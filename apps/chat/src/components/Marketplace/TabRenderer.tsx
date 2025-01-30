@@ -1,13 +1,16 @@
 import { IconMessage2 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getApplicationType } from '@/src/utils/app/application';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { translate } from '@/src/utils/app/translation';
+import {
+  doesApplicationMatchFilters,
+  doesApplicationMatchSearchTerm,
+} from '@/src/utils/marketplace';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import {
@@ -48,7 +51,6 @@ import Magnifier from '../../../public/images/icons/search-alt.svg';
 import { NoResultsFound } from '../Common/NoResultsFound';
 
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
-import intersection from 'lodash-es/intersection';
 
 interface NoAgentsFoundProps {
   children: React.ReactNode;
@@ -156,8 +158,8 @@ const ResultsView = ({
   if (areAllFiltersEmpty) {
     return (
       <NoAgentsFound
-        header={t('No agents') ?? ''}
-        desc={t("You don't have any agents.") ?? ''}
+        header={t('No agents')}
+        desc={t("You don't have any agents.")}
       >
         <IconMessage2 size={100} className="stroke-[0.2]" />
       </NoAgentsFound>
@@ -194,7 +196,7 @@ const getDeleteConfirmationText = (
       confirmLabel: translate('Delete'),
     },
     [DeleteType.REMOVE]: {
-      heading: translate('Confirm removing application'),
+      heading: translate('Confirm removing agent'),
       description: translate(
         'Are you sure you want to remove the {{modelName}}{{modelVersion}} from My workspace?',
         translationVariables,
@@ -249,41 +251,32 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
   const isSomeFilterNotEmpty =
     searchTerm.length ||
     selectedFilters[FilterTypes.ENTITY_TYPE].length ||
-    selectedFilters[FilterTypes.TOPICS].length;
+    selectedFilters[FilterTypes.TOPICS].length ||
+    selectedFilters[FilterTypes.SOURCES].length;
 
   const areAllFiltersEmpty =
     !searchTerm.length &&
     !selectedFilters[FilterTypes.ENTITY_TYPE].length &&
-    !selectedFilters[FilterTypes.TOPICS].length;
+    !selectedFilters[FilterTypes.TOPICS].length &&
+    !selectedFilters[FilterTypes.SOURCES].length;
 
   const displayedEntities = useMemo(() => {
     const filteredEntities = allModels.filter(
       (entity) =>
-        (doesEntityContainSearchTerm(entity, searchTerm) ||
-          (entity.version &&
-            doesEntityContainSearchTerm(
-              { name: entity.version },
-              searchTerm,
-            ))) &&
-        (selectedFilters[FilterTypes.ENTITY_TYPE].length
-          ? selectedFilters[FilterTypes.ENTITY_TYPE].includes(entity.type)
-          : true) &&
-        (selectedFilters[FilterTypes.TOPICS].length
-          ? intersection(selectedFilters[FilterTypes.TOPICS], entity.topics)
-              .length
-          : true),
+        doesApplicationMatchSearchTerm(entity, searchTerm) &&
+        doesApplicationMatchFilters(entity, selectedFilters),
     );
 
     const isInstalledModel = (entity: DialAIEntityModel) =>
       installedModelIds.has(entity.reference);
 
     const entitiesForTab =
-      selectedTab === MarketplaceTabs.MY_APPLICATIONS
+      selectedTab === MarketplaceTabs.MY_WORKSPACE
         ? filteredEntities.filter(isInstalledModel)
         : filteredEntities;
 
     const shouldSuggest =
-      selectedTab === MarketplaceTabs.MY_APPLICATIONS && isSomeFilterNotEmpty;
+      selectedTab === MarketplaceTabs.MY_WORKSPACE && isSomeFilterNotEmpty;
 
     const groupedEntities = groupModelsAndSaveOrder(
       entitiesForTab.concat(shouldSuggest ? filteredEntities : []),
@@ -320,7 +313,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
 
   const handleEditApplication = useCallback(
     (entity: DialAIEntityModel) => {
-      dispatch(ApplicationActions.get(entity.id));
+      dispatch(ApplicationActions.get({ applicationId: entity.id }));
       setApplicationModel({
         entity,
         action: ApplicationActionType.EDIT,
@@ -473,7 +466,6 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
       {currentDetailsModel && (
         <ApplicationDetails
           onPublish={handleSetPublishEntity}
-          isMobileView={screenState === ScreenState.MOBILE}
           entity={currentDetailsModel}
           onChangeVersion={handleSetVersion}
           onClose={handleCloseDetailsDialog}
@@ -481,7 +473,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           onEdit={handleEditApplication}
           onBookmarkClick={handleBookmarkClick}
           allEntities={allModels}
-          isMyAppsTab={selectedTab === MarketplaceTabs.MY_APPLICATIONS}
+          isMyAppsTab={selectedTab === MarketplaceTabs.MY_WORKSPACE}
           isSuggested={detailsModel.isSuggested}
         />
       )}

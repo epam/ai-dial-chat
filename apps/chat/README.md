@@ -34,29 +34,29 @@ Once you have Node.js and npm installed, follow these steps to set up your devel
 
 1. Clone the AI DIAL Chat repository:
 
-```
-git clone https://github.com/epam/ai-dial-chat.git
-```
+   ```bash
+   git clone https://github.com/epam/ai-dial-chat.git
+   ```
 
 2. Install project dependencies:
 
-```bash
-npm install
-```
+   ```bash
+   npm install
+   ```
 
 3. Create `.env.local` file in the `\apps\chat` project directory and add the required variables with appropriate values. These three are the only required environment variables. Refer to [Environment Variables](#environment-variables) to learn more.
 
-```
-DIAL_API_HOST="ADD_VALUE_HERE"
-DIAL_API_KEY="ADD_VALUE_HERE"
-NEXTAUTH_SECRET="ADD_VALUE_HERE"
-```
+   ```bash
+   DIAL_API_HOST="ADD_VALUE_HERE"
+   DIAL_API_KEY="ADD_VALUE_HERE"
+   NEXTAUTH_SECRET="ADD_VALUE_HERE"
+   ```
 
 4. To start the development server, run:
 
-```bash
-npm run nx serve chat
-```
+   ```bash
+   npm run nx serve chat
+   ```
 
 Once the server is up and running, open `http://localhost:3000` in your browser to view the AI DIAL Chat application.
 
@@ -121,6 +121,7 @@ AI DIAL Chat uses environment variables for configuration. All environment varia
 | `RECENT_ADDONS_IDS`                       |    No    | A list of IDs for recently-used addons                                                                                                                                                                                                                                                                                        | Any string                                                                                       |                                                                                                                                    |
 | `THEMES_CONFIG_HOST`                      |    No    | The host URL for a custom themes configuration.<br />Can lead to public and private resource.<br />Refer to [Theme Customization](../../docs/THEME-CUSTOMIZATION.md) to learn more.                                                                                                                                           | Any string                                                                                       |                                                                                                                                    |
 | `QUICK_APPS_HOST`                         |    No    | The host URL for a Quick Apps Completion URLs.<br />Can lead to public and private resource. more.                                                                                                                                                                                                                            | Any string                                                                                       |                                                                                                                                    |
+| `QUICK_APPS_SCHEMA_ID`                    |    No    | `applicationTypeSchemaId` value for QuickApp application type                                                                                                                                                                                                                                                                 | Any string                                                                                       |                                                                                                                                    |
 | `QUICK_APPS_MODEL`                        |    No    | A model that will be used in Quick Apps                                                                                                                                                                                                                                                                                       | Any string                                                                                       |                                                                                                                                    |
 | `FOOTER_HTML_MESSAGE`                     |    No    | A message that will be displayed in the application's footer.<br />Specify in HTML format.                                                                                                                                                                                                                                    | Any string                                                                                       |                                                                                                                                    |
 | `ANNOUNCEMENT_HTML_MESSAGE`               |    No    | A message of the announcement banner.<br />Specify in HTML format.                                                                                                                                                                                                                                                            | Any string                                                                                       |                                                                                                                                    |

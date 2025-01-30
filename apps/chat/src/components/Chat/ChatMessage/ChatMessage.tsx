@@ -1,6 +1,6 @@
 import { FC, memo, useCallback, useEffect, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
 import { isMobile, isSmallScreen } from '@/src/utils/app/mobile';
@@ -23,6 +23,7 @@ import { Feature, LikeState, Message } from '@epam/ai-dial-shared';
 export interface Props {
   message: Message;
   messageIndex: number;
+  filteredMessages: Message[];
   conversation: Conversation;
   isLikesEnabled: boolean;
   editDisabled: boolean;
@@ -40,6 +41,7 @@ export const ChatMessage: FC<Props> = memo(
   ({
     message,
     conversation,
+    filteredMessages,
     onLike,
     onDelete,
     editDisabled,
@@ -126,6 +128,7 @@ export const ChatMessage: FC<Props> = memo(
             isEditingTemplates={isTemplateModalOpened}
             messageCopied={messageCopied}
             conversation={conversation}
+            allMessages={filteredMessages}
             onLike={handleLike}
             onCopy={handleCopy}
             message={message}
@@ -153,6 +156,7 @@ export const ChatMessage: FC<Props> = memo(
                 isLastMessage={isLastMessage}
                 messageIndex={messageIndex}
                 conversation={conversation}
+                allMessages={filteredMessages}
                 editDisabled={editDisabled}
                 isEditing={isEditing}
                 toggleEditing={toggleEditing}
@@ -199,9 +203,7 @@ export const ChatMessage: FC<Props> = memo(
         <ConfirmDialog
           isOpen={isDeleteConfirmationOpened}
           heading={t('Confirm deleting message')}
-          description={
-            t('Are you sure that you want to delete the message?') || ''
-          }
+          description={t('Are you sure that you want to delete the message?')}
           confirmLabel={t('Delete')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {

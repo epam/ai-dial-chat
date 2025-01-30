@@ -1,45 +1,30 @@
-import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
+import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { combineEntities } from '@/src/utils/app/common';
 import { translate } from '@/src/utils/app/translation';
 
 import { ApplicationStatus } from '@/src/types/applications';
-import { EntityType } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
 import {
   DialAIEntityModel,
   InstalledModel,
-  ModelsMap,
   PublishRequestDialAIEntityModel,
 } from '@/src/types/models';
+import { Translation } from '@/src/types/translation';
 
 import { RECENT_MODELS_COUNT } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
 import { DeleteType } from '@/src/constants/marketplace';
 
-import { RootState } from '../index';
+import * as ModelsSelectors from './models.selectors';
+import { ModelUpdatedValues, ModelsState } from './models.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { sortBy } from 'lodash-es';
 import cloneDeep from 'lodash-es/cloneDeep';
-import groupBy from 'lodash-es/groupBy';
 import omit from 'lodash-es/omit';
-import orderBy from 'lodash-es/orderBy';
 import uniq from 'lodash-es/uniq';
 
-export interface ModelsState {
-  initialized: boolean;
-  status: UploadStatus;
-  error: ErrorMessage | undefined;
-  models: DialAIEntityModel[];
-  modelsMap: ModelsMap;
-  recentModelsIds: string[];
-  recentModelsStatus: UploadStatus;
-  isInstalledModelsInitialized: boolean;
-  installedModels: InstalledModel[];
-  publishRequestModels: PublishRequestDialAIEntityModel[];
-  publishedApplicationIds: string[];
-}
+export { ModelsSelectors };
 
 const initialState: ModelsState = {
   initialized: false,
@@ -81,6 +66,7 @@ export const modelsSlice = createSlice({
       _action: PayloadAction<{
         references: string[];
         showSuccessToast?: boolean;
+        updateRecentModels?: boolean;
       }>,
     ) => state,
     removeInstalledModels: (
@@ -127,9 +113,14 @@ export const modelsSlice = createSlice({
         code: payload.error.status?.toString() ?? 'unknown',
         messageLines: payload.error.statusText
           ? [payload.error.statusText]
-          : [translate(errorsMessages.generalServer, { ns: 'common' })],
+          : [
+              translate(errorsMessages.generalServer, {
+                ns: Translation.Common,
+              }),
+            ],
       } as ErrorMessage;
     },
+
     initRecentModels: (
       state,
       {
@@ -218,24 +209,35 @@ export const modelsSlice = createSlice({
         oldApplicationId: string;
       }>,
     ) => {
+      const oldModel = state.modelsMap[payload.model.reference];
+      //Copy permissions and sharedWithMe after update
+      const newModel: DialAIEntityModel = {
+        sharedWithMe: oldModel?.sharedWithMe,
+        permissions: oldModel?.permissions,
+        ...payload.model,
+      };
+
       state.models = state.models.map((model) =>
-        model.reference === payload.model.reference ? payload.model : model,
+        model.reference === newModel.reference ? newModel : model,
       );
       state.modelsMap = omit(state.modelsMap, [payload.oldApplicationId]);
-      state.modelsMap[payload.model.id] = payload.model;
-      state.modelsMap[payload.model.reference] = payload.model;
+      state.modelsMap[newModel.id] = newModel;
+      state.modelsMap[newModel.reference] = newModel;
     },
     deleteModels: (
       state,
       { payload }: PayloadAction<{ references: string[] }>,
     ) => {
+      const ids = payload.references
+        .map((reference) => state.modelsMap[reference]?.id)
+        .filter(Boolean) as string[];
       state.models = state.models.filter(
         (model) => !payload.references.includes(model.reference),
       );
       state.recentModelsIds = state.recentModelsIds.filter(
         (id) => !payload.references.includes(id),
       );
-      state.modelsMap = omit(state.modelsMap, payload.references);
+      state.modelsMap = omit(state.modelsMap, [...payload.references, ...ids]);
     },
     addPublishRequestModels: (
       state,
@@ -272,128 +274,39 @@ export const modelsSlice = createSlice({
         state.modelsMap[targetModel.reference] = updatedModel;
       }
     },
+    updateLocalModels: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        modelsToUpdate: ModelUpdatedValues[];
+      }>,
+    ) => {
+      payload.modelsToUpdate.forEach((modelToUpdate) => {
+        const model = state.modelsMap[modelToUpdate.reference];
+
+        if (model) {
+          const updatedModel = {
+            ...model,
+            ...modelToUpdate.updatedValues,
+          };
+          state.modelsMap[model.reference] = updatedModel;
+          state.modelsMap[model.id] = updatedModel;
+
+          state.models = state.models.map((modelFromState) => {
+            if (modelFromState.reference === modelToUpdate.reference) {
+              return {
+                ...modelFromState,
+                ...modelToUpdate.updatedValues,
+              };
+            }
+
+            return modelFromState;
+          });
+        }
+      });
+    },
   },
 });
-
-const rootSelector = (state: RootState): ModelsState => state.models;
-
-const selectModelsIsLoading = createSelector([rootSelector], (state) => {
-  return (
-    state.status === UploadStatus.LOADING ||
-    state.status === UploadStatus.UNINITIALIZED
-  );
-});
-
-const selectIsModelsLoaded = createSelector([rootSelector], (state) => {
-  return state.status === UploadStatus.LOADED;
-});
-
-const selectIsInstalledModelsInitialized = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.isInstalledModelsInitialized;
-  },
-);
-
-const selectModelsError = createSelector([rootSelector], (state) => {
-  return state.error;
-});
-
-const selectIsRecentModelsLoaded = createSelector([rootSelector], (state) => {
-  return state.recentModelsStatus === UploadStatus.LOADED;
-});
-
-const selectModels = createSelector([rootSelector], (state) => {
-  const groups = groupBy(state.models, (model) =>
-    model.reference === model.id ? 'rest' : 'custom',
-  );
-
-  return sortBy(
-    [
-      ...(groups.rest ?? []),
-      ...orderBy(groups.custom ?? [], 'version', 'desc'),
-    ],
-    (model) => model.name.toLowerCase(),
-  );
-});
-
-const selectModelTopics = createSelector([rootSelector], (state) => {
-  return uniq(
-    state.models?.flatMap((model) => model.topics ?? []) ?? [],
-  ).sort();
-});
-
-const selectModelsMap = createSelector([rootSelector], (state) => {
-  return state.modelsMap;
-});
-const selectRecentModelsIds = createSelector([rootSelector], (state) => {
-  return state.recentModelsIds;
-});
-
-const selectRecentModels = createSelector(
-  [selectRecentModelsIds, selectModelsMap],
-  (recentModelsIds, modelsMap) => {
-    return recentModelsIds.map((id) => modelsMap[id]).filter(Boolean);
-  },
-);
-
-const selectModelsOnly = createSelector([selectModels], (models) => {
-  return models.filter((model) => model.type === EntityType.Model);
-});
-
-const selectPublishRequestModels = createSelector([rootSelector], (state) => {
-  return state.publishRequestModels;
-});
-
-const selectPublishedApplicationIds = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.publishedApplicationIds;
-  },
-);
-
-const selectInstalledModels = createSelector([rootSelector], (state) => {
-  return state.installedModels;
-});
-
-const selectInstalledModelIds = createSelector([rootSelector], (state) => {
-  return new Set(state.installedModels.map(({ id }) => id));
-});
-
-const selectRecentWithInstalledModelsIds = createSelector(
-  [selectRecentModelsIds, selectInstalledModelIds],
-  (recentModelIds, installedModelIds) => {
-    // TODO: implement Pin-behavior in future
-    const installedWithoutRecents = Array.from(installedModelIds).filter(
-      (id) => !recentModelIds.includes(id),
-    );
-    return [...recentModelIds, ...installedWithoutRecents];
-  },
-);
-
-const selectInitialized = createSelector(
-  [rootSelector],
-  (state) => state.initialized,
-);
-
-export const ModelsSelectors = {
-  selectIsInstalledModelsInitialized,
-  selectIsModelsLoaded,
-  selectModelsIsLoading,
-  selectModelsError,
-  selectModels,
-  selectModelsMap,
-  selectInstalledModels,
-  selectInstalledModelIds,
-  selectRecentModelsIds,
-  selectRecentModels,
-  selectIsRecentModelsLoaded,
-  selectModelsOnly,
-  selectPublishRequestModels,
-  selectPublishedApplicationIds,
-  selectModelTopics,
-  selectRecentWithInstalledModelsIds,
-  selectInitialized,
-};
 
 export const ModelsActions = modelsSlice.actions;

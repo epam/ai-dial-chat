@@ -1,3 +1,5 @@
+import { useRouter } from 'next/router';
+
 import {
   Action,
   Store,
@@ -29,6 +31,7 @@ import { FilesEpics } from './files/files.epics';
 import { filesSlice } from './files/files.reducers';
 import { ImportExportEpics } from './import-export/importExport.epics';
 import { importExportSlice } from './import-export/importExport.reducers';
+import { MarketplaceEpics } from './marketplace/marketplace.epics';
 import { marketplaceSlice } from './marketplace/marketplace.reducers';
 import { MigrationEpics } from './migration/migration.epics';
 import { migrationSlice } from './migration/migration.reducers';
@@ -66,6 +69,7 @@ export const rootEpic = combineEpics(
   ApplicationEpics,
   CodeEditorEpics,
   ChatEpics,
+  MarketplaceEpics,
 );
 
 const reducer = combineReducers({
@@ -106,7 +110,10 @@ export type AppDispatch = typeof store.dispatch;
 
 export const createStore = (preloadedState: { settings: SettingsState }) => {
   if (typeof window === 'undefined') {
-    const epicMiddleware = createEpicMiddleware();
+    const epicMiddleware = createEpicMiddleware({
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      dependencies: { router: useRouter() },
+    });
 
     const middleware = getMiddleware(epicMiddleware);
     const localStore = configureStore({
@@ -120,7 +127,10 @@ export const createStore = (preloadedState: { settings: SettingsState }) => {
   }
 
   if (!store) {
-    const epicMiddleware = createEpicMiddleware();
+    const epicMiddleware = createEpicMiddleware({
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      dependencies: { router: useRouter() },
+    });
 
     const middleware = getMiddleware(epicMiddleware);
     store = configureStore({

@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
+import { useTranslation } from '@/src/hooks/useTranslation';
+
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
+import { doesModelHaveSettings } from '@/src/utils/app/models';
 
 import { Conversation } from '@/src/types/chat';
-import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -147,7 +147,7 @@ export const ChatSettings = ({
       .map((conv) => modelsMap[conv.model.id])
       .filter(Boolean) as DialAIEntityModel[];
 
-    return allowedModels.some((model) => model.type !== EntityType.Application);
+    return allowedModels.some((model) => doesModelHaveSettings(model));
   }, [conversations, modelsMap]);
 
   return (

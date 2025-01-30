@@ -12,14 +12,15 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { constructPath } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
   getNextDefaultName,
+  splitEntityId,
 } from '@/src/utils/app/folders';
 import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
 
@@ -394,6 +395,7 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
   const handleUploadEmptyFile = useCallback(
     (fileName: string) => {
       if (fileName && sourcesFolderId) {
+        const { bucket } = splitEntityId(sourcesFolderId);
         dispatch(
           FilesActions.uploadFile({
             fileContent: new File([''], fileName, {
@@ -402,6 +404,7 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
             relativePath: getIdWithoutRootPathSegments(sourcesFolderId),
             id: constructPath(sourcesFolderId, fileName),
             name: fileName,
+            bucket,
           }),
         );
         setNewFileFolder(undefined);
@@ -654,14 +657,12 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
           <ConfirmDialog
             isOpen={!!deletingFileId}
             heading={t('Confirm deleting')}
-            description={
-              t(
-                'Are you sure that you want to delete "{{name}}" permanently?',
-                {
-                  name: deletingFileId?.split('/').pop(),
-                },
-              ) || ''
-            }
+            description={t(
+              'Are you sure that you want to delete "{{name}}" permanently?',
+              {
+                name: deletingFileId?.split('/').pop(),
+              },
+            )}
             confirmLabel={t('Confirm')}
             cancelLabel={t('Cancel')}
             onClose={handleDeleteFile}

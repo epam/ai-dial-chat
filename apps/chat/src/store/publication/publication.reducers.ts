@@ -5,6 +5,7 @@ import { sortAllVersions } from '@/src/utils/app/common';
 import { FeatureType } from '@/src/types/common';
 import {
   PublicVersionGroups,
+  PublicVersionOption,
   Publication,
   PublicationInfo,
   PublicationRequestModel,
@@ -108,7 +109,13 @@ export const publicationSlice = createSlice({
       state,
     approvePublicationSuccess: (
       state,
-      { payload }: PayloadAction<{ url: string }>,
+      {
+        payload,
+      }: PayloadAction<{
+        url: string;
+        triggerModelsListing: boolean;
+        triggerPublicFilesListing: boolean;
+      }>,
     ) => {
       state.publications = state.publications.filter(
         (p) => p.url !== payload.url,
@@ -158,6 +165,20 @@ export const publicationSlice = createSlice({
       state.resourcesToReview = state.resourcesToReview.map((resource) =>
         resource.reviewUrl === payload.id &&
         resource.publicationUrl === payload.publicationUrl
+          ? { ...resource, reviewed: true }
+          : resource,
+      );
+    },
+    markResourcesAsReviewedByIds: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        ids: string[];
+      }>,
+    ) => {
+      state.resourcesToReview = state.resourcesToReview.map((resource) =>
+        payload.ids.includes(resource.reviewUrl)
           ? { ...resource, reviewed: true }
           : resource,
       );
@@ -227,13 +248,13 @@ export const publicationSlice = createSlice({
         }
       }
     },
-    setNewVersionForPublicVersionGroup: (
+    setSelectedVersionForPublicVersionGroup: (
       state,
       {
         payload,
       }: PayloadAction<{
         versionGroupId: string;
-        newVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'];
+        newVersion: PublicVersionOption;
       }>,
     ) => {
       // link to state.publicVersionGroups[payload.versionGroupId]

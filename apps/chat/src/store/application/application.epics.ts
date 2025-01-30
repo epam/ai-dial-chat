@@ -1,5 +1,6 @@
 import {
   EMPTY,
+  Observable,
   concat,
   concatMap,
   from,
@@ -9,6 +10,8 @@ import {
   takeUntil,
 } from 'rxjs';
 import { catchError, filter, map, switchMap } from 'rxjs/operators';
+
+import { AnyAction } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
@@ -32,7 +35,8 @@ import { DeleteType } from '@/src/constants/marketplace';
 
 import { ApplicationActions } from '../application/application.reducers';
 import { AuthSelectors } from '../auth/auth.reducers';
-import { ModelsActions } from '../models/models.reducers';
+import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
+import { ShareActions, ShareSelectors } from '../share/share.reducers';
 
 const createApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
@@ -60,6 +64,7 @@ const createApplicationEpic: AppEpic = (action$) =>
                       references: [application.reference],
                     }),
                   ),
+                  of(ApplicationActions.createSuccess()),
                 );
               }
 
@@ -111,9 +116,14 @@ const updateApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ApplicationActions.update.match),
     switchMap(({ payload }) => {
+      if (payload.applicationData.sharedWithMe) {
+        return of(ApplicationActions.edit(payload.applicationData));
+      }
+
       const updatedCustomApplication = regenerateApplicationId(
         payload.applicationData,
       ) as CustomApplicationModel;
+
       if (payload.oldApplicationId !== updatedCustomApplication.id) {
         return DataService.getDataStorage()
           .move({
@@ -169,15 +179,46 @@ const editApplicationEpic: AppEpic = (action$) =>
     }),
   );
 
-const getApplicationEpic: AppEpic = (action$) =>
+const getApplicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ApplicationActions.get.match),
     switchMap(({ payload }) =>
-      ApplicationService.get(payload).pipe(
-        map((application) => {
-          return application
-            ? ApplicationActions.getSuccess(application)
-            : ApplicationActions.getFail();
+      ApplicationService.get(payload.applicationId).pipe(
+        switchMap((application) => {
+          if (!application) {
+            return of(ApplicationActions.getFail());
+          }
+
+          const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+          const modelFromState = modelsMap[application.reference];
+
+          const actions: Observable<AnyAction>[] = [];
+          actions.push(
+            of(
+              ApplicationActions.getSuccess({
+                ...application,
+                sharedWithMe: modelFromState?.sharedWithMe,
+                permissions: modelFromState?.permissions,
+                isShared: modelFromState?.isShared,
+              }),
+            ),
+          );
+
+          if (payload.isForSharing) {
+            const permissionsFromState = ShareSelectors.selectSharePermissions(
+              state$.value,
+            );
+            actions.push(
+              of(
+                ShareActions.shareApplication({
+                  resourceId: application.id,
+                  permissions: permissionsFromState,
+                }),
+              ),
+            );
+          }
+
+          return concat(...actions);
         }),
         catchError((err) => {
           console.error('Failed to get application:', err);

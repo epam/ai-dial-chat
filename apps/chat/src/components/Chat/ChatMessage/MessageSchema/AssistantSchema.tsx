@@ -1,18 +1,24 @@
 import { memo, useCallback } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getMessageSchema } from '@/src/utils/app/form-schema';
+import {
+  getMessageSchema,
+  isFormSchemaValid,
+} from '@/src/utils/app/form-schema';
 
 import { Translation } from '@/src/types/translation';
 
 import { ChatActions } from '@/src/store/chat/chat.reducer';
+import { ChatSelectors } from '@/src/store/chat/chat.selectors';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { FormSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/FormSchema';
+import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 
 import {
+  DialSchemaProperties,
   Message,
   MessageFormSchema,
   MessageFormValueType,
@@ -28,12 +34,13 @@ const AssistantSchemaView = ({ schema }: AssistantSchemaViewProps) => {
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
+  const formValue = useAppSelector(ChatSelectors.selectChatFormValue);
 
   const handleChange = useCallback(
     (property: string, value: MessageFormValueType, submit?: boolean) => {
       const populateText = schema.properties[property]?.oneOf?.find(
         (option) => option.const === value,
-      )?.['dial:widgetOptions']?.populateText;
+      )?.[DialSchemaProperties.DialWidgetOptions]?.populateText;
 
       dispatch(
         ChatActions.setFormValue({
@@ -53,6 +60,8 @@ const AssistantSchemaView = ({ schema }: AssistantSchemaViewProps) => {
         schema={schema}
         onChange={handleChange}
         disabled={isPlayback}
+        formValue={formValue}
+        showSelected
       />
     </div>
   );
@@ -72,6 +81,13 @@ export const AssistantSchema = memo(function AssistantSchema({
   const schema = getMessageSchema(message);
 
   if (!schema) return null;
+
+  if (!isFormSchemaValid(schema))
+    return (
+      <div className="mt-2">
+        <ErrorMessage error={t('Form schema is invalid')} />
+      </div>
+    );
 
   if (
     !isLastMessage &&

@@ -9,16 +9,18 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import {
   excludeSystemMessages,
   getConversationModelParams,
 } from '@/src/utils/app/conversation';
+import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
 import { isSmallScreen } from '@/src/utils/app/mobile';
+import { doesModelHaveConfiguration } from '@/src/utils/app/models';
 
 import {
   Conversation,
@@ -28,23 +30,20 @@ import {
 import { EntityType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import {
-  AddonsActions,
-  AddonsSelectors,
-} from '@/src/store/addons/addons.reducers';
+import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import { ChatActions } from '@/src/store/chat/chat.reducer';
+import { ChatSelectors } from '@/src/store/chat/chat.selectors';
 import {
   ConversationsActions,
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  ModelsActions,
-  ModelsSelectors,
-} from '@/src/store/models/models.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
+
+import { ChatStarters } from '@/src/components/Chat/ChatStarters';
 
 import Loader from '../Common/Loader';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
@@ -115,12 +114,15 @@ export const ChatView = memo(() => {
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
   const talkToConversationId = useAppSelector(
-    ConversationsSelectors.selectТalkToConversationId,
+    ConversationsSelectors.selectTalkToConversationId,
   );
   const isAnyMenuOpen = useAppSelector(UISelectors.selectIsAnyMenuOpen);
   const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
+  );
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
   );
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
@@ -191,6 +193,7 @@ export const ChatView = memo(() => {
               !modelsMap[conv.assistantModelId])
           );
         }));
+
     if (isNotAllowedModel) {
       setNotAllowedType(EntityType.Model);
     } else if (
@@ -279,7 +282,7 @@ export const ChatView = memo(() => {
       : [];
 
     const isErrorInSomeLastMessage = lastMergedMessages.some(
-      (mergedStr: [Conversation, Message, number]) =>
+      (mergedStr: [Conversation, Message, number, Message[]]) =>
         !!mergedStr[1].errorMessage,
     );
     setIsLastMessageError(isErrorInSomeLastMessage);
@@ -310,18 +313,21 @@ export const ChatView = memo(() => {
   useLayoutEffect(() => {
     if (selectedConversations.length > 0) {
       const mergedMessages: MergedMessages[] = [];
-      const firstConversationMessages = excludeSystemMessages(
-        selectedConversations[0].messages,
+      const userMessages = selectedConversations.map((conv) =>
+        excludeSystemMessages(conv.messages),
       );
-      for (let i = 0; i < firstConversationMessages.length; i++) {
+      const messagesLength = userMessages[0].length;
+
+      for (let i = 0; i < messagesLength; i++) {
         mergedMessages.push(
-          selectedConversations.map((conv) => [
+          selectedConversations.map((conv, convIndex) => [
             conv,
-            excludeSystemMessages(conv.messages)[i] || {
+            userMessages[convIndex][i] || {
               role: Role.Assistant,
               content: '',
             },
             i,
+            userMessages[convIndex],
           ]),
         );
       }
@@ -501,10 +507,17 @@ export const ChatView = memo(() => {
     (conv) => !conv.messages.length,
   );
 
-  useEffect(() => {
-    dispatch(ChatActions.resetFormValue());
-    dispatch(ChatActions.setInputContent(''));
-  }, [dispatch, selectedConversationsIds]);
+  const isConversationWithSchema = selectedConversations.some(
+    (conv) =>
+      doesModelHaveConfiguration(modelsMap[conv.model.id]) ||
+      isConversationWithFormSchema(conv),
+  );
+
+  const isInputVisible =
+    (!isReplay || isNotEmptyConversations) &&
+    !isExternal &&
+    (isModelsInstalled || isReplay || isIsolatedView) &&
+    !(isConversationWithSchema && selectedConversations.length > 1);
 
   return (
     <div
@@ -577,13 +590,7 @@ export const ChatView = memo(() => {
                                   !isExternal
                                 }
                                 isShowSettings={isShowChatSettings}
-                                setShowSettings={(isShow) => {
-                                  if (isShow) {
-                                    dispatch(ModelsActions.getModels());
-                                    dispatch(AddonsActions.getAddons());
-                                  }
-                                  setIsShowChatSettings(isShow);
-                                }}
+                                setShowSettings={setIsShowChatSettings}
                                 selectedConversationIds={
                                   selectedConversationsIds
                                 }
@@ -657,7 +664,12 @@ export const ChatView = memo(() => {
                         <div className="flex flex-col" data-qa="chat-messages">
                           {mergedMessages.map(
                             (
-                              mergedStr: [Conversation, Message, number][],
+                              mergedStr: [
+                                Conversation,
+                                Message,
+                                number,
+                                Message[],
+                              ][],
                               i: number,
                             ) => (
                               <div
@@ -670,10 +682,11 @@ export const ChatView = memo(() => {
                                 }
                               >
                                 {mergedStr.map(
-                                  ([conv, message, index]: [
+                                  ([conv, message, index, filteredMessages]: [
                                     Conversation,
                                     Message,
                                     number,
+                                    Message[],
                                   ]) => (
                                     <div
                                       key={conv.id}
@@ -689,6 +702,7 @@ export const ChatView = memo(() => {
                                           key={conv.id}
                                           message={message}
                                           messageIndex={index}
+                                          filteredMessages={filteredMessages}
                                           conversation={conv}
                                           isLikesEnabled={enabledFeatures.has(
                                             Feature.Likes,
@@ -724,7 +738,7 @@ export const ChatView = memo(() => {
                       )}
                     </div>
                   </div>
-                  {!isPlayback && notAllowedType ? (
+                  {!isPlayback && notAllowedType && !selectedPublicationUrl ? (
                     <NotAllowedModel
                       showScrollDownButton={showScrollDownButton}
                       onScrollDownClick={handleScrollDown}
@@ -741,6 +755,8 @@ export const ChatView = memo(() => {
                         />
                       )}
 
+                      <ChatStarters />
+
                       {!isPlayback && (
                         <ChatInput
                           showReplayControls={showReplayControls}
@@ -754,11 +770,7 @@ export const ChatView = memo(() => {
                             dispatch(ConversationsActions.stopStreamMessage());
                           }}
                           onResize={onChatInputResize}
-                          isShowInput={
-                            (!isReplay || isNotEmptyConversations) &&
-                            !isExternal &&
-                            (isModelsInstalled || isReplay || isIsolatedView)
-                          }
+                          isShowInput={isInputVisible}
                         >
                           <ChatInputControls
                             isNotEmptyConversations={isNotEmptyConversations}
@@ -766,6 +778,7 @@ export const ChatView = memo(() => {
                             isModelsInstalled={
                               isModelsInstalled || isIsolatedView
                             }
+                            isConversationWithSchema={isConversationWithSchema}
                             showScrollDownButton={showScrollDownButton}
                             onScrollDown={handleScrollDown}
                           />
@@ -835,6 +848,7 @@ ChatView.displayName = 'ChatView';
 
 export function Chat() {
   const { t } = useTranslation(Translation.Chat);
+  const dispatch = useAppDispatch();
 
   const areSelectedConversationsLoaded = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsLoaded,
@@ -857,6 +871,27 @@ export function Chat() {
   const isInstalledModelsInitialized = useAppSelector(
     ModelsSelectors.selectIsInstalledModelsInitialized,
   );
+  const isConfigurationSchemaLoading = useAppSelector(
+    ChatSelectors.selectIsConfigurationSchemaLoading,
+  );
+
+  const configurationModelId = selectedConversations.find((conv) =>
+    doesModelHaveConfiguration(modelsMap[conv.model.id]),
+  )?.model?.id;
+
+  useEffect(() => {
+    dispatch(ChatActions.resetFormValue());
+    dispatch(ChatActions.setInputContent(''));
+  }, [dispatch, selectedConversationsIds]);
+
+  useEffect(() => {
+    dispatch(ChatActions.resetConfigurationSchema());
+    if (configurationModelId) {
+      dispatch(
+        ChatActions.getConfigurationSchema({ modelId: configurationModelId }),
+      );
+    }
+  }, [dispatch, configurationModelId, selectedConversationsIds]);
 
   if (selectedPublication?.resources && !selectedConversationsIds.length) {
     return (
@@ -872,7 +907,7 @@ export function Chat() {
       <div className="h-screen pt-2">
         <NotFoundEntity
           entity={t('Agent is')}
-          additionalText={t('Please contact your administrator.') || ''}
+          additionalText={t('Please contact your administrator.')}
         />
       </div>
     );
@@ -883,7 +918,8 @@ export function Chat() {
       selectedConversations.some(
         (conv) => conv.status !== UploadStatus.LOADED,
       )) ||
-    !isInstalledModelsInitialized
+    !isInstalledModelsInitialized ||
+    isConfigurationSchemaLoading
   ) {
     return <Loader />;
   }
@@ -894,7 +930,7 @@ export function Chat() {
     return (
       <NotFoundEntity
         entity={t('Conversation')}
-        additionalText={t('Please select another conversation.') || ''}
+        additionalText={t('Please select another conversation.')}
       />
     );
   }

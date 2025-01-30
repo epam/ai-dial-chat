@@ -21,12 +21,19 @@ export class TextFileService {
     );
   }
 
-  public static updateContent(
-    relativePath: string,
-    fileName: string,
-    content: string,
-    contentType: string,
-  ): Observable<Result> {
+  public static updateContent({
+    relativePath,
+    fileName,
+    content,
+    contentType,
+    bucket,
+  }: {
+    relativePath: string;
+    fileName: string;
+    content: string;
+    contentType: string;
+    bucket?: string;
+  }): Observable<Result> {
     const formData = new FormData();
     formData.append(
       'attachments',
@@ -39,6 +46,7 @@ export class TextFileService {
       relativePath,
       fileName,
       HTTPMethod.PUT,
+      bucket,
     ).pipe(
       filter(
         ({ result, percent }) =>

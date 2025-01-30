@@ -1,6 +1,10 @@
 import { FeatureType } from '@/src/types/common';
 import { PromptInfo } from '@/src/types/prompt';
-import { PublicVersionGroups } from '@/src/types/publication';
+import {
+  PublicVersionGroups,
+  PublicationResource,
+  ResourceToReview,
+} from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 
 import {
@@ -117,40 +121,30 @@ export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
         );
         const currentVersionGroup = acc.publicVersionGroups[idWithoutVersion];
 
+        const newVersion = {
+          version: parsedApiKey.publicationInfo.version,
+          id: item.id,
+        };
+
         if (!currentVersionGroup) {
           acc.publicVersionGroups[idWithoutVersion] = {
-            selectedVersion: {
-              version: parsedApiKey.publicationInfo.version,
-              id: item.id,
-            },
-            allVersions: [
-              {
-                version: parsedApiKey.publicationInfo.version,
-                id: item.id,
-              },
-            ],
+            selectedVersion: newVersion,
+            allVersions: [newVersion],
           };
         } else {
-          const latestVersion = findLatestVersion([
-            ...currentVersionGroup.allVersions.map(({ version }) => version),
-            parsedApiKey.publicationInfo.version,
-          ]);
+          const allVersions =
+            currentVersionGroup.allVersions.concat(newVersion);
+
+          const latestVersion = findLatestVersion(
+            allVersions.map(({ version }) => version),
+          );
 
           acc.publicVersionGroups[idWithoutVersion] = {
             selectedVersion:
               latestVersion === currentVersionGroup.selectedVersion.version
                 ? currentVersionGroup.selectedVersion
-                : {
-                    version: parsedApiKey.publicationInfo.version,
-                    id: item.id,
-                  },
-            allVersions: [
-              ...currentVersionGroup.allVersions,
-              {
-                version: parsedApiKey.publicationInfo.version,
-                id: item.id,
-              },
-            ],
+                : newVersion,
+            allVersions,
           };
         }
       }
@@ -180,3 +174,34 @@ export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
 
 export const getPublicationId = (url: string) =>
   url.split('/').slice(-1).shift();
+
+export const getItemsIdsToRemoveAndHide = (
+  allResources: PublicationResource[],
+  resourcesToReview: ResourceToReview[],
+) => {
+  const itemsToHide: PublicationResource[] = [];
+  const itemsToRemove: PublicationResource[] = [];
+
+  const reviewUrlCountMap = resourcesToReview.reduce<Record<string, number>>(
+    (acc, res) => {
+      acc[res.reviewUrl] = (acc[res.reviewUrl] || 0) + 1;
+      return acc;
+    },
+    {},
+  );
+
+  allResources.forEach((resource) => {
+    const count = reviewUrlCountMap[resource.reviewUrl] || 0;
+
+    if (count > 1) {
+      itemsToHide.push(resource);
+    } else {
+      itemsToRemove.push(resource);
+    }
+  });
+
+  return {
+    itemsToHideIds: itemsToHide.map((item) => item.reviewUrl),
+    itemsToRemoveIds: itemsToRemove.map((item) => item.reviewUrl),
+  };
+};

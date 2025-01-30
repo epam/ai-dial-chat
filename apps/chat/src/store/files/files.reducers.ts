@@ -64,6 +64,7 @@ export const filesSlice = createSlice({
         id: string;
         relativePath?: string;
         name: string;
+        bucket?: string;
       }>,
     ) => {
       state.files = state.files.filter((file) => file.id !== payload.id);
@@ -169,7 +170,11 @@ export const filesSlice = createSlice({
 
       state.files = mappedFiles.concat(
         state.files.filter(
-          (file) => !mappedFiles.find((stateFile) => stateFile.id === file.id),
+          (stateFile) =>
+            //remove all files from loaded folder to have latest folder update
+            !mappedFiles.find(
+              (mappedFile) => mappedFile.folderId === stateFile.folderId,
+            ),
         ),
       );
       state.filesStatus = UploadStatus.LOADED;
@@ -420,6 +425,12 @@ export const filesSlice = createSlice({
         contentType: string;
       }>,
     ) => state,
+    resetAllFoldersStatus: (state) => {
+      state.folders = state.folders.map((folder) => ({
+        ...folder,
+        status: UploadStatus.UNINITIALIZED,
+      }));
+    },
   },
 });
 
@@ -537,6 +548,13 @@ const selectInitialized = createSelector(
   (state) => state.initialized,
 );
 
+const selectFolderById = createSelector(
+  [selectFolders, (_state, folderId: string) => folderId],
+  (folders, folderId) => {
+    return folders.find((folder) => folder.id == folderId);
+  },
+);
+
 export const FilesSelectors = {
   selectFiles,
   selectFilteredFiles,
@@ -549,6 +567,7 @@ export const FilesSelectors = {
   selectAreFoldersLoading,
   selectLoadingFolderIds,
   selectNewAddedFolderId,
+  selectFolderById,
   selectFilesByIds,
   selectFileById,
   selectFoldersWithSearchTerm,

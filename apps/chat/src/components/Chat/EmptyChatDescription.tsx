@@ -1,13 +1,15 @@
 import { useCallback, useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getModelDescription } from '@/src/utils/app/application';
-import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
+import {
+  getOpenAIEntityFullName,
+  isOldConversationReplay,
+} from '@/src/utils/app/conversation';
 import { isEntityIdExternal } from '@/src/utils/app/id';
 
 import { Conversation } from '@/src/types/chat';
@@ -25,6 +27,8 @@ import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { Spinner } from '../Common/Spinner';
 import { FunctionStatusIndicator } from '../Marketplace/FunctionStatusIndicator';
 import { ModelVersionSelect } from './ModelVersionSelect';
+import { PlaybackIcon } from './Playback/PlaybackIcon';
+import { ReplayAsIsIcon } from './ReplayAsIsIcon';
 
 import { Feature } from '@epam/ai-dial-shared';
 
@@ -33,6 +37,25 @@ interface EmptyChatDescriptionViewProps {
   onShowChangeModel: (conversationId: string) => void;
   onShowSettings: (show: boolean) => void;
 }
+
+const getModelName = (
+  conversation: Conversation,
+  model: DialAIEntityModel | undefined,
+) => {
+  if (conversation.playback?.isPlayback) {
+    return 'Playback';
+  }
+
+  if (conversation.replay?.replayAsIs) {
+    return 'Replay as is';
+  }
+
+  if (model) {
+    return getOpenAIEntityFullName(model);
+  }
+
+  return conversation.model.id;
+};
 
 const EmptyChatDescriptionView = ({
   conversation,
@@ -64,9 +87,12 @@ const EmptyChatDescriptionView = ({
   const versions = useMemo(
     () =>
       models.filter(
-        (m) => installedModelIds.has(m.reference) && m.name === model?.name,
+        (m) =>
+          (installedModelIds.has(m.reference) ||
+            model?.reference === m.reference) &&
+          m.name === model?.name,
       ),
-    [installedModelIds, model?.name, models],
+    [installedModelIds, model?.name, model?.reference, models],
   );
 
   const incorrectModel = !model;
@@ -102,6 +128,12 @@ const EmptyChatDescriptionView = ({
   }
 
   const modelIconSize = screenState === ScreenState.MOBILE ? 36 : 50;
+  const isOldReplay = isOldConversationReplay(conversation.replay);
+  const PseudoIcon = conversation.playback?.isPlayback
+    ? PlaybackIcon
+    : conversation.replay?.replayAsIs
+      ? ReplayAsIsIcon
+      : null;
 
   return (
     <div className="flex size-full flex-col items-center gap-5 rounded-t px-3 py-4 md:px-0 lg:max-w-3xl">
@@ -117,46 +149,85 @@ const EmptyChatDescriptionView = ({
             className="flex flex-col items-center justify-center gap-5 text-3xl leading-10"
             data-qa="agent-info"
           >
-            <ModelIcon
-              entity={model}
-              entityId={model?.id ?? conversation.model.id}
-              size={modelIconSize}
-              isCustomTooltip
-            />
+            {PseudoIcon ? (
+              <PseudoIcon size={modelIconSize} />
+            ) : (
+              <ModelIcon
+                entity={model}
+                entityId={model?.id ?? conversation.model.id}
+                size={modelIconSize}
+                isCustomTooltip
+              />
+            )}
             <div className="flex items-center gap-2 whitespace-pre-wrap">
               <span
                 data-qa="agent-name"
                 className={classNames(incorrectModel && 'text-secondary')}
               >
-                {model ? getOpenAIEntityFullName(model) : conversation.model.id}
+                {incorrectModel
+                  ? conversation.model.id
+                  : getModelName(conversation, model)}
               </span>
               {model && <FunctionStatusIndicator entity={model} />}
             </div>
           </div>
-          {model && (
+          {conversation.replay?.replayAsIs && !incorrectModel && (
             <>
-              <ModelVersionSelect
-                className="h-max w-fit self-center"
-                entities={versions}
-                onSelect={handleSelectVersion}
-                currentEntity={model}
-                showVersionPrefix
-              />
-              {!!getModelDescription(model) && (
-                <span
-                  className="whitespace-pre-wrap text-secondary"
-                  data-qa="agent-descr"
+              <span
+                className="whitespace-pre-wrap text-secondary"
+                data-qa="agent-descr"
+              >
+                <EntityMarkdownDescription
+                  className="!text-base"
+                  isShortDescription
                 >
+                  {t(
+                    'This mode replicates user requests from the original conversation including settings set in each message.',
+                  )}
+                </EntityMarkdownDescription>
+              </span>
+              {isOldReplay && (
+                <span className="text-error">
                   <EntityMarkdownDescription
-                    className="!text-base"
+                    className="!text-sm"
                     isShortDescription
                   >
-                    {getModelDescription(model)}
+                    {t(
+                      'Some messages were created in an older DIAL version and may not replay as expected.',
+                    )}
                   </EntityMarkdownDescription>
                 </span>
               )}
             </>
           )}
+          {model &&
+            !(
+              conversation.playback?.isPlayback ||
+              conversation.replay?.replayAsIs
+            ) && (
+              <>
+                <ModelVersionSelect
+                  className="h-max w-fit self-center"
+                  entities={versions}
+                  onSelect={handleSelectVersion}
+                  currentEntity={model}
+                  showVersionPrefix
+                />
+                {!!getModelDescription(model) && (
+                  <span
+                    className="whitespace-pre-wrap text-secondary"
+                    data-qa="agent-descr"
+                  >
+                    <EntityMarkdownDescription
+                      className="!text-base"
+                      isShortDescription
+                    >
+                      {getModelDescription(model)}
+                    </EntityMarkdownDescription>
+                  </span>
+                )}
+              </>
+            )}
         </div>
       </div>
       {!isExternal && (

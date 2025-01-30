@@ -1,11 +1,9 @@
 /*eslint-disable @next/next/no-img-element*/
 import { IconSettings } from '@tabler/icons-react';
-import { signIn, useSession } from 'next-auth/react';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
-import { customSignOut } from '@/src/utils/auth/signOut';
+import { useLogout } from '@/src/hooks/useLogout';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
@@ -26,11 +24,8 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLogoutConfirmationOpened, setIsLogoutConfirmationOpened] =
     useState(false);
-  const { data: session } = useSession();
+  const { session, handleLogout } = useLogout();
   const dispatch = useAppDispatch();
-  const handleLogout = useCallback(() => {
-    session ? customSignOut() : signIn('azure-ad', { redirect: true });
-  }, [session]);
 
   return (
     <>
@@ -49,13 +44,15 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
                   src={session?.user?.image}
                   width={18}
                   height={18}
-                  alt={t(`User avatar`) || ''}
+                  alt={t(`User avatar`)}
                 />
               ) : (
                 <UserIcon width={18} height={18} />
               )}
 
-              <span className="grow">{session?.user?.name || t('User')}</span>
+              <span className="grow" data-qa="username">
+                {session?.user?.name || t('User')}
+              </span>
             </div>
             <ChevronDownIcon
               className={`shrink-0 text-primary transition-all ${
@@ -68,7 +65,7 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
         }
       >
         <MenuItem
-          data-customize-id="user-settings-menu-item"
+          id="user-settings-menu-item"
           className="hover:bg-accent-primary-alpha"
           item={
             <div className="flex">
@@ -81,7 +78,7 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
           }}
         />
         <MenuItem
-          data-customize-id="logout-menu-item"
+          id="logout-menu-item"
           className="hover:bg-accent-primary-alpha"
           item={
             <div className="flex gap-3">
@@ -101,7 +98,7 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
       <ConfirmDialog
         isOpen={isLogoutConfirmationOpened}
         heading={t('Confirm logging out')}
-        description={t('Are you sure that you want to log out?') || ''}
+        description={t('Are you sure that you want to log out?')}
         confirmLabel={t('Log out')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {

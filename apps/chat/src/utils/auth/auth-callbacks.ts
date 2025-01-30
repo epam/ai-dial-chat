@@ -183,7 +183,6 @@ export const callbacks: Partial<
         refreshToken: options.account.refresh_token,
         providerId: options.account.provider,
         userId: options.user.id,
-        idToken: options.account.id_token,
       };
     }
 

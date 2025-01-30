@@ -1,8 +1,8 @@
 import { ReactNode } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
@@ -78,7 +78,7 @@ export default function ShareIcon({
             width={size}
             height={size}
             className={classNames(
-              'stroke-1 p-px text-accent-primary group-hover:bg-accent-primary-alpha',
+              'stroke-[1.5] p-px text-accent-primary group-hover:bg-accent-primary-alpha',
               isHighlighted && 'bg-accent-primary-alpha',
               isPublished ? 'rounded-md' : 'rounded-sm',
               iconClassName,

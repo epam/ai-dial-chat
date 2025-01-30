@@ -1,9 +1,14 @@
 import config from '../../config/chat.playwright.config';
 
 import { CopyTableType } from '@/chat/types/chat';
+import { EntityType } from '@/chat/types/common';
 import path from 'path';
 
 export const ExpectedConstants = {
+  settingsTooltip: (entityType: EntityType) =>
+    entityType === EntityType.Application
+      ? 'Change conversation settings:\nThere are no conversation settings for this agent'
+      : 'Change conversation settings:\nTemperature:',
   newConversationTitle: 'New conversation',
   newConversationWithIndexTitle: (index: number) =>
     `${ExpectedConstants.newConversationTitle} ${index}`,
@@ -114,6 +119,8 @@ export const ExpectedConstants = {
     'This link is temporary and will be active for 3 days. This conversation and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming or changing the model will stop sharing.',
   sharePromptText:
     'This link is temporary and will be active for 3 days. This prompt and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
+  shareApplicationText:
+    'This application and its updates will be visible to users with the link. Renaming or changing the version will stop sharing.',
   shareConversationFolderText:
     'This link is temporary and will be active for 3 days. This conversation folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
   sharePromptFolderText:
@@ -145,7 +152,7 @@ export const ExpectedConstants = {
   controlChars: `\b\t\f`,
   hieroglyphChars: `あおㅁㄹñ¿äß맞습니다. 한국어 학습의 인기는 그 나라의 문화와 경제뿐만 아니라 언어 자체의 매력에서도 비롯됩니다. 한국어는 한글이라는 고유한 문자 시스템을 사용하는데, 이는 15세기에 세종대왕에 의해 창안되었습니다. 한글은 그 논리적이고 과학적인 설계로 인해 배우기 쉬운 것으로 여겨지며, 이 또`,
   attachedFileError: (filename: string) =>
-    `You've trying to upload files with incorrect type: ${filename}`,
+    `You're trying to upload files with incorrect type: ${filename}`,
   allowedSpecialChars: "(`~!@#$^*-_+[]'|<>.?)",
   allowedSpecialSymbolsInName: () =>
     `Test ${ExpectedConstants.allowedSpecialChars}`,
@@ -210,6 +217,14 @@ export const ExpectedConstants = {
     'Template must have at least one variable',
   messageTemplateRequiredField: 'Please fill in this required field',
   messageTemplateMismatchTextErrorMessage: `Template doesn't match the message text`,
+  modelInfoTooltipTitle: 'Current agent:',
+  modelInfoTooltipChangeTitle: 'Change current agent:',
+  requestApiKeyLink: 'this form',
+  reportAnIssueLink: 'report an issue',
+  publishedAttachmentDownloadPath: (name: string) =>
+    `${API.fileHost}/public/${name}`,
+  attachmentPublishErrorMessage:
+    'Publishing failed. You are only allowed to publish conversations with attachments from "All files"',
 };
 
 export enum Types {
@@ -292,7 +307,10 @@ export const API = {
   shareConversationHost: '/api/share/create',
   shareListing: '/api/share/listing',
   discardShareWithMeItem: '/api/share/discard',
-  installedDeploymentsHost: 'clientdata/installed_deployments.json',
+  installedDeploymentsFolder: 'clientdata',
+  installedDeploymentsFile: 'installed_deployments.json',
+  installedDeploymentsHost: () =>
+    `${API.installedDeploymentsFolder}/${API.installedDeploymentsFile}`,
   marketplaceHost: 'marketplace.json',
   publicationRequestHost: '/api/publication/create',
   publicationRequestCreate: '/api/publication/create',

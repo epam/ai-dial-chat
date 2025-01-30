@@ -1,13 +1,12 @@
 /*eslint-disable @next/next/no-img-element*/
 import { IconSettings } from '@tabler/icons-react';
-import { signIn, useSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import { useCallback, useState } from 'react';
-
-import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { customSignOut } from '@/src/utils/auth/signOut';
+import { useLogout } from '@/src/hooks/useLogout';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
@@ -37,13 +36,15 @@ const UserInfo = () => {
             src={session?.user?.image}
             width={18}
             height={18}
-            alt={t('User avatar') || ''}
+            alt={t('User avatar')}
           />
         ) : (
           <UserIcon className="mx-2 text-secondary" width={18} height={18} />
         )}
 
-        <span className="grow">{session?.user?.name ?? ''}</span>
+        <span className="grow" data-qa="username">
+          {session?.user?.name ?? ''}
+        </span>
       </div>
     </div>
   );
@@ -59,7 +60,7 @@ const UserSettings = () => {
 
   return (
     <div
-      data-customize-id="user-settings-menu-item"
+      id="user-settings-menu-item"
       className="flex h-[42px] cursor-pointer items-center gap-2 px-2"
       onClick={onClick}
     >
@@ -70,18 +71,15 @@ const UserSettings = () => {
 };
 
 const Logout = () => {
-  const { data: session } = useSession();
+  const { session, handleLogout } = useLogout();
   const { t } = useTranslation(Translation.Header);
   const [isLogoutConfirmationOpened, setIsLogoutConfirmationOpened] =
     useState(false);
 
-  const handleLogout = useCallback(() => {
-    session ? customSignOut() : signIn('azure-ad', { redirect: true });
-  }, [session]);
   return (
     <>
       <div
-        data-customize-id="logout-menu-item"
+        id="logout-menu-item"
         className="flex h-[42px] cursor-pointer items-center gap-2 px-2"
         onClick={() => {
           if (!session) {
@@ -97,7 +95,7 @@ const Logout = () => {
       <ConfirmDialog
         isOpen={isLogoutConfirmationOpened}
         heading={t('Confirm logging out')}
-        description={t('Are you sure that you want to log out?') || ''}
+        description={t('Are you sure that you want to log out?')}
         confirmLabel={t('Log out')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {
@@ -128,6 +126,7 @@ export const UserMobile = Inversify.register('UserMobile', () => {
         'fixed right-0 z-40 flex w-[260px] flex-col overflow-y-auto border-tertiary bg-layer-3 md:hidden',
         isOverlay ? 'top-9 h-[calc(100%-36px)]' : 'top-12 h-[calc(100%-48px)]',
       )}
+      data-qa="profile-panel"
     >
       <UserInfo />
       <UserMenu />

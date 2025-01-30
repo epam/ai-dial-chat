@@ -35,7 +35,7 @@ export const applicationSlice = createSlice({
       state,
       _action: PayloadAction<Omit<CustomApplicationModel, 'id' | 'reference'>>,
     ) => {
-      state.appLoading = UploadStatus.LOADED;
+      state.appLoading = UploadStatus.LOADING;
     },
     createSuccess: (state) => {
       state.appLoading = UploadStatus.LOADED;
@@ -73,7 +73,10 @@ export const applicationSlice = createSlice({
     updateFail: (state) => {
       state.appLoading = UploadStatus.FAILED;
     },
-    get: (state, _action: PayloadAction<string>) => {
+    get: (
+      state,
+      _action: PayloadAction<{ applicationId: string; isForSharing?: boolean }>,
+    ) => {
       state.appLoading = UploadStatus.LOADING;
     },
     getSuccess: (state, action: PayloadAction<CustomApplicationModel>) => {

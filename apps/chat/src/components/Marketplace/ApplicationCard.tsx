@@ -6,13 +6,15 @@ import {
   IconPlayerPlay,
   IconPlaystationSquare,
   IconTrashX,
+  IconUserShare,
   IconWorldShare,
 } from '@tabler/icons-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useScreenState } from '@/src/hooks/useScreenState';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getApplicationNextStatus,
@@ -21,15 +23,16 @@ import {
   isApplicationStatusUpdating,
   isExecutableApp,
 } from '@/src/utils/app/application';
-import { getRootId } from '@/src/utils/app/id';
+import { isMyApplication } from '@/src/utils/app/id';
 import { isMediumScreen } from '@/src/utils/app/mobile';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
 import {
   ApplicationStatus,
   SimpleApplicationStatus,
 } from '@/src/types/applications';
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, ScreenState } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -39,6 +42,7 @@ import { AuthSelectors } from '@/src/store/auth/auth.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
@@ -46,15 +50,22 @@ import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescr
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
+import ShareIcon from '../Common/ShareIcon';
 import Tooltip from '../Common/Tooltip';
 import { ApplicationLogs } from './ApplicationLogs';
 
 import LoaderIcon from '@/public/images/icons/loader.svg';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
 const DESKTOP_ICON_SIZE = 80;
 const SMALL_ICON_SIZE = 48;
+
+// TODO uncomment in #2943
+// const MOBILE_SHARE_ICON_SIZE = 16;
+const TABLET_SHARE_ICON_SIZE = 20;
+const DESKTOP_SHARE_ICON_SIZE = 30;
 
 interface CardFooterProps {
   entity: DialAIEntityModel;
@@ -118,6 +129,7 @@ export const ApplicationCard = ({
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
+  const screenState = useScreenState();
 
   const [isOpenLogs, setIsOpenLogs] = useState<boolean>();
 
@@ -129,12 +141,19 @@ export const ApplicationCard = ({
   );
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
-  const isMyApp = entity.id.startsWith(
-    getRootId({ featureType: FeatureType.Application }),
-  );
+  const isMyApp = isMyApplication(entity);
+
+  const canWrite = canWriteSharedWithMe(entity);
+
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
-  const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin);
+  const isExecutable =
+    isExecutableApp(entity) && (isMyApp || isAdmin || canWrite);
+
+  const shareIconSize =
+    screenState === ScreenState.DESKTOP
+      ? DESKTOP_SHARE_ICON_SIZE
+      : TABLET_SHARE_ICON_SIZE;
 
   const PlayerIcon = useMemo(() => {
     switch (playerStatus) {
@@ -162,6 +181,24 @@ export const ApplicationCard = ({
     [setIsOpenLogs],
   );
 
+  const handleOpenSharing = useCallback(() => {
+    dispatch(
+      ShareActions.share({
+        featureType: FeatureType.Application,
+        resourceId: entity.id,
+      }),
+    );
+  }, [dispatch, entity.id]);
+
+  const handleOpenUnshare = useCallback(
+    () => dispatch(ShareActions.setUnshareEntity(entity)),
+    [dispatch, entity],
+  );
+
+  const isApplicationsSharingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
+  );
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
@@ -186,11 +223,31 @@ export const ApplicationCard = ({
       {
         name: t('Edit'),
         dataQa: 'edit',
-        display: isMyApp && !!onEdit,
+        display: (isMyApp || !!canWrite) && !!onEdit,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
           onEdit?.(entity);
+        },
+      },
+      {
+        name: t('Share'),
+        dataQa: 'share',
+        display: isMyApp && isApplicationsSharingEnabled,
+        Icon: IconUserShare,
+        onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
+          e.stopPropagation();
+          handleOpenSharing();
+        },
+      },
+      {
+        name: t('Unshare'),
+        dataQa: 'unshare',
+        display: !!entity.sharedWithMe && isApplicationsSharingEnabled,
+        Icon: IconUserUnshare,
+        onClick: (e: React.MouseEvent) => {
+          handleOpenUnshare();
+          e.stopPropagation();
         },
       },
       {
@@ -217,7 +274,7 @@ export const ApplicationCard = ({
         name: t('Logs'),
         dataQa: 'app-logs',
         display:
-          isExecutable && playerStatus === SimpleApplicationStatus.UNDEPLOY,
+          !!isExecutable && playerStatus === SimpleApplicationStatus.UNDEPLOY,
         Icon: IconFileDescription,
         onClick: (e: React.MouseEvent) => {
           e.preventDefault();
@@ -246,12 +303,16 @@ export const ApplicationCard = ({
       isMyApp,
       isCodeAppsEnabled,
       PlayerIcon,
+      canWrite,
       onEdit,
-      isModifyDisabled,
+      isApplicationsSharingEnabled,
       onPublish,
       isExecutable,
       onDelete,
+      isModifyDisabled,
       handleUpdateFunctionStatus,
+      handleOpenSharing,
+      handleOpenUnshare,
     ],
   );
 
@@ -277,7 +338,7 @@ export const ApplicationCard = ({
               triggerIconSize={18}
               className="m-0 xl:invisible group-hover:xl:visible"
             />
-            {!isMyApp && (
+            {!isMyApp && !entity.sharedWithMe && (
               <Tooltip
                 tooltip={
                   installedModelIds.has(entity.reference)
@@ -299,7 +360,20 @@ export const ApplicationCard = ({
           </div>
           <div className="flex items-center gap-4 overflow-hidden">
             <div className="flex shrink-0 items-center justify-center xl:my-[3px]">
-              <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
+              <ShareIcon
+                {...entity}
+                isHighlighted={false}
+                size={shareIconSize}
+                featureType={FeatureType.Application}
+                iconClassName="bg-layer-2 !stroke-[0.6] group-hover:bg-transparent !rounded-[4px]"
+                iconWrapperClassName="!rounded-[4px]"
+              >
+                <ModelIcon
+                  entityId={entity.id}
+                  entity={entity}
+                  size={iconSize}
+                />
+              </ShareIcon>
             </div>
             <div className="flex grow flex-col justify-center gap-2 overflow-hidden">
               {entity.version && (

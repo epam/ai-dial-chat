@@ -18,6 +18,7 @@ dialTest(
     fileApiHelper,
     chatBar,
     uploadFromDeviceModal,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-1777', 'EPMRTC-1778');
     const expectedErrorTextClassAttribute = 'truncate whitespace-pre-wrap';
@@ -43,35 +44,22 @@ dialTest(
     await dialTest.step(
       'Verify error message is shown, it is red and has valid class attribute value',
       async () => {
-        await expect
-          .soft(
-            uploadFromDeviceModal.getUploadErrorText.getElementLocator(),
-            ExpectedMessages.notAllowedNameErrorShown,
-          )
-          .toBeVisible();
-
-        const uploadErrorText = uploadFromDeviceModal.getUploadErrorText;
-        expect
-          .soft(
-            await uploadErrorText.getElementContent(),
-            ExpectedMessages.errorMessageContentIsValid,
-          )
-          .toBe(
-            ExpectedConstants.duplicatedFilenameError(Attachment.longImageName),
-          );
-
-        const errorTextColor = await uploadErrorText.getComputedStyleProperty(
-          Styles.color,
+        const error = uploadFromDeviceModal.getModalError();
+        await baseAssertion.assertElementState(error, 'visible');
+        await baseAssertion.assertElementText(
+          error.errorMessage,
+          ExpectedConstants.duplicatedFilenameError(Attachment.longImageName),
+          ExpectedMessages.errorMessageContentIsValid,
         );
-        expect
-          .soft(errorTextColor[0], ExpectedMessages.errorTextColorIsValid)
-          .toBe(Colors.textPrimary);
-        await expect
-          .soft(
-            uploadErrorText.getElementLocator(),
-            ExpectedMessages.elementAttributeValueIsValid,
-          )
-          .toHaveAttribute(Attributes.class, expectedErrorTextClassAttribute);
+        await baseAssertion.assertElementColor(
+          error.errorMessage,
+          Colors.textPrimary,
+        );
+        await baseAssertion.assertElementAttribute(
+          error.errorMessage,
+          Attributes.class,
+          expectedErrorTextClassAttribute,
+        );
       },
     );
   },
@@ -86,6 +74,7 @@ dialTest(
     attachFilesModal,
     chatBar,
     uploadFromDeviceModal,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-1780', 'EPMRTC-1802');
     const restrictedChar = GeneratorUtil.randomArrayElement(
@@ -111,18 +100,13 @@ dialTest(
           restrictedChar,
         );
         await uploadFromDeviceModal.uploadButton.click();
-        await expect
-          .soft(
-            uploadFromDeviceModal.getUploadErrorText.getElementLocator(),
-            ExpectedMessages.notAllowedNameErrorShown,
-          )
-          .toBeVisible();
-        expect
-          .soft(
-            await uploadFromDeviceModal.getUploadErrorText.getElementContent(),
-            ExpectedMessages.errorMessageContentIsValid,
-          )
-          .toBe(ExpectedConstants.notAllowedFilenameError(notAllowedFilename));
+        const error = uploadFromDeviceModal.getModalError();
+        await baseAssertion.assertElementState(error, 'visible');
+        await baseAssertion.assertElementText(
+          error.errorMessage,
+          ExpectedConstants.notAllowedFilenameError(notAllowedFilename),
+          ExpectedMessages.errorMessageContentIsValid,
+        );
       },
     );
 
@@ -168,6 +152,7 @@ dialTest(
     chatBar,
     uploadFromDeviceModal,
     fileApiHelper,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-3217', 'EPMRTC-3194', 'EPMRTC-1779');
 
@@ -194,14 +179,9 @@ dialTest(
     );
 
     await dialTest.step('Verify 3 error messages are shown', async () => {
-      await expect
-        .soft(
-          uploadFromDeviceModal.getUploadErrorText.getElementLocator(),
-          ExpectedMessages.errorMessageIsShown,
-        )
-        .toBeVisible();
-      const errorText =
-        await uploadFromDeviceModal.getUploadErrorText.getElementContent();
+      const error = uploadFromDeviceModal.getModalError();
+      await baseAssertion.assertElementState(error, 'visible');
+      const errorText = await error.errorMessage.getElementContent();
       expect
         .soft(
           errorText?.replaceAll('\n', ''),
@@ -230,6 +210,7 @@ dialTest(
     attachFilesModal,
     chatBar,
     uploadFromDeviceModal,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-3216', 'EPMRTC-3113');
     const dot = '.';
@@ -258,22 +239,15 @@ dialTest(
           dot,
         );
         await uploadFromDeviceModal.uploadButton.click();
-        await expect
-          .soft(
-            uploadFromDeviceModal.getUploadErrorText.getElementLocator(),
-            ExpectedMessages.notAllowedNameErrorShown,
-          )
-          .toBeVisible();
-        expect
-          .soft(
-            await uploadFromDeviceModal.getUploadErrorText.getElementContent(),
-            ExpectedMessages.errorMessageContentIsValid,
-          )
-          .toBe(
-            ExpectedConstants.endDotFilenameError(
-              Attachment.fileWithoutExtension + dot,
-            ),
-          );
+        const error = uploadFromDeviceModal.getModalError();
+        await baseAssertion.assertElementState(error, 'visible');
+        await baseAssertion.assertElementText(
+          error.errorMessage,
+          ExpectedConstants.endDotFilenameError(
+            Attachment.fileWithoutExtension + dot,
+          ),
+          ExpectedMessages.errorMessageContentIsValid,
+        );
       },
     );
 

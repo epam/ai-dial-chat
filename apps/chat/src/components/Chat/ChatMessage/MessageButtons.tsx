@@ -10,14 +10,15 @@ import {
 } from '@tabler/icons-react';
 import { ButtonHTMLAttributes, FC } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getMessageCustomContent } from '@/src/utils/server/chat';
 
 import { Translation } from '@/src/types/translation';
 
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
@@ -68,6 +69,9 @@ export const MessageUserButtons = ({
   const { t } = useTranslation(Translation.Chat);
 
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+  const isConversationsWithSchema = useAppSelector(
+    ConversationsSelectors.selectIsSelectedConversationsWithSchema,
+  );
 
   return (
     <div
@@ -78,7 +82,7 @@ export const MessageUserButtons = ({
     >
       {!isMessageStreaming && (
         <>
-          {isEditTemplatesAvailable && (
+          {isEditTemplatesAvailable && !isConversationsWithSchema && (
             <Tooltip
               placement="top"
               isTriggerClickable
@@ -92,12 +96,11 @@ export const MessageUserButtons = ({
               </button>
             </Tooltip>
           )}
-          {isEditAvailable && (
+          {isEditAvailable && !editDisabled && (
             <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
               <button
                 className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
                 onClick={toggleEditing}
-                disabled={editDisabled}
               >
                 <IconEdit size={18} />
               </button>
@@ -275,6 +278,10 @@ export const MessageMobileButtons = ({
 }: MessageMobileButtonsProps) => {
   const { t } = useTranslation(Translation.Chat);
 
+  const isConversationsWithSchema = useAppSelector(
+    ConversationsSelectors.selectIsSelectedConversationsWithSchema,
+  );
+
   const isAssistant = message.role === Role.Assistant;
 
   if (isAssistant) {
@@ -390,7 +397,7 @@ export const MessageMobileButtons = ({
     !isMessageStreaming &&
     !isConversationInvalid && (
       <>
-        {isEditTemplatesAvailable && (
+        {isEditTemplatesAvailable && !isConversationsWithSchema && (
           <MenuItem
             className="hover:bg-accent-primary-alpha focus:visible disabled:cursor-not-allowed group-hover:visible"
             onClick={() => onToggleTemplatesEditing()}
@@ -407,17 +414,18 @@ export const MessageMobileButtons = ({
             }
           />
         )}
-        <MenuItem
-          className="hover:bg-accent-primary-alpha focus:visible disabled:cursor-not-allowed group-hover:visible"
-          onClick={() => onToggleEditing(!isEditing)}
-          disabled={editDisabled}
-          item={
-            <div className="flex items-center gap-3">
-              <IconEdit className="text-secondary" size={18} />
-              <p>{t('Edit')}</p>
-            </div>
-          }
-        />
+        {!editDisabled && (
+          <MenuItem
+            className="hover:bg-accent-primary-alpha focus:visible disabled:cursor-not-allowed group-hover:visible"
+            onClick={() => onToggleEditing(!isEditing)}
+            item={
+              <div className="flex items-center gap-3">
+                <IconEdit className="text-secondary" size={18} />
+                <p>{t('Edit')}</p>
+              </div>
+            }
+          />
+        )}
         <MenuItem
           className="hover:bg-accent-primary-alpha focus:visible group-hover:visible"
           onClick={onDelete}

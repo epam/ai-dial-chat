@@ -2,7 +2,12 @@ import {
   isEntityNameOrPathInvalid,
   prepareEntityName,
 } from '@/src/utils/app/common';
-import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
+import {
+  getConfigurationSchema,
+  getConfigurationValue,
+  getFormValueDefinitions,
+  isConversationWithFormSchema,
+} from '@/src/utils/app/form-schema';
 
 import { Conversation, Replay } from '@/src/types/chat';
 import { EntityType, PartialBy } from '@/src/types/common';
@@ -98,12 +103,19 @@ export const getNewConversationName = (
   const convName = prepareEntityName(conversation.name);
   const content = prepareEntityName(message.content);
 
+  const formValue = getConfigurationValue(message);
+  const configurationSchema = getConfigurationSchema(message);
+
   if (content.length > 0) {
     return content;
   } else if (message.custom_content?.attachments?.length) {
     const { title, reference_url } = message.custom_content.attachments[0];
 
     return prepareEntityName(!title && reference_url ? reference_url : title);
+  } else if (formValue && configurationSchema) {
+    const definitions = getFormValueDefinitions(formValue, configurationSchema);
+
+    if (definitions.length) return prepareEntityName(definitions[0].title);
   }
 
   return convName;
@@ -340,8 +352,11 @@ export const getConversationModelParams = (
   };
 };
 
+export const isSystemMessage = (message?: Message) =>
+  message?.role === Role.System;
+
 export const excludeSystemMessages = (messages: Message[]) =>
-  messages.filter((m) => m.role !== Role.System);
+  messages.filter((m) => !isSystemMessage(m));
 
 export const getDefaultModelReference = ({
   recentModelReferences,
@@ -358,3 +373,9 @@ export const getDefaultModelReference = ({
     ...modelReferences,
   ][0];
 };
+
+export const isOldConversationReplay = (replay: Replay | undefined) =>
+  replay &&
+  replay.isReplay &&
+  replay.replayUserMessagesStack &&
+  replay.replayUserMessagesStack.some((message) => !message.model);

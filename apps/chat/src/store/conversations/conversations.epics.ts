@@ -75,6 +75,11 @@ import {
   parseStreamMessages,
 } from '@/src/utils/app/merge-streams';
 import { isMediumScreen } from '@/src/utils/app/mobile';
+import {
+  doesModelAllowAddons,
+  doesModelAllowSystemPrompt,
+  doesModelAllowTemperature,
+} from '@/src/utils/app/models';
 import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import {
@@ -102,6 +107,7 @@ import { LOCAL_BUCKET, resetShareEntity } from '@/src/constants/chat';
 import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_TEMPERATURE,
+  FALLBACK_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
@@ -154,6 +160,24 @@ const initEpic: AppEpic = (action$, state$) =>
         ),
         of(ConversationsActions.initFoldersAndConversations()),
         of(ConversationsActions.initFinish()),
+      );
+    }),
+  );
+
+const initShareEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter((action) => ConversationsActions.initShare.match(action)),
+    switchMap(() => {
+      const searchParams = new URLSearchParams(window.location.search);
+
+      return iif(
+        () => searchParams.has(SHARE_QUERY_PARAM),
+        of(
+          ShareActions.acceptShareInvitation({
+            invitationId: searchParams.get(SHARE_QUERY_PARAM)!,
+          }),
+        ),
+        EMPTY,
       );
     }),
   );
@@ -686,6 +710,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
             selectedIdToReplaceWithNewOne: conversation.id,
           }),
         ),
+        of(PublicationActions.selectPublication(null)),
       );
     }),
   );
@@ -1324,23 +1349,27 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
 
       if (conversationModelType === EntityType.Model) {
         modelAdditionalSettings = {
-          prompt: lastModel?.features?.systemPrompt
+          prompt: doesModelAllowSystemPrompt(lastModel)
             ? payload.conversation.prompt
             : undefined,
-          temperature: payload.conversation.temperature,
-          selectedAddons,
+          temperature: doesModelAllowTemperature(lastModel)
+            ? payload.conversation.temperature
+            : FALLBACK_TEMPERATURE,
+          selectedAddons: doesModelAllowAddons(lastModel) ? selectedAddons : [],
         };
       }
       if (conversationModelType === EntityType.Assistant && assistantModelId) {
         modelAdditionalSettings = {
-          assistantModelId,
-          temperature: payload.conversation.temperature,
-          selectedAddons,
+          assistantModel: modelsMap[assistantModelId],
+          temperature: doesModelAllowTemperature(lastModel)
+            ? payload.conversation.temperature
+            : FALLBACK_TEMPERATURE,
+          selectedAddons: doesModelAllowAddons(lastModel) ? selectedAddons : [],
         };
       }
 
       const chatBody: ChatBody = {
-        modelId: payload.conversation.model.id,
+        model: modelsMap[payload.conversation.model.id],
         messages: payload.conversation.messages
           .filter(
             (message, index) =>
@@ -1354,12 +1383,15 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
             ...((message.custom_content?.state ||
               message.custom_content?.attachments ||
               message.custom_content?.form_value ||
-              message.custom_content?.form_schema) && {
+              message.custom_content?.form_schema ||
+              message.custom_content?.configuration_value) && {
               custom_content: {
                 state: message.custom_content?.state,
                 attachments: message.custom_content?.attachments,
                 form_value: message.custom_content?.form_value,
                 form_schema: message.custom_content?.form_schema,
+                configuration_value:
+                  message.custom_content?.configuration_value,
               },
             }),
           })),
@@ -3060,6 +3092,10 @@ const updateLastConversationSettingsEpic: AppEpic = (action$, state$) =>
     })),
     switchMap(({ lastConversation }) =>
       forkJoin({
+        oldTemperature: of((lastConversation as Conversation)?.temperature),
+        wasAlreadyUploaded: of(
+          lastConversation?.status === UploadStatus.LOADED,
+        ),
         lastConversation:
           lastConversation &&
           lastConversation.status !== UploadStatus.LOADED &&
@@ -3076,15 +3112,30 @@ const updateLastConversationSettingsEpic: AppEpic = (action$, state$) =>
             : of(lastConversation as Conversation),
       }),
     ),
-    switchMap(({ lastConversation }) => {
-      // don't save for temp empty conversation to be able to reset settings by "New conversation"
-      return lastConversation && !isEntityIdLocal(lastConversation)
-        ? of(
-            ConversationsActions.setLastConversationSettings({
-              temperature: lastConversation.temperature,
-            }),
-          )
-        : EMPTY;
+    switchMap(({ lastConversation, oldTemperature, wasAlreadyUploaded }) => {
+      if (
+        !lastConversation ||
+        // don't save for temp empty conversation to be able to reset settings by "New conversation"
+        isEntityIdLocal(lastConversation) ||
+        // don't save if already uploaded and nothing changed
+        (wasAlreadyUploaded && oldTemperature === lastConversation.temperature)
+      ) {
+        return EMPTY;
+      }
+
+      return concat(
+        of(
+          ConversationsActions.setLastConversationSettings({
+            temperature: lastConversation.temperature,
+          }),
+        ),
+        of(
+          ConversationsActions.uploadConversationsByIdsSuccess({
+            setIds: new Set(lastConversation.id),
+            conversations: [lastConversation],
+          }),
+        ),
+      );
     }),
   );
 
@@ -3116,6 +3167,7 @@ const initLastConversationSettingsEpic: AppEpic = (action$) =>
 export const ConversationsEpics = combineEpics(
   // init
   initEpic,
+  initShareEpic,
   initSelectedConversationsEpic,
   initFoldersAndConversationsEpic,
 

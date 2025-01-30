@@ -1,9 +1,9 @@
 import { IconTrashX, IconWorldShare } from '@tabler/icons-react';
 import { FC, useCallback, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isApplicationStatusUpdating } from '@/src/utils/app/application';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
@@ -92,10 +92,12 @@ export const ApplicationWizardFooter: FC<ApplicationWizardFooterProps> = ({
       <div
         className={classNames(
           'flex gap-2 border-t border-tertiary p-4 md:px-6',
-          isEdit ? 'justify-between' : 'justify-end',
+          isEdit && !selectedApplication?.sharedWithMe
+            ? 'justify-between'
+            : 'justify-end',
         )}
       >
-        {isEdit && (
+        {isEdit && !selectedApplication?.sharedWithMe && (
           <div className="flex items-center gap-2">
             <Tooltip
               tooltip={
@@ -142,9 +144,7 @@ export const ApplicationWizardFooter: FC<ApplicationWizardFooterProps> = ({
       <ConfirmDialog
         isOpen={isDeleteModalOpen}
         heading={t('Confirm deleting application')}
-        description={
-          t('Are you sure you want to delete the application?') || ''
-        }
+        description={t('Are you sure you want to delete the application?')}
         confirmLabel={t('Delete')}
         cancelLabel={t('Cancel')}
         onClose={handleConfirmDialogClose}

@@ -24,7 +24,10 @@ import {
   sortByName,
   splitEntityId,
 } from '@/src/utils/app/folders';
-import { isMessageInputDisabled } from '@/src/utils/app/form-schema';
+import {
+  isConversationWithFormSchema,
+  isMessageInputDisabled,
+} from '@/src/utils/app/form-schema';
 import {
   getConversationRootId,
   isEntityIdExternal,
@@ -837,7 +840,7 @@ export const selectRenamingConversation = createSelector(
     conversations.find((conv) => conv.id === renamingConversationId),
 );
 
-export const selectТalkToConversationId = createSelector(
+export const selectTalkToConversationId = createSelector(
   [rootSelector],
   (state) => state.talkToConversationId,
 );
@@ -851,4 +854,9 @@ export const selectIsSelectedConversationBlocksInput = createSelector(
         conversation.messages,
       ),
     ),
+);
+
+export const selectIsSelectedConversationsWithSchema = createSelector(
+  [selectSelectedConversations],
+  (conversations) => conversations.some(isConversationWithFormSchema),
 );

@@ -1,9 +1,9 @@
 import React, { useCallback, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { topicToOption } from '@/src/utils/app/application';
+import { getSharedTooltip, topicToOption } from '@/src/utils/app/application';
 
 import { CustomApplicationModel } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
@@ -58,6 +58,8 @@ export const CustomAppView: React.FC<ViewProps> = ({
   const topics = useAppSelector(SettingsSelectors.selectTopics);
   const models = useAppSelector(ModelsSelectors.selectModels);
 
+  const isSharedWithMe = selectedApplication?.sharedWithMe;
+
   const modelsWithFolderId = models.map((model) => ({
     ...model,
     folderId: '',
@@ -99,6 +101,7 @@ export const CustomAppView: React.FC<ViewProps> = ({
         ...preparedData,
         reference: currentReference,
         id: selectedApplication.id,
+        sharedWithMe: isSharedWithMe,
       };
 
       dispatch(
@@ -124,9 +127,11 @@ export const CustomAppView: React.FC<ViewProps> = ({
           {...register('name', validators['name'])}
           label={t('Name')}
           mandatory
-          placeholder={t('Type name') || ''}
+          placeholder={t('Type name')}
           id="name"
           error={errors.name?.message}
+          disabled={isSharedWithMe}
+          tooltip={isSharedWithMe ? getSharedTooltip('name') : ''}
         />
 
         <ControlledField
@@ -138,6 +143,8 @@ export const CustomAppView: React.FC<ViewProps> = ({
           control={control}
           name="version"
           rules={validators['version']}
+          disabled={isSharedWithMe}
+          tooltip={isSharedWithMe ? getSharedTooltip('version') : ''}
         />
 
         <Controller
@@ -154,6 +161,8 @@ export const CustomAppView: React.FC<ViewProps> = ({
               fileManagerModalTitle="Select application icon"
               allowedTypes={IMAGE_TYPES}
               error={errors.iconUrl?.message}
+              disabled={isSharedWithMe}
+              tooltip={isSharedWithMe ? getSharedTooltip('icon') : ''}
             />
           )}
         />
@@ -178,7 +187,7 @@ export const CustomAppView: React.FC<ViewProps> = ({
           info={t(
             'The first paragraph serves as a short description. To create an extended description, enter two line breaks and start the second paragraph.',
           )}
-          placeholder={t('A description of your application') || ''}
+          placeholder={t('A description of your application')}
           rows={3}
           className="resize-none"
           id="description"
@@ -203,13 +212,13 @@ export const CustomAppView: React.FC<ViewProps> = ({
           control={control}
           render={({ field }) => (
             <ComboBoxField
-              label={t('Attachment types') || ''}
+              label={t('Attachment types')}
               info={t("Input the MIME type and press 'Enter' to add")}
               initialSelectedItems={field.value}
               getItemLabel={getItemLabel}
               getItemValue={getItemLabel}
               onChangeSelectedItems={field.onChange}
-              placeholder={t('Enter one or more attachment types') || ''}
+              placeholder={t('Enter one or more attachment types')}
               className="input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full"
               hasDeleteAll
               hideSuggestions
@@ -222,7 +231,7 @@ export const CustomAppView: React.FC<ViewProps> = ({
 
         <ControlledField
           label={t('Max. attachments number')}
-          placeholder={t('Enter the maximum number of attachments') || ''}
+          placeholder={t('Enter the maximum number of attachments')}
           id="maxInputAttachments"
           error={errors.maxInputAttachments?.message}
           control={control}
@@ -234,7 +243,7 @@ export const CustomAppView: React.FC<ViewProps> = ({
           {...register('completionUrl', validators['completionUrl'])}
           label={t('Chat completion URL')}
           mandatory
-          placeholder={t('Type chat completion URL') || ''}
+          placeholder={t('Type chat completion URL')}
           id="completionUrl"
           error={errors.completionUrl?.message}
           data-qa="completion-url"

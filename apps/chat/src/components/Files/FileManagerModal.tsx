@@ -9,12 +9,11 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
 import { useSectionToggle } from '@/src/hooks/useSectionToggle';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getDialFilesWithInvalidFileType,
@@ -284,6 +283,8 @@ export const FileManagerModal = ({
 
   useEffect(() => {
     if (isOpen) {
+      dispatch(FilesActions.resetAllFoldersStatus());
+
       dispatch(FilesActions.getFilesWithFolders({}));
       dispatch(FilesActions.resetNewFolderId());
     }
@@ -488,7 +489,7 @@ export const FileManagerModal = ({
             maxAttachmentsAmount: maximumAttachmentsAmount,
             selectedAttachmentsAmount: selectedFilesIds.length,
           },
-        ) as string,
+        ),
       );
       return;
     }
@@ -503,11 +504,11 @@ export const FileManagerModal = ({
     if (filesWithIncorrectTypes.length > 0) {
       setErrorMessage(
         t(
-          `You've trying to upload files with incorrect type: {{incorrectTypeFileNames}}`,
+          `You're trying to upload files with incorrect type: {{incorrectTypeFileNames}}`,
           {
             incorrectTypeFileNames: filesWithIncorrectTypes.join(', '),
           },
-        ) as string,
+        ),
       );
       return;
     }
@@ -669,7 +670,7 @@ export const FileManagerModal = ({
           <div className="group/modal flex flex-col gap-2 overflow-auto">
             <input
               name="titleInput"
-              placeholder={t('Search files') || ''}
+              placeholder={t('Search files')}
               type="text"
               onChange={handleSearch}
               className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
@@ -728,6 +729,7 @@ export const FileManagerModal = ({
                         canSelectFolders={canAttachFolders}
                         showTooltip={showTooltip}
                         onSelectFolder={handleFolderToggle}
+                        onShowError={setErrorMessage}
                       />
                     );
                   })}
@@ -792,6 +794,7 @@ export const FileManagerModal = ({
                         showTooltip={showTooltip}
                         onSelectFolder={handleFolderToggle}
                         onDeleteFolder={handleDiscardSharedWithMeFolder}
+                        onShowError={setErrorMessage}
                       />
                     );
                   })}
@@ -852,6 +855,7 @@ export const FileManagerModal = ({
                         canSelectFolders={canAttachFolders}
                         showTooltip={showTooltip}
                         onSelectFolder={handleFolderToggle}
+                        onShowError={setErrorMessage}
                       />
                     );
                   })}
@@ -975,26 +979,24 @@ export const FileManagerModal = ({
               : '',
           ].join(''),
         )}
-        description={
-          t(
-            [
-              'Are you sure that you want to delete ',
-              deletingFileIds.length + deletingFolderIds.length > 1
-                ? 'these '
-                : 'this ',
-              deletingFolderIds.length > 0
-                ? `folder${deletingFolderIds.length > 1 ? 's' : ''}`
-                : '',
-              deletingFileIds.length > 0 && deletingFolderIds.length > 0
-                ? ' and '
-                : '',
-              deletingFileIds.length > 0
-                ? `file${deletingFileIds.length > 1 ? 's' : ''}`
-                : '',
-              '?',
-            ].join(''),
-          ) || ''
-        }
+        description={t(
+          [
+            'Are you sure that you want to delete ',
+            deletingFileIds.length + deletingFolderIds.length > 1
+              ? 'these '
+              : 'this ',
+            deletingFolderIds.length > 0
+              ? `folder${deletingFolderIds.length > 1 ? 's' : ''}`
+              : '',
+            deletingFileIds.length > 0 && deletingFolderIds.length > 0
+              ? ' and '
+              : '',
+            deletingFileIds.length > 0
+              ? `file${deletingFileIds.length > 1 ? 's' : ''}`
+              : '',
+            '?',
+          ].join(''),
+        )}
         confirmLabel={t('Delete')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {

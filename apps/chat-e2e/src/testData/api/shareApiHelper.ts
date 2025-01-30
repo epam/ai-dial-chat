@@ -65,9 +65,12 @@ export class ShareApiHelper extends BaseApiHelper {
       invitationType: ShareRequestType.link,
       resources: resources,
     };
-    const response = await this.request.post(API.shareConversationHost, {
-      data: requestData,
-    });
+    const response = await this.request.post(
+      this.getHost(API.shareConversationHost),
+      {
+        data: requestData,
+      },
+    );
     expect(
       response.status(),
       `Successfully created share invitation link`,
@@ -85,9 +88,12 @@ export class ShareApiHelper extends BaseApiHelper {
         shareLinkResponse.invitationLink,
       ),
     };
-    const response = await this.request.post(API.shareInviteAcceptanceHost, {
-      data: requestData,
-    });
+    const response = await this.request.post(
+      this.getHost(API.shareInviteAcceptanceHost),
+      {
+        data: requestData,
+      },
+    );
     expect(
       response.status(),
       `Successfully accepted share invitation link`,
@@ -112,7 +118,7 @@ export class ShareApiHelper extends BaseApiHelper {
       with: ShareRelations.me,
       order: 'popular_asc',
     };
-    const response = await this.request.post(API.shareListing, {
+    const response = await this.request.post(this.getHost(API.shareListing), {
       data: requestData,
     });
     const statusCode = response.status();
@@ -138,9 +144,12 @@ export class ShareApiHelper extends BaseApiHelper {
       const requestData: ShareRevokeRequestModel = {
         resources: entityUrls,
       };
-      const response = await this.request.post(API.discardShareWithMeItem, {
-        data: requestData,
-      });
+      const response = await this.request.post(
+        this.getHost(API.discardShareWithMeItem),
+        {
+          data: requestData,
+        },
+      );
       expect(response.status(), `Shared items successfully deleted`).toBe(200);
     }
   }

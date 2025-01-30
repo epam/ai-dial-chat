@@ -1,9 +1,9 @@
 import { IconDownload, IconRefresh } from '@tabler/icons-react';
 import React from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { downloadApplicationLogs } from '@/src/utils/app/import-export';
 

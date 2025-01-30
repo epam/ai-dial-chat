@@ -5,7 +5,7 @@ import { ServerUtils } from '@/src/utils/server/server';
 
 import { ApplicationInfo } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
-import { ApiKeys } from '@/src/types/common';
+import { ApiKeys, CoreApiKeys } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
 import { PromptInfo } from '@/src/types/prompt';
 
@@ -14,6 +14,7 @@ import { NA_VERSION } from '@/src/constants/public';
 import { validVersionRegEx } from '@/src/constants/versions';
 
 import { constructPath } from '../app/file';
+import { splitEntityId } from '../app/folders';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
 
@@ -286,5 +287,25 @@ export const addVersionToId = (id: string, version: string) =>
   [id, version].join(pathKeySeparator);
 
 export const isValidEntityApiType = (apiKey: string): boolean => {
-  return Object.values(ApiKeys).includes(apiKey as ApiKeys);
+  return (
+    Object.values(ApiKeys).includes(apiKey as ApiKeys) ||
+    Object.values(CoreApiKeys).includes(apiKey as CoreApiKeys)
+  );
+};
+
+export const getIdWithoutVersionFromApiKey = (
+  id: string,
+  parseMethod:
+    | typeof parseApplicationApiKey
+    | typeof parseConversationApiKey
+    | typeof parsePromptApiKey,
+) => {
+  const parsedApiKey = parseMethod(splitEntityId(id).name, {
+    parseVersion: true,
+  });
+
+  return getPublicItemIdWithoutVersion(
+    parsedApiKey.publicationInfo?.version ?? NA_VERSION,
+    id,
+  );
 };

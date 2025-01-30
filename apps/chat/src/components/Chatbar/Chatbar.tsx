@@ -1,10 +1,11 @@
 import { IconApps } from '@tabler/icons-react';
 import { DragEvent, useCallback, useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
 import Link from 'next/link';
 
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { getConversationRootId } from '@/src/utils/app/id';
@@ -30,9 +31,10 @@ import { ChatFolders } from './ChatFolders';
 import { ChatbarSettings } from './ChatbarSettings';
 import { Conversations } from './Conversations';
 
+import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { ConversationInfo, Feature } from '@epam/ai-dial-shared';
 
-const ChatActionsBlock = () => {
+const ChatActionsBlock = Inversify.register('ChatActionsBlock', () => {
   const { t } = useTranslation(Translation.SideBar);
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
@@ -75,7 +77,7 @@ const ChatActionsBlock = () => {
       )}
     </>
   );
-};
+});
 
 export const Chatbar = () => {
   const { t } = useTranslation(Translation.Chat);
@@ -142,7 +144,7 @@ export const Chatbar = () => {
                 t(
                   'Conversation with name "{{name}}" already exists at the root.',
                   {
-                    ns: 'chat',
+                    ns: Translation.Chat,
                     name: conversation.name,
                   },
                 ),

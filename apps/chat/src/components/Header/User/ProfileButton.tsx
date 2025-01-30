@@ -3,7 +3,7 @@ import { IconX } from '@tabler/icons-react';
 import { useSession } from 'next-auth/react';
 import { useCallback } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
@@ -39,16 +39,23 @@ export const ProfileButton = () => {
     <button
       className="flex size-full items-center justify-center text-secondary md:text-primary"
       onClick={onClick}
+      data-qa="account-settings"
+      aria-label={t('Account settings')}
     >
       {isProfileOpen ? (
-        <IconX className="text-secondary" width={iconSize} height={iconSize} />
+        <IconX
+          className="text-secondary"
+          width={iconSize}
+          height={iconSize}
+          id="close-icon"
+        />
       ) : session?.user?.image ? (
         <img
           className="rounded"
           src={session?.user?.image}
           width={iconSize}
           height={iconSize}
-          alt={t('User avatar') || ''}
+          alt={t('User avatar')}
         />
       ) : (
         <UserIcon width={iconSize} height={iconSize} />

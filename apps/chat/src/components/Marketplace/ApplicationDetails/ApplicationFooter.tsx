@@ -10,9 +10,9 @@ import {
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getApplicationNextStatus,
@@ -21,14 +21,14 @@ import {
   isApplicationStatusUpdating,
   isExecutableApp,
 } from '@/src/utils/app/application';
-import { getRootId, isApplicationId } from '@/src/utils/app/id';
+import { isApplicationId, isMyApplication } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
 import {
   ApplicationStatus,
   SimpleApplicationStatus,
 } from '@/src/types/applications';
-import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
@@ -37,6 +37,7 @@ import { AuthSelectors } from '@/src/store/auth/auth.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
 
 import Loader from '@/src/components/Common/Loader';
 
@@ -45,6 +46,7 @@ import Tooltip from '../../Common/Tooltip';
 import { ApplicationLogs } from '../ApplicationLogs';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
 const getFunctionTooltip = (entity: DialAIEntityModel) => {
@@ -108,15 +110,17 @@ export const ApplicationDetailsFooter = ({
     ModelsSelectors.selectInstalledModelIds,
   );
 
-  const isMyApp = entity.id.startsWith(
-    getRootId({ featureType: FeatureType.Application }),
-  );
+  const isMyApp = isMyApplication(entity);
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
   const isPublicApp = isEntityIdPublic(entity);
   const Bookmark = installedModelIds.has(entity.reference)
     ? IconBookmarkFilled
     : IconBookmark;
-  const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin);
+
+  const canWrite = canWriteSharedWithMe(entity);
+
+  const isExecutable =
+    isExecutableApp(entity) && (isMyApp || isAdmin || canWrite);
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
   const isAppInDeployment = isApplicationDeploymentInProgress(entity);
@@ -155,6 +159,15 @@ export const ApplicationDetailsFooter = ({
     );
   };
 
+  const handleOpenUnshare = useCallback(
+    () => dispatch(ShareActions.setUnshareEntity(entity)),
+    [dispatch, entity],
+  );
+
+  const isApplicationsSharingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
+  );
+
   return (
     <section className="flex px-3 py-4 md:px-6">
       <div className="flex w-full items-center justify-between">
@@ -176,38 +189,49 @@ export const ApplicationDetailsFooter = ({
               </button>
             </Tooltip>
           )}
-
-          {isMyApp ? (
-            <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
+          {!!entity.sharedWithMe && isApplicationsSharingEnabled && (
+            <Tooltip tooltip={t('Unshare application')}>
               <button
-                disabled={isModifyDisabled && isMyApp}
-                onClick={() => onDelete(entity)}
+                onClick={handleOpenUnshare}
                 className="icon-button"
-                data-qa="application-delete"
+                data-qa="application-unshare"
               >
-                <IconTrashX size={24} />
-              </button>
-            </Tooltip>
-          ) : (
-            <Tooltip
-              tooltip={
-                installedModelIds.has(entity.reference)
-                  ? t('Remove from My workspace')
-                  : t('Add to My workspace')
-              }
-              isTriggerClickable
-            >
-              <button
-                onClick={() => onBookmarkClick(entity)}
-                className="icon-button"
-                data-qa="application-bookmark"
-              >
-                <Bookmark size={24} />
+                <IconUserUnshare height={24} width={24} />
               </button>
             </Tooltip>
           )}
+          {!entity.sharedWithMe &&
+            (isMyApp ? (
+              <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
+                <button
+                  disabled={isModifyDisabled}
+                  onClick={() => onDelete(entity)}
+                  className="icon-button"
+                  data-qa="application-delete"
+                >
+                  <IconTrashX size={24} />
+                </button>
+              </Tooltip>
+            ) : (
+              <Tooltip
+                tooltip={
+                  installedModelIds.has(entity.reference)
+                    ? t('Remove from My workspace')
+                    : t('Add to My workspace')
+                }
+                isTriggerClickable
+              >
+                <button
+                  onClick={() => onBookmarkClick(entity)}
+                  className="icon-button"
+                  data-qa="application-bookmark"
+                >
+                  <Bookmark size={24} />
+                </button>
+              </Tooltip>
+            ))}
 
-          {isApplicationId(entity.id) && (
+          {isApplicationId(entity.id) && (isMyApp || isPublicApp) && (
             <Tooltip tooltip={isPublicApp ? t('Unpublish') : t('Publish')}>
               <button
                 onClick={() =>
@@ -227,7 +251,7 @@ export const ApplicationDetailsFooter = ({
               </button>
             </Tooltip>
           )}
-          {isMyApp && (
+          {(isMyApp || canWrite) && (
             <Tooltip tooltip={t('Edit')}>
               <button
                 disabled={isAppInDeployment}

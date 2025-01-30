@@ -67,6 +67,7 @@ export class SideBarEntitiesTree extends EntitiesTree {
     await this.entityDotsMenu(name, indexOrOptions).click({ force: true });
     await this.getDropdownMenu().waitForState();
   }
+
   async openEditEntityNameMode(newName: string) {
     const input = this.getEditEntityInput();
     await input.editValue(newName);

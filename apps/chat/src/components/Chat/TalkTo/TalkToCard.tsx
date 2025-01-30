@@ -4,15 +4,15 @@ import {
   IconPlayerPlay,
   IconPlaystationSquare,
   IconTrashX,
+  IconUserShare,
   IconWorldShare,
 } from '@tabler/icons-react';
 import React, { useCallback, useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getApplicationNextStatus,
@@ -21,7 +21,9 @@ import {
   isApplicationStatusUpdating,
   isExecutableApp,
 } from '@/src/utils/app/application';
-import { getRootId } from '@/src/utils/app/id';
+import { isOldConversationReplay } from '@/src/utils/app/conversation';
+import { isMyApplication } from '@/src/utils/app/id';
+import { canWriteSharedWithMe } from '@/src/utils/app/share';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
 import {
@@ -39,6 +41,7 @@ import { AuthSelectors } from '@/src/store/auth/auth.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 
@@ -51,12 +54,19 @@ import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescr
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
+import ShareIcon from '../../Common/ShareIcon';
+
 import LoaderIcon from '@/public/images/icons/loader.svg';
+import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature } from '@epam/ai-dial-shared';
 
 const DESKTOP_ICON_SIZE = 80;
 const TABLET_ICON_SIZE = 48;
 const MOBILE_ICON_SIZE = 40;
+
+const MOBILE_SHARE_ICON_SIZE = 16;
+const TABLET_SHARE_ICON_SIZE = 20;
+const DESKTOP_SHARE_ICON_SIZE = 30;
 
 const getPlayerCaption = (entity: DialAIEntityModel) => {
   switch (entity.functionStatus) {
@@ -113,18 +123,24 @@ export const TalkToCard = ({
   );
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
-  const isMyApp = entity.id.startsWith(
-    getRootId({ featureType: FeatureType.Application }),
-  );
-  const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin);
+  const isMyEntity = isMyApplication(entity);
+
+  const canWrite = canWriteSharedWithMe(entity);
+
+  const isExecutable =
+    isExecutableApp(entity) && (isMyEntity || isAdmin || canWrite);
   const screenState = useScreenState();
+
+  const isApplicationsSharingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
+  );
 
   const versionsToSelect = useMemo(() => {
     return allModels.filter(
       (model) =>
         entity.name === model.name &&
         entity.version &&
-        (installedModelIds.has(model.id) ||
+        (installedModelIds.has(model.reference) ||
           (isSelected && entity.reference === model.reference)),
     );
   }, [
@@ -136,9 +152,6 @@ export const TalkToCard = ({
     isSelected,
   ]);
 
-  const isMyEntity = entity.id.startsWith(
-    getRootId({ featureType: FeatureType.Application }),
-  );
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
 
@@ -170,17 +183,19 @@ export const TalkToCard = ({
     [onSelectVersion],
   );
 
-  const isOldReplay = useMemo(() => {
-    return (
-      entity.id === REPLAY_AS_IS_MODEL &&
-      conversation.replay &&
-      conversation.replay.isReplay &&
-      conversation.replay.replayUserMessagesStack &&
-      conversation.replay.replayUserMessagesStack.some(
-        (message) => !message.model,
-      )
+  const handleOpenSharing = useCallback(() => {
+    dispatch(
+      ShareActions.share({
+        featureType: FeatureType.Application,
+        resourceId: entity.id,
+      }),
     );
-  }, [conversation.replay, entity.id]);
+  }, [dispatch, entity.id]);
+
+  const handleOpenUnshare = useCallback(
+    () => dispatch(ShareActions.setUnshareEntity(entity)),
+    [dispatch, entity],
+  );
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -208,11 +223,31 @@ export const TalkToCard = ({
       {
         name: t('Edit'),
         dataQa: 'edit',
-        display: isMyEntity && !!onEdit,
+        display: (isMyEntity || !!canWrite) && !!onEdit,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
           onEdit(entity);
+        },
+      },
+      {
+        name: t('Share'),
+        dataQa: 'share',
+        display: isMyEntity && isApplicationsSharingEnabled,
+        Icon: IconUserShare,
+        onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
+          e.stopPropagation();
+          handleOpenSharing();
+        },
+      },
+      {
+        name: t('Unshare'),
+        dataQa: 'unshare',
+        display: !!entity.sharedWithMe && isApplicationsSharingEnabled,
+        Icon: IconUserUnshare,
+        onClick: (e: React.MouseEvent) => {
+          handleOpenUnshare();
+          e.stopPropagation();
         },
       },
       {
@@ -229,7 +264,7 @@ export const TalkToCard = ({
         name: t('Logs'),
         dataQa: 'app-logs',
         display:
-          isExecutable && playerStatus === SimpleApplicationStatus.UNDEPLOY,
+          !!isExecutable && playerStatus === SimpleApplicationStatus.UNDEPLOY,
         Icon: IconFileDescription,
         onClick: (e: React.MouseEvent) => {
           e.preventDefault();
@@ -258,12 +293,16 @@ export const TalkToCard = ({
       isMyEntity,
       isCodeAppsEnabled,
       PlayerIcon,
+      canWrite,
       onEdit,
+      isApplicationsSharingEnabled,
       onPublish,
       isExecutable,
       onDelete,
       isModifyDisabled,
       handleUpdateFunctionStatus,
+      handleOpenSharing,
+      handleOpenUnshare,
       onOpenLogs,
     ],
   );
@@ -274,6 +313,16 @@ export const TalkToCard = ({
       : screenState === ScreenState.TABLET
         ? TABLET_ICON_SIZE
         : MOBILE_ICON_SIZE;
+  const isOldReplay =
+    entity.id === REPLAY_AS_IS_MODEL &&
+    isOldConversationReplay(conversation.replay);
+
+  const shareIconSize =
+    screenState === ScreenState.MOBILE
+      ? MOBILE_SHARE_ICON_SIZE
+      : screenState === ScreenState.TABLET
+        ? TABLET_SHARE_ICON_SIZE
+        : DESKTOP_SHARE_ICON_SIZE;
 
   return (
     <div
@@ -320,7 +369,20 @@ export const TalkToCard = ({
           )}
           {!isPseudoModel(entity.reference) &&
             entity.reference !== REPLAY_AS_IS_MODEL && (
-              <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
+              <ShareIcon
+                {...entity}
+                isHighlighted={false}
+                size={shareIconSize}
+                featureType={FeatureType.Application}
+                iconClassName="bg-layer-2 !stroke-[0.6] group-hover:bg-transparent !rounded-[4px]"
+                iconWrapperClassName="!rounded-[4px]"
+              >
+                <ModelIcon
+                  entityId={entity.id}
+                  entity={entity}
+                  size={iconSize}
+                />
+              </ShareIcon>
             )}
         </div>
         <div className="flex grow flex-col justify-center gap-2 overflow-hidden leading-4">
@@ -328,6 +390,7 @@ export const TalkToCard = ({
             <div className="flex items-center">
               <p className="mr-1 text-xs text-secondary">{t('Version')}: </p>
               <ModelVersionSelect
+                readonly={conversation.playback?.isPlayback}
                 className="h-max text-xs"
                 entities={versionsToSelect}
                 onSelect={handleSelectVersion}

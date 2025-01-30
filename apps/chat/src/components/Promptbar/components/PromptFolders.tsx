@@ -7,9 +7,8 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import { useSectionToggle } from '@/src/hooks/useSectionToggle';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { sortByName } from '@/src/utils/app/folders';
@@ -173,7 +172,7 @@ const PromptFolderTemplate = ({
         dispatch(
           UIActions.showErrorToast(
             t('Folder with name "{{name}}" already exists at the root.', {
-              ns: 'folder',
+              ns: Translation.Chat,
               name: folder.name,
             }),
           ),
@@ -314,6 +313,9 @@ const _PromptSection = ({
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
 
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
+  const selectedPublication = useAppSelector(
+    PublicationSelectors.selectSelectedPublication,
+  );
 
   const filteredPromptsSelector = useMemo(
     () => PromptsSelectors.selectFilteredPrompts(filters, searchTerm),
@@ -386,6 +388,9 @@ const _PromptSection = ({
     return null;
   }
 
+  const isOrganizationAndPublicationSelected =
+    name === ORGANIZATION_SECTION_NAME && selectedPublication;
+
   return (
     <CollapsibleSection
       onToggle={handleToggle}
@@ -393,7 +398,9 @@ const _PromptSection = ({
       openByDefault={openByDefault ?? isExpanded}
       isExpanded={isExpanded}
       dataQa={dataQa}
-      isHighlighted={isSectionHighlighted}
+      isHighlighted={
+        isOrganizationAndPublicationSelected ? false : isSectionHighlighted
+      }
     >
       <div>
         {rootFolders.map((folder, index, arr) => (

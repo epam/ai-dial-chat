@@ -9,3 +9,7 @@ export enum Translation {
   Marketplace = 'marketplace',
   Header = 'header',
 }
+
+export type TranslationOptions = Record<string, unknown> & {
+  ns?: Translation;
+};

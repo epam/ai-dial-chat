@@ -1,6 +1,9 @@
 import { FeatureType } from '@/src/types/common';
 import { DialAIError } from '@/src/types/error';
+import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
+
+import { ShareEntity, SharePermission } from '@epam/ai-dial-shared';
 
 export const getShareType = (
   featureType?: FeatureType,
@@ -25,6 +28,8 @@ export const getShareType = (
         return SharingType.Conversation;
       case FeatureType.Prompt:
         return SharingType.Prompt;
+      case FeatureType.Application:
+        return SharingType.Application;
       default:
         return undefined;
     }
@@ -38,3 +43,10 @@ export const validateInvitationId = (invitationId: string) => {
     throw new DialAIError('Invalid invitationId', '', '', '400');
   }
 };
+
+export const hasWritePermission = (
+  permissions: SharePermission[] | undefined,
+) => permissions?.includes(SharePermission.WRITE);
+
+export const canWriteSharedWithMe = (entity: DialAIEntityModel | ShareEntity) =>
+  hasWritePermission(entity?.permissions);
