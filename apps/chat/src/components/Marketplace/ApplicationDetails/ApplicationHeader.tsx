@@ -57,7 +57,7 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
 
   return (
     <header className="flex items-start justify-between px-3 py-4 md:p-6">
-      <div className="flex items-center gap-2 md:gap-4 ">
+      <div className="flex items-center gap-2 overflow-hidden md:gap-4">
         <ShareIcon
           {...entity}
           isHighlighted={false}
