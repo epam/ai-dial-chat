@@ -53,7 +53,7 @@ dialTest(
       'Open the home page and verify initial state',
       async () => {
         await dialHomePage.openHomePage({
-          iconsToBeLoaded: models[0].iconUrl ? [models[0].iconUrl] : undefined,
+          iconsToBeLoaded: [models[0].iconUrl!],
         });
         await dialHomePage.waitForPageLoaded();
         await chat.getSendMessage().waitForState({ state: 'attached' });
@@ -246,7 +246,7 @@ dialTest(
       'Open the home page and verify initial state',
       async () => {
         await dialHomePage.openHomePage({
-          iconsToBeLoaded: models[0].iconUrl ? [models[0].iconUrl] : undefined,
+          iconsToBeLoaded: [models[0].iconUrl!],
         });
         await dialHomePage.waitForPageLoaded();
         await chat.getSendMessage().waitForState({ state: 'attached' });
