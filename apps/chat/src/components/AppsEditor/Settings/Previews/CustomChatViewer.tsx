@@ -13,7 +13,6 @@ interface Props {
   currentProviderId: string;
   customViewerUrl: string;
   title: string;
-  isPreviewConversation: boolean;
 }
 
 export const CustomChatViewer: React.FC<Props> = ({
@@ -22,7 +21,6 @@ export const CustomChatViewer: React.FC<Props> = ({
   customViewerUrl,
   conversation,
   title,
-  isPreviewConversation = false,
 }) => {
   const theme = useAppSelector(UISelectors.selectThemeState);
 
@@ -46,7 +44,6 @@ export const CustomChatViewer: React.FC<Props> = ({
           targetOrigin={generateTargetUrl()?.origin}
           onMessage={() => null}
           containerClassName="w-full h-full border-none"
-          isPreviewConversation={isPreviewConversation}
           conversationId={conversation.id}
         />
       )}

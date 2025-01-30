@@ -4,9 +4,12 @@ import React, {
   useCallback,
   useEffect,
   useImperativeHandle,
+  useMemo,
   useRef,
   useState,
 } from 'react';
+
+import { useRouter } from 'next/router';
 
 import { Conversation } from '@/src/types/chat';
 
@@ -33,7 +36,6 @@ interface IframeRendererProps {
   onMessage?: (event: MessageEvent) => void;
   containerStyle?: React.CSSProperties;
   containerClassName?: string;
-  isPreviewConversation?: boolean;
   conversationId?: string;
 }
 
@@ -48,7 +50,6 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
       onMessage,
       containerStyle = {},
       containerClassName = '',
-      isPreviewConversation,
       conversationId,
     },
     ref: Ref<HTMLDivElement>,
@@ -56,6 +57,12 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
     const containerRef = useRef<HTMLDivElement>(null);
     const visualizer = useRef<VisualizerConnector | null>(null);
     const dispatch = useAppDispatch();
+
+    const router = useRouter();
+
+    const isPreviewConversation = useMemo(() => {
+      return router.pathname === '/apps-editor/[slug]/settings';
+    }, [router.pathname]);
 
     const [loading, setLoading] = useState<boolean>(true);
 

@@ -161,23 +161,19 @@ export const ApplicationSettings: React.FC<Props> = ({
     ) {
       return;
     }
+    dispatch(
+      ModelsActions.updateRecentModels({
+        modelId: applicationData.reference,
+      }),
+    );
+
     if (previewConversationId) {
-      dispatch(
-        ModelsActions.updateRecentModels({
-          modelId: applicationData.reference,
-        }),
-      );
       dispatch(
         ConversationsActions.selectConversations({
           conversationIds: [previewConversationId],
         }),
       );
     } else {
-      dispatch(
-        ModelsActions.updateRecentModels({
-          modelId: applicationData.reference,
-        }),
-      );
       dispatch(
         ConversationsActions.createNewConversations({
           names: ['Preview Conversation'],

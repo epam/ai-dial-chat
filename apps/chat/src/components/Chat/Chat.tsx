@@ -633,7 +633,6 @@ export const ChatView = memo(() => {
                   //TO-DO: update provider
                   currentProviderId="keycloak"
                   customViewerUrl={customViewer.viewerUrl}
-                  isPreviewConversation={isApplicationPreviewChat}
                 />
               )}
             </>
