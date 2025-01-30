@@ -31,7 +31,7 @@ import {
   SimpleApplicationStatus,
 } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
-import { FeatureType, ScreenState } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -44,6 +44,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+import { CardIconSizes } from '@/src/constants/marketplace';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
@@ -59,14 +60,6 @@ import ShareIcon from '../../Common/ShareIcon';
 import LoaderIcon from '@/public/images/icons/loader.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature } from '@epam/ai-dial-shared';
-
-const DESKTOP_ICON_SIZE = 80;
-const TABLET_ICON_SIZE = 48;
-const MOBILE_ICON_SIZE = 40;
-
-const MOBILE_SHARE_ICON_SIZE = 16;
-const TABLET_SHARE_ICON_SIZE = 20;
-const DESKTOP_SHARE_ICON_SIZE = 30;
 
 const getPlayerCaption = (entity: DialAIEntityModel) => {
   switch (entity.functionStatus) {
@@ -134,6 +127,8 @@ export const TalkToCard = ({
   const isApplicationsSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
   );
+
+  const { iconSize, shareIconSize } = CardIconSizes[screenState];
 
   const versionsToSelect = useMemo(() => {
     return allModels.filter(
@@ -307,22 +302,9 @@ export const TalkToCard = ({
     ],
   );
 
-  const iconSize =
-    screenState === ScreenState.DESKTOP
-      ? DESKTOP_ICON_SIZE
-      : screenState === ScreenState.TABLET
-        ? TABLET_ICON_SIZE
-        : MOBILE_ICON_SIZE;
   const isOldReplay =
     entity.id === REPLAY_AS_IS_MODEL &&
     isOldConversationReplay(conversation.replay);
-
-  const shareIconSize =
-    screenState === ScreenState.MOBILE
-      ? MOBILE_SHARE_ICON_SIZE
-      : screenState === ScreenState.TABLET
-        ? TABLET_SHARE_ICON_SIZE
-        : DESKTOP_SHARE_ICON_SIZE;
 
   return (
     <div

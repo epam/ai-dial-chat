@@ -1,9 +1,9 @@
 import { IconCheck, IconLink } from '@tabler/icons-react';
 import { MouseEvent, useCallback, useMemo, useRef, useState } from 'react';
 
-import { useTranslation } from '@/src/hooks/useTranslation';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { PageType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
@@ -55,32 +55,28 @@ export function ApplicationCopyLink({
     [link],
   );
 
-  const Content = urlCopied ? (
-    <div className={classNames(TRIGGER_CLASS, className)}>
-      <IconCheck size={size} />
-      {withText && <span>{t('Copied!')}</span>}
-    </div>
-  ) : (
-    <a
-      className={classNames(TRIGGER_CLASS, className)}
-      onClick={handleCopy}
-      data-qa="copy-link"
-      href={link}
-    >
-      <IconLink size={size} />
-      {withText && <span>{t('Copy link')}</span>}
-    </a>
-  );
-
   return (
-    <>
-      {hasTooltip ? (
-        <Tooltip tooltip={t(urlCopied ? 'Copied!' : 'Copy link')}>
-          {Content}
-        </Tooltip>
-      ) : (
-        Content
-      )}
-    </>
+    <Tooltip
+      tooltip={hasTooltip ? t(urlCopied ? 'Copied!' : 'Copy link') : undefined}
+    >
+      <>
+        {urlCopied ? (
+          <div className={classNames(TRIGGER_CLASS, className)}>
+            <IconCheck size={size} />
+            {withText && <span>{t('Copied!')}</span>}
+          </div>
+        ) : (
+          <a
+            className={classNames(TRIGGER_CLASS, className)}
+            onClick={handleCopy}
+            data-qa="copy-link"
+            href={link}
+          >
+            <IconLink size={size} />
+            {withText && <span>{t('Copy link')}</span>}
+          </a>
+        )}
+      </>
+    </Tooltip>
   );
 }

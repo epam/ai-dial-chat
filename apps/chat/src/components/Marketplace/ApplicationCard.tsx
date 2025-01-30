@@ -31,7 +31,7 @@ import {
   ApplicationStatus,
   SimpleApplicationStatus,
 } from '@/src/types/applications';
-import { FeatureType, ScreenState } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -42,6 +42,8 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
+
+import { CardIconSizes } from '@/src/constants/marketplace';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
@@ -57,14 +59,6 @@ import LoaderIcon from '@/public/images/icons/loader.svg';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
-
-const MOBILE_ICON_SIZE = 40;
-const TABLET_ICON_SIZE = 48;
-const DESKTOP_ICON_SIZE = 80;
-
-const MOBILE_SHARE_ICON_SIZE = 16;
-const TABLET_SHARE_ICON_SIZE = 20;
-const DESKTOP_SHARE_ICON_SIZE = 30;
 
 interface CardFooterProps {
   entity: DialAIEntityModel;
@@ -147,19 +141,7 @@ export const ApplicationCard = ({
   const isExecutable =
     isExecutableApp(entity) && (isMyApp || isAdmin || canWrite);
 
-  const iconSize =
-    screenState === ScreenState.DESKTOP
-      ? DESKTOP_ICON_SIZE
-      : screenState === ScreenState.TABLET
-        ? TABLET_ICON_SIZE
-        : MOBILE_ICON_SIZE;
-
-  const shareIconSize =
-    screenState === ScreenState.MOBILE
-      ? MOBILE_SHARE_ICON_SIZE
-      : screenState === ScreenState.TABLET
-        ? TABLET_SHARE_ICON_SIZE
-        : DESKTOP_SHARE_ICON_SIZE;
+  const { iconSize, shareIconSize } = CardIconSizes[screenState];
 
   const PlayerIcon = useMemo(() => {
     switch (playerStatus) {

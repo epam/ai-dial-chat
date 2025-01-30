@@ -14,6 +14,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -25,7 +26,6 @@ import {
   isExecutableApp,
 } from '@/src/utils/app/application';
 import { isApplicationId, isMyApplication } from '@/src/utils/app/id';
-import { isSmallScreen } from '@/src/utils/app/mobile';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
@@ -33,7 +33,7 @@ import {
   ApplicationStatus,
   SimpleApplicationStatus,
 } from '@/src/types/applications';
-import { FeatureType, PageType } from '@/src/types/common';
+import { FeatureType, PageType, ScreenState } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -112,6 +112,8 @@ export const ApplicationDetailsFooter = ({
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
+  const screenState = useScreenState();
+
   const [isOpenLogs, setIsOpenLogs] = useState<boolean>();
 
   const isCodeAppsEnabled = useAppSelector((state) =>
@@ -126,6 +128,8 @@ export const ApplicationDetailsFooter = ({
 
   const isPublicEntity = isEntityIdPublic(entity);
   const isPublicApp = isApplicationPublic(entity);
+
+  const isSmallScreen = screenState === ScreenState.MOBILE;
 
   const Bookmark = installedModelIds.has(entity.reference)
     ? IconBookmarkFilled
@@ -209,7 +213,7 @@ export const ApplicationDetailsFooter = ({
       {
         name: t('Copy link'),
         dataQa: 'application-copy-link',
-        display: isPublicApp && isSmallScreen(),
+        display: isPublicApp && isSmallScreen,
         Icon: IconLink,
         onClick: (e: React.MouseEvent) => {
           handleCopy();
@@ -238,7 +242,7 @@ export const ApplicationDetailsFooter = ({
       {
         name: t('Share'),
         dataQa: 'share',
-        display: isMyApp && isApplicationsSharingEnabled && isSmallScreen(),
+        display: isMyApp && isApplicationsSharingEnabled && isSmallScreen,
         Icon: IconUserShare,
         onClick: (e: React.MouseEvent) => {
           handleOpenSharing();
@@ -313,6 +317,7 @@ export const ApplicationDetailsFooter = ({
     [
       t,
       isPublicApp,
+      isSmallScreen,
       entity,
       isExecutable,
       isCodeAppsEnabled,
@@ -335,7 +340,7 @@ export const ApplicationDetailsFooter = ({
     ],
   );
 
-  const hasBookmark = !isMyApp;
+  const hasBookmark = !isMyApp || !entity.sharedWithMe;
   const countDisplayTrue = menuItems.filter((item) => item.display).length;
   const menuItemsCount = hasBookmark ? countDisplayTrue + 1 : countDisplayTrue;
 
@@ -343,7 +348,7 @@ export const ApplicationDetailsFooter = ({
     <section className="flex px-3 py-4 md:px-6">
       <div className="flex w-full items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          {isSmallScreen() && menuItemsCount > 2 ? (
+          {isSmallScreen && menuItemsCount > 2 ? (
             <button className="icon-button">
               <ContextMenu
                 menuItems={menuItems}
@@ -354,7 +359,7 @@ export const ApplicationDetailsFooter = ({
             </button>
           ) : (
             <>
-              {isPublicApp && isSmallScreen() && (
+              {isPublicApp && isSmallScreen && (
                 <ApplicationCopyLink
                   reference={entity.reference}
                   size={24}
@@ -379,7 +384,7 @@ export const ApplicationDetailsFooter = ({
                   </button>
                 </Tooltip>
               )}
-              {isMyApp && isApplicationsSharingEnabled && isSmallScreen() && (
+              {isMyApp && isApplicationsSharingEnabled && isSmallScreen && (
                 <Tooltip tooltip={t('Share')}>
                   <button
                     onClick={handleOpenSharing}

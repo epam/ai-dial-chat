@@ -17,6 +17,8 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 
+import { HeaderIconSizes } from '@/src/constants/marketplace';
+
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
 import { ModelIcon } from '../../Chatbar/ModelIcon';
@@ -25,12 +27,6 @@ import { ApplicationTopic } from '../ApplicationTopic';
 import { ApplicationCopyLink } from './ApplicationCopyLink';
 
 import { Feature } from '@epam/ai-dial-shared';
-
-const SMALL_SHARE_ICON_SIZE = 20;
-const DESKTOP_SHARE_ICON_SIZE = 30;
-
-const SMALL_ICON_SIZE = 48;
-const DESKTOP_ICON_SIZE = 96;
 
 interface Props {
   entity: DialAIEntityModel;
@@ -41,13 +37,7 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
   const dispatch = useAppDispatch();
   const screenState = useScreenState();
 
-  const iconSize =
-    screenState === ScreenState.MOBILE ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
-
-  const shareIconSize =
-    screenState === ScreenState.MOBILE
-      ? SMALL_SHARE_ICON_SIZE
-      : DESKTOP_SHARE_ICON_SIZE;
+  const { iconSize, shareIconSize } = HeaderIconSizes[screenState];
 
   const isMyApp = isMyApplication(entity);
   const isPublicApp = isApplicationPublic(entity);

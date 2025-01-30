@@ -1,5 +1,5 @@
 import { ApplicationType } from '../types/applications';
-import { EntityType } from '../types/common';
+import { EntityType, ScreenState } from '../types/common';
 
 export enum MarketplaceQueryParams {
   fromConversation = 'fromConversation',
@@ -58,4 +58,21 @@ export const ApplicationTypeToSourceType = {
   [ApplicationType.QUICK_APP]: SourceType.MyQuickApps,
   [ApplicationType.CUSTOM_APP]: SourceType.MyCustomApps,
   [ApplicationType.MINDMAP]: SourceType.MyMindMaps,
+};
+
+interface IconSize {
+  iconSize: number;
+  shareIconSize: number;
+}
+
+export const CardIconSizes: Record<ScreenState, IconSize> = {
+  [ScreenState.DESKTOP]: { iconSize: 80, shareIconSize: 30 },
+  [ScreenState.TABLET]: { iconSize: 48, shareIconSize: 20 },
+  [ScreenState.MOBILE]: { iconSize: 40, shareIconSize: 16 },
+};
+
+export const HeaderIconSizes: Record<ScreenState, IconSize> = {
+  [ScreenState.DESKTOP]: { iconSize: 96, shareIconSize: 30 },
+  [ScreenState.TABLET]: { iconSize: 96, shareIconSize: 30 },
+  [ScreenState.MOBILE]: { iconSize: 48, shareIconSize: 20 },
 };
