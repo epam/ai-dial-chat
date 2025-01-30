@@ -62,8 +62,8 @@ dialTest(
         });
         await dialHomePage.waitForPageLoaded();
         await chat.getSendMessage().waitForState({ state: 'attached' });
-        await chat.changeAgentButton.waitForState({ state: 'visible' });
-        await chat.configureSettingsButton.waitForState({ state: 'visible' });
+        await chat.changeAgentButton.waitForState();
+        await chat.configureSettingsButton.waitForState();
         await conversationAssertion.assertNoConversationIsSelected();
       },
     );
@@ -81,8 +81,8 @@ dialTest(
       'Verify nothing changes after going back to chat',
       async () => {
         await dialHomePage.waitForPageLoaded();
-        await chat.changeAgentButton.waitForState({ state: 'visible' });
-        await chat.configureSettingsButton.waitForState({ state: 'visible' });
+        await chat.changeAgentButton.waitForState();
+        await chat.configureSettingsButton.waitForState();
         await conversationAssertion.assertNoConversationIsSelected();
       },
     );
@@ -139,8 +139,8 @@ dialTest(
       async () => {
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
-        await chat.changeAgentButton.waitForState({ state: 'visible' });
-        await chat.configureSettingsButton.waitForState({ state: 'visible' });
+        await chat.changeAgentButton.waitForState();
+        await chat.configureSettingsButton.waitForState();
         await conversationAssertion.assertNoConversationIsSelected();
       },
     );
@@ -153,8 +153,8 @@ dialTest(
 
     await dialTest.step('Verify chat stays selected', async () => {
       await dialHomePage.waitForPageLoaded();
-      await chat.changeAgentButton.waitForState({ state: 'visible' });
-      await chat.configureSettingsButton.waitForState({ state: 'visible' });
+      await chat.changeAgentButton.waitForState();
+      await chat.configureSettingsButton.waitForState();
       await conversationAssertion.assertSelectedConversation(
         initialConversationName,
       );
@@ -166,8 +166,8 @@ dialTest(
       async () => {
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
-        await chat.changeAgentButton.waitForState({ state: 'visible' });
-        await chat.configureSettingsButton.waitForState({ state: 'visible' });
+        await chat.changeAgentButton.waitForState();
+        await chat.configureSettingsButton.waitForState();
         await conversationAssertion.assertSelectedConversation(
           initialConversationName,
         );
@@ -183,8 +183,8 @@ dialTest(
         );
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
-        await chat.changeAgentButton.waitForState({ state: 'visible' });
-        await chat.configureSettingsButton.waitForState({ state: 'visible' });
+        await chat.changeAgentButton.waitForState();
+        await chat.configureSettingsButton.waitForState();
         await conversationAssertion.assertNoConversationIsSelected();
       },
     );
@@ -259,8 +259,8 @@ dialTest(
         });
         await dialHomePage.waitForPageLoaded();
         await chat.getSendMessage().waitForState({ state: 'attached' });
-        await chat.changeAgentButton.waitForState({ state: 'visible' });
-        await chat.configureSettingsButton.waitForState({ state: 'visible' });
+        await chat.changeAgentButton.waitForState();
+        await chat.configureSettingsButton.waitForState();
         await conversationAssertion.assertNoConversationIsSelected();
       },
     );
@@ -282,8 +282,8 @@ dialTest(
       async () => {
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
-        await chat.changeAgentButton.waitForState({ state: 'visible' });
-        await chat.configureSettingsButton.waitForState({ state: 'visible' });
+        await chat.changeAgentButton.waitForState();
+        await chat.configureSettingsButton.waitForState();
         await conversationAssertion.assertNoConversationIsSelected();
       },
     );
@@ -298,8 +298,8 @@ dialTest(
         await chat.changeAgentButton.hoverOver();
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
-        await chat.changeAgentButton.waitForState({ state: 'visible' });
-        await chat.configureSettingsButton.waitForState({ state: 'visible' });
+        await chat.changeAgentButton.waitForState();
+        await chat.configureSettingsButton.waitForState();
         await conversationAssertion.assertNoConversationIsSelected();
       },
     );
@@ -314,8 +314,8 @@ dialTest(
         await chat.changeAgentButton.hoverOver();
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
-        await chat.changeAgentButton.waitForState({ state: 'visible' });
-        await chat.configureSettingsButton.waitForState({ state: 'visible' });
+        await chat.changeAgentButton.waitForState();
+        await chat.configureSettingsButton.waitForState();
         await conversationAssertion.assertNoConversationIsSelected();
       },
     );

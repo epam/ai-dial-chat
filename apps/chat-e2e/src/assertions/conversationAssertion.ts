@@ -6,7 +6,6 @@ import {
   TreeEntity,
 } from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
-import { ChatBarSelectors } from '@/src/ui/selectors';
 import { ConversationsTree } from '@/src/ui/webElements/entityTree';
 import { expect } from '@playwright/test';
 
@@ -53,33 +52,12 @@ export class ConversationAssertion extends SideBarEntityAssertion<ConversationsT
   }
 
   public async assertNoConversationIsSelected() {
-    const entitiesWithIndices =
-      await this.sideBarEntitiesTree.getAllTreeEntitiesWithIndices();
-    const selectedEntities = [];
-
-    for (const { name, index } of entitiesWithIndices) {
-      const hasSelectedClass =
-        (await this.sideBarEntitiesTree
-          .getEntityByName(name, index)
-          .locator(ChatBarSelectors.selectedEntity)
-          .count()) > 0;
-
-      const entityBackgroundColor =
-        await this.sideBarEntitiesTree.getEntityBackgroundColor(name, index);
-
-      if (
-        hasSelectedClass ||
-        entityBackgroundColor === Colors.backgroundAccentSecondary
-      ) {
-        selectedEntities.push({ name, index });
-      }
-    }
-
+    const selectedEntities =
+      await this.sideBarEntitiesTree.getSelectedEntities();
     expect
       .soft(selectedEntities.length, ExpectedMessages.noConversationIsSelected)
       .toBe(0);
   }
-
   public async assertConversationInToday(conversationName: string) {
     const todayConversations =
       await this.sideBarEntitiesTree.getChronologyConversations(
