@@ -34,6 +34,7 @@ export const GeneralInfoView: React.FC<Props> = ({
         ) ?? [],
       id: applicationData?.name ?? '',
       reference: applicationData?.reference ?? '',
+      applicationProperties: applicationData?.application_properties,
     },
   });
 

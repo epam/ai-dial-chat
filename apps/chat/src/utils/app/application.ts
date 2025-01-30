@@ -84,10 +84,6 @@ export const convertApplicationToApi = (
     max_input_attachments: applicationData.maxInputAttachments,
     reference: applicationData.reference || undefined,
     description_keywords: applicationData.topics,
-    applicationTypeSchemaId: applicationData.applicationTypeSchemaId,
-    applicationProperties: mapApplicationPropertiesToApi(
-      applicationData.applicationProperties,
-    ),
   };
 
   if (schema) {
@@ -104,7 +100,9 @@ export const convertApplicationToApi = (
       ...commonData,
       function: {
         runtime: applicationData.function.runtime ?? 'python3.11',
-        source_folder: `${ApiUtils.encodeApiUrl(applicationData.function.sourceFolder)}/`,
+        source_folder: applicationData.function.sourceFolder
+          ? `${ApiUtils.encodeApiUrl(applicationData.function.sourceFolder)}/`
+          : '',
         mapping: applicationData.function.mapping,
         ...(applicationData.function.env && {
           env: applicationData.function.env,
