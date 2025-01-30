@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getEntitiesFromTemplateMapping,
@@ -62,7 +62,7 @@ const ReplayVariablesDialog = () => {
                 replayUserMessagesStack:
                   conversation.replay.replayUserMessagesStack.map(
                     (message, index) =>
-                      (index === conversation.replay?.activeReplayIndex ?? 0)
+                      index === (conversation.replay?.activeReplayIndex ?? 0)
                         ? {
                             ...message,
                             content: newContent,

@@ -1,9 +1,9 @@
 /*eslint-disable @next/next/no-img-element*/
 import { IconSettings } from '@tabler/icons-react';
-import { signIn, signOut, useSession } from 'next-auth/react';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useLogout } from '@/src/hooks/useLogout';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
@@ -24,13 +24,8 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLogoutConfirmationOpened, setIsLogoutConfirmationOpened] =
     useState(false);
-  const { data: session } = useSession();
+  const { session, handleLogout } = useLogout();
   const dispatch = useAppDispatch();
-  const handleLogout = useCallback(() => {
-    session
-      ? signOut({ redirect: true })
-      : signIn('azure-ad', { redirect: true });
-  }, [session]);
 
   return (
     <>
@@ -49,7 +44,7 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
                   src={session?.user?.image}
                   width={18}
                   height={18}
-                  alt={t(`User avatar`) || ''}
+                  alt={t(`User avatar`)}
                 />
               ) : (
                 <UserIcon width={18} height={18} />
@@ -103,7 +98,7 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
       <ConfirmDialog
         isOpen={isLogoutConfirmationOpened}
         heading={t('Confirm logging out')}
-        description={t('Are you sure that you want to log out?') || ''}
+        description={t('Are you sure that you want to log out?')}
         confirmLabel={t('Log out')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {

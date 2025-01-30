@@ -11,11 +11,10 @@ import {
 } from '@tabler/icons-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getApplicationNextStatus,
@@ -342,7 +341,7 @@ export const ApplicationCard = ({
               triggerIconSize={18}
               className="m-0 xl:invisible group-hover:xl:visible"
             />
-            {!isMyApp && (
+            {!isMyApp && !entity.sharedWithMe && (
               <Tooltip
                 tooltip={
                   installedModelIds.has(entity.reference)

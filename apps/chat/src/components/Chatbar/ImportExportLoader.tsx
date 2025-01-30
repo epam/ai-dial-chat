@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Operation } from '@/src/types/import-export';
 import { Translation } from '@/src/types/translation';

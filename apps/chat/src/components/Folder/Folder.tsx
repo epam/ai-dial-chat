@@ -16,9 +16,9 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   doesHaveDotsInTheEnd,
@@ -441,7 +441,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             t(
               'Folder with name "{{folderName}}" already exists in this folder.',
               {
-                ns: 'folder',
+                ns: Translation.Chat,
                 folderName: newName,
               },
             ),
@@ -558,7 +558,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 t(
                   'Folder with name "{{folderName}}" already exists in this folder.',
                   {
-                    ns: 'folder',
+                    ns: Translation.Chat,
                     folderName: draggedFolder.name,
                   },
                 ),
@@ -587,7 +587,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 t(
                   '{{entityType}} with name "{{entityName}}" already exists in this folder.',
                   {
-                    ns: 'common',
+                    ns: Translation.Common,
                     entityType:
                       featureType === FeatureType.Chat
                         ? 'Conversation'
@@ -828,6 +828,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const iconSize = additionalItemData?.isSidePanelItem ? 24 : 18;
   const folderIconStrokeWidth = additionalItemData?.isSidePanelItem ? 1.5 : 2;
   const isSidePanelItem = additionalItemData?.isSidePanelItem;
+  const isInApproveRequiredSectionOrNot =
+    (selectedPublicationUrl && additionalItemData?.publicationUrl) ||
+    (!selectedPublicationUrl && !additionalItemData?.publicationUrl);
 
   return (
     <div
@@ -1105,7 +1108,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     : highlightedFolders?.includes(currentFolder.id) &&
                         isPartOfSelectedPublication &&
                         featureType &&
-                        !canSelectFolders
+                        !canSelectFolders &&
+                        isInApproveRequiredSectionOrNot
                       ? 'text-accent-primary'
                       : 'text-primary',
                 )}
@@ -1294,9 +1298,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           heading={t('Confirm unsharing: {{folderName}}', {
             folderName: currentFolder.name,
           })}
-          description={
-            t('Are you sure that you want to unshare this folder?') || ''
-          }
+          description={t('Are you sure that you want to unshare this folder?')}
           confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {
@@ -1319,11 +1321,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         heading={t('Confirm renaming folder')}
         confirmLabel={t('Rename')}
         cancelLabel={t('Cancel')}
-        description={
-          t(
-            'Renaming will stop sharing and other users will no longer see this folder.',
-          ) || ''
-        }
+        description={t(
+          'Renaming will stop sharing and other users will no longer see this folder.',
+        )}
         onClose={(result) => {
           setIsConfirmRenaming(false);
           if (result) {

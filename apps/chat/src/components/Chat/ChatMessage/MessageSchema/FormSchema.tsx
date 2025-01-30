@@ -1,8 +1,8 @@
 import { memo, useCallback, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getFormButtonType } from '@/src/utils/app/form-schema';
 
@@ -75,6 +75,7 @@ export const ButtonsProperty = ({
       >
         {options?.map((option) => (
           <button
+            data-no-context-menu
             key={option.const}
             onClick={() => handleClick(option)}
             className={classNames('chat-button', buttonClassName, {

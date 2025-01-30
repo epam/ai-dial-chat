@@ -1,10 +1,9 @@
 import { useCallback, useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getModelDescription } from '@/src/utils/app/application';
 import {
@@ -90,9 +89,12 @@ const EmptyChatDescriptionView = ({
   const versions = useMemo(
     () =>
       models.filter(
-        (m) => installedModelIds.has(m.reference) && m.name === model?.name,
+        (m) =>
+          (installedModelIds.has(m.reference) ||
+            model?.reference === m.reference) &&
+          m.name === model?.name,
       ),
-    [installedModelIds, model?.name, models],
+    [installedModelIds, model?.name, model?.reference, models],
   );
 
   const incorrectModel = !model;

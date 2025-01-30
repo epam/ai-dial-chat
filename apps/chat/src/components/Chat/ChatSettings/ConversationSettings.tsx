@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import {
@@ -67,6 +67,7 @@ export function SettingContainer({ children }: SettingContainerProps) {
 
 function EmptySettings() {
   const { t } = useTranslation(Translation.Chat);
+
   return (
     <SettingContainer>
       <FieldContainer>
@@ -143,7 +144,7 @@ export const ConversationSettings = Inversify.register(
         {doesModelAllowTemperature(model) && (
           <FieldContainer>
             <TemperatureSlider
-              label={t('Temperature') ?? ''}
+              label={t('Temperature')}
               onChangeTemperature={onChangeTemperature}
               temperature={temperature}
               disabled={isPlayback}

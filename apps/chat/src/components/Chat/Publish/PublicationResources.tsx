@@ -1,12 +1,11 @@
 import { IconDownload } from '@tabler/icons-react';
 import { useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 import { usePublicationResources } from '@/src/hooks/usePublicationResources';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { constructPath } from '@/src/utils/app/file';
 import { ApiUtils } from '@/src/utils/server/api';

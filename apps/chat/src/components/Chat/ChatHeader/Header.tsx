@@ -6,18 +6,23 @@ import {
 } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 import { useScreenState } from '@/src/hooks/useScreenState';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
 import {
   getSelectedAddons,
   getValidEntitiesFromIds,
 } from '@/src/utils/app/conversation';
+import {
+  doesModelAllowAddons,
+  doesModelAllowSystemPrompt,
+  doesModelAllowTemperature,
+  doesModelHaveSettings,
+} from '@/src/utils/app/models';
 
 import { Conversation } from '@/src/types/chat';
 import { EntityType, ScreenState } from '@/src/types/common';
@@ -35,6 +40,8 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
+
+import { FALLBACK_TEMPERATURE } from '@/src/constants/default-ui-settings';
 
 import { ConversationContextMenu } from '@/src/components/Chat/ConversationContextMenu';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
@@ -267,6 +274,7 @@ export const ChatHeader = Inversify.register(
                 </span>
                 {model ? (
                   model.type !== EntityType.Application &&
+                  doesModelAllowAddons(model) &&
                   (conversation.selectedAddons.length > 0 ||
                     (model.selectedAddons &&
                       model.selectedAddons.length > 0)) && (
@@ -309,21 +317,22 @@ export const ChatHeader = Inversify.register(
                   )
                 ) : (
                   <>
-                    {conversation.selectedAddons.length > 0 && (
-                      <span
-                        className="flex items-center gap-2"
-                        data-qa="chat-addons"
-                      >
-                        {conversation.selectedAddons.map((addon) => (
-                          <ModelIcon
-                            key={addon}
-                            entityId={addon}
-                            size={iconSize}
-                            entity={addonsMap[addon]}
-                          />
-                        ))}
-                      </span>
-                    )}
+                    {doesModelAllowAddons(model) &&
+                      conversation.selectedAddons.length > 0 && (
+                        <span
+                          className="flex items-center gap-2"
+                          data-qa="chat-addons"
+                        >
+                          {conversation.selectedAddons.map((addon) => (
+                            <ModelIcon
+                              key={addon}
+                              entityId={addon}
+                              size={iconSize}
+                              entity={addonsMap[addon]}
+                            />
+                          ))}
+                        </span>
+                      )}
                   </>
                 )}
               </>
@@ -337,6 +346,7 @@ export const ChatHeader = Inversify.register(
                   tooltip={
                     <HeaderSettingsTooltip
                       disallowChangeSettings={disallowChangeSettings}
+                      hasSettings={!!doesModelHaveSettings(model)}
                       subModel={
                         conversation.assistantModelId &&
                         model?.type === EntityType.Assistant
@@ -344,22 +354,27 @@ export const ChatHeader = Inversify.register(
                           : undefined
                       }
                       systemPrompt={
-                        model?.type === EntityType.Model
+                        model?.type === EntityType.Model &&
+                        doesModelAllowSystemPrompt(model)
                           ? conversation.prompt
                           : ''
                       }
                       temperature={
                         model?.type !== EntityType.Application
-                          ? conversation.temperature
+                          ? doesModelAllowTemperature(model)
+                            ? conversation.temperature
+                            : FALLBACK_TEMPERATURE
                           : null
                       }
                       selectedAddons={
-                        model
-                          ? selectedAddons
-                          : getValidEntitiesFromIds(
-                              conversation.selectedAddons,
-                              addonsMap,
-                            )
+                        doesModelAllowAddons(model)
+                          ? model
+                            ? selectedAddons
+                            : getValidEntitiesFromIds(
+                                conversation.selectedAddons,
+                                addonsMap,
+                              )
+                          : null
                       }
                     />
                   }
@@ -438,9 +453,7 @@ export const ChatHeader = Inversify.register(
         <ConfirmDialog
           isOpen={isClearConversationModalOpen}
           heading={t('Confirm deleting all messages in the conversation')}
-          description={
-            t('Are you sure that you want to delete all messages?') || ''
-          }
+          description={t('Are you sure that you want to delete all messages?')}
           confirmLabel={t('Delete')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {

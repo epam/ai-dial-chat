@@ -55,7 +55,7 @@ export class ConversationToCompare extends BaseElement {
 
   public async selectCompareConversation(
     name: string,
-    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
+    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
     if (isHttpMethodTriggered) {
       const respPromise = this.page.waitForResponse(

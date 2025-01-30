@@ -10,9 +10,9 @@ import {
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getApplicationNextStatus,
@@ -231,35 +231,36 @@ export const ApplicationDetailsFooter = ({
               </button>
             </Tooltip>
           )}
-          {isMyApp ? (
-            <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
-              <button
-                disabled={isModifyDisabled}
-                onClick={() => onDelete(entity)}
-                className="icon-button"
-                data-qa="application-delete"
+          {!entity.sharedWithMe &&
+            (isMyApp ? (
+              <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
+                <button
+                  disabled={isModifyDisabled}
+                  onClick={() => onDelete(entity)}
+                  className="icon-button"
+                  data-qa="application-delete"
+                >
+                  <IconTrashX size={24} />
+                </button>
+              </Tooltip>
+            ) : (
+              <Tooltip
+                tooltip={
+                  installedModelIds.has(entity.reference)
+                    ? t('Remove from My workspace')
+                    : t('Add to My workspace')
+                }
+                isTriggerClickable
               >
-                <IconTrashX size={24} />
-              </button>
-            </Tooltip>
-          ) : (
-            <Tooltip
-              tooltip={
-                installedModelIds.has(entity.reference)
-                  ? t('Remove from My workspace')
-                  : t('Add to My workspace')
-              }
-              isTriggerClickable
-            >
-              <button
-                onClick={() => onBookmarkClick(entity)}
-                className="icon-button"
-                data-qa="application-bookmark"
-              >
-                <Bookmark size={24} />
-              </button>
-            </Tooltip>
-          )}
+                <button
+                  onClick={() => onBookmarkClick(entity)}
+                  className="icon-button"
+                  data-qa="application-bookmark"
+                >
+                  <Bookmark size={24} />
+                </button>
+              </Tooltip>
+            ))}
 
           {isApplicationId(entity.id) && (isMyApp || isPublicApp) && (
             <Tooltip tooltip={isPublicApp ? t('Unpublish') : t('Publish')}>

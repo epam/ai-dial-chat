@@ -40,6 +40,7 @@ export const marketplaceSlice = createSlice({
   name: 'marketplace',
   initialState,
   reducers: {
+    init: () => initialState,
     initQueryParams: (state) => state,
     setState: (
       state,
@@ -61,9 +62,6 @@ export const marketplaceSlice = createSlice({
     },
     setSelectedTab: (state, { payload }: PayloadAction<MarketplaceTabs>) => {
       state.selectedTab = payload;
-    },
-    resetState: () => {
-      return initialState;
     },
     setApplyModelStatus: (state, { payload }: PayloadAction<UploadStatus>) => {
       state.applyModelStatus = payload;

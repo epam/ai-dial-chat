@@ -107,6 +107,7 @@ import { LOCAL_BUCKET, resetShareEntity } from '@/src/constants/chat';
 import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_TEMPERATURE,
+  FALLBACK_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
@@ -709,6 +710,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
             selectedIdToReplaceWithNewOne: conversation.id,
           }),
         ),
+        of(PublicationActions.selectPublication(null)),
       );
     }),
   );
@@ -1352,7 +1354,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
             : undefined,
           temperature: doesModelAllowTemperature(lastModel)
             ? payload.conversation.temperature
-            : 1,
+            : FALLBACK_TEMPERATURE,
           selectedAddons: doesModelAllowAddons(lastModel) ? selectedAddons : [],
         };
       }
@@ -1361,7 +1363,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           assistantModel: modelsMap[assistantModelId],
           temperature: doesModelAllowTemperature(lastModel)
             ? payload.conversation.temperature
-            : 1,
+            : FALLBACK_TEMPERATURE,
           selectedAddons: doesModelAllowAddons(lastModel) ? selectedAddons : [],
         };
       }
@@ -3100,6 +3102,10 @@ const updateLastConversationSettingsEpic: AppEpic = (action$, state$) =>
     })),
     switchMap(({ lastConversation }) =>
       forkJoin({
+        oldTemperature: of((lastConversation as Conversation)?.temperature),
+        wasAlreadyUploaded: of(
+          lastConversation?.status === UploadStatus.LOADED,
+        ),
         lastConversation:
           lastConversation &&
           lastConversation.status !== UploadStatus.LOADED &&
@@ -3116,15 +3122,30 @@ const updateLastConversationSettingsEpic: AppEpic = (action$, state$) =>
             : of(lastConversation as Conversation),
       }),
     ),
-    switchMap(({ lastConversation }) => {
-      // don't save for temp empty conversation to be able to reset settings by "New conversation"
-      return lastConversation && !isEntityIdLocal(lastConversation)
-        ? of(
-            ConversationsActions.setLastConversationSettings({
-              temperature: lastConversation.temperature,
-            }),
-          )
-        : EMPTY;
+    switchMap(({ lastConversation, oldTemperature, wasAlreadyUploaded }) => {
+      if (
+        !lastConversation ||
+        // don't save for temp empty conversation to be able to reset settings by "New conversation"
+        isEntityIdLocal(lastConversation) ||
+        // don't save if already uploaded and nothing changed
+        (wasAlreadyUploaded && oldTemperature === lastConversation.temperature)
+      ) {
+        return EMPTY;
+      }
+
+      return concat(
+        of(
+          ConversationsActions.setLastConversationSettings({
+            temperature: lastConversation.temperature,
+          }),
+        ),
+        of(
+          ConversationsActions.uploadConversationsByIdsSuccess({
+            setIds: new Set(lastConversation.id),
+            conversations: [lastConversation],
+          }),
+        ),
+      );
     }),
   );
 

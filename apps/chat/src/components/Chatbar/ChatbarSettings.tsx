@@ -9,7 +9,7 @@ import {
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getConversationRootId } from '@/src/utils/app/id';
 
@@ -240,11 +240,9 @@ export const ChatbarSettings = () => {
       <ConfirmDialog
         isOpen={isClearModalOpen}
         heading={t(`Confirm deleting ${deleteTerm} conversations`)}
-        description={
-          t(
-            `Are you sure that you want to delete ${deleteTerm} conversations?`,
-          ) || ''
-        }
+        description={t(
+          `Are you sure that you want to delete ${deleteTerm} conversations?`,
+        )}
         confirmLabel={t('Delete')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {

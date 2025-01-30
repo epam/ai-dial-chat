@@ -6,16 +6,8 @@ import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
 import { BucketUtil, ItemUtil } from '@/src/utils';
 import { Entity } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
-import { APIRequestContext } from 'playwright-core';
 
 export class ItemApiHelper extends BaseApiHelper {
-  private readonly userBucket?: string;
-
-  constructor(request: APIRequestContext, userBucket?: string) {
-    super(request);
-    this.userBucket = userBucket;
-  }
-
   public async deleteAllData(bucket?: string) {
     const bucketToUse = this.userBucket ?? bucket;
     const conversations = await this.listItems(
