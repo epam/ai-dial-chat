@@ -58,7 +58,9 @@ export const ModelVersionSelect = ({
           data-qa="version"
         >
           {showVersionPrefix && <VersionPrefix />}
-          {entities[0].version}
+          <span className="mr-3 max-w-full overflow-hidden truncate whitespace-nowrap">
+            {entities[0].version}
+          </span>
         </div>
       );
     }
