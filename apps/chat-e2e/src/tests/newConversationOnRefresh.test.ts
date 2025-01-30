@@ -1,7 +1,12 @@
 import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
-import { MenuOptions, MockedChatApiResponseBodies } from '@/src/testData';
+import {
+  CollapsedSections,
+  MenuOptions,
+  MockedChatApiResponseBodies,
+} from '@/src/testData';
+import { loadingTimeout } from '@/src/ui/pages';
 import { ModelsUtil } from '@/src/utils';
 import { GeneratorUtil } from '@/src/utils/generatorUtil';
 
@@ -201,6 +206,7 @@ dialTest(
     conversations,
     conversationDropdownMenu,
     compareConversation,
+    appContainer,
   }) => {
     setTestIds('EPMRTC-4682', 'EPMRTC-4683', 'EPMRTC-4593');
     let models: DialAIEntityModel[];
@@ -239,6 +245,9 @@ dialTest(
           replayConversation,
           initialConversation,
         ]);
+        await localStorageManager.setChatCollapsedSection(
+          CollapsedSections.Organization,
+        );
       },
     );
 
@@ -283,6 +292,10 @@ dialTest(
       'Select playback conversation, refresh the page and verify new conversation is created after the playback mode',
       async () => {
         await conversations.selectConversation(playbackConversation.name);
+        await appContainer
+          .getChatLoader()
+          .waitForState({ state: 'hidden', timeout: loadingTimeout });
+        await chat.changeAgentButton.hoverOver();
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.waitForState({ state: 'visible' });
@@ -295,6 +308,10 @@ dialTest(
       'Select replay conversation, refresh the page and verify new conversation is created after the playback mode',
       async () => {
         await conversations.selectConversation(replayConversation.name);
+        await appContainer
+          .getChatLoader()
+          .waitForState({ state: 'hidden', timeout: loadingTimeout });
+        await chat.changeAgentButton.hoverOver();
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.waitForState({ state: 'visible' });
