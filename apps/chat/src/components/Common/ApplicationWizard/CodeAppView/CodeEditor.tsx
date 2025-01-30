@@ -313,10 +313,18 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
       rootFolders: [],
     };
   }, [files, folders, sourcesFolderId]);
+
   const rootFileNames = useMemo(
     () => rootFiles.map((f) => f.name),
     [rootFiles],
   );
+
+  const bucket = useMemo(() => {
+    if (sourcesFolderId) {
+      const { bucket } = splitEntityId(sourcesFolderId);
+      return bucket;
+    }
+  }, [sourcesFolderId]);
 
   useEffect(() => {
     if (sourcesFolderId) {
@@ -354,11 +362,12 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
             id: file.id,
             relativePath: folderPath,
             name: file.name,
+            bucket,
           }),
         );
       });
     },
-    [dispatch],
+    [bucket, dispatch],
   );
 
   const handleDeleteFile = useCallback(
@@ -395,7 +404,6 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
   const handleUploadEmptyFile = useCallback(
     (fileName: string) => {
       if (fileName && sourcesFolderId) {
-        const { bucket } = splitEntityId(sourcesFolderId);
         dispatch(
           FilesActions.uploadFile({
             fileContent: new File([''], fileName, {
@@ -411,7 +419,7 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
         setNewFileName('');
       }
     },
-    [dispatch, sourcesFolderId],
+    [bucket, dispatch, sourcesFolderId],
   );
 
   const handleToggleFolder = useCallback(
@@ -652,6 +660,7 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
               onUploadFiles={handleUploadFiles}
               onClose={() => setUploadFolderId(undefined)}
               maximumAttachmentsAmount={Number.MAX_SAFE_INTEGER}
+              rootFolderId={sourcesFolderId}
             />
           )}
           <ConfirmDialog

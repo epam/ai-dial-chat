@@ -21,6 +21,7 @@ import {
   getApplicationNextStatus,
   getApplicationSimpleStatus,
   getModelShortDescription,
+  getPlayerCaption,
   isApplicationStatusUpdating,
   isExecutableApp,
 } from '@/src/utils/app/application';
@@ -29,10 +30,7 @@ import { isMediumScreen } from '@/src/utils/app/mobile';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
-import {
-  ApplicationStatus,
-  SimpleApplicationStatus,
-} from '@/src/types/applications';
+import { SimpleApplicationStatus } from '@/src/types/applications';
 import { FeatureType, ScreenState } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
@@ -91,21 +89,6 @@ const CardFooter = ({ entity }: CardFooterProps) => {
       </div>
     </>
   );
-};
-
-const getPlayerCaption = (entity: DialAIEntityModel) => {
-  switch (entity.functionStatus) {
-    case ApplicationStatus.DEPLOYED:
-      return 'Undeploy';
-    case ApplicationStatus.UNDEPLOYED:
-    case ApplicationStatus.FAILED:
-      return 'Deploy';
-    case ApplicationStatus.UNDEPLOYING:
-      return 'Undeploying';
-    case ApplicationStatus.DEPLOYING:
-    default:
-      return 'Deploying';
-  }
 };
 
 interface ApplicationCardProps {

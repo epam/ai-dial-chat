@@ -601,26 +601,19 @@ export const renameFolderWithChildren = ({
   return updatedFolders.concat(newFolder);
 };
 
-export const isCurrentFolderOrParentSharedWithMeAndCanEdit = (
+export const canEditSharedFolderOrParent = (
   folders: FolderInterface[],
   folderId: string | undefined,
 ): boolean => {
-  if (!folderId) {
-    return false;
-  }
-
-  let folder = folders.find((folder) => folder.id === folderId);
-
-  if (folder?.sharedWithMe && hasWritePermission(folder.permissions)) {
-    return true;
-  }
-
-  while (folder) {
-    folder = folders.find((item) => item.id === folder!.folderId);
+  while (folderId) {
+    const folder = folders.find((folder) => folder.id === folderId);
 
     if (folder?.sharedWithMe && hasWritePermission(folder.permissions)) {
       return true;
     }
+
+    folderId = folder?.folderId;
   }
+
   return false;
 };

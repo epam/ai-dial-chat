@@ -22,7 +22,10 @@ import {
   notAllowedSymbols,
   prepareFileName,
 } from '@/src/utils/app/file';
-import { getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
+import {
+  getParentAndCurrentFoldersById,
+  splitEntityId,
+} from '@/src/utils/app/folders';
 import { getFileRootId } from '@/src/utils/app/id';
 
 import { DialFile } from '@/src/types/files';
@@ -33,6 +36,7 @@ import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
+import { SHARED_WITH_ME_SECTION_NAME } from '@/src/constants/sections';
 
 import Modal from '@/src/components/Common/Modal';
 
@@ -52,6 +56,7 @@ interface Props {
   ) => void;
   uploadFolderId?: string;
   customUploadButtonLabel?: string;
+  rootFolderId?: string;
 }
 
 const bytesInMb = 1_048_576;
@@ -66,6 +71,7 @@ export const PreUploadDialog = ({
   onUploadFiles,
   uploadFolderId,
   customUploadButtonLabel,
+  rootFolderId,
 }: Props) => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation(Translation.Chat);
@@ -87,6 +93,14 @@ export const PreUploadDialog = ({
 
   const headingId = useId();
   const descriptionId = useId();
+
+  const { bucket, name } = useMemo(
+    () =>
+      rootFolderId
+        ? splitEntityId(rootFolderId)
+        : { bucket: undefined, name: undefined },
+    [rootFolderId],
+  );
 
   const folderPath = useMemo(() => {
     return (
@@ -156,7 +170,7 @@ export const PreUploadDialog = ({
             return {
               fileContent: file,
               id: constructPath(
-                getFileRootId(),
+                getFileRootId(bucket),
                 folderPath,
                 prepareFileName(file.name),
               ),
@@ -169,7 +183,7 @@ export const PreUploadDialog = ({
         uploadInputRef.current.value = '';
       }
     },
-    [allowedTypes, folderPath, t],
+    [allowedTypes, bucket, folderPath, t],
   );
 
   const handleUpload = useCallback(() => {
@@ -400,7 +414,9 @@ export const PreUploadDialog = ({
               data-qa="change-path-container"
             >
               <span className="truncate" data-qa="path">
-                {constructPath(t('All files'), folderPath)}
+                {getFileRootId(bucket) === getFileRootId()
+                  ? constructPath(t('All files'), folderPath)
+                  : constructPath(t(SHARED_WITH_ME_SECTION_NAME), folderPath)}
               </span>
               <span
                 className="cursor-pointer text-accent-primary"
@@ -490,13 +506,14 @@ export const PreUploadDialog = ({
       <SelectFolderModal
         isOpen={isChangeFolderModalOpened}
         initialSelectedFolderId={selectedFolderId}
-        rootFolderId={getFileRootId()}
+        rootFolderId={rootFolderId ?? getFileRootId(bucket)}
         onClose={(folderId) => {
           if (folderId) {
             setSelectedFolderId(folderId);
           }
           setIsChangeFolderModalOpened(false);
         }}
+        rootFolderName={name}
       />
     </Modal>
   );

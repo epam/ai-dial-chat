@@ -19,6 +19,7 @@ import {
   getApplicationNextStatus,
   getApplicationSimpleStatus,
   getModelShortDescription,
+  getPlayerCaption,
   isApplicationStatusUpdating,
   isExecutableApp,
 } from '@/src/utils/app/application';
@@ -27,10 +28,7 @@ import { isMyApplication } from '@/src/utils/app/id';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
-import {
-  ApplicationStatus,
-  SimpleApplicationStatus,
-} from '@/src/types/applications';
+import { SimpleApplicationStatus } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, ScreenState } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
@@ -68,21 +66,6 @@ const MOBILE_ICON_SIZE = 40;
 const MOBILE_SHARE_ICON_SIZE = 16;
 const TABLET_SHARE_ICON_SIZE = 20;
 const DESKTOP_SHARE_ICON_SIZE = 30;
-
-const getPlayerCaption = (entity: DialAIEntityModel) => {
-  switch (entity.functionStatus) {
-    case ApplicationStatus.DEPLOYED:
-      return 'Undeploy';
-    case ApplicationStatus.UNDEPLOYED:
-    case ApplicationStatus.FAILED:
-      return 'Deploy';
-    case ApplicationStatus.UNDEPLOYING:
-      return 'Undeploying';
-    case ApplicationStatus.DEPLOYING:
-    default:
-      return 'Deploying';
-  }
-};
 
 interface ApplicationCardProps {
   entity: DialAIEntityModel;

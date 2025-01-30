@@ -17,6 +17,7 @@ import classNames from 'classnames';
 import {
   getApplicationNextStatus,
   getApplicationSimpleStatus,
+  getPlayerCaption,
   isApplicationDeploymentInProgress,
   isApplicationStatusUpdating,
   isExecutableApp,
@@ -49,21 +50,8 @@ import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
-const getFunctionTooltip = (entity: DialAIEntityModel) => {
-  switch (entity.functionStatus) {
-    case ApplicationStatus.UNDEPLOYED:
-    case ApplicationStatus.FAILED:
-      return 'Deploy';
-    case ApplicationStatus.DEPLOYED:
-      return 'Undeploy';
-    case ApplicationStatus.DEPLOYING:
-      return 'Deploying';
-    case ApplicationStatus.UNDEPLOYING:
-      return 'Undeploying';
-    default:
-      return '';
-  }
-};
+const getFunctionTooltip = (entity: DialAIEntityModel) =>
+  getPlayerCaption(entity);
 
 const getDisabledTooltip = (entity: DialAIEntityModel, normal: string) => {
   switch (entity.functionStatus) {
@@ -172,7 +160,8 @@ export const ApplicationDetailsFooter = ({
     <section className="flex px-3 py-4 md:px-6">
       <div className="flex w-full items-center justify-between">
         <div className="flex items-center gap-2">
-          {isExecutable && isCodeAppsEnabled && (
+          {/* TODO remove  !entity.sharedWithMe when core issue will be ready #655 */}
+          {!entity.sharedWithMe && isExecutable && isCodeAppsEnabled && (
             <Tooltip tooltip={t(getFunctionTooltip(entity))}>
               <button
                 disabled={playerStatus === SimpleApplicationStatus.UPDATING}

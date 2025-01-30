@@ -2,6 +2,8 @@ import { IconPointFilled } from '@tabler/icons-react';
 
 import classNames from 'classnames';
 
+import { getPlayerCaption } from '@/src/utils/app/application';
+
 import { ApplicationStatus } from '@/src/types/applications';
 import { DialAIEntityModel } from '@/src/types/models';
 
@@ -11,21 +13,8 @@ interface FunctionStatusIndicatorProps {
   entity: DialAIEntityModel;
 }
 
-const getFunctionTooltip = (entity: DialAIEntityModel) => {
-  switch (entity.functionStatus) {
-    case ApplicationStatus.UNDEPLOYED:
-    case ApplicationStatus.FAILED:
-      return 'Undeployed';
-    case ApplicationStatus.DEPLOYED:
-      return 'Deployed';
-    case ApplicationStatus.DEPLOYING:
-      return 'Deploying';
-    case ApplicationStatus.UNDEPLOYING:
-      return 'Undeploying';
-    default:
-      return '';
-  }
-};
+const getFunctionTooltip = (entity: DialAIEntityModel) =>
+  getPlayerCaption(entity);
 
 export const FunctionStatusIndicator = ({
   entity,
