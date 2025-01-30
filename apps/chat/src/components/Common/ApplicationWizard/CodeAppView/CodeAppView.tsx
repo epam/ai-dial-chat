@@ -1,7 +1,7 @@
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getSharedTooltip,
@@ -13,6 +13,7 @@ import {
   ApplicationType,
   CustomApplicationModel,
 } from '@/src/types/applications';
+import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
@@ -24,6 +25,7 @@ import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { IMAGE_TYPES } from '@/src/constants/chat';
@@ -54,6 +56,7 @@ import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { OptionsDialog } from '@/src/components/Common/OptionsDialog';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
+import { ConfirmDialog } from '../../ConfirmDialog';
 import { ViewProps } from '../view-props';
 import { CodeEditor } from './CodeEditor';
 import { RuntimeVersionSelector } from './RuntimeVersionSelector';
@@ -92,6 +95,11 @@ export const CodeAppView: FC<ViewProps> = ({
   const isSharedWithMe = selectedApplication?.sharedWithMe;
 
   const [editorConfirmation, setEditorConfirmation] = useState<FormData>();
+  const [confirmSharingRevoke, setConfirmSharingRevoke] = useState<{
+    description: string;
+    heading: string;
+    data: FormData;
+  }>();
 
   useEffect(() => {
     return () => {
@@ -131,20 +139,11 @@ export const CodeAppView: FC<ViewProps> = ({
     [files],
   );
 
-  const handleSubmit = useCallback(
+  const handleEdit = useCallback(
     (data: FormData) => {
-      const preparedData = getApplicationData(data, type);
+      if (selectedApplication && currentReference) {
+        const preparedData = getApplicationData(data, type);
 
-      if (type === ApplicationType.CODE_APP) {
-        preparedData.functionStatus = selectedApplication?.functionStatus;
-      }
-
-      if (
-        isEdit &&
-        selectedApplication?.name &&
-        currentReference &&
-        selectedApplication.id
-      ) {
         const applicationData: CustomApplicationModel = {
           ...preparedData,
           reference: currentReference,
@@ -158,29 +157,62 @@ export const CodeAppView: FC<ViewProps> = ({
             applicationData,
           }),
         );
-        isAppDeployed &&
+
+        if (isAppDeployed) {
           dispatch(
             UIActions.showWarningToast(
               t('Saved changes will be applied during next deployment'),
             ),
           );
-      } else {
-        dispatch(ApplicationActions.create(preparedData));
-      }
+        }
 
-      onClose(true);
+        onClose(true);
+      }
     },
     [
       currentReference,
       dispatch,
       isAppDeployed,
-      isEdit,
       isSharedWithMe,
       onClose,
       selectedApplication,
       t,
       type,
     ],
+  );
+
+  const handleSubmit = useCallback(
+    (data: FormData) => {
+      const preparedData = getApplicationData(data, type);
+
+      if (type === ApplicationType.CODE_APP) {
+        preparedData.functionStatus = selectedApplication?.functionStatus;
+      }
+
+      if (isEdit) {
+        if (
+          selectedApplication?.isShared &&
+          type === ApplicationType.CODE_APP &&
+          preparedData.function?.sourceFolder !==
+            selectedApplication.function?.sourceFolder
+        ) {
+          setConfirmSharingRevoke({
+            description:
+              'Changing of source folder will stop sharing and other users will no longer see this application.',
+            heading: 'Confirm changing source folder',
+            data,
+          });
+          return;
+        }
+
+        handleEdit(data);
+      } else {
+        dispatch(ApplicationActions.create(preparedData));
+      }
+
+      onClose(true);
+    },
+    [dispatch, handleEdit, isEdit, onClose, selectedApplication, type],
   );
 
   const handleSave = useCallback(
@@ -194,7 +226,7 @@ export const CodeAppView: FC<ViewProps> = ({
   const modalOptions = useMemo(
     () => [
       {
-        label: "Don't save",
+        label: t("Don't save"),
         dataQa: 'not-save-option',
         className: 'button-secondary',
         onClick: () => {
@@ -203,7 +235,7 @@ export const CodeAppView: FC<ViewProps> = ({
         },
       },
       {
-        label: 'Save',
+        label: t('Save'),
         dataQa: 'save-option',
         onClick: () => {
           dispatch(CodeEditorActions.saveAllModifiedFiles());
@@ -212,7 +244,7 @@ export const CodeAppView: FC<ViewProps> = ({
         },
       },
     ],
-    [editorConfirmation, dispatch, handleSubmit],
+    [t, editorConfirmation, handleSubmit, dispatch],
   );
 
   register('sourceFiles', validators['sourceFiles']);
@@ -229,7 +261,7 @@ export const CodeAppView: FC<ViewProps> = ({
             {...register('name', validators['name'])}
             label={t('Name')}
             mandatory
-            placeholder={t('Type name') || ''}
+            placeholder={t('Type name')}
             id="name"
             error={errors.name?.message}
             disabled={isAppDeployed || isSharedWithMe}
@@ -297,7 +329,7 @@ export const CodeAppView: FC<ViewProps> = ({
             info={t(
               'The first paragraph serves as a short description. To create an extended description, enter two line breaks and start the second paragraph.',
             )}
-            placeholder={t('A description of your application') || ''}
+            placeholder={t('A description of your application')}
             rows={3}
             className="resize-none"
             id="description"
@@ -309,13 +341,13 @@ export const CodeAppView: FC<ViewProps> = ({
             control={control}
             render={({ field }) => (
               <ComboBoxField
-                label={t('Attachment types') || ''}
+                label={t('Attachment types')}
                 info={t("Input the MIME type and press 'Enter' to add")}
                 initialSelectedItems={field.value}
                 getItemLabel={(i: unknown) => i as string}
                 getItemValue={(i: unknown) => i as string}
                 onChangeSelectedItems={field.onChange}
-                placeholder={t('Enter one or more attachment types') || ''}
+                placeholder={t('Enter one or more attachment types')}
                 className="input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full"
                 hasDeleteAll
                 hideSuggestions
@@ -328,7 +360,7 @@ export const CodeAppView: FC<ViewProps> = ({
 
           <ControlledField
             label={t('Max. attachments number')}
-            placeholder={t('Enter the maximum number of attachments') || ''}
+            placeholder={t('Enter the maximum number of attachments')}
             id="maxInputAttachments"
             error={errors.maxInputAttachments?.message}
             control={control}
@@ -359,8 +391,8 @@ export const CodeAppView: FC<ViewProps> = ({
 
           <MappingsForm
             label={t('Endpoints')}
-            addLabel={t('Add endpoint') ?? ''}
-            valueLabel={t('Endpoint') ?? ''}
+            addLabel={t('Add endpoint')}
+            valueLabel={t('Endpoint')}
             options={CODE_APPS_ENDPOINTS}
             name="endpoints"
             keyOptions={endpointsKeyValidator}
@@ -371,13 +403,36 @@ export const CodeAppView: FC<ViewProps> = ({
           <MappingsForm
             creatable
             label={t('Environment variables')}
-            addLabel={t('Add variable') ?? ''}
+            addLabel={t('Add variable')}
             name="env"
             keyOptions={envKeysValidator}
             valueOptions={envValueValidator}
             errors={errors.env}
           />
         </div>
+
+        {confirmSharingRevoke && selectedApplication && (
+          <ConfirmDialog
+            isOpen
+            heading={t(confirmSharingRevoke.heading)}
+            description={t(confirmSharingRevoke.description)}
+            confirmLabel={t('Confirm')}
+            cancelLabel={t('Cancel')}
+            onClose={(result) => {
+              if (result) {
+                dispatch(
+                  ShareActions.revokeAccess({
+                    resourceId: selectedApplication.id,
+                    featureType: FeatureType.Application,
+                  }),
+                );
+
+                handleEdit(confirmSharingRevoke.data);
+                setConfirmSharingRevoke(undefined);
+              }
+            }}
+          />
+        )}
 
         <OptionsDialog
           isOpen={!!editorConfirmation}

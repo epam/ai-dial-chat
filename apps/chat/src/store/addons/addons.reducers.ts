@@ -4,6 +4,7 @@ import { translate } from '@/src/utils/app/translation';
 
 import { ErrorMessage } from '@/src/types/error';
 import { DialAIEntityAddon } from '@/src/types/models';
+import { Translation } from '@/src/types/translation';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -68,7 +69,11 @@ export const addonsSlice = createSlice({
         code: payload.error.status?.toString() ?? 'unknown',
         messageLines: payload.error.statusText
           ? [payload.error.statusText]
-          : [translate(errorsMessages.generalServer, { ns: 'common' })],
+          : [
+              translate(errorsMessages.generalServer, {
+                ns: Translation.Common,
+              }),
+            ],
       } as ErrorMessage;
     },
     initRecentAddons: (

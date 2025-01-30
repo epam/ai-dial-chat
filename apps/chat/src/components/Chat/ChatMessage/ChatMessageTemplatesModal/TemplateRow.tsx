@@ -8,9 +8,9 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { templateMatchContent } from '@/src/utils/app/prompts';
@@ -54,11 +54,10 @@ export const TemplateRow = ({
           ? setValidationContentError
           : setValidationTemplateError;
       if (!element.value.trim()) {
-        setMethod(t('Please fill in this required field') ?? '');
+        setMethod(t('Please fill in this required field'));
         return;
       }
-      const foundError =
-        t('This part was not found in the original message') ?? '';
+      const foundError = t('This part was not found in the original message');
       if (
         element === contentRef.current &&
         element.value &&
@@ -74,10 +73,10 @@ export const TemplateRow = ({
         element.value &&
         !PROMPT_VARIABLE_REGEX_TEST.test(element.value)
       ) {
-        setMethod(t('Template must have at least one variable') ?? '');
+        setMethod(t('Template must have at least one variable'));
         return;
       }
-      const matchError = t("Template doesn't match the message text") ?? '';
+      const matchError = t("Template doesn't match the message text");
       if (
         contentRef.current?.value.trim() &&
         templateRef.current?.value.trim() &&
@@ -147,7 +146,7 @@ export const TemplateRow = ({
         <TemplateInput
           value={content}
           dataQA="template-content"
-          placeholder={t('A part of the message') ?? ''}
+          placeholder={t('A part of the message')}
           ref={contentRef}
           onInput={handleChange}
           onBlur={handleBlur}
@@ -156,13 +155,11 @@ export const TemplateRow = ({
         <TemplateInput
           value={template}
           dataQA="template-value"
-          placeholder={
-            t(
-              isSmallScreen()
-                ? 'Your template with {{variable}}'
-                : 'Your template. Use {{}} to denote a variable',
-            ) ?? ''
-          }
+          placeholder={t(
+            isSmallScreen()
+              ? 'Your template with {{variable}}'
+              : 'Your template. Use {{}} to denote a variable',
+          )}
           ref={templateRef}
           onInput={handleChange}
           onBlur={handleBlur}

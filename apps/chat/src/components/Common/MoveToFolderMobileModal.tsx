@@ -1,7 +1,7 @@
 import { IconFolderPlus } from '@tabler/icons-react';
 import { useCallback } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { FolderInterface, MoveToFolderProps } from '@/src/types/folder';
 import { ModalState } from '@/src/types/modal';
