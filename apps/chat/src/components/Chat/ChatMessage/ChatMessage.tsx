@@ -1,6 +1,6 @@
 import { FC, memo, useCallback, useEffect, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
 import { isMobile, isSmallScreen } from '@/src/utils/app/mobile';
@@ -203,9 +203,7 @@ export const ChatMessage: FC<Props> = memo(
         <ConfirmDialog
           isOpen={isDeleteConfirmationOpened}
           heading={t('Confirm deleting message')}
-          description={
-            t('Are you sure that you want to delete the message?') || ''
-          }
+          description={t('Are you sure that you want to delete the message?')}
           confirmLabel={t('Delete')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {

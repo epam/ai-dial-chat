@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   constructPath,
@@ -183,7 +183,7 @@ export const PreUploadDialog = ({
             selectedAttachmentsAmount:
               selectedFiles.length + attachments.length,
           },
-        ) as string,
+        ),
       );
     }
     const { filesWithNotAllowedSymbols, filesWithDotInTheEnd } =
@@ -204,7 +204,7 @@ export const PreUploadDialog = ({
             notAllowedSymbols,
             fileNames: filesWithNotAllowedSymbolsNames.join(', '),
           },
-        ) as string,
+        ),
       );
     } else {
       if (filesWithNotAllowedSymbolsNames.length) {
@@ -215,7 +215,7 @@ export const PreUploadDialog = ({
               notAllowedSymbols,
               fileNames: filesWithNotAllowedSymbolsNames.join(', '),
             },
-          ) as string,
+          ),
         );
       }
 
@@ -226,7 +226,7 @@ export const PreUploadDialog = ({
             {
               fileNames: filesWithDotInTheEndNames.join(', '),
             },
-          ) as string,
+          ),
         );
       }
     }
@@ -245,7 +245,7 @@ export const PreUploadDialog = ({
         t(
           `${errors.length ? '\n' : ''}Files which you trying to upload already presented in selected folder. Please rename or delete them from uploading files list: {{fileNames}}`,
           { fileNames: localIncorrectSameNameFiles.join(', ') },
-        ) as string,
+        ),
       );
     }
 
@@ -259,7 +259,7 @@ export const PreUploadDialog = ({
           {
             fileNames: duplicateNames.join(', '),
           },
-        ) as string,
+        ),
       );
     }
 

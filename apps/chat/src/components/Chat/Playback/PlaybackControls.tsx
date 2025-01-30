@@ -8,15 +8,17 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getConfigurationValue,
   getMessageFormValue,
 } from '@/src/utils/app/form-schema';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
+
+import { Translation } from '@/src/types/translation';
 
 import { ChatActions } from '@/src/store/chat/chat.reducer';
 import {
@@ -51,7 +53,7 @@ export const PlaybackControls = ({
   nextMessageBoxRef,
   showScrollDownButton,
 }: Props) => {
-  const { t } = useTranslation('playback');
+  const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,

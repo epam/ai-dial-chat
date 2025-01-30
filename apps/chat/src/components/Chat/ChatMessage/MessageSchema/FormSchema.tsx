@@ -1,8 +1,8 @@
 import { memo, useCallback, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getFormButtonType } from '@/src/utils/app/form-schema';
 

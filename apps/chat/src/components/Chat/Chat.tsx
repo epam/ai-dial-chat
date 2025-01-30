@@ -9,9 +9,9 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import {
@@ -907,7 +907,7 @@ export function Chat() {
       <div className="h-screen pt-2">
         <NotFoundEntity
           entity={t('Agent is')}
-          additionalText={t('Please contact your administrator.') || ''}
+          additionalText={t('Please contact your administrator.')}
         />
       </div>
     );
@@ -930,7 +930,7 @@ export function Chat() {
     return (
       <NotFoundEntity
         entity={t('Conversation')}
-        additionalText={t('Please select another conversation.') || ''}
+        additionalText={t('Please select another conversation.')}
       />
     );
   }

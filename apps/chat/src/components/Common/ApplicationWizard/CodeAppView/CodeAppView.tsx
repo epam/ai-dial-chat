@@ -1,7 +1,7 @@
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getSharedTooltip,
@@ -261,7 +261,7 @@ export const CodeAppView: FC<ViewProps> = ({
             {...register('name', validators['name'])}
             label={t('Name')}
             mandatory
-            placeholder={t('Type name') || ''}
+            placeholder={t('Type name')}
             id="name"
             error={errors.name?.message}
             disabled={isAppDeployed || isSharedWithMe}
@@ -329,7 +329,7 @@ export const CodeAppView: FC<ViewProps> = ({
             info={t(
               'The first paragraph serves as a short description. To create an extended description, enter two line breaks and start the second paragraph.',
             )}
-            placeholder={t('A description of your application') || ''}
+            placeholder={t('A description of your application')}
             rows={3}
             className="resize-none"
             id="description"
@@ -341,13 +341,13 @@ export const CodeAppView: FC<ViewProps> = ({
             control={control}
             render={({ field }) => (
               <ComboBoxField
-                label={t('Attachment types') || ''}
+                label={t('Attachment types')}
                 info={t("Input the MIME type and press 'Enter' to add")}
                 initialSelectedItems={field.value}
                 getItemLabel={(i: unknown) => i as string}
                 getItemValue={(i: unknown) => i as string}
                 onChangeSelectedItems={field.onChange}
-                placeholder={t('Enter one or more attachment types') || ''}
+                placeholder={t('Enter one or more attachment types')}
                 className="input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full"
                 hasDeleteAll
                 hideSuggestions
@@ -360,7 +360,7 @@ export const CodeAppView: FC<ViewProps> = ({
 
           <ControlledField
             label={t('Max. attachments number')}
-            placeholder={t('Enter the maximum number of attachments') || ''}
+            placeholder={t('Enter the maximum number of attachments')}
             id="maxInputAttachments"
             error={errors.maxInputAttachments?.message}
             control={control}
@@ -391,8 +391,8 @@ export const CodeAppView: FC<ViewProps> = ({
 
           <MappingsForm
             label={t('Endpoints')}
-            addLabel={t('Add endpoint') ?? ''}
-            valueLabel={t('Endpoint') ?? ''}
+            addLabel={t('Add endpoint')}
+            valueLabel={t('Endpoint')}
             options={CODE_APPS_ENDPOINTS}
             name="endpoints"
             keyOptions={endpointsKeyValidator}
@@ -403,7 +403,7 @@ export const CodeAppView: FC<ViewProps> = ({
           <MappingsForm
             creatable
             label={t('Environment variables')}
-            addLabel={t('Add variable') ?? ''}
+            addLabel={t('Add variable')}
             name="env"
             keyOptions={envKeysValidator}
             valueOptions={envValueValidator}
@@ -415,7 +415,7 @@ export const CodeAppView: FC<ViewProps> = ({
           <ConfirmDialog
             isOpen
             heading={t(confirmSharingRevoke.heading)}
-            description={t(confirmSharingRevoke.description) ?? ''}
+            description={t(confirmSharingRevoke.description)}
             confirmLabel={t('Confirm')}
             cancelLabel={t('Cancel')}
             onClose={(result) => {

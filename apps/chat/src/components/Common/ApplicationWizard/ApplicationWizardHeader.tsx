@@ -1,7 +1,7 @@
 import { IconX } from '@tabler/icons-react';
 import { FC } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { ApplicationType } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
