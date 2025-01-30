@@ -1,4 +1,4 @@
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';

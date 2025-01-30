@@ -22,7 +22,6 @@ import { Feature } from '@epam/ai-dial-shared';
 
 function Marketplace() {
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
-
   const isMarketplaceEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
   );

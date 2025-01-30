@@ -1,7 +1,7 @@
 import { IconMessage2 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getApplicationType } from '@/src/utils/app/application';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
@@ -158,8 +158,8 @@ const ResultsView = ({
   if (areAllFiltersEmpty) {
     return (
       <NoAgentsFound
-        header={t('No agents') ?? ''}
-        desc={t("You don't have any agents.") ?? ''}
+        header={t('No agents')}
+        desc={t("You don't have any agents.")}
       >
         <IconMessage2 size={100} className="stroke-[0.2]" />
       </NoAgentsFound>

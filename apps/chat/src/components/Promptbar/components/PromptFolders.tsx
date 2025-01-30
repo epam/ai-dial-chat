@@ -7,9 +7,8 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import { useSectionToggle } from '@/src/hooks/useSectionToggle';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { sortByName } from '@/src/utils/app/folders';
@@ -173,7 +172,7 @@ const PromptFolderTemplate = ({
         dispatch(
           UIActions.showErrorToast(
             t('Folder with name "{{name}}" already exists at the root.', {
-              ns: 'folder',
+              ns: Translation.Chat,
               name: folder.name,
             }),
           ),

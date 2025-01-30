@@ -1,8 +1,8 @@
 import { memo, useCallback, useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getConfigurationSchema,
@@ -83,7 +83,7 @@ const UserSchemaView = memo(function UserSchemaView({
   }, [formValue, schema]);
 
   if (!schema && formValue)
-    return <ErrorMessage error={t('Form schema is missing') ?? ''} />;
+    return <ErrorMessage error={t('Form schema is missing')} />;
 
   if (!formValue || !schema) return null;
 
@@ -139,7 +139,7 @@ export const UserSchema = memo(function UserSchema(props: UserSchemaProps) {
   if (schema && !isFormSchemaValid(schema))
     return (
       <div className="mt-2">
-        <ErrorMessage error={t('Form schema is invalid') ?? ''} />
+        <ErrorMessage error={t('Form schema is invalid')} />
       </div>
     );
 

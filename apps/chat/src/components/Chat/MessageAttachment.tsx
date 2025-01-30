@@ -3,9 +3,9 @@ import { IconDownload, IconFile, IconFolder } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { PlotParams } from 'react-plotly.js';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
 
@@ -328,7 +328,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
                 ? 'max-w-full'
                 : 'max-w-[calc(100%-30px)]',
             )}
-            title={attachment.title || attachment.url || t('Attachment') || ''}
+            title={attachment.title || attachment.url || t('Attachment')}
           >
             {attachment.title || attachment.url || t('Attachment')}
           </span>

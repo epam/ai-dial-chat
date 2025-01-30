@@ -12,7 +12,7 @@ import {
 } from '@tabler/icons-react';
 import { MouseEventHandler, useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   hasInvalidNameInPath,

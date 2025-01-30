@@ -10,6 +10,7 @@ import {
   InstalledModel,
   PublishRequestDialAIEntityModel,
 } from '@/src/types/models';
+import { Translation } from '@/src/types/translation';
 
 import { RECENT_MODELS_COUNT } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
@@ -112,7 +113,11 @@ export const modelsSlice = createSlice({
         code: payload.error.status?.toString() ?? 'unknown',
         messageLines: payload.error.statusText
           ? [payload.error.statusText]
-          : [translate(errorsMessages.generalServer, { ns: 'common' })],
+          : [
+              translate(errorsMessages.generalServer, {
+                ns: Translation.Common,
+              }),
+            ],
       } as ErrorMessage;
     },
 
