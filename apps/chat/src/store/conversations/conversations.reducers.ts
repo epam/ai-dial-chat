@@ -101,43 +101,54 @@ export const conversationsSlice = createSlice({
       });
       state.isNewConversationUpdating = false;
     },
-    recreateConversation: (
+    moveConversation: (
       state,
-      action: PayloadAction<{ new: Conversation; old: Conversation }>,
-    ) => {
-      if (!action.payload.old.messages.length) {
-        state.isNewConversationUpdating = true;
-      }
-    },
-    recreateConversationFail: (
+      _action: PayloadAction<{
+        conversation: ConversationInfo;
+        newValues: Partial<ConversationInfo>;
+      }>,
+    ) => state,
+    moveConversationRegenerated: (
       state,
       {
         payload,
       }: PayloadAction<{
-        newId: string;
-        oldConversation: Conversation;
+        oldConversation: ConversationInfo;
+        newConversation: ConversationInfo;
       }>,
     ) => {
-      state.isNewConversationUpdating = false;
       state.conversations = state.conversations.map((conv) => {
-        if (conv.id === payload.newId) {
-          const conversation = conv as Conversation;
-          return {
-            ...conversation,
-            ...payload.oldConversation,
-            messages: conversation.messages,
-            isMessageStreaming: false,
-          };
+        if (payload.oldConversation.id === conv.id) {
+          return payload.newConversation;
         }
 
         return conv;
       });
+      state.selectedConversationsIds = state.selectedConversationsIds.map(
+        (id) =>
+          id === payload.oldConversation.id ? payload.newConversation.id : id,
+      );
+    },
+    moveConversationFail: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        oldConversation: ConversationInfo;
+        newConversation: ConversationInfo;
+      }>,
+    ) => {
+      state.conversations = state.conversations.map((conv) => {
+        if (payload.newConversation.id === conv.id) {
+          return payload.oldConversation;
+        }
 
-      if (payload.newId !== payload.oldConversation.id) {
-        state.selectedConversationsIds = state.selectedConversationsIds.map(
-          (id) => (id === payload.newId ? payload.oldConversation.id! : id),
-        );
-      }
+        return conv;
+      });
+      state.selectedConversationsIds = state.selectedConversationsIds.map(
+        (id) =>
+          id === payload.newConversation.id ? payload.oldConversation.id : id,
+      );
     },
     updateConversation: (
       state,

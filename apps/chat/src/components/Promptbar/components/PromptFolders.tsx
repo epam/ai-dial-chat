@@ -133,11 +133,9 @@ const PromptFolderTemplate = ({
         if (promptData) {
           const prompt: PromptInfo = JSON.parse(promptData);
           dispatch(
-            PromptsActions.updatePrompt({
-              id: prompt.id,
-              values: {
-                folderId: folder.id,
-              },
+            PromptsActions.movePrompt({
+              prompt,
+              newValues: { folderId: folder.id },
             }),
           );
         } else if (folderData) {

@@ -864,9 +864,9 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
             conversations.forEach((conversation) => {
               actions.push(
                 of(
-                  ConversationsActions.updateConversation({
-                    id: conversation.id,
-                    values: {
+                  ConversationsActions.moveConversation({
+                    conversation,
+                    newValues: {
                       folderId: updateFolderId(conversation.folderId),
                     },
                   }),
@@ -1278,7 +1278,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
                 true,
               );
 
-        const updatedConversation: Conversation = regenerateConversationId({
+        const updatedConversation = regenerateConversationId<Conversation>({
           ...payload.conversation,
           lastActivityDate: Date.now(),
           replay: payload.conversation.replay
@@ -1308,12 +1308,24 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
 
         return concat(
           ...actions,
-          of(
-            ConversationsActions.updateConversation({
-              id: payload.conversation.id,
-              values: updatedConversation,
-            }),
+          iif(
+            () =>
+              newConversationName !== payload.conversation.name &&
+              !isEntityIdLocal(payload.conversation),
+            of(
+              ConversationsActions.moveConversation({
+                conversation: payload.conversation,
+                newValues: updatedConversation,
+              }),
+            ),
+            of(
+              ConversationsActions.updateConversation({
+                id: payload.conversation.id,
+                values: updatedConversation,
+              }),
+            ),
           ),
+
           of(
             ModelsActions.updateRecentModels({
               modelId: updatedConversation.model.id,
@@ -2319,35 +2331,67 @@ const saveConversationEpic: AppEpic = (action$) =>
     }),
   );
 
-const recreateConversationEpic: AppEpic = (action$) =>
+const moveConversationEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ConversationsActions.recreateConversation.match),
-    mergeMap(({ payload }) => {
-      return ConversationService.createConversation(payload.new).pipe(
+    filter(ConversationsActions.moveConversation.match),
+    map(({ payload }) =>
+      ConversationsActions.moveConversationRegenerated({
+        oldConversation: payload.conversation,
+        newConversation: regenerateConversationId({
+          ...payload.conversation,
+          ...payload.newValues,
+        }),
+      }),
+    ),
+  );
+
+const moveConversationRegeneratedEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.moveConversationRegenerated.match),
+    switchMap(({ payload }) => {
+      if (isEntityIdLocal(payload.oldConversation)) {
+        return of(
+          ConversationsActions.updateConversation({
+            id: payload.oldConversation.id,
+            values: payload.newConversation,
+          }),
+        );
+      }
+
+      if (payload.newConversation.id === payload.oldConversation.id) {
+        return EMPTY;
+      }
+
+      return ConversationService.moveConversation({
+        sourceUrl: payload.oldConversation.id,
+        destinationUrl: payload.newConversation.id,
+        overwrite: false,
+      }).pipe(
         switchMap(() =>
-          ConversationService.deleteConversation(
-            getConversationInfoFromId(payload.old.id),
+          of(
+            ConversationsActions.updateConversation({
+              id: payload.newConversation.id,
+              values: payload.newConversation,
+            }),
           ),
         ),
-        switchMap(() => of(ConversationsActions.saveConversationSuccess())),
-        catchError((err) => {
-          console.error(err);
-          return concat(
-            of(
-              ConversationsActions.recreateConversationFail({
-                newId: payload.new.id,
-                oldConversation: payload.old,
-              }),
-            ),
-            of(
-              UIActions.showErrorToast(
-                translate(
-                  'An error occurred while saving the conversation. Please refresh the page.',
-                ),
-              ),
-            ),
-          );
+        catchError(() => {
+          return of(ConversationsActions.moveConversationFail(payload));
         }),
+      );
+    }),
+  );
+
+const moveConversationFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.moveConversationFail.match),
+    switchMap(() => {
+      return of(
+        UIActions.showErrorToast(
+          translate(
+            'It looks like conversation already exist. Please reload the page',
+          ),
+        ),
       );
     }),
   );
@@ -2369,33 +2413,23 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
           ),
         );
       }
-      const newConversation: Conversation = regenerateConversationId({
-        ...(conversation as Conversation),
-        ...values,
-        lastActivityDate: Date.now(),
-      });
 
       return concat(
         iif(
-          () => !!conversation && conversation.id !== newConversation.id,
+          () => !conversation.isPlayback || values.isPlayback === false,
           of(
-            ConversationsActions.recreateConversation({
-              new: newConversation,
-              old: conversation,
+            ConversationsActions.saveConversation({
+              ...conversation,
+              ...values,
             }),
           ),
-          iif(
-            () => !newConversation.isPlayback,
-            of(ConversationsActions.saveConversation(newConversation)),
-            EMPTY,
-          ),
+          EMPTY,
         ),
         of(
           ConversationsActions.updateConversationSuccess({
             id,
             conversation: {
               ...values,
-              id: newConversation.id,
             },
           }),
         ),
@@ -3012,17 +3046,15 @@ const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
           iif(
             () => !!conversation,
             of(
-              ConversationsActions.updateConversation({
-                id: conversation?.id as string,
-                values: {
-                  ...(conversation
-                    ? getConversationModelParams(
-                        conversation as Conversation,
-                        modelToApply?.reference,
-                        modelsMap,
-                        addonsMap,
-                      )
-                    : {}),
+              ConversationsActions.moveConversation({
+                conversation: conversation!,
+                newValues: {
+                  ...getConversationModelParams(
+                    conversation as Conversation,
+                    modelToApply?.reference,
+                    modelsMap,
+                    addonsMap,
+                  ),
                 },
               }),
             ),
@@ -3172,10 +3204,12 @@ export const ConversationsEpics = combineEpics(
   initFoldersAndConversationsEpic,
 
   // update
+  moveConversationEpic,
+  moveConversationRegeneratedEpic,
+  moveConversationFailEpic,
   updateConversationEpic,
   updateLocalConversationEpic,
   saveConversationEpic,
-  recreateConversationEpic,
   createNewConversationsEpic,
   applyMarketplaceModelEpic,
   applyMarketplaceModelSuccessEpic,

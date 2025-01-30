@@ -42,13 +42,12 @@ export const RenameConversationModal = () => {
 
 const RenameConversationView = () => {
   const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const allConversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );
-
   const renamingConversation = useAppSelector(
     ConversationsSelectors.selectRenamingConversation,
   );
@@ -56,6 +55,8 @@ const RenameConversationView = () => {
   const [newConversationName, setNewConversationName] = useState('');
   const [isConfirmRenaming, setIsConfirmRenaming] = useState(false);
   const [originConversationName, setOriginConversationName] = useState('');
+
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (renamingConversation) {
@@ -82,13 +83,9 @@ const RenameConversationView = () => {
       if (!name.trim()) return;
       if (name.length > 0 && renamingConversation) {
         dispatch(
-          ConversationsActions.updateConversation({
-            id: renamingConversation.id,
-            values: {
-              name,
-              isNameChanged: true,
-              isShared: false,
-            },
+          ConversationsActions.moveConversation({
+            conversation: renamingConversation,
+            newValues: { name },
           }),
         );
         dispatch(ConversationsActions.setRenamingConversationId(null));

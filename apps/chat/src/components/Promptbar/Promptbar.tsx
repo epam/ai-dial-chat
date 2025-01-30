@@ -167,9 +167,9 @@ const Promptbar = () => {
             }),
           );
           dispatch(
-            PromptsActions.updatePrompt({
-              id: prompt.id,
-              values: { folderId },
+            PromptsActions.movePrompt({
+              prompt,
+              newValues: { folderId },
             }),
           );
         }

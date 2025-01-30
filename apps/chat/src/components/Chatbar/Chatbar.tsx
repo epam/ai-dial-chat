@@ -162,9 +162,9 @@ export const Chatbar = () => {
             }),
           );
           dispatch(
-            ConversationsActions.updateConversation({
-              id: conversation.id,
-              values: { folderId },
+            ConversationsActions.moveConversation({
+              conversation,
+              newValues: { folderId },
             }),
           );
           dispatch(ConversationsActions.resetSearch());
