@@ -1,9 +1,9 @@
 import { IconX } from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isMediumScreen, isSmallScreen } from '@/src/utils/app/mobile';
 import { centralChatWidth, getNewSidebarWidth } from '@/src/utils/app/sidebar';

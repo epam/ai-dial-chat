@@ -1,6 +1,6 @@
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { updateEntitiesFoldersAndIds } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
@@ -159,7 +159,7 @@ export const ChangePathDialog = ({
       setSelectedFolderId(newFolderId);
 
       if (error) {
-        setErrorMessage(t(error) as string);
+        setErrorMessage(t(error));
         return;
       }
       const { updatedOpenedFoldersIds } = updateEntitiesFoldersAndIds(

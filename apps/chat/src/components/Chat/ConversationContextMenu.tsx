@@ -7,9 +7,8 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import { useScreenState } from '@/src/hooks/useScreenState';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
@@ -35,6 +34,7 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
@@ -92,6 +92,12 @@ export const ConversationContextMenu = ({
   const allConversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );
+  const resourceToReview = useAppSelector((state) =>
+    PublicationSelectors.selectResourceToReviewByReviewUrl(
+      state,
+      conversation.id,
+    ),
+  );
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Chat),
   );
@@ -132,6 +138,9 @@ export const ConversationContextMenu = ({
   const isEmptyConversation = !(
     (conversation as Conversation).messages?.length > 0
   );
+
+  const isUnpublishVisible =
+    !(isHeaderMenu && resourceToReview) && !isReplay && !publicationUrl;
 
   const dismiss = useDismiss(context);
   const { getFloatingProps } = useInteractions([dismiss]);
@@ -201,7 +210,7 @@ export const ConversationContextMenu = ({
             t(
               'Conversation with name "{{name}}" already exists in this folder.',
               {
-                ns: 'chat',
+                ns: Translation.Chat,
                 name: conversation.name,
               },
             ),
@@ -372,9 +381,7 @@ export const ConversationContextMenu = ({
           onShare={!isReplay ? handleOpenSharing : undefined}
           onUnshare={!isReplay ? handleUnshare : undefined}
           onPublish={!isReplay ? handleOpenPublishing : undefined}
-          onUnpublish={
-            isReplay || publicationUrl ? undefined : handleOpenUnpublishing
-          }
+          onUnpublish={isUnpublishVisible ? handleOpenUnpublishing : undefined}
           onOpenChange={setIsOpen}
           isOpen={isOpen}
           isLoading={conversation.status !== UploadStatus.LOADED}
@@ -420,9 +427,9 @@ export const ConversationContextMenu = ({
           heading={t('Confirm unsharing: {{conversationName}}', {
             conversationName: conversation.name,
           })}
-          description={
-            t('Are you sure that you want to unshare this conversation?') || ''
-          }
+          description={t(
+            'Are you sure that you want to unshare this conversation?',
+          )}
           confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {

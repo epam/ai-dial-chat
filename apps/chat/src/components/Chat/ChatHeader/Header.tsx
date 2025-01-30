@@ -6,12 +6,11 @@ import {
 } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 import { useScreenState } from '@/src/hooks/useScreenState';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
 import {
@@ -454,9 +453,7 @@ export const ChatHeader = Inversify.register(
         <ConfirmDialog
           isOpen={isClearConversationModalOpen}
           heading={t('Confirm deleting all messages in the conversation')}
-          description={
-            t('Are you sure that you want to delete all messages?') || ''
-          }
+          description={t('Are you sure that you want to delete all messages?')}
           confirmLabel={t('Delete')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {
