@@ -107,7 +107,7 @@ dialTest(
         initialConversationName,
       );
       await chatMessagesAssertion.assertMessageContent(2, 'Response');
-      await conversationAssertion.assertEntitiesCount(4);
+      await conversationAssertion.assertEntitiesCount(1);
     });
 
     await dialTest.step(
@@ -122,7 +122,7 @@ dialTest(
           initialConversationName,
         );
         await chatMessagesAssertion.assertMessageContent(2, 'Response');
-        await conversationAssertion.assertEntitiesCount(4);
+        await conversationAssertion.assertEntitiesCount(1);
         await conversationAssertion.assertSelectedConversation(
           initialConversationName,
         );
@@ -166,7 +166,7 @@ dialTest(
         await conversationAssertion.assertSelectedConversation(
           initialConversationName,
         );
-        await conversationAssertion.assertEntitiesCount(4);
+        await conversationAssertion.assertEntitiesCount(1);
       },
     );
 
