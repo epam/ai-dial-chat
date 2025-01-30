@@ -2,7 +2,7 @@ import Editor from '@monaco-editor/react';
 import React, { useCallback, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip, topicToOption } from '@/src/utils/app/application';
 
@@ -128,7 +128,7 @@ export const QuickAppView: React.FC<ViewProps> = ({
           {...register('name', { ...validators['name'] })}
           label={t('Name')}
           mandatory
-          placeholder={t('Type name') || ''}
+          placeholder={t('Type name')}
           id="name"
           error={errors.name?.message}
           disabled={isSharedWithMe}
@@ -222,7 +222,7 @@ export const QuickAppView: React.FC<ViewProps> = ({
           info={t(
             'The first paragraph serves as a short description. To create an extended description, enter two line breaks and start the second paragraph.',
           )}
-          placeholder={t('A description of your application') || ''}
+          placeholder={t('A description of your application')}
           rows={3}
           className="resize-none"
           id="description"
@@ -259,7 +259,7 @@ export const QuickAppView: React.FC<ViewProps> = ({
         <FieldTextArea
           {...register('instructions')}
           label={t('Instructions')}
-          placeholder={t('Instructions of your application') || ''}
+          placeholder={t('Instructions of your application')}
           rows={4}
           className="resize-none"
           id="instructions"
@@ -270,7 +270,7 @@ export const QuickAppView: React.FC<ViewProps> = ({
           control={control}
           render={({ field }) => (
             <Slider
-              label={t('Temperature') || ''}
+              label={t('Temperature')}
               temperature={field.value}
               onChangeTemperature={field.onChange}
             />

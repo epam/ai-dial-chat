@@ -2,10 +2,11 @@ import { IconSearch } from '@tabler/icons-react';
 import { MouseEvent, useCallback, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
-import { useTranslation } from 'next-i18next';
 import Link from 'next/link';
 
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getApplicationType } from '@/src/utils/app/application';
 import {
@@ -138,10 +139,9 @@ const TalkToModalView = ({
       orderedModels.unshift({
         id: REPLAY_AS_IS_MODEL,
         name: t('Replay as is'),
-        description:
-          t(
-            'This mode replicates user requests from the original conversation including settings set in each message.',
-          ) ?? '',
+        description: t(
+          'This mode replicates user requests from the original conversation including settings set in each message.',
+        ),
         reference: REPLAY_AS_IS_MODEL,
         type: EntityType.Model,
         isDefault: false,
@@ -151,10 +151,9 @@ const TalkToModalView = ({
         id: conversation.model.id,
         name: conversation.model.id,
         reference: conversation.model.id,
-        description:
-          t('chat.error.incorrect-selected', {
-            context: EntityType.Model,
-          }) ?? '',
+        description: t('chat.error.incorrect-selected', {
+          context: EntityType.Model,
+        }),
         type: EntityType.Model,
         isDefault: false,
       });
@@ -295,7 +294,7 @@ const TalkToModalView = ({
         <input
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder={t('Search') ?? ''}
+          placeholder={t('Search')}
           className="input-form peer m-0 pl-[38px]"
           data-qa="search-agents"
         />
@@ -339,19 +338,17 @@ const TalkToModalView = ({
         <ConfirmDialog
           isOpen
           heading={t('Confirm deleting application')}
-          description={
-            t(
-              'Are you sure you want to delete the {{modelName}}{{modelVersion}}?',
-              {
-                modelName: deleteModel.name,
-                modelVersion: deleteModel.version
-                  ? t(' (version {{version}})', {
-                      version: deleteModel.version,
-                    })
-                  : '',
-              },
-            ) ?? ''
-          }
+          description={t(
+            'Are you sure you want to delete the {{modelName}}{{modelVersion}}?',
+            {
+              modelName: deleteModel.name,
+              modelVersion: deleteModel.version
+                ? t(' (version {{version}})', {
+                    version: deleteModel.version,
+                  })
+                : '',
+            },
+          )}
           confirmLabel={t('Delete')}
           onClose={handleDeleteClose}
           cancelLabel={t('Cancel')}
@@ -379,11 +376,9 @@ const TalkToModalView = ({
           heading={t('Confirm model changing')}
           confirmLabel={t('Confirm')}
           cancelLabel={t('Cancel')}
-          description={
-            t(
-              'Model changing will stop sharing and other users will no longer see this conversation.',
-            ) || ''
-          }
+          description={t(
+            'Model changing will stop sharing and other users will no longer see this conversation.',
+          )}
           onClose={(result) => {
             if (result && sharedConversationNewModel) {
               handleUpdateConversationModel(sharedConversationNewModel);

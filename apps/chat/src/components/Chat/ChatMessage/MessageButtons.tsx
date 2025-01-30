@@ -10,9 +10,9 @@ import {
 } from '@tabler/icons-react';
 import { ButtonHTMLAttributes, FC } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getMessageCustomContent } from '@/src/utils/server/chat';
 

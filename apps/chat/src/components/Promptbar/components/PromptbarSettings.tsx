@@ -7,7 +7,7 @@ import {
 } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getPromptRootId } from '@/src/utils/app/id';
 
@@ -138,9 +138,9 @@ export function PromptbarSettings() {
       <ConfirmDialog
         isOpen={isClearModalOpen}
         heading={t(`Confirm deleting ${deleteTerm} prompts`)}
-        description={
-          t(`Are you sure that you want to delete ${deleteTerm} prompts?`) || ''
-        }
+        description={t(
+          `Are you sure that you want to delete ${deleteTerm} prompts?`,
+        )}
         confirmLabel={t('Delete')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {

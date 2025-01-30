@@ -1,4 +1,4 @@
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
@@ -11,11 +11,9 @@ export const SchemaCompareWarning = () => {
     <div className="flex justify-center">
       <div className="max-w-2xl">
         <ErrorMessage
-          error={
-            t(
-              'Compare Mode is unavailable with agents requiring a configuration. Please either select a single chat or switch to agents without configuration schema to continue.',
-            ) ?? ''
-          }
+          error={t(
+            'Compare Mode is unavailable with agents requiring a configuration. Please either select a single chat or switch to agents without configuration schema to continue.',
+          )}
           type="warning"
         />
       </div>

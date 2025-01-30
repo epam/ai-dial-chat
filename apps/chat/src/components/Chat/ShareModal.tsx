@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { constructPath } from '@/src/utils/app/file';
 import { getShareType } from '@/src/utils/app/share';

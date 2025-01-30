@@ -7,7 +7,7 @@ import {
 } from '@tabler/icons-react';
 import { FC, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { CopyTableType } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
