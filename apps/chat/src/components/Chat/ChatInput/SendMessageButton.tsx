@@ -4,7 +4,11 @@ import {
   IconSend,
 } from '@tabler/icons-react';
 
+import { useTranslation } from 'next-i18next';
+
 import classNames from 'classnames';
+
+import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
@@ -28,6 +32,8 @@ interface Props {
 export const SendMessageButton = Inversify.register(
   'SendMessageButton',
   ({ isLastMessageError, onSend, isDisabled, tooltip, isLoading }: Props) => {
+    const { t } = useTranslation(Translation.Chat);
+
     const isModelsLoading = useAppSelector(
       ModelsSelectors.selectModelsIsLoading,
     );
@@ -52,6 +58,7 @@ export const SendMessageButton = Inversify.register(
             isLastMessageError && 'text-error',
             isOverlay ? 'right-3' : 'right-4',
           )}
+          aria-label={`${t('Send a message')}`}
           onClick={onSend}
           data-qa="regenerate"
         >
@@ -73,6 +80,7 @@ export const SendMessageButton = Inversify.register(
           'absolute top-[calc(50%_-_12px)] rounded hover:text-accent-primary disabled:cursor-not-allowed disabled:text-secondary',
           isOverlay ? 'right-3' : 'right-4',
         )}
+        aria-label={`${t('Send a message')}`}
         onClick={onSend}
         disabled={disabled}
         data-qa={dataQa}
