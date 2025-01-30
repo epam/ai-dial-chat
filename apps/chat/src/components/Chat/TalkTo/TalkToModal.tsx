@@ -3,12 +3,17 @@ import { MouseEvent, useCallback, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getApplicationType } from '@/src/utils/app/application';
+import {
+  getApplicationType,
+  isApplicationType,
+} from '@/src/utils/app/application';
+import { encrypt } from '@/src/utils/app/application-type-schema';
 import {
   getConversationModelParams,
   groupModelsAndSaveOrder,
@@ -227,13 +232,22 @@ const TalkToModalView = ({
       handleUpdateConversationModel,
     ],
   );
+  const router = useRouter();
 
   const handleEditApplication = useCallback(
     (entity: DialAIEntityModel) => {
-      dispatch(ApplicationActions.get({ applicationId: entity.id }));
-      setEditModel(entity);
+      const applicationType = getApplicationType(entity);
+      router.push({
+        pathname: `/apps-editor/[slug]/settings`,
+        query: {
+          id: encodeURIComponent(entity.id),
+          slug: isApplicationType(applicationType)
+            ? applicationType
+            : encrypt(applicationType ?? ''),
+        },
+      });
     },
-    [dispatch],
+    [router],
   );
 
   const handleCloseEditDialog = useCallback(
