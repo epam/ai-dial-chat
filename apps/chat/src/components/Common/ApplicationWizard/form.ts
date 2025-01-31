@@ -101,10 +101,19 @@ export const validators: Validators = {
     validate: (v) => {
       const reg = /^[0-9]+\.[0-9]+\.[0-9]+$/;
 
-      return (
-        reg.test(v) ||
-        'Version should be in x.y.z format and contain only numbers and dots.'
-      );
+      if (!reg.test(v)) {
+        return 'Version should be in x.y.z format and contain only numbers and dots.';
+      }
+
+      const parts = v.split('.');
+
+      for (const part of parts) {
+        if (part.length > 5) {
+          return 'Each part of the version should contain no more than five numbers.';
+        }
+      }
+
+      return true;
     },
     setValueAs: (v) => {
       return (v as string).replace(/[^0-9.]/g, '');
