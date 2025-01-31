@@ -28,10 +28,12 @@ import { splitEntityId } from '@/src/utils/app/folders';
 import {
   isApplicationId,
   isConversationId,
+  isEntityIdExternal,
   isFolderId,
   isPromptId,
 } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { hasWritePermission } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils, parseConversationApiKey } from '@/src/utils/server/api';
@@ -331,10 +333,23 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
         },
       ];
 
+      const actions: Observable<AnyAction>[] = [];
+
       if (application?.iconUrl) {
-        resources.push({
-          url: ApiUtils.encodeApiUrl(application.iconUrl),
-        });
+        const iconId = application.iconUrl;
+        if (isEntityIdExternal({ id: iconId })) {
+          actions.push(
+            of(
+              UIActions.showWarningToast(
+                `The icon used for this application is in the "${isEntityIdPublic({ id: iconId }) ? 'Organization' : 'Shared with me'}" section and cannot be shared. Please replace the icon, otherwise the application will be shared with the default one.`,
+              ),
+            ),
+          );
+        } else {
+          resources.push({
+            url: ApiUtils.encodeApiUrl(iconId),
+          });
+        }
       }
 
       if (
@@ -344,7 +359,7 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
       ) {
         resources.push({
           url:
-            ApiUtils.encodeApiUrl(applicationDetails?.function?.sourceFolder) +
+            ApiUtils.encodeApiUrl(applicationDetails.function.sourceFolder) +
             '/',
           permissions: payload.permissions,
         });
@@ -354,11 +369,16 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
         invitationType: ShareRequestType.link,
         resources,
       }).pipe(
-        map((response: ShareByLinkResponseModel) => {
-          return ShareActions.shareSuccess({
-            invitationId: response.invitationLink.split('/').slice(-1)?.[0],
-            permissions: payload.permissions,
-          });
+        switchMap((response: ShareByLinkResponseModel) => {
+          return concat(
+            of(
+              ShareActions.shareSuccess({
+                invitationId: response.invitationLink.split('/').slice(-1)?.[0],
+                permissions: payload.permissions,
+              }),
+            ),
+            ...actions,
+          );
         }),
         catchError((err) => {
           console.error(err);
