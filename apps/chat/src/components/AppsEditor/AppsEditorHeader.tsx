@@ -1,4 +1,10 @@
-import { IconCircleCheck, IconCircleDot } from '@tabler/icons-react';
+import {
+  IconCircleCheck,
+  IconCircleDot,
+  IconMenu2,
+  IconX,
+} from '@tabler/icons-react';
+import { useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 import Link from 'next/link';
@@ -74,6 +80,8 @@ export const AppsEditorHeader = () => {
     },
   ];
 
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <div
       className={classNames(
@@ -82,11 +90,19 @@ export const AppsEditorHeader = () => {
       )}
       data-qa="header"
     >
-      <div className="flex grow justify-between">
-        <div className="flex items-center space-x-4 md:ml-5">
+      <div className="flex grow items-center justify-between px-4">
+        <div className="flex items-center space-x-4">
+          <button
+            className="p-2 text-primary md:hidden"
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            {menuOpen ? <IconX size={24} /> : <IconMenu2 size={24} />}
+          </button>
+
           <span
             className={classNames(
-              'mx-auto h-12 min-w-[110px] bg-contain bg-center bg-no-repeat md:ml-5 lg:bg-left',
+              'h-12 min-w-[110px] bg-contain bg-center bg-no-repeat',
+              menuOpen ? 'hidden md:block' : '',
             )}
             style={{
               backgroundImage: customLogoUrl
@@ -94,63 +110,58 @@ export const AppsEditorHeader = () => {
                 : `var(--app-logo)`,
             }}
           ></span>
-          <div className="h-full border-l border-tertiary"></div>
-          <span className="text-primary">Add application</span>
-          <div className="flex items-center">
-            {tabs.map((tab, index) => {
-              const isDisabled =
-                tab.key === TabKeys.SETTINGS && !router.query.id;
-              return (
-                <div key={tab.key} className="flex items-center">
-                  <Link
-                    href={tab.href}
-                    className={isDisabled ? 'pointer-events-none' : ''}
-                    aria-disabled={isDisabled}
-                    tabIndex={isDisabled ? -1 : undefined}
-                    passHref
-                  >
-                    <div
-                      className={classNames(
-                        'flex cursor-pointer items-center px-2',
-                        isDisabled ? 'text-secondary' : 'text-primary',
-                      )}
-                    >
-                      {tab.key === TabKeys.GENERAL && router.query.id ? (
-                        <IconCircleCheck
-                          className={classNames('text-accent-primary')}
-                          width={24}
-                          height={24}
-                        />
-                      ) : (
-                        <IconCircleDot
-                          className={classNames(
-                            isDisabled
-                              ? 'text-secondary'
-                              : 'text-accent-primary',
-                          )}
-                          width={24}
-                          height={24}
-                        />
-                      )}
+        </div>
 
-                      <span className="px-2">{tab.label}</span>
-                    </div>
-                  </Link>
-                  {index < tabs.length - 1 && (
-                    <div
-                      className="mx-2 h-0.5 w-5"
-                      style={{ backgroundColor: 'var(--text-secondary)' }}
-                    ></div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+        <div className="hidden items-center md:flex">
+          {tabs.map((tab, index) => {
+            const isDisabled = tab.key === TabKeys.SETTINGS && !router.query.id;
+            return (
+              <div key={tab.key} className="flex items-center">
+                <Link
+                  href={tab.href}
+                  className={isDisabled ? 'pointer-events-none' : ''}
+                  aria-disabled={isDisabled}
+                  tabIndex={isDisabled ? -1 : undefined}
+                  passHref
+                >
+                  <div
+                    className={classNames(
+                      'flex cursor-pointer items-center px-2',
+                      isDisabled ? 'text-secondary' : 'text-primary',
+                    )}
+                  >
+                    {tab.key === TabKeys.GENERAL && router.query.id ? (
+                      <IconCircleCheck
+                        className="text-accent-primary"
+                        width={24}
+                        height={24}
+                      />
+                    ) : (
+                      <IconCircleDot
+                        className={
+                          isDisabled ? 'text-secondary' : 'text-accent-primary'
+                        }
+                        width={24}
+                        height={24}
+                      />
+                    )}
+                    <span className="px-2">{tab.label}</span>
+                  </div>
+                </Link>
+                {index < tabs.length - 1 && (
+                  <div
+                    className="mx-2 h-0.5 w-5"
+                    style={{ backgroundColor: 'var(--text-secondary)' }}
+                  ></div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         <div className="flex items-center space-x-2">
           <Link
-            className="flex items-center space-x-1 hover:text-accent-primary"
+            className="hidden items-center space-x-1 hover:text-accent-primary md:flex"
             href="/marketplace"
           >
             <LogOutIcon width={14} height={14} />
@@ -162,6 +173,34 @@ export const AppsEditorHeader = () => {
           </div>
         </div>
       </div>
+
+      {menuOpen && (
+        <div className="absolute left-0 top-[48px] w-full border-b border-tertiary bg-layer-3 md:hidden">
+          {tabs.map((tab) => {
+            const isDisabled = tab.key === TabKeys.SETTINGS && !router.query.id;
+            return (
+              <Link key={tab.key} href={tab.href} passHref>
+                <div
+                  className={classNames(
+                    'cursor-pointer border-b border-tertiary px-4 py-2',
+                    isDisabled ? 'text-secondary' : 'text-primary',
+                  )}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {tab.label}
+                </div>
+              </Link>
+            );
+          })}
+          <Link
+            className="flex items-center px-4 py-2 hover:text-accent-primary"
+            href="/marketplace"
+          >
+            <LogOutIcon width={14} height={14} />
+            <span>{t('Go to marketplace')}</span>
+          </Link>
+        </div>
+      )}
 
       <SettingDialog
         open={isUserSettingsOpen}
