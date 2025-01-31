@@ -178,12 +178,16 @@ export const AppsEditorHeader = () => {
         <div className="absolute left-0 top-[48px] w-full border-b border-tertiary bg-layer-3 md:hidden">
           {tabs.map((tab) => {
             const isDisabled = tab.key === TabKeys.SETTINGS && !router.query.id;
+            const isActive = router.pathname === tab.href.pathname;
             return (
               <Link key={tab.key} href={tab.href} passHref>
                 <div
                   className={classNames(
                     'cursor-pointer border-b border-tertiary px-4 py-2',
                     isDisabled ? 'text-secondary' : 'text-primary',
+                    isActive && !isDisabled
+                      ? 'font-semibold text-accent-primary'
+                      : '',
                   )}
                   onClick={() => setMenuOpen(false)}
                 >
