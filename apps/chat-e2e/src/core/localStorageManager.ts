@@ -183,17 +183,10 @@ export class LocalStorageManager {
   }
 
   private async getKey(key: string, originHost?: string) {
-    let value;
     const storage = await this.page.context().storageState();
-    let origin;
-    if (originHost) {
-      origin = storage.origins.find((o) => o.origin === originHost);
-    } else {
-      origin = storage.origins[0];
-    }
-    if (origin) {
-      value = origin.localStorage.find((s) => s.name === key)?.value;
-    }
-    return value;
+    const origin = originHost
+      ? storage.origins.find((o) => o.origin === originHost)
+      : storage.origins[0];
+    return origin?.localStorage.find((s) => s.name === key)?.value;
   }
 }
