@@ -4,6 +4,12 @@
 
 @layer components {
   .button {
-    @apply rounded bg-gray-200 p-2 text-center hover:bg-gray-400;
+    @apply rounded border border-gray-800 bg-gray-300 p-2 text-center hover:border-gray-600 hover:bg-gray-200;
+  }
+  details {
+    cursor: pointer;
+  }
+  textarea {
+    padding: 5px 10px;
   }
 }

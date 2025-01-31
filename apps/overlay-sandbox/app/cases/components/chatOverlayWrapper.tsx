@@ -1,9 +1,10 @@
 'use client';
 
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+
 import { BackToButton } from './backToSelectOverlayMode';
 
 import { ChatOverlay, ChatOverlayOptions } from '@epam/ai-dial-overlay';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 export const commonOverlayProps = {
   domain: process.env.NEXT_PUBLIC_OVERLAY_HOST!,
