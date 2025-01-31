@@ -14,7 +14,7 @@ import {
   SimpleApplicationStatus,
 } from '@/src/types/applications';
 import { EntityType, PartialBy } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
+import { DialAIEntityFeatures, DialAIEntityModel } from '@/src/types/models';
 import { QuickAppConfig } from '@/src/types/quick-apps';
 import { Translation } from '@/src/types/translation';
 
@@ -32,8 +32,21 @@ import { getApplicationRootId } from './id';
 import { isEntityIdPublic } from './publications';
 import { translate } from './translation';
 
-import { merge } from 'lodash-es';
+import { isObject, merge } from 'lodash-es';
 import omit from 'lodash-es/omit';
+
+export const safeStringifyApplicationFeatures = (
+  featureData: DialAIEntityFeatures | Record<string, string> | undefined,
+) => {
+  if (
+    !featureData ||
+    (isObject(featureData) && !Object.keys(featureData).length)
+  ) {
+    return '';
+  }
+
+  return JSON.stringify(featureData, null, 2);
+};
 
 export const getGeneratedApplicationId = (
   application: Omit<ApplicationInfo, 'id'>,

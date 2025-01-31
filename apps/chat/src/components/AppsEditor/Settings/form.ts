@@ -5,6 +5,7 @@ import {
   UseFormSetError,
 } from 'react-hook-form';
 
+import { safeStringifyApplicationFeatures } from '@/src/utils/app/application';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 
 import {
@@ -12,7 +13,6 @@ import {
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
-import { DialAIEntityFeatures } from '@/src/types/models';
 import { QuickAppConfig } from '@/src/types/quick-apps';
 
 import {
@@ -25,8 +25,6 @@ import { DEFAULT_QUICK_APPS_MODEL } from '@/src/constants/quick-apps';
 
 import { DynamicField } from '../../Common/Forms/DynamicFormFields';
 import { ApplicationGeneralInfoFormData } from '../GeneralInfoView/form';
-
-import { isObject } from 'lodash-es';
 
 const getToolsetStr = (config: QuickAppConfig) => {
   try {
@@ -126,19 +124,6 @@ export const getAttachmentTypeErrorHandlers = (
   return { validationRegExp, handleError, handleClearError };
 };
 
-const safeStringify = (
-  featureData: DialAIEntityFeatures | Record<string, string> | undefined,
-) => {
-  if (
-    !featureData ||
-    (isObject(featureData) && !Object.keys(featureData).length)
-  ) {
-    return '';
-  }
-
-  return JSON.stringify(featureData, null, 2);
-};
-
 const getApplicationGeneralDefaultValues = (
   app: ApiApplicationResponseDefault,
 ) => {
@@ -210,7 +195,7 @@ export const getCustomApplicationDefaultValues = ({
   inputAttachmentTypes: app.input_attachment_types ?? [],
   maxInputAttachments: app.max_input_attachments ?? '',
   completionUrl: app.endpoint ?? '',
-  features: safeStringify(app.features),
+  features: safeStringifyApplicationFeatures(app.features),
   applicationProperties: app.application_properties ?? null,
 });
 

@@ -1,6 +1,9 @@
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { isApplicationType } from '@/src/utils/app/application';
+import {
+  isApplicationType,
+  safeStringifyApplicationFeatures,
+} from '@/src/utils/app/application';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { ApiApplicationResponseDefault } from '@/src/types/applications';
@@ -34,7 +37,13 @@ export const GeneralInfoView: React.FC<Props> = ({
         ) ?? [],
       id: applicationData?.name ?? '',
       reference: applicationData?.reference ?? '',
+      //schema type application properties
       applicationProperties: applicationData?.application_properties,
+      //custom application properties
+      completionUrl: applicationData?.endpoint,
+      inputAttachmentTypes: applicationData?.input_attachment_types,
+      maxInputAttachments: applicationData?.max_input_attachments,
+      features: safeStringifyApplicationFeatures(applicationData?.features),
     },
   });
 
