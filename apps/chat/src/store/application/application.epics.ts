@@ -144,26 +144,27 @@ const updateApplicationEpic: AppEpic = (action$) =>
         payload.applicationData,
       ) as CustomApplicationModel;
 
-      const move$ =
-        payload.oldApplicationId !== updatedCustomApplication.id
-          ? DataService.getDataStorage()
-              .move({
-                sourceUrl: payload.oldApplicationId,
-                destinationUrl: updatedCustomApplication.id,
-                overwrite: false,
-              })
-              .pipe(
-                catchError((err) => {
-                  console.error('Failed to update application:', err);
-                  return of(
-                    ApplicationActions.updateFail(),
-                    UIActions.showErrorToast(
-                      translate('Failed to update application'),
-                    ),
-                  );
-                }),
-              )
-          : EMPTY;
+      const isMoved = payload.oldApplicationId !== updatedCustomApplication.id;
+
+      const move$ = isMoved
+        ? DataService.getDataStorage()
+            .move({
+              sourceUrl: payload.oldApplicationId,
+              destinationUrl: updatedCustomApplication.id,
+              overwrite: false,
+            })
+            .pipe(
+              catchError((err) => {
+                console.error('Failed to update application:', err);
+                return of(
+                  ApplicationActions.updateFail(),
+                  UIActions.showErrorToast(
+                    translate('Failed to update application'),
+                  ),
+                );
+              }),
+            )
+        : EMPTY;
 
       const edit$ = ApplicationService.edit(
         updatedCustomApplication,
@@ -190,7 +191,10 @@ const updateApplicationEpic: AppEpic = (action$) =>
       return concat(move$, edit$).pipe(
         switchMap(() => {
           if (payload.redirectUrl) {
-            Router.push(payload.redirectUrl);
+            Router.push({
+              pathname: payload.redirectUrl,
+              query: { id: updatedCustomApplication.id },
+            });
           }
           return EMPTY;
         }),
