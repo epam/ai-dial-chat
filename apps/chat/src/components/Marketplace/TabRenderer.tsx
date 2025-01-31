@@ -28,6 +28,7 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
+import { ApplicationTypesSchemasSelectors } from '@/src/store/application-type-schemas/application-type-schemas.reducer';
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -237,6 +238,9 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
   const allModels = useAppSelector(ModelsSelectors.selectModels);
   const detailsModel = useAppSelector(MarketplaceSelectors.selectDetailsModel);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const applicationTypeSchemas = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectAllSchemas,
+  );
 
   const [suggestedResults, setSuggestedResults] = useState<DialAIEntityModel[]>(
     [],
@@ -271,7 +275,11 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
     const filteredEntities = allModels.filter(
       (entity) =>
         doesApplicationMatchSearchTerm(entity, searchTerm) &&
-        doesApplicationMatchFilters(entity, selectedFilters),
+        doesApplicationMatchFilters(
+          entity,
+          selectedFilters,
+          applicationTypeSchemas,
+        ),
     );
 
     const isInstalledModel = (entity: DialAIEntityModel) =>

@@ -10,6 +10,7 @@ import {
   ApplicationInfo,
   ApplicationSlug,
   ApplicationStatus,
+  ApplicationType,
   CustomApplicationModel,
   SimpleApplicationStatus,
 } from '@/src/types/applications';
@@ -20,6 +21,7 @@ import { Translation } from '@/src/types/translation';
 
 import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
+import { ApplicationTypeToSourceType } from '@/src/constants/marketplace';
 import {
   DEFAULT_QUICK_APPS_MODEL,
   DEFAULT_QUICK_APPS_SCHEMA_ID,
@@ -237,9 +239,9 @@ export const getApplicationType = (entity: DialAIEntityModel): string => {
   if (entity.applicationTypeSchemaId) {
     return entity.applicationTypeSchemaId;
   }
-  if (isExecutableApp(entity)) return ApplicationSlug.CODE_APP;
+  if (isExecutableApp(entity)) return ApplicationType.CODE_APP;
 
-  return ApplicationSlug.CUSTOM_APP;
+  return ApplicationType.CUSTOM_APP;
 };
 
 export const getApplicationNextStatus = (entity: DialAIEntityModel) => {
@@ -270,6 +272,12 @@ export const isApplicationStatusUpdating = (entity: DialAIEntityModel) => {
 
 export const isApplicationDeployed = (entity: DialAIEntityModel) => {
   return entity.functionStatus === ApplicationStatus.DEPLOYED;
+};
+
+export const isApplicationTypeKey = (
+  key: any,
+): key is keyof typeof ApplicationTypeToSourceType => {
+  return key in ApplicationTypeToSourceType;
 };
 
 export const isApplicationDeploymentInProgress = (

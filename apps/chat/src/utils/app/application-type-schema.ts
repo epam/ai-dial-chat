@@ -22,3 +22,13 @@ export function encrypt(text: string) {
 export function decrypt(encryptedText: string) {
   return decodeURIComponent(encryptedText);
 }
+
+export function pluralizeDisplayName(displayName: string): string {
+  if (displayName.match(/[^aeiou]y$/i)) {
+    return `My ${displayName.slice(0, -1)}ies`;
+  }
+  if (displayName.match(/(s|sh|ch|x|z)$/i)) {
+    return `My ${displayName}es`;
+  }
+  return `My ${displayName}s`;
+}
