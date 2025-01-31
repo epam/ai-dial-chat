@@ -101,7 +101,12 @@ export class MarketplaceAgents extends BaseElement {
     }
   }
 
-  public async isAgentUsed(entity: DialAIEntityModel): Promise<boolean> {
+  public async isAgentUsed(
+    entity: DialAIEntityModel,
+    {
+      isInstalledDeploymentsUpdated = false,
+    }: { isInstalledDeploymentsUpdated?: boolean } = {},
+  ): Promise<boolean> {
     let isAgentVisible = false;
     const entityLocator = this.agentName(entity.name);
     //open entity details modal if it is visible
@@ -129,7 +134,9 @@ export class MarketplaceAgents extends BaseElement {
               await agentDetailsModal
                 .getVersionDropdownMenu()
                 .selectMenuOption(entity.version);
-              await agentDetailsModal.clickUseButton();
+              await agentDetailsModal.clickUseButton({
+                isInstalledDeploymentsUpdated,
+              });
               isAgentVisible = true;
             } else {
               await agentDetailsModal.closeButton.click();
@@ -138,11 +145,15 @@ export class MarketplaceAgents extends BaseElement {
             await agentDetailsModal.closeButton.click();
           }
         } else {
-          await agentDetailsModal.clickUseButton();
+          await agentDetailsModal.clickUseButton({
+            isInstalledDeploymentsUpdated,
+          });
           isAgentVisible = true;
         }
       } else {
-        await agentDetailsModal.clickUseButton();
+        await agentDetailsModal.clickUseButton({
+          isInstalledDeploymentsUpdated,
+        });
         isAgentVisible = true;
       }
     }
