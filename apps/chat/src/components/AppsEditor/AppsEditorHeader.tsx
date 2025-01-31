@@ -12,8 +12,6 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
-import { ApiUtils } from '@/src/utils/server/api';
-
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
@@ -22,9 +20,7 @@ import { User } from '@/src/components/Header/User/User';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
 import LogOutIcon from '../../../public/images/icons/log-out.svg';
-
-import { Feature } from '@epam/ai-dial-shared';
-import cssEscape from 'css.escape';
+import { Logo } from '../Header/Logo';
 
 export enum TabKeys {
   GENERAL = 'general',
@@ -40,16 +36,6 @@ export const AppsEditorHeader = () => {
     UISelectors.selectIsUserSettingsOpen,
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
-  const customLogo = useAppSelector(UISelectors.selectCustomLogo);
-
-  const isCustomLogoFeatureEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.CustomLogo),
-  );
-
-  const customLogoUrl =
-    isCustomLogoFeatureEnabled &&
-    customLogo &&
-    `/api/${ApiUtils.encodeApiUrl(customLogo)}`;
 
   const handleCloseUserSettings = () => {
     dispatch(UIActions.setIsUserSettingsOpen(false));
@@ -91,72 +77,69 @@ export const AppsEditorHeader = () => {
       data-qa="header"
     >
       <div className="flex grow items-center justify-between px-4">
-        <div className="flex items-center space-x-4">
-          <button
-            className="p-2 text-primary md:hidden"
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            {menuOpen ? <IconX size={24} /> : <IconMenu2 size={24} />}
-          </button>
-
-          <span
-            className={classNames(
-              'h-12 min-w-[110px] bg-contain bg-center bg-no-repeat',
-              menuOpen ? 'hidden md:block' : '',
-            )}
-            style={{
-              backgroundImage: customLogoUrl
-                ? `url(${cssEscape(customLogoUrl)})`
-                : `var(--app-logo)`,
-            }}
-          ></span>
-        </div>
-
-        <div className="hidden items-center md:flex">
-          {tabs.map((tab, index) => {
-            const isDisabled = tab.key === TabKeys.SETTINGS && !router.query.id;
-            return (
-              <div key={tab.key} className="flex items-center">
-                <Link
-                  href={tab.href}
-                  className={isDisabled ? 'pointer-events-none' : ''}
-                  aria-disabled={isDisabled}
-                  tabIndex={isDisabled ? -1 : undefined}
-                  passHref
-                >
-                  <div
-                    className={classNames(
-                      'flex cursor-pointer items-center px-2',
-                      isDisabled ? 'text-secondary' : 'text-primary',
-                    )}
+        <div className="flex h-full space-x-4 md:ml-5">
+          <div className="flex items-center space-x-4">
+            <button
+              className="p-2 text-primary md:hidden"
+              onClick={() => setMenuOpen(!menuOpen)}
+            >
+              {menuOpen ? <IconX size={24} /> : <IconMenu2 size={24} />}
+            </button>
+          </div>
+          <Logo />
+          <div className="h-full border-l border-tertiary"></div>
+          <span className="hidden items-center text-primary md:flex">
+            Add application
+          </span>
+          <div className="hidden items-center space-x-4 md:flex">
+            {tabs.map((tab, index) => {
+              const isDisabled =
+                tab.key === TabKeys.SETTINGS && !router.query.id;
+              return (
+                <div key={tab.key} className="flex items-center">
+                  <Link
+                    href={tab.href}
+                    className={isDisabled ? 'pointer-events-none' : ''}
+                    aria-disabled={isDisabled}
+                    tabIndex={isDisabled ? -1 : undefined}
+                    passHref
                   >
-                    {tab.key === TabKeys.GENERAL && router.query.id ? (
-                      <IconCircleCheck
-                        className="text-accent-primary"
-                        width={24}
-                        height={24}
-                      />
-                    ) : (
-                      <IconCircleDot
-                        className={
-                          isDisabled ? 'text-secondary' : 'text-accent-primary'
-                        }
-                        width={24}
-                        height={24}
-                      />
-                    )}
-                    <span className="px-2">{tab.label}</span>
-                  </div>
-                </Link>
-                {index < tabs.length - 1 && (
-                  <div
-                    className="mx-2 h-0.5 w-5"
-                    style={{ backgroundColor: 'var(--text-secondary)' }}
-                  ></div>
-                )}
-              </div>
-            );
-          })}
+                    <div
+                      className={classNames(
+                        'flex cursor-pointer items-center px-2',
+                        isDisabled ? 'text-secondary' : 'text-primary',
+                      )}
+                    >
+                      {tab.key === TabKeys.GENERAL && router.query.id ? (
+                        <IconCircleCheck
+                          className="text-accent-primary"
+                          width={24}
+                          height={24}
+                        />
+                      ) : (
+                        <IconCircleDot
+                          className={
+                            isDisabled
+                              ? 'text-secondary'
+                              : 'text-accent-primary'
+                          }
+                          width={24}
+                          height={24}
+                        />
+                      )}
+                      <span className="px-2">{tab.label}</span>
+                    </div>
+                  </Link>
+                  {index < tabs.length - 1 && (
+                    <div
+                      className="mx-2 h-0.5 w-5"
+                      style={{ backgroundColor: 'var(--text-secondary)' }}
+                    ></div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         <div className="flex items-center space-x-2">
