@@ -23,7 +23,7 @@ enum OverlayCases {
 
 export default async function Index() {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 p-2">
       <div className="font-semibold">Select mode/case for Overlay:</div>
       <ul className="flex h-full flex-wrap gap-2">
         {Object.entries(OverlayCases).map(([label, url]) => (
