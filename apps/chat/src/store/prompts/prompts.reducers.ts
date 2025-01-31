@@ -109,7 +109,7 @@ export const promptsSlice = createSlice({
       state,
       _action: PayloadAction<{
         prompt: PromptInfo;
-        newValues: Partial<PromptInfo>;
+        newValues: Partial<Prompt>;
       }>,
     ) => state,
     movePromptRegenerated: (
