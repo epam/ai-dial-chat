@@ -1,7 +1,10 @@
 'use client';
 
-import { ChatOverlay, ChatOverlayOptions } from '@epam/ai-dial-overlay';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+
+import { BackToButton } from './backToSelectOverlayMode';
+
+import { ChatOverlay, ChatOverlayOptions } from '@epam/ai-dial-overlay';
 
 export const commonOverlayProps = {
   domain: process.env.NEXT_PUBLIC_OVERLAY_HOST!,
@@ -97,6 +100,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
       ></div>
 
       <div className="flex max-w-[300px] flex-col gap-2">
+        <BackToButton />
         <details>
           <summary>Chat actions</summary>
 
