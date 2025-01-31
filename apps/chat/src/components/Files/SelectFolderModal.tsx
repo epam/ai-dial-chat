@@ -1,15 +1,11 @@
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
 
 import {
   getParentFolderIdsFromFolderId,
   splitEntityId,
 } from '@/src/utils/app/folders';
-
-import { Translation } from '@/src/types/translation';
 
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -37,8 +33,6 @@ export const SelectFolderModal = ({
   disallowSelectRootFolder,
 }: Props) => {
   const dispatch = useAppDispatch();
-
-  const { t } = useTranslation(Translation.Files);
 
   const { name: rootFolderName } = splitEntityId(rootFolderId);
 
@@ -173,7 +167,7 @@ export const SelectFolderModal = ({
           handleFolderSelect={handleFolderSelect}
           isAllEntitiesOpened={isAllFilesOpened}
           selectedFolderId={selectedFolderId}
-          rootFolderName={rootFolderName ?? t('All files')}
+          rootFolderName={rootFolderName}
           rootFolderId={rootFolderId}
           onShowError={setErrorMessage}
         />

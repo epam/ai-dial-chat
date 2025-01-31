@@ -88,7 +88,7 @@ export const PreUploadDialog = ({
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState(
-    uploadFolderId || getFileRootId(),
+    uploadFolderId || rootFolderId || getFileRootId(),
   );
 
   const headingId = useId();

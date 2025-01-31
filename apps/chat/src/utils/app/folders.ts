@@ -13,6 +13,7 @@ import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
+import { ROOT_SECTION_NAME } from '@/src/constants/sections';
 
 import {
   doesHaveDotsInTheEnd,
@@ -442,6 +443,7 @@ export const splitEntityId = (
   name: string;
   parentPath: string | undefined;
   apiKey: string;
+  isRoot: boolean;
 } => {
   const parts = id.split('/');
   const parentPath =
@@ -449,11 +451,16 @@ export const splitEntityId = (
       ? constructPath(...parts.slice(2, parts.length - 1))
       : undefined;
 
+  const isRoot = parts.length < 3;
+
+  const name = isRoot ? ROOT_SECTION_NAME : parts[parts.length - 1];
+
   return {
     apiKey: parts[0],
     bucket: parts[1],
     parentPath,
-    name: parts[parts.length - 1],
+    name,
+    isRoot,
   };
 };
 

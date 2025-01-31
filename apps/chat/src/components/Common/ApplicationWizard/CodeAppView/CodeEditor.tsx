@@ -319,11 +319,12 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
     [rootFiles],
   );
 
-  const bucket = useMemo(() => {
+  const { bucket, parentPath } = useMemo(() => {
     if (sourcesFolderId) {
-      const { bucket } = splitEntityId(sourcesFolderId);
-      return bucket;
+      const { bucket, parentPath } = splitEntityId(sourcesFolderId);
+      return { bucket, parentPath };
     }
+    return { bucket: undefined, parentPath: undefined };
   }, [sourcesFolderId]);
 
   useEffect(() => {
@@ -349,6 +350,11 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
     },
     [dispatch, openedFoldersIds],
   );
+
+  const openUploadDialog = useCallback(() => {
+    setUploadFolderId(sourcesFolderId);
+    dispatch(FilesActions.getFolders({ id: parentPath }));
+  }, [dispatch, parentPath, sourcesFolderId]);
 
   const handleUploadFiles = useCallback(
     (
@@ -605,7 +611,7 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
               <Tooltip tooltip={t('Upload file')}>
                 <button
                   type="button"
-                  onClick={() => setUploadFolderId(sourcesFolderId)}
+                  onClick={openUploadDialog}
                   className="text-secondary hover:text-accent-primary"
                 >
                   <IconUpload size={18} />
