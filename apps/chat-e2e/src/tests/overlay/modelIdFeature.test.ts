@@ -80,7 +80,7 @@ dialOverlayTest(
           overlayAgentInfo.agentName,
           expectedModel.name,
         );
-        await overlayAgentInfoAssertion.assertDescription(expectedModel);
+        await overlayAgentInfoAssertion.assertShortDescription(expectedModel);
         await overlayAgentInfoAssertion.assertAgentIcon(expectedModelIcon);
       },
     );

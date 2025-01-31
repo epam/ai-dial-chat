@@ -19,7 +19,7 @@ export class AgentInfoAssertion extends BaseAssertion {
     );
   }
 
-  public async assertDescription(expectedModel: DialAIEntityModel) {
+  public async assertShortDescription(expectedModel: DialAIEntityModel) {
     const description = await this.agentInfo.getAgentDescription();
     expect
       .soft(description, ExpectedMessages.agentDescriptionIsValid)
