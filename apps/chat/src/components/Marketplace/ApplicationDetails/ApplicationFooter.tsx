@@ -24,7 +24,7 @@ import {
   isApplicationStatusUpdating,
   isExecutableApp,
 } from '@/src/utils/app/application';
-import { isApplicationId, isMyApplication } from '@/src/utils/app/id';
+import { isMyApplication } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
@@ -129,7 +129,7 @@ export const ApplicationDetailsFooter = ({
   const isMyApp = isMyApplication(entity);
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
-  const isPublicEntity = isEntityIdPublic(entity);
+  const hasPublicId = isEntityIdPublic(entity);
   const isPublicApp = isApplicationPublic(entity);
 
   const isSmallScreen = screenState === ScreenState.MOBILE;
@@ -260,7 +260,7 @@ export const ApplicationDetailsFooter = ({
       {
         name: t('Publish'),
         dataQa: 'publish',
-        display: isApplicationId(entity.id) && isMyApp,
+        display: isMyApp,
         Icon: IconWorldShare,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -270,7 +270,7 @@ export const ApplicationDetailsFooter = ({
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
-        display: isApplicationId(entity.id) && isPublicEntity,
+        display: hasPublicId,
         Icon: UnpublishIcon,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -313,7 +313,7 @@ export const ApplicationDetailsFooter = ({
       isMyApp,
       isApplicationsSharingEnabled,
       isModifyDisabled,
-      isPublicEntity,
+      hasPublicId,
       canWrite,
       onEdit,
       isAppInDeployment,
@@ -403,15 +403,13 @@ export const ApplicationDetailsFooter = ({
                   </button>
                 </Tooltip>
               )}
-              {isApplicationId(entity.id) && (isMyApp || isPublicEntity) && (
-                <Tooltip
-                  tooltip={isPublicEntity ? t('Unpublish') : t('Publish')}
-                >
+              {(isMyApp || hasPublicId) && (
+                <Tooltip tooltip={hasPublicId ? t('Unpublish') : t('Publish')}>
                   <button
                     onClick={() =>
                       onPublish(
                         entity,
-                        isPublicEntity
+                        hasPublicId
                           ? PublishActions.DELETE
                           : PublishActions.ADD,
                       )
@@ -419,7 +417,7 @@ export const ApplicationDetailsFooter = ({
                     className="icon-button"
                     data-qa="application-publish"
                   >
-                    {isPublicEntity ? (
+                    {hasPublicId ? (
                       <UnpublishIcon className="size-6 shrink-0" />
                     ) : (
                       <IconWorldShare size={24} />
@@ -486,7 +484,7 @@ export const ApplicationDetailsFooter = ({
               playerStatus === SimpleApplicationStatus.UNDEPLOY
             }
             tooltip={
-              isPublicEntity && !isAdmin
+              hasPublicId && !isAdmin
                 ? t(
                     'Ask your administrator to deploy this application to be able to use it',
                   )
