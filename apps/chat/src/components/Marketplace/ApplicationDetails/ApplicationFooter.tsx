@@ -126,7 +126,9 @@ export const ApplicationDetailsFooter = ({
   const canWrite = canWriteSharedWithMe(entity);
 
   const isExecutable =
-    isExecutableApp(entity) && (isMyApp || isAdmin || canWrite);
+    // TODO canWrite when core issue will be ready #655
+    isExecutableApp(entity) && (isMyApp || isAdmin);
+
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
   const isAppInDeployment = isApplicationDeploymentInProgress(entity);
@@ -200,7 +202,7 @@ export const ApplicationDetailsFooter = ({
         },
       },
       {
-        name: t(getFunctionTooltip(entity)),
+        name: t(getPlayerCaption(entity)),
         dataQa: 'status-change',
         display: isExecutable && isCodeAppsEnabled,
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
@@ -340,7 +342,7 @@ export const ApplicationDetailsFooter = ({
                 />
               )}
               {isExecutable && isCodeAppsEnabled && (
-                <Tooltip tooltip={t(getFunctionTooltip(entity))}>
+                <Tooltip tooltip={t(getPlayerCaption(entity))}>
                   <button
                     disabled={playerStatus === SimpleApplicationStatus.UPDATING}
                     onClick={handleUpdateFunctionStatus}
