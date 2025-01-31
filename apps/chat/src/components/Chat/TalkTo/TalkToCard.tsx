@@ -1,8 +1,6 @@
 import {
   IconFileDescription,
   IconPencilMinus,
-  IconPlayerPlay,
-  IconPlaystationSquare,
   IconTrashX,
   IconUserShare,
   IconWorldShare,
@@ -29,7 +27,7 @@ import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
 import { SimpleApplicationStatus } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
-import { FeatureType, ScreenState } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -42,6 +40,11 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+import {
+  CardIconSizes,
+  PlayerContextIconClasses,
+  PlayerContextIcons,
+} from '@/src/constants/marketplace';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
@@ -54,17 +57,8 @@ import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionSt
 
 import ShareIcon from '../../Common/ShareIcon';
 
-import LoaderIcon from '@/public/images/icons/loader.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature } from '@epam/ai-dial-shared';
-
-const DESKTOP_ICON_SIZE = 80;
-const TABLET_ICON_SIZE = 48;
-const MOBILE_ICON_SIZE = 40;
-
-const MOBILE_SHARE_ICON_SIZE = 16;
-const TABLET_SHARE_ICON_SIZE = 20;
-const DESKTOP_SHARE_ICON_SIZE = 30;
 
 interface ApplicationCardProps {
   entity: DialAIEntityModel;
@@ -118,6 +112,8 @@ export const TalkToCard = ({
     SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
   );
 
+  const { iconSize, shareIconSize } = CardIconSizes[screenState];
+
   const versionsToSelect = useMemo(() => {
     return allModels.filter(
       (model) =>
@@ -138,17 +134,7 @@ export const TalkToCard = ({
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
 
-  const PlayerIcon = useMemo(() => {
-    switch (playerStatus) {
-      case SimpleApplicationStatus.DEPLOY:
-        return IconPlayerPlay;
-      case SimpleApplicationStatus.UNDEPLOY:
-        return IconPlaystationSquare;
-      case SimpleApplicationStatus.UPDATING:
-      default:
-        return LoaderIcon;
-    }
-  }, [playerStatus]);
+  const PlayerContextIcon = PlayerContextIcons[playerStatus];
 
   const handleUpdateFunctionStatus = useCallback(() => {
     dispatch(
@@ -190,14 +176,8 @@ export const TalkToCard = ({
           (isAdmin || isMyEntity) &&
           !!entity.functionStatus &&
           isCodeAppsEnabled,
-        Icon: PlayerIcon,
-        iconClassName: classNames({
-          ['text-error']: playerStatus === SimpleApplicationStatus.UNDEPLOY,
-          ['text-accent-secondary']:
-            playerStatus === SimpleApplicationStatus.DEPLOY,
-          ['animate-spin-steps']:
-            playerStatus === SimpleApplicationStatus.UPDATING,
-        }),
+        Icon: PlayerContextIcon,
+        iconClassName: PlayerContextIconClasses[playerStatus],
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
           handleUpdateFunctionStatus();
@@ -275,7 +255,7 @@ export const TalkToCard = ({
       isAdmin,
       isMyEntity,
       isCodeAppsEnabled,
-      PlayerIcon,
+      PlayerContextIcon,
       canWrite,
       onEdit,
       isApplicationsSharingEnabled,
@@ -290,22 +270,9 @@ export const TalkToCard = ({
     ],
   );
 
-  const iconSize =
-    screenState === ScreenState.DESKTOP
-      ? DESKTOP_ICON_SIZE
-      : screenState === ScreenState.TABLET
-        ? TABLET_ICON_SIZE
-        : MOBILE_ICON_SIZE;
   const isOldReplay =
     entity.id === REPLAY_AS_IS_MODEL &&
     isOldConversationReplay(conversation.replay);
-
-  const shareIconSize =
-    screenState === ScreenState.MOBILE
-      ? MOBILE_SHARE_ICON_SIZE
-      : screenState === ScreenState.TABLET
-        ? TABLET_SHARE_ICON_SIZE
-        : DESKTOP_SHARE_ICON_SIZE;
 
   return (
     <div
@@ -374,7 +341,7 @@ export const TalkToCard = ({
               <p className="mr-1 text-xs text-secondary">{t('Version')}: </p>
               <ModelVersionSelect
                 readonly={conversation.playback?.isPlayback}
-                className="h-max text-xs"
+                className="h-max truncate text-xs"
                 entities={versionsToSelect}
                 onSelect={handleSelectVersion}
                 currentEntity={entity}

@@ -17,6 +17,8 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 
+import { HeaderIconSizes } from '@/src/constants/marketplace';
+
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
 import { ModelIcon } from '../../Chatbar/ModelIcon';
@@ -25,9 +27,6 @@ import { ApplicationTopic } from '../ApplicationTopic';
 import { ApplicationCopyLink } from './ApplicationCopyLink';
 
 import { Feature } from '@epam/ai-dial-shared';
-
-const MOBILE_SHARE_ICON_SIZE = 20;
-const DESKTOP_SHARE_ICON_SIZE = 30;
 
 interface Props {
   entity: DialAIEntityModel;
@@ -38,10 +37,7 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
   const dispatch = useAppDispatch();
   const screenState = useScreenState();
 
-  const shareIconSize =
-    screenState === ScreenState.MOBILE
-      ? MOBILE_SHARE_ICON_SIZE
-      : DESKTOP_SHARE_ICON_SIZE;
+  const { iconSize, shareIconSize } = HeaderIconSizes[screenState];
 
   const isMyApp = isMyApplication(entity);
   const isPublicApp = isApplicationPublic(entity);
@@ -61,7 +57,7 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
 
   return (
     <header className="flex items-start justify-between px-3 py-4 md:p-6">
-      <div className="flex items-center gap-2 md:gap-4 ">
+      <div className="flex items-center gap-2 overflow-hidden md:gap-4">
         <ShareIcon
           {...entity}
           isHighlighted={false}
@@ -75,7 +71,7 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
             isCustomTooltip
             entity={entity}
             entityId={entity.id}
-            size={screenState === ScreenState.MOBILE ? 48 : 96}
+            size={iconSize}
           />
         </ShareIcon>
         <div className="flex min-w-0 shrink flex-col justify-center gap-1 md:gap-3">
@@ -104,16 +100,20 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
           </div>
         </div>
       </div>
-      {isMyApp && isApplicationsSharingEnabled && (
-        <button
-          className="flex gap-2 px-3 py-1.5 text-sm text-accent-primary"
-          onClick={handleOpenSharing}
-        >
-          <IconUserShare size={18} />
-          <span>{t('Share')}</span>
-        </button>
+      {isMyApp &&
+        isApplicationsSharingEnabled &&
+        screenState !== ScreenState.MOBILE && (
+          <button
+            className="flex gap-2 px-3 py-1.5 text-sm text-accent-primary"
+            onClick={handleOpenSharing}
+          >
+            <IconUserShare size={18} />
+            <span>{t('Share')}</span>
+          </button>
+        )}
+      {isPublicApp && screenState !== ScreenState.MOBILE && (
+        <ApplicationCopyLink reference={entity.reference} withText />
       )}
-      {isPublicApp && <ApplicationCopyLink entity={entity} />}
     </header>
   );
 };
