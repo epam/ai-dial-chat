@@ -27,7 +27,7 @@ export default async function Index() {
       <div className="font-semibold">Select mode/case for Overlay:</div>
       <ul className="flex h-full flex-wrap gap-2">
         {Object.entries(OverlayCases).map(([label, url]) => (
-          <li className="w-[380px] rounded bg-gray-200 p-2 text-center hover:bg-gray-400">
+          <li className="button w-[380px]">
             <Link href={url}>{label}</Link>
           </li>
         ))}

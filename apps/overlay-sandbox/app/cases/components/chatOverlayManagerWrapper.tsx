@@ -19,6 +19,7 @@ export const ChatOverlayManagerWrapper: React.FC<
   const overlayManager = useRef<ChatOverlayManager | null>(null);
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const [dialogInfo, setDialogInfo] = useState('');
+  const [created, setCreated] = useState(false);
   const [conversationIdInputValue, setConversationIdInputValue] = useState('');
 
   const handleDisplayInformation = useCallback((textToShow: string) => {
@@ -34,8 +35,17 @@ export const ChatOverlayManagerWrapper: React.FC<
         ...overlayManagerOptions,
         hostDomain: window.location.origin,
       });
+      setCreated(true);
     }
   }, [overlayManagerOptions]);
+
+  useEffect(() => {
+    return () => {
+      if (overlayManager.current && created) {
+        overlayManager.current?.removeOverlay(overlayManagerOptions.id);
+      }
+    };
+  });
 
   useEffect(() => {
     overlayManager.current?.subscribe(
