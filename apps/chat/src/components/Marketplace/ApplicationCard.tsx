@@ -350,19 +350,21 @@ export const ApplicationCard = ({
               {entity.version && (
                 <div
                   className={classNames(
-                    'text-xs leading-[14px] text-secondary',
-                    !isMyApp && 'mr-6',
+                    'mr-6 flex gap-1 text-xs leading-[14px] text-secondary',
+                    !isMyApp && '!mr-12',
                   )}
                 >
                   {t('Version: ')}
-                  {entity.version}
+                  <span className="max-w-full overflow-hidden truncate whitespace-nowrap">
+                    {entity.version}
+                  </span>
                 </div>
               )}
               <div className="flex whitespace-nowrap">
                 <div
                   className={classNames(
-                    'shrink truncate text-base font-semibold leading-[20px] text-primary',
-                    !isMyApp && !entity.version && 'mr-6',
+                    'mr-6 shrink truncate text-base font-semibold leading-[20px] text-primary',
+                    !isMyApp && !entity.version && '!mr-12',
                   )}
                   data-qa="agent-name"
                 >

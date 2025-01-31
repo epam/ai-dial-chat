@@ -32,11 +32,19 @@ export class AgentDetailsModal extends BaseElement {
   );
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
 
-  public async clickUseButton() {
-    const responsePromise = this.page.waitForResponse(
-      (resp) => resp.request().method() === 'PUT',
-    );
-    await this.useButton.click();
-    await responsePromise;
+  public async clickUseButton({
+    isInstalledDeploymentsUpdated = false,
+  }: {
+    isInstalledDeploymentsUpdated?: boolean;
+  }) {
+    if (isInstalledDeploymentsUpdated) {
+      const responsePromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'PUT',
+      );
+      await this.useButton.click();
+      await responsePromise;
+    } else {
+      await this.useButton.click();
+    }
   }
 }

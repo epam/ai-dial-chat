@@ -67,7 +67,9 @@ export class TalkToAgentDialog extends BaseElement {
         const expectedAgents = ModelsUtil.getLatestOpenAIEntities();
         const allAgents = marketplace.getAgents();
         await allAgents.waitForAgentByIndex(expectedAgents.length);
-        const isAllApplicationUsed = await allAgents.isAgentUsed(entity);
+        const isAllApplicationUsed = await allAgents.isAgentUsed(entity, {
+          isInstalledDeploymentsUpdated: true,
+        });
         if (!isAllApplicationUsed) {
           throw new Error(
             `Entity with name: ${entity.name} and version: ${entity.version ?? 'N/A'} is not found!`,

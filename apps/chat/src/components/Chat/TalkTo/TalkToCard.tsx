@@ -358,7 +358,7 @@ export const TalkToCard = ({
               <p className="mr-1 text-xs text-secondary">{t('Version')}: </p>
               <ModelVersionSelect
                 readonly={conversation.playback?.isPlayback}
-                className="h-max text-xs"
+                className="h-max truncate text-xs"
                 entities={versionsToSelect}
                 onSelect={handleSelectVersion}
                 currentEntity={entity}
