@@ -2352,7 +2352,7 @@ const moveConversationRegeneratedEpic: AppEpic = (action$) =>
       if (isEntityIdLocal(payload.oldConversation)) {
         return of(
           ConversationsActions.updateConversation({
-            id: payload.oldConversation.id,
+            id: payload.newConversation.id,
             values: payload.newConversation,
           }),
         );
