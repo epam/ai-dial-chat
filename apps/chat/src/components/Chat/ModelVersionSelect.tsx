@@ -53,12 +53,12 @@ export const ModelVersionSelect = ({
   if (entities.length < 2) {
     if (entities.length && entities[0].version) {
       return (
-        <div
-          className={classNames('flex truncate', className)}
-          data-qa="version"
-        >
+        <div className={classNames('flex truncate', className)}>
           {showVersionPrefix && <VersionPrefix />}
-          <span className="mr-3 max-w-full overflow-hidden truncate whitespace-nowrap">
+          <span
+            className="mr-3 max-w-full overflow-hidden truncate whitespace-nowrap"
+            data-qa="version"
+          >
             {entities[0].version}
           </span>
         </div>
