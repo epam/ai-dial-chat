@@ -1,13 +1,12 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-
 import { BackToButton } from './backToSelectOverlayMode';
 
 import {
   ChatOverlayManager,
   ChatOverlayManagerOptions,
 } from '@epam/ai-dial-overlay';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 interface ChatOverlayManagerWrapperProps {
   overlayManagerOptions: Omit<ChatOverlayManagerOptions, 'hostDomain'>;
