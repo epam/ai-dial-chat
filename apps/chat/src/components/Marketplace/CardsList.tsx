@@ -9,7 +9,6 @@ import { PublishActions } from '@epam/ai-dial-shared';
 
 interface CardsListProps {
   entities: DialAIEntityModel[];
-  isNotDesktop?: boolean;
   title?: string;
   className?: string;
   onCardClick: (entity: DialAIEntityModel) => void;
@@ -22,7 +21,6 @@ interface CardsListProps {
 
 export const CardsList = ({
   entities,
-  isNotDesktop,
   title,
   className,
   onCardClick,
@@ -45,7 +43,6 @@ export const CardsList = ({
           <ApplicationCard
             key={entity.id}
             entity={entity}
-            isNotDesktop={isNotDesktop}
             onPublish={onPublish}
             onDelete={onDelete}
             onClick={onCardClick}
