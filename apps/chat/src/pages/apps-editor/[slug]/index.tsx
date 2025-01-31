@@ -23,14 +23,23 @@ import { getLayout } from '../../_app';
 interface PageProps {
   applicationData?: ApiApplicationResponseDefault;
   schema: ApiDetailedApplicationTypeSchema | null;
+  bucket: string;
 }
 
-export default function AppsEditor({ applicationData, schema }: PageProps) {
+export default function AppsEditor({
+  applicationData,
+  schema,
+  bucket,
+}: PageProps) {
   return (
     <div className="flex size-full flex-col">
       <AppsEditorHeader />
       <div className="flex size-full">
-        <GeneralInfoView applicationData={applicationData} schema={schema} />
+        <GeneralInfoView
+          applicationData={applicationData}
+          schema={schema}
+          bucket={bucket}
+        />
       </div>
     </div>
   );
@@ -122,6 +131,25 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
   }
 
+  const bucketUrl = `${process.env.DIAL_API_HOST}/v1/bucket`;
+  const bucketResponse = await fetch(bucketUrl, {
+    headers: getApiHeaders({ jwt: token?.access_token as string }),
+  });
+
+  if (!bucketResponse.ok) {
+    const serverErrorMessage = await bucketResponse.text();
+    throw new DialAIError(
+      serverErrorMessage,
+      '',
+      '',
+      bucketResponse.status + '',
+    );
+  }
+
+  const bucketJson = (await bucketResponse.json()) as { bucket: string };
+
+  const bucket = bucketJson.bucket;
+
   const { id } = context.query;
 
   if (id && typeof id === 'string') {
@@ -149,6 +177,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
           ...commonProps.props,
           applicationData,
           schema: applicationTypeDetailedSchema ?? null,
+          bucket,
         },
       };
     } catch (error) {
@@ -162,6 +191,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       props: {
         ...commonProps.props,
         schema: applicationTypeDetailedSchema,
+        bucket,
       },
     };
   }

@@ -113,9 +113,7 @@ export const convertApplicationToApi = (
       ...commonData,
       function: {
         runtime: applicationData.function.runtime ?? 'python3.11',
-        source_folder: applicationData.function.sourceFolder
-          ? `${ApiUtils.encodeApiUrl(applicationData.function.sourceFolder)}/`
-          : '',
+        source_folder: `${ApiUtils.encodeApiUrl(applicationData.function.sourceFolder)}/`,
         mapping: applicationData.function.mapping,
         ...(applicationData.function.env && {
           env: applicationData.function.env,

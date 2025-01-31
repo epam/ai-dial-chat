@@ -1,6 +1,5 @@
 import { Path, RegisterOptions } from 'react-hook-form';
 
-import { isApplicationType } from '@/src/utils/app/application';
 import { notAllowedSymbols } from '@/src/utils/app/file';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
@@ -9,6 +8,8 @@ import { EntityType } from '@/src/types/common';
 import { QuickAppConfig } from '@/src/types/quick-apps';
 
 import { DEFAULT_VERSION } from '@/src/constants/public';
+
+import { DynamicField } from '../../Common/Forms/DynamicFormFields';
 
 export interface ApplicationGeneralInfoFormData {
   name: string;
@@ -23,6 +24,11 @@ export interface ApplicationGeneralInfoFormData {
   inputAttachmentTypes?: string[];
   maxInputAttachments?: number;
   features?: string | null;
+  env?: DynamicField[];
+  sources?: string;
+  sourceFiles?: string[];
+  runtime?: string;
+  endpoints?: DynamicField[];
 }
 
 type Options<T extends Path<ApplicationGeneralInfoFormData>> = Omit<
@@ -73,22 +79,44 @@ export const getApplicationData = (
     type: EntityType.Application,
     isDefault: false,
     folderId: '',
-    topics: isApplicationType(type)
-      ? [...formData.topics, type]
-      : formData.topics,
+    topics: formData.topics,
     description: formData.description.trim(),
     completionUrl: formData.completionUrl,
     version: formData.version || DEFAULT_VERSION,
     iconUrl: formData.iconUrl,
     applicationProperties: formData.applicationProperties ?? undefined,
+    inputAttachmentTypes: formData.inputAttachmentTypes,
+    maxInputAttachments: formData.maxInputAttachments,
   };
   if (type === 'custom-app') {
     preparedData.completionUrl = formData.completionUrl ?? '';
-    preparedData.inputAttachmentTypes = formData.inputAttachmentTypes;
-    preparedData.maxInputAttachments = formData.maxInputAttachments;
     preparedData.features = formData.features
       ? JSON.parse(formData.features)
       : null;
+  }
+
+  if (type === 'code-app') {
+    preparedData.function = {
+      runtime: formData.runtime,
+      env: formData.env?.length
+        ? formData.env.reduce(
+            (acc, option) => ({
+              ...acc,
+              [option.label]: option.value,
+            }),
+            {},
+          )
+        : undefined,
+      sourceFolder: formData.sources!,
+      mapping:
+        formData.endpoints?.reduce(
+          (acc, option) => ({
+            ...acc,
+            [option.label]: option.value.trim(),
+          }),
+          {},
+        ) ?? {},
+    };
   }
 
   return preparedData;
