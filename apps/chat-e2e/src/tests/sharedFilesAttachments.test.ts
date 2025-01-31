@@ -368,7 +368,7 @@ dialSharedWithMeTest(
             );
             await renameConversationModal.saveButton.click();
             await confirmationDialog.confirm({
-              triggeredHttpMethod: 'DELETE',
+              triggeredHttpMethod: 'PUT',
             });
             break;
           case 'model change':

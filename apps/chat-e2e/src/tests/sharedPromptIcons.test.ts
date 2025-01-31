@@ -240,7 +240,7 @@ dialTest(
       async () => {
         await promptModalDialog.setField(promptModalDialog.name, newName);
         await promptModalDialog.saveButton.click();
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
         await promptAssertion.assertEntityArrowIconState(
           { name: newName },
           'hidden',

@@ -417,7 +417,7 @@ dialTest(
     await dialTest.step(
       'Confirm conversation rename and verify conversation is not shared and arrow icon disappears',
       async () => {
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
         await conversationAssertion.assertEntityArrowIconState(
           { name: newName },
           'hidden',
@@ -443,7 +443,7 @@ dialTest(
     await dialTest.step(
       'Confirm conversation model change and verify conversation is not shared and arrow icon disappears',
       async () => {
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
         await conversationAssertion.assertEntityArrowIconState(
           { name: newName },
           'hidden',
