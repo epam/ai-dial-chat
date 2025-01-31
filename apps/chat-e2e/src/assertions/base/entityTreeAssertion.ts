@@ -23,7 +23,6 @@ export class EntityTreeAssertion<T extends EntitiesTree> extends BaseAssertion {
   ) {
     const entityLocator = this.treeEntities.getEntityByExactName(
       entity.name,
-      entity.index,
     );
     await this.assertElementState(entityLocator, expectedState);
   }

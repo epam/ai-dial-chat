@@ -21,19 +21,25 @@ export class BaseSideBarConversationTree extends SideBarEntitiesTree {
   }
 
   public selectedConversation(name: string, index?: number) {
-    return this.getEntityByName(name, index).locator(
-      ChatBarSelectors.selectedEntity,
-    );
+    if (index) {
+      return this.getEntityByName(name, index).locator(
+        ChatBarSelectors.selectedEntity,
+      );
+    }
+    else {
+      return this.getEntityByExactName(name).locator(
+        ChatBarSelectors.selectedEntity,
+      );
+    }
   }
 
-  public async getSelectedEntities(): Promise<
-    { name: string; index?: number }[]
-  > {
+  public async getSelectedEntities(): Promise<{ name: string; index?: number }[]> {
     const allNames = await this.getAllTreeEntitiesNames();
     const selectedEntities = [];
 
     for (const name of allNames) {
-      const hasSelectedClass = await this.isEntitySelected(name);
+      const hasSelectedClass = await this.selectedConversation(name)
+        .count() > 0;
       const backgroundColor = await this.getEntityBackgroundColor(name);
 
       if (
@@ -44,13 +50,5 @@ export class BaseSideBarConversationTree extends SideBarEntitiesTree {
       }
     }
     return selectedEntities;
-  }
-
-  public async isEntitySelected(name: string): Promise<boolean> {
-    return (
-      (await this.getEntityByExactName(name)
-        .locator(ChatBarSelectors.selectedEntity)
-        .count()) > 0
-    );
   }
 }

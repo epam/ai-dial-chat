@@ -56,8 +56,7 @@ export class EntitiesTree extends BaseElement {
       indexOrOptions.exactMatch
     ) {
       // New exact match behavior
-      index = indexOrOptions.index;
-      return this.getEntityByExactName(name, index);
+      return this.getEntityByExactName(name);
     } else {
       // Default behavior (partial match, no index)
       return this.getEntityByName(name);
@@ -70,11 +69,10 @@ export class EntitiesTree extends BaseElement {
     ).getElementLocatorByText(name, index);
   }
 
-  getEntityByExactName(name: string, index?: number): Locator {
+  getEntityByExactName(name: string): Locator {
     return this.getChildElementBySelector(this.entitySelector)
       .getElementLocator()
-      .filter({ hasText: new RegExp(`^${RegexUtil.escapeRegexChars(name)}$`) })
-      .nth(index ? index - 1 : 0);
+      .filter({ hasText: new RegExp(`^${RegexUtil.escapeRegexChars(name)}$`) });
   }
 
   getEntityName(name: string, index?: number) {
