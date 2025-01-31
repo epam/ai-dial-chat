@@ -1,4 +1,5 @@
 import { GetServerSideProps } from 'next';
+import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 
