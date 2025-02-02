@@ -313,7 +313,8 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
       );
 
       if (
-        applicationType === ApplicationType.CODE_APP &&
+        (applicationType === ApplicationType.CODE_APP ||
+          applicationType === ApplicationType.QUICK_APP) &&
         applicationDetails?.reference !== application.reference
       ) {
         return of(
@@ -334,6 +335,14 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
       if (application?.iconUrl) {
         resources.push({
           url: ApiUtils.encodeApiUrl(application.iconUrl),
+        });
+      }
+
+      if (application?.applicationProperties?.document_relative_url) {
+        resources.push({
+          url: ApiUtils.encodeApiUrl(
+            application.applicationProperties.document_relative_url,
+          ),
         });
       }
 
