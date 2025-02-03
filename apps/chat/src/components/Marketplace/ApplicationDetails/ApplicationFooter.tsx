@@ -19,6 +19,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import {
   getApplicationNextStatus,
   getApplicationSimpleStatus,
+  getPlayerCaption,
   isApplicationDeploymentInProgress,
   isApplicationPublic,
   isApplicationStatusUpdating,
@@ -62,22 +63,6 @@ import { ApplicationCopyLink } from './ApplicationCopyLink';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
-
-const getFunctionTooltip = (entity: DialAIEntityModel) => {
-  switch (entity.functionStatus) {
-    case ApplicationStatus.UNDEPLOYED:
-    case ApplicationStatus.FAILED:
-      return 'Deploy';
-    case ApplicationStatus.DEPLOYED:
-      return 'Undeploy';
-    case ApplicationStatus.DEPLOYING:
-      return 'Deploying';
-    case ApplicationStatus.UNDEPLOYING:
-      return 'Undeploying';
-    default:
-      return '';
-  }
-};
 
 const getDisabledTooltip = (entity: DialAIEntityModel, normal: string) => {
   switch (entity.functionStatus) {
@@ -142,6 +127,7 @@ export const ApplicationDetailsFooter = ({
 
   const isExecutable =
     isExecutableApp(entity) && (isMyApp || isAdmin || canWrite);
+
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
   const isAppInDeployment = isApplicationDeploymentInProgress(entity);
@@ -215,9 +201,10 @@ export const ApplicationDetailsFooter = ({
         },
       },
       {
-        name: t(getFunctionTooltip(entity)),
+        name: t(getPlayerCaption(entity)),
         dataQa: 'status-change',
-        display: isExecutable && isCodeAppsEnabled,
+        // TODO remove '&& !entity.sharedWithMe' when core issue will be ready #655
+        display: isExecutable && isCodeAppsEnabled && !entity.sharedWithMe,
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
         Icon: PlayerContextIcon,
         iconClassName: PlayerContextIconClasses[playerStatus],
@@ -327,7 +314,7 @@ export const ApplicationDetailsFooter = ({
     ],
   );
 
-  const hasBookmark = !isMyApp || !entity.sharedWithMe;
+  const hasBookmark = !isMyApp && !entity.sharedWithMe;
   const countDisplayTrue = menuItems.filter((item) => item.display).length;
   const menuItemsCount = hasBookmark ? countDisplayTrue + 1 : countDisplayTrue;
 
@@ -354,8 +341,9 @@ export const ApplicationDetailsFooter = ({
                   className="icon-button !p-[5px]"
                 />
               )}
-              {isExecutable && isCodeAppsEnabled && (
-                <Tooltip tooltip={t(getFunctionTooltip(entity))}>
+              {/*TODO remove '&& !entity.sharedWithMe' when core issue will be ready #655*/}
+              {isExecutable && isCodeAppsEnabled && !entity.sharedWithMe && (
+                <Tooltip tooltip={t(getPlayerCaption(entity))}>
                   <button
                     disabled={playerStatus === SimpleApplicationStatus.UPDATING}
                     onClick={handleUpdateFunctionStatus}
