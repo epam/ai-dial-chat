@@ -9,6 +9,7 @@ import {
   createQuickAppConfig,
   getModelDescription,
   getQuickAppConfig,
+  getQuickAppDocumentUrl,
 } from '@/src/utils/app/application';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { constructPath, notAllowedSymbols } from '@/src/utils/app/file';
@@ -369,7 +370,7 @@ export const getDefaultValues = ({
     model:
       quickAppConfig?.model ??
       DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
-    documentRelativeUrl: quickAppConfig?.document_relative_url ?? '',
+    documentRelativeUrl: getQuickAppDocumentUrl(app) ?? '',
   };
 };
 

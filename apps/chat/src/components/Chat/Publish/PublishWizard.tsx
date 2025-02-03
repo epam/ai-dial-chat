@@ -20,11 +20,12 @@ import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import {
   getIdWithoutRootPathSegments,
   getRootId,
-  isEntityIdExternal,
+  isApplicationId,
 } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
   createTargetUrl,
+  getApplicationPublishResources,
   isEntityIdPublic,
 } from '@/src/utils/app/publications';
 import { NotReplayFilter } from '@/src/utils/app/search';
@@ -41,6 +42,10 @@ import {
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
+import {
+  ApplicationActions,
+  ApplicationSelectors,
+} from '@/src/store/application/application.reducers';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -114,6 +119,9 @@ export function PublishModal<
   const areConversationsWithContentUploading = useAppSelector(
     ConversationsSelectors.selectAreConversationsWithContentUploading,
   );
+  const isApplicationLoading = useAppSelector(
+    ApplicationSelectors.selectIsApplicationLoading,
+  );
   const isRulesLoading = useAppSelector(
     PublicationSelectors.selectIsRulesLoading,
   );
@@ -129,6 +137,11 @@ export function PublishModal<
   const selectedItemsIds = useAppSelector(
     PublicationSelectors.selectSelectedItemsToPublish,
   );
+  const applicationDetails = useAppSelector(
+    ApplicationSelectors.selectApplicationDetail,
+  );
+
+  const applicationId = isApplicationId(entity?.id) ? entity.id : null;
 
   const filteredFiles = useMemo(() => {
     if (publishAction === PublishActions.DELETE) {
@@ -167,6 +180,12 @@ export function PublishModal<
       dispatch(PublicationActions.uploadRules({ path }));
     }
   }, [dispatch, path]);
+
+  useEffect(() => {
+    if (applicationId && isOpen) {
+      dispatch(ApplicationActions.get({ applicationId }));
+    }
+  }, [applicationId, dispatch, isOpen]);
 
   useEffect(() => {
     if (currentFolderRules) {
@@ -312,6 +331,7 @@ export function PublishModal<
               : selectedFiles.reduce<PublicationRequestModel['resources']>(
                   (acc, file) => {
                     const decodedFileId = ApiUtils.decodeApiUrl(file.id);
+
                     const item = mappedFiles.find(
                       (f) => f.oldUrl === decodedFileId,
                     );
@@ -322,34 +342,34 @@ export function PublishModal<
                         sourceUrl: decodedFileId,
                         targetUrl: item.newUrl,
                       });
+                    } else {
+                      acc.push({
+                        action: publishAction,
+                        sourceUrl: decodedFileId,
+                        targetUrl: ApiUtils.decodeApiUrl(
+                          constructPath(
+                            file.id.split('/')[0],
+                            PUBLIC_URL_PREFIX,
+                            trimmedPath,
+                            getIdWithoutRootPathSegments(entity.folderId),
+                            file.id.split('/').at(-1),
+                          ),
+                        ),
+                      });
                     }
 
                     return acc;
                   },
                   [],
                 )),
-            ...(type === SharingType.Application &&
-            'iconUrl' in entity &&
-            entity.iconUrl &&
-            !isEntityIdExternal({ id: entity.iconUrl })
-              ? [
-                  {
-                    action: publishAction,
-                    targetUrl: ApiUtils.decodeApiUrl(
-                      constructPath(
-                        entity.iconUrl.split('/')[0],
-                        PUBLIC_URL_PREFIX,
-                        trimmedPath,
-                        getIdWithoutRootPathSegments(entity.folderId),
-                        entity.iconUrl.split('/').at(-1),
-                      ),
-                    ),
-                    sourceUrl:
-                      publishAction === PublishActions.DELETE
-                        ? undefined
-                        : ApiUtils.decodeApiUrl(entity.iconUrl),
-                  },
-                ]
+            ...(type === SharingType.Application
+              ? getApplicationPublishResources({
+                  entity: entity as PublishRequestDialAIEntityModel,
+                  path: trimmedPath,
+                  publishAction,
+                  applicationDetails,
+                  selectedIds: selectedItemsIds,
+                })
               : []),
           ],
           rules: preparedFilters.map((filter) => ({
@@ -363,18 +383,19 @@ export function PublishModal<
       onClose();
     },
     [
-      currentFolderRules,
-      dispatch,
-      entitiesArray,
       entity,
-      filteredFiles,
-      onClose,
-      otherTargetAudienceFilters,
       path,
-      publishAction,
       publishRequestName,
-      selectedItemsIds,
+      otherTargetAudienceFilters,
+      currentFolderRules,
+      entitiesArray,
+      filteredFiles,
       type,
+      dispatch,
+      publishAction,
+      applicationDetails,
+      selectedItemsIds,
+      onClose,
     ],
   );
 
@@ -417,7 +438,8 @@ export function PublishModal<
     isRuleSetterOpened ||
     isNothingSelectedAndNoRuleChanges ||
     isSomeVersionInvalid ||
-    areConversationsWithContentUploading;
+    areConversationsWithContentUploading ||
+    isApplicationLoading;
   const isSendBtnTooltipHidden =
     !!publishRequestName.trim().length &&
     !isRuleSetterOpened &&
