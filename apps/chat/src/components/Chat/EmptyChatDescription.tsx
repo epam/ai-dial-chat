@@ -65,8 +65,8 @@ const EmptyChatDescriptionView = ({
   const dispatch = useAppDispatch();
 
   const { t } = useTranslation(Translation.Chat);
+
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const model = modelsMap[conversation.model.id];
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
@@ -74,16 +74,10 @@ const EmptyChatDescriptionView = ({
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
-  const isEmptyChatChangeAgentHidden = enabledFeatures.has(
-    Feature.HideEmptyChatChangeAgent,
-  );
-  const isEmptyChatSettingsEnabled = enabledFeatures.has(
-    Feature.EmptyChatSettings,
-  );
-  const isExternal = isEntityIdExternal(conversation);
 
   const screenState = useScreenState();
 
+  const model = modelsMap[conversation.model.id];
   const versions = useMemo(
     () =>
       models.filter(
@@ -94,8 +88,6 @@ const EmptyChatDescriptionView = ({
       ),
     [installedModelIds, model?.name, model?.reference, models],
   );
-
-  const incorrectModel = !model;
 
   const handleOpenChangeModel = useCallback(
     () => onShowChangeModel(conversation.id),
@@ -127,11 +119,21 @@ const EmptyChatDescriptionView = ({
     );
   }
 
+  const isReplayAsIs = conversation.replay?.replayAsIs;
+  const isPlayback = conversation.playback?.isPlayback;
+  const isEmptyChatChangeAgentHidden = enabledFeatures.has(
+    Feature.HideEmptyChatChangeAgent,
+  );
+  const isEmptyChatSettingsEnabled = enabledFeatures.has(
+    Feature.EmptyChatSettings,
+  );
+  const incorrectModel = !model;
+  const isExternal = isEntityIdExternal(conversation);
   const modelIconSize = screenState === ScreenState.MOBILE ? 36 : 50;
   const isOldReplay = isOldConversationReplay(conversation.replay);
-  const PseudoIcon = conversation.playback?.isPlayback
+  const PseudoIcon = isPlayback
     ? PlaybackIcon
-    : conversation.replay?.replayAsIs
+    : isReplayAsIs
       ? ReplayAsIsIcon
       : null;
 
@@ -162,16 +164,19 @@ const EmptyChatDescriptionView = ({
             <div className="flex items-center gap-2 whitespace-pre-wrap">
               <span
                 data-qa="agent-name"
-                className={classNames(incorrectModel && 'text-secondary')}
+                className={classNames(
+                  incorrectModel &&
+                    !isReplayAsIs &&
+                    !isPlayback &&
+                    'text-secondary',
+                )}
               >
-                {incorrectModel
-                  ? conversation.model.id
-                  : getModelName(conversation, model)}
+                {getModelName(conversation, model)}
               </span>
               {model && <FunctionStatusIndicator entity={model} />}
             </div>
           </div>
-          {conversation.replay?.replayAsIs && !incorrectModel && (
+          {isReplayAsIs && (
             <>
               <span
                 className="whitespace-pre-wrap text-secondary"
@@ -200,34 +205,30 @@ const EmptyChatDescriptionView = ({
               )}
             </>
           )}
-          {model &&
-            !(
-              conversation.playback?.isPlayback ||
-              conversation.replay?.replayAsIs
-            ) && (
-              <>
-                <ModelVersionSelect
-                  className="h-max w-fit self-center"
-                  entities={versions}
-                  onSelect={handleSelectVersion}
-                  currentEntity={model}
-                  showVersionPrefix
-                />
-                {!!getModelDescription(model) && (
-                  <span
-                    className="whitespace-pre-wrap text-secondary"
-                    data-qa="agent-descr"
+          {model && !(isPlayback || isReplayAsIs) && (
+            <>
+              <ModelVersionSelect
+                className="h-max w-fit self-center"
+                entities={versions}
+                onSelect={handleSelectVersion}
+                currentEntity={model}
+                showVersionPrefix
+              />
+              {!!getModelDescription(model) && (
+                <span
+                  className="whitespace-pre-wrap text-secondary"
+                  data-qa="agent-descr"
+                >
+                  <EntityMarkdownDescription
+                    className="!text-base"
+                    isShortDescription
                   >
-                    <EntityMarkdownDescription
-                      className="!text-base"
-                      isShortDescription
-                    >
-                      {getModelDescription(model)}
-                    </EntityMarkdownDescription>
-                  </span>
-                )}
-              </>
-            )}
+                    {getModelDescription(model)}
+                  </EntityMarkdownDescription>
+                </span>
+              )}
+            </>
+          )}
         </div>
       </div>
       {!isExternal && (
@@ -241,17 +242,15 @@ const EmptyChatDescriptionView = ({
               {t('Change agent')}
             </button>
           )}
-          {!conversation.replay?.replayAsIs &&
-            !conversation.playback?.isPlayback &&
-            isEmptyChatSettingsEnabled && (
-              <button
-                className="pl-3 text-left text-accent-primary"
-                data-qa="configure-settings"
-                onClick={handleOpenSettings}
-              >
-                {t('Configure settings')}
-              </button>
-            )}
+          {!isReplayAsIs && !isPlayback && isEmptyChatSettingsEnabled && (
+            <button
+              className="pl-3 text-left text-accent-primary"
+              data-qa="configure-settings"
+              onClick={handleOpenSettings}
+            >
+              {t('Configure settings')}
+            </button>
+          )}
         </div>
       )}
     </div>
