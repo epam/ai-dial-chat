@@ -1,5 +1,7 @@
 'use client';
 
+import { BackToButton } from './backToSelectOverlayMode';
+
 import {
   ChatOverlayManager,
   ChatOverlayManagerOptions,
@@ -16,6 +18,7 @@ export const ChatOverlayManagerWrapper: React.FC<
   const overlayManager = useRef<ChatOverlayManager | null>(null);
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const [dialogInfo, setDialogInfo] = useState('');
+  const [created, setCreated] = useState(false);
   const [conversationIdInputValue, setConversationIdInputValue] = useState('');
 
   const handleDisplayInformation = useCallback((textToShow: string) => {
@@ -31,8 +34,17 @@ export const ChatOverlayManagerWrapper: React.FC<
         ...overlayManagerOptions,
         hostDomain: window.location.origin,
       });
+      setCreated(true);
     }
   }, [overlayManagerOptions]);
+
+  useEffect(() => {
+    return () => {
+      if (overlayManager.current && created) {
+        overlayManager.current?.removeOverlay(overlayManagerOptions.id);
+      }
+    };
+  });
 
   useEffect(() => {
     overlayManager.current?.subscribe(
@@ -59,7 +71,7 @@ export const ChatOverlayManagerWrapper: React.FC<
       <dialog ref={dialogRef} className="rounded p-5">
         <div className="flex justify-end">
           <button
-            className="rounded bg-gray-200 p-2"
+            className="button"
             autoFocus
             onClick={() => dialogRef.current?.close()}
           >
@@ -70,12 +82,13 @@ export const ChatOverlayManagerWrapper: React.FC<
       </dialog>
 
       <div className="flex max-w-[300px] flex-col gap-2">
+        <BackToButton />
         <details>
           <summary>Chat actions</summary>
 
           <div className="flex flex-col gap-2">
             <button
-              className="rounded bg-gray-200 p-2"
+              className="button"
               onClick={() => {
                 overlayManager.current?.sendMessage(
                   overlayManagerOptions.id,
@@ -87,7 +100,7 @@ export const ChatOverlayManagerWrapper: React.FC<
             </button>
 
             <button
-              className="rounded bg-gray-200 p-2"
+              className="button"
               onClick={() => {
                 overlayManager.current?.setSystemPrompt(
                   overlayManagerOptions.id,
@@ -99,7 +112,7 @@ export const ChatOverlayManagerWrapper: React.FC<
             </button>
 
             <button
-              className="rounded bg-gray-200 p-2"
+              className="button"
               onClick={async () => {
                 const messages = await overlayManager.current?.getMessages(
                   overlayManagerOptions.id,
@@ -112,7 +125,7 @@ export const ChatOverlayManagerWrapper: React.FC<
             </button>
 
             <button
-              className="rounded bg-gray-200 p-2"
+              className="button"
               onClick={async () => {
                 const conversations =
                   await overlayManager.current?.getConversations(
@@ -128,7 +141,7 @@ export const ChatOverlayManagerWrapper: React.FC<
             </button>
 
             <button
-              className="rounded bg-gray-200 p-2"
+              className="button"
               onClick={async () => {
                 const conversation =
                   await overlayManager.current?.createConversation(
@@ -142,7 +155,7 @@ export const ChatOverlayManagerWrapper: React.FC<
             </button>
 
             <button
-              className="rounded bg-gray-200 p-2"
+              className="button"
               onClick={async () => {
                 const conversation =
                   await overlayManager.current?.createConversation(
@@ -158,7 +171,7 @@ export const ChatOverlayManagerWrapper: React.FC<
 
             <div className="flex flex-col gap-1 border p-1">
               <button
-                className="rounded bg-gray-200 p-2"
+                className="button"
                 onClick={async () => {
                   const conversation =
                     await overlayManager.current?.selectConversation(
@@ -187,7 +200,7 @@ export const ChatOverlayManagerWrapper: React.FC<
 
           <div>
             <button
-              className="rounded bg-gray-200 p-2"
+              className="button"
               onClick={() => {
                 const newOptions = {
                   ...overlayManagerOptions,
