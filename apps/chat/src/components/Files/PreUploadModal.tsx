@@ -508,7 +508,7 @@ export const PreUploadDialog = ({
 
       {isChangeFolderModalOpened && (
         <SelectFolderModal
-          isOpen={isChangeFolderModalOpened}
+          isOpen
           initialSelectedFolderId={selectedFolderId}
           rootFolderId={rootFolderId ?? getFileRootId(bucket)}
           onClose={(folderId) => {
