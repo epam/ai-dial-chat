@@ -126,8 +126,7 @@ export const ApplicationDetailsFooter = ({
   const canWrite = canWriteSharedWithMe(entity);
 
   const isExecutable =
-    // TODO canWrite when core issue will be ready #655
-    isExecutableApp(entity) && (isMyApp || isAdmin);
+    isExecutableApp(entity) && (isMyApp || isAdmin || canWrite);
 
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
@@ -204,7 +203,8 @@ export const ApplicationDetailsFooter = ({
       {
         name: t(getPlayerCaption(entity)),
         dataQa: 'status-change',
-        display: isExecutable && isCodeAppsEnabled,
+        // TODO remove '&& !entity.sharedWithMe' when core issue will be ready #655
+        display: isExecutable && isCodeAppsEnabled && !entity.sharedWithMe,
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
         Icon: PlayerContextIcon,
         iconClassName: PlayerContextIconClasses[playerStatus],
@@ -314,7 +314,7 @@ export const ApplicationDetailsFooter = ({
     ],
   );
 
-  const hasBookmark = !isMyApp || !entity.sharedWithMe;
+  const hasBookmark = !isMyApp && !entity.sharedWithMe;
   const countDisplayTrue = menuItems.filter((item) => item.display).length;
   const menuItemsCount = hasBookmark ? countDisplayTrue + 1 : countDisplayTrue;
 
@@ -341,7 +341,8 @@ export const ApplicationDetailsFooter = ({
                   className="icon-button !p-[5px]"
                 />
               )}
-              {isExecutable && isCodeAppsEnabled && (
+              {/*TODO remove '&& !entity.sharedWithMe' when core issue will be ready #655*/}
+              {isExecutable && isCodeAppsEnabled && !entity.sharedWithMe && (
                 <Tooltip tooltip={t(getPlayerCaption(entity))}>
                   <button
                     disabled={playerStatus === SimpleApplicationStatus.UPDATING}
