@@ -143,9 +143,10 @@ export const PromptModal: FC<Props> = ({
 
       if (isNewPromptCreating) {
         onCreatePrompt(updatedPrompt);
+      } else {
+        onUpdatePrompt(selectedPrompt, updatedPrompt);
       }
 
-      onUpdatePrompt(selectedPrompt, updatedPrompt);
       setSubmitted(false);
       onClose();
     },
