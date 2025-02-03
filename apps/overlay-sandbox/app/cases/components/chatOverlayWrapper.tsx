@@ -181,7 +181,8 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
             </button>
 
             <div className="flex flex-col gap-1 border p-1">
-              <button className="button"
+              <button
+                className="button"
                 onClick={handleSelectConversation}
                 data-qa="select-conversation-by-id"
               >
