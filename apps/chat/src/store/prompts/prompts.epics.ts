@@ -222,12 +222,6 @@ const moveOrUpdatePromptEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.moveOrUpdatePrompt.match),
     switchMap(({ payload }) => {
-      console.log(
-        typeof payload.newValues.name === 'string' &&
-          payload.newValues.name !== payload.prompt.name,
-      );
-      console.log(payload.prompt);
-      console.log(payload.newValues);
       if (
         typeof payload.newValues.name === 'string' &&
         payload.newValues.name !== payload.prompt.name
