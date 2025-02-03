@@ -364,7 +364,7 @@ export function PublishModal<
                 )),
             ...(type === SharingType.Application
               ? getApplicationPublishResources({
-                  entity,
+                  entity: entity as PublishRequestDialAIEntityModel,
                   path: trimmedPath,
                   publishAction,
                   applicationDetails,

@@ -16,7 +16,10 @@ import { AnyAction } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
-import { getApplicationType } from '@/src/utils/app/application';
+import {
+  getApplicationType,
+  getQuickAppDocumentUrl,
+} from '@/src/utils/app/application';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { ShareService } from '@/src/utils/app/data/share-service';
 import {
@@ -353,10 +356,10 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
         }
       }
 
-      if (application?.applicationProperties?.document_relative_url) {
+      if (getQuickAppDocumentUrl(applicationDetails)) {
         resources.push({
           url: ApiUtils.encodeApiUrl(
-            application.applicationProperties.document_relative_url,
+            getQuickAppDocumentUrl(applicationDetails) as string,
           ),
         });
       }

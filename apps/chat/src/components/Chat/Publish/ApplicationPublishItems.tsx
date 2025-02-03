@@ -5,6 +5,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { getQuickAppDocumentUrl } from '@/src/utils/app/application';
 import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
 import { isEntityIdExternal } from '@/src/utils/app/id';
@@ -52,8 +53,7 @@ export const ApplicationPublishItems = ({
   const areFilesLoading = useAppSelector(FilesSelectors.selectAreFilesLoading);
   const files = useAppSelector(FilesSelectors.selectFiles);
 
-  const quickAppDocumentUrl = applicationDetails?.applicationProperties
-    ?.document_relative_url as string;
+  const quickAppDocumentUrl = getQuickAppDocumentUrl(applicationDetails);
   const quickAppDocument = useMemo(
     () => files.find((file) => file.id === quickAppDocumentUrl),
     [files, quickAppDocumentUrl],
@@ -127,7 +127,6 @@ export const ApplicationPublishItems = ({
             <FilesRow
               itemComponentClassNames={classNames(
                 'w-full cursor-pointer truncate',
-                // @ts-expect-error delete is impossible right now
                 publishAction === PublishActions.DELETE && 'text-error',
               )}
               item={quickAppDocument}

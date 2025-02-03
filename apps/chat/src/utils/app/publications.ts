@@ -1,3 +1,5 @@
+import { getQuickAppDocumentUrl } from '@/src/utils/app/application';
+
 import { CustomApplicationModel } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { PublishRequestDialAIEntityModel } from '@/src/types/models';
@@ -223,33 +225,40 @@ export const getApplicationPublishResources = ({
   applicationDetails?: CustomApplicationModel;
 }) => {
   const iconUrl = entity.iconUrl;
-  const documentUrl: string | undefined =
-    applicationDetails?.id === entity.id
-      ? applicationDetails?.applicationProperties?.document_relative_url
-      : null;
+  const documentUrl = getQuickAppDocumentUrl(applicationDetails);
 
   const resources = [
     iconUrl && !isEntityIdExternal({ id: iconUrl }) ? iconUrl : undefined,
-    selectedIds.includes(documentUrl) ? documentUrl : undefined,
+    documentUrl && selectedIds.includes(documentUrl) ? documentUrl : undefined,
   ];
 
-  return resources.reduce((acc, id) => {
-    if (id) {
-      return [
-        ...acc,
-        {
-          action: publishAction,
-          targetUrl:
-            publishAction === PublishActions.DELETE
-              ? ApiUtils.decodeApiUrl(id)
-              : createTargetUrl(FeatureType.File, path, id, SharingType.File),
-          sourceUrl:
-            publishAction === PublishActions.DELETE
-              ? undefined
-              : ApiUtils.decodeApiUrl(id),
-        },
-      ];
-    }
-    return acc;
-  }, []);
+  return resources.reduce(
+    (
+      acc: {
+        action: PublishActions;
+        sourceUrl?: string | undefined;
+        targetUrl: string;
+      }[],
+      id,
+    ) => {
+      if (id) {
+        return [
+          ...acc,
+          {
+            action: publishAction,
+            targetUrl:
+              publishAction === PublishActions.DELETE
+                ? ApiUtils.decodeApiUrl(id)
+                : createTargetUrl(FeatureType.File, path, id, SharingType.File),
+            sourceUrl:
+              publishAction === PublishActions.DELETE
+                ? undefined
+                : ApiUtils.decodeApiUrl(id),
+          },
+        ];
+      }
+      return acc;
+    },
+    [],
+  );
 };

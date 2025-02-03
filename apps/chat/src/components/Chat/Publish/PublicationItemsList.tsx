@@ -541,7 +541,7 @@ export const PublicationItemsList = memo(
         )}
         {type === SharingType.Application && (
           <ApplicationPublishItems
-            entity={entity}
+            entity={entity as PublishRequestDialAIEntityModel}
             handleSelectItems={handleSelectItems}
             publishAction={publishAction}
             chosenItemsIds={chosenItemsIds}

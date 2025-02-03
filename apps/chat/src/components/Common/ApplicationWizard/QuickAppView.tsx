@@ -4,7 +4,11 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getSharedTooltip, topicToOption } from '@/src/utils/app/application';
+import {
+  getQuickAppDocumentUrl,
+  getSharedTooltip,
+  topicToOption,
+} from '@/src/utils/app/application';
 
 import { CustomApplicationModel } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
@@ -135,8 +139,8 @@ export const QuickAppView: React.FC<ViewProps> = ({
     if (
       isEdit &&
       selectedApplication?.isShared &&
-      preparedData.applicationProperties?.document_relative_url !==
-        selectedApplication?.applicationProperties?.document_relative_url
+      getQuickAppDocumentUrl(preparedData as CustomApplicationModel) !==
+        getQuickAppDocumentUrl(selectedApplication)
     ) {
       setConfirmSharingRevoke({
         description:
@@ -156,7 +160,7 @@ export const QuickAppView: React.FC<ViewProps> = ({
 
   const handleCloseRevokeAccessModal = useCallback(
     (result: boolean) => {
-      if (result) {
+      if (result && selectedApplication?.id && confirmSharingRevoke?.data) {
         dispatch(
           ShareActions.revokeAccess({
             resourceId: selectedApplication.id,
@@ -168,7 +172,7 @@ export const QuickAppView: React.FC<ViewProps> = ({
         setConfirmSharingRevoke(undefined);
       }
     },
-    [confirmSharingRevoke?.data, dispatch, handleEdit, selectedApplication.id],
+    [confirmSharingRevoke?.data, dispatch, handleEdit, selectedApplication?.id],
   );
 
   return (

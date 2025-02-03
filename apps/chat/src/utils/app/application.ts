@@ -184,6 +184,10 @@ export const getQuickAppConfig = (
       };
 };
 
+export const getQuickAppDocumentUrl = (entity?: CustomApplicationModel) => {
+  return entity ? getQuickAppConfig(entity).document_relative_url : undefined;
+};
+
 export const createQuickAppConfig = ({
   instructions,
   temperature,
