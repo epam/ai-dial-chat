@@ -52,7 +52,7 @@ export const ApplicationPublishItems = ({
   const areFilesLoading = useAppSelector(FilesSelectors.selectAreFilesLoading);
   const files = useAppSelector(FilesSelectors.selectFiles);
 
-  const quickAppDocumentUrl =
+  const quickAppDocumentUrl: string =
     applicationDetails?.applicationProperties?.document_relative_url;
   const quickAppDocument = useMemo(
     () => files.find((file) => file.id === quickAppDocumentUrl),
