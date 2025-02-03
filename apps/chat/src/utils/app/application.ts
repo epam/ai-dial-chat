@@ -184,6 +184,10 @@ export const getQuickAppConfig = (
       };
 };
 
+export const getQuickAppDocumentUrl = (entity?: CustomApplicationModel) => {
+  return entity ? getQuickAppConfig(entity).document_relative_url : undefined;
+};
+
 export const createQuickAppConfig = ({
   instructions,
   temperature,
@@ -269,3 +273,18 @@ export const getSharedTooltip = (context: string) => {
 
 export const isApplicationPublic = (entity: DialAIEntityModel) =>
   isEntityIdPublic(entity) || entity.id === entity.reference;
+
+export const getPlayerCaption = (entity: DialAIEntityModel) => {
+  switch (entity.functionStatus) {
+    case ApplicationStatus.DEPLOYED:
+      return 'Undeploy';
+    case ApplicationStatus.UNDEPLOYED:
+    case ApplicationStatus.FAILED:
+      return 'Deploy';
+    case ApplicationStatus.UNDEPLOYING:
+      return 'Undeploying';
+    case ApplicationStatus.DEPLOYING:
+    default:
+      return 'Deploying';
+  }
+};

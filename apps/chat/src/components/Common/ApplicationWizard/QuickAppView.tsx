@@ -1,12 +1,17 @@
 import Editor from '@monaco-editor/react';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getSharedTooltip, topicToOption } from '@/src/utils/app/application';
+import {
+  getQuickAppDocumentUrl,
+  getSharedTooltip,
+  topicToOption,
+} from '@/src/utils/app/application';
 
 import { CustomApplicationModel } from '@/src/types/applications';
+import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
@@ -14,6 +19,7 @@ import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { IMAGE_TYPES } from '@/src/constants/chat';
@@ -21,6 +27,7 @@ import { DEFAULT_VERSION } from '@/src/constants/public';
 
 import { TemperatureSlider } from '@/src/components/Chat/ChatSettings/Temperature';
 import { ApplicationWizardFooter } from '@/src/components/Common/ApplicationWizard/ApplicationWizardFooter';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
 import { withController } from '@/src/components/Common/Forms/ControlledFormField';
 import { Field } from '@/src/components/Common/Forms/Field';
@@ -63,6 +70,12 @@ export const QuickAppView: React.FC<ViewProps> = ({
 
   const isSharedWithMe = selectedApplication?.sharedWithMe;
 
+  const [confirmSharingRevoke, setConfirmSharingRevoke] = useState<{
+    description: string;
+    heading: string;
+    data: FormData;
+  }>();
+
   const modelsWithFolderId = models.map((model) => ({
     ...model,
     folderId: '',
@@ -89,34 +102,78 @@ export const QuickAppView: React.FC<ViewProps> = ({
     [files],
   );
 
+  const handleEdit = useCallback(
+    (data: FormData) => {
+      if (selectedApplication && currentReference) {
+        const preparedData = getApplicationData(data, type);
+
+        const applicationData: CustomApplicationModel = {
+          ...preparedData,
+          reference: currentReference,
+          id: selectedApplication.id,
+          sharedWithMe: isSharedWithMe,
+        };
+
+        dispatch(
+          ApplicationActions.update({
+            oldApplicationId: selectedApplication.id,
+            applicationData,
+          }),
+        );
+      }
+      onClose(true);
+    },
+    [
+      currentReference,
+      dispatch,
+      isSharedWithMe,
+      onClose,
+      selectedApplication,
+      type,
+    ],
+  );
+
   const handleSubmit = (data: FormData) => {
     const preparedData = getApplicationData(data, type);
 
     if (
       isEdit &&
-      selectedApplication?.name &&
-      currentReference &&
-      selectedApplication.id
+      selectedApplication?.isShared &&
+      getQuickAppDocumentUrl(preparedData as CustomApplicationModel) !==
+        getQuickAppDocumentUrl(selectedApplication)
     ) {
-      const applicationData: CustomApplicationModel = {
-        ...preparedData,
-        reference: currentReference,
-        id: selectedApplication.id,
-        sharedWithMe: isSharedWithMe,
-      };
-
-      dispatch(
-        ApplicationActions.update({
-          oldApplicationId: selectedApplication.id,
-          applicationData,
-        }),
-      );
+      setConfirmSharingRevoke({
+        description:
+          'Changing of document relative url will stop sharing and other users will no longer see this application.',
+        heading: 'Confirm changing url',
+        data,
+      });
+      return;
+    } else if (isEdit) {
+      handleEdit(data);
     } else {
       dispatch(ApplicationActions.create(preparedData));
     }
 
     onClose(true);
   };
+
+  const handleCloseRevokeAccessModal = useCallback(
+    (result: boolean) => {
+      if (result && selectedApplication?.id && confirmSharingRevoke?.data) {
+        dispatch(
+          ShareActions.revokeAccess({
+            resourceId: selectedApplication.id,
+            featureType: FeatureType.Application,
+          }),
+        );
+
+        handleEdit(confirmSharingRevoke?.data);
+        setConfirmSharingRevoke(undefined);
+      }
+    },
+    [confirmSharingRevoke?.data, dispatch, handleEdit, selectedApplication?.id],
+  );
 
   return (
     <form
@@ -277,6 +334,17 @@ export const QuickAppView: React.FC<ViewProps> = ({
           )}
         />
       </div>
+
+      {confirmSharingRevoke && selectedApplication && (
+        <ConfirmDialog
+          isOpen
+          heading={t(confirmSharingRevoke.heading)}
+          description={t(confirmSharingRevoke.description)}
+          confirmLabel={t('Confirm')}
+          cancelLabel={t('Cancel')}
+          onClose={handleCloseRevokeAccessModal}
+        />
+      )}
 
       <ApplicationWizardFooter
         onClose={onClose}

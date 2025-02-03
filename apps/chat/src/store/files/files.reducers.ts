@@ -521,6 +521,9 @@ const selectIsUploadingFilePresent = createSelector(
 const selectAreFoldersLoading = createSelector([rootSelector], (state) => {
   return state.foldersStatus === UploadStatus.LOADING;
 });
+const selectAreFilesLoading = createSelector([rootSelector], (state) => {
+  return state.filesStatus === UploadStatus.LOADING;
+});
 const selectLoadingFolderIds = createSelector([rootSelector], (state) => {
   return state.loadingFolderId ? [state.loadingFolderId] : [];
 });
@@ -573,6 +576,7 @@ export const FilesSelectors = {
   selectFoldersWithSearchTerm,
   selectPublicationFolders,
   selectInitialized,
+  selectAreFilesLoading,
 };
 
 export const FilesActions = filesSlice.actions;
