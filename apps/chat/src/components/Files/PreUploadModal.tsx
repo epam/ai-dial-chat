@@ -26,7 +26,7 @@ import {
   getParentAndCurrentFoldersById,
   splitEntityId,
 } from '@/src/utils/app/folders';
-import { getFileRootId, isIsMyBucket } from '@/src/utils/app/id';
+import { getFileRootId, isMyBucket } from '@/src/utils/app/id';
 
 import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
@@ -414,7 +414,7 @@ export const PreUploadDialog = ({
               data-qa="change-path-container"
             >
               <span className="truncate" data-qa="path">
-                {!bucket || isIsMyBucket(bucket)
+                {!bucket || isMyBucket(bucket)
                   ? constructPath(t('All files'), folderPath ?? rootFolderName)
                   : constructPath(
                       t(SHARED_WITH_ME_SECTION_NAME),
