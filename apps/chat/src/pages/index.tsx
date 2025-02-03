@@ -7,22 +7,19 @@ import {
   SettingsSelectors,
   SettingsState,
 } from '@/src/store/settings/settings.reducers';
-import {
-  UISelectors,
-  selectShowSelectToMigrateWindow,
-} from '@/src/store/ui/ui.reducers';
+import { selectShowSelectToMigrateWindow } from '@/src/store/ui/ui.reducers';
 
 import { getLayout } from '@/src/pages/_app';
 
-import { MainModalManager } from '../components/Chat/MainModalManager';
+import { ChatModalsManager } from '../components/Chat/ChatModalsManager';
 import { ImportExportLoader } from '../components/Chatbar/ImportExportLoader';
 import { AnnouncementsBanner } from '../components/Common/AnnouncementBanner';
+import { RenderWhen } from '../components/Common/RenderWhen';
 import { Chat } from '@/src/components/Chat/Chat';
 import { Migration } from '@/src/components/Chat/Migration/Migration';
 import { MigrationFailedWindow } from '@/src/components/Chat/Migration/MigrationFailedModal';
 import { Chatbar } from '@/src/components/Chatbar/Chatbar';
 import Header from '@/src/components/Header/Header';
-import { UserMobile } from '@/src/components/Header/User/UserMobile';
 import Promptbar from '@/src/components/Promptbar';
 
 import { useCustomizations } from '@/src/customizations';
@@ -36,8 +33,6 @@ export interface HomeProps {
 
 function Home() {
   useCustomizations();
-
-  const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
 
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
@@ -97,13 +92,14 @@ function Home() {
               <AnnouncementsBanner />
               <Chat />
 
-              {isImportingExporting && (
-                <ImportExportLoader isOpen={isImportingExporting} />
-              )}
+              <RenderWhen
+                selector={ImportExportSelectors.selectIsLoadingImportExport}
+              >
+                <ImportExportLoader />
+              </RenderWhen>
             </div>
             {enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
-            {isProfileOpen && <UserMobile />}
-            <MainModalManager />
+            <ChatModalsManager />
           </div>
         </div>
       )}

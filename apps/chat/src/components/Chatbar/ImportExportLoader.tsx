@@ -13,10 +13,7 @@ import {
 
 import { FullPageLoader } from '../Common/FullPageLoader';
 
-interface Props {
-  isOpen: boolean;
-}
-export const ImportExportLoader = ({ isOpen }: Props) => {
+export function ImportExportLoader() {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
   const operationName =
@@ -38,7 +35,7 @@ export const ImportExportLoader = ({ isOpen }: Props) => {
   return (
     <FullPageLoader
       loaderLabel={t(operationName)}
-      isOpen={isOpen}
+      isOpen
       onClose={() => {
         return;
       }}
@@ -46,4 +43,4 @@ export const ImportExportLoader = ({ isOpen }: Props) => {
       stopLabel={t(stopLabel)}
     />
   );
-};
+}

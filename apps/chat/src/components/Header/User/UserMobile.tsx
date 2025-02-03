@@ -6,19 +6,22 @@ import { useCallback, useState } from 'react';
 import classNames from 'classnames';
 
 import { useLogout } from '@/src/hooks/useLogout';
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { ScreenState } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { FooterMessage } from '@/src/components/Common/FooterMessage';
 
 import LogOutIcon from '../../../../public/images/icons/log-out.svg';
 import UserIcon from '../../../../public/images/icons/user.svg';
+import { RenderWhen } from '../../Common/RenderWhen';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 
@@ -117,7 +120,7 @@ const UserMenu = () => {
   );
 };
 
-export const UserMobile = Inversify.register('UserMobile', () => {
+const UserMobileView = Inversify.register('UserMobile', () => {
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   return (
@@ -137,3 +140,13 @@ export const UserMobile = Inversify.register('UserMobile', () => {
     </div>
   );
 });
+
+export function UserMobile() {
+  const screenState = useScreenState();
+  if (screenState !== ScreenState.MOBILE) return null;
+  return (
+    <RenderWhen selector={UISelectors.selectIsProfileOpen}>
+      <UserMobileView />
+    </RenderWhen>
+  );
+}

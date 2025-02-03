@@ -9,16 +9,17 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ShareActions, ShareSelectors } from '@/src/store/share/share.reducers';
 
 import { ConfirmDialog } from './ConfirmDialog';
+import { RenderWhen } from './RenderWhen';
 
-export const UnshareDialog = () => {
-  const unshareEntity = useAppSelector(ShareSelectors.selectUnshareModel);
+export function UnshareDialog() {
+  return (
+    <RenderWhen selector={ShareSelectors.selectUnshareModel}>
+      <UnshareDialogView />
+    </RenderWhen>
+  );
+}
 
-  if (unshareEntity !== undefined) {
-    return <UnshareDialogView />;
-  }
-};
-
-const UnshareDialogView = () => {
+function UnshareDialogView() {
   const { t } = useTranslation(Translation.Common);
   const dispatch = useAppDispatch();
   const unshareEntity = useAppSelector(ShareSelectors.selectUnshareModel);
@@ -72,4 +73,4 @@ const UnshareDialogView = () => {
       onClose={handleConfirmUnshare}
     />
   );
-};
+}

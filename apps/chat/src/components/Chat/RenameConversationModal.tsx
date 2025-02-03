@@ -30,17 +30,17 @@ import { DISALLOW_INTERACTIONS } from '@/src/constants/modal';
 
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { Modal } from '../Common/Modal';
+import { RenderWhen } from '../Common/RenderWhen';
 
-export const RenameConversationModal = () => {
-  const renamingConversation = useAppSelector(
-    ConversationsSelectors.selectRenamingConversation,
+export function RenameConversationModal() {
+  return (
+    <RenderWhen selector={ConversationsSelectors.selectRenamingConversation}>
+      <RenameConversationView />
+    </RenderWhen>
   );
-  if (renamingConversation) {
-    return <RenameConversationView />;
-  }
-};
+}
 
-const RenameConversationView = () => {
+function RenameConversationView() {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -228,4 +228,4 @@ const RenameConversationView = () => {
       />
     </Modal>
   );
-};
+}
