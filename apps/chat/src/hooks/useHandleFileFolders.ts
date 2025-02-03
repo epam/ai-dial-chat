@@ -119,9 +119,11 @@ export const useHandleFileFolders = (
    * Handles the creation of a new folder.
    */
   const handleNewFolder = useCallback(() => {
-    dispatch(FilesActions.addNewFolder({ parentId: getFileRootId() }));
+    dispatch(
+      FilesActions.addNewFolder({ parentId: rootFolderId ?? getFileRootId() }),
+    );
     setIsAllFilesOpened?.(true);
-  }, [dispatch, setIsAllFilesOpened]);
+  }, [dispatch, rootFolderId, setIsAllFilesOpened]);
 
   return {
     handleRenameFolder,
