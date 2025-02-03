@@ -5,7 +5,7 @@ import {
   useFormContext,
 } from 'react-hook-form';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
@@ -175,13 +175,13 @@ export const ApplicationView: React.FC = () => {
           control={control}
           render={({ field }) => (
             <ComboBoxField
-              label={t('Attachment types') || ''}
+              label={t('Attachment types')}
               info={t("Input the MIME type and press 'Enter' to add")}
               initialSelectedItems={field.value}
               getItemLabel={getItemLabel}
               getItemValue={getItemLabel}
               onChangeSelectedItems={field.onChange}
-              placeholder={t('Enter one or more attachment types') || ''}
+              placeholder={t('Enter one or more attachment types')}
               className="input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full"
               hasDeleteAll
               hideSuggestions
@@ -194,7 +194,7 @@ export const ApplicationView: React.FC = () => {
 
         <ControlledField
           label={t('Max. attachments number')}
-          placeholder={t('Enter the maximum number of attachments') || ''}
+          placeholder={t('Enter the maximum number of attachments')}
           id="maxInputAttachments"
           error={errors.maxInputAttachments?.message}
           control={control}
@@ -206,7 +206,7 @@ export const ApplicationView: React.FC = () => {
           {...register('completionUrl', validators['completionUrl'])}
           label={t('Chat completion URL')}
           mandatory
-          placeholder={t('Type chat completion URL') || ''}
+          placeholder={t('Type chat completion URL')}
           id="completionUrl"
           error={errors.completionUrl?.message}
           data-qa="completion-url"

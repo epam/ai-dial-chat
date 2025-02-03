@@ -2,6 +2,7 @@ import { Path, RegisterOptions } from 'react-hook-form';
 
 import { safeStringifyApplicationFeatures } from '@/src/utils/app/application';
 import { notAllowedSymbols } from '@/src/utils/app/file';
+import { getNextDefaultName } from '@/src/utils/app/folders';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
@@ -16,9 +17,12 @@ import {
   FEATURES_ENDPOINTS_DEFAULT_VALUES,
   FEATURES_ENDPOINTS_NAMES,
 } from '@/src/constants/applications';
+import { DEFAULT_APPLICATION_NAME } from '@/src/constants/default-ui-settings';
 import { DEFAULT_VERSION } from '@/src/constants/public';
 
 import { DynamicField } from '../../Common/Forms/DynamicFormFields';
+
+import { ShareEntity } from '@epam/ai-dial-shared';
 
 export interface ApplicationGeneralInfoFormData {
   name: string;
@@ -53,9 +57,12 @@ export const getDefaultValues = (
   applicationData?: ApiApplicationResponseDefault,
   bucket?: string,
   pythonVersion?: string,
+  models?: ShareEntity[],
 ): ApplicationGeneralInfoFormData => {
   return {
-    name: applicationData?.display_name ?? '',
+    name:
+      applicationData?.display_name ??
+      getNextDefaultName(DEFAULT_APPLICATION_NAME, models ?? [], 0, true),
     version: applicationData?.display_version ?? DEFAULT_VERSION,
     iconUrl: applicationData?.icon_url ?? '',
     description: applicationData?.description ?? '',

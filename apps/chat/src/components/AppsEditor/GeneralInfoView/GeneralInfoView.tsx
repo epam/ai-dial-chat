@@ -26,13 +26,26 @@ export const GeneralInfoView: React.FC<Props> = ({
   const modelFromState = applicationData
     ? modelsMap[applicationData.reference]
     : null;
+
   const [pythonVersion] = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
   );
+
+  const models = useAppSelector(ModelsSelectors.selectModels);
+  const modelsWithFolderId = models.map((model) => ({
+    ...model,
+    folderId: '',
+  }));
+
   const methods = useForm<ApplicationGeneralInfoFormData>({
     mode: 'onChange',
     reValidateMode: 'onChange',
-    defaultValues: getDefaultValues(applicationData, bucket, pythonVersion),
+    defaultValues: getDefaultValues(
+      applicationData,
+      bucket,
+      pythonVersion,
+      modelsWithFolderId,
+    ),
   });
 
   const formData = methods.watch();
