@@ -44,7 +44,7 @@ export const ChatOverlayManagerWrapper: React.FC<
         overlayManager.current?.removeOverlay(overlayManagerOptions.id);
       }
     };
-  });
+  }, [overlayManager.current, created]);
 
   useEffect(() => {
     overlayManager.current?.subscribe(
