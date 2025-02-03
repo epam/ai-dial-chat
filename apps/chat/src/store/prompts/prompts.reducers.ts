@@ -105,6 +105,13 @@ export const promptsSlice = createSlice({
       );
     },
     savePrompt: (state, _action: PayloadAction<Prompt>) => state,
+    moveOrUpdatePrompt: (
+      state,
+      _action: PayloadAction<{
+        prompt: PromptInfo;
+        newValues: Partial<Prompt>;
+      }>,
+    ) => state,
     movePrompt: (
       state,
       _action: PayloadAction<{

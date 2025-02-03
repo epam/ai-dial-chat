@@ -105,7 +105,7 @@ export const conversationsSlice = createSlice({
       state,
       _action: PayloadAction<{
         conversation: ConversationInfo;
-        newValues: Partial<ConversationInfo>;
+        newValues: Partial<Conversation>;
       }>,
     ) => state,
     moveConversationRegenerated: (

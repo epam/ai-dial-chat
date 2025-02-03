@@ -47,7 +47,7 @@ const PromptActionsBlock = () => {
       isNewPromptCreating
         ? dispatch(PromptsActions.createNewPrompt(regeneratePromptId(prompt)))
         : dispatch(
-            PromptsActions.movePrompt({
+            PromptsActions.moveOrUpdatePrompt({
               prompt,
               newValues: {
                 name: prompt.name,

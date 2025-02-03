@@ -28,7 +28,6 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { DISALLOW_INTERACTIONS } from '@/src/constants/modal';
 
-import { ConfirmDialog } from '../Common/ConfirmDialog';
 import Modal from '../Common/Modal';
 
 export const RenameConversationModal = () => {
@@ -53,7 +52,6 @@ const RenameConversationView = () => {
   );
 
   const [newConversationName, setNewConversationName] = useState('');
-  const [isConfirmRenaming, setIsConfirmRenaming] = useState(false);
   const [originConversationName, setOriginConversationName] = useState('');
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -69,29 +67,12 @@ const RenameConversationView = () => {
     } else {
       setNewConversationName('');
       setOriginConversationName('');
-      setIsConfirmRenaming(false);
     }
   }, [renamingConversation]);
 
   const newName = useMemo(
     () => prepareEntityName(newConversationName, { forRenaming: true }),
     [newConversationName],
-  );
-
-  const performRename = useCallback(
-    (name: string) => {
-      if (!name.trim()) return;
-      if (name.length > 0 && renamingConversation) {
-        dispatch(
-          ConversationsActions.moveConversation({
-            conversation: renamingConversation,
-            newValues: { name },
-          }),
-        );
-        dispatch(ConversationsActions.setRenamingConversationId(null));
-      }
-    },
-    [renamingConversation, dispatch],
   );
 
   const handleRename = useCallback(() => {
@@ -128,23 +109,16 @@ const RenameConversationView = () => {
       return;
     }
 
-    if (
-      renamingConversation.isShared &&
-      newName !== renamingConversation.name
-    ) {
-      setIsConfirmRenaming(true);
-      return;
+    if (newName.length > 0) {
+      dispatch(
+        ConversationsActions.moveConversation({
+          conversation: renamingConversation,
+          newValues: { name: newName, isNameChanged: true },
+        }),
+      );
+      dispatch(ConversationsActions.setRenamingConversationId(null));
     }
-
-    performRename(newName);
-  }, [
-    newName,
-    renamingConversation,
-    allConversations,
-    performRename,
-    dispatch,
-    t,
-  ]);
+  }, [newName, renamingConversation, allConversations, dispatch, t]);
 
   const handleEnterDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
@@ -209,20 +183,6 @@ const RenameConversationView = () => {
           {t('Save')}
         </button>
       </div>
-      <ConfirmDialog
-        isOpen={isConfirmRenaming}
-        heading={t('Confirm renaming conversation')}
-        confirmLabel={t('Rename')}
-        cancelLabel={t('Cancel')}
-        description={t(
-          'Renaming will stop sharing and other users will no longer see this conversation.',
-        )}
-        onClose={(result) => {
-          setIsConfirmRenaming(false);
-          if (result) performRename(newName);
-          handleClose();
-        }}
-      />
     </Modal>
   );
 };

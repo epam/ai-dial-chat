@@ -218,6 +218,26 @@ const savePromptEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
+const moveOrUpdatePromptEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.moveOrUpdatePrompt.match),
+    switchMap(({ payload }) => {
+      if (
+        typeof payload.newValues.name === 'string' &&
+        payload.newValues.name !== payload.prompt.name
+      ) {
+        return of(PromptsActions.movePrompt(payload));
+      }
+
+      return of(
+        PromptsActions.updatePrompt({
+          id: payload.prompt.id,
+          values: payload.newValues,
+        }),
+      );
+    }),
+  );
+
 const movePromptEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.movePrompt.match),
@@ -908,6 +928,7 @@ export const PromptsEpics = combineEpics(
   saveNewPromptEpic,
   deleteFolderEpic,
   savePromptEpic,
+  moveOrUpdatePromptEpic,
   movePromptEpic,
   movePromptRegeneratedEpic,
   movePromptFailEpic,

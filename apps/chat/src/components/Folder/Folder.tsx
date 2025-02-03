@@ -185,7 +185,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const [renameValue, setRenameValue] = useState(currentFolder.name);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
-  const [isConfirmRenaming, setIsConfirmRenaming] = useState(false);
   const dragDropElement = useRef<HTMLDivElement>(null);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
@@ -458,13 +457,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         );
         return;
       }
-    }
-
-    if (currentFolder.isShared && newName !== currentFolder.name) {
-      setIsConfirmRenaming(true);
-      setIsRenaming(false);
-      setIsContextMenu(false);
-      return;
     }
 
     if (newName && newName !== currentFolder.name) {
@@ -1316,27 +1308,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           }}
         />
       )}
-      <ConfirmDialog
-        isOpen={isConfirmRenaming}
-        heading={t('Confirm renaming folder')}
-        confirmLabel={t('Rename')}
-        cancelLabel={t('Cancel')}
-        description={t(
-          'Renaming will stop sharing and other users will no longer see this folder.',
-        )}
-        onClose={(result) => {
-          setIsConfirmRenaming(false);
-          if (result) {
-            const newName = prepareEntityName(renameValue);
-
-            if (newName) {
-              onRenameFolder!(newName, currentFolder.id);
-            }
-
-            setRenameValue('');
-          }
-        }}
-      />
     </div>
   );
 };
