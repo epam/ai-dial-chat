@@ -12,6 +12,7 @@ import {
   PublishPath,
 } from '@/src/testData';
 import { GeneratorUtil } from '@/src/utils';
+import { SortingUtil } from '@/src/utils/sortingUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
@@ -219,7 +220,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Admin clicks on "Go to a review" button and verify the first conversation is opened, navigation buttons are available',
       async () => {
-        orderedConversations = baseAssertion.sortStringsArray(
+        orderedConversations = SortingUtil.sortStringsArray(
           [firstConversation.name, secondConversation.name],
           (f) => f.toLowerCase(),
           'asc',

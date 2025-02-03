@@ -17,6 +17,7 @@ interface CardsListProps {
   onEdit?: (entity: DialAIEntityModel) => void;
   onBookmarkClick?: (entity: DialAIEntityModel) => void;
   onSelectVersion?: (entity: DialAIEntityModel) => void;
+  dataQA?: string;
 }
 
 export const CardsList = ({
@@ -28,6 +29,7 @@ export const CardsList = ({
   onDelete,
   onEdit,
   onBookmarkClick,
+  dataQA,
 }: CardsListProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -37,7 +39,7 @@ export const CardsList = ({
 
       <div
         className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-3 xl:gap-5 3xl:grid-cols-4 4xl:grid-cols-5 5xl:grid-cols-6"
-        data-qa="agents"
+        data-qa={dataQA}
       >
         {entities.map((entity) => (
           <ApplicationCard

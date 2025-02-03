@@ -1,6 +1,8 @@
 import config from '../../config/chat.playwright.config';
 import { DialHomePage, MarketplacePage } from '../ui/pages';
 import {
+  AddApplicationModal,
+  AgentDetailsModal,
   AgentInfo,
   AttachFilesModal,
   Chat,
@@ -61,6 +63,7 @@ import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion'
 import test from '@/src/core/baseFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
+  ApplicationApiHelper,
   ChatApiHelper,
   FileApiHelper,
   IconApiHelper,
@@ -139,7 +142,10 @@ const dialTest = test.extend<{
   marketplaceFilter: MarketplaceFilter;
   marketplace: Marketplace;
   marketplaceAgents: MarketplaceAgents;
+  agentDetailsModal: AgentDetailsModal;
   marketplaceHeader: MarketplaceHeader;
+  addAppDropdownMenu: DropdownMenu;
+  addApplicationModal: AddApplicationModal;
   chatBar: ChatBar;
   chatLoader: ChatLoader;
   importExportLoader: ImportExportLoader;
@@ -200,6 +206,7 @@ const dialTest = test.extend<{
   fileApiHelper: FileApiHelper;
   additionalSecondShareUserFileApiHelper: FileApiHelper;
   itemApiHelper: ItemApiHelper;
+  applicationApiHelper: ApplicationApiHelper;
   browserStorageInjector: BrowserStorageInjector;
   apiInjector: ApiInjector;
   dataInjector: DataInjectorInterface;
@@ -208,6 +215,7 @@ const dialTest = test.extend<{
   additionalSecondShareUserRequestContext: APIRequestContext;
   adminUserRequestContext: APIRequestContext;
   adminUserItemApiHelper: ItemApiHelper;
+  adminApplicationApiHelper: ApplicationApiHelper;
   mainUserShareApiHelper: ShareApiHelper;
   additionalUserShareApiHelper: ShareApiHelper;
   additionalUserItemApiHelper: ItemApiHelper;
@@ -279,6 +287,7 @@ const dialTest = test.extend<{
   folderToPublishAssertion: PublishFolderAssertion<FolderConversationsToPublish>;
   organizationFolderConversationAssertions: FolderAssertion<Folders>;
   messageTemplateModalAssertion: MessageTemplateModalAssertion;
+  agentVersionsDropdownMenuAssertion: MenuAssertion;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper }, use) => {
@@ -324,9 +333,21 @@ const dialTest = test.extend<{
     const marketplaceAgents = marketplace.getAgents();
     await use(marketplaceAgents);
   },
+  agentDetailsModal: async ({ marketplaceAgents }, use) => {
+    const agentDetailsModal = marketplaceAgents.getAgentDetailsModal();
+    await use(agentDetailsModal);
+  },
   marketplaceHeader: async ({ marketplace }, use) => {
     const marketplaceHeader = marketplace.getMarketplaceHeader();
     await use(marketplaceHeader);
+  },
+  addAppDropdownMenu: async ({ page }, use) => {
+    const addAppDropdownMenu = new DropdownMenu(page);
+    await use(addAppDropdownMenu);
+  },
+  addApplicationModal: async ({ page }, use) => {
+    const addApplicationModal = new AddApplicationModal(page);
+    await use(addApplicationModal);
   },
   chatBar: async ({ appContainer }, use) => {
     const chatBar = appContainer.getChatBar();
@@ -580,6 +601,10 @@ const dialTest = test.extend<{
     const conversationApiHelper = new ItemApiHelper(request);
     await use(conversationApiHelper);
   },
+  applicationApiHelper: async ({ request }, use) => {
+    const applicationApiHelper = new ApplicationApiHelper(request);
+    await use(applicationApiHelper);
+  },
   apiInjector: async ({ itemApiHelper }, use) => {
     const apiInjector = new ApiInjector(itemApiHelper);
     await use(apiInjector);
@@ -610,6 +635,13 @@ const dialTest = test.extend<{
       BucketUtil.getAdminUserBucket(),
     );
     await use(adminUserItemApiHelper);
+  },
+  adminApplicationApiHelper: async ({ adminUserRequestContext }, use) => {
+    const adminApplicationApiHelper = new ApplicationApiHelper(
+      adminUserRequestContext,
+      BucketUtil.getAdminUserBucket(),
+    );
+    await use(adminApplicationApiHelper);
   },
   additionalShareUserRequestContext: async ({ playwright }, use) => {
     const additionalShareUserRequestContext =
@@ -1012,6 +1044,12 @@ const dialTest = test.extend<{
       messageTemplateModal,
     );
     await use(messageTemplateModalAssertion);
+  },
+  agentVersionsDropdownMenuAssertion: async ({ agentDetailsModal }, use) => {
+    const agentVersionsDropdownMenuAssertion = new MenuAssertion(
+      agentDetailsModal.getVersionDropdownMenu(),
+    );
+    await use(agentVersionsDropdownMenuAssertion);
   },
 });
 

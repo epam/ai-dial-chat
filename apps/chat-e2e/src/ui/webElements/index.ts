@@ -56,3 +56,4 @@ export * from './marketplace/marketplaceHeader';
 export * from './marketplace/marketplaceSidebar';
 export * from './talkToAgentDialog';
 export * from './messageTemplateModal';
+export * from './marketplace/application/addApplicationModal';

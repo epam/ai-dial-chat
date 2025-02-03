@@ -64,10 +64,10 @@ export class ConversationData extends FolderData {
     let conversationId;
     if (name !== undefined) {
       conversationName = name;
-      conversationId = `${modelToUse.id}${ItemUtil.conversationIdSeparator}${name}`;
+      conversationId = `${modelToUse.id}${ItemUtil.entityIdSeparator}${name}`;
     } else {
       conversationName = GeneratorUtil.randomString(10);
-      conversationId = `${modelToUse.id}${ItemUtil.conversationIdSeparator}${conversationName}`;
+      conversationId = `${modelToUse.id}${ItemUtil.entityIdSeparator}${conversationName}`;
     }
     return this.conversationBuilder
       .withMessage(userMessage)
@@ -473,7 +473,7 @@ export class ConversationData extends FolderData {
     const messages = conversation.messages;
     const playbackConversation = JSON.parse(JSON.stringify(conversation));
     playbackConversation.name = `${ExpectedConstants.playbackConversation}${conversation.name}`;
-    playbackConversation.id = `playback${ItemUtil.conversationIdSeparator}${playbackConversation.name}`;
+    playbackConversation.id = `playback${ItemUtil.entityIdSeparator}${playbackConversation.name}`;
     playbackConversation.messages = [];
     if (playbackIndex) {
       for (let i = 0; i < playbackIndex; i++) {
@@ -546,7 +546,7 @@ export class ConversationData extends FolderData {
     };
     const name = GeneratorUtil.randomString(10);
     return this.conversationBuilder
-      .withId(`${modelToUse.id}${ItemUtil.conversationIdSeparator}${name}`)
+      .withId(`${modelToUse.id}${ItemUtil.entityIdSeparator}${name}`)
       .withName(name)
       .withMessage(userMessage)
       .withMessage(assistantMessage)
@@ -612,7 +612,7 @@ export class ConversationData extends FolderData {
       .withMessage(assistantMessage)
       .withModel(modelToUse);
 
-    let conversationId = `${modelToUse.id}${ItemUtil.conversationIdSeparator}${name}`;
+    let conversationId = `${modelToUse.id}${ItemUtil.entityIdSeparator}${name}`;
 
     if (folderName !== undefined) {
       const folder = this.prepareFolder(folderName);
@@ -663,7 +663,7 @@ export class ConversationData extends FolderData {
     };
     const name = GeneratorUtil.randomString(10);
     return this.conversationBuilder
-      .withId(`${modelToUse.id}${ItemUtil.conversationIdSeparator}${name}`)
+      .withId(`${modelToUse.id}${ItemUtil.entityIdSeparator}${name}`)
       .withName(name)
       .withMessage(userMessage)
       .withMessage(assistantMessage)
@@ -711,7 +711,7 @@ export class ConversationData extends FolderData {
     };
     const name = GeneratorUtil.randomString(10);
     return this.conversationBuilder
-      .withId(`${modelToUse.id}${ItemUtil.conversationIdSeparator}${name}`)
+      .withId(`${modelToUse.id}${ItemUtil.entityIdSeparator}${name}`)
       .withName(name)
       .withMessage(userMessage)
       .withMessage(assistantMessage)
@@ -778,7 +778,7 @@ export class ConversationData extends FolderData {
     const replayUserMessages = JSON.parse(
       JSON.stringify(conversation.messages.filter((m) => m.role === 'user')),
     ) as Message[];
-    replayConversation.id = `replay${ItemUtil.conversationIdSeparator}${ExpectedConstants.replayConversation}${conversation.name}`;
+    replayConversation.id = `replay${ItemUtil.entityIdSeparator}${ExpectedConstants.replayConversation}${conversation.name}`;
     replayConversation.name = `${ExpectedConstants.replayConversation}${conversation.name}`;
     replayConversation.messages = [];
     replayConversation.replay = {

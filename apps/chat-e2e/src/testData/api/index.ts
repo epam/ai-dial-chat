@@ -5,3 +5,4 @@ export * from './iconApiHelper';
 export * from './itemApiHelper';
 export * from './shareApiHelper';
 export * from './publicationApiHelper';
+export * from './applicationApiHelper';
