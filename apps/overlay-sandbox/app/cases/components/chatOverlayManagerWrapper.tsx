@@ -208,7 +208,7 @@ export const ChatOverlayManagerWrapper: React.FC<
                 };
 
                 newOptions.theme = 'dark';
-                newOptions.modelId = 'stability.stable-diffusion-xl';
+                //newOptions.modelId = 'stability.stable-diffusion-xl';
 
                 overlayManager.current?.setOverlayOptions(
                   overlayManagerOptions.id,
