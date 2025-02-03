@@ -25,7 +25,7 @@ import {
 
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
-import Modal from '../Modal';
+import { Modal } from '../Modal';
 import { ReplaceSelector } from './Components';
 import { ConversationsList } from './ConversationsList';
 import { FilesList } from './FilesList';

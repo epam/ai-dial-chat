@@ -18,7 +18,7 @@ import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 
 import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
-import Modal from '@/src/components/Common/Modal';
+import { Modal } from '@/src/components/Common/Modal';
 
 import { ModelIcon } from '../../Chatbar/ModelIcon';
 import { ConversationSettings } from './ConversationSettings';

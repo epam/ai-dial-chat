@@ -25,7 +25,7 @@ import {
 } from '@/src/store/service/service.reducer';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
-import Modal from '@/src/components/Common/Modal';
+import { Modal } from '@/src/components/Common/Modal';
 
 import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
 

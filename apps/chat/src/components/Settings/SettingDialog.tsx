@@ -16,7 +16,7 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
-import Modal from '@/src/components/Common/Modal';
+import { Modal } from '@/src/components/Common/Modal';
 
 import { ToggleSwitchLabeled } from '../Common/ToggleSwitch/ToggleSwitchLabeled';
 import { CustomLogoSelect } from './CustomLogoSelect';

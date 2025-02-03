@@ -4,7 +4,7 @@ import { ModalState } from '@/src/types/modal';
 
 import { DISALLOW_INTERACTIONS } from '@/src/constants/modal';
 
-import Modal from '@/src/components/Common/Modal';
+import { Modal } from '@/src/components/Common/Modal';
 
 interface Props {
   isOpen: boolean;
