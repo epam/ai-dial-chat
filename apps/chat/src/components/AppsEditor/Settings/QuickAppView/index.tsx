@@ -1,4 +1,5 @@
 import { Editor } from '@monaco-editor/react';
+import { useCallback } from 'react';
 import {
   Controller,
   Path,
@@ -6,12 +7,15 @@ import {
   useFormContext,
 } from 'react-hook-form';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
+
+import { getSharedTooltip } from '@/src/utils/app/application';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
@@ -19,6 +23,8 @@ import { TemperatureSlider } from '@/src/components/Chat/ChatSettings/Temperatur
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
+import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
+import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
 import { ApplicationSettingsFormFooter } from '../ApplicationSettingsFormFooter';
 import { QuickAppFormData, getQuickAppData } from '../form';
@@ -46,14 +52,20 @@ export const validators: Validators = {
   },
 };
 
+const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const ToolsetEditor = withErrorMessage(withLabel(Editor));
 const Slider = withLabel(TemperatureSlider, true);
+const ModelsSelectorField = withErrorMessage(withLabel(ModelsSelector));
 
 interface QuickAppViewProps {
   schema: ApiDetailedApplicationTypeSchema | null;
+  isSharedWithMe: boolean;
 }
 
-export const QuickAppView: React.FC<QuickAppViewProps> = ({ schema }) => {
+export const QuickAppView: React.FC<QuickAppViewProps> = ({
+  schema,
+  isSharedWithMe,
+}) => {
   const { t } = useTranslation(Translation.Chat);
   const theme = useAppSelector(UISelectors.selectThemeState);
 
@@ -81,12 +93,53 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({ schema }) => {
     );
   };
 
+  const files = useAppSelector(FilesSelectors.selectFiles);
+
+  const getLogoId = useCallback(
+    (filesIds: string[]) => files.find((f) => f.id === filesIds[0])?.id,
+    [files],
+  );
+
   return (
     <form
       onSubmit={submitWrapper(handleSubmit)}
       className="flex size-full flex-col bg-layer-2"
     >
       <div className="grow space-y-4 divide-tertiary overflow-y-auto p-5">
+        <Controller
+          name="documentRelativeUrl"
+          control={control}
+          render={({ field }) => (
+            <LogoSelector
+              label={t('Document relative url')}
+              localLogo={field.value?.split('/')?.pop()}
+              onLogoSelect={(v) => field.onChange(getLogoId(v))}
+              onDeleteLocalLogoHandler={() => field.onChange('')}
+              customPlaceholder={t('No document relative url')}
+              className="max-w-full"
+              fileManagerModalTitle="Select document"
+              error={errors.documentRelativeUrl?.message}
+              allowedTypes={['*/*']}
+              disabled={isSharedWithMe}
+              tooltip={isSharedWithMe ? getSharedTooltip('file') : ''}
+            />
+          )}
+        />
+
+        <Controller
+          name="model"
+          control={control}
+          render={({ field }) => (
+            <ModelsSelectorField
+              label={t('Model')}
+              value={field.value}
+              onChange={field.onChange}
+              mandatory
+              error={errors.model?.message}
+            />
+          )}
+        />
+
         <Controller
           name="toolset"
           control={control}
@@ -118,7 +171,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({ schema }) => {
         <FieldTextArea
           {...register('instructions')}
           label={t('Instructions')}
-          placeholder={t('Instructions of your application') || ''}
+          placeholder={t('Instructions of your application')}
           rows={4}
           className="resize-none"
           id="instructions"
@@ -129,7 +182,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({ schema }) => {
           control={control}
           render={({ field }) => (
             <Slider
-              label={t('Temperature') || ''}
+              label={t('Temperature')}
               temperature={field.value}
               onChangeTemperature={field.onChange}
             />

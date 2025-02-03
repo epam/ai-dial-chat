@@ -7,6 +7,8 @@ import {
 
 import { safeStringifyApplicationFeatures } from '@/src/utils/app/application';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
+import { constructPath } from '@/src/utils/app/file';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import {
   ApiApplicationResponseDefault,
@@ -21,7 +23,10 @@ import {
   FEATURES_ENDPOINTS_NAMES,
 } from '@/src/constants/applications';
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
-import { DEFAULT_QUICK_APPS_MODEL } from '@/src/constants/quick-apps';
+import {
+  DEFAULT_QUICK_APPS_HOST,
+  DEFAULT_QUICK_APPS_MODEL,
+} from '@/src/constants/quick-apps';
 
 import { DynamicField } from '../../Common/Forms/DynamicFormFields';
 import { ApplicationGeneralInfoFormData } from '../GeneralInfoView/form';
@@ -50,6 +55,8 @@ export interface QuickAppFormData extends ApplicationGeneralInfoFormData {
   instructions: string;
   temperature: number;
   toolset: string;
+  documentRelativeUrl: string;
+  model: string;
 }
 
 export interface CodeAppFormData extends ApplicationGeneralInfoFormData {
@@ -207,6 +214,14 @@ export const getQuickAppDefaultValues = ({
   return {
     ...getApplicationGeneralDefaultValues(app),
     completionUrl: app.endpoint ?? '',
+    documentRelativeUrl:
+      typeof app.application_properties?.document_relative_url === 'string'
+        ? app.application_properties?.document_relative_url
+        : '',
+    model:
+      typeof app.application_properties?.model === 'string'
+        ? app.application_properties?.model
+        : DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
     instructions:
       typeof app.application_properties?.instructions === 'string'
         ? app.application_properties.instructions
@@ -297,9 +312,15 @@ export const getQuickAppData = (
       instructions: formData.instructions,
       temperature: formData.temperature,
       web_api_toolset: JSON.parse(formData.toolset),
-      model: DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
+      model: formData.model,
+      document_relative_url: formData.documentRelativeUrl,
     },
-    completionUrl: formData.completionUrl,
+    completionUrl: constructPath(
+      DefaultsService.get('quickAppsHost', DEFAULT_QUICK_APPS_HOST),
+      'openai/deployments',
+      ApiUtils.safeEncodeURIComponent(formData.name.trim()),
+      'chat/completions',
+    ),
     isDefault: false,
     folderId: '',
   };

@@ -23,7 +23,10 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsActions } from '@/src/store/models/models.reducers';
+import {
+  ModelsActions,
+  ModelsSelectors,
+} from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
@@ -55,6 +58,11 @@ export const ApplicationSettings: React.FC<Props> = ({
   const pythonVersions = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
   );
+
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const modelFromState = applicationData
+    ? modelsMap[applicationData.reference]
+    : null;
 
   const previewConversationId = useAppSelector(
     ConversationsSelectors.selectPreviewConversationId,
@@ -102,7 +110,12 @@ export const ApplicationSettings: React.FC<Props> = ({
     const formViews: Record<string, JSX.Element> = {
       [ApplicationType.CUSTOM_APP]: <ApplicationView />,
       [ApplicationType.CODE_APP]: <CodeAppView />,
-      ['Quick App']: <QuickAppView schema={schema} />,
+      ['Quick App']: (
+        <QuickAppView
+          schema={schema}
+          isSharedWithMe={modelFromState?.sharedWithMe ?? false}
+        />
+      ),
     };
 
     const customView =
