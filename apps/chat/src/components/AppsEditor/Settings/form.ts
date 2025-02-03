@@ -159,7 +159,9 @@ export const getCodeAppDefaultValues = ({
     completionUrl: app.endpoint ?? '',
     inputAttachmentTypes: app.input_attachment_types ?? [],
     maxInputAttachments: app.max_input_attachments ?? '',
-    sources: app?.function?.source_folder ?? '',
+    sources: app.function?.source_folder
+      ? ApiUtils.decodeApiUrl(app.function.source_folder)
+      : '',
     runtime: app?.function?.runtime ?? runtime ?? 'python3.11',
     endpoints: app?.function?.mapping
       ? Object.entries(app.function.mapping).map(([key, value]) => ({

@@ -3,10 +3,12 @@ import { Path, RegisterOptions } from 'react-hook-form';
 import { safeStringifyApplicationFeatures } from '@/src/utils/app/application';
 import { notAllowedSymbols } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
   ApiApplicationResponseDefault,
+  ApplicationStatus,
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
@@ -42,6 +44,7 @@ export interface ApplicationGeneralInfoFormData {
   sourceFiles?: string[];
   runtime?: string;
   endpoints?: DynamicField[];
+  functionStatus?: ApplicationStatus;
 }
 
 type Options<T extends Path<ApplicationGeneralInfoFormData>> = Omit<
@@ -77,8 +80,9 @@ export const getDefaultValues = (
     maxInputAttachments: applicationData?.max_input_attachments,
     features: safeStringifyApplicationFeatures(applicationData?.features),
     //code app application properties
-    sources:
-      applicationData?.function?.source_folder ?? `files/${bucket}/appdata`,
+    sources: applicationData?.function?.source_folder
+      ? ApiUtils.decodeApiUrl(applicationData.function.source_folder)
+      : `files/${bucket}/appdata`,
     runtime:
       applicationData?.function?.runtime ?? pythonVersion ?? 'python3.11',
     endpoints: applicationData?.function?.mapping
@@ -112,6 +116,7 @@ export const getDefaultValues = (
           editableKey: true,
         }))
       : [],
+    functionStatus: applicationData?.function?.status,
   };
 };
 

@@ -1,3 +1,4 @@
+import { useCallback, useMemo, useState } from 'react';
 import {
   Controller,
   Path,
@@ -5,12 +6,25 @@ import {
   useFormContext,
 } from 'react-hook-form';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { getSharedTooltip } from '@/src/utils/app/application';
+
+import {
+  ApiApplicationResponseDefault,
+  CustomApplicationModel,
+} from '@/src/types/applications';
+import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { useAppDispatch } from '@/src/store/hooks';
+import {
+  CodeEditorActions,
+  CodeEditorSelectors,
+} from '@/src/store/codeEditor/codeEditor.reducer';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ShareActions } from '@/src/store/share/share.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { CODEAPPS_REQUIRED_FILES } from '@/src/constants/applications';
 import { CODE_APPS_ENDPOINTS } from '@/src/constants/code-apps';
@@ -19,12 +33,14 @@ import { MIME_FORMAT_REGEX } from '@/src/constants/file';
 import { CodeEditor } from '@/src/components/Common/ApplicationWizard/CodeAppView/CodeEditor';
 import { RuntimeVersionSelector } from '@/src/components/Common/ApplicationWizard/CodeAppView/RuntimeVersionSelector';
 import { SourceFilesEditor } from '@/src/components/Common/ApplicationWizard/CodeAppView/SourceFilesEditor';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { withController } from '@/src/components/Common/Forms/ControlledFormField';
 import { DynamicFormFields } from '@/src/components/Common/Forms/DynamicFormFields';
 import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
+import { OptionsDialog } from '@/src/components/Common/OptionsDialog';
 
 import { ApplicationSettingsFormFooter } from '../ApplicationSettingsFormFooter';
 import {
@@ -90,8 +106,29 @@ const MappingsForm = withLabel(
   DynamicFormFields<CodeAppFormData, 'endpoints' | 'env'>,
 );
 
-export const CodeAppView: React.FC = () => {
+interface CodeAppViewProps {
+  isSharedWithMe: boolean;
+  isAppDeployed: boolean;
+  application: ApiApplicationResponseDefault;
+  isShared: boolean;
+}
+
+export const CodeAppView: React.FC<CodeAppViewProps> = ({
+  isSharedWithMe,
+  isAppDeployed,
+  application,
+  isShared,
+}) => {
   const { t } = useTranslation(Translation.Chat);
+  const [confirmSharingRevoke, setConfirmSharingRevoke] = useState<{
+    description: string;
+    heading: string;
+    data: CodeAppFormData;
+  }>();
+  const [editorConfirmation, setEditorConfirmation] =
+    useState<CodeAppFormData>();
+
+  const isCodeEditorDirty = useAppSelector(CodeEditorSelectors.selectIsDirty);
 
   const dispatch = useAppDispatch();
 
@@ -102,27 +139,94 @@ export const CodeAppView: React.FC = () => {
     clearErrors,
     formState: { errors, isValid },
     watch,
+    register,
   } = useFormContext<CodeAppFormData>();
 
-  const handleSubmit = (data: CodeAppFormData) => {
-    const applicationData = getCodeAppData(data);
-    dispatch(
-      ApplicationActions.update({
-        oldApplicationId: data.id,
-        applicationData: {
-          ...applicationData,
-          id: data.id,
-          reference: data.reference,
-        },
-      }),
-    );
-  };
+  const handleEdit = useCallback(
+    (data: CodeAppFormData) => {
+      if (application.reference) {
+        const preparedData = getCodeAppData(data);
 
+        preparedData.functionStatus = application?.function?.status;
+
+        const applicationData: CustomApplicationModel = {
+          ...preparedData,
+          reference: application.reference,
+          id: application.name,
+          sharedWithMe: isSharedWithMe,
+        };
+
+        if (
+          isShared &&
+          preparedData.function?.sourceFolder !==
+            application.function?.source_folder
+        ) {
+          setConfirmSharingRevoke({
+            description:
+              'Changing of source folder will stop sharing and other users will no longer see this application.',
+            heading: 'Confirm changing source folder',
+            data,
+          });
+          return;
+        }
+
+        dispatch(
+          ApplicationActions.update({
+            oldApplicationId: application.name,
+            applicationData,
+          }),
+        );
+
+        if (isAppDeployed) {
+          dispatch(
+            UIActions.showWarningToast(
+              t('Saved changes will be applied during next deployment'),
+            ),
+          );
+        }
+      }
+    },
+    [application, dispatch, isAppDeployed, isSharedWithMe, t, isShared],
+  );
+
+  const handleSave = useCallback(
+    (data: CodeAppFormData) => {
+      if (isCodeEditorDirty) setEditorConfirmation(data);
+      else handleEdit(data);
+    },
+    [handleEdit, isCodeEditorDirty],
+  );
+
+  const modalOptions = useMemo(
+    () => [
+      {
+        label: t("Don't save"),
+        dataQa: 'not-save-option',
+        className: 'button-secondary',
+        onClick: () => {
+          editorConfirmation && handleEdit(editorConfirmation);
+          setEditorConfirmation(undefined);
+        },
+      },
+      {
+        label: t('Save'),
+        dataQa: 'save-option',
+        onClick: () => {
+          dispatch(CodeEditorActions.saveAllModifiedFiles());
+          editorConfirmation && handleEdit(editorConfirmation);
+          setEditorConfirmation(undefined);
+        },
+      },
+    ],
+    [t, editorConfirmation, handleEdit, dispatch],
+  );
+
+  register('sourceFiles', validators['sourceFiles']);
   const sources = watch('sources');
 
   return (
     <form
-      onSubmit={submitWrapper(handleSubmit)}
+      onSubmit={submitWrapper(handleSave)}
       className="flex size-full flex-col bg-layer-2"
     >
       <div className="grow space-y-4 divide-tertiary overflow-y-auto p-5">
@@ -132,13 +236,13 @@ export const CodeAppView: React.FC = () => {
           control={control}
           render={({ field }) => (
             <ComboBoxField
-              label={t('Attachment types') || ''}
+              label={t('Attachment types')}
               info={t("Input the MIME type and press 'Enter' to add")}
               initialSelectedItems={field.value}
               getItemLabel={(i: unknown) => i as string}
               getItemValue={(i: unknown) => i as string}
               onChangeSelectedItems={field.onChange}
-              placeholder={t('Enter one or more attachment types') || ''}
+              placeholder={t('Enter one or more attachment types')}
               className="input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full"
               hasDeleteAll
               hideSuggestions
@@ -148,15 +252,17 @@ export const CodeAppView: React.FC = () => {
             />
           )}
         />
+
         <ControlledField
           label={t('Max. attachments number')}
-          placeholder={t('Enter the maximum number of attachments') || ''}
+          placeholder={t('Enter the maximum number of attachments')}
           id="maxInputAttachments"
           error={errors.maxInputAttachments?.message}
           control={control}
           name="maxInputAttachments"
           rules={validators['maxInputAttachments']}
         />
+
         <FilesEditor
           mandatory
           control={control}
@@ -164,31 +270,69 @@ export const CodeAppView: React.FC = () => {
           label={t('Select folder with source files')}
           rules={validators['sources']}
           error={errors.sources?.message || errors.sourceFiles?.message}
+          disabled={isSharedWithMe}
+          tooltip={
+            isSharedWithMe ? getSharedTooltip('folder with source files') : ''
+          }
         />
+
         {sources && <CodeEditor sourcesFolderId={sources} />}
+
         <RuntimeSelector
           control={control}
           name="runtime"
           label={t('Runtime version')}
         />
+
         <MappingsForm
           label={t('Endpoints')}
-          addLabel={t('Add endpoint') ?? ''}
-          valueLabel={t('Endpoint') ?? ''}
+          addLabel={t('Add endpoint')}
+          valueLabel={t('Endpoint')}
           options={CODE_APPS_ENDPOINTS}
           name="endpoints"
           keyOptions={endpointsKeyValidator}
           valueOptions={endpointsValueValidator}
           errors={errors.endpoints}
         />
+
         <MappingsForm
           creatable
           label={t('Environment variables')}
-          addLabel={t('Add variable') ?? ''}
+          addLabel={t('Add variable')}
           name="env"
           keyOptions={envKeysValidator}
           valueOptions={envValueValidator}
           errors={errors.env}
+        />
+
+        {confirmSharingRevoke && (
+          <ConfirmDialog
+            isOpen
+            heading={t(confirmSharingRevoke.heading)}
+            description={t(confirmSharingRevoke.description)}
+            confirmLabel={t('Confirm')}
+            cancelLabel={t('Cancel')}
+            onClose={(result) => {
+              if (result) {
+                dispatch(
+                  ShareActions.revokeAccess({
+                    resourceId: application.name,
+                    featureType: FeatureType.Application,
+                  }),
+                );
+
+                handleEdit(confirmSharingRevoke.data);
+                setConfirmSharingRevoke(undefined);
+              }
+            }}
+          />
+        )}
+
+        <OptionsDialog
+          isOpen={!!editorConfirmation}
+          heading={t('Do you want to save changes in the code editor?')}
+          onClose={() => setEditorConfirmation(undefined)}
+          options={modalOptions}
         />
       </div>
       <div className="sticky">

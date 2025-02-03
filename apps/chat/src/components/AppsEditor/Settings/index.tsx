@@ -14,6 +14,7 @@ import classNames from 'classnames';
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
   ApiApplicationResponseDefault,
+  ApplicationStatus,
   ApplicationType,
 } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
@@ -58,6 +59,9 @@ export const ApplicationSettings: React.FC<Props> = ({
   const pythonVersions = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
   );
+
+  const isAppDeployed =
+    applicationData?.function?.status === ApplicationStatus.DEPLOYED;
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const modelFromState = applicationData
@@ -106,10 +110,17 @@ export const ApplicationSettings: React.FC<Props> = ({
   };
 
   const getFormView = (type: string) => {
-    // will be removed after all apps are migrated to the new schema
+    // will be removed after all apps are migrated to the new schema flow
     const formViews: Record<string, JSX.Element> = {
       [ApplicationType.CUSTOM_APP]: <ApplicationView />,
-      [ApplicationType.CODE_APP]: <CodeAppView />,
+      [ApplicationType.CODE_APP]: (
+        <CodeAppView
+          isSharedWithMe={modelFromState?.sharedWithMe ?? false}
+          isAppDeployed={isAppDeployed}
+          application={applicationData}
+          isShared={modelFromState?.isShared ?? false}
+        />
+      ),
       ['Quick App']: (
         <QuickAppView
           schema={schema}

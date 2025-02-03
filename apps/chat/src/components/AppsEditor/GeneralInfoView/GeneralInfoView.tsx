@@ -1,7 +1,10 @@
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
-import { ApiApplicationResponseDefault } from '@/src/types/applications';
+import {
+  ApiApplicationResponseDefault,
+  ApplicationStatus,
+} from '@/src/types/applications';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
@@ -37,6 +40,9 @@ export const GeneralInfoView: React.FC<Props> = ({
     folderId: '',
   }));
 
+  const isAppDeployed =
+    applicationData?.function?.status === ApplicationStatus.DEPLOYED;
+
   const methods = useForm<ApplicationGeneralInfoFormData>({
     mode: 'onChange',
     reValidateMode: 'onChange',
@@ -58,6 +64,7 @@ export const GeneralInfoView: React.FC<Props> = ({
             isEdit={!!applicationData}
             schema={schema}
             isSharedWithMe={modelFromState?.sharedWithMe ?? false}
+            isAppDeployed={isAppDeployed}
           />
         </FormProvider>
       </div>

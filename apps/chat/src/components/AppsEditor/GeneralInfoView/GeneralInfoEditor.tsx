@@ -11,12 +11,14 @@ import { getSharedTooltip, topicToOption } from '@/src/utils/app/application';
 import { encrypt } from '@/src/utils/app/application-type-schema';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
+import { ApplicationType } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { IMAGE_TYPES } from '@/src/constants/chat';
 import { DEFAULT_VERSION } from '@/src/constants/public';
@@ -39,6 +41,7 @@ interface Props {
   isEdit: boolean;
   schema: ApiDetailedApplicationTypeSchema | null;
   isSharedWithMe: boolean;
+  isAppDeployed: boolean;
 }
 
 const ControlledField = withController(Field);
@@ -49,6 +52,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
   isEdit,
   schema,
   isSharedWithMe,
+  isAppDeployed,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -77,6 +81,11 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     const { slug } = router.query;
     if (slug) {
       const preparedData = getApplicationData(data, slug.toString(), schema);
+
+      if (slug === ApplicationType.CODE_APP) {
+        preparedData.functionStatus = data?.functionStatus;
+      }
+
       if (isEdit) {
         dispatch(
           ApplicationActions.update({
@@ -90,6 +99,14 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             schema: schema ?? undefined,
           }),
         );
+
+        if (isAppDeployed) {
+          dispatch(
+            UIActions.showWarningToast(
+              t('Saved changes will be applied during next deployment'),
+            ),
+          );
+        }
       } else {
         dispatch(
           ApplicationActions.create({
@@ -116,8 +133,12 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             placeholder={t('Type name')}
             id="name"
             error={errors.name?.message}
-            disabled={isSharedWithMe}
-            tooltip={isSharedWithMe ? getSharedTooltip('name') : ''}
+            disabled={isAppDeployed || isSharedWithMe}
+            tooltip={
+              (isSharedWithMe && getSharedTooltip('name')) ||
+              (isAppDeployed && t('Undeploy application to edit name')) ||
+              ''
+            }
           />
 
           <ControlledField
@@ -129,8 +150,12 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             control={control}
             name="version"
             rules={validators['version']}
-            disabled={isSharedWithMe}
-            tooltip={isSharedWithMe ? getSharedTooltip('version') : ''}
+            disabled={isAppDeployed || isSharedWithMe}
+            tooltip={
+              (isSharedWithMe && getSharedTooltip('version')) ||
+              (isAppDeployed && t('Undeploy application to edit version')) ||
+              ''
+            }
           />
 
           <Controller
