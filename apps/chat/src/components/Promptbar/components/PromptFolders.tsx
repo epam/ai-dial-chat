@@ -200,6 +200,35 @@ const PromptFolderTemplate = ({
     [dispatch],
   );
 
+  const handleFolderRename = useCallback(
+    (name: string, folderId: string) => {
+      dispatch(
+        PromptsActions.updateFolder({
+          folderId,
+          values: { name, isShared: false },
+        }),
+      );
+    },
+    [dispatch],
+  );
+
+  const handleFolderDelete = useCallback(
+    (folderId: string) => {
+      if (folder.sharedWithMe) {
+        dispatch(
+          ShareActions.discardSharedWithMe({
+            resourceIds: [folder.id],
+            isFolder: true,
+            featureType: FeatureType.Prompt,
+          }),
+        );
+      } else {
+        dispatch(PromptsActions.deleteFolder({ folderId }));
+      }
+    },
+    [dispatch, folder.id, folder.sharedWithMe],
+  );
+
   const handleFolderSelect = useCallback(
     (folderId: string) => {
       if (isFolderEmpty) {
@@ -260,27 +289,8 @@ const PromptFolderTemplate = ({
         highlightedFolders={allowHighlight ? highlightedFolders : []}
         openedFoldersIds={openedFoldersIds}
         handleDrop={handleDrop}
-        onRenameFolder={(name, folderId) => {
-          dispatch(
-            PromptsActions.updateFolder({
-              folderId,
-              values: { name },
-            }),
-          );
-        }}
-        onDeleteFolder={(folderId: string) => {
-          if (folder.sharedWithMe) {
-            dispatch(
-              ShareActions.discardSharedWithMe({
-                resourceIds: [folder.id],
-                isFolder: true,
-                featureType: FeatureType.Prompt,
-              }),
-            );
-          } else {
-            dispatch(PromptsActions.deleteFolder({ folderId }));
-          }
-        }}
+        onRenameFolder={handleFolderRename}
+        onDeleteFolder={handleFolderDelete}
         onClickFolder={handleFolderClick}
         featureType={FeatureType.Prompt}
         canSelectFolders={isSelectMode}
