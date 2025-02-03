@@ -40,7 +40,6 @@ import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
-// import { ApplicationWizard } from '@/src/components/Common/ApplicationWizard/ApplicationWizard';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import Modal from '@/src/components/Common/Modal';
 
@@ -79,7 +78,6 @@ const TalkToModalView = ({
   const recentModelIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
 
   const [searchTerm, setSearchTerm] = useState('');
-  // const [editModel, setEditModel] = useState<DialAIEntityModel>();
   const [deleteModel, setDeleteModel] = useState<DialAIEntityModel>();
   const [logModel, setLogModel] = useState<DialAIEntityModel>();
   const [publishModel, setPublishModel] = useState<
@@ -249,11 +247,6 @@ const TalkToModalView = ({
     [router],
   );
 
-  // const handleCloseEditDialog = useCallback(
-  //   () => setEditModel(undefined),
-  //   [setEditModel],
-  // );
-
   const handleDeleteClose = useCallback(
     (confirm: boolean) => {
       if (confirm && deleteModel) {
@@ -340,15 +333,6 @@ const TalkToModalView = ({
         </Link>
       )}
 
-      {/* {editModel && (
-        <ApplicationWizard
-          isOpen
-          onClose={handleCloseEditDialog}
-          isEdit
-          currentReference={editModel.reference}
-          type={getApplicationType(editModel) as ApplicationType}
-        />
-      )} */}
       {deleteModel && (
         <ConfirmDialog
           isOpen
