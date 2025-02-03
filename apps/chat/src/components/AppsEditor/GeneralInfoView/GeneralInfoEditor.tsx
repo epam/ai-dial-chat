@@ -1,15 +1,17 @@
 import { useCallback, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
-import { topicToOption } from '@/src/utils/app/application';
+import { useTranslation } from '@/src/hooks/useTranslation';
+
+import { getSharedTooltip, topicToOption } from '@/src/utils/app/application';
 import { encrypt } from '@/src/utils/app/application-type-schema';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
+import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
@@ -36,14 +38,19 @@ import {
 interface Props {
   isEdit: boolean;
   schema: ApiDetailedApplicationTypeSchema | null;
+  isSharedWithMe: boolean;
 }
 
 const ControlledField = withController(Field);
 const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const TopicsSelector = withLabel(DropdownSelector);
 
-export const GeneralInfoEditor: React.FC<Props> = ({ isEdit, schema }) => {
-  const { t } = useTranslation();
+export const GeneralInfoEditor: React.FC<Props> = ({
+  isEdit,
+  schema,
+  isSharedWithMe,
+}) => {
+  const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
 
@@ -103,21 +110,27 @@ export const GeneralInfoEditor: React.FC<Props> = ({ isEdit, schema }) => {
       >
         <div className="grow space-y-4 divide-tertiary overflow-y-auto p-5">
           <Field
-            {...register('name', { ...validators['name'] })}
+            {...register('name', validators['name'])}
             label={t('Name')}
             mandatory
-            placeholder={t('Type name') || ''}
+            placeholder={t('Type name')}
             id="name"
             error={errors.name?.message}
+            disabled={isSharedWithMe}
+            tooltip={isSharedWithMe ? getSharedTooltip('name') : ''}
           />
 
           <ControlledField
             label={t('Version')}
+            mandatory
             placeholder={DEFAULT_VERSION}
             id="version"
+            error={errors.version?.message}
             control={control}
             name="version"
             rules={validators['version']}
+            disabled={isSharedWithMe}
+            tooltip={isSharedWithMe ? getSharedTooltip('version') : ''}
           />
 
           <Controller
@@ -133,6 +146,9 @@ export const GeneralInfoEditor: React.FC<Props> = ({ isEdit, schema }) => {
                 className="max-w-full"
                 fileManagerModalTitle="Select application icon"
                 allowedTypes={IMAGE_TYPES}
+                error={errors.iconUrl?.message}
+                disabled={isSharedWithMe}
+                tooltip={isSharedWithMe ? getSharedTooltip('icon') : ''}
               />
             )}
           />
@@ -140,7 +156,10 @@ export const GeneralInfoEditor: React.FC<Props> = ({ isEdit, schema }) => {
           <FieldTextArea
             {...register('description')}
             label={t('Description')}
-            placeholder={t('A description of your application') || ''}
+            info={t(
+              'The first paragraph serves as a short description. To create an extended description, enter two line breaks and start the second paragraph.',
+            )}
+            placeholder={t('A description of your application')}
             rows={3}
             className="resize-none"
             id="description"

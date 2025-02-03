@@ -1,12 +1,21 @@
 import { Path, RegisterOptions } from 'react-hook-form';
 
+import { safeStringifyApplicationFeatures } from '@/src/utils/app/application';
 import { notAllowedSymbols } from '@/src/utils/app/file';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
-import { CustomApplicationModel } from '@/src/types/applications';
+import {
+  ApiApplicationResponseDefault,
+  CustomApplicationModel,
+} from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 import { QuickAppConfig } from '@/src/types/quick-apps';
 
+import {
+  FEATURES_ENDPOINTS,
+  FEATURES_ENDPOINTS_DEFAULT_VALUES,
+  FEATURES_ENDPOINTS_NAMES,
+} from '@/src/constants/applications';
 import { DEFAULT_VERSION } from '@/src/constants/public';
 
 import { DynamicField } from '../../Common/Forms/DynamicFormFields';
@@ -38,6 +47,65 @@ type Options<T extends Path<ApplicationGeneralInfoFormData>> = Omit<
 
 type Validators = {
   [K in keyof ApplicationGeneralInfoFormData]?: Options<K>;
+};
+
+export const getDefaultValues = (
+  applicationData?: ApiApplicationResponseDefault,
+  bucket?: string,
+  pythonVersion?: string,
+): ApplicationGeneralInfoFormData => {
+  return {
+    name: applicationData?.display_name ?? '',
+    version: applicationData?.display_version ?? DEFAULT_VERSION,
+    iconUrl: applicationData?.icon_url ?? '',
+    description: applicationData?.description ?? '',
+    topics: applicationData?.description_keywords ?? [],
+    id: applicationData?.name ?? '',
+    reference: applicationData?.reference ?? '',
+    //schema type application properties
+    applicationProperties: applicationData?.application_properties,
+    //custom application properties
+    completionUrl: applicationData?.endpoint ?? '',
+    inputAttachmentTypes: applicationData?.input_attachment_types,
+    maxInputAttachments: applicationData?.max_input_attachments,
+    features: safeStringifyApplicationFeatures(applicationData?.features),
+    //code app application properties
+    sources:
+      applicationData?.function?.source_folder ?? `files/${bucket}/appdata`,
+    runtime:
+      applicationData?.function?.runtime ?? pythonVersion ?? 'python3.11',
+    endpoints: applicationData?.function?.mapping
+      ? Object.entries(applicationData.function.mapping).map(
+          ([key, value]) => ({
+            label: key,
+            visibleName: FEATURES_ENDPOINTS_NAMES[key],
+            value,
+            editableKey:
+              !FEATURES_ENDPOINTS[key as keyof typeof FEATURES_ENDPOINTS],
+            static: key === FEATURES_ENDPOINTS.chat_completion,
+          }),
+        )
+      : [
+          {
+            label: FEATURES_ENDPOINTS.chat_completion,
+            visibleName:
+              FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.chat_completion],
+            value:
+              FEATURES_ENDPOINTS_DEFAULT_VALUES[
+                FEATURES_ENDPOINTS.chat_completion
+              ] || '',
+            editableKey: false,
+            static: true,
+          },
+        ],
+    env: applicationData?.function?.env
+      ? Object.entries(applicationData.function.env).map(([label, value]) => ({
+          label,
+          value,
+          editableKey: true,
+        }))
+      : [],
+  };
 };
 
 export const validators: Validators = {
