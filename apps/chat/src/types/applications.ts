@@ -134,8 +134,3 @@ export enum ApplicationType {
   CODE_APP = 'code app',
   MINDMAP = 'mindmap',
 }
-
-export enum ApplicationSlug {
-  CUSTOM_APP = 'custom-app',
-  CODE_APP = 'code-app',
-}

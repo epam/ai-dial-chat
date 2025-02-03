@@ -149,7 +149,10 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     applicationTypeDetailedSchema = await detailedSchemaResponse.json();
   }
 
-  if (!isApplicationType(slug) && !applicationTypeDetailedSchema) {
+  if (
+    !isApplicationType(decodeURIComponent(slug)) &&
+    !applicationTypeDetailedSchema
+  ) {
     return {
       notFound: true,
     };

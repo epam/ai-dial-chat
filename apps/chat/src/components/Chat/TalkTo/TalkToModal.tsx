@@ -22,7 +22,6 @@ import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils, PseudoModel } from '@/src/utils/server/api';
 
-import { ApplicationSlug, ApplicationType } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
@@ -41,7 +40,7 @@ import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
-import { ApplicationWizard } from '@/src/components/Common/ApplicationWizard/ApplicationWizard';
+// import { ApplicationWizard } from '@/src/components/Common/ApplicationWizard/ApplicationWizard';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import Modal from '@/src/components/Common/Modal';
 
@@ -80,7 +79,7 @@ const TalkToModalView = ({
   const recentModelIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [editModel, setEditModel] = useState<DialAIEntityModel>();
+  // const [editModel, setEditModel] = useState<DialAIEntityModel>();
   const [deleteModel, setDeleteModel] = useState<DialAIEntityModel>();
   const [logModel, setLogModel] = useState<DialAIEntityModel>();
   const [publishModel, setPublishModel] = useState<
@@ -250,10 +249,10 @@ const TalkToModalView = ({
     [router],
   );
 
-  const handleCloseEditDialog = useCallback(
-    () => setEditModel(undefined),
-    [setEditModel],
-  );
+  // const handleCloseEditDialog = useCallback(
+  //   () => setEditModel(undefined),
+  //   [setEditModel],
+  // );
 
   const handleDeleteClose = useCallback(
     (confirm: boolean) => {
@@ -283,15 +282,6 @@ const TalkToModalView = ({
     },
     [setDeleteModel],
   );
-
-  const getTypeFromSlug = (slug: ApplicationSlug) => {
-    switch (slug) {
-      case ApplicationSlug.CODE_APP:
-        return ApplicationType.CODE_APP;
-      default:
-        return ApplicationType.CUSTOM_APP;
-    }
-  };
 
   const handleGoToWorkspace = useCallback(
     (e: MouseEvent<HTMLAnchorElement>) => {
@@ -350,18 +340,15 @@ const TalkToModalView = ({
         </Link>
       )}
 
-      {editModel && (
+      {/* {editModel && (
         <ApplicationWizard
           isOpen
           onClose={handleCloseEditDialog}
           isEdit
           currentReference={editModel.reference}
-          //TO_DO: fix type
-          type={getTypeFromSlug(
-            getApplicationType(editModel) as ApplicationSlug,
-          )}
+          type={getApplicationType(editModel) as ApplicationType}
         />
-      )}
+      )} */}
       {deleteModel && (
         <ConfirmDialog
           isOpen

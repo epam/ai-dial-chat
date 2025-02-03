@@ -8,7 +8,6 @@ import {
   ApiApplicationModelSchema,
   ApiApplicationResponse,
   ApplicationInfo,
-  ApplicationSlug,
   ApplicationStatus,
   ApplicationType,
   CustomApplicationModel,
@@ -289,8 +288,8 @@ export const isApplicationDeploymentInProgress = (
   );
 };
 
-export const isApplicationType = (value: unknown): value is ApplicationSlug => {
-  return Object.values(ApplicationSlug).includes(value as ApplicationSlug);
+export const isApplicationType = (value: unknown): value is ApplicationType => {
+  return Object.values(ApplicationType).includes(value as ApplicationType);
 };
 export const getSharedTooltip = (context: string) => {
   return translate(

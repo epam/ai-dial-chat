@@ -10,7 +10,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { encrypt } from '@/src/utils/app/application-type-schema';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
-import { ApplicationSlug } from '@/src/types/applications';
+import { ApplicationType } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
@@ -110,7 +110,7 @@ export const SearchHeader = () => {
         display: isCustomApplicationsEnabled,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          router.push(`/apps-editor/${ApplicationSlug.CUSTOM_APP}`);
+          router.push(`/apps-editor/${ApplicationType.CUSTOM_APP}`);
         },
       },
       {
@@ -119,7 +119,7 @@ export const SearchHeader = () => {
         display: isCodeAppsEnabled,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          router.push(`/apps-editor/${ApplicationSlug.CODE_APP}`);
+          router.push(`/apps-editor/${ApplicationType.CODE_APP}`);
         },
       },
       ...(applicationTypeSchemas?.map((schema: ApplicationTypeSchema) => ({

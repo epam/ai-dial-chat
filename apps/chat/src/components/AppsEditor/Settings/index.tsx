@@ -14,7 +14,7 @@ import classNames from 'classnames';
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
   ApiApplicationResponseDefault,
-  ApplicationSlug,
+  ApplicationType,
 } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
@@ -82,10 +82,10 @@ export const ApplicationSettings: React.FC<Props> = ({
       string,
       CustomApplicationFormData | QuickAppFormData | CodeAppFormData | null
     > = {
-      [ApplicationSlug.CUSTOM_APP]: getCustomApplicationDefaultValues({
+      [ApplicationType.CUSTOM_APP]: getCustomApplicationDefaultValues({
         app: applicationData,
       }),
-      [ApplicationSlug.CODE_APP]: getCodeAppDefaultValues({
+      [ApplicationType.CODE_APP]: getCodeAppDefaultValues({
         app: applicationData,
         runtime: pythonVersions[0],
       }),
@@ -100,8 +100,8 @@ export const ApplicationSettings: React.FC<Props> = ({
   const getFormView = (type: string) => {
     // will be removed after all apps are migrated to the new schema
     const formViews: Record<string, JSX.Element> = {
-      [ApplicationSlug.CUSTOM_APP]: <ApplicationView />,
-      [ApplicationSlug.CODE_APP]: <CodeAppView />,
+      [ApplicationType.CUSTOM_APP]: <ApplicationView />,
+      [ApplicationType.CODE_APP]: <CodeAppView />,
       ['Quick App']: <QuickAppView schema={schema} />,
     };
 
