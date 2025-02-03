@@ -52,8 +52,8 @@ export const ApplicationPublishItems = ({
   const areFilesLoading = useAppSelector(FilesSelectors.selectAreFilesLoading);
   const files = useAppSelector(FilesSelectors.selectFiles);
 
-  const quickAppDocumentUrl: string =
-    applicationDetails?.applicationProperties?.document_relative_url;
+  const quickAppDocumentUrl = applicationDetails?.applicationProperties
+    ?.document_relative_url as string;
   const quickAppDocument = useMemo(
     () => files.find((file) => file.id === quickAppDocumentUrl),
     [files, quickAppDocumentUrl],
