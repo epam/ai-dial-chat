@@ -1,5 +1,7 @@
 'use client';
 
+import { BackToButton } from './backToSelectOverlayMode';
+
 import { ChatOverlay, ChatOverlayOptions } from '@epam/ai-dial-overlay';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -78,7 +80,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
       <dialog ref={dialogRef} className="rounded p-5">
         <div className="flex justify-end">
           <button
-            className="rounded bg-gray-200 p-2"
+            className="button"
             autoFocus
             onClick={() => dialogRef.current?.close()}
           >
@@ -97,12 +99,13 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
       ></div>
 
       <div className="flex max-w-[300px] flex-col gap-2">
+        <BackToButton />
         <details>
           <summary>Chat actions</summary>
 
           <div className="flex flex-col gap-2">
             <button
-              className="rounded bg-gray-200 p-2"
+              className="button"
               onClick={() => {
                 overlay.current?.sendMessage('Hello');
               }}
@@ -111,7 +114,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
             </button>
 
             <button
-              className="rounded bg-gray-200 p-2"
+              className="button"
               onClick={() => {
                 overlay.current?.setSystemPrompt(
                   'End each word with string "!?!?!"',
@@ -122,7 +125,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
             </button>
 
             <button
-              className="rounded bg-gray-200 p-2"
+              className="button"
               onClick={async () => {
                 const messages = await overlay.current?.getMessages();
 
@@ -133,7 +136,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
             </button>
 
             <button
-              className="rounded bg-gray-200 p-2"
+              className="button"
               onClick={async () => {
                 const conversations = await overlay.current?.getConversations();
 
@@ -146,7 +149,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
             </button>
 
             <button
-              className="rounded bg-gray-200 p-2"
+              className="button"
               onClick={async () => {
                 const conversation =
                   await overlay.current?.createConversation();
@@ -158,7 +161,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
             </button>
 
             <button
-              className="rounded bg-gray-200 p-2"
+              className="button"
               onClick={async () => {
                 const conversation =
                   await overlay.current?.createConversation(
@@ -172,10 +175,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
             </button>
 
             <div className="flex flex-col gap-1 border p-1">
-              <button
-                className="rounded bg-gray-200 p-2"
-                onClick={handleSelectConversation}
-              >
+              <button className="button" onClick={handleSelectConversation}>
                 Select conversation by ID
               </button>
               <textarea
@@ -192,7 +192,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
 
           <div>
             <button
-              className="rounded bg-gray-200 p-2"
+              className="button"
               onClick={() => {
                 const newOptions = {
                   ...overlayOptions,
