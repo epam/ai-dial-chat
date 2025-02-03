@@ -11,5 +11,5 @@ interface RenderWhenProps {
 
 export function RenderWhen({ selector, children }: RenderWhenProps) {
   const shouldRender = useAppSelector(selector);
-  return !!shouldRender ? children : null;
+  return shouldRender ? children : null;
 }
