@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import classNames from 'classnames';
@@ -6,6 +6,7 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { constructPath } from '@/src/utils/app/file';
+import { splitEntityId } from '@/src/utils/app/folders';
 import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
 
 import { Translation } from '@/src/types/translation';
@@ -36,6 +37,11 @@ export const CodeAppExampleLink = ({
 
   const dispatch = useAppDispatch();
 
+  const bucket = useMemo(() => {
+    const { bucket } = splitEntityId(folderId);
+    return bucket;
+  }, [folderId]);
+
   const handleClick = useCallback(() => {
     const example = CODE_APPS_EXAMPLES[exampleType];
     Object.entries(example.files).forEach(([newFileName, content]) => {
@@ -48,6 +54,7 @@ export const CodeAppExampleLink = ({
             relativePath: getIdWithoutRootPathSegments(folderId),
             id: constructPath(folderId, newFileName),
             name: newFileName,
+            bucket,
           }),
         );
       }
@@ -83,7 +90,7 @@ export const CodeAppExampleLink = ({
         }
       });
     }
-  }, [exampleType, fileNames, dispatch, folderId, setValue, getValues]);
+  }, [exampleType, fileNames, dispatch, folderId, bucket, getValues, setValue]);
 
   return (
     <span

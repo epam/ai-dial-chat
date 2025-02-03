@@ -269,3 +269,18 @@ export const getSharedTooltip = (context: string) => {
 
 export const isApplicationPublic = (entity: DialAIEntityModel) =>
   isEntityIdPublic(entity) || entity.id === entity.reference;
+
+export const getPlayerCaption = (entity: DialAIEntityModel) => {
+  switch (entity.functionStatus) {
+    case ApplicationStatus.DEPLOYED:
+      return 'Undeploy';
+    case ApplicationStatus.UNDEPLOYED:
+    case ApplicationStatus.FAILED:
+      return 'Deploy';
+    case ApplicationStatus.UNDEPLOYING:
+      return 'Undeploying';
+    case ApplicationStatus.DEPLOYING:
+    default:
+      return 'Deploying';
+  }
+};

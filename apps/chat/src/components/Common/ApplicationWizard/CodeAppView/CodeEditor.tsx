@@ -313,10 +313,19 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
       rootFolders: [],
     };
   }, [files, folders, sourcesFolderId]);
+
   const rootFileNames = useMemo(
     () => rootFiles.map((f) => f.name),
     [rootFiles],
   );
+
+  const { bucket, parentPath } = useMemo(() => {
+    if (sourcesFolderId) {
+      const { bucket, parentPath } = splitEntityId(sourcesFolderId);
+      return { bucket, parentPath };
+    }
+    return { bucket: undefined, parentPath: undefined };
+  }, [sourcesFolderId]);
 
   useEffect(() => {
     if (sourcesFolderId) {
@@ -342,6 +351,11 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
     [dispatch, openedFoldersIds],
   );
 
+  const openUploadDialog = useCallback(() => {
+    setUploadFolderId(sourcesFolderId);
+    dispatch(FilesActions.getFolders({ id: parentPath }));
+  }, [dispatch, parentPath, sourcesFolderId]);
+
   const handleUploadFiles = useCallback(
     (
       selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
@@ -354,11 +368,12 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
             id: file.id,
             relativePath: folderPath,
             name: file.name,
+            bucket,
           }),
         );
       });
     },
-    [dispatch],
+    [bucket, dispatch],
   );
 
   const handleDeleteFile = useCallback(
@@ -395,7 +410,6 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
   const handleUploadEmptyFile = useCallback(
     (fileName: string) => {
       if (fileName && sourcesFolderId) {
-        const { bucket } = splitEntityId(sourcesFolderId);
         dispatch(
           FilesActions.uploadFile({
             fileContent: new File([''], fileName, {
@@ -411,7 +425,7 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
         setNewFileName('');
       }
     },
-    [dispatch, sourcesFolderId],
+    [bucket, dispatch, sourcesFolderId],
   );
 
   const handleToggleFolder = useCallback(
@@ -597,7 +611,7 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
               <Tooltip tooltip={t('Upload file')}>
                 <button
                   type="button"
-                  onClick={() => setUploadFolderId(sourcesFolderId)}
+                  onClick={openUploadDialog}
                   className="text-secondary hover:text-accent-primary"
                 >
                   <IconUpload size={18} />
@@ -652,6 +666,7 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
               onUploadFiles={handleUploadFiles}
               onClose={() => setUploadFolderId(undefined)}
               maximumAttachmentsAmount={Number.MAX_SAFE_INTEGER}
+              rootFolderId={sourcesFolderId}
             />
           )}
           <ConfirmDialog
