@@ -200,7 +200,7 @@ export const ChatOverlayManagerWrapper: React.FC<
 
           <div>
             <button
-              className="button"
+              className="button w-full"
               onClick={() => {
                 const newOptions = {
                   ...overlayManagerOptions,

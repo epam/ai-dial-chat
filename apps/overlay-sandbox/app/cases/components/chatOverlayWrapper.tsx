@@ -192,7 +192,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
 
           <div>
             <button
-              className="button"
+              className="button w-full"
               onClick={() => {
                 const newOptions = {
                   ...overlayOptions,
@@ -200,7 +200,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
                 };
 
                 newOptions.theme = 'dark';
-                newOptions.modelId = 'stability.stable-diffusion-xl';
+                //newOptions.modelId = 'stability.stable-diffusion-xl';
 
                 overlay.current?.setOverlayOptions(newOptions);
               }}

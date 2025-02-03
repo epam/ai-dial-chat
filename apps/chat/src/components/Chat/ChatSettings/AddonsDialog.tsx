@@ -16,7 +16,7 @@ import { useAppSelector } from '@/src/store/hooks';
 
 import { OUTSIDE_PRESS } from '@/src/constants/modal';
 
-import Modal from '@/src/components/Common/Modal';
+import { Modal } from '@/src/components/Common/Modal';
 
 import { ModelIcon } from '../../Chatbar/ModelIcon';
 import CollapsibleSection from '../../Common/CollapsibleSection';
