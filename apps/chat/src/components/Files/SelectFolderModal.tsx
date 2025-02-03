@@ -15,6 +15,8 @@ import { SelectFolderFooter } from '@/src/components/Common/SelectFolder/SelectF
 import { SelectFolderHeader } from '@/src/components/Common/SelectFolder/SelectFolderHeader';
 import { SelectFolderList } from '@/src/components/Common/SelectFolder/SelectFolderList';
 
+import uniq from 'lodash-es/uniq';
+
 interface Props {
   isOpen: boolean;
   initialSelectedFolderId?: string;
@@ -133,11 +135,9 @@ export const SelectFolderModal = ({
 
   const onCancel = useCallback(() => {
     handleClose(undefined);
-  }, [handleClose]);
-
-  if (!isOpen) {
-    return null;
-  }
+    setSelectedFolderId(defaultSelectedFolder);
+    setOpenedFoldersIds((prev) => uniq(prev.concat(defaultOpenedFoldersIds)));
+  }, [defaultOpenedFoldersIds, defaultSelectedFolder, handleClose]);
 
   return (
     <SelectFolder
