@@ -53,9 +53,6 @@ function Home() {
   const showSelectToMigrateWindow = useAppSelector(
     selectShowSelectToMigrateWindow,
   );
-  const isImportingExporting = useAppSelector(
-    ImportExportSelectors.selectIsLoadingImportExport,
-  );
 
   if (conversationsToMigrateCount !== 0 || promptsToMigrateCount !== 0) {
     if (
