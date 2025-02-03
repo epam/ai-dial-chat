@@ -40,14 +40,23 @@ import Tooltip from '../../Common/Tooltip';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onUpdatePrompt: (prompt: Prompt) => void;
+  onUpdatePrompt: (oldPrompt: Prompt, newPrompt: Prompt) => void;
+  onCreatePrompt: (prompt: Prompt) => void;
 }
 
-export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
+export const PromptModal: FC<Props> = ({
+  isOpen,
+  onClose,
+  onUpdatePrompt,
+  onCreatePrompt,
+}) => {
   const { t } = useTranslation(Translation.PromptBar);
 
   const dispatch = useAppDispatch();
 
+  const isNewPromptCreating = useAppSelector(
+    PromptsSelectors.selectIsNewPromptCreating,
+  );
   const selectedPrompt = useAppSelector(
     PromptsSelectors.selectSelectedOrNewPrompt,
   );
@@ -125,12 +134,18 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
         return;
       }
 
-      onUpdatePrompt({
+      const updatedPrompt = {
         ...selectedPrompt,
         name: trimEndDots(name),
         description: description?.trim(),
         content: content.trim(),
-      });
+      };
+
+      if (isNewPromptCreating) {
+        onCreatePrompt(updatedPrompt);
+      }
+
+      onUpdatePrompt(selectedPrompt, updatedPrompt);
       setSubmitted(false);
       onClose();
     },
@@ -139,8 +154,10 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
       content,
       description,
       dispatch,
+      isNewPromptCreating,
       name,
       onClose,
+      onCreatePrompt,
       onUpdatePrompt,
       t,
     ],

@@ -32,34 +32,31 @@ import Sidebar from '../Sidebar';
 
 const PromptActionsBlock = () => {
   const { t } = useTranslation(Translation.PromptBar);
-  const dispatch = useAppDispatch();
 
-  const isNewPromptCreating = useAppSelector(
-    PromptsSelectors.selectIsNewPromptCreating,
-  );
+  const dispatch = useAppDispatch();
 
   const { showModal, isModalPreviewMode } = useAppSelector(
     PromptsSelectors.selectIsEditModalOpen,
   );
 
-  const handleUpdate = useCallback(
+  const handleCreate = useCallback(
     (prompt: Prompt) => {
-      isNewPromptCreating
-        ? dispatch(PromptsActions.createNewPrompt(regeneratePromptId(prompt)))
-        : dispatch(
-            PromptsActions.moveOrUpdatePrompt({
-              prompt,
-              newValues: {
-                name: prompt.name,
-                description: prompt.description,
-                content: prompt.content,
-                isShared: prompt.isShared,
-              },
-            }),
-          );
+      dispatch(PromptsActions.createNewPrompt(regeneratePromptId(prompt)));
+    },
+    [dispatch],
+  );
+
+  const handleUpdate = useCallback(
+    (oldPrompt: Prompt, newPrompt: Prompt) => {
+      dispatch(
+        PromptsActions.moveOrUpdatePrompt({
+          prompt: oldPrompt,
+          newValues: newPrompt,
+        }),
+      );
       dispatch(PromptsActions.resetSearch());
     },
-    [dispatch, isNewPromptCreating],
+    [dispatch],
   );
 
   const handleClose = useCallback(() => {
@@ -77,7 +74,6 @@ const PromptActionsBlock = () => {
           dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true }));
           dispatch(PromptsActions.resetChosenPrompts());
         }}
-        disabled={isNewPromptCreating}
         data-qa="new-entity"
       >
         <Tooltip tooltip={t('New prompt')}>
@@ -90,6 +86,7 @@ const PromptActionsBlock = () => {
           isOpen
           onClose={handleClose}
           onUpdatePrompt={handleUpdate}
+          onCreatePrompt={handleCreate}
         />
       )}
     </div>
