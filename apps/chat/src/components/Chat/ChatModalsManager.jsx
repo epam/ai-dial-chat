@@ -4,7 +4,7 @@ import { UserMobile } from '../Header/User/UserMobile';
 import { RenameConversationModal } from './RenameConversationModal';
 import { ShareModal } from './ShareModal';
 
-export const ChatModalsManager = () => {
+export function ChatModalsManager() {
   return (
     <>
       <UserMobile />
@@ -14,4 +14,4 @@ export const ChatModalsManager = () => {
       <RenameConversationModal />
     </>
   );
-};
+}
