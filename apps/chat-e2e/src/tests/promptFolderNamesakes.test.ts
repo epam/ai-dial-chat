@@ -41,7 +41,9 @@ dialTest(
         ExpectedConstants.newFolderWithIndexTitle(1),
       );
       await promptDropdownMenu.selectMenuOption(MenuOptions.rename);
-      await folderPrompts.editFolderNameWithTick(duplicatedFolderName);
+      await folderPrompts.editFolderNameWithTick(duplicatedFolderName, {
+        isHttpMethodTriggered: false,
+      });
     });
 
     await dialTest.step(

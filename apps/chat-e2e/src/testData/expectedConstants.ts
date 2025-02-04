@@ -292,6 +292,7 @@ export const API = {
   fileHost: '/api/files',
   conversationHost: '/api/conversations',
   promptHost: '/api/prompts',
+  moveHost: '/api/ops/resource/move',
   importFileRootPath: (bucket: string) => `files/${bucket}`,
   modelFilePath: (modelId: string) => `appdata/${modelId}/images`,
   importFilePath: (bucket: string, modelId: string) =>

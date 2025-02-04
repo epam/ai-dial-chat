@@ -117,6 +117,7 @@ dialTest(
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
         await folderConversations.editFolderNameWithTick(
           GeneratorUtil.randomString(5),
+          { isHttpMethodTriggered: false },
         );
 
         await chatBar.createNewFolder();

@@ -76,11 +76,15 @@ export class PromptModalDialog extends BaseElement {
     value: string,
     method: () => Promise<void>,
   ) {
+    const isNameUpdated = (await this.getName()) !== name;
     await this.fillPromptDetails(name, description, value);
     if (isApiStorageType) {
-      const respPromise = this.page.waitForResponse((resp) =>
-        resp.request().url().includes(API.promptHost),
-      );
+      const respPromise = this.page.waitForResponse((resp) => {
+        const url = resp.request().url();
+        return isNameUpdated
+          ? url.includes(API.moveHost)
+          : url.includes(API.promptHost);
+      });
       await method();
       const response = await respPromise;
       return response.request().postDataJSON();
