@@ -9,7 +9,11 @@ import {
   isSectionFilterMatched,
   isVersionFilterMatched,
 } from '@/src/utils/app/common';
-import { sortByDateAndName } from '@/src/utils/app/conversation';
+import {
+  isPlaybackConversation,
+  isReplayConversation,
+  sortByDateAndName,
+} from '@/src/utils/app/conversation';
 import { constructPath } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersById,
@@ -320,16 +324,14 @@ export const selectIsSendMessageAborted = createSelector(
 export const selectIsReplaySelectedConversations = createSelector(
   [selectSelectedConversations],
   (conversations) => {
-    return conversations.some((conv) => conv.replay?.isReplay);
+    return conversations.some((conv) => isReplayConversation(conv));
   },
 );
 
 export const selectIsPlaybackSelectedConversations = createSelector(
   [selectSelectedConversations],
   (conversations) => {
-    return conversations.some(
-      (conv) => conv.playback && conv.playback.isPlayback,
-    );
+    return conversations.some((conv) => isPlaybackConversation(conv));
   },
 );
 
@@ -771,6 +773,9 @@ export const selectIsSelectedConversationBlocksInput = createSelector(
     conversations.some(
       (conversation) =>
         (isConfigurationBlocksInput && !conversation.messages.length) ||
+        isReplayConversation(conversation) ||
+        isPlaybackConversation(conversation) ||
+        isEntityIdExternal(conversation) ||
         isMessageInputDisabled(
           conversation.messages.length,
           conversation.messages,
