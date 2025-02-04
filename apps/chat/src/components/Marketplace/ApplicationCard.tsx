@@ -2,6 +2,7 @@ import {
   IconBookmark,
   IconBookmarkFilled,
   IconFileDescription,
+  IconLink,
   IconPencilMinus,
   IconTrashX,
   IconUserShare,
@@ -19,6 +20,7 @@ import {
   getApplicationSimpleStatus,
   getModelShortDescription,
   getPlayerCaption,
+  isApplicationPublic,
   isApplicationStatusUpdating,
   isExecutableApp,
 } from '@/src/utils/app/application';
@@ -27,7 +29,7 @@ import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
 import { SimpleApplicationStatus } from '@/src/types/applications';
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, PageType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -38,9 +40,11 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import {
   CardIconSizes,
+  MarketplaceQueryParams,
   PlayerContextIconClasses,
   PlayerContextIcons,
 } from '@/src/constants/marketplace';
@@ -117,6 +121,7 @@ export const ApplicationCard = ({
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
   const isMyApp = isMyApplication(entity);
+  const isPublicApp = isApplicationPublic(entity);
 
   const canWrite = canWriteSharedWithMe(entity);
 
@@ -161,8 +166,31 @@ export const ApplicationCard = ({
     SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
   );
 
+  const link = useMemo(
+    () =>
+      `${window.location.origin}/${PageType.Marketplace}?${MarketplaceQueryParams.model}=${entity.reference}`,
+    [entity.reference],
+  );
+
+  const handleCopy = useCallback(() => {
+    if (!navigator.clipboard) return;
+    navigator.clipboard.writeText(link);
+    dispatch(UIActions.showSuccessToast(t('Link copied!')));
+  }, [dispatch, link, t]);
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
+      {
+        name: t('Copy link'),
+        dataQa: 'application-copy-link',
+        display: isPublicApp,
+        Icon: IconLink,
+        onClick: (e: React.MouseEvent) => {
+          handleCopy();
+          e.preventDefault();
+          e.stopPropagation();
+        },
+      },
       {
         name: t(getPlayerCaption(entity)),
         dataQa: 'status-change',
@@ -253,6 +281,7 @@ export const ApplicationCard = ({
     ],
     [
       t,
+      isPublicApp,
       entity,
       playerStatus,
       isAdmin,
@@ -266,6 +295,7 @@ export const ApplicationCard = ({
       isExecutable,
       onDelete,
       isModifyDisabled,
+      handleCopy,
       handleUpdateFunctionStatus,
       handleOpenSharing,
       handleOpenUnshare,
@@ -346,14 +376,14 @@ export const ApplicationCard = ({
               <div className="flex whitespace-nowrap">
                 <div
                   className={classNames(
-                    'mr-6 shrink truncate text-base font-semibold leading-[20px] text-primary',
+                    'mr-6 flex shrink gap-2 truncate text-base font-semibold leading-[20px] text-primary',
                     !isMyApp && !entity.version && '!mr-12',
                   )}
                   data-qa="agent-name"
                 >
-                  {entity.name}
+                  <span className="truncate">{entity.name}</span>
+                  <FunctionStatusIndicator entity={entity} />
                 </div>
-                <FunctionStatusIndicator entity={entity} />
               </div>
               <EntityMarkdownDescription className="hidden text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
                 {getModelShortDescription(entity)}
