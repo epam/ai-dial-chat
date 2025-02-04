@@ -145,7 +145,7 @@ export const AppsEditorHeader = () => {
         <div className="flex items-center space-x-2">
           <Link
             className="hidden items-center space-x-1 hover:text-accent-primary md:flex"
-            href="/marketplace"
+            href={{ pathname: '/marketplace', query: { tab: 'workspace' } }}
           >
             <LogOutIcon width={14} height={14} />
             <span>{t('Go to marketplace')}</span>
@@ -181,7 +181,7 @@ export const AppsEditorHeader = () => {
           })}
           <Link
             className="flex items-center px-4 py-2 hover:text-accent-primary"
-            href="/marketplace"
+            href={{ pathname: '/marketplace', query: { tab: 'workspace' } }}
           >
             <LogOutIcon width={14} height={14} />
             <span>{t('Go to marketplace')}</span>
