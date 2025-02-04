@@ -138,14 +138,18 @@ dialTest(
           ExpectedConstants.newPromptFolderWithIndexTitle(1),
         );
         await promptDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await folderPrompts.editFolderNameWithTick(longName);
+        await folderPrompts.editFolderNameWithTick(longName, {
+          isHttpMethodTriggered: false,
+        });
 
         // Rename folder_child
         await folderPrompts.openFolderDropdownMenu(
           ExpectedConstants.newPromptFolderWithIndexTitle(2),
         );
         await promptDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await folderPrompts.editFolderNameWithTick(longName);
+        await folderPrompts.editFolderNameWithTick(longName, {
+          isHttpMethodTriggered: false,
+        });
       },
     );
 

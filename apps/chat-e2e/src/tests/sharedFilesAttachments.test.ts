@@ -52,7 +52,6 @@ dialSharedWithMeTest(
     additionalShareUserLocalStorageManager,
     additionalShareUserAttachFilesModal,
     additionalShareUserToastAssertion,
-    additionalShareUserDataInjector,
     conversations,
     attachmentDropdownMenu,
     attachFilesModal,
@@ -85,7 +84,6 @@ dialSharedWithMeTest(
     let imageUrl2: string;
     let imageInConversationInFolderUrl: string;
     let specialCharsImageUrl: string;
-    let conversationToShare: Conversation;
     //TODO EPMRTC-4135 blocked by the #1076
     // let imageInFolderUrl2: string;
     let shareByLinkResponse: ShareByLinkResponseModel;
@@ -293,18 +291,6 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Prepare conversation to share of the user 2',
-      async () => {
-        conversationData.resetData();
-        conversationToShare =
-          conversationData.prepareEmptyConversation(defaultModelId);
-        await additionalShareUserDataInjector.createConversations([
-          conversationToShare,
-        ]);
-      },
-    );
-
-    await dialSharedWithMeTest.step(
       'By user2 create a conversation with attachments from Shared with me section in Manage attachments',
       async () => {
         await additionalShareUserLocalStorageManager.setRecentModelsIds(
@@ -313,9 +299,6 @@ dialSharedWithMeTest(
         const newRequest = GeneratorUtil.randomString(10);
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserConversations.selectConversation(
-          conversationToShare.name,
-        );
         await additionalShareUserSendMessage.attachmentMenuTrigger.click();
 
         await additionalShareUserAttachmentDropdownMenu.selectMenuOption(
@@ -363,13 +346,9 @@ dialSharedWithMeTest(
             );
             conversationWithTwoResponses.name = GeneratorUtil.randomString(10);
             await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-            await renameConversationModal.editInputValue(
+            await renameConversationModal.editConversationNameWithSaveButton(
               conversationWithTwoResponses.name,
             );
-            await renameConversationModal.saveButton.click();
-            await confirmationDialog.confirm({
-              triggeredHttpMethod: 'PUT',
-            });
             break;
           case 'model change':
             await chatHeader.chatAgent.click();

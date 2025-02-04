@@ -219,8 +219,9 @@ export class Folders extends BaseElement {
     if (isHttpMethodTriggered && isApiStorageType) {
       const respPromise = this.page.waitForResponse((resp) => {
         return (
-          resp.url().includes(API.conversationsHost()) ||
-          resp.url().includes(API.promptsHost())
+          resp.request().method() === 'PUT' &&
+          (resp.url().includes(API.conversationHost) ||
+            resp.url().includes(API.promptHost))
         );
       });
       await folderInputActions.clickTickButton();

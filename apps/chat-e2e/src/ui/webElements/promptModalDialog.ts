@@ -1,4 +1,5 @@
 import { isApiStorageType } from '@/src/hooks/global-setup';
+import { API } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { ErrorLabelSelectors } from '@/src/ui/selectors';
@@ -77,10 +78,9 @@ export class PromptModalDialog extends BaseElement {
   ) {
     await this.fillPromptDetails(name, description, value);
     if (isApiStorageType) {
-      const respPromise = this.page.waitForResponse((resp) => {
-        const method = resp.request().method();
-        return method === 'POST' || method === 'PUT';
-      });
+      const respPromise = this.page.waitForResponse((resp) =>
+        resp.request().url().includes(API.promptHost),
+      );
       await method();
       const response = await respPromise;
       return response.request().postDataJSON();
