@@ -12,7 +12,7 @@ import { ApplicationWizardHeader } from '@/src/components/Common/ApplicationWiza
 import { CodeAppView } from '@/src/components/Common/ApplicationWizard/CodeAppView/CodeAppView';
 import { CustomAppView } from '@/src/components/Common/ApplicationWizard/CustomAppView';
 import { QuickAppView } from '@/src/components/Common/ApplicationWizard/QuickAppView';
-import Modal from '@/src/components/Common/Modal';
+import { Modal } from '@/src/components/Common/Modal';
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import { UploadStatus } from '@epam/ai-dial-shared';

@@ -18,6 +18,7 @@ import {
   hasInvalidNameInPath,
   isEntityNameInvalid,
 } from '@/src/utils/app/common';
+import { canEditSharedFolderOrParent } from '@/src/utils/app/folders';
 import { isEntityIdExternal, isMyEntity } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
@@ -26,6 +27,7 @@ import { FolderInterface } from '@/src/types/folder';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
+import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
@@ -79,10 +81,22 @@ export const FolderContextMenu = ({
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
 
+  const folders = useAppSelector(FilesSelectors.selectFolders);
+
   const isExternal = isEntityIdExternal(folder);
   const isNameInvalid = isEntityNameInvalid(folder.name);
   const isInvalidPath = hasInvalidNameInPath(folder.folderId);
   const disableAll = isNameInvalid || isInvalidPath;
+
+  const canEditShared = useMemo(() => {
+    return canEditSharedFolderOrParent(folders, folder.folderId);
+  }, [folder.folderId, folders]);
+
+  const isMyFolder = useMemo(() => {
+    return isMyEntity(folder, featureType);
+  }, [featureType, folder]);
+
+  const isMyOrCanEdit = isMyFolder || canEditShared;
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -95,7 +109,7 @@ export const FolderContextMenu = ({
       },
       {
         name: t('Upload'),
-        display: !!onUpload && !isExternal,
+        display: !!onUpload && isMyOrCanEdit,
         dataQa: 'upload',
         Icon: IconUpload,
         onClick: onUpload,
@@ -103,7 +117,7 @@ export const FolderContextMenu = ({
       },
       {
         name: t('Rename'),
-        display: (!!onRename && !isExternal) || !!folder.temporary,
+        display: !!onRename && (!isExternal || !!folder.temporary),
         dataQa: 'rename',
         Icon: IconPencilMinus,
         onClick: onRename,
@@ -166,23 +180,20 @@ export const FolderContextMenu = ({
       {
         name: t('Delete'),
         display:
-          (!!onDelete && isMyEntity(folder, featureType)) || !!folder.temporary,
+          !!onDelete &&
+          (isMyEntity(folder, featureType) ||
+            !!folder.temporary ||
+            !!folder.sharedWithMe),
         dataQa: 'delete',
         Icon: IconTrashX,
         onClick: onDelete,
       },
-      {
-        name: t('Delete'),
-        display: !!onDelete && !!folder.sharedWithMe,
-        dataQa: 'delete',
-        Icon: IconTrashX,
-        onClick: onDelete,
-      },
+
       {
         name: t('Add new folder'),
         display:
-          (!!onAddFolder && !isExternal) ||
-          !!additionalItemData?.isChangePathFolder,
+          !!onAddFolder &&
+          (isMyOrCanEdit || !!additionalItemData?.isChangePathFolder),
         dataQa: 'new-folder',
         Icon: IconFolderPlus,
         onClick: onAddFolder,
@@ -197,6 +208,7 @@ export const FolderContextMenu = ({
       onSelect,
       featureType,
       onUpload,
+      isMyOrCanEdit,
       disableAll,
       onRename,
       folder,

@@ -44,7 +44,7 @@ import {
   SHARED_WITH_ME_SECTION_NAME,
 } from '@/src/constants/sections';
 
-import Modal from '@/src/components/Common/Modal';
+import { Modal } from '@/src/components/Common/Modal';
 
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
 import CollapsibleSection from '../Common/CollapsibleSection';

@@ -27,7 +27,7 @@ import Tooltip from '@/src/components/Common/Tooltip';
 import { TemplateRenderer } from '../../Chat/ChatMessage/ChatMessageTemplatesModal/TemplateRenderer';
 import { PublicVersionSelector } from '../../Chat/Publish/PublicVersionSelector';
 import { PublicationControls } from '../../Chat/Publish/PublicationChatControls';
-import Modal from '../../Common/Modal';
+import { Modal } from '../../Common/Modal';
 
 import { PublishActions } from '@epam/ai-dial-shared';
 

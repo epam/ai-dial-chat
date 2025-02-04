@@ -11,7 +11,7 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 
-import Modal from '../../Common/Modal';
+import { Modal } from '../../Common/Modal';
 import { ApplicationDetailsContent } from './ApplicationContent';
 import { ApplicationDetailsFooter } from './ApplicationFooter';
 import { ApplicationDetailsHeader } from './ApplicationHeader';

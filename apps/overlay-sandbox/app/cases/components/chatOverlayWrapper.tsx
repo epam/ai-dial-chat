@@ -203,7 +203,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
 
           <div>
             <button
-              className="button"
+              className="button w-full"
               onClick={() => {
                 const newOptions = {
                   ...overlayOptions,
