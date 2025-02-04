@@ -125,8 +125,7 @@ export const ApplicationDetailsFooter = ({
 
   const canWrite = canWriteSharedWithMe(entity);
 
-  const isExecutable =
-    isExecutableApp(entity) && (isMyApp || isAdmin || canWrite);
+  const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin); //TODO add  ```|| canWrite``` when core issues #655 and #672 will be ready
 
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
