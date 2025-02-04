@@ -39,8 +39,6 @@ export const CustomApplicationEditorView: React.FC<Props> = ({
         title={title}
         width="100%"
         height="100%"
-        targetOrigin={generateTargetUrl()?.origin}
-        onMessage={() => null}
         containerClassName="w-full h-full border-none transition-all"
       />
     </div>
