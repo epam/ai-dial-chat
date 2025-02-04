@@ -340,8 +340,9 @@ export const ApplicationCard = ({
                     !isMyApp && '!mr-12',
                   )}
                 >
-                  {t('Version: ')}
+                  {t('Version')}
                   <span className="max-w-full overflow-hidden truncate whitespace-nowrap">
+                    {': '}
                     {entity.version}
                   </span>
                 </div>
