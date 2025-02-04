@@ -9,7 +9,7 @@ import { MouseEvent, MouseEventHandler, useMemo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { isCurrentFolderOrParentSharedWithMeAndCanEdit } from '@/src/utils/app/folders';
+import { canEditSharedFolderOrParent } from '@/src/utils/app/folders';
 import { isMyEntity } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
@@ -118,7 +118,7 @@ export function FileItemContextMenu({
         display:
           isMyEntity(file, FeatureType.File) ||
           !!file.sharedWithMe ||
-          isCurrentFolderOrParentSharedWithMeAndCanEdit(folders, file.folderId),
+          canEditSharedFolderOrParent(folders, file.folderId),
 
         Icon: IconTrashX,
         onClick: onDelete,

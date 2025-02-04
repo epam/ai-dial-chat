@@ -159,12 +159,10 @@ function ModalView({
   );
 }
 
-const Modal = (props: Props) => {
+export function Modal(props: Props) {
   if (props.state === ModalState.CLOSED) {
     return null;
   }
 
   return <ModalView {...props} />;
-};
-
-export default Modal;
+}

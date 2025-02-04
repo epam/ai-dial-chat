@@ -15,7 +15,7 @@ import {
 } from '@/src/store/application/application.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
-import Modal from '../Common/Modal';
+import { Modal } from '../Common/Modal';
 import { Spinner } from '../Common/Spinner';
 import Tooltip from '../Common/Tooltip';
 

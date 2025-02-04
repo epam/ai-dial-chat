@@ -18,7 +18,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
-import Modal from '../../Common/Modal';
+import { Modal } from '../../Common/Modal';
 import { MultipleComboBox } from '../../Common/MultipleComboBox';
 import { RegexParamInput } from './RegexParamInput';
 import { RulesSelect } from './RulesSelect';

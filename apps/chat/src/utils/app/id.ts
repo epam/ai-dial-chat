@@ -77,3 +77,7 @@ export const isMyEntity = (entity: { id: string }, featureType: FeatureType) =>
 
 export const isMyApplication = (entity: { id: string }) =>
   isMyEntity(entity, FeatureType.Application);
+
+export const isMyBucket = (bucket: string) => {
+  return bucket === LOCAL_BUCKET || bucket === BucketService.getBucket();
+};
