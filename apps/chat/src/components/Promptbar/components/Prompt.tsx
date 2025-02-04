@@ -380,7 +380,7 @@ export const PromptComponent = ({
     (e) => {
       e.stopPropagation();
       setIsContextMenu(false);
-      dispatch(PromptsActions.usePrompt(prompt));
+      dispatch(PromptsActions.applyPrompt(prompt));
     },
     [dispatch, prompt],
   );

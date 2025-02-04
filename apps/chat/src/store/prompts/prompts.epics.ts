@@ -880,9 +880,9 @@ const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const usePromptEpic: AppEpic = (action$, state$) =>
+const applyPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PromptsActions.usePrompt.match),
+    filter(PromptsActions.applyPrompt.match),
     switchMap(({ payload }) => getOrUploadPrompt(payload, state$.value)),
     switchMap(({ prompt, wasUploaded }) => {
       if (!prompt) {
@@ -932,5 +932,5 @@ export const PromptsEpics = combineEpics(
   duplicatePromptEpic,
   uploadPromptEpic,
   deleteChosenPromptsEpic,
-  usePromptEpic,
+  applyPromptEpic,
 );
