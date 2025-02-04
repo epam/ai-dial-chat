@@ -748,7 +748,7 @@ dialTest.skip(
         await conversations.selectConversation(replayConversation.name);
         await agentInfoAssertion.assertElementText(
           agentInfo.agentName,
-          notAllowedModel,
+          ExpectedConstants.replayAsIsLabel,
         );
         //TODO: add conversation screen verification when fixed https://github.com/epam/ai-dial-chat/issues/2697
         await chatAssertion.assertReplayButtonState('hidden');

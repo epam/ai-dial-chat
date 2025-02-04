@@ -428,8 +428,9 @@ export const CodeAppView: FC<ViewProps> = ({
                 );
 
                 handleEdit(confirmSharingRevoke.data);
-                setConfirmSharingRevoke(undefined);
               }
+
+              setConfirmSharingRevoke(undefined);
             }}
           />
         )}

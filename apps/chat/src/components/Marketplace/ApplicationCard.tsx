@@ -3,8 +3,6 @@ import {
   IconBookmarkFilled,
   IconFileDescription,
   IconPencilMinus,
-  IconPlayerPlay,
-  IconPlaystationSquare,
   IconTrashX,
   IconUserShare,
   IconWorldShare,
@@ -20,19 +18,16 @@ import {
   getApplicationNextStatus,
   getApplicationSimpleStatus,
   getModelShortDescription,
+  getPlayerCaption,
   isApplicationStatusUpdating,
   isExecutableApp,
 } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
-import { isMediumScreen } from '@/src/utils/app/mobile';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
-import {
-  ApplicationStatus,
-  SimpleApplicationStatus,
-} from '@/src/types/applications';
-import { FeatureType, ScreenState } from '@/src/types/common';
+import { SimpleApplicationStatus } from '@/src/types/applications';
+import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -44,6 +39,12 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 
+import {
+  CardIconSizes,
+  PlayerContextIconClasses,
+  PlayerContextIcons,
+} from '@/src/constants/marketplace';
+
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
@@ -54,18 +55,9 @@ import ShareIcon from '../Common/ShareIcon';
 import Tooltip from '../Common/Tooltip';
 import { ApplicationLogs } from './ApplicationLogs';
 
-import LoaderIcon from '@/public/images/icons/loader.svg';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
-
-const DESKTOP_ICON_SIZE = 80;
-const SMALL_ICON_SIZE = 48;
-
-// TODO uncomment in #2943
-// const MOBILE_SHARE_ICON_SIZE = 16;
-const TABLET_SHARE_ICON_SIZE = 20;
-const DESKTOP_SHARE_ICON_SIZE = 30;
 
 interface CardFooterProps {
   entity: DialAIEntityModel;
@@ -74,7 +66,7 @@ interface CardFooterProps {
 const CardFooter = ({ entity }: CardFooterProps) => {
   return (
     <>
-      <EntityMarkdownDescription className="mt-3 line-clamp-2 text-ellipsis text-sm leading-[18px] text-secondary xl:hidden">
+      <EntityMarkdownDescription className="mt-3 hidden text-ellipsis text-sm leading-[18px] text-secondary md:line-clamp-2 xl:hidden">
         {getModelShortDescription(entity)}
       </EntityMarkdownDescription>
       <div className="flex flex-col gap-2 pt-3 md:pt-4">
@@ -92,24 +84,8 @@ const CardFooter = ({ entity }: CardFooterProps) => {
   );
 };
 
-const getPlayerCaption = (entity: DialAIEntityModel) => {
-  switch (entity.functionStatus) {
-    case ApplicationStatus.DEPLOYED:
-      return 'Undeploy';
-    case ApplicationStatus.UNDEPLOYED:
-    case ApplicationStatus.FAILED:
-      return 'Deploy';
-    case ApplicationStatus.UNDEPLOYING:
-      return 'Undeploying';
-    case ApplicationStatus.DEPLOYING:
-    default:
-      return 'Deploying';
-  }
-};
-
 interface ApplicationCardProps {
   entity: DialAIEntityModel;
-  isNotDesktop?: boolean;
   onClick: (entity: DialAIEntityModel) => void;
   onPublish?: (entity: DialAIEntityModel, action: PublishActions) => void;
   onDelete?: (entity: DialAIEntityModel) => void;
@@ -120,7 +96,6 @@ interface ApplicationCardProps {
 
 export const ApplicationCard = ({
   entity,
-  isNotDesktop,
   onClick,
   onDelete,
   onEdit,
@@ -152,22 +127,9 @@ export const ApplicationCard = ({
   const isExecutable =
     isExecutableApp(entity) && (isMyApp || isAdmin || canWrite);
 
-  const shareIconSize =
-    screenState === ScreenState.DESKTOP
-      ? DESKTOP_SHARE_ICON_SIZE
-      : TABLET_SHARE_ICON_SIZE;
+  const { iconSize, shareIconSize } = CardIconSizes[screenState];
 
-  const PlayerIcon = useMemo(() => {
-    switch (playerStatus) {
-      case SimpleApplicationStatus.DEPLOY:
-        return IconPlayerPlay;
-      case SimpleApplicationStatus.UNDEPLOY:
-        return IconPlaystationSquare;
-      case SimpleApplicationStatus.UPDATING:
-      default:
-        return LoaderIcon;
-    }
-  }, [playerStatus]);
+  const PlayerContextIcon = PlayerContextIcons[playerStatus];
 
   const handleUpdateFunctionStatus = useCallback(() => {
     dispatch(
@@ -209,14 +171,8 @@ export const ApplicationCard = ({
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
         display:
           (isAdmin || isMyApp) && !!entity.functionStatus && isCodeAppsEnabled,
-        Icon: PlayerIcon,
-        iconClassName: classNames({
-          ['text-error']: playerStatus === SimpleApplicationStatus.UNDEPLOY,
-          ['text-accent-secondary']:
-            playerStatus === SimpleApplicationStatus.DEPLOY,
-          ['animate-spin-steps']:
-            playerStatus === SimpleApplicationStatus.UPDATING,
-        }),
+        Icon: PlayerContextIcon,
+        iconClassName: PlayerContextIconClasses[playerStatus],
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
           handleUpdateFunctionStatus();
@@ -304,7 +260,7 @@ export const ApplicationCard = ({
       isAdmin,
       isMyApp,
       isCodeAppsEnabled,
-      PlayerIcon,
+      PlayerContextIcon,
       canWrite,
       onEdit,
       isApplicationsSharingEnabled,
@@ -319,8 +275,6 @@ export const ApplicationCard = ({
     ],
   );
 
-  const iconSize =
-    (isNotDesktop ?? isMediumScreen()) ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
   const Bookmark = installedModelIds.has(entity.reference)
     ? IconBookmarkFilled
     : IconBookmark;
@@ -329,7 +283,7 @@ export const ApplicationCard = ({
     <>
       <div
         onClick={() => onClick(entity)}
-        className="group relative h-[162px] cursor-pointer rounded-md bg-layer-2 p-4 shadow-card hover:bg-layer-3 xl:h-[164px] xl:p-5"
+        className="group relative h-[98px] cursor-pointer rounded-md bg-layer-2 p-3 shadow-card hover:bg-layer-3 md:h-[162px] md:p-4 xl:h-[164px] xl:p-5"
         data-qa="agent"
       >
         <div>
@@ -382,18 +336,21 @@ export const ApplicationCard = ({
               {entity.version && (
                 <div
                   className={classNames(
-                    'text-xs leading-[14px] text-secondary',
-                    !isMyApp && 'mr-6',
+                    'mr-6 flex gap-1 text-xs leading-[14px] text-secondary',
+                    !isMyApp && '!mr-12',
                   )}
                 >
-                  {t('Version')}: {entity.version}
+                  {t('Version: ')}
+                  <span className="max-w-full overflow-hidden truncate whitespace-nowrap">
+                    {entity.version}
+                  </span>
                 </div>
               )}
               <div className="flex whitespace-nowrap">
                 <div
                   className={classNames(
-                    'shrink truncate text-base font-semibold leading-[20px] text-primary',
-                    !isMyApp && !entity.version && 'mr-6',
+                    'mr-6 shrink truncate text-base font-semibold leading-[20px] text-primary',
+                    !isMyApp && !entity.version && '!mr-12',
                   )}
                   data-qa="agent-name"
                 >

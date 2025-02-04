@@ -1,7 +1,7 @@
 import { ReplaceConfirmationModal } from '../Common/ReplaceConfirmationModal/ReplaceConfirmationModal';
 import { UnshareDialog } from '../Common/UnshareDialog';
 import { RenameConversationModal } from './RenameConversationModal';
-import ShareModal from './ShareModal';
+import { ShareModal } from './ShareModal';
 
 export const MainModalManager = () => {
   return (

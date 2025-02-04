@@ -23,7 +23,6 @@ import {
   ApplicationActionType,
   ApplicationType,
 } from '@/src/types/applications';
-import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
@@ -78,7 +77,6 @@ interface ResultsViewProps {
   suggestedResults: DialAIEntityModel[];
   selectedTab: MarketplaceTabs;
   areAllFiltersEmpty: boolean;
-  isNotDesktop: boolean;
   onCardClick: (entity: DialAIEntityModel, isSuggested?: boolean) => void;
   onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
   onDelete: (entity: DialAIEntityModel) => void;
@@ -94,7 +92,6 @@ const ResultsView = ({
   onPublish,
   onDelete,
   onEdit,
-  isNotDesktop,
   onBookmarkClick,
 }: ResultsViewProps) => {
   const { t } = useTranslation(Translation.Marketplace);
@@ -115,7 +112,6 @@ const ResultsView = ({
           onPublish={onPublish}
           onDelete={onDelete}
           onEdit={onEdit}
-          isNotDesktop={isNotDesktop}
           onBookmarkClick={onBookmarkClick}
         />
         {!entities.length && (
@@ -141,7 +137,6 @@ const ResultsView = ({
           onPublish={onPublish}
           onDelete={onDelete}
           onEdit={onEdit}
-          isNotDesktop={isNotDesktop}
           onBookmarkClick={onBookmarkClick}
         />
       </>
@@ -156,7 +151,6 @@ const ResultsView = ({
         onPublish={onPublish}
         onDelete={onDelete}
         onEdit={onEdit}
-        isNotDesktop={isNotDesktop}
         onBookmarkClick={onBookmarkClick}
       />
     );
@@ -215,11 +209,7 @@ const getDeleteConfirmationText = (
   return deleteConfirmationText[action];
 };
 
-interface TabRendererProps {
-  screenState: ScreenState;
-}
-
-export const TabRenderer = ({ screenState }: TabRendererProps) => {
+export const TabRenderer = () => {
   const { t } = useTranslation(Translation.Marketplace);
   const router = useRouter();
 
@@ -450,7 +440,6 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
         onPublish={handleSetPublishEntity}
         onDelete={handleDelete}
         onEdit={handleEditApplication}
-        isNotDesktop={screenState !== ScreenState.DESKTOP}
         onBookmarkClick={handleBookmarkClick}
       />
 

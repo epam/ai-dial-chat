@@ -59,8 +59,7 @@ export const Marketplace = () => {
         </div>
       ) : (
         <>
-          <TabRenderer screenState={screenState} />
-
+          <TabRenderer />
           {showOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
         </>
       )}

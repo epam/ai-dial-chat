@@ -82,6 +82,13 @@ const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
   );
 };
 
+interface MenuItem {
+  type: ApplicationType | string;
+  name: string;
+  dataQa: string;
+  display: boolean;
+}
+
 export const SearchHeader = () => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -102,10 +109,11 @@ export const SearchHeader = () => {
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
 
-  const menuItems: DisplayMenuItemProps[] = useMemo(
+  const menuItems: MenuItem[] = useMemo(
     () => [
       {
         name: t('Custom App'),
+        type: ApplicationType.CUSTOM_APP,
         dataQa: 'add-custom-app',
         display: isCustomApplicationsEnabled,
         onClick: (e: React.MouseEvent) => {
@@ -116,6 +124,7 @@ export const SearchHeader = () => {
       {
         name: t('Code App'),
         dataQa: 'add-startable-app',
+        type: ApplicationType.CODE_APP,
         display: isCodeAppsEnabled,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -124,6 +133,7 @@ export const SearchHeader = () => {
       },
       ...(applicationTypeSchemas?.map((schema: ApplicationTypeSchema) => ({
         name: schema.displayName,
+        type: schema.displayName,
         dataQa: `add-${schema.displayName}`,
         display: true,
         onClick: (e: React.MouseEvent) => {
