@@ -366,6 +366,7 @@ export enum ExpectedMessages {
   elementIsDisabled = 'Elements is disabled',
   elementIsVisible = 'Elements is visible',
   elementIsNotVisible = 'Elements is not visible',
+  noConversationIsSelected = 'No conversation is selected',
 }
 
 export enum PublishingExpectedMessages {
