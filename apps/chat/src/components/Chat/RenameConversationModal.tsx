@@ -28,7 +28,7 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { DISALLOW_INTERACTIONS } from '@/src/constants/modal';
 
-import Modal from '../Common/Modal';
+import { Modal } from '../Common/Modal';
 
 export const RenameConversationModal = () => {
   const renamingConversation = useAppSelector(
