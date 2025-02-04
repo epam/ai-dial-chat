@@ -1,25 +1,25 @@
-import { Sorting } from '@/src/testData';
+import { BackendChatEntity } from '@/chat/types/common';
 
 export class SortingUtil {
-  public static sortObjects(
-    objects: T[],
-    orderByProperties: string[],
-    orders: Sorting[] = [],
-  ): T[] {
-    const sortedObjects = [...objects];
-    sortedObjects.sort((a, b) => {
-      for (let i = 0; i < orderByProperties.length; i++) {
-        const property = orderByProperties[i];
-        const order = orders[i] || 'asc';
-        if (a[property] < b[property]) {
-          return order === 'asc' ? -1 : 1;
-        }
-        if (a[property] > b[property]) {
-          return order === 'asc' ? 1 : -1;
-        }
+  public static sortBackendConversationsByDateAndName(
+    entities: BackendChatEntity[],
+  ): BackendChatEntity[] {
+    return entities.sort((a, b) => {
+      // Sort by updatedAt in descending order
+      const dateComparison = b.updatedAt - a.updatedAt;
+      if (dateComparison !== 0) {
+        return dateComparison;
+      }
+      // If updatedAt is the same, sort by name in descending order
+      const nameA = a.name.toLowerCase();
+      const nameB = b.name.toLowerCase();
+      if (nameA < nameB) {
+        return 1;
+      }
+      if (nameA > nameB) {
+        return -1;
       }
       return 0;
     });
-    return sortedObjects;
   }
 }

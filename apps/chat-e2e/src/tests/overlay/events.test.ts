@@ -229,8 +229,8 @@ dialOverlayTest(
         publishedConversation = conversationData.prepareDefaultConversation();
         conversationData.resetData();
         sharedConversation = conversationData.prepareDefaultConversation();
-        await overlayDataInjector.createConversations([todayConversation]);
         await overlayDataInjector.createConversations([
+          todayConversation,
           ...folderConversation.conversations,
         ]);
         await adminDataInjector.createConversations([
@@ -315,11 +315,10 @@ dialOverlayTest(
           API.conversationsHost(),
         );
         //need to sort conversations by 'lastActivityDate' and 'name' in order to define the last conversation
-        actualConversationsList = SortingUtil.sortObjects(
-          actualConversationsList,
-          ['lastActivityDate', 'name'],
-          ['desc', 'desc'],
-        );
+        actualConversationsList =
+          SortingUtil.sortBackendConversationsByDateAndName(
+            actualConversationsList,
+          );
         for (let i = 0; i < actualConversationsList.length; i++) {
           let expectedConversation: OverlayConversation | Conversation;
           const conversation = await overlayItemApiHelper.getItem(
