@@ -1,27 +1,25 @@
 import { ApiKeys, EntityType } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
 
 import { ApplicationCard } from '../../Marketplace/ApplicationCard';
 import { ApplicationGeneralInfoFormData } from './form';
 
 interface GeneralInfoPreviewProps {
-  data: DialAIEntityModel;
+  data: ApplicationGeneralInfoFormData;
 }
 
-export const getPreviewEntityData = (
-  data: Partial<ApplicationGeneralInfoFormData>,
-): DialAIEntityModel => {
+export const getPreviewEntityData = (data: ApplicationGeneralInfoFormData) => {
   return {
     name: data.name ?? '',
-    version: data.version,
-    description: data.description,
-    iconUrl: data.iconUrl,
-    topics: data.topics,
-    type: EntityType.Application,
-    isDefault: true,
+    version: data.version ?? '',
+    description: data.description ?? '',
+    iconUrl: data.iconUrl ?? '',
+    topics: data.topics ?? [],
     reference: '',
     features: undefined,
     id: `${ApiKeys.Applications}/draft`,
+    completionUrl: '',
+    type: EntityType.Application,
+    isDefault: true,
   };
 };
 
@@ -31,10 +29,7 @@ export const GeneralInfoPreview = ({ data }: GeneralInfoPreviewProps) => {
       <div className="flex flex-1 items-center justify-center">
         <div className="w-full max-w-[700px] flex-col divide-y divide-tertiary bg-blackout bg-layer-3 p-3 md:p-5 xl:max-w-[720px]">
           <ApplicationCard
-            //update the type of data
-            entity={getPreviewEntityData(
-              data as unknown as ApplicationGeneralInfoFormData,
-            )}
+            entity={getPreviewEntityData(data)}
             onClick={() => null}
             isPreview
             onDelete={() => null}
