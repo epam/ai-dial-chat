@@ -225,7 +225,7 @@ export const ApplicationCard = ({
       {
         name: t('Edit'),
         dataQa: 'edit',
-        display: ((isMyApp || !!canWrite) && !!onEdit) || isPreview,
+        display: ((isMyApp || !!canWrite) && !!onEdit) || !!isPreview,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -235,7 +235,7 @@ export const ApplicationCard = ({
       {
         name: t('Share'),
         dataQa: 'share',
-        display: (isMyApp && isApplicationsSharingEnabled) || isPreview,
+        display: (isMyApp && isApplicationsSharingEnabled) || !!isPreview,
         Icon: IconUserShare,
         onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
           e.stopPropagation();
@@ -255,7 +255,7 @@ export const ApplicationCard = ({
       {
         name: t('Publish'),
         dataQa: 'publish',
-        display: (isMyApp && !!onPublish) || isPreview,
+        display: (isMyApp && !!onPublish) || !!isPreview,
         Icon: IconWorldShare,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -287,7 +287,7 @@ export const ApplicationCard = ({
       {
         name: t('Delete'),
         dataQa: 'delete',
-        display: (isMyApp && !!onDelete) || isPreview,
+        display: (isMyApp && !!onDelete) || !!isPreview,
         disabled: isModifyDisabled,
         Icon: IconTrashX,
         iconClassName: 'stroke-error',
