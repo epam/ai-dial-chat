@@ -61,9 +61,18 @@ export class SideBarEntityAssertion<
     );
   }
 
-  public async assertEntitiesCount(actualCount: number, expectedCount: number) {
-    expect
-      .soft(actualCount, ExpectedMessages.entitiesCountIsValid)
-      .toBe(expectedCount);
+  public async assertEntitiesCount(
+    expectedCount: number,
+    actualCount?: number,
+  ) {
+    if (actualCount === undefined) {
+      await this.assertElementsCount(this.sideBarEntitiesTree, expectedCount);
+    } else {
+      this.assertValue(
+        expectedCount,
+        actualCount,
+        ExpectedMessages.elementsCountIsValid,
+      );
+    }
   }
 }
