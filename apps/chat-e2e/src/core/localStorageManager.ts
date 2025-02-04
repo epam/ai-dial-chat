@@ -120,6 +120,12 @@ export class LocalStorageManager {
     );
   }
 
+  async removeFromLocalStorage(key: string) {
+    await this.page.evaluate((storageKey) => {
+      window.localStorage.removeItem(storageKey);
+    }, key);
+  }
+
   async getRecentModels() {
     return this.page.evaluate(
       () => window.localStorage.getItem('recentModelsIds') ?? undefined,
