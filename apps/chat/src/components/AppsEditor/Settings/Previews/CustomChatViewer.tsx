@@ -1,12 +1,18 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
+
+import { useRouter } from 'next/router';
 
 import { Conversation } from '@/src/types/chat';
 
-import { useAppSelector } from '@/src/store/hooks';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ModelsActions } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { IframeRenderer } from '@/src/components/IframeRenderer';
+
+import { VisualizerConnectorRequest } from '@epam/ai-dial-shared';
 
 interface Props {
   id: string;
@@ -23,6 +29,13 @@ export const CustomChatViewer: React.FC<Props> = ({
 }) => {
   const theme = useAppSelector(UISelectors.selectThemeState);
   const providerId = useAppSelector(SettingsSelectors.selectProviderId);
+  const dispatch = useAppDispatch();
+
+  const router = useRouter();
+
+  const isPreviewConversation = useMemo(() => {
+    return router.pathname === '/apps-editor/[slug]/settings';
+  }, [router.pathname]);
 
   const generateTargetUrl = useCallback(() => {
     try {
@@ -33,6 +46,41 @@ export const CustomChatViewer: React.FC<Props> = ({
     }
   }, [customViewerUrl, id, providerId, theme, conversation.id]);
 
+  const onMessage = useCallback(
+    (event: MessageEvent<VisualizerConnectorRequest>) => {
+      if (event.data?.type?.split('/')[0] !== title) return;
+      if (event.data.type === `${title}/CREATED_CONVERSATION_SUCCESS`) {
+        const { conversation } = event.data.payload as unknown as {
+          conversation?: Conversation;
+        };
+
+        if (conversation) {
+          dispatch(
+            ConversationsActions.addConversations({
+              conversations: [conversation],
+            }),
+          );
+          dispatch(
+            ConversationsActions.selectConversations({
+              conversationIds: [conversation.id],
+            }),
+          );
+          dispatch(
+            ModelsActions.updateRecentModels({
+              modelId: conversation.model.id,
+            }),
+          );
+          if (isPreviewConversation) {
+            dispatch(
+              ConversationsActions.setPreviewConversationId(conversation.id),
+            );
+          }
+        }
+      }
+    },
+    [title, isPreviewConversation, dispatch],
+  );
+
   return (
     <div className="size-full">
       {generateTargetUrl()?.href && (
@@ -41,9 +89,9 @@ export const CustomChatViewer: React.FC<Props> = ({
           title={title}
           width="100%"
           height="100%"
-          targetOrigin={generateTargetUrl()?.origin}
           containerClassName="w-full h-full border-none"
           conversationId={conversation.id}
+          onMessage={onMessage}
         />
       )}
     </div>

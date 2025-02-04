@@ -11,12 +11,6 @@ import React, {
 
 import { useRouter } from 'next/router';
 
-import { Conversation } from '@/src/types/chat';
-
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { useAppDispatch } from '@/src/store/hooks';
-import { ModelsActions } from '@/src/store/models/models.reducers';
-
 import { Spinner } from '../Common/Spinner';
 
 import {
@@ -32,7 +26,6 @@ interface IframeRendererProps {
   title: string;
   width?: number | string;
   height?: number | string;
-  targetOrigin?: string;
   onMessage?: (event: MessageEvent) => void;
   containerStyle?: React.CSSProperties;
   containerClassName?: string;
@@ -46,7 +39,6 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
       title,
       width = '100%',
       height = '100%',
-      targetOrigin,
       onMessage,
       containerStyle = {},
       containerClassName = '',
@@ -56,7 +48,6 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
   ) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const visualizer = useRef<VisualizerConnector | null>(null);
-    const dispatch = useAppDispatch();
 
     const router = useRouter();
 
@@ -65,11 +56,6 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
     }, [router.pathname]);
 
     const [loading, setLoading] = useState<boolean>(true);
-
-    const expectedOrigin = useCallback(
-      () => targetOrigin || new URL(iframeUrl).origin,
-      [iframeUrl, targetOrigin],
-    );
 
     useImperativeHandle(ref, () => containerRef.current as HTMLDivElement);
 
@@ -96,35 +82,6 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
           onMessage(event);
         }
 
-        if (event.data.type === `${title}/CREATED_CONVERSATION_SUCCESS`) {
-          const { conversation } = event.data.payload as unknown as {
-            conversation?: Conversation;
-          };
-
-          if (conversation) {
-            dispatch(
-              ConversationsActions.addConversations({
-                conversations: [conversation],
-              }),
-            );
-            dispatch(
-              ConversationsActions.selectConversations({
-                conversationIds: [conversation.id],
-              }),
-            );
-            dispatch(
-              ModelsActions.updateRecentModels({
-                modelId: conversation.model.id,
-              }),
-            );
-            if (isPreviewConversation) {
-              dispatch(
-                ConversationsActions.setPreviewConversationId(conversation.id),
-              );
-            }
-          }
-        }
-
         if (
           event.data.type ===
           `${title}/${VisualizerConnectorEvents.readyToInteract}`
@@ -132,7 +89,7 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
           setLoading(false);
         }
       },
-      [expectedOrigin, onMessage, title],
+      [onMessage, title],
     );
 
     const sendMessage = useCallback(
