@@ -76,8 +76,8 @@ export const AppsEditorHeader = () => {
       )}
       data-qa="header"
     >
-      <div className="flex grow items-center justify-between px-4">
-        <div className="flex h-full space-x-4 md:ml-5">
+      <div className="flex grow items-center justify-between">
+        <div className="flex h-full space-x-4">
           <div className="flex items-center space-x-4">
             <button
               className="p-2 text-primary md:hidden"
@@ -142,7 +142,7 @@ export const AppsEditorHeader = () => {
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex h-full items-center space-x-2">
           <Link
             className="hidden items-center space-x-1 hover:text-accent-primary md:flex"
             href={{ pathname: '/marketplace', query: { tab: 'workspace' } }}
@@ -151,7 +151,7 @@ export const AppsEditorHeader = () => {
             <span>{t('Go to marketplace')}</span>
           </Link>
 
-          <div className="h-full border-l border-tertiary px-4 max-md:border-tertiary">
+          <div className="h-full border-l border-tertiary max-md:border-tertiary md:pl-2">
             <User />
           </div>
         </div>
