@@ -438,6 +438,12 @@ export const promptsSlice = createSlice({
         payload.ids,
       );
     },
+    setPromptWithVariablesForApply: (
+      state,
+      { payload }: PayloadAction<Prompt | undefined>,
+    ) => {
+      state.promptWithVariablesForApply = payload;
+    },
   },
 });
 

@@ -25,6 +25,9 @@ export const chatSlice = createSlice({
     setInputContent: (state, { payload }: PayloadAction<string>) => {
       state.inputContent = payload;
     },
+    appendInputContent: (state, { payload }: PayloadAction<string>) => {
+      state.inputContent = `${state.inputContent} ${payload}`;
+    },
     setFormValue(
       state,
       {

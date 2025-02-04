@@ -14,7 +14,7 @@ import {
 
 import { getLayout } from '@/src/pages/_app';
 
-import { MainModalManager } from '../components/Chat/MainModalManager';
+import { ChatModalsManager } from '../components/Chat/ChatModalsManager';
 import { ImportExportLoader } from '../components/Chatbar/ImportExportLoader';
 import { AnnouncementsBanner } from '../components/Common/AnnouncementBanner';
 import { Chat } from '@/src/components/Chat/Chat';
@@ -103,7 +103,7 @@ function Home() {
             </div>
             {enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
             {isProfileOpen && <UserMobile />}
-            <MainModalManager />
+            <ChatModalsManager />
           </div>
         </div>
       )}

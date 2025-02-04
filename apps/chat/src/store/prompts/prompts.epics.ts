@@ -36,6 +36,7 @@ import {
 import { getPromptRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import {
   getPromptInfoFromId,
+  parseVariablesFromContent,
   regeneratePromptId,
 } from '@/src/utils/app/prompts';
 import {
@@ -53,7 +54,6 @@ import { resetShareEntity } from '@/src/constants/chat';
 import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-ui-settings';
 
 import { ChatActions } from '../chat/chat.reducer';
-import { ChatSelectors } from '../chat/chat.selectors';
 import { PublicationActions } from '../publication/publication.reducers';
 import { ShareActions } from '../share/share.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
@@ -895,17 +895,16 @@ const applyPromptEpic: AppEpic = (action$, state$) =>
         );
       }
 
+      const parsedVariables = parseVariablesFromContent(prompt.content);
+
       return concat(
-        of(
-          ChatActions.setInputContent(
-            `${ChatSelectors.selectInputContent(state$.value)}${prompt.content}`,
-          ),
-        ),
-        iif(
-          () => wasUploaded,
-          of(PromptsActions.updatePromptSuccess({ id: prompt.id, prompt })),
-          EMPTY,
-        ),
+        parsedVariables.length > 0
+          ? of(PromptsActions.setPromptWithVariablesForApply(prompt))
+          : of(ChatActions.appendInputContent(prompt.content ?? '')),
+        // save in state to not upload again
+        wasUploaded
+          ? of(PromptsActions.updatePromptSuccess({ id: prompt.id, prompt }))
+          : EMPTY,
       );
     }),
   );
