@@ -217,13 +217,9 @@ export class Folders extends BaseElement {
     await this.editFolderName(newName);
     const folderInputActions = this.getEditFolderInputActions();
     if (isHttpMethodTriggered && isApiStorageType) {
-      const respPromise = this.page.waitForResponse((resp) => {
-        return (
-          resp.request().method() === 'PUT' &&
-          (resp.url().includes(API.conversationHost) ||
-            resp.url().includes(API.promptHost))
-        );
-      });
+      const respPromise = this.page.waitForResponse((resp) =>
+        resp.url().includes(API.moveHost),
+      );
       await folderInputActions.clickTickButton();
       return respPromise;
     }
