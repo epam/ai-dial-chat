@@ -374,7 +374,7 @@ export const PromptComponent = ({
     [dispatch, prompt.id],
   );
 
-  const allowUsePrompt = !useAppSelector(
+  const disableUsePrompt = useAppSelector(
     ConversationsSelectors.selectIsSelectedConversationBlocksInput,
   );
 
@@ -550,7 +550,7 @@ export const PromptComponent = ({
               onView={(e) => handleOpenEditModal(e, true)}
               isOpen={isContextMenu}
               onSelect={handleSelect}
-              disableUse={allowUsePrompt}
+              disableUse={disableUsePrompt}
               onUse={handleUse}
             />
           </div>

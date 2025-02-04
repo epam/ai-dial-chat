@@ -772,10 +772,12 @@ export const selectIsSelectedConversationBlocksInput = createSelector(
   (conversations, isConfigurationBlocksInput) =>
     conversations.some(
       (conversation) =>
-        (isConfigurationBlocksInput && !conversation.messages.length) ||
+        conversation.sharedWithMe ||
+        (isConfigurationBlocksInput && !conversation.messages?.length) ||
         isReplayConversation(conversation) ||
         isPlaybackConversation(conversation) ||
         isEntityIdExternal(conversation) ||
+        !conversation.messages ||
         isMessageInputDisabled(
           conversation.messages.length,
           conversation.messages,
