@@ -34,7 +34,7 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
-import Modal from '../../Common/Modal';
+import { Modal } from '../../Common/Modal';
 import Tooltip from '../../Common/Tooltip';
 
 interface Props {
