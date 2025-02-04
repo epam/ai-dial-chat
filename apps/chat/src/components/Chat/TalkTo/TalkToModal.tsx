@@ -103,7 +103,9 @@ const TalkToModalView = ({
     );
 
     const sortedModels = [
-      ...(currentModel ? [currentModel] : []),
+      ...(currentModel && installedModelIdsSet.has(currentModel.id)
+        ? [currentModel]
+        : []),
       ...recentInstalledModels,
       ...installedModels,
     ];
