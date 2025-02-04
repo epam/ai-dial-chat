@@ -102,13 +102,13 @@ const EmptyChatDescriptionView = ({
   const handleSelectVersion = useCallback(
     (model: DialAIEntityModel) => {
       dispatch(
-        ConversationsActions.moveConversation({
-          conversation,
-          newValues: { model: { id: model.reference } },
+        ConversationsActions.updateConversation({
+          id: conversation.id,
+          values: { model: { id: model.reference } },
         }),
       );
     },
-    [conversation, dispatch],
+    [conversation.id, dispatch],
   );
 
   if (models.length === 0) {

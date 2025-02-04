@@ -238,9 +238,9 @@ export const ConversationContextMenu = ({
         }),
       );
       dispatch(
-        ConversationsActions.moveConversation({
-          conversation,
-          newValues: {
+        ConversationsActions.updateConversation({
+          id: conversation.id,
+          values: {
             folderId: isNewFolder
               ? constructPath(getConversationRootId(), folderPath)
               : folderPath,

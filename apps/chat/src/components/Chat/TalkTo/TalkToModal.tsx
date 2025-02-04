@@ -189,9 +189,9 @@ const TalkToModalView = ({
           conversation.replay?.replayAsIs)
       ) {
         dispatch(
-          ConversationsActions.moveConversation({
-            conversation,
-            newValues: {
+          ConversationsActions.updateConversation({
+            id: conversation.id,
+            values: {
               ...getConversationModelParams(
                 conversation,
                 entity.reference,

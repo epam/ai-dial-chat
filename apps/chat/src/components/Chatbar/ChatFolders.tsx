@@ -142,9 +142,9 @@ const ChatFolderTemplate = ({
         if (conversationData) {
           const conversation: Conversation = JSON.parse(conversationData);
           dispatch(
-            ConversationsActions.moveConversation({
-              conversation,
-              newValues: { folderId: folder.id },
+            ConversationsActions.updateConversation({
+              id: conversation.id,
+              values: { folderId: folder.id },
             }),
           );
         } else if (folderData) {

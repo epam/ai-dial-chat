@@ -103,39 +103,22 @@ export const conversationsSlice = createSlice({
     },
     moveConversation: (
       state,
-      _action: PayloadAction<{
-        conversation: ConversationInfo;
-        newValues: Partial<Conversation>;
-      }>,
-    ) => state,
-    moveConversationRegenerated: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        oldConversation: ConversationInfo;
-        newConversation: ConversationInfo;
+      action: PayloadAction<{
+        newConversation: Conversation;
+        oldConversation: Conversation;
       }>,
     ) => {
-      state.conversations = state.conversations.map((conv) => {
-        if (payload.oldConversation.id === conv.id) {
-          return payload.newConversation;
-        }
-
-        return conv;
-      });
-      state.selectedConversationsIds = state.selectedConversationsIds.map(
-        (id) =>
-          id === payload.oldConversation.id ? payload.newConversation.id : id,
-      );
+      if (!action.payload.oldConversation.messages.length) {
+        state.isNewConversationUpdating = true;
+      }
     },
     moveConversationFail: (
       state,
       {
         payload,
       }: PayloadAction<{
-        oldConversation: ConversationInfo;
-        newConversation: ConversationInfo;
+        oldConversation: Conversation;
+        newConversation: Conversation;
       }>,
     ) => {
       state.conversations = state.conversations.map((conv) => {

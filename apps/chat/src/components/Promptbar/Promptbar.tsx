@@ -49,9 +49,9 @@ const PromptActionsBlock = () => {
   const handleUpdate = useCallback(
     (oldPrompt: Prompt, newPrompt: Prompt) => {
       dispatch(
-        PromptsActions.moveOrUpdatePrompt({
-          prompt: oldPrompt,
-          newValues: newPrompt,
+        PromptsActions.updatePrompt({
+          id: oldPrompt.id,
+          values: newPrompt,
         }),
       );
       dispatch(PromptsActions.resetSearch());
@@ -164,9 +164,9 @@ const Promptbar = () => {
             }),
           );
           dispatch(
-            PromptsActions.movePrompt({
-              prompt,
-              newValues: { folderId },
+            PromptsActions.updatePrompt({
+              id: prompt.id,
+              values: { folderId },
             }),
           );
         }

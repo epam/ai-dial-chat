@@ -111,9 +111,9 @@ const RenameConversationView = () => {
 
     if (newName.length > 0) {
       dispatch(
-        ConversationsActions.moveConversation({
-          conversation: renamingConversation,
-          newValues: { name: newName, isNameChanged: true },
+        ConversationsActions.updateConversation({
+          id: renamingConversation.id,
+          values: { name: newName, isNameChanged: true },
         }),
       );
       dispatch(ConversationsActions.setRenamingConversationId(null));

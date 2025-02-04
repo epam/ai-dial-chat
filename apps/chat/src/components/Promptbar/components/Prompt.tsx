@@ -327,9 +327,9 @@ export const PromptComponent = ({
         }),
       );
       dispatch(
-        PromptsActions.movePrompt({
-          prompt,
-          newValues: {
+        PromptsActions.updatePrompt({
+          id: prompt.id,
+          values: {
             folderId: isNewFolder
               ? constructPath(getPromptRootId(), folderPath)
               : folderPath,

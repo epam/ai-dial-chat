@@ -864,9 +864,9 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
             conversations.forEach((conversation) => {
               actions.push(
                 of(
-                  ConversationsActions.moveConversation({
-                    conversation,
-                    newValues: {
+                  ConversationsActions.updateConversation({
+                    id: conversation.id,
+                    values: {
                       folderId: updateFolderId(conversation.folderId),
                     },
                   }),
@@ -1308,24 +1308,12 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
 
         return concat(
           ...actions,
-          iif(
-            () =>
-              newConversationName !== payload.conversation.name &&
-              !isEntityIdLocal(payload.conversation),
-            of(
-              ConversationsActions.moveConversation({
-                conversation: payload.conversation,
-                newValues: updatedConversation,
-              }),
-            ),
-            of(
-              ConversationsActions.updateConversation({
-                id: payload.conversation.id,
-                values: updatedConversation,
-              }),
-            ),
+          of(
+            ConversationsActions.updateConversation({
+              id: payload.conversation.id,
+              values: updatedConversation,
+            }),
           ),
-
           of(
             ModelsActions.updateRecentModels({
               modelId: updatedConversation.model.id,
@@ -2331,57 +2319,6 @@ const saveConversationEpic: AppEpic = (action$) =>
     }),
   );
 
-const moveConversationEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter(ConversationsActions.moveConversation.match),
-    map(({ payload }) =>
-      ConversationsActions.moveConversationRegenerated({
-        oldConversation: payload.conversation,
-        newConversation: regenerateConversationId({
-          ...payload.conversation,
-          ...payload.newValues,
-        }),
-      }),
-    ),
-  );
-
-const moveConversationRegeneratedEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter(ConversationsActions.moveConversationRegenerated.match),
-    switchMap(({ payload }) => {
-      if (isEntityIdLocal(payload.oldConversation)) {
-        return of(
-          ConversationsActions.updateConversation({
-            id: payload.newConversation.id,
-            values: payload.newConversation,
-          }),
-        );
-      }
-
-      if (payload.newConversation.id === payload.oldConversation.id) {
-        return EMPTY;
-      }
-
-      return ConversationService.moveConversation({
-        sourceUrl: payload.oldConversation.id,
-        destinationUrl: payload.newConversation.id,
-        overwrite: false,
-      }).pipe(
-        switchMap(() =>
-          of(
-            ConversationsActions.updateConversation({
-              id: payload.newConversation.id,
-              values: payload.newConversation,
-            }),
-          ),
-        ),
-        catchError(() => {
-          return of(ConversationsActions.moveConversationFail(payload));
-        }),
-      );
-    }),
-  );
-
 const moveConversationFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.moveConversationFail.match),
@@ -2392,6 +2329,23 @@ const moveConversationFailEpic: AppEpic = (action$) =>
             'It looks like conversation already exist. Please reload the page',
           ),
         ),
+      );
+    }),
+  );
+
+const moveConversationEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.moveConversation.match),
+    mergeMap(({ payload }) => {
+      return ConversationService.moveConversation({
+        sourceUrl: payload.oldConversation.id,
+        destinationUrl: payload.newConversation.id,
+        overwrite: false,
+      }).pipe(
+        catchError(() => {
+          return of(ConversationsActions.moveConversationFail(payload));
+        }),
+        ignoreElements(),
       );
     }),
   );
@@ -2414,23 +2368,31 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         );
       }
 
+      const newConversation: Conversation = regenerateConversationId({
+        ...(conversation as Conversation),
+        ...values,
+        lastActivityDate: Date.now(),
+      });
+
       return concat(
         iif(
-          () => !conversation.isPlayback || values.isPlayback === false,
+          () => !!conversation && conversation.id !== newConversation.id,
           of(
-            ConversationsActions.saveConversation({
-              ...conversation,
-              ...values,
+            ConversationsActions.moveConversation({
+              newConversation,
+              oldConversation: conversation,
             }),
           ),
-          EMPTY,
+          iif(
+            () => !newConversation.isPlayback,
+            of(ConversationsActions.saveConversation(newConversation)),
+            EMPTY,
+          ),
         ),
         of(
           ConversationsActions.updateConversationSuccess({
             id,
-            conversation: {
-              ...values,
-            },
+            conversation: { ...values },
           }),
         ),
       );
@@ -3046,9 +3008,9 @@ const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
           iif(
             () => !!conversation,
             of(
-              ConversationsActions.moveConversation({
-                conversation: conversation!,
-                newValues: {
+              ConversationsActions.updateConversation({
+                id: conversation?.id as string,
+                values: {
                   ...getConversationModelParams(
                     conversation as Conversation,
                     modelToApply?.reference,
@@ -3205,7 +3167,6 @@ export const ConversationsEpics = combineEpics(
 
   // update
   moveConversationEpic,
-  moveConversationRegeneratedEpic,
   moveConversationFailEpic,
   updateConversationEpic,
   updateLocalConversationEpic,

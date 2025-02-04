@@ -218,72 +218,6 @@ const savePromptEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
-const moveOrUpdatePromptEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter(PromptsActions.moveOrUpdatePrompt.match),
-    switchMap(({ payload }) => {
-      if (
-        typeof payload.newValues.name === 'string' &&
-        payload.newValues.name !== payload.prompt.name
-      ) {
-        return of(PromptsActions.movePrompt(payload));
-      }
-
-      return of(
-        PromptsActions.updatePrompt({
-          id: payload.prompt.id,
-          values: payload.newValues,
-        }),
-      );
-    }),
-  );
-
-const movePromptEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter(PromptsActions.movePrompt.match),
-    map(({ payload }) =>
-      PromptsActions.movePromptRegenerated({
-        oldPrompt: payload.prompt,
-        newPrompt: {
-          ...payload.prompt,
-          ...payload.newValues,
-          id: constructPath(
-            payload.newValues.folderId ?? payload.prompt.folderId,
-            getPromptApiKey({ ...payload.prompt, ...payload.newValues }),
-          ),
-        },
-      }),
-    ),
-  );
-
-const movePromptRegeneratedEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter(PromptsActions.movePromptRegenerated.match),
-    switchMap(({ payload }) => {
-      if (payload.newPrompt.id === payload.oldPrompt.id) {
-        return EMPTY;
-      }
-
-      return PromptService.movePrompt({
-        sourceUrl: payload.oldPrompt.id,
-        destinationUrl: payload.newPrompt.id,
-        overwrite: false,
-      }).pipe(
-        switchMap(() =>
-          of(
-            PromptsActions.updatePrompt({
-              id: payload.newPrompt.id,
-              values: payload.newPrompt,
-            }),
-          ),
-        ),
-        catchError(() => {
-          return of(PromptsActions.movePromptFail(payload));
-        }),
-      );
-    }),
-  );
-
 const movePromptFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.movePromptFail.match),
@@ -294,6 +228,23 @@ const movePromptFailEpic: AppEpic = (action$) =>
             'It looks like prompt already exist. Please reload the page',
           ),
         ),
+      );
+    }),
+  );
+
+const movePromptEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.movePrompt.match),
+    mergeMap(({ payload }) => {
+      return PromptService.movePrompt({
+        sourceUrl: payload.oldPrompt.id,
+        destinationUrl: payload.newPrompt.id,
+        overwrite: false,
+      }).pipe(
+        catchError(() => {
+          return of(PromptsActions.movePromptFail(payload));
+        }),
+        ignoreElements(),
       );
     }),
   );
@@ -318,14 +269,22 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      return concat(
-        of(
-          PromptsActions.updatePromptSuccess({
-            prompt: { ...values },
-            id,
-          }),
+      const newPrompt: Prompt = {
+        ...prompt,
+        ...values,
+        id: constructPath(
+          values.folderId || prompt.folderId,
+          getPromptApiKey({ ...prompt, ...values }),
         ),
-        of(PromptsActions.savePrompt({ ...prompt, ...values })),
+      };
+
+      return concat(
+        of(PromptsActions.updatePromptSuccess({ prompt: newPrompt, id })),
+        iif(
+          () => !!prompt && prompt.id !== newPrompt.id,
+          of(PromptsActions.movePrompt({ oldPrompt: prompt, newPrompt })),
+          of(PromptsActions.savePrompt(newPrompt)),
+        ),
       );
     }),
   );
@@ -458,9 +417,9 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
             prompts.forEach((prompt) => {
               actions.push(
                 of(
-                  PromptsActions.movePrompt({
-                    prompt,
-                    newValues: { folderId: updateFolderId(prompt.folderId) },
+                  PromptsActions.updatePrompt({
+                    id: prompt.id,
+                    values: { folderId: updateFolderId(prompt.folderId) },
                   }),
                 ),
               );
@@ -928,9 +887,7 @@ export const PromptsEpics = combineEpics(
   saveNewPromptEpic,
   deleteFolderEpic,
   savePromptEpic,
-  moveOrUpdatePromptEpic,
   movePromptEpic,
-  movePromptRegeneratedEpic,
   movePromptFailEpic,
   updatePromptEpic,
   deletePromptEpic,
