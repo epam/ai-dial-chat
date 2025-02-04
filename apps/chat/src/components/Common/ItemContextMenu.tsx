@@ -318,6 +318,7 @@ export default function ItemContextMenu({
     ],
     [
       disableAll,
+      disableUse,
       entity,
       featureType,
       folders,
@@ -342,6 +343,7 @@ export default function ItemContextMenu({
       onShare,
       onUnpublish,
       onUnshare,
+      onUse,
       onView,
       t,
     ],
