@@ -21,8 +21,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import ChevronDown from '../../../public/images/icons/chevron-down.svg';
-
+import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import { useCombobox } from 'downshift';
 
 interface Props<T> {

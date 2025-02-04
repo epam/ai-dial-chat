@@ -275,14 +275,10 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      const newPrompt: Prompt = {
+      const newPrompt: Prompt = regeneratePromptId({
         ...prompt,
         ...values,
-        id: constructPath(
-          values.folderId || prompt.folderId,
-          getPromptApiKey({ ...prompt, ...values }),
-        ),
-      };
+      });
 
       return concat(
         of(PromptsActions.updatePromptSuccess({ prompt: newPrompt, id })),

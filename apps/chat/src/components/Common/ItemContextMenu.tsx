@@ -40,6 +40,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import ContextMenu from './ContextMenu';
 
+import InsertPromptIcon from '@/public/images/icons/insert-prompt.svg';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import { ShareEntity } from '@epam/ai-dial-shared';
 
@@ -68,6 +69,7 @@ interface ItemContextMenuProps {
   onDuplicate?: MouseEventHandler<unknown>;
   onView?: MouseEventHandler<unknown>;
   onSelect?: MouseEventHandler<unknown>;
+  onUse?: MouseEventHandler<unknown>;
   isLoading?: boolean;
   TriggerIcon?: ContextMenuProps['TriggerIcon'];
 }
@@ -98,6 +100,7 @@ export default function ItemContextMenu({
   onView,
   isLoading,
   onSelect,
+  onUse,
   TriggerIcon,
 }: ItemContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
@@ -120,6 +123,13 @@ export default function ItemContextMenu({
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
+      {
+        name: t('Use'),
+        display: !!onUse,
+        dataQa: 'use',
+        Icon: InsertPromptIcon,
+        onClick: onUse,
+      },
       {
         name: t('Select'),
         display: !isExternal && !!onSelect,
