@@ -77,6 +77,20 @@ export const CustomChatViewer: React.FC<Props> = ({
           }
         }
       }
+
+      if (event.data.type === `${title}/UPDATED_CONVERSATION_SUCCESS`) {
+        const { conversation } = event.data.payload as unknown as {
+          conversation?: Conversation;
+        };
+
+        if (conversation) {
+          dispatch(
+            ModelsActions.updateRecentModels({
+              modelId: conversation.model.id,
+            }),
+          );
+        }
+      }
     },
     [title, isPreviewConversation, dispatch],
   );
