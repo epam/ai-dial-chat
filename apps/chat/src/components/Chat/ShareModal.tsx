@@ -24,7 +24,7 @@ import { ShareActions, ShareSelectors } from '@/src/store/share/share.reducers';
 
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
-import Modal from '../Common/Modal';
+import { Modal } from '../Common/Modal';
 import Tooltip from '../Common/Tooltip';
 
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';

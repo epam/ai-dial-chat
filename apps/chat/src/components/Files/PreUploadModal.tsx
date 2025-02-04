@@ -38,7 +38,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 import { SHARED_WITH_ME_SECTION_NAME } from '@/src/constants/sections';
 
-import Modal from '@/src/components/Common/Modal';
+import { Modal } from '@/src/components/Common/Modal';
 
 import { ErrorMessage } from '../Common/ErrorMessage';
 import { SelectFolderModal } from './SelectFolderModal';

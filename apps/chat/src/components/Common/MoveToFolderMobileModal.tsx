@@ -7,7 +7,7 @@ import { FolderInterface, MoveToFolderProps } from '@/src/types/folder';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
-import Modal from './Modal';
+import { Modal } from './Modal';
 
 interface MoveToFolderMobileModalProps {
   folders: FolderInterface[];

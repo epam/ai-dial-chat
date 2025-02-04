@@ -5,7 +5,7 @@ import { Translation } from '@/src/types/translation';
 
 import { OUTSIDE_PRESS } from '@/src/constants/modal';
 
-import Modal from '../Common/Modal';
+import { Modal } from '../Common/Modal';
 
 interface Props {
   onExport: (args?: { withAttachments?: boolean }) => void;
