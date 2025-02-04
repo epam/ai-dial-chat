@@ -51,6 +51,7 @@ import { PublicationSelectors } from '@/src/store/publication/publication.reduce
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
+import { ChatSelectors } from '../chat/chat.selectors';
 import { RootState } from '../index';
 import { ModelsSelectors } from '../models/models.reducers';
 import { SettingsSelectors } from '../settings/settings.reducers';
@@ -124,12 +125,8 @@ export const selectFilteredConversations = (
     },
   );
 
-export const selectFolders = createSelector(
-  [rootSelector],
-  (state: ConversationsState) => {
-    return state.folders || [];
-  },
-);
+export const selectFolders = (state: RootState) =>
+  rootSelector(state).folders || [];
 
 export const selectPublicationFolders = createSelector(
   [rootSelector],
@@ -187,18 +184,13 @@ export const selectConversation = createSelector(
     return conversations.find((conv) => conv.id === id);
   },
 );
-export const selectSelectedConversationsIds = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.selectedConversationsIds;
-  },
-);
-export const selectConversationSignal = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.conversationSignal;
-  },
-);
+
+export const selectSelectedConversationsIds = (state: RootState) =>
+  rootSelector(state).selectedConversationsIds;
+
+export const selectConversationSignal = (state: RootState) =>
+  rootSelector(state).conversationSignal;
+
 export const selectSelectedConversations = createSelector(
   [selectConversations, selectSelectedConversationsIds],
   (conversations, selectedConversationIds) => {
@@ -214,9 +206,8 @@ export const selectLoadedCharts = createSelector([rootSelector], (state) => {
   return cloneDeep(state.loadedCharts);
 });
 
-export const selectChartLoading = createSelector([rootSelector], (state) => {
-  return state.chartLoading;
-});
+export const selectChartLoading = (state: RootState) =>
+  rootSelector(state).chartLoading;
 
 export const selectParentFolders = createSelector(
   [selectFolders, (_state, folderId: string | undefined) => folderId],
@@ -278,19 +269,14 @@ export const selectIsConversationNameOrPathInvalid = createSelector(
   },
 );
 
-export const selectSearchTerm = createSelector([rootSelector], (state) => {
-  return state.searchTerm;
-});
+export const selectSearchTerm = (state: RootState) =>
+  rootSelector(state).searchTerm;
 
-export const selectSearchFilters = createSelector(
-  [rootSelector],
-  (state) => state.searchFilters,
-);
+export const selectSearchFilters = (state: RootState) =>
+  rootSelector(state).searchFilters;
 
-export const selectIsEmptySearchFilter = createSelector(
-  [rootSelector],
-  (state) => state.searchFilters === SearchFilters.None,
-);
+export const selectIsEmptySearchFilter = (state: RootState) =>
+  selectSearchFilters(state) === SearchFilters.None;
 
 export const selectMyItemsFilters = createSelector(
   [selectSearchFilters],
@@ -305,15 +291,12 @@ export const selectSearchedConversations = createSelector(
     ),
 );
 
-export const selectIsReplayPaused = createSelector([rootSelector], (state) => {
-  return state.isReplayPaused;
-});
-export const selectIsReplayRequiresVariables = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.isReplayRequiresVariables;
-  },
-);
+export const selectIsReplayPaused = (state: RootState) =>
+  rootSelector(state).isReplayPaused;
+
+export const selectIsReplayRequiresVariables = (state: RootState) =>
+  rootSelector(state).isReplayRequiresVariables;
+
 export const selectWillReplayRequireVariables = createSelector(
   [selectFirstSelectedConversation],
   (conversation) => {
@@ -329,10 +312,11 @@ export const selectWillReplayRequireVariables = createSelector(
 );
 export const selectIsSendMessageAborted = createSelector(
   [selectConversationSignal],
-  (state) => {
-    return state.signal.aborted;
+  (abortController) => {
+    return abortController.signal.aborted;
   },
 );
+
 export const selectIsReplaySelectedConversations = createSelector(
   [selectSelectedConversations],
   (conversations) => {
@@ -383,12 +367,8 @@ export const selectIsErrorReplayConversations = createSelector(
   },
 );
 
-export const selectIsPlaybackPaused = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.isPlaybackPaused;
-  },
-);
+export const selectIsPlaybackPaused = (state: RootState) =>
+  rootSelector(state).isPlaybackPaused;
 
 export const selectPlaybackActiveMessage = createSelector(
   [selectSelectedConversations],
@@ -526,12 +506,8 @@ export const selectCanAttachFile = createSelector(
   },
 );
 
-export const selectTemporaryFolders = createSelector(
-  [rootSelector],
-  (state: ConversationsState) => {
-    return state.temporaryFolders;
-  },
-);
+export const selectTemporaryFolders = (state: RootState) =>
+  rootSelector(state).temporaryFolders;
 
 export const selectPublishedWithMeFolders = createSelector(
   [selectFolders],
@@ -565,12 +541,8 @@ export const selectTemporaryAndPublishedFolders = createSelector(
   },
 );
 
-export const selectNewAddedFolderId = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.newAddedFolderId;
-  },
-);
+export const selectNewAddedFolderId = (state: RootState) =>
+  rootSelector(state).newAddedFolderId;
 
 export const getUniqueAttachments = (attachments: DialFile[]): DialFile[] =>
   uniqBy(attachments, (file) => constructPath(file.relativePath, file.name));
@@ -619,37 +591,20 @@ export const getAttachments = createSelector(
   },
 );
 
-export const areConversationsUploaded = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.conversationsLoaded;
-  },
-);
+export const areConversationsUploaded = (state: RootState) =>
+  rootSelector(state).conversationsLoaded;
 
-export const selectFoldersStatus = createSelector([rootSelector], (state) => {
-  return state.foldersStatus;
-});
+export const selectFoldersStatus = (state: RootState) =>
+  rootSelector(state).foldersStatus;
 
-export const selectConversationsStatus = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.conversationsStatus;
-  },
-);
+export const selectConversationsStatus = (state: RootState) =>
+  rootSelector(state).conversationsStatus;
 
-export const selectAreSelectedConversationsLoaded = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.areSelectedConversationsLoaded;
-  },
-);
+export const selectAreSelectedConversationsLoaded = (state: RootState) =>
+  rootSelector(state).areSelectedConversationsLoaded;
 
-export const selectAreConversationsWithContentUploading = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.areConversationsWithContentUploading;
-  },
-);
+export const selectAreConversationsWithContentUploading = (state: RootState) =>
+  rootSelector(state).areConversationsWithContentUploading;
 
 // default name with counter
 export const selectNewFolderName = createSelector(
@@ -665,24 +620,14 @@ export const selectNewFolderName = createSelector(
   },
 );
 
-export const selectLoadingFolderIds = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.loadingFolderIds;
-  },
-);
+export const selectLoadingFolderIds = (state: RootState) =>
+  rootSelector(state).loadingFolderIds;
 
-export const selectIsCompareLoading = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.compareLoading;
-  },
-);
+export const selectIsCompareLoading = (state: RootState) =>
+  rootSelector(state).compareLoading;
 
-export const selectIsMessageSending = createSelector(
-  [rootSelector],
-  (state) => state.isMessageSending,
-);
+export const selectIsMessageSending = (state: RootState) =>
+  rootSelector(state).isMessageSending;
 
 export const selectDuplicatedConversation = createSelector(
   [
@@ -708,19 +653,11 @@ export const selectDuplicatedConversation = createSelector(
   },
 );
 
-export const selectCustomAttachmentLoading = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.customAttachmentDataLoading;
-  },
-);
+export const selectCustomAttachmentLoading = (state: RootState) =>
+  rootSelector(state).customAttachmentDataLoading;
 
-export const selectLoadedCustomAttachments = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.loadedCustomAttachmentsData;
-  },
-);
+export const selectLoadedCustomAttachments = (state: RootState) =>
+  rootSelector(state).loadedCustomAttachmentsData;
 
 export const selectCustomAttachmentData = createSelector(
   [
@@ -752,16 +689,11 @@ export const selectIsSelectMode = createSelector([rootSelector], (state) => {
   );
 });
 
-export const selectSelectedItems = createSelector([rootSelector], (state) => {
-  return state.chosenConversationIds;
-});
+export const selectSelectedItems = (state: RootState) =>
+  rootSelector(state).chosenConversationIds;
 
-export const selectChosenEmptyFolderIds = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.chosenEmptyFoldersIds;
-  },
-);
+export const selectChosenEmptyFolderIds = (state: RootState) =>
+  rootSelector(state).chosenEmptyFoldersIds;
 
 export const selectIsFolderEmpty = createSelector(
   [selectEmptyFolderIds, (_state, folderId: string) => folderId],
@@ -812,27 +744,17 @@ export const selectChosenFolderIds = (itemsShouldBeChosen: ShareEntity[]) =>
     },
   );
 
-export const selectIsNewConversationUpdating = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.isNewConversationUpdating;
-  },
-);
+export const selectIsNewConversationUpdating = (state: RootState) =>
+  rootSelector(state).isNewConversationUpdating;
 
-export const selectInitialized = createSelector(
-  [rootSelector],
-  (state) => state.initialized,
-);
+export const selectInitialized = (state: RootState) =>
+  rootSelector(state).initialized;
 
-export const selectLastConversationSettings = createSelector(
-  [rootSelector],
-  (state) => state.lastConversationSettings,
-);
+export const selectLastConversationSettings = (state: RootState) =>
+  rootSelector(state).lastConversationSettings;
 
-const selectRenamingConversationId = createSelector(
-  [rootSelector],
-  (state) => state.renamingConversationId,
-);
+const selectRenamingConversationId = (state: RootState) =>
+  rootSelector(state).renamingConversationId;
 
 export const selectRenamingConversation = createSelector(
   [selectConversations, selectRenamingConversationId],
@@ -840,19 +762,19 @@ export const selectRenamingConversation = createSelector(
     conversations.find((conv) => conv.id === renamingConversationId),
 );
 
-export const selectTalkToConversationId = createSelector(
-  [rootSelector],
-  (state) => state.talkToConversationId,
-);
+export const selectTalkToConversationId = (state: RootState) =>
+  rootSelector(state).talkToConversationId;
 
 export const selectIsSelectedConversationBlocksInput = createSelector(
-  [selectSelectedConversations],
-  (conversations) =>
-    conversations.some((conversation) =>
-      isMessageInputDisabled(
-        conversation.messages.length,
-        conversation.messages,
-      ),
+  [selectSelectedConversations, ChatSelectors.selectIsConfigurationBlocksInput],
+  (conversations, isConfigurationBlocksInput) =>
+    conversations.some(
+      (conversation) =>
+        (isConfigurationBlocksInput && !conversation.messages.length) ||
+        isMessageInputDisabled(
+          conversation.messages.length,
+          conversation.messages,
+        ),
     ),
 );
 

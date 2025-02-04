@@ -140,7 +140,7 @@ export const PromptComponent = ({
   const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
 
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isRenaming, setIsRenaming] = useState(false);
+  const [isOpened, setIsOpened] = useState(false);
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
@@ -164,7 +164,7 @@ export const PromptComponent = ({
 
   useEffect(() => {
     if (!showModal) {
-      setIsRenaming(false);
+      setIsOpened(false);
     }
   }, [showModal]);
 
@@ -198,29 +198,26 @@ export const PromptComponent = ({
     }, []);
 
   const handleDelete = useCallback(() => {
-    if (isDeleting) {
-      if (prompt.sharedWithMe) {
-        dispatch(
-          ShareActions.discardSharedWithMe({
-            resourceIds: [prompt.id],
-            featureType: FeatureType.Prompt,
-          }),
-        );
-      } else {
-        dispatch(PromptsActions.deletePrompt({ prompt }));
-      }
-      dispatch(PromptsActions.resetSearch());
+    if (prompt.sharedWithMe) {
+      dispatch(
+        ShareActions.discardSharedWithMe({
+          resourceIds: [prompt.id],
+          featureType: FeatureType.Prompt,
+        }),
+      );
+    } else {
+      dispatch(PromptsActions.deletePrompt({ prompt }));
     }
+    dispatch(PromptsActions.resetSearch());
 
-    setIsDeleting(false);
     dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
-  }, [dispatch, isDeleting, prompt]);
+  }, [dispatch, prompt]);
 
   const handleOpenDeleteModal: MouseEventHandler = useCallback((e) => {
     e.stopPropagation();
     e.preventDefault();
 
-    setIsRenaming(false);
+    setIsOpened(false);
     setIsDeleting(true);
   }, []);
 
@@ -238,7 +235,7 @@ export const PromptComponent = ({
     (e: MouseEvent<unknown, globalThis.MouseEvent>, isPreview = false) => {
       e.stopPropagation();
       e.preventDefault();
-      setIsRenaming(true);
+      setIsOpened(true);
       dispatch(
         PromptsActions.setSelectedPrompt({
           promptId: prompt.id,
@@ -355,7 +352,7 @@ export const PromptComponent = ({
     setIsContextMenu(true);
   };
   const isHighlighted = !isSelectMode
-    ? isDeleting || isRenaming || (showModal && isSelected) || isContextMenu
+    ? isDeleting || isOpened || (showModal && isSelected) || isContextMenu
     : isChosen;
 
   const handleDuplicate: MouseEventHandler<HTMLButtonElement> = useCallback(
@@ -376,6 +373,8 @@ export const PromptComponent = ({
     [dispatch, prompt.id],
   );
 
+  const allowUsePrompt = true;
+
   const handleUse: MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
       e.stopPropagation();
@@ -387,7 +386,7 @@ export const PromptComponent = ({
 
   useEffect(() => {
     if (isSelectMode) {
-      setIsRenaming(false);
+      setIsOpened(false);
       setIsDeleting(false);
     }
   }, [isSelectMode]);
@@ -420,7 +419,7 @@ export const PromptComponent = ({
         onClick={() => {
           if (isSelectMode && !isExternal) {
             setIsDeleting(false);
-            setIsRenaming(false);
+            setIsOpened(false);
             dispatch(PromptsActions.setChosenPrompts({ ids: [prompt.id] }));
           }
         }}
@@ -434,7 +433,7 @@ export const PromptComponent = ({
         <div
           className={classNames('flex size-full items-center gap-2', {
             'pr-6 xl:pr-0':
-              !isSelectMode && !isDeleting && !isRenaming && isSelected,
+              !isSelectMode && !isDeleting && !isOpened && isSelected,
           })}
           draggable={!isExternal && !isNameOrPathInvalid && !isSelectMode}
           onDragStart={(e) => handleDragStart(e, prompt)}
@@ -514,7 +513,7 @@ export const PromptComponent = ({
             </Tooltip>
           </div>
         </div>
-        {!isSelectMode && !isDeleting && !isRenaming && (
+        {!isSelectMode && !isDeleting && !isOpened && (
           <div
             ref={refs.setFloating}
             {...getFloatingProps()}
@@ -548,7 +547,7 @@ export const PromptComponent = ({
               onView={(e) => handleOpenEditModal(e, true)}
               isOpen={isContextMenu}
               onSelect={handleSelect}
-              onUse={handleUse}
+              onUse={allowUsePrompt ? handleUse : undefined}
             />
           </div>
         )}
@@ -609,8 +608,8 @@ export const PromptComponent = ({
           confirmLabel={t('Delete')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {
-            setIsDeleting(false);
             if (result) handleDelete();
+            setIsDeleting(false);
           }}
         />
       )}
