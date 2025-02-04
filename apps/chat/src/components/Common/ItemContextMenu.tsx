@@ -69,6 +69,7 @@ interface ItemContextMenuProps {
   onDuplicate?: MouseEventHandler<unknown>;
   onView?: MouseEventHandler<unknown>;
   onSelect?: MouseEventHandler<unknown>;
+  disableUse?: boolean;
   onUse?: MouseEventHandler<unknown>;
   isLoading?: boolean;
   TriggerIcon?: ContextMenuProps['TriggerIcon'];
@@ -100,6 +101,7 @@ export default function ItemContextMenu({
   onView,
   isLoading,
   onSelect,
+  disableUse,
   onUse,
   TriggerIcon,
 }: ItemContextMenuProps) {
@@ -126,6 +128,7 @@ export default function ItemContextMenu({
       {
         name: t('Use'),
         display: !!onUse,
+        disabled: disableUse,
         dataQa: 'use',
         Icon: InsertPromptIcon,
         onClick: onUse,

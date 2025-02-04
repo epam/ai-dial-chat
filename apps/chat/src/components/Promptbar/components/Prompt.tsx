@@ -550,7 +550,8 @@ export const PromptComponent = ({
               onView={(e) => handleOpenEditModal(e, true)}
               isOpen={isContextMenu}
               onSelect={handleSelect}
-              onUse={allowUsePrompt ? handleUse : undefined}
+              disableUse={allowUsePrompt}
+              onUse={handleUse}
             />
           </div>
         )}
