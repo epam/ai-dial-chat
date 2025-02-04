@@ -223,9 +223,9 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
               : selectedConversationsIds;
 
           if (!selectedIds.length) {
-            return forkJoin({
-              selectedConversations: of([]),
-              selectedIds: of([]),
+            return of({
+              selectedConversations: [],
+              selectedIds: [],
             });
           }
 

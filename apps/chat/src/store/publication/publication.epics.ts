@@ -264,10 +264,10 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
             });
           }
 
-          return forkJoin({
-            publication: of(publication),
-            uploadedUnpublishEntities: of([]),
-            unpublishResources: of([]),
+          return of({
+            publication: publication,
+            uploadedUnpublishEntities: [],
+            unpublishResources: [],
           });
         }),
         switchMap(

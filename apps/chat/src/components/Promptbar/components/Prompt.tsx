@@ -376,6 +376,15 @@ export const PromptComponent = ({
     [dispatch, prompt.id],
   );
 
+  const handleUse: MouseEventHandler<HTMLButtonElement> = useCallback(
+    (e) => {
+      e.stopPropagation();
+      setIsContextMenu(false);
+      dispatch(PromptsActions.usePrompt(prompt));
+    },
+    [dispatch, prompt],
+  );
+
   useEffect(() => {
     if (isSelectMode) {
       setIsRenaming(false);
@@ -539,6 +548,7 @@ export const PromptComponent = ({
               onView={(e) => handleOpenEditModal(e, true)}
               isOpen={isContextMenu}
               onSelect={handleSelect}
+              onUse={handleUse}
             />
           </div>
         )}

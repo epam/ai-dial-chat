@@ -144,6 +144,7 @@ export const promptsSlice = createSlice({
       });
     },
     duplicatePrompt: (state, _action: PayloadAction<PromptInfo>) => state,
+    usePrompt: (state, _action: PayloadAction<PromptInfo>) => state,
     setPrompts: (
       state,
       { payload }: PayloadAction<{ prompts: PromptInfo[] }>,
