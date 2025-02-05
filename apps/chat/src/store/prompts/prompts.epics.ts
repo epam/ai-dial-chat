@@ -25,7 +25,6 @@ import {
 } from '@/src/utils/app/common';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { getOrUploadPrompt } from '@/src/utils/app/data/storages/api/prompt-api-storage';
-import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   generateNextName,
@@ -43,7 +42,6 @@ import {
   mapPublishedItems,
 } from '@/src/utils/app/publications';
 import { translate } from '@/src/utils/app/translation';
-import { getPromptApiKey } from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
