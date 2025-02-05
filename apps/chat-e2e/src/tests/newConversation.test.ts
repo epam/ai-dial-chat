@@ -3,7 +3,7 @@ import { ExpectedConstants, ExpectedMessages } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
-dialTest.only(
+dialTest(
   'Click on + resets all settings on new conversation. Change agent pop-up opens\n' +
     'Click on + does not create a new conversation if new conversation was on the screen',
   async ({
@@ -119,6 +119,50 @@ dialTest.only(
         0,
         ExpectedMessages.noAddonsSelected,
       );
+    });
+  },
+);
+
+dialTest.only(
+  'New conversation disappears, chat history is shown on the central part if to click on the chat with history',
+  async ({
+    dialHomePage,
+    header,
+    conversationData,
+    dataInjector,
+    conversations,
+    conversationAssertion,
+    chatMessagesAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-4791');
+    const conversation =
+      conversationData.prepareModelConversationBasedOnRequests([
+        'first request',
+        'second request',
+      ]);
+    await dataInjector.createConversations([conversation]);
+
+    await dialTest.step('Open app and create new conversation', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'Select conversation with history and verify it is highlighted, its content is displayed',
+      async () => {
+        await conversations.selectConversation(conversation.name);
+        await conversationAssertion.assertSelectedConversation(
+          conversation.name,
+        );
+        await chatMessagesAssertion.assertMessagesCount(
+          conversation.messages.length,
+        );
+      },
+    );
+
+    await dialTest.step('Verify no new conversation is created', async () => {
+      await conversationAssertion.assertEntitiesCount(1);
     });
   },
 );
