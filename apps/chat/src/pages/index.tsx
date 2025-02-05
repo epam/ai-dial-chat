@@ -1,6 +1,5 @@
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
-import { ImportExportSelectors } from '../store/import-export/importExport.reducers';
 import { MigrationSelectors } from '../store/migration/migration.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import {
@@ -14,7 +13,6 @@ import { getLayout } from '@/src/pages/_app';
 import { ChatModalsManager } from '../components/Chat/ChatModalsManager';
 import { ImportExportLoader } from '../components/Chatbar/ImportExportLoader';
 import { AnnouncementsBanner } from '../components/Common/AnnouncementBanner';
-import { RenderWhen } from '../components/Common/RenderWhen';
 import { Chat } from '@/src/components/Chat/Chat';
 import { Migration } from '@/src/components/Chat/Migration/Migration';
 import { MigrationFailedWindow } from '@/src/components/Chat/Migration/MigrationFailedModal';
@@ -88,12 +86,7 @@ function Home() {
             <div className="flex min-w-0 grow flex-col">
               <AnnouncementsBanner />
               <Chat />
-
-              <RenderWhen
-                selector={ImportExportSelectors.selectIsLoadingImportExport}
-              >
-                <ImportExportLoader />
-              </RenderWhen>
+              <ImportExportLoader />
             </div>
             {enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
             <ChatModalsManager />

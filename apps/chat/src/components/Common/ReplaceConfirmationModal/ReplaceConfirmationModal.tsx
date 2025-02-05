@@ -26,21 +26,13 @@ import {
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
 import { Modal } from '../Modal';
-import { RenderWhen } from '../RenderWhen';
+import { withRenderWhen } from '../RenderWhen';
 import { ReplaceSelector } from './Components';
 import { ConversationsList } from './ConversationsList';
 import { FilesList } from './FilesList';
 import { PromptsList } from './PromptsList';
 
 export type OnItemEvent = (actionOption: string, entityId: unknown) => void;
-
-export function ReplaceConfirmationModal() {
-  return (
-    <RenderWhen selector={ImportExportSelectors.selectIsShowReplaceDialog}>
-      <ReplaceConfirmationModalView />
-    </RenderWhen>
-  );
-}
 
 export function ReplaceConfirmationModalView() {
   const { t } = useTranslation(Translation.Chat);
@@ -245,3 +237,7 @@ export function ReplaceConfirmationModalView() {
     </Modal>
   );
 }
+
+export const ReplaceConfirmationModal = withRenderWhen(
+  ImportExportSelectors.selectIsShowReplaceDialog,
+)(ReplaceConfirmationModalView);

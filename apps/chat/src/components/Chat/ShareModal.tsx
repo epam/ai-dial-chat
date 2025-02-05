@@ -25,19 +25,11 @@ import { ShareActions, ShareSelectors } from '@/src/store/share/share.reducers';
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
 import { Modal } from '../Common/Modal';
-import { RenderWhen } from '../Common/RenderWhen';
+import { withRenderWhen } from '../Common/RenderWhen';
 import Tooltip from '../Common/Tooltip';
 
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { SharePermission } from '@epam/ai-dial-shared';
-
-export function ShareModal() {
-  return (
-    <RenderWhen selector={ShareSelectors.selectShareModalOpened}>
-      <ShareModalView />
-    </RenderWhen>
-  );
-}
 
 interface ShareAccessOptionProps {
   filterValue: string;
@@ -260,3 +252,7 @@ export function ShareModalView() {
     </Modal>
   );
 }
+
+export const ShareModal = withRenderWhen(ShareSelectors.selectShareModalOpened)(
+  ShareModalView,
+);

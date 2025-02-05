@@ -1,15 +1,17 @@
-import { useScreenState } from '@/src/hooks/useScreenState';
-
 import { ScreenState } from '@/src/types/common';
 
 import { FooterMessage } from '../../Common/FooterMessage';
+import { withRenderForScreen } from '../../Common/ScreenRender';
 
-export const ChatInputFooter = () => {
-  const screenState = useScreenState();
-  if (screenState === ScreenState.MOBILE) return null;
+function ChatInputFooterView() {
   return (
     <div className="p-5 max-md:hidden">
       <FooterMessage />
     </div>
   );
-};
+}
+
+export const ChatInputFooter = withRenderForScreen([
+  ScreenState.TABLET,
+  ScreenState.DESKTOP,
+])(ChatInputFooterView);

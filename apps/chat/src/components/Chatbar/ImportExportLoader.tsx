@@ -12,8 +12,9 @@ import {
 } from '@/src/store/import-export/importExport.reducers';
 
 import { FullPageLoader } from '../Common/FullPageLoader';
+import { withRenderWhen } from '../Common/RenderWhen';
 
-export function ImportExportLoader() {
+function ImportExportLoaderView() {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
   const operationName =
@@ -44,3 +45,7 @@ export function ImportExportLoader() {
     />
   );
 }
+
+export const ImportExportLoader = withRenderWhen(
+  ImportExportSelectors.selectIsLoadingImportExport,
+)(ImportExportLoaderView);

@@ -6,7 +6,6 @@ import { useCallback, useState } from 'react';
 import classNames from 'classnames';
 
 import { useLogout } from '@/src/hooks/useLogout';
-import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { ScreenState } from '@/src/types/common';
@@ -21,7 +20,8 @@ import { FooterMessage } from '@/src/components/Common/FooterMessage';
 
 import LogOutIcon from '../../../../public/images/icons/log-out.svg';
 import UserIcon from '../../../../public/images/icons/user.svg';
-import { RenderWhen } from '../../Common/RenderWhen';
+import { withRenderWhen } from '../../Common/RenderWhen';
+import { withRenderForScreen } from '../../Common/ScreenRender';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 
@@ -141,12 +141,6 @@ const UserMobileView = Inversify.register('UserMobile', () => {
   );
 });
 
-export function UserMobile() {
-  const screenState = useScreenState();
-  if (screenState !== ScreenState.MOBILE) return null;
-  return (
-    <RenderWhen selector={UISelectors.selectIsProfileOpen}>
-      <UserMobileView />
-    </RenderWhen>
-  );
-}
+export const UserMobile = withRenderForScreen([ScreenState.MOBILE])(
+  withRenderWhen(UISelectors.selectIsProfileOpen)(UserMobileView),
+);
