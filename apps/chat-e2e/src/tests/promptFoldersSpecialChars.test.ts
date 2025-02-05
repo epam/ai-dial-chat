@@ -66,7 +66,6 @@ dialTest(
 
     await dialTest.step('Click on confirmation button', async () => {
       await folderPrompts.getEditFolderInputActions().clickTickButton();
-
       await toastAssertion.assertToastIsVisible();
       await toastAssertion.assertToastMessage(
         ExpectedConstants.nameWithDotErrorMessage,
@@ -106,7 +105,7 @@ dialTest(
         await dialHomePage.copyToClipboard(nameWithRestrictedChars);
         await folderPrompts.getEditFolderInput().editInput.click();
         await dialHomePage.pasteFromClipboard();
-        await folderPrompts.getEditFolderInputActions().clickTickButton();
+        await folderPrompts.clickTick({ isHttpMethodTriggered: true });
         await promptBarFolderAssertion.assertFolderState(
           { name: expectedFolderName },
           'visible',
@@ -125,7 +124,7 @@ dialTest(
         await promptBarFolderAssertion.assertFolderEditInputValue(
           newNameWithSpaces,
         );
-        await folderPrompts.getEditFolderInputActions().clickTickButton();
+        await folderPrompts.clickTick({ isHttpMethodTriggered: true });
         // Assert that the folder is renamed with spaces on the panel
         await promptBarFolderAssertion.assertFolderState(
           { name: newNameWithSpaces },
@@ -141,7 +140,7 @@ dialTest(
           await folderPrompts.openFolderDropdownMenu(newNameWithSpaces);
           await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
           await folderPrompts.editFolderName(name);
-          await folderPrompts.getEditFolderInputActions().clickTickButton();
+          await folderPrompts.clickTick();
           await promptBarFolderAssertion.assertFolderState(
             { name: newNameWithSpaces },
             'visible',
@@ -160,7 +159,7 @@ dialTest(
         await promptBarFolderAssertion.assertFolderEditInputValue(
           nameWithSpacesBeforeAndAfter,
         );
-        await folderPrompts.getEditFolderInputActions().clickTickButton();
+        await folderPrompts.clickTick({ isHttpMethodTriggered: true });
         // Assert that the folder is renamed with spaces on the panel
         await promptBarFolderAssertion.assertFolderState(
           { name: expectedName },

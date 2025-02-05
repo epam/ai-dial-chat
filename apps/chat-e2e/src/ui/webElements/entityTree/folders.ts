@@ -215,6 +215,12 @@ export class Folders extends BaseElement {
     { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
   ) {
     await this.editFolderName(newName);
+    await this.clickTick({ isHttpMethodTriggered });
+  }
+
+  public async clickTick({
+    isHttpMethodTriggered = false,
+  }: { isHttpMethodTriggered?: boolean } = {}) {
     const folderInputActions = this.getEditFolderInputActions();
     if (isHttpMethodTriggered && isApiStorageType) {
       const respPromise = this.page.waitForResponse((resp) => {
