@@ -16,6 +16,7 @@ import {
   getApplicationNextStatus,
   getApplicationSimpleStatus,
   getModelShortDescription,
+  getPlayerCaption,
   isApplicationStatusUpdating,
   isExecutableApp,
 } from '@/src/utils/app/application';
@@ -24,10 +25,7 @@ import { isMyApplication } from '@/src/utils/app/id';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
-import {
-  ApplicationStatus,
-  SimpleApplicationStatus,
-} from '@/src/types/applications';
+import { SimpleApplicationStatus } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
@@ -61,21 +59,6 @@ import ShareIcon from '../../Common/ShareIcon';
 
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature } from '@epam/ai-dial-shared';
-
-const getPlayerCaption = (entity: DialAIEntityModel) => {
-  switch (entity.functionStatus) {
-    case ApplicationStatus.DEPLOYED:
-      return 'Undeploy';
-    case ApplicationStatus.UNDEPLOYED:
-    case ApplicationStatus.FAILED:
-      return 'Deploy';
-    case ApplicationStatus.UNDEPLOYING:
-      return 'Undeploying';
-    case ApplicationStatus.DEPLOYING:
-    default:
-      return 'Deploying';
-  }
-};
 
 interface ApplicationCardProps {
   entity: DialAIEntityModel;
@@ -121,8 +104,7 @@ export const TalkToCard = ({
 
   const canWrite = canWriteSharedWithMe(entity);
 
-  const isExecutable =
-    isExecutableApp(entity) && (isMyEntity || isAdmin || canWrite);
+  const isExecutable = isExecutableApp(entity) && (isMyEntity || isAdmin); //TODO add  ```|| canWrite``` when core issues #655 and #672 will be ready
   const screenState = useScreenState();
 
   const isApplicationsSharingEnabled = useAppSelector((state) =>
@@ -190,7 +172,7 @@ export const TalkToCard = ({
         dataQa: 'status-change',
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
         display:
-          (isAdmin || isMyEntity) &&
+          (isAdmin || isMyEntity) && //TODO add  ```|| canWrite``` when core issues #655 will be ready
           !!entity.functionStatus &&
           isCodeAppsEnabled,
         Icon: PlayerContextIcon,

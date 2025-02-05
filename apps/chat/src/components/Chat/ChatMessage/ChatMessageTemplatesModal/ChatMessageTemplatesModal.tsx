@@ -18,7 +18,7 @@ import { useAppDispatch } from '@/src/store/hooks';
 
 import { PROMPT_VARIABLE_REGEX_TEST } from '@/src/constants/folders';
 
-import Modal from '@/src/components/Common/Modal';
+import { Modal } from '@/src/components/Common/Modal';
 
 import { TabButton } from '../../../Buttons/TabButton';
 import { TemplateRenderer } from './TemplateRenderer';

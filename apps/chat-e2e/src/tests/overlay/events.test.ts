@@ -11,13 +11,16 @@ import {
   Theme,
 } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { SortingUtil } from '@/src/utils/sortingUtil';
 import {
+  ConversationInfo,
   CreateConversationResponse,
   GetConversationsResponse,
   GetMessagesResponse,
   OverlayConversation,
   PublishActions,
   SelectConversationResponse,
+  UploadStatus,
 } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 
@@ -211,7 +214,9 @@ dialOverlayTest(
     let folderConversation: FolderConversation;
     let publishedConversation: Conversation;
     let sharedConversation: Conversation;
-    const expectedConversationsArray: OverlayConversation[] = [];
+    const expectedConversationsArray: (OverlayConversation | Conversation)[] =
+      [];
+    let expectedSelectedConversation: SelectConversationResponse;
 
     await dialOverlayTest.step(
       `Prepare conversations in Today, Pinned, Organization and Shared sections`,
@@ -264,7 +269,7 @@ dialOverlayTest(
           actualConversations,
         ) as GetConversationsResponse;
 
-        const expectedConversationsModel: GetConversationsResponse = {
+        const expectedConversationsModel = {
           conversations: expectedConversationsArray,
         };
 
@@ -306,17 +311,24 @@ dialOverlayTest(
         // }
 
         //build expected conversations created by user
-        const actualConversationsList = await overlayItemApiHelper.listItems(
+        let actualConversationsList = await overlayItemApiHelper.listItems(
           API.conversationsHost(),
         );
-        for (const actualConversation of actualConversationsList) {
-          const conversation = await overlayItemApiHelper.getItem(
-            actualConversation.url,
+        //need to sort conversations by 'lastActivityDate' and 'name' in order to define the last conversation
+        actualConversationsList =
+          SortingUtil.sortBackendConversationsByDateAndName(
+            actualConversationsList,
           );
+        for (let i = 0; i < actualConversationsList.length; i++) {
+          let expectedConversation: OverlayConversation | Conversation;
+          const conversation = await overlayItemApiHelper.getItem(
+            actualConversationsList[i].url,
+          );
+          const actualConversation = actualConversationsList[i];
           const parentPath = actualConversation.parentPath;
           const isPlayback = conversation.playback?.isPlayback;
           const isReplay = conversation.replay?.isReplay;
-          expectedConversationsArray.push({
+          const shortConversation: ConversationInfo = {
             model: isPlayback
               ? { id: PseudoModel.playback }
               : isReplay
@@ -328,9 +340,41 @@ dialOverlayTest(
             id: conversation.id,
             lastActivityDate: actualConversation.updatedAt,
             folderId: conversation.folderId,
-            bucket: actualConversation.bucket,
-            ...(parentPath && { parentPath }),
-          });
+          };
+
+          //save expectedSelectedConversation for the next test step
+          if (shortConversation.id === todayConversation.id) {
+            expectedSelectedConversation = {
+              conversation: shortConversation as OverlayConversation,
+            };
+          }
+
+          //for the last listed conversation full response is generated
+          let fullConversation: Conversation;
+          if (i === 0) {
+            fullConversation = {
+              ...shortConversation,
+              messages: conversation.messages,
+              prompt: conversation.prompt,
+              temperature: conversation.temperature,
+              replay: conversation.replay,
+              selectedAddons: conversation.selectedAddons,
+              status: UploadStatus.LOADED,
+              isMessageStreaming: false,
+            };
+            expectedConversation = {
+              ...fullConversation,
+              bucket: actualConversation.bucket,
+              ...(parentPath && { parentPath }),
+            };
+          } else {
+            expectedConversation = {
+              ...shortConversation,
+              bucket: actualConversation.bucket,
+              ...(parentPath && { parentPath }),
+            };
+          }
+          expectedConversationsArray.push(expectedConversation);
         }
 
         //build expected conversations shared with user
@@ -402,17 +446,10 @@ dialOverlayTest(
           await overlayDialog.content.getElementInnerContent();
         const actualConversationModel = JSON.parse(
           actualConversation,
-        ) as SelectConversationResponse;
-
-        const expectedConversation = expectedConversationsArray.find(
-          (c) => c.id === todayConversation.id,
-        );
-        const expectedSelectedConversation = { ...expectedConversation };
-        delete expectedSelectedConversation.bucket;
-
+        ) as OverlayConversation;
         expect
           .soft(actualConversationModel)
-          .toStrictEqual(expectedSelectedConversation);
+          .toStrictEqual(expectedSelectedConversation.conversation);
         await overlayDialog.closeButton.click();
 
         await overlayBaseAssertion.assertElementText(
