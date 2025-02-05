@@ -28,7 +28,7 @@ export class PromptModalDialog extends BaseElement {
   public async fillPromptDetails(
     name: string,
     description: string | undefined,
-    value: string,
+    value: string | undefined,
   ) {
     await this.name.click();
     await this.page.keyboard.press(keys.ctrlPlusA);
@@ -38,9 +38,11 @@ export class PromptModalDialog extends BaseElement {
     if (description !== undefined) {
       await this.description.typeInInput(description);
     }
-    await this.prompt.click();
-    await this.page.keyboard.press(keys.ctrlPlusA);
-    await this.prompt.typeInInput(value);
+    if (value !== undefined) {
+      await this.prompt.click();
+      await this.page.keyboard.press(keys.ctrlPlusA);
+      await this.prompt.typeInInput(value);
+    }
   }
 
   public async setField(field: BaseElement, value: string) {
@@ -52,8 +54,8 @@ export class PromptModalDialog extends BaseElement {
 
   public async updatePromptDetailsWithButton(
     name: string,
-    description: string | undefined,
-    value: string,
+    description?: string | undefined,
+    value?: string | undefined,
   ) {
     return this.updatePromptDetails(name, description, value, () =>
       this.saveButton.click(),
@@ -62,8 +64,8 @@ export class PromptModalDialog extends BaseElement {
 
   public async updatePromptDetailsWithEnter(
     name: string,
-    description: string,
-    value: string,
+    description?: string,
+    value?: string | undefined,
   ) {
     return this.updatePromptDetails(name, description, value, () =>
       this.page.keyboard.press(keys.enter),
@@ -73,7 +75,7 @@ export class PromptModalDialog extends BaseElement {
   public async updatePromptDetails(
     name: string,
     description: string | undefined,
-    value: string,
+    value: string | undefined,
     method: () => Promise<void>,
   ) {
     const isNameUpdated = (await this.getName()) !== name;

@@ -211,8 +211,7 @@ dialTest(
       async () => {
         await prompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-        await promptModalDialog.setField(promptModalDialog.name, newName);
-        await promptModalDialog.saveButton.click();
+        await promptModalDialog.updatePromptDetailsWithButton(newName);
         await promptAssertion.assertElementState(
           prompts.getEntityByName(newName),
           'visible',
