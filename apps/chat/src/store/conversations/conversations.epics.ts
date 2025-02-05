@@ -2350,7 +2350,6 @@ const moveConversationEpic: AppEpic = (action$) =>
         catchError(() => {
           return of(ConversationsActions.moveConversationFail(payload));
         }),
-        ignoreElements(),
       );
     }),
   );
