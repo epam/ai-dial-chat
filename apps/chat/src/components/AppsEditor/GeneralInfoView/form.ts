@@ -70,7 +70,7 @@ export const getDefaultValues = (
     iconUrl: applicationData?.icon_url ?? '',
     description: applicationData?.description ?? '',
     topics: applicationData?.description_keywords ?? [],
-    id: applicationData?.name ?? '',
+    id: applicationData?.name ? decodeURIComponent(applicationData?.name) : '',
     reference: applicationData?.reference ?? '',
     //schema type application properties
     applicationProperties: applicationData?.application_properties,

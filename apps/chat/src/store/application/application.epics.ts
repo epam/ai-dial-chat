@@ -11,7 +11,7 @@ import {
   of,
   takeUntil,
 } from 'rxjs';
-import { catchError, filter, map, switchMap } from 'rxjs/operators';
+import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 
 import { AnyAction } from '@reduxjs/toolkit';
 
@@ -155,16 +155,16 @@ const updateApplicationEpic: AppEpic = (action$) =>
             })
             .pipe(
               catchError((err) => {
-                console.error('Failed to update application:', err);
+                console.error('Failed to move application:', err);
                 return of(
                   ApplicationActions.updateFail(),
                   UIActions.showErrorToast(
-                    translate('Failed to update application'),
+                    translate('Failed to move application'),
                   ),
                 );
               }),
             )
-        : EMPTY;
+        : of(null);
 
       const edit$ = ApplicationService.edit(
         updatedCustomApplication,
@@ -190,13 +190,15 @@ const updateApplicationEpic: AppEpic = (action$) =>
 
       return concat(move$, edit$).pipe(
         switchMap(() => {
+          return of(ApplicationActions.edit(updatedCustomApplication));
+        }),
+        tap(() => {
           if (payload.redirectUrl) {
             Router.push({
               pathname: payload.redirectUrl,
               query: { id: updatedCustomApplication.id },
             });
           }
-          return EMPTY;
         }),
         catchError((err) => {
           console.error('Failed to update application:', err);

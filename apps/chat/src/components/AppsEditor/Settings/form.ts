@@ -154,7 +154,7 @@ export const getCodeAppDefaultValues = ({
 }): CodeAppFormData => {
   return {
     ...getApplicationGeneralDefaultValues(app),
-    id: app.name,
+    id: decodeURIComponent(app.name),
     reference: app.reference,
     completionUrl: app.endpoint ?? '',
     inputAttachmentTypes: app.input_attachment_types ?? [],
