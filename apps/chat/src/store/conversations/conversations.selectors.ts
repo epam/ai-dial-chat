@@ -773,8 +773,8 @@ export const selectIsSelectedConversationBlocksInput = createSelector(
     conversations.some(
       (conversation) =>
         conversation.sharedWithMe ||
-        (isConfigurationBlocksInput && !conversation.messages?.length) ||
-        isReplayConversation(conversation) ||
+        (!conversation.messages?.length &&
+          (isConfigurationBlocksInput || isReplayConversation(conversation))) ||
         isPlaybackConversation(conversation) ||
         isEntityIdExternal(conversation) ||
         !conversation.messages ||
