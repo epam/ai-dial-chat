@@ -229,7 +229,7 @@ export class BaseAssertion {
       .toBe(expectedCount);
   }
   public assertValue(
-    actualValue: string | number | undefined,
+    actualValue: string | number | undefined | null,
     expectedValue: string | number,
     expectedMessage?: string,
   ) {
