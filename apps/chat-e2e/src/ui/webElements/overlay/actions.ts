@@ -58,14 +58,4 @@ export class Actions extends BaseElement {
       response: responseBody,
     };
   }
-
-  public async clickSelectConversationById() {
-    const respPromise = this.page.waitForResponse(
-      (response) =>
-        response.request().method() === 'GET' && response.status() === 200,
-    );
-    await this.selectConversationByIdButton.click();
-    const response = await respPromise;
-    return (await response.json()) as Conversation;
-  }
 }

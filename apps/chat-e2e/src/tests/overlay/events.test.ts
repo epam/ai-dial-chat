@@ -342,7 +342,7 @@ dialOverlayTest(
             folderId: conversation.folderId,
           };
 
-          //save expectedSelectedConversation for the next test step
+          //save expectedSelectedConversation for the next test step if it is not last listed one
           if (shortConversation.id === todayConversation.id) {
             expectedSelectedConversation = {
               conversation: shortConversation as OverlayConversation,
@@ -367,6 +367,16 @@ dialOverlayTest(
               bucket: actualConversation.bucket,
               ...(parentPath && { parentPath }),
             };
+
+            //save expectedSelectedConversation for the next test step if it is the last listed one
+            if (expectedConversation.id === todayConversation.id) {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              const { bucket, parentPath, ...conversationInfo } =
+                expectedConversation;
+              expectedSelectedConversation = {
+                conversation: conversationInfo as OverlayConversation,
+              };
+            }
           } else {
             expectedConversation = {
               ...shortConversation,
@@ -434,12 +444,7 @@ dialOverlayTest(
         await overlayActions.conversationIdField.fillInInput(
           todayConversation.id,
         );
-        const conversationResponse =
-          await overlayActions.clickSelectConversationById();
-        overlayBaseAssertion.assertValue(
-          conversationResponse.id,
-          todayConversation.id,
-        );
+        await overlayActions.selectConversationByIdButton.click();
 
         await overlayBaseAssertion.assertElementState(overlayDialog, 'visible');
         const actualConversation =
