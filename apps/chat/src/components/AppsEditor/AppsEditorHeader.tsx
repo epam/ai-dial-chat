@@ -6,11 +6,14 @@ import {
 } from '@tabler/icons-react';
 import { useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
+
+import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -30,7 +33,7 @@ export enum TabKeys {
 export const AppsEditorHeader = () => {
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t } = useTranslation(Translation.Chat);
 
   const isUserSettingsOpen = useAppSelector(
     UISelectors.selectIsUserSettingsOpen,
