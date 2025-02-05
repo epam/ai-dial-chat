@@ -122,8 +122,7 @@ export const ApplicationCard = ({
 
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
-  const isExecutable =
-    isExecutableApp(entity) && (isMyApp || isAdmin || canWrite);
+  const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin); //TODO add  ```|| canWrite``` when core issues #655 and #672 will be ready
 
   const { iconSize, shareIconSize } = CardIconSizes[screenState];
 
@@ -168,7 +167,7 @@ export const ApplicationCard = ({
         dataQa: 'status-change',
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
         display:
-          (isAdmin || isMyApp) && !!entity.functionStatus && isCodeAppsEnabled,
+          (isAdmin || isMyApp) && !!entity.functionStatus && isCodeAppsEnabled, //TODO add  canWrite when core issues #655 will be ready
         Icon: PlayerContextIcon,
         iconClassName: PlayerContextIconClasses[playerStatus],
         onClick: (e: React.MouseEvent) => {
