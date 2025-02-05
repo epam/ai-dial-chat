@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { DialAIEntity, DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -53,12 +53,14 @@ export const ModelVersionSelect = ({
   if (entities.length < 2) {
     if (entities.length && entities[0].version) {
       return (
-        <div
-          className={classNames('flex truncate', className)}
-          data-qa="version"
-        >
+        <div className={classNames('flex truncate', className)}>
           {showVersionPrefix && <VersionPrefix />}
-          {entities[0].version}
+          <span
+            className="mr-3 max-w-full overflow-hidden truncate whitespace-nowrap"
+            data-qa="version"
+          >
+            {entities[0].version}
+          </span>
         </div>
       );
     }
@@ -82,7 +84,10 @@ export const ModelVersionSelect = ({
           onClick={stopBubbling}
         >
           {showVersionPrefix && <VersionPrefix />}
-          <span className="truncate" data-qa="version">
+          <span
+            className="max-w-full overflow-hidden truncate whitespace-nowrap"
+            data-qa="version"
+          >
             {currentEntity.version || currentEntity.id}
           </span>
           <ChevronDownIcon

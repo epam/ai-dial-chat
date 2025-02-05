@@ -4,8 +4,7 @@ import { useRouter } from 'next/router';
 
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
+import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
@@ -22,10 +21,7 @@ import { MarketplaceHeader } from '@/src/components/Marketplace/MarketplaceHeade
 import { Feature } from '@epam/ai-dial-shared';
 
 function Marketplace() {
-  const dispatch = useAppDispatch();
-
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
-
   const isMarketplaceEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
   );
@@ -36,10 +32,6 @@ function Marketplace() {
       router.push('/');
     }
   }, [isMarketplaceEnabled, router]);
-
-  useEffect(() => {
-    dispatch(MarketplaceActions.resetState());
-  }, [dispatch]);
 
   if (!isMarketplaceEnabled) return <Loader />;
 

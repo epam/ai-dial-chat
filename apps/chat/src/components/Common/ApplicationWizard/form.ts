@@ -9,6 +9,7 @@ import {
   createQuickAppConfig,
   getModelDescription,
   getQuickAppConfig,
+  getQuickAppDocumentUrl,
 } from '@/src/utils/app/application';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { constructPath, notAllowedSymbols } from '@/src/utils/app/file';
@@ -37,6 +38,7 @@ import { MIME_FORMAT_REGEX } from '@/src/constants/file';
 import { DEFAULT_VERSION } from '@/src/constants/public';
 import {
   DEFAULT_QUICK_APPS_HOST,
+  DEFAULT_QUICK_APPS_MODEL,
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
 
@@ -68,6 +70,8 @@ export interface FormData extends CodeData {
   instructions: string;
   temperature: number;
   toolset: string;
+  model: string;
+  documentRelativeUrl: string;
 }
 
 type Options<T extends Path<FormData>> = Omit<
@@ -98,10 +102,19 @@ export const validators: Validators = {
     validate: (v) => {
       const reg = /^[0-9]+\.[0-9]+\.[0-9]+$/;
 
-      return (
-        reg.test(v) ||
-        'Version should be in x.y.z format and contain only numbers and dots.'
-      );
+      if (!reg.test(v)) {
+        return 'Version should be in x.y.z format and contain only numbers and dots.';
+      }
+
+      const parts = v.split('.');
+
+      for (const part of parts) {
+        if (part.length > 5) {
+          return 'Each part of the version should contain no more than five numbers.';
+        }
+      }
+
+      return true;
     },
     setValueAs: (v) => {
       return (v as string).replace(/[^0-9.]/g, '');
@@ -304,53 +317,62 @@ export const getDefaultValues = ({
   app?: CustomApplicationModel;
   models?: ShareEntity[];
   runtime?: string;
-}): FormData => ({
-  name:
-    app?.name ??
-    getNextDefaultName(DEFAULT_APPLICATION_NAME, models ?? [], 0, true),
-  description: app ? getModelDescription(app) : '',
-  version: app?.version ?? DEFAULT_VERSION,
-  iconUrl: app?.iconUrl ?? '',
-  topics: app?.topics ?? [],
-  inputAttachmentTypes: app?.inputAttachmentTypes ?? [],
-  maxInputAttachments: String(app?.maxInputAttachments ?? ''),
-  completionUrl: app?.completionUrl ?? '',
-  features: safeStringify(app?.features),
-  instructions: app ? getQuickAppConfig(app).instructions : '',
-  temperature: app ? getQuickAppConfig(app).temperature : DEFAULT_TEMPERATURE,
-  toolset: app ? getToolsetStr(getQuickAppConfig(app)) : '',
-  sources: app?.function?.sourceFolder ?? '',
-  endpoints: app?.function?.mapping
-    ? Object.entries(app.function.mapping).map(([key, value]) => ({
-        label: key,
-        visibleName: FEATURES_ENDPOINTS_NAMES[key],
-        value,
-        editableKey:
-          !FEATURES_ENDPOINTS[key as keyof typeof FEATURES_ENDPOINTS],
-        static: key === FEATURES_ENDPOINTS.chat_completion,
-      }))
-    : [
-        {
-          label: FEATURES_ENDPOINTS.chat_completion,
-          visibleName:
-            FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.chat_completion],
-          value:
-            FEATURES_ENDPOINTS_DEFAULT_VALUES[
-              FEATURES_ENDPOINTS.chat_completion
-            ] || '',
-          editableKey: false,
-          static: true,
-        },
-      ],
-  env: app?.function?.env
-    ? Object.entries(app.function.env).map(([label, value]) => ({
-        label,
-        value,
-        editableKey: true,
-      }))
-    : [],
-  runtime: app?.function?.runtime ?? runtime ?? 'python3.11',
-});
+}): FormData => {
+  const quickAppConfig = app ? getQuickAppConfig(app) : undefined;
+
+  return {
+    name:
+      app?.name ??
+      getNextDefaultName(DEFAULT_APPLICATION_NAME, models ?? [], 0, true),
+    description: app ? getModelDescription(app) : '',
+    version: app?.version ?? DEFAULT_VERSION,
+    iconUrl: app?.iconUrl ?? '',
+    topics: app?.topics ?? [],
+    inputAttachmentTypes: app?.inputAttachmentTypes ?? [],
+    maxInputAttachments: String(app?.maxInputAttachments ?? ''),
+    completionUrl: app?.completionUrl ?? '',
+    features: safeStringify(app?.features),
+    sources: app?.function?.sourceFolder ?? '',
+    endpoints: app?.function?.mapping
+      ? Object.entries(app.function.mapping).map(([key, value]) => ({
+          label: key,
+          visibleName: FEATURES_ENDPOINTS_NAMES[key],
+          value,
+          editableKey:
+            !FEATURES_ENDPOINTS[key as keyof typeof FEATURES_ENDPOINTS],
+          static: key === FEATURES_ENDPOINTS.chat_completion,
+        }))
+      : [
+          {
+            label: FEATURES_ENDPOINTS.chat_completion,
+            visibleName:
+              FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.chat_completion],
+            value:
+              FEATURES_ENDPOINTS_DEFAULT_VALUES[
+                FEATURES_ENDPOINTS.chat_completion
+              ] || '',
+            editableKey: false,
+            static: true,
+          },
+        ],
+    env: app?.function?.env
+      ? Object.entries(app.function.env).map(([label, value]) => ({
+          label,
+          value,
+          editableKey: true,
+        }))
+      : [],
+    runtime: app?.function?.runtime ?? runtime ?? 'python3.11',
+    // QUICK APP
+    instructions: quickAppConfig?.instructions ?? '',
+    temperature: quickAppConfig?.temperature ?? DEFAULT_TEMPERATURE,
+    toolset: quickAppConfig ? getToolsetStr(quickAppConfig) : '',
+    model:
+      quickAppConfig?.model ??
+      DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
+    documentRelativeUrl: getQuickAppDocumentUrl(app) ?? '',
+  };
+};
 
 export const getApplicationData = (
   formData: FormData,
@@ -385,6 +407,8 @@ export const getApplicationData = (
       config: formData.toolset,
       instructions: formData.instructions ?? '',
       temperature: formData.temperature,
+      model: formData.model,
+      document_relative_url: formData.documentRelativeUrl,
     });
     preparedData.completionUrl = constructPath(
       DefaultsService.get('quickAppsHost', DEFAULT_QUICK_APPS_HOST),

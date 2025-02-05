@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { FormValidations, getFieldClassnames } from '@/src/utils/app/forms';
 
@@ -11,7 +11,7 @@ import { Translation } from '@/src/types/translation';
 
 import { OUTSIDE_PRESS } from '@/src/constants/modal';
 
-import Modal from '@/src/components/Common/Modal';
+import { Modal } from '@/src/components/Common/Modal';
 
 import { FieldErrorMessage } from '../Common/Forms/FieldErrorMessage';
 
@@ -74,7 +74,7 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
           </label>
           <input
             title=""
-            placeholder={t('Paste link') ?? ''}
+            placeholder={t('Paste link')}
             type="url"
             className={getFieldClassnames<Inputs>('href', 'input', {
               errors,
@@ -101,7 +101,7 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
           </label>
           <input
             title=""
-            placeholder={t('Write text') ?? ''}
+            placeholder={t('Write text')}
             type="text"
             className={getFieldClassnames<Inputs>('title', 'input', {
               errors,

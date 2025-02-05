@@ -1,4 +1,8 @@
+import { getQuickAppDocumentUrl } from '@/src/utils/app/application';
+
+import { CustomApplicationModel } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
+import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import { PromptInfo } from '@/src/types/prompt';
 import {
   PublicVersionGroups,
@@ -14,6 +18,7 @@ import {
 } from '@/src/constants/public';
 
 import {
+  ApiUtils,
   addVersionToId,
   getPublicItemIdWithoutVersion,
   parseConversationApiKey,
@@ -22,10 +27,10 @@ import {
 import { isVersionValid } from './common';
 import { constructPath } from './file';
 import { getFolderIdFromEntityId, splitEntityId } from './folders';
-import { getEntityBucket, getRootId, isRootId } from './id';
+import { getEntityBucket, getRootId, isEntityIdExternal, isRootId } from './id';
 import { EnumMapper } from './mappers';
 
-import { ConversationInfo } from '@epam/ai-dial-shared';
+import { ConversationInfo, PublishActions } from '@epam/ai-dial-shared';
 
 export const isEntityIdPublic = (
   entity: { id: string },
@@ -204,4 +209,56 @@ export const getItemsIdsToRemoveAndHide = (
     itemsToHideIds: itemsToHide.map((item) => item.reviewUrl),
     itemsToRemoveIds: itemsToRemove.map((item) => item.reviewUrl),
   };
+};
+
+export const getApplicationPublishResources = ({
+  entity,
+  publishAction,
+  path,
+  applicationDetails,
+  selectedIds,
+}: {
+  entity: PublishRequestDialAIEntityModel;
+  publishAction: PublishActions;
+  path: string;
+  selectedIds: string[];
+  applicationDetails?: CustomApplicationModel;
+}) => {
+  const iconUrl = entity.iconUrl;
+  const documentUrl = getQuickAppDocumentUrl(applicationDetails);
+
+  const resources = [
+    iconUrl && !isEntityIdExternal({ id: iconUrl }) ? iconUrl : undefined,
+    documentUrl && selectedIds.includes(documentUrl) ? documentUrl : undefined,
+  ];
+
+  return resources.reduce(
+    (
+      acc: {
+        action: PublishActions;
+        sourceUrl?: string | undefined;
+        targetUrl: string;
+      }[],
+      id,
+    ) => {
+      if (id) {
+        return [
+          ...acc,
+          {
+            action: publishAction,
+            targetUrl:
+              publishAction === PublishActions.DELETE
+                ? ApiUtils.decodeApiUrl(id)
+                : createTargetUrl(FeatureType.File, path, id, SharingType.File),
+            sourceUrl:
+              publishAction === PublishActions.DELETE
+                ? undefined
+                : ApiUtils.decodeApiUrl(id),
+          },
+        ];
+      }
+      return acc;
+    },
+    [],
+  );
 };

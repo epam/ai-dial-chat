@@ -1,9 +1,9 @@
 import { IconExclamationCircle } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getFolderIdFromEntityId,
@@ -284,13 +284,10 @@ export function PublicationHandler({ publication }: Props) {
     };
 
     const startApplicationsReview = () => {
-      dispatch(
-        ApplicationActions.get(
-          applicationsToReviewIds.length
-            ? applicationsToReviewIds[0].reviewUrl
-            : reviewedApplicationsIds[0].reviewUrl,
-        ),
-      );
+      const applicationId = applicationsToReviewIds.length
+        ? applicationsToReviewIds[0].reviewUrl
+        : reviewedApplicationsIds[0].reviewUrl;
+      dispatch(ApplicationActions.get({ applicationId }));
       dispatch(PublicationActions.setIsApplicationReview(true));
     };
 

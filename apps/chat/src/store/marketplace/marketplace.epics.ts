@@ -13,7 +13,7 @@ import {
   SourceType,
 } from '@/src/constants/marketplace';
 
-import { ModelsSelectors } from '../models/models.reducers';
+import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import {
   MarketplaceActions,
@@ -41,8 +41,25 @@ const addToQuery = (
   }
 };
 
+const initEpic: AppEpic = (action$, _state$) =>
+  action$.pipe(
+    filter(MarketplaceActions.init.match),
+    switchMap(() => {
+      const query = parse(window.location.search.slice(1));
+      const workSpaceTab =
+        query[MarketplaceQueryParams.fromConversation] ||
+        query[MarketplaceQueryParams.tab] === MarketplaceTabs.MY_WORKSPACE;
+      return of(
+        MarketplaceActions.setSelectedTab(
+          workSpaceTab ? MarketplaceTabs.MY_WORKSPACE : MarketplaceTabs.HOME,
+        ),
+      );
+    }),
+  );
+
 const setQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
   action$.pipe(
+    filter(() => ModelsSelectors.selectIsModelsLoaded(state$.value)),
     filter(
       (action) =>
         MarketplaceActions.setSelectedTab.match(action) ||
@@ -168,7 +185,44 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const updateFiltersEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(
+      (action) =>
+        ModelsActions.deleteModels.match(action) ||
+        ModelsActions.updateModel.match(action),
+    ),
+    switchMap(() => {
+      const state = state$.value;
+
+      const existingTopics = ModelsSelectors.selectModelTopics(state);
+      const sourceTypes = MarketplaceSelectors.selectSourceTypes(state);
+      const filters = selectSelectedFilters(state);
+      const updatedFilters = { ...filters };
+      updatedFilters.Topics = filters.Topics.filter((topic) =>
+        existingTopics.includes(topic),
+      );
+      updatedFilters.Sources = filters.Sources.filter((source) =>
+        sourceTypes.includes(source as SourceType),
+      );
+      if (
+        updatedFilters.Topics.length !== filters.Topics.length ||
+        updatedFilters.Sources.length !== filters.Sources.length
+      ) {
+        return of(
+          MarketplaceActions.setState({
+            selectedFilters: updatedFilters,
+          }),
+        );
+      }
+
+      return EMPTY;
+    }),
+  );
+
 export const MarketplaceEpics = combineEpics(
+  initEpic,
   initQueryParamsEpic,
   setQueryParamsEpic,
+  updateFiltersEpic,
 );

@@ -248,6 +248,7 @@ export class ChatOverlayManager {
     });
 
     button.innerHTML = options?.iconSvg || overlayToggleIconOptions.iconSvg;
+    button.ariaLabel = 'Open chat';
     button.name = 'open';
     return button;
   }
@@ -259,6 +260,7 @@ export class ChatOverlayManager {
   public createFullscreenButton(): HTMLButtonElement {
     const button = document.createElement('button');
     button.id = 'full-screen-button';
+    button.ariaLabel = 'Open full screen';
 
     setStyles(button, {
       appearance: 'none',
@@ -298,6 +300,7 @@ export class ChatOverlayManager {
    */
   public createCloseButton(): HTMLButtonElement {
     const closeButton = document.createElement('button');
+    closeButton.ariaLabel = 'Collapse';
 
     setStyles(closeButton, {
       boxSizing: 'border-box',

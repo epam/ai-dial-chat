@@ -2,14 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-.link-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-@media (max-width: 768px) {
-  .link-container {
-    flex-direction: column;
+@layer components {
+  .button {
+    @apply rounded border border-gray-800 bg-gray-300 p-2 text-center hover:border-gray-600 hover:bg-gray-200;
+  }
+  details {
+    cursor: pointer;
+  }
+  textarea {
+    padding: 5px 10px;
   }
 }

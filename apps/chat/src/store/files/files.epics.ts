@@ -22,6 +22,7 @@ import { ApiUtils } from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
+import { Translation } from '@/src/types/translation';
 
 import { PublicationActions } from '../publication/publication.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
@@ -59,6 +60,8 @@ const uploadFileEpic: AppEpic = (action$) =>
         formData,
         payload.relativePath,
         payload.name,
+        undefined,
+        payload.bucket,
       ).pipe(
         filter(
           ({ percent, result }) =>
@@ -228,7 +231,7 @@ const deleteFileFailEpic: AppEpic = (action$) =>
         message: translate(
           'Deleting file {{fileName}} failed. Please try again later',
           {
-            ns: 'file',
+            ns: Translation.Files,
             fileName: payload.fileName,
           },
         ),

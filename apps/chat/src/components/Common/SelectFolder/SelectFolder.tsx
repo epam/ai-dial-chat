@@ -1,14 +1,14 @@
 import { useId } from '@floating-ui/react';
 import { ReactNode } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
-import Modal from '@/src/components/Common/Modal';
+import { Modal } from '@/src/components/Common/Modal';
 
 interface Props {
   isOpen: boolean;

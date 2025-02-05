@@ -80,6 +80,7 @@ import { HTTPMethod } from '@/src/types/http';
 import { LatestExportFormat, ReplaceOptions } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 import { AppEpic } from '@/src/types/store';
+import { Translation } from '@/src/types/translation';
 
 import {
   PromptsActions,
@@ -407,7 +408,7 @@ const importPromptsEpic: AppEpic = (action$) =>
           of(
             UIActions.showErrorToast(
               translate(errorsMessages.unsupportedPromptsDataFormat, {
-                ns: 'common',
+                ns: Translation.Common,
               }),
             ),
           ),

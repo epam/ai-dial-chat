@@ -64,6 +64,7 @@ export const filesSlice = createSlice({
         id: string;
         relativePath?: string;
         name: string;
+        bucket?: string;
       }>,
     ) => {
       state.files = state.files.filter((file) => file.id !== payload.id);
@@ -520,6 +521,9 @@ const selectIsUploadingFilePresent = createSelector(
 const selectAreFoldersLoading = createSelector([rootSelector], (state) => {
   return state.foldersStatus === UploadStatus.LOADING;
 });
+const selectAreFilesLoading = createSelector([rootSelector], (state) => {
+  return state.filesStatus === UploadStatus.LOADING;
+});
 const selectLoadingFolderIds = createSelector([rootSelector], (state) => {
   return state.loadingFolderId ? [state.loadingFolderId] : [];
 });
@@ -547,6 +551,13 @@ const selectInitialized = createSelector(
   (state) => state.initialized,
 );
 
+const selectFolderById = createSelector(
+  [selectFolders, (_state, folderId: string) => folderId],
+  (folders, folderId) => {
+    return folders.find((folder) => folder.id == folderId);
+  },
+);
+
 export const FilesSelectors = {
   selectFiles,
   selectFilteredFiles,
@@ -559,11 +570,13 @@ export const FilesSelectors = {
   selectAreFoldersLoading,
   selectLoadingFolderIds,
   selectNewAddedFolderId,
+  selectFolderById,
   selectFilesByIds,
   selectFileById,
   selectFoldersWithSearchTerm,
   selectPublicationFolders,
   selectInitialized,
+  selectAreFilesLoading,
 };
 
 export const FilesActions = filesSlice.actions;

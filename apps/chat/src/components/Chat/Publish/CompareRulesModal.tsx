@@ -1,10 +1,10 @@
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { ModalState } from '@/src/types/modal';
 import { PublicationRule } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
-import Modal from '../../Common/Modal';
+import { Modal } from '../../Common/Modal';
 import { RuleListItem } from './RuleListItem';
 
 import isEqual from 'lodash-es/isEqual';

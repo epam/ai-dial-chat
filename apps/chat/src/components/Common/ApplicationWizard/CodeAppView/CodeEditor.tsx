@@ -12,14 +12,15 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { constructPath } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
   getNextDefaultName,
+  splitEntityId,
 } from '@/src/utils/app/folders';
 import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
 
@@ -312,10 +313,19 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
       rootFolders: [],
     };
   }, [files, folders, sourcesFolderId]);
+
   const rootFileNames = useMemo(
     () => rootFiles.map((f) => f.name),
     [rootFiles],
   );
+
+  const { bucket, parentPath } = useMemo(() => {
+    if (sourcesFolderId) {
+      const { bucket, parentPath } = splitEntityId(sourcesFolderId);
+      return { bucket, parentPath };
+    }
+    return { bucket: undefined, parentPath: undefined };
+  }, [sourcesFolderId]);
 
   useEffect(() => {
     if (sourcesFolderId) {
@@ -341,6 +351,11 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
     [dispatch, openedFoldersIds],
   );
 
+  const openUploadDialog = useCallback(() => {
+    setUploadFolderId(sourcesFolderId);
+    dispatch(FilesActions.getFolders({ id: parentPath }));
+  }, [dispatch, parentPath, sourcesFolderId]);
+
   const handleUploadFiles = useCallback(
     (
       selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
@@ -353,11 +368,12 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
             id: file.id,
             relativePath: folderPath,
             name: file.name,
+            bucket,
           }),
         );
       });
     },
-    [dispatch],
+    [bucket, dispatch],
   );
 
   const handleDeleteFile = useCallback(
@@ -402,13 +418,14 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
             relativePath: getIdWithoutRootPathSegments(sourcesFolderId),
             id: constructPath(sourcesFolderId, fileName),
             name: fileName,
+            bucket,
           }),
         );
         setNewFileFolder(undefined);
         setNewFileName('');
       }
     },
-    [dispatch, sourcesFolderId],
+    [bucket, dispatch, sourcesFolderId],
   );
 
   const handleToggleFolder = useCallback(
@@ -594,7 +611,7 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
               <Tooltip tooltip={t('Upload file')}>
                 <button
                   type="button"
-                  onClick={() => setUploadFolderId(sourcesFolderId)}
+                  onClick={openUploadDialog}
                   className="text-secondary hover:text-accent-primary"
                 >
                   <IconUpload size={18} />
@@ -649,19 +666,18 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
               onUploadFiles={handleUploadFiles}
               onClose={() => setUploadFolderId(undefined)}
               maximumAttachmentsAmount={Number.MAX_SAFE_INTEGER}
+              rootFolderId={sourcesFolderId}
             />
           )}
           <ConfirmDialog
             isOpen={!!deletingFileId}
             heading={t('Confirm deleting')}
-            description={
-              t(
-                'Are you sure that you want to delete "{{name}}" permanently?',
-                {
-                  name: deletingFileId?.split('/').pop(),
-                },
-              ) || ''
-            }
+            description={t(
+              'Are you sure that you want to delete "{{name}}" permanently?',
+              {
+                name: deletingFileId?.split('/').pop(),
+              },
+            )}
             confirmLabel={t('Confirm')}
             cancelLabel={t('Cancel')}
             onClose={handleDeleteFile}

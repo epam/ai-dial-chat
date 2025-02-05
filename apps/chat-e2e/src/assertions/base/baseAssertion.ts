@@ -223,7 +223,11 @@ export class BaseAssertion {
       .soft(elementsCount, ExpectedMessages.elementsCountIsValid)
       .toBe(expectedCount);
   }
-
+  public async assertCount(expectedCount: number, actualCount: number) {
+    expect
+      .soft(actualCount, ExpectedMessages.elementsCountIsValid)
+      .toBe(expectedCount);
+  }
   public assertValue(
     actualValue: string | number | undefined,
     expectedValue: string | number,

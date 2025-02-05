@@ -13,6 +13,7 @@ import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
+import { ROOT_SECTION_NAME } from '@/src/constants/sections';
 
 import {
   doesHaveDotsInTheEnd,
@@ -20,6 +21,7 @@ import {
   updateEntitiesFoldersAndIds,
 } from './common';
 import { isRootId } from './id';
+import { hasWritePermission } from './share';
 
 import {
   Attachment,
@@ -441,6 +443,7 @@ export const splitEntityId = (
   name: string;
   parentPath: string | undefined;
   apiKey: string;
+  isRoot: boolean;
 } => {
   const parts = id.split('/');
   const parentPath =
@@ -448,11 +451,16 @@ export const splitEntityId = (
       ? constructPath(...parts.slice(2, parts.length - 1))
       : undefined;
 
+  const isRoot = parts.length < 3;
+
+  const name = isRoot ? ROOT_SECTION_NAME : parts[parts.length - 1];
+
   return {
     apiKey: parts[0],
     bucket: parts[1],
     parentPath,
-    name: parts[parts.length - 1],
+    name,
+    isRoot,
   };
 };
 
@@ -598,4 +606,21 @@ export const renameFolderWithChildren = ({
   );
 
   return updatedFolders.concat(newFolder);
+};
+
+export const canEditSharedFolderOrParent = (
+  folders: FolderInterface[],
+  folderId: string | undefined,
+): boolean => {
+  while (folderId) {
+    const folder = folders.find((folder) => folder.id === folderId);
+
+    if (folder?.sharedWithMe && hasWritePermission(folder.permissions)) {
+      return true;
+    }
+
+    folderId = folder?.folderId;
+  }
+
+  return false;
 };

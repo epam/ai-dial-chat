@@ -1,9 +1,9 @@
 import { IconDownload, IconRefresh } from '@tabler/icons-react';
 import React from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { downloadApplicationLogs } from '@/src/utils/app/import-export';
 
@@ -15,7 +15,7 @@ import {
 } from '@/src/store/application/application.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
-import Modal from '../Common/Modal';
+import { Modal } from '../Common/Modal';
 import { Spinner } from '../Common/Spinner';
 import Tooltip from '../Common/Tooltip';
 

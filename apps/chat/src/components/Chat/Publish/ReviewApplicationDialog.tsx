@@ -6,7 +6,7 @@ import { PublicationActions } from '@/src/store/publication/publication.reducers
 
 import { MOUSE_OUTSIDE_PRESS_EVENT } from '@/src/constants/modal';
 
-import Modal from '../../Common/Modal';
+import { Modal } from '../../Common/Modal';
 import { Spinner } from '../../Common/Spinner';
 import { ReviewApplicationDialogView } from './ReviewApplicationDialogView';
 

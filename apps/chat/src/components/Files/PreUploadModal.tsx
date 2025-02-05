@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   constructPath,
@@ -22,8 +22,11 @@ import {
   notAllowedSymbols,
   prepareFileName,
 } from '@/src/utils/app/file';
-import { getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
-import { getFileRootId } from '@/src/utils/app/id';
+import {
+  getParentAndCurrentFoldersById,
+  splitEntityId,
+} from '@/src/utils/app/folders';
+import { getFileRootId, isMyBucket } from '@/src/utils/app/id';
 
 import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
@@ -33,8 +36,9 @@ import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
+import { SHARED_WITH_ME_SECTION_NAME } from '@/src/constants/sections';
 
-import Modal from '@/src/components/Common/Modal';
+import { Modal } from '@/src/components/Common/Modal';
 
 import { ErrorMessage } from '../Common/ErrorMessage';
 import { SelectFolderModal } from './SelectFolderModal';
@@ -52,6 +56,7 @@ interface Props {
   ) => void;
   uploadFolderId?: string;
   customUploadButtonLabel?: string;
+  rootFolderId?: string;
 }
 
 const bytesInMb = 1_048_576;
@@ -66,6 +71,7 @@ export const PreUploadDialog = ({
   onUploadFiles,
   uploadFolderId,
   customUploadButtonLabel,
+  rootFolderId,
 }: Props) => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation(Translation.Chat);
@@ -82,11 +88,19 @@ export const PreUploadDialog = ({
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState(
-    uploadFolderId || getFileRootId(),
+    uploadFolderId || rootFolderId || getFileRootId(),
   );
 
   const headingId = useId();
   const descriptionId = useId();
+
+  const { bucket, name: rootFolderName } = useMemo(
+    () =>
+      rootFolderId
+        ? splitEntityId(rootFolderId)
+        : { bucket: undefined, name: undefined },
+    [rootFolderId],
+  );
 
   const folderPath = useMemo(() => {
     return (
@@ -139,7 +153,7 @@ export const PreUploadDialog = ({
       if (incorrectTypeFiles.length > 0) {
         errors.push(
           t(
-            `You've trying to upload files with incorrect type: {{incorrectTypeFileNames}}`,
+            `You're trying to upload files with incorrect type: {{incorrectTypeFileNames}}`,
             {
               incorrectTypeFileNames: incorrectTypeFiles.join(', '),
             },
@@ -156,7 +170,7 @@ export const PreUploadDialog = ({
             return {
               fileContent: file,
               id: constructPath(
-                getFileRootId(),
+                getFileRootId(bucket),
                 folderPath,
                 prepareFileName(file.name),
               ),
@@ -169,7 +183,7 @@ export const PreUploadDialog = ({
         uploadInputRef.current.value = '';
       }
     },
-    [allowedTypes, folderPath, t],
+    [allowedTypes, bucket, folderPath, t],
   );
 
   const handleUpload = useCallback(() => {
@@ -183,7 +197,7 @@ export const PreUploadDialog = ({
             selectedAttachmentsAmount:
               selectedFiles.length + attachments.length,
           },
-        ) as string,
+        ),
       );
     }
     const { filesWithNotAllowedSymbols, filesWithDotInTheEnd } =
@@ -204,7 +218,7 @@ export const PreUploadDialog = ({
             notAllowedSymbols,
             fileNames: filesWithNotAllowedSymbolsNames.join(', '),
           },
-        ) as string,
+        ),
       );
     } else {
       if (filesWithNotAllowedSymbolsNames.length) {
@@ -215,7 +229,7 @@ export const PreUploadDialog = ({
               notAllowedSymbols,
               fileNames: filesWithNotAllowedSymbolsNames.join(', '),
             },
-          ) as string,
+          ),
         );
       }
 
@@ -226,7 +240,7 @@ export const PreUploadDialog = ({
             {
               fileNames: filesWithDotInTheEndNames.join(', '),
             },
-          ) as string,
+          ),
         );
       }
     }
@@ -245,7 +259,7 @@ export const PreUploadDialog = ({
         t(
           `${errors.length ? '\n' : ''}Files which you trying to upload already presented in selected folder. Please rename or delete them from uploading files list: {{fileNames}}`,
           { fileNames: localIncorrectSameNameFiles.join(', ') },
-        ) as string,
+        ),
       );
     }
 
@@ -259,7 +273,7 @@ export const PreUploadDialog = ({
           {
             fileNames: duplicateNames.join(', '),
           },
-        ) as string,
+        ),
       );
     }
 
@@ -400,7 +414,12 @@ export const PreUploadDialog = ({
               data-qa="change-path-container"
             >
               <span className="truncate" data-qa="path">
-                {constructPath(t('All files'), folderPath)}
+                {!bucket || isMyBucket(bucket)
+                  ? constructPath(t('All files'), folderPath ?? rootFolderName)
+                  : constructPath(
+                      t(SHARED_WITH_ME_SECTION_NAME),
+                      folderPath ?? rootFolderName,
+                    )}
               </span>
               <span
                 className="cursor-pointer text-accent-primary"
@@ -490,7 +509,7 @@ export const PreUploadDialog = ({
       <SelectFolderModal
         isOpen={isChangeFolderModalOpened}
         initialSelectedFolderId={selectedFolderId}
-        rootFolderId={getFileRootId()}
+        rootFolderId={rootFolderId ?? getFileRootId(bucket)}
         onClose={(folderId) => {
           if (folderId) {
             setSelectedFolderId(folderId);

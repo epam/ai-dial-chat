@@ -3,20 +3,21 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { combineEntities } from '@/src/utils/app/common';
 import { translate } from '@/src/utils/app/translation';
 
-import { ApplicationInfo, ApplicationStatus } from '@/src/types/applications';
+import { ApplicationStatus } from '@/src/types/applications';
 import { ErrorMessage } from '@/src/types/error';
 import {
   DialAIEntityModel,
   InstalledModel,
   PublishRequestDialAIEntityModel,
 } from '@/src/types/models';
+import { Translation } from '@/src/types/translation';
 
 import { RECENT_MODELS_COUNT } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
 import { DeleteType } from '@/src/constants/marketplace';
 
 import * as ModelsSelectors from './models.selectors';
-import { ModelsState } from './models.types';
+import { ModelUpdatedValues, ModelsState } from './models.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -112,7 +113,11 @@ export const modelsSlice = createSlice({
         code: payload.error.status?.toString() ?? 'unknown',
         messageLines: payload.error.statusText
           ? [payload.error.statusText]
-          : [translate(errorsMessages.generalServer, { ns: 'common' })],
+          : [
+              translate(errorsMessages.generalServer, {
+                ns: Translation.Common,
+              }),
+            ],
       } as ErrorMessage;
     },
 
@@ -207,6 +212,7 @@ export const modelsSlice = createSlice({
       const oldModel = state.modelsMap[payload.model.reference];
       //Copy permissions and sharedWithMe after update
       const newModel: DialAIEntityModel = {
+        ...oldModel,
         sharedWithMe: oldModel?.sharedWithMe,
         permissions: oldModel?.permissions,
         ...payload.model,
@@ -274,31 +280,32 @@ export const modelsSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        reference: string;
-        updatedValues: Partial<ApplicationInfo>;
+        modelsToUpdate: ModelUpdatedValues[];
       }>,
     ) => {
-      const model = state.modelsMap[payload.reference];
+      payload.modelsToUpdate.forEach((modelToUpdate) => {
+        const model = state.modelsMap[modelToUpdate.reference];
 
-      if (model) {
-        const updatedModel = {
-          ...model,
-          ...payload.updatedValues,
-        };
-        state.modelsMap[model.reference] = updatedModel;
-        state.modelsMap[model.id] = updatedModel;
+        if (model) {
+          const updatedModel = {
+            ...model,
+            ...modelToUpdate.updatedValues,
+          };
+          state.modelsMap[model.reference] = updatedModel;
+          state.modelsMap[model.id] = updatedModel;
 
-        state.models = state.models.map((model) => {
-          if (model.reference === payload.reference) {
-            return {
-              ...model,
-              ...payload.updatedValues,
-            };
-          }
+          state.models = state.models.map((modelFromState) => {
+            if (modelFromState.reference === modelToUpdate.reference) {
+              return {
+                ...modelFromState,
+                ...modelToUpdate.updatedValues,
+              };
+            }
 
-          return model;
-        });
-      }
+            return modelFromState;
+          });
+        }
+      });
     },
   },
 });

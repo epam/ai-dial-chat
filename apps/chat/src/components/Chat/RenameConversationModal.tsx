@@ -7,7 +7,7 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   doesHaveDotsInTheEnd,
@@ -29,7 +29,7 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import { DISALLOW_INTERACTIONS } from '@/src/constants/modal';
 
 import { ConfirmDialog } from '../Common/ConfirmDialog';
-import Modal from '../Common/Modal';
+import { Modal } from '../Common/Modal';
 
 export const RenameConversationModal = () => {
   const renamingConversation = useAppSelector(
@@ -112,7 +112,7 @@ const RenameConversationView = () => {
           t(
             'Conversation with name "{{newName}}" already exists in this folder.',
             {
-              ns: 'chat',
+              ns: Translation.Chat,
               newName,
             },
           ),
@@ -217,11 +217,9 @@ const RenameConversationView = () => {
         heading={t('Confirm renaming conversation')}
         confirmLabel={t('Rename')}
         cancelLabel={t('Cancel')}
-        description={
-          t(
-            'Renaming will stop sharing and other users will no longer see this conversation.',
-          ) || ''
-        }
+        description={t(
+          'Renaming will stop sharing and other users will no longer see this conversation.',
+        )}
         onClose={(result) => {
           setIsConfirmRenaming(false);
           if (result) performRename(newName);

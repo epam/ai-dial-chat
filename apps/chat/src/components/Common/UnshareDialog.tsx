@@ -1,8 +1,9 @@
 import { useCallback } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { FeatureType } from '@/src/types/common';
+import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ShareActions, ShareSelectors } from '@/src/store/share/share.reducers';
@@ -18,7 +19,7 @@ export const UnshareDialog = () => {
 };
 
 const UnshareDialogView = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(Translation.Common);
   const dispatch = useAppDispatch();
   const unshareEntity = useAppSelector(ShareSelectors.selectUnshareModel);
 

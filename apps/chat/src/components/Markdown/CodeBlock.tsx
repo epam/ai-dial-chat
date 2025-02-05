@@ -6,9 +6,9 @@ import {
   oneLight,
 } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   languageExtensionMapping,
@@ -71,10 +71,7 @@ export const CodeBlock: FC<Props> = memo(
       const suggestedFileName =
         languageFilenameMapping[displayLanguage] ??
         `ai-chat-code-${currentDate()}${fileExtension}`;
-      const fileName = window.prompt(
-        t('Enter file name') || '',
-        suggestedFileName,
-      );
+      const fileName = window.prompt(t('Enter file name'), suggestedFileName);
 
       if (!fileName) {
         // User pressed cancel on prompt

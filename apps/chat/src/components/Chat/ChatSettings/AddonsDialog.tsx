@@ -1,9 +1,9 @@
 import { IconX } from '@tabler/icons-react';
 import { FC, useCallback, useEffect, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 
@@ -16,7 +16,7 @@ import { useAppSelector } from '@/src/store/hooks';
 
 import { OUTSIDE_PRESS } from '@/src/constants/modal';
 
-import Modal from '@/src/components/Common/Modal';
+import { Modal } from '@/src/components/Common/Modal';
 
 import { ModelIcon } from '../../Chatbar/ModelIcon';
 import CollapsibleSection from '../../Common/CollapsibleSection';
@@ -199,7 +199,7 @@ export const AddonsDialog: FC<Props> = ({
       <div className="h-fit px-3 md:px-5">
         <input
           name="titleInput"
-          placeholder={t('Search for addons') || ''}
+          placeholder={t('Search for addons')}
           type="text"
           onChange={(e) => {
             handleSearch(e.target.value);

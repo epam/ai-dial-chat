@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { doesModelHaveSettings } from '@/src/utils/app/models';
@@ -18,7 +18,7 @@ import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 
 import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
-import Modal from '@/src/components/Common/Modal';
+import { Modal } from '@/src/components/Common/Modal';
 
 import { ModelIcon } from '../../Chatbar/ModelIcon';
 import { ConversationSettings } from './ConversationSettings';

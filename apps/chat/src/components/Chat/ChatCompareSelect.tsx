@@ -1,7 +1,7 @@
 import { IconCheck } from '@tabler/icons-react';
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isValidConversationForCompare } from '@/src/utils/app/conversation';
 import { sortByName } from '@/src/utils/app/folders';
@@ -76,7 +76,7 @@ export const ChatCompareSelect = ({
   const isConversationVersionValid = (
     conv: ConversationInfo,
     publicVersionGroups: PublicVersionGroups,
-    selectedConversation: Conversation,
+    selectedConversationId: string,
   ) => {
     if (!conv.publicationInfo?.version) {
       return true;
@@ -95,7 +95,7 @@ export const ChatCompareSelect = ({
       currentVersionGroup &&
       conv.publicationInfo?.version !==
         currentVersionGroup.selectedVersion.version &&
-      (currentVersionGroup.selectedVersion.id !== selectedConversation.id ||
+      (currentVersionGroup.selectedVersion.id !== selectedConversationId ||
         currentVersionGroup.allVersions.find(
           (ver) => ver.id !== currentVersionGroup.selectedVersion.id,
         )?.id !== conv.id)
@@ -114,7 +114,7 @@ export const ChatCompareSelect = ({
           isConversationVersionValid(
             conv,
             publicVersionGroups,
-            selectedConversation,
+            selectedConversation?.id,
           ),
       ),
     [
@@ -171,7 +171,7 @@ export const ChatCompareSelect = ({
               <input
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
-                placeholder={t('Search conversations') ?? ''}
+                placeholder={t('Search conversations')}
                 className="input-form peer"
                 data-qa="search-compare-conversation"
               />
