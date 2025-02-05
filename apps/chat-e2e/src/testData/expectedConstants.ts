@@ -259,6 +259,7 @@ export enum MenuOptions {
   attachLink = 'Attach link',
   select = 'Select',
   view = 'View',
+  use = 'Use',
 }
 
 export enum FilterMenuOptions {
