@@ -2342,6 +2342,11 @@ const moveConversationEpic: AppEpic = (action$) =>
         destinationUrl: payload.newConversation.id,
         overwrite: false,
       }).pipe(
+        switchMap(() => {
+          return of(
+            ConversationsActions.saveConversation(payload.newConversation),
+          );
+        }),
         catchError(() => {
           return of(ConversationsActions.moveConversationFail(payload));
         }),
@@ -2392,7 +2397,7 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         of(
           ConversationsActions.updateConversationSuccess({
             id,
-            conversation: { ...values },
+            conversation: { ...newConversation },
           }),
         ),
       );

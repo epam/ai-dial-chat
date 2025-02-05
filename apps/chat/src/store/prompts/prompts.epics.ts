@@ -241,10 +241,12 @@ const movePromptEpic: AppEpic = (action$) =>
         destinationUrl: payload.newPrompt.id,
         overwrite: false,
       }).pipe(
+        switchMap(() => {
+          return of(PromptsActions.savePrompt(payload.newPrompt));
+        }),
         catchError(() => {
           return of(PromptsActions.movePromptFail(payload));
         }),
-        ignoreElements(),
       );
     }),
   );
