@@ -368,10 +368,13 @@ dialOverlayTest(
               ...(parentPath && { parentPath }),
             };
 
-            //save expectedSelectedConversation for the next test step if it is last listed one
+            //save expectedSelectedConversation for the next test step if it is the last listed one
             if (expectedConversation.id === todayConversation.id) {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              const { bucket, parentPath, ...conversationInfo } =
+                expectedConversation;
               expectedSelectedConversation = {
-                conversation: expectedConversation as OverlayConversation,
+                conversation: conversationInfo as OverlayConversation,
               };
             }
           } else {
