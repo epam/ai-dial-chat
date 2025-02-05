@@ -61,8 +61,6 @@ dialOverlayTest(
 
     const expectedModel = ModelsUtil.getModel(expectedModelId)!;
     const expectedModelIcon = overlayIconApiHelper.getEntityIcon(expectedModel);
-    const expectedShortDescription =
-      expectedModel.description?.split(/\s*\n\s*\n\s*/g)[0];
     await overlayHomePage.mockChatTextResponse(
       MockedChatApiResponseBodies.simpleTextBody,
       { isOverlay: true },
@@ -82,9 +80,7 @@ dialOverlayTest(
           overlayAgentInfo.agentName,
           expectedModel.name,
         );
-        await overlayAgentInfoAssertion.assertDescription(
-          expectedShortDescription,
-        );
+        await overlayAgentInfoAssertion.assertShortDescription(expectedModel);
         await overlayAgentInfoAssertion.assertAgentIcon(expectedModelIcon);
       },
     );
