@@ -154,57 +154,58 @@ const updateApplicationEpic: AppEpic = (action$) =>
               overwrite: false,
             })
             .pipe(
+              map(() => ({ success: true as const })),
               catchError((err) => {
                 console.error('Failed to move application:', err);
-                return of(
-                  ApplicationActions.updateFail(),
-                  UIActions.showErrorToast(
-                    translate('Failed to move application'),
-                  ),
-                );
+                return of({
+                  success: false as const,
+                  actions: [
+                    ApplicationActions.updateFail(),
+                    UIActions.showErrorToast(
+                      translate('Failed to move application'),
+                    ),
+                  ],
+                });
               }),
             )
-        : of(null);
+        : of({ success: true as const });
 
-      const edit$ = ApplicationService.edit(
-        updatedCustomApplication,
-        payload.schema,
-      ).pipe(
-        switchMap(() =>
-          of(
-            ApplicationActions.editSuccess(),
-            ModelsActions.updateModel({
-              model: updatedCustomApplication,
-              oldApplicationId: payload.oldApplicationId,
-            }),
-          ),
-        ),
-        catchError((err) => {
-          console.error('Failed to edit application:', err);
-          return of(
-            ApplicationActions.editFail(),
-            UIActions.showErrorToast(translate('Failed to edit application')),
-          );
-        }),
-      );
-
-      return concat(move$, edit$).pipe(
-        switchMap(() => {
-          return of(ApplicationActions.edit(updatedCustomApplication));
-        }),
-        tap(() => {
-          if (payload.redirectUrl) {
-            Router.push({
-              pathname: payload.redirectUrl,
-              query: { id: updatedCustomApplication.id },
-            });
+      return move$.pipe(
+        switchMap((moveResult) => {
+          if (!moveResult.success) {
+            return of(...moveResult.actions);
           }
-        }),
-        catchError((err) => {
-          console.error('Failed to update application:', err);
-          return of(
-            ApplicationActions.updateFail(),
-            UIActions.showErrorToast(translate('Failed to update application')),
+
+          return ApplicationService.edit(
+            updatedCustomApplication,
+            payload.schema,
+          ).pipe(
+            switchMap(() =>
+              of(
+                ApplicationActions.editSuccess(),
+                ModelsActions.updateModel({
+                  model: updatedCustomApplication,
+                  oldApplicationId: payload.oldApplicationId,
+                }),
+              ),
+            ),
+            tap(() => {
+              if (payload.redirectUrl) {
+                Router.push({
+                  pathname: payload.redirectUrl,
+                  query: { id: updatedCustomApplication.id },
+                });
+              }
+            }),
+            catchError((err) => {
+              console.error('Failed to update application:', err);
+              return of(
+                ApplicationActions.updateFail(),
+                UIActions.showErrorToast(
+                  translate('Failed to update application'),
+                ),
+              );
+            }),
           );
         }),
       );
