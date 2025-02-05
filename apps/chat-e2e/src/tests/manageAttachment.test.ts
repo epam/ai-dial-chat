@@ -583,49 +583,64 @@ dialTest(
     manageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-5396');
-    let userFileUrl: string;
-    const fileName = `${GeneratorUtil.randomString(7)}.txt`;
+    const filesToTest = [
+      {
+        name: `${GeneratorUtil.randomString(7)}.txt`,
+        url: '',
+        isText: true,
+      },
+      {
+        name: Attachment.sunImageName,
+        url: '',
+        isText: false,
+      },
+    ];
 
     await dialTest.step('Open Dial', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
     });
 
-    await dialTest.step('Upload a file via API', async () => {
-      userFileUrl = await fileApiHelper.putStringAsFile(
-        fileName,
-        GeneratorUtil.randomString(100),
+    await dialTest.step('Upload 2 files via API', async () => {
+      for (const file of filesToTest) {
+        file.url = file.isText
+          ? await fileApiHelper.putStringAsFile(
+              file.name,
+              GeneratorUtil.randomString(100),
+            )
+          : await fileApiHelper.putFile(file.name);
+      }
+    });
+
+    await dialTest.step(
+      'Open the "Manage Attachments" modal and confirm files are present.',
+      async () => {
+        await chatBar.openManageAttachmentsModal();
+        for (const file of filesToTest) {
+          await manageAttachmentsAssertion.assertEntityState(
+            { name: file.name },
+            FileModalSection.AllFiles,
+            'visible',
+          );
+        }
+        await attachFilesModal.closeButton.click();
+      },
+    );
+
+    for (const file of filesToTest) {
+      await dialTest.step(
+        `Delete ${file.isText ? 'text' : 'non-text'} file via API and verify it's not visible`,
+        async () => {
+          await fileApiHelper.deleteFromAllFiles(file.url);
+          await chatBar.openManageAttachmentsModal();
+          await manageAttachmentsAssertion.assertEntityState(
+            { name: file.name },
+            FileModalSection.AllFiles,
+            'hidden',
+          );
+          await attachFilesModal.closeButton.click();
+        },
       );
-    });
-
-    await dialTest.step(
-      'Open the "Manage Attachments" modal and confirm the file is present.',
-      async () => {
-        await chatBar.openManageAttachmentsModal();
-        await manageAttachmentsAssertion.assertEntityState(
-          { name: fileName },
-          FileModalSection.AllFiles,
-          'visible',
-        );
-        await attachFilesModal.closeButton.click();
-      },
-    );
-
-    await dialTest.step('Delete a file via API', async () => {
-      await fileApiHelper.deleteFromAllFiles(userFileUrl);
-    });
-
-    await dialTest.step(
-      'Re-open the "Manage Attachments" modal and confirm the file doesnt exist. (without refreshing the browser)',
-      async () => {
-        await chatBar.openManageAttachmentsModal();
-        await manageAttachmentsAssertion.assertEntityState(
-          { name: fileName },
-          FileModalSection.AllFiles,
-          'hidden',
-        );
-        await attachFilesModal.closeButton.click();
-      },
-    );
+    }
   },
 );
