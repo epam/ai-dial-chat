@@ -209,6 +209,7 @@ dialTest(
       await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
       await folderPrompts.editFolderNameWithTick(
         ExpectedConstants.newFolderWithIndexTitle(2),
+        { isHttpMethodTriggered: false },
       );
     });
 

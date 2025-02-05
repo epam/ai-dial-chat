@@ -75,10 +75,6 @@ dialTest(
     await dialTest.step('Rename the prompt to a long name', async () => {
       await prompts.openEntityDropdownMenu(expectedName);
       await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-      await promptModalDialog.setField(
-        promptModalDialog.name,
-        nameUnder160Symbols,
-      );
       // Wait for the API request to update the prompt name
       await promptModalDialog.updatePromptDetailsWithButton(
         nameUnder160Symbols,

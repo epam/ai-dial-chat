@@ -163,7 +163,9 @@ dialTest(
           ExpectedConstants.newFolderWithIndexTitle(folderNumber),
         );
         await promptDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await folderPrompts.editFolderNameWithTick('Renamed Folder');
+        await folderPrompts.editFolderNameWithTick('Renamed Folder', {
+          isHttpMethodTriggered: false,
+        });
 
         await promptBar.createNewFolder();
         await expect
@@ -211,6 +213,7 @@ dialTest(
       await promptDropdownMenu.selectMenuOption(MenuOptions.rename);
       await folderPrompts.editFolderNameWithTick(
         ExpectedConstants.newPromptFolderWithIndexTitle(999),
+        { isHttpMethodTriggered: false },
       );
     });
 
@@ -285,7 +288,9 @@ dialTest(
           ExpectedConstants.newFolderWithIndexTitle(i),
         );
         await promptDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await folderPrompts.editFolderNameWithTick(duplicatedFolderName);
+        await folderPrompts.editFolderNameWithTick(duplicatedFolderName, {
+          isHttpMethodTriggered: false,
+        });
         await expect(
           folderPrompts.getFolderByName(duplicatedFolderName, i),
           ExpectedMessages.folderNameUpdated,
