@@ -27,9 +27,10 @@ import {
 import { isMyApplication } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
+import { getApplicationLink } from '@/src/utils/marketplace';
 
 import { SimpleApplicationStatus } from '@/src/types/applications';
-import { FeatureType, PageType } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -44,7 +45,6 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import {
   CardIconSizes,
-  MarketplaceQueryParams,
   PlayerContextIconClasses,
   PlayerContextIcons,
 } from '@/src/constants/marketplace';
@@ -165,11 +165,7 @@ export const ApplicationCard = ({
     SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
   );
 
-  const link = useMemo(
-    () =>
-      `${window.location.origin}/${PageType.Marketplace}?${MarketplaceQueryParams.model}=${entity.reference}`,
-    [entity.reference],
-  );
+  const link = getApplicationLink(entity.reference);
 
   const handleCopy = useCallback(() => {
     if (!navigator.clipboard) return;

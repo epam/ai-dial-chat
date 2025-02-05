@@ -28,12 +28,13 @@ import {
 import { isMyApplication } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
+import { getApplicationLink } from '@/src/utils/marketplace';
 
 import {
   ApplicationStatus,
   SimpleApplicationStatus,
 } from '@/src/types/applications';
-import { FeatureType, PageType, ScreenState } from '@/src/types/common';
+import { FeatureType, ScreenState } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -47,7 +48,6 @@ import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import {
-  MarketplaceQueryParams,
   PlayerContextButtonClasses,
   PlayerContextIconClasses,
   PlayerContextIcons,
@@ -174,11 +174,7 @@ export const ApplicationDetailsFooter = ({
     SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
   );
 
-  const link = useMemo(
-    () =>
-      `${window.location.origin}/${PageType.Marketplace}?${MarketplaceQueryParams.model}=${entity.reference}`,
-    [entity.reference],
-  );
+  const link = getApplicationLink(entity.reference);
 
   const handleCopy = useCallback(() => {
     if (!navigator.clipboard) return;

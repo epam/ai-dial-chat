@@ -1,14 +1,13 @@
 import { IconCheck, IconLink } from '@tabler/icons-react';
-import { MouseEvent, useCallback, useMemo, useRef, useState } from 'react';
+import { MouseEvent, useCallback, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { PageType } from '@/src/types/common';
-import { Translation } from '@/src/types/translation';
+import { getApplicationLink } from '@/src/utils/marketplace';
 
-import { MarketplaceQueryParams } from '@/src/constants/marketplace';
+import { Translation } from '@/src/types/translation';
 
 import Tooltip from '../../Common/Tooltip';
 
@@ -33,11 +32,7 @@ export function ApplicationCopyLink({
   const { t } = useTranslation(Translation.Marketplace);
   const [urlCopied, setUrlCopied] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
-  const link = useMemo(
-    () =>
-      `${window.location.origin}/${PageType.Marketplace}?${MarketplaceQueryParams.model}=${reference}`,
-    [reference],
-  );
+  const link = getApplicationLink(reference);
   const handleCopy = useCallback(
     (e: MouseEvent<HTMLAnchorElement>) => {
       e.preventDefault();
