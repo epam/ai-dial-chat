@@ -1,5 +1,4 @@
 import { BackendChatEntity } from '@/chat/types/common';
-
 import { Sorting } from '@/src/testData';
 
 export class SortingUtil {
@@ -23,7 +22,7 @@ export class SortingUtil {
       }
       return 0;
     });
-    }
+  }
 
   public static sortStringsArray(
     array: string[],
