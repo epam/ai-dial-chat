@@ -14,4 +14,6 @@ export enum Tags {
   td = 'td',
   html = 'html',
   label = 'label',
+  dialog = 'dialog',
+  p = 'p',
 }
