@@ -7,7 +7,7 @@ import {
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
 
-import { RenderWhen } from '../../Common/RenderWhen';
+import { withRenderWhen } from '../../Common/RenderWhen';
 import { PromptVariablesDialog } from './PromptVariablesDialog';
 
 function PromptVariablesForApplyDialogView() {
@@ -37,10 +37,6 @@ function PromptVariablesForApplyDialogView() {
   );
 }
 
-export function PromptVariablesForApplyDialog() {
-  return (
-    <RenderWhen selector={PromptsSelectors.selectPromptWithVariablesForApply}>
-      <PromptVariablesForApplyDialogView />
-    </RenderWhen>
-  );
-}
+export const PromptVariablesForApplyDialog = withRenderWhen(
+  PromptsSelectors.selectPromptWithVariablesForApply,
+)(PromptVariablesForApplyDialogView);
