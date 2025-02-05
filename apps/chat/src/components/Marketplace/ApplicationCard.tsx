@@ -374,9 +374,10 @@ export const ApplicationCard = ({
                     'mr-6 flex shrink gap-2 truncate text-base font-semibold leading-[20px] text-primary',
                     !isMyApp && !entity.version && '!mr-12',
                   )}
-                  data-qa="agent-name"
                 >
-                  <span className="truncate">{entity.name}</span>
+                  <span className="truncate" data-qa="agent-name">
+                    {entity.name}
+                  </span>
                   <FunctionStatusIndicator entity={entity} />
                 </div>
               </div>
