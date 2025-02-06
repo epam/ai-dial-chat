@@ -460,8 +460,7 @@ dialTest(
   },
 );
 
-//need to update the test
-dialTest.skip(
+dialTest(
   'Error icon and red file name appear because of Network error while file is being uploaded',
   async ({
     dialHomePage,
