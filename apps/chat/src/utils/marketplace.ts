@@ -64,6 +64,6 @@ export const doesApplicationMatchFilters = (
   return true;
 };
 
-export const getApplicationLink = (reference: string) => {
-  return `${window.location.origin}/${PageType.Marketplace}?${MarketplaceQueryParams.model}=${reference}`;
+export const getApplicationLink = (entity: DialAIEntityModel) => {
+  return `${window.location.origin}/${PageType.Marketplace}?${MarketplaceQueryParams.model}=${entity.reference}`;
 };

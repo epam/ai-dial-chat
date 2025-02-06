@@ -132,11 +132,13 @@ export const ApplicationDetailsFooter = ({
   const isAppInDeployment = isApplicationDeploymentInProgress(entity);
 
   const handleLogClick = useCallback(
-    (entityId: string) => {
-      dispatch(ApplicationActions.getLogs(entityId));
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dispatch(ApplicationActions.getLogs(entity.id));
       setIsOpenLogs(true);
     },
-    [dispatch],
+    [dispatch, entity.id],
   );
 
   const handleCloseApplicationLogs = useCallback(
@@ -147,40 +149,55 @@ export const ApplicationDetailsFooter = ({
   const PlayerIcon = StatusIcons[playerStatus];
   const PlayerContextIcon = PlayerContextIcons[playerStatus];
 
-  const handleUpdateFunctionStatus = useCallback(() => {
-    dispatch(
-      ApplicationActions.startUpdatingFunctionStatus({
-        id: entity.id,
-        status: getApplicationNextStatus(entity),
-      }),
-    );
-  }, [dispatch, entity]);
-
-  const handleOpenUnshare = useCallback(
-    () => dispatch(ShareActions.setUnshareEntity(entity)),
+  const handleUpdateFunctionStatus = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      dispatch(
+        ApplicationActions.startUpdatingFunctionStatus({
+          id: entity.id,
+          status: getApplicationNextStatus(entity),
+        }),
+      );
+    },
     [dispatch, entity],
   );
 
-  const handleOpenSharing = useCallback(() => {
-    dispatch(
-      ShareActions.share({
-        featureType: FeatureType.Application,
-        resourceId: entity.id,
-      }),
-    );
-  }, [dispatch, entity.id]);
+  const handleOpenUnshare = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      dispatch(ShareActions.setUnshareEntity(entity));
+    },
+    [dispatch, entity],
+  );
+
+  const handleOpenSharing = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      dispatch(
+        ShareActions.share({
+          featureType: FeatureType.Application,
+          resourceId: entity.id,
+        }),
+      );
+    },
+    [dispatch, entity.id],
+  );
 
   const isApplicationsSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
   );
 
-  const link = getApplicationLink(entity.reference);
-
-  const handleCopy = useCallback(() => {
-    if (!navigator.clipboard) return;
-    navigator.clipboard.writeText(link);
-    dispatch(UIActions.showSuccessToast(t('Link copied!')));
-  }, [dispatch, link, t]);
+  const handleCopy = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!navigator.clipboard) return;
+      const link = getApplicationLink(entity);
+      navigator.clipboard.writeText(link);
+      dispatch(UIActions.showSuccessToast(t('Link copied!')));
+    },
+    [dispatch, entity, t],
+  );
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -189,11 +206,7 @@ export const ApplicationDetailsFooter = ({
         dataQa: 'application-copy-link',
         display: isPublicApp && isSmallScreen,
         Icon: IconLink,
-        onClick: (e: React.MouseEvent) => {
-          handleCopy();
-          e.preventDefault();
-          e.stopPropagation();
-        },
+        onClick: handleCopy,
       },
       {
         name: t(getPlayerCaption(entity)),
@@ -203,30 +216,21 @@ export const ApplicationDetailsFooter = ({
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
         Icon: PlayerContextIcon,
         iconClassName: PlayerContextIconClasses[playerStatus],
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          handleUpdateFunctionStatus();
-        },
+        onClick: handleUpdateFunctionStatus,
       },
       {
         name: t('Share'),
         dataQa: 'share',
         display: isMyApp && isApplicationsSharingEnabled && isSmallScreen,
         Icon: IconUserShare,
-        onClick: (e: React.MouseEvent) => {
-          handleOpenSharing();
-          e.stopPropagation();
-        },
+        onClick: handleOpenSharing,
       },
       {
         name: t('Unshare'),
         dataQa: 'unshare',
         display: !!entity.sharedWithMe && isApplicationsSharingEnabled,
         Icon: IconUserUnshare,
-        onClick: (e: React.MouseEvent) => {
-          handleOpenUnshare();
-          e.stopPropagation();
-        },
+        onClick: handleOpenUnshare,
       },
       {
         name: t('Delete'),
@@ -276,11 +280,7 @@ export const ApplicationDetailsFooter = ({
         display:
           isExecutable && playerStatus === SimpleApplicationStatus.UNDEPLOY,
         Icon: IconFileDescription,
-        onClick: (e: React.MouseEvent) => {
-          e.preventDefault();
-          e.stopPropagation();
-          handleLogClick(entity.id);
-        },
+        onClick: handleLogClick,
       },
     ],
     [
@@ -330,7 +330,7 @@ export const ApplicationDetailsFooter = ({
             <>
               {isPublicApp && isSmallScreen && (
                 <ApplicationCopyLink
-                  reference={entity.reference}
+                  entity={entity}
                   size={24}
                   hasTooltip
                   className="icon-button !p-[5px]"
@@ -424,7 +424,7 @@ export const ApplicationDetailsFooter = ({
                 playerStatus === SimpleApplicationStatus.UNDEPLOY && (
                   <Tooltip tooltip={t('Application logs')}>
                     <button
-                      onClick={() => handleLogClick(entity.id)}
+                      onClick={handleLogClick}
                       className="icon-button"
                       data-qa="application-logs"
                     >

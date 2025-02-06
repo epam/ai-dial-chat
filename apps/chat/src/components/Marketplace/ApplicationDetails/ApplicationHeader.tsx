@@ -112,7 +112,7 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
           </button>
         )}
       {isPublicApp && screenState !== ScreenState.MOBILE && (
-        <ApplicationCopyLink reference={entity.reference} withText />
+        <ApplicationCopyLink entity={entity} withText />
       )}
     </header>
   );
