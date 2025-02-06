@@ -1,5 +1,10 @@
+import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedConstants, ExpectedMessages } from '@/src/testData';
+import {
+  ExpectedConstants,
+  ExpectedMessages,
+  MenuOptions,
+} from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -124,7 +129,8 @@ dialTest(
 );
 
 dialTest.only(
-  'New conversation disappears, chat history is shown on the central part if to click on the chat with history',
+  'New conversation disappears, chat history is shown on the central part if to click on the chat with history\n' +
+    'New conversation appears if user deletes focused Chat1. Chat2 stays unselected.',
   async ({
     dialHomePage,
     header,
@@ -134,14 +140,23 @@ dialTest.only(
     conversationAssertion,
     chatMessagesAssertion,
     setTestIds,
+    conversationDropdownMenu,
+    confirmationDialog,
+    chat,
   }) => {
-    setTestIds('EPMRTC-4791');
-    const conversation =
+    setTestIds('EPMRTC-4791', 'EPMRTC-4776');
+    const firstConversation =
       conversationData.prepareModelConversationBasedOnRequests([
         'first request',
         'second request',
       ]);
-    await dataInjector.createConversations([conversation]);
+    conversationData.resetData();
+    const secondConversation = conversationData.prepareDefaultConversation();
+    await dataInjector.createConversations([
+      firstConversation,
+      secondConversation,
+    ]);
+    await dataInjector.createConversations([firstConversation]);
 
     await dialTest.step('Open app and create new conversation', async () => {
       await dialHomePage.openHomePage();
@@ -151,17 +166,46 @@ dialTest.only(
     await dialTest.step(
       'Select conversation with history and verify it is highlighted, its content is displayed',
       async () => {
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectConversation(firstConversation.name);
         await conversationAssertion.assertSelectedConversation(
-          conversation.name,
+          firstConversation.name,
         );
         await chatMessagesAssertion.assertMessagesCount(
-          conversation.messages.length,
+          firstConversation.messages.length,
         );
       },
     );
 
     await dialTest.step('Verify no new conversation is created', async () => {
+      await conversationAssertion.assertEntitiesCount(2);
+    });
+
+    await dialTest.step('Select first conversation and delete it', async () => {
+      await conversations.openEntityDropdownMenu(firstConversation.name);
+      await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
+      await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+    });
+
+    await dialTest.step(
+      'Verify new conversation is shown and second conversation is not selected',
+      async () => {
+        await dialHomePage.waitForPageLoaded();
+        await chat.getSendMessage().waitForState({ state: 'attached' });
+        await chat.changeAgentButton.waitForState();
+        await chat.configureSettingsButton.waitForState();
+        await conversationAssertion.assertEntityState(
+          { name: secondConversation.name },
+          'visible',
+        );
+        await conversationAssertion.assertEntityState(
+          { name: firstConversation.name },
+          'hidden',
+        );
+        await conversationAssertion.assertNoConversationIsSelected();
+      },
+    );
+
+    await dialTest.step('Verify only one conversation remains', async () => {
       await conversationAssertion.assertEntitiesCount(1);
     });
   },
