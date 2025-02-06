@@ -13,9 +13,9 @@ export class MarketplacePage extends BasePage {
   }
 
   async openMyWorkspacePage({
-    isDeploymentsUpdated = true,
-  }: { isDeploymentsUpdated?: boolean } = {}) {
-    if (isDeploymentsUpdated) {
+    isInstalledDeploymentsUpdated = true,
+  }: { isInstalledDeploymentsUpdated?: boolean } = {}) {
+    if (isInstalledDeploymentsUpdated) {
       const resp = this.page.waitForResponse(
         (resp) =>
           resp.url().includes(API.installedDeploymentsHost()) &&
