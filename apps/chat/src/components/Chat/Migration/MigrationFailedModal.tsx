@@ -451,15 +451,15 @@ export const MigrationFailedWindow = ({
           {t('contact us.')}
         </button>
       </p>
-      {enabledFeatures.has(Feature.ReportAnIssue) && (
-        <ReportIssueDialog
-          isOpen={isReportIssueDialogOpen}
-          onClose={() => {
-            setIsReportIssueDialogOpen(false);
-            router.replace(router.basePath);
-          }}
-        />
-      )}
+      {enabledFeatures.has(Feature.ReportAnIssue) &&
+        isReportIssueDialogOpen && (
+          <ReportIssueDialog
+            onClose={() => {
+              setIsReportIssueDialogOpen(false);
+              router.replace(router.basePath);
+            }}
+          />
+        )}
     </div>
   );
 };

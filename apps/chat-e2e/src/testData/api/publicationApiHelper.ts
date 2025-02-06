@@ -1,9 +1,11 @@
+import { Conversation } from '@/chat/types/chat';
 import {
   Publication,
   PublicationInfo,
   PublicationRequestModel,
   PublicationStatus,
   PublicationsListModel,
+  PublishedList,
 } from '@/chat/types/publication';
 import { API, ExpectedConstants } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
@@ -31,6 +33,23 @@ export class PublicationApiHelper extends BaseApiHelper {
     return (await response.json()) as PublicationsListModel;
   }
 
+  public async listPublishedConversations() {
+    const response = await this.request.get(
+      this.getHost(API.publishedConversations),
+      {
+        params: {
+          recursive: true,
+        },
+      },
+    );
+    const statusCode = response.status();
+    expect(
+      statusCode,
+      `Received response code: ${statusCode} with body: ${await response.text()}`,
+    ).toBe(200);
+    return (await response.json()) as PublishedList;
+  }
+
   public async getPublicationRequestDetails(publicationUrl: string) {
     const response = await this.request.post(
       this.getHost(API.publicationRequestDetails),
@@ -44,6 +63,18 @@ export class PublicationApiHelper extends BaseApiHelper {
       `Received response code: ${statusCode} with body: ${await response.text()}`,
     ).toBe(200);
     return (await response.json()) as Publication;
+  }
+
+  public async getPublishedConversation(conversationUrl: string) {
+    const response = await this.request.get(
+      this.getHost(`/api/${conversationUrl}`),
+    );
+    const statusCode = response.status();
+    expect(
+      statusCode,
+      `Received response code: ${statusCode} with body: ${await response.text()}`,
+    ).toBe(200);
+    return (await response.json()) as Conversation;
   }
 
   public async approveRequest(

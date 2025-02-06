@@ -11,6 +11,10 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import {
+  isPlaybackConversation,
+  isReplayConversation,
+} from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 
 import {
@@ -161,6 +165,8 @@ const ConversationView = ({
   featureContainerClassNames,
 }: ConversationViewProps) => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const isReplay = isReplayConversation(conversation);
+  const isPlayback = isPlaybackConversation(conversation);
 
   return (
     <FeatureContainer containerClassNames={featureContainerClassNames}>
@@ -191,17 +197,17 @@ const ConversationView = ({
         iconWrapperClassName="!bg-layer-2"
         {...conversation}
       >
-        {conversation.isReplay && (
+        {isReplay && (
           <span className="flex shrink-0">
             <ReplayAsIsIcon size={18} />
           </span>
         )}
-        {conversation.isPlayback && (
+        {isPlayback && (
           <span className="flex shrink-0">
             <PlaybackIcon size={18} />
           </span>
         )}
-        {!conversation.isReplay && !conversation.isPlayback && (
+        {!isReplay && !isPlayback && (
           <ModelIcon
             size={18}
             entityId={conversation.model.id}

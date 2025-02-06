@@ -20,7 +20,10 @@ import {
   isApplicationStatusUpdating,
   isExecutableApp,
 } from '@/src/utils/app/application';
-import { isOldConversationReplay } from '@/src/utils/app/conversation';
+import {
+  isOldConversationReplay,
+  isPlaybackConversation,
+} from '@/src/utils/app/conversation';
 import { isMyApplication } from '@/src/utils/app/id';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
@@ -135,14 +138,18 @@ export const TalkToCard = ({
 
   const PlayerContextIcon = PlayerContextIcons[playerStatus];
 
-  const handleUpdateFunctionStatus = useCallback(() => {
-    dispatch(
-      ApplicationActions.startUpdatingFunctionStatus({
-        id: entity.id,
-        status: getApplicationNextStatus(entity),
-      }),
-    );
-  }, [dispatch, entity]);
+  const handleUpdateFunctionStatus = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      dispatch(
+        ApplicationActions.startUpdatingFunctionStatus({
+          id: entity.id,
+          status: getApplicationNextStatus(entity),
+        }),
+      );
+    },
+    [dispatch, entity],
+  );
 
   const handleSelectVersion = useCallback(
     (model: DialAIEntityModel) => {
@@ -151,17 +158,24 @@ export const TalkToCard = ({
     [onSelectVersion],
   );
 
-  const handleOpenSharing = useCallback(() => {
-    dispatch(
-      ShareActions.share({
-        featureType: FeatureType.Application,
-        resourceId: entity.id,
-      }),
-    );
-  }, [dispatch, entity.id]);
+  const handleOpenSharing = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      dispatch(
+        ShareActions.share({
+          featureType: FeatureType.Application,
+          resourceId: entity.id,
+        }),
+      );
+    },
+    [dispatch, entity.id],
+  );
 
   const handleOpenUnshare = useCallback(
-    () => dispatch(ShareActions.setUnshareEntity(entity)),
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      dispatch(ShareActions.setUnshareEntity(entity));
+    },
     [dispatch, entity],
   );
 
@@ -177,10 +191,7 @@ export const TalkToCard = ({
           isCodeAppsEnabled,
         Icon: PlayerContextIcon,
         iconClassName: PlayerContextIconClasses[playerStatus],
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          handleUpdateFunctionStatus();
-        },
+        onClick: handleUpdateFunctionStatus,
       },
       {
         name: t('Edit'),
@@ -197,20 +208,14 @@ export const TalkToCard = ({
         dataQa: 'share',
         display: isMyEntity && isApplicationsSharingEnabled,
         Icon: IconUserShare,
-        onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
-          e.stopPropagation();
-          handleOpenSharing();
-        },
+        onClick: handleOpenSharing,
       },
       {
         name: t('Unshare'),
         dataQa: 'unshare',
         display: !!entity.sharedWithMe && isApplicationsSharingEnabled,
         Icon: IconUserUnshare,
-        onClick: (e: React.MouseEvent) => {
-          handleOpenUnshare();
-          e.stopPropagation();
-        },
+        onClick: handleOpenUnshare,
       },
       {
         name: t('Publish'),
@@ -339,7 +344,7 @@ export const TalkToCard = ({
             <div className="flex items-center">
               <p className="mr-1 text-xs text-secondary">{t('Version')}: </p>
               <ModelVersionSelect
-                readonly={conversation.playback?.isPlayback}
+                readonly={isPlaybackConversation(conversation)}
                 className="h-max truncate text-xs"
                 entities={versionsToSelect}
                 onSelect={handleSelectVersion}
