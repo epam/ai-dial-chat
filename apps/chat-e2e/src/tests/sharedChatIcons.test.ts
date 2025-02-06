@@ -377,7 +377,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(firstConversationToShare.name);
+        await conversations.selectConversation(firstConversationToShare.name, {
+          isHttpMethodTriggered: true,
+        });
         await chatHeader.openConversationSettingsPopup();
         await agentSettings.setSystemPrompt(GeneratorUtil.randomString(5));
         await temperatureSlider.setTemperature(0);
@@ -398,7 +400,9 @@ dialTest(
       'Update conversation name for the 2nd conversation and verify conversation is shared, shared icon is displayed',
       async () => {
         newName = GeneratorUtil.randomString(10);
-        await conversations.selectConversation(secondConversationToShare.name);
+        await conversations.selectConversation(secondConversationToShare.name, {
+          isHttpMethodTriggered: true,
+        });
         await conversations.openEntityDropdownMenu(
           secondConversationToShare.name,
         );
@@ -534,7 +538,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectConversation(conversation.name, {
+          isHttpMethodTriggered: true,
+        });
         for (const conversation of [
           replayConversation,
           playbackConversation,

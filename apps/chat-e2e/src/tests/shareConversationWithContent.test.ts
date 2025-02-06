@@ -149,6 +149,7 @@ dialSharedWithMeTest(
         await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserSharedWithMeConversations.selectConversation(
           responseImageConversation.name,
+          { isHttpMethodTriggered: true },
         );
 
         await additionalShareUserChatMessages
@@ -177,6 +178,7 @@ dialSharedWithMeTest(
 
         await additionalShareUserSharedWithMeConversations.selectConversation(
           requestImageConversation.name,
+          { isHttpMethodTriggered: true },
         );
         await additionalShareUserChatMessages
           .getChatMessage(chatResponseIndex)
@@ -209,6 +211,7 @@ dialSharedWithMeTest(
 
         await additionalShareUserSharedWithMeConversations.selectConversation(
           stageConversation.name,
+          { isHttpMethodTriggered: true },
         );
         await additionalShareUserChatMessages
           .getChatMessage(chatResponseIndex)
@@ -222,6 +225,7 @@ dialSharedWithMeTest(
 
         await additionalShareUserSharedWithMeConversations.selectConversation(
           codeConversation.name,
+          { isHttpMethodTriggered: true },
         );
         await additionalShareUserChatMessages
           .getChatMessage(chatResponseIndex)
@@ -677,6 +681,7 @@ dialSharedWithMeTest(
         await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserSharedWithMeConversations.selectConversation(
           imageConversation.name,
+          { isHttpMethodTriggered: true },
         );
 
         await additionalShareUserChatMessages.expandChatMessageAttachment(
@@ -753,8 +758,6 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserConversations.selectConversation(
           secondUserEmptyConversation.name,
-          undefined,
-          { isHttpMethodTriggered: false },
         );
         await additionalShareUserSendMessage.attachmentMenuTrigger.click();
 

@@ -264,9 +264,13 @@ dialTest(
           iconsToBeLoaded: [defaultModel.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(modelConversation.name, {
-          exactMatch: true,
-        });
+        await conversations.selectConversation(
+          modelConversation.name,
+          { isHttpMethodTriggered: false },
+          {
+            exactMatch: true,
+          },
+        );
         await conversations.openEntityDropdownMenu(modelConversation.name, {
           exactMatch: true,
         });
@@ -288,7 +292,9 @@ dialTest(
     await dialTest.step(
       'Open another conversation and verify compare mode is closed',
       async () => {
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectConversation(replayConversation.name, {
+          isHttpMethodTriggered: true,
+        });
         await expect
           .soft(compare.getElementLocator(), ExpectedMessages.compareModeClosed)
           .toBeHidden();
@@ -446,7 +452,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(firstConversation.name);
+        await conversations.selectConversation(firstConversation.name, {
+          isHttpMethodTriggered: true,
+        });
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
 
@@ -613,11 +621,7 @@ dialTest(
           .soft(isComparedMessageRated, ExpectedMessages.chatMessageIsRated)
           .toBeTruthy();
 
-        await conversations.selectConversation(
-          firstConversation.name,
-          undefined,
-          { isHttpMethodTriggered: false },
-        );
+        await conversations.selectConversation(firstConversation.name);
         await chatMessages
           .getChatMessageRate(firstConversation.messages.length + 2, rate)
           .waitFor();
@@ -1101,7 +1105,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(firstConversation.name);
+        await conversations.selectConversation(firstConversation.name, {
+          isHttpMethodTriggered: true,
+        });
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
         await compareConversation.checkShowAllConversations();
@@ -1374,11 +1380,9 @@ dialTest(
     await dialTest.step(
       'Switch to comparing conversation and verify Compare mode is closed',
       async () => {
-        await conversations.selectConversation(
-          firstConversation.name,
-          undefined,
-          { isHttpMethodTriggered: false },
-        );
+        await conversations.selectConversation(firstConversation.name, {
+          isHttpMethodTriggered: false,
+        });
         await expect
           .soft(compare.getElementLocator(), ExpectedMessages.compareModeClosed)
           .toBeHidden();

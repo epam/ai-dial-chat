@@ -538,7 +538,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectConversation(replayConversation.name, {
+          isHttpMethodTriggered: true,
+        });
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -632,7 +634,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectConversation(replayConversation.name, {
+          isHttpMethodTriggered: true,
+        });
 
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
@@ -742,7 +746,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectConversation(replayConversation.name, {
+          isHttpMethodTriggered: true,
+        });
         await agentInfoAssertion.assertElementText(
           agentInfo.agentName,
           ExpectedConstants.replayAsIsLabel,

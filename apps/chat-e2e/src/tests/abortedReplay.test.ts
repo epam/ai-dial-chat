@@ -116,7 +116,9 @@ dialTest(
           iconsToBeLoaded: [secondRandomModel.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectConversation(replayConversation.name, {
+          isHttpMethodTriggered: true,
+        });
         await conversations.getEntityByName(replayConversation.name).waitFor();
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenuAssertion.assertMenuExcludesOptions(
@@ -406,7 +408,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectConversation(replayConversation.name, {
+          isHttpMethodTriggered: true,
+        });
         await chat.startReplay();
         await sendMessage.messageInput.fillInInput(message);
 
@@ -507,7 +511,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectConversation(replayConversation.name, {
+          isHttpMethodTriggered: true,
+        });
         await context.setOffline(true);
         await chat.startReplay();
       },
@@ -580,7 +586,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectConversation(replayConversation.name, {
+          isHttpMethodTriggered: true,
+        });
         const isStartReplayEnabled = await chat.replay.isElementEnabled();
         expect
           .soft(isStartReplayEnabled, ExpectedMessages.startReplayVisible)
