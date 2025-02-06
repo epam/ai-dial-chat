@@ -12,6 +12,9 @@ import { getApplicationType } from '@/src/utils/app/application';
 import {
   getConversationModelParams,
   groupModelsAndSaveOrder,
+  isPlaybackConversation,
+  isReplayAsIsConversation,
+  isReplayConversation,
 } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
@@ -83,8 +86,8 @@ const TalkToModalView = ({
   const [sharedConversationNewModel, setSharedConversationNewModel] =
     useState<DialAIEntityModel>();
 
-  const isPlayback = conversation.playback?.isPlayback;
-  const isReplay = conversation.replay?.isReplay;
+  const isPlayback = isPlaybackConversation(conversation);
+  const isReplay = isReplayConversation(conversation);
 
   const displayedModels = useMemo(() => {
     const currentModel = modelsMap[conversation.model.id];
@@ -179,7 +182,7 @@ const TalkToModalView = ({
       if (
         (model || entity.reference === REPLAY_AS_IS_MODEL) &&
         (conversation.model.id !== entity.reference ||
-          conversation.replay?.replayAsIs)
+          isReplayAsIsConversation(conversation))
       ) {
         dispatch(
           ConversationsActions.updateConversation({
@@ -270,13 +273,13 @@ const TalkToModalView = ({
 
   const handleGoToWorkspace = useCallback(
     (e: MouseEvent<HTMLAnchorElement>) => {
-      if (conversation.playback?.isPlayback) {
+      if (isPlayback) {
         e.preventDefault();
       } else {
         dispatch(ConversationsActions.setTalkToConversationId(null));
       }
     },
-    [conversation.playback?.isPlayback, dispatch],
+    [isPlayback, dispatch],
   );
 
   return (
@@ -317,7 +320,7 @@ const TalkToModalView = ({
           onClick={handleGoToWorkspace}
           className={classNames(
             'm-auto mt-4 text-accent-primary md:absolute md:bottom-6 md:right-6',
-            conversation.playback?.isPlayback && 'cursor-not-allowed',
+            isPlayback && 'cursor-not-allowed',
           )}
           data-qa="go-to-my-workspace"
         >

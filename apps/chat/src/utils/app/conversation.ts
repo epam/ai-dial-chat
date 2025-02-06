@@ -181,8 +181,8 @@ export const isValidConversationForCompare = (
   dontCompareNames?: boolean,
 ): boolean => {
   if (
-    candidate.isReplay ||
-    candidate.isPlayback ||
+    isReplayConversation(candidate) ||
+    isPlaybackConversation(candidate) ||
     isEntityIdLocal(candidate) ||
     isEntityNameOrPathInvalid(candidate)
   ) {
@@ -206,8 +206,8 @@ export const isChosenConversationValidForCompare = (
 ): boolean => {
   if (
     chosenSelection.status !== UploadStatus.LOADED ||
-    chosenSelection.replay?.isReplay ||
-    chosenSelection.playback?.isPlayback
+    isReplayConversation(chosenSelection) ||
+    isPlaybackConversation(chosenSelection)
   ) {
     return false;
   }
@@ -331,9 +331,8 @@ export const getConversationModelParams = (
         replayAsIs: false,
       };
   const updatedAddons =
-    conversation.replay &&
-    conversation.replay.isReplay &&
-    conversation.replay.replayAsIs &&
+    isReplayConversation(conversation) &&
+    isReplayAsIsConversation(conversation) &&
     !updatedReplay?.replayAsIs
       ? conversation.selectedAddons.filter((addonId) => addonsMap[addonId])
       : conversation.selectedAddons;
@@ -379,3 +378,16 @@ export const isOldConversationReplay = (replay: Replay | undefined) =>
   replay.isReplay &&
   replay.replayUserMessagesStack &&
   replay.replayUserMessagesStack.some((message) => !message.model);
+
+export const isPlaybackConversation = (conversation: ConversationInfo) =>
+  (conversation as Conversation).playback?.isPlayback ??
+  conversation.isPlayback ??
+  false;
+
+export const isReplayConversation = (conversation: ConversationInfo) =>
+  (conversation as Conversation).replay?.isReplay ??
+  conversation.isReplay ??
+  false;
+
+export const isReplayAsIsConversation = (conversation: ConversationInfo) =>
+  (conversation as Conversation).replay?.replayAsIs ?? false;

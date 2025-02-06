@@ -42,9 +42,8 @@ export const FooterMessage = () => {
           dangerouslySetInnerHTML={{ __html: footerHtmlMessage || '' }}
         ></span>
       </div>
-      {enabledFeatures.has(Feature.RequestApiKey) && (
+      {enabledFeatures.has(Feature.RequestApiKey) && isRequestAPIDialogOpen && (
         <RequestAPIKeyDialog
-          isOpen={isRequestAPIDialogOpen}
           onClose={() => {
             setIsRequestAPIDialogOpen(false);
             window.location.hash = '';
@@ -52,16 +51,16 @@ export const FooterMessage = () => {
           }}
         />
       )}
-      {enabledFeatures.has(Feature.ReportAnIssue) && (
-        <ReportIssueDialog
-          isOpen={isReportIssueDialogOpen}
-          onClose={() => {
-            setIsReportIssueDialogOpen(false);
-            window.location.hash = '';
-            resetHash();
-          }}
-        />
-      )}
+      {enabledFeatures.has(Feature.ReportAnIssue) &&
+        isReportIssueDialogOpen && (
+          <ReportIssueDialog
+            onClose={() => {
+              setIsReportIssueDialogOpen(false);
+              window.location.hash = '';
+              resetHash();
+            }}
+          />
+        )}
     </div>
   ) : null;
 };
