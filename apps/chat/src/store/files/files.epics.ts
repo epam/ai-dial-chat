@@ -17,6 +17,7 @@ import { combineEpics } from 'redux-observable';
 
 import { FileService } from '@/src/utils/app/data/file-service';
 import { getDownloadPath, triggerDownload } from '@/src/utils/app/file';
+import { getFileRootId } from '@/src/utils/app/id';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -122,6 +123,7 @@ const getFilesEpic: AppEpic = (action$) =>
         map((files) =>
           FilesActions.getFilesSuccess({
             files,
+            foldersSet: new Set([payload.id ?? getFileRootId()]),
           }),
         ),
         catchError(() => of(FilesActions.getFilesFail())),

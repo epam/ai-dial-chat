@@ -915,7 +915,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
 
           payload.resources.entities.length &&
             actions.push(
-              FilesActions.addFiles({
+              FilesActions.addSharedFiles({
                 files: payload.resources.entities
                   // do not override selected files
                   .filter((res) => !selectedFilesIds.includes(res.id))
