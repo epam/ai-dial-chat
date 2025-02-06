@@ -138,14 +138,18 @@ export const TalkToCard = ({
 
   const PlayerContextIcon = PlayerContextIcons[playerStatus];
 
-  const handleUpdateFunctionStatus = useCallback(() => {
-    dispatch(
-      ApplicationActions.startUpdatingFunctionStatus({
-        id: entity.id,
-        status: getApplicationNextStatus(entity),
-      }),
-    );
-  }, [dispatch, entity]);
+  const handleUpdateFunctionStatus = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      dispatch(
+        ApplicationActions.startUpdatingFunctionStatus({
+          id: entity.id,
+          status: getApplicationNextStatus(entity),
+        }),
+      );
+    },
+    [dispatch, entity],
+  );
 
   const handleSelectVersion = useCallback(
     (model: DialAIEntityModel) => {
@@ -154,17 +158,24 @@ export const TalkToCard = ({
     [onSelectVersion],
   );
 
-  const handleOpenSharing = useCallback(() => {
-    dispatch(
-      ShareActions.share({
-        featureType: FeatureType.Application,
-        resourceId: entity.id,
-      }),
-    );
-  }, [dispatch, entity.id]);
+  const handleOpenSharing = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      dispatch(
+        ShareActions.share({
+          featureType: FeatureType.Application,
+          resourceId: entity.id,
+        }),
+      );
+    },
+    [dispatch, entity.id],
+  );
 
   const handleOpenUnshare = useCallback(
-    () => dispatch(ShareActions.setUnshareEntity(entity)),
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      dispatch(ShareActions.setUnshareEntity(entity));
+    },
     [dispatch, entity],
   );
 
@@ -180,10 +191,7 @@ export const TalkToCard = ({
           isCodeAppsEnabled,
         Icon: PlayerContextIcon,
         iconClassName: PlayerContextIconClasses[playerStatus],
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          handleUpdateFunctionStatus();
-        },
+        onClick: handleUpdateFunctionStatus,
       },
       {
         name: t('Edit'),
@@ -200,20 +208,14 @@ export const TalkToCard = ({
         dataQa: 'share',
         display: isMyEntity && isApplicationsSharingEnabled,
         Icon: IconUserShare,
-        onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
-          e.stopPropagation();
-          handleOpenSharing();
-        },
+        onClick: handleOpenSharing,
       },
       {
         name: t('Unshare'),
         dataQa: 'unshare',
         display: !!entity.sharedWithMe && isApplicationsSharingEnabled,
         Icon: IconUserUnshare,
-        onClick: (e: React.MouseEvent) => {
-          handleOpenUnshare();
-          e.stopPropagation();
-        },
+        onClick: handleOpenUnshare,
       },
       {
         name: t('Publish'),
