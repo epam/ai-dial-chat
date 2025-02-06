@@ -313,7 +313,6 @@ dialTest(
     temperatureSlider,
     agentSettings,
     addons,
-    marketplacePage,
     conversations,
     conversationDropdownMenu,
     conversationSettingsModal,
@@ -418,7 +417,7 @@ dialTest(
       async () => {
         await conversations.selectConversation(thirdConversationToShare.name);
         await chatHeader.chatAgent.click();
-        await talkToAgentDialog.selectAgent(randomModel, marketplacePage);
+        await talkToAgentDialog.selectRecentAgent(randomModel);
         await conversationAssertion.assertEntityArrowIconState(
           { name: newName },
           'visible',

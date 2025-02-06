@@ -666,7 +666,6 @@ dialSharedWithMeTest(
         await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserSharedWithMeConversations.selectConversation(
           conversationWithTwoRequestsWithAttachments.name,
-          undefined,
           { isHttpMethodTriggered: true },
         );
 
@@ -697,7 +696,6 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserSharedWithMeConversations.selectConversation(
           conversationWithTwoResponsesWithAttachments.name,
-          undefined,
           { isHttpMethodTriggered: true },
         );
 
@@ -738,7 +736,6 @@ dialSharedWithMeTest(
 
         await additionalShareUserSharedWithMeConversations.selectConversation(
           user1ConversationInFolder.name,
-          undefined,
           { isHttpMethodTriggered: true },
         );
 
