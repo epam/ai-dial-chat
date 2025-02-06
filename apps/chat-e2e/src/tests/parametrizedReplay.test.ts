@@ -99,9 +99,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name, {
-          isHttpMethodTriggered: true,
-        });
+        await conversations.selectConversation(replayConversation.name);
         await chat.replay.click();
         await variableModalAssertion.assertVariableModalState('visible');
       },
@@ -256,9 +254,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name, {
-          isHttpMethodTriggered: true,
-        });
+        await conversations.selectConversation(replayConversation.name);
         await chat.changeAgentButton.click();
         await talkToAgentDialog.selectAgent(randomModel, marketplacePage);
         await chat.replay.click();
@@ -369,9 +365,7 @@ dialSharedWithMeTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name, {
-          isHttpMethodTriggered: true,
-        });
+        await conversations.selectConversation(replayConversation.name);
         await chat.proceedReplaying();
         await variableModalAssertion.assertVariableModalState('hidden');
       },

@@ -429,9 +429,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(playbackConversation.name, {
-          isHttpMethodTriggered: true,
-        });
+        await conversations.selectConversation(playbackConversation.name);
         await conversations.openEntityDropdownMenu(playbackConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
         exportedData = await dialHomePage.downloadData(
@@ -578,9 +576,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name, {
-          isHttpMethodTriggered: true,
-        });
+        await conversations.selectConversation(replayConversation.name);
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
         exportedData = await dialHomePage.downloadData(

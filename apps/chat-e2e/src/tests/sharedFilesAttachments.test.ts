@@ -415,7 +415,6 @@ dialSharedWithMeTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(
           conversationWithSpecialChars.name,
-          { isHttpMethodTriggered: true },
         );
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
@@ -448,7 +447,6 @@ dialSharedWithMeTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(
           conversationWithSpecialChars.name,
-          { isHttpMethodTriggered: true },
         );
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
@@ -668,6 +666,7 @@ dialSharedWithMeTest(
         await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserSharedWithMeConversations.selectConversation(
           conversationWithTwoRequestsWithAttachments.name,
+          undefined,
           { isHttpMethodTriggered: true },
         );
 
@@ -698,6 +697,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserSharedWithMeConversations.selectConversation(
           conversationWithTwoResponsesWithAttachments.name,
+          undefined,
           { isHttpMethodTriggered: true },
         );
 
@@ -738,6 +738,7 @@ dialSharedWithMeTest(
 
         await additionalShareUserSharedWithMeConversations.selectConversation(
           user1ConversationInFolder.name,
+          undefined,
           { isHttpMethodTriggered: true },
         );
 

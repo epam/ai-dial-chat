@@ -66,9 +66,7 @@ dialTest(
     await dialTest.step('Open start page', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await conversations.selectConversation(secondConversation.name, {
-        isHttpMethodTriggered: true,
-      });
+      await conversations.selectConversation(secondConversation.name);
     });
 
     await dialTest.step('Hover over chat1', async () => {

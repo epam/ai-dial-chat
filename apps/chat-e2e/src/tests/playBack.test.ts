@@ -438,9 +438,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(playbackConversation.name, {
-          isHttpMethodTriggered: true,
-        });
+        await conversations.selectConversation(playbackConversation.name);
         await conversations
           .getEntityByName(playbackConversation.name)
           .waitFor();
@@ -696,9 +694,7 @@ dialTest(
           iconsToBeLoaded: [defaultModel!.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(playbackConversation.name, {
-          isHttpMethodTriggered: true,
-        });
+        await conversations.selectConversation(playbackConversation.name);
         await chatHeader.leavePlaybackMode.click();
         await expect
           .soft(
@@ -769,9 +765,7 @@ dialTest(
     await dialTest.step('Verify playback next message has scroll', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await conversations.selectConversation(playbackConversation.name, {
-        isHttpMethodTriggered: true,
-      });
+      await conversations.selectConversation(playbackConversation.name);
       await conversations.getEntityByName(playbackConversation.name).waitFor();
       await chat.playNextChatMessage();
       const isPlaybackNextMessageScrollable = await playbackControl
