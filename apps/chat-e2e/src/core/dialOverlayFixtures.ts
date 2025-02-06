@@ -30,13 +30,17 @@ import {
 } from '@/src/assertions';
 import { OverlayAssertion } from '@/src/assertions/overlay/overlayAssertion';
 import test from '@/src/core/baseFixtures';
+import { LocalStorageManager } from '@/src/core/localStorageManager';
+import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
   FileApiHelper,
   IconApiHelper,
   ItemApiHelper,
   PublicationApiHelper,
+  ShareApiHelper,
 } from '@/src/testData/api';
 import { ApiInjector } from '@/src/testData/injector/apiInjector';
+import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 import { OverlayHomePage } from '@/src/ui/pages/overlay/overlayHomePage';
 import { OverlayMarketplacePage } from '@/src/ui/pages/overlay/overlayMarketplacePage';
@@ -48,11 +52,15 @@ import {
 import { ReportAnIssueModal } from '@/src/ui/webElements/footer/reportAnIssueModal';
 import { RequestApiKeyModal } from '@/src/ui/webElements/footer/requestApiKeyModal';
 import { Header } from '@/src/ui/webElements/header';
+import { Actions } from '@/src/ui/webElements/overlay/actions';
+import { Configuration } from '@/src/ui/webElements/overlay/configuration';
+import { Dialog } from '@/src/ui/webElements/overlay/dialog';
 import { ProfilePanel } from '@/src/ui/webElements/overlay/profilePanel';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { SettingsModal } from '@/src/ui/webElements/settingsModal';
 import { ShareModal } from '@/src/ui/webElements/shareModal';
 import { BucketUtil } from '@/src/utils';
+import { Page } from '@playwright/test';
 import path from 'path';
 import { APIRequestContext } from 'playwright-core';
 import * as process from 'process';
@@ -106,8 +114,19 @@ const dialOverlayTest = test.extend<{
   overlayAssertion: OverlayAssertion;
   overlayConversationAssertion: ConversationAssertion;
   overlayPromptAssertion: PromptAssertion;
+  overlayShareApiHelper: ShareApiHelper;
   adminUserRequestContext: APIRequestContext;
   adminPublicationApiHelper: PublicationApiHelper;
+  adminShareApiHelper: ShareApiHelper;
+  adminItemApiHelper: ItemApiHelper;
+  adminApiInjector: ApiInjector;
+  adminBrowserStorageInjector: BrowserStorageInjector;
+  adminPage: Page;
+  adminLocalStorageManager: LocalStorageManager;
+  adminDataInjector: DataInjectorInterface;
+  overlayActions: Actions;
+  overlayConfiguration: Configuration;
+  overlayDialog: Dialog;
 }>({
   // eslint-disable-next-line no-empty-pattern
   storageState: async ({}, use) => {
@@ -354,6 +373,10 @@ const dialOverlayTest = test.extend<{
     const promptAssertion = new PromptAssertion(overlayPrompts);
     await use(promptAssertion);
   },
+  overlayShareApiHelper: async ({ request }, use) => {
+    const overlayShareApiHelper = new ShareApiHelper(request);
+    await use(overlayShareApiHelper);
+  },
   adminUserRequestContext: async ({ playwright }, use) => {
     const adminUserRequestContext = await playwright.request.newContext({
       storageState: overlayStateFilePath(+config.workers!),
@@ -366,6 +389,60 @@ const dialOverlayTest = test.extend<{
       BucketUtil.getAdminUserBucket(),
     );
     await use(adminPublicationApiHelper);
+  },
+  adminShareApiHelper: async ({ adminUserRequestContext }, use) => {
+    const adminShareApiHelper = new ShareApiHelper(adminUserRequestContext);
+    await use(adminShareApiHelper);
+  },
+  adminItemApiHelper: async ({ adminUserRequestContext }, use) => {
+    const adminItemApiHelper = new ItemApiHelper(
+      adminUserRequestContext,
+      BucketUtil.getAdminUserBucket(),
+    );
+    await use(adminItemApiHelper);
+  },
+  adminApiInjector: async ({ adminItemApiHelper }, use) => {
+    const adminApiInjector = new ApiInjector(adminItemApiHelper);
+    await use(adminApiInjector);
+  },
+  adminPage: async ({ browser }, use) => {
+    const context = await browser.newContext({
+      storageState: overlayStateFilePath(+config.workers!),
+    });
+    const adminPage = await context.newPage();
+    await use(adminPage);
+    await context.close();
+  },
+  adminLocalStorageManager: async ({ adminPage }, use) => {
+    const adminLocalStorageManager = new LocalStorageManager(adminPage);
+    await use(adminLocalStorageManager);
+  },
+  adminBrowserStorageInjector: async ({ adminLocalStorageManager }, use) => {
+    const adminBrowserStorageInjector = new BrowserStorageInjector(
+      adminLocalStorageManager,
+    );
+    await use(adminBrowserStorageInjector);
+  },
+  adminDataInjector: async (
+    { adminApiInjector, adminBrowserStorageInjector },
+    use,
+  ) => {
+    const adminDataInjector = isApiStorageType
+      ? adminApiInjector
+      : adminBrowserStorageInjector;
+    await use(adminDataInjector);
+  },
+  overlayActions: async ({ overlayHomePage }, use) => {
+    const overlayActions = overlayHomePage.getActions();
+    await use(overlayActions);
+  },
+  overlayConfiguration: async ({ overlayHomePage }, use) => {
+    const overlayConfiguration = overlayHomePage.getConfiguration();
+    await use(overlayConfiguration);
+  },
+  overlayDialog: async ({ page }, use) => {
+    const overlayDialog = new Dialog(page);
+    await use(overlayDialog);
   },
 });
 

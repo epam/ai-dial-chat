@@ -20,7 +20,10 @@ import {
   isApplicationStatusUpdating,
   isExecutableApp,
 } from '@/src/utils/app/application';
-import { isOldConversationReplay } from '@/src/utils/app/conversation';
+import {
+  isOldConversationReplay,
+  isPlaybackConversation,
+} from '@/src/utils/app/conversation';
 import { isMyApplication } from '@/src/utils/app/id';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
@@ -339,7 +342,7 @@ export const TalkToCard = ({
             <div className="flex items-center">
               <p className="mr-1 text-xs text-secondary">{t('Version')}: </p>
               <ModelVersionSelect
-                readonly={conversation.playback?.isPlayback}
+                readonly={isPlaybackConversation(conversation)}
                 className="h-max truncate text-xs"
                 entities={versionsToSelect}
                 onSelect={handleSelectVersion}
