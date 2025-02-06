@@ -40,11 +40,10 @@ function transformDateString(dateString: string): string {
 }
 
 interface Props {
-  isOpen: boolean;
   onClose: () => void;
 }
 
-export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
+export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
   const { t } = useTranslation(Translation.Settings);
 
   const dispatch = useAppDispatch();
@@ -218,7 +217,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
     <Modal
       initialFocus={projectNameInputRef}
       portalId="theme-main"
-      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
+      state={ModalState.OPENED}
       onClose={handleClose}
       dataQa="request-api-key-dialog"
       overlayClassName="fixed inset-0"

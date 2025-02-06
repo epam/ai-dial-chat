@@ -25,19 +25,11 @@ import { ShareActions, ShareSelectors } from '@/src/store/share/share.reducers';
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
 import { Modal } from '../Common/Modal';
+import { withRenderWhen } from '../Common/RenderWhen';
 import Tooltip from '../Common/Tooltip';
 
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { SharePermission } from '@epam/ai-dial-shared';
-
-export const ShareModal = () => {
-  const isShareModalClosed = useAppSelector(
-    ShareSelectors.selectShareModalClosed,
-  );
-  if (!isShareModalClosed) {
-    return <ShareModalView />;
-  }
-};
 
 interface ShareAccessOptionProps {
   filterValue: string;
@@ -45,11 +37,11 @@ interface ShareAccessOptionProps {
   onSelect: (value: boolean) => void;
 }
 
-const ShareAccessOption = ({
+function ShareAccessOption({
   filterValue,
   selected,
   onSelect,
-}: ShareAccessOptionProps) => {
+}: ShareAccessOptionProps) {
   return (
     <label
       className="relative flex size-[18px] w-full shrink-0 cursor-pointer items-center"
@@ -68,9 +60,9 @@ const ShareAccessOption = ({
       <span className="ml-2 whitespace-nowrap text-sm">{filterValue}</span>
     </label>
   );
-};
+}
 
-export default function ShareModalView() {
+export function ShareModalView() {
   const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
 
@@ -260,3 +252,7 @@ export default function ShareModalView() {
     </Modal>
   );
 }
+
+export const ShareModal = withRenderWhen(ShareSelectors.selectShareModalOpened)(
+  ShareModalView,
+);

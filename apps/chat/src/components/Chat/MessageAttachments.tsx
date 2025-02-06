@@ -6,9 +6,9 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import ChevronDown from '../../../public/images/icons/chevron-down.svg';
 import { MessageAttachment } from './MessageAttachment';
 
+import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import { Attachment } from '@epam/ai-dial-shared';
 
 interface Props {

@@ -10,12 +10,12 @@ import { useAppSelector } from '@/src/store/hooks';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 
-import ChevronDown from '../../../public/images/icons/chevron-down.svg';
-import CircleCheck from '../../../public/images/icons/circle-check.svg';
 import { Spinner } from '../Common/Spinner';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { MessageAttachments } from './MessageAttachments';
 
+import ChevronDown from '@/public/images/icons/chevron-down.svg';
+import CircleCheck from '@/public/images/icons/circle-check.svg';
 import { Stage } from '@epam/ai-dial-shared';
 
 interface StageTitleProps {
