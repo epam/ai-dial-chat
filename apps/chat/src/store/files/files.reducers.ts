@@ -416,7 +416,7 @@ export const filesSlice = createSlice({
       state,
       { payload }: PayloadAction<{ files: DialFile[] }>,
     ) => {
-      //remove sharedWithMe files from state
+      //remove sharedWithMe files from state to have latest state from API
       const filteredFiles = state.files.filter((file) => !file.sharedWithMe);
       state.files = combineEntities(payload.files, filteredFiles);
     },
