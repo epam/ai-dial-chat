@@ -216,12 +216,10 @@ export const getApplicationPublishResources = ({
   publishAction,
   path,
   applicationDetails,
-  selectedIds,
 }: {
   entity: PublishRequestDialAIEntityModel;
   publishAction: PublishActions;
   path: string;
-  selectedIds: string[];
   applicationDetails?: CustomApplicationModel;
 }) => {
   const iconUrl = entity.iconUrl;
@@ -229,7 +227,7 @@ export const getApplicationPublishResources = ({
 
   const resources = [
     iconUrl && !isEntityIdExternal({ id: iconUrl }) ? iconUrl : undefined,
-    documentUrl && selectedIds.includes(documentUrl) ? documentUrl : undefined,
+    documentUrl,
   ];
 
   return resources.reduce(
