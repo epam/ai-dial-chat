@@ -19,8 +19,7 @@ dialTest.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultModel()!;
 });
 
-//need to update the test
-dialTest.skip(
+dialTest(
   'Replay after Stop generating.\n' +
     'Share menu item is not available for the chat in Replay mode.\n' +
     'No Edit, Delete and Clear buttons when chat is in replay mode.\n' +

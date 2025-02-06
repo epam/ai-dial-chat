@@ -12,7 +12,7 @@ export interface ApplicationTypesSchemasState {
   schemasLoading: UploadStatus;
   schemaDetailsLoading: UploadStatus;
   schemas: ApplicationTypeSchema[];
-  selectedSchema: any | undefined;
+  selectedSchema: ApplicationTypeSchema | undefined;
 }
 
 const initialState: ApplicationTypesSchemasState = {

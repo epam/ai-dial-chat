@@ -16,8 +16,7 @@ dialTest.beforeAll(async () => {
   modelsWithAttachments = ModelsUtil.getLatestModelsWithAttachment();
 });
 
-//need to update the test
-dialTest.skip(
+dialTest(
   'Clip icon does not exist while editing user message in chat history when the functionality is unavailable for the model',
   async ({
     dialHomePage,
@@ -86,8 +85,7 @@ dialTest.skip(
   },
 );
 
-//need to update the test
-dialTest.skip(
+dialTest(
   'Change attached files in message box.\n' +
     'Delete attachment on x from message box',
   async ({

@@ -204,8 +204,7 @@ dialTest(
   },
 );
 
-//need to update the test
-dialTest.skip(
+dialTest(
   'Default model in new chat is set as in previous chat.\n' +
     'Send button is disabled if the message box is empty.\n' +
     'Chat name is shown in chat header.\n' +
@@ -334,7 +333,7 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Settings on default screen are not saved in local storage when temperature = 0',
   async ({
     dialHomePage,
@@ -395,8 +394,7 @@ dialTest.skip(
   },
 );
 
-//need to update the test
-dialTest.skip(
+dialTest(
   'Recent "Talk to" list is updated',
   async ({
     dialHomePage,
@@ -438,8 +436,7 @@ dialTest.skip(
   },
 );
 
-//need to update the test
-dialTest.skip(
+dialTest(
   'Search "Talk to" item in "See full list..."',
   async ({
     dialHomePage,

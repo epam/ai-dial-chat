@@ -11,8 +11,7 @@ dialTest.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultModel()!;
 });
 
-//need to update the test
-dialTest.skip(
+dialTest(
   'Model settings opened in chat are the same as on New chat defaults',
   async ({
     dialHomePage,

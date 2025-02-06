@@ -321,8 +321,7 @@ dialTest(
   },
 );
 
-//need to update the test
-dialTest.skip(
+dialTest(
   'System prompt is applied in Model',
   async ({
     dialHomePage,

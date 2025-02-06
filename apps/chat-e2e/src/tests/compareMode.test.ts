@@ -715,8 +715,7 @@ dialTest(
   },
 );
 
-//need to update the test
-dialTest.skip(
+dialTest(
   'Apply changes with new settings for both chats in compare mode and check chat headers',
   async ({
     dialHomePage,

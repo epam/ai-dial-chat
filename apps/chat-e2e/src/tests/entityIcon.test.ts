@@ -11,8 +11,7 @@ dialTest.beforeAll(async () => {
   simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
 });
 
-//need to update test
-dialTest.skip(
+dialTest(
   '"Talk to" icons on See full list screen.\n' +
     'Addon icons on See full addons screen',
   async ({

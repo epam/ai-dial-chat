@@ -4,8 +4,7 @@ import { API, Attachment, ExpectedMessages } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
-//need to update the test
-dialTest.skip(
+dialTest(
   'Generated in response picture appears in Manage attachments',
   async ({
     dialHomePage,

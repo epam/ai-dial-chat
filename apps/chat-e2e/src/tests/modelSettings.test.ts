@@ -15,8 +15,7 @@ dialTest.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultModel()!;
 });
 
-//need to update the test
-dialTest.skip(
+dialTest(
   'Selected settings are saved if to switch from Model1 to Model2',
   async ({
     dialHomePage,
