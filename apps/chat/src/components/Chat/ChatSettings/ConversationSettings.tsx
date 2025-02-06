@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isPlaybackConversation } from '@/src/utils/app/conversation';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import {
   doesModelAllowAddons,
@@ -97,7 +98,7 @@ export const ConversationSettings = Inversify.register(
     const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
     const model = modelsMap[conversation.model.id];
-    const isPlayback = !!conversation.playback?.isPlayback;
+    const isPlayback = isPlaybackConversation(conversation);
 
     if (!model) {
       return (

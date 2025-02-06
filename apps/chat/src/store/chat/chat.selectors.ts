@@ -7,25 +7,17 @@ import { DialSchemaProperties } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState): ChatState => state.chat;
 
-export const selectInputContent = createSelector(
-  [rootSelector],
-  (state) => state.inputContent,
-);
+export const selectInputContent = (state: RootState) =>
+  rootSelector(state).inputContent;
 
-export const selectChatFormValue = createSelector(
-  [rootSelector],
-  (state) => state.formValue,
-);
+export const selectChatFormValue = (state: RootState) =>
+  rootSelector(state).formValue;
 
-export const selectConfigurationSchema = createSelector(
-  [rootSelector],
-  (state) => state.configurationSchema,
-);
+export const selectConfigurationSchema = (state: RootState) =>
+  rootSelector(state).configurationSchema;
 
-export const selectIsConfigurationSchemaLoading = createSelector(
-  [rootSelector],
-  (state) => state.isConfigurationSchemaLoading,
-);
+export const selectIsConfigurationSchemaLoading = (state: RootState) =>
+  rootSelector(state).isConfigurationSchemaLoading;
 
 export const selectIsConfigurationBlocksInput = createSelector(
   [rootSelector],

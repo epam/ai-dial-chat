@@ -5,6 +5,7 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
+import { isPlaybackConversation } from '@/src/utils/app/conversation';
 
 import { Conversation } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
@@ -83,7 +84,7 @@ export const AssistantMessage = memo(function AssistantMessage({
           )}
         {!(
           conversation.isMessageStreaming &&
-          conversation.playback?.isPlayback &&
+          isPlaybackConversation(conversation) &&
           isLastMessage
         ) && (
           <MessageAttachments

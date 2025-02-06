@@ -17,7 +17,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { SendMessageButton } from '@/src/components/Chat/ChatInput/SendMessageButton';
 import Tooltip from '@/src/components/Common/Tooltip';
 
-import RefreshCW from '../../../../public/images/icons/refresh-cw.svg';
+import RefreshCW from '@/public/images/icons/refresh-cw.svg';
 
 interface Props {
   showReplayControls: boolean;

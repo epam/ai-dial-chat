@@ -46,7 +46,6 @@ import {
 
 import { Modal } from '@/src/components/Common/Modal';
 
-import FolderPlus from '../../../public/images/icons/folder-plus.svg';
 import CollapsibleSection from '../Common/CollapsibleSection';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { ErrorMessage } from '../Common/ErrorMessage';
@@ -58,6 +57,7 @@ import Folder from '../Folder/Folder';
 import { FileItem, FileItemEventIds } from './FileItem';
 import { PreUploadDialog } from './PreUploadModal';
 
+import FolderPlus from '@/public/images/icons/folder-plus.svg';
 import uniq from 'lodash-es/uniq';
 
 interface FilesSectionProps {

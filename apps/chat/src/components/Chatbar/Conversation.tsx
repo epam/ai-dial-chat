@@ -17,6 +17,10 @@ import {
   isEntityNameInvalid,
   isEntityNameOrPathInvalid,
 } from '@/src/utils/app/common';
+import {
+  isPlaybackConversation,
+  isReplayConversation,
+} from '@/src/utils/app/conversation';
 import { getEntityNameError } from '@/src/utils/app/errors';
 import { isEntityIdExternal } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
@@ -101,6 +105,8 @@ export function ConversationView({
   const iconSize = additionalItemData?.isSidePanelItem ? 24 : 18;
   const strokeWidth = additionalItemData?.isSidePanelItem ? 1.5 : 2;
   const isExternal = isEntityIdExternal(conversation);
+  const isReplay = isReplayConversation(conversation);
+  const isPlayback = isPlaybackConversation(conversation);
 
   return (
     <>
@@ -149,19 +155,19 @@ export function ConversationView({
             )}
           />
         )}
-        {conversation.isReplay && (
+        {isReplay && (
           <span className="flex shrink-0">
             <ReplayAsIsIcon size={iconSize} />
           </span>
         )}
 
-        {conversation.isPlayback && (
+        {isPlayback && (
           <span className="flex shrink-0">
             <PlaybackIcon strokeWidth={strokeWidth} size={iconSize} />
           </span>
         )}
 
-        {!conversation.isReplay && !conversation.isPlayback && (
+        {!isReplay && !isPlayback && (
           <ModelIcon
             size={iconSize}
             entityId={conversation.model.id}
