@@ -17,6 +17,8 @@ import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import {
   excludeSystemMessages,
   getConversationModelParams,
+  isReplayAsIsConversation,
+  isReplayConversation,
 } from '@/src/utils/app/conversation';
 import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
 import { isSmallScreen } from '@/src/utils/app/mobile';
@@ -170,11 +172,10 @@ export const ChatView = memo(() => {
       (models.length === 0 ||
         selectedConversations.some((conv) => {
           if (
-            conv.replay &&
-            conv.replay.isReplay &&
-            conv.replay.replayAsIs &&
-            conv.replay.replayUserMessagesStack &&
-            conv.replay.replayUserMessagesStack[0].model
+            isReplayConversation(conv) &&
+            isReplayAsIsConversation(conv) &&
+            conv.replay?.replayUserMessagesStack &&
+            conv.replay?.replayUserMessagesStack[0].model
           ) {
             return conv.replay.replayUserMessagesStack.some(
               (message) =>

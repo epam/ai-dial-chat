@@ -21,10 +21,10 @@ export const selectWriteInvitationId = createSelector(
 export const selectShareModalState = createSelector([rootSelector], (state) => {
   return state.shareModalState;
 });
-export const selectShareModalClosed = createSelector(
+export const selectShareModalOpened = createSelector(
   [rootSelector],
   (state) => {
-    return state.shareModalState === ModalState.CLOSED;
+    return state.shareModalState !== ModalState.CLOSED;
   },
 );
 
