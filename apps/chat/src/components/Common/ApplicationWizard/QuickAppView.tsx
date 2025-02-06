@@ -12,6 +12,7 @@ import {
 
 import { CustomApplicationModel } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
+import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
@@ -51,6 +52,8 @@ const ToolsetEditor = withErrorMessage(withLabel(Editor));
 const Slider = withLabel(TemperatureSlider, true);
 const ControlledField = withController(Field);
 const ModelsSelectorField = withErrorMessage(withLabel(ModelsSelector));
+
+const myFilesFilter = new Set([FileSourceType.MY_FILES]);
 
 export const QuickAppView: React.FC<ViewProps> = ({
   onClose,
@@ -242,6 +245,7 @@ export const QuickAppView: React.FC<ViewProps> = ({
               allowedTypes={['*/*']}
               disabled={isSharedWithMe}
               tooltip={isSharedWithMe ? getSharedTooltip('file') : ''}
+              sourceFilters={myFilesFilter}
             />
           )}
         />

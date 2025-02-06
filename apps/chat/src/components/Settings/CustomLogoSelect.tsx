@@ -5,6 +5,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import Tooltip from '../Common/Tooltip';
@@ -21,6 +22,7 @@ interface CustomLogoSelectProps {
   allowedTypes?: string[];
   disabled?: boolean;
   tooltip?: string;
+  sourceFilters?: Set<FileSourceType>;
 }
 
 export const CustomLogoSelect = ({
@@ -34,6 +36,7 @@ export const CustomLogoSelect = ({
   allowedTypes,
   disabled,
   tooltip,
+  sourceFilters,
 }: CustomLogoSelectProps) => {
   const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
     useState(false);
@@ -98,6 +101,7 @@ export const CustomLogoSelect = ({
           customButtonLabel={t('Select file')}
           customUploadButtonLabel={t('Upload files')}
           forceShowSelectCheckBox
+          sourceFilters={sourceFilters}
         />
       )}
     </div>
