@@ -27,6 +27,10 @@ import {
   isEntityNameOnSameLevelUnique,
   prepareEntityName,
 } from '@/src/utils/app/common';
+import {
+  isPlaybackConversation,
+  isReplayConversation,
+} from '@/src/utils/app/conversation';
 import { getEntityNameError } from '@/src/utils/app/errors';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
@@ -321,8 +325,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
     return (sortedItems as (ConversationInfo & Partial<Conversation>)[]).filter(
       (item) =>
-        item.isPlayback ||
-        (!item.isReplay && (item.messages?.length || !item.messages)),
+        isPlaybackConversation(item) ||
+        (!isReplayConversation(item) &&
+          (item.messages?.length || !item.messages)),
     );
   }, [
     allItemsWithoutFilters,
@@ -1145,8 +1150,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     onUnshare={handleUnshare}
                     onPublish={
                       featureType !== FeatureType.Chat ||
-                      !allChildItems.every(
-                        (item) => (item as ConversationInfo).isReplay,
+                      !allChildItems.every((item) =>
+                        isReplayConversation(item as ConversationInfo),
                       )
                         ? handleOpenPublishing
                         : undefined

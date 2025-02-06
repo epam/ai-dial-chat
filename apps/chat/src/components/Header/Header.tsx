@@ -20,14 +20,14 @@ import {
   OVERLAY_HEADER_ICON_SIZE,
 } from '@/src/constants/default-ui-settings';
 
-import MoveLeftIcon from '../../../public/images/icons/move-left.svg';
-import MoveRightIcon from '../../../public/images/icons/move-right.svg';
 import Tooltip from '../Common/Tooltip';
 import { SettingDialog } from '../Settings/SettingDialog';
 import { CreateNewConversation } from './CreateNewConversation';
 import { Logo } from './Logo';
 import { User } from './User/User';
 
+import MoveLeftIcon from '@/public/images/icons/move-left.svg';
+import MoveRightIcon from '@/public/images/icons/move-right.svg';
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature } from '@epam/ai-dial-shared';
 

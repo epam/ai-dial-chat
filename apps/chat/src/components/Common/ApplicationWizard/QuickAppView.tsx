@@ -169,8 +169,9 @@ export const QuickAppView: React.FC<ViewProps> = ({
         );
 
         handleEdit(confirmSharingRevoke?.data);
-        setConfirmSharingRevoke(undefined);
       }
+
+      setConfirmSharingRevoke(undefined);
     },
     [confirmSharingRevoke?.data, dispatch, handleEdit, selectedApplication?.id],
   );

@@ -65,6 +65,7 @@ export const getOrUploadConversation = <T extends { id: string }>(
 ): Observable<{
   conversation: Conversation | null;
   payload: T;
+  wasUploaded: boolean;
 }> => {
   const conversation = ConversationsSelectors.selectConversation(
     state,
@@ -84,11 +85,13 @@ export const getOrUploadConversation = <T extends { id: string }>(
         }),
       ),
       payload: of(payload),
+      wasUploaded: of(true),
     });
   } else {
-    return forkJoin({
-      conversation: of((conversation as Conversation) ?? null),
-      payload: of(payload),
+    return of({
+      conversation: (conversation as Conversation) ?? null,
+      payload: payload,
+      wasUploaded: false,
     });
   }
 };

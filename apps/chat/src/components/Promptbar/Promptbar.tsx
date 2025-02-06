@@ -26,9 +26,10 @@ import { PromptModal } from './components/PromptModal';
 import { PromptbarSettings } from './components/PromptbarSettings';
 import { Prompts } from './components/Prompts';
 
-import PlusIcon from '../../../public/images/icons/plus-large.svg';
 import Tooltip from '../Common/Tooltip';
 import Sidebar from '../Sidebar';
+
+import PlusIcon from '@/public/images/icons/plus-large.svg';
 
 const PromptActionsBlock = () => {
   const { t } = useTranslation(Translation.PromptBar);
