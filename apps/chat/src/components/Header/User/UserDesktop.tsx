@@ -13,10 +13,9 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
-import ChevronDownIcon from '../../../../public/images/icons/chevron-down.svg';
-import LogOutIcon from '../../../../public/images/icons/log-out.svg';
-import UserIcon from '../../../../public/images/icons/user.svg';
-
+import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
+import LogOutIcon from '@/public/images/icons/log-out.svg';
+import UserIcon from '@/public/images/icons/user.svg';
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 
 export const UserDesktop = Inversify.register('UserDesktop', () => {
