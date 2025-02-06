@@ -1,19 +1,19 @@
 import { IconCheck, IconLink } from '@tabler/icons-react';
-import { MouseEvent, useCallback, useMemo, useRef, useState } from 'react';
+import { MouseEvent, useCallback, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { PageType } from '@/src/types/common';
-import { Translation } from '@/src/types/translation';
+import { getApplicationLink } from '@/src/utils/marketplace';
 
-import { MarketplaceQueryParams } from '@/src/constants/marketplace';
+import { DialAIEntityModel } from '@/src/types/models';
+import { Translation } from '@/src/types/translation';
 
 import Tooltip from '../../Common/Tooltip';
 
 interface ApplicationCopyLinkProps {
-  reference: string;
+  entity: DialAIEntityModel;
   size?: number;
   withText?: boolean;
   hasTooltip?: boolean;
@@ -24,7 +24,7 @@ const TRIGGER_CLASS =
   'flex items-center gap-2 whitespace-nowrap px-3 py-1.5 text-sm text-accent-primary outline-none';
 
 export function ApplicationCopyLink({
-  reference,
+  entity,
   size = 20,
   withText,
   hasTooltip,
@@ -33,11 +33,7 @@ export function ApplicationCopyLink({
   const { t } = useTranslation(Translation.Marketplace);
   const [urlCopied, setUrlCopied] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
-  const link = useMemo(
-    () =>
-      `${window.location.origin}/${PageType.Marketplace}?${MarketplaceQueryParams.model}=${reference}`,
-    [reference],
-  );
+  const link = getApplicationLink(entity);
   const handleCopy = useCallback(
     (e: MouseEvent<HTMLAnchorElement>) => {
       e.preventDefault();

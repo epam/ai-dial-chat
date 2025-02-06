@@ -233,6 +233,7 @@ export const TabRenderer = () => {
   const allModels = useAppSelector(ModelsSelectors.selectModels);
   const detailsModel = useAppSelector(MarketplaceSelectors.selectDetailsModel);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const currentDetailsModel = detailsModel && modelsMap[detailsModel.reference];
 
   const [suggestedResults, setSuggestedResults] = useState<DialAIEntityModel[]>(
     [],
@@ -422,8 +423,6 @@ export const TabRenderer = () => {
     },
     [dispatch, installedModelIds],
   );
-
-  const currentDetailsModel = detailsModel && modelsMap[detailsModel.reference];
 
   return (
     <>
