@@ -764,7 +764,10 @@ dialTest(
           nestedFolders[nestedLevel - 2].name,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await folderConversations.editFolderNameWithEnter(newFolderName);
+        await folderConversations.renameFolderWithContentWithEnter(
+          newFolderName,
+          { isHttpMethodTriggered: false },
+        );
 
         expect
           .soft(
