@@ -35,6 +35,7 @@ import {
 import { getPromptRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import {
   getPromptInfoFromId,
+  parseVariablesFromContent,
   regeneratePromptId,
 } from '@/src/utils/app/prompts';
 import {
@@ -51,6 +52,7 @@ import { AppEpic } from '@/src/types/store';
 import { resetShareEntity } from '@/src/constants/chat';
 import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-ui-settings';
 
+import { ChatActions } from '../chat/chat.reducer';
 import { PublicationActions } from '../publication/publication.reducers';
 import { ShareActions } from '../share/share.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
@@ -528,14 +530,8 @@ const openFolderEpic: AppEpic = (action$) =>
 const duplicatePromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.duplicatePrompt.match),
-    switchMap(({ payload }) =>
-      forkJoin({
-        prompt: getOrUploadPrompt(payload, state$.value).pipe(
-          map((data) => data.prompt),
-        ),
-      }),
-    ),
-    switchMap(({ prompt }) => {
+    switchMap(({ payload }) => getOrUploadPrompt(payload, state$.value)),
+    switchMap(({ prompt, wasUploaded }) => {
       if (!prompt) {
         return of(
           UIActions.showErrorToast(
@@ -562,7 +558,14 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
         ),
       });
 
-      return of(PromptsActions.saveNewPrompt({ newPrompt }));
+      return concat(
+        of(PromptsActions.saveNewPrompt({ newPrompt })),
+        iif(
+          () => wasUploaded,
+          of(PromptsActions.updatePromptSuccess({ id: prompt.id, prompt })),
+          EMPTY,
+        ),
+      );
     }),
   );
 
@@ -871,6 +874,35 @@ const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const applyPromptEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(PromptsActions.applyPrompt.match),
+    switchMap(({ payload }) => getOrUploadPrompt(payload, state$.value)),
+    switchMap(({ prompt, wasUploaded }) => {
+      if (!prompt) {
+        return of(
+          UIActions.showErrorToast(
+            translate(
+              'It looks like this prompt has been deleted. Please reload the page',
+            ),
+          ),
+        );
+      }
+
+      const parsedVariables = parseVariablesFromContent(prompt.content);
+
+      return concat(
+        parsedVariables.length > 0
+          ? of(PromptsActions.setPromptWithVariablesForApply(prompt))
+          : of(ChatActions.appendInputContent(prompt.content ?? '')),
+        // save in state to not upload again
+        wasUploaded
+          ? of(PromptsActions.updatePromptSuccess({ id: prompt.id, prompt }))
+          : EMPTY,
+      );
+    }),
+  );
+
 export const PromptsEpics = combineEpics(
   initEpic,
   uploadPromptsFromMultipleFoldersEpic,
@@ -894,4 +926,5 @@ export const PromptsEpics = combineEpics(
   duplicatePromptEpic,
   uploadPromptEpic,
   deleteChosenPromptsEpic,
+  applyPromptEpic,
 );

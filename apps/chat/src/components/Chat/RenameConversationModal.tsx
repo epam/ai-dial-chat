@@ -29,17 +29,9 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import { DISALLOW_INTERACTIONS } from '@/src/constants/modal';
 
 import { Modal } from '../Common/Modal';
+import { withRenderWhen } from '../Common/RenderWhen';
 
-export const RenameConversationModal = () => {
-  const renamingConversation = useAppSelector(
-    ConversationsSelectors.selectRenamingConversation,
-  );
-  if (renamingConversation) {
-    return <RenameConversationView />;
-  }
-};
-
-const RenameConversationView = () => {
+function RenameConversationView() {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -185,4 +177,8 @@ const RenameConversationView = () => {
       </div>
     </Modal>
   );
-};
+}
+
+export const RenameConversationModal = withRenderWhen(
+  ConversationsSelectors.selectRenamingConversation,
+)(RenameConversationView);

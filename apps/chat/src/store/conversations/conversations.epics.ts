@@ -45,6 +45,8 @@ import {
   getDefaultModelReference,
   getNewConversationName,
   isChosenConversationValidForCompare,
+  isReplayAsIsConversation,
+  isReplayConversation,
   isSettingsChanged,
   regenerateConversationId,
 } from '@/src/utils/app/conversation';
@@ -223,9 +225,9 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
               : selectedConversationsIds;
 
           if (!selectedIds.length) {
-            return forkJoin({
-              selectedConversations: of([]),
-              selectedIds: of([]),
+            return of({
+              selectedConversations: [],
+              selectedIds: [],
             });
           }
 
@@ -1258,7 +1260,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         const conversationRootFolderId = getConversationRootId();
 
         const newConversationName =
-          payload.conversation.replay?.isReplay ||
+          isReplayConversation(payload.conversation) ||
           updatedMessages.filter((msg) => msg.role === Role.User).length > 1 ||
           payload.conversation.isNameChanged
             ? payload.conversation.name
@@ -1764,7 +1766,8 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
       let updatedConversation: Conversation = conv;
 
       if (
-        conv.replay?.replayAsIs &&
+        conv.replay &&
+        isReplayAsIsConversation(conv) &&
         activeMessage.model &&
         activeMessage.model.id
       ) {

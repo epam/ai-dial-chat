@@ -156,6 +156,7 @@ export const promptsSlice = createSlice({
       });
     },
     duplicatePrompt: (state, _action: PayloadAction<PromptInfo>) => state,
+    applyPrompt: (state, _action: PayloadAction<PromptInfo>) => state,
     setPrompts: (
       state,
       { payload }: PayloadAction<{ prompts: PromptInfo[] }>,
@@ -448,6 +449,12 @@ export const promptsSlice = createSlice({
         state.chosenEmptyFoldersIds,
         payload.ids,
       );
+    },
+    setPromptWithVariablesForApply: (
+      state,
+      { payload }: PayloadAction<Prompt | undefined>,
+    ) => {
+      state.promptWithVariablesForApply = payload;
     },
   },
 });

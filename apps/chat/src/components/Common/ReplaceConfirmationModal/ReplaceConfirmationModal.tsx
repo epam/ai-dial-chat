@@ -26,6 +26,7 @@ import {
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
 import { Modal } from '../Modal';
+import { withRenderWhen } from '../RenderWhen';
 import { ReplaceSelector } from './Components';
 import { ConversationsList } from './ConversationsList';
 import { FilesList } from './FilesList';
@@ -33,16 +34,7 @@ import { PromptsList } from './PromptsList';
 
 export type OnItemEvent = (actionOption: string, entityId: unknown) => void;
 
-export const ReplaceConfirmationModal = () => {
-  const isReplaceModalOpened = useAppSelector(
-    ImportExportSelectors.selectIsShowReplaceDialog,
-  );
-  if (isReplaceModalOpened) {
-    return <ReplaceConfirmationModalView />;
-  }
-};
-
-export const ReplaceConfirmationModalView = () => {
+export function ReplaceConfirmationModalView() {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
@@ -244,4 +236,8 @@ export const ReplaceConfirmationModalView = () => {
       </div>
     </Modal>
   );
-};
+}
+
+export const ReplaceConfirmationModal = withRenderWhen(
+  ImportExportSelectors.selectIsShowReplaceDialog,
+)(ReplaceConfirmationModalView);
