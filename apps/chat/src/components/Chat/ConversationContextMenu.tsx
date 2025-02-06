@@ -11,6 +11,10 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
+import {
+  isPlaybackConversation,
+  isReplayConversation,
+} from '@/src/utils/app/conversation';
 import { constructPath } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import {
@@ -133,8 +137,8 @@ export const ConversationContextMenu = ({
     }
   }, [conversation.id, conversation.status, dispatch, isOpen]);
 
-  const isReplay = (conversation as Conversation).replay?.isReplay;
-  const isPlayback = (conversation as Conversation).playback?.isPlayback;
+  const isReplay = isReplayConversation(conversation);
+  const isPlayback = isPlaybackConversation(conversation);
   const isEmptyConversation = !(
     (conversation as Conversation).messages?.length > 0
   );

@@ -138,20 +138,14 @@ export const ChatInputMessage = Inversify.register(
       ConversationsSelectors.selectSelectedConversationsModels,
     );
 
-    const isConversationBlocksInput = useAppSelector(
+    const isChatInputDisabled = useAppSelector(
       ConversationsSelectors.selectIsSelectedConversationBlocksInput,
-    );
-    const isConfigurationBlocksInput = useAppSelector(
-      ChatSelectors.selectIsConfigurationBlocksInput,
     );
     const configurationSchema = useAppSelector(
       ChatSelectors.selectConfigurationSchema,
     );
 
     const isChatEmpty = !selectedConversations[0]?.messages?.length;
-
-    const isChatInputDisabled =
-      isConversationBlocksInput || (isConfigurationBlocksInput && isChatEmpty);
 
     const modelTokenizer =
       selectedModels?.length === 1 ? selectedModels[0]?.tokenizer : undefined;
