@@ -65,7 +65,7 @@ export function FileItemContextMenu({
   const folders = useAppSelector(FilesSelectors.selectFolders);
 
   const handleSave = useMenuItemHandler(onSave, file.id);
-  const handleDownload = useMenuItemHandler(onOpenChange, false);
+  const handleDownload = useMenuItemHandler(onOpenChange, false, false);
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [

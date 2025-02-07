@@ -1,16 +1,20 @@
 import { MouseEvent, useCallback } from 'react';
 
+
 export const useMenuItemHandler = <T>(
   handler: ((props: T) => void) | undefined,
   props: T,
+  preventDefault = true,
 ) =>
   useCallback(
     (e: MouseEvent) => {
-      e.preventDefault();
+      if (preventDefault) {
+        e.preventDefault();
+      }
       e.stopPropagation();
       handler?.(props);
     },
-    [handler, props],
+    [preventDefault, handler, props],
   );
 
 export const useMenuItemHandlerWithTwoArgs = <T, T2>(
