@@ -3018,12 +3018,14 @@ const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
               ConversationsActions.updateConversation({
                 id: conversation?.id as string,
                 values: {
-                  ...getConversationModelParams(
-                    conversation as Conversation,
-                    modelToApply?.reference,
-                    modelsMap,
-                    addonsMap,
-                  ),
+                  ...(conversation
+                    ? getConversationModelParams(
+                        conversation as Conversation,
+                        modelToApply?.reference,
+                        modelsMap,
+                        addonsMap,
+                      )
+                    : {}),
                 },
               }),
             ),
