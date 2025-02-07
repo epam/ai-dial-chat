@@ -266,7 +266,9 @@ dialTest(
     await dialTest.step(
       'Export conversation and then delete all Dial entities',
       async () => {
-        await conversations.openEntityDropdownMenu(conversation.name, 2);
+        await conversations.openEntityDropdownMenu(conversation.name, {
+          exactMatch: true,
+        });
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
         exportedData = await dialHomePage.downloadData(
           () =>

@@ -27,6 +27,7 @@ dialOverlayTest(
         await overlayAssertion.assertOverlayManagerIsVisible(
           overlayHomePage.overlayManagerContainer,
         );
+        await overlayHomePage.waitForPageLoaded();
       },
     );
 

@@ -1,5 +1,5 @@
 import { Conversation } from '@/chat/types/chat';
-import { BackendDataEntity, BackendDataNodeType } from '@/chat/types/common';
+import { BackendChatEntity, BackendDataNodeType } from '@/chat/types/common';
 import { Prompt } from '@/chat/types/prompt';
 import { API } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
@@ -39,10 +39,20 @@ export class ItemApiHelper extends BaseApiHelper {
       statusCode,
       `Received response code: ${statusCode} with body: ${await response.text()}`,
     ).toBe(200);
-    return (await response.json()) as BackendDataEntity[];
+    return (await response.json()) as BackendChatEntity[];
   }
 
-  public async deleteBackendItem(...items: BackendDataEntity[]) {
+  public async getItem(id: string) {
+    const response = await this.request.get(this.getHost(`/api/${id}`));
+    const statusCode = response.status();
+    expect(
+      statusCode,
+      `Received response code: ${statusCode} with body: ${await response.text()}`,
+    ).toBe(200);
+    return (await response.json()) as Conversation;
+  }
+
+  public async deleteBackendItem(...items: BackendChatEntity[]) {
     for (const item of items) {
       const path = `/api/${item.url}`;
       const response = await this.request.delete(this.getHost(path));

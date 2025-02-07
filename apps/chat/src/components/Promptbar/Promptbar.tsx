@@ -26,40 +26,38 @@ import { PromptModal } from './components/PromptModal';
 import { PromptbarSettings } from './components/PromptbarSettings';
 import { Prompts } from './components/Prompts';
 
-import PlusIcon from '../../../public/images/icons/plus-large.svg';
 import Tooltip from '../Common/Tooltip';
 import Sidebar from '../Sidebar';
 
+import PlusIcon from '@/public/images/icons/plus-large.svg';
+
 const PromptActionsBlock = () => {
   const { t } = useTranslation(Translation.PromptBar);
-  const dispatch = useAppDispatch();
 
-  const isNewPromptCreating = useAppSelector(
-    PromptsSelectors.selectIsNewPromptCreating,
-  );
+  const dispatch = useAppDispatch();
 
   const { showModal, isModalPreviewMode } = useAppSelector(
     PromptsSelectors.selectIsEditModalOpen,
   );
 
-  const handleUpdate = useCallback(
+  const handleCreate = useCallback(
     (prompt: Prompt) => {
-      isNewPromptCreating
-        ? dispatch(PromptsActions.createNewPrompt(regeneratePromptId(prompt)))
-        : dispatch(
-            PromptsActions.updatePrompt({
-              id: prompt.id,
-              values: {
-                name: prompt.name,
-                description: prompt.description,
-                content: prompt.content,
-                isShared: prompt.isShared,
-              },
-            }),
-          );
+      dispatch(PromptsActions.createNewPrompt(regeneratePromptId(prompt)));
+    },
+    [dispatch],
+  );
+
+  const handleUpdate = useCallback(
+    (oldPrompt: Prompt, newPrompt: Prompt) => {
+      dispatch(
+        PromptsActions.updatePrompt({
+          id: oldPrompt.id,
+          values: newPrompt,
+        }),
+      );
       dispatch(PromptsActions.resetSearch());
     },
-    [dispatch, isNewPromptCreating],
+    [dispatch],
   );
 
   const handleClose = useCallback(() => {
@@ -77,7 +75,6 @@ const PromptActionsBlock = () => {
           dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true }));
           dispatch(PromptsActions.resetChosenPrompts());
         }}
-        disabled={isNewPromptCreating}
         data-qa="new-entity"
       >
         <Tooltip tooltip={t('New prompt')}>
@@ -90,6 +87,7 @@ const PromptActionsBlock = () => {
           isOpen
           onClose={handleClose}
           onUpdatePrompt={handleUpdate}
+          onCreatePrompt={handleCreate}
         />
       )}
     </div>
