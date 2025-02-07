@@ -154,6 +154,7 @@
     "vitest": "^1.6.1"
   },
   "overrides": {
+    "cross-spawn": "7.0.6",
     "js-yaml": "4.1.0",
     "argparse": "2.0.1"
   },
