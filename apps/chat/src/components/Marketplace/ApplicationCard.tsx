@@ -12,6 +12,10 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
+import {
+  useMenuItemHandler,
+  useMenuItemHandlerWithTwoArgs,
+} from '@/src/hooks/useHandler';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -197,6 +201,19 @@ export const ApplicationCard = ({
     [dispatch, entity, t],
   );
 
+  const handleEdit = useMenuItemHandler(onEdit, entity);
+  const handleDelete = useMenuItemHandler(onDelete, entity);
+  const handlePublish = useMenuItemHandlerWithTwoArgs(
+    onPublish,
+    entity,
+    PublishActions.ADD,
+  );
+  const handleUnpublish = useMenuItemHandlerWithTwoArgs(
+    onPublish,
+    entity,
+    PublishActions.DELETE,
+  );
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
@@ -221,10 +238,7 @@ export const ApplicationCard = ({
         dataQa: 'edit',
         display: (isMyApp || !!canWrite) && !!onEdit,
         Icon: IconPencilMinus,
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onEdit?.(entity);
-        },
+        onClick: handleEdit,
       },
       {
         name: t('Share'),
@@ -245,20 +259,14 @@ export const ApplicationCard = ({
         dataQa: 'publish',
         display: isMyApp && !!onPublish,
         Icon: IconWorldShare,
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onPublish?.(entity, PublishActions.ADD);
-        },
+        onClick: handlePublish,
       },
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
         display: isEntityIdPublic(entity) && !!onPublish,
         Icon: UnpublishIcon,
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onPublish?.(entity, PublishActions.DELETE);
-        },
+        onClick: handleUnpublish,
       },
       {
         name: t('Logs'),
@@ -275,10 +283,7 @@ export const ApplicationCard = ({
         disabled: isModifyDisabled,
         Icon: IconTrashX,
         iconClassName: 'stroke-error',
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onDelete?.(entity);
-        },
+        onClick: handleDelete,
       },
     ],
     [
@@ -294,14 +299,18 @@ export const ApplicationCard = ({
       handleUpdateFunctionStatus,
       canWrite,
       onEdit,
+      handleEdit,
       isApplicationsSharingEnabled,
       handleOpenSharing,
       handleOpenUnshare,
       onPublish,
+      handlePublish,
+      handleUnpublish,
       isExecutable,
       handleOpenApplicationLogs,
       onDelete,
       isModifyDisabled,
+      handleDelete,
     ],
   );
 

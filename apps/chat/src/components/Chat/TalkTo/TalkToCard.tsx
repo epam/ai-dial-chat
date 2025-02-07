@@ -9,6 +9,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import classNames from 'classnames';
 
+import { useMenuItemHandler } from '@/src/hooks/useHandler';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -179,6 +180,11 @@ export const TalkToCard = ({
     [dispatch, entity],
   );
 
+  const handleEdit = useMenuItemHandler(onEdit, entity);
+  const handleDelete = useMenuItemHandler(onDelete, entity);
+  const handleOpenLogs = useMenuItemHandler(onOpenLogs, entity);
+  const handlePublish = useMenuItemHandler(onPublish, entity);
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
@@ -198,10 +204,7 @@ export const TalkToCard = ({
         dataQa: 'edit',
         display: (isMyEntity || !!canWrite) && !!onEdit,
         Icon: IconPencilMinus,
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onEdit(entity);
-        },
+        onClick: handleEdit,
       },
       {
         name: t('Share'),
@@ -222,10 +225,7 @@ export const TalkToCard = ({
         dataQa: 'publish',
         display: isMyEntity && !!onPublish,
         Icon: IconWorldShare,
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onPublish(entity);
-        },
+        onClick: handlePublish,
       },
       {
         name: t('Logs'),
@@ -233,11 +233,7 @@ export const TalkToCard = ({
         display:
           !!isExecutable && playerStatus === SimpleApplicationStatus.UNDEPLOY,
         Icon: IconFileDescription,
-        onClick: (e: React.MouseEvent) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onOpenLogs(entity);
-        },
+        onClick: handleOpenLogs,
       },
       {
         name: t('Delete'),
@@ -246,10 +242,7 @@ export const TalkToCard = ({
         disabled: isModifyDisabled,
         Icon: IconTrashX,
         iconClassName: 'stroke-error',
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onDelete(entity);
-        },
+        onClick: handleDelete,
       },
     ],
     [
@@ -260,17 +253,20 @@ export const TalkToCard = ({
       isMyEntity,
       isCodeAppsEnabled,
       PlayerContextIcon,
+      handleUpdateFunctionStatus,
       canWrite,
       onEdit,
+      handleEdit,
       isApplicationsSharingEnabled,
-      onPublish,
-      isExecutable,
-      onDelete,
-      isModifyDisabled,
-      handleUpdateFunctionStatus,
       handleOpenSharing,
       handleOpenUnshare,
-      onOpenLogs,
+      onPublish,
+      handlePublish,
+      isExecutable,
+      handleOpenLogs,
+      onDelete,
+      isModifyDisabled,
+      handleDelete,
     ],
   );
 
