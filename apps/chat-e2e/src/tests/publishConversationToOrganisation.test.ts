@@ -310,7 +310,7 @@ dialAdminTest(
 
     await dialTest.step('Verify folder renaming and max length', async () => {
       await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-      await selectFolders.editFolderNameWithTick(newFolderName, {
+      await selectFolders.renameEmptyFolderWithTick(newFolderName, {
         isHttpMethodTriggered: false,
       });
       await selectFoldersAssertion.assertFolderState(
@@ -406,7 +406,7 @@ dialAdminTest(
           true,
         );
         //TODO: remove next line when fixed https://github.com/epam/ai-dial-chat/issues/2294
-        await selectFolders.editFolderNameWithTick(
+        await selectFolders.renameEmptyFolderWithTick(
           GeneratorUtil.randomString(5),
           {
             isHttpMethodTriggered: false,

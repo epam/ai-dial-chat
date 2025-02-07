@@ -205,28 +205,103 @@ export class Folders extends BaseElement {
     return this.folderDotsMenu(name, index);
   }
 
-  public async editFolderNameWithEnter(newName: string) {
-    await this.editFolderName(newName);
-    await this.page.keyboard.press(keys.enter);
-  }
-
-  public async editFolderNameWithTick(
+  public async renameEmptyFolderWithEnter(
     newName: string,
     { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
   ) {
-    await this.editFolderName(newName);
+    await this.renameEmptyFolder(
+      newName,
+      () => this.page.keyboard.press(keys.enter),
+      { isHttpMethodTriggered },
+    );
+  }
+
+  public async renameFolderWithContentWithEnter(
+    newName: string,
+    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
+  ) {
+    await this.renameFolderWithContent(
+      newName,
+      () => this.page.keyboard.press(keys.enter),
+      { isHttpMethodTriggered },
+    );
+  }
+
+  public async renameEmptyFolderWithTick(
+    newName: string,
+    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
+  ) {
     const folderInputActions = this.getEditFolderInputActions();
+    await this.renameEmptyFolder(
+      newName,
+      () => folderInputActions.clickTickButton(),
+      {
+        isHttpMethodTriggered,
+      },
+    );
+  }
+
+  public async renameFolderWithContentWithTick(
+    newName: string,
+    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
+  ) {
+    const folderInputActions = this.getEditFolderInputActions();
+    await this.renameFolderWithContent(
+      newName,
+      () => folderInputActions.clickTickButton(),
+      { isHttpMethodTriggered },
+    );
+  }
+
+  //listing API is triggered if to rename folder on side panel
+  //no API is triggered if to rename folder in 'Manage Attachments' or 'Change path' modals
+  public async renameEmptyFolder(
+    newName: string,
+    method: () => Promise<void>,
+    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
+  ) {
+    await this.editFolderName(newName);
     if (isHttpMethodTriggered && isApiStorageType) {
-      const respPromise = this.page.waitForResponse((resp) => {
-        return (
-          resp.url().includes(API.conversationsHost()) ||
-          resp.url().includes(API.promptsHost())
-        );
-      });
-      await folderInputActions.clickTickButton();
+      const respPromise = this.page.waitForResponse((resp) =>
+        resp.url().includes(API.listingHost),
+      );
+      await method();
       return respPromise;
     }
-    await folderInputActions.clickTickButton();
+    await method();
+  }
+
+  //3 API calls are triggered if to rename folder with content
+  //if shared folder is renamed, confirmation popup is prompted
+  public async renameFolderWithContent(
+    newName: string,
+    method: () => Promise<void>,
+    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
+  ) {
+    await this.editFolderName(newName);
+    if (isApiStorageType && isHttpMethodTriggered) {
+      const hostsMap = new Map([
+        [API.listingHost, 'GET'],
+        [API.moveHost, 'POST'],
+        ['/api/', 'PUT'],
+      ]);
+      const responses = [];
+      for (const [host, method] of hostsMap) {
+        const resp = this.page.waitForResponse(
+          (response) =>
+            response.url().includes(host) &&
+            response.request().method() === method &&
+            response.status() === 200,
+        );
+        responses.push(resp);
+      }
+      await method();
+      for (const resp of responses) {
+        await resp;
+      }
+    } else {
+      await method();
+    }
   }
 
   public async editFolderName(newName: string) {
