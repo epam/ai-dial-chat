@@ -8,6 +8,7 @@ import {
 import { SideBarEntitiesTree } from '@/src/ui/webElements/entityTree/sidebar/sideBarEntitiesTree';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
+import {EntitySelectors} from "@/src/ui/selectors";
 
 export class SideBarEntityAssertion<
   T extends SideBarEntitiesTree,
@@ -66,7 +67,7 @@ export class SideBarEntityAssertion<
     actualCount?: number,
   ) {
     if (actualCount === undefined) {
-      await this.assertElementsCount(this.sideBarEntitiesTree, expectedCount);
+      await this.assertElementsCount(this.sideBarEntitiesTree.getChildElementBySelector(EntitySelectors.entityName), expectedCount);
     } else {
       this.assertValue(
         expectedCount,

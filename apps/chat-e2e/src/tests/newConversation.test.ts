@@ -4,13 +4,15 @@ import {
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
+  MockedChatApiResponseBodies,
 } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 dialTest(
   'Click on + resets all settings on new conversation. Change agent pop-up opens\n' +
-    'Click on + does not create a new conversation if new conversation was on the screen',
+    'Click on + does not create a new conversation if new conversation was on the screen\n' +
+    'Click on + resets all settings on new conversation. When temperature was changed in previous chat.',
   async ({
     dialHomePage,
     header,
@@ -25,10 +27,9 @@ dialTest(
     localStorageManager,
     conversationSettingsModal,
     iconApiHelper,
-    conversations,
     conversationAssertion,
   }) => {
-    setTestIds('EPMRTC-4717', 'EPMRTC-4837');
+    setTestIds('EPMRTC-4717', 'EPMRTC-4837', 'EPMRTC-4920');
     const models = GeneratorUtil.randomArrayElements(
       ModelsUtil.getLatestModels().filter(
         (m) =>
@@ -42,6 +43,21 @@ dialTest(
     const addon = GeneratorUtil.randomArrayElement(ModelsUtil.getAddons());
     await localStorageManager.setRecentModelsIdsOnce(...models);
     await localStorageManager.setRecentAddonsIds(addon);
+    await dialHomePage.addInitScript(
+      (data) => {
+        const { storageKey, storageValue } = data;
+        localStorage.setItem(storageKey,
+          typeof storageValue === 'string'
+            ? storageValue
+            : JSON.stringify(storageValue)
+        );
+      },
+      {
+        storageKey: 'lastConversationSettings',
+        storageValue: '',
+      },
+    );
+
     let initialConversationIds: string | undefined;
 
     await dialTest.step(
@@ -54,6 +70,48 @@ dialTest(
         await chat.getSendMessage().waitForState({ state: 'attached' });
         initialConversationIds =
           await localStorageManager.getSelectedConversationIds();
+      },
+    );
+
+    await dialTest.step('Change settings and apply', async () => {
+      await chat.configureSettingsButton.click();
+      await agentSettings.setSystemPrompt('Act like a dog');
+      await temperatureSlider.setTemperature(0.7);
+      await addons.selectAddon(addon.name);
+      await conversationSettingsModal.applyChangesButton.click();
+    });
+
+    await dialTest.step(
+      'Send a user message and click on the "New conversation" header button and check that the settings are changed, temperature is not changed',
+      async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        // await dialHomePage.interceptAndChangePutApiConversationsOnce({temperature: 0.5});
+        await chat.sendRequestWithButton('test request');
+        await header.createNewConversation();
+      },
+    );
+
+    await dialTest.step(
+      'Check that the settings are reset, temperature is not changed after sending a message and starting a new conversation',
+      async () => {
+        await chat.configureSettingsButton.click();
+        await agentInfoAssertion.assertElementText(
+          agentSettings.systemPrompt,
+          ExpectedConstants.emptyString,
+        );
+        agentInfoAssertion.assertValue(
+          await temperatureSlider.getTemperature(),
+          '0.7',
+          ExpectedMessages.temperatureIsValid,
+        );
+        agentInfoAssertion.assertValue(
+          await addons.getSelectedAddons().then((a) => a.length),
+          0,
+          ExpectedMessages.noAddonsSelected,
+        );
+        await conversationSettingsModal.cancelButton.click();
       },
     );
 
@@ -72,7 +130,7 @@ dialTest(
     await dialTest.step('Change settings and apply', async () => {
       await chat.configureSettingsButton.click();
       await agentSettings.setSystemPrompt('Act like a cat');
-      await temperatureSlider.setTemperature(0);
+      await temperatureSlider.setTemperature(0.2);
       await addons.selectAddon(addon.name);
       await conversationSettingsModal.applyChangesButton.click();
     });
@@ -108,29 +166,33 @@ dialTest(
       },
     );
 
-    await dialTest.step('Verify settings reset', async () => {
-      await chat.configureSettingsButton.click();
-      await agentInfoAssertion.assertElementText(
-        agentSettings.systemPrompt,
-        ExpectedConstants.emptyString,
-      );
-      agentInfoAssertion.assertValue(
-        await temperatureSlider.getTemperature(),
-        ExpectedConstants.defaultTemperature,
-        ExpectedMessages.temperatureIsValid,
-      );
-      agentInfoAssertion.assertValue(
-        await addons.getSelectedAddons().then((a) => a.length),
-        0,
-        ExpectedMessages.noAddonsSelected,
-      );
-    });
+    await dialTest.step(
+      'Verify settings are completely reset after not sending a message in a chat',
+      async () => {
+        await chat.configureSettingsButton.click();
+        await agentInfoAssertion.assertElementText(
+          agentSettings.systemPrompt,
+          ExpectedConstants.emptyString,
+        );
+        agentInfoAssertion.assertValue(
+          await temperatureSlider.getTemperature(),
+          '0.7',
+          ExpectedMessages.temperatureIsValid,
+        );
+        agentInfoAssertion.assertValue(
+          await addons.getSelectedAddons().then((a) => a.length),
+          0,
+          ExpectedMessages.noAddonsSelected,
+        );
+      },
+    );
   },
 );
 
 dialTest.only(
   'New conversation disappears, chat history is shown on the central part if to click on the chat with history\n' +
-    'New conversation appears if user deletes focused Chat1. Chat2 stays unselected.',
+    'New conversation appears if user deletes focused Chat1. Chat2 stays unselected.\n' +
+  'New conversation appears if user deletes focused chat. No data label appears instead.',
   async ({
     dialHomePage,
     header,
@@ -143,8 +205,9 @@ dialTest.only(
     conversationDropdownMenu,
     confirmationDialog,
     chat,
+           chatBarAssertion,
   }) => {
-    setTestIds('EPMRTC-4791', 'EPMRTC-4776');
+    setTestIds('EPMRTC-4791', 'EPMRTC-4776', 'EPMRTC-4804');
     const firstConversation =
       conversationData.prepareModelConversationBasedOnRequests([
         'first request',
@@ -156,7 +219,6 @@ dialTest.only(
       firstConversation,
       secondConversation,
     ]);
-    await dataInjector.createConversations([firstConversation]);
 
     await dialTest.step('Open app and create new conversation', async () => {
       await dialHomePage.openHomePage();
@@ -207,6 +269,13 @@ dialTest.only(
 
     await dialTest.step('Verify only one conversation remains', async () => {
       await conversationAssertion.assertEntitiesCount(1);
+    });
+
+    await dialTest.step('Select second conversation and delete it', async () => {
+      await conversations.openEntityDropdownMenu(secondConversation.name);
+      await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
+      await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+      await chatBarAssertion.assertNoDataInConversations();
     });
   },
 );
