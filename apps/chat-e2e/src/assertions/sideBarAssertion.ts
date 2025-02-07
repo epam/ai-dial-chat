@@ -1,9 +1,9 @@
+import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ElementState, ExpectedMessages } from '@/src/testData';
 import { SideBar } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
-import {BaseAssertion} from "@/src/assertions/base/baseAssertion";
 
-export class SideBarAssertion extends BaseAssertion{
+export class SideBarAssertion extends BaseAssertion {
   readonly sideBar: SideBar;
 
   constructor(sideBar: SideBar) {

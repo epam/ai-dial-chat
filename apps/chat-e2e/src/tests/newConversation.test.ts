@@ -46,10 +46,11 @@ dialTest(
     await dialHomePage.addInitScript(
       (data) => {
         const { storageKey, storageValue } = data;
-        localStorage.setItem(storageKey,
+        localStorage.setItem(
+          storageKey,
           typeof storageValue === 'string'
             ? storageValue
-            : JSON.stringify(storageValue)
+            : JSON.stringify(storageValue),
         );
       },
       {
@@ -192,7 +193,7 @@ dialTest(
 dialTest.only(
   'New conversation disappears, chat history is shown on the central part if to click on the chat with history\n' +
     'New conversation appears if user deletes focused Chat1. Chat2 stays unselected.\n' +
-  'New conversation appears if user deletes focused chat. No data label appears instead.',
+    'New conversation appears if user deletes focused chat. No data label appears instead.',
   async ({
     dialHomePage,
     header,
@@ -205,7 +206,7 @@ dialTest.only(
     conversationDropdownMenu,
     confirmationDialog,
     chat,
-           chatBarAssertion,
+    chatBarAssertion,
   }) => {
     setTestIds('EPMRTC-4791', 'EPMRTC-4776', 'EPMRTC-4804');
     const firstConversation =
@@ -271,11 +272,14 @@ dialTest.only(
       await conversationAssertion.assertEntitiesCount(1);
     });
 
-    await dialTest.step('Select second conversation and delete it', async () => {
-      await conversations.openEntityDropdownMenu(secondConversation.name);
-      await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
-      await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-      await chatBarAssertion.assertNoDataInConversations();
-    });
+    await dialTest.step(
+      'Select second conversation and delete it',
+      async () => {
+        await conversations.openEntityDropdownMenu(secondConversation.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await chatBarAssertion.assertNoDataInConversations();
+      },
+    );
   },
 );
