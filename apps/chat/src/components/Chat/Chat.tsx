@@ -520,6 +520,12 @@ export const ChatView = memo(() => {
     (isModelsInstalled || isReplay || isIsolatedView) &&
     !(isConversationWithSchema && selectedConversations.length > 1);
 
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, []);
+
   return (
     <div
       className="relative min-w-0 shrink grow basis-0 overflow-y-auto"

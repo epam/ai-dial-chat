@@ -1,4 +1,3 @@
-import { Conversation } from '@/chat/types/chat';
 import { Prompt } from '@/chat/types/prompt';
 import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialTest from '@/src/core/dialFixtures';
@@ -510,7 +509,6 @@ dialTest(
   async ({
     dialHomePage,
     promptData,
-    conversationData,
     dataInjector,
     agentSettings,
     conversationSettingsModal,
@@ -533,24 +531,17 @@ dialTest(
       `{{${aVar}}}`,
       `{{${bVar}|${bVarDefaultValue}}}`,
     );
-    let conversation: Conversation;
 
-    await dialTest.step(
-      'Prepare prompt with vars and empty conversation',
-      async () => {
-        prompt = promptData.preparePrompt(promptContent);
-        conversation = conversationData.prepareEmptyConversation();
-        await dataInjector.createPrompts([prompt]);
-        await dataInjector.createConversations([conversation]);
-      },
-    );
+    await dialTest.step('Prepare prompt with vars', async () => {
+      prompt = promptData.preparePrompt(promptContent);
+      await dataInjector.createPrompts([prompt]);
+    });
 
     await dialTest.step(
       `Type / in system prompt field, select created prompt and verify variable modal with default values is displayed`,
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
         await chat.configureSettingsButton.click();
         await agentSettings.setSystemPrompt('/');
         const promptsList = agentSettings.getPromptList();
@@ -574,7 +565,7 @@ dialTest(
         await agentSettingAssertion.assertSystemPromptValue(
           promptTemplate(aVarValue, bVarDefaultValue),
         );
-        await conversationSettingsModal.cancelButton.click();
+        await conversationSettingsModal.applyChangesButton.click();
       },
     );
 
