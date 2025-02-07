@@ -1,6 +1,5 @@
 import { MouseEvent, useCallback } from 'react';
 
-
 export const useMenuItemHandler = <T>(
   handler: ((props: T) => void) | undefined,
   props: T,
