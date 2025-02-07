@@ -4,6 +4,7 @@ import { constructPath } from '@/src/utils/app/file';
 import { getPromptRootId, isRootPromptId } from '@/src/utils/app/id';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
 
+import { MoveModel } from '@/src/types/common';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 
@@ -53,6 +54,10 @@ export class PromptService {
 
   public static createPrompt(prompt: Prompt): Observable<PromptInfo | null> {
     return DataService.getDataStorage().createPrompt(prompt);
+  }
+
+  public static movePrompt(moveModel: MoveModel): Observable<MoveModel> {
+    return DataService.getDataStorage().move(moveModel);
   }
 
   public static updatePrompt(prompt: Prompt): Observable<void> {
