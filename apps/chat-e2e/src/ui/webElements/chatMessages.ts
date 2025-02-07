@@ -189,37 +189,32 @@ export class ChatMessages extends BaseElement {
     attachmentTitle: string,
     { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
   ) {
-    const isCollapsed =
-      await this.getCollapsedChatMessageAttachment(message).isVisible();
-    if (isCollapsed) {
-      const messageAttachment = this.getChatMessageAttachment(
-        message,
-        attachmentTitle,
+    await this.getCollapsedChatMessageAttachment(message).waitFor();
+    const messageAttachment = this.getChatMessageAttachment(
+      message,
+      attachmentTitle,
+    );
+    if (isApiStorageType && isHttpMethodTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (resp) =>
+          resp.request().method() === 'GET' &&
+          resp.url().includes(attachmentTitle),
+        { timeout: config.use!.actionTimeout! * 2 },
       );
-      if (isApiStorageType && isHttpMethodTriggered) {
-        const respPromise = this.page.waitForResponse(
-          (resp) =>
-            resp.request().method() === 'GET' &&
-            resp.url().includes(attachmentTitle),
-          { timeout: config.use!.actionTimeout! * 2 },
-        );
-        await messageAttachment.click();
-        return respPromise;
-      }
       await messageAttachment.click();
+      return respPromise;
     }
+    await messageAttachment.click();
   }
 
   public async collapseChatMessageAttachment(
     message: string | number,
     attachmentTitle: string,
   ) {
-    const isExpanded = await this.getChatMessage(message)
+    await this.getChatMessage(message)
       .locator(ChatSelectors.attachmentExpanded)
-      .isVisible();
-    if (isExpanded) {
-      await this.getChatMessageAttachment(message, attachmentTitle).click();
-    }
+      .waitFor();
+    await this.getChatMessageAttachment(message, attachmentTitle).click();
   }
 
   public async getChatMessageAttachmentUrl(message: string | number) {
