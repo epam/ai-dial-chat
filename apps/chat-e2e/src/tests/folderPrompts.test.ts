@@ -124,7 +124,7 @@ dialTest(
       'Select "Rename" option, set new name and verify folder is renamed',
       async () => {
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await folderPrompts.editFolderNameWithEnter(newName);
+        await folderPrompts.renameEmptyFolderWithEnter(newName);
         await promptBarFolderAssertion.assertFolderState(
           { name: newName },
           'visible',
@@ -196,7 +196,7 @@ dialTest(
     await dialHomePage.waitForPageLoaded();
     await folderPrompts.openFolderDropdownMenu(promptInFolder.folders.name);
     await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-    await folderPrompts.editFolderNameWithTick(newName);
+    await folderPrompts.renameFolderWithContentWithTick(newName);
     await expect
       .soft(
         folderPrompts.getFolderByName(newName),

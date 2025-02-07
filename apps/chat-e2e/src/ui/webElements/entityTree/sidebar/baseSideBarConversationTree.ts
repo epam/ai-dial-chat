@@ -6,8 +6,8 @@ import { SideBarEntitiesTree } from '@/src/ui/webElements/entityTree/sidebar/sid
 export class BaseSideBarConversationTree extends SideBarEntitiesTree {
   public async selectConversation(
     name: string,
-    indexOrOptions?: number | { exactMatch: boolean; index?: number },
     { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
+    indexOrOptions?: number | { exactMatch: boolean; index?: number },
   ) {
     const conversationToSelect = this.getTreeEntity(name, indexOrOptions);
     if (isApiStorageType && isHttpMethodTriggered) {

@@ -72,7 +72,9 @@ dialTest(
     await dialTest.step(
       'Set new name, hit Enter and verify name is updated, edit mode is closed',
       async () => {
-        await selectFolders.editFolderNameWithEnter(updatedFolderName);
+        await selectFolders.renameEmptyFolderWithEnter(updatedFolderName, {
+          isHttpMethodTriggered: false,
+        });
         await expect
           .soft(
             selectFolders.getEditFolderInput().getElementLocator(),
@@ -255,7 +257,7 @@ dialTest(
       'Click "Create new folder" icon, set long folder name and verify it is truncated with dots',
       async () => {
         await selectFolderModal.newFolderButton.click();
-        await selectFolders.editFolderNameWithTick(longFolderName, {
+        await selectFolders.renameEmptyFolderWithTick(longFolderName, {
           isHttpMethodTriggered: false,
         });
         const folderNameOverflowProp = await selectFolders
@@ -296,7 +298,7 @@ dialTest(
       async () => {
         await selectFolders.openFolderDropdownMenu(longFolderName);
         await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
-        await selectFolders.editFolderNameWithTick(longFolderName, {
+        await selectFolders.renameEmptyFolderWithTick(longFolderName, {
           isHttpMethodTriggered: false,
         });
         const childFolderNameOverflowProp = await selectFolders
@@ -376,7 +378,7 @@ dialTest(
       'Click "Create new folder" again and edit name to "New folder 999"',
       async () => {
         await selectFolderModal.newFolderButton.click();
-        await selectFolders.editFolderNameWithTick(
+        await selectFolders.renameEmptyFolderWithTick(
           ExpectedConstants.newFolderWithIndexTitle(updateFoldeNameIndex),
           { isHttpMethodTriggered: false },
         );
@@ -521,7 +523,7 @@ dialTest(
           2,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await selectFolders.editFolderNameWithTick(newChildFolderName, {
+        await selectFolders.renameEmptyFolderWithTick(newChildFolderName, {
           isHttpMethodTriggered: false,
         });
         await expect
@@ -543,7 +545,7 @@ dialTest(
           ExpectedConstants.newFolderWithIndexTitle(1),
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await selectFolders.editFolderNameWithTick(newParentFolderName, {
+        await selectFolders.renameEmptyFolderWithTick(newParentFolderName, {
           isHttpMethodTriggered: false,
         });
         //TODO: remove next line when fixed https://github.com/epam/ai-dial-chat/issues/1551
@@ -602,7 +604,7 @@ dialTest(
       'Click "Create new folder" again, set new folder name with end dot, confirm and verify error toast is shown',
       async () => {
         await selectFolderModal.newFolderButton.click();
-        await selectFolders.editFolderNameWithTick(
+        await selectFolders.renameEmptyFolderWithTick(
           `${GeneratorUtil.randomString(10)}.`,
           { isHttpMethodTriggered: false },
         );
@@ -620,7 +622,7 @@ dialTest(
       'Create new folder, set name to already existing one, confirm and verify error message is shown',
       async () => {
         await selectFolderModal.newFolderButton.click();
-        await selectFolders.editFolderNameWithTick(
+        await selectFolders.renameEmptyFolderWithTick(
           ExpectedConstants.newFolderWithIndexTitle(1),
           { isHttpMethodTriggered: false },
         );
@@ -673,7 +675,7 @@ dialTest(
       async () => {
         const nameWithSpaces = GeneratorUtil.randomArrayElement(['', '  ']);
         await selectFolderModal.newFolderButton.click();
-        await selectFolders.editFolderNameWithTick(nameWithSpaces, {
+        await selectFolders.renameEmptyFolderWithTick(nameWithSpaces, {
           isHttpMethodTriggered: false,
         });
         await expect

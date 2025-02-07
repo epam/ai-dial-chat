@@ -1,8 +1,8 @@
 {
     "share.modal.link.description": "This link is temporary and will be active for 3 days.",
-    "share.modal.link_conversation": "This conversation and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming or changing the model will stop sharing.",
-    "share.modal.link_prompt": "This prompt and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.",
+    "share.modal.link_conversation": "This conversation and future changes to it will be visible to users who follow the link. Only owner will be able to make changes.",
+    "share.modal.link_prompt": "This prompt and future changes to it will be visible to users who follow the link. Only owner will be able to make changes.",
     "share.modal.link_conversations_folder": "This conversation folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.",
     "share.modal.link_prompts_folder": "This prompt folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.",
-    "share.modal.link_application": "This application and its updates will be visible to users with the link. Renaming or changing the version will stop sharing."
+    "share.modal.link_application": "This application and its updates will be visible to users with the link."
 }
