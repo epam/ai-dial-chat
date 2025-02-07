@@ -30,7 +30,6 @@ import {
   generateNextName,
   getFolderFromId,
   getParentFolderIdsFromFolderId,
-  splitEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
 import { getPromptRootId, isEntityIdExternal } from '@/src/utils/app/id';
@@ -219,38 +218,35 @@ const savePromptEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
-const recreatePromptEpic: AppEpic = (action$) =>
+const movePromptFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PromptsActions.recreatePrompt.match),
-    mergeMap(({ payload }) => {
-      const { parentPath } = splitEntityId(payload.old.id);
-      return PromptService.createPrompt(payload.new).pipe(
-        switchMap(() =>
-          PromptService.deletePrompt({
-            id: payload.old.id,
-            folderId: parentPath || getPromptRootId(),
-            name: payload.old.name,
-          }),
+    filter(PromptsActions.movePromptFail.match),
+    switchMap(() => {
+      return of(
+        UIActions.showErrorToast(
+          translate(
+            'It looks like prompt already exist. Please reload the page',
+          ),
         ),
-        catchError((err) => {
-          console.error(err);
-          return concat(
-            of(
-              PromptsActions.recreatePromptFail({
-                newId: payload.new.id,
-                oldPrompt: payload.old,
-              }),
-            ),
-            of(
-              UIActions.showErrorToast(
-                translate(
-                  'An error occurred while saving the prompt. Please refresh the page.',
-                ),
-              ),
-            ),
-          );
+      );
+    }),
+  );
+
+const movePromptEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.movePrompt.match),
+    mergeMap(({ payload }) => {
+      return PromptService.movePrompt({
+        sourceUrl: payload.oldPrompt.id,
+        destinationUrl: payload.newPrompt.id,
+        overwrite: false,
+      }).pipe(
+        switchMap(() => {
+          return of(PromptsActions.savePrompt(payload.newPrompt));
         }),
-        ignoreElements(),
+        catchError(() => {
+          return of(PromptsActions.movePromptFail(payload));
+        }),
       );
     }),
   );
@@ -284,7 +280,7 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
         of(PromptsActions.updatePromptSuccess({ prompt: newPrompt, id })),
         iif(
           () => !!prompt && prompt.id !== newPrompt.id,
-          of(PromptsActions.recreatePrompt({ old: prompt, new: newPrompt })),
+          of(PromptsActions.movePrompt({ oldPrompt: prompt, newPrompt })),
           of(PromptsActions.savePrompt(newPrompt)),
         ),
       );
@@ -421,9 +417,7 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
                 of(
                   PromptsActions.updatePrompt({
                     id: prompt.id,
-                    values: {
-                      folderId: updateFolderId(prompt.folderId),
-                    },
+                    values: { folderId: updateFolderId(prompt.folderId) },
                   }),
                 ),
               );
@@ -921,7 +915,8 @@ export const PromptsEpics = combineEpics(
   saveNewPromptEpic,
   deleteFolderEpic,
   savePromptEpic,
-  recreatePromptEpic,
+  movePromptEpic,
+  movePromptFailEpic,
   updatePromptEpic,
   deletePromptEpic,
   clearPromptsEpic,

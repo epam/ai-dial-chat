@@ -135,4 +135,13 @@ export class TalkToAgentDialog extends BaseElement {
   public async selectReplayAsIs() {
     await this.getAgents().getAgent(ExpectedConstants.replayAsIsLabel).click();
   }
+
+  //select agent available on 'Talk to' modal
+  public async selectRecentAgent(agent: DialAIEntityModel) {
+    const resp = this.page.waitForResponse((r) =>
+      r.url().includes(API.moveHost),
+    );
+    await this.getAgents().getAgent(agent).click();
+    await resp;
+  }
 }
