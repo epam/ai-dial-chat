@@ -1,5 +1,4 @@
 import { isApiStorageType } from '@/src/hooks/global-setup';
-import { API } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { ErrorLabelSelectors } from '@/src/ui/selectors';
@@ -28,7 +27,7 @@ export class PromptModalDialog extends BaseElement {
   public async fillPromptDetails(
     name: string,
     description: string | undefined,
-    value: string | undefined,
+    value: string,
   ) {
     await this.name.click();
     await this.page.keyboard.press(keys.ctrlPlusA);
@@ -38,11 +37,9 @@ export class PromptModalDialog extends BaseElement {
     if (description !== undefined) {
       await this.description.typeInInput(description);
     }
-    if (value !== undefined) {
-      await this.prompt.click();
-      await this.page.keyboard.press(keys.ctrlPlusA);
-      await this.prompt.typeInInput(value);
-    }
+    await this.prompt.click();
+    await this.page.keyboard.press(keys.ctrlPlusA);
+    await this.prompt.typeInInput(value);
   }
 
   public async setField(field: BaseElement, value: string) {
@@ -54,8 +51,8 @@ export class PromptModalDialog extends BaseElement {
 
   public async updatePromptDetailsWithButton(
     name: string,
-    description?: string | undefined,
-    value?: string | undefined,
+    description: string | undefined,
+    value: string,
   ) {
     return this.updatePromptDetails(name, description, value, () =>
       this.saveButton.click(),
@@ -64,8 +61,8 @@ export class PromptModalDialog extends BaseElement {
 
   public async updatePromptDetailsWithEnter(
     name: string,
-    description?: string,
-    value?: string | undefined,
+    description: string,
+    value: string,
   ) {
     return this.updatePromptDetails(name, description, value, () =>
       this.page.keyboard.press(keys.enter),
@@ -75,17 +72,14 @@ export class PromptModalDialog extends BaseElement {
   public async updatePromptDetails(
     name: string,
     description: string | undefined,
-    value: string | undefined,
+    value: string,
     method: () => Promise<void>,
   ) {
-    const isNameUpdated = (await this.getName()) !== name;
     await this.fillPromptDetails(name, description, value);
     if (isApiStorageType) {
       const respPromise = this.page.waitForResponse((resp) => {
-        const url = resp.request().url();
-        return isNameUpdated
-          ? url.includes(API.moveHost)
-          : url.includes(API.promptHost);
+        const method = resp.request().method();
+        return method === 'POST' || method === 'PUT';
       });
       await method();
       const response = await respPromise;

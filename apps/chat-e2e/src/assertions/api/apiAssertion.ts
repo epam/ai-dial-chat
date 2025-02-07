@@ -1,6 +1,6 @@
 import { ChatBody } from '@/chat/types/chat';
-import { MoveModel } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
+import { Prompt } from '@/chat/types/prompt';
 import { ExpectedConstants, ExpectedMessages } from '@/src/testData';
 import { Message } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
@@ -123,30 +123,30 @@ export class ApiAssertion {
       .toBe(expectedMessage);
   }
 
-  public async assertMoveRequest(
-    request: MoveModel,
-    expectedDestination: string,
-    expectedSource: string,
-    isOverwritten = false,
+  public async assertRequestPromptName(request: Prompt, expectedValue: string) {
+    expect
+      .soft(request.name, ExpectedMessages.promptRequestNameIsValid)
+      .toBe(expectedValue);
+  }
+
+  public async assertRequestPromptDescription(
+    request: Prompt,
+    expectedValue: string,
   ) {
     expect
       .soft(
-        request.destinationUrl.endsWith(`/${expectedDestination}`),
-        ExpectedMessages.moveDestinationIsValid,
+        request.description,
+        ExpectedMessages.promptRequestDescriptionIsValid,
       )
-      .toBeTruthy();
+      .toBe(expectedValue);
+  }
+
+  public async assertRequestPromptContent(
+    request: Prompt,
+    expectedValue: string,
+  ) {
     expect
-      .soft(
-        request.sourceUrl.endsWith(`/${expectedSource}`),
-        ExpectedMessages.moveSourceIsValid,
-      )
-      .toBeTruthy();
-    isOverwritten
-      ? expect
-          .soft(isOverwritten, ExpectedMessages.moveSourceIsValid)
-          .toBeTruthy()
-      : expect
-          .soft(isOverwritten, ExpectedMessages.moveOverwriteIsValid)
-          .toBeFalsy();
+      .soft(request.content, ExpectedMessages.promptRequestContentIsValid)
+      .toBe(expectedValue);
   }
 }

@@ -162,6 +162,8 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserSharedWithMeConversations.selectConversation(
           conversationName,
+          undefined,
+          { isHttpMethodTriggered: false },
         );
         await additionalShareUserChat.duplicateConversation();
         await additionalShareUserConversations

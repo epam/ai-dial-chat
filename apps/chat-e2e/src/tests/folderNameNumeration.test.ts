@@ -115,7 +115,7 @@ dialTest(
       async () => {
         await folderConversations.openFolderDropdownMenu(incrementedFolderName);
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await folderConversations.renameEmptyFolderWithTick(
+        await folderConversations.editFolderNameWithTick(
           GeneratorUtil.randomString(5),
         );
 
@@ -173,7 +173,7 @@ dialTest(
           nestedFolders[nestedFolderLevel - 1].name,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await folderConversations.renameFolderWithContentWithTick(
+        await folderConversations.editFolderNameWithTick(
           expectedDuplicatedFolderName,
         );
 

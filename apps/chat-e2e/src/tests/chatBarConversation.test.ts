@@ -758,7 +758,7 @@ dialTest(
           1,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await folderConversations.renameEmptyFolderWithEnter(folderName);
+        await folderConversations.editFolderNameWithEnter(folderName);
 
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.moveTo);

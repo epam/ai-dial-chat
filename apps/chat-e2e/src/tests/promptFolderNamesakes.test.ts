@@ -41,7 +41,7 @@ dialTest(
         ExpectedConstants.newFolderWithIndexTitle(1),
       );
       await promptDropdownMenu.selectMenuOption(MenuOptions.rename);
-      await folderPrompts.renameEmptyFolderWithTick(duplicatedFolderName);
+      await folderPrompts.editFolderNameWithTick(duplicatedFolderName);
     });
 
     await dialTest.step(
@@ -51,7 +51,7 @@ dialTest(
           ExpectedConstants.newFolderWithIndexTitle(2),
         );
         await promptDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await folderPrompts.renameEmptyFolderWithTick(duplicatedFolderName, {
+        await folderPrompts.editFolderNameWithTick(duplicatedFolderName, {
           isHttpMethodTriggered: false,
         });
         const errorMessage = await toast.getElementContent();
@@ -205,7 +205,7 @@ dialTest(
         ExpectedConstants.newFolderWithIndexTitle(3),
       );
       await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-      await folderPrompts.renameEmptyFolderWithTick(
+      await folderPrompts.editFolderNameWithTick(
         ExpectedConstants.newFolderWithIndexTitle(2),
       );
     });

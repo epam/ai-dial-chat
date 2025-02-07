@@ -137,7 +137,7 @@ dialTest(
           nestedFolders[sharedFolderIndex].name,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await folderPrompts.renameEmptyFolderWithTick(newFolderName, {
+        await folderPrompts.editFolderNameWithTick(newFolderName, {
           isHttpMethodTriggered: false,
         });
         await confirmationDialogAssertion.assertConfirmationMessage(

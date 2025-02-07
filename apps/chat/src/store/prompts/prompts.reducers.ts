@@ -105,32 +105,20 @@ export const promptsSlice = createSlice({
       );
     },
     savePrompt: (state, _action: PayloadAction<Prompt>) => state,
-    moveOrUpdatePrompt: (
+    recreatePrompt: (
       state,
-      _action: PayloadAction<{
-        prompt: PromptInfo;
-        newValues: Partial<Prompt>;
-      }>,
+      _action: PayloadAction<{ new: Prompt; old: PromptInfo }>,
     ) => state,
-    movePrompt: (
+    recreatePromptFail: (
       state,
-      _action: PayloadAction<{
-        newPrompt: Prompt;
-        oldPrompt: Prompt;
-      }>,
-    ) => state,
-    movePromptFail: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        newPrompt: Prompt;
-        oldPrompt: Prompt;
-      }>,
+      { payload }: PayloadAction<{ oldPrompt: Prompt; newId: string }>,
     ) => {
       state.prompts = state.prompts.map((prompt) => {
-        if (payload.newPrompt.id === prompt.id) {
-          return payload.oldPrompt;
+        if (prompt.id === payload.newId) {
+          return {
+            ...prompt,
+            ...payload.oldPrompt,
+          };
         }
 
         return prompt;

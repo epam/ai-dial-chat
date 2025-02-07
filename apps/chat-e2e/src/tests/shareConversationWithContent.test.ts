@@ -753,6 +753,8 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserConversations.selectConversation(
           secondUserEmptyConversation.name,
+          undefined,
+          { isHttpMethodTriggered: false },
         );
         await additionalShareUserSendMessage.attachmentMenuTrigger.click();
 

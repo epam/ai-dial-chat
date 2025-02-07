@@ -313,8 +313,11 @@ dialTest(
     temperatureSlider,
     agentSettings,
     addons,
+    marketplacePage,
     conversations,
     conversationDropdownMenu,
+    confirmationDialog,
+    confirmationDialogAssertion,
     conversationSettingsModal,
     chat,
     setTestIds,
@@ -332,7 +335,6 @@ dialTest(
     let thirdConversationToShare: Conversation;
     let randomAddon: DialAIEntityModel;
     let randomModel: DialAIEntityModel;
-    let defaultModelId: string;
     let newName: string;
 
     await dialTest.step(
@@ -359,11 +361,10 @@ dialTest(
             await mainUserShareApiHelper.shareEntityByLink([conversation]);
           await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
         }
-        defaultModelId = ModelsUtil.getDefaultModel()!.id;
         randomAddon = GeneratorUtil.randomArrayElement(ModelsUtil.getAddons());
         randomModel = GeneratorUtil.randomArrayElement(
           ModelsUtil.getLatestModels().filter(
-            (model) => model.id !== defaultModelId,
+            (model) => model.id !== ModelsUtil.getDefaultModel()!.id,
           ),
         );
         await localStorageManager.setRecentAddonsIds(randomAddon);
@@ -394,7 +395,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Update conversation name for the 2nd conversation and verify conversation is shared, shared icon is displayed',
+      'Update conversation name for the 2nd conversation and verify confirmation modal is displayed',
       async () => {
         newName = GeneratorUtil.randomString(10);
         await conversations.selectConversation(secondConversationToShare.name);
@@ -402,51 +403,77 @@ dialTest(
           secondConversationToShare.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await renameConversationModal.editConversationNameWithSaveButton(
-          newName,
+        await renameConversationModal.editInputValue(newName);
+        await renameConversationModal.saveButton.click();
+        await confirmationDialogAssertion.assertConfirmationDialogTitle(
+          ExpectedConstants.renameSharedConversationDialogTitle,
         );
-        await conversationAssertion.assertEntityArrowIconState(
-          { name: newName },
-          'visible',
+        await confirmationDialogAssertion.assertConfirmationMessage(
+          ExpectedConstants.renameSharedConversationMessage,
         );
       },
     );
 
     await dialTest.step(
-      'Update model for the 3rd conversation and verify conversation is shared, shared icon is displayed',
+      'Confirm conversation rename and verify conversation is not shared and arrow icon disappears',
+      async () => {
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await conversationAssertion.assertEntityArrowIconState(
+          { name: newName },
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Update model for the 3rd conversation and verify confirmation modal is displayed',
       async () => {
         await conversations.selectConversation(thirdConversationToShare.name);
         await chatHeader.chatAgent.click();
-        await talkToAgentDialog.selectRecentAgent(randomModel);
+        await talkToAgentDialog.selectAgent(randomModel, marketplacePage);
+        await confirmationDialogAssertion.assertConfirmationDialogTitle(
+          ExpectedConstants.sharedConversationModelChangeDialogTitle,
+        );
+        await confirmationDialogAssertion.assertConfirmationMessage(
+          ExpectedConstants.sharedConversationModelChangeMessage,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Confirm conversation model change and verify conversation is not shared and arrow icon disappears',
+      async () => {
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await conversationAssertion.assertEntityArrowIconState(
           { name: newName },
-          'visible',
+          'hidden',
         );
       },
     );
 
     await dialSharedWithMeTest.step(
-      'Verify conversations remained shared with user',
+      'Verify only conversation with updated settings is shared with user',
       async () => {
+        const sharedEntities =
+          await additionalUserShareApiHelper.listSharedWithMeConversations();
+        await shareApiAssertion.assertSharedWithMeEntityState(
+          sharedEntities,
+          firstConversationToShare,
+          'visible',
+        );
+
         secondConversationToShare.id = secondConversationToShare.id.replace(
           secondConversationToShare.name,
           newName,
         );
-        thirdConversationToShare.id = thirdConversationToShare.id.replace(
-          defaultModelId,
-          randomModel.id,
-        );
-        const sharedEntities =
-          await additionalUserShareApiHelper.listSharedWithMeConversations();
-        for (const conversation of [
-          firstConversationToShare,
+        for (const sharedConversation of [
           secondConversationToShare,
           thirdConversationToShare,
         ]) {
           await shareApiAssertion.assertSharedWithMeEntityState(
             sharedEntities,
-            conversation,
-            'visible',
+            sharedConversation,
+            'hidden',
           );
         }
       },
@@ -763,10 +790,7 @@ dialTest(
           nestedFolders[nestedLevel - 2].name,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await folderConversations.renameFolderWithContentWithEnter(
-          newFolderName,
-          { isHttpMethodTriggered: false },
-        );
+        await folderConversations.editFolderNameWithEnter(newFolderName);
 
         expect
           .soft(

@@ -134,7 +134,9 @@ const PromptFolderTemplate = ({
           dispatch(
             PromptsActions.updatePrompt({
               id: prompt.id,
-              values: { folderId: folder.id },
+              values: {
+                folderId: folder.id,
+              },
             }),
           );
         } else if (folderData) {
@@ -200,35 +202,6 @@ const PromptFolderTemplate = ({
     [dispatch],
   );
 
-  const handleFolderRename = useCallback(
-    (name: string, folderId: string) => {
-      dispatch(
-        PromptsActions.updateFolder({
-          folderId,
-          values: { name, isShared: false },
-        }),
-      );
-    },
-    [dispatch],
-  );
-
-  const handleFolderDelete = useCallback(
-    (folderId: string) => {
-      if (folder.sharedWithMe) {
-        dispatch(
-          ShareActions.discardSharedWithMe({
-            resourceIds: [folder.id],
-            isFolder: true,
-            featureType: FeatureType.Prompt,
-          }),
-        );
-      } else {
-        dispatch(PromptsActions.deleteFolder({ folderId }));
-      }
-    },
-    [dispatch, folder.id, folder.sharedWithMe],
-  );
-
   const handleFolderSelect = useCallback(
     (folderId: string) => {
       if (isFolderEmpty) {
@@ -289,8 +262,27 @@ const PromptFolderTemplate = ({
         highlightedFolders={allowHighlight ? highlightedFolders : []}
         openedFoldersIds={openedFoldersIds}
         handleDrop={handleDrop}
-        onRenameFolder={handleFolderRename}
-        onDeleteFolder={handleFolderDelete}
+        onRenameFolder={(name, folderId) => {
+          dispatch(
+            PromptsActions.updateFolder({
+              folderId,
+              values: { name },
+            }),
+          );
+        }}
+        onDeleteFolder={(folderId: string) => {
+          if (folder.sharedWithMe) {
+            dispatch(
+              ShareActions.discardSharedWithMe({
+                resourceIds: [folder.id],
+                isFolder: true,
+                featureType: FeatureType.Prompt,
+              }),
+            );
+          } else {
+            dispatch(PromptsActions.deleteFolder({ folderId }));
+          }
+        }}
         onClickFolder={handleFolderClick}
         featureType={FeatureType.Prompt}
         canSelectFolders={isSelectMode}
