@@ -158,6 +158,7 @@ export function ShareModalView() {
   }, [dispatch, entity, handleClose]);
 
   useEffect(() => () => clearTimeout(timeoutRef.current), []);
+
   return (
     <Modal
       portalId="theme-main"

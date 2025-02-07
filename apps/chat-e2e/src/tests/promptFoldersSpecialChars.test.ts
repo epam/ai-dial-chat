@@ -81,7 +81,7 @@ dialTest(
     });
 
     await dialTest.step('Rename it to contain special characters', async () => {
-      await folderPrompts.editFolderNameWithTick(newNameWithSpecialChars);
+      await folderPrompts.renameEmptyFolderWithTick(newNameWithSpecialChars);
       await promptBarFolderAssertion.assertFolderState(
         { name: newNameWithSpecialChars },
         'visible',
@@ -174,7 +174,7 @@ dialTest(
       async () => {
         await folderPrompts.openFolderDropdownMenu(expectedName);
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await folderPrompts.editFolderNameWithTick(newNameWithEmojis);
+        await folderPrompts.renameEmptyFolderWithTick(newNameWithEmojis);
         await promptBarFolderAssertion.assertFolderState(
           { name: newNameWithEmojis },
           'visible',
