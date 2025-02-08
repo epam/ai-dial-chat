@@ -40,7 +40,10 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import {
+  ModelsActions,
+  ModelsSelectors,
+} from '@/src/store/models/models.reducers';
 import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
@@ -278,16 +281,24 @@ export const ChatView = memo(() => {
   }, []);
 
   useEffect(() => {
-    const lastMergedMessages = mergedMessages.length
-      ? mergedMessages[mergedMessages.length - 1]
-      : [];
+    if (!mergedMessages.length) return;
 
+    const lastMergedMessages = mergedMessages[mergedMessages.length - 1];
     const isErrorInSomeLastMessage = lastMergedMessages.some(
       (mergedStr: [Conversation, Message, number, Message[]]) =>
         !!mergedStr[1].errorMessage,
     );
+
     setIsLastMessageError(isErrorInSomeLastMessage);
-  }, [mergedMessages]);
+
+    const lastMessage = lastMergedMessages[0]?.[1];
+    if (
+      lastMessage?.errorMessage &&
+      lastMessage.errorMessage.includes('server error')
+    ) {
+      dispatch(ModelsActions.getModels());
+    }
+  }, [dispatch, mergedMessages]);
 
   useEffect(() => {
     const handleResize = () => {
