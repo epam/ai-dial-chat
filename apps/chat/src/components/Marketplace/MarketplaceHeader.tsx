@@ -21,11 +21,12 @@ import {
 import { Logo } from '@/src/components/Header/Logo';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
-import MoveLeftIcon from '../../../public/images/icons/move-left.svg';
-import MoveRightIcon from '../../../public/images/icons/move-right.svg';
 import Tooltip from '../Common/Tooltip';
 import { BackToChat } from '../Header/BackToChat';
 import { User } from '../Header/User/User';
+
+import MoveLeftIcon from '@/public/images/icons/move-left.svg';
+import MoveRightIcon from '@/public/images/icons/move-right.svg';
 
 export const MarketplaceHeader = () => {
   const { t } = useTranslation(Translation.Header);

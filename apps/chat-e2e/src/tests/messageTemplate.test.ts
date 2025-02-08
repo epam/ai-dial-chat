@@ -1014,10 +1014,10 @@ dialTest(
       async () => {
         await conversations.selectConversation(
           replayName,
+          { isHttpMethodTriggered: false },
           {
             exactMatch: true,
           },
-          { isHttpMethodTriggered: false },
         );
         await chat.startReplay(
           simpleConversationMessage.messages[0].content,

@@ -41,16 +41,23 @@ export class ConversationAssertion extends SideBarEntityAssertion<ConversationsT
   }
 
   public async assertSelectedConversation(conversationName: string) {
-    const conversationBackgroundColor =
-      await this.sideBarEntitiesTree.getEntityBackgroundColor(conversationName);
-    expect
-      .soft(
-        conversationBackgroundColor,
-        ExpectedMessages.conversationIsSelected,
-      )
-      .toBe(Colors.backgroundAccentSecondary);
+    const selectedEntity =
+      this.sideBarEntitiesTree.selectedConversation(conversationName);
+
+    await this.assertElementState(selectedEntity, 'visible');
+    await this.assertEntityBackgroundColor(
+      { name: conversationName },
+      Colors.backgroundAccentSecondary,
+    );
   }
 
+  public async assertNoConversationIsSelected() {
+    const selectedEntities =
+      await this.sideBarEntitiesTree.getSelectedEntities();
+    expect
+      .soft(selectedEntities.length, ExpectedMessages.noConversationIsSelected)
+      .toBe(0);
+  }
   public async assertConversationInToday(conversationName: string) {
     const todayConversations =
       await this.sideBarEntitiesTree.getChronologyConversations(
