@@ -5,8 +5,9 @@ import {
   IconTrashX,
   IconUserX,
 } from '@tabler/icons-react';
-import { MouseEvent, MouseEventHandler, useMemo } from 'react';
+import { MouseEventHandler, useMemo } from 'react';
 
+import { useMenuItemHandler } from '@/src/hooks/useHandler';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { canEditSharedFolderOrParent } from '@/src/utils/app/folders';
@@ -21,8 +22,6 @@ import { CodeEditorSelectors } from '@/src/store/codeEditor/codeEditor.reducer';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-
-import { stopBubbling } from '@/src/constants/chat';
 
 import ContextMenu from '../Common/ContextMenu';
 import DownloadRenderer from './Download';
@@ -65,6 +64,9 @@ export function FileItemContextMenu({
 
   const folders = useAppSelector(FilesSelectors.selectFolders);
 
+  const handleSave = useMenuItemHandler(onSave, file.id);
+  const handleDownload = useMenuItemHandler(onOpenChange, false, false);
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
@@ -79,7 +81,7 @@ export function FileItemContextMenu({
         ) : null,
         display: !!onSave,
         Icon: IconDeviceFloppy,
-        onClick: () => onSave?.(file.id),
+        onClick: handleSave,
       },
       {
         name: t('Download'),
@@ -88,10 +90,7 @@ export function FileItemContextMenu({
           file.status !== UploadStatus.FAILED,
         dataQa: 'download',
         Icon: IconDownload,
-        onClick: (e: MouseEvent) => {
-          stopBubbling(e);
-          onOpenChange?.(false);
-        },
+        onClick: handleDownload,
         customTriggerData: file,
         CustomTriggerRenderer: DownloadRenderer,
       },
@@ -128,14 +127,15 @@ export function FileItemContextMenu({
       t,
       isCodeEditorFile,
       onSave,
+      handleSave,
       file,
+      handleDownload,
       isSharingConversationEnabled,
       onUnshare,
       isPublishingConversationEnabled,
       onUnpublish,
       folders,
       onDelete,
-      onOpenChange,
     ],
   );
 

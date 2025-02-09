@@ -434,9 +434,9 @@ const acceptInvitationEpic: AppEpic = (action$) =>
               return of(
                 ShareActions.acceptShareInvitationSuccess({
                   acceptedId,
-                  isFolder: isFolderId(data.resources[0].url),
-                  isConversation: isConversationId(data.resources[0].url),
-                  isPrompt: isPromptId(data.resources[0].url),
+                  isFolder: isFolderId(acceptedIds[0].url),
+                  isConversation: isConversationId(acceptedIds[0].url),
+                  isPrompt: isPromptId(acceptedIds[0].url),
                   isApplication: isApplicationId(acceptedId),
                 }),
               );
