@@ -209,6 +209,14 @@ export const createQuickAppConfig = ({
   document_relative_url: document_relative_url || undefined,
 });
 
+export const getToolsetStr = (config: QuickAppConfig) => {
+  try {
+    return JSON.stringify(config.web_api_toolset, null, 2);
+  } catch {
+    return '';
+  }
+};
+
 export const topicToOption = (topic: string) => ({
   value: topic,
   label: topic,

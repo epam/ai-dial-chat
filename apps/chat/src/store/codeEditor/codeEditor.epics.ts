@@ -36,7 +36,7 @@ const initCodeEditorEpic: AppEpic = (action$, state$) =>
     filter(CodeEditorActions.initCodeEditor.match),
     switchMap(({ payload }) => {
       const folderFiles = FilesSelectors.selectFiles(state$.value).filter(
-        (file) => file.id.startsWith(`${payload.sourcesFolderId}/`),
+        (file) => file.id.startsWith(`${payload.sourcesFolderId}`),
       );
       const rootFiles = FilesSelectors.selectFiles(state$.value).filter(
         (file) => file.folderId === payload.sourcesFolderId,
