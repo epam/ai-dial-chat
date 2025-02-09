@@ -113,8 +113,11 @@ export const usePromptSelection = (
   const addPromptContent = useCallback(
     (newContent: string) => {
       setContent(content?.replace(/\/\w*$/, newContent));
+      if (!useLocalContentState) {
+        setTimeout(() => dispatch(ChatActions.setShouldFocusAndScroll(true)));
+      }
     },
-    [setContent, content],
+    [setContent, content, useLocalContentState, dispatch],
   );
 
   /**

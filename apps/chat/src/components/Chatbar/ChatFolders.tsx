@@ -144,9 +144,7 @@ const ChatFolderTemplate = ({
           dispatch(
             ConversationsActions.updateConversation({
               id: conversation.id,
-              values: {
-                folderId: folder.id,
-              },
+              values: { folderId: folder.id },
             }),
           );
         } else if (folderData) {
