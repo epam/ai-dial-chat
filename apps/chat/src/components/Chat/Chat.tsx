@@ -169,36 +169,33 @@ export const ChatView = memo(() => {
     isReplayRequiresVariables ||
     selectedConversations.some((conv) => conv.messages.length > 0);
 
-  const isNotAllowedModel = useMemo(
-    () =>
-      isModelsLoaded &&
-      (models.length === 0 ||
-        selectedConversations.some((conv) => {
-          if (
-            isReplayConversation(conv) &&
-            isReplayAsIsConversation(conv) &&
-            conv.replay?.replayUserMessagesStack &&
-            conv.replay?.replayUserMessagesStack[0].model
-          ) {
-            return conv.replay.replayUserMessagesStack.some(
-              (message) =>
-                message.role === Role.User &&
-                message.model?.id &&
-                !modelsMap[message.model.id],
-            );
-          }
-
-          const model = modelsMap[conv.model.id];
-
-          return (
-            !model ||
-            (model.type === EntityType.Assistant &&
-              conv.assistantModelId &&
-              !modelsMap[conv.assistantModelId])
+  const isNotAllowedModel =
+    isModelsLoaded &&
+    (models.length === 0 ||
+      selectedConversations.some((conv) => {
+        if (
+          isReplayConversation(conv) &&
+          isReplayAsIsConversation(conv) &&
+          conv.replay?.replayUserMessagesStack &&
+          conv.replay?.replayUserMessagesStack[0].model
+        ) {
+          return conv.replay.replayUserMessagesStack.some(
+            (message) =>
+              message.role === Role.User &&
+              message.model?.id &&
+              !modelsMap[message.model.id],
           );
-        })),
-    [isModelsLoaded, models.length, modelsMap, selectedConversations],
-  );
+        }
+
+        const model = modelsMap[conv.model.id];
+
+        return (
+          !model ||
+          (model.type === EntityType.Assistant &&
+            conv.assistantModelId &&
+            !modelsMap[conv.assistantModelId])
+        );
+      }));
 
   useLayoutEffect(() => {
     if (isNotAllowedModel) {
