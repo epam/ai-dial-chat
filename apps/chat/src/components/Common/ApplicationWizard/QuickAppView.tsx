@@ -117,7 +117,7 @@ export const QuickAppView: React.FC<ViewProps> = ({
 
         dispatch(
           ApplicationActions.update({
-            oldApplicationId: selectedApplication.id,
+            oldApplication: selectedApplication,
             applicationData,
           }),
         );
