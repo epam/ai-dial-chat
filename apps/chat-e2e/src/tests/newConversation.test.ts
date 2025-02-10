@@ -1,5 +1,6 @@
 import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
+import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
   ExpectedConstants,
   ExpectedMessages,
@@ -190,10 +191,12 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialSharedWithMeTest.only(
   'New conversation disappears, chat history is shown on the central part if to click on the chat with history\n' +
     'New conversation appears if user deletes focused Chat1. Chat2 stays unselected.\n' +
-    'New conversation appears if user deletes focused chat. No data label appears instead.',
+    'New conversation appears if user deletes focused chat. No data label appears instead.\n' +
+    'Shared with me. Delete shared chat\n' +
+    'New conversation appears if user deletes focused chat from Shared with me',
   async ({
     dialHomePage,
     header,
@@ -207,8 +210,19 @@ dialTest.only(
     confirmationDialog,
     chat,
     chatBarAssertion,
+    mainUserShareApiHelper,
+    additionalUserShareApiHelper,
+    additionalShareUserDataInjector,
+    sharedWithMeConversations,
+    sharedWithMeConversationDropdownMenu,
   }) => {
-    setTestIds('EPMRTC-4791', 'EPMRTC-4776', 'EPMRTC-4804');
+    setTestIds(
+      'EPMRTC-4791',
+      'EPMRTC-4776',
+      'EPMRTC-4804',
+      'EPMRTC-1834',
+      'EPMRTC-4802',
+    );
     const firstConversation =
       conversationData.prepareModelConversationBasedOnRequests([
         'first request',
@@ -216,10 +230,23 @@ dialTest.only(
       ]);
     conversationData.resetData();
     const secondConversation = conversationData.prepareDefaultConversation();
+    conversationData.resetData();
+    const sharedConversation = conversationData.prepareDefaultConversation();
+    await additionalShareUserDataInjector.createConversations([
+      sharedConversation,
+    ]);
     await dataInjector.createConversations([
       firstConversation,
       secondConversation,
     ]);
+
+    await dialTest.step('Prepare shared conversation', async () => {
+      const shareByLinkResponse =
+        await additionalUserShareApiHelper.shareEntityByLink([
+          sharedConversation,
+        ]);
+      await mainUserShareApiHelper.acceptInvite(shareByLinkResponse);
+    });
 
     await dialTest.step('Open app and create new conversation', async () => {
       await dialHomePage.openHomePage();
@@ -279,6 +306,43 @@ dialTest.only(
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await chatBarAssertion.assertNoDataInConversations();
+        await chat.getSendMessage().waitForState({ state: 'attached' });
+        await chat.changeAgentButton.waitForState();
+        await chat.configureSettingsButton.waitForState();
+      },
+    );
+
+    await dialTest.step(
+      'Open shared conversation by another user, select Delete and confirm',
+      async () => {
+        await sharedWithMeConversations.selectConversation(
+          sharedConversation.name,
+        );
+        await sharedWithMeConversations.openEntityDropdownMenu(
+          sharedConversation.name,
+        );
+        await sharedWithMeConversationDropdownMenu.selectMenuOption(
+          MenuOptions.delete,
+        );
+        await confirmationDialog.confirm({
+          triggeredHttpMethod: 'POST',
+        });
+      },
+    );
+
+    await dialTest.step(
+      'Verify shared conversation is deleted and new conversation is shown',
+      async () => {
+        await expect
+          .soft(
+            sharedWithMeConversations.getEntityByName(firstConversation.name),
+            ExpectedMessages.conversationIsNotVisible,
+          )
+          .toBeHidden();
+        await chatBarAssertion.assertNoDataInConversations();
+        await chat.getSendMessage().waitForState({ state: 'attached' });
+        await chat.changeAgentButton.waitForState();
+        await chat.configureSettingsButton.waitForState();
       },
     );
   },
