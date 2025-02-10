@@ -109,8 +109,15 @@ const getConfigurationSchemaFailedEpic: AppEpic = (action$) =>
     }),
   );
 
+const appendInputContentEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ChatActions.appendInputContent.match),
+    map(() => ChatActions.setShouldFocusAndScroll(true)),
+  );
+
 export const ChatEpics = combineEpics(
   setFormValueEpic,
   getConfigurationSchemaEpic,
   getConfigurationSchemaFailedEpic,
+  appendInputContentEpic,
 );
