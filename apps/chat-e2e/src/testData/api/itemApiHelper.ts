@@ -7,7 +7,7 @@ import {
 import { Prompt } from '@/chat/types/prompt';
 import { API } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
-import { BucketUtil, ItemUtil } from '@/src/utils';
+import { BucketUtil, ItemUtil, applicationNamePrefix } from '@/src/utils';
 import { Entity } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 
@@ -20,7 +20,11 @@ export class ItemApiHelper extends BaseApiHelper {
     );
     const prompts = await this.listItems(API.promptsHost(), bucketToUse);
     const apps = await this.listItems(API.appsHost(), bucketToUse);
-    await this.deleteBackendItem(...conversations, ...prompts, ...apps);
+    await this.deleteBackendItem(
+      ...conversations,
+      ...prompts,
+      ...apps.filter((a) => a.name.startsWith(applicationNamePrefix)),
+    );
   }
 
   public async listItems(url: string, bucket?: string) {

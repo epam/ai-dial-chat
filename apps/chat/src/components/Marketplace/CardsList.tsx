@@ -22,18 +22,19 @@ interface CardsListProps {
   dataQA?: string;
 }
 
-export const CardsList = memo(({
-  entities,
-  title,
-  className,
-  onCardClick,
-  onPublish,
-  onDelete,
-  onEdit,
-  onBookmarkClick,
-  dataQA,
-}: CardsListProps) => {
-  const { t } = useTranslation(Translation.Marketplace);
+export const CardsList = memo(
+  ({
+    entities,
+    title,
+    className,
+    onCardClick,
+    onPublish,
+    onDelete,
+    onEdit,
+    onBookmarkClick,
+    dataQA,
+  }: CardsListProps) => {
+    const { t } = useTranslation(Translation.Marketplace);
 
     return (
       <section className={className}>
