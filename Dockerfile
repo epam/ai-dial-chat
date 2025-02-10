@@ -18,7 +18,7 @@ FROM build AS run_dependencies
 WORKDIR /app/dist/apps/chat
 COPY /tools /app/dist/apps/chat/tools
 COPY /patches /app/dist/apps/chat/patches
-RUN npm i
+RUN npm install && npm uninstall cross-spawn && npm install cross-spawn@7.0.6
 RUN node tools/patch-nextjs.js
 
 # ---- Production ----
