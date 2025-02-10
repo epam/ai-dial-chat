@@ -11,6 +11,7 @@ export interface ChatState {
   formValue?: MessageFormValue;
   configurationSchema?: MessageFormSchema;
   isConfigurationSchemaLoading: boolean;
+  shouldFocusAndScroll?: boolean;
 }
 
 const initialState: ChatState = {
@@ -68,6 +69,9 @@ export const chatSlice = createSlice({
     resetConfigurationSchema: (state) => {
       state.configurationSchema = undefined;
       state.isConfigurationSchemaLoading = false;
+    },
+    setShouldFocusAndScroll: (state, { payload }: PayloadAction<boolean>) => {
+      state.shouldFocusAndScroll = payload;
     },
   },
 });
