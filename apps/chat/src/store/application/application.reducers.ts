@@ -52,25 +52,46 @@ export const applicationSlice = createSlice({
     deleteFail: (state) => {
       state.appLoading = UploadStatus.FAILED;
     },
-    edit: (state, _action: PayloadAction<CustomApplicationModel>) => {
+    edit: (
+      state,
+      _action: PayloadAction<{
+        oldApplication: CustomApplicationModel;
+        updatedApplication: CustomApplicationModel;
+      }>,
+    ) => {
       state.appLoading = UploadStatus.LOADING;
     },
     editSuccess: (state) => {
       state.appLoading = UploadStatus.LOADED;
     },
-    editFail: (state) => {
+    editFail: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        oldApplication: CustomApplicationModel;
+      }>,
+    ) => {
+      state.appDetails = payload.oldApplication;
       state.appLoading = UploadStatus.FAILED;
     },
     update: (
       state,
-      _action: PayloadAction<{
-        oldApplicationId: string;
+      {
+        payload,
+      }: PayloadAction<{
+        oldApplication: CustomApplicationModel;
         applicationData: CustomApplicationModel;
       }>,
     ) => {
       state.appLoading = UploadStatus.LOADING;
+      state.appDetails = payload.applicationData;
     },
-    updateFail: (state) => {
+    updateFail: (
+      state,
+      { payload }: PayloadAction<{ oldApplication: CustomApplicationModel }>,
+    ) => {
+      state.appDetails = payload.oldApplication;
       state.appLoading = UploadStatus.FAILED;
     },
     get: (

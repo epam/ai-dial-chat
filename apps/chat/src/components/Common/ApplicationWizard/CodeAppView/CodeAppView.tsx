@@ -153,7 +153,7 @@ export const CodeAppView: FC<ViewProps> = ({
 
         dispatch(
           ApplicationActions.update({
-            oldApplicationId: selectedApplication.id,
+            oldApplication: selectedApplication,
             applicationData,
           }),
         );
