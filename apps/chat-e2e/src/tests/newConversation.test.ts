@@ -217,7 +217,7 @@ dialTest(
   },
 );
 
-dialSharedWithMeTest.only(
+dialSharedWithMeTest(
   'New conversation disappears, chat history is shown on the central part if to click on the chat with history\n' +
     'New conversation appears if user deletes focused Chat1. Chat2 stays unselected.\n' +
     'New conversation appears if user deletes focused chat. No data label appears instead.\n' +
@@ -431,6 +431,81 @@ dialSharedWithMeTest.only(
         await chat.getSendMessage().waitForState({ state: 'attached' });
         await chat.changeAgentButton.waitForState();
         await chat.configureSettingsButton.waitForState();
+      },
+    );
+  },
+);
+
+dialTest.only(
+  'New conversation appears if user clicks on logo when DIAL Marketplace panel is opened',
+  async ({
+           dialHomePage,
+           header,
+           talkToAgentDialog,
+    chatBar,
+           agentInfoAssertion,
+           setTestIds,
+           conversationData,
+           dataInjector,
+    conversations,
+           sendMessageAssertion,
+           chat,
+           localStorageManager,
+         }) => {
+    setTestIds('EPMRTC-4832');
+    const models = GeneratorUtil.randomArrayElements(
+      ModelsUtil.getLatestModels().filter(
+        (m) =>
+          ModelsUtil.doesModelAllowSystemPrompt(m) &&
+          ModelsUtil.doesModelAllowTemperature(m) &&
+          ModelsUtil.doesModelAllowAddons(m) &&
+          m.iconUrl !== undefined,
+      ),
+      1,
+    );
+    const conversation = conversationData.prepareDefaultConversation(models[0]);
+    await dataInjector.createConversations([conversation]);
+    await localStorageManager.setRecentModelsIdsOnce(...models);
+
+    await dialTest.step(
+      'Open Dial, navigate to Marketplace',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
+        await chatBar.dialMarketplaceLink.click();
+      },
+    );
+
+    await dialTest.step(
+      'Click on DIAL logo and verify new conversation mode is shown',
+      async () => {
+        await header.logo.click();
+        await dialHomePage.waitForPageLoaded();
+        await chat.getSendMessage().waitForState({ state: 'attached' });
+        await chat.changeAgentButton.waitForState();
+        await chat.configureSettingsButton.waitForState();
+        await sendMessageAssertion.assertInputFieldState('visible', 'enabled');
+      },
+    );
+
+    await dialTest.step(
+      'Navigate to Marketplace again and click on DIAL logo again',
+      async () => {
+        await chat.changeAgentButton.click();
+        await talkToAgentDialog.goToMyWorkspace();
+        await header.logo.click();
+      },
+    );
+
+    await dialTest.step(
+      'Verify new conversation is still shown',
+      async () => {
+        await dialHomePage.waitForPageLoaded();
+        await chat.getSendMessage().waitForState({ state: 'attached' });
+        await chat.changeAgentButton.waitForState();
+        await chat.configureSettingsButton.waitForState();
+        await sendMessageAssertion.assertInputFieldState('visible', 'enabled');
       },
     );
   },
