@@ -30,6 +30,7 @@ import MoveRightIcon from '@/public/images/icons/move-right.svg';
 
 export const MarketplaceHeader = () => {
   const { t } = useTranslation(Translation.Header);
+
   const showFilterbar = useAppSelector(
     UISelectors.selectShowMarketplaceFilterbar,
   );
