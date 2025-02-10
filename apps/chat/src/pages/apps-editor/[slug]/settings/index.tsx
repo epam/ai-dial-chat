@@ -163,18 +163,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   if (id && typeof id === 'string') {
     try {
       const applicationId = decodeURIComponent(id);
-
+      const baseUrl = process.env.DIAL_API_HOST;
       const paths = applicationId.split('/').map(encodeURIComponent);
-
-      const baseUrl = process.env.DIAL_API_HOST || '';
-
       const url = constructPath(baseUrl, 'v1', ...paths);
-
-      const token = await getToken({ req: context.req });
-
-      if (!token?.access_token) {
-        throw new Error('Failed to retrieve access token.');
-      }
 
       const response = await fetch(url, {
         method: 'GET',
@@ -238,16 +229,21 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             'v1',
             item.url,
           )}`;
-          const conversation = await fetch(detailedConversationsUrl, {
-            headers: getApiHeaders({ jwt: token.access_token }),
-          });
-          const conversationDetailed = await conversation.json();
-          return conversationDetailed;
+          try {
+            const conversation = await fetch(detailedConversationsUrl, {
+              headers: getApiHeaders({ jwt: token.access_token }),
+            });
+            const conversationDetailed = await conversation.json();
+            return conversationDetailed;
+          } catch (error) {
+            logger.error('Error fetching conversation data:', error);
+            return null;
+          }
         }),
       );
 
       const previewConversation = applicationConversations.find(
-        (conversation) => conversation.isApplicationPreviewConversation,
+        (conversation) => conversation?.isApplicationPreviewConversation,
       );
 
       return {
@@ -259,6 +255,10 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         },
       };
     } catch (error) {
+      console.log(
+        '🚀 ~ constgetServerSideProps:GetServerSideProps= ~ error:',
+        error,
+      );
       logger.error('Error fetching application data:', error);
       return {
         notFound: true,
