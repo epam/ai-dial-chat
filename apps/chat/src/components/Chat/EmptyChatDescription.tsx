@@ -9,6 +9,8 @@ import { getModelDescription } from '@/src/utils/app/application';
 import {
   getOpenAIEntityFullName,
   isOldConversationReplay,
+  isPlaybackConversation,
+  isReplayAsIsConversation,
 } from '@/src/utils/app/conversation';
 import { isEntityIdExternal } from '@/src/utils/app/id';
 
@@ -42,11 +44,11 @@ const getModelName = (
   conversation: Conversation,
   model: DialAIEntityModel | undefined,
 ) => {
-  if (conversation.playback?.isPlayback) {
+  if (isPlaybackConversation(conversation)) {
     return 'Playback';
   }
 
-  if (conversation.replay?.replayAsIs) {
+  if (isReplayAsIsConversation(conversation)) {
     return 'Replay as is';
   }
 
@@ -119,8 +121,8 @@ const EmptyChatDescriptionView = ({
     );
   }
 
-  const isReplayAsIs = conversation.replay?.replayAsIs;
-  const isPlayback = conversation.playback?.isPlayback;
+  const isReplayAsIs = isReplayAsIsConversation(conversation);
+  const isPlayback = isPlaybackConversation(conversation);
   const isEmptyChatChangeAgentHidden = enabledFeatures.has(
     Feature.HideEmptyChatChangeAgent,
   );

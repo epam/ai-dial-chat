@@ -30,7 +30,7 @@ export class RenameConversationModal extends BaseElement {
     await this.nameInput.fillInInput(newName);
     if (isApiStorageType && isHttpMethodTriggered) {
       const respPromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === 'DELETE',
+        (resp) => resp.request().method() === 'POST',
       );
       await confirmationAction();
       await respPromise;

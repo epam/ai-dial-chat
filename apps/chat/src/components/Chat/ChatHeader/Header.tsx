@@ -16,6 +16,7 @@ import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
 import {
   getSelectedAddons,
   getValidEntitiesFromIds,
+  isReplayAsIsConversation,
 } from '@/src/utils/app/conversation';
 import {
   doesModelAllowAddons,
@@ -180,7 +181,7 @@ export const ChatHeader = Inversify.register(
 
     const disallowChangeAgent = isChangeAgentDisallowed || isExternal;
     const disallowChangeSettings =
-      conversation.replay?.replayAsIs || isPlayback || isExternal;
+      isReplayAsIsConversation(conversation) || isPlayback || isExternal;
 
     return (
       <>

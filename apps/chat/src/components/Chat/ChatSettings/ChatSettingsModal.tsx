@@ -17,6 +17,7 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 
 import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
+import { MOUSE_OUTSIDE_PRESS_EVENT } from '@/src/constants/modal';
 
 import { Modal } from '@/src/components/Common/Modal';
 
@@ -165,7 +166,7 @@ export const ChatSettings = ({
         isCompareMode ? 'md:max-w-[1000px]' : 'md:max-w-[500px]',
         isSomethingConfigurable ? 'py-3 md:py-4' : 'pt-3 md:pt-4',
       )}
-      dismissProps={{ outsidePressEvent: 'mousedown' }}
+      dismissProps={MOUSE_OUTSIDE_PRESS_EVENT}
     >
       <div className="mb-3 !border-t-0 px-3 text-base font-semibold md:px-6">
         {t('Conversation settings')}

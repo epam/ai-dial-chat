@@ -4,7 +4,10 @@ import { Conversation } from '@/src/types/chat';
 import { DialFile, DialLink, FileFolderAttachment } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 
-import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
+import {
+  FOLDER_ATTACHMENT_CONTENT_TYPE,
+  METADATA_PREFIX,
+} from '@/src/constants/folders';
 
 import { ApiUtils } from '../server/api';
 import { doesHaveDotsInTheEnd } from './common';
@@ -71,8 +74,8 @@ export const getUserCustomContent = (
     (folder: FolderInterface) => ({
       type: FOLDER_ATTACHMENT_CONTENT_TYPE,
       title: folder.name ?? folder.id,
-      url: !folder.id.startsWith('metadata/')
-        ? `metadata/${ApiUtils.encodeApiUrl(`${folder.id}`)}/`
+      url: !folder.id.startsWith(METADATA_PREFIX)
+        ? `${METADATA_PREFIX}${ApiUtils.encodeApiUrl(`${folder.id}`)}/`
         : folder.id,
     }),
   );
@@ -450,16 +453,19 @@ export const isConversationHasExternalAttachments = (
         ]
       : conversation.messages;
 
-  const attachments = messages
-    .flatMap((message) => message.custom_content?.attachments ?? [])
-    .filter(
-      (attachment) => attachment.url && !isAttachmentLink(attachment.url),
-    );
+  const attachments = messages.flatMap(
+    (message) => message.custom_content?.attachments ?? [],
+  );
 
-  return attachments.some((attachment) => {
-    const { bucket: attachmentBucket } = splitEntityId(
-      attachment.url as string,
-    );
+  const filesIds = getDialFilesFromAttachments(attachments);
+  const folders = getDialFoldersFromAttachments(attachments);
+
+  const entityIds = [...filesIds, ...folders].map(({ id }) =>
+    id.startsWith(METADATA_PREFIX) ? id.slice(METADATA_PREFIX.length) : id,
+  );
+
+  return entityIds.some((id) => {
+    const { bucket: attachmentBucket } = splitEntityId(id);
 
     return attachmentBucket !== userBucket;
   });

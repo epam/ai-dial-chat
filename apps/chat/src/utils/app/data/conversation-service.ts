@@ -1,6 +1,7 @@
 import { Observable } from 'rxjs';
 
 import { Conversation } from '@/src/types/chat';
+import { MoveModel } from '@/src/types/common';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { UIStorageKeys } from '@/src/types/storage';
 
@@ -26,6 +27,10 @@ export class ConversationService {
     conversation: Conversation,
   ): Observable<ConversationInfo | null> {
     return DataService.getDataStorage().createConversation(conversation);
+  }
+
+  public static moveConversation(moveModel: MoveModel): Observable<MoveModel> {
+    return DataService.getDataStorage().move(moveModel);
   }
 
   public static updateConversation(
