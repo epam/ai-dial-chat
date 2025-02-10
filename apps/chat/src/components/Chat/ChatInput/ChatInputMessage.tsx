@@ -2,6 +2,7 @@ import {
   KeyboardEvent,
   MutableRefObject,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -144,6 +145,17 @@ export const ChatInputMessage = Inversify.register(
     const configurationSchema = useAppSelector(
       ChatSelectors.selectConfigurationSchema,
     );
+    const shouldFocusAndScroll = useAppSelector(
+      ChatSelectors.selectShouldFocusAndScroll,
+    );
+
+    useEffect(() => {
+      if (shouldFocusAndScroll && textareaRef.current) {
+        textareaRef.current.focus();
+        textareaRef.current.scrollIntoView();
+        dispatch(ChatActions.setShouldFocusAndScroll(false));
+      }
+    }, [dispatch, shouldFocusAndScroll, textareaRef]);
 
     const isChatEmpty = !selectedConversations[0]?.messages?.length;
 

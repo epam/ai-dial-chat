@@ -13,6 +13,10 @@ import { useCallback, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
+import {
+  useMenuItemHandler,
+  useMenuItemHandlerWithTwoArgs,
+} from '@/src/hooks/useHandler';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -198,6 +202,18 @@ export const ApplicationDetailsFooter = ({
     },
     [dispatch, entity, t],
   );
+  const handleEdit = useMenuItemHandler(onEdit, entity);
+  const handleDelete = useMenuItemHandler(onDelete, entity);
+  const handlePublish = useMenuItemHandlerWithTwoArgs(
+    onPublish,
+    entity,
+    PublishActions.ADD,
+  );
+  const handleUnpublish = useMenuItemHandlerWithTwoArgs(
+    onPublish,
+    entity,
+    PublishActions.DELETE,
+  );
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -238,30 +254,21 @@ export const ApplicationDetailsFooter = ({
         display: isMyApp,
         disabled: isModifyDisabled,
         Icon: IconTrashX,
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onDelete?.(entity);
-        },
+        onClick: handleDelete,
       },
       {
         name: t('Publish'),
         dataQa: 'publish',
         display: isMyApp,
         Icon: IconWorldShare,
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onPublish?.(entity, PublishActions.ADD);
-        },
+        onClick: handlePublish,
       },
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
         display: hasPublicId,
         Icon: UnpublishIcon,
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onPublish?.(entity, PublishActions.DELETE);
-        },
+        onClick: handleUnpublish,
       },
       {
         name: t('Edit'),
@@ -269,10 +276,7 @@ export const ApplicationDetailsFooter = ({
         display: (isMyApp || !!canWrite) && !!onEdit,
         disabled: isAppInDeployment,
         Icon: IconEdit,
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onEdit?.(entity);
-        },
+        onClick: handleEdit,
       },
       {
         name: t('Application logs'),
@@ -287,24 +291,26 @@ export const ApplicationDetailsFooter = ({
       t,
       isPublicApp,
       isSmallScreen,
+      handleCopy,
       entity,
       isExecutable,
       isCodeAppsEnabled,
       playerStatus,
       PlayerContextIcon,
+      handleUpdateFunctionStatus,
       isMyApp,
       isApplicationsSharingEnabled,
+      handleOpenSharing,
+      handleOpenUnshare,
       isModifyDisabled,
+      handleDelete,
+      handlePublish,
       hasPublicId,
+      handleUnpublish,
       canWrite,
       onEdit,
       isAppInDeployment,
-      handleCopy,
-      handleUpdateFunctionStatus,
-      handleOpenSharing,
-      handleOpenUnshare,
-      onDelete,
-      onPublish,
+      handleEdit,
       handleLogClick,
     ],
   );
