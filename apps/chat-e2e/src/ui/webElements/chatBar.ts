@@ -147,7 +147,7 @@ export class ChatBar extends SideBar {
     }
   }
 
-  public async drugConversationFromFolder(
+  public async dragConversationFromFolder(
     folderName: string,
     conversationName: string,
   ) {
@@ -172,7 +172,7 @@ export class ChatBar extends SideBar {
     folderName: string,
     folderConversationName: string,
     conversationName: string,
-    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
+    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
   ) {
     const folderConversation = this.getFolderConversations().getFolderEntity(
       folderName,
@@ -182,14 +182,17 @@ export class ChatBar extends SideBar {
       this.getConversationsTree().getEntityByName(conversationName);
     await this.dragAndDropEntityToFolder(conversation, folderConversation, {
       isHttpMethodTriggered,
+      httpMethod: 'PUT',
     });
   }
 
   public async dragAndDropFolderToRootLevel(
     folderName: string,
-    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
+    options: { isHttpMethodTriggered?: boolean; httpMethod?: string } = {
+      isHttpMethodTriggered: false,
+    },
   ) {
     const folder = this.getFolderConversations().getFolderByName(folderName);
-    await this.dragAndDropFolderToRoot(folder, { isHttpMethodTriggered });
+    await this.dragAndDropFolderToRoot(folder, options);
   }
 }

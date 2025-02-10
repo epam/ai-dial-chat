@@ -263,6 +263,7 @@ dialTest(
         await chatBar.dragAndDropEntityToFolder(
           conversations.getEntityByName(initConversationName),
           folderConversations.getFolderByName(nestedFolders[0].name),
+          { httpMethod: 'PUT' },
         );
         await expect
           .soft(
@@ -617,6 +618,7 @@ dialTest(
         await chatBar.dragAndDropEntityToFolder(
           conversationToMove,
           targetFolder,
+          { isHttpMethodTriggered: false },
         );
         await expect
           .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)

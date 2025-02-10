@@ -957,7 +957,7 @@ dialTest(
       async () => {
         await chatBar.dragAndDropFolderToRootLevel(
           nestedFolders[levelsCount - 1].name,
-          { isHttpMethodTriggered: true },
+          { isHttpMethodTriggered: true, httpMethod: 'PUT' },
         );
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),

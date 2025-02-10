@@ -171,6 +171,7 @@ dialTest(
         folderConversations.getFolderByName(
           ExpectedConstants.newFolderWithIndexTitle(i - 1),
         ),
+        { httpMethod: 'GET' },
       );
     }
     await folderConversations.expandFolder(
@@ -490,6 +491,7 @@ dialTest(
           folderConversations.getFolderByName(
             ExpectedConstants.newFolderWithIndexTitle(i - 1),
           ),
+          { httpMethod: 'GET' },
         );
       }
     });
@@ -824,6 +826,7 @@ dialTest(
           folderConversations.getFolderByName(
             ExpectedConstants.newFolderWithIndexTitle(i - 1),
           ),
+          { httpMethod: 'GET' },
         );
         if (i !== 4) {
           await folderConversations.expandFolder(
@@ -849,6 +852,7 @@ dialTest(
           folderConversations.getFolderByName(
             ExpectedConstants.newFolderWithIndexTitle(4),
           ),
+          { httpMethod: 'GET' },
         );
 
         await toastAssertion.assertToastMessage(
@@ -896,6 +900,7 @@ dialTest(
             2,
           ),
           conversations.chronologyByTitle(Chronology.today),
+          { isHttpMethodTriggered: false },
         );
 
         await chatBarFolderAssertion.assertRootFolderState(

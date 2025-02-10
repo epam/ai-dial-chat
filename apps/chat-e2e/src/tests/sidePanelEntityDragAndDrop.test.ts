@@ -48,7 +48,7 @@ dialTest(
     });
     await dialHomePage.waitForPageLoaded();
     await folderConversations.expandFolder(conversationInFolder.folders.name);
-    await chatBar.drugConversationFromFolder(
+    await chatBar.dragConversationFromFolder(
       conversationInFolder.folders.name,
       conversationInFolder.conversations[0].name,
     );
@@ -58,7 +58,7 @@ dialTest(
       .toBe(ColorsWithoutAlpha.backgroundAccentSecondary);
     if (isApiStorageType) {
       const respPromise = page.waitForResponse((resp) => {
-        return resp.request().method() === 'POST';
+        return resp.request().method() === 'PUT';
       });
       await page.mouse.up();
       await respPromise;
@@ -147,6 +147,7 @@ dialTest(
             folderConversations.getFolderByName(
               ExpectedConstants.newFolderWithIndexTitle(i - 1),
             ),
+            { httpMethod: 'GET' },
           );
         }
         await folderConversations.expandFolder(
@@ -286,7 +287,7 @@ dialTest(
     await promptBar.dragAndDropPromptFromFolder(
       promptInFolder.folders.name,
       promptInFolder.prompts[0].name,
-      { isHttpMethodTriggered: true },
+      { isHttpMethodTriggered: true, httpMethod: 'PUT' },
     );
     expect
       .soft(
@@ -349,6 +350,7 @@ dialTest(
           folderPrompts.getFolderByName(
             ExpectedConstants.newFolderWithIndexTitle(1),
           ),
+          { httpMethod: 'GET' },
         );
 
         await promptBar.dragPromptToFolder(

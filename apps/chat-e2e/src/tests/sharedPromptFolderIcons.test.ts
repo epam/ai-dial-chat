@@ -80,9 +80,12 @@ dialTest(
       'Add a new empty folder to a folder that gonna be shared',
       async () => {
         await promptBar.createNewFolder();
-        await promptBar.dragAndDropFolderToFolder(
-          ExpectedConstants.newFolderWithIndexTitle(1),
-          nestedFolders[sharedFolderIndex].name,
+        await promptBar.dragAndDropEntityToFolder(
+          folderPrompts.getFolderByName(
+            ExpectedConstants.newFolderWithIndexTitle(1),
+          ),
+          folderPrompts.getFolderByName(nestedFolders[sharedFolderIndex].name),
+          { httpMethod: 'GET' },
         );
       },
     );

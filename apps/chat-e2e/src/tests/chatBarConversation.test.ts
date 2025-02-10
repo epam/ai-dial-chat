@@ -923,6 +923,7 @@ dialTest(
         folderConversations.getFolderByName(
           ExpectedConstants.newFolderWithIndexTitle(i - 1),
         ),
+        { httpMethod: 'GET' },
       );
     }
     await folderConversations.expandFolder(

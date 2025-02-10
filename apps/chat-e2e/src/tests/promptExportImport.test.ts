@@ -877,7 +877,6 @@ dialTest(
         await promptBar.dragAndDropFolderToFolder(
           nestedFolders[levelsCount - 1].name,
           nestedFolders[0].name,
-          { isHttpMethodTriggered: true },
         );
         await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),

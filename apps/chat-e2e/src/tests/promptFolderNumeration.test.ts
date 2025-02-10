@@ -272,6 +272,7 @@ dialTest(
           folderPrompts.getFolderByName(
             ExpectedConstants.newPromptFolderWithIndexTitle(i - 1),
           ),
+          { httpMethod: 'GET' },
         );
       }
       await folderPrompts.expandFolder(

@@ -107,6 +107,7 @@ dialTest(
           folderPrompts.getFolderByName(
             ExpectedConstants.newFolderWithIndexTitle(1),
           ),
+          { httpMethod: 'GET' },
         );
       },
     );
@@ -129,6 +130,7 @@ dialTest(
           folderPrompts.getFolderByName(
             ExpectedConstants.newFolderWithIndexTitle(1),
           ),
+          { isHttpMethodTriggered: false },
         );
 
         await expect
@@ -190,6 +192,7 @@ dialTest(
           folderPrompts.getFolderByName(
             ExpectedConstants.newFolderWithIndexTitle(i - 1),
           ),
+          { httpMethod: 'GET' },
         );
       }
     });
@@ -221,6 +224,7 @@ dialTest(
           folderPrompts.getFolderByName(
             ExpectedConstants.newFolderWithIndexTitle(1),
           ),
+          { isHttpMethodTriggered: false },
         );
 
         await expect
@@ -279,6 +283,7 @@ dialTest(
         folderPrompts.getFolderByName(
           ExpectedConstants.newFolderWithIndexTitle(1),
         ),
+        { httpMethod: 'GET' },
       );
     });
 

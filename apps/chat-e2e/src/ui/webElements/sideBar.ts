@@ -92,18 +92,19 @@ export class SideBar extends BaseElement {
     entityLocator: Locator,
     x: number,
     y: number,
-    {
-      isHttpMethodTriggered = false,
-      httpMethod = 'POST',
-    }: { isHttpMethodTriggered?: boolean; httpMethod?: string } = {},
+    options: { isHttpMethodTriggered?: boolean; httpMethod?: string } = {},
   ) {
     await entityLocator.hover();
     await this.page.mouse.down();
     await this.page.mouse.move(x, y);
 
-    if (isApiStorageType && isHttpMethodTriggered) {
+    if (
+      isApiStorageType &&
+      options.isHttpMethodTriggered &&
+      options.httpMethod
+    ) {
       const respPromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === httpMethod,
+        (resp) => resp.request().method() === options.httpMethod,
       );
       await this.page.mouse.up();
       return respPromise;
@@ -137,7 +138,9 @@ export class SideBar extends BaseElement {
 
   public async dragAndDropFolderToRoot(
     folderLocator: Locator,
-    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
+    options: { isHttpMethodTriggered?: boolean; httpMethod?: string } = {
+      isHttpMethodTriggered: false,
+    },
   ) {
     const draggableBounding = await this.foldersSeparator
       .getNthElement(1)
@@ -146,7 +149,7 @@ export class SideBar extends BaseElement {
       folderLocator,
       draggableBounding!.x + draggableBounding!.width / 2,
       draggableBounding!.y,
-      { isHttpMethodTriggered },
+      options,
     );
   }
 
@@ -180,15 +183,18 @@ export class SideBar extends BaseElement {
 
   public async dragAndDropEntityFromFolder(
     entityLocator: Locator,
-    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
+    options: { isHttpMethodTriggered?: boolean; httpMethod?: string } = {
+      isHttpMethodTriggered: false,
+    },
   ) {
     await this.dragEntityFromFolder(entityLocator);
-    if (isApiStorageType && isHttpMethodTriggered) {
+    if (
+      isApiStorageType &&
+      options.isHttpMethodTriggered &&
+      options.httpMethod
+    ) {
       const respPromise = this.page.waitForResponse((resp) => {
-        return (
-          resp.request().method() === 'PUT' ||
-          resp.request().method() === 'POST'
-        );
+        return resp.request().method() === options.httpMethod;
       });
       await this.page.mouse.up();
       return respPromise;
@@ -199,11 +205,14 @@ export class SideBar extends BaseElement {
   public async dragAndDropEntityToFolder(
     entityLocator: Locator,
     folderLocator: Locator,
-    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
+    options: { isHttpMethodTriggered?: boolean; httpMethod?: string } = {
+      isHttpMethodTriggered: true,
+    },
   ) {
-    return this.dragAndDropEntityToEntity(entityLocator, folderLocator, {
-      isHttpMethodTriggered,
-      httpMethod: 'POST',
-    });
+    return this.dragAndDropEntityToEntity(
+      entityLocator,
+      folderLocator,
+      options,
+    );
   }
 }

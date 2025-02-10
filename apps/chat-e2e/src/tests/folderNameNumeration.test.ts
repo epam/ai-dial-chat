@@ -271,6 +271,7 @@ dialTest(
           folderConversations.getFolderByName(
             nestedFolders[nestedFolderLevel - 2].name,
           ),
+          { isHttpMethodTriggered: false },
         );
         await expect
           .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)

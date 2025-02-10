@@ -122,6 +122,7 @@ dialTest(
           folderPrompts.getFolderByName(
             ExpectedConstants.newPromptFolderWithIndexTitle(1),
           ),
+          { httpMethod: 'GET' },
         );
       },
     );

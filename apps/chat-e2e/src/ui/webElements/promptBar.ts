@@ -136,15 +136,13 @@ export class PromptBar extends SideBar {
   public async dragAndDropPromptFromFolder(
     folderName: string,
     promptName: string,
-    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
+    options: { isHttpMethodTriggered?: boolean; httpMethod?: string } = {},
   ) {
     const folderPrompt = this.getPinnedFolderPrompts().getFolderEntity(
       folderName,
       promptName,
     );
-    await this.dragAndDropEntityFromFolder(folderPrompt, {
-      isHttpMethodTriggered,
-    });
+    await this.dragAndDropEntityFromFolder(folderPrompt, options);
   }
 
   public async dragPromptToFolder(folderName: string, promptName: string) {
@@ -157,7 +155,7 @@ export class PromptBar extends SideBar {
     folderName: string,
     folderPromptName: string,
     promptName: string,
-    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
+    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
   ) {
     const folderPrompt = this.getPinnedFolderPrompts().getFolderEntity(
       folderName,
@@ -166,19 +164,21 @@ export class PromptBar extends SideBar {
     const prompt = this.getPromptsTree().getEntityByName(promptName);
     await this.dragAndDropEntityToFolder(prompt, folderPrompt, {
       isHttpMethodTriggered,
+      httpMethod: 'PUT',
     });
   }
 
   public async dragAndDropFolderToFolder(
     folderNameToMove: string,
     folderNameToMoveTo: string,
-    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
+    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
   ) {
     const folderPrompts = this.getPinnedFolderPrompts();
     const folderToMove = folderPrompts.getFolderByName(folderNameToMove);
     const folderToMoveTo = folderPrompts.getFolderByName(folderNameToMoveTo);
     await this.dragAndDropEntityToFolder(folderToMove, folderToMoveTo, {
       isHttpMethodTriggered,
+      httpMethod: 'PUT',
     });
   }
 }
