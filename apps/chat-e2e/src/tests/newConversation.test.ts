@@ -13,7 +13,8 @@ import { expect } from '@playwright/test';
 dialTest(
   'Click on + resets all settings on new conversation. Change agent pop-up opens\n' +
     'Click on + does not create a new conversation if new conversation was on the screen\n' +
-    'Click on + resets all settings on new conversation. When temperature was changed in previous chat.',
+    'Click on + resets all settings on new conversation. When temperature was changed in previous chat.\n' +
+  'Click on logo resets all setting on new conversation',
   async ({
     dialHomePage,
     header,
@@ -30,7 +31,7 @@ dialTest(
     iconApiHelper,
     conversationAssertion,
   }) => {
-    setTestIds('EPMRTC-4717', 'EPMRTC-4837', 'EPMRTC-4920');
+    setTestIds('EPMRTC-4717', 'EPMRTC-4837', 'EPMRTC-4920', 'EPMRTC-5092');
     const models = GeneratorUtil.randomArrayElements(
       ModelsUtil.getLatestModels().filter(
         (m) =>
@@ -117,6 +118,31 @@ dialTest(
       },
     );
 
+    await dialTest.step('Change settings, apply, click on the logo, verify settings are reset', async () => {
+      await chat.configureSettingsButton.click();
+      await agentSettings.setSystemPrompt('Act like a cat');
+      await temperatureSlider.setTemperature(0.2);
+      await addons.selectAddon(addon.name);
+      await conversationSettingsModal.applyChangesButton.click();
+      await header.logo.click();
+      await chat.configureSettingsButton.click();
+      await agentInfoAssertion.assertElementText(
+        agentSettings.systemPrompt,
+        ExpectedConstants.emptyString,
+      );
+      agentInfoAssertion.assertValue(
+        await temperatureSlider.getTemperature(),
+        '0.2',
+        ExpectedMessages.temperatureIsValid,
+      );
+      agentInfoAssertion.assertValue(
+        await addons.getSelectedAddons().then((a) => a.length),
+        0,
+        ExpectedMessages.noAddonsSelected,
+      );
+      await conversationSettingsModal.cancelButton.click();
+    });
+
     await dialTest.step(
       'Change model and verify the correct model is selected',
       async () => {
@@ -197,7 +223,8 @@ dialSharedWithMeTest.only(
     'New conversation appears if user deletes focused chat. No data label appears instead.\n' +
     'Shared with me. Delete shared chat\n' +
     'New conversation appears if user deletes focused chat from Shared with me\n' +
-    'New conversation appears if user deletes folder with focused chat from Shared with me',
+    'New conversation appears if user deletes folder with focused chat from Shared with me\n' +
+  'New conversation appears if user clicks on logo when Chat is opened',
   async ({
     dialHomePage,
     header,
@@ -227,6 +254,7 @@ dialSharedWithMeTest.only(
       'EPMRTC-1834',
       'EPMRTC-4802',
       'EPMRTC-4805',
+      'EPMRTC-4817',
     );
     const firstConversation =
       conversationData.prepareModelConversationBasedOnRequests([
@@ -275,7 +303,7 @@ dialSharedWithMeTest.only(
     });
 
     await dialTest.step(
-      'Select conversation with history and verify it is highlighted, its content is displayed',
+      'Select conversation with history and verify it is highlighted, its content is displayed, no new conversation is created',
       async () => {
         await conversations.selectConversation(firstConversation.name);
         await conversationAssertion.assertSelectedConversation(
@@ -284,10 +312,25 @@ dialSharedWithMeTest.only(
         await chatMessagesAssertion.assertMessagesCount(
           firstConversation.messages.length,
         );
+        await conversationAssertion.assertEntitiesCount(2);
       },
     );
 
-    await dialTest.step('Verify no new conversation is created', async () => {
+    await dialTest.step('Click on DIAL logo and check that new conversation is shown on the central part', async () => {
+      await header.logo.click();
+      await dialHomePage.waitForPageLoaded();
+      await chat.getSendMessage().waitForState({ state: 'attached' });
+      await chat.changeAgentButton.waitForState();
+      await chat.configureSettingsButton.waitForState();
+      await conversationAssertion.assertEntityState(
+        { name: secondConversation.name },
+        'visible',
+      );
+      await conversationAssertion.assertEntityState(
+        { name: firstConversation.name },
+        'hidden',
+      );
+      await conversationAssertion.assertNoConversationIsSelected();
       await conversationAssertion.assertEntitiesCount(2);
     });
 
@@ -298,7 +341,7 @@ dialSharedWithMeTest.only(
     });
 
     await dialTest.step(
-      'Verify new conversation is shown and second conversation is not selected',
+      'Verify new conversation is shown and second conversation is not selected and verify only one conversation remains',
       async () => {
         await dialHomePage.waitForPageLoaded();
         await chat.getSendMessage().waitForState({ state: 'attached' });
@@ -313,12 +356,10 @@ dialSharedWithMeTest.only(
           'hidden',
         );
         await conversationAssertion.assertNoConversationIsSelected();
+        await conversationAssertion.assertEntitiesCount(1);
+
       },
     );
-
-    await dialTest.step('Verify only one conversation remains', async () => {
-      await conversationAssertion.assertEntitiesCount(1);
-    });
 
     await dialTest.step(
       'Select second conversation and delete it',
