@@ -59,7 +59,6 @@ import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAs
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import test from '@/src/core/baseFixtures';
-import { LocalStorageManager } from '@/src/core/localStorageManager';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
   ChatApiHelper,

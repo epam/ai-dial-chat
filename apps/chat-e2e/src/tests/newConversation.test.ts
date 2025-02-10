@@ -1,4 +1,3 @@
-import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
@@ -14,7 +13,7 @@ dialTest(
   'Click on + resets all settings on new conversation. Change agent pop-up opens\n' +
     'Click on + does not create a new conversation if new conversation was on the screen\n' +
     'Click on + resets all settings on new conversation. When temperature was changed in previous chat.\n' +
-  'Click on logo resets all setting on new conversation',
+    'Click on logo resets all setting on new conversation',
   async ({
     dialHomePage,
     header,
@@ -118,30 +117,33 @@ dialTest(
       },
     );
 
-    await dialTest.step('Change settings, apply, click on the logo, verify settings are reset', async () => {
-      await chat.configureSettingsButton.click();
-      await agentSettings.setSystemPrompt('Act like a cat');
-      await temperatureSlider.setTemperature(0.2);
-      await addons.selectAddon(addon.name);
-      await conversationSettingsModal.applyChangesButton.click();
-      await header.logo.click();
-      await chat.configureSettingsButton.click();
-      await agentInfoAssertion.assertElementText(
-        agentSettings.systemPrompt,
-        ExpectedConstants.emptyString,
-      );
-      agentInfoAssertion.assertValue(
-        await temperatureSlider.getTemperature(),
-        '0.2',
-        ExpectedMessages.temperatureIsValid,
-      );
-      agentInfoAssertion.assertValue(
-        await addons.getSelectedAddons().then((a) => a.length),
-        0,
-        ExpectedMessages.noAddonsSelected,
-      );
-      await conversationSettingsModal.cancelButton.click();
-    });
+    await dialTest.step(
+      'Change settings, apply, click on the logo, verify settings are reset',
+      async () => {
+        await chat.configureSettingsButton.click();
+        await agentSettings.setSystemPrompt('Act like a cat');
+        await temperatureSlider.setTemperature(0.2);
+        await addons.selectAddon(addon.name);
+        await conversationSettingsModal.applyChangesButton.click();
+        await header.logo.click();
+        await chat.configureSettingsButton.click();
+        await agentInfoAssertion.assertElementText(
+          agentSettings.systemPrompt,
+          ExpectedConstants.emptyString,
+        );
+        agentInfoAssertion.assertValue(
+          await temperatureSlider.getTemperature(),
+          '0.2',
+          ExpectedMessages.temperatureIsValid,
+        );
+        agentInfoAssertion.assertValue(
+          await addons.getSelectedAddons().then((a) => a.length),
+          0,
+          ExpectedMessages.noAddonsSelected,
+        );
+        await conversationSettingsModal.cancelButton.click();
+      },
+    );
 
     await dialTest.step(
       'Change model and verify the correct model is selected',
@@ -224,7 +226,7 @@ dialSharedWithMeTest(
     'Shared with me. Delete shared chat\n' +
     'New conversation appears if user deletes focused chat from Shared with me\n' +
     'New conversation appears if user deletes folder with focused chat from Shared with me\n' +
-  'New conversation appears if user clicks on logo when Chat is opened',
+    'New conversation appears if user clicks on logo when Chat is opened',
   async ({
     dialHomePage,
     header,
@@ -243,7 +245,6 @@ dialSharedWithMeTest(
     additionalShareUserDataInjector,
     sharedWithMeConversations,
     sharedWithMeConversationDropdownMenu,
-    additionalShareUserChat,
     sharedWithMeFolderDropdownMenu,
     sharedFolderConversations,
   }) => {
@@ -316,23 +317,26 @@ dialSharedWithMeTest(
       },
     );
 
-    await dialTest.step('Click on DIAL logo and check that new conversation is shown on the central part', async () => {
-      await header.logo.click();
-      await dialHomePage.waitForPageLoaded();
-      await chat.getSendMessage().waitForState({ state: 'attached' });
-      await chat.changeAgentButton.waitForState();
-      await chat.configureSettingsButton.waitForState();
-      await conversationAssertion.assertEntityState(
-        { name: secondConversation.name },
-        'visible',
-      );
-      await conversationAssertion.assertEntityState(
-        { name: firstConversation.name },
-        'hidden',
-      );
-      await conversationAssertion.assertNoConversationIsSelected();
-      await conversationAssertion.assertEntitiesCount(2);
-    });
+    await dialTest.step(
+      'Click on DIAL logo and check that new conversation is shown on the central part',
+      async () => {
+        await header.logo.click();
+        await dialHomePage.waitForPageLoaded();
+        await chat.getSendMessage().waitForState({ state: 'attached' });
+        await chat.changeAgentButton.waitForState();
+        await chat.configureSettingsButton.waitForState();
+        await conversationAssertion.assertEntityState(
+          { name: secondConversation.name },
+          'visible',
+        );
+        await conversationAssertion.assertEntityState(
+          { name: firstConversation.name },
+          'hidden',
+        );
+        await conversationAssertion.assertNoConversationIsSelected();
+        await conversationAssertion.assertEntitiesCount(2);
+      },
+    );
 
     await dialTest.step('Select first conversation and delete it', async () => {
       await conversations.openEntityDropdownMenu(firstConversation.name);
@@ -357,7 +361,6 @@ dialSharedWithMeTest(
         );
         await conversationAssertion.assertNoConversationIsSelected();
         await conversationAssertion.assertEntitiesCount(1);
-
       },
     );
 
@@ -436,22 +439,21 @@ dialSharedWithMeTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'New conversation appears if user clicks on logo when DIAL Marketplace panel is opened',
   async ({
-           dialHomePage,
-           header,
-           talkToAgentDialog,
+    dialHomePage,
+    header,
+    talkToAgentDialog,
     chatBar,
-           agentInfoAssertion,
-           setTestIds,
-           conversationData,
-           dataInjector,
+    setTestIds,
+    conversationData,
+    dataInjector,
     conversations,
-           sendMessageAssertion,
-           chat,
-           localStorageManager,
-         }) => {
+    sendMessageAssertion,
+    chat,
+    localStorageManager,
+  }) => {
     setTestIds('EPMRTC-4832');
     const models = GeneratorUtil.randomArrayElements(
       ModelsUtil.getLatestModels().filter(
@@ -467,15 +469,12 @@ dialTest.only(
     await dataInjector.createConversations([conversation]);
     await localStorageManager.setRecentModelsIdsOnce(...models);
 
-    await dialTest.step(
-      'Open Dial, navigate to Marketplace',
-      async () => {
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
-        await chatBar.dialMarketplaceLink.click();
-      },
-    );
+    await dialTest.step('Open Dial, navigate to Marketplace', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded();
+      await conversations.selectConversation(conversation.name);
+      await chatBar.dialMarketplaceLink.click();
+    });
 
     await dialTest.step(
       'Click on DIAL logo and verify new conversation mode is shown',
@@ -498,15 +497,12 @@ dialTest.only(
       },
     );
 
-    await dialTest.step(
-      'Verify new conversation is still shown',
-      async () => {
-        await dialHomePage.waitForPageLoaded();
-        await chat.getSendMessage().waitForState({ state: 'attached' });
-        await chat.changeAgentButton.waitForState();
-        await chat.configureSettingsButton.waitForState();
-        await sendMessageAssertion.assertInputFieldState('visible', 'enabled');
-      },
-    );
+    await dialTest.step('Verify new conversation is still shown', async () => {
+      await dialHomePage.waitForPageLoaded();
+      await chat.getSendMessage().waitForState({ state: 'attached' });
+      await chat.changeAgentButton.waitForState();
+      await chat.configureSettingsButton.waitForState();
+      await sendMessageAssertion.assertInputFieldState('visible', 'enabled');
+    });
   },
 );
