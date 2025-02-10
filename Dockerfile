@@ -1,5 +1,6 @@
 # ---- Base Node ----
 FROM node:20-alpine AS base
+RUN apk update && apk upgrade --no-cache cross-spawn
 WORKDIR /app
 COPY /tools ./tools
 COPY package*.json ./
@@ -23,6 +24,7 @@ RUN node tools/patch-nextjs.js
 
 # ---- Production ----
 FROM node:20-alpine AS production
+RUN apk update && apk upgrade --no-cache cross-spawn
 WORKDIR /app
 COPY --from=run_dependencies /app/dist/apps/chat ./
 
