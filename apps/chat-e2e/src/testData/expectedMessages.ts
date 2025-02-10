@@ -374,3 +374,7 @@ export enum PublishingExpectedMessages {
   publishToPathIsValid = 'Publish to path is valid',
   entityVersionIsValid = 'Publish entity version is valid',
 }
+
+export enum MarketplaceExpectedMessages {
+  agentIsVisible = 'Agent is visible in Marketplace',
+}
