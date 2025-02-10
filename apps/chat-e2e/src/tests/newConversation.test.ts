@@ -196,7 +196,8 @@ dialSharedWithMeTest.only(
     'New conversation appears if user deletes focused Chat1. Chat2 stays unselected.\n' +
     'New conversation appears if user deletes focused chat. No data label appears instead.\n' +
     'Shared with me. Delete shared chat\n' +
-    'New conversation appears if user deletes focused chat from Shared with me',
+    'New conversation appears if user deletes focused chat from Shared with me\n' +
+    'New conversation appears if user deletes folder with focused chat from Shared with me',
   async ({
     dialHomePage,
     header,
@@ -215,6 +216,9 @@ dialSharedWithMeTest.only(
     additionalShareUserDataInjector,
     sharedWithMeConversations,
     sharedWithMeConversationDropdownMenu,
+    additionalShareUserChat,
+    sharedWithMeFolderDropdownMenu,
+    sharedFolderConversations,
   }) => {
     setTestIds(
       'EPMRTC-4791',
@@ -222,6 +226,7 @@ dialSharedWithMeTest.only(
       'EPMRTC-4804',
       'EPMRTC-1834',
       'EPMRTC-4802',
+      'EPMRTC-4805',
     );
     const firstConversation =
       conversationData.prepareModelConversationBasedOnRequests([
@@ -232,6 +237,7 @@ dialSharedWithMeTest.only(
     const secondConversation = conversationData.prepareDefaultConversation();
     conversationData.resetData();
     const sharedConversation = conversationData.prepareDefaultConversation();
+    conversationData.resetData();
     await additionalShareUserDataInjector.createConversations([
       sharedConversation,
     ]);
@@ -240,12 +246,27 @@ dialSharedWithMeTest.only(
       secondConversation,
     ]);
 
-    await dialTest.step('Prepare shared conversation', async () => {
+    const sharedFolderConversation =
+      conversationData.prepareDefaultConversationInFolder();
+    conversationData.resetData();
+    await additionalShareUserDataInjector.createConversations(
+      sharedFolderConversation.conversations,
+      sharedFolderConversation.folders,
+    );
+
+    await dialTest.step('Prepare shared conversations', async () => {
       const shareByLinkResponse =
         await additionalUserShareApiHelper.shareEntityByLink([
           sharedConversation,
         ]);
       await mainUserShareApiHelper.acceptInvite(shareByLinkResponse);
+
+      const shareFolderByLinkResponse =
+        await additionalUserShareApiHelper.shareEntityByLink(
+          [sharedFolderConversation.conversations[0]],
+          true,
+        );
+      await mainUserShareApiHelper.acceptInvite(shareFolderByLinkResponse);
     });
 
     await dialTest.step('Open app and create new conversation', async () => {
@@ -339,6 +360,32 @@ dialSharedWithMeTest.only(
             ExpectedMessages.conversationIsNotVisible,
           )
           .toBeHidden();
+        await chatBarAssertion.assertNoDataInConversations();
+        await chat.getSendMessage().waitForState({ state: 'attached' });
+        await chat.changeAgentButton.waitForState();
+        await chat.configureSettingsButton.waitForState();
+      },
+    );
+
+    await dialTest.step(
+      'Select conversation inside shared folder, delete folder and verify new conversation is shown',
+      async () => {
+        await sharedFolderConversations.expandFolder(
+          sharedFolderConversation.folders.name,
+        );
+        await sharedFolderConversations.selectFolderEntity(
+          sharedFolderConversation.folders.name,
+          sharedFolderConversation.conversations[0].name,
+        );
+        await sharedFolderConversations.openFolderDropdownMenu(
+          sharedFolderConversation.folders.name,
+        );
+        await sharedWithMeFolderDropdownMenu.selectMenuOption(
+          MenuOptions.delete,
+        );
+        await confirmationDialog.confirm({
+          triggeredHttpMethod: 'POST',
+        });
         await chatBarAssertion.assertNoDataInConversations();
         await chat.getSendMessage().waitForState({ state: 'attached' });
         await chat.changeAgentButton.waitForState();

@@ -95,6 +95,7 @@ import {
   PromptsToPublishTree,
   PromptsTree,
   PublishFolder,
+  SharedFolderConversations,
   SharedWithMeConversationsTree,
 } from '@/src/ui/webElements/entityTree';
 import { OrganizationPromptsTree } from '@/src/ui/webElements/entityTree/sidebar/organizationPromptsTree';
@@ -213,6 +214,8 @@ const dialTest = test.extend<{
   mainUserShareApiHelper: ShareApiHelper;
   sharedWithMeConversations: SharedWithMeConversationsTree;
   sharedWithMeConversationDropdownMenu: DropdownMenu;
+  sharedFolderConversations: SharedFolderConversations;
+  sharedWithMeFolderDropdownMenu: DropdownMenu;
   additionalUserShareApiHelper: ShareApiHelper;
   additionalUserItemApiHelper: ItemApiHelper;
   additionalSecondUserShareApiHelper: ShareApiHelper;
@@ -292,6 +295,18 @@ const dialTest = test.extend<{
     },
     { scope: 'test', auto: true },
   ],
+  sharedWithMeFolderDropdownMenu: async (
+    { sharedFolderConversations },
+    use,
+  ) => {
+    const sharedWithMeFolderDropdownMenu =
+      sharedFolderConversations.getDropdownMenu();
+    await use(sharedWithMeFolderDropdownMenu);
+  },
+  sharedFolderConversations: async ({ chatBar }, use) => {
+    const sharedFolderConversations = chatBar.getSharedFolderConversations();
+    await use(sharedFolderConversations);
+  },
   sharedWithMeConversations: async ({ chatBar }, use) => {
     const sharedWithMeConversations =
       chatBar.getSharedWithMeConversationsTree();
