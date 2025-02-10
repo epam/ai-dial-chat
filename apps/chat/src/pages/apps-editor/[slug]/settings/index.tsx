@@ -255,10 +255,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         },
       };
     } catch (error) {
-      console.log(
-        '🚀 ~ constgetServerSideProps:GetServerSideProps= ~ error:',
-        error,
-      );
       logger.error('Error fetching application data:', error);
       return {
         notFound: true,
