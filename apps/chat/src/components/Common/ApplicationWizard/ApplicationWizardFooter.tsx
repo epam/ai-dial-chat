@@ -133,7 +133,7 @@ export const ApplicationWizardFooter: FC<ApplicationWizardFooterProps> = ({
           <button
             className="button button-primary"
             disabled={!isValid}
-            data-qa="save-application-dialog"
+            data-qa="add-application"
             type="submit"
           >
             {isEdit ? t('Save') : t('Add')}

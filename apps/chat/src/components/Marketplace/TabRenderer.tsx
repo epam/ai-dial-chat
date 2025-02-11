@@ -68,7 +68,11 @@ const NoAgentsFound = ({ children, desc, header }: NoAgentsFoundProps) => (
   <div className="flex grow flex-col items-center justify-center">
     {children}
     {header && <span className="mt-5 text-lg font-semibold">{header}</span>}
-    {desc && <span className="mt-4 text-sm font-normal">{desc}</span>}
+    {desc && (
+      <span className="mt-4 text-sm font-normal" data-qa="no-data-description">
+        {desc}
+      </span>
+    )}
   </div>
 );
 
@@ -113,9 +117,13 @@ const ResultsView = ({
           onDelete={onDelete}
           onEdit={onEdit}
           onBookmarkClick={onBookmarkClick}
+          dataQA="filtered-agents"
         />
         {!entities.length && (
-          <div className="flex items-center gap-1">
+          <div
+            className="flex items-center gap-1"
+            data-qa="no-workspace-results-found"
+          >
             <Magnifier
               height={32}
               width={32}
@@ -128,7 +136,10 @@ const ResultsView = ({
             </span>
           </div>
         )}
-        <span className="mb-4 mt-5 text-xl md:mt-6 lg:mt-8">
+        <span
+          className="mb-4 mt-5 text-xl md:mt-6 lg:mt-8"
+          data-qa="marketplace-suggestions-label"
+        >
           {t('Suggested results from DIAL Marketplace')}
         </span>
         <CardsList
@@ -138,6 +149,7 @@ const ResultsView = ({
           onDelete={onDelete}
           onEdit={onEdit}
           onBookmarkClick={onBookmarkClick}
+          dataQA="suggested-agents"
         />
       </>
     );
@@ -152,6 +164,7 @@ const ResultsView = ({
         onDelete={onDelete}
         onEdit={onEdit}
         onBookmarkClick={onBookmarkClick}
+        dataQA="filtered-agents"
       />
     );
   }

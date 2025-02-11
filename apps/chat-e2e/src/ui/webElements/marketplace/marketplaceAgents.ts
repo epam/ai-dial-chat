@@ -1,4 +1,5 @@
 import { DialAIEntityModel } from '@/chat/types/models';
+import { ExpectedConstants } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
 import { MarketplaceAgentSelectors } from '@/src/ui/selectors/marketplaceSelectors';
 import { BaseElement } from '@/src/ui/webElements';
@@ -35,6 +36,12 @@ export class MarketplaceAgents extends BaseElement {
       `${MarketplaceAgentSelectors.version}:text-is('${version}')`,
     ).getElementLocator();
 
+  public agentVersionWithPrefix = (version: string) =>
+    new BaseElement(
+      this.page,
+      `${MarketplaceAgentSelectors.version}:text-is('${ExpectedConstants.versionPrefix}${version}')`,
+    ).getElementLocator();
+
   public getAgent = (entity: DialAIEntityModel | string) => {
     let agent;
     if (typeof entity === 'string') {
@@ -44,7 +51,11 @@ export class MarketplaceAgents extends BaseElement {
       if (entity.version) {
         agent = this.rootLocator
           .filter({ has: this.agentName(entity.name) })
-          .filter({ has: this.agentVersion(entity.version) })
+          .filter({
+            has: this.agentVersion(entity.version).or(
+              this.agentVersionWithPrefix(entity.version),
+            ),
+          })
           .first();
       } else {
         //init agent locator if no version is available in the config
@@ -60,6 +71,12 @@ export class MarketplaceAgents extends BaseElement {
     return this.getAgent(entity)
       .getChildElementBySelector(MarketplaceAgentSelectors.description)
       .getChildElementBySelector(`${Attributes.visible}=true`);
+  }
+
+  public getAgentVersion(entity: DialAIEntityModel | string) {
+    return this.getAgent(entity).getChildElementBySelector(
+      MarketplaceAgentSelectors.version,
+    );
   }
 
   public async agentWithVersionToSet(entity: DialAIEntityModel) {
@@ -117,9 +134,8 @@ export class MarketplaceAgents extends BaseElement {
       //if entity has more than one version in the config
       if (entity.version) {
         //check if current version match expected
-        const currentVersion = await agentDetailsModal.agentVersion
-          .getElementInnerContent()
-          .then((value) => value.replace('Version:\n', '').replace('v. ', ''));
+        const currentVersion =
+          await agentDetailsModal.agentVersion.getElementInnerContent();
         //select version from dropdown menu if it does not match the current one
         if (currentVersion !== entity.version) {
           const menuTrigger = agentDetailsModal.versionMenuTrigger;

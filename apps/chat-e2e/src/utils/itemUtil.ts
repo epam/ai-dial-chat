@@ -3,7 +3,7 @@ import { Prompt } from '@/chat/types/prompt';
 import { BucketUtil } from '@/src/utils/bucketUtil';
 
 export class ItemUtil {
-  static conversationIdSeparator = '__';
+  static entityIdSeparator = '__';
   static urlSeparator = '/';
 
   public static getConversationBucketPath(bucket?: string) {

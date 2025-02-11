@@ -1,4 +1,5 @@
 import { Conversation } from '@/chat/types/chat';
+import { BackendEntity } from '@/chat/types/common';
 import {
   PublicationRequestModel,
   PublicationRule,
@@ -64,6 +65,25 @@ export class PublishRequestBuilder {
       resource = {
         ...resource,
         sourceUrl: conversation.id,
+      };
+    }
+    this.publishRequest.resources.push(resource);
+    return this;
+  }
+
+  withApplicationResource(
+    application: BackendEntity,
+    action: PublishActions,
+  ): PublishRequestBuilder {
+    const targetUrl = `applications/${this.getPublishRequest().targetFolder}${application.name}`;
+    let resource: PublicationResource = {
+      action: action,
+      targetUrl: targetUrl,
+    };
+    if (action === 'ADD' || action === 'ADD_IF_ABSENT') {
+      resource = {
+        ...resource,
+        sourceUrl: application.url,
       };
     }
     this.publishRequest.resources.push(resource);
