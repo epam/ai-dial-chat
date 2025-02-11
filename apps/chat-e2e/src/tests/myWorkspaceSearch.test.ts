@@ -579,7 +579,7 @@ dialTest(
         );
         await baseAssertion.assertElementText(
           toast,
-          'The agent added to my workspace',
+          ExpectedConstants.agentAddedToWorkspaceMessage,
         );
         await toast.closeToast();
         await agentDetailsModal.closeButton.click();
@@ -608,17 +608,16 @@ dialTest(
       async () => {
         for (const searchTerm of [sortedVersions[1], appName]) {
           await marketplaceHeader.searchInput.fillInInput(searchTerm);
-          const actualFilteredAgents = marketplace.getFilteredAgents();
-          await baseAssertion.assertElementState(
-            actualFilteredAgents,
-            'visible',
+          const filteredAgents = marketplace.getFilteredAgents();
+          await baseAssertion.assertElementState(filteredAgents, 'visible');
+          await baseAssertion.assertElementsCount(filteredAgents, 1);
+          baseAssertion.assertArrayIncludesAll(
+            await filteredAgents.getAgentNames(),
+            [appName],
+            ExpectedMessages.searchResultsAreCorrect,
           );
-          await baseAssertion.assertElementsCount(actualFilteredAgents, 1);
-          const actualFilteredAgentsNames =
-            await marketplaceAgents.getAgentNames();
-          baseAssertion.assertValue(actualFilteredAgentsNames[0], appName);
           await baseAssertion.assertElementText(
-            marketplaceAgents.getAgentVersion(appName),
+            filteredAgents.getAgentVersion(appName),
             sortedVersions[1],
           );
 
@@ -654,7 +653,7 @@ dialTest(
         );
         await baseAssertion.assertElementText(
           toast,
-          'The agent added to my workspace',
+          ExpectedConstants.agentAddedToWorkspaceMessage,
         );
         await toast.closeToast();
         await agentDetailsModal.closeButton.click();
@@ -682,14 +681,17 @@ dialTest(
       'Back to "My Workspace" and verify agent is found, no other agents are suggested',
       async () => {
         await marketplaceSidebar.myWorkspaceButton.click();
-        const actualFilteredAgents = marketplace.getFilteredAgents();
-        await baseAssertion.assertElementState(actualFilteredAgents, 'visible');
-        await baseAssertion.assertElementsCount(actualFilteredAgents, 1);
-        const actualFilteredAgentsNames =
-          await marketplaceAgents.getAgentNames();
-        baseAssertion.assertValue(actualFilteredAgentsNames[0], appName);
+        const filteredAgents = marketplace.getFilteredAgents();
+        await baseAssertion.assertElementState(filteredAgents, 'visible');
+        await baseAssertion.assertElementsCount(filteredAgents, 1);
+        const actualFilteredAgentsNames = await filteredAgents.getAgentNames();
+        baseAssertion.assertArrayIncludesAll(
+          actualFilteredAgentsNames,
+          [appName],
+          ExpectedMessages.searchResultsAreCorrect,
+        );
         await baseAssertion.assertElementText(
-          marketplaceAgents.getAgentVersion(appName),
+          filteredAgents.getAgentVersion(appName),
           sortedVersions[0],
         );
 

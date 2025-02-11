@@ -222,6 +222,7 @@ export const ExpectedConstants = {
     'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
   noMarketplaceAgentsFoundMessage: `Sorry, we couldn't find any results for your search.`,
   versionPrefix: 'Version: ',
+  agentAddedToWorkspaceMessage: 'The agent added to my workspace',
 };
 
 export enum Types {
