@@ -138,14 +138,13 @@ dialTest(
           marketplace.marketplaceSuggestionsLabel,
           'visible',
         );
-        await baseAssertion.assertElementsCount(
-          marketplace.getSuggestedAgents(),
-          1,
-        );
-        const actualSuggestedAgents = await marketplaceAgents.getAgentNames();
-        baseAssertion.assertValue(
-          actualSuggestedAgents[0],
-          nonInstalledAppName,
+        const suggestedAgents = marketplace.getSuggestedAgents();
+        await baseAssertion.assertElementsCount(suggestedAgents, 1);
+        const actualSuggestedAgents = await suggestedAgents.getAgentNames();
+        baseAssertion.assertArrayIncludesAll(
+          actualSuggestedAgents,
+          [nonInstalledAppName],
+          ExpectedMessages.searchResultsAreCorrect,
         );
       },
     );
@@ -199,8 +198,12 @@ dialTest(
         const filteredAgents = marketplace.getFilteredAgents();
         await baseAssertion.assertElementState(filteredAgents, 'visible');
         await baseAssertion.assertElementsCount(filteredAgents, 1);
-        const actualFilteredAgents = await marketplaceAgents.getAgentNames();
-        baseAssertion.assertValue(actualFilteredAgents[0], installedAppName);
+        const actualFilteredAgents = await filteredAgents.getAgentNames();
+        baseAssertion.assertArrayIncludesAll(
+          actualFilteredAgents,
+          [installedAppName],
+          ExpectedMessages.searchResultsAreCorrect,
+        );
       },
     );
 
@@ -211,8 +214,12 @@ dialTest(
         const filteredAgents = marketplace.getFilteredAgents();
         await baseAssertion.assertElementState(filteredAgents, 'visible');
         await baseAssertion.assertElementsCount(filteredAgents, 1);
-        const actualFilteredAgents = await marketplaceAgents.getAgentNames();
-        baseAssertion.assertValue(actualFilteredAgents[0], installedAppName);
+        const actualFilteredAgents = await filteredAgents.getAgentNames();
+        baseAssertion.assertArrayIncludesAll(
+          actualFilteredAgents,
+          [installedAppName],
+          ExpectedMessages.searchResultsAreCorrect,
+        );
         await baseAssertion.assertElementState(
           marketplace.marketplaceSuggestionsLabel,
           'hidden',
@@ -267,17 +274,16 @@ dialTest(
           marketplace.marketplaceSuggestionsLabel,
           'visible',
         );
-        await baseAssertion.assertElementsCount(
-          marketplace.getSuggestedAgents(),
-          1,
-        );
-        const actualSuggestedAgents = await marketplaceAgents.getAgentNames();
-        baseAssertion.assertValue(
-          actualSuggestedAgents[0],
-          nonInstalledAppName,
+        const suggestedAgents = marketplace.getSuggestedAgents();
+        await baseAssertion.assertElementsCount(suggestedAgents, 1);
+        const actualSuggestedAgents = await suggestedAgents.getAgentNames();
+        baseAssertion.assertArrayIncludesAll(
+          actualSuggestedAgents,
+          [nonInstalledAppName],
+          ExpectedMessages.searchResultsAreCorrect,
         );
         const actualSuggestedAgentVersion =
-          marketplaceAgents.getAgentVersion(nonInstalledAppName);
+          suggestedAgents.getAgentVersion(nonInstalledAppName);
         await baseAssertion.assertElementText(
           actualSuggestedAgentVersion,
           nonInstalledAppSecondVersion,
@@ -375,12 +381,10 @@ dialTest(
         await marketplaceHeader.searchInput.fillInInput(
           installedAppFirstVersion,
         );
-        await baseAssertion.assertElementsCount(
-          marketplace.getFilteredAgents(),
-          1,
-        );
+        const filteredAgents = marketplace.getFilteredAgents();
+        await baseAssertion.assertElementsCount(filteredAgents, 1);
         await baseAssertion.assertElementText(
-          marketplaceAgents.getAgentVersion(installedAppName),
+          filteredAgents.getAgentVersion(installedAppName),
           installedAppFirstVersion,
         );
       },
@@ -457,15 +461,11 @@ dialTest(
           await addApplicationModal.addApp();
         }
 
-        await baseAssertion.assertElementsCount(
-          marketplace.getFilteredAgents(),
-          2,
-        );
-        const filteredAgents = await marketplace
-          .getFilteredAgents()
-          .getAgentNames();
+        const filteredAgents = marketplace.getFilteredAgents();
+        await baseAssertion.assertElementsCount(filteredAgents, 2);
+        const actualFilteredAgents = await filteredAgents.getAgentNames();
         baseAssertion.assertArrayIncludesAll(
-          filteredAgents,
+          actualFilteredAgents,
           [installedAppName, firstAddedAppName],
           ExpectedMessages.searchResultsAreCorrect,
         );
