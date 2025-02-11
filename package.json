@@ -154,7 +154,6 @@
     "vitest": "^1.6.1"
   },
   "overrides": {
-    "cross-spawn": "7.0.6",
     "js-yaml": "4.1.0",
     "argparse": "2.0.1"
   },
@@ -166,8 +165,8 @@
     "playwright-chromium": "^1.50.0"
   },
   "engines": {
-    "node": ">=18.18.2",
-    "npm": ">=9.8.1"
+    "node": ">=22.2.0",
+    "npm": ">=10.7.0"
   },
   "browser": {
     "fs": false,
