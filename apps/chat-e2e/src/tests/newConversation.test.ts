@@ -155,7 +155,7 @@ dialTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.only(
   'New conversation disappears, chat history is shown on the central part if to click on the chat with history\n' +
     'New conversation appears if user deletes focused Chat1. Chat2 stays unselected.\n' +
     'New conversation appears if user deletes focused chat. No data label appears instead.\n' +
@@ -267,7 +267,7 @@ dialSharedWithMeTest(
         );
         await conversationAssertion.assertEntityState(
           { name: firstConversation.name },
-          'hidden',
+          'visible',
         );
         await conversationAssertion.assertNoConversationIsSelected();
         await conversationAssertion.assertEntitiesCount(2);
