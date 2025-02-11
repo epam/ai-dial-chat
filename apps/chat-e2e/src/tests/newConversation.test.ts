@@ -11,9 +11,7 @@ import { expect } from '@playwright/test';
 
 dialTest(
   'Click on + resets all settings on new conversation. Change agent pop-up opens\n' +
-    'Click on + does not create a new conversation if new conversation was on the screen\n' +
-    'Click on + resets all settings on new conversation. When temperature was changed in previous chat.\n' +
-    'Click on logo resets all setting on new conversation',
+    'Click on + resets all settings on new conversation. When temperature was changed in previous chat.',
   async ({
     dialHomePage,
     header,
@@ -28,9 +26,10 @@ dialTest(
     localStorageManager,
     conversationSettingsModal,
     iconApiHelper,
-    conversationAssertion,
+    setIssueIds,
   }) => {
-    setTestIds('EPMRTC-4717', 'EPMRTC-4837', 'EPMRTC-4920', 'EPMRTC-5092');
+    setTestIds('EPMRTC-4717', 'EPMRTC-4920');
+    setIssueIds('3116');
     const models = GeneratorUtil.randomArrayElements(
       ModelsUtil.getLatestModels().filter(
         (m) =>
@@ -60,8 +59,6 @@ dialTest(
       },
     );
 
-    let initialConversationIds: string | undefined;
-
     await dialTest.step(
       'Open Dial and verify the correct model is selected',
       async () => {
@@ -70,8 +67,6 @@ dialTest(
         });
         await dialHomePage.waitForPageLoaded();
         await chat.getSendMessage().waitForState({ state: 'attached' });
-        initialConversationIds =
-          await localStorageManager.getSelectedConversationIds();
       },
     );
 
@@ -118,34 +113,6 @@ dialTest(
     );
 
     await dialTest.step(
-      'Change settings, apply, click on the logo, verify settings are reset',
-      async () => {
-        await chat.configureSettingsButton.click();
-        await agentSettings.setSystemPrompt('Act like a cat');
-        await temperatureSlider.setTemperature(0.2);
-        await addons.selectAddon(addon.name);
-        await conversationSettingsModal.applyChangesButton.click();
-        await header.logo.click();
-        await chat.configureSettingsButton.click();
-        await agentInfoAssertion.assertElementText(
-          agentSettings.systemPrompt,
-          ExpectedConstants.emptyString,
-        );
-        agentInfoAssertion.assertValue(
-          await temperatureSlider.getTemperature(),
-          '0.2',
-          ExpectedMessages.temperatureIsValid,
-        );
-        agentInfoAssertion.assertValue(
-          await addons.getSelectedAddons().then((a) => a.length),
-          0,
-          ExpectedMessages.noAddonsSelected,
-        );
-        await conversationSettingsModal.cancelButton.click();
-      },
-    );
-
-    await dialTest.step(
       'Change model and verify the correct model is selected',
       async () => {
         await chat.changeAgentButton.waitForState();
@@ -164,37 +131,6 @@ dialTest(
       await addons.selectAddon(addon.name);
       await conversationSettingsModal.applyChangesButton.click();
     });
-
-    await dialTest.step(
-      'Click on + button and verify agent selection popup is opened',
-      async () => {
-        const requestPromise = dialHomePage.waitForRequest({
-          method: 'POST',
-          shouldNotOccur: true,
-          timeout: 20000,
-        });
-        await header.createNewConversation();
-        await talkToAgentDialog.waitForState();
-        await talkToAgentDialog.cancelButton.click();
-        await requestPromise;
-      },
-    );
-
-    await dialTest.step(
-      'Verify local storage and conversation list remain unchanged',
-      async () => {
-        const updatedConversationIds =
-          await localStorageManager.getSelectedConversationIds();
-        expect
-          .soft(
-            updatedConversationIds,
-            'selectedConversationIds should remain the same',
-          )
-          .toStrictEqual(initialConversationIds);
-
-        await conversationAssertion.assertEntitiesCount(0);
-      },
-    );
 
     await dialTest.step(
       'Verify settings are completely reset after not sending a message in a chat',
@@ -504,5 +440,126 @@ dialTest(
       await chat.configureSettingsButton.waitForState();
       await sendMessageAssertion.assertInputFieldState('visible', 'enabled');
     });
+  },
+);
+
+dialTest(
+  'New conversation 1 is not created if New conversation is on the screen\n' +
+    'Click on logo resets all setting on new conversation',
+  async ({
+    dialHomePage,
+    header,
+    chat,
+    agentSettings,
+    temperatureSlider,
+    addons,
+    talkToAgentDialog,
+    agentInfoAssertion,
+    setTestIds,
+    localStorageManager,
+    conversationSettingsModal,
+    conversationAssertion,
+  }) => {
+    setTestIds('EPMRTC-4837', 'EPMRTC-5092');
+    const model = GeneratorUtil.randomArrayElement(
+      ModelsUtil.getLatestModels().filter(
+        (m) =>
+          ModelsUtil.doesModelAllowSystemPrompt(m) &&
+          ModelsUtil.doesModelAllowTemperature(m) &&
+          ModelsUtil.doesModelAllowAddons(m) &&
+          m.iconUrl !== undefined,
+      ),
+    );
+    const addon = GeneratorUtil.randomArrayElement(ModelsUtil.getAddons());
+    await localStorageManager.setRecentModelsIdsOnce(model);
+    await localStorageManager.setRecentAddonsIds(addon);
+    await dialHomePage.addInitScript(
+      (data) => {
+        const { storageKey, storageValue } = data;
+        localStorage.setItem(
+          storageKey,
+          typeof storageValue === 'string'
+            ? storageValue
+            : JSON.stringify(storageValue),
+        );
+      },
+      {
+        storageKey: 'lastConversationSettings',
+        storageValue: '',
+      },
+    );
+
+    let initialConversationIds: string | undefined;
+
+    await dialTest.step(
+      'Open Dial and verify the correct model is selected',
+      async () => {
+        await dialHomePage.openHomePage({
+          iconsToBeLoaded: [model.iconUrl!],
+        });
+        await dialHomePage.waitForPageLoaded();
+        await chat.getSendMessage().waitForState({ state: 'attached' });
+        initialConversationIds =
+          await localStorageManager.getSelectedConversationIds();
+      },
+    );
+
+    await dialTest.step(
+      'Click on "+" button and verify no POST request is made',
+      async () => {
+        const requestPromise = dialHomePage.waitForRequest({
+          method: 'POST',
+          shouldNotOccur: true,
+          timeout: 20000,
+        });
+        await header.createNewConversation();
+        await talkToAgentDialog.waitForState();
+        await talkToAgentDialog.cancelButton.click();
+        await requestPromise;
+      },
+    );
+
+    await dialTest.step(
+      'Verify local storage and conversation list remain unchanged',
+      async () => {
+        const updatedConversationIds =
+          await localStorageManager.getSelectedConversationIds();
+        expect
+          .soft(
+            updatedConversationIds,
+            'selectedConversationIds should remain the same',
+          )
+          .toStrictEqual(initialConversationIds);
+        await conversationAssertion.assertEntitiesCount(0);
+      },
+    );
+
+    await dialTest.step(
+      'Change settings, apply, click on the logo, verify settings are reset',
+      async () => {
+        await chat.configureSettingsButton.click();
+        await agentSettings.setSystemPrompt('Act like a cat');
+        await temperatureSlider.setTemperature(0.2);
+        await addons.selectAddon(addon.name);
+        await conversationSettingsModal.applyChangesButton.click();
+        await header.logo.click();
+        await chat.configureSettingsButton.click();
+        await agentInfoAssertion.assertElementText(
+          agentSettings.systemPrompt,
+          ExpectedConstants.emptyString,
+        );
+        agentInfoAssertion.assertValue(
+          await temperatureSlider.getTemperature(),
+          ExpectedConstants.defaultTemperature,
+          ExpectedMessages.temperatureIsValid,
+        );
+        agentInfoAssertion.assertValue(
+          await addons.getSelectedAddons().then((a) => a.length),
+          0,
+          ExpectedMessages.noAddonsSelected,
+        );
+        await conversationSettingsModal.cancelButton.click();
+      },
+    );
   },
 );
