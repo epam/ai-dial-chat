@@ -13,7 +13,8 @@ import {
   FolderConversation,
   Import,
   ImportedModelIds,
-  MenuOptions, MockedChatApiResponseBodies,
+  MenuOptions,
+  MockedChatApiResponseBodies,
   ScrollState,
 } from '@/src/testData';
 import { ImportConversation } from '@/src/testData/conversationHistory/importConversation';
@@ -585,10 +586,14 @@ dialTest(
       'Send new request in Gpr-3.5 and verify response is received',
       async () => {
         const newRequest = '1+2=';
-        await dialHomePage.mockChatTextResponse(MockedChatApiResponseBodies.simpleTextBody);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chat.sendRequestWithButton(newRequest);
         await baseAssertion.assertElementText(
-          chatMessages.chatMessages.getNthElement(await chatMessages.chatMessages.getElementsCount()),
+          chatMessages.chatMessages.getNthElement(
+            await chatMessages.chatMessages.getElementsCount(),
+          ),
           'Response',
         );
       },
