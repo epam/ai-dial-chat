@@ -565,6 +565,7 @@ dialTest(
       'On the "Marketplace" tab open created app and add not latest version to "My Workspace"',
       async () => {
         await marketplacePage.openMarketplacePage();
+        await marketplacePage.waitForPageLoaded();
         await marketplaceAgents.getAgent(appName).click();
         await agentDetailsModal.versionMenuTrigger.click();
         await agentDetailsModal
