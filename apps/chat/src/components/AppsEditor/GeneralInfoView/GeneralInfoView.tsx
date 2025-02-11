@@ -1,5 +1,7 @@
 import { FormProvider, useForm } from 'react-hook-form';
 
+import { convertApplicationFromApi } from '@/src/utils/app/application';
+
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
   ApiApplicationResponseDefault,
@@ -61,7 +63,11 @@ export const GeneralInfoView: React.FC<Props> = ({
       <div className="w-1/2">
         <FormProvider {...methods}>
           <GeneralInfoEditor
-            isEdit={!!applicationData}
+            oldApplication={
+              applicationData
+                ? convertApplicationFromApi(applicationData)
+                : undefined
+            }
             schema={schema}
             isSharedWithMe={modelFromState?.sharedWithMe ?? false}
             isAppDeployed={isAppDeployed}

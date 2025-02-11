@@ -10,10 +10,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip } from '@/src/utils/app/application';
 
-import {
-  ApiApplicationResponseDefault,
-  CustomApplicationModel,
-} from '@/src/types/applications';
+import { CustomApplicationModel } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
@@ -109,14 +106,14 @@ const MappingsForm = withLabel(
 interface CodeAppViewProps {
   isSharedWithMe: boolean;
   isAppDeployed: boolean;
-  application: ApiApplicationResponseDefault;
+  oldApplication: CustomApplicationModel;
   isShared: boolean;
 }
 
 export const CodeAppView: React.FC<CodeAppViewProps> = ({
   isSharedWithMe,
   isAppDeployed,
-  application,
+  oldApplication,
   isShared,
 }) => {
   const { t } = useTranslation(Translation.Chat);
@@ -144,22 +141,22 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
 
   const handleEdit = useCallback(
     (data: CodeAppFormData) => {
-      if (application.reference) {
+      if (oldApplication.reference) {
         const preparedData = getCodeAppData(data);
 
-        preparedData.functionStatus = application?.function?.status;
+        preparedData.functionStatus = oldApplication?.function?.status;
 
         const applicationData: CustomApplicationModel = {
           ...preparedData,
-          reference: application.reference,
-          id: application.name,
+          reference: oldApplication.reference,
+          id: oldApplication.name,
           sharedWithMe: isSharedWithMe,
         };
 
         if (
           isShared &&
           preparedData.function?.sourceFolder !==
-            application.function?.source_folder
+            oldApplication.function?.sourceFolder
         ) {
           setConfirmSharingRevoke({
             description:
@@ -172,7 +169,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
 
         dispatch(
           ApplicationActions.update({
-            oldApplicationId: application.name,
+            oldApplication: oldApplication,
             applicationData,
           }),
         );
@@ -186,7 +183,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
         }
       }
     },
-    [application, dispatch, isAppDeployed, isSharedWithMe, t, isShared],
+    [oldApplication, dispatch, isAppDeployed, isSharedWithMe, t, isShared],
   );
 
   const handleSave = useCallback(
@@ -316,7 +313,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
               if (result) {
                 dispatch(
                   ShareActions.revokeAccess({
-                    resourceId: application.name,
+                    resourceId: oldApplication.name,
                     featureType: FeatureType.Application,
                   }),
                 );

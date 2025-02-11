@@ -12,6 +12,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { getSharedTooltip } from '@/src/utils/app/application';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
+import { CustomApplicationModel } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
@@ -60,11 +61,13 @@ const ModelsSelectorField = withErrorMessage(withLabel(ModelsSelector));
 interface QuickAppViewProps {
   schema: ApiDetailedApplicationTypeSchema | null;
   isSharedWithMe: boolean;
+  oldApplication: CustomApplicationModel;
 }
 
 export const QuickAppView: React.FC<QuickAppViewProps> = ({
   schema,
   isSharedWithMe,
+  oldApplication,
 }) => {
   const { t } = useTranslation(Translation.Chat);
   const theme = useAppSelector(UISelectors.selectThemeState);
@@ -82,7 +85,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
     const applicationData = getQuickAppData(data);
     dispatch(
       ApplicationActions.update({
-        oldApplicationId: data.id,
+        oldApplication: oldApplication,
         applicationData: {
           ...applicationData,
           id: data.id,

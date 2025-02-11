@@ -7,6 +7,7 @@ import {
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { CustomApplicationModel } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
@@ -123,7 +124,11 @@ export const validators: Validators = {
 
 const getItemLabel = (item: unknown): string => item as string;
 
-export const ApplicationView: React.FC = () => {
+interface Props {
+  oldApplication: CustomApplicationModel;
+}
+
+export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
@@ -140,7 +145,7 @@ export const ApplicationView: React.FC = () => {
     const applicationData = getCustomApplicationData(data);
     dispatch(
       ApplicationActions.update({
-        oldApplicationId: data.id,
+        oldApplication: oldApplication,
         applicationData: {
           ...applicationData,
           id: data.id,

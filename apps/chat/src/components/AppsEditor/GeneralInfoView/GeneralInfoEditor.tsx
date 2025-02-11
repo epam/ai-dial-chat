@@ -11,7 +11,10 @@ import { getSharedTooltip, topicToOption } from '@/src/utils/app/application';
 import { encrypt } from '@/src/utils/app/application-type-schema';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
-import { ApplicationType } from '@/src/types/applications';
+import {
+  ApplicationType,
+  CustomApplicationModel,
+} from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
@@ -38,10 +41,10 @@ import {
 } from './form';
 
 interface Props {
-  isEdit: boolean;
   schema: ApiDetailedApplicationTypeSchema | null;
   isSharedWithMe: boolean;
   isAppDeployed: boolean;
+  oldApplication?: CustomApplicationModel;
 }
 
 const ControlledField = withController(Field);
@@ -49,7 +52,7 @@ const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const TopicsSelector = withLabel(DropdownSelector);
 
 export const GeneralInfoEditor: React.FC<Props> = ({
-  isEdit,
+  oldApplication,
   schema,
   isSharedWithMe,
   isAppDeployed,
@@ -86,7 +89,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
         preparedData.functionStatus = data?.functionStatus;
       }
 
-      if (isEdit) {
+      if (oldApplication) {
         dispatch(
           ApplicationActions.update({
             applicationData: {
@@ -94,7 +97,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
               reference: data.reference,
               id: data.id,
             },
-            oldApplicationId: data.id,
+            oldApplication: oldApplication,
             redirectUrl: `/apps-editor/${encrypt(slug.toString())}/settings`,
             schema: schema ?? undefined,
           }),
