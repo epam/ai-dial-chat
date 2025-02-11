@@ -499,6 +499,7 @@ dialTest(
     chat,
     iconApiHelper,
     agentInfo,
+    baseAssertion,
   }) => {
     dialTest.skip(
       [
@@ -584,14 +585,13 @@ dialTest(
       'Send new request in Gpr-3.5 and verify response is received',
       async () => {
         const newRequest = '1+2=';
+        const response = 'response';
+        await dialHomePage.mockChatTextResponse(response);
         await chat.sendRequestWithButton(newRequest);
-        const lastResponseContent = await chatMessages.getLastMessageContent();
-        expect
-          .soft(
-            lastResponseContent !== '',
-            ExpectedMessages.messageContentIsValid,
-          )
-          .toBeTruthy();
+        await baseAssertion.assertElementText(
+          chatMessages.getNthElement(await chatMessages.getElementsCount()),
+          response,
+        );
       },
     );
 
