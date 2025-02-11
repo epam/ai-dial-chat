@@ -21,8 +21,9 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import Download from '../../../public/images/icons/download.svg';
 import Tooltip from '../Common/Tooltip';
+
+import Download from '@/public/images/icons/download.svg';
 
 interface Props {
   language: string;

@@ -17,6 +17,9 @@ import { encrypt } from '@/src/utils/app/application-type-schema';
 import {
   getConversationModelParams,
   groupModelsAndSaveOrder,
+  isPlaybackConversation,
+  isReplayAsIsConversation,
+  isReplayConversation,
 } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
@@ -63,6 +66,7 @@ const TalkToModalView = ({
   onClose,
 }: TalkToModalViewProps) => {
   const { t } = useTranslation(Translation.Chat);
+  const router = useRouter();
 
   const dispatch = useDispatch();
 
@@ -83,11 +87,9 @@ const TalkToModalView = ({
   const [publishModel, setPublishModel] = useState<
     ShareEntity & { iconUrl?: string }
   >();
-  const [sharedConversationNewModel, setSharedConversationNewModel] =
-    useState<DialAIEntityModel>();
 
-  const isPlayback = conversation.playback?.isPlayback;
-  const isReplay = conversation.replay?.isReplay;
+  const isPlayback = isPlaybackConversation(conversation);
+  const isReplay = isReplayConversation(conversation);
 
   const displayedModels = useMemo(() => {
     const currentModel = modelsMap[conversation.model.id];
@@ -175,14 +177,23 @@ const TalkToModalView = ({
     t,
   ]);
 
-  const handleUpdateConversationModel = useCallback(
+  const handleCloseApplicationLogs = useCallback(
+    () => setLogModel(undefined),
+    [],
+  );
+
+  const handleOpenApplicationLogs = useCallback((entity: DialAIEntityModel) => {
+    setLogModel(entity);
+  }, []);
+
+  const handleSelectModel = useCallback(
     (entity: DialAIEntityModel) => {
       const model = modelsMap[entity.reference];
 
       if (
         (model || entity.reference === REPLAY_AS_IS_MODEL) &&
         (conversation.model.id !== entity.reference ||
-          conversation.replay?.replayAsIs)
+          isReplayAsIsConversation(conversation))
       ) {
         dispatch(
           ConversationsActions.updateConversation({
@@ -204,32 +215,6 @@ const TalkToModalView = ({
     },
     [addonsMap, conversation, dispatch, modelsMap, onClose],
   );
-
-  const handleCloseApplicationLogs = useCallback(
-    () => setLogModel(undefined),
-    [],
-  );
-
-  const handleOpenApplicationLogs = useCallback((entity: DialAIEntityModel) => {
-    setLogModel(entity);
-  }, []);
-
-  const handleSelectModel = useCallback(
-    (entity: DialAIEntityModel) => {
-      if (conversation.isShared && entity.reference !== conversation.model.id) {
-        setSharedConversationNewModel(entity);
-        return;
-      }
-
-      handleUpdateConversationModel(entity);
-    },
-    [
-      conversation.isShared,
-      conversation.model.id,
-      handleUpdateConversationModel,
-    ],
-  );
-  const router = useRouter();
 
   const handleEditApplication = useCallback(
     (entity: DialAIEntityModel) => {
@@ -278,13 +263,13 @@ const TalkToModalView = ({
 
   const handleGoToWorkspace = useCallback(
     (e: MouseEvent<HTMLAnchorElement>) => {
-      if (conversation.playback?.isPlayback) {
+      if (isPlayback) {
         e.preventDefault();
       } else {
         dispatch(ConversationsActions.setTalkToConversationId(null));
       }
     },
-    [conversation.playback?.isPlayback, dispatch],
+    [isPlayback, dispatch],
   );
 
   return (
@@ -325,7 +310,7 @@ const TalkToModalView = ({
           onClick={handleGoToWorkspace}
           className={classNames(
             'm-auto mt-4 text-accent-primary md:absolute md:bottom-6 md:right-6',
-            conversation.playback?.isPlayback && 'cursor-not-allowed',
+            isPlayback && 'cursor-not-allowed',
           )}
           data-qa="go-to-my-workspace"
         >
@@ -367,24 +352,6 @@ const TalkToModalView = ({
           isOpen
           onClose={handleCloseApplicationLogs}
           entityId={logModel.id}
-        />
-      )}
-      {sharedConversationNewModel && (
-        <ConfirmDialog
-          isOpen
-          heading={t('Confirm model changing')}
-          confirmLabel={t('Confirm')}
-          cancelLabel={t('Cancel')}
-          description={t(
-            'Model changing will stop sharing and other users will no longer see this conversation.',
-          )}
-          onClose={(result) => {
-            if (result && sharedConversationNewModel) {
-              handleUpdateConversationModel(sharedConversationNewModel);
-            }
-
-            setSharedConversationNewModel(undefined);
-          }}
         />
       )}
     </>

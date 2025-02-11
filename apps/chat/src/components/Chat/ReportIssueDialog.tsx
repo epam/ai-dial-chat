@@ -30,11 +30,10 @@ import { Modal } from '@/src/components/Common/Modal';
 import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
 
 interface Props {
-  isOpen: boolean;
   onClose: () => void;
 }
 
-export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
+export const ReportIssueDialog: FC<Props> = ({ onClose }) => {
   const { t } = useTranslation(Translation.Settings);
 
   const isSuccessfullySent = useAppSelector(
@@ -102,7 +101,7 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
     <Modal
       initialFocus={titleInputRef}
       portalId="theme-main"
-      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
+      state={ModalState.OPENED}
       onClose={handleClose}
       dataQa="report-issue-dialog"
       overlayClassName="fixed inset-0"

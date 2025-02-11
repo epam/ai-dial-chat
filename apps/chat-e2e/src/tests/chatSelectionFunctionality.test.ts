@@ -218,7 +218,7 @@ dialTest(
       await conversationDropdownMenu.selectMenuOption(MenuOptions.duplicate, {
         triggeredHttpMethod: 'POST',
       });
-      clonedConversation = `${firstConversation.name} 1`;
+      clonedConversation = `${ExpectedConstants.playbackConversation}${firstConversation.name} 1`;
       await conversations.getEntityByName(clonedConversation).waitFor();
       await conversationAssertion.assertSelectedConversation(
         clonedConversation,

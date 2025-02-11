@@ -13,6 +13,10 @@ import { EMPTY_MODEL_ID } from '@/src/constants/default-ui-settings';
 import { NA_VERSION } from '@/src/constants/public';
 import { validVersionRegEx } from '@/src/constants/versions';
 
+import {
+  isPlaybackConversation,
+  isReplayConversation,
+} from '../app/conversation';
 import { constructPath } from '../app/file';
 import { splitEntityId } from '../app/folders';
 
@@ -42,10 +46,8 @@ export const isPseudoModel = (modelId: string | undefined) =>
   modelId ? Object.values(PseudoModel).includes(modelId as PseudoModel) : false;
 
 const getModelApiIdFromConversation = (conversation: Conversation): string => {
-  if (conversation.replay?.isReplay ?? conversation.isReplay)
-    return PseudoModel.Replay;
-  if (conversation.playback?.isPlayback ?? conversation.isPlayback)
-    return PseudoModel.Playback;
+  if (isReplayConversation(conversation)) return PseudoModel.Replay;
+  if (isPlaybackConversation(conversation)) return PseudoModel.Playback;
   return conversation.model.id;
 };
 

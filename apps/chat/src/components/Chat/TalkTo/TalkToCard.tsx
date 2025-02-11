@@ -9,6 +9,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import classNames from 'classnames';
 
+import { useMenuItemHandler } from '@/src/hooks/useHandler';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -20,7 +21,10 @@ import {
   isApplicationStatusUpdating,
   isExecutableApp,
 } from '@/src/utils/app/application';
-import { isOldConversationReplay } from '@/src/utils/app/conversation';
+import {
+  isOldConversationReplay,
+  isPlaybackConversation,
+} from '@/src/utils/app/conversation';
 import { isMyApplication } from '@/src/utils/app/id';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
@@ -104,8 +108,7 @@ export const TalkToCard = ({
 
   const canWrite = canWriteSharedWithMe(entity);
 
-  const isExecutable =
-    isExecutableApp(entity) && (isMyEntity || isAdmin || canWrite);
+  const isExecutable = isExecutableApp(entity) && (isMyEntity || isAdmin); //TODO add  ```|| canWrite``` when core issues #655 and #672 will be ready
   const screenState = useScreenState();
 
   const isApplicationsSharingEnabled = useAppSelector((state) =>
@@ -136,14 +139,18 @@ export const TalkToCard = ({
 
   const PlayerContextIcon = PlayerContextIcons[playerStatus];
 
-  const handleUpdateFunctionStatus = useCallback(() => {
-    dispatch(
-      ApplicationActions.startUpdatingFunctionStatus({
-        id: entity.id,
-        status: getApplicationNextStatus(entity),
-      }),
-    );
-  }, [dispatch, entity]);
+  const handleUpdateFunctionStatus = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      dispatch(
+        ApplicationActions.startUpdatingFunctionStatus({
+          id: entity.id,
+          status: getApplicationNextStatus(entity),
+        }),
+      );
+    },
+    [dispatch, entity],
+  );
 
   const handleSelectVersion = useCallback(
     (model: DialAIEntityModel) => {
@@ -152,19 +159,31 @@ export const TalkToCard = ({
     [onSelectVersion],
   );
 
-  const handleOpenSharing = useCallback(() => {
-    dispatch(
-      ShareActions.share({
-        featureType: FeatureType.Application,
-        resourceId: entity.id,
-      }),
-    );
-  }, [dispatch, entity.id]);
+  const handleOpenSharing = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      dispatch(
+        ShareActions.share({
+          featureType: FeatureType.Application,
+          resourceId: entity.id,
+        }),
+      );
+    },
+    [dispatch, entity.id],
+  );
 
   const handleOpenUnshare = useCallback(
-    () => dispatch(ShareActions.setUnshareEntity(entity)),
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      dispatch(ShareActions.setUnshareEntity(entity));
+    },
     [dispatch, entity],
   );
+
+  const handleEdit = useMenuItemHandler(onEdit, entity);
+  const handleDelete = useMenuItemHandler(onDelete, entity);
+  const handleOpenLogs = useMenuItemHandler(onOpenLogs, entity);
+  const handlePublish = useMenuItemHandler(onPublish, entity);
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -173,55 +192,40 @@ export const TalkToCard = ({
         dataQa: 'status-change',
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
         display:
-          (isAdmin || isMyEntity) &&
+          (isAdmin || isMyEntity) && //TODO add  ```|| canWrite``` when core issues #655 will be ready
           !!entity.functionStatus &&
           isCodeAppsEnabled,
         Icon: PlayerContextIcon,
         iconClassName: PlayerContextIconClasses[playerStatus],
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          handleUpdateFunctionStatus();
-        },
+        onClick: handleUpdateFunctionStatus,
       },
       {
         name: t('Edit'),
         dataQa: 'edit',
         display: (isMyEntity || !!canWrite) && !!onEdit,
         Icon: IconPencilMinus,
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onEdit(entity);
-        },
+        onClick: handleEdit,
       },
       {
         name: t('Share'),
         dataQa: 'share',
         display: isMyEntity && isApplicationsSharingEnabled,
         Icon: IconUserShare,
-        onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
-          e.stopPropagation();
-          handleOpenSharing();
-        },
+        onClick: handleOpenSharing,
       },
       {
         name: t('Unshare'),
         dataQa: 'unshare',
         display: !!entity.sharedWithMe && isApplicationsSharingEnabled,
         Icon: IconUserUnshare,
-        onClick: (e: React.MouseEvent) => {
-          handleOpenUnshare();
-          e.stopPropagation();
-        },
+        onClick: handleOpenUnshare,
       },
       {
         name: t('Publish'),
         dataQa: 'publish',
         display: isMyEntity && !!onPublish,
         Icon: IconWorldShare,
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onPublish(entity);
-        },
+        onClick: handlePublish,
       },
       {
         name: t('Logs'),
@@ -229,11 +233,7 @@ export const TalkToCard = ({
         display:
           !!isExecutable && playerStatus === SimpleApplicationStatus.UNDEPLOY,
         Icon: IconFileDescription,
-        onClick: (e: React.MouseEvent) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onOpenLogs(entity);
-        },
+        onClick: handleOpenLogs,
       },
       {
         name: t('Delete'),
@@ -242,10 +242,7 @@ export const TalkToCard = ({
         disabled: isModifyDisabled,
         Icon: IconTrashX,
         iconClassName: 'stroke-error',
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onDelete(entity);
-        },
+        onClick: handleDelete,
       },
     ],
     [
@@ -256,17 +253,20 @@ export const TalkToCard = ({
       isMyEntity,
       isCodeAppsEnabled,
       PlayerContextIcon,
+      handleUpdateFunctionStatus,
       canWrite,
       onEdit,
+      handleEdit,
       isApplicationsSharingEnabled,
-      onPublish,
-      isExecutable,
-      onDelete,
-      isModifyDisabled,
-      handleUpdateFunctionStatus,
       handleOpenSharing,
       handleOpenUnshare,
-      onOpenLogs,
+      onPublish,
+      handlePublish,
+      isExecutable,
+      handleOpenLogs,
+      onDelete,
+      isModifyDisabled,
+      handleDelete,
     ],
   );
 
@@ -340,7 +340,7 @@ export const TalkToCard = ({
             <div className="flex items-center">
               <p className="mr-1 text-xs text-secondary">{t('Version')}: </p>
               <ModelVersionSelect
-                readonly={conversation.playback?.isPlayback}
+                readonly={isPlaybackConversation(conversation)}
                 className="h-max truncate text-xs"
                 entities={versionsToSelect}
                 onSelect={handleSelectVersion}

@@ -20,6 +20,7 @@ import {
   prepareEntityName,
   updateEntitiesFoldersAndIds,
 } from './common';
+import { isReplayConversation } from './conversation';
 import { isRootId } from './id';
 import { hasWritePermission } from './share';
 
@@ -389,7 +390,7 @@ export const getConversationAttachmentWithPath = <
 ): DialFile[] => {
   const { path } = getPathToFolderById(folders, conversation.folderId);
   const isReplay =
-    'replay' in conversation ? conversation?.replay?.isReplay : false;
+    'replay' in conversation ? isReplayConversation(conversation) : false;
   const attachments =
     'messages' in conversation
       ? (

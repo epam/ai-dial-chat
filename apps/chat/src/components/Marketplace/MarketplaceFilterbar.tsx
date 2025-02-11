@@ -5,7 +5,7 @@ import {
   IconLayoutGrid,
   TablerIconsProps,
 } from '@tabler/icons-react';
-import { JSX, useCallback, useState } from 'react';
+import { JSX, memo, useCallback, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -174,7 +174,7 @@ const ActionButton = ({
 
 const getTypeLabel = (value: string) => `${capitalize(value)}s`;
 
-export const MarketplaceFilterbar = () => {
+export const MarketplaceFilterbar = memo(() => {
   const { t } = useTranslation(Translation.SideBar);
 
   const dispatch = useAppDispatch();
@@ -291,4 +291,6 @@ export const MarketplaceFilterbar = () => {
       )}
     </nav>
   );
-};
+});
+
+MarketplaceFilterbar.displayName = 'MarketplaceFilterbar';

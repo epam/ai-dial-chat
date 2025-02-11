@@ -41,6 +41,7 @@ export const getOrUploadPrompt = (
 ): Observable<{
   prompt: Prompt | null;
   payload: { id: string };
+  wasUploaded: boolean;
 }> => {
   const prompt = PromptsSelectors.selectPrompt(state, payload.id);
 
@@ -53,11 +54,13 @@ export const getOrUploadPrompt = (
         }),
       ),
       payload: of(payload),
+      wasUploaded: of(true),
     });
   } else {
-    return forkJoin({
-      prompt: of(prompt ?? null),
-      payload: of(payload),
+    return of({
+      prompt: prompt ?? null,
+      payload: payload,
+      wasUploaded: false,
     });
   }
 };

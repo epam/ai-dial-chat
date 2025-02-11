@@ -79,7 +79,7 @@ export class SideBarEntitiesTree extends EntitiesTree {
     { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
   ) {
     return this.getDropdownMenu().selectMenuOption(name, {
-      triggeredHttpMethod: 'DELETE',
+      triggeredHttpMethod: 'POST',
       isHttpMethodTriggered,
     });
   }

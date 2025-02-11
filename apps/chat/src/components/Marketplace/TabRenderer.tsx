@@ -53,9 +53,9 @@ import { CardsList } from '@/src/components/Marketplace/CardsList';
 import { MarketplaceBanner } from '@/src/components/Marketplace/MarketplaceBanner';
 import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
 
-import Magnifier from '../../../public/images/icons/search-alt.svg';
 import { NoResultsFound } from '../Common/NoResultsFound';
 
+import Magnifier from '@/public/images/icons/search-alt.svg';
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 
 interface NoAgentsFoundProps {
@@ -231,6 +231,7 @@ export const TabRenderer = () => {
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
+  const currentDetailsModel = detailsModel && modelsMap[detailsModel.reference];
 
   const [suggestedResults, setSuggestedResults] = useState<DialAIEntityModel[]>(
     [],
@@ -307,6 +308,7 @@ export const TabRenderer = () => {
     searchTerm,
     selectedFilters,
     installedModelIds,
+    applicationTypeSchemas,
   ]);
 
   const handleEditApplication = useCallback(
@@ -421,8 +423,6 @@ export const TabRenderer = () => {
     },
     [dispatch, installedModelIds],
   );
-
-  const currentDetailsModel = detailsModel && modelsMap[detailsModel.reference];
 
   return (
     <>

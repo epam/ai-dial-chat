@@ -7,12 +7,14 @@ import { isMyApplication } from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 
 import { ApplicationTypeSchema } from '../types/application-type-schema';
+import { PageType } from '../types/common';
 import { MarketplaceFilters } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
 
 import {
   ApplicationTypeToSourceType,
   FilterTypes,
+  MarketplaceQueryParams,
   SourceType,
 } from '@/src/constants/marketplace';
 
@@ -73,4 +75,8 @@ export const doesApplicationMatchFilters = (
   }
 
   return true;
+};
+
+export const getApplicationLink = (entity: DialAIEntityModel) => {
+  return `${window.location.origin}/${PageType.Marketplace}?${MarketplaceQueryParams.model}=${entity.reference}`;
 };

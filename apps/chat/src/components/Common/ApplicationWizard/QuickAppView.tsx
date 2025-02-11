@@ -116,7 +116,7 @@ export const QuickAppView: React.FC<ViewProps> = ({
 
         dispatch(
           ApplicationActions.update({
-            oldApplicationId: selectedApplication.id,
+            oldApplication: selectedApplication,
             applicationData,
           }),
         );
@@ -169,8 +169,9 @@ export const QuickAppView: React.FC<ViewProps> = ({
         );
 
         handleEdit(confirmSharingRevoke?.data);
-        setConfirmSharingRevoke(undefined);
       }
+
+      setConfirmSharingRevoke(undefined);
     },
     [confirmSharingRevoke?.data, dispatch, handleEdit, selectedApplication?.id],
   );

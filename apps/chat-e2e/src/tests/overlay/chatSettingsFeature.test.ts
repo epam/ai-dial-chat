@@ -201,7 +201,8 @@ dialOverlayTest(
 
 dialOverlayTest(
   `[Overlay] When no any feature is enabled in the code.\n` +
-    '[Overlay] Display configure settings for empty chat - Feature.EmptyChatSettings. p1',
+    '[Overlay] Display configure settings for empty chat - Feature.EmptyChatSettings. p1.\n' +
+    `[Overlay] Send 'Hello' to Chat manually`,
   async ({
     overlayHomePage,
     overlayChat,
@@ -212,7 +213,7 @@ dialOverlayTest(
     overlaySendMessage,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-3780', 'EPMRTC-3765');
+    setTestIds('EPMRTC-3780', 'EPMRTC-3765', 'EPMRTC-4846');
 
     await dialTest.step(
       'Open sandbox and verify model information, send request field and "Change agent" link are available',
@@ -255,7 +256,12 @@ dialOverlayTest(
           MockedChatApiResponseBodies.simpleTextBody,
           { isOverlay: true },
         );
-        await overlayChat.sendRequestWithButton('test');
+        const requestContent = 'test';
+        const request = await overlayChat.sendRequestWithButton(requestContent);
+        overlayBaseAssertion.assertValue(
+          request.messages[0].content,
+          requestContent,
+        );
         await overlayChatMessagesAssertion.assertMessageDeleteIconState(
           1,
           'visible',
