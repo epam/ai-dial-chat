@@ -13,7 +13,7 @@ import {
   getApplicationType,
   isApplicationType,
 } from '@/src/utils/app/application';
-import { encrypt } from '@/src/utils/app/application-type-schema';
+import { encode } from '@/src/utils/app/application-type-schema';
 import {
   getConversationModelParams,
   groupModelsAndSaveOrder,
@@ -225,7 +225,7 @@ const TalkToModalView = ({
           id: encodeURIComponent(entity.id),
           slug: isApplicationType(applicationType)
             ? applicationType
-            : encrypt(applicationType ?? ''),
+            : encode(applicationType ?? ''),
         },
       });
     },

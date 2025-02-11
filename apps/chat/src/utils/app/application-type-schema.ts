@@ -14,12 +14,12 @@ export const convertApplicationTypeSchemaFromApi = (
   };
 };
 
-export function encrypt(text: string) {
+export function encode(text: string) {
   const cleanedLink = text.replace(/^https?:\/\//, '');
   return encodeURIComponent(cleanedLink);
 }
 
-export function decrypt(encryptedText: string) {
+export function decode(encryptedText: string) {
   return decodeURIComponent(encryptedText);
 }
 

@@ -7,7 +7,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { encrypt } from '@/src/utils/app/application-type-schema';
+import { encode } from '@/src/utils/app/application-type-schema';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { ApplicationType } from '@/src/types/applications';
@@ -138,7 +138,7 @@ export const SearchHeader = () => {
         display: true,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          router.push(`/apps-editor/${encrypt(schema.id)}`);
+          router.push(`/apps-editor/${encode(schema.id)}`);
         },
       })) ?? []),
     ],

@@ -2,7 +2,7 @@ import { GetServerSideProps } from 'next';
 import { getToken } from 'next-auth/jwt';
 
 import { isApplicationType } from '@/src/utils/app/application';
-import { decrypt } from '@/src/utils/app/application-type-schema';
+import { decode } from '@/src/utils/app/application-type-schema';
 import { constructPath } from '@/src/utils/app/file';
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
@@ -91,7 +91,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   }
 
   const schema = schemas.find((schema) => {
-    return schema.$id.replace(/^https?:\/\//, '') === decrypt(slug);
+    return schema.$id.replace(/^https?:\/\//, '') === decode(slug);
   });
 
   let applicationTypeDetailedSchema = null;

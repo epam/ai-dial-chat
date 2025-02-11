@@ -254,3 +254,7 @@ export const groupAllVersions = (versions: PublicVersionOption[]) =>
       ? [{ version: latestVersion, id: latestVersionItemId }]
       : [];
   });
+
+export const fakeCallback = () => null;
+
+export const castToString = (value: unknown): string => value as string;

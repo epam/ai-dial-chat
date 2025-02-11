@@ -13,7 +13,7 @@ import {
   CustomApplicationModel,
   SimpleApplicationStatus,
 } from '@/src/types/applications';
-import { EntityType, PartialBy } from '@/src/types/common';
+import { ApiKeys, EntityType, PartialBy } from '@/src/types/common';
 import { DialAIEntityFeatures, DialAIEntityModel } from '@/src/types/models';
 import { QuickAppConfig } from '@/src/types/quick-apps';
 import { Translation } from '@/src/types/translation';
@@ -26,6 +26,8 @@ import {
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
 
+import { ApplicationGeneralInfoFormData } from '@/src/components/AppsEditor/GeneralInfoView/form';
+
 import { ApiUtils, getApplicationApiKey } from '../server/api';
 import { constructPath } from './file';
 import { getFolderIdFromEntityId } from './folders';
@@ -33,7 +35,7 @@ import { getApplicationRootId } from './id';
 import { isEntityIdPublic } from './publications';
 import { translate } from './translation';
 
-import { isObject, merge } from 'lodash-es';
+import { isObject } from 'lodash-es';
 import omit from 'lodash-es/omit';
 
 export const safeStringifyApplicationFeatures = (
@@ -101,12 +103,12 @@ export const convertApplicationToApi = (
   };
 
   if (schema) {
-    const filledApplicationSchemaField = {
+    return {
+      ...commonData,
       application_properties: applicationData.applicationProperties ?? null,
       application_type_schema_id:
         applicationData.applicationTypeSchemaId ?? schema['$id'],
     };
-    return merge({}, filledApplicationSchemaField, commonData);
   }
 
   if (applicationData.function) {
@@ -165,7 +167,9 @@ export const convertApplicationFromApi = (
     type: EntityType.Application,
     id,
     inputAttachmentTypes: application.input_attachment_types,
-    applicationProperties: application.application_properties,
+    applicationProperties: mapApplicationPropertiesFromApi(
+      application.application_properties,
+    ),
     applicationTypeSchemaId: application.application_type_schema_id,
     iconUrl: ApiUtils.decodeApiUrl(application.icon_url),
     maxInputAttachments: application.max_input_attachments,
@@ -318,4 +322,22 @@ export const getPlayerCaption = (entity: DialAIEntityModel) => {
     default:
       return 'Deploying';
   }
+};
+
+export const getApplicationEntityFields = (
+  data: ApplicationGeneralInfoFormData,
+) => {
+  return {
+    name: data.name ?? '',
+    version: data.version ?? '',
+    description: data.description ?? '',
+    iconUrl: data.iconUrl ?? '',
+    topics: data.topics ?? [],
+    reference: '',
+    features: undefined,
+    id: `${ApiKeys.Applications}/draft`,
+    completionUrl: '',
+    type: EntityType.Application,
+    isDefault: true,
+  };
 };

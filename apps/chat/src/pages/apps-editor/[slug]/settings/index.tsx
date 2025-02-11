@@ -5,7 +5,7 @@ import { getToken } from 'next-auth/jwt';
 import { useRouter } from 'next/router';
 
 import { isApplicationType } from '@/src/utils/app/application';
-import { decrypt } from '@/src/utils/app/application-type-schema';
+import { decode } from '@/src/utils/app/application-type-schema';
 import { constructPath } from '@/src/utils/app/file';
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
@@ -45,7 +45,7 @@ export default function AppsSettings({
     () =>
       isApplicationType(router.query.slug?.toString())
         ? router.query.slug?.toString()
-        : decrypt(router.query.slug?.toString() ?? ''),
+        : decode(router.query.slug?.toString() ?? ''),
     [router.query.slug],
   );
 
@@ -115,7 +115,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   }
 
   const schema = schemas.find((schema) => {
-    return schema.$id.replace(/^https?:\/\//, '') === decrypt(slug);
+    return schema.$id.replace(/^https?:\/\//, '') === decode(slug);
   });
 
   let applicationTypeDetailedSchema = null;

@@ -9,7 +9,7 @@ import {
   getApplicationType,
   isApplicationType,
 } from '@/src/utils/app/application';
-import { encrypt } from '@/src/utils/app/application-type-schema';
+import { encode } from '@/src/utils/app/application-type-schema';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { translate } from '@/src/utils/app/translation';
@@ -320,7 +320,7 @@ export const TabRenderer = () => {
           id: encodeURIComponent(entity.id),
           slug: isApplicationType(applicationType)
             ? applicationType
-            : encrypt(applicationType ?? ''),
+            : encode(applicationType ?? ''),
         },
       });
     },

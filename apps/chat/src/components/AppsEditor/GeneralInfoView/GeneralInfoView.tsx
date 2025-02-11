@@ -1,6 +1,9 @@
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { convertApplicationFromApi } from '@/src/utils/app/application';
+import {
+  convertApplicationFromApi,
+  getApplicationEntityFields,
+} from '@/src/utils/app/application';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
@@ -13,7 +16,7 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { GeneralInfoEditor } from './GeneralInfoEditor';
-import { GeneralInfoPreview, getPreviewEntityData } from './GeneralInfoPreview';
+import { GeneralInfoPreview } from './GeneralInfoPreview';
 import { ApplicationGeneralInfoFormData, getDefaultValues } from './form';
 
 interface Props {
@@ -75,7 +78,7 @@ export const GeneralInfoView: React.FC<Props> = ({
         </FormProvider>
       </div>
       <div className="w-1/2">
-        <GeneralInfoPreview data={getPreviewEntityData(formData)} />
+        <GeneralInfoPreview data={getApplicationEntityFields(formData)} />
       </div>
     </div>
   );

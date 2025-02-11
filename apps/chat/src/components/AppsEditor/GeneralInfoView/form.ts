@@ -9,6 +9,7 @@ import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-s
 import {
   ApiApplicationResponseDefault,
   ApplicationStatus,
+  ApplicationType,
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
@@ -168,14 +169,14 @@ export const getApplicationData = (
     inputAttachmentTypes: formData.inputAttachmentTypes,
     maxInputAttachments: formData.maxInputAttachments,
   };
-  if (type === 'custom-app') {
+  if (type === ApplicationType.CUSTOM_APP) {
     preparedData.completionUrl = formData.completionUrl ?? '';
     preparedData.features = formData.features
       ? JSON.parse(formData.features)
       : null;
   }
 
-  if (type === 'code-app') {
+  if (type === ApplicationType.CODE_APP) {
     preparedData.function = {
       runtime: formData.runtime,
       env: formData.env?.length

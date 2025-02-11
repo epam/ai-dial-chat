@@ -8,7 +8,7 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip, topicToOption } from '@/src/utils/app/application';
-import { encrypt } from '@/src/utils/app/application-type-schema';
+import { encode } from '@/src/utils/app/application-type-schema';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
@@ -98,7 +98,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
               id: data.id,
             },
             oldApplication: oldApplication,
-            redirectUrl: `/apps-editor/${encrypt(slug.toString())}/settings`,
+            redirectUrl: `/apps-editor/${encode(slug.toString())}/settings`,
             schema: schema ?? undefined,
           }),
         );
@@ -114,7 +114,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
         dispatch(
           ApplicationActions.create({
             applicationData: preparedData,
-            slug: encrypt(slug.toString()),
+            slug: encode(slug.toString()),
             schema: schema ?? undefined,
           }),
         );

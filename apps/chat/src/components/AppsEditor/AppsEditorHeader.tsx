@@ -4,7 +4,7 @@ import {
   IconMenu2,
   IconX,
 } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -44,30 +44,33 @@ export const AppsEditorHeader = () => {
     dispatch(UIActions.setIsUserSettingsOpen(false));
   };
 
-  const tabs = [
-    {
-      key: TabKeys.GENERAL,
-      label: t('General info'),
-      href: {
-        pathname: `/apps-editor/[slug]`,
-        query: {
-          id: router.query.id?.toString() ?? '',
-          slug: router.query.slug!.toString(),
+  const tabs = useMemo(
+    () => [
+      {
+        key: TabKeys.GENERAL,
+        label: t('General info'),
+        href: {
+          pathname: `/apps-editor/[slug]`,
+          query: {
+            id: router.query.id?.toString() ?? '',
+            slug: router.query.slug!.toString(),
+          },
         },
       },
-    },
-    {
-      key: TabKeys.SETTINGS,
-      label: t('Settings'),
-      href: {
-        pathname: `/apps-editor/[slug]/settings`,
-        query: {
-          id: router.query.id?.toString() ?? '',
-          slug: router.query.slug!.toString(),
+      {
+        key: TabKeys.SETTINGS,
+        label: t('Settings'),
+        href: {
+          pathname: `/apps-editor/[slug]/settings`,
+          query: {
+            id: router.query.id?.toString() ?? '',
+            slug: router.query.slug!.toString(),
+          },
         },
       },
-    },
-  ];
+    ],
+    [t, router.query.id, router.query.slug],
+  );
 
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -84,7 +87,7 @@ export const AppsEditorHeader = () => {
           <div className="flex items-center space-x-4">
             <button
               className="p-2 text-primary md:hidden"
-              onClick={() => setMenuOpen(!menuOpen)}
+              onClick={() => setMenuOpen((prevState) => !prevState)}
             >
               {menuOpen ? <IconX size={24} /> : <IconMenu2 size={24} />}
             </button>
