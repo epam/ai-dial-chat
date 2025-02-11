@@ -70,6 +70,7 @@ import {
   ShareApiHelper,
 } from '@/src/testData/api';
 import { ItemApiHelper } from '@/src/testData/api/itemApiHelper';
+import { ModelApiHelper } from '@/src/testData/api/modelApiHelper';
 import { PublicationApiHelper } from '@/src/testData/api/publicationApiHelper';
 import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
@@ -201,6 +202,7 @@ const dialTest = test.extend<{
   promptFilter: Filter;
   chatFilterDropdownMenu: DropdownCheckboxMenu;
   promptFilterDropdownMenu: DropdownCheckboxMenu;
+  modelApiHelper: ModelApiHelper;
   iconApiHelper: IconApiHelper;
   chatApiHelper: ChatApiHelper;
   fileApiHelper: FileApiHelper;
@@ -574,6 +576,10 @@ const dialTest = test.extend<{
   shareModal: async ({ page }, use) => {
     const shareModal = new ShareModal(page);
     await use(shareModal);
+  },
+  modelApiHelper: async ({ request }, use) => {
+    const modelApiHelper = new ModelApiHelper(request);
+    await use(modelApiHelper);
   },
   iconApiHelper: async ({ request }, use) => {
     const iconApiHelper = new IconApiHelper(request);
