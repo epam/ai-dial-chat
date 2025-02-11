@@ -126,6 +126,7 @@ dialTest(
       'Open "My Workspace", search by not installed agent name and verify no results label is displayed, agents from Marketplace are suggested',
       async () => {
         await marketplacePage.openMyWorkspacePage();
+        await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(nonInstalledAppName);
         await baseAssertion.assertElementsCount(
           marketplace.getFilteredAgents(),
@@ -393,6 +394,7 @@ dialTest(
           await applicationApiHelper.createApplication(appModel);
         }
         await marketplacePage.openMyWorkspacePage();
+        await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(
           installedAppFirstVersion,
         );
