@@ -87,7 +87,7 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
                   <ApplicationTopic key={topic} topic={topic} />
                 ))}
               </div>
-              <div className="flex items-center gap-2 whitespace-nowrap">
+              <div className="flex items-center gap-[2px] whitespace-nowrap">
                 <div
                   className="shrink truncate text-lg font-semibold leading-[18px] md:text-xl md:leading-6"
                   data-qa="agent-name"

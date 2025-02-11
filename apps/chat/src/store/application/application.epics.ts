@@ -117,28 +117,40 @@ const updateApplicationEpic: AppEpic = (action$) =>
     filter(ApplicationActions.update.match),
     switchMap(({ payload }) => {
       if (payload.applicationData.sharedWithMe) {
-        return of(ApplicationActions.edit(payload.applicationData));
+        return of(
+          ApplicationActions.edit({
+            oldApplication: payload.oldApplication,
+            updatedApplication: payload.applicationData,
+          }),
+        );
       }
 
       const updatedCustomApplication = regenerateApplicationId(
         payload.applicationData,
       ) as CustomApplicationModel;
 
-      if (payload.oldApplicationId !== updatedCustomApplication.id) {
+      if (payload.oldApplication.id !== updatedCustomApplication.id) {
         return DataService.getDataStorage()
           .move({
-            sourceUrl: payload.oldApplicationId,
+            sourceUrl: payload.oldApplication.id,
             destinationUrl: updatedCustomApplication.id,
             overwrite: false,
           })
           .pipe(
             switchMap(() => {
-              return of(ApplicationActions.edit(updatedCustomApplication));
+              return of(
+                ApplicationActions.edit({
+                  oldApplication: payload.oldApplication,
+                  updatedApplication: updatedCustomApplication,
+                }),
+              );
             }),
             catchError((err) => {
               console.error('Failed to update application:', err);
               return of(
-                ApplicationActions.updateFail(),
+                ApplicationActions.updateFail({
+                  oldApplication: payload.oldApplication,
+                }),
                 UIActions.showErrorToast(
                   translate('Failed to update application'),
                 ),
@@ -146,7 +158,12 @@ const updateApplicationEpic: AppEpic = (action$) =>
             }),
           );
       }
-      return of(ApplicationActions.edit(updatedCustomApplication));
+      return of(
+        ApplicationActions.edit({
+          oldApplication: payload.oldApplication,
+          updatedApplication: updatedCustomApplication,
+        }),
+      );
     }),
   );
 
@@ -154,24 +171,26 @@ const editApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ApplicationActions.edit.match),
     switchMap(({ payload }) => {
-      if (!payload.version) {
+      if (!payload.updatedApplication.version) {
         return EMPTY;
       }
 
-      return ApplicationService.edit(payload).pipe(
+      return ApplicationService.edit(payload.updatedApplication).pipe(
         switchMap(() =>
           of(
             ApplicationActions.editSuccess(),
             ModelsActions.updateModel({
-              model: payload,
-              oldApplicationId: payload.id,
+              model: payload.updatedApplication,
+              oldApplicationId: payload.updatedApplication.id,
             }),
           ),
         ),
         catchError((err) => {
           console.error('Failed to edit application:', err);
           return of(
-            ApplicationActions.editFail(),
+            ApplicationActions.editFail({
+              oldApplication: payload.oldApplication,
+            }),
             UIActions.showErrorToast(translate('Failed to update application')),
           );
         }),
