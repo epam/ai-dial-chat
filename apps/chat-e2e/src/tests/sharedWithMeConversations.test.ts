@@ -598,7 +598,7 @@ dialSharedWithMeTest(
             folderName,
             `${sharedFolderName}/${folderName}`,
           );
-        const singleConversationName = `${singleConversation.model.id}${ItemUtil.conversationIdSeparator}${singleConversation.name}`;
+        const singleConversationName = `${singleConversation.model.id}${ItemUtil.entityIdSeparator}${singleConversation.name}`;
         singleConversation.id = singleConversation.id.replace(
           singleConversationName,
           `${sharedFolderName}/${singleConversationName}`,

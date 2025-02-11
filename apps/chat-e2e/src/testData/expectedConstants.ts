@@ -216,6 +216,11 @@ export const ExpectedConstants = {
     `${API.fileHost}/public/${name}`,
   attachmentPublishErrorMessage:
     'Publishing failed. You are only allowed to publish conversations with attachments from "All files"',
+  workspacePath: '/marketplace?tab=workspace',
+  noWorkspaceAgentsFoundMessage:
+    'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
+  noMarketplaceAgentsFoundMessage: `Sorry, we couldn't find any results for your search.`,
+  versionPrefix: 'Version: ',
 };
 
 export enum Types {
@@ -268,6 +273,12 @@ export enum UploadMenuOptions {
   uploadFromDevice = 'Upload from device',
 }
 
+export enum AddAppMenuOptions {
+  codeApp = 'Code app',
+  customApp = 'Custom app',
+  quickApp = 'Quick app',
+}
+
 export const Chronology = {
   today: 'Today',
   yesterday: 'Yesterday',
@@ -289,6 +300,7 @@ export const API = {
   listingHost: '/api/listing',
   conversationsHost: () => `${API.listingHost}/conversations`,
   promptsHost: () => `${API.listingHost}/prompts`,
+  appsHost: () => `${API.listingHost}/applications`,
   filesListingHost: () => `${API.listingHost}/files`,
   fileHost: '/api/files',
   conversationHost: '/api/conversations',
@@ -316,6 +328,7 @@ export const API = {
   multipleListingHost: () => `${API.listingHost}/multiple?recursive=true`,
   pendingPublicationsListing: '/api/publication/listing',
   publishedConversations: '/api/publication/conversations/public',
+  applicationCreateHost: '/api/applications',
 };
 
 export const Import = {
