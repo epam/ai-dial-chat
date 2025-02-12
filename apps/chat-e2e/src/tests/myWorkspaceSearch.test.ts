@@ -293,7 +293,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open suggested agent and verify set version and available in dropdown menu versions',
+      'Open suggested agent and verify set version are available in dropdown menu versions',
       async () => {
         await marketplaceAgents.getAgent(nonInstalledAppName).click();
         await baseAssertion.assertElementText(

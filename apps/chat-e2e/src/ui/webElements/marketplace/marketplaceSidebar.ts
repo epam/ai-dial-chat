@@ -24,6 +24,6 @@ export class MarketplaceSidebar extends BaseElement {
     MarketplaceSideBarSelectors.marketplaceHomePageButton,
   );
   public myWorkspaceButton = this.getChildElementBySelector(
-    MarketplaceSideBarSelectors.myApplicationsButton,
+    MarketplaceSideBarSelectors.myWorkspaceButton,
   );
 }
