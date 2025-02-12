@@ -2,6 +2,7 @@ import {
   IconBookmark,
   IconBookmarkFilled,
   IconFileDescription,
+  IconLink,
   IconPencilMinus,
   IconTrashX,
   IconUserShare,
@@ -11,6 +12,10 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
+import {
+  useMenuItemHandler,
+  useMenuItemHandlerWithTwoArgs,
+} from '@/src/hooks/useHandler';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -19,12 +24,14 @@ import {
   getApplicationSimpleStatus,
   getModelShortDescription,
   getPlayerCaption,
+  isApplicationPublic,
   isApplicationStatusUpdating,
   isExecutableApp,
 } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
+import { getApplicationLink } from '@/src/utils/marketplace';
 
 import { SimpleApplicationStatus } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
@@ -38,6 +45,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import {
   CardIconSizes,
@@ -117,43 +125,63 @@ export const ApplicationCard = ({
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
   const isMyApp = isMyApplication(entity);
+  const isPublicApp = isApplicationPublic(entity);
 
   const canWrite = canWriteSharedWithMe(entity);
 
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
-  const isExecutable =
-    isExecutableApp(entity) && (isMyApp || isAdmin || canWrite);
+  const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin); //TODO add  ```|| canWrite``` when core issues #655 and #672 will be ready
 
   const { iconSize, shareIconSize } = CardIconSizes[screenState];
 
   const PlayerContextIcon = PlayerContextIcons[playerStatus];
 
-  const handleUpdateFunctionStatus = useCallback(() => {
-    dispatch(
-      ApplicationActions.startUpdatingFunctionStatus({
-        id: entity.id,
-        status: getApplicationNextStatus(entity),
-      }),
-    );
-  }, [dispatch, entity]);
+  const handleUpdateFunctionStatus = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      dispatch(
+        ApplicationActions.startUpdatingFunctionStatus({
+          id: entity.id,
+          status: getApplicationNextStatus(entity),
+        }),
+      );
+    },
+    [dispatch, entity],
+  );
+
+  const handleOpenApplicationLogs = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsOpenLogs(true);
+    },
+    [setIsOpenLogs],
+  );
 
   const handleCloseApplicationLogs = useCallback(
     () => setIsOpenLogs(false),
     [setIsOpenLogs],
   );
 
-  const handleOpenSharing = useCallback(() => {
-    dispatch(
-      ShareActions.share({
-        featureType: FeatureType.Application,
-        resourceId: entity.id,
-      }),
-    );
-  }, [dispatch, entity.id]);
+  const handleOpenSharing = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      dispatch(
+        ShareActions.share({
+          featureType: FeatureType.Application,
+          resourceId: entity.id,
+        }),
+      );
+    },
+    [dispatch, entity.id],
+  );
 
   const handleOpenUnshare = useCallback(
-    () => dispatch(ShareActions.setUnshareEntity(entity)),
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      dispatch(ShareActions.setUnshareEntity(entity));
+    },
     [dispatch, entity],
   );
 
@@ -161,70 +189,84 @@ export const ApplicationCard = ({
     SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
   );
 
+  const handleCopy = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!navigator.clipboard) return;
+      const link = getApplicationLink(entity);
+      navigator.clipboard.writeText(link);
+      dispatch(UIActions.showSuccessToast(t('Link copied!')));
+    },
+    [dispatch, entity, t],
+  );
+
+  const handleEdit = useMenuItemHandler(onEdit, entity);
+  const handleDelete = useMenuItemHandler(onDelete, entity);
+  const handlePublish = useMenuItemHandlerWithTwoArgs(
+    onPublish,
+    entity,
+    PublishActions.ADD,
+  );
+  const handleUnpublish = useMenuItemHandlerWithTwoArgs(
+    onPublish,
+    entity,
+    PublishActions.DELETE,
+  );
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
+      {
+        name: t('Copy link'),
+        dataQa: 'application-copy-link',
+        display: isPublicApp,
+        Icon: IconLink,
+        onClick: handleCopy,
+      },
       {
         name: t(getPlayerCaption(entity)),
         dataQa: 'status-change',
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
         display:
-          (isAdmin || isMyApp) && !!entity.functionStatus && isCodeAppsEnabled,
+          (isAdmin || isMyApp) && !!entity.functionStatus && isCodeAppsEnabled, //TODO add  canWrite when core issues #655 will be ready
         Icon: PlayerContextIcon,
         iconClassName: PlayerContextIconClasses[playerStatus],
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          handleUpdateFunctionStatus();
-        },
+        onClick: handleUpdateFunctionStatus,
       },
       {
         name: t('Edit'),
         dataQa: 'edit',
         display: (isMyApp || !!canWrite) && !!onEdit,
         Icon: IconPencilMinus,
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onEdit?.(entity);
-        },
+        onClick: handleEdit,
       },
       {
         name: t('Share'),
         dataQa: 'share',
         display: isMyApp && isApplicationsSharingEnabled,
         Icon: IconUserShare,
-        onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
-          e.stopPropagation();
-          handleOpenSharing();
-        },
+        onClick: handleOpenSharing,
       },
       {
         name: t('Unshare'),
         dataQa: 'unshare',
         display: !!entity.sharedWithMe && isApplicationsSharingEnabled,
         Icon: IconUserUnshare,
-        onClick: (e: React.MouseEvent) => {
-          handleOpenUnshare();
-          e.stopPropagation();
-        },
+        onClick: handleOpenUnshare,
       },
       {
         name: t('Publish'),
         dataQa: 'publish',
         display: isMyApp && !!onPublish,
         Icon: IconWorldShare,
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onPublish?.(entity, PublishActions.ADD);
-        },
+        onClick: handlePublish,
       },
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
         display: isEntityIdPublic(entity) && !!onPublish,
         Icon: UnpublishIcon,
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onPublish?.(entity, PublishActions.DELETE);
-        },
+        onClick: handleUnpublish,
       },
       {
         name: t('Logs'),
@@ -232,11 +274,7 @@ export const ApplicationCard = ({
         display:
           !!isExecutable && playerStatus === SimpleApplicationStatus.UNDEPLOY,
         Icon: IconFileDescription,
-        onClick: (e: React.MouseEvent) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setIsOpenLogs(true);
-        },
+        onClick: handleOpenApplicationLogs,
       },
       {
         name: t('Delete'),
@@ -245,30 +283,34 @@ export const ApplicationCard = ({
         disabled: isModifyDisabled,
         Icon: IconTrashX,
         iconClassName: 'stroke-error',
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onDelete?.(entity);
-        },
+        onClick: handleDelete,
       },
     ],
     [
       t,
+      isPublicApp,
+      handleCopy,
       entity,
       playerStatus,
       isAdmin,
       isMyApp,
       isCodeAppsEnabled,
       PlayerContextIcon,
+      handleUpdateFunctionStatus,
       canWrite,
       onEdit,
+      handleEdit,
       isApplicationsSharingEnabled,
-      onPublish,
-      isExecutable,
-      onDelete,
-      isModifyDisabled,
-      handleUpdateFunctionStatus,
       handleOpenSharing,
       handleOpenUnshare,
+      onPublish,
+      handlePublish,
+      handleUnpublish,
+      isExecutable,
+      handleOpenApplicationLogs,
+      onDelete,
+      isModifyDisabled,
+      handleDelete,
     ],
   );
 
@@ -338,7 +380,10 @@ export const ApplicationCard = ({
                   )}
                 >
                   {t('Version: ')}
-                  <span className="max-w-full overflow-hidden truncate whitespace-nowrap">
+                  <span
+                    className="max-w-full overflow-hidden truncate whitespace-nowrap"
+                    data-qa="version"
+                  >
                     {entity.version}
                   </span>
                 </div>
@@ -346,14 +391,15 @@ export const ApplicationCard = ({
               <div className="flex whitespace-nowrap">
                 <div
                   className={classNames(
-                    'mr-6 shrink truncate text-base font-semibold leading-[20px] text-primary',
+                    'mr-6 flex shrink truncate text-base font-semibold leading-[20px] text-primary',
                     !isMyApp && !entity.version && '!mr-12',
                   )}
-                  data-qa="agent-name"
                 >
-                  {entity.name}
+                  <span className="truncate" data-qa="agent-name">
+                    {entity.name}
+                  </span>
+                  <FunctionStatusIndicator entity={entity} />
                 </div>
-                <FunctionStatusIndicator entity={entity} />
               </div>
               <EntityMarkdownDescription className="hidden text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
                 {getModelShortDescription(entity)}

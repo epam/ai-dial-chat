@@ -14,7 +14,7 @@ export class ConversationBuilder {
   constructor() {
     const model = ModelsUtil.getDefaultModel()!;
     this.conversation = {
-      id: `${model.id}${ItemUtil.conversationIdSeparator}${DEFAULT_CONVERSATION_NAME}`,
+      id: `${model.id}${ItemUtil.entityIdSeparator}${DEFAULT_CONVERSATION_NAME}`,
       name: DEFAULT_CONVERSATION_NAME,
       messages: [],
       model: { id: model.id },

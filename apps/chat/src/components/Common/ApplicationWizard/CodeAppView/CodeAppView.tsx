@@ -153,7 +153,7 @@ export const CodeAppView: FC<ViewProps> = ({
 
         dispatch(
           ApplicationActions.update({
-            oldApplicationId: selectedApplication.id,
+            oldApplication: selectedApplication,
             applicationData,
           }),
         );
@@ -428,8 +428,9 @@ export const CodeAppView: FC<ViewProps> = ({
                 );
 
                 handleEdit(confirmSharingRevoke.data);
-                setConfirmSharingRevoke(undefined);
               }
+
+              setConfirmSharingRevoke(undefined);
             }}
           />
         )}

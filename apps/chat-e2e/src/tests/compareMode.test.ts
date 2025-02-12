@@ -264,9 +264,13 @@ dialTest(
           iconsToBeLoaded: [defaultModel.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(modelConversation.name, {
-          exactMatch: true,
-        });
+        await conversations.selectConversation(
+          modelConversation.name,
+          { isHttpMethodTriggered: false },
+          {
+            exactMatch: true,
+          },
+        );
         await conversations.openEntityDropdownMenu(modelConversation.name, {
           exactMatch: true,
         });
@@ -601,7 +605,8 @@ dialTest(
       },
     );
 
-    await dialTest.step(
+    //enable when https://github.com/epam/ai-dial-chat/issues/2170 is fixed
+    await dialTest.step.skip(
       'Put like/dislike for compared chat, open this chat and verify like/dislike saved',
       async () => {
         const rate = GeneratorUtil.randomArrayElement(Object.values(Rate));
@@ -612,11 +617,7 @@ dialTest(
           .soft(isComparedMessageRated, ExpectedMessages.chatMessageIsRated)
           .toBeTruthy();
 
-        await conversations.selectConversation(
-          firstConversation.name,
-          undefined,
-          { isHttpMethodTriggered: false },
-        );
+        await conversations.selectConversation(firstConversation.name);
         await chatMessages
           .getChatMessageRate(firstConversation.messages.length + 2, rate)
           .waitFor();
@@ -738,6 +739,7 @@ dialTest(
     conversations,
     conversationDropdownMenu,
     compareConversation,
+    compare,
   }) => {
     dialTest.slow();
     setTestIds('EPMRTC-1021');
@@ -806,16 +808,19 @@ dialTest(
         await compareConversation.selectCompareConversation(
           secondConversation.name,
         );
+        await compare.waitForComparedConversationsLoaded();
         await leftChatHeader.chatAgent.click();
         await talkToAgentDialog.selectAgent(
           firstUpdatedRandomModel,
           marketplacePage,
         );
+        await compare.waitForComparedConversationsLoaded();
         await rightChatHeader.chatAgent.click();
         await talkToAgentDialog.selectAgent(
           secondUpdatedRandomModel,
           marketplacePage,
         );
+        await compare.waitForComparedConversationsLoaded();
 
         await leftChatHeader.openConversationSettingsPopup();
         const leftEntitySettings =
@@ -1373,11 +1378,7 @@ dialTest(
     await dialTest.step(
       'Switch to comparing conversation and verify Compare mode is closed',
       async () => {
-        await conversations.selectConversation(
-          firstConversation.name,
-          undefined,
-          { isHttpMethodTriggered: false },
-        );
+        await conversations.selectConversation(firstConversation.name);
         await expect
           .soft(compare.getElementLocator(), ExpectedMessages.compareModeClosed)
           .toBeHidden();

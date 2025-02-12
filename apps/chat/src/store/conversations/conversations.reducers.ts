@@ -101,43 +101,37 @@ export const conversationsSlice = createSlice({
       });
       state.isNewConversationUpdating = false;
     },
-    recreateConversation: (
+    moveConversation: (
       state,
-      action: PayloadAction<{ new: Conversation; old: Conversation }>,
+      action: PayloadAction<{
+        newConversation: Conversation;
+        oldConversation: Conversation;
+      }>,
     ) => {
-      if (!action.payload.old.messages.length) {
+      if (!action.payload.oldConversation.messages.length) {
         state.isNewConversationUpdating = true;
       }
     },
-    recreateConversationFail: (
+    moveConversationFail: (
       state,
       {
         payload,
       }: PayloadAction<{
-        newId: string;
         oldConversation: Conversation;
+        newConversation: Conversation;
       }>,
     ) => {
-      state.isNewConversationUpdating = false;
       state.conversations = state.conversations.map((conv) => {
-        if (conv.id === payload.newId) {
-          const conversation = conv as Conversation;
-          return {
-            ...conversation,
-            ...payload.oldConversation,
-            messages: conversation.messages,
-            isMessageStreaming: false,
-          };
+        if (payload.newConversation.id === conv.id) {
+          return payload.oldConversation;
         }
 
         return conv;
       });
-
-      if (payload.newId !== payload.oldConversation.id) {
-        state.selectedConversationsIds = state.selectedConversationsIds.map(
-          (id) => (id === payload.newId ? payload.oldConversation.id! : id),
-        );
-      }
+      state.selectedConversationsIds = state.selectedConversationsIds.map(
+        (id) =>
+          id === payload.newConversation.id ? payload.oldConversation.id : id,
+      );
     },
     updateConversation: (
       state,

@@ -1,6 +1,6 @@
 {
   "name": "ai-dial-chat",
-  "version": "0.24.0-rc",
+  "version": "0.25.0-rc",
   "private": true,
   "scripts": {
     "nx": "nx",
@@ -61,7 +61,7 @@
     "lodash-es": "^4.17.21",
     "mime-types": "^2.1.35",
     "next": "14.2.22",
-    "next-auth": "^4.24.10",
+    "next-auth": "4.24.10",
     "next-i18next": "^13.2.2",
     "node-fetch": "^3.3.2",
     "pino": "^8.15.1",
@@ -123,8 +123,8 @@
     "@typescript-eslint/eslint-plugin": "^6.7.0",
     "@typescript-eslint/parser": "^6.7.0",
     "@vitejs/plugin-react": "^4.2.1",
-    "@vitest/coverage-v8": "^1.2.1",
-    "@vitest/ui": "^1.6.0",
+    "@vitest/coverage-v8": "^1.6.1",
+    "@vitest/ui": "^1.6.1",
     "autoprefixer": "^10.4.16",
     "dotenv": "^16.3.1",
     "endent": "^2.1.0",
@@ -151,7 +151,7 @@
     "ts-node": "10.9.1",
     "typescript": "^5.2.2",
     "vite": "^5.4.14",
-    "vitest": "^1.6.0"
+    "vitest": "^1.6.1"
   },
   "overrides": {
     "js-yaml": "4.1.0",
@@ -165,8 +165,8 @@
     "playwright-chromium": "^1.50.0"
   },
   "engines": {
-    "node": ">=18.18.2",
-    "npm": ">=9.8.1"
+    "node": ">=22.2.0",
+    "npm": ">=10.7.0"
   },
   "browser": {
     "fs": false,
