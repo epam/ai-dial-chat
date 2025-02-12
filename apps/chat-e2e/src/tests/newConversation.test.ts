@@ -53,10 +53,19 @@ dialTest(
       await chat.getSendMessage().waitForState();
     });
 
+    const PROMPTS = {
+      DOG: 'Act like a dog',
+      CAT: 'Act like a cat',
+    };
+    const TEMPERATURE = {
+      HIGH: '0.7',
+      LOW: '0.2',
+    };
+
     await dialTest.step('Change settings and apply', async () => {
       await chat.configureSettingsButton.click();
-      await agentSettings.setSystemPrompt('Act like a dog');
-      await temperatureSlider.setTemperature(0.7);
+      await agentSettings.setSystemPrompt(PROMPTS.DOG);
+      await temperatureSlider.setTemperature(TEMPERATURE.HIGH);
       await addons.selectAddon(addon.name);
       await conversationSettingsModal.applyChangesButton.click();
     });
@@ -82,7 +91,7 @@ dialTest(
         );
         agentInfoAssertion.assertValue(
           await temperatureSlider.getTemperature(),
-          '0.7',
+          TEMPERATURE.HIGH,
           ExpectedMessages.temperatureIsValid,
         );
         agentInfoAssertion.assertValue(
@@ -108,8 +117,8 @@ dialTest(
 
     await dialTest.step('Change settings and apply', async () => {
       await chat.configureSettingsButton.click();
-      await agentSettings.setSystemPrompt('Act like a cat');
-      await temperatureSlider.setTemperature(0.2);
+      await agentSettings.setSystemPrompt(PROMPTS.CAT);
+      await temperatureSlider.setTemperature(TEMPERATURE.LOW);
       await addons.selectAddon(addon.name);
       await conversationSettingsModal.applyChangesButton.click();
     });
@@ -124,7 +133,7 @@ dialTest(
         );
         agentInfoAssertion.assertValue(
           await temperatureSlider.getTemperature(),
-          '0.7',
+          TEMPERATURE.HIGH,
           ExpectedMessages.temperatureIsValid,
         );
         agentInfoAssertion.assertValue(
