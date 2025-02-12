@@ -131,6 +131,7 @@ dialTest(
       'Refresh page and verify banner is not shown',
       async () => {
         await dialHomePage.reloadPage();
+        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
         await expect
           .soft(banner.getElementLocator(), ExpectedMessages.bannerIsClosed)
           .toBeHidden();

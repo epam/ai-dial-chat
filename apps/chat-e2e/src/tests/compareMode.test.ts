@@ -742,6 +742,7 @@ dialTest(
     conversations,
     conversationDropdownMenu,
     compareConversation,
+    compare,
   }) => {
     dialTest.slow();
     setTestIds('EPMRTC-1021');
@@ -810,16 +811,19 @@ dialTest(
         await compareConversation.selectCompareConversation(
           secondConversation.name,
         );
+        await compare.waitForComparedConversationsLoaded();
         await leftChatHeader.chatAgent.click();
         await talkToAgentDialog.selectAgent(
           firstUpdatedRandomModel,
           marketplacePage,
         );
+        await compare.waitForComparedConversationsLoaded();
         await rightChatHeader.chatAgent.click();
         await talkToAgentDialog.selectAgent(
           secondUpdatedRandomModel,
           marketplacePage,
         );
+        await compare.waitForComparedConversationsLoaded();
 
         await leftChatHeader.openConversationSettingsPopup();
         const leftEntitySettings =

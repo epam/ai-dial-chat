@@ -1,9 +1,13 @@
 import { Conversation } from '@/chat/types/chat';
-import { BackendChatEntity, BackendDataNodeType } from '@/chat/types/common';
+import {
+  BackendChatEntity,
+  BackendDataNodeType,
+  BackendEntity,
+} from '@/chat/types/common';
 import { Prompt } from '@/chat/types/prompt';
 import { API } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
-import { BucketUtil, ItemUtil } from '@/src/utils';
+import { BucketUtil, ItemUtil, applicationNamePrefix } from '@/src/utils';
 import { Entity } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 
@@ -15,7 +19,12 @@ export class ItemApiHelper extends BaseApiHelper {
       bucketToUse,
     );
     const prompts = await this.listItems(API.promptsHost(), bucketToUse);
-    await this.deleteBackendItem(...conversations, ...prompts);
+    const apps = await this.listItems(API.appsHost(), bucketToUse);
+    await this.deleteBackendItem(
+      ...conversations,
+      ...prompts,
+      ...apps.filter((a) => a.name.startsWith(applicationNamePrefix)),
+    );
   }
 
   public async listItems(url: string, bucket?: string) {
@@ -52,7 +61,7 @@ export class ItemApiHelper extends BaseApiHelper {
     return (await response.json()) as Conversation;
   }
 
-  public async deleteBackendItem(...items: BackendChatEntity[]) {
+  public async deleteBackendItem(...items: BackendEntity[]) {
     for (const item of items) {
       const path = `/api/${item.url}`;
       const response = await this.request.delete(this.getHost(path));
