@@ -40,13 +40,15 @@ export default function AppsSettings({
   schema,
 }: PageProps) {
   const dispatch = useAppDispatch();
-  const router = useRouter();
+  const {
+    query: { slug = '' },
+  } = useRouter();
   const type = useMemo(
     () =>
-      isApplicationType(router.query.slug?.toString())
-        ? router.query.slug?.toString()
-        : decode(router.query.slug?.toString() ?? ''),
-    [router.query.slug],
+      isApplicationType(slug.toString())
+        ? slug.toString()
+        : decode(slug?.toString() ?? ''),
+    [slug],
   );
 
   useEffect(() => {
@@ -60,7 +62,7 @@ export default function AppsSettings({
       <AppsEditorHeader
         isEditApplication
         applicationTypeDisplayName={
-          schema?.['dial:applicationTypeDisplayName'] ?? type
+          schema?.['dial:applicationTypeDisplayName'] ?? decode(slug.toString())
         }
       />
       <div className="flex size-full grow overflow-hidden">
