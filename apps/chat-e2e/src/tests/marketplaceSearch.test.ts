@@ -11,7 +11,8 @@ const publicationsToUnpublish: Publication[] = [];
 dialTest(
   'Search word is stored; search results differ if to switch between My workspace and DIAL Marketplace pages. Search by name. Suggested results on My workspace. The model is without versions.' +
     'Space before and after search phrase is ignored\n' +
-    `Search in DIAL Marketplace: 'No results found'`,
+    `Search in DIAL Marketplace: 'No results found'.\n` +
+    'Search_phrase stays on Refresh. DIAL marketplace tab stays opened.',
   async ({
     marketplacePage,
     marketplaceSidebar,
@@ -28,13 +29,14 @@ dialTest(
     adminPublicationApiHelper,
     publishRequestBuilder,
   }) => {
-    setTestIds('EPMRTC-4318', 'EPMRTC-4615', 'EPMRTC-4383');
+    setTestIds('EPMRTC-4318', 'EPMRTC-4615', 'EPMRTC-4383', 'EPMRTC-4317');
     let installedAppVersion: string;
     let installedAppName: string;
     let nonInstalledAppVersion: string;
     let nonInstalledAppName: string;
     let leadingSpacesSearchTerm: string;
     let leadingEndingSpacesSearchTerm: string;
+    let notMatchingTerm: string;
 
     await dialTest.step(
       'Prepare one application visible in "My Workspace" and one available in the "Marketplace", both have common part in the name',
@@ -168,7 +170,7 @@ dialTest(
     await dialTest.step(
       'Continue typing chars into search field and verify no results are found',
       async () => {
-        const notMatchingTerm = GeneratorUtil.randomString(10);
+        notMatchingTerm = GeneratorUtil.randomString(10);
         await marketplaceHeader.searchInput.typeInInput(notMatchingTerm);
         await baseAssertion.assertElementState(
           marketplace.noResultsFound,
@@ -186,6 +188,19 @@ dialTest(
           marketplace.noResultsFoundIcon,
           'visible',
         );
+        await baseAssertion.assertElementAttribute(
+          marketplaceHeader.searchInput,
+          Attributes.value,
+          leadingEndingSpacesSearchTerm + notMatchingTerm,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Reload the page and verify search term is preserved',
+      async () => {
+        await marketplacePage.reloadPage();
+        await marketplacePage.waitForPageLoaded();
         await baseAssertion.assertElementAttribute(
           marketplaceHeader.searchInput,
           Attributes.value,
