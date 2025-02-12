@@ -1,6 +1,8 @@
 import { Observable, map } from 'rxjs';
 
-import { ApiKeys, BackendDataNodeType } from '@/src/types/common';
+import { DataService } from '@/src/utils/app/data/data-service';
+
+import { ApiKeys, BackendDataNodeType, MoveModel } from '@/src/types/common';
 import {
   BackendFile,
   BackendFileFolder,
@@ -204,5 +206,9 @@ export class FileService {
 
   public static getFileContent<T>(path: string): Observable<T> {
     return ApiUtils.request(path);
+  }
+
+  public static moveFile(moveModel: MoveModel): Observable<MoveModel> {
+    return DataService.getDataStorage().move(moveModel);
   }
 }

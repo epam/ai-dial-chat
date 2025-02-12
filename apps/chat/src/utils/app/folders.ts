@@ -420,8 +420,9 @@ export const getConversationAttachmentWithPath = <
   }));
 };
 
-const getGeneratedFolderId = (folder: PartialBy<FolderInterface, 'id'>) =>
-  constructPath(folder.folderId, folder.name);
+export const getGeneratedFolderId = (
+  folder: PartialBy<FolderInterface, 'id'>,
+) => constructPath(folder.folderId, folder.name);
 
 export const addGeneratedFolderId = (
   folder: PartialBy<FolderInterface, 'id'>,

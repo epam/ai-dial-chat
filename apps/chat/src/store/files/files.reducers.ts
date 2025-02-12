@@ -1,13 +1,15 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { combineEntities } from '@/src/utils/app/common';
-import { constructPath } from '@/src/utils/app/file';
+import { constructPath, getRelativePath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   getFilteredFolders,
   getNextDefaultName,
   getParentAndChildFolders,
   sortByName,
+  updateMovedEntityId,
+  updateMovedFolderId,
 } from '@/src/utils/app/folders';
 import { getFileRootId } from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
@@ -33,6 +35,7 @@ export interface FilesState {
   foldersStatus: UploadStatus;
   loadingFolderId?: string;
   newAddedFolderId?: string;
+  lastRenamedParentFolder?: { oldId: string; newId: string };
   sharedFileIds: string[];
 }
 
@@ -294,18 +297,23 @@ export const filesSlice = createSlice({
       const targetFolder = state.folders.find((f) => f.id === payload.folderId);
 
       if (!targetFolder) return;
+      const newFolderId = constructPath(targetFolder.folderId, payload.newName);
+
+      if (state.files.some((f) => f.id.startsWith(`${payload.folderId}/`))) {
+        state.loadingFolderId = newFolderId;
+      }
 
       state.folders = state.folders.map((folder) => {
         if (folder.id === payload.folderId) {
           return {
             ...folder,
             name: payload.newName.trim(),
-            id: constructPath(targetFolder.folderId, payload.newName),
+            id: newFolderId,
           };
         } else if (folder.id.startsWith(`${payload.folderId}/`)) {
           const updatedFolderId = folder.folderId.replace(
             targetFolder.id,
-            constructPath(targetFolder.folderId, payload.newName),
+            newFolderId,
           );
 
           return {
@@ -317,8 +325,49 @@ export const filesSlice = createSlice({
         return folder;
       });
     },
+    renameFolderSuccess: (
+      state,
+      { payload }: PayloadAction<{ oldId: string; newId: string }>,
+    ) => {
+      if (state.loadingFolderId === payload.newId) {
+        state.loadingFolderId = undefined;
+      }
+      state.files = state.files.map((file) => {
+        if (file.id.startsWith(`${payload.oldId}/`)) {
+          const newFolderId =
+            file.folderId === payload.oldId
+              ? payload.newId
+              : updateMovedFolderId(
+                  payload.oldId,
+                  payload.newId,
+                  file.folderId,
+                );
+          return {
+            ...file,
+            id: updateMovedEntityId(payload.oldId, payload.newId, file.id),
+            folderId: newFolderId,
+            absolutePath: newFolderId,
+            relativePath: getRelativePath(newFolderId),
+          };
+        }
+
+        return file;
+      });
+      state.lastRenamedParentFolder = { ...payload };
+    },
+    renameFolderFail: (
+      state,
+      { payload }: PayloadAction<{ oldId: string; newId: string }>,
+    ) => {
+      if (state.loadingFolderId === payload.newId) {
+        state.loadingFolderId = undefined;
+      }
+    },
     resetNewFolderId: (state) => {
       state.newAddedFolderId = undefined;
+    },
+    resetLastRenamedParentFolder: (state) => {
+      state.lastRenamedParentFolder = undefined;
     },
     deleteFilesList: (
       state,
@@ -558,6 +607,9 @@ const selectFolderById = createSelector(
   },
 );
 
+const selectLastRenamedParentFolder = (state: RootState) =>
+  rootSelector(state).lastRenamedParentFolder;
+
 export const FilesSelectors = {
   selectFiles,
   selectFilteredFiles,
@@ -577,6 +629,7 @@ export const FilesSelectors = {
   selectPublicationFolders,
   selectInitialized,
   selectAreFilesLoading,
+  selectLastRenamedParentFolder,
 };
 
 export const FilesActions = filesSlice.actions;
