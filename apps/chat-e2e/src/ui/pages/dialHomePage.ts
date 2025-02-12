@@ -3,6 +3,7 @@ import { BasePage, UploadDownloadData } from './basePage';
 import config from '@/config/chat.playwright.config';
 import { SharedPromptPreviewModal } from '@/src/ui/webElements';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
+import { Request } from 'playwright-chromium';
 import { PageFunction } from 'playwright-core/types/structs';
 
 export const loadingTimeout = config.use!.actionTimeout! * 2;
@@ -139,7 +140,7 @@ export class DialHomePage extends BasePage {
     timeout?: number;
     shouldNotOccur?: boolean;
   }) {
-    const requestMatcher = (request: any) => {
+    const matchRequest = (request: Request) => {
       const methodMatches = request.method() === method;
       if (!urlPattern) return methodMatches;
       return (
@@ -152,7 +153,7 @@ export class DialHomePage extends BasePage {
 
     if (shouldNotOccur) {
       try {
-        await this.page.waitForRequest(requestMatcher, { timeout });
+        await this.page.waitForRequest(matchRequest, { timeout: timeout });
         // If we get here, we found a request when we shouldn't have
         throw new Error(`Unexpected ${method} request was sent`);
       } catch (error: unknown) {
@@ -163,7 +164,7 @@ export class DialHomePage extends BasePage {
         throw error;
       }
     } else {
-      return this.page.waitForRequest(requestMatcher, { timeout });
+      return this.page.waitForRequest(matchRequest, { timeout });
     }
   }
 }

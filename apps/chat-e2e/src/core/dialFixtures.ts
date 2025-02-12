@@ -59,6 +59,7 @@ import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateM
 import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
 import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
+import { SharedWithMeConversationAssertion } from '@/src/assertions/sharedWithMeConversationAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import test from '@/src/core/baseFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
@@ -296,6 +297,7 @@ const dialTest = test.extend<{
   organizationFolderConversationAssertions: FolderAssertion<Folders>;
   messageTemplateModalAssertion: MessageTemplateModalAssertion;
   agentVersionsDropdownMenuAssertion: MenuAssertion;
+  sharedWithMeConversationAssertion: SharedWithMeConversationAssertion;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper }, use) => {
@@ -305,6 +307,14 @@ const dialTest = test.extend<{
     },
     { scope: 'test', auto: true },
   ],
+  sharedWithMeConversationAssertion: async (
+    { sharedWithMeConversations },
+    use,
+  ) => {
+    const sharedWithMeConversationAssertion =
+      new SharedWithMeConversationAssertion(sharedWithMeConversations);
+    await use(sharedWithMeConversationAssertion);
+  },
   sharedWithMeFolderDropdownMenu: async (
     { sharedFolderConversations },
     use,

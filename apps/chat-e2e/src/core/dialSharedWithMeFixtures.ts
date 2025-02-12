@@ -40,6 +40,7 @@ import { PromptListAssertion } from '@/src/assertions/promptListAssertion';
 import { PromptModalAssertion } from '@/src/assertions/promptModalAssertion';
 import { SendMessageAssertion } from '@/src/assertions/sendMessageAssertion';
 import { SharedPromptPreviewModalAssertion } from '@/src/assertions/sharedPromptPreviewModalAssertion';
+import { SharedWithMeConversationAssertion } from '@/src/assertions/sharedWithMeConversationAssertion';
 import { SharedWithMePromptsAssertion } from '@/src/assertions/sharedWithMePromptsAssertion';
 import { VariableModalAssertion } from '@/src/assertions/variableModalAssertion';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
@@ -106,6 +107,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserFileApiHelper: FileApiHelper;
   additionalShareUserPromptModalDialog: PromptModalDialog;
   additionalShareUserSharedWithMePromptAssertion: SharedWithMePromptsAssertion;
+  additionalShareUserSharedWithMeConversationAssertion: SharedWithMeConversationAssertion;
   additionalShareUserSharedPromptPreviewModalAssertion: SharedPromptPreviewModalAssertion;
   additionalShareUserSendMessageAssertion: SendMessageAssertion;
   additionalShareUserVariableModalAssertion: VariableModalAssertion;
@@ -534,6 +536,16 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserSharedWithMePromptAssertion =
       new SharedWithMePromptsAssertion(additionalShareUserSharedWithMePrompts);
     await use(additionalShareUserSharedWithMePromptAssertion);
+  },
+  additionalShareUserSharedWithMeConversationAssertion: async (
+    { additionalShareUserSharedWithMeConversations },
+    use,
+  ) => {
+    const additionalShareUserSharedWithMeConversationAssertion =
+      new SharedWithMeConversationAssertion(
+        additionalShareUserSharedWithMeConversations,
+      );
+    await use(additionalShareUserSharedWithMeConversationAssertion);
   },
   additionalShareUserSharedPromptPreviewModalAssertion: async (
     { additionalShareUserPromptPreviewModal },

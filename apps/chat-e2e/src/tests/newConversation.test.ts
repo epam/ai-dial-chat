@@ -174,6 +174,7 @@ dialSharedWithMeTest(
     sharedWithMeConversationDropdownMenu,
     sharedWithMeFolderDropdownMenu,
     sharedFolderConversations,
+    sharedWithMeConversationAssertion,
   }) => {
     setTestIds(
       'EPMRTC-4791',
@@ -325,12 +326,10 @@ dialSharedWithMeTest(
     await dialTest.step(
       'Verify shared conversation is deleted and new conversation is shown',
       async () => {
-        await expect
-          .soft(
-            sharedWithMeConversations.getEntityByName(firstConversation.name),
-            ExpectedMessages.conversationIsNotVisible,
-          )
-          .toBeHidden();
+        await sharedWithMeConversationAssertion.assertEntityState(
+          { name: firstConversation.name },
+          'hidden',
+        );
         await chatBarAssertion.assertNoDataInConversations();
         await chat.getSendMessage().waitForState({ state: 'attached' });
         await chat.changeAgentButton.waitForState();
@@ -464,22 +463,7 @@ dialTest(
     const addon = GeneratorUtil.randomArrayElement(ModelsUtil.getAddons());
     await localStorageManager.setRecentModelsIdsOnce(model);
     await localStorageManager.setRecentAddonsIds(addon);
-    await dialHomePage.addInitScript(
-      (data) => {
-        const { storageKey, storageValue } = data;
-        localStorage.setItem(
-          storageKey,
-          typeof storageValue === 'string'
-            ? storageValue
-            : JSON.stringify(storageValue),
-        );
-      },
-      {
-        storageKey: 'lastConversationSettings',
-        storageValue: '',
-      },
-    );
-
+    await localStorageManager.setLastConversationSettings('');
     let initialConversationIds: string | undefined;
 
     await dialTest.step(
@@ -544,8 +528,8 @@ dialTest(
           ExpectedConstants.defaultTemperature,
           ExpectedMessages.temperatureIsValid,
         );
-        agentInfoAssertion.assertValue(
-          await addons.getSelectedAddons().then((a) => a.length),
+        await agentInfoAssertion.assertElementsCount(
+          addons.selectedAddons,
           0,
           ExpectedMessages.noAddonsSelected,
         );
