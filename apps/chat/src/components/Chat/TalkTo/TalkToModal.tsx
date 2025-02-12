@@ -105,7 +105,7 @@ const TalkToModalView = ({
 
     const sortedModels = [
       ...(currentModel &&
-      !(!installedModelIdsSet.has(currentModel.id) && isReplay)
+      (installedModelIdsSet.has(currentModel.id) || !isReplay)
         ? [currentModel]
         : []),
       ...recentInstalledModels,
