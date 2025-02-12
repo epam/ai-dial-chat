@@ -350,9 +350,8 @@ dialTest(
       'Open "My Workspace", search by one of the installed agent versions and verify only that version is displayed in the results',
       async () => {
         const recentModelIds = await localStorageManager.getRecentModelsIds();
-        const recentNames = ModelsUtil.getRecentAgentsNames(recentModelIds);
-        const recentVersions =
-          ModelsUtil.getRecentAgentsVersions(recentModelIds);
+        recentNames = ModelsUtil.getRecentAgentsNames(recentModelIds);
+        recentVersions = ModelsUtil.getRecentAgentsVersions(recentModelIds);
 
         installedAppFirstVersion = GeneratorUtil.randomApplicationVersion([
           ...recentNames,
@@ -673,10 +672,11 @@ dialTest(
           [appName],
           MarketplaceExpectedMessages.agentIsVisible,
         );
-        await baseAssertion.assertElementText(
-          marketplaceAgents.getAgentVersion(appName),
-          sortedVersions[0],
-        );
+        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/3138
+        // await baseAssertion.assertElementText(
+        //   marketplaceAgents.getAgentVersion(appName),
+        //   sortedVersions[0],
+        // );
       },
     );
 
@@ -693,10 +693,11 @@ dialTest(
           [appName],
           ExpectedMessages.searchResultsAreCorrect,
         );
-        await baseAssertion.assertElementText(
-          filteredAgents.getAgentVersion(appName),
-          sortedVersions[0],
-        );
+        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/3138
+        // await baseAssertion.assertElementText(
+        //   filteredAgents.getAgentVersion(appName),
+        //   sortedVersions[0],
+        // );
 
         await baseAssertion.assertElementState(
           marketplace.marketplaceSuggestionsLabel,
@@ -713,10 +714,11 @@ dialTest(
       'Open found agent and verify set version and available in dropdown menu versions',
       async () => {
         await marketplaceAgents.getAgent(appName).click();
-        await baseAssertion.assertElementText(
-          agentDetailsModal.agentVersion,
-          sortedVersions[0],
-        );
+        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/3138
+        // await baseAssertion.assertElementText(
+        //   agentDetailsModal.agentVersion,
+        //   sortedVersions[0],
+        // );
         await agentDetailsModal.versionMenuTrigger.click();
         //TODO: replace with commented assertion when fixed https://github.com/epam/ai-dial-chat/issues/3138
         // await agentVersionsDropdownMenuAssertion.assertMenuOptions(

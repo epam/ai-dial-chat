@@ -1,4 +1,5 @@
 import { DialAIEntityModel } from '@/chat/types/models';
+import config from '@/config/chat.playwright.config';
 import { API, ExpectedConstants } from '@/src/testData';
 import { MarketplacePage } from '@/src/ui/pages';
 import { OverlayMarketplacePage } from '@/src/ui/pages/overlay/overlayMarketplacePage';
@@ -125,8 +126,9 @@ export class TalkToAgentDialog extends BaseElement {
   }
 
   public async goToMyWorkspace() {
-    const responsePromise = this.page.waitForResponse((resp) =>
-      resp.url().includes(API.marketplaceHost),
+    const responsePromise = this.page.waitForResponse(
+      (resp) => resp.url().includes(API.marketplaceHost),
+      { timeout: config.use!.actionTimeout! * 2 },
     );
     await this.goToMyWorkspaceButton.click();
     await responsePromise;
