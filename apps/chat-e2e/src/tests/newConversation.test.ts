@@ -94,8 +94,8 @@ dialTest(
           TEMPERATURE.HIGH,
           ExpectedMessages.temperatureIsValid,
         );
-        agentInfoAssertion.assertValue(
-          await addons.getSelectedAddons().then((a) => a.length),
+        await agentInfoAssertion.assertElementsCount(
+          addons.selectedAddons,
           0,
           ExpectedMessages.noAddonsSelected,
         );
@@ -136,8 +136,8 @@ dialTest(
           TEMPERATURE.HIGH,
           ExpectedMessages.temperatureIsValid,
         );
-        agentInfoAssertion.assertValue(
-          await addons.getSelectedAddons().then((a) => a.length),
+        await agentInfoAssertion.assertElementsCount(
+          addons.selectedAddons,
           0,
           ExpectedMessages.noAddonsSelected,
         );
