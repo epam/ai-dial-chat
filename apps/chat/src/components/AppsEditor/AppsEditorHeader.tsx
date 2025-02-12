@@ -22,17 +22,28 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 import { User } from '@/src/components/Header/User/User';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
-import LogOutIcon from '../../../public/images/icons/log-out.svg';
 import { Logo } from '../Header/Logo';
 
-export enum TabKeys {
+import LogOutIcon from '@/public/images/icons/log-out.svg';
+
+enum TabKeys {
   GENERAL = 'general',
   SETTINGS = 'settings',
 }
+interface AppsEditorHeaderProps {
+  applicationTypeDisplayName: string;
+  isEditApplication?: boolean;
+}
 
-export const AppsEditorHeader = () => {
+export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
+  applicationTypeDisplayName,
+  isEditApplication,
+}) => {
   const dispatch = useAppDispatch();
-  const router = useRouter();
+  const {
+    query: { id = '', slug = '' },
+    pathname,
+  } = useRouter();
   const { t } = useTranslation(Translation.Chat);
 
   const isUserSettingsOpen = useAppSelector(
@@ -52,8 +63,8 @@ export const AppsEditorHeader = () => {
         href: {
           pathname: `/apps-editor/[slug]`,
           query: {
-            id: router.query.id?.toString() ?? '',
-            slug: router.query.slug!.toString(),
+            id: id,
+            slug: slug,
           },
         },
       },
@@ -63,13 +74,13 @@ export const AppsEditorHeader = () => {
         href: {
           pathname: `/apps-editor/[slug]/settings`,
           query: {
-            id: router.query.id?.toString() ?? '',
-            slug: router.query.slug!.toString(),
+            id: id,
+            slug: slug,
           },
         },
       },
     ],
-    [t, router.query.id, router.query.slug],
+    [t, id, slug],
   );
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -95,12 +106,12 @@ export const AppsEditorHeader = () => {
           <Logo />
           <div className="h-full border-l border-tertiary"></div>
           <span className="hidden items-center text-primary md:flex">
-            Add application
+            {isEditApplication ? t('Edit') : t('Add')}{' '}
+            {applicationTypeDisplayName}
           </span>
           <div className="hidden items-center space-x-4 md:flex">
             {tabs.map((tab, index) => {
-              const isDisabled =
-                tab.key === TabKeys.SETTINGS && !router.query.id;
+              const isDisabled = tab.key === TabKeys.SETTINGS && !id;
               return (
                 <div key={tab.key} className="flex items-center">
                   <Link
@@ -116,7 +127,7 @@ export const AppsEditorHeader = () => {
                         isDisabled ? 'text-secondary' : 'text-primary',
                       )}
                     >
-                      {tab.key === TabKeys.GENERAL && router.query.id ? (
+                      {tab.key === TabKeys.GENERAL && id ? (
                         <IconCircleCheck
                           className="text-accent-primary"
                           width={24}
@@ -166,8 +177,8 @@ export const AppsEditorHeader = () => {
       {menuOpen && (
         <div className="absolute left-0 top-[48px] w-full border-b border-tertiary bg-layer-3 md:hidden">
           {tabs.map((tab) => {
-            const isDisabled = tab.key === TabKeys.SETTINGS && !router.query.id;
-            const isActive = router.pathname === tab.href.pathname;
+            const isDisabled = tab.key === TabKeys.SETTINGS && !id;
+            const isActive = pathname === tab.href.pathname;
             return (
               <Link key={tab.key} href={tab.href} passHref>
                 <div

@@ -2,7 +2,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
 
-import * as ApplicationTypesSchemasSelectors from './application-type-schemas.selectors';
+import * as ApplicationTypesSchemasSelectors from './applicationTypeSchemas.selectors';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 
@@ -10,16 +10,12 @@ export { ApplicationTypesSchemasSelectors };
 
 export interface ApplicationTypesSchemasState {
   schemasLoading: UploadStatus;
-  schemaDetailsLoading: UploadStatus;
   schemas: ApplicationTypeSchema[];
-  selectedSchema: ApplicationTypeSchema | undefined;
 }
 
 const initialState: ApplicationTypesSchemasState = {
   schemasLoading: UploadStatus.UNINITIALIZED,
-  schemaDetailsLoading: UploadStatus.UNINITIALIZED,
   schemas: [],
-  selectedSchema: undefined,
 };
 
 export const applicationTypesSchemasSlice = createSlice({

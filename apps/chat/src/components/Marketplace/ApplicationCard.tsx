@@ -245,7 +245,7 @@ export const ApplicationCard = ({
       {
         name: t('Share'),
         dataQa: 'share',
-        display: (isMyApp && isApplicationsSharingEnabled) || !!isPreview,
+        display: isMyApp && isApplicationsSharingEnabled,
         Icon: IconUserShare,
         onClick: handleOpenSharing,
       },
@@ -337,7 +337,7 @@ export const ApplicationCard = ({
               triggerIconSize={18}
               className="m-0 xl:invisible group-hover:xl:visible"
             />
-            {!isMyApp && !entity.sharedWithMe && (
+            {!isMyApp && !entity.sharedWithMe && !isPreview && (
               <Tooltip
                 tooltip={
                   installedModelIds.has(entity.reference)
@@ -382,7 +382,8 @@ export const ApplicationCard = ({
                     !isMyApp && '!mr-12',
                   )}
                 >
-                  {t('Version: ')}
+                  {t('Version')}
+                  {': '}
                   <span
                     className="max-w-full overflow-hidden truncate whitespace-nowrap"
                     data-qa="version"

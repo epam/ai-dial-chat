@@ -7,7 +7,7 @@ import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application
 
 import { AppEpic } from '@/src/types/store';
 
-import { ApplicationTypesSchemasActions } from './application-type-schemas.reducer';
+import { ApplicationTypesSchemasActions } from './applicationTypeSchemas.reducer';
 
 const fetchSchemasEpic: AppEpic = (action$) =>
   action$.pipe(

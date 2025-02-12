@@ -2,6 +2,7 @@ import { Observable, catchError, map, of } from 'rxjs';
 
 import {
   ApiApplicationTypeSchema,
+  ApiDetailedApplicationTypeSchema,
   ApplicationTypeSchema,
 } from '@/src/types/application-type-schema';
 import { HTTPMethod } from '@/src/types/http';
@@ -23,11 +24,14 @@ export class ApplicationTypesSchemasService {
             )
           : [],
       ),
+      // TODO: handle error
       catchError(() => of([])),
     );
   }
 
-  public static getApplicationTypeSchema(id: string): Observable<any> {
+  public static getApplicationTypeSchema(
+    id: string,
+  ): Observable<ApiDetailedApplicationTypeSchema> {
     return ApiUtils.request('/api/application/types/schema/details', {
       method: HTTPMethod.POST,
       body: JSON.stringify({ id }),

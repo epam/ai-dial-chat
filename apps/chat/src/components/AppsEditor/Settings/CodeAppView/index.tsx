@@ -319,9 +319,9 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
                   }),
                 );
 
-                setConfirmSharingRevoke(undefined);
                 handleEdit(confirmSharingRevoke.data);
               }
+              setConfirmSharingRevoke(undefined);
             }}
           />
         )}

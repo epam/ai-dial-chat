@@ -17,7 +17,7 @@ import {
   SourceTypeFilterOrder,
 } from '@/src/constants/marketplace';
 
-import { ApplicationTypesSchemasSelectors } from '../application-type-schemas/application-type-schemas.reducer';
+import { ApplicationTypesSchemasSelectors } from '../applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { RootState } from '../index';
 import { ModelsSelectors } from '../models/models.reducers';
 import { MarketplaceState } from './marketplace.reducers';

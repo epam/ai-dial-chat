@@ -57,7 +57,12 @@ export default function AppsSettings({
 
   return (
     <div className="flex size-full flex-col">
-      <AppsEditorHeader />
+      <AppsEditorHeader
+        isEditApplication
+        applicationTypeDisplayName={
+          schema?.['dial:applicationTypeDisplayName'] ?? type
+        }
+      />
       <div className="flex size-full grow overflow-hidden">
         <ApplicationSettings
           applicationData={applicationData}

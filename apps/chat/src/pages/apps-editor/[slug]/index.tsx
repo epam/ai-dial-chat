@@ -1,5 +1,6 @@
 import { GetServerSideProps } from 'next';
 import { getToken } from 'next-auth/jwt';
+import { useRouter } from 'next/router';
 
 import { isApplicationType } from '@/src/utils/app/application';
 import { decode } from '@/src/utils/app/application-type-schema';
@@ -31,9 +32,18 @@ export default function AppsEditor({
   schema,
   bucket,
 }: PageProps) {
+  const {
+    query: { slug = '' },
+  } = useRouter();
+
   return (
     <div className="flex size-full flex-col">
-      <AppsEditorHeader />
+      <AppsEditorHeader
+        applicationTypeDisplayName={
+          schema?.['dial:applicationTypeDisplayName'] ?? decode(slug.toString())
+        }
+        isEditApplication={!!applicationData}
+      />
       <div className="flex size-full">
         <GeneralInfoView
           applicationData={applicationData}

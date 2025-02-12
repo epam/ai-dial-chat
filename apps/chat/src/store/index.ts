@@ -19,10 +19,10 @@ import { ChatEpics } from '@/src/store/chat/chat.epics';
 
 import { AddonsEpics } from './addons/addons.epics';
 import { addonsSlice } from './addons/addons.reducers';
-import { ApplicationTypesSchemasEpics } from './application-type-schemas/application-type-schemas.epic';
-import { applicationTypesSchemasSlice } from './application-type-schemas/application-type-schemas.reducer';
 import { ApplicationEpics } from './application/application.epics';
 import { applicationSlice } from './application/application.reducers';
+import { ApplicationTypesSchemasEpics } from './applicationTypeSchemas/applicationTypeSchemas.epic';
+import { applicationTypesSchemasSlice } from './applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { authSlice } from './auth/auth.reducers';
 import { chatSlice } from './chat/chat.reducer';
 import { CodeEditorEpics } from './codeEditor/codeEditor.epics';

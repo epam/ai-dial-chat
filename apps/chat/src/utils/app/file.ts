@@ -34,7 +34,7 @@ export const constructPath = (
   ...values: (string | undefined | null)[]
 ): string => {
   const path = values.filter(Boolean).join('/');
-  return path.startsWith('api') ? path.replace('api/', '/api/') : path;
+  return path.startsWith('api/') ? path.replace('api/', '/api/') : path;
 };
 
 export const getRelativePath = (

@@ -22,7 +22,7 @@ import { AppEpic } from '@/src/types/store';
 import { errorsMessages } from '@/src/constants/errors';
 
 import { AddonsActions } from '../addons/addons.reducers';
-import { ApplicationTypesSchemasActions } from '../application-type-schemas/application-type-schemas.reducer';
+import { ApplicationTypesSchemasActions } from '../applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { AuthSelectors } from '../auth/auth.reducers';
 import { ConversationsActions } from '../conversations/conversations.reducers';
 import { FilesActions } from '../files/files.reducers';

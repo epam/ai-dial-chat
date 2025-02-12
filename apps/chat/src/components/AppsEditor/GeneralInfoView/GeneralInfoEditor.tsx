@@ -114,7 +114,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
         dispatch(
           ApplicationActions.create({
             applicationData: preparedData,
-            slug: encode(slug.toString()),
+            slug: slug.toString(),
             schema: schema ?? undefined,
           }),
         );
