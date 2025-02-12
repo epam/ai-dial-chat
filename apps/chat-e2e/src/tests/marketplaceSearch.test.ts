@@ -1,4 +1,5 @@
 import { Publication } from '@/chat/types/publication';
+import config from '@/config/chat.playwright.config';
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedConstants, ExpectedMessages } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
@@ -12,7 +13,9 @@ dialTest(
   'Search word is stored; search results differ if to switch between My workspace and DIAL Marketplace pages. Search by name. Suggested results on My workspace. The model is without versions.' +
     'Space before and after search phrase is ignored\n' +
     `Search in DIAL Marketplace: 'No results found'.\n` +
-    'Search_phrase stays on Refresh. DIAL marketplace tab stays opened.',
+    'Search_phrase stays on Refresh. DIAL marketplace tab stays opened.\n' +
+    'Search_phrase is applied to another user via URL.\n' +
+    'Search_phrase is applied to another user via URL. Search phrase consists of restricted and allowed special chars.',
   async ({
     marketplacePage,
     marketplaceSidebar,
@@ -29,7 +32,14 @@ dialTest(
     adminPublicationApiHelper,
     publishRequestBuilder,
   }) => {
-    setTestIds('EPMRTC-4318', 'EPMRTC-4615', 'EPMRTC-4383', 'EPMRTC-4317');
+    setTestIds(
+      'EPMRTC-4318',
+      'EPMRTC-4615',
+      'EPMRTC-4383',
+      'EPMRTC-4317',
+      'EPMRTC-5274',
+      'EPMRTC-5369',
+    );
     let installedAppVersion: string;
     let installedAppName: string;
     let nonInstalledAppVersion: string;
@@ -205,6 +215,30 @@ dialTest(
           marketplaceHeader.searchInput,
           Attributes.value,
           leadingEndingSpacesSearchTerm + notMatchingTerm,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Type special chars in the search filed and verify search field is populated if to reopen the url',
+      async () => {
+        const searchTerm =
+          GeneratorUtil.randomString(7) +
+          ExpectedConstants.restrictedNameChars +
+          ExpectedConstants.allowedSpecialChars;
+        await marketplaceHeader.searchInput.fillInInput(searchTerm);
+        const searchUrl = page.url();
+        await marketplaceHeader.searchInput.fillInInput('');
+        baseAssertion.assertValue(
+          page.url(),
+          config.use!.baseURL!.concat(ExpectedConstants.marketplacePath),
+        );
+
+        await marketplacePage.navigateToUrl(searchUrl);
+        await baseAssertion.assertElementAttribute(
+          marketplaceHeader.searchInput,
+          Attributes.value,
+          searchTerm,
         );
       },
     );
