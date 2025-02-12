@@ -485,7 +485,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'Import file from 1.4 DIAL milestone to conversations and continue working with it.\n' +
     'Chat sorting. Other chat is moved to Today section after sending a message',
   async ({
