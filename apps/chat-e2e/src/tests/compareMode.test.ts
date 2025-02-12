@@ -605,8 +605,7 @@ dialTest(
       },
     );
 
-    //enable when https://github.com/epam/ai-dial-chat/issues/2170 is fixed
-    await dialTest.step.skip(
+    await dialTest.step(
       'Put like/dislike for compared chat, open this chat and verify like/dislike saved',
       async () => {
         const rate = GeneratorUtil.randomArrayElement(Object.values(Rate));
