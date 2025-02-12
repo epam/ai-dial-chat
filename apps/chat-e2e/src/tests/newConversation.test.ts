@@ -43,32 +43,15 @@ dialTest(
     const addon = GeneratorUtil.randomArrayElement(ModelsUtil.getAddons());
     await localStorageManager.setRecentModelsIdsOnce(...models);
     await localStorageManager.setRecentAddonsIds(addon);
-    await dialHomePage.addInitScript(
-      (data) => {
-        const { storageKey, storageValue } = data;
-        localStorage.setItem(
-          storageKey,
-          typeof storageValue === 'string'
-            ? storageValue
-            : JSON.stringify(storageValue),
-        );
-      },
-      {
-        storageKey: 'lastConversationSettings',
-        storageValue: '',
-      },
-    );
+    await localStorageManager.setLastConversationSettings('');
 
-    await dialTest.step(
-      'Open Dial and verify the correct model is selected',
-      async () => {
-        await dialHomePage.openHomePage({
-          iconsToBeLoaded: [models[0].iconUrl!],
-        });
-        await dialHomePage.waitForPageLoaded();
-        await chat.getSendMessage().waitForState({ state: 'attached' });
-      },
-    );
+    await dialTest.step('Open Dial', async () => {
+      await dialHomePage.openHomePage({
+        iconsToBeLoaded: [models[0].iconUrl!],
+      });
+      await dialHomePage.waitForPageLoaded();
+      await chat.getSendMessage().waitForState();
+    });
 
     await dialTest.step('Change settings and apply', async () => {
       await chat.configureSettingsButton.click();
@@ -84,7 +67,6 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        // await dialHomePage.interceptAndChangePutApiConversationsOnce({temperature: 0.5});
         await chat.sendRequestWithButton('test request');
         await header.createNewConversation();
       },

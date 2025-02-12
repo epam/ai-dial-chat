@@ -139,21 +139,20 @@ export class DialHomePage extends BasePage {
     timeout?: number;
     shouldNotOccur?: boolean;
   }) {
+    const requestMatcher = (request: any) => {
+      const methodMatches = request.method() === method;
+      if (!urlPattern) return methodMatches;
+      return (
+        methodMatches &&
+        (urlPattern instanceof RegExp
+          ? urlPattern.test(request.url())
+          : request.url().includes(urlPattern))
+      );
+    };
+
     if (shouldNotOccur) {
       try {
-        await this.page.waitForRequest(
-          (request) => {
-            const methodMatches = request.method() === method;
-            if (!urlPattern) return methodMatches;
-            return (
-              methodMatches &&
-              (urlPattern instanceof RegExp
-                ? urlPattern.test(request.url())
-                : request.url().includes(urlPattern))
-            );
-          },
-          { timeout: timeout },
-        );
+        await this.page.waitForRequest(requestMatcher, { timeout });
         // If we get here, we found a request when we shouldn't have
         throw new Error(`Unexpected ${method} request was sent`);
       } catch (error: unknown) {
@@ -164,19 +163,7 @@ export class DialHomePage extends BasePage {
         throw error;
       }
     } else {
-      return this.page.waitForRequest(
-        (request) => {
-          const methodMatches = request.method() === method;
-          if (!urlPattern) return methodMatches;
-          return (
-            methodMatches &&
-            (urlPattern instanceof RegExp
-              ? urlPattern.test(request.url())
-              : request.url().includes(urlPattern))
-          );
-        },
-        { timeout },
-      );
+      return this.page.waitForRequest(requestMatcher, { timeout });
     }
   }
 }

@@ -323,25 +323,16 @@ export class BasePage {
       : API.chatHost;
 
     await this.page.route(urlToIntercept, async (route) => {
-      if (!options?.passThrough) {
-        // Fulfill with our fake response, never hitting the server
-        await route.fulfill({
-          status: 200,
-          body: responseBody,
-        });
-      } else {
-        // 1. Send the request to the actual server. The await is absent in this line intentionally
-        // It prevents us from waiting for the response to be received
+      if (options?.passThrough) {
+        // 1. Sends the request to the actual server.
         await route.fetch();
-
-        // 2. Replaces the real response body with our mocked body
-        // We can also keep realResponse.body() if we want a partial override,
-        // or realResponse.headers(), realResponse.status(), etc.
-        await route.fulfill({
-          status: 200,
-          body: responseBody,
-        });
       }
+      // 2. Replaces the real response body with our mocked body
+      // Fulfill with our fake response, never hitting the server
+      await route.fulfill({
+        status: 200,
+        body: responseBody,
+      });
     });
   }
 }

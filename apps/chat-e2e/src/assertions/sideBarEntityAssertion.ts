@@ -68,9 +68,7 @@ export class SideBarEntityAssertion<
   ) {
     if (actualCount === undefined) {
       await this.assertElementsCount(
-        this.sideBarEntitiesTree.getChildElementBySelector(
-          EntitySelectors.entityName,
-        ),
+        this.sideBarEntitiesTree.treeEntityNames,
         expectedCount,
       );
     } else {

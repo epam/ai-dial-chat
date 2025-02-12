@@ -214,8 +214,4 @@ export class SideBar extends BaseElement {
   public noDataPlaceholder = this.getChildElementBySelector(
     SideBarSelectors.noData,
   );
-
-  public async getNoDataPlaceholderText() {
-    return this.noDataPlaceholder.getElementInnerContent();
-  }
 }
