@@ -380,7 +380,10 @@ export const ApplicationCard = ({
                   )}
                 >
                   {t('Version: ')}
-                  <span className="max-w-full overflow-hidden truncate whitespace-nowrap">
+                  <span
+                    className="max-w-full overflow-hidden truncate whitespace-nowrap"
+                    data-qa="version"
+                  >
                     {entity.version}
                   </span>
                 </div>

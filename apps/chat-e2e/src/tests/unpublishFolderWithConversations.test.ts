@@ -13,6 +13,7 @@ import {
 import { PublicationProps } from '@/src/testData/api';
 import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { SortingUtil } from '@/src/utils/sortingUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
 
 let expectedConversationIcon: string;
@@ -436,7 +437,6 @@ dialAdminTest(
     adminDialHomePage,
     adminApproveRequiredConversations,
     adminPublishingApprovalModal,
-    baseAssertion,
     adminPublicationReviewControl,
     adminApproveRequiredConversationsAssertion,
     adminOrganizationFolderConversationAssertions,
@@ -705,7 +705,7 @@ dialAdminTest(
         await adminPublishingApprovalModalAssertion.assertElementText(
           adminPublishingApprovalModal.duplicatedUnpublishingError,
           ExpectedConstants.duplicatedUnpublishingError(
-            ...baseAssertion.sortStringsArray(
+            ...SortingUtil.sortStringsArray(
               folderConversations,
               (f) => f.toLowerCase(),
               'asc',
