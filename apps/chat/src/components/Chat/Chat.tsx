@@ -169,33 +169,36 @@ export const ChatView = memo(() => {
     isReplayRequiresVariables ||
     selectedConversations.some((conv) => conv.messages.length > 0);
 
-  const isNotAllowedModel =
-    isModelsLoaded &&
-    (models.length === 0 ||
-      selectedConversations.some((conv) => {
-        if (
-          isReplayConversation(conv) &&
-          isReplayAsIsConversation(conv) &&
-          conv.replay?.replayUserMessagesStack &&
-          conv.replay?.replayUserMessagesStack[0].model
-        ) {
-          return conv.replay.replayUserMessagesStack.some(
-            (message) =>
-              message.role === Role.User &&
-              message.model?.id &&
-              !modelsMap[message.model.id],
+  const isNotAllowedModel = useMemo(
+    () =>
+      isModelsLoaded &&
+      (models.length === 0 ||
+        selectedConversations.some((conv) => {
+          if (
+            isReplayConversation(conv) &&
+            isReplayAsIsConversation(conv) &&
+            conv.replay?.replayUserMessagesStack &&
+            conv.replay?.replayUserMessagesStack[0].model
+          ) {
+            return conv.replay.replayUserMessagesStack.some(
+              (message) =>
+                message.role === Role.User &&
+                message.model?.id &&
+                !modelsMap[message.model.id],
+            );
+          }
+
+          const model = modelsMap[conv.model.id];
+
+          return (
+            !model ||
+            (model.type === EntityType.Assistant &&
+              conv.assistantModelId &&
+              !modelsMap[conv.assistantModelId])
           );
-        }
-
-        const model = modelsMap[conv.model.id];
-
-        return (
-          !model ||
-          (model.type === EntityType.Assistant &&
-            conv.assistantModelId &&
-            !modelsMap[conv.assistantModelId])
-        );
-      }));
+        })),
+    [isModelsLoaded, models.length, modelsMap, selectedConversations],
+  );
 
   useLayoutEffect(() => {
     if (isNotAllowedModel) {
