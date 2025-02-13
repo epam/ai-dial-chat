@@ -28,7 +28,10 @@ import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
+import {
+  ApplicationTypesSchemasActions,
+  ApplicationTypesSchemasSelectors,
+} from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MarketplaceActions,
@@ -324,9 +327,23 @@ export const TabRenderer = () => {
     applicationTypeSchemas,
   ]);
 
+  const detailedApplicationTypeSchema = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
+  );
+
   const handleEditApplication = useCallback(
     (entity: DialAIEntityModel) => {
       const applicationType = getApplicationType(entity);
+      if (
+        !isApplicationType(applicationType) &&
+        detailedApplicationTypeSchema?.$id !== applicationType
+      ) {
+        dispatch(
+          ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema(
+            applicationType,
+          ),
+        );
+      }
       router.push({
         pathname: `/apps-editor/[slug]/settings`,
         query: {
@@ -337,7 +354,7 @@ export const TabRenderer = () => {
         },
       });
     },
-    [router],
+    [router, dispatch, detailedApplicationTypeSchema],
   );
 
   const handleDeleteClose = useCallback(

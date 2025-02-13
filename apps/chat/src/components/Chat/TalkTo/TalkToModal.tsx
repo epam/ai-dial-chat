@@ -34,6 +34,10 @@ import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import { ApplicationActions } from '@/src/store/application/application.reducers';
+import {
+  ApplicationTypesSchemasActions,
+  ApplicationTypesSchemasSelectors,
+} from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
@@ -216,9 +220,23 @@ const TalkToModalView = ({
     [addonsMap, conversation, dispatch, modelsMap, onClose],
   );
 
+  const detailedApplicationTypeSchema = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
+  );
+
   const handleEditApplication = useCallback(
     (entity: DialAIEntityModel) => {
       const applicationType = getApplicationType(entity);
+      if (
+        !isApplicationType(applicationType) &&
+        detailedApplicationTypeSchema?.$id !== applicationType
+      ) {
+        dispatch(
+          ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema(
+            applicationType,
+          ),
+        );
+      }
       router.push({
         pathname: `/apps-editor/[slug]/settings`,
         query: {
@@ -229,7 +247,7 @@ const TalkToModalView = ({
         },
       });
     },
-    [router],
+    [router, detailedApplicationTypeSchema, dispatch],
   );
 
   const handleDeleteClose = useCallback(

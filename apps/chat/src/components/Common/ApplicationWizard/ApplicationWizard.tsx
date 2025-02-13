@@ -11,7 +11,7 @@ import { MOUSE_OUTSIDE_PRESS_EVENT } from '@/src/constants/modal';
 import { ApplicationWizardHeader } from '@/src/components/Common/ApplicationWizard/ApplicationWizardHeader';
 import { CodeAppView } from '@/src/components/Common/ApplicationWizard/CodeAppView/CodeAppView';
 import { CustomAppView } from '@/src/components/Common/ApplicationWizard/CustomAppView';
-import { QuickAppView } from '@/src/components/Common/ApplicationWizard/QuickAppView';
+// import { QuickAppView } from '@/src/components/Common/ApplicationWizard/QuickAppView';
 import { Modal } from '@/src/components/Common/Modal';
 import { Spinner } from '@/src/components/Common/Spinner';
 
@@ -52,8 +52,8 @@ export const ApplicationWizard: React.FC<ApplicationWizardProps> = ({
 
   const View = useMemo(() => {
     switch (type) {
-      case ApplicationType.QUICK_APP:
-        return QuickAppView;
+      // case ApplicationType.QUICK_APP:
+      //   return QuickAppView;
       case ApplicationType.CODE_APP:
         return CodeAppView;
       case ApplicationType.CUSTOM_APP:

@@ -32,9 +32,8 @@ export class ApplicationTypesSchemasService {
   public static getApplicationTypeSchema(
     id: string,
   ): Observable<ApiDetailedApplicationTypeSchema> {
-    return ApiUtils.request('/api/application/types/schema/details', {
-      method: HTTPMethod.POST,
-      body: JSON.stringify({ id }),
+    return ApiUtils.request(`/api/application-type-schemas/schema?id=${id}`, {
+      method: HTTPMethod.GET,
     });
   }
 }

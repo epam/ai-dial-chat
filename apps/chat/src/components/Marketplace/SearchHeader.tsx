@@ -15,7 +15,10 @@ import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
+import {
+  ApplicationTypesSchemasActions,
+  ApplicationTypesSchemasSelectors,
+} from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MarketplaceActions,
@@ -108,6 +111,9 @@ export const SearchHeader = () => {
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
+  const detailedApplicationTypeSchema = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
+  );
 
   const menuItems: MenuItem[] = useMemo(
     () => [
@@ -138,6 +144,13 @@ export const SearchHeader = () => {
         display: true,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
+          if (detailedApplicationTypeSchema?.$id !== schema.id) {
+            dispatch(
+              ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema(
+                schema.id,
+              ),
+            );
+          }
           router.push(`/apps-editor/${encode(schema.id)}`);
         },
       })) ?? []),
@@ -148,6 +161,8 @@ export const SearchHeader = () => {
       applicationTypeSchemas,
       isCodeAppsEnabled,
       router,
+      dispatch,
+      detailedApplicationTypeSchema,
     ],
   );
 

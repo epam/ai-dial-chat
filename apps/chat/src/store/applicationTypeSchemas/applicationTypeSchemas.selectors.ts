@@ -1,5 +1,3 @@
-import { createSelector } from '@reduxjs/toolkit';
-
 import { RootState } from '../index';
 import { ApplicationTypesSchemasState } from './applicationTypeSchemas.reducer';
 
@@ -9,7 +7,10 @@ const rootSelector = (state: RootState): ApplicationTypesSchemasState =>
 export const selectAllSchemas = (state: RootState) =>
   rootSelector(state).schemas;
 
-export const selectSchemaById = (id: string) =>
-  createSelector([selectAllSchemas], (schemas) =>
-    schemas.find((s) => s.id === id),
-  );
+export const selectDetailedApplicationTypeSchema = (state: RootState) =>
+  rootSelector(state).detailedApplicationTypeSchema;
+
+export const selectSchemasLoading = (state: RootState) => state.schemasLoading;
+
+export const selectSchemaById = (state: RootState, id: string) =>
+  selectAllSchemas(state).find((schema) => schema.id === id);

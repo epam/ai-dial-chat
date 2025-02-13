@@ -1,3 +1,5 @@
+import Router from 'next/router';
+
 import { of } from 'rxjs';
 import { catchError, filter, switchMap } from 'rxjs/operators';
 
@@ -7,13 +9,23 @@ import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application
 
 import { AppEpic } from '@/src/types/store';
 
-import { ApplicationTypesSchemasActions } from './applicationTypeSchemas.reducer';
+import {
+  ApplicationTypesSchemasActions,
+  ApplicationTypesSchemasSelectors,
+} from './applicationTypeSchemas.reducer';
 
-const fetchSchemasEpic: AppEpic = (action$) =>
+import { UploadStatus } from '@epam/ai-dial-shared';
+
+const fetchSchemasEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ApplicationTypesSchemasActions.init.match),
-    switchMap(() =>
-      ApplicationTypesSchemasService.getApplicationTypesSchemas().pipe(
+    filter(
+      (action) =>
+        ApplicationTypesSchemasActions.init.match(action) &&
+        ApplicationTypesSchemasSelectors.selectSchemasLoading(state$.value) !==
+          UploadStatus.LOADED,
+    ),
+    switchMap(() => {
+      return ApplicationTypesSchemasService.getApplicationTypesSchemas().pipe(
         switchMap((schemas) =>
           of(
             ApplicationTypesSchemasActions.fetchSchemasSuccess({ schemas }),
@@ -21,8 +33,58 @@ const fetchSchemasEpic: AppEpic = (action$) =>
           ),
         ),
         catchError(() => of(ApplicationTypesSchemasActions.fetchSchemasFail())),
-      ),
-    ),
+      );
+    }),
   );
 
-export const ApplicationTypesSchemasEpics = combineEpics(fetchSchemasEpic);
+const fetchDetailedApplicationTypeSchemaEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(
+      (action) =>
+        ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema.match(
+          action,
+        ) || ApplicationTypesSchemasActions.initFinish.match(action),
+    ),
+    switchMap(({ payload }) => {
+      let id = payload;
+
+      if (!id) {
+        const slug = Router?.query?.slug?.toString();
+        if (slug) {
+          const schemas = ApplicationTypesSchemasSelectors.selectAllSchemas(
+            state$.value,
+          );
+          const schema = schemas.find(
+            (schema) =>
+              schema.id.replace(/^https?:\/\//, '') ===
+              decodeURIComponent(slug),
+          );
+          id = schema?.id;
+        }
+      }
+      if (!id)
+        return of(
+          ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchemaFail(),
+        );
+
+      return ApplicationTypesSchemasService.getApplicationTypeSchema(id).pipe(
+        switchMap((schema) =>
+          of(
+            ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchemaSuccess(
+              { schema },
+            ),
+          ),
+        ),
+        catchError(() =>
+          of(
+            ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchemaFail(),
+          ),
+        ),
+      );
+    }),
+  );
+
+export const ApplicationTypesSchemasEpics = combineEpics(
+  fetchSchemasEpic,
+  fetchDetailedApplicationTypeSchemaEpic,
+);
