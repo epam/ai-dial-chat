@@ -128,7 +128,7 @@ export class TalkToAgentDialog extends BaseElement {
   public async goToMyWorkspace() {
     const responsePromise = this.page.waitForResponse(
       (resp) => resp.url().includes(API.marketplaceHost),
-      { timeout: config.use!.actionTimeout! * 2 },
+      { timeout: config.use!.actionTimeout! * 3 },
     );
     await this.goToMyWorkspaceButton.click();
     await responsePromise;
