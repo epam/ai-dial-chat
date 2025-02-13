@@ -13,7 +13,7 @@ import {
   MenuOptions,
 } from '@/src/testData';
 import { FileModalSection } from '@/src/ui/webElements';
-import { FileUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { FileUtil, GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 let modelWithInputAttachments: DialAIEntityModel;
@@ -140,7 +140,7 @@ dialAdminTest(
           await filesToPublishTree.getFileDownloadIUrl(
             Attachment.cloudImageName,
           ),
-          `api/${imageUrl}`,
+          ItemUtil.getEncodedItemId(`/api/${imageUrl}`),
           ExpectedMessages.attachmentUrlIsValid,
         );
       },
