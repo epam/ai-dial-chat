@@ -237,7 +237,10 @@ export const ApplicationSettings: React.FC<Props> = ({
         )}
       >
         <div className="flex items-center justify-between p-2">
-          <span>{t('Preview')}</span>
+          <span className="text-primary">
+            {t('Preview')}: {applicationData.name} {t('v.')}{' '}
+            {applicationData.version}
+          </span>
           <div className="flex space-x-2">
             {previewMode === 'half' && (
               <button
@@ -292,8 +295,12 @@ export const ApplicationSettings: React.FC<Props> = ({
             <IconLayoutSidebarLeftCollapse size={24} />
           </button>
 
-          <span className="select-none" style={{ writingMode: 'vertical-rl' }}>
-            {t('Preview')}
+          <span
+            className="select-none text-primary"
+            style={{ writingMode: 'vertical-rl' }}
+          >
+            {t('Preview')}: {applicationData.name} {t('v.')}{' '}
+            {applicationData.version}
           </span>
         </div>
       )}

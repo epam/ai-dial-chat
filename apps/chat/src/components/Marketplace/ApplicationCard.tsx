@@ -325,7 +325,10 @@ export const ApplicationCard = ({
     <>
       <div
         onClick={() => onClick(entity)}
-        className="group relative h-[98px] cursor-pointer rounded-md bg-layer-2 p-3 shadow-card hover:bg-layer-3 md:h-[162px] md:p-4 xl:h-[164px] xl:p-5"
+        className={classNames(
+          'group relative h-[98px] rounded-md bg-layer-2 p-3 shadow-card hover:bg-layer-3 md:h-[162px] md:p-4 xl:h-[164px] xl:p-5',
+          !isPreview && 'cursor-pointer',
+        )}
         data-qa="agent"
       >
         <div>
