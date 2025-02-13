@@ -41,6 +41,7 @@ import {
   isRootId,
 } from '@/src/utils/app/id';
 import {
+  getFilesFromPublicResources,
   getItemsIdsToRemoveAndHide,
   isEntityIdPublic,
   mapPublishedItems,
@@ -520,6 +521,11 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
                 ),
               );
 
+              const { publicFiles, foldersSet } = getFilesFromPublicResources({
+                fileResources,
+                payloadUrl: payload.url,
+              });
+
               actions.push(
                 of(
                   FilesActions.getFoldersSuccess({
@@ -532,18 +538,8 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
                 ),
                 of(
                   FilesActions.getFilesSuccess({
-                    files: fileResources.map((r) => ({
-                      id: r.reviewUrl,
-                      folderId: getFolderIdFromEntityId(r.reviewUrl),
-                      name: splitEntityId(r.targetUrl).name,
-                      contentLength: 0,
-                      contentType: '',
-                      isPublicationFile: true,
-                      publicationInfo: {
-                        action: r.action,
-                        publicationUrl: payload.url,
-                      },
-                    })),
+                    files: publicFiles,
+                    foldersSet: foldersSet,
                   }),
                 ),
               );
@@ -726,24 +722,32 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
             }
 
             if (items.length) {
+              const foldersSet = new Set<string>();
+              const publicFiles = (items as PublishedFileItem[]).map((item) => {
+                const decodedUrl = ApiUtils.decodeApiUrl(item.url);
+
+                const folderId = getFolderIdFromEntityId(decodedUrl);
+
+                foldersSet.add(folderId);
+                const { apiKey, bucket, parentPath, name } =
+                  splitEntityId(decodedUrl);
+
+                return {
+                  contentLength: item.contentLength,
+                  contentType: item.contentType,
+                  absolutePath: constructPath(apiKey, bucket, parentPath),
+                  id: decodedUrl,
+                  folderId,
+                  name,
+                  publishedWithMe: true,
+                };
+              });
+
               actions.push(
                 of(
                   FilesActions.getFilesSuccess({
-                    files: (items as PublishedFileItem[]).map((item) => {
-                      const decodedUrl = ApiUtils.decodeApiUrl(item.url);
-                      const { apiKey, bucket, parentPath, name } =
-                        splitEntityId(decodedUrl);
-
-                      return {
-                        contentLength: item.contentLength,
-                        contentType: item.contentType,
-                        absolutePath: constructPath(apiKey, bucket, parentPath),
-                        id: decodedUrl,
-                        folderId: getFolderIdFromEntityId(decodedUrl),
-                        name,
-                        publishedWithMe: true,
-                      };
-                    }),
+                    files: publicFiles,
+                    foldersSet,
                   }),
                 ),
               );

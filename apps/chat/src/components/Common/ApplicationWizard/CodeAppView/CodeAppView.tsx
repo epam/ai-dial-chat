@@ -59,7 +59,7 @@ import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
 import { ConfirmDialog } from '../../ConfirmDialog';
 import { ViewProps } from '../view-props';
-import { CodeEditor } from './CodeEditor';
+import { FormCodeEditor } from './FormCodeEditor';
 import { RuntimeVersionSelector } from './RuntimeVersionSelector';
 
 const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
@@ -382,7 +382,7 @@ export const CodeAppView: FC<ViewProps> = ({
             }
           />
 
-          {sources && <CodeEditor sourcesFolderId={sources} />}
+          {sources && <FormCodeEditor sourcesFolderId={sources} />}
 
           <RuntimeSelector
             control={control}
@@ -443,12 +443,7 @@ export const CodeAppView: FC<ViewProps> = ({
           options={modalOptions}
         />
 
-        <ApplicationWizardFooter
-          onClose={onClose}
-          selectedApplication={selectedApplication}
-          isEdit={isEdit}
-          isValid={isValid}
-        />
+        <ApplicationWizardFooter isEdit={isEdit} isValid={isValid} />
       </FormProvider>
     </form>
   );
