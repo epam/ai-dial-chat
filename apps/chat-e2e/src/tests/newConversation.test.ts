@@ -28,7 +28,7 @@ dialTest(
     iconApiHelper,
     setIssueIds,
   }) => {
-    setTestIds('EPMRTC-4717', 'EPMRTC-4920');
+    setTestIds('EPMRTC-4717', 'EPMRTC-4920', 'EPMRTC-404', 'EPMRTC-403');
     setIssueIds('3116');
     const models = GeneratorUtil.randomArrayElements(
       ModelsUtil.getLatestModels().filter(
