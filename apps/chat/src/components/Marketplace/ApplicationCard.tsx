@@ -380,7 +380,10 @@ export const ApplicationCard = ({
                   )}
                 >
                   {t('Version: ')}
-                  <span className="max-w-full overflow-hidden truncate whitespace-nowrap">
+                  <span
+                    className="max-w-full overflow-hidden truncate whitespace-nowrap"
+                    data-qa="version"
+                  >
                     {entity.version}
                   </span>
                 </div>
@@ -388,7 +391,7 @@ export const ApplicationCard = ({
               <div className="flex whitespace-nowrap">
                 <div
                   className={classNames(
-                    'mr-6 flex shrink gap-2 truncate text-base font-semibold leading-[20px] text-primary',
+                    'mr-6 flex shrink truncate text-base font-semibold leading-[20px] text-primary',
                     !isMyApp && !entity.version && '!mr-12',
                   )}
                 >

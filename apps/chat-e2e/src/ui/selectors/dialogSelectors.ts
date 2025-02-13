@@ -225,3 +225,11 @@ export const RequestApiKeyModalSelectors = {
 export const ReportAnIssueModalSelectors = {
   reportAnIssueContainer: '[data-qa="report-issue-dialog"]',
 };
+
+export const AddApplicationModalSelector = {
+  modalContainer: '[data-qa="application-dialog"]',
+  name: '#name',
+  version: '#version',
+  chatCompletionUrl: '#completionUrl',
+  addButton: '[data-qa="add-application"]',
+};

@@ -7,11 +7,12 @@ import {
 import { IconApiHelper } from '@/src/testData/api';
 import { Attributes, Styles } from '@/src/ui/domData';
 import { BaseElement } from '@/src/ui/webElements';
+import { SortingUtil } from '@/src/utils/sortingUtil';
 import { Locator, expect } from '@playwright/test';
 
 export class BaseAssertion {
   public async assertStringsSorting(arrayToSort: string[], sorting: Sorting) {
-    const expectedOrder = this.sortStringsArray(
+    const expectedOrder = SortingUtil.sortStringsArray(
       arrayToSort,
       (f) => f.toLowerCase(),
       sorting,
@@ -19,21 +20,6 @@ export class BaseAssertion {
     expect
       .soft(arrayToSort, ExpectedMessages.elementsOrderIsCorrect)
       .toEqual(expectedOrder);
-  }
-
-  public sortStringsArray(
-    array: string[],
-    iteratee: (item: string) => string,
-    sorting: Sorting,
-  ): string[] {
-    const sortedArray = array.slice().sort((a, b) => {
-      const valueA = iteratee(a);
-      const valueB = iteratee(b);
-      if (valueA > valueB) return 1;
-      if (valueA < valueB) return -1;
-      return 0;
-    });
-    return sorting === 'asc' ? sortedArray : sortedArray.reverse();
   }
 
   public async assertEntityIcon(
@@ -74,14 +60,16 @@ export class BaseAssertion {
     unexpectedItems: string[],
     assertionMessage: string,
   ) {
-    unexpectedItems.forEach((unexpectedItem) => {
-      expect
-        .soft(
-          actualList,
-          `${assertionMessage} - Unexpected item: "${unexpectedItem}"`,
-        )
-        .not.toContain(unexpectedItem);
-    });
+    if (actualList.length > 0) {
+      unexpectedItems.forEach((unexpectedItem) => {
+        expect
+          .soft(
+            actualList,
+            `${assertionMessage} - Unexpected item: "${unexpectedItem}"`,
+          )
+          .not.toContain(unexpectedItem);
+      });
+    }
   }
 
   public async assertElementActionabilityState(

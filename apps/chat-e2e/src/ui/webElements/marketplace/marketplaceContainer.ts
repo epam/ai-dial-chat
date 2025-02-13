@@ -31,11 +31,7 @@ export class MarketplaceContainer extends BaseLayoutContainer {
   }
 
   public async goToMarketplaceHome() {
-    const respPromise = this.page.waitForResponse(
-      (r) => r.request().method() === 'GET',
-    );
     await this.getMarketplaceSidebar().marketplaceHomePageButton.click();
-    await respPromise;
     const allExpectedAgents = ModelsUtil.getLatestOpenAIEntities();
     await this.getMarketplace()
       .getAgents()
