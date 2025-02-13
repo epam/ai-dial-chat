@@ -14,13 +14,12 @@ import { Translation } from '@/src/types/translation';
 import { ApplicationSelectors } from '@/src/store/application/application.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
-import { FEATURES_ENDPOINTS_NAMES } from '@/src/constants/applications';
-
+import { ReviewCodeAppSection } from '@/src/components/Chat/Publish/ReviewApplicationDialog/ReviewCodeAppSection';
+import { ReviewQuickAppSection } from '@/src/components/Chat/Publish/ReviewApplicationDialog/ReviewQuickAppSection';
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
 
-import { ModelIcon } from '../../Chatbar/ModelIcon';
-import { PublicationControls } from './PublicationChatControls';
-import { ReviewApplicationPropsSection } from './ReviewApplicationPropsSection';
+import { ModelIcon } from '../../../Chatbar/ModelIcon';
+import { PublicationControls } from '../PublicationChatControls';
 
 import isEmpty from 'lodash-es/isEmpty';
 
@@ -70,10 +69,10 @@ export function ReviewApplicationDialogView() {
         </div>
         {!!(application && getModelDescription(application)) && (
           <div className="flex gap-4">
-            <span className="w-[122px] text-secondary">
+            <span className="w-[122px] shrink-0 text-secondary">
               {t('Description: ')}
             </span>
-            <span className="max-w-[414px] text-primary">
+            <span className="grow text-primary">
               {getModelDescription(application)}
             </span>
           </div>
@@ -149,19 +148,10 @@ export function ReviewApplicationDialogView() {
               </span>
             </div>
           )}
-        {!isEmpty(application?.function?.mapping)! && (
-          <ReviewApplicationPropsSection
-            label="Endpoints"
-            appProps={application?.function?.mapping ?? {}}
-            propsNames={FEATURES_ENDPOINTS_NAMES}
-          />
-        )}
-        {!isEmpty(application?.function?.env)! && (
-          <ReviewApplicationPropsSection
-            label="Environment variables"
-            appProps={application?.function?.env ?? {}}
-          />
-        )}
+
+        <ReviewCodeAppSection application={application} />
+
+        <ReviewQuickAppSection application={application} />
       </div>
       <div className="flex w-full items-center justify-end border-t border-tertiary px-3 py-4 md:px-5">
         {controlsEntity && (

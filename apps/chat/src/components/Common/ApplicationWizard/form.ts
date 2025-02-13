@@ -9,6 +9,7 @@ import {
   getModelDescription,
   getQuickAppConfig,
   getQuickAppDocumentUrl,
+  getToolsetStr,
 } from '@/src/utils/app/application';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { notAllowedSymbols } from '@/src/utils/app/file';
@@ -20,7 +21,6 @@ import {
 } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 import { DialAIEntityFeatures } from '@/src/types/models';
-import { QuickAppConfig } from '@/src/types/quick-apps';
 
 import {
   CODEAPPS_REQUIRED_FILES,
@@ -296,14 +296,6 @@ const safeStringify = (
   }
 
   return JSON.stringify(featureData, null, 2);
-};
-
-const getToolsetStr = (config: QuickAppConfig) => {
-  try {
-    return JSON.stringify(config.web_api_toolset, null, 2);
-  } catch {
-    return '';
-  }
 };
 
 export const getDefaultValues = ({

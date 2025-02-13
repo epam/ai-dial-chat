@@ -13,7 +13,7 @@ export const ReviewApplicationPropsItem = ({
   return (
     <div className="flex gap-4 text-primary">
       <span className="w-[122px] shrink-0">{itemLabel}:</span>
-      <span>{itemValue}</span>
+      <span className="shrink grow">{itemValue}</span>
     </div>
   );
 };
@@ -32,8 +32,8 @@ export const ReviewApplicationPropsSection = ({
   const { t } = useTranslation(Translation.Chat);
   return (
     <div className="flex gap-4">
-      <span className="w-[122px] text-secondary">{t(label)}:</span>
-      <div className="max-w-[414px]">
+      <span className="w-[122px] shrink-0 text-secondary">{t(label)}:</span>
+      <div className="shrink grow">
         {Object.entries(appProps).map(([key, value]) => {
           return (
             <ReviewApplicationPropsItem
