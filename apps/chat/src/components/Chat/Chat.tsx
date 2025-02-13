@@ -40,7 +40,10 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import {
+  ModelsActions,
+  ModelsSelectors,
+} from '@/src/store/models/models.reducers';
 import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
@@ -166,8 +169,8 @@ export const ChatView = memo(() => {
     isReplayRequiresVariables ||
     selectedConversations.some((conv) => conv.messages.length > 0);
 
-  useLayoutEffect(() => {
-    const isNotAllowedModel =
+  const isNotAllowedModel = useMemo(
+    () =>
       isModelsLoaded &&
       (models.length === 0 ||
         selectedConversations.some((conv) => {
@@ -193,8 +196,11 @@ export const ChatView = memo(() => {
               conv.assistantModelId &&
               !modelsMap[conv.assistantModelId])
           );
-        }));
+        })),
+    [isModelsLoaded, models.length, modelsMap, selectedConversations],
+  );
 
+  useLayoutEffect(() => {
     if (isNotAllowedModel) {
       setNotAllowedType(EntityType.Model);
     } else if (
@@ -206,7 +212,14 @@ export const ChatView = memo(() => {
     } else {
       setNotAllowedType(null);
     }
-  }, [selectedConversations, models, isModelsLoaded, addonsMap, modelsMap]);
+  }, [
+    selectedConversations,
+    models,
+    isModelsLoaded,
+    addonsMap,
+    modelsMap,
+    isNotAllowedModel,
+  ]);
 
   const onLikeHandler = useCallback(
     (index: number, conversation: Conversation) => (rate: LikeState) => {
@@ -278,16 +291,34 @@ export const ChatView = memo(() => {
   }, []);
 
   useEffect(() => {
-    const lastMergedMessages = mergedMessages.length
-      ? mergedMessages[mergedMessages.length - 1]
-      : [];
+    if (!mergedMessages.length) {
+      setIsLastMessageError(false);
+      return;
+    }
 
+    const lastMergedMessages = mergedMessages[mergedMessages.length - 1];
     const isErrorInSomeLastMessage = lastMergedMessages.some(
       (mergedStr: [Conversation, Message, number, Message[]]) =>
         !!mergedStr[1].errorMessage,
     );
+
     setIsLastMessageError(isErrorInSomeLastMessage);
-  }, [mergedMessages]);
+
+    const lastMessage = lastMergedMessages[0]?.[1];
+    if (
+      lastMessage?.errorMessage &&
+      lastMessage.errorMessage.includes('server error') &&
+      !isNotAllowedModel
+    ) {
+      dispatch(ModelsActions.getModels());
+    }
+  }, [
+    dispatch,
+    isModelsLoaded,
+    isNotAllowedModel,
+    mergedMessages,
+    notAllowedType,
+  ]);
 
   useEffect(() => {
     const handleResize = () => {
