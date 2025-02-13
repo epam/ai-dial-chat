@@ -11,13 +11,11 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { convertApplicationFromApi } from '@/src/utils/app/application';
-
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
-  ApiApplicationResponseDefault,
   ApplicationStatus,
   ApplicationType,
+  CustomApplicationModel,
 } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
@@ -49,7 +47,7 @@ import {
 
 interface Props {
   schema: ApiDetailedApplicationTypeSchema | null;
-  applicationData: ApiApplicationResponseDefault;
+  applicationData: CustomApplicationModel;
   type: string;
 }
 
@@ -115,15 +113,13 @@ export const ApplicationSettings: React.FC<Props> = ({
     // will be removed after all apps are migrated to the new schema flow
     const formViews: Record<string, JSX.Element> = {
       [ApplicationType.CUSTOM_APP]: (
-        <ApplicationView
-          oldApplication={convertApplicationFromApi(applicationData)}
-        />
+        <ApplicationView oldApplication={applicationData} />
       ),
       [ApplicationType.CODE_APP]: (
         <CodeAppView
           isSharedWithMe={modelFromState?.sharedWithMe ?? false}
           isAppDeployed={isAppDeployed}
-          oldApplication={convertApplicationFromApi(applicationData)}
+          oldApplication={applicationData}
           isShared={modelFromState?.isShared ?? false}
         />
       ),
@@ -131,7 +127,7 @@ export const ApplicationSettings: React.FC<Props> = ({
         <QuickAppView
           schema={schema}
           isSharedWithMe={modelFromState?.sharedWithMe ?? false}
-          oldApplication={convertApplicationFromApi(applicationData)}
+          oldApplication={applicationData}
         />
       ),
     };

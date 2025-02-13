@@ -11,13 +11,17 @@ import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 
-import { ApiApplicationResponseDefault } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
 import { DialAIError } from '@/src/types/error';
 
+import {
+  ApplicationActions,
+  ApplicationSelectors,
+} from '@/src/store/application/application.reducers';
 import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { AppsEditorHeader } from '@/src/components/AppsEditor/AppsEditorHeader';
 import { ApplicationSettings } from '@/src/components/AppsEditor/Settings';
@@ -27,17 +31,13 @@ import { getLayout } from '../../../_app';
 import fetch from 'node-fetch';
 
 interface PageProps {
-  applicationData: ApiApplicationResponseDefault;
   previewConversationId: string | null;
 }
 
-export default function AppsSettings({
-  applicationData,
-  previewConversationId,
-}: PageProps) {
+export default function AppsSettings({ previewConversationId }: PageProps) {
   const dispatch = useAppDispatch();
   const {
-    query: { slug = '' },
+    query: { slug = '', id = '' },
   } = useRouter();
   const type = useMemo(
     () =>
@@ -47,17 +47,30 @@ export default function AppsSettings({
     [slug],
   );
 
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+
   const schema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
   );
 
   const isSchemaApplicationType = !isApplicationType(decode(slug.toString()));
 
+  const applicationData = useAppSelector(
+    ApplicationSelectors.selectApplicationDetail,
+  );
+
   useEffect(() => {
     dispatch(
       ConversationsActions.setPreviewConversationId(previewConversationId),
     );
   }, [dispatch, previewConversationId]);
+
+  useEffect(() => {
+    const applicationId = modelsMap[id.toString()]?.id;
+    if (!applicationData && id && applicationId) {
+      dispatch(ApplicationActions.get({ applicationId }));
+    }
+  }, [modelsMap, applicationData, id, dispatch]);
 
   return (
     <div className="flex size-full flex-col">
@@ -70,11 +83,13 @@ export default function AppsSettings({
         }
       />
       <div className="flex size-full grow overflow-hidden">
-        <ApplicationSettings
-          applicationData={applicationData}
-          schema={isSchemaApplicationType ? schema : null}
-          type={type ?? ''}
-        />
+        {applicationData && (
+          <ApplicationSettings
+            applicationData={applicationData}
+            schema={isSchemaApplicationType ? schema : null}
+            type={type ?? ''}
+          />
+        )}
       </div>
     </div>
   );
@@ -98,25 +113,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
   if (id && typeof id === 'string') {
     try {
-      const applicationId = decodeURIComponent(id);
-      const baseUrl = process.env.DIAL_API_HOST;
-      const paths = applicationId.split('/').map(encodeURIComponent);
-      const url = constructPath(baseUrl, 'v1', ...paths);
-
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: getApiHeaders({ jwt: token.access_token }),
-      });
-
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch application data: ${response.status} ${response.statusText}`,
-        );
-      }
-
-      const applicationData =
-        (await response.json()) as ApiApplicationResponseDefault;
-
       const bucketUrl = `${process.env.DIAL_API_HOST}/v1/bucket`;
       const bucketResponse = await fetch(bucketUrl, {
         headers: getApiHeaders({ jwt: token?.access_token as string }),
@@ -157,7 +153,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         items: { url: string; isApplicationPreviewConversation?: boolean }[];
       };
       const filteredConversations = conversationsData.items.filter((item) =>
-        item.url.includes(applicationData.reference),
+        item.url.includes(id),
       );
 
       const applicationConversations = await Promise.all(
@@ -188,7 +184,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       return {
         props: {
           ...commonProps.props,
-          applicationData,
           previewConversationId: previewConversation?.id ?? null,
         },
       };

@@ -1,15 +1,12 @@
 import { FormProvider, useForm } from 'react-hook-form';
 
-import {
-  convertApplicationFromApi,
-  getApplicationEntityFields,
-} from '@/src/utils/app/application';
+import { getApplicationEntityFields } from '@/src/utils/app/application';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
-  ApiApplicationResponseDefault,
   ApplicationStatus,
+  CustomApplicationModel,
 } from '@/src/types/applications';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -21,7 +18,7 @@ import { GeneralInfoPreview } from './GeneralInfoPreview';
 import { ApplicationGeneralInfoFormData, getDefaultValues } from './form';
 
 interface Props {
-  applicationData?: ApiApplicationResponseDefault;
+  applicationData?: CustomApplicationModel;
   schema: ApiDetailedApplicationTypeSchema | null;
 }
 
@@ -65,11 +62,7 @@ export const GeneralInfoView: React.FC<Props> = ({
       <div className="w-1/2">
         <FormProvider {...methods}>
           <GeneralInfoEditor
-            oldApplication={
-              applicationData
-                ? convertApplicationFromApi(applicationData)
-                : undefined
-            }
+            oldApplication={applicationData ? applicationData : undefined}
             schema={schema}
             isSharedWithMe={modelFromState?.sharedWithMe ?? false}
             isAppDeployed={isAppDeployed}

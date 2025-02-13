@@ -334,6 +334,7 @@ export const TabRenderer = () => {
   const handleEditApplication = useCallback(
     (entity: DialAIEntityModel) => {
       const applicationType = getApplicationType(entity);
+      dispatch(ApplicationActions.get({ applicationId: entity.id }));
       if (
         !isApplicationType(applicationType) &&
         detailedApplicationTypeSchema?.$id !== applicationType
@@ -347,7 +348,7 @@ export const TabRenderer = () => {
       router.push({
         pathname: `/apps-editor/[slug]/settings`,
         query: {
-          id: encodeURIComponent(entity.id),
+          id: encodeURIComponent(entity.reference),
           slug: isApplicationType(applicationType)
             ? applicationType
             : encode(applicationType ?? ''),

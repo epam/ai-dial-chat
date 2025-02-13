@@ -7,7 +7,6 @@ import { ApiUtils } from '@/src/utils/server/api';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
-  ApiApplicationResponseDefault,
   ApplicationStatus,
   ApplicationType,
   CustomApplicationModel,
@@ -58,31 +57,31 @@ type Validators = {
 };
 
 export const getDefaultValues = (
-  applicationData?: ApiApplicationResponseDefault,
+  applicationData?: CustomApplicationModel,
   bucket?: string,
   pythonVersion?: string,
   models?: ShareEntity[],
 ): ApplicationGeneralInfoFormData => {
   return {
     name:
-      applicationData?.display_name ??
+      applicationData?.name ??
       getNextDefaultName(DEFAULT_APPLICATION_NAME, models ?? [], 0, true),
-    version: applicationData?.display_version ?? DEFAULT_VERSION,
-    iconUrl: applicationData?.icon_url ?? '',
+    version: applicationData?.version ?? DEFAULT_VERSION,
+    iconUrl: applicationData?.iconUrl ?? '',
     description: applicationData?.description ?? '',
-    topics: applicationData?.description_keywords ?? [],
-    id: applicationData?.name ? decodeURIComponent(applicationData?.name) : '',
+    topics: applicationData?.topics ?? [],
+    id: applicationData?.name ? applicationData?.name : '',
     reference: applicationData?.reference ?? '',
     //schema type application properties
-    applicationProperties: applicationData?.application_properties,
+    applicationProperties: applicationData?.applicationProperties,
     //custom application properties
-    completionUrl: applicationData?.endpoint ?? '',
-    inputAttachmentTypes: applicationData?.input_attachment_types,
-    maxInputAttachments: applicationData?.max_input_attachments,
+    completionUrl: applicationData?.completionUrl ?? '',
+    inputAttachmentTypes: applicationData?.inputAttachmentTypes,
+    maxInputAttachments: applicationData?.maxInputAttachments,
     features: safeStringifyApplicationFeatures(applicationData?.features),
     //code app application properties
-    sources: applicationData?.function?.source_folder
-      ? ApiUtils.decodeApiUrl(applicationData.function.source_folder)
+    sources: applicationData?.function?.sourceFolder
+      ? ApiUtils.decodeApiUrl(applicationData.function.sourceFolder)
       : `files/${bucket}/appdata`,
     runtime:
       applicationData?.function?.runtime ?? pythonVersion ?? 'python3.11',

@@ -66,6 +66,17 @@ const getInitActions = (page?: PageType): Observable<ActionInit>[] => {
         of(PublicationActions.init()),
         of(ApplicationTypesSchemasActions.init()),
       ];
+    case PageType.AppsEditorSettings:
+    case PageType.AppsEditorGeneralInfo:
+      return [
+        of(UIActions.init()),
+        of(ModelsActions.init()),
+        of(AddonsActions.init()),
+        of(FilesActions.init()),
+        of(PublicationActions.init()),
+        of(ConversationsActions.init()),
+        of(ApplicationTypesSchemasActions.init()),
+      ];
     default:
       return [
         of(UIActions.init()),

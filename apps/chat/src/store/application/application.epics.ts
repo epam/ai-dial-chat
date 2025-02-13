@@ -85,7 +85,7 @@ const createApplicationEpic: AppEpic = (action$) =>
               pathname: `/apps-editor/[slug]/settings`,
               query: {
                 slug,
-                id: encodeURIComponent(action.payload.models[0].id),
+                id: encodeURIComponent(action.payload.models[0].reference),
               },
             });
           }

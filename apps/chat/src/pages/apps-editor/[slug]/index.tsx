@@ -1,36 +1,47 @@
+import { useEffect } from 'react';
+
 import { GetServerSideProps } from 'next';
-import { getToken } from 'next-auth/jwt';
 import { useRouter } from 'next/router';
 
 import { isApplicationType } from '@/src/utils/app/application';
 import { decode } from '@/src/utils/app/application-type-schema';
-import { constructPath } from '@/src/utils/app/file';
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
-import { getApiHeaders } from '@/src/utils/server/get-headers';
-import { logger } from '@/src/utils/server/logger';
 
-import { ApiApplicationResponseDefault } from '@/src/types/applications';
-
+import {
+  ApplicationActions,
+  ApplicationSelectors,
+} from '@/src/store/application/application.reducers';
 import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
-import { useAppSelector } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { AppsEditorHeader } from '@/src/components/AppsEditor/AppsEditorHeader';
 import { GeneralInfoView } from '@/src/components/AppsEditor/GeneralInfoView/GeneralInfoView';
 
 import { getLayout } from '../../_app';
 
-interface PageProps {
-  applicationData?: ApiApplicationResponseDefault;
-}
-
-export default function AppsEditor({ applicationData }: PageProps) {
+export default function AppsEditor() {
   const {
-    query: { slug = '' },
+    query: { slug = '', id = '' },
   } = useRouter();
+  const dispatch = useAppDispatch();
+
   const schema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
   );
   const isSchemaApplicationType = !isApplicationType(decode(slug.toString()));
+
+  const applicationData = useAppSelector(
+    ApplicationSelectors.selectApplicationDetail,
+  );
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+
+  useEffect(() => {
+    const applicationId = modelsMap[id.toString()]?.id;
+    if (!applicationData && id && applicationId) {
+      dispatch(ApplicationActions.get({ applicationId }));
+    }
+  }, [modelsMap, applicationData, id, dispatch]);
 
   return (
     <div className="flex size-full flex-col">
@@ -43,10 +54,12 @@ export default function AppsEditor({ applicationData }: PageProps) {
         isEditApplication={!!applicationData}
       />
       <div className="flex size-full">
-        <GeneralInfoView
-          applicationData={applicationData}
-          schema={isSchemaApplicationType ? schema : null}
-        />
+        {applicationData && (
+          <GeneralInfoView
+            applicationData={applicationData}
+            schema={isSchemaApplicationType ? schema : null}
+          />
+        )}
       </div>
     </div>
   );
@@ -54,57 +67,4 @@ export default function AppsEditor({ applicationData }: PageProps) {
 
 AppsEditor.getLayout = getLayout;
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const commonProps = await getCommonPageProps(context);
-  if ('redirect' in commonProps || 'notFound' in commonProps) {
-    return commonProps;
-  }
-
-  const token = await getToken({ req: context.req });
-
-  if (!token?.access_token) {
-    throw new Error('Failed to retrieve access token.');
-  }
-
-  const { id } = context.query;
-
-  if (id && typeof id === 'string') {
-    try {
-      const applicationId = decodeURIComponent(id);
-      const baseUrl = process.env.DIAL_API_HOST;
-      const paths = applicationId.split('/').map(encodeURIComponent);
-      const url = constructPath(baseUrl, 'v1', ...paths);
-
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: getApiHeaders({ jwt: token.access_token }),
-      });
-
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch application data: ${response.status} ${response.statusText}`,
-        );
-      }
-
-      const applicationData = await response.json();
-
-      return {
-        props: {
-          ...commonProps.props,
-          applicationData,
-        },
-      };
-    } catch (error) {
-      logger.error('Error fetching application data:', error);
-      return {
-        notFound: true,
-      };
-    }
-  } else {
-    return {
-      props: {
-        ...commonProps.props,
-      },
-    };
-  }
-};
+export const getServerSideProps: GetServerSideProps = getCommonPageProps;

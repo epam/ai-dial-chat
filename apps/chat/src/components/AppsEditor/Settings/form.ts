@@ -10,10 +10,7 @@ import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { constructPath } from '@/src/utils/app/file';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import {
-  ApiApplicationResponseDefault,
-  CustomApplicationModel,
-} from '@/src/types/applications';
+import { CustomApplicationModel } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 import { QuickAppConfig } from '@/src/types/quick-apps';
 
@@ -42,7 +39,7 @@ const getToolsetStr = (config: QuickAppConfig) => {
 export interface CustomApplicationFormData
   extends ApplicationGeneralInfoFormData {
   inputAttachmentTypes: string[];
-  maxInputAttachments: number;
+  maxInputAttachments?: number;
   completionUrl: string;
   features: string | null;
   id: string;
@@ -63,7 +60,7 @@ export interface CodeAppFormData extends ApplicationGeneralInfoFormData {
   id: string;
   reference: string;
   inputAttachmentTypes: string[];
-  maxInputAttachments: number;
+  maxInputAttachments?: number;
   sources: string;
   sourceFiles?: string[];
   runtime: string;
@@ -131,16 +128,14 @@ export const getAttachmentTypeErrorHandlers = (
   return { validationRegExp, handleError, handleClearError };
 };
 
-const getApplicationGeneralDefaultValues = (
-  app: ApiApplicationResponseDefault,
-) => {
+const getApplicationGeneralDefaultValues = (app: CustomApplicationModel) => {
   return {
-    name: app.display_name,
-    id: app.name,
-    description: app.description,
-    version: app.display_version,
-    iconUrl: app.icon_url ?? '',
-    topics: app.description_keywords ?? [],
+    name: app.name,
+    id: app.id,
+    description: app.description ?? '',
+    version: app.version,
+    iconUrl: app.iconUrl ?? '',
+    topics: app.topics ?? [],
     reference: app.reference,
   };
 };
@@ -149,18 +144,18 @@ export const getCodeAppDefaultValues = ({
   app,
   runtime,
 }: {
-  app: ApiApplicationResponseDefault;
+  app: CustomApplicationModel;
   runtime?: string;
 }): CodeAppFormData => {
   return {
     ...getApplicationGeneralDefaultValues(app),
     id: decodeURIComponent(app.name),
     reference: app.reference,
-    completionUrl: app.endpoint ?? '',
-    inputAttachmentTypes: app.input_attachment_types ?? [],
-    maxInputAttachments: app.max_input_attachments ?? '',
-    sources: app.function?.source_folder
-      ? ApiUtils.decodeApiUrl(app.function.source_folder)
+    completionUrl: app.completionUrl ?? '',
+    inputAttachmentTypes: app.inputAttachmentTypes ?? [],
+    maxInputAttachments: app.maxInputAttachments,
+    sources: app.function?.sourceFolder
+      ? ApiUtils.decodeApiUrl(app.function.sourceFolder)
       : '',
     runtime: app?.function?.runtime ?? runtime ?? 'python3.11',
     endpoints: app?.function?.mapping
@@ -198,43 +193,43 @@ export const getCodeAppDefaultValues = ({
 export const getCustomApplicationDefaultValues = ({
   app,
 }: {
-  app: ApiApplicationResponseDefault;
+  app: CustomApplicationModel;
 }): CustomApplicationFormData => ({
   ...getApplicationGeneralDefaultValues(app),
-  inputAttachmentTypes: app.input_attachment_types ?? [],
-  maxInputAttachments: app.max_input_attachments ?? '',
-  completionUrl: app.endpoint ?? '',
+  inputAttachmentTypes: app.inputAttachmentTypes ?? [],
+  maxInputAttachments: app.maxInputAttachments,
+  completionUrl: app.completionUrl ?? '',
   features: safeStringifyApplicationFeatures(app.features),
-  applicationProperties: app.application_properties ?? null,
+  applicationProperties: app.applicationProperties ?? null,
 });
 
 export const getQuickAppDefaultValues = ({
   app,
 }: {
-  app: ApiApplicationResponseDefault;
+  app: CustomApplicationModel;
 }): QuickAppFormData => {
   return {
     ...getApplicationGeneralDefaultValues(app),
-    completionUrl: app.endpoint ?? '',
+    completionUrl: app.completionUrl ?? '',
     documentRelativeUrl:
-      typeof app.application_properties?.document_relative_url === 'string'
-        ? app.application_properties?.document_relative_url
+      typeof app.applicationProperties?.document_relative_url === 'string'
+        ? app.applicationProperties?.document_relative_url
         : '',
     model:
-      typeof app.application_properties?.model === 'string'
-        ? app.application_properties?.model
+      typeof app.applicationProperties?.model === 'string'
+        ? app.applicationProperties?.model
         : DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
     instructions:
-      typeof app.application_properties?.instructions === 'string'
-        ? app.application_properties.instructions
+      typeof app.applicationProperties?.instructions === 'string'
+        ? app.applicationProperties.instructions
         : '',
     temperature:
-      typeof app.application_properties?.temperature === 'number'
-        ? app.application_properties.temperature
+      typeof app.applicationProperties?.temperature === 'number'
+        ? app.applicationProperties.temperature
         : DEFAULT_TEMPERATURE,
     toolset:
       getToolsetStr({
-        web_api_toolset: app.application_properties?.web_api_toolset ?? [],
+        web_api_toolset: app.applicationProperties?.web_api_toolset ?? [],
       } as QuickAppConfig) ?? '',
   };
 };
