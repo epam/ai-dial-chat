@@ -5,6 +5,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import {
   getEntitiesFromTemplateMapping,
   replaceDefaultValuesFromContent,
+  replaceTemplates,
 } from '@/src/utils/app/prompts';
 
 import { Prompt } from '@/src/types/prompt';
@@ -94,10 +95,8 @@ const ReplayVariablesDialog = () => {
   )
     return null;
 
-  const template = getEntitiesFromTemplateMapping(
-    activeMessage.templateMapping,
-  ).reduce(
-    (acc, [key, value]) => acc.replaceAll(key, value),
+  const template = replaceTemplates(
+    getEntitiesFromTemplateMapping(activeMessage.templateMapping),
     activeMessage.content,
   );
   const prompt: Prompt = {
