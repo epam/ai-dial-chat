@@ -10,7 +10,6 @@ import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 
 import { ApiApplicationResponseDefault } from '@/src/types/applications';
-import { DialAIError } from '@/src/types/error';
 
 import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { useAppSelector } from '@/src/store/hooks';
@@ -22,10 +21,9 @@ import { getLayout } from '../../_app';
 
 interface PageProps {
   applicationData?: ApiApplicationResponseDefault;
-  bucket: string;
 }
 
-export default function AppsEditor({ applicationData, bucket }: PageProps) {
+export default function AppsEditor({ applicationData }: PageProps) {
   const {
     query: { slug = '' },
   } = useRouter();
@@ -47,7 +45,6 @@ export default function AppsEditor({ applicationData, bucket }: PageProps) {
       <div className="flex size-full">
         <GeneralInfoView
           applicationData={applicationData}
-          bucket={bucket}
           schema={isSchemaApplicationType ? schema : null}
         />
       </div>
@@ -68,25 +65,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   if (!token?.access_token) {
     throw new Error('Failed to retrieve access token.');
   }
-
-  const bucketUrl = `${process.env.DIAL_API_HOST}/v1/bucket`;
-  const bucketResponse = await fetch(bucketUrl, {
-    headers: getApiHeaders({ jwt: token?.access_token as string }),
-  });
-
-  if (!bucketResponse.ok) {
-    const serverErrorMessage = await bucketResponse.text();
-    throw new DialAIError(
-      serverErrorMessage,
-      '',
-      '',
-      bucketResponse.status + '',
-    );
-  }
-
-  const bucketJson = (await bucketResponse.json()) as { bucket: string };
-
-  const bucket = bucketJson.bucket;
 
   const { id } = context.query;
 
@@ -114,7 +92,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         props: {
           ...commonProps.props,
           applicationData,
-          bucket,
         },
       };
     } catch (error) {
@@ -127,7 +104,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     return {
       props: {
         ...commonProps.props,
-        bucket,
       },
     };
   }

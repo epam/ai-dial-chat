@@ -4,6 +4,7 @@ import {
   convertApplicationFromApi,
   getApplicationEntityFields,
 } from '@/src/utils/app/application';
+import { BucketService } from '@/src/utils/app/data/bucket-service';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
@@ -22,13 +23,11 @@ import { ApplicationGeneralInfoFormData, getDefaultValues } from './form';
 interface Props {
   applicationData?: ApiApplicationResponseDefault;
   schema: ApiDetailedApplicationTypeSchema | null;
-  bucket: string;
 }
 
 export const GeneralInfoView: React.FC<Props> = ({
   applicationData,
   schema,
-  bucket,
 }) => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const modelFromState = applicationData
@@ -53,7 +52,7 @@ export const GeneralInfoView: React.FC<Props> = ({
     reValidateMode: 'onChange',
     defaultValues: getDefaultValues(
       applicationData,
-      bucket,
+      BucketService.getBucket(),
       pythonVersion,
       modelsWithFolderId,
     ),
