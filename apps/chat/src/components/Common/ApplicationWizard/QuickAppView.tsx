@@ -338,12 +338,7 @@ export const QuickAppView: React.FC<ViewProps> = ({
         />
       )}
 
-      <ApplicationWizardFooter
-        onClose={onClose}
-        selectedApplication={selectedApplication}
-        isEdit={isEdit}
-        isValid={isValid}
-      />
+      <ApplicationWizardFooter isEdit={isEdit} isValid={isValid} />
     </form>
   );
 };

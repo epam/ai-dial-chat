@@ -442,12 +442,7 @@ export const CodeAppView: FC<ViewProps> = ({
           options={modalOptions}
         />
 
-        <ApplicationWizardFooter
-          onClose={onClose}
-          selectedApplication={selectedApplication}
-          isEdit={isEdit}
-          isValid={isValid}
-        />
+        <ApplicationWizardFooter isEdit={isEdit} isValid={isValid} />
       </FormProvider>
     </form>
   );

@@ -535,6 +535,9 @@ dialTest(
           secondConversation.name,
         );
         await compare.waitForComparedConversationsLoaded();
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         const requestsData = await chat.sendRequestInCompareMode(
           'how are you?',
           {

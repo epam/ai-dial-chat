@@ -23,9 +23,6 @@ const ChatStartersView = ({ schema }: ChatStartersViewProps) => {
   const dispatch = useAppDispatch();
 
   const formValue = useAppSelector(ChatSelectors.selectChatFormValue);
-  const isPlayback = useAppSelector(
-    ConversationsSelectors.selectIsPlaybackSelectedConversations,
-  );
 
   const handleChange = useCallback(
     (property: string, value: MessageFormValueType, submit?: boolean) => {
@@ -59,7 +56,6 @@ const ChatStartersView = ({ schema }: ChatStartersViewProps) => {
       buttonsWrapperClassName="md:justify-center flex-nowrap overflow-x-auto overflow-y-hidden px-2"
       buttonClassName="shrink-0"
       propertyWrapperClassName="items-center"
-      disabled={isPlayback}
     />
   );
 };
