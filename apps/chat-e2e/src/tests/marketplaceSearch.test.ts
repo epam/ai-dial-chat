@@ -227,14 +227,26 @@ dialTest(
           ExpectedConstants.restrictedNameChars +
           ExpectedConstants.allowedSpecialChars;
         await marketplaceHeader.searchInput.fillInInput(searchTerm);
-        const searchUrl = page.url();
+        await baseAssertion.assertElementAttribute(
+          marketplaceHeader.searchInput,
+          Attributes.value,
+          searchTerm,
+        );
+        const pageUrl = page.url();
+        //cleanup search field in order to have url without params
         await marketplaceHeader.searchInput.fillInInput('');
+        await baseAssertion.assertElementAttribute(
+          marketplaceHeader.searchInput,
+          Attributes.value,
+          '',
+        );
         baseAssertion.assertValue(
           page.url(),
           config.use!.baseURL!.concat(ExpectedConstants.marketplacePath),
         );
-
-        await marketplacePage.navigateToUrl(searchUrl);
+        //navigate to url with special chars as param
+        await marketplacePage.navigateToUrl(pageUrl);
+        await marketplacePage.waitForPageLoaded();
         await baseAssertion.assertElementAttribute(
           marketplaceHeader.searchInput,
           Attributes.value,
