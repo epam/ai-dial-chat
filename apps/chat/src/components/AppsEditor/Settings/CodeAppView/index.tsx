@@ -1,36 +1,40 @@
 import { useCallback, useMemo, useState } from 'react';
-import {
-  Controller,
-  Path,
-  RegisterOptions,
-  useFormContext,
-} from 'react-hook-form';
+import { Controller, Path, RegisterOptions, useFormContext } from 'react-hook-form';
+
+
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+
+
 import { getSharedTooltip } from '@/src/utils/app/application';
 import { castToString } from '@/src/utils/app/common';
+
+
 
 import { CustomApplicationModel } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
+
+
 import { ApplicationActions } from '@/src/store/application/application.reducers';
-import {
-  CodeEditorActions,
-  CodeEditorSelectors,
-} from '@/src/store/codeEditor/codeEditor.reducer';
+import { CodeEditorActions, CodeEditorSelectors } from '@/src/store/codeEditor/codeEditor.reducer';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
+
+
 
 import { CODEAPPS_REQUIRED_FILES } from '@/src/constants/applications';
 import { CODE_APPS_ENDPOINTS } from '@/src/constants/code-apps';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
 
-import { CodeEditor } from '@/src/components/Common/ApplicationWizard/CodeAppView/CodeEditor';
+
+
 import { RuntimeVersionSelector } from '@/src/components/Common/ApplicationWizard/CodeAppView/RuntimeVersionSelector';
 import { SourceFilesEditor } from '@/src/components/Common/ApplicationWizard/CodeAppView/SourceFilesEditor';
+import { CodeEditor } from '@/src/components/Common/CodeEditor';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { withController } from '@/src/components/Common/Forms/ControlledFormField';
 import { DynamicFormFields } from '@/src/components/Common/Forms/DynamicFormFields';
@@ -40,16 +44,11 @@ import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { OptionsDialog } from '@/src/components/Common/OptionsDialog';
 
+
+
 import { ApplicationSettingsFormFooter } from '../ApplicationSettingsFormFooter';
-import {
-  CodeAppFormData,
-  endpointsKeyValidator,
-  endpointsValueValidator,
-  envKeysValidator,
-  envValueValidator,
-  getAttachmentTypeErrorHandlers,
-  getCodeAppData,
-} from '../form';
+import { CodeAppFormData, endpointsKeyValidator, endpointsValueValidator, envKeysValidator, envValueValidator, getAttachmentTypeErrorHandlers, getCodeAppData } from '../form';
+
 
 type Options<T extends Path<CodeAppFormData>> = Omit<
   RegisterOptions<CodeAppFormData, T>,
