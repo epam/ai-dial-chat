@@ -1,6 +1,8 @@
 import config from '../../config/chat.playwright.config';
 import { DialHomePage, MarketplacePage } from '../ui/pages';
 import {
+  AddApplicationModal,
+  AgentDetailsModal,
   AgentInfo,
   AttachFilesModal,
   Chat,
@@ -57,16 +59,19 @@ import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateM
 import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
 import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
+import { SharedWithMeConversationAssertion } from '@/src/assertions/sharedWithMeConversationAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import test from '@/src/core/baseFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
+  ApplicationApiHelper,
   ChatApiHelper,
   FileApiHelper,
   IconApiHelper,
   ShareApiHelper,
 } from '@/src/testData/api';
 import { ItemApiHelper } from '@/src/testData/api/itemApiHelper';
+import { ModelApiHelper } from '@/src/testData/api/modelApiHelper';
 import { PublicationApiHelper } from '@/src/testData/api/publicationApiHelper';
 import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
@@ -94,6 +99,8 @@ import {
   PromptsToPublishTree,
   PromptsTree,
   PublishFolder,
+  SharedFolderConversations,
+  SharedWithMeConversationsTree,
 } from '@/src/ui/webElements/entityTree';
 import { OrganizationPromptsTree } from '@/src/ui/webElements/entityTree/sidebar/organizationPromptsTree';
 import { ErrorPopup } from '@/src/ui/webElements/errorPopup';
@@ -139,7 +146,10 @@ const dialTest = test.extend<{
   marketplaceFilter: MarketplaceFilter;
   marketplace: Marketplace;
   marketplaceAgents: MarketplaceAgents;
+  agentDetailsModal: AgentDetailsModal;
   marketplaceHeader: MarketplaceHeader;
+  addAppDropdownMenu: DropdownMenu;
+  addApplicationModal: AddApplicationModal;
   chatBar: ChatBar;
   chatLoader: ChatLoader;
   importExportLoader: ImportExportLoader;
@@ -195,11 +205,13 @@ const dialTest = test.extend<{
   promptFilter: Filter;
   chatFilterDropdownMenu: DropdownCheckboxMenu;
   promptFilterDropdownMenu: DropdownCheckboxMenu;
+  modelApiHelper: ModelApiHelper;
   iconApiHelper: IconApiHelper;
   chatApiHelper: ChatApiHelper;
   fileApiHelper: FileApiHelper;
   additionalSecondShareUserFileApiHelper: FileApiHelper;
   itemApiHelper: ItemApiHelper;
+  applicationApiHelper: ApplicationApiHelper;
   browserStorageInjector: BrowserStorageInjector;
   apiInjector: ApiInjector;
   dataInjector: DataInjectorInterface;
@@ -208,7 +220,12 @@ const dialTest = test.extend<{
   additionalSecondShareUserRequestContext: APIRequestContext;
   adminUserRequestContext: APIRequestContext;
   adminUserItemApiHelper: ItemApiHelper;
+  adminApplicationApiHelper: ApplicationApiHelper;
   mainUserShareApiHelper: ShareApiHelper;
+  sharedWithMeConversations: SharedWithMeConversationsTree;
+  sharedWithMeConversationDropdownMenu: DropdownMenu;
+  sharedFolderConversations: SharedFolderConversations;
+  sharedWithMeFolderDropdownMenu: DropdownMenu;
   additionalUserShareApiHelper: ShareApiHelper;
   additionalUserItemApiHelper: ItemApiHelper;
   additionalSecondUserShareApiHelper: ShareApiHelper;
@@ -279,6 +296,8 @@ const dialTest = test.extend<{
   folderToPublishAssertion: PublishFolderAssertion<FolderConversationsToPublish>;
   organizationFolderConversationAssertions: FolderAssertion<Folders>;
   messageTemplateModalAssertion: MessageTemplateModalAssertion;
+  agentVersionsDropdownMenuAssertion: MenuAssertion;
+  sharedWithMeConversationAssertion: SharedWithMeConversationAssertion;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper }, use) => {
@@ -288,6 +307,39 @@ const dialTest = test.extend<{
     },
     { scope: 'test', auto: true },
   ],
+  sharedWithMeConversationAssertion: async (
+    { sharedWithMeConversations },
+    use,
+  ) => {
+    const sharedWithMeConversationAssertion =
+      new SharedWithMeConversationAssertion(sharedWithMeConversations);
+    await use(sharedWithMeConversationAssertion);
+  },
+  sharedWithMeFolderDropdownMenu: async (
+    { sharedFolderConversations },
+    use,
+  ) => {
+    const sharedWithMeFolderDropdownMenu =
+      sharedFolderConversations.getDropdownMenu();
+    await use(sharedWithMeFolderDropdownMenu);
+  },
+  sharedFolderConversations: async ({ chatBar }, use) => {
+    const sharedFolderConversations = chatBar.getSharedFolderConversations();
+    await use(sharedFolderConversations);
+  },
+  sharedWithMeConversations: async ({ chatBar }, use) => {
+    const sharedWithMeConversations =
+      chatBar.getSharedWithMeConversationsTree();
+    await use(sharedWithMeConversations);
+  },
+  sharedWithMeConversationDropdownMenu: async (
+    { sharedWithMeConversations },
+    use,
+  ) => {
+    const sharedWithMeConversationDropdownMenu =
+      sharedWithMeConversations.getDropdownMenu();
+    await use(sharedWithMeConversationDropdownMenu);
+  },
   // eslint-disable-next-line no-empty-pattern
   storageState: async ({}, use) => {
     await use(stateFilePath(+process.env.TEST_PARALLEL_INDEX!));
@@ -324,9 +376,21 @@ const dialTest = test.extend<{
     const marketplaceAgents = marketplace.getAgents();
     await use(marketplaceAgents);
   },
+  agentDetailsModal: async ({ marketplaceAgents }, use) => {
+    const agentDetailsModal = marketplaceAgents.getAgentDetailsModal();
+    await use(agentDetailsModal);
+  },
   marketplaceHeader: async ({ marketplace }, use) => {
     const marketplaceHeader = marketplace.getMarketplaceHeader();
     await use(marketplaceHeader);
+  },
+  addAppDropdownMenu: async ({ page }, use) => {
+    const addAppDropdownMenu = new DropdownMenu(page);
+    await use(addAppDropdownMenu);
+  },
+  addApplicationModal: async ({ page }, use) => {
+    const addApplicationModal = new AddApplicationModal(page);
+    await use(addApplicationModal);
   },
   chatBar: async ({ appContainer }, use) => {
     const chatBar = appContainer.getChatBar();
@@ -446,8 +510,8 @@ const dialTest = test.extend<{
       chatBar.getOrganizationFolderConversations();
     await use(organizationFolderConversations);
   },
-  talkToAgentDialog: async ({ page }, use) => {
-    const talkToAgentDialog = new TalkToAgentDialog(page);
+  talkToAgentDialog: async ({ page, modelApiHelper }, use) => {
+    const talkToAgentDialog = new TalkToAgentDialog(page, modelApiHelper);
     await use(talkToAgentDialog);
   },
   talkToAgents: async ({ talkToAgentDialog }, use) => {
@@ -554,6 +618,10 @@ const dialTest = test.extend<{
     const shareModal = new ShareModal(page);
     await use(shareModal);
   },
+  modelApiHelper: async ({ request }, use) => {
+    const modelApiHelper = new ModelApiHelper(request);
+    await use(modelApiHelper);
+  },
   iconApiHelper: async ({ request }, use) => {
     const iconApiHelper = new IconApiHelper(request);
     await use(iconApiHelper);
@@ -579,6 +647,10 @@ const dialTest = test.extend<{
   itemApiHelper: async ({ request }, use) => {
     const conversationApiHelper = new ItemApiHelper(request);
     await use(conversationApiHelper);
+  },
+  applicationApiHelper: async ({ request }, use) => {
+    const applicationApiHelper = new ApplicationApiHelper(request);
+    await use(applicationApiHelper);
   },
   apiInjector: async ({ itemApiHelper }, use) => {
     const apiInjector = new ApiInjector(itemApiHelper);
@@ -610,6 +682,13 @@ const dialTest = test.extend<{
       BucketUtil.getAdminUserBucket(),
     );
     await use(adminUserItemApiHelper);
+  },
+  adminApplicationApiHelper: async ({ adminUserRequestContext }, use) => {
+    const adminApplicationApiHelper = new ApplicationApiHelper(
+      adminUserRequestContext,
+      BucketUtil.getAdminUserBucket(),
+    );
+    await use(adminApplicationApiHelper);
   },
   additionalShareUserRequestContext: async ({ playwright }, use) => {
     const additionalShareUserRequestContext =
@@ -1012,6 +1091,12 @@ const dialTest = test.extend<{
       messageTemplateModal,
     );
     await use(messageTemplateModalAssertion);
+  },
+  agentVersionsDropdownMenuAssertion: async ({ agentDetailsModal }, use) => {
+    const agentVersionsDropdownMenuAssertion = new MenuAssertion(
+      agentDetailsModal.getVersionDropdownMenu(),
+    );
+    await use(agentVersionsDropdownMenuAssertion);
   },
 });
 

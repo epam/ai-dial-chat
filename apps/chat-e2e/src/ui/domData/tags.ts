@@ -16,4 +16,5 @@ export enum Tags {
   label = 'label',
   dialog = 'dialog',
   p = 'p',
+  section = 'section',
 }

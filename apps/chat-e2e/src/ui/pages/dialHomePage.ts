@@ -3,6 +3,7 @@ import { BasePage, UploadDownloadData } from './basePage';
 import config from '@/config/chat.playwright.config';
 import { SharedPromptPreviewModal } from '@/src/ui/webElements';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
+import { Request } from 'playwright-chromium';
 import { PageFunction } from 'playwright-core/types/structs';
 
 export const loadingTimeout = config.use!.actionTimeout! * 2;
@@ -126,5 +127,44 @@ export class DialHomePage extends BasePage {
     arg?: Arg,
   ): Promise<void> {
     await this.page.addInitScript(script, arg);
+  }
+
+  public async waitForRequest({
+    method,
+    urlPattern,
+    timeout = 5000,
+    shouldNotOccur = false,
+  }: {
+    method: 'PUT' | 'DELETE' | 'POST' | 'GET';
+    urlPattern?: string | RegExp;
+    timeout?: number;
+    shouldNotOccur?: boolean;
+  }) {
+    const matchRequest = (request: Request) => {
+      const methodMatches = request.method() === method;
+      if (!urlPattern) return methodMatches;
+      return (
+        methodMatches &&
+        (urlPattern instanceof RegExp
+          ? urlPattern.test(request.url())
+          : request.url().includes(urlPattern))
+      );
+    };
+
+    if (shouldNotOccur) {
+      try {
+        await this.page.waitForRequest(matchRequest, { timeout: timeout });
+        // If we get here, we found a request when we shouldn't have
+        throw new Error(`Unexpected ${method} request was sent`);
+      } catch (error: unknown) {
+        if (error instanceof Error && error.message.includes('Timeout')) {
+          // Timeout is expected and good in this case
+          return;
+        }
+        throw error;
+      }
+    } else {
+      return this.page.waitForRequest(matchRequest, { timeout });
+    }
   }
 }

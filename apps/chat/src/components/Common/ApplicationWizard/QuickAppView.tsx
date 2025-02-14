@@ -1,4 +1,3 @@
-import Editor from '@monaco-editor/react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
@@ -12,6 +11,7 @@ import {
 
 import { CustomApplicationModel } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
+import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
@@ -20,7 +20,6 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { IMAGE_TYPES } from '@/src/constants/chat';
 import { DEFAULT_VERSION } from '@/src/constants/public';
@@ -35,6 +34,7 @@ import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessag
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
+import { MonacoEditor } from '@/src/components/Common/MonacoEditor';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
 import {
@@ -47,10 +47,12 @@ import { ViewProps } from './view-props';
 
 const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const TopicsSelector = withLabel(DropdownSelector);
-const ToolsetEditor = withErrorMessage(withLabel(Editor));
+const ToolsetEditor = withErrorMessage(withLabel(MonacoEditor));
 const Slider = withLabel(TemperatureSlider, true);
 const ControlledField = withController(Field);
 const ModelsSelectorField = withErrorMessage(withLabel(ModelsSelector));
+
+const myFilesFilter = new Set([FileSourceType.MY_FILES]);
 
 export const QuickAppView: React.FC<ViewProps> = ({
   onClose,
@@ -64,7 +66,6 @@ export const QuickAppView: React.FC<ViewProps> = ({
   const dispatch = useAppDispatch();
 
   const files = useAppSelector(FilesSelectors.selectFiles);
-  const theme = useAppSelector(UISelectors.selectThemeState);
   const topics = useAppSelector(SettingsSelectors.selectTopics);
   const models = useAppSelector(ModelsSelectors.selectModels);
 
@@ -116,7 +117,7 @@ export const QuickAppView: React.FC<ViewProps> = ({
 
         dispatch(
           ApplicationActions.update({
-            oldApplicationId: selectedApplication.id,
+            oldApplication: selectedApplication,
             applicationData,
           }),
         );
@@ -242,6 +243,7 @@ export const QuickAppView: React.FC<ViewProps> = ({
               allowedTypes={['*/*']}
               disabled={isSharedWithMe}
               tooltip={isSharedWithMe ? getSharedTooltip('file') : ''}
+              sourceFilters={myFilesFilter}
             />
           )}
         />
@@ -295,21 +297,10 @@ export const QuickAppView: React.FC<ViewProps> = ({
               label={t('Configure toolset')}
               error={errors.toolset?.message}
               height={200}
-              options={{
-                minimap: {
-                  enabled: false,
-                },
-                padding: {
-                  top: 12,
-                  bottom: 12,
-                },
-                scrollBeyondLastLine: false,
-              }}
               value={field.value}
               className="m-0.5 w-full overflow-hidden rounded border border-primary"
               language="json"
               onChange={(v) => field.onChange(v ?? '')}
-              theme={theme === 'dark' ? 'vs-dark' : 'vs'}
             />
           )}
         />
@@ -347,12 +338,7 @@ export const QuickAppView: React.FC<ViewProps> = ({
         />
       )}
 
-      <ApplicationWizardFooter
-        onClose={onClose}
-        selectedApplication={selectedApplication}
-        isEdit={isEdit}
-        isValid={isValid}
-      />
+      <ApplicationWizardFooter isEdit={isEdit} isValid={isValid} />
     </form>
   );
 };

@@ -160,6 +160,7 @@ export const filesSlice = createSlice({
         payload,
       }: PayloadAction<{
         files: DialFile[];
+        foldersSet: Set<string>;
       }>,
     ) => {
       const mappedFiles: DialFile[] = payload.files.map((file) =>
@@ -172,9 +173,7 @@ export const filesSlice = createSlice({
         state.files.filter(
           (stateFile) =>
             //remove all files from loaded folder to have latest folder update
-            !mappedFiles.find(
-              (mappedFile) => mappedFile.folderId === stateFile.folderId,
-            ),
+            !payload.foldersSet.has(stateFile.folderId),
         ),
       );
       state.filesStatus = UploadStatus.LOADED;
@@ -413,8 +412,13 @@ export const filesSlice = createSlice({
     ) => {
       state.sharedFileIds = payload.ids;
     },
-    addFiles: (state, { payload }: PayloadAction<{ files: DialFile[] }>) => {
-      state.files = combineEntities(payload.files, state.files);
+    addSharedFiles: (
+      state,
+      { payload }: PayloadAction<{ files: DialFile[] }>,
+    ) => {
+      //remove sharedWithMe files from state to have latest state from API
+      const filteredFiles = state.files.filter((file) => !file.sharedWithMe);
+      state.files = combineEntities(payload.files, filteredFiles);
     },
     updateFileContent: (
       state,
@@ -429,6 +433,7 @@ export const filesSlice = createSlice({
       state.folders = state.folders.map((folder) => ({
         ...folder,
         status: UploadStatus.UNINITIALIZED,
+        serverSynced: false,
       }));
     },
   },
