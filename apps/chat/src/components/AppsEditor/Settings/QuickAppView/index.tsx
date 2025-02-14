@@ -27,7 +27,6 @@ import { withLabel } from '@/src/components/Common/Forms/Label';
 import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
-import { ApplicationSettingsFormFooter } from '../ApplicationSettingsFormFooter';
 import { QuickAppFormData, getQuickAppData } from '../form';
 
 type Options<T extends Path<QuickAppFormData>> = Omit<
@@ -62,12 +61,16 @@ interface QuickAppViewProps {
   schema: ApiDetailedApplicationTypeSchema | null;
   isSharedWithMe: boolean;
   oldApplication: CustomApplicationModel;
+  submitButtonRef?: React.Ref<HTMLButtonElement>;
+  updateLastSubmittedValues?: (data: QuickAppFormData) => void;
 }
 
 export const QuickAppView: React.FC<QuickAppViewProps> = ({
   schema,
   isSharedWithMe,
   oldApplication,
+  submitButtonRef,
+  updateLastSubmittedValues,
 }) => {
   const { t } = useTranslation(Translation.Chat);
   const theme = useAppSelector(UISelectors.selectThemeState);
@@ -78,7 +81,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
     register,
     control,
     handleSubmit: submitWrapper,
-    formState: { errors, isValid },
+    formState: { errors },
   } = useFormContext<QuickAppFormData>();
 
   const handleSubmit = (data: QuickAppFormData) => {
@@ -94,6 +97,9 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
         schema: schema ?? undefined,
       }),
     );
+    if (updateLastSubmittedValues) {
+      updateLastSubmittedValues(data);
+    }
   };
 
   const files = useAppSelector(FilesSelectors.selectFiles);
@@ -191,8 +197,12 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
             />
           )}
         />
+        <button
+          type="submit"
+          ref={submitButtonRef}
+          style={{ display: 'none' }}
+        />
       </div>
-      <ApplicationSettingsFormFooter isValid={isValid} />
     </form>
   );
 };

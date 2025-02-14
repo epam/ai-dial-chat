@@ -26,7 +26,6 @@ import {
 } from '@/src/constants/quick-apps';
 
 import { DynamicField } from '../../Common/Forms/DynamicFormFields';
-import { ApplicationGeneralInfoFormData } from '../GeneralInfoView/form';
 
 const getToolsetStr = (config: QuickAppConfig) => {
   try {
@@ -36,17 +35,28 @@ const getToolsetStr = (config: QuickAppConfig) => {
   }
 };
 
-export interface CustomApplicationFormData
-  extends ApplicationGeneralInfoFormData {
+interface ApplicationGeneralInfo {
+  name: string;
+  version: string;
+  iconUrl: string;
+  description: string;
+  topics: string[];
+  id: string;
+  reference: string;
+  completionUrl: string;
+}
+
+export interface CustomApplicationFormData extends ApplicationGeneralInfo {
   inputAttachmentTypes: string[];
-  maxInputAttachments?: number;
   completionUrl: string;
   features: string | null;
   id: string;
   reference: string;
+  maxInputAttachments?: number | '';
+  applicationProperties: Record<string, unknown> | null | QuickAppConfig;
 }
 
-export interface QuickAppFormData extends ApplicationGeneralInfoFormData {
+export interface QuickAppFormData extends ApplicationGeneralInfo {
   id: string;
   reference: string;
   instructions: string;
@@ -56,17 +66,22 @@ export interface QuickAppFormData extends ApplicationGeneralInfoFormData {
   model: string;
 }
 
-export interface CodeAppFormData extends ApplicationGeneralInfoFormData {
+export interface CodeAppFormData extends ApplicationGeneralInfo {
   id: string;
   reference: string;
   inputAttachmentTypes: string[];
-  maxInputAttachments?: number;
   sources: string;
   sourceFiles?: string[];
   runtime: string;
   endpoints: DynamicField[];
+  maxInputAttachments?: number | '';
   env: DynamicField[];
 }
+
+export type FormDataType =
+  | CustomApplicationFormData
+  | QuickAppFormData
+  | CodeAppFormData;
 
 const getMappingsKeyOptions = (name: 'endpoints' | 'env') => ({
   validate: (v: string, data: CodeAppFormData) => {

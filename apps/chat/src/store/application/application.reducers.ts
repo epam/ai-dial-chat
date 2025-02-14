@@ -162,6 +162,15 @@ export const applicationSlice = createSlice({
       state.logsLoadingStatus = UploadStatus.FAILED;
       state.appLogs = undefined;
     },
+    updateStart: (state) => {
+      state.appLoading = UploadStatus.LOADING;
+    },
+    updateComplete: (state) => {
+      state.appLoading = UploadStatus.LOADED;
+    },
+    updateSuccess: (state, action: PayloadAction<CustomApplicationModel>) => {
+      state.appDetails = action.payload;
+    },
   },
 });
 

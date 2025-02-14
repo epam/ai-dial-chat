@@ -40,7 +40,6 @@ import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { OptionsDialog } from '@/src/components/Common/OptionsDialog';
 
-import { ApplicationSettingsFormFooter } from '../ApplicationSettingsFormFooter';
 import {
   CodeAppFormData,
   endpointsKeyValidator,
@@ -70,13 +69,13 @@ export const validators: Validators = {
     },
   },
   maxInputAttachments: {
-    validate: (v) => {
-      const reg = /^[0-9]*$/;
-
+    validate: (v?: number | '') => {
+      if (v === '' || v === undefined) return true;
+      const reg = /^[0-9]+$/;
       return reg.test(String(v)) || 'Max attachments must be a number';
     },
-    setValueAs: (v) => {
-      return v.replace(/[^0-9]/g, '');
+    setValueAs: (v: string): number | '' => {
+      return v === '' ? '' : Number(v.replace(/[^0-9]/g, ''));
     },
   },
   sources: {
@@ -109,6 +108,8 @@ interface CodeAppViewProps {
   isAppDeployed: boolean;
   oldApplication: CustomApplicationModel;
   isShared: boolean;
+  submitButtonRef?: React.Ref<HTMLButtonElement>;
+  updateLastSubmittedValues?: (data: CodeAppFormData) => void;
 }
 
 export const CodeAppView: React.FC<CodeAppViewProps> = ({
@@ -116,6 +117,8 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
   isAppDeployed,
   oldApplication,
   isShared,
+  submitButtonRef,
+  updateLastSubmittedValues,
 }) => {
   const { t } = useTranslation(Translation.Chat);
   const [confirmSharingRevoke, setConfirmSharingRevoke] = useState<{
@@ -135,7 +138,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     handleSubmit: submitWrapper,
     setError,
     clearErrors,
-    formState: { errors, isValid },
+    formState: { errors },
     watch,
     register,
   } = useFormContext<CodeAppFormData>();
@@ -174,6 +177,10 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
             applicationData,
           }),
         );
+
+        if (updateLastSubmittedValues) {
+          updateLastSubmittedValues(data);
+        }
 
         if (isAppDeployed) {
           dispatch(
@@ -332,9 +339,12 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           onClose={() => setEditorConfirmation(undefined)}
           options={modalOptions}
         />
-      </div>
-      <div className="sticky">
-        <ApplicationSettingsFormFooter isValid={isValid} />
+
+        <button
+          type="submit"
+          ref={submitButtonRef}
+          style={{ display: 'none' }}
+        />
       </div>
     </form>
   );

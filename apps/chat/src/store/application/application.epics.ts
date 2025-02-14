@@ -11,7 +11,15 @@ import {
   of,
   takeUntil,
 } from 'rxjs';
-import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
+import {
+  catchError,
+  endWith,
+  filter,
+  map,
+  startWith,
+  switchMap,
+  tap,
+} from 'rxjs/operators';
 
 import { AnyAction } from '@reduxjs/toolkit';
 
@@ -189,7 +197,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
           ).pipe(
             switchMap(() =>
               of(
-                ApplicationActions.editSuccess(),
+                ApplicationActions.updateSuccess(updatedCustomApplication),
                 ModelsActions.updateModel({
                   model: updatedCustomApplication,
                   oldApplicationId: payload.oldApplication.id,
@@ -215,6 +223,8 @@ const updateApplicationEpic: AppEpic = (action$) =>
                 ),
               );
             }),
+            startWith(ApplicationActions.updateStart()),
+            endWith(ApplicationActions.updateComplete()),
           );
         }),
       );

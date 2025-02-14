@@ -4,7 +4,7 @@ import {
   IconLayoutSidebarLeftCollapse,
   IconLayoutSidebarRightCollapse,
 } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import classNames from 'classnames';
@@ -19,6 +19,7 @@ import {
 } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
+import { ApplicationSelectors } from '@/src/store/application/application.reducers';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -32,6 +33,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { Chat } from '../../Chat/Chat';
+import { Spinner } from '../../Common/Spinner';
 import { ApplicationView } from './ApplicationView';
 import { CodeAppView } from './CodeAppView';
 import { CustomApplicationEditorView } from './CustomApplicationEditorView';
@@ -39,11 +41,15 @@ import { QuickAppView } from './QuickAppView';
 import {
   CodeAppFormData,
   CustomApplicationFormData,
+  FormDataType,
   QuickAppFormData,
   getCodeAppDefaultValues,
   getCustomApplicationDefaultValues,
   getQuickAppDefaultValues,
 } from './form';
+
+import { UploadStatus } from '@epam/ai-dial-shared';
+import { isEqual } from 'lodash-es';
 
 interface Props {
   schema: ApiDetailedApplicationTypeSchema | null;
@@ -56,6 +62,9 @@ export const ApplicationSettings: React.FC<Props> = ({
   schema,
   type,
 }) => {
+  const submitButtonRef = useRef<HTMLButtonElement>(null);
+  const submitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const pythonVersions = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
   );
@@ -89,25 +98,28 @@ export const ApplicationSettings: React.FC<Props> = ({
     schema?.['dial:applicationTypeViewerUrl'] ? 'closed' : 'half',
   );
 
-  const getDefaultValues = (type: string) => {
-    const defaultValues: Record<
-      string,
-      CustomApplicationFormData | QuickAppFormData | CodeAppFormData | null
-    > = {
-      [ApplicationType.CUSTOM_APP]: getCustomApplicationDefaultValues({
-        app: applicationData,
-      }),
-      [ApplicationType.CODE_APP]: getCodeAppDefaultValues({
-        app: applicationData,
-        runtime: pythonVersions[0],
-      }),
-      ['Quick App']: getQuickAppDefaultValues({
-        app: applicationData,
-      }),
-    };
+  const getDefaultValues = useCallback(
+    (type: string) => {
+      const defaultValues: Record<
+        string,
+        CustomApplicationFormData | QuickAppFormData | CodeAppFormData | null
+      > = {
+        [ApplicationType.CUSTOM_APP]: getCustomApplicationDefaultValues({
+          app: applicationData,
+        }),
+        [ApplicationType.CODE_APP]: getCodeAppDefaultValues({
+          app: applicationData,
+          runtime: pythonVersions[0],
+        }),
+        ['Quick App']: getQuickAppDefaultValues({
+          app: applicationData,
+        }),
+      };
 
-    return defaultValues[type] ?? null;
-  };
+      return defaultValues[type] ?? null;
+    },
+    [applicationData, pythonVersions],
+  );
 
   const getFormView = (type: string) => {
     // will be removed after all apps are migrated to the new schema flow
@@ -153,6 +165,54 @@ export const ApplicationSettings: React.FC<Props> = ({
     return customView ?? null;
   };
 
+  const appLoading = useAppSelector(ApplicationSelectors.selectAppLoading);
+
+  const handlePreviewMouseEnter = () => {
+    submitTimeoutRef.current = setTimeout(() => {
+      const currentValues = methods.getValues();
+      if (
+        methods.formState.isValid &&
+        !isEqual(currentValues, lastSubmittedValuesRef.current)
+      ) {
+        submitButtonRef.current?.click();
+      }
+    }, 750);
+  };
+
+  const handlePreviewMouseLeave = () => {
+    if (submitTimeoutRef.current) {
+      clearTimeout(submitTimeoutRef.current);
+      submitTimeoutRef.current = null;
+    }
+  };
+
+  const methods = useForm<
+    CustomApplicationFormData | QuickAppFormData | CodeAppFormData
+  >({
+    mode: 'onChange',
+    reValidateMode: 'onChange',
+    defaultValues:
+      getDefaultValues(schema?.['dial:applicationTypeDisplayName'] ?? type) ??
+      {},
+  });
+
+  const lastSubmittedValuesRef = useRef(methods.getValues());
+
+  const updateLastSubmittedValues = (data: FormDataType) => {
+    lastSubmittedValuesRef.current = data;
+  };
+
+  const formViewElement = getFormView(type);
+  const formViewWithRef = React.isValidElement(formViewElement)
+    ? React.cloneElement(
+        formViewElement as React.ReactElement<{
+          submitButtonRef?: React.Ref<HTMLButtonElement>;
+          updateLastSubmittedValues?: (data: CustomApplicationFormData) => void;
+        }>,
+        { submitButtonRef, updateLastSubmittedValues },
+      )
+    : formViewElement;
+
   const getPreview = () => {
     if (
       !areSelectedConversationsLoaded ||
@@ -161,19 +221,20 @@ export const ApplicationSettings: React.FC<Props> = ({
     )
       return null;
     return (
-      <div className="flex size-full min-w-0 grow flex-col">
+      <div
+        className="relative flex size-full min-w-0 grow flex-col"
+        onMouseEnter={handlePreviewMouseEnter}
+        onMouseLeave={handlePreviewMouseLeave}
+      >
+        {appLoading === UploadStatus.LOADING && (
+          <div className="absolute flex size-full items-center justify-center bg-layer-2">
+            <Spinner size={30} />
+          </div>
+        )}
         <Chat />
       </div>
     );
   };
-
-  const methods = useForm<CustomApplicationFormData | QuickAppFormData>({
-    mode: 'onChange',
-    reValidateMode: 'onChange',
-    defaultValues:
-      getDefaultValues(schema?.['dial:applicationTypeDisplayName'] ?? type) ??
-      {},
-  });
 
   const dispatch = useAppDispatch();
 
@@ -223,7 +284,7 @@ export const ApplicationSettings: React.FC<Props> = ({
           'w-0 opacity-0': previewMode === 'full',
         })}
       >
-        <FormProvider {...methods}>{getFormView(type)}</FormProvider>
+        <FormProvider {...methods}>{formViewWithRef}</FormProvider>
       </div>
 
       <div

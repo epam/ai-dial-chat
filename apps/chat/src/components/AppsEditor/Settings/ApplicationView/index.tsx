@@ -22,7 +22,6 @@ import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 
-import { ApplicationSettingsFormFooter } from '../ApplicationSettingsFormFooter';
 import {
   CustomApplicationFormData,
   getAttachmentTypeErrorHandlers,
@@ -87,13 +86,13 @@ export const validators: Validators = {
     },
   },
   maxInputAttachments: {
-    validate: (v) => {
-      const reg = /^[0-9]*$/;
-
+    validate: (v?: number | '') => {
+      if (v === '' || v === undefined) return true;
+      const reg = /^[0-9]+$/;
       return reg.test(String(v)) || 'Max attachments must be a number';
     },
-    setValueAs: (v) => {
-      return v.replace(/[^0-9]/g, '');
+    setValueAs: (v: string): number | '' => {
+      return v === '' ? '' : Number(v.replace(/[^0-9]/g, ''));
     },
   },
   completionUrl: {
@@ -126,9 +125,15 @@ const getItemLabel = (item: unknown): string => item as string;
 
 interface Props {
   oldApplication: CustomApplicationModel;
+  submitButtonRef?: React.Ref<HTMLButtonElement>;
+  updateLastSubmittedValues?: (data: CustomApplicationFormData) => void;
 }
 
-export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
+export const ApplicationView: React.FC<Props> = ({
+  oldApplication,
+  submitButtonRef,
+  updateLastSubmittedValues,
+}) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
@@ -136,7 +141,7 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
     register,
     control,
     handleSubmit: submitWrapper,
-    formState: { errors, isValid },
+    formState: { errors },
     setError,
     clearErrors,
   } = useFormContext<CustomApplicationFormData>();
@@ -153,6 +158,9 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
         },
       }),
     );
+    if (updateLastSubmittedValues) {
+      updateLastSubmittedValues(data);
+    }
   };
 
   return (
@@ -216,9 +224,11 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
           error={errors.completionUrl?.message}
           data-qa="completion-url"
         />
-      </div>
-      <div className="sticky">
-        <ApplicationSettingsFormFooter isValid={isValid} />
+        <button
+          type="submit"
+          ref={submitButtonRef}
+          style={{ display: 'none' }}
+        />
       </div>
     </form>
   );

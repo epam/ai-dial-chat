@@ -37,7 +37,7 @@ export interface ApplicationGeneralInfoFormData {
   reference: string;
   applicationProperties?: Record<string, unknown> | QuickAppConfig | null;
   inputAttachmentTypes?: string[];
-  maxInputAttachments?: number;
+  maxInputAttachments?: number | '';
   features?: string | null;
   env?: DynamicField[];
   sources?: string;
@@ -166,7 +166,9 @@ export const getApplicationData = (
     iconUrl: formData.iconUrl,
     applicationProperties: formData.applicationProperties ?? undefined,
     inputAttachmentTypes: formData.inputAttachmentTypes,
-    maxInputAttachments: formData.maxInputAttachments,
+    maxInputAttachments: formData.maxInputAttachments
+      ? Number(formData.maxInputAttachments)
+      : undefined,
   };
   if (type === ApplicationType.CUSTOM_APP) {
     preparedData.completionUrl = formData.completionUrl ?? '';
