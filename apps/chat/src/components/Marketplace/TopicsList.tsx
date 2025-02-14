@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
+import React, { memo, useEffect, useRef, useState } from 'react';
 
 import Tooltip from '../Common/Tooltip';
 import { ApplicationTopic } from './ApplicationTopic';
@@ -33,64 +33,54 @@ export const TopicsList = ({ topics }: TopicsListProps) => {
   const allTopicsRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const checkOverflow = useCallback(() => {
-    if (containerRef.current && allTopicsRef.current) {
-      if (
-        allTopicsRef.current.offsetWidth <= containerRef.current.offsetWidth
-      ) {
-        setVisibleTopics(topics);
-        setHiddenTopics([]);
-      }
-
-      const initialVisibleTopics: string[] = [];
-      const initialHiddenTopics: string[] = [];
-      const children = Array.from(allTopicsRef.current.children);
-      const containerWidth = containerRef.current.offsetWidth - counterWidth;
-      let occupiedWidth = 0;
-
-      const visibleTopicWidths: { topic: string; width: number }[] = [];
-
-      children.forEach((childNode, index) => {
-        const element = childNode as HTMLElement;
-        const elementWidth = element.offsetWidth + leftTopicPadding;
-
-        if (occupiedWidth + elementWidth <= containerWidth) {
-          initialVisibleTopics.push(topics[index]);
-          visibleTopicWidths.push({
-            topic: topics[index],
-            width: elementWidth,
-          });
-          occupiedWidth += elementWidth;
-        } else {
-          initialHiddenTopics.push(topics[index]);
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (containerRef.current && allTopicsRef.current) {
+        if (
+          allTopicsRef.current.offsetWidth <= containerRef.current.offsetWidth
+        ) {
+          setVisibleTopics(topics);
+          setHiddenTopics([]);
         }
-      });
 
-      setVisibleTopics(initialVisibleTopics);
-      setHiddenTopics(initialHiddenTopics);
-    }
-  }, [topics]);
+        const initialVisibleTopics: string[] = [];
+        const initialHiddenTopics: string[] = [];
+        const children = Array.from(allTopicsRef.current.children);
+        const containerWidth = containerRef.current.offsetWidth - counterWidth;
+        let occupiedWidth = 0;
 
-  useEffect(() => {
-    checkOverflow();
-  }, [checkOverflow, topics]);
+        const visibleTopicWidths: { topic: string; width: number }[] = [];
 
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    const onResize = () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        checkOverflow();
-      }, 30);
+        children.forEach((childNode, index) => {
+          const element = childNode as HTMLElement;
+          const elementWidth = element.offsetWidth + leftTopicPadding;
+
+          if (occupiedWidth + elementWidth <= containerWidth) {
+            initialVisibleTopics.push(topics[index]);
+            visibleTopicWidths.push({
+              topic: topics[index],
+              width: elementWidth,
+            });
+            occupiedWidth += elementWidth;
+          } else {
+            initialHiddenTopics.push(topics[index]);
+          }
+        });
+
+        setVisibleTopics(initialVisibleTopics);
+        setHiddenTopics(initialHiddenTopics);
+      }
     };
+    const resizeObserver = new ResizeObserver(checkOverflow);
 
-    window.addEventListener('resize', onResize);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
 
     return () => {
-      clearTimeout(timer);
-      window.removeEventListener('resize', onResize);
+      resizeObserver.disconnect();
     };
-  }, [checkOverflow]);
+  }, [topics]);
 
   return (
     <>
