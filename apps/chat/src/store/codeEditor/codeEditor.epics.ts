@@ -35,8 +35,10 @@ const initCodeEditorEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(CodeEditorActions.initCodeEditor.match),
     switchMap(({ payload }) => {
+      const sourceFolderId = `${payload.sourcesFolderId}${payload.sourcesFolderId.endsWith('/') ? '' : '/'}`;
+
       const folderFiles = FilesSelectors.selectFiles(state$.value).filter(
-        (file) => file.id.startsWith(`${payload.sourcesFolderId}/`),
+        (file) => file.id.startsWith(sourceFolderId),
       );
       const rootFiles = FilesSelectors.selectFiles(state$.value).filter(
         (file) => file.folderId === payload.sourcesFolderId,
