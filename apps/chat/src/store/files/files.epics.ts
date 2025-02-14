@@ -132,21 +132,21 @@ const renameFolderEpic: AppEpic = (action$, state$) =>
       });
       const files = FilesSelectors.selectFiles(state$.value);
 
-      const targetFileIds = files
-        .filter((file) => file.id?.startsWith(`${payload.folderId}/`))
+      const updatedFileIds = files
+        .filter((file) => file.id?.startsWith(`${targetFolderId}/`))
         .map(({ id }) => id);
 
-      if (!targetFileIds.length) return EMPTY;
+      if (!updatedFileIds.length) return EMPTY;
 
-      const updatedFileIds = targetFileIds.map((id) =>
-        updateMovedEntityId(payload.folderId, targetFolderId, id),
+      const sourceFileIds = updatedFileIds.map((id) =>
+        updateMovedEntityId(targetFolderId, payload.folderId, id),
       );
 
       return forkJoin(
         ...updatedFileIds.map((destinationUrl, i) =>
           FileService.moveFile({
             destinationUrl,
-            sourceUrl: targetFileIds[i],
+            sourceUrl: sourceFileIds[i],
             overwrite: true,
           }),
         ),
@@ -176,15 +176,15 @@ const renameFolderFailEpic: AppEpic = (action$) =>
     filter(FilesActions.renameFolderFail.match),
     switchMap(({ payload }) => {
       return of(
-        UIActions.showToast({
-          message: translate(
+        UIActions.showErrorToast(
+          translate(
             'Renaming folder {{folderName}} failed. Please try again later',
             {
               ns: Translation.Files,
               folderName: getFolderFromId(payload.oldId, FolderType.File).name,
             },
           ),
-        }),
+        ),
       );
     }),
   );

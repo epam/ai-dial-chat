@@ -1,12 +1,13 @@
 import {
   constructPath,
   getDialFilesFromAttachments,
+  getRelativePath,
   notAllowedSymbols,
   notAllowedSymbolsRegex,
 } from '@/src/utils/app/file';
 
 import { Conversation, PrepareNameOptions } from '@/src/types/chat';
-import { PartialBy } from '@/src/types/common';
+import { BaseDialEntity, PartialBy } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
@@ -625,4 +626,46 @@ export const canEditSharedFolderOrParent = (
   }
 
   return false;
+};
+
+export const updateEntityFolder = <T extends Entity | BaseDialEntity>(
+  entity: T,
+  sourceFolderId: string,
+  targetFolderId: string,
+): T => {
+  if (entity.id.startsWith(`${sourceFolderId}/`)) {
+    const folderId =
+      entity.folderId === sourceFolderId
+        ? targetFolderId
+        : updateMovedFolderId(sourceFolderId, targetFolderId, entity.folderId);
+    return {
+      ...entity,
+      id: updateMovedEntityId(sourceFolderId, targetFolderId, entity.id),
+      folderId,
+      ...('absolutePath' in entity && {
+        absolutePath: folderId,
+      }),
+      ...('relativePath' in entity && {
+        relativePath: getRelativePath(folderId),
+      }),
+    };
+  }
+
+  return entity;
+};
+
+export const renameFolderAndMoveEntity = <T extends Entity | BaseDialEntity>(
+  entity: T,
+  sourceFolderId: string,
+  targetFolderId: string,
+) => {
+  if (entity.id === sourceFolderId) {
+    return {
+      ...entity,
+      name: splitEntityId(targetFolderId).name,
+      id: targetFolderId,
+    };
+  }
+
+  return updateEntityFolder(entity, sourceFolderId, targetFolderId);
 };
