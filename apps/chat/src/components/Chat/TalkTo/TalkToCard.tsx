@@ -56,10 +56,10 @@ import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
-import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
 import ShareIcon from '../../Common/ShareIcon';
+import { TopicsList } from '../../Marketplace/TopicsList';
 
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature } from '@epam/ai-dial-shared';
@@ -396,9 +396,7 @@ export const TalkToCard = ({
               )}
             </span>
           )}
-          {entity.topics?.map((topic) => (
-            <ApplicationTopic key={topic} topic={topic} />
-          ))}
+          {entity.topics && <TopicsList topics={entity.topics} />}
         </div>
       </div>
     </div>
