@@ -6,7 +6,6 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
 import { isPlaybackConversation } from '@/src/utils/app/conversation';
-import { isEntityIdExternal } from '@/src/utils/app/id';
 
 import { Conversation } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
@@ -53,7 +52,6 @@ export const AssistantMessage = memo(function AssistantMessage({
   const isShowResponseLoader =
     !!conversation.isMessageStreaming && isLastMessage;
   const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
-  const isExternal = isEntityIdExternal(conversation);
 
   const codeRegEx =
     /(?:(?:^|\n)[ \t]*`{3}[\s\S]*?(?:^|\n)[ \t]*`{3}|(?:^|\n)(?: {4}|\t)[^\n]*)/g;
@@ -101,7 +99,7 @@ export const AssistantMessage = memo(function AssistantMessage({
         !isConversationInvalid && (
           <MessageAssistantButtons
             copyOnClick={() => onCopy?.()}
-            isLikesEnabled={isLikesEnabled && !isExternal}
+            isLikesEnabled={isLikesEnabled}
             message={message}
             messageCopied={messageCopied}
             onLike={(likeStatus) => onLike?.(likeStatus)}
