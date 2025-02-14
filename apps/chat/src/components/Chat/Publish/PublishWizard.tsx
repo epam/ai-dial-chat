@@ -368,7 +368,6 @@ export function PublishModal<
                   path: trimmedPath,
                   publishAction,
                   applicationDetails,
-                  selectedIds: selectedItemsIds,
                 })
               : []),
           ],
