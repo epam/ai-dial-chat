@@ -24,6 +24,9 @@ interface TopicsListProps {
   topics: string[];
 }
 
+const counterWidth = 30;
+const leftTopicPadding = 8;
+
 export const TopicsList = ({ topics }: TopicsListProps) => {
   const [visibleTopics, setVisibleTopics] = useState<string[]>([]);
   const [hiddenTopics, setHiddenTopics] = useState<string[]>([]);
@@ -32,17 +35,24 @@ export const TopicsList = ({ topics }: TopicsListProps) => {
 
   const checkOverflow = useCallback(() => {
     if (containerRef.current && allTopicsRef.current) {
+      if (
+        allTopicsRef.current.offsetWidth <= containerRef.current.offsetWidth
+      ) {
+        setVisibleTopics(topics);
+        setHiddenTopics([]);
+      }
+
       const initialVisibleTopics: string[] = [];
       const initialHiddenTopics: string[] = [];
       const children = Array.from(allTopicsRef.current.children);
-      const containerWidth = containerRef.current.offsetWidth;
+      const containerWidth = containerRef.current.offsetWidth - counterWidth;
       let occupiedWidth = 0;
 
       const visibleTopicWidths: { topic: string; width: number }[] = [];
 
       children.forEach((childNode, index) => {
         const element = childNode as HTMLElement;
-        const elementWidth = element.offsetWidth + 8;
+        const elementWidth = element.offsetWidth + leftTopicPadding;
 
         if (occupiedWidth + elementWidth <= containerWidth) {
           initialVisibleTopics.push(topics[index]);
@@ -55,24 +65,6 @@ export const TopicsList = ({ topics }: TopicsListProps) => {
           initialHiddenTopics.push(topics[index]);
         }
       });
-
-      if (initialHiddenTopics.length && occupiedWidth > containerWidth - 30) {
-        const smallestVisible = visibleTopicWidths
-          .filter(({ width }) => width > 30)
-          .reduce(
-            (minItem, item) => (item.width < minItem.width ? item : minItem),
-            { topic: '', width: Infinity },
-          );
-
-        if (smallestVisible.width !== Infinity) {
-          initialVisibleTopics.splice(
-            initialVisibleTopics.indexOf(smallestVisible.topic),
-            1,
-          );
-          initialHiddenTopics.push(smallestVisible.topic);
-          occupiedWidth -= smallestVisible.width;
-        }
-      }
 
       setVisibleTopics(initialVisibleTopics);
       setHiddenTopics(initialHiddenTopics);
