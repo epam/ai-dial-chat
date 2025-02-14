@@ -82,7 +82,7 @@ export const getDefaultValues = (
     //code app application properties
     sources: applicationData?.function?.sourceFolder
       ? ApiUtils.decodeApiUrl(applicationData.function.sourceFolder)
-      : `files/${bucket}/appdata`,
+      : `files/${bucket}`,
     runtime:
       applicationData?.function?.runtime ?? pythonVersion ?? 'python3.11',
     endpoints: applicationData?.function?.mapping

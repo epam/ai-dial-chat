@@ -3,6 +3,8 @@ import {
   IconArrowsMinimize,
   IconLayoutSidebarLeftCollapse,
   IconLayoutSidebarRightCollapse,
+  IconMessages,
+  IconPlayerPlay,
 } from '@tabler/icons-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -11,15 +13,22 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import {
+  getApplicationNextStatus,
+  isApplicationDeployed,
+} from '@/src/utils/app/application';
+
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
-  ApplicationStatus,
   ApplicationType,
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationSelectors } from '@/src/store/application/application.reducers';
+import {
+  ApplicationActions,
+  ApplicationSelectors,
+} from '@/src/store/application/application.reducers';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -70,7 +79,7 @@ export const ApplicationSettings: React.FC<Props> = ({
   );
 
   const isAppDeployed =
-    applicationData?.function?.status === ApplicationStatus.DEPLOYED;
+    applicationData && isApplicationDeployed(applicationData);
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const modelFromState = applicationData
@@ -231,7 +240,40 @@ export const ApplicationSettings: React.FC<Props> = ({
             <Spinner size={30} />
           </div>
         )}
-        <Chat />
+        {type === ApplicationType.CODE_APP && !isAppDeployed ? (
+          <div className="flex size-full flex-col items-center justify-center gap-4">
+            <div className="flex items-center justify-center text-secondary">
+              <IconMessages size={45} />
+            </div>
+            <div className="w-full max-w-[420px] items-center justify-center text-center text-primary">
+              {t(
+                'Please fill the mandatory fields and deploy the application to enable preview. To keep your preview up-to-date,',
+              )}
+              <span className="font-semibold">
+                {t(' make sure to redeploy ')}
+              </span>
+              {t('after making changes.')}
+            </div>
+            <button
+              className="button button-accent-secondary mb-2 flex items-center gap-2 text-accent-secondary md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
+              data-qa="deploy-code-app"
+              disabled={!methods.formState.isValid}
+              onClick={() => {
+                dispatch(
+                  ApplicationActions.startUpdatingFunctionStatus({
+                    id: applicationData.id,
+                    status: getApplicationNextStatus(applicationData),
+                  }),
+                );
+              }}
+            >
+              <IconPlayerPlay size={12} />
+              <span>{t('Deploy code app')}</span>
+            </button>
+          </div>
+        ) : (
+          <Chat />
+        )}
       </div>
     );
   };

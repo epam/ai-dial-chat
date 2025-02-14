@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Controller,
   Path,
@@ -28,9 +28,9 @@ import { CODEAPPS_REQUIRED_FILES } from '@/src/constants/applications';
 import { CODE_APPS_ENDPOINTS } from '@/src/constants/code-apps';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
 
+import { FormCodeEditor } from '@/src/components/Common/ApplicationWizard/CodeAppView/FormCodeEditor';
 import { RuntimeVersionSelector } from '@/src/components/Common/ApplicationWizard/CodeAppView/RuntimeVersionSelector';
 import { SourceFilesEditor } from '@/src/components/Common/ApplicationWizard/CodeAppView/SourceFilesEditor';
-import { CodeEditor } from '@/src/components/Common/CodeEditor';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { withController } from '@/src/components/Common/Forms/ControlledFormField';
 import { DynamicFormFields } from '@/src/components/Common/Forms/DynamicFormFields';
@@ -59,7 +59,7 @@ type Validators = {
   [K in keyof CodeAppFormData]?: Options<K>;
 };
 
-export const validators: Validators = {
+const validators: Validators = {
   inputAttachmentTypes: {
     validate: (types) => {
       return (
@@ -129,9 +129,9 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
   const [editorConfirmation, setEditorConfirmation] =
     useState<CodeAppFormData>();
 
-  const isCodeEditorDirty = useAppSelector(CodeEditorSelectors.selectIsDirty);
-
   const dispatch = useAppDispatch();
+
+  const isCodeEditorDirty = useAppSelector(CodeEditorSelectors.selectIsDirty);
 
   const {
     control,
@@ -191,7 +191,15 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
         }
       }
     },
-    [oldApplication, dispatch, isAppDeployed, isSharedWithMe, t, isShared],
+    [
+      oldApplication,
+      dispatch,
+      isAppDeployed,
+      isSharedWithMe,
+      t,
+      isShared,
+      updateLastSubmittedValues,
+    ],
   );
 
   const handleSave = useCallback(
@@ -228,6 +236,12 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
 
   register('sourceFiles', validators['sourceFiles']);
   const sources = watch('sources');
+
+  useEffect(() => {
+    return () => {
+      dispatch(CodeEditorActions.resetCodeEditor());
+    };
+  }, [dispatch]);
 
   return (
     <form
@@ -281,7 +295,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           }
         />
 
-        {sources && <CodeEditor sourcesFolderId={sources} />}
+        {sources && <FormCodeEditor sourcesFolderId={sources} />}
 
         <RuntimeSelector
           control={control}
