@@ -23,7 +23,7 @@ export class ItemApiHelper extends BaseApiHelper {
     await this.deleteBackendItem(
       ...conversations,
       ...prompts,
-      ...apps.filter((a) => a.name.startsWith(applicationNamePrefix)),
+      ...apps.filter((a) => a.name.includes(applicationNamePrefix)),
     );
   }
 
