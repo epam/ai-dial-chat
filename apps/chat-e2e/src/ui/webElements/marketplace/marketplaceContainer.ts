@@ -3,7 +3,6 @@ import { BaseElement } from '@/src/ui/webElements';
 import { BaseLayoutContainer } from '@/src/ui/webElements/baseLayoutContainer';
 import { Marketplace } from '@/src/ui/webElements/marketplace/marketplace';
 import { MarketplaceSidebar } from '@/src/ui/webElements/marketplace/marketplaceSidebar';
-import { ModelsUtil } from '@/src/utils';
 
 export class MarketplaceContainer extends BaseLayoutContainer {
   private marketplace!: Marketplace;
@@ -30,11 +29,12 @@ export class MarketplaceContainer extends BaseLayoutContainer {
     return this.getChildElementBySelector(ChatSelectors.messageSpinner);
   }
 
-  public async goToMarketplaceHome() {
+  public async goToMarketplaceHome(expectedAgentsCount?: number) {
     await this.getMarketplaceSidebar().marketplaceHomePageButton.click();
-    const allExpectedAgents = ModelsUtil.getLatestOpenAIEntities();
-    await this.getMarketplace()
-      .getAgents()
-      .waitForAgentByIndex(allExpectedAgents.length);
+    if (expectedAgentsCount) {
+      await this.getMarketplace()
+        .getAgents()
+        .waitForAgentByIndex(expectedAgentsCount);
+    }
   }
 }

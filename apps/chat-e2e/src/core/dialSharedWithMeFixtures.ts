@@ -46,7 +46,7 @@ import { VariableModalAssertion } from '@/src/assertions/variableModalAssertion'
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
 import { isApiStorageType } from '@/src/hooks/global-setup';
-import { FileApiHelper } from '@/src/testData/api';
+import { FileApiHelper, ModelApiHelper } from '@/src/testData/api';
 import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
@@ -80,6 +80,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserConversationSettingsModal: ConversationSettingsModal;
   additionalShareUserAgentSettings: AgentSettings;
   additionalShareUserChatHeader: ChatHeader;
+  additionalShareUserModelApiHelper: ModelApiHelper;
   additionalShareUserTalkToAgentDialog: TalkToAgentDialog;
   additionalShareUserChatMessages: ChatMessages;
   additionalShareUserSendMessage: SendMessage;
@@ -380,12 +381,23 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserChat.getChatHeader();
     await use(additionalShareUserChatHeader);
   },
+  additionalShareUserModelApiHelper: async (
+    { additionalShareUserRequestContext },
+    use,
+  ) => {
+    const additionalShareUserModelApiHelper = new ModelApiHelper(
+      additionalShareUserRequestContext,
+      BucketUtil.getAdditionalShareUserBucket(),
+    );
+    await use(additionalShareUserModelApiHelper);
+  },
   additionalShareUserTalkToAgentDialog: async (
-    { additionalShareUserPage },
+    { additionalShareUserPage, additionalShareUserModelApiHelper },
     use,
   ) => {
     const additionalShareUserTalkToAgentDialog = new TalkToAgentDialog(
       additionalShareUserPage,
+      additionalShareUserModelApiHelper,
     );
     await use(additionalShareUserTalkToAgentDialog);
   },

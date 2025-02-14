@@ -510,8 +510,8 @@ const dialTest = test.extend<{
       chatBar.getOrganizationFolderConversations();
     await use(organizationFolderConversations);
   },
-  talkToAgentDialog: async ({ page }, use) => {
-    const talkToAgentDialog = new TalkToAgentDialog(page);
+  talkToAgentDialog: async ({ page, modelApiHelper }, use) => {
+    const talkToAgentDialog = new TalkToAgentDialog(page, modelApiHelper);
     await use(talkToAgentDialog);
   },
   talkToAgents: async ({ talkToAgentDialog }, use) => {
