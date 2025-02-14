@@ -18,12 +18,12 @@ import { combineEpics } from 'redux-observable';
 
 import { FileService } from '@/src/utils/app/data/file-service';
 import { getDownloadPath, triggerDownload } from '@/src/utils/app/file';
-import { getFileRootId } from '@/src/utils/app/id';
 import {
   getFolderFromId,
   getGeneratedFolderId,
   updateMovedEntityId,
 } from '@/src/utils/app/folders';
+import { getFileRootId } from '@/src/utils/app/id';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
