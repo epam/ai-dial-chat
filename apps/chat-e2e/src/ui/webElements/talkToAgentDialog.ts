@@ -1,6 +1,7 @@
 import { DialAIEntityModel } from '@/chat/types/models';
 import config from '@/config/chat.playwright.config';
 import { API, ExpectedConstants } from '@/src/testData';
+import { ModelApiHelper } from '@/src/testData/api';
 import { MarketplacePage } from '@/src/ui/pages';
 import { OverlayMarketplacePage } from '@/src/ui/pages/overlay/overlayMarketplacePage';
 import {
@@ -15,9 +16,16 @@ import { ModelsUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
 export class TalkToAgentDialog extends BaseElement {
-  constructor(page: Page, parentLocator?: Locator) {
+  constructor(
+    page: Page,
+    modelApiHelper: ModelApiHelper,
+    parentLocator?: Locator,
+  ) {
     super(page, TalkToAgentDialogSelectors.talkToAgentModal, parentLocator);
+    this.modelApiHelper = modelApiHelper;
   }
+
+  private modelApiHelper: ModelApiHelper;
 
   private agents!: MarketplaceAgents;
   private versionDropdownMenu!: DropdownButtonMenu;
@@ -63,11 +71,12 @@ export class TalkToAgentDialog extends BaseElement {
         .isAgentUsed(entity);
       //otherwise go to marketplace "DIAL Marketplace page"
       if (!isMyApplicationUsed) {
-        await marketplaceContainer.goToMarketplaceHome();
+        const expectedAgents = ModelsUtil.getLatestOpenAIEntities(
+          await this.modelApiHelper.getModels(),
+        );
+        await marketplaceContainer.goToMarketplaceHome(expectedAgents.length);
         await marketplacePage.waitForPageLoaded(); // Wait for "Home Page" to load
-        const expectedAgents = ModelsUtil.getLatestOpenAIEntities();
         const allAgents = marketplace.getAgents();
-        await allAgents.waitForAgentByIndex(expectedAgents.length);
         const isAllApplicationUsed = await allAgents.isAgentUsed(entity, {
           isInstalledDeploymentsUpdated: true,
         });
