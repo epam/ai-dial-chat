@@ -43,3 +43,9 @@ export interface DialLink {
   title?: string;
   href: string;
 }
+
+export enum FileSourceType {
+  MY_FILES = 'MY_FILES',
+  SHARED_WITH_ME = 'SHARED_WITH_ME',
+  PUBLIC = 'PUBLIC',
+}

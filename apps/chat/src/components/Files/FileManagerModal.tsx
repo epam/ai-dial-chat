@@ -28,7 +28,7 @@ import {
 } from '@/src/utils/app/search';
 
 import { FeatureType } from '@/src/types/common';
-import { DialFile } from '@/src/types/files';
+import { DialFile, FileSourceType } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
@@ -66,6 +66,8 @@ interface FilesSectionProps {
   children: ReactNode;
   files: DialFile[];
   folders: FolderInterface[];
+  sourceType: FileSourceType;
+  filters?: Set<FileSourceType>;
 }
 
 const FilesSectionWrapper = ({
@@ -74,12 +76,14 @@ const FilesSectionWrapper = ({
   folders,
   files,
   children,
+  sourceType,
+  filters,
 }: FilesSectionProps) => {
   const { handleToggle, isExpanded } = useSectionToggle(name, FeatureType.File);
 
   const isNothingExists = folders.length === 0 && files.length === 0;
 
-  if (isNothingExists) return null;
+  if (isNothingExists || (filters && !filters.has(sourceType))) return null;
 
   return (
     <CollapsibleSection
@@ -115,6 +119,7 @@ interface Props {
   forceShowSelectCheckBox?: boolean;
   forceHideSelectFolders?: boolean;
   showTooltip?: boolean;
+  sourceFilters?: Set<FileSourceType>;
 }
 
 export const FileManagerModal = ({
@@ -130,6 +135,7 @@ export const FileManagerModal = ({
   forceHideSelectFolders,
   onClose,
   showTooltip,
+  sourceFilters,
 }: Props) => {
   const dispatch = useAppDispatch();
 
@@ -687,6 +693,8 @@ export const FileManagerModal = ({
                 dataQa="organization-files"
                 folders={organizationRootFolders}
                 files={organizationRootFiles}
+                sourceType={FileSourceType.PUBLIC}
+                filters={sourceFilters}
               >
                 <div className="flex flex-col gap-1 overflow-auto">
                   {organizationRootFolders.map((folder) => {
@@ -761,6 +769,8 @@ export const FileManagerModal = ({
                 dataQa="shared-with-me-files"
                 folders={sharedWithMeRootFolders}
                 files={sharedWithMeRootFiles}
+                sourceType={FileSourceType.SHARED_WITH_ME}
+                filters={sourceFilters}
               >
                 <div className="flex flex-col gap-1 overflow-auto">
                   {sharedWithMeRootFolders.map((folder) => {
@@ -822,6 +832,8 @@ export const FileManagerModal = ({
                 dataQa="all-files"
                 folders={myRootFolders}
                 files={myRootFiles}
+                sourceType={FileSourceType.MY_FILES}
+                filters={sourceFilters}
               >
                 <div className="flex flex-col gap-1 overflow-auto">
                   {myRootFolders.map((folder) => {

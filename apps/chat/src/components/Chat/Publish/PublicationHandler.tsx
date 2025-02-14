@@ -52,7 +52,7 @@ import {
   FilePublicationResources,
   PromptPublicationResources,
 } from './PublicationResources';
-import { ReviewApplicationDialog } from './ReviewApplicationDialog';
+import { ReviewApplicationDialog } from './ReviewApplicationDialog/ReviewApplicationDialog';
 import { RuleListItem } from './RuleListItem';
 
 import isEqual from 'lodash-es/isEqual';
