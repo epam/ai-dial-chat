@@ -19,6 +19,8 @@ export const SideBarSelectors = {
   sharedWithMeContainer: '[data-qa="shared-with-me-container"]',
   approveRequiredContainer: '[data-qa="approve-required-container"]',
   organizationContainer: '[data-qa="published-with-me-container"]',
+  noData: '[data-qa="no-data-placeholder"]',
+  noDataIcon: '[data-qa="no-data-icon"]',
 };
 
 export const ChatBarSelectors = {
