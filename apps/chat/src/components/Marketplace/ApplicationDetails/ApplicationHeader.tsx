@@ -86,7 +86,7 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
                 <TopicsList
                   topics={entity.topics}
                   counterMarginRight={
-                    screenState === ScreenState.MOBILE ? 15 : 0
+                    screenState === ScreenState.MOBILE ? 18 : 0
                   }
                 />
               )}
