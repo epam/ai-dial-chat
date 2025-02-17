@@ -290,7 +290,7 @@ export const isApplicationDeployed = (entity: DialAIEntityModel) => {
 };
 
 export const isApplicationTypeKey = (
-  key: any,
+  key: string,
 ): key is keyof typeof ApplicationTypeToSourceType => {
   return key in ApplicationTypeToSourceType;
 };

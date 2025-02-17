@@ -3,9 +3,11 @@ import {
   Observable,
   catchError,
   concat,
+  endWith,
   filter,
   first,
   of,
+  startWith,
   switchMap,
   tap,
 } from 'rxjs';
@@ -105,7 +107,6 @@ const initEpic: AppEpic = (action$, state$) =>
         filter(() => {
           const authStatus = AuthSelectors.selectStatus(state$.value);
           const shouldLogin = AuthSelectors.selectIsShouldLogin(state$.value);
-
           return authStatus !== 'loading' && !shouldLogin;
         }),
         first(),
@@ -116,7 +117,6 @@ const initEpic: AppEpic = (action$, state$) =>
           ).pipe(
             switchMap(({ bucket }) => {
               BucketService.setBucket(bucket);
-
               return concat(...getInitActions(payload));
             }),
             catchError((error) => {
@@ -131,6 +131,8 @@ const initEpic: AppEpic = (action$, state$) =>
                 );
               }
             }),
+            startWith(SettingsActions.initStart()),
+            endWith(SettingsActions.initComplete()),
           ),
         ),
       );

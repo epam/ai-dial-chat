@@ -14,12 +14,15 @@ import {
 import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { AppsEditorHeader } from '@/src/components/AppsEditor/AppsEditorHeader';
 import { GeneralInfoView } from '@/src/components/AppsEditor/GeneralInfoView/GeneralInfoView';
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import { getLayout } from '../../_app';
+
+import { UploadStatus } from '@epam/ai-dial-shared';
 
 export default function AppsEditor() {
   const {
@@ -36,7 +39,9 @@ export default function AppsEditor() {
     ApplicationSelectors.selectApplicationDetail,
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const isLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
+  const initialDataStatus = useAppSelector(
+    SettingsSelectors.selectInitialDataStatus,
+  );
 
   useEffect(() => {
     const applicationId = modelsMap[id.toString()]?.id;
@@ -47,7 +52,7 @@ export default function AppsEditor() {
 
   return (
     <div className="flex size-full flex-col">
-      {isLoading ? (
+      {initialDataStatus === UploadStatus.LOADING ? (
         <div className="flex h-full items-center justify-center">
           <Spinner size={45} className="mx-auto" />
         </div>

@@ -5,8 +5,15 @@ import {
   IconLayoutSidebarRightCollapse,
   IconMessages,
   IconPlayerPlay,
+  IconRefresh,
 } from '@tabler/icons-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import classNames from 'classnames';
@@ -16,10 +23,12 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import {
   getApplicationNextStatus,
   isApplicationDeployed,
+  isApplicationDeploymentInProgress,
 } from '@/src/utils/app/application';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
+  ApplicationStatus,
   ApplicationType,
   CustomApplicationModel,
 } from '@/src/types/applications';
@@ -78,13 +87,20 @@ export const ApplicationSettings: React.FC<Props> = ({
     SettingsSelectors.selectCodeEditorPythonVersions,
   );
 
-  const isAppDeployed =
-    applicationData && isApplicationDeployed(applicationData);
-
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const modelFromState = applicationData
     ? modelsMap[applicationData.reference]
     : null;
+
+  const isAppDeployed = useMemo(() => {
+    return !!modelFromState && isApplicationDeployed(modelFromState);
+  }, [modelFromState]);
+
+  const isAppDeploymentInProgress = useMemo(() => {
+    return (
+      !!modelFromState && isApplicationDeploymentInProgress(modelFromState)
+    );
+  }, [modelFromState]);
 
   const previewConversationId = useAppSelector(
     ConversationsSelectors.selectPreviewConversationId,
@@ -163,7 +179,7 @@ export const ApplicationSettings: React.FC<Props> = ({
     ) {
       return (
         <CustomApplicationEditorView
-          id={applicationData.name}
+          id={applicationData.id}
           host={schema['dial:applicationTypeEditorUrl']}
           theme={theme}
           title={schema['dial:applicationTypeDisplayName']}
@@ -241,36 +257,43 @@ export const ApplicationSettings: React.FC<Props> = ({
           </div>
         )}
         {type === ApplicationType.CODE_APP && !isAppDeployed ? (
-          <div className="flex size-full flex-col items-center justify-center gap-4">
-            <div className="flex items-center justify-center text-secondary">
-              <IconMessages size={45} />
+          isAppDeploymentInProgress ? (
+            <div className="flex size-full flex-col items-center justify-center gap-4">
+              <Spinner size={30} />
+              <span>{t('Deploying...')}</span>
             </div>
-            <div className="w-full max-w-[420px] items-center justify-center text-center text-primary">
-              {t(
-                'Please fill the mandatory fields and deploy the application to enable preview. To keep your preview up-to-date,',
-              )}
-              <span className="font-semibold">
-                {t(' make sure to redeploy ')}
-              </span>
-              {t('after making changes.')}
+          ) : (
+            <div className="flex size-full flex-col items-center justify-center gap-4">
+              <div className="flex items-center justify-center text-secondary">
+                <IconMessages size={45} />
+              </div>
+              <div className="w-full max-w-[420px] items-center justify-center text-center text-primary">
+                {t(
+                  'Please fill the mandatory fields and deploy the application to enable preview. To keep your preview up-to-date,',
+                )}
+                <span className="font-semibold">
+                  {t(' make sure to redeploy ')}
+                </span>
+                {t('after making changes.')}
+              </div>
+              <button
+                className="button button-accent-secondary mb-2 flex items-center gap-2 text-accent-secondary md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
+                data-qa="deploy-code-app"
+                disabled={!methods.formState.isValid}
+                onClick={() => {
+                  dispatch(
+                    ApplicationActions.startUpdatingFunctionStatus({
+                      id: applicationData.id,
+                      status: getApplicationNextStatus(applicationData),
+                    }),
+                  );
+                }}
+              >
+                <IconPlayerPlay size={12} />
+                <span>{t('Deploy code app')}</span>
+              </button>
             </div>
-            <button
-              className="button button-accent-secondary mb-2 flex items-center gap-2 text-accent-secondary md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
-              data-qa="deploy-code-app"
-              disabled={!methods.formState.isValid}
-              onClick={() => {
-                dispatch(
-                  ApplicationActions.startUpdatingFunctionStatus({
-                    id: applicationData.id,
-                    status: getApplicationNextStatus(applicationData),
-                  }),
-                );
-              }}
-            >
-              <IconPlayerPlay size={12} />
-              <span>{t('Deploy code app')}</span>
-            </button>
-          </div>
+          )
         ) : (
           <Chat />
         )}
@@ -345,6 +368,24 @@ export const ApplicationSettings: React.FC<Props> = ({
             {applicationData.version}
           </span>
           <div className="flex space-x-2">
+            {type === ApplicationType.CODE_APP && isAppDeployed && (
+              <button
+                className="button button-accent-secondary mb-2 flex items-center gap-2 text-accent-secondary md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
+                data-qa="redeploy-code-app"
+                disabled={!methods.formState.isValid}
+                onClick={() => {
+                  dispatch(
+                    ApplicationActions.startUpdatingFunctionStatus({
+                      id: applicationData.id,
+                      status: ApplicationStatus.DEPLOYING,
+                    }),
+                  );
+                }}
+              >
+                <IconRefresh size={12} />
+                <span>{t('Redeploy')}</span>
+              </button>
+            )}
             {previewMode === 'half' && (
               <button
                 className="text-secondary hover:text-accent-primary"

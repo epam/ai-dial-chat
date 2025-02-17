@@ -60,6 +60,10 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
     useImperativeHandle(ref, () => containerRef.current as HTMLDivElement);
 
     useEffect(() => {
+      if (visualizer.current) {
+        visualizer.current.destroy();
+      }
+
       if (containerRef.current && !visualizer.current) {
         visualizer.current = new VisualizerConnector(containerRef.current, {
           domain: iframeUrl,

@@ -38,7 +38,6 @@ export interface Conversation extends ShareEntity, ConversationInfo {
 
   isMessageStreaming?: boolean;
   isNameChanged?: boolean;
-  isApplicationPreviewConversation?: boolean;
 }
 
 export interface Replay {
