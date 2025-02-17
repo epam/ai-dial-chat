@@ -1,6 +1,8 @@
 import { IconUserShare } from '@tabler/icons-react';
 import { MouseEventHandler, useCallback } from 'react';
 
+import classNames from 'classnames';
+
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -72,10 +74,20 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
             size={iconSize}
           />
         </ShareIcon>
-        <div className="flex w-full shrink flex-col justify-center gap-1 md:gap-3">
+        <div className="flex min-w-0 shrink grow flex-col justify-center gap-1 md:gap-3">
           <div className="flex shrink-0 justify-between ">
-            <div className="flex w-full flex-col gap-2">
-              {entity.topics && <TopicsList topics={entity.topics} />}
+            <div
+              className={classNames(
+                'flex w-full flex-col',
+                entity.topics?.length ? 'gap-2' : '',
+              )}
+            >
+              {entity.topics && (
+                <TopicsList
+                  topics={entity.topics}
+                  hasAdditionalSpace={screenState === ScreenState.MOBILE}
+                />
+              )}
               <div className="flex items-center gap-[2px] whitespace-nowrap">
                 <div
                   className="shrink truncate text-lg font-semibold leading-[18px] md:text-xl md:leading-6"

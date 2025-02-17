@@ -22,16 +22,18 @@ AllTopics.displayName = 'AllTopics';
 
 interface TopicsListProps {
   topics: string[];
+  hasAdditionalSpace?: boolean;
 }
 
-const counterWidth = 30;
 const leftTopicPadding = 8;
 
-export const TopicsList = ({ topics }: TopicsListProps) => {
+export const TopicsList = ({ topics, hasAdditionalSpace }: TopicsListProps) => {
   const [visibleTopics, setVisibleTopics] = useState<string[]>([]);
   const [hiddenTopics, setHiddenTopics] = useState<string[]>([]);
   const allTopicsRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  const counterWidth = hasAdditionalSpace ? 45 : 30;
 
   useEffect(() => {
     const checkOverflow = () => {
@@ -80,7 +82,7 @@ export const TopicsList = ({ topics }: TopicsListProps) => {
     return () => {
       resizeObserver.disconnect();
     };
-  }, [topics]);
+  }, [counterWidth, topics]);
 
   return (
     <>
