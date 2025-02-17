@@ -23,7 +23,7 @@ import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionSt
 
 import { ModelIcon } from '../../Chatbar/ModelIcon';
 import ShareIcon from '../../Common/ShareIcon';
-import { ApplicationTopic } from '../ApplicationTopic';
+import { TopicsList } from '../TopicsList';
 import { ApplicationCopyLink } from './ApplicationCopyLink';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -57,7 +57,7 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
 
   return (
     <header className="flex items-start justify-between px-3 py-4 md:p-6">
-      <div className="flex items-center gap-2 overflow-hidden md:gap-4">
+      <div className="flex w-full items-center gap-2 overflow-hidden md:gap-4">
         <ShareIcon
           {...entity}
           isHighlighted={false}
@@ -74,19 +74,22 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
             size={iconSize}
           />
         </ShareIcon>
-        <div className="flex min-w-0 shrink flex-col justify-center gap-1 md:gap-3">
-          <div className="flex justify-between">
-            <div className="flex w-full flex-col gap-2">
-              <div
-                className={classNames(
-                  'flex flex-wrap gap-2 overflow-hidden truncate',
-                  entity.topics?.length ? 'block' : 'hidden',
-                )}
-              >
-                {entity.topics?.map((topic) => (
-                  <ApplicationTopic key={topic} topic={topic} />
-                ))}
-              </div>
+        <div className="flex min-w-0 shrink grow flex-col justify-center gap-1 md:gap-3">
+          <div className="flex shrink-0 justify-between ">
+            <div
+              className={classNames(
+                'flex w-full flex-col',
+                entity.topics?.length ? 'gap-2' : '',
+              )}
+            >
+              {entity.topics && (
+                <TopicsList
+                  topics={entity.topics}
+                  counterMarginRight={
+                    screenState === ScreenState.MOBILE ? 18 : 0
+                  }
+                />
+              )}
               <div className="flex items-center gap-[2px] whitespace-nowrap">
                 <div
                   className="shrink truncate text-lg font-semibold leading-[18px] md:text-xl md:leading-6"
