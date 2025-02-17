@@ -548,7 +548,10 @@ dialTest(
           await marketplaceAgents.agentNames.getElementsCount();
         expect
           .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
-          .toBe(ModelsUtil.getLatestOpenAIEntities().length);
+          .toBe(
+            ModelsUtil.getLatestOpenAIEntities(await modelApiHelper.getModels())
+              .length,
+          );
       },
     );
   },
