@@ -1,4 +1,8 @@
-import { MenuSelectors, SideBarSelectors } from '../../../selectors';
+import {
+  EntitySelectors,
+  MenuSelectors,
+  SideBarSelectors,
+} from '../../../selectors';
 
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { EditInput } from '@/src/ui/webElements/editInput';
@@ -7,6 +11,10 @@ import { EntitiesTree } from '@/src/ui/webElements/entityTree';
 
 export class SideBarEntitiesTree extends EntitiesTree {
   private editEntityInput!: EditInput;
+
+  public treeEntityNames = this.getChildElementBySelector(
+    EntitySelectors.entityName,
+  );
 
   getEditEntityInput(): EditInput {
     if (!this.editEntityInput) {

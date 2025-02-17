@@ -164,6 +164,19 @@ export class LocalStorageManager {
     );
   }
 
+  async setLastConversationSettings(storageValue: string) {
+    await this.page.addInitScript(
+      (data) => {
+        const { storageKey, storageValue } = data;
+        localStorage.setItem(storageKey, storageValue);
+      },
+      {
+        storageKey: 'lastConversationSettings',
+        storageValue: storageValue,
+      },
+    );
+  }
+
   async setRecentAddonsIds(...addons: DialAIEntityModel[]) {
     await this.page.addInitScript(
       this.setRecentAddonsIdsKey(),
