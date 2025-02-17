@@ -22,18 +22,18 @@ AllTopics.displayName = 'AllTopics';
 
 interface TopicsListProps {
   topics: string[];
-  hasAdditionalSpace?: boolean;
+  addCounterMargin?: boolean;
 }
 
 const leftTopicPadding = 8;
 
-export const TopicsList = ({ topics, hasAdditionalSpace }: TopicsListProps) => {
+export const TopicsList = ({ topics, addCounterMargin }: TopicsListProps) => {
   const [visibleTopics, setVisibleTopics] = useState<string[]>([]);
   const [hiddenTopics, setHiddenTopics] = useState<string[]>([]);
   const allTopicsRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const counterWidth = hasAdditionalSpace ? 45 : 30;
+  const counterWidth = addCounterMargin ? 45 : 30;
 
   useEffect(() => {
     const checkOverflow = () => {
