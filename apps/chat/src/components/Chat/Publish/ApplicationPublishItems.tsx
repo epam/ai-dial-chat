@@ -42,6 +42,7 @@ export const ApplicationPublishItems = ({
   chosenItemsIds,
 }: ApplicationPublishItemsProps) => {
   const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
 
   const applicationDetails = useAppSelector(

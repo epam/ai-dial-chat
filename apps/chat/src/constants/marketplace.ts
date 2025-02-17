@@ -108,3 +108,8 @@ export const PlayerContextIcons = {
   ...StatusIcons,
   [SimpleApplicationStatus.UPDATING]: LoaderIcon,
 };
+
+export enum ViewTypes {
+  CARD,
+  TABLE,
+}
