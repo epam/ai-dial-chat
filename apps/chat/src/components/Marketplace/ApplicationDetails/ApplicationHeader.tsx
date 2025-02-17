@@ -72,7 +72,7 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
             size={iconSize}
           />
         </ShareIcon>
-        <div className="flex w-full shrink flex-col justify-center gap-1 md:gap-3">
+        <div className="flex min-w-0 shrink grow flex-col justify-center gap-1 md:gap-3">
           <div className="flex shrink-0 justify-between ">
             <div className="flex w-full flex-col gap-2">
               {entity.topics && <TopicsList topics={entity.topics} />}
