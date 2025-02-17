@@ -56,12 +56,12 @@ import {
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
-import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
 import ShareIcon from '../Common/ShareIcon';
 import Tooltip from '../Common/Tooltip';
 import { ApplicationLogs } from './ApplicationLogs';
+import { TopicsList } from './TopicsList';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
@@ -82,10 +82,8 @@ const CardFooter = ({ entity }: CardFooterProps) => {
         Capabilities: Conversation
       </span> */}
 
-        <div className="flex gap-2 overflow-hidden">
-          {entity.topics?.map((topic) => (
-            <ApplicationTopic key={topic} topic={topic} />
-          ))}
+        <div className="w-full">
+          {entity.topics && <TopicsList topics={entity.topics} />}
         </div>
       </div>
     </>

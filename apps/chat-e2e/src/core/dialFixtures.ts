@@ -59,6 +59,7 @@ import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateM
 import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
 import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
+import { SharedWithMeConversationAssertion } from '@/src/assertions/sharedWithMeConversationAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import test from '@/src/core/baseFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
@@ -98,6 +99,8 @@ import {
   PromptsToPublishTree,
   PromptsTree,
   PublishFolder,
+  SharedFolderConversations,
+  SharedWithMeConversationsTree,
 } from '@/src/ui/webElements/entityTree';
 import { OrganizationPromptsTree } from '@/src/ui/webElements/entityTree/sidebar/organizationPromptsTree';
 import { ErrorPopup } from '@/src/ui/webElements/errorPopup';
@@ -219,6 +222,10 @@ const dialTest = test.extend<{
   adminUserItemApiHelper: ItemApiHelper;
   adminApplicationApiHelper: ApplicationApiHelper;
   mainUserShareApiHelper: ShareApiHelper;
+  sharedWithMeConversations: SharedWithMeConversationsTree;
+  sharedWithMeConversationDropdownMenu: DropdownMenu;
+  sharedFolderConversations: SharedFolderConversations;
+  sharedWithMeFolderDropdownMenu: DropdownMenu;
   additionalUserShareApiHelper: ShareApiHelper;
   additionalUserItemApiHelper: ItemApiHelper;
   additionalSecondUserShareApiHelper: ShareApiHelper;
@@ -290,6 +297,7 @@ const dialTest = test.extend<{
   organizationFolderConversationAssertions: FolderAssertion<Folders>;
   messageTemplateModalAssertion: MessageTemplateModalAssertion;
   agentVersionsDropdownMenuAssertion: MenuAssertion;
+  sharedWithMeConversationAssertion: SharedWithMeConversationAssertion;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper }, use) => {
@@ -299,6 +307,39 @@ const dialTest = test.extend<{
     },
     { scope: 'test', auto: true },
   ],
+  sharedWithMeConversationAssertion: async (
+    { sharedWithMeConversations },
+    use,
+  ) => {
+    const sharedWithMeConversationAssertion =
+      new SharedWithMeConversationAssertion(sharedWithMeConversations);
+    await use(sharedWithMeConversationAssertion);
+  },
+  sharedWithMeFolderDropdownMenu: async (
+    { sharedFolderConversations },
+    use,
+  ) => {
+    const sharedWithMeFolderDropdownMenu =
+      sharedFolderConversations.getDropdownMenu();
+    await use(sharedWithMeFolderDropdownMenu);
+  },
+  sharedFolderConversations: async ({ chatBar }, use) => {
+    const sharedFolderConversations = chatBar.getSharedFolderConversations();
+    await use(sharedFolderConversations);
+  },
+  sharedWithMeConversations: async ({ chatBar }, use) => {
+    const sharedWithMeConversations =
+      chatBar.getSharedWithMeConversationsTree();
+    await use(sharedWithMeConversations);
+  },
+  sharedWithMeConversationDropdownMenu: async (
+    { sharedWithMeConversations },
+    use,
+  ) => {
+    const sharedWithMeConversationDropdownMenu =
+      sharedWithMeConversations.getDropdownMenu();
+    await use(sharedWithMeConversationDropdownMenu);
+  },
   // eslint-disable-next-line no-empty-pattern
   storageState: async ({}, use) => {
     await use(stateFilePath(+process.env.TEST_PARALLEL_INDEX!));
@@ -469,8 +510,8 @@ const dialTest = test.extend<{
       chatBar.getOrganizationFolderConversations();
     await use(organizationFolderConversations);
   },
-  talkToAgentDialog: async ({ page }, use) => {
-    const talkToAgentDialog = new TalkToAgentDialog(page);
+  talkToAgentDialog: async ({ page, modelApiHelper }, use) => {
+    const talkToAgentDialog = new TalkToAgentDialog(page, modelApiHelper);
     await use(talkToAgentDialog);
   },
   talkToAgents: async ({ talkToAgentDialog }, use) => {
