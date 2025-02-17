@@ -22,18 +22,22 @@ AllTopics.displayName = 'AllTopics';
 
 interface TopicsListProps {
   topics: string[];
-  addCounterMargin?: boolean;
+  counterMarginRight?: number;
 }
 
 const leftTopicPadding = 8;
+const counterWidth = 30;
 
-export const TopicsList = ({ topics, addCounterMargin }: TopicsListProps) => {
+export const TopicsList = ({
+  topics,
+  counterMarginRight = 0,
+}: TopicsListProps) => {
   const [visibleTopics, setVisibleTopics] = useState<string[]>([]);
   const [hiddenTopics, setHiddenTopics] = useState<string[]>([]);
   const allTopicsRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const counterWidth = addCounterMargin ? 45 : 30;
+  const extraSpace = counterWidth + counterMarginRight;
 
   useEffect(() => {
     const checkOverflow = () => {
@@ -48,7 +52,7 @@ export const TopicsList = ({ topics, addCounterMargin }: TopicsListProps) => {
         const initialVisibleTopics: string[] = [];
         const initialHiddenTopics: string[] = [];
         const children = Array.from(allTopicsRef.current.children);
-        const containerWidth = containerRef.current.offsetWidth - counterWidth;
+        const containerWidth = containerRef.current.offsetWidth - extraSpace;
         let occupiedWidth = 0;
 
         const visibleTopicWidths: { topic: string; width: number }[] = [];
@@ -82,7 +86,7 @@ export const TopicsList = ({ topics, addCounterMargin }: TopicsListProps) => {
     return () => {
       resizeObserver.disconnect();
     };
-  }, [counterWidth, topics]);
+  }, [extraSpace, topics]);
 
   return (
     <>

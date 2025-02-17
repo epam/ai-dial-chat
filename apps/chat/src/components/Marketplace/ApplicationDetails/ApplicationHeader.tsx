@@ -85,7 +85,9 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
               {entity.topics && (
                 <TopicsList
                   topics={entity.topics}
-                  addCounterMargin={screenState === ScreenState.MOBILE}
+                  counterMarginRight={
+                    screenState === ScreenState.MOBILE ? 15 : 0
+                  }
                 />
               )}
               <div className="flex items-center gap-[2px] whitespace-nowrap">
