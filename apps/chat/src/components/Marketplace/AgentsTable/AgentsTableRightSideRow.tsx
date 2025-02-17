@@ -18,6 +18,7 @@ import {
   useMenuItemHandler,
   useMenuItemHandlerWithTwoArgs,
 } from '@/src/hooks/useHandler';
+import { useScreenState } from '@/src/hooks/useScreenState';
 
 import {
   getApplicationNextStatus,
@@ -33,8 +34,9 @@ import { canWriteSharedWithMe } from '@/src/utils/app/share';
 import { getApplicationLink } from '@/src/utils/marketplace';
 
 import { SimpleApplicationStatus } from '@/src/types/applications';
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, ScreenState } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
+import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
@@ -53,13 +55,26 @@ import {
 import ContextMenu from '../../Common/ContextMenu';
 import Tooltip from '../../Common/Tooltip';
 import { ApplicationTopic } from '../ApplicationTopic';
-import { AgentTableRowItemProps } from './view-props';
+import { TopicsList } from '../TopicsList';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
-export const AgentsTableRightSideRow: React.FC<AgentTableRowItemProps> = memo(
+export interface Props {
+  entity: DialAIEntityModel;
+  isHovered: boolean;
+  onClick: (entity: DialAIEntityModel) => void;
+  onRowHoverOver: () => void;
+  onRowHover: (id: string) => void;
+  onPublish?: (entity: DialAIEntityModel, action: PublishActions) => void;
+  onDelete?: (entity: DialAIEntityModel) => void;
+  onEdit?: (entity: DialAIEntityModel) => void;
+  onBookmarkClick?: (entity: DialAIEntityModel) => void;
+  onLogsClick?: (entity: DialAIEntityModel) => void;
+}
+
+export const AgentsTableRightSideRow: React.FC<Props> = memo(
   ({
     entity,
     isHovered,
@@ -83,6 +98,8 @@ export const AgentsTableRightSideRow: React.FC<AgentTableRowItemProps> = memo(
       SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
     );
     const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
+
+    const screenState = useScreenState();
 
     const isMyApp = isMyApplication(entity);
     const isPublicApp = isApplicationPublic(entity);
@@ -295,7 +312,7 @@ export const AgentsTableRightSideRow: React.FC<AgentTableRowItemProps> = memo(
         onMouseEnter={() => onRowHover(entity.id)}
         onMouseLeave={() => onRowHoverOver()}
         className={classNames(
-          'flex h-[55px] min-w-full cursor-pointer gap-3 py-3 pl-4 pr-3 md:h-[115px] md:gap-5 md:p-4',
+          'relative flex h-[55px] min-w-full cursor-pointer gap-3 py-3 pl-4 pr-3 md:h-[115px] md:gap-5 md:p-4',
           isHovered && 'bg-layer-2',
         )}
       >
@@ -303,25 +320,31 @@ export const AgentsTableRightSideRow: React.FC<AgentTableRowItemProps> = memo(
           <p className="truncate">{entity.version}</p>
         </div>
         <div className="flex w-[161px] min-w-[161px] flex-col justify-center gap-2 overflow-hidden">
-          {visibleTopics.map((topic) => (
-            <ApplicationTopic key={topic} topic={topic} />
-          ))}
-          {!!hiddenTopics.length && (
-            <Tooltip
-              triggerClassName="flex"
-              tooltip={
-                <div className="my-1 flex max-w-48 flex-wrap gap-2">
-                  {hiddenTopics.map((topic) => (
-                    <ApplicationTopic key={topic} topic={topic} />
-                  ))}
-                </div>
-              }
-              placement="top"
-            >
-              <span className="flex items-center rounded border border-accent-primary px-1.5 py-1 text-xs leading-3">
-                +{hiddenTopics.length}
-              </span>
-            </Tooltip>
+          {screenState === ScreenState.MOBILE ? (
+            <TopicsList topics={entity.topics ?? []} />
+          ) : (
+            <>
+              {visibleTopics.map((topic) => (
+                <ApplicationTopic key={topic} topic={topic} />
+              ))}
+              {!!hiddenTopics.length && (
+                <Tooltip
+                  triggerClassName="flex"
+                  tooltip={
+                    <div className="my-1 flex max-w-48 flex-wrap gap-2">
+                      {hiddenTopics.map((topic) => (
+                        <ApplicationTopic key={topic} topic={topic} />
+                      ))}
+                    </div>
+                  }
+                  placement="top"
+                >
+                  <span className="flex items-center rounded border border-accent-primary px-1.5 py-1 text-xs leading-3">
+                    +{hiddenTopics.length}
+                  </span>
+                </Tooltip>
+              )}
+            </>
           )}
         </div>
         <div className="flex w-[130px] min-w-[130px] items-center">

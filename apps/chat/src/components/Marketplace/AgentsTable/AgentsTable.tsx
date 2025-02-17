@@ -68,14 +68,10 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
               key={entity.id}
               entity={entity}
               isHovered={entity.id === hoveredRowId}
-              onPublish={onPublish}
-              onDelete={onDelete}
               onClick={onCardClick}
-              onEdit={onEdit}
               onBookmarkClick={onBookmarkClick}
               onRowHover={handleRowHover}
               onRowHoverOver={handleRowHoverOver}
-              onLogsClick={onLogsClick}
             />
           ))}
         </div>

@@ -60,7 +60,6 @@ import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionSt
 
 import ShareIcon from '../Common/ShareIcon';
 import Tooltip from '../Common/Tooltip';
-import { ApplicationLogs } from './ApplicationLogs';
 import { TopicsList } from './TopicsList';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
