@@ -202,22 +202,22 @@ export class BaseAssertion {
   public async assertElementsCount(
     element: BaseElement | Locator,
     expectedCount: number,
+    expectedMessage?: string,
   ) {
     const elementsCount =
       element instanceof BaseElement
         ? await element.getElementsCount()
         : await element.count();
     expect
-      .soft(elementsCount, ExpectedMessages.elementsCountIsValid)
+      .soft(
+        elementsCount,
+        expectedMessage ?? ExpectedMessages.elementsCountIsValid,
+      )
       .toBe(expectedCount);
   }
-  public async assertCount(expectedCount: number, actualCount: number) {
-    expect
-      .soft(actualCount, ExpectedMessages.elementsCountIsValid)
-      .toBe(expectedCount);
-  }
+
   public assertValue(
-    actualValue: string | number | undefined,
+    actualValue: string | number | undefined | null,
     expectedValue: string | number,
     expectedMessage?: string,
   ) {

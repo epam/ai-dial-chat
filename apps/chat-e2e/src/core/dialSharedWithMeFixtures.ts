@@ -40,12 +40,13 @@ import { PromptListAssertion } from '@/src/assertions/promptListAssertion';
 import { PromptModalAssertion } from '@/src/assertions/promptModalAssertion';
 import { SendMessageAssertion } from '@/src/assertions/sendMessageAssertion';
 import { SharedPromptPreviewModalAssertion } from '@/src/assertions/sharedPromptPreviewModalAssertion';
+import { SharedWithMeConversationAssertion } from '@/src/assertions/sharedWithMeConversationAssertion';
 import { SharedWithMePromptsAssertion } from '@/src/assertions/sharedWithMePromptsAssertion';
 import { VariableModalAssertion } from '@/src/assertions/variableModalAssertion';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
 import { isApiStorageType } from '@/src/hooks/global-setup';
-import { FileApiHelper } from '@/src/testData/api';
+import { FileApiHelper, ModelApiHelper } from '@/src/testData/api';
 import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
@@ -79,6 +80,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserConversationSettingsModal: ConversationSettingsModal;
   additionalShareUserAgentSettings: AgentSettings;
   additionalShareUserChatHeader: ChatHeader;
+  additionalShareUserModelApiHelper: ModelApiHelper;
   additionalShareUserTalkToAgentDialog: TalkToAgentDialog;
   additionalShareUserChatMessages: ChatMessages;
   additionalShareUserSendMessage: SendMessage;
@@ -106,6 +108,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserFileApiHelper: FileApiHelper;
   additionalShareUserPromptModalDialog: PromptModalDialog;
   additionalShareUserSharedWithMePromptAssertion: SharedWithMePromptsAssertion;
+  additionalShareUserSharedWithMeConversationAssertion: SharedWithMeConversationAssertion;
   additionalShareUserSharedPromptPreviewModalAssertion: SharedPromptPreviewModalAssertion;
   additionalShareUserSendMessageAssertion: SendMessageAssertion;
   additionalShareUserVariableModalAssertion: VariableModalAssertion;
@@ -378,12 +381,23 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserChat.getChatHeader();
     await use(additionalShareUserChatHeader);
   },
+  additionalShareUserModelApiHelper: async (
+    { additionalShareUserRequestContext },
+    use,
+  ) => {
+    const additionalShareUserModelApiHelper = new ModelApiHelper(
+      additionalShareUserRequestContext,
+      BucketUtil.getAdditionalShareUserBucket(),
+    );
+    await use(additionalShareUserModelApiHelper);
+  },
   additionalShareUserTalkToAgentDialog: async (
-    { additionalShareUserPage },
+    { additionalShareUserPage, additionalShareUserModelApiHelper },
     use,
   ) => {
     const additionalShareUserTalkToAgentDialog = new TalkToAgentDialog(
       additionalShareUserPage,
+      additionalShareUserModelApiHelper,
     );
     await use(additionalShareUserTalkToAgentDialog);
   },
@@ -534,6 +548,16 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserSharedWithMePromptAssertion =
       new SharedWithMePromptsAssertion(additionalShareUserSharedWithMePrompts);
     await use(additionalShareUserSharedWithMePromptAssertion);
+  },
+  additionalShareUserSharedWithMeConversationAssertion: async (
+    { additionalShareUserSharedWithMeConversations },
+    use,
+  ) => {
+    const additionalShareUserSharedWithMeConversationAssertion =
+      new SharedWithMeConversationAssertion(
+        additionalShareUserSharedWithMeConversations,
+      );
+    await use(additionalShareUserSharedWithMeConversationAssertion);
   },
   additionalShareUserSharedPromptPreviewModalAssertion: async (
     { additionalShareUserPromptPreviewModal },

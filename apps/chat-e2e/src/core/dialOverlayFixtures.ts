@@ -36,6 +36,7 @@ import {
   FileApiHelper,
   IconApiHelper,
   ItemApiHelper,
+  ModelApiHelper,
   PublicationApiHelper,
   ShareApiHelper,
 } from '@/src/testData/api';
@@ -86,6 +87,7 @@ const dialOverlayTest = test.extend<{
   overlayPublicationApiHelper: PublicationApiHelper;
   overlayFileApiHelper: FileApiHelper;
   overlayIconApiHelper: IconApiHelper;
+  overlayModelApiHelper: ModelApiHelper;
   overlayApiInjector: ApiInjector;
   overlayDataInjector: DataInjectorInterface;
   overlayBaseAssertion: BaseAssertion;
@@ -208,6 +210,10 @@ const dialOverlayTest = test.extend<{
     const overlayIconApiHelper = new IconApiHelper(request);
     await use(overlayIconApiHelper);
   },
+  overlayModelApiHelper: async ({ request }, use) => {
+    const overlayModelApiHelper = new ModelApiHelper(request);
+    await use(overlayModelApiHelper);
+  },
   overlayApiInjector: async ({ overlayItemApiHelper }, use) => {
     const overlayApiInjector = new ApiInjector(overlayItemApiHelper);
     await use(overlayApiInjector);
@@ -235,9 +241,13 @@ const dialOverlayTest = test.extend<{
     const overlayApiAssertion = new ApiAssertion();
     await use(overlayApiAssertion);
   },
-  overlayTalkToAgentDialog: async ({ page, overlayHomePage }, use) => {
+  overlayTalkToAgentDialog: async (
+    { page, overlayHomePage, overlayModelApiHelper },
+    use,
+  ) => {
     const overlayTalkToAgentDialog = new TalkToAgentDialog(
       page,
+      overlayModelApiHelper,
       overlayHomePage.getOverlayContainer().getElementLocator(),
     );
     await use(overlayTalkToAgentDialog);
