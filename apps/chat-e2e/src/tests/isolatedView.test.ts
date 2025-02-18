@@ -270,7 +270,6 @@ dialTest(
       'EPMRTC-4889',
     );
     let nonWorkspaceModel: DialAIEntityModel;
-    let installedDeployments: { id: string }[];
     let models: DialAIEntityModel[];
     let chatName: string;
 
@@ -284,7 +283,7 @@ dialTest(
 
         nonWorkspaceModel = GeneratorUtil.randomArrayElement(
           models.filter((model) => {
-            const isNotInstalled = !installedDeployments.some(
+            const isNotInstalled = !randomModels.some(
               (deployment) => deployment.id === model.id,
             );
             const hasNoColon = !model.id.includes(':');
@@ -292,7 +291,7 @@ dialTest(
           }),
         );
 
-        const recentModelsToAdd = installedDeployments
+        const recentModelsToAdd = randomModels
           .map((deployment) =>
             models.find((model) => model.id === deployment.id),
           )

@@ -257,7 +257,7 @@ export class BaseAssertion {
     expectedCount: number,
     expectedMessage?: string,
   ) {
-    const elementsCount = this.getElement(element);
+    const elementsCount = await this.getElement(element).count();
     expect
       .soft(
         elementsCount,
