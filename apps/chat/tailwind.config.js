@@ -92,7 +92,7 @@ module.exports = {
       },
       fontFamily: {
         DEFAULT: ['var(--theme-font, var(--font-inter))'],
-        inter: ['var(--theme-font, var(--font-inter))'],
+        theme: ['var(--theme-font, var(--font-inter))'],
         codeblock: ['var(--codeblock-font, var(--theme-font))'],
       },
       fontSize: {
