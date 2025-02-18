@@ -156,7 +156,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
         const applicationData: CustomApplicationModel = {
           ...preparedData,
           reference: oldApplication.reference,
-          id: oldApplication.name,
+          id: oldApplication.id,
           sharedWithMe: isSharedWithMe,
         };
         if (
