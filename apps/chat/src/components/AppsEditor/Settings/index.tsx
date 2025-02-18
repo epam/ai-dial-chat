@@ -130,6 +130,7 @@ export const ApplicationSettings: React.FC<Props> = ({
             isAppDeployed={isAppDeployed}
             oldApplication={applicationData}
             isShared={modelFromState?.isShared ?? false}
+            applicationStatus={modelFromState?.functionStatus}
           />
         );
       case 'Quick App':

@@ -11,7 +11,10 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { getSharedTooltip } from '@/src/utils/app/application';
 import { castToString } from '@/src/utils/app/common';
 
-import { CustomApplicationModel } from '@/src/types/applications';
+import {
+  ApplicationStatus,
+  CustomApplicationModel,
+} from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
@@ -108,6 +111,7 @@ interface CodeAppViewProps {
   isAppDeployed: boolean;
   oldApplication: CustomApplicationModel;
   isShared: boolean;
+  applicationStatus?: ApplicationStatus;
 }
 
 export const CodeAppView: React.FC<CodeAppViewProps> = ({
@@ -115,6 +119,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
   isAppDeployed,
   oldApplication,
   isShared,
+  applicationStatus,
 }) => {
   const { t } = useTranslation(Translation.Chat);
   const [confirmSharingRevoke, setConfirmSharingRevoke] = useState<{
@@ -152,7 +157,8 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
         !isEqual(data, lastSubmittedValuesRef.current)
       ) {
         const preparedData = getCodeAppData(data);
-        preparedData.functionStatus = oldApplication?.function?.status;
+
+        preparedData.functionStatus = applicationStatus;
         const applicationData: CustomApplicationModel = {
           ...preparedData,
           reference: oldApplication.reference,
