@@ -42,6 +42,7 @@ export default function AppsEditor() {
   const initialDataStatus = useAppSelector(
     SettingsSelectors.selectInitialDataStatus,
   );
+  const isLoadingModels = useAppSelector(ModelsSelectors.selectModelsIsLoading);
 
   useEffect(() => {
     const applicationId = modelsMap[id.toString()]?.id;
@@ -52,7 +53,7 @@ export default function AppsEditor() {
 
   return (
     <div className="flex size-full flex-col">
-      {initialDataStatus === UploadStatus.LOADING ? (
+      {initialDataStatus === UploadStatus.LOADING || isLoadingModels ? (
         <div className="flex h-full items-center justify-center">
           <Spinner size={45} className="mx-auto" />
         </div>

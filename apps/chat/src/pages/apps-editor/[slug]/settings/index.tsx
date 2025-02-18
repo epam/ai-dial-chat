@@ -42,6 +42,7 @@ export default function AppsSettings() {
   const schema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
   );
+  const isLoadingModels = useAppSelector(ModelsSelectors.selectModelsIsLoading);
 
   const isSchemaApplicationType = !isApplicationType(decode(slug.toString()));
 
@@ -61,9 +62,24 @@ export default function AppsSettings() {
     }
   }, [modelsMap, applicationData, id, dispatch]);
 
+  const isLoading = useMemo(
+    () =>
+      initialDataStatus === UploadStatus.LOADING ||
+      isLoadingModels ||
+      (isSchemaApplicationType && !schema) ||
+      !applicationData,
+    [
+      initialDataStatus,
+      isLoadingModels,
+      isSchemaApplicationType,
+      schema,
+      applicationData,
+    ],
+  );
+
   return (
     <div className="flex size-full flex-col">
-      {initialDataStatus === UploadStatus.LOADING ? (
+      {isLoading ? (
         <div className="flex h-full items-center justify-center">
           <Spinner size={45} className="mx-auto" />
         </div>

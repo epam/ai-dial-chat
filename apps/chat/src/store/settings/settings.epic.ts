@@ -98,7 +98,6 @@ const initEpic: AppEpic = (action$, state$) =>
     tap(() => {
       const storageType = SettingsSelectors.selectStorageType(state$.value);
       const defaults = SettingsSelectors.selectDefaults(state$.value);
-
       DefaultsService.setDefaults(defaults);
       DataService.init(storageType);
     }),
