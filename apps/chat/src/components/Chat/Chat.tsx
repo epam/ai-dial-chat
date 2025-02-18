@@ -893,9 +893,12 @@ export function Chat() {
     ChatSelectors.selectIsConfigurationSchemaLoading,
   );
 
-  const configurationModelId = selectedConversations.find((conv) =>
+  const configurationAppReference = selectedConversations.find((conv) =>
     doesModelHaveConfiguration(modelsMap[conv.model.id]),
   )?.model?.id;
+  const configurationAppId = configurationAppReference
+    ? modelsMap[configurationAppReference]?.id
+    : undefined;
 
   useEffect(() => {
     dispatch(ChatActions.resetFormValue());
@@ -903,12 +906,12 @@ export function Chat() {
 
   useEffect(() => {
     dispatch(ChatActions.resetConfigurationSchema());
-    if (configurationModelId) {
+    if (configurationAppId) {
       dispatch(
-        ChatActions.getConfigurationSchema({ modelId: configurationModelId }),
+        ChatActions.getConfigurationSchema({ modelId: configurationAppId }),
       );
     }
-  }, [dispatch, configurationModelId, selectedConversationsIds]);
+  }, [dispatch, configurationAppId, selectedConversationsIds]);
 
   if (selectedPublication?.resources && !selectedConversationsIds.length) {
     return (
