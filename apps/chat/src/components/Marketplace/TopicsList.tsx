@@ -10,7 +10,10 @@ interface AllTopicsProps {
 
 const AllTopics = memo(({ topics, allTopicsRef }: AllTopicsProps) => {
   return (
-    <div className="invisible absolute top-0 flex gap-2" ref={allTopicsRef}>
+    <div
+      className="invisible absolute top-0 flex gap-2 font-theme"
+      ref={allTopicsRef}
+    >
       {topics.map((topic) => (
         <ApplicationTopic key={topic} topic={topic} />
       ))}
@@ -25,8 +28,9 @@ interface TopicsListProps {
   counterMarginRight?: number;
 }
 
-const leftTopicPadding = 8;
 const counterWidth = 30;
+const innerMaxTooltipWidth = 198;
+const topicGap = 8;
 
 export const TopicsList = ({
   topics,
@@ -36,6 +40,7 @@ export const TopicsList = ({
   const [hiddenTopics, setHiddenTopics] = useState<string[]>([]);
   const allTopicsRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [maxTooltipWidth, setMaxTooltipWidth] = useState<number>(0);
 
   const extraSpace = counterWidth + counterMarginRight;
 
@@ -55,26 +60,41 @@ export const TopicsList = ({
         const containerWidth = containerRef.current.offsetWidth - extraSpace;
         let occupiedWidth = 0;
 
-        const visibleTopicWidths: { topic: string; width: number }[] = [];
+        const hiddenTopicWidths: { topic: string; topicWidth: number }[] = [];
 
         children.forEach((childNode, index) => {
           const element = childNode as HTMLElement;
-          const elementWidth = element.offsetWidth + leftTopicPadding;
 
-          if (occupiedWidth + elementWidth <= containerWidth) {
+          const elementWidth = element.getBoundingClientRect().width;
+
+          if (occupiedWidth + elementWidth + topicGap <= containerWidth) {
             initialVisibleTopics.push(topics[index]);
-            visibleTopicWidths.push({
-              topic: topics[index],
-              width: elementWidth,
-            });
-            occupiedWidth += elementWidth;
+            occupiedWidth += elementWidth + topicGap;
           } else {
             initialHiddenTopics.push(topics[index]);
+            hiddenTopicWidths.push({
+              topic: topics[index],
+              topicWidth: elementWidth,
+            });
           }
         });
 
         setVisibleTopics(initialVisibleTopics);
         setHiddenTopics(initialHiddenTopics);
+
+        let maxRowWidth = 0,
+          currentRowWidth = -topicGap;
+        for (const { topicWidth } of hiddenTopicWidths) {
+          if (currentRowWidth + topicWidth + topicGap > innerMaxTooltipWidth) {
+            maxRowWidth = Math.max(currentRowWidth, maxRowWidth);
+            currentRowWidth = topicWidth;
+          } else {
+            currentRowWidth += topicWidth + topicGap;
+          }
+        }
+        maxRowWidth = Math.max(currentRowWidth, maxRowWidth);
+
+        setMaxTooltipWidth(maxRowWidth);
       }
     };
     const resizeObserver = new ResizeObserver(checkOverflow);
@@ -99,7 +119,10 @@ export const TopicsList = ({
         {hiddenTopics.length > 0 && (
           <Tooltip
             tooltip={
-              <div className="my-1 flex max-w-48 flex-wrap gap-2">
+              <div
+                className="my-1 flex flex-wrap gap-2"
+                style={{ maxWidth: `${maxTooltipWidth}px` }}
+              >
                 {hiddenTopics.map((topic) => (
                   <ApplicationTopic key={topic} topic={topic} />
                 ))}
