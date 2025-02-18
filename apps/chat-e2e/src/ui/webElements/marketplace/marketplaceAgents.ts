@@ -1,8 +1,9 @@
 import { DialAIEntityModel } from '@/chat/types/models';
 import { ExpectedConstants } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
+import { MenuSelectors } from '@/src/ui/selectors';
 import { MarketplaceAgentSelectors } from '@/src/ui/selectors/marketplaceSelectors';
-import { BaseElement } from '@/src/ui/webElements';
+import { BaseElement, DropdownMenu } from '@/src/ui/webElements';
 import { AgentDetailsModal } from '@/src/ui/webElements/marketplace/agentDetailsModal';
 import { Locator, Page } from '@playwright/test';
 
@@ -12,12 +13,20 @@ export class MarketplaceAgents extends BaseElement {
   }
 
   private applicationDetailsModal!: AgentDetailsModal;
+  private agentDropdownMenu!: DropdownMenu;
 
   getAgentDetailsModal(): AgentDetailsModal {
     if (!this.applicationDetailsModal) {
       this.applicationDetailsModal = new AgentDetailsModal(this.page);
     }
     return this.applicationDetailsModal;
+  }
+
+  getAgentDropdownMenu(): DropdownMenu {
+    if (!this.agentDropdownMenu) {
+      this.agentDropdownMenu = new DropdownMenu(this.page);
+    }
+    return this.agentDropdownMenu;
   }
 
   public agentNames = this.getChildElementBySelector(
@@ -76,6 +85,12 @@ export class MarketplaceAgents extends BaseElement {
   public getAgentVersion(entity: DialAIEntityModel | string) {
     return this.getAgent(entity).getChildElementBySelector(
       MarketplaceAgentSelectors.version,
+    );
+  }
+
+  public getAgentDotsMenu(entity: DialAIEntityModel | string) {
+    return this.getAgent(entity).getChildElementBySelector(
+      MenuSelectors.dotsMenu,
     );
   }
 

@@ -8,7 +8,7 @@ import {
   MockedChatApiResponseBodies,
   OverlaySandboxUrls,
   PseudoModel,
-  Theme,
+  ThemeId,
 } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { SortingUtil } from '@/src/utils/sortingUtil';
@@ -159,7 +159,10 @@ dialOverlayTest(
       `Click on "Set light theme and new model" button and verify theme is changed to light, model is added to the recent models`,
       async () => {
         await overlayConfiguration.setConfigurationButton.click();
-        await overlayAssertion.assertOverlayTheme(overlayHomePage, Theme.light);
+        await overlayAssertion.assertOverlayTheme(
+          overlayHomePage,
+          ThemeId.light,
+        );
         await overlayBaseAssertion.assertElementText(
           overlayAgentInfo.agentName,
           ModelsUtil.getDefaultModel()!.name,

@@ -280,15 +280,7 @@ dialTest(
         models = ModelsUtil.getModels();
 
         const randomModels = GeneratorUtil.randomArrayElements(models, 5);
-        installedDeployments = randomModels.map((model) => ({
-          id: model.id,
-        }));
-        const installedDeploymentsJson = JSON.stringify(installedDeployments);
-        await fileApiHelper.putStringAsFile(
-          API.installedDeploymentsFile,
-          installedDeploymentsJson,
-          API.installedDeploymentsFolder,
-        );
+        await fileApiHelper.updateInstalledDeployments(randomModels);
 
         nonWorkspaceModel = GeneratorUtil.randomArrayElement(
           models.filter((model) => {
