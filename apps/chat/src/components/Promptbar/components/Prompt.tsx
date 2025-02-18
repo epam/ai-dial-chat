@@ -47,6 +47,7 @@ import { Translation } from '@/src/types/translation';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import {
   PromptsActions,
   PromptsSelectors,
@@ -102,6 +103,12 @@ export const PromptComponent = ({
   const selectedPublicationUrl = useAppSelector(
     PublicationSelectors.selectSelectedPublicationUrl,
   );
+  const selectedConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedConversations,
+  );
+  const installedModelIds = useAppSelector(
+    ModelsSelectors.selectInstalledModelIds,
+  );
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
   const { showModal, isModalPreviewMode } = useAppSelector(
     PromptsSelectors.selectIsEditModalOpen,
@@ -117,6 +124,9 @@ export const PromptComponent = ({
   const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Prompt),
+  );
+  const isConversationBlocksInput = useAppSelector(
+    ConversationsSelectors.selectIsSelectedConversationBlocksInput,
   );
 
   const collapsedSectionsSelector = useMemo(
@@ -153,6 +163,9 @@ export const PromptComponent = ({
   const isChosen = useMemo(
     () => chosenPromptIds.includes(prompt.id),
     [chosenPromptIds, prompt.id],
+  );
+  const isModelsInstalled = selectedConversations.every((conv) =>
+    installedModelIds.has(conv.model.id),
   );
 
   const { refs, context } = useFloating({
@@ -374,9 +387,7 @@ export const PromptComponent = ({
     [dispatch, prompt.id],
   );
 
-  const disableUsePrompt = useAppSelector(
-    ConversationsSelectors.selectIsSelectedConversationBlocksInput,
-  );
+  const disableUsePrompt = isConversationBlocksInput || !isModelsInstalled;
 
   const handleUse: MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {

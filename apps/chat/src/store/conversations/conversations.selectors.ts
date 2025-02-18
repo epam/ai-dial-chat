@@ -768,13 +768,18 @@ export const selectTalkToConversationId = (state: RootState) =>
   rootSelector(state).talkToConversationId;
 
 export const selectIsSelectedConversationBlocksInput = createSelector(
-  [selectSelectedConversations, ChatSelectors.selectIsConfigurationBlocksInput],
-  (conversations, isConfigurationBlocksInput) =>
+  [
+    selectSelectedConversations,
+    ChatSelectors.selectIsConfigurationBlocksInput,
+    ChatSelectors.selectNotAvailableEntityType,
+  ],
+  (conversations, isConfigurationBlocksInput, notAvailableEntityType) =>
     conversations.some(
       (conversation) =>
         conversation.sharedWithMe ||
         (!conversation.messages?.length &&
           (isConfigurationBlocksInput || isReplayConversation(conversation))) ||
+        notAvailableEntityType ||
         isPlaybackConversation(conversation) ||
         isEntityIdExternal(conversation) ||
         !conversation.messages ||
