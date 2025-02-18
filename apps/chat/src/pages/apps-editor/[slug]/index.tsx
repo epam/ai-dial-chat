@@ -68,7 +68,7 @@ export default function AppsEditor() {
           />
           <div className="flex size-full">
             <GeneralInfoView
-              applicationData={applicationData}
+              applicationData={id ? applicationData : undefined}
               schema={isSchemaApplicationType ? schema : null}
             />
           </div>

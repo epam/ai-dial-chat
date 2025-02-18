@@ -48,3 +48,8 @@ export const selectApplicationLogs = createSelector([rootSelector], (state) => {
     })
     .join('');
 });
+
+export const selectShouldSaveApplication = createSelector(
+  [rootSelector],
+  (state) => state.shouldSaveApplication,
+);

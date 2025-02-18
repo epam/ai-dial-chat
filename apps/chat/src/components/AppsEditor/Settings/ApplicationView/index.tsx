@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef } from 'react';
 import {
   Controller,
   Path,
@@ -10,8 +11,11 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { CustomApplicationModel } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { useAppDispatch } from '@/src/store/hooks';
+import {
+  ApplicationActions,
+  ApplicationSelectors,
+} from '@/src/store/application/application.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
 
@@ -27,6 +31,8 @@ import {
   getAttachmentTypeErrorHandlers,
   getCustomApplicationData,
 } from '../form';
+
+import { isEqual } from 'lodash-es';
 
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const ControlledField = withController(Field);
@@ -44,16 +50,13 @@ export const validators: Validators = {
   features: {
     validate: (data) => {
       if (!data?.trim()) return true;
-
       try {
         const object = JSON.parse(data);
-
         if (typeof object === 'object' && !!object && !Array.isArray(object)) {
           for (const [key, value] of Object.entries(object)) {
             if (!key.trim()) {
               return 'Keys should not be empty';
             }
-
             const valueType = typeof value;
             if (
               !(['boolean', 'number'].includes(valueType) || value === null)
@@ -61,7 +64,6 @@ export const validators: Validators = {
               if (typeof value === 'string' && !value.trim()) {
                 return 'String values should not be empty';
               }
-
               if (!['boolean', 'number', 'string'].includes(valueType)) {
                 return 'Values should be a string, number, boolean or null';
               }
@@ -70,7 +72,6 @@ export const validators: Validators = {
         } else {
           return 'Data is not a valid JSON object';
         }
-
         return true;
       } catch (error) {
         return 'Invalid JSON string';
@@ -78,12 +79,9 @@ export const validators: Validators = {
     },
   },
   inputAttachmentTypes: {
-    validate: (types) => {
-      return (
-        types.every((v) => MIME_FORMAT_REGEX.test(v)) ||
-        'Please match the MIME format'
-      );
-    },
+    validate: (types) =>
+      types.every((v) => MIME_FORMAT_REGEX.test(v)) ||
+      'Please match the MIME format',
   },
   maxInputAttachments: {
     validate: (v?: number | '') => {
@@ -91,9 +89,8 @@ export const validators: Validators = {
       const reg = /^[0-9]+$/;
       return reg.test(String(v)) || 'Max attachments must be a number';
     },
-    setValueAs: (v: string): number | '' => {
-      return v === '' ? '' : Number(v.replace(/[^0-9]/g, ''));
-    },
+    setValueAs: (v: string): number | '' =>
+      v === '' ? '' : Number(v.replace(/[^0-9]/g, '')),
   },
   completionUrl: {
     required: 'Completion URL is required',
@@ -125,43 +122,58 @@ const getItemLabel = (item: unknown): string => item as string;
 
 interface Props {
   oldApplication: CustomApplicationModel;
-  submitButtonRef?: React.Ref<HTMLButtonElement>;
-  updateLastSubmittedValues?: (data: CustomApplicationFormData) => void;
 }
 
-export const ApplicationView: React.FC<Props> = ({
-  oldApplication,
-  submitButtonRef,
-  updateLastSubmittedValues,
-}) => {
+export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
-
   const {
     register,
     control,
+
     handleSubmit: submitWrapper,
-    formState: { errors },
+    formState: { errors, defaultValues },
     setError,
     clearErrors,
   } = useFormContext<CustomApplicationFormData>();
+  const lastSubmittedValuesRef = useRef<CustomApplicationFormData | undefined>(
+    defaultValues as CustomApplicationFormData,
+  );
 
-  const handleSubmit = (data: CustomApplicationFormData) => {
-    const applicationData = getCustomApplicationData(data);
-    dispatch(
-      ApplicationActions.update({
-        oldApplication: oldApplication,
-        applicationData: {
-          ...applicationData,
-          id: data.id,
-          reference: data.reference,
-        },
-      }),
-    );
-    if (updateLastSubmittedValues) {
-      updateLastSubmittedValues(data);
+  const shouldSaveApplication = useAppSelector(
+    ApplicationSelectors.selectShouldSaveApplication,
+  );
+
+  const handleSubmit = useCallback(
+    (data: CustomApplicationFormData) => {
+      if (
+        !isEqual(data, lastSubmittedValuesRef.current) &&
+        shouldSaveApplication
+      ) {
+        const applicationData = getCustomApplicationData(data);
+        dispatch(
+          ApplicationActions.update({
+            oldApplication,
+            applicationData: {
+              ...applicationData,
+              id: data.id,
+              reference: data.reference,
+            },
+          }),
+        );
+        lastSubmittedValuesRef.current = data;
+      } else {
+        dispatch(ApplicationActions.setShouldSaveApplication(false));
+      }
+    },
+    [lastSubmittedValuesRef, oldApplication, dispatch, shouldSaveApplication],
+  );
+
+  useEffect(() => {
+    if (shouldSaveApplication) {
+      submitWrapper(handleSubmit)();
     }
-  };
+  }, [submitWrapper, shouldSaveApplication, handleSubmit]);
 
   return (
     <form
@@ -181,7 +193,6 @@ export const ApplicationView: React.FC<Props> = ({
           data-qa="features-data"
           error={errors.features?.message}
         />
-
         <Controller
           name="inputAttachmentTypes"
           rules={validators['inputAttachmentTypes']}
@@ -204,7 +215,6 @@ export const ApplicationView: React.FC<Props> = ({
             />
           )}
         />
-
         <ControlledField
           label={t('Max. attachments number')}
           placeholder={t('Enter the maximum number of attachments')}
@@ -214,7 +224,6 @@ export const ApplicationView: React.FC<Props> = ({
           name="maxInputAttachments"
           rules={validators['maxInputAttachments']}
         />
-
         <Field
           {...register('completionUrl', validators['completionUrl'])}
           label={t('Chat completion URL')}
@@ -223,11 +232,6 @@ export const ApplicationView: React.FC<Props> = ({
           id="completionUrl"
           error={errors.completionUrl?.message}
           data-qa="completion-url"
-        />
-        <button
-          type="submit"
-          ref={submitButtonRef}
-          style={{ display: 'none' }}
         />
       </div>
     </form>

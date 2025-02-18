@@ -54,8 +54,9 @@ export default function AppsSettings() {
   );
 
   useEffect(() => {
+    if (!id) return;
     const applicationId = modelsMap[id.toString()]?.id;
-    if (!applicationData && id && applicationId) {
+    if (!applicationData && applicationId) {
       dispatch(ApplicationActions.get({ applicationId }));
     }
   }, [modelsMap, applicationData, id, dispatch]);

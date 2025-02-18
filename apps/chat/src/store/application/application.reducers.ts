@@ -19,6 +19,7 @@ export interface ApplicationState {
   logsLoadingStatus: UploadStatus;
   appDetails: CustomApplicationModel | undefined;
   appLogs: ApplicationLogsType | undefined;
+  shouldSaveApplication?: boolean;
 }
 
 const initialState: ApplicationState = {
@@ -26,6 +27,7 @@ const initialState: ApplicationState = {
   logsLoadingStatus: UploadStatus.UNINITIALIZED,
   appDetails: undefined,
   appLogs: undefined,
+  shouldSaveApplication: false,
 };
 
 export const applicationSlice = createSlice({
@@ -170,6 +172,9 @@ export const applicationSlice = createSlice({
     },
     updateSuccess: (state, action: PayloadAction<CustomApplicationModel>) => {
       state.appDetails = action.payload;
+    },
+    setShouldSaveApplication: (state, action: PayloadAction<boolean>) => {
+      state.shouldSaveApplication = action.payload;
     },
   },
 });

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Controller,
   Path,
@@ -15,7 +15,10 @@ import { CustomApplicationModel } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
+import {
+  ApplicationActions,
+  ApplicationSelectors,
+} from '@/src/store/application/application.reducers';
 import {
   CodeEditorActions,
   CodeEditorSelectors,
@@ -50,6 +53,8 @@ import {
   getCodeAppData,
 } from '../form';
 
+import { isEqual } from 'lodash-es';
+
 type Options<T extends Path<CodeAppFormData>> = Omit<
   RegisterOptions<CodeAppFormData, T>,
   'disabled' | 'valueAsNumber' | 'valueAsDate'
@@ -61,12 +66,9 @@ type Validators = {
 
 const validators: Validators = {
   inputAttachmentTypes: {
-    validate: (types) => {
-      return (
-        types.every((v) => MIME_FORMAT_REGEX.test(v)) ||
-        'Please match the MIME format'
-      );
-    },
+    validate: (types) =>
+      types.every((v) => MIME_FORMAT_REGEX.test(v)) ||
+      'Please match the MIME format',
   },
   maxInputAttachments: {
     validate: (v?: number | '') => {
@@ -74,9 +76,8 @@ const validators: Validators = {
       const reg = /^[0-9]+$/;
       return reg.test(String(v)) || 'Max attachments must be a number';
     },
-    setValueAs: (v: string): number | '' => {
-      return v === '' ? '' : Number(v.replace(/[^0-9]/g, ''));
-    },
+    setValueAs: (v: string): number | '' =>
+      v === '' ? '' : Number(v.replace(/[^0-9]/g, '')),
   },
   sources: {
     required: 'Source folder is required',
@@ -89,7 +90,6 @@ const validators: Validators = {
       if (!files.includes(CODEAPPS_REQUIRED_FILES.REQUIREMENTS)) {
         return `This folder does not contain the required "${CODEAPPS_REQUIRED_FILES.REQUIREMENTS}" file`;
       }
-
       return true;
     },
   },
@@ -108,8 +108,6 @@ interface CodeAppViewProps {
   isAppDeployed: boolean;
   oldApplication: CustomApplicationModel;
   isShared: boolean;
-  submitButtonRef?: React.Ref<HTMLButtonElement>;
-  updateLastSubmittedValues?: (data: CodeAppFormData) => void;
 }
 
 export const CodeAppView: React.FC<CodeAppViewProps> = ({
@@ -117,8 +115,6 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
   isAppDeployed,
   oldApplication,
   isShared,
-  submitButtonRef,
-  updateLastSubmittedValues,
 }) => {
   const { t } = useTranslation(Translation.Chat);
   const [confirmSharingRevoke, setConfirmSharingRevoke] = useState<{
@@ -128,35 +124,41 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
   }>();
   const [editorConfirmation, setEditorConfirmation] =
     useState<CodeAppFormData>();
-
   const dispatch = useAppDispatch();
-
   const isCodeEditorDirty = useAppSelector(CodeEditorSelectors.selectIsDirty);
-
   const {
     control,
     handleSubmit: submitWrapper,
     setError,
     clearErrors,
-    formState: { errors },
+    formState: { errors, defaultValues },
     watch,
     register,
   } = useFormContext<CodeAppFormData>();
 
+  const lastSubmittedValuesRef = useRef<CodeAppFormData | undefined>(
+    defaultValues as CodeAppFormData,
+  );
+
+  const shouldSaveApplication = useAppSelector(
+    ApplicationSelectors.selectShouldSaveApplication,
+  );
+
   const handleEdit = useCallback(
     (data: CodeAppFormData) => {
-      if (oldApplication.reference) {
+      if (
+        oldApplication.reference &&
+        shouldSaveApplication &&
+        !isEqual(data, lastSubmittedValuesRef.current)
+      ) {
         const preparedData = getCodeAppData(data);
-
         preparedData.functionStatus = oldApplication?.function?.status;
-
         const applicationData: CustomApplicationModel = {
           ...preparedData,
           reference: oldApplication.reference,
           id: oldApplication.name,
           sharedWithMe: isSharedWithMe,
         };
-
         if (
           isShared &&
           preparedData.function?.sourceFolder !==
@@ -170,18 +172,13 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           });
           return;
         }
-
         dispatch(
           ApplicationActions.update({
-            oldApplication: oldApplication,
+            oldApplication,
             applicationData,
           }),
         );
-
-        if (updateLastSubmittedValues) {
-          updateLastSubmittedValues(data);
-        }
-
+        lastSubmittedValuesRef.current = data;
         if (isAppDeployed) {
           dispatch(
             UIActions.showWarningToast(
@@ -189,6 +186,8 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
             ),
           );
         }
+      } else {
+        dispatch(ApplicationActions.setShouldSaveApplication(false));
       }
     },
     [
@@ -198,14 +197,17 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
       isSharedWithMe,
       t,
       isShared,
-      updateLastSubmittedValues,
+      shouldSaveApplication,
     ],
   );
 
   const handleSave = useCallback(
     (data: CodeAppFormData) => {
-      if (isCodeEditorDirty) setEditorConfirmation(data);
-      else handleEdit(data);
+      if (isCodeEditorDirty) {
+        setEditorConfirmation(data);
+      } else {
+        handleEdit(data);
+      }
     },
     [handleEdit, isCodeEditorDirty],
   );
@@ -217,7 +219,9 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
         dataQa: 'not-save-option',
         className: 'button-secondary',
         onClick: () => {
-          editorConfirmation && handleEdit(editorConfirmation);
+          if (editorConfirmation) {
+            handleEdit(editorConfirmation);
+          }
           setEditorConfirmation(undefined);
         },
       },
@@ -226,7 +230,9 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
         dataQa: 'save-option',
         onClick: () => {
           dispatch(CodeEditorActions.saveAllModifiedFiles());
-          editorConfirmation && handleEdit(editorConfirmation);
+          if (editorConfirmation) {
+            handleEdit(editorConfirmation);
+          }
           setEditorConfirmation(undefined);
         },
       },
@@ -242,6 +248,12 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
       dispatch(CodeEditorActions.resetCodeEditor());
     };
   }, [dispatch]);
+
+  useEffect(() => {
+    if (shouldSaveApplication) {
+      submitWrapper(handleSave)();
+    }
+  }, [submitWrapper, shouldSaveApplication, handleSave]);
 
   return (
     <form
@@ -339,7 +351,6 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
                     featureType: FeatureType.Application,
                   }),
                 );
-
                 handleEdit(confirmSharingRevoke.data);
               }
               setConfirmSharingRevoke(undefined);
@@ -352,12 +363,6 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           heading={t('Do you want to save changes in the code editor?')}
           onClose={() => setEditorConfirmation(undefined)}
           options={modalOptions}
-        />
-
-        <button
-          type="submit"
-          ref={submitButtonRef}
-          style={{ display: 'none' }}
         />
       </div>
     </form>

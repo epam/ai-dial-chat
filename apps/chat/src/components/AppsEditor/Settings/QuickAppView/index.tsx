@@ -1,5 +1,5 @@
 import { Editor } from '@monaco-editor/react';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   Controller,
   Path,
@@ -15,7 +15,10 @@ import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-s
 import { CustomApplicationModel } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
+import {
+  ApplicationActions,
+  ApplicationSelectors,
+} from '@/src/store/application/application.reducers';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
@@ -28,6 +31,8 @@ import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
 import { QuickAppFormData, getQuickAppData } from '../form';
+
+import { isEqual } from 'lodash-es';
 
 type Options<T extends Path<QuickAppFormData>> = Omit<
   RegisterOptions<QuickAppFormData, T>,
@@ -61,49 +66,69 @@ interface QuickAppViewProps {
   schema: ApiDetailedApplicationTypeSchema | null;
   isSharedWithMe: boolean;
   oldApplication: CustomApplicationModel;
-  submitButtonRef?: React.Ref<HTMLButtonElement>;
-  updateLastSubmittedValues?: (data: QuickAppFormData) => void;
 }
 
 export const QuickAppView: React.FC<QuickAppViewProps> = ({
   schema,
   isSharedWithMe,
   oldApplication,
-  submitButtonRef,
-  updateLastSubmittedValues,
 }) => {
   const { t } = useTranslation(Translation.Chat);
   const theme = useAppSelector(UISelectors.selectThemeState);
-
   const dispatch = useAppDispatch();
-
   const {
     register,
     control,
     handleSubmit: submitWrapper,
-    formState: { errors },
+    formState: { errors, defaultValues },
   } = useFormContext<QuickAppFormData>();
 
-  const handleSubmit = (data: QuickAppFormData) => {
-    const applicationData = getQuickAppData(data);
-    dispatch(
-      ApplicationActions.update({
-        oldApplication: oldApplication,
-        applicationData: {
-          ...applicationData,
-          id: data.id,
-          reference: data.reference,
-        },
-        schema: schema ?? undefined,
-      }),
-    );
-    if (updateLastSubmittedValues) {
-      updateLastSubmittedValues(data);
+  const lastSubmittedValuesRef = useRef<QuickAppFormData | undefined>(
+    defaultValues as QuickAppFormData,
+  );
+
+  const shouldSaveApplication = useAppSelector(
+    ApplicationSelectors.selectShouldSaveApplication,
+  );
+
+  const handleSubmit = useCallback(
+    (data: QuickAppFormData) => {
+      if (
+        !isEqual(data, lastSubmittedValuesRef.current) &&
+        shouldSaveApplication
+      ) {
+        const applicationData = getQuickAppData(data);
+
+        dispatch(
+          ApplicationActions.update({
+            oldApplication,
+            applicationData: {
+              ...applicationData,
+              id: data.id,
+              reference: data.reference,
+            },
+            schema: schema ?? undefined,
+          }),
+        );
+        lastSubmittedValuesRef.current = data;
+      } else {
+        dispatch(ApplicationActions.setShouldSaveApplication(false));
+      }
+    },
+    [dispatch, oldApplication, schema, shouldSaveApplication],
+  );
+
+  const autoSaveHandler = useCallback(() => {
+    submitWrapper(handleSubmit)();
+  }, [submitWrapper, handleSubmit]);
+
+  useEffect(() => {
+    if (shouldSaveApplication) {
+      autoSaveHandler();
     }
-  };
+  }, [autoSaveHandler, shouldSaveApplication]);
 
   const files = useAppSelector(FilesSelectors.selectFiles);
-
   const getLogoId = useCallback(
     (filesIds: string[]) => files.find((f) => f.id === filesIds[0])?.id,
     [files],
@@ -159,13 +184,8 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
               error={errors.toolset?.message}
               height={200}
               options={{
-                minimap: {
-                  enabled: false,
-                },
-                padding: {
-                  top: 12,
-                  bottom: 12,
-                },
+                minimap: { enabled: false },
+                padding: { top: 12, bottom: 12 },
                 scrollBeyondLastLine: false,
               }}
               value={field.value}
@@ -196,11 +216,6 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
               onChangeTemperature={field.onChange}
             />
           )}
-        />
-        <button
-          type="submit"
-          ref={submitButtonRef}
-          style={{ display: 'none' }}
         />
       </div>
     </form>

@@ -224,7 +224,10 @@ const updateApplicationEpic: AppEpic = (action$) =>
               );
             }),
             startWith(ApplicationActions.updateStart()),
-            endWith(ApplicationActions.updateComplete()),
+            endWith(
+              ApplicationActions.updateComplete(),
+              ApplicationActions.setShouldSaveApplication(false),
+            ),
           );
         }),
       );
