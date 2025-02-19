@@ -75,6 +75,12 @@ interface IconSize {
   shareIconSize: number;
 }
 
+export const TableIconSizes: Record<ScreenState, IconSize> = {
+  [ScreenState.DESKTOP]: { iconSize: 60, shareIconSize: 24 },
+  [ScreenState.TABLET]: { iconSize: 60, shareIconSize: 24 },
+  [ScreenState.MOBILE]: { iconSize: 30, shareIconSize: 16 },
+};
+
 export const CardIconSizes: Record<ScreenState, IconSize> = {
   [ScreenState.DESKTOP]: { iconSize: 80, shareIconSize: 30 },
   [ScreenState.TABLET]: { iconSize: 48, shareIconSize: 20 },

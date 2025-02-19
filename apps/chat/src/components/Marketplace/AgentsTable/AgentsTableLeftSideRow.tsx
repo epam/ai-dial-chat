@@ -7,14 +7,19 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { getModelShortDescription } from '@/src/utils/app/application';
 
-import { ScreenState } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
-import { ModelIcon } from '../../Chatbar/ModelIcon';
-import { EntityMarkdownDescription } from '../../Common/MarkdownDescription';
+import { TableIconSizes } from '@/src/constants/marketplace';
+
+import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
+import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
+import ShareIcon from '@/src/components/Common/ShareIcon';
+
+import { FunctionStatusIndicator } from '../FunctionStatusIndicator';
 
 interface Props {
   entity: DialAIEntityModel;
@@ -35,6 +40,8 @@ export const AgentsTableLeftSideRow: React.FC<Props> = memo(
     onBookmarkClick,
   }) => {
     const screenState = useScreenState();
+
+    const { iconSize, shareIconSize } = TableIconSizes[screenState];
 
     const installedModelIds = useAppSelector(
       ModelsSelectors.selectInstalledModelIds,
@@ -64,15 +71,26 @@ export const AgentsTableLeftSideRow: React.FC<Props> = memo(
               className="block shrink-0 rounded text-secondary hover:text-accent-primary xl:hidden"
               size={18}
             />
-            <ModelIcon
-              entityId={entity.id}
-              entity={entity}
-              size={screenState === ScreenState.MOBILE ? 30 : 60}
-            />
+            <ShareIcon
+              {...entity}
+              isHighlighted={false}
+              size={shareIconSize}
+              featureType={FeatureType.Application}
+              iconClassName={classNames(
+                '!rounded-[4px] !stroke-[0.6]',
+                isHovered ? 'bg-layer-2 ' : 'bg-layer-1',
+              )}
+              iconWrapperClassName="!rounded-[4px]"
+            >
+              <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
+            </ShareIcon>
           </div>
           <div>
-            <div className="line-clamp-1 max-w-screen-sm text-base font-semibold leading-5">
-              {entity.name}
+            <div className="flex">
+              <div className="line-clamp-1 max-w-screen-sm text-base font-semibold leading-5">
+                {entity.name}
+              </div>
+              <FunctionStatusIndicator entity={entity} />
             </div>
             <EntityMarkdownDescription className="mt-2 hidden max-w-screen-sm truncate whitespace-normal break-all !text-sm font-light !leading-[18px] text-secondary md:line-clamp-3">
               {getModelShortDescription(entity)}

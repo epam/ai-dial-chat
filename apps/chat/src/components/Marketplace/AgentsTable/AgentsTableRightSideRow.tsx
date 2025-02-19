@@ -52,8 +52,9 @@ import {
   PlayerContextIcons,
 } from '@/src/constants/marketplace';
 
-import ContextMenu from '../../Common/ContextMenu';
-import Tooltip from '../../Common/Tooltip';
+import ContextMenu from '@/src/components/Common/ContextMenu';
+import Tooltip from '@/src/components/Common/Tooltip';
+
 import { ApplicationTopic } from '../ApplicationTopic';
 import { TopicsList } from '../TopicsList';
 
