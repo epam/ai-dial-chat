@@ -15,6 +15,7 @@ import { errorsMessages } from '@/src/constants/errors';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
+import { sanitizeUri } from 'micromark-util-sanitize-uri';
 import fetch from 'node-fetch';
 
 const getEntityUrlFromSlugs = (
@@ -57,7 +58,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const token = await getToken({ req });
 
   try {
-    const proxyRes = await fetch(url, {
+    const proxyRes = await fetch(sanitizeUri(url, /^https?$/i), {
       headers: getApiHeaders({ jwt: token?.access_token as string }),
     });
 
