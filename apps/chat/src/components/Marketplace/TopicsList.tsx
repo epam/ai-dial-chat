@@ -1,5 +1,7 @@
 import React, { memo, useEffect, useRef, useState } from 'react';
 
+import { stopBubbling } from '@/src/constants/chat';
+
 import Tooltip from '../Common/Tooltip';
 import { ApplicationTopic } from './ApplicationTopic';
 
@@ -10,7 +12,10 @@ interface AllTopicsProps {
 
 const AllTopics = memo(({ topics, allTopicsRef }: AllTopicsProps) => {
   return (
-    <div className="invisible fixed flex gap-2 font-theme" ref={allTopicsRef}>
+    <div
+      className="invisible fixed top-0 flex gap-2 font-theme"
+      ref={allTopicsRef}
+    >
       {topics.map((topic) => (
         <ApplicationTopic key={topic} topic={topic} />
       ))}
@@ -132,7 +137,10 @@ export const TopicsList = ({
             }
             placement="top"
           >
-            <span className="flex cursor-pointer items-center rounded border border-accent-primary px-1.5 py-1 text-xs leading-3">
+            <span
+              className="flex cursor-pointer items-center rounded border border-accent-primary px-1.5 py-1 text-xs leading-3"
+              onClick={stopBubbling}
+            >
               +{hiddenTopics.length}
             </span>
           </Tooltip>
