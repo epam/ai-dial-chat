@@ -17,6 +17,7 @@ import {
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
+import { ApplicationSelectors } from '@/src/store/application/application.reducers';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -86,11 +87,19 @@ export const ChangePathDialog = ({
   const promptFolders = useAppSelector((state) =>
     PromptsSelectors.selectTemporaryAndPublishedFolders(state, searchQuery),
   );
+  const applicationFolders = useAppSelector(
+    ApplicationSelectors.selectPublicFolders,
+  );
   const loadingFolderIds = useAppSelector(selectors.selectLoadingFolderIds);
 
   const folders = useMemo(
-    () => sortByName([...conversationFolders, ...promptFolders]),
-    [conversationFolders, promptFolders],
+    () =>
+      sortByName([
+        ...conversationFolders,
+        ...promptFolders,
+        ...applicationFolders,
+      ]),
+    [conversationFolders, promptFolders, applicationFolders],
   );
 
   useEffect(() => {
