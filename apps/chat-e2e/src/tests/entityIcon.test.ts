@@ -21,44 +21,42 @@ dialTest(
     addons,
     addonsDialog,
     iconApiHelper,
-    localStorageManager,
     marketplaceContainer,
     marketplaceAgents,
     addonsDialogAssertion,
     marketplaceAgentsAssertion,
     chat,
+    modelApiHelper,
     setTestIds,
   }) => {
     dialTest.slow();
     setTestIds('EPMRTC-1036', 'EPMRTC-1038');
 
-    const allExpectedEntities = ModelsUtil.getLatestOpenAIEntities();
-    const randomEntity = GeneratorUtil.randomArrayElement(allExpectedEntities);
-    const randomUpdateEntity = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getLatestModels(),
-    );
     const defaultModel = ModelsUtil.getDefaultModel()!;
+    let allExpectedEntities: DialAIEntityModel[];
 
     await dialTest.step(
       'Open initial screen and click "Go to my workspace" to view all available entities',
       async () => {
-        await localStorageManager.setRecentModelsIds(
-          defaultModel,
-          randomUpdateEntity,
-        );
         await dialHomePage.openHomePage({
           iconsToBeLoaded: [defaultModel.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.click();
         await talkToAgentDialog.goToMyWorkspace();
-        await marketplaceContainer.goToMarketplaceHome();
+        allExpectedEntities = ModelsUtil.getLatestOpenAIEntities(
+          await modelApiHelper.getModels(),
+        );
+        await marketplaceContainer.goToMarketplaceHome(
+          allExpectedEntities.length,
+        );
       },
     );
 
     await dialTest.step('Verify all entities have valid icons', async () => {
+      const randomEntity =
+        GeneratorUtil.randomArrayElement(allExpectedEntities);
       await marketplaceAgents.waitForAgentByIndex(allExpectedEntities.length);
-
       const actualIcons = await marketplaceAgents.getAgentsIcons();
       expect
         .soft(actualIcons.length, ExpectedMessages.entitiesIconsCountIsValid)

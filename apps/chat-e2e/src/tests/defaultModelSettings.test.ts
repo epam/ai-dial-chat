@@ -7,6 +7,7 @@ import {
 } from '../testData';
 import { Cursors, Styles } from '../ui/domData';
 
+import { EntityType } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
@@ -445,6 +446,7 @@ dialTest(
     marketplaceHeader,
     talkToAgentDialog,
     chat,
+    modelApiHelper,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-408');
@@ -452,27 +454,9 @@ dialTest(
       ModelsUtil.getOpenAIEntities().filter((m) => m.name.length >= 3),
     );
     const searchTerm = randomEntity.name.substring(0, 3);
-    const matchedModels = ModelsUtil.getModels().filter(
-      (m) =>
-        m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        m.version?.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
-    const matchedApplications = ModelsUtil.getApplications().filter(
-      (a) =>
-        a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        a.version?.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
-    const matchedAssistants = ModelsUtil.getAssistants().filter(
-      (a) =>
-        a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        a.version?.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
-    const expectedMatchedModelsCount =
-      ModelsUtil.groupEntitiesByName(matchedModels).size;
-    const expectedMatchedAppsCount =
-      ModelsUtil.groupEntitiesByName(matchedApplications).size;
-    const expectedMatchedAssistantsCount =
-      ModelsUtil.groupEntitiesByName(matchedAssistants).size;
+    let expectedMatchedModelsCount: number;
+    let expectedMatchedAppsCount: number;
+    let expectedMatchedAssistantsCount: number;
 
     await dialTest.step(
       'Create new conversation and click "Search on My workspace" link',
@@ -491,6 +475,33 @@ dialTest(
         await marketplaceHeader.searchInput.fillInInput(searchTerm);
         const entitiesCount =
           await marketplaceAgents.agentNames.getElementsCount();
+
+        const configModels = await modelApiHelper.getModels();
+        const matchedModels = configModels.filter(
+          (m) =>
+            m.type === EntityType.Model &&
+            (m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              m.version?.toLowerCase().includes(searchTerm.toLowerCase())),
+        );
+        const matchedApplications = configModels.filter(
+          (a) =>
+            a.type === EntityType.Application &&
+            (a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              a.version?.toLowerCase().includes(searchTerm.toLowerCase())),
+        );
+        const matchedAssistants = configModels.filter(
+          (a) =>
+            a.type === EntityType.Assistant &&
+            (a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              a.version?.toLowerCase().includes(searchTerm.toLowerCase())),
+        );
+        expectedMatchedModelsCount =
+          ModelsUtil.groupEntitiesByName(matchedModels).size;
+        expectedMatchedAppsCount =
+          ModelsUtil.groupEntitiesByName(matchedApplications).size;
+        expectedMatchedAssistantsCount =
+          ModelsUtil.groupEntitiesByName(matchedAssistants).size;
+
         expect
           .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
           .toBe(
@@ -537,7 +548,10 @@ dialTest(
           await marketplaceAgents.agentNames.getElementsCount();
         expect
           .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
-          .toBe(ModelsUtil.getLatestOpenAIEntities().length);
+          .toBe(
+            ModelsUtil.getLatestOpenAIEntities(await modelApiHelper.getModels())
+              .length,
+          );
       },
     );
   },

@@ -6,6 +6,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getEntitiesFromTemplateMapping,
+  replaceTemplates,
   templateMatchContent,
 } from '@/src/utils/app/prompts';
 
@@ -108,12 +109,8 @@ export const ChatMessageTemplatesModal = ({
   ]);
 
   const templateResult = useMemo(() => {
-    return templates
-      .slice(0, templates.length - 1)
-      .reduce(
-        (acc, [key, value]) => acc.replaceAll(key.trim(), value.trim()),
-        message.content,
-      );
+    const items = templates.slice(0, templates.length - 1);
+    return replaceTemplates(items, message.content);
   }, [message.content, templates]);
 
   const isInvalid = useMemo(
