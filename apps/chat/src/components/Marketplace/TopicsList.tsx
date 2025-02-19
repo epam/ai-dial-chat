@@ -135,7 +135,10 @@ export const TopicsList = ({
             }
             placement="top"
           >
-            <span className="flex cursor-pointer items-center rounded border border-accent-primary px-1.5 py-1 text-xs leading-3">
+            <span
+              className="flex cursor-pointer items-center rounded border border-accent-primary px-1.5 py-1 text-xs leading-3"
+              onClick={(event) => event.stopPropagation()}
+            >
               +{hiddenTopics.length}
             </span>
           </Tooltip>
