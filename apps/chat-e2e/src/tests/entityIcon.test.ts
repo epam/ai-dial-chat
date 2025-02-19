@@ -33,6 +33,7 @@ dialTest(
     setTestIds('EPMRTC-1036', 'EPMRTC-1038');
 
     const defaultModel = ModelsUtil.getDefaultModel()!;
+    let allExpectedEntities: DialAIEntityModel[];
 
     await dialTest.step(
       'Open initial screen and click "Go to my workspace" to view all available entities',
@@ -43,17 +44,18 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.click();
         await talkToAgentDialog.goToMyWorkspace();
-        await marketplaceContainer.goToMarketplaceHome();
+        allExpectedEntities = ModelsUtil.getLatestOpenAIEntities(
+          await modelApiHelper.getModels(),
+        );
+        await marketplaceContainer.goToMarketplaceHome(
+          allExpectedEntities.length,
+        );
       },
     );
 
     await dialTest.step('Verify all entities have valid icons', async () => {
-      const allExpectedEntities = ModelsUtil.getLatestOpenAIEntities(
-        await modelApiHelper.getModels(),
-      );
       const randomEntity =
         GeneratorUtil.randomArrayElement(allExpectedEntities);
-
       await marketplaceAgents.waitForAgentByIndex(allExpectedEntities.length);
       const actualIcons = await marketplaceAgents.getAgentsIcons();
       expect

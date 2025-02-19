@@ -50,6 +50,11 @@
   .codeblock .table {
     display: initial;
   }
+
+  .break-words {
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
 }
 
 html {

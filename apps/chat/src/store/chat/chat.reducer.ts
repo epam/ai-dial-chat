@@ -2,7 +2,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
-import { EntityInfo, RawEntityInfo } from '@/src/types/common';
+import { EntityInfo, EntityType, RawEntityInfo } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 
 import {
@@ -17,6 +17,7 @@ export interface ChatState {
   configurationSchema?: MessageFormSchema;
   isConfigurationSchemaLoading: boolean;
   shouldFocusAndScroll?: boolean;
+  notAvailableEntityType?: EntityType;
   infoModalState: ModalState;
   selectedEntityInfo?: EntityInfo;
 }
@@ -80,6 +81,12 @@ export const chatSlice = createSlice({
     },
     setShouldFocusAndScroll: (state, { payload }: PayloadAction<boolean>) => {
       state.shouldFocusAndScroll = payload;
+    },
+    setNotAvailableEntityType: (
+      state,
+      { payload }: PayloadAction<EntityType | undefined>,
+    ) => {
+      state.notAvailableEntityType = payload;
     },
     setInfoModalState: (state, { payload }: PayloadAction<ModalState>) => {
       state.infoModalState = payload;

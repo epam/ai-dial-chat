@@ -9,6 +9,9 @@ import { getFormButtonType } from '@/src/utils/app/form-schema';
 import { FormButtonType } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import { useAppSelector } from '@/src/store/hooks';
+
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
 import {
@@ -41,6 +44,9 @@ export const ButtonsProperty = ({
   buttonClassName,
 }: ButtonsPropertyProps) => {
   const { t } = useTranslation(Translation.Chat);
+  const isPlayback = useAppSelector(
+    ConversationsSelectors.selectIsPlaybackSelectedConversations,
+  );
 
   const [confirmation, setConfirmation] = useState<FormSchemaButtonOption>();
 
@@ -77,13 +83,14 @@ export const ButtonsProperty = ({
           <button
             data-no-context-menu
             key={option.const}
-            onClick={() => handleClick(option)}
+            onClick={isPlayback ? undefined : () => handleClick(option)}
             className={classNames('chat-button', buttonClassName, {
               'button-accent-primary':
                 showSelected &&
                 Object.values(formValue ?? {}).includes(option.const),
+              'cursor-not-allowed': disabled,
             })}
-            disabled={disabled}
+            disabled={isPlayback ? false : disabled}
           >
             {option.title}
           </button>
