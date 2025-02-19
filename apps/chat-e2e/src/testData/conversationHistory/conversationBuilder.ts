@@ -22,7 +22,7 @@ export class ConversationBuilder {
       temperature: DEFAULT_TEMPERATURE,
       replay: defaultReplay,
       selectedAddons: model.selectedAddons ?? [],
-      lastActivityDate: Date.now(),
+      updatedAt: Date.now(),
       folderId: '',
     };
   }
@@ -81,8 +81,8 @@ export class ConversationBuilder {
     return this;
   }
 
-  withLastActivityDate(lastActivityDate: number): ConversationBuilder {
-    this.conversation.lastActivityDate = lastActivityDate;
+  withUpdatedAt(updatedAt: number): ConversationBuilder {
+    this.conversation.updatedAt = updatedAt;
     return this;
   }
 

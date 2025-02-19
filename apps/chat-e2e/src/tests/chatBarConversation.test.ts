@@ -572,8 +572,8 @@ dialTest(
 //TODO: enable when item modification date is implemented on backend
 dialTest.skip(
   'Chat sorting. Yesterday.\n' +
-    'Chat sorting. Last 7 days when chat with lastActivityDate is the day before yesterday.\n' +
-    'Chat sorting. Last 30 days when chat with lastActivityDate is the 8th day.\n' +
+    'Chat sorting. Last 7 days when chat with updatedAt is the day before yesterday.\n' +
+    'Chat sorting. Last 30 days when chat with updatedAt is the 8th day.\n' +
     'Chat sorting. Yesterday chat is moved to Today section after regenerate response.\n' +
     'Chat sorting. Last 7 Days chat is moved to Today section after editing already answered message',
   async ({

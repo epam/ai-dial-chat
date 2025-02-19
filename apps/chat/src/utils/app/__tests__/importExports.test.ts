@@ -120,7 +120,7 @@ describe('cleanData Functions', () => {
     selectedAddons: [],
     assistantModelId: 'gpt-4',
     folderId: getConversationRootId(bucket),
-    lastActivityDate: expect.any(Number),
+    updatedAt: expect.any(Number),
   };
 
   describe('cleaning v1 data', () => {

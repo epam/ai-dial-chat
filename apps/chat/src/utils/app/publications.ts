@@ -103,7 +103,7 @@ export const findLatestVersion = (versions: string[]) => {
 };
 
 export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
-  items: { id: string; lastActivityDate?: number }[],
+  items: { id: string; updatedAt?: number }[],
   featureType: FeatureType,
 ) =>
   items.reduce<{
@@ -163,8 +163,7 @@ export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
       } as T;
 
       if (featureType === FeatureType.Chat) {
-        (itemToAdd as ConversationInfo).lastActivityDate =
-          item.lastActivityDate;
+        (itemToAdd as ConversationInfo).updatedAt = item.updatedAt;
       }
 
       acc.items.push(itemToAdd);

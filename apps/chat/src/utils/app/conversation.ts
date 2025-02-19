@@ -162,7 +162,7 @@ export const sortByDateAndName = <T extends ConversationInfo>(
 ): T[] =>
   orderBy(
     conversations,
-    ['lastActivityDate', (conv) => conv.name.toLowerCase()],
+    ['updatedAt', (conv) => conv.name.toLowerCase()],
     ['desc', 'desc'],
   );
 

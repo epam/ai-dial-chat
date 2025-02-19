@@ -441,13 +441,13 @@ export class ConversationData extends FolderData {
     name?: string,
   ) {
     const conversation = this.prepareDefaultConversation(model, name);
-    conversation.lastActivityDate = DateUtil.getYesterdayDate();
+    conversation.updatedAt = DateUtil.getYesterdayDate();
     return conversation;
   }
 
   public prepareLastWeekConversation(model?: DialAIEntityModel, name?: string) {
     const conversation = this.prepareDefaultConversation(model, name);
-    conversation.lastActivityDate = DateUtil.getLastWeekDate();
+    conversation.updatedAt = DateUtil.getLastWeekDate();
     return conversation;
   }
 
@@ -456,13 +456,13 @@ export class ConversationData extends FolderData {
     name?: string,
   ) {
     const conversation = this.prepareDefaultConversation(model, name);
-    conversation.lastActivityDate = DateUtil.getLastMonthDate();
+    conversation.updatedAt = DateUtil.getLastMonthDate();
     return conversation;
   }
 
   public prepareOlderConversation(model?: DialAIEntityModel, name?: string) {
     const conversation = this.prepareDefaultConversation(model, name);
-    conversation.lastActivityDate = DateUtil.getOlderDate();
+    conversation.updatedAt = DateUtil.getOlderDate();
     return conversation;
   }
 
