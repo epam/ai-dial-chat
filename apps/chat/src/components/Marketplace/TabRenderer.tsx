@@ -35,6 +35,7 @@ import {
   ModelsActions,
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import {
   DeleteType,
@@ -57,7 +58,7 @@ import { ApplicationLogs } from './ApplicationLogs';
 import { ViewToggler } from './ViewToggler';
 
 import Magnifier from '@/public/images/icons/search-alt.svg';
-import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
+import { Feature, PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 
 interface NoAgentsFoundProps {
   children: React.ReactNode;
@@ -254,7 +255,9 @@ export const TabRenderer = () => {
     MarketplaceSelectors.selectSelectedViewType,
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const currentDetailsModel = detailsModel && modelsMap[detailsModel.reference];
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
 
   const [suggestedResults, setSuggestedResults] = useState<DialAIEntityModel[]>(
     [],
@@ -461,12 +464,7 @@ export const TabRenderer = () => {
     setLogsEntity(undefined);
   }, []);
 
-  const handleToggleView = useCallback(
-    (viewType: ViewTypes) => {
-      dispatch(MarketplaceActions.setSelectedView({ viewType }));
-    },
-    [dispatch],
-  );
+  const currentDetailsModel = detailsModel && modelsMap[detailsModel.reference];
 
   return (
     <>
@@ -486,10 +484,7 @@ export const TabRenderer = () => {
             items={displayedEntities.length}
             onAddApplication={handleAddApplication}
           />
-          <ViewToggler
-            onToggle={handleToggleView}
-            selectedViewType={selectedViewType}
-          />
+          {enabledFeatures.has(Feature.MarketplaceTableView) && <ViewToggler />}
         </div>
       </header>
 

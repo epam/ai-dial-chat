@@ -18,6 +18,7 @@ export enum MarketplaceQueryParams {
   topics = 'topics',
   search = 'search',
   sources = 'sources',
+  viewType = 'viewType',
 }
 
 export enum FilterTypes {
@@ -110,6 +111,6 @@ export const PlayerContextIcons = {
 };
 
 export enum ViewTypes {
-  CARD,
-  TABLE,
+  CARD = 'CARD',
+  TABLE = 'TABLE',
 }

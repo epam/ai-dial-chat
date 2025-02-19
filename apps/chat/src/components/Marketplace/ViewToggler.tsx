@@ -1,42 +1,51 @@
 import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
+import { useCallback } from 'react';
 
 import classNames from 'classnames';
 
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import {
+  MarketplaceActions,
+  MarketplaceSelectors,
+} from '@/src/store/marketplace/marketplace.reducers';
+
 import { ViewTypes } from '@/src/constants/marketplace';
 
-interface Props {
-  onToggle: (viewType: ViewTypes) => void;
-  selectedViewType: ViewTypes;
-}
+const views = [
+  { view: ViewTypes.CARD, Icon: IconLayoutGrid },
+  { view: ViewTypes.TABLE, Icon: IconLayoutList },
+];
 
-export const ViewToggler: React.FC<Props> = ({
-  onToggle,
-  selectedViewType,
-}) => {
+export const ViewToggler: React.FC = () => {
+  const dispatch = useAppDispatch();
+
+  const selectedViewType = useAppSelector(
+    MarketplaceSelectors.selectSelectedViewType,
+  );
+
+  const handleToggleView = useCallback(
+    (viewType: ViewTypes) => {
+      dispatch(MarketplaceActions.setSelectedView({ viewType }));
+    },
+    [dispatch],
+  );
+
   return (
     <div className="flex gap-2">
-      <button
-        className={classNames(
-          'rounded border p-1.5',
-          selectedViewType === ViewTypes.CARD
-            ? 'border-accent-primary text-accent-primary'
-            : 'border-secondary text-secondary',
-        )}
-        onClick={() => onToggle(ViewTypes.CARD)}
-      >
-        <IconLayoutGrid size={24} />
-      </button>
-      <button
-        className={classNames(
-          'rounded border p-1.5',
-          selectedViewType === ViewTypes.TABLE
-            ? 'border-accent-primary text-accent-primary'
-            : 'border-secondary text-secondary',
-        )}
-        onClick={() => onToggle(ViewTypes.TABLE)}
-      >
-        <IconLayoutList size={24} />
-      </button>
+      {views.map(({ view, Icon }) => (
+        <button
+          key={view}
+          className={classNames(
+            'rounded border p-1.5',
+            selectedViewType === view
+              ? 'border-accent-primary text-accent-primary'
+              : 'border-secondary text-secondary',
+          )}
+          onClick={() => handleToggleView(view)}
+        >
+          <Icon size={24} />
+        </button>
+      ))}
     </div>
   );
 };

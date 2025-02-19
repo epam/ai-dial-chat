@@ -1,4 +1,3 @@
-import { IconArrowNarrowDown } from '@tabler/icons-react';
 import { memo, useCallback, useState } from 'react';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
@@ -52,16 +51,16 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
     return (
       <div data-qa={dataQA} className="flex max-w-full">
         <div className="min-w-[195px] flex-1 divide-y divide-secondary md:min-w-[316px] xl:min-w-[245px]">
-          <div className="group flex cursor-pointer items-center gap-2 pb-3 pl-3 pr-1 pt-5 font-semibold md:pl-4">
+          <div className="group flex items-center gap-2 pb-3 pl-3 pr-1 pt-5 font-semibold md:pl-4">
             {t(
               screenState === ScreenState.MOBILE
                 ? 'Name'
                 : 'Name and Description',
             )}
-            <IconArrowNarrowDown
+            {/* <IconArrowNarrowDown
               className="invisible text-secondary group-hover:visible"
               size={16}
-            />
+            /> */}
           </div>
           {entities.map((entity) => (
             <AgentsTableLeftSideRow
@@ -78,33 +77,33 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
         <div className="overflow-auto">
           <div className="inline-flex flex-col divide-y divide-secondary">
             <div className="ms:px-4 flex shrink-0 grow gap-3 pb-3 pl-4 pr-3 pt-5 md:gap-5">
-              <div className="group flex w-[100px] min-w-[100px] cursor-pointer items-center gap-2 font-semibold">
+              <div className="group flex w-[100px] min-w-[100px] items-center gap-2 font-semibold">
                 {t('Version')}
-                <IconArrowNarrowDown
+                {/* <IconArrowNarrowDown
                   className="invisible text-secondary group-hover:visible"
                   size={16}
-                />
+                /> */}
               </div>
-              <div className="group flex w-[161px] min-w-[161px] cursor-pointer items-center gap-2 font-semibold">
+              <div className="group flex w-[161px] min-w-[161px] items-center gap-2 font-semibold">
                 {t('Topics')}
-                <IconArrowNarrowDown
+                {/* <IconArrowNarrowDown
                   className="invisible text-secondary group-hover:visible"
                   size={16}
-                />
+                /> */}
               </div>
-              <div className="group flex w-[130px] min-w-[130px] cursor-pointer items-center gap-2 font-semibold">
+              <div className="group flex w-[130px] min-w-[130px] items-center gap-2 font-semibold">
                 {t('Owner')}
-                <IconArrowNarrowDown
+                {/* <IconArrowNarrowDown
                   className="invisible text-secondary group-hover:visible"
                   size={16}
-                />
+                /> */}
               </div>
-              <div className="group flex w-[86px] min-w-[86px] cursor-pointer items-center gap-2 font-semibold">
+              <div className="group flex w-[86px] min-w-[86px] items-center gap-2 font-semibold">
                 {t('Released')}
-                <IconArrowNarrowDown
+                {/* <IconArrowNarrowDown
                   className="invisible text-secondary group-hover:visible"
                   size={16}
-                />
+                /> */}
               </div>
               <div className="hidden flex-none xl:block">
                 <div className="invisible flex gap-1">
