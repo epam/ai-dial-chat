@@ -34,7 +34,7 @@ import orderBy from 'lodash-es/orderBy';
 import uniq from 'lodash-es/uniq';
 import uniqBy from 'lodash-es/uniqBy';
 
-export const getAssitantModelId = (
+export const getAssistantModelId = (
   modelType: EntityType,
   defaultAssistantModelId: string,
   conversationAssistantModelId?: string,
