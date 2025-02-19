@@ -22,7 +22,7 @@ function InfoColumn({ dataQa, infoLabel, info }: infoColumnProps) {
 }
 
 interface Props {
-  entityInfo: { createdAt?: number; author: string };
+  entityInfo: { createdAt?: number; author?: string };
 }
 
 export function ApplicationInfo({ entityInfo }: Props) {
