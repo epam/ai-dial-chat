@@ -43,6 +43,7 @@ export const TopicsList = ({
   const allTopicsRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [maxTooltipWidth, setMaxTooltipWidth] = useState<number>(0);
+  const [openHiddenTooltip, setOpenHiddenTooltip] = useState<boolean>(false);
 
   const extraSpace = counterWidth + counterMarginRight;
 
@@ -135,11 +136,18 @@ export const TopicsList = ({
                 ))}
               </div>
             }
+            open={openHiddenTooltip}
+            onOpenChange={setOpenHiddenTooltip}
             placement="top"
           >
             <span
               className="flex cursor-pointer items-center rounded border border-accent-primary px-1.5 py-1 text-xs leading-3"
-              onClick={stopBubbling}
+              onClick={(event) => {
+                stopBubbling(event);
+                setOpenHiddenTooltip(!openHiddenTooltip);
+              }}
+              onMouseEnter={() => setOpenHiddenTooltip(true)}
+              onMouseLeave={() => setOpenHiddenTooltip(false)}
             >
               +{hiddenTopics.length}
             </span>
