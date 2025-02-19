@@ -1,14 +1,13 @@
 import { memo, useCallback, useState } from 'react';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
-import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
-import { Translation } from '@/src/types/translation';
 
 import { AgentsTableLeftSideRow } from './AgentsTableLeftSideRow';
 import { AgentsTableRightSideRow } from './AgentsTableRightSideRow';
+import { HeaderItem } from './HeaderItem';
 
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -23,6 +22,14 @@ interface AgentsTableProps {
   onLogsClick?: (entity: DialAIEntityModel) => void;
   dataQA?: string;
 }
+
+const headerItems = [
+  { label: 'Version', size: 100 },
+  { label: 'Topics', size: 161 },
+  { label: 'Owner', size: 130 },
+  { label: 'Released', size: 86 },
+];
+
 export const AgentsTable: React.FC<AgentsTableProps> = memo(
   ({
     entities,
@@ -34,8 +41,6 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
     onLogsClick,
     dataQA,
   }) => {
-    const { t } = useTranslation(Translation.Marketplace);
-
     const screenState = useScreenState();
 
     const [hoveredRowId, setHoveredRowId] = useState('');
@@ -52,15 +57,20 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
       <div data-qa={dataQA} className="flex max-w-full">
         <div className="min-w-[195px] flex-1 divide-y divide-secondary md:min-w-[316px] xl:min-w-[245px]">
           <div className="group flex items-center gap-2 pb-3 pl-3 pr-1 pt-5 font-semibold md:pl-4">
-            {t(
-              screenState === ScreenState.MOBILE
-                ? 'Name'
-                : 'Name and Description',
-            )}
-            {/* <IconArrowNarrowDown
-              className="invisible text-secondary group-hover:visible"
-              size={16}
-            /> */}
+            <HeaderItem
+              label={
+                screenState === ScreenState.MOBILE
+                  ? 'Name'
+                  : 'Name and Description'
+              }
+              size={
+                screenState === ScreenState.MOBILE
+                  ? 195
+                  : screenState === ScreenState.TABLET
+                    ? 316
+                    : 245
+              }
+            />
           </div>
           {entities.map((entity) => (
             <AgentsTableLeftSideRow
@@ -77,34 +87,9 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
         <div className="overflow-auto">
           <div className="inline-flex flex-col divide-y divide-secondary">
             <div className="ms:px-4 flex shrink-0 grow gap-3 pb-3 pl-4 pr-3 pt-5 md:gap-5">
-              <div className="group flex w-[100px] min-w-[100px] items-center gap-2 font-semibold">
-                {t('Version')}
-                {/* <IconArrowNarrowDown
-                  className="invisible text-secondary group-hover:visible"
-                  size={16}
-                /> */}
-              </div>
-              <div className="group flex w-[161px] min-w-[161px] items-center gap-2 font-semibold">
-                {t('Topics')}
-                {/* <IconArrowNarrowDown
-                  className="invisible text-secondary group-hover:visible"
-                  size={16}
-                /> */}
-              </div>
-              <div className="group flex w-[130px] min-w-[130px] items-center gap-2 font-semibold">
-                {t('Owner')}
-                {/* <IconArrowNarrowDown
-                  className="invisible text-secondary group-hover:visible"
-                  size={16}
-                /> */}
-              </div>
-              <div className="group flex w-[86px] min-w-[86px] items-center gap-2 font-semibold">
-                {t('Released')}
-                {/* <IconArrowNarrowDown
-                  className="invisible text-secondary group-hover:visible"
-                  size={16}
-                /> */}
-              </div>
+              {headerItems.map((item) => (
+                <HeaderItem {...item} key={item.label} />
+              ))}
               <div className="hidden flex-none xl:block">
                 <div className="invisible flex gap-1">
                   <div className="size-[18px]"></div>
