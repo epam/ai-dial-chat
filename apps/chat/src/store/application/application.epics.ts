@@ -318,11 +318,17 @@ const updateApplicationStatusEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ApplicationActions.startUpdatingFunctionStatus.match),
     mergeMap(({ payload }) => {
-      const request =
-        payload.status === ApplicationStatus.DEPLOYING
-          ? ApplicationService.deploy
-          : ApplicationService.undeploy;
-
+      let request;
+      switch (payload.status) {
+        case ApplicationStatus.DEPLOYING:
+          request = ApplicationService.deploy;
+          break;
+        case ApplicationStatus.REDEPLOYING:
+          request = ApplicationService.redeploy;
+          break;
+        default:
+          request = ApplicationService.undeploy;
+      }
       return request(payload.id).pipe(
         switchMap(() =>
           concat(

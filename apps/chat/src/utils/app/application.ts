@@ -300,7 +300,8 @@ export const isApplicationDeploymentInProgress = (
 ) => {
   return (
     entity.functionStatus === ApplicationStatus.DEPLOYING ||
-    entity.functionStatus === ApplicationStatus.UNDEPLOYING
+    entity.functionStatus === ApplicationStatus.UNDEPLOYING ||
+    entity.functionStatus === ApplicationStatus.REDEPLOYING
   );
 };
 
