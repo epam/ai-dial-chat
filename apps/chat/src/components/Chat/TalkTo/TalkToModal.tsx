@@ -138,9 +138,6 @@ const TalkToModalView = ({
         reference: PseudoModel.Playback,
         type: EntityType.Model,
         isDefault: false,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        owner: '',
       });
     } else if (isReplay) {
       orderedModels.unshift({
@@ -152,9 +149,6 @@ const TalkToModalView = ({
         reference: REPLAY_AS_IS_MODEL,
         type: EntityType.Model,
         isDefault: false,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        owner: '',
       });
     } else if (!modelsMap[conversation.model.id]) {
       orderedModels.unshift({
@@ -166,9 +160,6 @@ const TalkToModalView = ({
         }),
         type: EntityType.Model,
         isDefault: false,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        owner: '',
       });
     }
 

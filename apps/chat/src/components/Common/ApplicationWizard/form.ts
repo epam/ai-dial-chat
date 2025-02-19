@@ -369,14 +369,8 @@ export const getDefaultValues = ({
 export const getApplicationData = (
   formData: FormData,
   type: ApplicationType,
-): Omit<
-  CustomApplicationModel,
-  'id' | 'reference' | 'createdAt' | 'updatedAt' | 'owner'
-> => {
-  const preparedData: Omit<
-    CustomApplicationModel,
-    'id' | 'reference' | 'createdAt' | 'updatedAt' | 'owner'
-  > = {
+): Omit<CustomApplicationModel, 'id' | 'reference'> => {
+  const preparedData: Omit<CustomApplicationModel, 'id' | 'reference'> = {
     name: formData.name.trim(),
     type: EntityType.Application,
     isDefault: false,

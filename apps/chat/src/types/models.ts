@@ -72,9 +72,9 @@ export interface DialAIEntity {
   name: string;
   description?: string | undefined;
   iconUrl?: string | undefined;
-  createdAt: number;
-  updatedAt: number;
-  owner: string;
+  createdAt?: number;
+  updatedAt?: number;
+  owner?: string;
   type: EntityType;
   selectedAddons?: string[];
   inputAttachmentTypes?: string[];
