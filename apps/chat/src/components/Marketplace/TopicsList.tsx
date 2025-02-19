@@ -13,7 +13,7 @@ interface AllTopicsProps {
 const AllTopics = memo(({ topics, allTopicsRef }: AllTopicsProps) => {
   return (
     <div
-      className="font-theme invisible fixed top-0 flex gap-2"
+      className="invisible fixed top-0 flex gap-2 font-theme"
       ref={allTopicsRef}
     >
       {topics.map((topic) => (
