@@ -46,6 +46,10 @@ export class ApplicationService {
     return DataService.getDataStorage().deployApplication(applicationId);
   }
 
+  public static redeploy(applicationId: string): Observable<void> {
+    return DataService.getDataStorage().redeployApplication(applicationId);
+  }
+
   public static undeploy(applicationId: string): Observable<void> {
     return DataService.getDataStorage().undeployApplication(applicationId);
   }

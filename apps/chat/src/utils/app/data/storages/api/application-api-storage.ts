@@ -60,7 +60,10 @@ export class ApplicationApiStorage extends ApiEntityStorage<
 
   toggleApplicationStatus(
     applicationId: string,
-    status: SimpleApplicationStatus.DEPLOY | SimpleApplicationStatus.UNDEPLOY,
+    status:
+      | SimpleApplicationStatus.DEPLOY
+      | SimpleApplicationStatus.UNDEPLOY
+      | SimpleApplicationStatus.REDEPLOY,
   ): Observable<void> {
     try {
       return ApiUtils.request(constructPath('/api/ops/application', status), {

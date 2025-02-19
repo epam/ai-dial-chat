@@ -81,6 +81,7 @@ export const ApplicationSettings: React.FC<Props> = ({
     () => !!modelFromState && isApplicationDeploymentInProgress(modelFromState),
     [modelFromState],
   );
+
   const previewConversationId = useAppSelector(
     ConversationsSelectors.selectPreviewConversationId,
   );
@@ -256,7 +257,7 @@ export const ApplicationSettings: React.FC<Props> = ({
                   dispatch(
                     ApplicationActions.startUpdatingFunctionStatus({
                       id: applicationData.id,
-                      status: ApplicationStatus.DEPLOYING,
+                      status: ApplicationStatus.REDEPLOYING,
                     }),
                   );
                 }}
