@@ -13,7 +13,7 @@ interface AllTopicsProps {
 const AllTopics = memo(({ topics, allTopicsRef }: AllTopicsProps) => {
   return (
     <div
-      className="invisible fixed top-0 flex gap-2 font-theme"
+      className="font-theme invisible fixed top-0 flex gap-2"
       ref={allTopicsRef}
     >
       {topics.map((topic) => (
@@ -43,7 +43,7 @@ export const TopicsList = ({
   const allTopicsRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [maxTooltipWidth, setMaxTooltipWidth] = useState<number>(0);
-  const [openHiddenTooltip, setOpenHiddenTooltip] = useState<boolean>(false);
+  const [openHiddenTopics, setOpenHiddenTopics] = useState<boolean>(false);
 
   const extraSpace = counterWidth + counterMarginRight;
 
@@ -136,18 +136,18 @@ export const TopicsList = ({
                 ))}
               </div>
             }
-            open={openHiddenTooltip}
-            onOpenChange={setOpenHiddenTooltip}
+            open={openHiddenTopics}
+            onOpenChange={setOpenHiddenTopics}
             placement="top"
           >
             <span
               className="flex cursor-pointer items-center rounded border border-accent-primary px-1.5 py-1 text-xs leading-3"
               onClick={(event) => {
                 stopBubbling(event);
-                setOpenHiddenTooltip(!openHiddenTooltip);
+                setOpenHiddenTopics(!openHiddenTopics);
               }}
-              onMouseEnter={() => setOpenHiddenTooltip(true)}
-              onMouseLeave={() => setOpenHiddenTooltip(false)}
+              onMouseEnter={() => setOpenHiddenTopics(true)}
+              onMouseLeave={() => setOpenHiddenTopics(false)}
             >
               +{hiddenTopics.length}
             </span>
