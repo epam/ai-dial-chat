@@ -48,53 +48,58 @@ export const TopicsList = ({
     const checkOverflow = () => {
       if (containerRef.current && allTopicsRef.current) {
         if (
-          allTopicsRef.current.offsetWidth <= containerRef.current.offsetWidth
+          allTopicsRef.current.getBoundingClientRect().width <=
+          containerRef.current.getBoundingClientRect().width
         ) {
           setVisibleTopics(topics);
           setHiddenTopics([]);
-        }
+        } else {
+          const initialVisibleTopics: string[] = [];
+          const initialHiddenTopics: string[] = [];
+          const children = Array.from(allTopicsRef.current.children);
+          const containerWidth =
+            containerRef.current.getBoundingClientRect().width - extraSpace;
+          let occupiedWidth = 0;
 
-        const initialVisibleTopics: string[] = [];
-        const initialHiddenTopics: string[] = [];
-        const children = Array.from(allTopicsRef.current.children);
-        const containerWidth = containerRef.current.offsetWidth - extraSpace;
-        let occupiedWidth = 0;
+          const hiddenTopicWidths: { topic: string; topicWidth: number }[] = [];
 
-        const hiddenTopicWidths: { topic: string; topicWidth: number }[] = [];
+          children.forEach((childNode, index) => {
+            const element = childNode as HTMLElement;
 
-        children.forEach((childNode, index) => {
-          const element = childNode as HTMLElement;
+            const elementWidth = element.getBoundingClientRect().width;
 
-          const elementWidth = element.getBoundingClientRect().width;
+            if (occupiedWidth + elementWidth + topicGap <= containerWidth) {
+              initialVisibleTopics.push(topics[index]);
+              occupiedWidth += elementWidth + topicGap;
+            } else {
+              initialHiddenTopics.push(topics[index]);
+              hiddenTopicWidths.push({
+                topic: topics[index],
+                topicWidth: elementWidth,
+              });
+            }
+          });
 
-          if (occupiedWidth + elementWidth + topicGap <= containerWidth) {
-            initialVisibleTopics.push(topics[index]);
-            occupiedWidth += elementWidth + topicGap;
-          } else {
-            initialHiddenTopics.push(topics[index]);
-            hiddenTopicWidths.push({
-              topic: topics[index],
-              topicWidth: elementWidth,
-            });
+          setVisibleTopics(initialVisibleTopics);
+          setHiddenTopics(initialHiddenTopics);
+
+          let maxRowWidth = 0,
+            currentRowWidth = -topicGap;
+          for (const { topicWidth } of hiddenTopicWidths) {
+            if (
+              currentRowWidth + topicWidth + topicGap >
+              innerMaxTooltipWidth
+            ) {
+              maxRowWidth = Math.max(currentRowWidth, maxRowWidth);
+              currentRowWidth = topicWidth;
+            } else {
+              currentRowWidth += topicWidth + topicGap;
+            }
           }
-        });
+          maxRowWidth = Math.max(currentRowWidth, maxRowWidth);
 
-        setVisibleTopics(initialVisibleTopics);
-        setHiddenTopics(initialHiddenTopics);
-
-        let maxRowWidth = 0,
-          currentRowWidth = -topicGap;
-        for (const { topicWidth } of hiddenTopicWidths) {
-          if (currentRowWidth + topicWidth + topicGap > innerMaxTooltipWidth) {
-            maxRowWidth = Math.max(currentRowWidth, maxRowWidth);
-            currentRowWidth = topicWidth;
-          } else {
-            currentRowWidth += topicWidth + topicGap;
-          }
+          setMaxTooltipWidth(maxRowWidth);
         }
-        maxRowWidth = Math.max(currentRowWidth, maxRowWidth);
-
-        setMaxTooltipWidth(maxRowWidth);
       }
     };
     const resizeObserver = new ResizeObserver(checkOverflow);
