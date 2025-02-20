@@ -1,6 +1,6 @@
 import React, { memo, useEffect, useRef, useState } from 'react';
 
-import { stopBubbling } from '@/src/constants/chat';
+import { stopBubblingAndPreventDefault } from '@/src/constants/chat';
 
 import Tooltip from '../Common/Tooltip';
 import { ApplicationTopic } from './ApplicationTopic';
@@ -130,7 +130,7 @@ export const TopicsList = ({
               <div
                 className="my-1 flex flex-wrap gap-2"
                 style={{ maxWidth: `${maxTooltipWidth}px` }}
-                onClick={stopBubbling}
+                onClick={stopBubblingAndPreventDefault}
               >
                 {hiddenTopics.map((topic) => (
                   <ApplicationTopic key={topic} topic={topic} />
@@ -144,7 +144,7 @@ export const TopicsList = ({
             <span
               className="flex cursor-pointer items-center rounded border border-accent-primary px-1.5 py-1 text-xs leading-3"
               onClick={(event) => {
-                stopBubbling(event);
+                stopBubblingAndPreventDefault(event);
                 setOpenHiddenTopics(!openHiddenTopics);
               }}
               onMouseEnter={() => setOpenHiddenTopics(true)}

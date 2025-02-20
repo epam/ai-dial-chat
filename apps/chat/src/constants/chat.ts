@@ -9,6 +9,10 @@ export const RECENT_MODELS_COUNT = 5;
 export const stopBubbling = <T>(e: MouseEvent<T>) => {
   e.stopPropagation();
 };
+export const stopBubblingAndPreventDefault = <T>(e: MouseEvent<T>) => {
+  e.stopPropagation();
+  e.preventDefault();
+};
 
 export const resetShareEntity: ShareInterface = {
   isPublished: false,
