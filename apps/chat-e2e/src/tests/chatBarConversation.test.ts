@@ -358,6 +358,7 @@ dialTest.skip(
         MenuOptions.rename,
         MenuOptions.compare,
         MenuOptions.moveTo,
+        MenuOptions.info,
         MenuOptions.delete,
       ]);
   },
@@ -490,6 +491,7 @@ dialTest(
             MenuOptions.moveTo,
             MenuOptions.share,
             MenuOptions.publish,
+            MenuOptions.info,
             MenuOptions.delete,
           ]);
       },

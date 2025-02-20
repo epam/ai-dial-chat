@@ -258,6 +258,7 @@ export enum MenuOptions {
   select = 'Select',
   view = 'View',
   use = 'Use',
+  info = 'Info',
 }
 
 export enum FilterMenuOptions {
