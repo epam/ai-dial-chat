@@ -1,5 +1,7 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
+import { EntityType } from '@/src/types/common';
+
 import {
   MessageFormSchema,
   MessageFormValue,
@@ -12,6 +14,7 @@ export interface ChatState {
   configurationSchema?: MessageFormSchema;
   isConfigurationSchemaLoading: boolean;
   shouldFocusAndScroll?: boolean;
+  notAvailableEntityType?: EntityType;
 }
 
 const initialState: ChatState = {
@@ -72,6 +75,12 @@ export const chatSlice = createSlice({
     },
     setShouldFocusAndScroll: (state, { payload }: PayloadAction<boolean>) => {
       state.shouldFocusAndScroll = payload;
+    },
+    setNotAvailableEntityType: (
+      state,
+      { payload }: PayloadAction<EntityType | undefined>,
+    ) => {
+      state.notAvailableEntityType = payload;
     },
   },
 });

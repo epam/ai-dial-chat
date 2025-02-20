@@ -194,7 +194,9 @@ export const ChatInputMessage = Inversify.register(
     const isSchemaValueValid = useMemo(() => {
       const schema =
         selectedConversations.map(getConversationSchema)?.[0] ??
-        configurationSchema;
+        (selectedConversations[0]?.messages?.length === 0
+          ? configurationSchema
+          : undefined);
 
       if (!schema) return true;
 

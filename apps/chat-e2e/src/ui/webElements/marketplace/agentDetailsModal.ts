@@ -1,3 +1,4 @@
+import { API } from '@/src/testData';
 import { IconSelectors } from '@/src/ui/selectors';
 import { MarketplaceDetailsModal } from '@/src/ui/selectors/marketplaceSelectors';
 import { BaseElement } from '@/src/ui/webElements';
@@ -30,6 +31,12 @@ export class AgentDetailsModal extends BaseElement {
   public versionMenuTrigger = this.getChildElementBySelector(
     MarketplaceDetailsModal.versionMenuTrigger,
   );
+  public transparentBookmarkIcon = this.getChildElementBySelector(
+    IconSelectors.transparentBookmarkIcon,
+  );
+  public filledBookmarkIcon = this.getChildElementBySelector(
+    IconSelectors.filledBookmarkIcon,
+  );
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
 
   public async clickUseButton({
@@ -46,5 +53,14 @@ export class AgentDetailsModal extends BaseElement {
     } else {
       await this.useButton.click();
     }
+  }
+
+  public async addAgentToWorkspace() {
+    const respPromise = this.page.waitForResponse(
+      (r) =>
+        r.url().includes(API.installedDeploymentsHost()) && r.status() === 200,
+    );
+    await this.transparentBookmarkIcon.click();
+    await respPromise;
   }
 }

@@ -127,7 +127,7 @@ export const PreviewPromptModal = ({
               >
                 {t('Name: ')}
               </p>
-              <p className="line-clamp-2 break-all" data-qa="prompt-name">
+              <p className="line-clamp-2 break-words" data-qa="prompt-name">
                 {prompt.name}
               </p>
             </li>
@@ -139,7 +139,10 @@ export const PreviewPromptModal = ({
                 >
                   {t('Description: ')}
                 </p>
-                <p className="break-all" data-qa="prompt-description">
+                <p
+                  className="overflow-hidden break-words"
+                  data-qa="prompt-description"
+                >
                   {prompt.description}
                 </p>
               </li>
@@ -152,7 +155,10 @@ export const PreviewPromptModal = ({
                 >
                   {t('Prompt: ')}
                 </p>
-                <p className="break-all" data-qa="prompt-content">
+                <p
+                  className="overflow-hidden break-words"
+                  data-qa="prompt-content"
+                >
                   <TemplateRenderer template={prompt.content} />
                 </p>
               </li>
