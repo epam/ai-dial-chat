@@ -4,6 +4,8 @@ import { DialAIEntityModel } from '@/src/types/models';
 
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 
+import { ApplicationInfo } from './ApplicationInfo';
+
 interface Props {
   entity: DialAIEntityModel;
 }
@@ -142,17 +144,7 @@ export const ApplicationDetailsContent = ({ entity }: Props) => {
           </div>
         </section>
       )}
-      {/* <section className="px-3 py-4 md:p-6">
-        <h3 className="text-lg font-semibold">{t('Capabilities')}</h3>
-        <ul className="mt-5 flex list-none flex-col gap-4">
-          {application.capabilities.map((capability) => (
-            <li key={capability} className="flex items-center gap-2">
-              <IconCheck size={18} className="text-success" />
-              <p>{capability}</p>
-            </li>
-          ))}
-        </ul>
-      </section> */}
+      {/*TODO uncomment when 'Rating' will be implemented*/}
       {/* <section className="px-3 py-4 md:p-6">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">{t('Rating')}</h3>
@@ -233,34 +225,11 @@ export const ApplicationDetailsContent = ({ entity }: Props) => {
           </div>
         )}
       </section> */}
-      {/* <section className="px-3 py-4 md:p-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">{t('Details')}</h3>
-          <button className="flex items-center gap-3 text-accent-primary">
-            <IconAlertCircle size={18} />
-            <span>{t('Report problem')}</span>
-          </button>
-        </div>
-        <div className="mt-4 flex flex-col gap-6 md:mt-5 md:flex-row md:gap-12">
-          <div className="flex flex-col gap-2">
-            <p className="font-semibold">{t('Author')}</p>
-            <div className="flex items-center gap-2">
-              <Image
-                src="https://i.pravatar.cc/300"
-                alt={t('application context menu icon')}
-                height={22}
-                width={22}
-                className="shrink-0 rounded-full bg-error"
-              />
-              <span>{application.author.name}</span>
-            </div>
-          </div>
-          <div className="flex flex-col gap-2">
-            <p className="font-semibold">{t('Release date')}</p>
-            <span>{entity.releaseDate}</span>
-          </div>
-        </div>
-      </section> */}
+      <section className="flex flex-col gap-3 overflow-auto px-3 py-4 md:px-6">
+        <ApplicationInfo
+          entityInfo={{ author: entity.owner, createdAt: entity.createdAt }}
+        />
+      </section>
       {/* {fullScreenSlide !== undefined && (
         <FullScreenImage
           images={application.previewImages}
