@@ -56,7 +56,13 @@ export const AgentBookmark: React.FC<Props> = ({
       )}
       isTriggerClickable
     >
-      <button data-qa={dataQA}>
+      <button
+        data-qa={
+          installedModelIds.has(entity.reference)
+            ? 'remove-bookmark'
+            : 'add-bookmark'
+        }
+      >
         <Bookmark
           onClick={(e) => {
             e.stopPropagation();
