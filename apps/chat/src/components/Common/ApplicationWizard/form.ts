@@ -369,12 +369,8 @@ export const getDefaultValues = ({
 export const getApplicationData = (
   formData: FormData,
   type: ApplicationType,
-): Omit<CustomApplicationModel, 'id' | 'reference' | 'owner'> => {
-  //TODO implement owner=author if needed
-  const preparedData: Omit<
-    CustomApplicationModel,
-    'id' | 'reference' | 'owner'
-  > = {
+): Omit<CustomApplicationModel, 'id' | 'reference'> => {
+  const preparedData: Omit<CustomApplicationModel, 'id' | 'reference'> = {
     name: formData.name.trim(),
     type: EntityType.Application,
     isDefault: false,
