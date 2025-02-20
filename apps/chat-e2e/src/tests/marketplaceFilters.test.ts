@@ -28,10 +28,6 @@ dialTest(
     accountSettings,
     accountDropdownMenu,
     confirmationDialog,
-    providerLogin,
-    dialHomePage,
-    marketplaceSidebar,
-    chatBar,
   }) => {
     setTestIds('EPMRTC-4485', 'EPMRTC-5241', 'EPMRTC-5242');
     let url: string;
@@ -88,11 +84,10 @@ dialTest(
         await accountSettings.openAccountDropdownMenu();
         await accountDropdownMenu.selectMenuOption(AccountMenuOptions.logout);
         await confirmationDialog.confirm();
-        await providerLogin.navigateToCredentialsPage();
-        await dialHomePage.waitForPageLoaded();
-        await chatBar.dialMarketplaceLink.click();
+        await marketplacePage.openMyWorkspacePage({
+          isInstalledDeploymentsUpdated: false,
+        });
         await marketplacePage.waitForPageLoaded();
-        await marketplaceSidebar.myWorkspaceButton.click();
         await baseAssertion.assertCheckboxState(
           marketplaceFilter.filterByPropertyOptionInput(
             MarketplaceFilterTypes.type,
