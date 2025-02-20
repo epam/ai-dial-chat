@@ -18,6 +18,7 @@ export enum MarketplaceQueryParams {
   topics = 'topics',
   search = 'search',
   sources = 'sources',
+  viewType = 'viewType',
 }
 
 export enum FilterTypes {
@@ -74,6 +75,12 @@ interface IconSize {
   shareIconSize: number;
 }
 
+export const TableIconSizes: Record<ScreenState, IconSize> = {
+  [ScreenState.DESKTOP]: { iconSize: 60, shareIconSize: 24 },
+  [ScreenState.TABLET]: { iconSize: 60, shareIconSize: 24 },
+  [ScreenState.MOBILE]: { iconSize: 30, shareIconSize: 16 },
+};
+
 export const CardIconSizes: Record<ScreenState, IconSize> = {
   [ScreenState.DESKTOP]: { iconSize: 80, shareIconSize: 30 },
   [ScreenState.TABLET]: { iconSize: 48, shareIconSize: 20 },
@@ -108,3 +115,8 @@ export const PlayerContextIcons = {
   ...StatusIcons,
   [SimpleApplicationStatus.UPDATING]: LoaderIcon,
 };
+
+export enum ViewTypes {
+  CARD = 'CARD',
+  TABLE = 'TABLE',
+}
