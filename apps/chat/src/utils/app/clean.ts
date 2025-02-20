@@ -93,10 +93,7 @@ export const cleanConversation = (
     messages: conversation.messages?.map(migrateMessageAttachmentUrls) || [],
     selectedAddons: conversation.selectedAddons ?? [],
     assistantModelId,
-    //TODO remove lastActivityDate when core issue #685 done
-    lastActivityDate:
-      conversation.updatedAt || conversation.lastActivityDate || 0,
-    updatedAt: conversation.updatedAt || conversation.lastActivityDate,
+    updatedAt: conversation.updatedAt || conversation.lastActivityDate || 0,
     isNameChanged: conversation.isNameChanged,
     ...(conversation.playback && {
       playback: {
