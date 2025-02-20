@@ -309,18 +309,30 @@ export class BasePage {
 
   public async mockChatTextResponse(
     responseBody: string,
-    options?: { isOverlay: boolean },
+    options?: {
+      isOverlay?: boolean;
+      /** If true, let the request actually hit the server
+       * and then override the response.
+       * Defaults to false for backward-compatibility.
+       */
+      passThrough?: boolean;
+    },
   ) {
-    await this.page.route(
-      options?.isOverlay
-        ? `${process.env.NEXT_PUBLIC_OVERLAY_HOST}${API.chatHost}`
-        : API.chatHost,
-      async (route) => {
-        await route.fulfill({
-          status: 200,
-          body: responseBody,
-        });
-      },
-    );
+    const urlToIntercept = options?.isOverlay
+      ? `${process.env.NEXT_PUBLIC_OVERLAY_HOST}${API.chatHost}`
+      : API.chatHost;
+
+    await this.page.route(urlToIntercept, async (route) => {
+      if (options?.passThrough) {
+        // 1. Sends the request to the actual server.
+        await route.fetch();
+      }
+      // 2. Replaces the real response body with our mocked body
+      // Fulfill with our fake response, never hitting the server
+      await route.fulfill({
+        status: 200,
+        body: responseBody,
+      });
+    });
   }
 }

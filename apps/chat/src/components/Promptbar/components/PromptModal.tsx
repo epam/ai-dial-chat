@@ -31,7 +31,6 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
-import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
@@ -41,14 +40,23 @@ import Tooltip from '../../Common/Tooltip';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onUpdatePrompt: (prompt: Prompt) => void;
+  onUpdatePrompt: (oldPrompt: Prompt, newPrompt: Prompt) => void;
+  onCreatePrompt: (prompt: Prompt) => void;
 }
 
-export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
+export const PromptModal: FC<Props> = ({
+  isOpen,
+  onClose,
+  onUpdatePrompt,
+  onCreatePrompt,
+}) => {
   const { t } = useTranslation(Translation.PromptBar);
 
   const dispatch = useAppDispatch();
 
+  const isNewPromptCreating = useAppSelector(
+    PromptsSelectors.selectIsNewPromptCreating,
+  );
   const selectedPrompt = useAppSelector(
     PromptsSelectors.selectSelectedOrNewPrompt,
   );
@@ -60,7 +68,6 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
     selectedPrompt?.description || '',
   );
   const [content, setContent] = useState(selectedPrompt?.content || '');
-  const [isConfirmDialog, setIsConfirmDialog] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [isDotError, setIsDotError] = useState(false);
 
@@ -97,20 +104,6 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
     onBlur(e);
   };
 
-  const updatePrompt = useCallback(
-    (selectedPrompt: Prompt) => {
-      onUpdatePrompt({
-        ...selectedPrompt,
-        name: trimEndDots(name),
-        description: description?.trim(),
-        content: content.trim(),
-      });
-      setSubmitted(false);
-      onClose();
-    },
-    [content, description, name, onClose, onUpdatePrompt],
-  );
-
   const handleRename = useCallback(
     (selectedPrompt: Prompt) => {
       setSubmitted(true);
@@ -141,14 +134,34 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
         return;
       }
 
-      if (selectedPrompt.isShared && selectedPrompt.name !== newName) {
-        setIsConfirmDialog(true);
-        return;
+      const updatedPrompt = {
+        ...selectedPrompt,
+        name: trimEndDots(name),
+        description: description?.trim(),
+        content: content.trim(),
+      };
+
+      if (isNewPromptCreating) {
+        onCreatePrompt(updatedPrompt);
+      } else {
+        onUpdatePrompt(selectedPrompt, updatedPrompt);
       }
 
-      updatePrompt(selectedPrompt);
+      setSubmitted(false);
+      onClose();
     },
-    [allPrompts, dispatch, name, t, updatePrompt],
+    [
+      allPrompts,
+      content,
+      description,
+      dispatch,
+      isNewPromptCreating,
+      name,
+      onClose,
+      onCreatePrompt,
+      onUpdatePrompt,
+      t,
+    ],
   );
 
   const handleSubmit = useCallback(
@@ -313,26 +326,6 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
               </button>
             </Tooltip>
           </div>
-          <ConfirmDialog
-            isOpen={isConfirmDialog}
-            heading={t('Confirm renaming prompt')}
-            confirmLabel={t('Rename')}
-            cancelLabel={t('Cancel')}
-            description={t(
-              'Renaming will stop sharing and other users will no longer see this prompt.',
-            )}
-            onClose={(result) => {
-              setIsConfirmDialog(false);
-              if (result) {
-                updatePrompt({
-                  ...selectedPrompt,
-                  isShared: false,
-                });
-                setSubmitted(false);
-                onClose();
-              }
-            }}
-          />
         </>
       ) : (
         <NotFoundEntity entity={t('Prompt')} />

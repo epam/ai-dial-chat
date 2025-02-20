@@ -753,8 +753,6 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserConversations.selectConversation(
           secondUserEmptyConversation.name,
-          undefined,
-          { isHttpMethodTriggered: false },
         );
         await additionalShareUserSendMessage.attachmentMenuTrigger.click();
 
@@ -984,6 +982,7 @@ dialSharedWithMeTest(
           .toEqual([
             MenuOptions.duplicate,
             MenuOptions.export,
+            MenuOptions.info,
             MenuOptions.delete,
           ]);
       },

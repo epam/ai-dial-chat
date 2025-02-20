@@ -106,7 +106,7 @@ export const CustomAppView: React.FC<ViewProps> = ({
 
       dispatch(
         ApplicationActions.update({
-          oldApplicationId: selectedApplication.id,
+          oldApplication: selectedApplication,
           applicationData,
         }),
       );
@@ -250,12 +250,7 @@ export const CustomAppView: React.FC<ViewProps> = ({
         />
       </div>
 
-      <ApplicationWizardFooter
-        onClose={onClose}
-        selectedApplication={selectedApplication}
-        isEdit={isEdit}
-        isValid={isValid}
-      />
+      <ApplicationWizardFooter isEdit={isEdit} isValid={isValid} />
     </form>
   );
 };

@@ -57,20 +57,11 @@ export const ExpectedConstants = {
     'Deleting will stop sharing and other users will no longer see this conversation.',
   renameSharedFolderMessage:
     'Renaming will stop sharing and other users will no longer see this folder.',
-  renameSharedConversationMessage:
-    'Renaming will stop sharing and other users will no longer see this conversation.',
   deleteSharedPromptMessage:
     'Are you sure that you want to delete a prompt?\n' +
     'Deleting will stop sharing and other users will no longer see this prompt.',
-  sharedConversationModelChangeDialogTitle: 'Confirm model changing',
-  renameSharedConversationDialogTitle: 'Confirm renaming conversation',
-  renameSharedPromptDialogTitle: 'Confirm renaming prompt',
   notAllowedToMoveParentToChild:
     "It's not allowed to move parent folder in child folder",
-  sharedConversationModelChangeMessage:
-    'Model changing will stop sharing and other users will no longer see this conversation.',
-  renameSharedPromptMessage:
-    'Renaming will stop sharing and other users will no longer see this prompt.',
   deletePromptConfirmationModalTitle: 'Confirm deleting prompt',
   deletePromptConfirmationModalMessage:
     'Are you sure that you want to delete a prompt?',
@@ -116,9 +107,9 @@ export const ExpectedConstants = {
   responseFileUrlContentPattern: (model: string) =>
     new RegExp('/appdata/' + model + '/images/.*\\.png', 'g'),
   shareConversationText:
-    'This link is temporary and will be active for 3 days. This conversation and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming or changing the model will stop sharing.',
+    'This link is temporary and will be active for 3 days. This conversation and future changes to it will be visible to users who follow the link. Only owner will be able to make changes.',
   sharePromptText:
-    'This link is temporary and will be active for 3 days. This prompt and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
+    'This link is temporary and will be active for 3 days. This prompt and future changes to it will be visible to users who follow the link. Only owner will be able to make changes.',
   shareApplicationText:
     'This application and its updates will be visible to users with the link. Renaming or changing the version will stop sharing.',
   shareConversationFolderText:
@@ -225,6 +216,13 @@ export const ExpectedConstants = {
     `${API.fileHost}/public/${name}`,
   attachmentPublishErrorMessage:
     'Publishing failed. You are only allowed to publish conversations with attachments from "All files"',
+  marketplacePath: '/marketplace',
+  workspacePath: () => `${ExpectedConstants.marketplacePath}?tab=workspace`,
+  noWorkspaceAgentsFoundMessage:
+    'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
+  noMarketplaceAgentsFoundMessage: `Sorry, we couldn't find any results for your search.`,
+  versionPrefix: 'Version: ',
+  agentAddedToWorkspaceMessage: 'The agent added to my workspace',
 };
 
 export enum Types {
@@ -259,6 +257,8 @@ export enum MenuOptions {
   attachLink = 'Attach link',
   select = 'Select',
   view = 'View',
+  use = 'Use',
+  info = 'Info',
 }
 
 export enum FilterMenuOptions {
@@ -274,6 +274,12 @@ export enum AccountMenuOptions {
 export enum UploadMenuOptions {
   attachUploadedFiles = 'Attach uploaded files',
   uploadFromDevice = 'Upload from device',
+}
+
+export enum AddAppMenuOptions {
+  codeApp = 'Code app',
+  customApp = 'Custom app',
+  quickApp = 'Quick app',
 }
 
 export const Chronology = {
@@ -297,8 +303,12 @@ export const API = {
   listingHost: '/api/listing',
   conversationsHost: () => `${API.listingHost}/conversations`,
   promptsHost: () => `${API.listingHost}/prompts`,
+  appsHost: () => `${API.listingHost}/applications`,
   filesListingHost: () => `${API.listingHost}/files`,
   fileHost: '/api/files',
+  conversationHost: '/api/conversations',
+  promptHost: '/api/prompts',
+  moveHost: '/api/ops/resource/move',
   importFileRootPath: (bucket: string) => `files/${bucket}`,
   modelFilePath: (modelId: string) => `appdata/${modelId}/images`,
   importFilePath: (bucket: string, modelId: string) =>
@@ -320,6 +330,10 @@ export const API = {
   publicationRulesList: '/api/publication/rulesList',
   multipleListingHost: () => `${API.listingHost}/multiple?recursive=true`,
   pendingPublicationsListing: '/api/publication/listing',
+  publishedConversations: '/api/publication/conversations/public',
+  applicationCreateHost: '/api/applications',
+  publishedApplicationsHost:
+    'api/publication/applications/public?recursive=true',
 };
 
 export const Import = {
@@ -432,4 +446,9 @@ export enum AuthProvider {
 export enum AttachFilesFolders {
   appdata = 'appdata',
   images = 'images',
+}
+
+export enum PseudoModel {
+  replay = 'replay',
+  playback = 'playback',
 }

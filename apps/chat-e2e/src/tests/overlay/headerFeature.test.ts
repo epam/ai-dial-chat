@@ -437,7 +437,7 @@ dialOverlayTest(
         const allConversations = await overlayItemApiHelper.listItems(
           API.conversationsHost(),
         );
-        const conversationWithContent = `${ModelsUtil.getDefaultModel()!.id}${ItemUtil.conversationIdSeparator}${requestContent}`;
+        const conversationWithContent = `${ModelsUtil.getDefaultModel()!.id}${ItemUtil.entityIdSeparator}${requestContent}`;
         expect
           .soft(
             allConversations.find((c) => c.name === conversationWithContent),

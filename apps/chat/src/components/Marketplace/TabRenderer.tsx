@@ -1,6 +1,9 @@
 import { IconMessage2 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 
+import classNames from 'classnames';
+
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getApplicationType } from '@/src/utils/app/application';
@@ -17,6 +20,7 @@ import {
   ApplicationActionType,
   ApplicationType,
 } from '@/src/types/applications';
+import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
@@ -31,11 +35,13 @@ import {
   ModelsActions,
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import {
   DeleteType,
   FilterTypes,
   MarketplaceTabs,
+  ViewTypes,
 } from '@/src/constants/marketplace';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
@@ -46,10 +52,13 @@ import { CardsList } from '@/src/components/Marketplace/CardsList';
 import { MarketplaceBanner } from '@/src/components/Marketplace/MarketplaceBanner';
 import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
 
-import Magnifier from '../../../public/images/icons/search-alt.svg';
 import { NoResultsFound } from '../Common/NoResultsFound';
+import { AgentsTable } from './AgentsTable/AgentsTable';
+import { ApplicationLogs } from './ApplicationLogs';
+import { ViewToggler } from './ViewToggler';
 
-import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
+import Magnifier from '@/public/images/icons/search-alt.svg';
+import { Feature, PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 
 interface NoAgentsFoundProps {
   children: React.ReactNode;
@@ -61,7 +70,11 @@ const NoAgentsFound = ({ children, desc, header }: NoAgentsFoundProps) => (
   <div className="flex grow flex-col items-center justify-center">
     {children}
     {header && <span className="mt-5 text-lg font-semibold">{header}</span>}
-    {desc && <span className="mt-4 text-sm font-normal">{desc}</span>}
+    {desc && (
+      <span className="mt-4 text-sm font-normal" data-qa="no-data-description">
+        {desc}
+      </span>
+    )}
   </div>
 );
 
@@ -70,22 +83,26 @@ interface ResultsViewProps {
   suggestedResults: DialAIEntityModel[];
   selectedTab: MarketplaceTabs;
   areAllFiltersEmpty: boolean;
+  selectedViewType: ViewTypes;
   onCardClick: (entity: DialAIEntityModel, isSuggested?: boolean) => void;
   onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
   onDelete: (entity: DialAIEntityModel) => void;
   onEdit: (entity: DialAIEntityModel) => void;
   onBookmarkClick: (entity: DialAIEntityModel) => void;
+  onLogsClick: (entity: DialAIEntityModel) => void;
 }
 
 const ResultsView = ({
   entities,
   suggestedResults,
   areAllFiltersEmpty,
+  selectedViewType,
   onCardClick,
   onPublish,
   onDelete,
   onEdit,
   onBookmarkClick,
+  onLogsClick,
 }: ResultsViewProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -96,19 +113,27 @@ const ResultsView = ({
     [onCardClick],
   );
 
+  const ViewList =
+    selectedViewType === ViewTypes.CARD ? CardsList : AgentsTable;
+
   if (suggestedResults.length) {
     return (
       <>
-        <CardsList
+        <ViewList
           entities={entities}
           onCardClick={onCardClick}
           onPublish={onPublish}
           onDelete={onDelete}
           onEdit={onEdit}
           onBookmarkClick={onBookmarkClick}
+          onLogsClick={onLogsClick}
+          dataQA="filtered-agents"
         />
         {!entities.length && (
-          <div className="flex items-center gap-1">
+          <div
+            className="flex items-center gap-1"
+            data-qa="no-workspace-results-found"
+          >
             <Magnifier
               height={32}
               width={32}
@@ -121,16 +146,21 @@ const ResultsView = ({
             </span>
           </div>
         )}
-        <span className="mb-4 mt-5 text-xl md:mt-6 lg:mt-8">
+        <span
+          className="mb-4 mt-5 text-xl md:mt-6 lg:mt-8"
+          data-qa="marketplace-suggestions-label"
+        >
           {t('Suggested results from DIAL Marketplace')}
         </span>
-        <CardsList
+        <ViewList
           entities={suggestedResults}
           onCardClick={handleSuggestedCardClick}
           onPublish={onPublish}
           onDelete={onDelete}
           onEdit={onEdit}
           onBookmarkClick={onBookmarkClick}
+          onLogsClick={onLogsClick}
+          dataQA="suggested-agents"
         />
       </>
     );
@@ -138,13 +168,15 @@ const ResultsView = ({
 
   if (entities.length) {
     return (
-      <CardsList
+      <ViewList
         entities={entities}
         onCardClick={onCardClick}
         onPublish={onPublish}
         onDelete={onDelete}
         onEdit={onEdit}
         onBookmarkClick={onBookmarkClick}
+        onLogsClick={onLogsClick}
+        dataQA="filtered-agents"
       />
     );
   }
@@ -219,7 +251,13 @@ export const TabRenderer = () => {
   );
   const allModels = useAppSelector(ModelsSelectors.selectModels);
   const detailsModel = useAppSelector(MarketplaceSelectors.selectDetailsModel);
+  const selectedViewType = useAppSelector(
+    MarketplaceSelectors.selectSelectedViewType,
+  );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
 
   const [suggestedResults, setSuggestedResults] = useState<DialAIEntityModel[]>(
     [],
@@ -237,6 +275,9 @@ export const TabRenderer = () => {
     entity: ShareEntity & { iconUrl?: string };
     action: PublishActions;
   }>();
+  const [logsEntity, setLogsEntity] = useState<DialAIEntityModel>();
+
+  const screenState = useScreenState();
 
   const isSomeFilterNotEmpty =
     searchTerm.length ||
@@ -265,6 +306,10 @@ export const TabRenderer = () => {
         ? filteredEntities.filter(isInstalledModel)
         : filteredEntities;
 
+    if (selectedViewType === ViewTypes.TABLE) {
+      return entitiesForTab;
+    }
+
     const shouldSuggest =
       selectedTab === MarketplaceTabs.MY_WORKSPACE && isSomeFilterNotEmpty;
 
@@ -288,6 +333,7 @@ export const TabRenderer = () => {
   }, [
     allModels,
     selectedTab,
+    selectedViewType,
     isSomeFilterNotEmpty,
     searchTerm,
     selectedFilters,
@@ -410,16 +456,36 @@ export const TabRenderer = () => {
     [dispatch, installedModelIds],
   );
 
+  const handleLogsClick = useCallback((entity: DialAIEntityModel) => {
+    setLogsEntity(entity);
+  }, []);
+
+  const handleCloseApplicationLogs = useCallback(() => {
+    setLogsEntity(undefined);
+  }, []);
+
   const currentDetailsModel = detailsModel && modelsMap[detailsModel.reference];
 
   return (
     <>
-      <header className="mb-5 md:mb-4 xl:mb-6" data-qa="marketplace-header">
+      <header
+        className={classNames(
+          'mb-5 md:mb-4 xl:mb-6',
+          selectedViewType === ViewTypes.TABLE &&
+            screenState === ScreenState.MOBILE
+            ? 'px-3'
+            : 'px-0',
+        )}
+        data-qa="marketplace-header"
+      >
         <MarketplaceBanner />
-        <SearchHeader
-          items={displayedEntities.length}
-          onAddApplication={handleAddApplication}
-        />
+        <div className="flex items-center justify-end gap-2 md:mt-4 md:gap-4 xl:mt-6">
+          <SearchHeader
+            items={displayedEntities.length}
+            onAddApplication={handleAddApplication}
+          />
+          {enabledFeatures.has(Feature.MarketplaceTableView) && <ViewToggler />}
+        </div>
       </header>
 
       <ResultsView
@@ -427,11 +493,13 @@ export const TabRenderer = () => {
         suggestedResults={suggestedResults}
         selectedTab={selectedTab}
         areAllFiltersEmpty={areAllFiltersEmpty}
+        selectedViewType={selectedViewType}
         onCardClick={handleSetDetailsModel}
         onPublish={handleSetPublishEntity}
         onDelete={handleDelete}
         onEdit={handleEditApplication}
         onBookmarkClick={handleBookmarkClick}
+        onLogsClick={handleLogsClick}
       />
 
       {/* MODALS */}
@@ -473,6 +541,13 @@ export const TabRenderer = () => {
           isOpen={!!publishModel}
           onClose={handlePublishClose}
           publishAction={publishModel.action}
+        />
+      )}
+      {logsEntity && (
+        <ApplicationLogs
+          isOpen
+          onClose={handleCloseApplicationLogs}
+          entityId={logsEntity.id}
         />
       )}
     </>

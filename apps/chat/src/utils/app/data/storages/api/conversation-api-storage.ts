@@ -37,7 +37,7 @@ export class ConversationApiStorage extends ApiEntityStorage<
     return {
       ...entity,
       ...info,
-      lastActivityDate: info.lastActivityDate ?? entity.lastActivityDate,
+      updatedAt: info.updatedAt ?? entity.updatedAt,
       model: entity.model,
     };
   }
@@ -65,6 +65,7 @@ export const getOrUploadConversation = <T extends { id: string }>(
 ): Observable<{
   conversation: Conversation | null;
   payload: T;
+  wasUploaded: boolean;
 }> => {
   const conversation = ConversationsSelectors.selectConversation(
     state,
@@ -84,11 +85,13 @@ export const getOrUploadConversation = <T extends { id: string }>(
         }),
       ),
       payload: of(payload),
+      wasUploaded: of(true),
     });
   } else {
-    return forkJoin({
-      conversation: of((conversation as Conversation) ?? null),
-      payload: of(payload),
+    return of({
+      conversation: (conversation as Conversation) ?? null,
+      payload: payload,
+      wasUploaded: false,
     });
   }
 };
@@ -123,7 +126,7 @@ export const getPreparedConversations = ({
       name: newName,
       folderId,
     });
-  }); // to send conversation with proper parentPath and lastActivityDate order
+  }); // to send conversation with proper parentPath and updatedAt order
 
 export const getImportPreparedConversations = ({
   conversations,
@@ -153,4 +156,4 @@ export const getImportPreparedConversations = ({
       name: newName,
       folderId: folderId,
     };
-  }); // to send conversation with proper parentPath and lastActivityDate order
+  }); // to send conversation with proper parentPath and updatedAt order

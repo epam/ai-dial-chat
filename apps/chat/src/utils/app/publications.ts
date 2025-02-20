@@ -2,6 +2,7 @@ import { getQuickAppDocumentUrl } from '@/src/utils/app/application';
 
 import { CustomApplicationModel } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
+import { DialFile } from '@/src/types/files';
 import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import { PromptInfo } from '@/src/types/prompt';
 import {
@@ -103,7 +104,7 @@ export const findLatestVersion = (versions: string[]) => {
 };
 
 export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
-  items: { id: string; lastActivityDate?: number }[],
+  items: { id: string; updatedAt?: number }[],
   featureType: FeatureType,
 ) =>
   items.reduce<{
@@ -163,8 +164,7 @@ export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
       } as T;
 
       if (featureType === FeatureType.Chat) {
-        (itemToAdd as ConversationInfo).lastActivityDate =
-          item.lastActivityDate;
+        (itemToAdd as ConversationInfo).updatedAt = item.updatedAt;
       }
 
       acc.items.push(itemToAdd);
@@ -216,12 +216,10 @@ export const getApplicationPublishResources = ({
   publishAction,
   path,
   applicationDetails,
-  selectedIds,
 }: {
   entity: PublishRequestDialAIEntityModel;
   publishAction: PublishActions;
   path: string;
-  selectedIds: string[];
   applicationDetails?: CustomApplicationModel;
 }) => {
   const iconUrl = entity.iconUrl;
@@ -229,7 +227,7 @@ export const getApplicationPublishResources = ({
 
   const resources = [
     iconUrl && !isEntityIdExternal({ id: iconUrl }) ? iconUrl : undefined,
-    documentUrl && selectedIds.includes(documentUrl) ? documentUrl : undefined,
+    documentUrl,
   ];
 
   return resources.reduce(
@@ -261,4 +259,33 @@ export const getApplicationPublishResources = ({
     },
     [],
   );
+};
+
+export const getFilesFromPublicResources = ({
+  fileResources,
+  payloadUrl,
+}: {
+  fileResources: PublicationResource[];
+  payloadUrl: string;
+}): { publicFiles: DialFile[]; foldersSet: Set<string> } => {
+  const foldersSet = new Set<string>();
+  const publicFiles: DialFile[] = fileResources.map((r) => {
+    const folderId = getFolderIdFromEntityId(r.reviewUrl);
+    foldersSet.add(folderId); // Add folderId to the Set
+
+    return {
+      id: r.reviewUrl,
+      folderId,
+      name: splitEntityId(r.targetUrl).name,
+      contentLength: 0,
+      contentType: '',
+      isPublicationFile: true,
+      publicationInfo: {
+        action: r.action,
+        publicationUrl: payloadUrl,
+      },
+    };
+  });
+
+  return { publicFiles, foldersSet };
 };

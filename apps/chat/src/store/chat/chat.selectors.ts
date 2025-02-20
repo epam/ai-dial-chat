@@ -1,5 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import { ModalState } from '@/src/types/modal';
+
 import { ChatState } from '@/src/store/chat/chat.reducer';
 
 import { RootState } from '@/src/store';
@@ -7,27 +9,18 @@ import { DialSchemaProperties } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState): ChatState => state.chat;
 
-export const selectInputContent = createSelector(
-  [rootSelector],
-  (state) => state.inputContent,
-);
+const selectInputContent = (state: RootState) =>
+  rootSelector(state).inputContent;
 
-export const selectChatFormValue = createSelector(
-  [rootSelector],
-  (state) => state.formValue,
-);
+const selectChatFormValue = (state: RootState) => rootSelector(state).formValue;
 
-export const selectConfigurationSchema = createSelector(
-  [rootSelector],
-  (state) => state.configurationSchema,
-);
+const selectConfigurationSchema = (state: RootState) =>
+  rootSelector(state).configurationSchema;
 
-export const selectIsConfigurationSchemaLoading = createSelector(
-  [rootSelector],
-  (state) => state.isConfigurationSchemaLoading,
-);
+const selectIsConfigurationSchemaLoading = (state: RootState) =>
+  rootSelector(state).isConfigurationSchemaLoading;
 
-export const selectIsConfigurationBlocksInput = createSelector(
+const selectIsConfigurationBlocksInput = createSelector(
   [rootSelector],
   (state) =>
     state.configurationSchema?.[
@@ -35,10 +28,31 @@ export const selectIsConfigurationBlocksInput = createSelector(
     ] ?? false,
 );
 
+const selectShouldFocusAndScroll = (state: RootState) =>
+  rootSelector(state).shouldFocusAndScroll;
+
+const selectNotAvailableEntityType = (state: RootState) =>
+  rootSelector(state).notAvailableEntityType;
+
+const selectInfoModalState = (state: RootState) =>
+  rootSelector(state).infoModalState;
+
+const selectInfoModalOpened = createSelector([rootSelector], (state) => {
+  return state.infoModalState !== ModalState.CLOSED;
+});
+
+const selectSelectedEntityInfo = (state: RootState) =>
+  rootSelector(state).selectedEntityInfo;
+
 export const ChatSelectors = {
   selectInputContent,
   selectChatFormValue,
   selectConfigurationSchema,
   selectIsConfigurationSchemaLoading,
   selectIsConfigurationBlocksInput,
+  selectShouldFocusAndScroll,
+  selectNotAvailableEntityType,
+  selectInfoModalState,
+  selectInfoModalOpened,
+  selectSelectedEntityInfo,
 };

@@ -434,9 +434,9 @@ const acceptInvitationEpic: AppEpic = (action$) =>
               return of(
                 ShareActions.acceptShareInvitationSuccess({
                   acceptedId,
-                  isFolder: isFolderId(data.resources[0].url),
-                  isConversation: isConversationId(data.resources[0].url),
-                  isPrompt: isPromptId(data.resources[0].url),
+                  isFolder: isFolderId(acceptedIds[0].url),
+                  isConversation: isConversationId(acceptedIds[0].url),
+                  isPrompt: isPromptId(acceptedIds[0].url),
                   isApplication: isApplicationId(acceptedId),
                 }),
               );
@@ -712,7 +712,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                     id: conv.id,
                     conversation: {
                       isShared: true,
-                      lastActivityDate: sharedConv.lastActivityDate,
+                      updatedAt: sharedConv.updatedAt,
                     },
                   });
                 }
@@ -915,7 +915,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
 
           payload.resources.entities.length &&
             actions.push(
-              FilesActions.addFiles({
+              FilesActions.addSharedFiles({
                 files: payload.resources.entities
                   // do not override selected files
                   .filter((res) => !selectedFilesIds.includes(res.id))

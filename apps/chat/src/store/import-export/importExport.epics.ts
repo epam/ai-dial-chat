@@ -235,7 +235,7 @@ const exportPromptEpic: AppEpic = (action$, state$) =>
     switchMap(({ payload }) => getOrUploadPrompt(payload, state$.value)),
 
     switchMap((promptAndPayload) => {
-      const { prompt } = promptAndPayload;
+      const { prompt, wasUploaded } = promptAndPayload;
       if (!prompt) {
         return concat(
           of(
@@ -254,7 +254,11 @@ const exportPromptEpic: AppEpic = (action$, state$) =>
         PromptsSelectors.selectParentFolders(state$.value, prompt.folderId),
         appName,
       );
-      return EMPTY;
+      return iif(
+        () => wasUploaded,
+        of(PromptsActions.updatePromptSuccess({ id: prompt.id, prompt })),
+        EMPTY,
+      );
     }),
   );
 
@@ -869,7 +873,7 @@ const replaceConversationsEpic: AppEpic = (action$, state$) =>
                     folderId: oldConversation.folderId,
                     id: oldConversation.id,
                     status: UploadStatus.UNINITIALIZED,
-                    lastActivityDate: Date.now(),
+                    updatedAt: Date.now(),
                   },
                 ],
                 errorsAcc,

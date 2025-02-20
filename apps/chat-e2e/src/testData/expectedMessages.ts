@@ -91,9 +91,9 @@ export enum ExpectedMessages {
   chatRequestAddonsAreValid = 'Chat API request addons are valid',
   chatRequestMessageIsValid = 'Chat API request message is valid',
   chatRequestAttachmentIsValid = 'Chat API request attachment is valid',
-  promptRequestNameIsValid = 'Prompt API request name is valid',
-  promptRequestDescriptionIsValid = 'Prompt API request description is valid',
-  promptRequestContentIsValid = 'Prompt API request content is valid',
+  moveDestinationIsValid = 'Move API request destination is valid',
+  moveSourceIsValid = 'Move API request source is valid',
+  moveOverwriteIsValid = 'Move API request overwrite is valid',
   sendMessageButtonDisabled = 'Send message button is disabled',
   sendMessageButtonEnabled = 'Send message button is enabled',
   tooltipContentIsValid = 'Tooltip content is valid',
@@ -367,10 +367,15 @@ export enum ExpectedMessages {
   elementIsVisible = 'Elements is visible',
   elementIsNotVisible = 'Elements is not visible',
   noConversationIsSelected = 'No conversation is selected',
+  noData = 'No data in the conversation section',
 }
 
 export enum PublishingExpectedMessages {
   noFilesToPublishRequested = 'No files to publish requested',
   publishToPathIsValid = 'Publish to path is valid',
   entityVersionIsValid = 'Publish entity version is valid',
+}
+
+export enum MarketplaceExpectedMessages {
+  agentIsVisible = 'Agent is visible in Marketplace',
 }

@@ -3,10 +3,14 @@ export const marketplaceContainer = '[data-qa="marketplace"]';
 export const MarketplaceSelectors = {
   header: '[data-qa="marketplace-header"]',
   addApp: '[data-qa="add-app"]',
+  noWorkspaceResultsFound: '[data-qa="no-workspace-results-found"]',
+  noResultsFoundDescription: '[data-qa="no-data-description"]',
+  marketplaceSuggestions: '[data-qa="marketplace-suggestions-label"]',
 };
 
 export const MarketplaceAgentSelectors = {
-  agents: '[data-qa="agents"]',
+  filteredAgents: '[data-qa="filtered-agents"]',
+  suggestedAgents: '[data-qa="suggested-agents"]',
   agent: '[data-qa="agent"]',
   agentName: '[data-qa="agent-name"]',
   version: '[data-qa="version"]',
@@ -26,7 +30,7 @@ export const MarketplaceDetailsModal = {
 export const MarketplaceSideBarSelectors = {
   sidebar: '[data-qa="marketplace-sidebar"]',
   marketplaceHomePageButton: '[data-qa="home-page"]',
-  myApplicationsButton: '[data-qa="my-applications"]',
+  myWorkspaceButton: '[data-qa="my-workspace"]',
   searchInput: '[name="titleInput"]',
   marketplaceFilter: '[data-qa="marketplace-filter"]',
   filterProperty: '[data-qa="filter-property"]',

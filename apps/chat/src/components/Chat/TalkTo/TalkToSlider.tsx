@@ -6,6 +6,10 @@ import classNames from 'classnames';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useSwipe } from '@/src/hooks/useSwipe';
 
+import {
+  isPlaybackConversation,
+  isReplayAsIsConversation,
+} from '@/src/utils/app/conversation';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -138,12 +142,12 @@ const SliderModelsGroup = ({
         {modelsGroup.map((model) => {
           const isNotPseudoModelSelected =
             model.reference === conversation.model.id &&
-            !conversation.playback?.isPlayback &&
-            !conversation.replay?.replayAsIs;
+            !isPlaybackConversation(conversation) &&
+            !isReplayAsIsConversation(conversation);
           const isPseudoModelSelected =
             model.reference === PseudoModel.Playback ||
             (model.reference === REPLAY_AS_IS_MODEL &&
-              !!conversation.replay?.replayAsIs);
+              isReplayAsIsConversation(conversation));
 
           return (
             <TalkToCard
@@ -155,7 +159,7 @@ const SliderModelsGroup = ({
                 model.reference !== REPLAY_AS_IS_MODEL
               }
               disabled={
-                !!conversation.playback?.isPlayback &&
+                isPlaybackConversation(conversation) &&
                 model.reference !== PseudoModel.Playback
               }
               key={model.id}

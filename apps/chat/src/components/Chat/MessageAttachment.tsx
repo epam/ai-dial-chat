@@ -28,12 +28,12 @@ import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { PlotlyComponent } from '@/src/components/Plotly/Plotly';
 
-import LinkIcon from '../../../public/images/icons/arrow-up-right-from-square.svg';
-import ChevronDown from '../../../public/images/icons/chevron-down.svg';
 import Tooltip from '../Common/Tooltip';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { VisualizerRenderer } from '../VisualalizerRenderer/VisualizerRenderer';
 
+import LinkIcon from '@/public/images/icons/arrow-up-right-from-square.svg';
+import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import { Attachment, MIMEType } from '@epam/ai-dial-shared';
 import { sanitize } from 'isomorphic-dompurify';
 

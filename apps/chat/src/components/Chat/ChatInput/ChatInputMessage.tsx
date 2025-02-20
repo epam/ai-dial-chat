@@ -2,6 +2,7 @@ import {
   KeyboardEvent,
   MutableRefObject,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -138,20 +139,25 @@ export const ChatInputMessage = Inversify.register(
       ConversationsSelectors.selectSelectedConversationsModels,
     );
 
-    const isConversationBlocksInput = useAppSelector(
+    const isChatInputDisabled = useAppSelector(
       ConversationsSelectors.selectIsSelectedConversationBlocksInput,
-    );
-    const isConfigurationBlocksInput = useAppSelector(
-      ChatSelectors.selectIsConfigurationBlocksInput,
     );
     const configurationSchema = useAppSelector(
       ChatSelectors.selectConfigurationSchema,
     );
+    const shouldFocusAndScroll = useAppSelector(
+      ChatSelectors.selectShouldFocusAndScroll,
+    );
+
+    useEffect(() => {
+      if (shouldFocusAndScroll && textareaRef.current) {
+        textareaRef.current.focus();
+        textareaRef.current.scrollIntoView();
+        dispatch(ChatActions.setShouldFocusAndScroll(false));
+      }
+    }, [dispatch, shouldFocusAndScroll, textareaRef]);
 
     const isChatEmpty = !selectedConversations[0]?.messages?.length;
-
-    const isChatInputDisabled =
-      isConversationBlocksInput || (isConfigurationBlocksInput && isChatEmpty);
 
     const modelTokenizer =
       selectedModels?.length === 1 ? selectedModels[0]?.tokenizer : undefined;
@@ -188,7 +194,9 @@ export const ChatInputMessage = Inversify.register(
     const isSchemaValueValid = useMemo(() => {
       const schema =
         selectedConversations.map(getConversationSchema)?.[0] ??
-        configurationSchema;
+        (selectedConversations[0]?.messages?.length === 0
+          ? configurationSchema
+          : undefined);
 
       if (!schema) return true;
 

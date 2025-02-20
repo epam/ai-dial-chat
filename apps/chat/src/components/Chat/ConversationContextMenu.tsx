@@ -11,6 +11,10 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
+import {
+  isPlaybackConversation,
+  isReplayConversation,
+} from '@/src/utils/app/conversation';
 import { constructPath } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import {
@@ -28,6 +32,7 @@ import { ContextMenuProps } from '@/src/types/menu';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
+import { ChatActions } from '@/src/store/chat/chat.reducer';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -133,8 +138,8 @@ export const ConversationContextMenu = ({
     }
   }, [conversation.id, conversation.status, dispatch, isOpen]);
 
-  const isReplay = (conversation as Conversation).replay?.isReplay;
-  const isPlayback = (conversation as Conversation).playback?.isPlayback;
+  const isReplay = isReplayConversation(conversation);
+  const isPlayback = isPlaybackConversation(conversation);
   const isEmptyConversation = !(
     (conversation as Conversation).messages?.length > 0
   );
@@ -350,6 +355,16 @@ export const ConversationContextMenu = ({
     dispatch(ConversationsActions.setRenamingConversationId(conversation.id));
   }, [conversation, dispatch]);
 
+  const handleOpenInfoModal = useCallback(() => {
+    const { id, updatedAt, createdAt, author, sharedWithMe } = conversation;
+
+    dispatch(
+      ChatActions.getEntityInfo({
+        entityInfo: { id, updatedAt, createdAt, author, sharedWithMe },
+      }),
+    );
+  }, [conversation, dispatch]);
+
   return (
     <>
       <button
@@ -387,6 +402,7 @@ export const ConversationContextMenu = ({
           isLoading={conversation.status !== UploadStatus.LOADED}
           onSelect={isHeaderMenu ? undefined : handleSelect}
           useStandardColor={isHeaderMenu}
+          onShowInfo={handleOpenInfoModal}
         />
       </button>
 

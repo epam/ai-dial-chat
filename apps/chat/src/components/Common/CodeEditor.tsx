@@ -1,4 +1,3 @@
-import { Editor } from '@monaco-editor/react';
 import {
   IconArrowsMaximize,
   IconArrowsMinimize,
@@ -10,7 +9,6 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
 
 import classNames from 'classnames';
 
@@ -34,20 +32,17 @@ import {
 } from '@/src/store/codeEditor/codeEditor.reducer';
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import Loader from '@/src/components/Common/Loader';
+import { MonacoEditor } from '@/src/components/Common/MonacoEditor';
 import Tooltip from '@/src/components/Common/Tooltip';
 import { FileItem } from '@/src/components/Files/FileItem';
 import { PreUploadDialog } from '@/src/components/Files/PreUploadModal';
 import Folder from '@/src/components/Folder/Folder';
-
-import { CodeData } from '../form';
-import { CodeAppExamples } from './CodeAppExamples';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
 import { UploadStatus } from '@epam/ai-dial-shared';
@@ -109,24 +104,10 @@ const CodeEditorFile = ({
 
 interface CodeEditorViewProps {
   selectedFileId: string;
+  readOnly?: boolean;
 }
 
-const editorOptions: monaco.editor.IStandaloneEditorConstructionOptions = {
-  minimap: {
-    enabled: false,
-  },
-  padding: {
-    top: 12,
-    bottom: 12,
-  },
-  scrollBeyondLastLine: false,
-  scrollbar: {
-    alwaysConsumeMouseWheel: false,
-  },
-  automaticLayout: true,
-};
-
-const CodeEditorView = ({ selectedFileId }: CodeEditorViewProps) => {
+const CodeEditorView = ({ selectedFileId, readOnly }: CodeEditorViewProps) => {
   const dispatch = useAppDispatch();
   const selectFileContentSelector = useMemo(
     () => CodeEditorSelectors.selectFileContent(selectedFileId),
@@ -136,7 +117,6 @@ const CodeEditorView = ({ selectedFileId }: CodeEditorViewProps) => {
   const isContentLoading = useAppSelector(
     CodeEditorSelectors.selectIsFileContentLoading,
   );
-  const theme = useAppSelector(UISelectors.selectThemeState);
 
   const debouncedChangeHandlerRef = useRef<DebouncedFunc<
     (content: string) => void
@@ -150,6 +130,11 @@ const CodeEditorView = ({ selectedFileId }: CodeEditorViewProps) => {
   const contentRef = useRef<string | null>(null);
 
   const [isEditorReady, setIsEditorReady] = useState(false);
+
+  const editorOptions = useMemo(
+    () => (readOnly ? { readOnly: true } : undefined),
+    [readOnly],
+  );
 
   useEffect(() => {
     debouncedChangeHandlerRef.current = debounce((content: string) => {
@@ -259,24 +244,23 @@ const CodeEditorView = ({ selectedFileId }: CodeEditorViewProps) => {
   }
 
   return (
-    <Editor
-      options={editorOptions}
+    <MonacoEditor
       language="python"
       onChange={handleDebouncedChange}
-      theme={theme === 'dark' ? 'vs-dark' : 'vs'}
       onMount={handleEditorMount}
       beforeMount={handleBeforeEditorMount}
+      options={editorOptions}
     />
   );
 };
 
 interface Props {
   sourcesFolderId: string | undefined;
+  readOnly?: boolean;
 }
 
-export const CodeEditor = ({ sourcesFolderId }: Props) => {
+export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
   const { t } = useTranslation(Translation.Chat);
-  const { setValue } = useFormContext<CodeData>();
 
   const dispatch = useAppDispatch();
 
@@ -314,11 +298,6 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
     };
   }, [files, folders, sourcesFolderId]);
 
-  const rootFileNames = useMemo(
-    () => rootFiles.map((f) => f.name),
-    [rootFiles],
-  );
-
   const { bucket, parentPath } = useMemo(() => {
     if (sourcesFolderId) {
       const { bucket, parentPath } = splitEntityId(sourcesFolderId);
@@ -332,12 +311,6 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
       dispatch(CodeEditorActions.initCodeEditor({ sourcesFolderId }));
     }
   }, [dispatch, sourcesFolderId]);
-
-  useEffect(() => {
-    if (sourcesFolderId) {
-      setValue('sourceFiles', rootFileNames, { shouldValidate: true });
-    }
-  }, [rootFileNames, setValue, sourcesFolderId]);
 
   const handleUploadFile = useCallback(
     (relativePath: string) => {
@@ -477,110 +450,109 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
   }
 
   return (
-    <>
-      <CodeAppExamples fileNames={rootFileNames} folderId={sourcesFolderId} />
-      <div className="z-10">
-        <div
-          className={classNames(
-            'flex min-h-[400px] w-full max-w-full',
-            isFullScreen ? 'fixed inset-0 z-50' : 'h-[400px]',
-          )}
-        >
-          <div className="flex max-h-full min-w-0 shrink flex-col gap-0.5 divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
-            <div className="w-[220px] min-w-0 shrink grow overflow-y-auto p-3">
-              {rootFolders.map((folder) => {
-                return (
-                  <Folder
-                    maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
-                    key={folder.id}
-                    searchTerm={''}
-                    onFileUpload={handleUploadFile}
-                    currentFolder={folder}
-                    allFolders={folders}
-                    isInitialRenameEnabled
-                    loadingFolderIds={loadingFolderIds}
-                    openedFoldersIds={openedFoldersIds}
-                    allItems={files}
-                    onAddFolder={handleAddFolder}
-                    itemComponent={(props) => (
-                      <CodeEditorFile
-                        isModified={modifiedFileIds.includes(props.item.id)}
-                        level={props.level}
-                        file={props.item as DialFile}
-                        onSelectFile={(file) =>
-                          dispatch(CodeEditorActions.setSelectedFileId(file.id))
-                        }
-                        isHighlighted={selectedFileId === props.item.id}
-                        onDeleteFile={setDeletingFileId}
-                        onSave={handleSaveFiles}
-                      />
-                    )}
-                    onClickFolder={handleToggleFolder}
-                    withBorderHighlight={false}
-                    featureType={FeatureType.File}
-                  />
-                );
-              })}
-              {rootFiles.map((file) => (
-                <CodeEditorFile
-                  isModified={modifiedFileIds.includes(file.id)}
-                  key={file.id}
-                  file={file}
-                  onSelectFile={(file) =>
-                    dispatch(CodeEditorActions.setSelectedFileId(file.id))
-                  }
-                  isHighlighted={selectedFileId === file.id}
-                  onDeleteFile={setDeletingFileId}
-                  onSave={handleSaveFiles}
-                />
-              ))}
-              {newFileFolder && (
-                <div
-                  className="relative flex h-[30px] w-full items-center gap-2 rounded border-l-2 border-accent-primary bg-accent-primary-alpha px-3"
-                  data-qa="edit-container"
-                >
-                  <IconFile className="text-secondary" size={18} />
-                  <input
-                    className="mr-12 w-full flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
-                    type="text"
-                    value={newFileName}
-                    name="edit-input"
-                    onChange={(e) => setNewFileName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleUploadEmptyFile(newFileName);
+    <div className="z-10 w-full max-w-full">
+      <div
+        className={classNames(
+          'grid min-h-[400px] w-full max-w-full grid-cols-[220px_1fr] grid-rows-[100%]',
+          isFullScreen ? 'fixed inset-0 z-50' : 'h-[400px]',
+        )}
+      >
+        <div className="flex max-h-full flex-col gap-0.5 divide-y divide-tertiary rounded-l border border-tertiary bg-layer-3">
+          <div className="grow overflow-y-auto p-3">
+            {rootFolders.map((folder) => {
+              return (
+                <Folder
+                  maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
+                  key={folder.id}
+                  searchTerm={''}
+                  onFileUpload={handleUploadFile}
+                  currentFolder={folder}
+                  allFolders={folders}
+                  isInitialRenameEnabled
+                  loadingFolderIds={loadingFolderIds}
+                  openedFoldersIds={openedFoldersIds}
+                  allItems={files}
+                  onAddFolder={handleAddFolder}
+                  itemComponent={(props) => (
+                    <CodeEditorFile
+                      isModified={modifiedFileIds.includes(props.item.id)}
+                      level={props.level}
+                      file={props.item as DialFile}
+                      onSelectFile={(file) =>
+                        dispatch(CodeEditorActions.setSelectedFileId(file.id))
                       }
+                      isHighlighted={selectedFileId === props.item.id}
+                      onDeleteFile={setDeletingFileId}
+                      onSave={handleSaveFiles}
+                    />
+                  )}
+                  onClickFolder={handleToggleFolder}
+                  withBorderHighlight={false}
+                  featureType={FeatureType.File}
+                />
+              );
+            })}
+            {rootFiles.map((file) => (
+              <CodeEditorFile
+                isModified={modifiedFileIds.includes(file.id)}
+                key={file.id}
+                file={file}
+                onSelectFile={(file) =>
+                  dispatch(CodeEditorActions.setSelectedFileId(file.id))
+                }
+                isHighlighted={selectedFileId === file.id}
+                onDeleteFile={setDeletingFileId}
+                onSave={handleSaveFiles}
+              />
+            ))}
+            {newFileFolder && (
+              <div
+                className="relative flex h-[30px] w-full items-center gap-2 rounded border-l-2 border-accent-primary bg-accent-primary-alpha px-3"
+                data-qa="edit-container"
+              >
+                <IconFile className="text-secondary" size={18} />
+                <input
+                  className="mr-12 w-full flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
+                  type="text"
+                  value={newFileName}
+                  name="edit-input"
+                  onChange={(e) => setNewFileName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleUploadEmptyFile(newFileName);
+                    }
+                  }}
+                  autoFocus
+                />
+                <div className="absolute right-1 z-10 flex" data-qa="actions">
+                  <SidebarActionButton
+                    handleClick={() => handleUploadEmptyFile(newFileName)}
+                    dataQA="confirm-edit"
+                  >
+                    <IconCheck
+                      size={18}
+                      className="hover:text-accent-primary"
+                    />
+                  </SidebarActionButton>
+                  <SidebarActionButton
+                    handleClick={() => {
+                      handleUploadEmptyFile(
+                        getNextDefaultName('New file', rootFiles),
+                      );
                     }}
-                    autoFocus
-                  />
-                  <div className="absolute right-1 z-10 flex" data-qa="actions">
-                    <SidebarActionButton
-                      handleClick={() => handleUploadEmptyFile(newFileName)}
-                      dataQA="confirm-edit"
-                    >
-                      <IconCheck
-                        size={18}
-                        className="hover:text-accent-primary"
-                      />
-                    </SidebarActionButton>
-                    <SidebarActionButton
-                      handleClick={() => {
-                        handleUploadEmptyFile(
-                          getNextDefaultName('New file', rootFiles),
-                        );
-                      }}
-                      dataQA="cancel-edit"
-                    >
-                      <IconX
-                        size={18}
-                        strokeWidth="2"
-                        className="hover:text-accent-primary"
-                      />
-                    </SidebarActionButton>
-                  </div>
+                    dataQA="cancel-edit"
+                  >
+                    <IconX
+                      size={18}
+                      strokeWidth="2"
+                      className="hover:text-accent-primary"
+                    />
+                  </SidebarActionButton>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+          </div>
+          {!readOnly && (
             <div className="flex items-center gap-3 px-3 py-2.5">
               <Tooltip tooltip={t('Add new folder')}>
                 <button
@@ -629,61 +601,64 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
                 </Tooltip>
               )}
             </div>
-          </div>
-          <div className="flex max-h-full min-w-0 shrink grow flex-col divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
-            <div className="flex w-full justify-end gap-3 divide-x divide-tertiary py-2">
-              <Tooltip tooltip={t(isFullScreen ? 'Minimize' : 'Full screen')}>
-                <button
-                  type="button"
-                  className="px-3 text-secondary hover:text-accent-primary"
-                  onClick={(e) => {
-                    setIsFullScreen(!isFullScreen);
-                    const mouseLeaveEvent = new MouseEvent('mouseleave', {
-                      bubbles: true,
-                      cancelable: true,
-                      view: window,
-                    });
-
-                    e.currentTarget.dispatchEvent(mouseLeaveEvent);
-                  }}
-                >
-                  <FullScreenIcon size={18} />
-                </button>
-              </Tooltip>
-            </div>
-            <div className="min-h-0 min-w-0 max-w-full shrink grow p-3">
-              {selectedFileId && (
-                <CodeEditorView selectedFileId={selectedFileId} />
-              )}
-            </div>
-          </div>
-          {uploadFolderId && (
-            <PreUploadDialog
-              uploadFolderId={uploadFolderId}
-              isOpen
-              allowedTypes={['*/*']}
-              initialFilesSelect
-              onUploadFiles={handleUploadFiles}
-              onClose={() => setUploadFolderId(undefined)}
-              maximumAttachmentsAmount={Number.MAX_SAFE_INTEGER}
-              rootFolderId={sourcesFolderId}
-            />
           )}
-          <ConfirmDialog
-            isOpen={!!deletingFileId}
-            heading={t('Confirm deleting')}
-            description={t(
-              'Are you sure that you want to delete "{{name}}" permanently?',
-              {
-                name: deletingFileId?.split('/').pop(),
-              },
-            )}
-            confirmLabel={t('Confirm')}
-            cancelLabel={t('Cancel')}
-            onClose={handleDeleteFile}
-          />
         </div>
+        <div className="flex max-h-full min-w-0 flex-col divide-y divide-tertiary rounded-r border border-tertiary bg-layer-3">
+          <div className="flex w-full justify-end gap-3 divide-x divide-tertiary py-2">
+            <Tooltip tooltip={t(isFullScreen ? 'Minimize' : 'Full screen')}>
+              <button
+                type="button"
+                className="px-3 text-secondary hover:text-accent-primary"
+                onClick={(e) => {
+                  setIsFullScreen(!isFullScreen);
+                  const mouseLeaveEvent = new MouseEvent('mouseleave', {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window,
+                  });
+
+                  e.currentTarget.dispatchEvent(mouseLeaveEvent);
+                }}
+              >
+                <FullScreenIcon size={18} />
+              </button>
+            </Tooltip>
+          </div>
+          <div className="min-h-0 min-w-0 max-w-full shrink grow p-3">
+            {selectedFileId && (
+              <CodeEditorView
+                selectedFileId={selectedFileId}
+                readOnly={readOnly}
+              />
+            )}
+          </div>
+        </div>
+        {uploadFolderId && (
+          <PreUploadDialog
+            uploadFolderId={uploadFolderId}
+            isOpen
+            allowedTypes={['*/*']}
+            initialFilesSelect
+            onUploadFiles={handleUploadFiles}
+            onClose={() => setUploadFolderId(undefined)}
+            maximumAttachmentsAmount={Number.MAX_SAFE_INTEGER}
+            rootFolderId={sourcesFolderId}
+          />
+        )}
+        <ConfirmDialog
+          isOpen={!!deletingFileId}
+          heading={t('Confirm deleting')}
+          description={t(
+            'Are you sure that you want to delete "{{name}}" permanently?',
+            {
+              name: deletingFileId?.split('/').pop(),
+            },
+          )}
+          confirmLabel={t('Confirm')}
+          cancelLabel={t('Cancel')}
+          onClose={handleDeleteFile}
+        />
       </div>
-    </>
+    </div>
   );
 };
