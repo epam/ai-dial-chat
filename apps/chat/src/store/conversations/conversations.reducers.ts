@@ -6,7 +6,7 @@ import { combineEntities } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
-  getFolderFromId,
+  getFolderIdFromEntityId,
   isFolderEmpty,
   renameFolderAndMoveEntity,
 } from '@/src/utils/app/folders';
@@ -421,10 +421,7 @@ export const conversationsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ folderId: string; name: string }>,
     ) => {
-      const parentId = getFolderFromId(
-        payload.folderId,
-        FolderType.Chat,
-      ).folderId;
+      const parentId = getFolderIdFromEntityId(payload.folderId);
       const newId = constructPath(parentId, payload.name);
 
       state.temporaryFolders = state.temporaryFolders.map((f) =>
