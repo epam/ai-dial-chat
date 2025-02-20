@@ -1,4 +1,3 @@
-import { IconBookmark, IconBookmarkFilled } from '@tabler/icons-react';
 import { memo } from 'react';
 
 import classNames from 'classnames';
@@ -6,13 +5,9 @@ import classNames from 'classnames';
 import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { getModelShortDescription } from '@/src/utils/app/application';
-import { isMyApplication } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
-
-import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { TableIconSizes } from '@/src/constants/marketplace';
 
@@ -20,6 +15,7 @@ import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import ShareIcon from '@/src/components/Common/ShareIcon';
 
+import { AgentBookmark } from '../AgentBookmark';
 import { FunctionStatusIndicator } from '../FunctionStatusIndicator';
 
 interface Props {
@@ -42,15 +38,7 @@ export const AgentsTableLeftSideRow: React.FC<Props> = memo(
   }) => {
     const screenState = useScreenState();
 
-    const installedModelIds = useAppSelector(
-      ModelsSelectors.selectInstalledModelIds,
-    );
-
     const { iconSize, shareIconSize } = TableIconSizes[screenState];
-    const isMyApp = isMyApplication(entity);
-    const Bookmark = installedModelIds.has(entity.reference)
-      ? IconBookmarkFilled
-      : IconBookmark;
 
     return (
       <li
@@ -64,16 +52,7 @@ export const AgentsTableLeftSideRow: React.FC<Props> = memo(
       >
         <div className="flex h-full items-center gap-3 md:gap-4">
           <div className="flex items-center gap-2 md:gap-4">
-            {!isMyApp && !entity.sharedWithMe && (
-              <Bookmark
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onBookmarkClick?.(entity);
-                }}
-                className="block shrink-0 rounded text-secondary hover:text-accent-primary xl:hidden"
-                size={18}
-              />
-            )}
+            <AgentBookmark entity={entity} onBookmarkClick={onBookmarkClick} />
             <ShareIcon
               {...entity}
               isHighlighted={false}
