@@ -1,24 +1,19 @@
-import { DialAIEntityModel } from '@/chat/types/models';
 import { Publication } from '@/chat/types/publication';
 import dialTest from '@/src/core/dialFixtures';
 import {
   AddAppMenuOptions,
   ExpectedConstants,
   ExpectedMessages,
+  MarketplaceExpectedMessages,
 } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
-import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { GeneratorUtil, ModelsUtil, SortingUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
-let agents: DialAIEntityModel[];
 const publicationsToUnpublish: Publication[] = [];
 
-dialTest.beforeAll(async () => {
-  agents = ModelsUtil.getOpenAIEntities();
-});
-
 dialTest(
-  `Search in My workspace: 'No results found' and  suggest results.\n` +
+  `Search in My workspace: 'No results found' and suggest results.\n` +
     `Search in My workspace: 'No results found' and no suggested results.\n` +
     'Search in My workspace when nothing to suggest from DIAL Marketplace. No suggested options.\n' +
     'Search in My workspace. Search by version. No suggested options.\n' +
@@ -55,15 +50,10 @@ dialTest(
     await dialTest.step(
       'Prepare one application visible in "My Workspace" and one available in the "Marketplace", both have unique name and version',
       async () => {
-        const recentModelIds =
-          (await localStorageManager.getRecentModelsIds()) as string[];
-        const recentModels = agents.filter((a) =>
-          recentModelIds.includes(a.reference || a.id),
-        );
-        const recentNames = recentModels.map(({ name }) => name);
-        const recentVersions = recentModels
-          .filter((r) => r.version !== undefined)
-          .map(({ version }) => version ?? '');
+        const recentModelIds = await localStorageManager.getRecentModelsIds();
+        const recentNames = ModelsUtil.getRecentAgentsNames(recentModelIds);
+        const recentVersions =
+          ModelsUtil.getRecentAgentsVersions(recentModelIds);
 
         installedAppVersion = GeneratorUtil.randomApplicationVersion([
           ...recentNames,
@@ -303,7 +293,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open suggested agent and verify set version and available in dropdown menu versions',
+      'Open suggested agent and verify set version are available in dropdown menu versions',
       async () => {
         await marketplaceAgents.getAgent(nonInstalledAppName).click();
         await baseAssertion.assertElementText(
@@ -359,15 +349,9 @@ dialTest(
     await dialTest.step(
       'Open "My Workspace", search by one of the installed agent versions and verify only that version is displayed in the results',
       async () => {
-        const recentModelIds =
-          (await localStorageManager.getRecentModelsIds()) as string[];
-        const recentModels = agents.filter((a) =>
-          recentModelIds.includes(a.reference || a.id),
-        );
-        recentNames = recentModels.map(({ name }) => name);
-        recentVersions = recentModels
-          .filter((r) => r.version !== undefined)
-          .map(({ version }) => version ?? '');
+        const recentModelIds = await localStorageManager.getRecentModelsIds();
+        recentNames = ModelsUtil.getRecentAgentsNames(recentModelIds);
+        recentVersions = ModelsUtil.getRecentAgentsVersions(recentModelIds);
 
         installedAppFirstVersion = GeneratorUtil.randomApplicationVersion([
           ...recentNames,
@@ -490,6 +474,258 @@ dialTest(
           marketplaceHeader.searchInput,
           Attributes.value,
           installedAppName,
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Search in My Workspace + Bookmark: search not latest version of model (only one version in My workspace added).\n' +
+    'Search in My Workspace + Bookmark: search by name. Not latest version of application' +
+    "Search by name when model has versions. Suggested results on My W. doesn't include the model if at least one version is used. Latest v.\n" +
+    'Search in My Workspace + Bookmark: search latest version of model (latest and other versions added to My workspace)',
+  async ({
+    marketplacePage,
+    marketplaceHeader,
+    marketplaceAgents,
+    marketplace,
+    marketplaceSidebar,
+    agentDetailsModal,
+    localStorageManager,
+    setTestIds,
+    baseAssertion,
+    customApplicationBuilder,
+    toast,
+    adminApplicationApiHelper,
+    adminPublicationApiHelper,
+    publishRequestBuilder,
+    agentVersionsDropdownMenuAssertion,
+  }) => {
+    setTestIds('EPMRTC-4709', 'EPMRTC-4710', 'EPMRTC-4626', 'EPMRTC-4711');
+    let firstAppVersion: string;
+    let secondAppVersion: string;
+    let sortedVersions: string[];
+    let appName: string;
+
+    await dialTest.step(
+      'Prepare application with two versions available in the "Marketplace"',
+      async () => {
+        const recentModelIds = await localStorageManager.getRecentModelsIds();
+        const recentNames = ModelsUtil.getRecentAgentsNames(recentModelIds);
+        const recentVersions =
+          ModelsUtil.getRecentAgentsVersions(recentModelIds);
+
+        firstAppVersion = GeneratorUtil.randomApplicationVersion([
+          ...recentNames,
+          ...recentVersions,
+        ]);
+        secondAppVersion = GeneratorUtil.randomApplicationVersion([
+          ...recentNames,
+          ...recentVersions,
+          firstAppVersion,
+        ]);
+        appName = GeneratorUtil.randomApplicationName();
+        sortedVersions = SortingUtil.sortVersionsArray([
+          firstAppVersion,
+          secondAppVersion,
+        ]);
+
+        const firstVersionCustomApplicationModel = customApplicationBuilder
+          .withDisplayName(appName)
+          .withDisplayVersion(firstAppVersion)
+          .build();
+        const secondVersionCustomApplicationModel = customApplicationBuilder
+          .withDisplayName(appName)
+          .withDisplayVersion(secondAppVersion)
+          .build();
+
+        for (const appModel of [
+          firstVersionCustomApplicationModel,
+          secondVersionCustomApplicationModel,
+        ]) {
+          const adminApp =
+            await adminApplicationApiHelper.createApplication(appModel);
+          const publishRequest = publishRequestBuilder
+            .withName(GeneratorUtil.randomPublicationRequestName())
+            .withApplicationResource(adminApp, PublishActions.ADD)
+            .build();
+          const appPublication =
+            await adminPublicationApiHelper.createPublishRequest(
+              publishRequest,
+            );
+          publicationsToUnpublish.push(appPublication);
+          await adminPublicationApiHelper.approveRequest(appPublication);
+        }
+      },
+    );
+
+    await dialTest.step(
+      'On the "Marketplace" tab open created app and add not latest version to "My Workspace"',
+      async () => {
+        await marketplacePage.openMarketplacePage();
+        await marketplacePage.waitForPageLoaded();
+        await marketplaceAgents.getAgent(appName).click();
+        await agentDetailsModal.versionMenuTrigger.click();
+        await agentDetailsModal
+          .getVersionDropdownMenu()
+          .selectMenuOption(sortedVersions[1]);
+        await baseAssertion.assertElementState(
+          agentDetailsModal.transparentBookmarkIcon,
+          'visible',
+        );
+        await agentDetailsModal.addAgentToWorkspace();
+        await baseAssertion.assertElementState(
+          agentDetailsModal.filledBookmarkIcon,
+          'visible',
+        );
+        await baseAssertion.assertElementText(
+          toast,
+          ExpectedConstants.agentAddedToWorkspaceMessage,
+        );
+        await toast.closeToast();
+        await agentDetailsModal.closeButton.click();
+      },
+    );
+
+    await dialTest.step(
+      'Verify agent with not latest version is displayed on "My Workspace" tab',
+      async () => {
+        await marketplaceSidebar.myWorkspaceButton.click();
+        const actualAgents = await marketplaceAgents.getAgentNames();
+        baseAssertion.assertArrayIncludesAll(
+          actualAgents,
+          [appName],
+          MarketplaceExpectedMessages.agentIsVisible,
+        );
+        await baseAssertion.assertElementText(
+          marketplaceAgents.getAgentVersion(appName),
+          sortedVersions[1],
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Search by installed agent version/name and verify agent is found, no other agents are suggested',
+      async () => {
+        for (const searchTerm of [sortedVersions[1], appName]) {
+          await marketplaceHeader.searchInput.fillInInput(searchTerm);
+          const filteredAgents = marketplace.getFilteredAgents();
+          await baseAssertion.assertElementState(filteredAgents, 'visible');
+          await baseAssertion.assertElementsCount(filteredAgents, 1);
+          baseAssertion.assertArrayIncludesAll(
+            await filteredAgents.getAgentNames(),
+            [appName],
+            ExpectedMessages.searchResultsAreCorrect,
+          );
+          await baseAssertion.assertElementText(
+            filteredAgents.getAgentVersion(appName),
+            sortedVersions[1],
+          );
+
+          await baseAssertion.assertElementState(
+            marketplace.marketplaceSuggestionsLabel,
+            'hidden',
+          );
+          await baseAssertion.assertElementState(
+            marketplace.getSuggestedAgents(),
+            'hidden',
+          );
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Back to the "Marketplace" tab and add latest version to "My Workspace"',
+      async () => {
+        await marketplaceSidebar.marketplaceHomePageButton.click();
+        await marketplaceAgents.getAgent(appName).click();
+        await agentDetailsModal.versionMenuTrigger.click();
+        await agentDetailsModal
+          .getVersionDropdownMenu()
+          .selectMenuOption(sortedVersions[0]);
+        await baseAssertion.assertElementState(
+          agentDetailsModal.transparentBookmarkIcon,
+          'visible',
+        );
+        await agentDetailsModal.addAgentToWorkspace();
+        await baseAssertion.assertElementState(
+          agentDetailsModal.filledBookmarkIcon,
+          'visible',
+        );
+        await baseAssertion.assertElementText(
+          toast,
+          ExpectedConstants.agentAddedToWorkspaceMessage,
+        );
+        await toast.closeToast();
+        await agentDetailsModal.closeButton.click();
+      },
+    );
+
+    await dialTest.step(
+      'Verify agent with latest version is displayed on "My Workspace" tab',
+      async () => {
+        await marketplaceSidebar.myWorkspaceButton.click();
+        const actualAgents = await marketplaceAgents.getAgentNames();
+        baseAssertion.assertArrayIncludesAll(
+          actualAgents,
+          [appName],
+          MarketplaceExpectedMessages.agentIsVisible,
+        );
+        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/3138
+        // await baseAssertion.assertElementText(
+        //   marketplaceAgents.getAgentVersion(appName),
+        //   sortedVersions[0],
+        // );
+      },
+    );
+
+    await dialTest.step(
+      'Back to "My Workspace" and verify agent is found, no other agents are suggested',
+      async () => {
+        await marketplaceSidebar.myWorkspaceButton.click();
+        const filteredAgents = marketplace.getFilteredAgents();
+        await baseAssertion.assertElementState(filteredAgents, 'visible');
+        await baseAssertion.assertElementsCount(filteredAgents, 1);
+        const actualFilteredAgentsNames = await filteredAgents.getAgentNames();
+        baseAssertion.assertArrayIncludesAll(
+          actualFilteredAgentsNames,
+          [appName],
+          ExpectedMessages.searchResultsAreCorrect,
+        );
+        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/3138
+        // await baseAssertion.assertElementText(
+        //   filteredAgents.getAgentVersion(appName),
+        //   sortedVersions[0],
+        // );
+
+        await baseAssertion.assertElementState(
+          marketplace.marketplaceSuggestionsLabel,
+          'hidden',
+        );
+        await baseAssertion.assertElementState(
+          marketplace.getSuggestedAgents(),
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Open found agent and verify set version and available in dropdown menu versions',
+      async () => {
+        await marketplaceAgents.getAgent(appName).click();
+        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/3138
+        // await baseAssertion.assertElementText(
+        //   agentDetailsModal.agentVersion,
+        //   sortedVersions[0],
+        // );
+        await agentDetailsModal.versionMenuTrigger.click();
+        //TODO: replace with commented assertion when fixed https://github.com/epam/ai-dial-chat/issues/3138
+        // await agentVersionsDropdownMenuAssertion.assertMenuOptions(
+        //   sortedVersions,
+        // );
+        await agentVersionsDropdownMenuAssertion.assertMenuIncludesOptions(
+          ...sortedVersions,
         );
       },
     );
