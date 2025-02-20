@@ -76,7 +76,11 @@ const createApplicationEpic: AppEpic = (action$) =>
                       references: [application.reference],
                     }),
                   ),
-                  of(ApplicationActions.createSuccess()),
+                  of(
+                    ApplicationActions.createSuccess({
+                      applicationData: application,
+                    }),
+                  ),
                 );
               }
 
@@ -140,7 +144,7 @@ const deleteApplicationEpic: AppEpic = (action$) =>
     ),
   );
 
-const updateApplicationEpic: AppEpic = (action$) =>
+const updateApplicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ApplicationActions.update.match),
     switchMap(({ payload }) => {
@@ -149,6 +153,8 @@ const updateApplicationEpic: AppEpic = (action$) =>
           ApplicationActions.edit({
             oldApplication: payload.oldApplication,
             updatedApplication: payload.applicationData,
+            redirectUrl: payload.redirectUrl,
+            schema: payload.schema,
           }),
         );
       }
@@ -205,10 +211,19 @@ const updateApplicationEpic: AppEpic = (action$) =>
               ),
             ),
             tap(() => {
-              if (payload.redirectUrl) {
+              if (
+                payload.redirectUrl &&
+                !state$.value.application.exitAfterSave
+              ) {
                 Router.push({
                   pathname: payload.redirectUrl,
                   query: { id: updatedCustomApplication.id },
+                });
+              }
+              if (state$.value.application.exitAfterSave) {
+                Router.push({
+                  pathname: '/marketplace',
+                  query: { tab: 'workspace' },
                 });
               }
             }),
@@ -223,10 +238,13 @@ const updateApplicationEpic: AppEpic = (action$) =>
                 ),
               );
             }),
-            startWith(ApplicationActions.updateStart()),
+            startWith(
+              ApplicationActions.updateStart(),
+              ApplicationActions.setShouldSaveApplication(false),
+            ),
             endWith(
               ApplicationActions.updateComplete(),
-              ApplicationActions.setShouldSaveApplication(false),
+              ApplicationActions.setExitAfterSave(false),
             ),
           );
         }),
@@ -234,7 +252,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
     }),
   );
 
-const editApplicationEpic: AppEpic = (action$) =>
+const editApplicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ApplicationActions.edit.match),
     switchMap(({ payload }) => {
@@ -252,6 +270,20 @@ const editApplicationEpic: AppEpic = (action$) =>
             }),
           ),
         ),
+        tap(() => {
+          if (payload.redirectUrl && !state$.value.application.exitAfterSave) {
+            Router.push({
+              pathname: payload.redirectUrl,
+              query: { id: payload.updatedApplication.id },
+            });
+          }
+          if (state$.value.application.exitAfterSave) {
+            Router.push({
+              pathname: '/marketplace',
+              query: { tab: 'workspace' },
+            });
+          }
+        }),
         catchError((err) => {
           console.error('Failed to edit application:', err);
           return of(

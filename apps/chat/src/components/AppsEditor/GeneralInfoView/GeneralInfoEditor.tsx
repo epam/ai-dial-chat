@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
@@ -17,7 +17,10 @@ import {
 } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
+import {
+  ApplicationActions,
+  ApplicationSelectors,
+} from '@/src/store/application/application.reducers';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -80,47 +83,60 @@ export const GeneralInfoEditor: React.FC<Props> = ({
 
   const topicOptions = useMemo(() => topics.map(topicToOption), [topics]);
 
-  const handleSubmit = (data: ApplicationGeneralInfoFormData) => {
-    const { slug } = router.query;
-    if (slug) {
-      const preparedData = getApplicationData(data, slug.toString(), schema);
+  const shouldSaveApplication = useAppSelector(
+    ApplicationSelectors.selectShouldSaveApplication,
+  );
 
-      if (slug === ApplicationType.CODE_APP) {
-        preparedData.functionStatus = data?.functionStatus;
-      }
+  const handleSubmit = useCallback(
+    (data: ApplicationGeneralInfoFormData) => {
+      const { slug } = router.query;
+      if (slug) {
+        const preparedData = getApplicationData(data, slug.toString(), schema);
 
-      if (oldApplication) {
-        dispatch(
-          ApplicationActions.update({
-            applicationData: {
-              ...preparedData,
-              reference: data.reference,
-              id: data.id,
-            },
-            oldApplication: oldApplication,
-            redirectUrl: `/apps-editor/${encode(slug.toString())}/settings`,
-            schema: schema ?? undefined,
-          }),
-        );
+        if (slug === ApplicationType.CODE_APP) {
+          preparedData.functionStatus = data?.functionStatus;
+        }
 
-        if (isAppDeployed) {
+        if (oldApplication) {
           dispatch(
-            UIActions.showWarningToast(
-              t('Saved changes will be applied during next deployment'),
-            ),
+            ApplicationActions.update({
+              applicationData: {
+                ...preparedData,
+                reference: data.reference,
+                id: data.id,
+              },
+              oldApplication: oldApplication,
+              redirectUrl: `/apps-editor/${encode(slug.toString())}/settings`,
+              schema: schema ?? undefined,
+            }),
+          );
+
+          if (isAppDeployed) {
+            dispatch(
+              UIActions.showWarningToast(
+                t('Saved changes will be applied during next deployment'),
+              ),
+            );
+          }
+        } else {
+          dispatch(
+            ApplicationActions.create({
+              applicationData: preparedData,
+              slug: slug.toString(),
+              schema: schema ?? undefined,
+            }),
           );
         }
-      } else {
-        dispatch(
-          ApplicationActions.create({
-            applicationData: preparedData,
-            slug: slug.toString(),
-            schema: schema ?? undefined,
-          }),
-        );
       }
+    },
+    [oldApplication, schema, isAppDeployed, router.query, dispatch, t],
+  );
+
+  useEffect(() => {
+    if (shouldSaveApplication) {
+      submitWrapper(handleSubmit)();
     }
-  };
+  }, [shouldSaveApplication, submitWrapper, handleSubmit]);
 
   return (
     <div className="size-full max-w-[1000px] overflow-hidden bg-layer-2">

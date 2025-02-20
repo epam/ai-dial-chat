@@ -149,12 +149,16 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     ApplicationSelectors.selectShouldSaveApplication,
   );
 
+  const exitAfterSave = useAppSelector(
+    ApplicationSelectors.selectExitAfterSave,
+  );
+
   const handleEdit = useCallback(
     (data: CodeAppFormData) => {
       if (
         oldApplication.reference &&
         shouldSaveApplication &&
-        !isEqual(data, lastSubmittedValuesRef.current)
+        (!isEqual(data, lastSubmittedValuesRef.current) || exitAfterSave)
       ) {
         const preparedData = getCodeAppData(data);
 
@@ -205,6 +209,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
       isShared,
       shouldSaveApplication,
       applicationStatus,
+      exitAfterSave,
     ],
   );
 

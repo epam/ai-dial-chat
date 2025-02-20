@@ -13,6 +13,7 @@ import { getSharedTooltip } from '@/src/utils/app/application';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { CustomApplicationModel } from '@/src/types/applications';
+import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -21,7 +22,6 @@ import {
 } from '@/src/store/application/application.reducers';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { TemperatureSlider } from '@/src/components/Chat/ChatSettings/Temperature';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
@@ -62,6 +62,8 @@ const ToolsetEditor = withErrorMessage(withLabel(Editor));
 const Slider = withLabel(TemperatureSlider, true);
 const ModelsSelectorField = withErrorMessage(withLabel(ModelsSelector));
 
+const myFilesFilter = new Set([FileSourceType.MY_FILES]);
+
 interface QuickAppViewProps {
   schema: ApiDetailedApplicationTypeSchema | null;
   isSharedWithMe: boolean;
@@ -74,7 +76,6 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
   oldApplication,
 }) => {
   const { t } = useTranslation(Translation.Chat);
-  const theme = useAppSelector(UISelectors.selectThemeState);
   const dispatch = useAppDispatch();
   const {
     register,
@@ -91,10 +92,14 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
     ApplicationSelectors.selectShouldSaveApplication,
   );
 
+  const exitAfterSave = useAppSelector(
+    ApplicationSelectors.selectExitAfterSave,
+  );
+
   const handleSubmit = useCallback(
     (data: QuickAppFormData) => {
       if (
-        !isEqual(data, lastSubmittedValuesRef.current) &&
+        (!isEqual(data, lastSubmittedValuesRef.current) || exitAfterSave) &&
         shouldSaveApplication
       ) {
         const applicationData = getQuickAppData(data);
@@ -115,7 +120,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
         dispatch(ApplicationActions.setShouldSaveApplication(false));
       }
     },
-    [dispatch, oldApplication, schema, shouldSaveApplication],
+    [dispatch, oldApplication, schema, shouldSaveApplication, exitAfterSave],
   );
 
   const autoSaveHandler = useCallback(() => {
@@ -156,6 +161,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
               allowedTypes={['*/*']}
               disabled={isSharedWithMe}
               tooltip={isSharedWithMe ? getSharedTooltip('file') : ''}
+              sourceFilters={myFilesFilter}
             />
           )}
         />
@@ -183,16 +189,10 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
               label={t('Configure toolset')}
               error={errors.toolset?.message}
               height={200}
-              options={{
-                minimap: { enabled: false },
-                padding: { top: 12, bottom: 12 },
-                scrollBeyondLastLine: false,
-              }}
               value={field.value}
               className="m-0.5 w-full overflow-hidden rounded border border-primary"
               language="json"
               onChange={(v) => field.onChange(v ?? '')}
-              theme={theme === 'dark' ? 'vs-dark' : 'vs'}
             />
           )}
         />

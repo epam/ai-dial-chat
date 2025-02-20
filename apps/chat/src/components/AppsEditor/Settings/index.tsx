@@ -38,6 +38,8 @@ import {
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { DEFAULT_QUICK_APPS_SCHEMA_ID } from '@/src/constants/quick-apps';
+
 import { ApplicationView } from './ApplicationView';
 import { CodeAppView } from './CodeAppView';
 import { CustomApplicationEditorView } from './CustomApplicationEditorView';
@@ -102,6 +104,12 @@ export const ApplicationSettings: React.FC<Props> = ({
 
   const getDefaultValues = useCallback(
     (type: string) => {
+      if (DEFAULT_QUICK_APPS_SCHEMA_ID.endsWith(type)) {
+        return getQuickAppDefaultValues({
+          app: applicationData,
+        });
+      }
+
       const defaultValues: Record<
         string,
         CustomApplicationFormData | QuickAppFormData | CodeAppFormData | null
@@ -113,7 +121,6 @@ export const ApplicationSettings: React.FC<Props> = ({
           app: applicationData,
           runtime: pythonVersions[0],
         }),
-        ['Quick App']: getQuickAppDefaultValues({ app: applicationData }),
       };
       return defaultValues[type] ?? null;
     },
@@ -121,6 +128,16 @@ export const ApplicationSettings: React.FC<Props> = ({
   );
 
   const getFormView = (type: string) => {
+    if (DEFAULT_QUICK_APPS_SCHEMA_ID.endsWith(type)) {
+      return (
+        <QuickAppView
+          schema={schema}
+          isSharedWithMe={modelFromState?.sharedWithMe ?? false}
+          oldApplication={applicationData}
+        />
+      );
+    }
+
     switch (type) {
       case ApplicationType.CUSTOM_APP:
         return <ApplicationView oldApplication={applicationData} />;
@@ -132,14 +149,6 @@ export const ApplicationSettings: React.FC<Props> = ({
             oldApplication={applicationData}
             isShared={modelFromState?.isShared ?? false}
             applicationStatus={modelFromState?.functionStatus}
-          />
-        );
-      case 'Quick App':
-        return (
-          <QuickAppView
-            schema={schema}
-            isSharedWithMe={modelFromState?.sharedWithMe ?? false}
-            oldApplication={applicationData}
           />
         );
       default:
@@ -165,9 +174,7 @@ export const ApplicationSettings: React.FC<Props> = ({
   >({
     mode: 'onChange',
     reValidateMode: 'onChange',
-    defaultValues:
-      getDefaultValues(schema?.['dial:applicationTypeDisplayName'] ?? type) ??
-      {},
+    defaultValues: getDefaultValues(type) ?? {},
   });
 
   const saveForm = useCallback(() => {

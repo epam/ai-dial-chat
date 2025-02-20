@@ -144,10 +144,14 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
     ApplicationSelectors.selectShouldSaveApplication,
   );
 
+  const exitAfterSave = useAppSelector(
+    ApplicationSelectors.selectExitAfterSave,
+  );
+
   const handleSubmit = useCallback(
     (data: CustomApplicationFormData) => {
       if (
-        !isEqual(data, lastSubmittedValuesRef.current) &&
+        (!isEqual(data, lastSubmittedValuesRef.current) || exitAfterSave) &&
         shouldSaveApplication
       ) {
         const applicationData = getCustomApplicationData(data);
@@ -166,7 +170,13 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
         dispatch(ApplicationActions.setShouldSaveApplication(false));
       }
     },
-    [lastSubmittedValuesRef, oldApplication, dispatch, shouldSaveApplication],
+    [
+      lastSubmittedValuesRef,
+      oldApplication,
+      dispatch,
+      shouldSaveApplication,
+      exitAfterSave,
+    ],
   );
 
   useEffect(() => {

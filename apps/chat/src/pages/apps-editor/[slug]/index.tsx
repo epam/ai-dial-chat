@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
@@ -51,9 +51,17 @@ export default function AppsEditor() {
     }
   }, [modelsMap, applicationData, id, dispatch]);
 
+  const isLoading = useMemo(
+    () =>
+      initialDataStatus === UploadStatus.LOADING ||
+      isLoadingModels ||
+      (id && !applicationData),
+    [initialDataStatus, isLoadingModels, id, applicationData],
+  );
+
   return (
     <div className="flex size-full flex-col">
-      {initialDataStatus === UploadStatus.LOADING || isLoadingModels ? (
+      {isLoading ? (
         <div className="flex h-full items-center justify-center">
           <Spinner size={45} className="mx-auto" />
         </div>

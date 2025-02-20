@@ -15,6 +15,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
@@ -53,6 +54,11 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
 
   const handleCloseUserSettings = () => {
     dispatch(UIActions.setIsUserSettingsOpen(false));
+  };
+
+  const handleSaveAndRedirect = () => {
+    dispatch(ApplicationActions.setExitAfterSave(true));
+    dispatch(ApplicationActions.setShouldSaveApplication(true));
   };
 
   const tabs = useMemo(
@@ -160,13 +166,23 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
         </div>
 
         <div className="flex h-full items-center space-x-2">
-          <Link
-            className="hidden items-center space-x-1 hover:text-accent-primary md:flex"
-            href={{ pathname: '/marketplace', query: { tab: 'workspace' } }}
-          >
-            <LogOutIcon width={14} height={14} />
-            <span>{t('Go to marketplace')}</span>
-          </Link>
+          {isEditApplication && applicationTypeDisplayName !== 'Mindmap' ? (
+            <button
+              className="button flex items-center space-x-1 hover:text-accent-primary md:flex"
+              onClick={handleSaveAndRedirect}
+            >
+              <LogOutIcon width={14} height={14} />
+              <span>{t('Save and exit')}</span>
+            </button>
+          ) : (
+            <Link
+              className="hidden items-center space-x-1 hover:text-accent-primary md:flex"
+              href={{ pathname: '/marketplace', query: { tab: 'workspace' } }}
+            >
+              <LogOutIcon width={14} height={14} />
+              <span>{t('Exit')}</span>
+            </Link>
+          )}
 
           <div className="h-full border-l border-tertiary max-md:border-tertiary md:pl-2">
             <User />

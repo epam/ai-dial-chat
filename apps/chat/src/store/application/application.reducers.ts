@@ -20,6 +20,7 @@ export interface ApplicationState {
   appDetails: CustomApplicationModel | undefined;
   appLogs: ApplicationLogsType | undefined;
   shouldSaveApplication?: boolean;
+  exitAfterSave?: boolean;
 }
 
 const initialState: ApplicationState = {
@@ -28,6 +29,7 @@ const initialState: ApplicationState = {
   appDetails: undefined,
   appLogs: undefined,
   shouldSaveApplication: false,
+  exitAfterSave: false,
 };
 
 export const applicationSlice = createSlice({
@@ -44,8 +46,16 @@ export const applicationSlice = createSlice({
     ) => {
       state.appLoading = UploadStatus.LOADING;
     },
-    createSuccess: (state) => {
+    createSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        applicationData: CustomApplicationModel;
+      }>,
+    ) => {
       state.appLoading = UploadStatus.LOADED;
+      state.appDetails = payload.applicationData;
     },
     createFail: (state) => {
       state.appLoading = UploadStatus.FAILED;
@@ -64,6 +74,8 @@ export const applicationSlice = createSlice({
       _action: PayloadAction<{
         oldApplication: CustomApplicationModel;
         updatedApplication: CustomApplicationModel;
+        redirectUrl?: string;
+        schema?: ApiDetailedApplicationTypeSchema;
       }>,
     ) => {
       state.appLoading = UploadStatus.LOADING;
@@ -175,6 +187,9 @@ export const applicationSlice = createSlice({
     },
     setShouldSaveApplication: (state, action: PayloadAction<boolean>) => {
       state.shouldSaveApplication = action.payload;
+    },
+    setExitAfterSave: (state, action: PayloadAction<boolean>) => {
+      state.exitAfterSave = action.payload;
     },
   },
 });
