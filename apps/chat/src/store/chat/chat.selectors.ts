@@ -1,5 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import { ModalState } from '@/src/types/modal';
+
 import { ChatState } from '@/src/store/chat/chat.reducer';
 
 import { RootState } from '@/src/store';
@@ -32,6 +34,16 @@ const selectShouldFocusAndScroll = (state: RootState) =>
 const selectNotAvailableEntityType = (state: RootState) =>
   rootSelector(state).notAvailableEntityType;
 
+const selectInfoModalState = (state: RootState) =>
+  rootSelector(state).infoModalState;
+
+const selectInfoModalOpened = createSelector([rootSelector], (state) => {
+  return state.infoModalState !== ModalState.CLOSED;
+});
+
+const selectSelectedEntityInfo = (state: RootState) =>
+  rootSelector(state).selectedEntityInfo;
+
 export const ChatSelectors = {
   selectInputContent,
   selectChatFormValue,
@@ -40,4 +52,7 @@ export const ChatSelectors = {
   selectIsConfigurationBlocksInput,
   selectShouldFocusAndScroll,
   selectNotAvailableEntityType,
+  selectInfoModalState,
+  selectInfoModalOpened,
+  selectSelectedEntityInfo,
 };

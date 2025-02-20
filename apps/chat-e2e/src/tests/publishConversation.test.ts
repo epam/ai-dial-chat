@@ -200,6 +200,7 @@ dialAdminTest(
             MenuOptions.replay,
             MenuOptions.playback,
             MenuOptions.export,
+            MenuOptions.info,
           ],
         );
       },
@@ -365,6 +366,7 @@ dialAdminTest(
           MenuOptions.playback,
           MenuOptions.export,
           MenuOptions.unpublish,
+          MenuOptions.info,
         ]);
       },
     );
