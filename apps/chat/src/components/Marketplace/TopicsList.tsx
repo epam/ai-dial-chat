@@ -45,6 +45,7 @@ export const TopicsList = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [maxTooltipWidth, setMaxTooltipWidth] = useState<number>(0);
   const [openHiddenTopics, setOpenHiddenTopics] = useState<boolean>(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const extraSpace = counterWidth + counterMarginRight;
 
@@ -116,15 +117,13 @@ export const TopicsList = ({
       resizeObserver.disconnect();
     };
   }, [extraSpace, topics]);
-
-  const handleDelayHide = useCallback(
-    () => setTimeout(() => setOpenHiddenTopics(false), displayDelay),
-    [],
-  );
-  const handleDelayShow = useCallback(
-    () => setTimeout(() => setOpenHiddenTopics(true), displayDelay),
-    [],
-  );
+  const handleDelayShowTooltip = useCallback((show: boolean) => {
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(
+      () => setOpenHiddenTopics(show),
+      displayDelay,
+    );
+  }, []);
 
   return (
     <>
@@ -155,10 +154,10 @@ export const TopicsList = ({
               className="flex cursor-pointer items-center rounded border border-accent-primary px-1.5 py-1 text-xs leading-3"
               onClick={(event) => {
                 stopBubbling(event);
-                setOpenHiddenTopics(!openHiddenTopics);
+                handleDelayShowTooltip(!openHiddenTopics);
               }}
-              onMouseEnter={handleDelayShow}
-              onMouseLeave={handleDelayHide}
+              onMouseEnter={() => handleDelayShowTooltip(true)}
+              onMouseLeave={() => handleDelayShowTooltip(false)}
             >
               +{hiddenTopics.length}
             </span>
