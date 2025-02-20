@@ -434,7 +434,7 @@ export const ApplicationDetailsFooter = ({
           <AgentBookmark
             entity={entity}
             size={24}
-            className="icon-button block"
+            className="icon-button"
             onBookmarkClick={onBookmarkClick}
             dataQA="application-bookmark"
           />
