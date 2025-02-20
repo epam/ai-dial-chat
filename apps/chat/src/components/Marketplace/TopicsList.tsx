@@ -1,8 +1,9 @@
-import Tooltip from '../Common/Tooltip';
-import { ApplicationTopic } from './ApplicationTopic';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 import { stopBubbling } from '@/src/constants/chat';
-import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
+
+import Tooltip from '../Common/Tooltip';
+import { ApplicationTopic } from './ApplicationTopic';
 
 interface AllTopicsProps {
   topics: string[];
