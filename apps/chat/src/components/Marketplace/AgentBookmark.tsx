@@ -19,7 +19,6 @@ interface Props {
   size?: number;
   className?: string;
   onBookmarkClick?: (entity: DialAIEntityModel) => void;
-  dataQA?: string;
 }
 
 export const AgentBookmark: React.FC<Props> = ({
@@ -27,7 +26,6 @@ export const AgentBookmark: React.FC<Props> = ({
   size = 18,
   className,
   onBookmarkClick,
-  dataQA,
 }) => {
   const { t } = useTranslation(Translation.Marketplace);
 
