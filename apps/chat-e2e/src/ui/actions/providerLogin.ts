@@ -20,6 +20,10 @@ export abstract class ProviderLogin<T extends BasePage & LoginInterface> {
     this.localStorageManager = localStorageManager;
   }
 
+  getAuthProviderPage(): T {
+    return this.authProviderPage;
+  }
+
   abstract navigateToCredentialsPage(): Promise<void>;
 
   public async login(

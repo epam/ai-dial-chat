@@ -18,17 +18,22 @@ dialTest(
   'Only existed Filters are applied, My workspace is opened for another user if user opens the URL. User has already logged in.\n' +
     'Filters are unselected after logout.\n' +
     'Search_phrase is cleared after logout',
-  async ({
-    marketplacePage,
-    marketplaceFilter,
-    setTestIds,
-    baseAssertion,
-    page,
-    marketplaceHeader,
-    accountSettings,
-    accountDropdownMenu,
-    confirmationDialog,
-  }) => {
+  async (
+    {
+      marketplacePage,
+      marketplaceFilter,
+      setTestIds,
+      baseAssertion,
+      page,
+      marketplaceHeader,
+      accountSettings,
+      accountDropdownMenu,
+      confirmationDialog,
+      providerLogin,
+      marketplaceSidebar,
+    },
+    testInfo,
+  ) => {
     setTestIds('EPMRTC-4485', 'EPMRTC-5241', 'EPMRTC-5242');
     let url: string;
 
@@ -87,7 +92,22 @@ dialTest(
         await marketplacePage.openMyWorkspacePage({
           isInstalledDeploymentsUpdated: false,
         });
+        const isLoginFormVisible = await providerLogin
+          .getAuthProviderPage()
+          .getLoginForm()
+          .isVisible();
+        if (isLoginFormVisible) {
+          const username =
+            process.env.E2E_USERNAME!.split(',')[+config.workers!];
+          await providerLogin.login(
+            testInfo,
+            username,
+            process.env.E2E_PASSWORD!,
+            false,
+          );
+        }
         await marketplacePage.waitForPageLoaded();
+        await marketplaceSidebar.myWorkspaceButton.click();
         await baseAssertion.assertCheckboxState(
           marketplaceFilter.filterByPropertyOptionInput(
             MarketplaceFilterTypes.type,
