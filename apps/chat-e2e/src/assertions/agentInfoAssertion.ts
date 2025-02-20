@@ -25,4 +25,12 @@ export class AgentInfoAssertion extends BaseAssertion {
       .soft(description, ExpectedMessages.agentDescriptionIsValid)
       .toBe(expectedModel.description?.split(/\s*\n\s*\n\s*/g)[0] ?? '');
   }
+
+  public async assertAgentName(expectedName: string) {
+    await this.assertElementText(
+      this.agentInfo.agentName,
+      expectedName,
+      ExpectedMessages.agentNameIsValid,
+    );
+  }
 }
