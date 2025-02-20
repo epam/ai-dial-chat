@@ -22,10 +22,29 @@ export class MarketplacePage extends BasePage {
           resp.request().method() === 'PUT' &&
           resp.status() === 200,
       );
-      await this.navigateToUrl(ExpectedConstants.workspacePath);
+      await this.navigateToUrl(ExpectedConstants.workspacePath());
       await resp;
     } else {
-      await this.navigateToUrl(ExpectedConstants.workspacePath);
+      await this.navigateToUrl(ExpectedConstants.workspacePath());
+    }
+    await this.waitForPageLoaded();
+  }
+
+  async openMarketplacePage() {
+    const responses = [];
+    const hostsArray = [
+      API.publishedApplicationsHost,
+      API.installedDeploymentsHost(),
+    ];
+    for (const host of hostsArray) {
+      const resp = this.page.waitForResponse(
+        (resp) => resp.url().includes(host) && resp.status() === 200,
+      );
+      responses.push(resp);
+    }
+    await this.navigateToUrl(ExpectedConstants.marketplacePath);
+    for (const resp of responses) {
+      await resp;
     }
     await this.waitForPageLoaded();
   }

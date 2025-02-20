@@ -207,4 +207,21 @@ export class ModelsUtil {
       ? ModelsUtil.getModel(process.env.SIMPLE_REQUEST_MODEL)
       : undefined;
   }
+
+  public static getRecentAgents(recentAgentIds: string[]) {
+    const allAgents = ModelsUtil.getOpenAIEntities();
+    return allAgents.filter((a) =>
+      recentAgentIds.includes(a.reference || a.id),
+    );
+  }
+
+  public static getRecentAgentsNames(recentAgentIds: string[]) {
+    return ModelsUtil.getRecentAgents(recentAgentIds).map(({ name }) => name);
+  }
+
+  public static getRecentAgentsVersions(recentAgentIds: string[]) {
+    return ModelsUtil.getRecentAgents(recentAgentIds)
+      .filter((r) => r.version !== undefined)
+      .map(({ version }) => version ?? '');
+  }
 }

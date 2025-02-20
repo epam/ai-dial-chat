@@ -29,6 +29,7 @@ export enum Feature {
   QuickApps = 'quick-apps', // Enable Quick apps
   CodeApps = 'code-apps', // Enable Code apps
   DisallowChangeAgent = 'disallow-change-agent', //Disallow "Change agent" button
+  MarketplaceTableView = 'marketplace-table-view', //Disallow "Change agent" button
 }
 
 export const availableFeatures: Record<Feature, boolean> = {
@@ -62,4 +63,5 @@ export const availableFeatures: Record<Feature, boolean> = {
   [Feature.QuickApps]: true,
   [Feature.CodeApps]: true,
   [Feature.DisallowChangeAgent]: true,
+  [Feature.MarketplaceTableView]: true,
 };

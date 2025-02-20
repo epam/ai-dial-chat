@@ -252,7 +252,7 @@ export const MarketplaceFilterbar = memo(() => {
           caption={t('My workspace')}
           Icon={IconHome2}
           selected={selectedTab === MarketplaceTabs.MY_WORKSPACE}
-          dataQa="my-applications"
+          dataQa="my-workspace"
         />
       </div>
       {showFilterbar && (

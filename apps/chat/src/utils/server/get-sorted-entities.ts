@@ -154,6 +154,9 @@ export const getSortedEntities = async (token: JWT | null) => {
       isDefault: defaultModelId === entity.id,
       version: entity.display_version,
       description: entity.description,
+      updatedAt: entity.updated_at,
+      createdAt: entity.created_at,
+      owner: entity.owner,
       iconUrl:
         entity.icon_url && !isAbsoluteUrl(entity.icon_url)
           ? ApiUtils.decodeApiUrl(entity.icon_url)
