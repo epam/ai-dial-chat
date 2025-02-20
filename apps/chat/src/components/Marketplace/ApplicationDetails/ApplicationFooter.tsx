@@ -436,7 +436,6 @@ export const ApplicationDetailsFooter = ({
             size={24}
             className="icon-button"
             onBookmarkClick={onBookmarkClick}
-            dataQA="application-bookmark"
           />
         </div>
         <div className="flex w-full min-w-0 items-center justify-end gap-4">
