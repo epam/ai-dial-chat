@@ -136,7 +136,7 @@ export class ShareService {
               entities.push({
                 ...parseConversationApiKey(conversation.name),
                 id,
-                lastActivityDate: conversation.updatedAt,
+                updatedAt: conversation.updatedAt,
                 folderId: constructPath(apiKey, bucket, parentPath),
               });
             }
@@ -163,7 +163,7 @@ export class ShareService {
               entities.push({
                 name: prompt.name,
                 id,
-                lastActivityDate: prompt.updatedAt,
+                updatedAt: prompt.updatedAt,
                 folderId: constructPath(apiKey, bucket, parentPath),
               });
             }

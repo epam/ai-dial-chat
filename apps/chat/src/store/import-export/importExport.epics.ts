@@ -873,7 +873,7 @@ const replaceConversationsEpic: AppEpic = (action$, state$) =>
                     folderId: oldConversation.folderId,
                     id: oldConversation.id,
                     status: UploadStatus.UNINITIALIZED,
-                    lastActivityDate: Date.now(),
+                    updatedAt: Date.now(),
                   },
                 ],
                 errorsAcc,

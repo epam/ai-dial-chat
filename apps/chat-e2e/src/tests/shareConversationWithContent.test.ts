@@ -982,6 +982,7 @@ dialSharedWithMeTest(
           .toEqual([
             MenuOptions.duplicate,
             MenuOptions.export,
+            MenuOptions.info,
             MenuOptions.delete,
           ]);
       },

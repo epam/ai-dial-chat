@@ -37,7 +37,7 @@ export class ConversationApiStorage extends ApiEntityStorage<
     return {
       ...entity,
       ...info,
-      lastActivityDate: info.lastActivityDate ?? entity.lastActivityDate,
+      updatedAt: info.updatedAt ?? entity.updatedAt,
       model: entity.model,
     };
   }
@@ -126,7 +126,7 @@ export const getPreparedConversations = ({
       name: newName,
       folderId,
     });
-  }); // to send conversation with proper parentPath and lastActivityDate order
+  }); // to send conversation with proper parentPath and updatedAt order
 
 export const getImportPreparedConversations = ({
   conversations,
@@ -156,4 +156,4 @@ export const getImportPreparedConversations = ({
       name: newName,
       folderId: folderId,
     };
-  }); // to send conversation with proper parentPath and lastActivityDate order
+  }); // to send conversation with proper parentPath and updatedAt order
