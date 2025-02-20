@@ -31,6 +31,8 @@ dialTest(
       confirmationDialog,
       providerLogin,
       marketplaceSidebar,
+      dialHomePage,
+      chatBar,
     },
     testInfo,
   ) => {
@@ -89,16 +91,15 @@ dialTest(
         await accountSettings.openAccountDropdownMenu();
         await accountDropdownMenu.selectMenuOption(AccountMenuOptions.logout);
         await confirmationDialog.confirm();
-        await marketplacePage.openMyWorkspacePage({
-          isInstalledDeploymentsUpdated: false,
-        });
+        await providerLogin.navigateToCredentialsPage();
+        await page.waitForLoadState();
         const isLoginFormVisible = await providerLogin
           .getAuthProviderPage()
           .getLoginForm()
           .isVisible();
         if (isLoginFormVisible) {
           const username =
-            process.env.E2E_USERNAME!.split(',')[+config.workers!];
+            process.env.E2E_USERNAME!.split(',')[+testInfo.parallelIndex];
           await providerLogin.login(
             testInfo,
             username,
@@ -106,6 +107,8 @@ dialTest(
             false,
           );
         }
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.dialMarketplaceLink.click();
         await marketplacePage.waitForPageLoaded();
         await marketplaceSidebar.myWorkspaceButton.click();
         await baseAssertion.assertCheckboxState(
