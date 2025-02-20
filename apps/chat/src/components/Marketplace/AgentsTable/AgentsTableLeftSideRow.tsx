@@ -6,6 +6,7 @@ import classNames from 'classnames';
 import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { getModelShortDescription } from '@/src/utils/app/application';
+import { isMyApplication } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
@@ -35,18 +36,18 @@ export const AgentsTableLeftSideRow: React.FC<Props> = memo(
     entity,
     isHovered,
     onClick,
-    onRowHover,
     onRowHoverOver,
+    onRowHover,
     onBookmarkClick,
   }) => {
     const screenState = useScreenState();
-
-    const { iconSize, shareIconSize } = TableIconSizes[screenState];
 
     const installedModelIds = useAppSelector(
       ModelsSelectors.selectInstalledModelIds,
     );
 
+    const { iconSize, shareIconSize } = TableIconSizes[screenState];
+    const isMyApp = isMyApplication(entity);
     const Bookmark = installedModelIds.has(entity.reference)
       ? IconBookmarkFilled
       : IconBookmark;
@@ -63,14 +64,16 @@ export const AgentsTableLeftSideRow: React.FC<Props> = memo(
       >
         <div className="flex h-full items-center gap-3 md:gap-4">
           <div className="flex items-center gap-2 md:gap-4">
-            <Bookmark
-              onClick={(e) => {
-                e.stopPropagation();
-                onBookmarkClick?.(entity);
-              }}
-              className="block shrink-0 rounded text-secondary hover:text-accent-primary xl:hidden"
-              size={18}
-            />
+            {!isMyApp && !entity.sharedWithMe && (
+              <Bookmark
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onBookmarkClick?.(entity);
+                }}
+                className="block shrink-0 rounded text-secondary hover:text-accent-primary xl:hidden"
+                size={18}
+              />
+            )}
             <ShareIcon
               {...entity}
               isHighlighted={false}

@@ -1,6 +1,4 @@
 import {
-  IconBookmark,
-  IconBookmarkFilled,
   IconFileDescription,
   IconLink,
   IconPencilMinus,
@@ -42,7 +40,6 @@ import { Translation } from '@/src/types/translation';
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { AuthSelectors } from '@/src/store/auth/auth.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -55,6 +52,7 @@ import {
 import ContextMenu from '@/src/components/Common/ContextMenu';
 import Tooltip from '@/src/components/Common/Tooltip';
 
+import { AgentBookmark } from '../AgentBookmark';
 import { ApplicationTopic } from '../ApplicationTopic';
 import { TopicsList } from '../TopicsList';
 
@@ -92,9 +90,6 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
 
     const dispatch = useAppDispatch();
 
-    const installedModelIds = useAppSelector(
-      ModelsSelectors.selectInstalledModelIds,
-    );
     const isCodeAppsEnabled = useAppSelector((state) =>
       SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
     );
@@ -303,10 +298,6 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
       };
     }, [entity.topics]);
 
-    const Bookmark = installedModelIds.has(entity.reference)
-      ? IconBookmarkFilled
-      : IconBookmark;
-
     return (
       <li
         onClick={() => onClick(entity)}
@@ -360,14 +351,7 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
         </div>
         <div className="hidden flex-none items-center xl:flex">
           <div className="flex gap-1">
-            <Bookmark
-              onClick={(e) => {
-                e.stopPropagation();
-                onBookmarkClick?.(entity);
-              }}
-              className="rounded text-secondary hover:text-accent-primary"
-              size={18}
-            />
+            <AgentBookmark onBookmarkClick={onBookmarkClick} entity={entity} />
             <ContextMenu
               menuItems={menuItems}
               featureType={FeatureType.Application}
