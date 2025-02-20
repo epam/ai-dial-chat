@@ -142,7 +142,7 @@ dialOverlayTest(
               isPlayback: newConversationData.request.isPlayback ?? false,
               isReplay: newConversationData.request.isReplay ?? false,
               id: newConversationData.request.id,
-              lastActivityDate: newConversationData.response.updatedAt,
+              updatedAt: newConversationData.response.updatedAt,
               folderId: newConversationData.request.folderId,
               bucket: newConversationData.response.bucket,
             },
@@ -307,7 +307,7 @@ dialOverlayTest(
         //     id: conversation.id,
         //     folderId: conversation.folderId,
         //     publishedWithMe: !parentPath,
-        //     lastActivityDate: actualPublishedConversation.updatedAt,
+        //     updatedAt: actualPublishedConversation.updatedAt,
         //     bucket: actualPublishedConversation.bucket,
         //     ...(parentPath && { parentPath }),
         //   });
@@ -317,7 +317,7 @@ dialOverlayTest(
         let actualConversationsList = await overlayItemApiHelper.listItems(
           API.conversationsHost(),
         );
-        //need to sort conversations by 'lastActivityDate' and 'name' in order to define the last conversation
+        //need to sort conversations by 'updatedAt' and 'name' in order to define the last conversation
         actualConversationsList =
           SortingUtil.sortBackendConversationsByDateAndName(
             actualConversationsList,
@@ -341,7 +341,7 @@ dialOverlayTest(
             isPlayback: isPlayback ?? false,
             isReplay: isReplay ?? false,
             id: conversation.id,
-            lastActivityDate: actualConversation.updatedAt,
+            updatedAt: actualConversation.updatedAt,
             folderId: conversation.folderId,
           };
 

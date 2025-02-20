@@ -118,6 +118,7 @@ import { CONVERSATIONS_DATE_SECTIONS } from '@/src/constants/sections';
 import { SHARE_QUERY_PARAM } from '@/src/constants/share';
 
 import { AddonsActions, AddonsSelectors } from '../addons/addons.reducers';
+import { ChatActions } from '../chat/chat.reducer';
 import { FilesActions } from '../files/files.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { OverlaySelectors } from '../overlay/overlay.reducers';
@@ -465,7 +466,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 temperature:
                   lastConversationSettings?.temperature ?? DEFAULT_TEMPERATURE,
                 selectedAddons: [],
-                lastActivityDate: Date.now(),
+                updatedAt: Date.now(),
                 status: UploadStatus.LOADED,
                 folderId: folderId ?? getConversationRootId(LOCAL_BUCKET),
               }),
@@ -580,7 +581,7 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
         folderId,
         name: newConversationName,
         messages: [],
-        lastActivityDate: Date.now(),
+        updatedAt: Date.now(),
 
         replay: {
           isReplay: true,
@@ -640,7 +641,7 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
         folderId,
         name: newConversationName,
         messages: [],
-        lastActivityDate: Date.now(),
+        updatedAt: Date.now(),
 
         playback: {
           messagesStack: excludeSystemMessages(conversation.messages),
@@ -696,7 +697,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
           conversation.name,
           conversations.filter((c) => c.folderId === conversationFolderId), // only root conversations for external entities
         ),
-        lastActivityDate: Date.now(),
+        updatedAt: Date.now(),
       });
 
       return concat(
@@ -728,9 +729,20 @@ const saveNewConversationEpic: AppEpic = (action$) =>
     filter(ConversationsActions.saveNewConversation.match),
     mergeMap(({ payload }) =>
       ConversationService.createConversation(payload.newConversation).pipe(
-        switchMap(() =>
-          of(ConversationsActions.saveNewConversationSuccess(payload)),
-        ),
+        switchMap((conversationInfo) => {
+          const newConversation: Conversation = {
+            ...payload.newConversation,
+            createdAt: conversationInfo?.createdAt,
+            updatedAt: conversationInfo?.updatedAt,
+          };
+          return of(
+            ConversationsActions.saveNewConversationSuccess({
+              newConversation,
+              selectedIdToReplaceWithNewOne:
+                payload.selectedIdToReplaceWithNewOne,
+            }),
+          );
+        }),
         catchError((err) => {
           console.error(err);
           return of(
@@ -1282,7 +1294,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
 
         const updatedConversation = regenerateConversationId<Conversation>({
           ...payload.conversation,
-          lastActivityDate: Date.now(),
+          updatedAt: Date.now(),
           replay: payload.conversation.replay
             ? {
                 ...payload.conversation.replay,
@@ -2306,7 +2318,24 @@ const saveConversationEpic: AppEpic = (action$) =>
         return of(ConversationsActions.saveConversationSuccess());
       }
       return ConversationService.updateConversation(newConversation).pipe(
-        switchMap(() => of(ConversationsActions.saveConversationSuccess())),
+        switchMap((conversationInfo) => {
+          if (!conversationInfo) {
+            return of(ConversationsActions.saveConversationSuccess());
+          }
+
+          return concat(
+            of(
+              ConversationsActions.updateConversationSuccess({
+                id: newConversation.id,
+                conversation: {
+                  createdAt: conversationInfo?.createdAt,
+                  updatedAt: conversationInfo?.updatedAt,
+                },
+              }),
+            ),
+            of(ConversationsActions.saveConversationSuccess()),
+          );
+        }),
         catchError((err) => {
           console.error(err);
           return concat(
@@ -2380,7 +2409,7 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
       const newConversation: Conversation = regenerateConversationId({
         ...(conversation as Conversation),
         ...values,
-        lastActivityDate: Date.now(),
+        updatedAt: Date.now(),
       });
 
       return concat(
@@ -2450,7 +2479,7 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
         ...(conversation as Conversation),
         ...values,
         folderId,
-        lastActivityDate: Date.now(),
+        updatedAt: Date.now(),
       });
 
       const successAction = ConversationsActions.updateConversationSuccess({
@@ -3177,6 +3206,53 @@ const initLastConversationSettingsEpic: AppEpic = (action$) =>
     ),
   );
 
+const getConversationMetadataEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.getConversationMetadata.match),
+    switchMap(({ payload }) =>
+      ConversationService.getConversationMetadata(payload.conversationId).pipe(
+        switchMap((conversationMetadata) => {
+          if (!conversationMetadata) {
+            return of(
+              ChatActions.getEntityInfoFail({
+                errorText: 'Could not get conversation info. Try again later',
+              }),
+            );
+          }
+
+          return concat(
+            of(
+              ChatActions.getEntityInfoSuccess({
+                entityInfo: {
+                  id: payload.conversationId,
+                  ...conversationMetadata,
+                },
+              }),
+            ),
+
+            of(
+              ConversationsActions.updateConversationSuccess({
+                id: payload.conversationId,
+                conversation: {
+                  updatedAt: conversationMetadata.updatedAt,
+                  createdAt: conversationMetadata.createdAt,
+                  author: conversationMetadata.author,
+                },
+              }),
+            ),
+          );
+        }),
+        catchError(() => {
+          return of(
+            ChatActions.getEntityInfoFail({
+              errorText: 'Could not get conversation info. Try again later',
+            }),
+          );
+        }),
+      ),
+    ),
+  );
+
 export const ConversationsEpics = combineEpics(
   // init
   initEpic,
@@ -3249,4 +3325,5 @@ export const ConversationsEpics = combineEpics(
   initLastConversationSettingsEpic,
 
   createNotLocalConversationsEpic,
+  getConversationMetadataEpic,
 );
