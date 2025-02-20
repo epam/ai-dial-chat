@@ -19,7 +19,7 @@ export class ApplicationService {
 
   public static edit(
     applicationData: CustomApplicationModel,
-  ): Observable<void> {
+  ): Observable<ApplicationInfo | void> {
     return DataService.getDataStorage().updateApplication(applicationData);
   }
 

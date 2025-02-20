@@ -44,6 +44,7 @@ import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
+import { ChatActions } from '@/src/store/chat/chat.reducer';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
@@ -398,6 +399,15 @@ export const PromptComponent = ({
     [dispatch, prompt],
   );
 
+  const handleOpenInfoModal = useCallback(() => {
+    const { id, updatedAt, createdAt, author, sharedWithMe } = prompt;
+    dispatch(
+      ChatActions.getEntityInfo({
+        entityInfo: { id, updatedAt, createdAt, author, sharedWithMe },
+      }),
+    );
+  }, [dispatch, prompt]);
+
   useEffect(() => {
     if (isSelectMode) {
       setIsOpened(false);
@@ -563,6 +573,7 @@ export const PromptComponent = ({
               onSelect={handleSelect}
               disableUse={disableUsePrompt}
               onUse={handleUse}
+              onShowInfo={handleOpenInfoModal}
             />
           </div>
         )}
