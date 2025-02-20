@@ -13,6 +13,7 @@ import {
   MarketplaceQueryParams,
   MarketplaceTabs,
   SourceType,
+  ViewTypes,
 } from '@/src/constants/marketplace';
 
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
@@ -22,12 +23,6 @@ import {
   MarketplaceSelectors,
   MarketplaceState,
 } from './marketplace.reducers';
-import {
-  selectDetailsModel,
-  selectSearchTerm,
-  selectSelectedFilters,
-  selectSelectedTab,
-} from './marketplace.selectors';
 
 import { ParsedUrlQueryInput, parse } from 'querystring';
 
@@ -68,14 +63,15 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
         MarketplaceActions.setDetailsModel.match(action) ||
         MarketplaceActions.setSelectedFilters.match(action) ||
         MarketplaceActions.setState.match(action) ||
-        MarketplaceActions.setSearchTerm.match(action),
+        MarketplaceActions.setSearchTerm.match(action) ||
+        MarketplaceActions.setSelectedView.match(action),
     ),
     switchMap(() => {
       const state = state$.value;
       const query = parse(window.location.search.slice(1));
       const pathname = window.location.pathname;
       // workspace tab
-      const selectedTab = selectSelectedTab(state);
+      const selectedTab = MarketplaceSelectors.selectSelectedTab(state);
       addToQuery(
         query,
         MarketplaceQueryParams.tab,
@@ -84,14 +80,11 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
           : undefined,
       );
       // application link
-      const reference = selectDetailsModel(state)?.reference;
-      addToQuery(
-        query,
-        MarketplaceQueryParams.model,
-        reference ? reference : undefined,
-      );
+      const reference =
+        MarketplaceSelectors.selectDetailsModel(state)?.reference;
+      addToQuery(query, MarketplaceQueryParams.model, reference ?? undefined);
       // filters
-      const filters = selectSelectedFilters(state);
+      const filters = MarketplaceSelectors.selectSelectedFilters(state);
       addToQuery(
         query,
         MarketplaceQueryParams.types,
@@ -108,11 +101,18 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
         filters.Sources.length ? filters.Sources.join(',') : undefined,
       );
       // search
-      const searchTerm = selectSearchTerm(state);
+      const searchTerm = MarketplaceSelectors.selectSearchTerm(state);
       addToQuery(
         query,
         MarketplaceQueryParams.search,
         searchTerm ? searchTerm : undefined,
+      );
+      // view
+      const viewType = MarketplaceSelectors.selectSelectedViewType(state);
+      addToQuery(
+        query,
+        MarketplaceQueryParams.viewType,
+        viewType !== ViewTypes.CARD ? viewType : undefined,
       );
 
       Router.push(
@@ -179,6 +179,9 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
       // search
       updatedMarketplaceState.searchTerm =
         (query[MarketplaceQueryParams.search] as string) ?? '';
+      // viewType
+      updatedMarketplaceState.selectedView =
+        (query[MarketplaceQueryParams.viewType] as ViewTypes) ?? ViewTypes.CARD;
 
       return concat(
         of(MarketplaceActions.setState(updatedMarketplaceState)),
@@ -201,7 +204,7 @@ const updateFiltersEpic: AppEpic = (action$, state$) =>
 
       const existingTopics = ModelsSelectors.selectModelTopics(state);
       const sourceTypes = MarketplaceSelectors.selectSourceTypes(state);
-      const filters = selectSelectedFilters(state);
+      const filters = MarketplaceSelectors.selectSelectedFilters(state);
       const updatedFilters = { ...filters };
       updatedFilters.Topics = filters.Topics.filter((topic) =>
         existingTopics.includes(topic),

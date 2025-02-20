@@ -2,7 +2,11 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { MarketplaceFilters } from '@/src/types/marketplace';
 
-import { FilterTypes, MarketplaceTabs } from '@/src/constants/marketplace';
+import {
+  FilterTypes,
+  MarketplaceTabs,
+  ViewTypes,
+} from '@/src/constants/marketplace';
 
 import * as MarketplaceSelectors from './marketplace.selectors';
 
@@ -16,6 +20,7 @@ export interface MarketplaceState {
   searchTerm: string;
   selectedTab: MarketplaceTabs;
   applyModelStatus: UploadStatus;
+  selectedView: ViewTypes;
   applyModelId?: string;
   detailsModel: { reference: string; isSuggested: boolean } | undefined;
 }
@@ -34,6 +39,7 @@ const initialState: MarketplaceState = {
   selectedTab: MarketplaceTabs.HOME,
   applyModelStatus: UploadStatus.UNINITIALIZED,
   detailsModel: undefined,
+  selectedView: ViewTypes.CARD,
 };
 
 export const marketplaceSlice = createSlice({
@@ -76,6 +82,12 @@ export const marketplaceSlice = createSlice({
       }: PayloadAction<{ reference: string; isSuggested: boolean } | undefined>,
     ) => {
       state.detailsModel = payload;
+    },
+    setSelectedView: (
+      state,
+      { payload }: PayloadAction<{ viewType: ViewTypes }>,
+    ) => {
+      state.selectedView = payload.viewType;
     },
   },
 });

@@ -131,6 +131,9 @@ export const ChatView = memo(() => {
   const selectedPublicationUrl = useAppSelector(
     PublicationSelectors.selectSelectedPublicationUrl,
   );
+  const notAvailableEntityType = useAppSelector(
+    ChatSelectors.selectNotAvailableEntityType,
+  );
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
   const [showScrollDownButton, setShowScrollDownButton] =
@@ -140,7 +143,6 @@ export const ChatView = memo(() => {
   const [isLastMessageError, setIsLastMessageError] = useState(false);
   const [prevSelectedIds, setPrevSelectedIds] = useState<string[]>([]);
   const [inputHeight, setInputHeight] = useState<number>(142);
-  const [notAllowedType, setNotAllowedType] = useState<EntityType | null>(null);
 
   const handleTalkToConversationId = useCallback(
     (conversationId: string | null) => {
@@ -201,17 +203,24 @@ export const ChatView = memo(() => {
         }));
 
     if (isNotAllowedModel) {
-      setNotAllowedType(EntityType.Model);
+      dispatch(ChatActions.setNotAvailableEntityType(EntityType.Model));
     } else if (
       selectedConversations.some((conversation) =>
         conversation.selectedAddons.some((addonId) => !addonsMap[addonId]),
       )
     ) {
-      setNotAllowedType(EntityType.Addon);
+      dispatch(ChatActions.setNotAvailableEntityType(EntityType.Addon));
     } else {
-      setNotAllowedType(null);
+      dispatch(ChatActions.setNotAvailableEntityType(undefined));
     }
-  }, [selectedConversations, models, isModelsLoaded, addonsMap, modelsMap]);
+  }, [
+    selectedConversations,
+    models,
+    isModelsLoaded,
+    addonsMap,
+    modelsMap,
+    dispatch,
+  ]);
 
   const onLikeHandler = useCallback(
     (index: number, conversation: Conversation) => (rate: LikeState) => {
@@ -502,7 +511,7 @@ export const ChatView = memo(() => {
     !isExternal &&
     !messageIsStreaming &&
     !isLastMessageError &&
-    !notAllowedType;
+    !notAvailableEntityType;
   const showFloatingOverlay =
     isSmallScreen() && isAnyMenuOpen && !isIsolatedView;
   const isModelsInstalled = selectedConversations.every((conv) =>
@@ -760,7 +769,7 @@ export const ChatView = memo(() => {
                                             Feature.Likes,
                                           )}
                                           editDisabled={
-                                            !!notAllowedType ||
+                                            !!notAvailableEntityType ||
                                             isExternal ||
                                             isReplay ||
                                             isPlayback
@@ -790,11 +799,13 @@ export const ChatView = memo(() => {
                       )}
                     </div>
                   </div>
-                  {!isPlayback && notAllowedType && !selectedPublicationUrl ? (
+                  {!isPlayback &&
+                  notAvailableEntityType &&
+                  !selectedPublicationUrl ? (
                     <NotAllowedModel
                       showScrollDownButton={showScrollDownButton}
                       onScrollDownClick={handleScrollDown}
-                      type={notAllowedType}
+                      type={notAvailableEntityType}
                     />
                   ) : (
                     <>
@@ -1019,9 +1030,12 @@ export function Chat() {
     ChatSelectors.selectIsConfigurationSchemaLoading,
   );
 
-  const configurationModelId = selectedConversations.find((conv) =>
+  const configurationAppReference = selectedConversations.find((conv) =>
     doesModelHaveConfiguration(modelsMap[conv.model.id]),
   )?.model?.id;
+  const configurationAppId = configurationAppReference
+    ? modelsMap[configurationAppReference]?.id
+    : undefined;
 
   useEffect(() => {
     dispatch(ChatActions.resetFormValue());
@@ -1029,12 +1043,12 @@ export function Chat() {
 
   useEffect(() => {
     dispatch(ChatActions.resetConfigurationSchema());
-    if (configurationModelId) {
+    if (configurationAppId) {
       dispatch(
-        ChatActions.getConfigurationSchema({ modelId: configurationModelId }),
+        ChatActions.getConfigurationSchema({ modelId: configurationAppId }),
       );
     }
-  }, [dispatch, configurationModelId, selectedConversationsIds]);
+  }, [dispatch, configurationAppId, selectedConversationsIds]);
 
   if (selectedPublication?.resources && !selectedConversationsIds.length) {
     return (

@@ -59,9 +59,10 @@ export const selectModels = createSelector([rootSelector], (state) => {
 });
 
 export const selectModelTopics = createSelector([rootSelector], (state) => {
-  return uniq(
-    state.models?.flatMap((model) => model.topics ?? []) ?? [],
-  ).sort();
+  return sortBy(
+    uniq(state.models?.flatMap((model) => model.topics ?? []) ?? []),
+    (topic) => topic.toLowerCase(),
+  );
 });
 
 export const selectModelsMap = createSelector([rootSelector], (state) => {

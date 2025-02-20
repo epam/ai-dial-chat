@@ -1781,10 +1781,12 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
           assistantModelId,
         };
 
-        const model =
-          ModelsSelectors.selectModelsMap(state$.value)[
-            activeMessage.model.id
-          ] ?? conv.model;
+        const model = {
+          id:
+            ModelsSelectors.selectModelsMap(state$.value)[
+              activeMessage.model.id
+            ]?.reference ?? conv.model.id,
+        };
 
         const messages =
           conv.model.id !== model.id ||

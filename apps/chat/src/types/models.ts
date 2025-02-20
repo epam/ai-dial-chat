@@ -21,6 +21,9 @@ export interface CoreAIEntity<T = EntityType.Model> {
   display_version?: string;
   icon_url?: string;
   description?: string;
+  created_at: number;
+  updated_at: number;
+  owner: string;
   capabilities?: {
     embeddings: boolean;
     chat_completion: boolean;
@@ -69,6 +72,9 @@ export interface DialAIEntity {
   name: string;
   description?: string | undefined;
   iconUrl?: string | undefined;
+  createdAt?: number;
+  updatedAt?: number;
+  owner?: string;
   type: EntityType;
   selectedAddons?: string[];
   inputAttachmentTypes?: string[];
