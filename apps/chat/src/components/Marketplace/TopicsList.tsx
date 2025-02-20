@@ -33,6 +33,7 @@ interface TopicsListProps {
 const counterWidth = 30;
 const innerMaxTooltipWidth = 198;
 const topicGap = 8;
+const displayDelay = 100;
 
 export const TopicsList = ({
   topics,
@@ -116,6 +117,15 @@ export const TopicsList = ({
     };
   }, [extraSpace, topics]);
 
+  const handleDelayHide = useCallback(
+    () => setTimeout(() => setOpenHiddenTopics(false), displayDelay),
+    [],
+  );
+  const handleDelayShow = useCallback(
+    () => setTimeout(() => setOpenHiddenTopics(true), displayDelay),
+    [],
+  );
+
   return (
     <>
       <AllTopics topics={topics} allTopicsRef={allTopicsRef} />
@@ -147,8 +157,8 @@ export const TopicsList = ({
                 stopBubbling(event);
                 setOpenHiddenTopics(!openHiddenTopics);
               }}
-              onMouseEnter={() => setOpenHiddenTopics(true)}
-              onMouseLeave={() => setOpenHiddenTopics(false)}
+              onMouseEnter={handleDelayShow}
+              onMouseLeave={handleDelayHide}
             >
               +{hiddenTopics.length}
             </span>
