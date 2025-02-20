@@ -21,6 +21,8 @@ export interface FolderConversation {
   folders: FolderInterface;
 }
 
+export const responseIdPrefix = 'chatcmpl-';
+
 export class ConversationData extends FolderData {
   private conversationBuilder: ConversationBuilder;
 
@@ -59,6 +61,7 @@ export class ConversationData extends FolderData {
       content: 'test response',
       model: { id: modelToUse.id },
       settings: settings,
+      responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
     };
     let conversationName;
     let conversationId;
@@ -129,6 +132,7 @@ export class ConversationData extends FolderData {
           content: `response on ${r}`,
           model: messageModel,
           settings: settings,
+          responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
         },
       );
     });
@@ -302,6 +306,7 @@ export class ConversationData extends FolderData {
         },
       },
       settings: messageSettings,
+      responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
     };
     conversation.messages = [userMessage, assistantMessage];
     return this.conversationBuilder.build();
@@ -328,6 +333,7 @@ export class ConversationData extends FolderData {
       content: responseContent,
       model: conversation.model,
       settings: messageSettings,
+      responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
     };
     conversation.messages = [userMessage, assistantMessage];
     return this.conversationBuilder.build();
@@ -543,6 +549,7 @@ export class ConversationData extends FolderData {
       content: 'Images',
       model: modelToUse,
       settings: settings,
+      responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
     };
     const name = GeneratorUtil.randomString(10);
     return this.conversationBuilder
@@ -603,6 +610,7 @@ export class ConversationData extends FolderData {
         attachments: [this.getAttachmentData(attachmentUrl)],
       },
       settings: settings,
+      responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
     };
     name = name ?? GeneratorUtil.randomString(10);
 
@@ -660,6 +668,7 @@ export class ConversationData extends FolderData {
       },
       model: modelToUse,
       settings: settings,
+      responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
     };
     const name = GeneratorUtil.randomString(10);
     return this.conversationBuilder
@@ -708,6 +717,7 @@ export class ConversationData extends FolderData {
         stages: stages,
       },
       settings: settings,
+      responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
     };
     const name = GeneratorUtil.randomString(10);
     return this.conversationBuilder

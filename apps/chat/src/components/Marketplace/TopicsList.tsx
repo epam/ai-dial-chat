@@ -130,6 +130,7 @@ export const TopicsList = ({
               <div
                 className="my-1 flex flex-wrap gap-2"
                 style={{ maxWidth: `${maxTooltipWidth}px` }}
+                onClick={stopBubbling}
               >
                 {hiddenTopics.map((topic) => (
                   <ApplicationTopic key={topic} topic={topic} />
