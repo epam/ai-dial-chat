@@ -12,13 +12,12 @@ interface AllTopicsProps {
 
 const AllTopics = memo(({ topics, allTopicsRef }: AllTopicsProps) => {
   return (
-    <div
-      className="invisible fixed top-0 flex gap-2 font-theme"
-      ref={allTopicsRef}
-    >
-      {topics.map((topic) => (
-        <ApplicationTopic key={topic} topic={topic} />
-      ))}
+    <div className="invisible fixed left-0 top-0 overflow-x-auto">
+      <div className="flex flex-nowrap gap-2 font-theme" ref={allTopicsRef}>
+        {topics.map((topic) => (
+          <ApplicationTopic key={topic} topic={topic} />
+        ))}
+      </div>
     </div>
   );
 });
@@ -130,7 +129,7 @@ export const TopicsList = ({
               <div
                 className="my-1 flex flex-wrap gap-2"
                 style={{ maxWidth: `${maxTooltipWidth}px` }}
-                onClick={stopBubblingAndPreventDefault}
+                onClickCapture={stopBubblingAndPreventDefault}
               >
                 {hiddenTopics.map((topic) => (
                   <ApplicationTopic key={topic} topic={topic} />
@@ -143,7 +142,7 @@ export const TopicsList = ({
           >
             <span
               className="flex cursor-pointer items-center rounded border border-accent-primary px-1.5 py-1 text-xs leading-3"
-              onClick={(event) => {
+              onClickCapture={(event) => {
                 stopBubblingAndPreventDefault(event);
                 setOpenHiddenTopics(!openHiddenTopics);
               }}
