@@ -216,11 +216,13 @@ export const ExpectedConstants = {
     `${API.fileHost}/public/${name}`,
   attachmentPublishErrorMessage:
     'Publishing failed. You are only allowed to publish conversations with attachments from "All files"',
-  workspacePath: '/marketplace?tab=workspace',
+  marketplacePath: '/marketplace',
+  workspacePath: () => `${ExpectedConstants.marketplacePath}?tab=workspace`,
   noWorkspaceAgentsFoundMessage:
     'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
   noMarketplaceAgentsFoundMessage: `Sorry, we couldn't find any results for your search.`,
   versionPrefix: 'Version: ',
+  agentAddedToWorkspaceMessage: 'The agent added to my workspace',
 };
 
 export enum Types {
@@ -329,6 +331,8 @@ export const API = {
   pendingPublicationsListing: '/api/publication/listing',
   publishedConversations: '/api/publication/conversations/public',
   applicationCreateHost: '/api/applications',
+  publishedApplicationsHost:
+    'api/publication/applications/public?recursive=true',
 };
 
 export const Import = {
