@@ -2,6 +2,8 @@ import { IconBookmark, IconBookmarkFilled } from '@tabler/icons-react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { isMyApplication } from '@/src/utils/app/id';
 
 import { DialAIEntityModel } from '@/src/types/models';
@@ -17,6 +19,7 @@ interface Props {
   size?: number;
   className?: string;
   onBookmarkClick?: (entity: DialAIEntityModel) => void;
+  dataQA?: string;
 }
 
 export const AgentBookmark: React.FC<Props> = ({
@@ -24,6 +27,7 @@ export const AgentBookmark: React.FC<Props> = ({
   size = 18,
   className,
   onBookmarkClick,
+  dataQA,
 }) => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -46,17 +50,22 @@ export const AgentBookmark: React.FC<Props> = ({
           ? t('Remove from My workspace')
           : t('Add to My workspace')
       }
-      triggerClassName={className}
+      triggerClassName={classNames(
+        className,
+        'group flex cursor-pointer items-center',
+      )}
       isTriggerClickable
     >
-      <Bookmark
-        onClick={(e) => {
-          e.stopPropagation();
-          onBookmarkClick?.(entity);
-        }}
-        className="cursor-pointer rounded text-secondary hover:text-accent-primary"
-        size={size}
-      />
+      <button data-qa={dataQA}>
+        <Bookmark
+          onClick={(e) => {
+            e.stopPropagation();
+            onBookmarkClick?.(entity);
+          }}
+          className="rounded text-secondary group-hover:text-accent-primary"
+          size={size}
+        />
+      </button>
     </Tooltip>
   );
 };
