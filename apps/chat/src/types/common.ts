@@ -44,6 +44,8 @@ export interface BackendEntity extends BackendDataEntity {
 
 export interface BackendChatEntity extends BackendEntity {
   updatedAt: number;
+  createdAt?: number;
+  author?: string;
 }
 
 export interface BackendFolder<ItemType> extends BackendDataEntity {
@@ -132,4 +134,18 @@ export enum ScreenState {
   MOBILE,
   TABLET,
   DESKTOP,
+}
+
+export interface RawEntityInfo {
+  id: string;
+  createdAt?: number;
+  updatedAt?: number;
+  author?: string;
+  sharedWithMe?: boolean;
+}
+export interface EntityInfo
+  extends Omit<RawEntityInfo, 'createdAt' | 'updatedAt'> {
+  createdAt?: string;
+  updatedAt?: string;
+  isPublic?: boolean;
 }
