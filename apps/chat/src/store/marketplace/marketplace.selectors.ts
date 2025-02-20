@@ -22,6 +22,9 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState): MarketplaceState => state.marketplace;
 
+export const selectSelectedViewType = (state: RootState) =>
+  rootSelector(state).selectedView;
+
 export const selectSelectedFilters = createSelector(
   [rootSelector],
   (state) => state.selectedFilters,
