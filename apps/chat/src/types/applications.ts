@@ -9,12 +9,14 @@ export enum ApplicationStatus {
   UNDEPLOYED = 'UNDEPLOYED',
   UNDEPLOYING = 'UNDEPLOYING',
   FAILED = 'FAILED',
+  REDEPLOYING = 'REDEPLOYING',
 }
 
 export enum SimpleApplicationStatus {
   DEPLOY = 'deploy',
   UNDEPLOY = 'undeploy',
   UPDATING = 'updating',
+  REDEPLOY = 'redeploy',
 }
 
 export interface ApiApplicationFunctionType {

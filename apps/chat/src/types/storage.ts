@@ -167,6 +167,8 @@ export interface DialStorage {
 
   deployApplication(applicationName: string): Observable<void>;
 
+  redeployApplication(applicationName: string): Observable<void>;
+
   undeployApplication(applicationName: string): Observable<void>;
 
   getApplicationLogs(path: string): Observable<ApplicationLogsType>;
