@@ -37,30 +37,20 @@ export const AgentBookmark: React.FC<Props> = ({
 
   if (isMyApp || entity.sharedWithMe) return null;
 
-  const Bookmark = installedModelIds.has(entity.reference)
-    ? IconBookmarkFilled
-    : IconBookmark;
+  const [Bookmark, tooltip, dataQa] = installedModelIds.has(entity.reference)
+    ? [IconBookmarkFilled, 'Remove from My workspace', 'remove-bookmark']
+    : [IconBookmark, 'Add to My workspace', 'add-bookmark'];
 
   return (
     <Tooltip
-      tooltip={
-        installedModelIds.has(entity.reference)
-          ? t('Remove from My workspace')
-          : t('Add to My workspace')
-      }
+      tooltip={t(tooltip)}
       triggerClassName={classNames(
         className,
         'group flex cursor-pointer items-center',
       )}
       isTriggerClickable
     >
-      <button
-        data-qa={
-          installedModelIds.has(entity.reference)
-            ? 'remove-bookmark'
-            : 'add-bookmark'
-        }
-      >
+      <button data-qa={dataQa}>
         <Bookmark
           onClick={(e) => {
             e.stopPropagation();

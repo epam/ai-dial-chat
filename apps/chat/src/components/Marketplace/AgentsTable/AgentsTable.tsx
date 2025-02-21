@@ -39,7 +39,7 @@ const LeftRowContainer: React.FC<{ children: ReactNode }> = ({ children }) => {
 const RightRowContainer = forwardRef<HTMLDivElement, { children: ReactNode }>(
   ({ children }, ref) => {
     return (
-      <div ref={ref} className="overflow-auto">
+      <div ref={ref} className="overflow-x-auto">
         <div className="inline-flex flex-col divide-y divide-secondary">
           {children}
         </div>
