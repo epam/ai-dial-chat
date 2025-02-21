@@ -268,8 +268,11 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
           {stringRowId !== -1 && (
             <span
               ref={suggestedRowRef}
-              className="absolute w-screen px-3 text-xl"
-              style={{ top: `${stringRowId * ROW_SIZES[screenState]}px` }}
+              className="absolute flex w-screen max-w-full items-center px-3 text-xl"
+              style={{
+                height: `${ROW_SIZES[screenState]}px`,
+                top: `${stringRowId * ROW_SIZES[screenState]}px`,
+              }}
               data-qa="marketplace-suggestions-label"
             >
               {t('Suggested results from DIAL Marketplace')}
