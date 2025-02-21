@@ -21,6 +21,7 @@ import {
   isReplayConversation,
 } from '@/src/utils/app/conversation';
 import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
+import { isEntityIdExternal } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { doesModelHaveConfiguration } from '@/src/utils/app/models';
 
@@ -720,9 +721,11 @@ export const ChatView = memo(() => {
                                           messageIndex={index}
                                           filteredMessages={filteredMessages}
                                           conversation={conv}
-                                          isLikesEnabled={enabledFeatures.has(
-                                            Feature.Likes,
-                                          )}
+                                          isLikesEnabled={
+                                            enabledFeatures.has(
+                                              Feature.Likes,
+                                            ) && !isEntityIdExternal(conv)
+                                          }
                                           editDisabled={
                                             !!notAvailableEntityType ||
                                             isExternal ||
