@@ -147,7 +147,10 @@ const ResultsView = ({
           </div>
         )}
         <span
-          className="mb-4 mt-5 text-xl md:mt-6 lg:mt-8"
+          className={classNames(
+            'mb-4 mt-5 text-xl md:mt-6 lg:mt-8',
+            selectedViewType === ViewTypes.TABLE && 'px-3',
+          )}
           data-qa="marketplace-suggestions-label"
         >
           {t('Suggested results from DIAL Marketplace')}
@@ -306,12 +309,22 @@ export const TabRenderer = () => {
         ? filteredEntities.filter(isInstalledModel)
         : filteredEntities;
 
-    if (selectedViewType === ViewTypes.TABLE) {
-      return entitiesForTab;
-    }
-
     const shouldSuggest =
       selectedTab === MarketplaceTabs.MY_WORKSPACE && isSomeFilterNotEmpty;
+
+    if (selectedViewType === ViewTypes.TABLE) {
+      if (shouldSuggest) {
+        const suggestedListWithoutInstalled = filteredEntities.filter(
+          (entity) => !isInstalledModel(entity),
+        );
+
+        setSuggestedResults(suggestedListWithoutInstalled);
+      } else {
+        setSuggestedResults([]);
+      }
+
+      return entitiesForTab;
+    }
 
     const groupedEntities = groupModelsAndSaveOrder(
       entitiesForTab.concat(shouldSuggest ? filteredEntities : []),
