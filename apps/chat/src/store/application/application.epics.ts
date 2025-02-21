@@ -51,6 +51,7 @@ import { DeleteType } from '@/src/constants/marketplace';
 import { ApplicationActions } from '../application/application.reducers';
 import { ApplicationTypesSchemasActions } from '../applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { AuthSelectors } from '../auth/auth.reducers';
+import { ConversationsActions } from '../conversations/conversations.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { ShareActions, ShareSelectors } from '../share/share.reducers';
 
@@ -595,6 +596,7 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
         schema: waitForSchema$,
       }).pipe(
         tap(() => {
+          ConversationsActions.setTalkToConversationId(null);
           router.push({
             pathname: `/apps-editor/[slug]/settings`,
             query: {
