@@ -73,7 +73,7 @@ export default function AppsEditor() {
                 ? (schema?.['dial:applicationTypeDisplayName'] ?? '')
                 : decode(slug.toString())
             }
-            isEditApplication={!!applicationData}
+            isEditApplication={!!id}
           />
           <div className="flex size-full">
             <GeneralInfoView

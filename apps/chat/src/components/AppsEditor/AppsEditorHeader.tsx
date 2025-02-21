@@ -115,7 +115,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
             {isEditApplication ? t('Edit') : t('Add')}{' '}
             {applicationTypeDisplayName}
           </span>
-          <div className="hidden items-center space-x-4 md:flex">
+          <div className="hidden items-center space-x-2 md:flex">
             {tabs.map((tab, index) => {
               const isDisabled = tab.key === TabKeys.SETTINGS && !id;
               return (
