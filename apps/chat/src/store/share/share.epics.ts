@@ -866,7 +866,6 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                   .map((res) => ({
                     ...res,
                     sharedWithMe: true,
-                    status: UploadStatus.LOADED,
                   })) as Prompt[],
               }),
             );
