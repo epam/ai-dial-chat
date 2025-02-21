@@ -150,7 +150,7 @@ export const conversationsSlice = createSlice({
         if (conv.id === payload.id) {
           return {
             ...conv,
-            lastActivityDate: Date.now(),
+            updatedAt: Date.now(),
             ...payload.conversation,
           };
         }
@@ -863,6 +863,10 @@ export const conversationsSlice = createSlice({
     ) => {
       state.talkToConversationId = payload;
     },
+    getConversationMetadata: (
+      state,
+      _action: PayloadAction<{ conversationId: string }>,
+    ) => state,
   },
 });
 

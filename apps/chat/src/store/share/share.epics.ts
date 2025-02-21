@@ -712,7 +712,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                     id: conv.id,
                     conversation: {
                       isShared: true,
-                      lastActivityDate: sharedConv.lastActivityDate,
+                      updatedAt: sharedConv.updatedAt,
                     },
                   });
                 }
