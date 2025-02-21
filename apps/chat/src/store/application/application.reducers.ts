@@ -191,6 +191,16 @@ export const applicationSlice = createSlice({
     setExitAfterSave: (state, action: PayloadAction<boolean>) => {
       state.exitAfterSave = action.payload;
     },
+    enterEditMode: (
+      state,
+      _action: PayloadAction<{
+        entity: { id: string; reference: string };
+        applicationType: string;
+        detailedApplicationTypeSchemaId?: string;
+      }>,
+    ) => {
+      state.appLoading = UploadStatus.LOADING;
+    },
   },
 });
 

@@ -1,4 +1,3 @@
-import { Editor } from '@monaco-editor/react';
 import { useCallback, useEffect, useRef } from 'react';
 import {
   Controller,
@@ -28,6 +27,7 @@ import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessag
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
+import { MonacoEditor } from '@/src/components/Common/MonacoEditor';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
 import { QuickAppFormData, getQuickAppData } from '../form';
@@ -58,7 +58,7 @@ export const validators: Validators = {
 };
 
 const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
-const ToolsetEditor = withErrorMessage(withLabel(Editor));
+const ToolsetEditor = withErrorMessage(withLabel(MonacoEditor));
 const Slider = withLabel(TemperatureSlider, true);
 const ModelsSelectorField = withErrorMessage(withLabel(ModelsSelector));
 

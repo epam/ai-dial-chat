@@ -1,18 +1,12 @@
 import { IconMessage2 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 
-import { useRouter } from 'next/router';
-
 import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import {
-  getApplicationType,
-  isApplicationType,
-} from '@/src/utils/app/application';
-import { encode } from '@/src/utils/app/application-type-schema';
+import { getApplicationType } from '@/src/utils/app/application';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { translate } from '@/src/utils/app/translation';
@@ -32,10 +26,7 @@ import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
-import {
-  ApplicationTypesSchemasActions,
-  ApplicationTypesSchemasSelectors,
-} from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
+import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MarketplaceActions,
@@ -246,7 +237,6 @@ const getDeleteConfirmationText = (
 
 export const TabRenderer = () => {
   const { t } = useTranslation(Translation.Marketplace);
-  const router = useRouter();
 
   const dispatch = useAppDispatch();
 
@@ -367,28 +357,15 @@ export const TabRenderer = () => {
   const handleEditApplication = useCallback(
     (entity: DialAIEntityModel) => {
       const applicationType = getApplicationType(entity);
-      dispatch(ApplicationActions.get({ applicationId: entity.id }));
-      if (
-        !isApplicationType(applicationType) &&
-        detailedApplicationTypeSchema?.$id !== applicationType
-      ) {
-        dispatch(
-          ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema(
-            applicationType,
-          ),
-        );
-      }
-      router.push({
-        pathname: `/apps-editor/[slug]/settings`,
-        query: {
-          id: encodeURIComponent(entity.reference),
-          slug: isApplicationType(applicationType)
-            ? applicationType
-            : encode(applicationType ?? ''),
-        },
-      });
+      dispatch(
+        ApplicationActions.enterEditMode({
+          entity: entity,
+          applicationType,
+          detailedApplicationTypeSchemaId: detailedApplicationTypeSchema?.$id,
+        }),
+      );
     },
-    [router, dispatch, detailedApplicationTypeSchema],
+    [dispatch, detailedApplicationTypeSchema],
   );
 
   const handleDeleteClose = useCallback(

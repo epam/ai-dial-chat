@@ -3,17 +3,12 @@ import { MouseEvent, useCallback, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
 import Link from 'next/link';
-import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import {
-  getApplicationType,
-  isApplicationType,
-} from '@/src/utils/app/application';
-import { encode } from '@/src/utils/app/application-type-schema';
+import { getApplicationType } from '@/src/utils/app/application';
 import {
   getConversationModelParams,
   groupModelsAndSaveOrder,
@@ -34,10 +29,7 @@ import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import { ApplicationActions } from '@/src/store/application/application.reducers';
-import {
-  ApplicationTypesSchemasActions,
-  ApplicationTypesSchemasSelectors,
-} from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
+import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
@@ -70,7 +62,6 @@ const TalkToModalView = ({
   onClose,
 }: TalkToModalViewProps) => {
   const { t } = useTranslation(Translation.Chat);
-  const router = useRouter();
 
   const dispatch = useDispatch();
 
@@ -230,28 +221,15 @@ const TalkToModalView = ({
   const handleEditApplication = useCallback(
     (entity: DialAIEntityModel) => {
       const applicationType = getApplicationType(entity);
-      dispatch(ApplicationActions.get({ applicationId: entity.id }));
-      if (
-        !isApplicationType(applicationType) &&
-        detailedApplicationTypeSchema?.$id !== applicationType
-      ) {
-        dispatch(
-          ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema(
-            applicationType,
-          ),
-        );
-      }
-      router.push({
-        pathname: `/apps-editor/[slug]/settings`,
-        query: {
-          id: encodeURIComponent(entity.reference),
-          slug: isApplicationType(applicationType)
-            ? applicationType
-            : encode(applicationType ?? ''),
-        },
-      });
+      dispatch(
+        ApplicationActions.enterEditMode({
+          entity: entity,
+          applicationType,
+          detailedApplicationTypeSchemaId: detailedApplicationTypeSchema?.$id,
+        }),
+      );
     },
-    [router, detailedApplicationTypeSchema, dispatch],
+    [detailedApplicationTypeSchema, dispatch],
   );
 
   const handleDeleteClose = useCallback(

@@ -59,6 +59,9 @@ export const applicationTypesSchemasSlice = createSlice({
     fetchDetailedApplicationTypeSchemaFail: (state) => {
       state.detailedApplicationTypeSchemaLoading = UploadStatus.FAILED;
     },
+    resetDetailedApplicationTypeSchema: (state) => {
+      state.detailedApplicationTypeSchema = null;
+    },
   },
 });
 

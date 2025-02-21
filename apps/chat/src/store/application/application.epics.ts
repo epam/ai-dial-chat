@@ -16,7 +16,6 @@ import {
   endWith,
   filter,
   map,
-  startWith,
   switchMap,
   tap,
 } from 'rxjs/operators';
@@ -25,7 +24,11 @@ import { AnyAction } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
-import { regenerateApplicationId } from '@/src/utils/app/application';
+import {
+  isApplicationType,
+  regenerateApplicationId,
+} from '@/src/utils/app/application';
+import { encode } from '@/src/utils/app/application-type-schema';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { isEntityIdExternal } from '@/src/utils/app/id';
@@ -44,6 +47,7 @@ import { errorsMessages } from '../../constants/errors';
 import { DeleteType } from '@/src/constants/marketplace';
 
 import { ApplicationActions } from '../application/application.reducers';
+import { ApplicationTypesSchemasActions } from '../applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { AuthSelectors } from '../auth/auth.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { ShareActions, ShareSelectors } from '../share/share.reducers';
@@ -159,6 +163,11 @@ const updateApplicationEpic: AppEpic = (action$, state$) =>
         );
       }
 
+      const initialActions$ = of(
+        ApplicationActions.updateStart(),
+        ApplicationActions.setShouldSaveApplication(false),
+      );
+
       const updatedCustomApplication = regenerateApplicationId(
         payload.applicationData,
       ) as CustomApplicationModel;
@@ -191,63 +200,62 @@ const updateApplicationEpic: AppEpic = (action$, state$) =>
             )
         : of({ success: true as const });
 
-      return move$.pipe(
-        switchMap((moveResult) => {
-          if (!moveResult.success) {
-            return of(...moveResult.actions);
-          }
+      return concat(
+        initialActions$,
+        move$.pipe(
+          switchMap((moveResult) => {
+            if (!moveResult.success) {
+              return of(...moveResult.actions);
+            }
 
-          return ApplicationService.edit(
-            updatedCustomApplication,
-            payload.schema,
-          ).pipe(
-            switchMap(() =>
-              of(
-                ApplicationActions.updateSuccess(updatedCustomApplication),
-                ModelsActions.updateModel({
-                  model: updatedCustomApplication,
-                  oldApplicationId: payload.oldApplication.id,
-                }),
-              ),
-            ),
-            tap(() => {
-              if (
-                payload.redirectUrl &&
-                !state$.value.application.exitAfterSave
-              ) {
-                Router.push({
-                  pathname: payload.redirectUrl,
-                  query: { id: updatedCustomApplication.id },
-                });
-              }
-              if (state$.value.application.exitAfterSave) {
-                Router.push({
-                  pathname: '/marketplace',
-                  query: { tab: 'workspace' },
-                });
-              }
-            }),
-            catchError((err) => {
-              console.error('Failed to update application:', err);
-              return of(
-                ApplicationActions.updateFail({
-                  oldApplication: payload.oldApplication,
-                }),
-                UIActions.showErrorToast(
-                  translate('Failed to update application'),
+            return ApplicationService.edit(
+              updatedCustomApplication,
+              payload.schema,
+            ).pipe(
+              switchMap(() =>
+                of(
+                  ApplicationActions.updateSuccess(updatedCustomApplication),
+                  ModelsActions.updateModel({
+                    model: updatedCustomApplication,
+                    oldApplicationId: payload.oldApplication.id,
+                  }),
                 ),
-              );
-            }),
-            startWith(
-              ApplicationActions.updateStart(),
-              ApplicationActions.setShouldSaveApplication(false),
-            ),
-            endWith(
-              ApplicationActions.updateComplete(),
-              ApplicationActions.setExitAfterSave(false),
-            ),
-          );
-        }),
+              ),
+              tap(() => {
+                if (
+                  payload.redirectUrl &&
+                  !state$.value.application.exitAfterSave
+                ) {
+                  Router.push({
+                    pathname: payload.redirectUrl,
+                    query: { id: updatedCustomApplication.id },
+                  });
+                }
+                if (state$.value.application.exitAfterSave) {
+                  Router.push({
+                    pathname: '/marketplace',
+                    query: { tab: 'workspace' },
+                  });
+                }
+              }),
+              catchError((err) => {
+                console.error('Failed to update application:', err);
+                return of(
+                  ApplicationActions.updateFail({
+                    oldApplication: payload.oldApplication,
+                  }),
+                  UIActions.showErrorToast(
+                    translate('Failed to update application'),
+                  ),
+                );
+              }),
+              endWith(
+                ApplicationActions.updateComplete(),
+                ApplicationActions.setExitAfterSave(false),
+              ),
+            );
+          }),
+        ),
       );
     }),
   );
@@ -338,8 +346,8 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
 
           return concat(...actions);
         }),
-        catchError((err) => {
-          console.error('Failed to get application:', err);
+        catchError(() => {
+          Router.push('/404');
           return of(ApplicationActions.getFail());
         }),
       ),
@@ -531,6 +539,52 @@ const getApplicationLogsEpic: AppEpic = (action$) =>
     ),
   );
 
+const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
+  action$.pipe(
+    filter(ApplicationActions.enterEditMode.match),
+    switchMap(({ payload }) => {
+      const { entity, applicationType, detailedApplicationTypeSchemaId } =
+        payload;
+
+      const actions: AnyAction[] = [
+        ApplicationActions.get({ applicationId: entity.id }),
+      ];
+
+      if (!isApplicationType(applicationType)) {
+        detailedApplicationTypeSchemaId !== applicationType &&
+          actions.push(
+            ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema(
+              applicationType,
+            ),
+          );
+      } else {
+        actions.push(
+          ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
+        );
+      }
+
+      return concat(...actions.map((action) => of(action))).pipe(
+        tap(() => {
+          router.push({
+            pathname: `/apps-editor/[slug]/settings`,
+            query: {
+              id: encodeURIComponent(entity.reference),
+              slug: isApplicationType(applicationType)
+                ? applicationType
+                : encode(applicationType ?? ''),
+            },
+          });
+        }),
+        catchError((err) => {
+          console.error('Failed to enter edit mode:', err);
+          return of(
+            UIActions.showErrorToast(translate('Failed to enter edit mode')),
+          );
+        }),
+      );
+    }),
+  );
+
 export const ApplicationEpics = combineEpics(
   createApplicationEpic,
   createFailEpic,
@@ -543,4 +597,5 @@ export const ApplicationEpics = combineEpics(
   updateApplicationStatusSuccessEpic,
   updateApplicationStatusFailEpic,
   getApplicationLogsEpic,
+  enterEditModeEpic,
 );
