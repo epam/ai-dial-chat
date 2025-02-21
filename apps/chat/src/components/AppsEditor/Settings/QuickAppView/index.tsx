@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Controller,
   Path,
@@ -8,10 +8,14 @@ import {
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getSharedTooltip } from '@/src/utils/app/application';
+import {
+  getQuickAppDocumentUrl,
+  getSharedTooltip,
+} from '@/src/utils/app/application';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { CustomApplicationModel } from '@/src/types/applications';
+import { FeatureType } from '@/src/types/common';
 import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
@@ -21,9 +25,11 @@ import {
 } from '@/src/store/application/application.reducers';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { TemperatureSlider } from '@/src/components/Chat/ChatSettings/Temperature';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
@@ -69,12 +75,14 @@ interface QuickAppViewProps {
   schema: ApiDetailedApplicationTypeSchema | null;
   isSharedWithMe: boolean;
   oldApplication: CustomApplicationModel;
+  isShared?: boolean;
 }
 
 export const QuickAppView: React.FC<QuickAppViewProps> = ({
   schema,
   isSharedWithMe,
   oldApplication,
+  isShared,
 }) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -84,6 +92,12 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
     handleSubmit: submitWrapper,
     formState: { errors, defaultValues, isValid },
   } = useFormContext<QuickAppFormData>();
+  const [revokedSharing, setRevokedSharing] = useState(false);
+  const [confirmSharingRevoke, setConfirmSharingRevoke] = useState<{
+    description: string;
+    heading: string;
+    data: QuickAppFormData;
+  }>();
 
   const lastSubmittedValuesRef = useRef<QuickAppFormData | undefined>(
     defaultValues as QuickAppFormData,
@@ -105,6 +119,23 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
       ) {
         const applicationData = getQuickAppData(data);
 
+        if (
+          isShared &&
+          getQuickAppDocumentUrl(applicationData as CustomApplicationModel) !==
+            getQuickAppDocumentUrl(oldApplication) &&
+          !revokedSharing
+        ) {
+          setConfirmSharingRevoke({
+            description:
+              'Changing of document relative url will stop sharing and other users will no longer see this application.',
+            heading: 'Confirm changing url',
+            data,
+          });
+          dispatch(ApplicationActions.setShouldSaveApplication(false));
+          dispatch(ApplicationActions.setExitAfterSave(false));
+          return;
+        }
+
         dispatch(
           ApplicationActions.update({
             oldApplication,
@@ -122,7 +153,15 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
         dispatch(ApplicationActions.setExitAfterSave(false));
       }
     },
-    [dispatch, oldApplication, schema, shouldSaveApplication, exitAfterSave],
+    [
+      dispatch,
+      oldApplication,
+      schema,
+      shouldSaveApplication,
+      exitAfterSave,
+      revokedSharing,
+      isShared,
+    ],
   );
 
   const autoSaveHandler = useCallback(() => {
@@ -228,6 +267,29 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
             />
           )}
         />
+
+        {confirmSharingRevoke && !revokedSharing && (
+          <ConfirmDialog
+            isOpen
+            heading={t(confirmSharingRevoke.heading)}
+            description={t(confirmSharingRevoke.description)}
+            confirmLabel={t('Confirm')}
+            cancelLabel={t('Cancel')}
+            onClose={(result) => {
+              if (result) {
+                dispatch(
+                  ShareActions.revokeAccess({
+                    resourceId: oldApplication.id,
+                    featureType: FeatureType.Application,
+                  }),
+                );
+                setRevokedSharing(true);
+                handleSubmit(confirmSharingRevoke.data);
+              }
+              setConfirmSharingRevoke(undefined);
+            }}
+          />
+        )}
       </div>
     </form>
   );

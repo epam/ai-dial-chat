@@ -134,6 +134,7 @@ export const ApplicationSettings: React.FC<Props> = ({
           schema={schema}
           isSharedWithMe={modelFromState?.sharedWithMe ?? false}
           oldApplication={applicationData}
+          isShared={modelFromState?.isShared ?? false}
         />
       );
     }

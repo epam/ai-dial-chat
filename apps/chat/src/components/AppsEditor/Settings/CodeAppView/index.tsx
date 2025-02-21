@@ -218,6 +218,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
       shouldSaveApplication,
       applicationStatus,
       exitAfterSave,
+      revokedSharing,
     ],
   );
 
