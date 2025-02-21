@@ -97,15 +97,6 @@ export const GeneralInfoEditor: React.FC<Props> = ({
           preparedData.functionStatus = data?.functionStatus;
         }
 
-        if (!isValid) {
-          dispatch(ApplicationActions.setShouldSaveApplication(false));
-          dispatch(ApplicationActions.setExitAfterSave(false));
-          dispatch(
-            UIActions.showErrorToast(t('Please fill in all mandatory fields')),
-          );
-          return;
-        }
-
         if (oldApplication) {
           dispatch(
             ApplicationActions.update({
@@ -143,9 +134,25 @@ export const GeneralInfoEditor: React.FC<Props> = ({
 
   useEffect(() => {
     if (shouldSaveApplication) {
+      if (!isValid) {
+        dispatch(ApplicationActions.setShouldSaveApplication(false));
+        dispatch(ApplicationActions.setExitAfterSave(false));
+        dispatch(
+          UIActions.showErrorToast(t('Please fill in all mandatory fields')),
+        );
+        return;
+      }
+
       submitWrapper(handleSubmit)();
     }
-  }, [shouldSaveApplication, submitWrapper, handleSubmit]);
+  }, [
+    shouldSaveApplication,
+    submitWrapper,
+    handleSubmit,
+    isValid,
+    dispatch,
+    t,
+  ]);
 
   return (
     <div className="size-full max-w-[1000px] overflow-hidden bg-layer-2">
