@@ -322,7 +322,9 @@ export const ApplicationCard = ({
             className="m-0 xl:invisible group-hover:xl:visible"
           />
 
-          {!isPreview && <AgentBookmark onBookmarkClick={onBookmarkClick} entity={entity} />}
+          {!isPreview && (
+            <AgentBookmark onBookmarkClick={onBookmarkClick} entity={entity} />
+          )}
         </div>
         <div className="flex items-center gap-4 overflow-hidden">
           <div className="flex shrink-0 items-center justify-center xl:my-[3px]">
