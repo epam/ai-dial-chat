@@ -1,7 +1,11 @@
 import { Publication } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedMessages, MenuOptions } from '@/src/testData';
+import {
+  ExpectedMessages,
+  MenuOptions,
+  MockedChatApiResponseBodies,
+} from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
@@ -218,7 +222,8 @@ dialTest(
 );
 
 dialAdminTest.only(
-  'RecentModelIds[0] is updated if remove latest used model from My applications',
+  'RecentModelIds is NOT updated when duplicate chat from Organization\n' +
+    'RecentModelIds updated when regenerate message from duplicated chat from Organization',
   async ({
     dialHomePage,
     conversationData,
@@ -235,9 +240,13 @@ dialAdminTest.only(
     agentInfoAssertion,
     organizationConversations,
     conversationDropdownMenu,
+    chatMessages,
+    chat,
     itemApiHelper,
+    conversations,
   }) => {
-    setTestIds('EPMRTC-4881');
+    setTestIds('EPMRTC-4881', 'EPMRTC-5162');
+
     let models = GeneratorUtil.randomArrayElements(
       ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
       2,
@@ -315,6 +324,21 @@ dialAdminTest.only(
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
         await agentInfoAssertion.assertAgentName(firstModel.name);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click Regenerate button and check Dev recentModelIds',
+      async () => {
+        await conversations.selectConversation(conversation.name);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chatMessages.regenerateResponse();
+        const recentModels = await localStorageManager.getRecentModels();
+        expect
+          .soft(recentModels, ExpectedMessages.recentEntitiesVisible)
+          .toBe(JSON.stringify([secondModel.id, firstModel.id]));
       },
     );
   },
