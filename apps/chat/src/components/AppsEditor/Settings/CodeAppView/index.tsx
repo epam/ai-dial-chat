@@ -140,6 +140,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     watch,
     register,
   } = useFormContext<CodeAppFormData>();
+  const [revokedSharing, setRevokedSharing] = useState(false);
 
   const lastSubmittedValuesRef = useRef<CodeAppFormData | undefined>(
     defaultValues as CodeAppFormData,
@@ -173,7 +174,8 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
         if (
           isShared &&
           preparedData.function?.sourceFolder !==
-            oldApplication.function?.sourceFolder
+            oldApplication.function?.sourceFolder &&
+          !revokedSharing
         ) {
           setConfirmSharingRevoke({
             description:
@@ -181,6 +183,8 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
             heading: 'Confirm changing source folder',
             data,
           });
+          dispatch(ApplicationActions.setShouldSaveApplication(false));
+          dispatch(ApplicationActions.setExitAfterSave(false));
           return;
         }
 
@@ -361,7 +365,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           errors={errors.env}
         />
 
-        {confirmSharingRevoke && (
+        {confirmSharingRevoke && !revokedSharing && (
           <ConfirmDialog
             isOpen
             heading={t(confirmSharingRevoke.heading)}
@@ -372,10 +376,11 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
               if (result) {
                 dispatch(
                   ShareActions.revokeAccess({
-                    resourceId: oldApplication.name,
+                    resourceId: oldApplication.id,
                     featureType: FeatureType.Application,
                   }),
                 );
+                setRevokedSharing(true);
                 handleEdit(confirmSharingRevoke.data);
               }
               setConfirmSharingRevoke(undefined);
