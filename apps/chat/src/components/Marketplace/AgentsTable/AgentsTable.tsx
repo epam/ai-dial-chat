@@ -43,7 +43,7 @@ const DataRowContainer = forwardRef<HTMLDivElement, DataRowContainerProps>(
           height: `${height}px`,
           width: `${width}px`,
         }}
-        className="relative flex w-full shrink divide-y divide-secondary overflow-x-auto overflow-y-hidden"
+        className="no-scrollbar relative flex w-full shrink divide-y divide-secondary overflow-x-auto overflow-y-hidden"
       >
         {children}
       </div>
@@ -105,8 +105,11 @@ const headerItems = [
   { label: 'Owner', size: 130 },
   { label: 'Released', size: 86 },
 ];
-const MOBILE_ROW_SIZE = 55;
-const COMMON_ROW_SIZE = 115;
+const ROW_SIZES = {
+  [ScreenState.MOBILE]: 55,
+  [ScreenState.DESKTOP]: 115,
+  [ScreenState.TABLET]: 115,
+};
 
 export const AgentsTable: React.FC<AgentsTableProps> = memo(
   ({
@@ -130,7 +133,8 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
     const rightColumnHeaderRef = useRef<HTMLDivElement>(null);
     const rightColumnDataRef = useRef<HTMLDivElement>(null);
     const parentRef = useRef<HTMLDivElement>(null);
-    const suggestedRef = useRef<HTMLDivElement>(null);
+    const suggestedHeaderRef = useRef<HTMLDivElement>(null);
+    const suggestedRowRef = useRef<HTMLDivElement>(null);
 
     useSyncXScroll(rightColumnHeaderRef, rightColumnDataRef);
 
@@ -148,8 +152,7 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
     const rowVirtualizer = useVirtualizer({
       count: allEntities.length,
       getScrollElement: () => parentRef.current,
-      estimateSize: () =>
-        screenState === ScreenState.MOBILE ? MOBILE_ROW_SIZE : COMMON_ROW_SIZE,
+      estimateSize: () => ROW_SIZES[screenState],
       overscan: 2,
     });
 
@@ -190,12 +193,13 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
 
     const virtualRows = rowVirtualizer.getVirtualItems();
     const columnsHeight = rowVirtualizer.getTotalSize();
+    const stringRowId = allEntities.findIndex(isString);
 
     return (
       <>
         {!entities.length && (
           <div
-            ref={suggestedRef}
+            ref={suggestedHeaderRef}
             className="flex flex-col justify-center px-3"
             data-qa="no-workspace-results-found"
           >
@@ -232,7 +236,10 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
               )}
             </p>
           </div>
-          <div ref={rightColumnHeaderRef} className="overflow-x-auto">
+          <div
+            ref={rightColumnHeaderRef}
+            className="no-scrollbar overflow-x-auto"
+          >
             <div className="inline-flex flex-col divide-y divide-secondary">
               <div className="flex shrink-0 grow gap-3 pb-3 pl-4 pr-3 pt-5 md:gap-5 md:px-4">
                 {headerItems.map((item) => (
@@ -252,11 +259,22 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
           ref={parentRef}
           data-qa={dataQA}
           style={{
-            maxHeight: `calc(100%-${suggestedRef.current?.clientHeight ?? 0})px`,
-            height: `calc(100%-${suggestedRef.current?.clientHeight ?? 0})px`,
+            maxHeight: `calc(100%-${suggestedHeaderRef.current?.clientHeight ?? 0})px`,
+            height: `calc(100%-${suggestedHeaderRef.current?.clientHeight ?? 0})px`,
           }}
-          className="flex overflow-auto"
+          className="relative flex overflow-auto"
         >
+          {/* positioned from parentRef to not be reduced by a parent container overflow */}
+          {stringRowId !== -1 && (
+            <span
+              ref={suggestedRowRef}
+              className="absolute w-screen px-3 text-xl"
+              style={{ top: `${stringRowId * ROW_SIZES[screenState]}px` }}
+              data-qa="marketplace-suggestions-label"
+            >
+              {t('Suggested results from DIAL Marketplace')}
+            </span>
+          )}
           <DataRowContainer
             ref={leftColumnDataRef}
             width={leftColumnWidth}
@@ -273,12 +291,7 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
                   virtualRow={virtualRow}
                 >
                   {isString(entity) ? (
-                    <span
-                      className="px-3 text-xl"
-                      data-qa="marketplace-suggestions-label"
-                    >
-                      {t('Suggested results from DIAL Marketplace')}
-                    </span>
+                    <span ref={suggestedRowRef}></span>
                   ) : (
                     <AgentsTableLeftSideRow
                       entity={entity}
