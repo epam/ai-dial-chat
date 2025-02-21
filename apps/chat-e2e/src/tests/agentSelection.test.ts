@@ -1,12 +1,18 @@
+import { Publication } from '@/chat/types/publication';
+import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedMessages } from '@/src/testData';
+import { ExpectedMessages, MenuOptions } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { PublishActions } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 
-dialTest.only(
+const publicationsToUnpublish: Publication[] = [];
+
+dialTest(
   'Previously used model is selected for New conversation: change model in "Change agent"\n' +
     'Previously used model is selected for New conversation: change model in My workspace through Use model\n' +
-    'RecentModelIds[0] is updated if remove latest used model from My applications',
+    'RecentModelIds[0] is updated if remove latest used model from My applications\n' +
+    'RecentModelIds updated when click "Add the agent to My workspace to continue"',
   async ({
     dialHomePage,
     header,
@@ -22,17 +28,28 @@ dialTest.only(
     chatBar,
     confirmationDialog,
     talkToAgentDialogAssertion,
+    conversations,
+    conversationData,
+    dataInjector,
+    chatAssertion,
   }) => {
-    setTestIds('EPMRTC-4878', 'EPMRTC-4880', 'EPMRTC-4356');
+    setTestIds('EPMRTC-4878', 'EPMRTC-4880', 'EPMRTC-4356', 'EPMRTC-5168');
     let models = GeneratorUtil.randomArrayElements(
       ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
       2,
     );
     const [initialModel1, initialModel2] = models;
+
+    // Get all available models, exclude initial models, and select one for this test case
     const availableModels = ModelsUtil.getLatestModels().filter(
       (m) => m.id !== initialModel1.id && m.id !== initialModel2.id,
     );
     let addedModel = GeneratorUtil.randomArrayElement(availableModels);
+
+    // Create a conversation with the addedModel, which is not in the workspace
+    const conversation =
+      conversationData.prepareDefaultConversation(addedModel);
+    await dataInjector.createConversations([conversation]);
 
     await dialTest.step(
       'Prepare models and set recent models in local storage',
@@ -176,5 +193,139 @@ dialTest.only(
         await agentInfoAssertion.assertAgentName(initialModel2.name);
       },
     );
+
+    await dialTest.step(
+      'Select a conversation with a model not in My Workspace',
+      async () => {
+        await conversations.selectConversation(conversation.name);
+        await chatAssertion.assertAddAgentButtonState('visible');
+      },
+    );
+
+    await dialTest.step(
+      'Click "Add the agent to My workspace to continue" and verify recentModelsIds is updated',
+      async () => {
+        await chat.addModelButton.click();
+        const recentModels = await localStorageManager.getRecentModels();
+        expect
+          .soft(recentModels, ExpectedMessages.recentEntitiesVisible)
+          .toBe(
+            JSON.stringify([addedModel.id, initialModel2.id, initialModel1.id]),
+          );
+      },
+    );
+  },
+);
+
+dialAdminTest.only(
+  'RecentModelIds[0] is updated if remove latest used model from My applications',
+  async ({
+    dialHomePage,
+    conversationData,
+    dataInjector,
+    adminDialHomePage,
+    adminDataInjector,
+    adminPublicationApiHelper,
+    publicationApiHelper,
+    publishRequestBuilder,
+    setTestIds,
+    localStorageManager,
+    header,
+    talkToAgentDialog,
+    agentInfoAssertion,
+    organizationConversations,
+    conversationDropdownMenu,
+    itemApiHelper,
+  }) => {
+    setTestIds('EPMRTC-4881');
+    let models = GeneratorUtil.randomArrayElements(
+      ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
+      2,
+    );
+    const [firstModel, secondModel] = models;
+
+    const conversation =
+      conversationData.prepareDefaultConversation(secondModel);
+    await dataInjector.createConversations([conversation]);
+
+    await dialAdminTest.step(
+      'Prepare models and set recent models in local storage',
+      async () => {
+        await localStorageManager.setRecentModelsIdsOnce(...models);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Create a conversation with the second model and publish it',
+      async () => {
+        const publishRequest = publishRequestBuilder
+          .withName(GeneratorUtil.randomPublicationRequestName())
+          .withConversationResource(conversation, PublishActions.ADD)
+          .build();
+        const publication =
+          await publicationApiHelper.createPublishRequest(publishRequest);
+        await adminPublicationApiHelper.approveRequest(publication);
+        await itemApiHelper.deleteEntity(conversation);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Open the application and navigate to the Organization section',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await organizationConversations.waitForState();
+      },
+    );
+
+    await dialAdminTest.step(
+      'Duplicate the published conversation',
+      async () => {
+        await organizationConversations.openEntityDropdownMenu(
+          conversation.name,
+        );
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.duplicate, {
+          triggeredHttpMethod: 'POST',
+        });
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify that recentModelsIds in local storage remains unchanged',
+      async () => {
+        const recentModels = await localStorageManager.getRecentModels();
+        expect
+          .soft(recentModels, ExpectedMessages.recentEntitiesVisible)
+          .toBe(JSON.stringify([firstModel.id, secondModel.id]));
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click "New Conversation" and verify the first model is still selected',
+      async () => {
+        await header.createNewConversation();
+        // await talkToAgentDialog.cancelButton.click();
+        await agentInfoAssertion.assertAgentName(firstModel.name);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Refresh the page and verify the first model is still selected',
+      async () => {
+        await dialHomePage.reloadPage();
+        await dialHomePage.waitForPageLoaded();
+        await agentInfoAssertion.assertAgentName(firstModel.name);
+      },
+    );
+  },
+);
+
+dialTest.afterAll(
+  async ({ publicationApiHelper, adminPublicationApiHelper }) => {
+    for (const publication of publicationsToUnpublish) {
+      const unpublishResponse =
+        await publicationApiHelper.createUnpublishRequest(publication);
+      await adminPublicationApiHelper.approveRequest(unpublishResponse);
+    }
   },
 );
