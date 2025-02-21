@@ -345,7 +345,7 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
         <div className="flex w-[86px] min-w-[86px] items-center">
           <p className="truncate">
             {entity?.createdAt
-              ? new Date(entity.createdAt).toLocaleDateString('en-GB')
+              ? new Date(entity.createdAt).toLocaleDateString()
               : t('Unknown')}
           </p>
         </div>
