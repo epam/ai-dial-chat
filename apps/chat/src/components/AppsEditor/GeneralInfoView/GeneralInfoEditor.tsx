@@ -97,6 +97,15 @@ export const GeneralInfoEditor: React.FC<Props> = ({
           preparedData.functionStatus = data?.functionStatus;
         }
 
+        if (!isValid) {
+          dispatch(ApplicationActions.setShouldSaveApplication(false));
+          dispatch(ApplicationActions.setExitAfterSave(false));
+          dispatch(
+            UIActions.showErrorToast(t('Please fill in all mandatory fields')),
+          );
+          return;
+        }
+
         if (oldApplication) {
           dispatch(
             ApplicationActions.update({

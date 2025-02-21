@@ -16,6 +16,7 @@ import {
   ApplicationSelectors,
 } from '@/src/store/application/application.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
 
@@ -132,7 +133,7 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
     control,
 
     handleSubmit: submitWrapper,
-    formState: { errors, defaultValues },
+    formState: { errors, defaultValues, isValid },
     setError,
     clearErrors,
   } = useFormContext<CustomApplicationFormData>();
@@ -168,6 +169,7 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
         lastSubmittedValuesRef.current = data;
       } else {
         dispatch(ApplicationActions.setShouldSaveApplication(false));
+        dispatch(ApplicationActions.setExitAfterSave(false));
       }
     },
     [
@@ -181,9 +183,25 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
 
   useEffect(() => {
     if (shouldSaveApplication) {
+      if (!isValid) {
+        dispatch(ApplicationActions.setShouldSaveApplication(false));
+        dispatch(ApplicationActions.setExitAfterSave(false));
+        dispatch(
+          UIActions.showErrorToast(t('Please fill in all mandatory fields')),
+        );
+        return;
+      }
+
       submitWrapper(handleSubmit)();
     }
-  }, [submitWrapper, shouldSaveApplication, handleSubmit]);
+  }, [
+    submitWrapper,
+    shouldSaveApplication,
+    handleSubmit,
+    isValid,
+    dispatch,
+    t,
+  ]);
 
   return (
     <form

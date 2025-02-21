@@ -21,6 +21,7 @@ import {
 } from '@/src/store/application/application.reducers';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { TemperatureSlider } from '@/src/components/Chat/ChatSettings/Temperature';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
@@ -81,7 +82,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
     register,
     control,
     handleSubmit: submitWrapper,
-    formState: { errors, defaultValues },
+    formState: { errors, defaultValues, isValid },
   } = useFormContext<QuickAppFormData>();
 
   const lastSubmittedValuesRef = useRef<QuickAppFormData | undefined>(
@@ -118,6 +119,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
         lastSubmittedValuesRef.current = data;
       } else {
         dispatch(ApplicationActions.setShouldSaveApplication(false));
+        dispatch(ApplicationActions.setExitAfterSave(false));
       }
     },
     [dispatch, oldApplication, schema, shouldSaveApplication, exitAfterSave],
@@ -129,9 +131,18 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
 
   useEffect(() => {
     if (shouldSaveApplication) {
+      if (!isValid) {
+        dispatch(ApplicationActions.setShouldSaveApplication(false));
+        dispatch(ApplicationActions.setExitAfterSave(false));
+        dispatch(
+          UIActions.showErrorToast(t('Please fill in all mandatory fields')),
+        );
+        return;
+      }
+
       autoSaveHandler();
     }
-  }, [autoSaveHandler, shouldSaveApplication]);
+  }, [autoSaveHandler, shouldSaveApplication, isValid, dispatch, t]);
 
   const files = useAppSelector(FilesSelectors.selectFiles);
   const getLogoId = useCallback(

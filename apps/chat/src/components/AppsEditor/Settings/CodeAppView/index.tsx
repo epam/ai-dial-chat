@@ -136,7 +136,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     handleSubmit: submitWrapper,
     setError,
     clearErrors,
-    formState: { errors, defaultValues },
+    formState: { errors, defaultValues, isValid },
     watch,
     register,
   } = useFormContext<CodeAppFormData>();
@@ -169,6 +169,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           id: oldApplication.id,
           sharedWithMe: isSharedWithMe,
         };
+
         if (
           isShared &&
           preparedData.function?.sourceFolder !==
@@ -182,6 +183,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           });
           return;
         }
+
         dispatch(
           ApplicationActions.update({
             oldApplication,
@@ -189,6 +191,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           }),
         );
         lastSubmittedValuesRef.current = data;
+
         if (isAppDeployed) {
           dispatch(
             UIActions.showWarningToast(
@@ -198,6 +201,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
         }
       } else {
         dispatch(ApplicationActions.setShouldSaveApplication(false));
+        dispatch(ApplicationActions.setExitAfterSave(false));
       }
     },
     [
@@ -263,9 +267,18 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
 
   useEffect(() => {
     if (shouldSaveApplication) {
+      if (!isValid) {
+        dispatch(ApplicationActions.setShouldSaveApplication(false));
+        dispatch(ApplicationActions.setExitAfterSave(false));
+        dispatch(
+          UIActions.showErrorToast(t('Please fill in all mandatory fields')),
+        );
+        return;
+      }
+
       submitWrapper(handleSave)();
     }
-  }, [submitWrapper, shouldSaveApplication, handleSave]);
+  }, [submitWrapper, shouldSaveApplication, handleSave, isValid, dispatch, t]);
 
   return (
     <form
