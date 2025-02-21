@@ -32,6 +32,7 @@ export interface Props extends FormHTMLAttributes<HTMLFormElement> {
   state?: ModalState | boolean;
   heading?: string | ReactNode;
   headingClassName?: string;
+  loaderClassName?: string;
   dataQa: string;
   initialFocus?: number | MutableRefObject<HTMLElement | null>;
   overlayClassName?: string;
@@ -52,6 +53,7 @@ function ModalView({
   state = ModalState.CLOSED,
   heading,
   headingClassName,
+  loaderClassName,
   onClose,
   children,
   dataQa,
@@ -145,7 +147,12 @@ function ModalView({
               )}
 
               {state === ModalState.LOADING ? (
-                <div className="flex min-h-[200px] items-center justify-center">
+                <div
+                  className={classNames(
+                    'flex min-h-[200px] items-center justify-center',
+                    loaderClassName,
+                  )}
+                >
                   <Spinner size={60} />
                 </div>
               ) : (

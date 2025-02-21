@@ -25,7 +25,7 @@ export class ApplicationService {
   public static edit(
     applicationData: CustomApplicationModel,
     schema?: ApiDetailedApplicationTypeSchema,
-  ): Observable<void> {
+  ): Observable<ApplicationInfo> {
     return DataService.getDataStorage().updateApplication(
       applicationData,
       schema,

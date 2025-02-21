@@ -8,7 +8,7 @@ import {
   ApplicationLogsType,
   CustomApplicationModel,
 } from './applications';
-import { MoveModel } from './common';
+import { BackendChatEntity, MoveModel } from './common';
 import { FolderInterface, FoldersAndEntities } from './folder';
 import { Prompt, PromptInfo } from './prompt';
 
@@ -80,7 +80,7 @@ export interface EntityStorage<
 
   createEntity(entity: TEntity): Observable<TEntityInfo>;
 
-  updateEntity(entity: TEntity): Observable<void>;
+  updateEntity(entity: TEntity): Observable<TEntityInfo>;
 
   deleteEntity(info: TEntityInfo): Observable<void>;
 
@@ -116,11 +116,15 @@ export interface DialStorage {
 
   getConversation(info: ConversationInfo): Observable<Conversation | null>;
 
+  getConversationMetadata(id: string): Observable<BackendChatEntity | null>;
+
   createConversation(
     conversation: Conversation,
   ): Observable<ConversationInfo | null>;
 
-  updateConversation(conversation: Conversation): Observable<void>;
+  updateConversation(
+    conversation: Conversation,
+  ): Observable<ConversationInfo | void>;
 
   deleteConversation(info: ConversationInfo): Observable<void>;
 
@@ -139,9 +143,11 @@ export interface DialStorage {
 
   getPrompt(info: PromptInfo): Observable<Prompt | null>;
 
+  getPromptMetadata(id: string): Observable<BackendChatEntity | null>;
+
   createPrompt(prompt: Prompt): Observable<PromptInfo | null>;
 
-  updatePrompt(prompt: Prompt): Observable<void>;
+  updatePrompt(prompt: Prompt): Observable<PromptInfo | void>;
 
   deletePrompt(info: PromptInfo): Observable<void>;
 
@@ -157,7 +163,7 @@ export interface DialStorage {
   updateApplication(
     application: CustomApplicationModel,
     schema?: ApiDetailedApplicationTypeSchema,
-  ): Observable<void>;
+  ): Observable<ApplicationInfo>;
 
   getApplication(
     applicationId: string,

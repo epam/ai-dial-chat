@@ -608,22 +608,19 @@ dialTest(
       },
     );
 
-    //enable when https://github.com/epam/ai-dial-chat/issues/2170 is fixed
-    await dialTest.step.skip(
+    await dialTest.step(
       'Put like/dislike for compared chat, open this chat and verify like/dislike saved',
       async () => {
         const rate = GeneratorUtil.randomArrayElement(Object.values(Rate));
-        await chatMessages.rateCompareRowMessage(Side.left, rate);
+        await chatMessages.rateCompareRowMessage(Side.left, rate, 2);
         const isComparedMessageRated =
-          await chatMessages.isComparedRowMessageRated(Side.left, rate);
+          await chatMessages.isComparedRowMessageRated(Side.left, rate, 2);
         expect
           .soft(isComparedMessageRated, ExpectedMessages.chatMessageIsRated)
           .toBeTruthy();
 
         await conversations.selectConversation(firstConversation.name);
-        await chatMessages
-          .getChatMessageRate(firstConversation.messages.length + 2, rate)
-          .waitFor();
+        await chatMessages.getChatMessageRate(2, rate).waitFor();
       },
     );
   },
