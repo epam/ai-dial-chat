@@ -136,18 +136,16 @@ const ResultsView = ({
   if (suggestedResults.length) {
     return (
       <>
-        {!!entities.length && (
-          <CardsList
-            entities={entities}
-            onCardClick={onCardClick}
-            onPublish={onPublish}
-            onDelete={onDelete}
-            onEdit={onEdit}
-            onBookmarkClick={onBookmarkClick}
-            onLogsClick={onLogsClick}
-            dataQA="filtered-agents"
-          />
-        )}
+        <CardsList
+          entities={entities}
+          onCardClick={onCardClick}
+          onPublish={onPublish}
+          onDelete={onDelete}
+          onEdit={onEdit}
+          onBookmarkClick={onBookmarkClick}
+          onLogsClick={onLogsClick}
+          dataQA="filtered-agents"
+        />
         {!entities.length && (
           <div
             className="flex items-center gap-1"
