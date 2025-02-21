@@ -8,7 +8,7 @@ import {
   IconUserShare,
   IconWorldShare,
 } from '@tabler/icons-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import classNames from 'classnames';
 
@@ -60,7 +60,6 @@ import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionSt
 
 import ShareIcon from '../Common/ShareIcon';
 import Tooltip from '../Common/Tooltip';
-import { ApplicationLogs } from './ApplicationLogs';
 import { TopicsList } from './TopicsList';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
@@ -90,13 +89,14 @@ const CardFooter = ({ entity }: CardFooterProps) => {
   );
 };
 
-interface ApplicationCardProps {
+export interface ApplicationCardProps {
   entity: DialAIEntityModel;
   onClick: (entity: DialAIEntityModel) => void;
   onPublish?: (entity: DialAIEntityModel, action: PublishActions) => void;
   onDelete?: (entity: DialAIEntityModel) => void;
   onEdit?: (entity: DialAIEntityModel) => void;
   onBookmarkClick?: (entity: DialAIEntityModel) => void;
+  onLogsClick?: (entity: DialAIEntityModel) => void;
 }
 
 export const ApplicationCard = ({
@@ -106,13 +106,12 @@ export const ApplicationCard = ({
   onEdit,
   onBookmarkClick,
   onPublish,
+  onLogsClick,
 }: ApplicationCardProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
   const screenState = useScreenState();
-
-  const [isOpenLogs, setIsOpenLogs] = useState<boolean>();
 
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
@@ -152,14 +151,9 @@ export const ApplicationCard = ({
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      setIsOpenLogs(true);
+      onLogsClick?.(entity);
     },
-    [setIsOpenLogs],
-  );
-
-  const handleCloseApplicationLogs = useCallback(
-    () => setIsOpenLogs(false),
-    [setIsOpenLogs],
+    [entity, onLogsClick],
   );
 
   const handleOpenSharing = useCallback(
@@ -317,103 +311,90 @@ export const ApplicationCard = ({
     : IconBookmark;
 
   return (
-    <>
-      <div
-        onClick={() => onClick(entity)}
-        className="group relative h-[98px] cursor-pointer rounded-md bg-layer-2 p-3 shadow-card hover:bg-layer-3 md:h-[162px] md:p-4 xl:h-[164px] xl:p-5"
-        data-qa="agent"
-      >
-        <div>
-          <div className="absolute right-4 top-4 flex gap-1 xl:right-5 xl:top-5">
-            <ContextMenu
-              menuItems={menuItems}
+    <div
+      onClick={() => onClick(entity)}
+      className="group relative h-[98px] cursor-pointer rounded-md bg-layer-2 p-3 shadow-card hover:bg-layer-3 md:h-[162px] md:p-4 xl:h-[164px] xl:p-5"
+      data-qa="agent"
+    >
+      <div>
+        <div className="absolute right-4 top-4 flex gap-1 xl:right-5 xl:top-5">
+          <ContextMenu
+            menuItems={menuItems}
+            featureType={FeatureType.Application}
+            triggerIconHighlight
+            triggerIconSize={18}
+            className="m-0 xl:invisible group-hover:xl:visible"
+          />
+          {!isMyApp && !entity.sharedWithMe && (
+            <Tooltip
+              tooltip={
+                installedModelIds.has(entity.reference)
+                  ? t('Remove from My workspace')
+                  : t('Add to My workspace')
+              }
+              isTriggerClickable
+            >
+              <Bookmark
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onBookmarkClick?.(entity);
+                }}
+                className="rounded text-secondary hover:text-accent-primary"
+                size={18}
+              />
+            </Tooltip>
+          )}
+        </div>
+        <div className="flex items-center gap-4 overflow-hidden">
+          <div className="flex shrink-0 items-center justify-center xl:my-[3px]">
+            <ShareIcon
+              {...entity}
+              isHighlighted={false}
+              size={shareIconSize}
               featureType={FeatureType.Application}
-              triggerIconHighlight
-              triggerIconSize={18}
-              className="m-0 xl:invisible group-hover:xl:visible"
-            />
-            {!isMyApp && !entity.sharedWithMe && (
-              <Tooltip
-                tooltip={
-                  installedModelIds.has(entity.reference)
-                    ? t('Remove from My workspace')
-                    : t('Add to My workspace')
-                }
-                isTriggerClickable
-              >
-                <Bookmark
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onBookmarkClick?.(entity);
-                  }}
-                  className="rounded text-secondary hover:text-accent-primary"
-                  size={18}
-                />
-              </Tooltip>
-            )}
+              iconClassName="bg-layer-2 !stroke-[0.6] group-hover:bg-transparent !rounded-[4px]"
+              iconWrapperClassName="!rounded-[4px]"
+            >
+              <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
+            </ShareIcon>
           </div>
-          <div className="flex items-center gap-4 overflow-hidden">
-            <div className="flex shrink-0 items-center justify-center xl:my-[3px]">
-              <ShareIcon
-                {...entity}
-                isHighlighted={false}
-                size={shareIconSize}
-                featureType={FeatureType.Application}
-                iconClassName="bg-layer-2 !stroke-[0.6] group-hover:bg-transparent !rounded-[4px]"
-                iconWrapperClassName="!rounded-[4px]"
+          <div className="flex grow flex-col justify-center gap-2 overflow-hidden">
+            {entity.version && (
+              <div
+                className={classNames(
+                  'mr-6 flex gap-1 text-xs leading-[14px] text-secondary',
+                  !isMyApp && '!mr-12',
+                )}
               >
-                <ModelIcon
-                  entityId={entity.id}
-                  entity={entity}
-                  size={iconSize}
-                />
-              </ShareIcon>
-            </div>
-            <div className="flex grow flex-col justify-center gap-2 overflow-hidden">
-              {entity.version && (
-                <div
-                  className={classNames(
-                    'mr-6 flex gap-1 text-xs leading-[14px] text-secondary',
-                    !isMyApp && '!mr-12',
-                  )}
+                {t('Version: ')}
+                <span
+                  className="max-w-full overflow-hidden truncate whitespace-nowrap"
+                  data-qa="version"
                 >
-                  {t('Version: ')}
-                  <span
-                    className="max-w-full overflow-hidden truncate whitespace-nowrap"
-                    data-qa="version"
-                  >
-                    {entity.version}
-                  </span>
-                </div>
-              )}
-              <div className="flex whitespace-nowrap">
-                <div
-                  className={classNames(
-                    'mr-6 flex shrink truncate text-base font-semibold leading-[20px] text-primary',
-                    !isMyApp && !entity.version && '!mr-12',
-                  )}
-                >
-                  <span className="truncate" data-qa="agent-name">
-                    {entity.name}
-                  </span>
-                  <FunctionStatusIndicator entity={entity} />
-                </div>
+                  {entity.version}
+                </span>
               </div>
-              <EntityMarkdownDescription className="hidden text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
-                {getModelShortDescription(entity)}
-              </EntityMarkdownDescription>
+            )}
+            <div className="flex whitespace-nowrap">
+              <div
+                className={classNames(
+                  'mr-6 flex shrink truncate text-base font-semibold leading-[20px] text-primary',
+                  !isMyApp && !entity.version && '!mr-12',
+                )}
+              >
+                <span className="truncate" data-qa="agent-name">
+                  {entity.name}
+                </span>
+                <FunctionStatusIndicator entity={entity} />
+              </div>
             </div>
+            <EntityMarkdownDescription className="hidden text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
+              {getModelShortDescription(entity)}
+            </EntityMarkdownDescription>
           </div>
         </div>
-        <CardFooter entity={entity} />
       </div>
-      {isOpenLogs && (
-        <ApplicationLogs
-          isOpen={isOpenLogs}
-          onClose={handleCloseApplicationLogs}
-          entityId={entity.id}
-        />
-      )}
-    </>
+      <CardFooter entity={entity} />
+    </div>
   );
 };

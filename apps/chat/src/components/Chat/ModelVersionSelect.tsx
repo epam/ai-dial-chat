@@ -53,7 +53,9 @@ export const ModelVersionSelect = ({
   if (entities.length < 2) {
     if (entities.length && entities[0].version) {
       return (
-        <div className={classNames('flex truncate', className)}>
+        <div
+          className={classNames('flex truncate font-theme text-sm', className)}
+        >
           {showVersionPrefix && <VersionPrefix />}
           <span
             className="mr-3 max-w-full overflow-hidden truncate whitespace-nowrap"
@@ -78,7 +80,7 @@ export const ModelVersionSelect = ({
       data-qa="model-version-select"
       trigger={
         <div
-          className="flex cursor-pointer items-center justify-between"
+          className="flex cursor-pointer items-center justify-between font-theme text-sm"
           data-qa="agent-version-select-trigger"
           data-model-versions
           onClick={stopBubbling}

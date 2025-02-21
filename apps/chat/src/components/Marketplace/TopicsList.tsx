@@ -1,5 +1,7 @@
 import React, { memo, useEffect, useRef, useState } from 'react';
 
+import { stopBubbling } from '@/src/constants/chat';
+
 import Tooltip from '../Common/Tooltip';
 import { ApplicationTopic } from './ApplicationTopic';
 
@@ -11,7 +13,7 @@ interface AllTopicsProps {
 const AllTopics = memo(({ topics, allTopicsRef }: AllTopicsProps) => {
   return (
     <div
-      className="invisible absolute top-0 flex gap-2 font-theme"
+      className="invisible fixed top-0 flex w-max gap-2 font-theme"
       ref={allTopicsRef}
     >
       {topics.map((topic) => (
@@ -41,6 +43,7 @@ export const TopicsList = ({
   const allTopicsRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [maxTooltipWidth, setMaxTooltipWidth] = useState<number>(0);
+  const [openHiddenTopics, setOpenHiddenTopics] = useState<boolean>(false);
 
   const extraSpace = counterWidth + counterMarginRight;
 
@@ -127,15 +130,26 @@ export const TopicsList = ({
               <div
                 className="my-1 flex flex-wrap gap-2"
                 style={{ maxWidth: `${maxTooltipWidth}px` }}
+                onClick={stopBubbling}
               >
                 {hiddenTopics.map((topic) => (
                   <ApplicationTopic key={topic} topic={topic} />
                 ))}
               </div>
             }
+            open={openHiddenTopics}
+            onOpenChange={setOpenHiddenTopics}
             placement="top"
           >
-            <span className="flex cursor-pointer items-center rounded border border-accent-primary px-1.5 py-1 text-xs leading-3">
+            <span
+              className="flex cursor-pointer items-center rounded border border-accent-primary px-1.5 py-1 text-xs leading-3"
+              onClick={(event) => {
+                stopBubbling(event);
+                setOpenHiddenTopics(!openHiddenTopics);
+              }}
+              onMouseEnter={() => setOpenHiddenTopics(true)}
+              onMouseLeave={() => setOpenHiddenTopics(false)}
+            >
               +{hiddenTopics.length}
             </span>
           </Tooltip>
