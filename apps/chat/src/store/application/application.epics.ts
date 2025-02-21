@@ -5,6 +5,7 @@ import {
   Observable,
   concat,
   concatMap,
+  forkJoin,
   from,
   interval,
   mergeMap,
@@ -17,6 +18,7 @@ import {
   filter,
   map,
   switchMap,
+  take,
   tap,
 } from 'rxjs/operators';
 
@@ -546,24 +548,52 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
       const { entity, applicationType, detailedApplicationTypeSchemaId } =
         payload;
 
+      const initialActions$ = of(
+        ApplicationActions.setShouldSaveApplication(false),
+        ApplicationActions.setExitAfterSave(false),
+      );
+
       const actions: AnyAction[] = [
         ApplicationActions.get({ applicationId: entity.id }),
       ];
 
-      if (!isApplicationType(applicationType)) {
-        detailedApplicationTypeSchemaId !== applicationType &&
-          actions.push(
-            ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema(
-              applicationType,
-            ),
-          );
+      const needSchema =
+        !isApplicationType(applicationType) &&
+        detailedApplicationTypeSchemaId !== applicationType;
+
+      if (needSchema) {
+        actions.push(
+          ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema(
+            applicationType,
+          ),
+        );
       } else {
         actions.push(
           ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
         );
       }
 
-      return concat(...actions.map((action) => of(action))).pipe(
+      const dispatchActions$ = concat(...actions.map((action) => of(action)));
+
+      const waitForAppLoad$ = action$.pipe(
+        filter(ApplicationActions.getSuccess.match),
+        take(1),
+      );
+
+      const waitForSchema$ = needSchema
+        ? action$.pipe(
+            filter(
+              ApplicationTypesSchemasActions
+                .fetchDetailedApplicationTypeSchemaSuccess.match,
+            ),
+            take(1),
+          )
+        : of(null);
+
+      const waitForData$ = forkJoin({
+        app: waitForAppLoad$,
+        schema: waitForSchema$,
+      }).pipe(
         tap(() => {
           router.push({
             pathname: `/apps-editor/[slug]/settings`,
@@ -575,6 +605,10 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
             },
           });
         }),
+        map(() => ApplicationActions.enterEditModeComplete()),
+      );
+
+      return concat(initialActions$, dispatchActions$, waitForData$).pipe(
         catchError((err) => {
           console.error('Failed to enter edit mode:', err);
           return of(

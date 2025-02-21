@@ -201,6 +201,9 @@ export const applicationSlice = createSlice({
     ) => {
       state.appLoading = UploadStatus.LOADING;
     },
+    enterEditModeComplete: (state) => {
+      state.appLoading = UploadStatus.LOADED;
+    },
   },
 });
 
