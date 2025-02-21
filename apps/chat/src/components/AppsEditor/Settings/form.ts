@@ -5,7 +5,10 @@ import {
   UseFormSetError,
 } from 'react-hook-form';
 
-import { safeStringifyApplicationFeatures } from '@/src/utils/app/application';
+import {
+  getQuickAppDocumentUrl,
+  safeStringifyApplicationFeatures,
+} from '@/src/utils/app/application';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { constructPath } from '@/src/utils/app/file';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -226,10 +229,7 @@ export const getQuickAppDefaultValues = ({
   return {
     ...getApplicationGeneralDefaultValues(app),
     completionUrl: app.completionUrl ?? '',
-    documentRelativeUrl:
-      typeof app.applicationProperties?.document_relative_url === 'string'
-        ? app.applicationProperties?.document_relative_url
-        : undefined,
+    documentRelativeUrl: getQuickAppDocumentUrl(app) ?? '',
     model:
       typeof app.applicationProperties?.model === 'string'
         ? app.applicationProperties?.model
@@ -325,7 +325,9 @@ export const getQuickAppData = (
       temperature: formData.temperature,
       web_api_toolset: JSON.parse(formData.toolset),
       model: formData.model,
-      document_relative_url: formData.documentRelativeUrl,
+      document_relative_url: ApiUtils.encodeApiUrl(
+        formData.documentRelativeUrl as string,
+      ),
     },
     completionUrl: constructPath(
       DefaultsService.get('quickAppsHost', DEFAULT_QUICK_APPS_HOST),
