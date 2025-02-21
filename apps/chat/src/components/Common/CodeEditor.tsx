@@ -8,7 +8,14 @@ import {
   IconUpload,
   IconX,
 } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  MouseEvent as ReactMouseEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import classNames from 'classnames';
 
@@ -45,6 +52,8 @@ import { PreUploadDialog } from '@/src/components/Files/PreUploadModal';
 import Folder from '@/src/components/Folder/Folder';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
+import MoveLeftIcon from '@/public/images/icons/move-left.svg';
+import MoveRightIcon from '@/public/images/icons/move-right.svg';
 import { UploadStatus } from '@epam/ai-dial-shared';
 import debounce, { DebouncedFunc } from 'lodash-es/debounce';
 import * as monaco from 'monaco-editor';
@@ -257,9 +266,14 @@ const CodeEditorView = ({ selectedFileId, readOnly }: CodeEditorViewProps) => {
 interface Props {
   sourcesFolderId: string | undefined;
   readOnly?: boolean;
+  sidebarDefaultOpen?: boolean;
 }
 
-export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
+export const CodeEditor = ({
+  sourcesFolderId,
+  readOnly,
+  sidebarDefaultOpen = true,
+}: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -281,6 +295,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
   const [uploadFolderId, setUploadFolderId] = useState<string>();
   const [deletingFileId, setDeletingFileId] = useState<string>();
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(sidebarDefaultOpen);
 
   const { rootFiles, rootFolders } = useMemo(() => {
     if (sourcesFolderId) {
@@ -440,6 +455,15 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
     [dispatch, handleToggleFolder, openedFoldersIds],
   );
 
+  const handleSidebarToggle = useCallback(
+    (e: ReactMouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsSidebarOpen((prev) => !prev);
+    },
+    [],
+  );
+
   const FullScreenIcon = useMemo(
     () => (isFullScreen ? IconArrowsMinimize : IconArrowsMaximize),
     [isFullScreen],
@@ -453,11 +477,22 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
     <div className="z-10 w-full max-w-full">
       <div
         className={classNames(
-          'grid min-h-[400px] w-full max-w-full grid-cols-[220px_1fr] grid-rows-[100%]',
+          'grid min-h-[400px] w-full max-w-full grid-rows-[100%]',
           isFullScreen ? 'fixed inset-0 z-50' : 'h-[400px]',
+          isSidebarOpen ? 'grid-cols-[220px_1fr]' : 'grid-cols-[0px_1fr]',
         )}
       >
-        <div className="flex max-h-full flex-col gap-0.5 divide-y divide-tertiary rounded-l border border-tertiary bg-layer-3">
+        <div className="flex max-h-full flex-col divide-y divide-tertiary overflow-hidden rounded-l border border-tertiary bg-layer-3">
+          <div className="flex w-full shrink-0">
+            <Tooltip tooltip={t('Hide file list')} isTriggerClickable>
+              <button
+                onClick={handleSidebarToggle}
+                className="border-r border-tertiary px-3 py-2 text-secondary hover:text-accent-primary"
+              >
+                <MoveLeftIcon width={18} height={18} />
+              </button>
+            </Tooltip>
+          </div>
           <div className="grow overflow-y-auto p-3">
             {rootFolders.map((folder) => {
               return (
@@ -604,11 +639,26 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
           )}
         </div>
         <div className="flex max-h-full min-w-0 flex-col divide-y divide-tertiary rounded-r border border-tertiary bg-layer-3">
-          <div className="flex w-full justify-end gap-3 divide-x divide-tertiary py-2">
+          <div className="flex w-full shrink-0 justify-end">
+            {!isSidebarOpen && (
+              <Tooltip
+                tooltip={t('Show file list')}
+                isTriggerClickable
+                triggerClassName="mr-auto"
+              >
+                <button
+                  onClick={handleSidebarToggle}
+                  className="border-r border-tertiary px-3 py-2 text-secondary hover:text-accent-primary"
+                >
+                  <MoveRightIcon width={18} height={18} />
+                </button>
+              </Tooltip>
+            )}
+
             <Tooltip tooltip={t(isFullScreen ? 'Minimize' : 'Full screen')}>
               <button
                 type="button"
-                className="px-3 text-secondary hover:text-accent-primary"
+                className="border-l border-tertiary px-3 py-2 text-secondary hover:text-accent-primary"
                 onClick={(e) => {
                   setIsFullScreen(!isFullScreen);
                   const mouseLeaveEvent = new MouseEvent('mouseleave', {
