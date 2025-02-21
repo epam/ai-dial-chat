@@ -32,6 +32,7 @@ import { ContextMenuProps } from '@/src/types/menu';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
+import { ChatActions } from '@/src/store/chat/chat.reducer';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -354,6 +355,16 @@ export const ConversationContextMenu = ({
     dispatch(ConversationsActions.setRenamingConversationId(conversation.id));
   }, [conversation, dispatch]);
 
+  const handleOpenInfoModal = useCallback(() => {
+    const { id, updatedAt, createdAt, author, sharedWithMe } = conversation;
+
+    dispatch(
+      ChatActions.getEntityInfo({
+        entityInfo: { id, updatedAt, createdAt, author, sharedWithMe },
+      }),
+    );
+  }, [conversation, dispatch]);
+
   return (
     <>
       <button
@@ -391,6 +402,7 @@ export const ConversationContextMenu = ({
           isLoading={conversation.status !== UploadStatus.LOADED}
           onSelect={isHeaderMenu ? undefined : handleSelect}
           useStandardColor={isHeaderMenu}
+          onShowInfo={handleOpenInfoModal}
         />
       </button>
 

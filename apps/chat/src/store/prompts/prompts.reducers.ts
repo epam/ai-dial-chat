@@ -459,6 +459,8 @@ export const promptsSlice = createSlice({
     ) => {
       state.promptWithVariablesForApply = payload;
     },
+    getPromptMetadata: (state, _action: PayloadAction<{ promptId: string }>) =>
+      state,
   },
 });
 

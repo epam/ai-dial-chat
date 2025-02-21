@@ -4,7 +4,7 @@ import { constructPath } from '@/src/utils/app/file';
 import { getPromptRootId, isRootPromptId } from '@/src/utils/app/id';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
 
-import { MoveModel } from '@/src/types/common';
+import { BackendChatEntity, MoveModel } from '@/src/types/common';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 
@@ -60,12 +60,18 @@ export class PromptService {
     return DataService.getDataStorage().move(moveModel);
   }
 
-  public static updatePrompt(prompt: Prompt): Observable<void> {
+  public static updatePrompt(prompt: Prompt): Observable<PromptInfo | void> {
     return DataService.getDataStorage().updatePrompt(prompt);
   }
 
   public static deletePrompt(info: PromptInfo): Observable<void> {
     return DataService.getDataStorage().deletePrompt(info);
+  }
+
+  public static getPromptMetadata(
+    id: string,
+  ): Observable<BackendChatEntity | null> {
+    return DataService.getDataStorage().getPromptMetadata(id);
   }
 }
 

@@ -1,3 +1,4 @@
+import { InfoModal } from '../Common/InfoModal';
 import { ReplaceConfirmationModal } from '../Common/ReplaceConfirmationModal/ReplaceConfirmationModal';
 import { UnshareDialog } from '../Common/UnshareDialog';
 import { UserMobile } from '../Header/User/UserMobile';
@@ -8,6 +9,7 @@ import { ShareModal } from './ShareModal';
 export function ChatModalsManager() {
   return (
     <>
+      <InfoModal />
       <UserMobile />
       <ShareModal />
       <UnshareDialog />

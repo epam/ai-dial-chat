@@ -482,7 +482,7 @@ export const ApplicationDetailsFooter = ({
           >
             <button
               onClick={onUseEntity}
-              className="button button-primary flex shrink-0 items-center gap-2"
+              className="button button-primary flex shrink-0 items-center gap-2 font-theme text-sm"
               data-qa="use-button"
               disabled={
                 isExecutableApp(entity) &&

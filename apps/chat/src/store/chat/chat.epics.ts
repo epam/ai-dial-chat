@@ -4,6 +4,11 @@ import { combineEpics } from 'redux-observable';
 
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { getUserCustomContent } from '@/src/utils/app/file';
+import {
+  isConversationId,
+  isEntityIdExternal,
+  isPromptId,
+} from '@/src/utils/app/id';
 import { translate } from '@/src/utils/app/translation';
 
 import { AppEpic } from '@/src/types/store';
@@ -16,6 +21,8 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
+
+import { PromptsActions } from '../prompts/prompts.reducers';
 
 import { Message, Role } from '@epam/ai-dial-shared';
 
@@ -115,9 +122,65 @@ const appendInputContentEpic: AppEpic = (action$) =>
     map(() => ChatActions.setShouldFocusAndScroll(true)),
   );
 
+const getEntityInfoEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ChatActions.getEntityInfo.match),
+    switchMap(({ payload }) => {
+      const { createdAt, updatedAt, author, id: entityId } = payload.entityInfo;
+      const isExternal = isEntityIdExternal({ id: entityId });
+
+      if (createdAt && updatedAt && (!isExternal || author)) {
+        return of(
+          ChatActions.getEntityInfoSuccess({
+            entityInfo: {
+              id: entityId,
+              createdAt,
+              updatedAt,
+              author,
+            },
+          }),
+        );
+      }
+
+      if (isConversationId(entityId)) {
+        return of(
+          ConversationsActions.getConversationMetadata({
+            conversationId: payload.entityInfo.id,
+          }),
+        );
+      }
+      if (isPromptId(entityId)) {
+        return of(
+          PromptsActions.getPromptMetadata({
+            promptId: payload.entityInfo.id,
+          }),
+        );
+      }
+
+      return of(
+        ChatActions.getEntityInfoFail({
+          errorText: 'Could not get entity info. Unknown entity.',
+        }),
+      );
+    }),
+  );
+
+const getEntityInfoFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ChatActions.getEntityInfoFail.match),
+    switchMap(({ payload }) => {
+      return concat(
+        of(ChatActions.resetInfoModal()),
+        of(UIActions.showErrorToast(translate(payload.errorText))),
+      );
+    }),
+  );
+
 export const ChatEpics = combineEpics(
   setFormValueEpic,
   getConfigurationSchemaEpic,
   getConfigurationSchemaFailedEpic,
   appendInputContentEpic,
+  getEntityInfoEpic,
+  getEntityInfoFailEpic,
 );

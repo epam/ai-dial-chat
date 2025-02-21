@@ -5,6 +5,7 @@ import {
   IconFileArrowRight,
   IconFolderPlus,
   IconFolderShare,
+  IconInfoCircle,
   IconPencilMinus,
   IconPlayerPlay,
   IconRefreshDot,
@@ -73,6 +74,7 @@ interface ItemContextMenuProps {
   onUse?: MouseEventHandler<unknown>;
   isLoading?: boolean;
   TriggerIcon?: ContextMenuProps['TriggerIcon'];
+  onShowInfo?: () => void;
 }
 
 export default function ItemContextMenu({
@@ -103,6 +105,7 @@ export default function ItemContextMenu({
   onSelect,
   disableUse,
   onUse,
+  onShowInfo,
   TriggerIcon,
 }: ItemContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
@@ -309,6 +312,13 @@ export default function ItemContextMenu({
         disabled: disableAll,
       },
       {
+        name: t('Info'),
+        display: !!onShowInfo,
+        dataQa: 'info',
+        Icon: IconInfoCircle,
+        onClick: onShowInfo,
+      },
+      {
         name: t('Delete'),
         dataQa: 'delete',
         display: !isExternal || !!entity.sharedWithMe,
@@ -341,6 +351,7 @@ export default function ItemContextMenu({
       onReplay,
       onSelect,
       onShare,
+      onShowInfo,
       onUnpublish,
       onUnshare,
       onUse,

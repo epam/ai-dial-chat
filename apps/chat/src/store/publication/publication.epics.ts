@@ -454,6 +454,7 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
                               (model) => model.id === r.reviewUrl,
                             ),
                         },
+                        owner: r.author ?? 'Unknown',
                       };
                     }),
                   }),
@@ -601,7 +602,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           const publicationItems = items.map((item) => ({
             ...item,
             id: item.url,
-            lastActivityDate: item.updatedAt,
+            updatedAt: Date.now(),
           }));
 
           if (selectedConversationsToUpload.length) {
@@ -649,7 +650,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
                 mapPublishedItems<ConversationInfo>(
                   publicationItems.map((item) => ({
                     ...item,
-                    lastActivityDate: item.updatedAt,
+                    updatedAt: item.updatedAt,
                   })),
                   payload.featureType,
                 );
@@ -915,7 +916,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
               mapPublishedItems<ConversationInfo>(
                 conversationResourcesToPublish.map((resource) => ({
                   id: resource.targetUrl,
-                  lastActivityDate: Date.now(),
+                  updatedAt: Date.now(),
                 })),
                 FeatureType.Chat,
               );
@@ -1285,7 +1286,7 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           const publicationItems = publications.items.map((item) => ({
             ...item,
             id: item.url,
-            lastActivityDate: item.updatedAt,
+            updatedAt: item.updatedAt,
           }));
           const paths = uniq(
             publicationItems.flatMap(({ id }) =>
