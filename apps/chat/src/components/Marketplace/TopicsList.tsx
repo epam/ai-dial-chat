@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 import { stopBubbling } from '@/src/constants/chat';
 
@@ -33,6 +33,7 @@ interface TopicsListProps {
 const counterWidth = 30;
 const innerMaxTooltipWidth = 198;
 const topicGap = 8;
+const displayDelay = 100;
 
 export const TopicsList = ({
   topics,
@@ -44,6 +45,7 @@ export const TopicsList = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [maxTooltipWidth, setMaxTooltipWidth] = useState<number>(0);
   const [openHiddenTopics, setOpenHiddenTopics] = useState<boolean>(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const extraSpace = counterWidth + counterMarginRight;
 
@@ -115,6 +117,13 @@ export const TopicsList = ({
       resizeObserver.disconnect();
     };
   }, [extraSpace, topics]);
+  const handleDelayShowTooltip = useCallback((show: boolean) => {
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(
+      () => setOpenHiddenTopics(show),
+      displayDelay,
+    );
+  }, []);
 
   return (
     <>
@@ -145,10 +154,10 @@ export const TopicsList = ({
               className="flex cursor-pointer items-center rounded border border-accent-primary px-1.5 py-1 text-xs leading-3"
               onClick={(event) => {
                 stopBubbling(event);
-                setOpenHiddenTopics(!openHiddenTopics);
+                handleDelayShowTooltip(!openHiddenTopics);
               }}
-              onMouseEnter={() => setOpenHiddenTopics(true)}
-              onMouseLeave={() => setOpenHiddenTopics(false)}
+              onMouseEnter={() => handleDelayShowTooltip(true)}
+              onMouseLeave={() => handleDelayShowTooltip(false)}
             >
               +{hiddenTopics.length}
             </span>
