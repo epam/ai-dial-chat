@@ -69,10 +69,10 @@ const DataRowItem: React.FC<DataRowItemProps> = ({
     <div
       className={classNames(
         suggestedResults.length &&
-          typeof entity !== 'string' &&
+          !isString(entity) &&
           entity.id === suggestedResults[0].id &&
           '!border-t-0',
-        typeof entity === 'string' && 'flex items-center !border-t-0',
+        isString(entity) && 'flex items-center !border-t-0',
         'absolute left-0 top-0 min-w-full',
       )}
       style={{
