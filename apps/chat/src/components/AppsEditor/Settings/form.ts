@@ -9,6 +9,7 @@ import {
   getQuickAppDocumentUrl,
   safeStringifyApplicationFeatures,
 } from '@/src/utils/app/application';
+import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { constructPath } from '@/src/utils/app/file';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -165,6 +166,7 @@ export const getCodeAppDefaultValues = ({
   app: CustomApplicationModel;
   runtime?: string;
 }): CodeAppFormData => {
+  const bucket = BucketService.getBucket();
   return {
     ...getApplicationGeneralDefaultValues(app),
     id: decodeURIComponent(app.name),
@@ -172,9 +174,11 @@ export const getCodeAppDefaultValues = ({
     completionUrl: app.completionUrl ?? '',
     inputAttachmentTypes: app.inputAttachmentTypes ?? [],
     maxInputAttachments: app.maxInputAttachments,
-    sources: app.function?.sourceFolder
-      ? ApiUtils.decodeApiUrl(app.function.sourceFolder)
-      : '',
+    sources:
+      app.function?.sourceFolder &&
+      app.function?.sourceFolder !== `files/${bucket}`
+        ? ApiUtils.decodeApiUrl(app.function.sourceFolder)
+        : '',
     runtime: app?.function?.runtime ?? runtime ?? 'python3.11',
     endpoints: app?.function?.mapping
       ? Object.entries(app.function.mapping).map(([key, value]) => ({
