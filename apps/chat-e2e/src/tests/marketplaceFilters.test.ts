@@ -75,6 +75,11 @@ dialTest(
       async () => {
         const searchTerm = GeneratorUtil.randomString(5);
         await marketplaceHeader.searchInput.fillInInput(searchTerm);
+        await baseAssertion.assertElementAttribute(
+          marketplaceHeader.searchInput,
+          Attributes.value,
+          searchTerm,
+        );
         baseAssertion.assertValue(
           page.url(),
           config.use!.baseURL!.concat(
