@@ -14,13 +14,16 @@ import {
   validateFolderRenaming,
 } from '@/src/utils/app/folders';
 
+import { FolderInterface } from '@/src/types/folder';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
+import { ApplicationSelectors } from '@/src/store/application/application.reducers';
 import {
   ConversationsActions,
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
+import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   PromptsActions,
@@ -40,6 +43,7 @@ import { SelectFolderList } from '@/src/components/Common/SelectFolder/SelectFol
 import { FolderProps } from '../Folder/Folder';
 
 import { ShareEntity } from '@epam/ai-dial-shared';
+import uniqBy from 'lodash-es/uniqBy';
 
 interface Props {
   type: SharingType;
@@ -86,11 +90,26 @@ export const ChangePathDialog = ({
   const promptFolders = useAppSelector((state) =>
     PromptsSelectors.selectTemporaryAndPublishedFolders(state, searchQuery),
   );
+  const applicationFolders = useAppSelector(
+    ApplicationSelectors.selectPublicFolders,
+  );
+  const fileFolders = useAppSelector(FilesSelectors.selectPublicationFolders);
   const loadingFolderIds = useAppSelector(selectors.selectLoadingFolderIds);
 
   const folders = useMemo(
-    () => sortByName([...conversationFolders, ...promptFolders]),
-    [conversationFolders, promptFolders],
+    () =>
+      sortByName(
+        uniqBy(
+          [
+            ...conversationFolders,
+            ...promptFolders,
+            ...applicationFolders,
+            ...fileFolders,
+          ],
+          'id',
+        ) as FolderInterface[],
+      ),
+    [conversationFolders, promptFolders, applicationFolders, fileFolders],
   );
 
   useEffect(() => {
