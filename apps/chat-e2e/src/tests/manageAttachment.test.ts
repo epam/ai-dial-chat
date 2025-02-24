@@ -573,7 +573,8 @@ dialTest(
 );
 
 dialTest(
-  '[Manage attachments] Single User, Multiple Tabs. Added and Deleted file appears/disappears without browser refresh',
+  '[Manage attachments] Single User, Multiple Tabs. Added and Deleted file appears/disappears without browser refresh\n' +
+    '[Manage attachments] Single User, Multiple Tabs. Added and Deleted file LOCATED IN FOLDER appears/disappears without browser refresh',
   async ({
     dialHomePage,
     setTestIds,
@@ -581,18 +582,27 @@ dialTest(
     fileApiHelper,
     chatBar,
     manageAttachmentsAssertion,
+    attachedAllFiles,
   }) => {
-    setTestIds('EPMRTC-5396');
+    setTestIds('EPMRTC-5396', 'EPMRTC-5526');
     const filesToTest = [
       {
         name: `${GeneratorUtil.randomString(7)}.txt`,
         url: '',
         isText: true,
+        folderName: '',
       },
       {
         name: Attachment.sunImageName,
         url: '',
         isText: false,
+        folderName: '',
+      },
+      {
+        name: `${GeneratorUtil.randomString(7)}.txt`,
+        url: '',
+        isText: true,
+        folderName: GeneratorUtil.randomString(7),
       },
     ];
 
@@ -603,12 +613,20 @@ dialTest(
 
     await dialTest.step('Upload 2 files via API', async () => {
       for (const file of filesToTest) {
-        file.url = file.isText
-          ? await fileApiHelper.putStringAsFile(
-              file.name,
-              GeneratorUtil.randomString(100),
-            )
-          : await fileApiHelper.putFile(file.name);
+        if (file.folderName != '' && file.isText) {
+          file.url = await fileApiHelper.putStringAsFile(
+            file.name,
+            GeneratorUtil.randomString(100),
+            file.folderName,
+          );
+        } else if (file.isText) {
+          file.url = await fileApiHelper.putStringAsFile(
+            file.name,
+            GeneratorUtil.randomString(100),
+          );
+        } else {
+          file.url = await fileApiHelper.putFile(file.name);
+        }
       }
     });
 
@@ -617,6 +635,9 @@ dialTest(
       async () => {
         await chatBar.openManageAttachmentsModal();
         for (const file of filesToTest) {
+          if (file.folderName != '') {
+            await attachedAllFiles.expandCollapseFolder(file.folderName);
+          }
           await manageAttachmentsAssertion.assertEntityState(
             { name: file.name },
             FileModalSection.AllFiles,
@@ -633,6 +654,9 @@ dialTest(
         async () => {
           await fileApiHelper.deleteFromAllFiles(file.url);
           await chatBar.openManageAttachmentsModal();
+          if (file.folderName != '') {
+            await attachedAllFiles.expandCollapseFolder(file.folderName);
+          }
           await manageAttachmentsAssertion.assertEntityState(
             { name: file.name },
             FileModalSection.AllFiles,
