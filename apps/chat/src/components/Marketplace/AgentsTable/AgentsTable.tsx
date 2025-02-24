@@ -20,6 +20,14 @@ import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import {
+  MarketplaceActions,
+  MarketplaceSelectors,
+} from '@/src/store/marketplace/marketplace.reducers';
+
+import { TableColumnSortKeys } from '@/src/constants/marketplace';
+
 import { AgentsTableLeftSideRow } from './AgentsTableLeftSideRow';
 import { AgentsTableRightSideRow } from './AgentsTableRightSideRow';
 import { HeaderItem } from './HeaderItem';
@@ -27,6 +35,7 @@ import { HeaderItem } from './HeaderItem';
 import Magnifier from '@/public/images/icons/search-alt.svg';
 import { PublishActions } from '@epam/ai-dial-shared';
 import isString from 'lodash-es/isString';
+import orderBy from 'lodash-es/orderBy';
 
 interface DataRowContainerProps {
   children: ReactNode;
@@ -102,8 +111,8 @@ interface AgentsTableProps {
 const headerItems = [
   { label: 'Version', size: 100 },
   { label: 'Topics', size: 161 },
-  { label: 'Owner', size: 130 },
-  { label: 'Released', size: 86 },
+  { label: 'Owner', size: 130, sortKey: TableColumnSortKeys.OWNER },
+  { label: 'Released', size: 86, sortKey: TableColumnSortKeys.RELEASED },
 ];
 const ROW_SIZES = {
   [ScreenState.MOBILE]: 55,
@@ -126,7 +135,7 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
   }) => {
     const { t } = useTranslation(Translation.Marketplace);
 
-    const screenState = useScreenState();
+    const dispatch = useAppDispatch();
 
     const leftColumnHeaderRef = useRef<HTMLDivElement>(null);
     const leftColumnDataRef = useRef<HTMLDivElement>(null);
@@ -136,18 +145,58 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
     const suggestedHeaderRef = useRef<HTMLDivElement>(null);
     const suggestedRowRef = useRef<HTMLDivElement>(null);
 
-    useSyncXScroll(rightColumnHeaderRef, rightColumnDataRef);
+    const tableSort = useAppSelector(MarketplaceSelectors.selectTableSort);
 
     const [hoveredRowId, setHoveredRowId] = useState('');
     const [leftColumnWidth, setLeftColumnWidth] = useState(0);
     const [rightColumnWidth, setRightColumnWidth] = useState(0);
 
-    const allEntities = useMemo(() => {
-      if (!suggestedResults.length) return entities;
-      if (!entities.length && suggestedResults.length) return suggestedResults;
+    const screenState = useScreenState();
+    useSyncXScroll(rightColumnHeaderRef, rightColumnDataRef);
 
-      return [...entities, separator, ...suggestedResults];
-    }, [entities, separator, suggestedResults]);
+    const allEntities = useMemo(() => {
+      let sortedEntities: DialAIEntityModel[] = [];
+      let sortedSuggestedEntities: DialAIEntityModel[] = [];
+
+      if (tableSort.column === TableColumnSortKeys.RELEASED) {
+        sortedEntities = orderBy(entities, ['createdAt'], [tableSort.type]);
+        sortedSuggestedEntities = orderBy(
+          suggestedResults,
+          ['createdAt'],
+          [tableSort.type],
+        );
+      } else {
+        if (tableSort.column === TableColumnSortKeys.NAME) {
+          sortedEntities = orderBy(entities, ['name'], [tableSort.type]);
+          sortedSuggestedEntities = orderBy(
+            suggestedResults,
+            ['name'],
+            [tableSort.type],
+          );
+        }
+
+        if (tableSort.column === TableColumnSortKeys.OWNER) {
+          sortedEntities = orderBy(entities, ['owner'], [tableSort.type]);
+          sortedSuggestedEntities = orderBy(
+            suggestedResults,
+            ['owner'],
+            [tableSort.type],
+          );
+        }
+      }
+
+      if (!suggestedResults.length) return sortedEntities;
+      if (!entities.length && suggestedResults.length)
+        return sortedSuggestedEntities;
+
+      return [...sortedEntities, separator, ...sortedSuggestedEntities];
+    }, [
+      entities,
+      separator,
+      suggestedResults,
+      tableSort.column,
+      tableSort.type,
+    ]);
 
     const rowVirtualizer = useVirtualizer({
       count: allEntities.length,
@@ -191,6 +240,21 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
       setHoveredRowId('');
     }, []);
 
+    const handleApplySorting = useCallback(
+      (column: TableColumnSortKeys) => {
+        const isSameColumnClicked = column === tableSort.column;
+
+        dispatch(
+          MarketplaceActions.setTableSort({
+            column,
+            type:
+              isSameColumnClicked && tableSort.type === 'asc' ? 'desc' : 'asc',
+          }),
+        );
+      },
+      [dispatch, tableSort.column, tableSort.type],
+    );
+
     const virtualRows = rowVirtualizer.getVirtualItems();
     const columnsHeight = rowVirtualizer.getTotalSize();
     const stringRowId = allEntities.findIndex(isString);
@@ -226,15 +290,22 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
         <div className="flex min-w-full items-center">
           <div
             ref={leftColumnHeaderRef}
-            className="min-w-[195px] flex-1 divide-y divide-secondary md:min-w-[316px] xl:min-w-[245px]"
+            className="min-w-[195px] flex-1 cursor-pointer items-center pb-3 pl-4 pr-3 pt-5 md:min-w-[316px] md:pl-4 xl:min-w-[245px]"
           >
-            <p className="pb-3 pl-4 pr-3 pt-5 font-semibold md:gap-5 md:pl-4">
-              {t(
+            <HeaderItem
+              label={
                 screenState === ScreenState.MOBILE
                   ? 'Name'
-                  : 'Name and Description',
-              )}
-            </p>
+                  : 'Name and Description'
+              }
+              sortKey={TableColumnSortKeys.NAME}
+              selectedSort={
+                tableSort.column === TableColumnSortKeys.NAME
+                  ? tableSort.type
+                  : undefined
+              }
+              onApplySorting={handleApplySorting}
+            />
           </div>
           <div
             ref={rightColumnHeaderRef}
@@ -243,7 +314,16 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
             <div className="inline-flex flex-col divide-y divide-secondary">
               <div className="flex shrink-0 grow gap-3 pb-3 pl-4 pr-3 pt-5 md:gap-5 md:px-4">
                 {headerItems.map((item) => (
-                  <HeaderItem {...item} key={item.label} />
+                  <HeaderItem
+                    {...item}
+                    key={item.label}
+                    selectedSort={
+                      tableSort.column === item.sortKey
+                        ? tableSort.type
+                        : undefined
+                    }
+                    onApplySorting={handleApplySorting}
+                  />
                 ))}
                 <div className="hidden flex-none xl:block">
                   <div className="invisible flex gap-1">

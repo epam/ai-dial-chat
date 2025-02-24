@@ -35,7 +35,6 @@ import {
   ModelsActions,
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import {
   DeleteType,
@@ -55,10 +54,9 @@ import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
 import { NoResultsFound } from '../Common/NoResultsFound';
 import { AgentsTable } from './AgentsTable/AgentsTable';
 import { ApplicationLogs } from './ApplicationLogs';
-import { ViewToggler } from './ViewToggler';
 
 import Magnifier from '@/public/images/icons/search-alt.svg';
-import { Feature, PublishActions, ShareEntity } from '@epam/ai-dial-shared';
+import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 
 interface NoAgentsFoundProps {
   children: React.ReactNode;
@@ -272,9 +270,6 @@ export const TabRenderer = () => {
     MarketplaceSelectors.selectSelectedViewType,
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
-  );
 
   const [suggestedResults, setSuggestedResults] = useState<DialAIEntityModel[]>(
     [],
@@ -511,7 +506,6 @@ export const TabRenderer = () => {
             items={displayedEntities.length}
             onAddApplication={handleAddApplication}
           />
-          {enabledFeatures.has(Feature.MarketplaceTableView) && <ViewToggler />}
         </div>
       </header>
 

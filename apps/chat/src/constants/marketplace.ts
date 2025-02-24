@@ -120,3 +120,12 @@ export enum ViewTypes {
   CARD = 'CARD',
   TABLE = 'TABLE',
 }
+
+export enum TableColumnSortKeys {
+  NAME = 'NAME',
+  OWNER = 'OWNER',
+  RELEASED = 'RELEASED',
+  // TODO: uncomment when will be decided how to sort by these fields
+  // VERSION = 'VERSION',
+  // TOPICS = 'TOPICS',
+}
