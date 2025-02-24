@@ -510,10 +510,7 @@ export const TabRenderer = () => {
       >
         <MarketplaceBanner />
         <div className="flex items-center justify-end gap-2 md:mt-4 md:gap-4 xl:mt-6">
-          <SearchHeader
-            items={displayedEntities.length}
-            onAddApplication={handleAddApplication}
-          />
+          <SearchHeader />
         </div>
       </header>
 
