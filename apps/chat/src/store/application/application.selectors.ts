@@ -58,3 +58,6 @@ export const selectExitAfterSave = createSelector(
   [rootSelector],
   (state) => state.exitAfterSave,
 );
+
+export const selectPublicFolders = (state: RootState) =>
+  rootSelector(state).publicFolders;

@@ -1,16 +1,23 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
+import {
+  getFolderFromId,
+  getParentFolderIdsFromEntityId,
+} from '@/src/utils/app/folders';
+
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
   ApplicationLogsType,
   ApplicationStatus,
   CustomApplicationModel,
 } from '@/src/types/applications';
+import { FolderInterface, FolderType } from '@/src/types/folder';
 import { DialAIEntityModel } from '@/src/types/models';
 
 import * as ApplicationSelectors from './application.selectors';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
+import uniqBy from 'lodash-es/uniqBy';
 
 export { ApplicationSelectors };
 
@@ -21,6 +28,7 @@ export interface ApplicationState {
   appLogs: ApplicationLogsType | undefined;
   shouldSaveApplication?: boolean;
   exitAfterSave?: boolean;
+  publicFolders: FolderInterface[];
 }
 
 const initialState: ApplicationState = {
@@ -30,6 +38,7 @@ const initialState: ApplicationState = {
   appLogs: undefined,
   shouldSaveApplication: false,
   exitAfterSave: false,
+  publicFolders: [],
 };
 
 export const applicationSlice = createSlice({
@@ -203,6 +212,15 @@ export const applicationSlice = createSlice({
     },
     enterEditModeComplete: (state) => {
       state.appLoading = UploadStatus.LOADED;
+    },
+    setFolders: (state, { payload }: PayloadAction<string[]>) => {
+      const folders = payload
+        .flatMap((id) => getParentFolderIdsFromEntityId(id).slice(0, -1))
+        .map((id) =>
+          getFolderFromId(id, FolderType.Application, UploadStatus.LOADED),
+        );
+
+      state.publicFolders = uniqBy(folders, 'id');
     },
   },
 });
