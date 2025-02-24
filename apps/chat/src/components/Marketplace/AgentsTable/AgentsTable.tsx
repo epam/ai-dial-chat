@@ -111,7 +111,7 @@ interface AgentsTableProps {
 const headerItems = [
   { label: 'Version', size: 100 },
   { label: 'Topics', size: 161 },
-  { label: 'Owner', size: 130, sortKey: TableColumnSortKeys.OWNER },
+  { label: 'Author', size: 130, sortKey: TableColumnSortKeys.OWNER },
   { label: 'Released', size: 86, sortKey: TableColumnSortKeys.RELEASED },
 ];
 const ROW_SIZES = {
