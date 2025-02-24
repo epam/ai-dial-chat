@@ -468,10 +468,8 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-4475', 'EPMRTC-4671');
     const appName = GeneratorUtil.randomApplicationName();
-    const firstVersion = GeneratorUtil.randomApplicationVersion();
-    const secondVersion = GeneratorUtil.randomApplicationVersion([
-      firstVersion,
-    ]);
+    const firstVersion = ExpectedConstants.defaultAppVersion;
+    const secondVersion = '0.0.2';
     const firstAppTopic = GeneratorUtil.randomString(7);
     const secondAppTopic = GeneratorUtil.randomString(10);
     let topicFilter: Locator;
@@ -573,6 +571,10 @@ dialTest(
           marketplaceAgents.getAgentTopics(appName),
           [secondAppTopic],
         );
+        await baseAssertion.assertElementState(
+          agents.getAgentWithVersion(appName, firstVersion),
+          'hidden',
+        );
       },
     );
 
@@ -645,6 +647,10 @@ dialTest(
         await baseAssertion.assertElementInnerText(
           suggestedAgents.getAgentTopics(appName),
           [secondAppTopic],
+        );
+        await baseAssertion.assertElementState(
+          suggestedAgents.getAgentWithVersion(appName, firstVersion),
+          'hidden',
         );
       },
     );
