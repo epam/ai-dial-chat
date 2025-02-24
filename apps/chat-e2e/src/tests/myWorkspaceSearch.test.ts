@@ -468,7 +468,7 @@ dialTest(
           await appEditorHeader.saveAppAndExit();
         }
 
-        //TODO: need to fix search field cleanup
+        //TODO: need to clarify whether search field and filters are reset after adding a new app
         await marketplaceHeader.searchInput.fillInInput(installedAppName);
         const filteredAgents = marketplace.getFilteredAgents();
         await baseAssertion.assertElementsCount(filteredAgents, 2);
