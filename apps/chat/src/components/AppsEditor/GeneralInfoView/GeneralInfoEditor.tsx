@@ -159,6 +159,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
       <form
         onSubmit={submitWrapper(handleSubmit)}
         className="flex size-full flex-col"
+        data-qa="app-general-form"
       >
         <div className="grow space-y-4 divide-tertiary overflow-y-auto p-5">
           <Field

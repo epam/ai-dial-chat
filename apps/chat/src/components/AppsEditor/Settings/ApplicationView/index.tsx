@@ -207,6 +207,7 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
     <form
       onSubmit={submitWrapper(handleSubmit)}
       className="flex h-full flex-col bg-layer-2"
+      data-qa="app-view-form"
     >
       <div className="grow space-y-4 divide-tertiary overflow-y-auto p-5">
         <FieldTextArea

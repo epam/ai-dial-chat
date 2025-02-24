@@ -97,7 +97,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
         'z-40 flex w-full border-b border-tertiary bg-layer-3',
         isOverlay ? 'min-h-[36px]' : 'min-h-[48px]',
       )}
-      data-qa="header"
+      data-qa="app-editor-header"
     >
       <div className="flex grow items-center justify-between">
         <div className="flex h-full space-x-4">
@@ -170,6 +170,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
             <button
               className="button flex items-center space-x-1 hover:text-accent-primary md:flex"
               onClick={handleSaveAndRedirect}
+              data-qa="save-and-exit"
             >
               <LogOutIcon width={14} height={14} />
               <span>{t('Save and exit')}</span>
