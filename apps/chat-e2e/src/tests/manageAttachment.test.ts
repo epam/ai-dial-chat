@@ -613,7 +613,7 @@ dialTest(
 
     await dialTest.step('Upload 2 files via API', async () => {
       for (const file of filesToTest) {
-        if (file.folderName != '' && file.isText) {
+        if (file.folderName !== '' && file.isText) {
           file.url = await fileApiHelper.putStringAsFile(
             file.name,
             GeneratorUtil.randomString(100),
@@ -635,7 +635,7 @@ dialTest(
       async () => {
         await chatBar.openManageAttachmentsModal();
         for (const file of filesToTest) {
-          if (file.folderName != '') {
+          if (file.folderName !== '') {
             await attachedAllFiles.expandCollapseFolder(file.folderName);
           }
           await manageAttachmentsAssertion.assertEntityState(
@@ -654,7 +654,7 @@ dialTest(
         async () => {
           await fileApiHelper.deleteFromAllFiles(file.url);
           await chatBar.openManageAttachmentsModal();
-          if (file.folderName != '') {
+          if (file.folderName !== '') {
             await attachedAllFiles.expandCollapseFolder(file.folderName);
           }
           await manageAttachmentsAssertion.assertEntityState(
