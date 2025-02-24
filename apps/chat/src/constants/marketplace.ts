@@ -19,6 +19,7 @@ export enum MarketplaceQueryParams {
   search = 'search',
   sources = 'sources',
   viewType = 'viewType',
+  tableSort = 'tableSort',
 }
 
 export enum FilterTypes {

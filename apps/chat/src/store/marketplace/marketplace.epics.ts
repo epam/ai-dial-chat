@@ -11,6 +11,7 @@ import {
   MarketplaceQueryParams,
   MarketplaceTabs,
   SourceType,
+  TableColumnSortKeys,
   ViewTypes,
 } from '@/src/constants/marketplace';
 
@@ -62,7 +63,8 @@ const setQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
         MarketplaceActions.setSelectedFilters.match(action) ||
         MarketplaceActions.setState.match(action) ||
         MarketplaceActions.setSearchTerm.match(action) ||
-        MarketplaceActions.setSelectedView.match(action),
+        MarketplaceActions.setSelectedView.match(action) ||
+        MarketplaceActions.setTableSort.match(action),
     ),
     switchMap(() => {
       const state = state$.value;
@@ -110,6 +112,14 @@ const setQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
         query,
         MarketplaceQueryParams.viewType,
         viewType !== ViewTypes.CARD ? viewType : undefined,
+      );
+      const tableSort = MarketplaceSelectors.selectTableSort(state);
+      addToQuery(
+        query,
+        MarketplaceQueryParams.tableSort,
+        viewType !== ViewTypes.CARD
+          ? `${tableSort.column}-${tableSort.type}`
+          : undefined,
       );
 
       router.push(
@@ -178,6 +188,24 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
       // viewType
       updatedMarketplaceState.selectedView =
         (query[MarketplaceQueryParams.viewType] as ViewTypes) ?? ViewTypes.CARD;
+      // table sort
+      const splittedTableSortQuery = (
+        query[MarketplaceQueryParams.tableSort] as string
+      ).split('-');
+      const tableSortColumn = (
+        splittedTableSortQuery[0] in TableColumnSortKeys
+          ? splittedTableSortQuery[0]
+          : TableColumnSortKeys.NAME
+      ) as TableColumnSortKeys;
+      const tableSortType = (
+        ['desc', 'asc'].includes(splittedTableSortQuery[1])
+          ? splittedTableSortQuery[1]
+          : 'asc'
+      ) as 'asc' | 'desc';
+      updatedMarketplaceState.tableSort = {
+        column: tableSortColumn,
+        type: tableSortType,
+      };
 
       return concat(
         of(MarketplaceActions.setState(updatedMarketplaceState)),
