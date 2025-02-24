@@ -380,4 +380,5 @@ export enum PublishingExpectedMessages {
 export enum MarketplaceExpectedMessages {
   agentIsVisible = 'Agent is visible in Marketplace',
   filteredAgentsAreValid = 'Filtered agents are valid',
+  filterOptionsAreValid = 'Filter options are valid',
 }

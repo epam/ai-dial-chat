@@ -128,7 +128,11 @@ export const TopicsList = ({
   return (
     <>
       <AllTopics topics={topics} allTopicsRef={allTopicsRef} />
-      <div className="flex w-full gap-2" ref={containerRef}>
+      <div
+        className="flex w-full gap-2"
+        ref={containerRef}
+        data-qa="app-topics"
+      >
         {visibleTopics.map((topic) => (
           <ApplicationTopic key={topic} topic={topic} />
         ))}

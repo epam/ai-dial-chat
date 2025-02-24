@@ -1,5 +1,5 @@
 import { DialAIEntityModel } from '@/chat/types/models';
-import { ExpectedConstants } from '@/src/testData';
+import { API, ExpectedConstants } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
 import { MenuSelectors } from '@/src/ui/selectors';
 import { MarketplaceAgentSelectors } from '@/src/ui/selectors/marketplaceSelectors';
@@ -88,9 +88,45 @@ export class MarketplaceAgents extends BaseElement {
     );
   }
 
+  public getAgentWithVersion(
+    entity: DialAIEntityModel | string,
+    version?: string,
+  ) {
+    let name = '';
+    if (typeof entity !== 'string') {
+      version = entity.version;
+      name = entity.name;
+    } else {
+      name = entity;
+    }
+    return this.rootLocator.filter({ has: this.agentName(name) }).filter({
+      has: this.agentVersion(version!).or(
+        this.agentVersionWithPrefix(version!),
+      ),
+    });
+  }
+
+  public getAgentTopics(entity: DialAIEntityModel | string) {
+    return this.getAgent(entity).getChildElementBySelector(
+      MarketplaceAgentSelectors.topics,
+    );
+  }
+
   public getAgentDotsMenu(entity: DialAIEntityModel | string) {
     return this.getAgent(entity).getChildElementBySelector(
       MenuSelectors.dotsMenu,
+    );
+  }
+
+  public getAgentAddBookmarkIcon(entity: DialAIEntityModel | string) {
+    return this.getAgent(entity).getChildElementBySelector(
+      MarketplaceAgentSelectors.addBookmarkIcon,
+    );
+  }
+
+  public getAgentRemoveBookmarkIcon(entity: DialAIEntityModel | string) {
+    return this.getAgent(entity).getChildElementBySelector(
+      MarketplaceAgentSelectors.removeBookmarkIcon,
     );
   }
 
@@ -131,6 +167,15 @@ export class MarketplaceAgents extends BaseElement {
         return selectedAgent.innerText();
       }
     }
+  }
+
+  public async addAgentToWorkspace(entity: DialAIEntityModel | string) {
+    const respPromise = this.page.waitForResponse(
+      (r) =>
+        r.url().includes(API.installedDeploymentsHost()) && r.status() === 200,
+    );
+    await this.getAgentAddBookmarkIcon(entity).click();
+    await respPromise;
   }
 
   public async isAgentUsed(
