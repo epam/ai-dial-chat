@@ -1,6 +1,4 @@
 import {
-  IconBookmark,
-  IconBookmarkFilled,
   IconFileDescription,
   IconLink,
   IconPencilMinus,
@@ -42,7 +40,6 @@ import { Translation } from '@/src/types/translation';
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { AuthSelectors } from '@/src/store/auth/auth.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -56,10 +53,10 @@ import {
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
+import ShareIcon from '@/src/components/Common/ShareIcon';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
-import ShareIcon from '../Common/ShareIcon';
-import Tooltip from '../Common/Tooltip';
+import { AgentBookmark } from './AgentBookmark';
 import { TopicsList } from './TopicsList';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
@@ -113,9 +110,6 @@ export const ApplicationCard = ({
   const dispatch = useAppDispatch();
   const screenState = useScreenState();
 
-  const installedModelIds = useAppSelector(
-    ModelsSelectors.selectInstalledModelIds,
-  );
   const isCodeAppsEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
   );
@@ -306,10 +300,6 @@ export const ApplicationCard = ({
     ],
   );
 
-  const Bookmark = installedModelIds.has(entity.reference)
-    ? IconBookmarkFilled
-    : IconBookmark;
-
   return (
     <div
       onClick={() => onClick(entity)}
@@ -325,25 +315,8 @@ export const ApplicationCard = ({
             triggerIconSize={18}
             className="m-0 xl:invisible group-hover:xl:visible"
           />
-          {!isMyApp && !entity.sharedWithMe && (
-            <Tooltip
-              tooltip={
-                installedModelIds.has(entity.reference)
-                  ? t('Remove from My workspace')
-                  : t('Add to My workspace')
-              }
-              isTriggerClickable
-            >
-              <Bookmark
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onBookmarkClick?.(entity);
-                }}
-                className="rounded text-secondary hover:text-accent-primary"
-                size={18}
-              />
-            </Tooltip>
-          )}
+
+          <AgentBookmark onBookmarkClick={onBookmarkClick} entity={entity} />
         </div>
         <div className="flex items-center gap-4 overflow-hidden">
           <div className="flex shrink-0 items-center justify-center xl:my-[3px]">

@@ -18,6 +18,7 @@ export enum FolderType {
   Chat = 'chat',
   Prompt = 'prompt',
   File = 'file',
+  Application = 'application',
 }
 
 export interface FolderSectionProps {

@@ -17,7 +17,7 @@ import {
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
-import { MoveModel } from '@/src/types/common';
+import { BackendChatEntity, MoveModel } from '@/src/types/common';
 import {
   FolderInterface,
   FolderType,
@@ -406,6 +406,12 @@ export class BrowserStorage implements DialStorage {
   }
 
   getApplicationConfig(_path: string): Observable<MessageFormSchema> {
+    throw new Error('Method not implemented.');
+  }
+  getConversationMetadata(_id: string): Observable<BackendChatEntity | null> {
+    throw new Error('Method not implemented.');
+  }
+  getPromptMetadata(_id: string): Observable<BackendChatEntity | null> {
     throw new Error('Method not implemented.');
   }
 }

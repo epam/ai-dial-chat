@@ -8,6 +8,7 @@ import {
   filter,
   from,
   ignoreElements,
+  iif,
   map,
   of,
   startWith,
@@ -27,6 +28,7 @@ import { combineEpics } from 'redux-observable';
 import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { isMyApplication } from '@/src/utils/app/id';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { translate } from '@/src/utils/app/translation';
 
 import { ApplicationStatus } from '@/src/types/applications';
@@ -149,6 +151,9 @@ const getModelsEpic: AppEpic = (action$, state$) =>
                 }),
               ),
             );
+          const publicApplicationIds = response
+            .filter((model) => isEntityIdPublic(model))
+            .map(({ id }) => id);
 
           return concat(
             of(ModelsActions.getModelsSuccess({ models: response })),
@@ -158,6 +163,11 @@ const getModelsEpic: AppEpic = (action$, state$) =>
               }),
             ),
             of(MarketplaceActions.initQueryParams()),
+            iif(
+              () => !!publicApplicationIds.length,
+              of(ApplicationActions.setFolders(publicApplicationIds)),
+              EMPTY,
+            ),
             ...continueUpdateActions,
           );
         }),

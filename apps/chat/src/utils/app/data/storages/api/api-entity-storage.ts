@@ -48,7 +48,7 @@ export abstract class ApiEntityStorage<
     return {
       ...info,
       id,
-      lastActivityDate: entity.updatedAt,
+      updatedAt: entity.updatedAt,
       folderId: constructPath(apiKey, bucket, parentPath),
     } as unknown as TEntityInfo;
   }
@@ -167,6 +167,22 @@ export abstract class ApiEntityStorage<
     }
   }
 
+  getEntityMetadata(id: string): Observable<BackendChatEntity | null> {
+    try {
+      return ApiUtils.request(
+        `/api/metadata/${ApiUtils.encodeApiUrl(id)}`,
+      ).pipe(
+        map((entityInfo: APIResponse) => {
+          return {
+            ...(entityInfo as BackendChatEntity),
+          };
+        }),
+      );
+    } catch (error) {
+      return throwError(() => error);
+    }
+  }
+
   createEntity(entity: TEntity): Observable<TEntityInfo> {
     try {
       return ApiUtils.request(this.getEntityUrl(entity), {
@@ -181,7 +197,7 @@ export abstract class ApiEntityStorage<
     }
   }
 
-  updateEntity(entity: TEntity): Observable<void> {
+  updateEntity(entity: TEntity): Observable<TEntityInfo> {
     try {
       return ApiUtils.request(this.getEntityUrl(entity), {
         method: HTTPMethod.PUT,
