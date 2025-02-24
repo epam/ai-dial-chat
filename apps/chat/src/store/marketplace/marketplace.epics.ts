@@ -189,23 +189,24 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
       updatedMarketplaceState.selectedView =
         (query[MarketplaceQueryParams.viewType] as ViewTypes) ?? ViewTypes.CARD;
       // table sort
-      const splittedTableSortQuery = (
-        query[MarketplaceQueryParams.tableSort] as string
-      ).split('-');
-      const tableSortColumn = (
-        splittedTableSortQuery[0] in TableColumnSortKeys
-          ? splittedTableSortQuery[0]
-          : TableColumnSortKeys.NAME
-      ) as TableColumnSortKeys;
-      const tableSortType = (
-        ['desc', 'asc'].includes(splittedTableSortQuery[1])
-          ? splittedTableSortQuery[1]
-          : 'asc'
-      ) as 'asc' | 'desc';
-      updatedMarketplaceState.tableSort = {
-        column: tableSortColumn,
-        type: tableSortType,
-      };
+      const tableSortQuery = query[MarketplaceQueryParams.tableSort] as string;
+      if (typeof tableSortQuery === 'string') {
+        const splittedTableSortQuery = tableSortQuery.split('-');
+        const tableSortColumn = (
+          splittedTableSortQuery[0] in TableColumnSortKeys
+            ? splittedTableSortQuery[0]
+            : TableColumnSortKeys.NAME
+        ) as TableColumnSortKeys;
+        const tableSortType = (
+          ['desc', 'asc'].includes(splittedTableSortQuery[1])
+            ? splittedTableSortQuery[1]
+            : 'asc'
+        ) as 'asc' | 'desc';
+        updatedMarketplaceState.tableSort = {
+          column: tableSortColumn,
+          type: tableSortType,
+        };
+      }
 
       return concat(
         of(MarketplaceActions.setState(updatedMarketplaceState)),
