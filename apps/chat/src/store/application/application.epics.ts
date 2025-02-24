@@ -568,7 +568,7 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
             applicationType,
           ),
         );
-      } else {
+      } else if (isApplicationType(applicationType)) {
         actions.push(
           ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
         );

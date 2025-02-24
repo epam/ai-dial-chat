@@ -61,6 +61,7 @@ export const applicationTypesSchemasSlice = createSlice({
     },
     resetDetailedApplicationTypeSchema: (state) => {
       state.detailedApplicationTypeSchema = null;
+      state.detailedApplicationTypeSchemaLoading = UploadStatus.UNINITIALIZED;
     },
   },
 });
