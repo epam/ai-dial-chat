@@ -168,7 +168,10 @@ dialTest(
     marketplace,
     confirmationDialog,
     addAppDropdownMenu,
-    addApplicationModal,
+    appEditorPage,
+    appEditorGeneralForm,
+    appEditorViewForm,
+    appEditorHeader,
     setTestIds,
     baseAssertion,
   }) => {
@@ -222,10 +225,14 @@ dialTest(
         await marketplaceSidebar.myWorkspaceButton.click();
         await marketplaceHeader.addAppButton.click();
         await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
-        await addApplicationModal.fillInAppFields({
+        await appEditorPage.waitForPageLoaded();
+        await appEditorGeneralForm.fillInAppFields({
           name: addedAppName,
         });
-        await addApplicationModal.addApp();
+        await appEditorGeneralForm.goNext();
+        await appEditorViewForm.fillInAppFields();
+        await appEditorHeader.saveAppAndExit();
+        await marketplacePage.waitForPageLoaded();
 
         const actualFilteredModels = await marketplace
           .getFilteredAgents()
