@@ -5,6 +5,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { extractNameFromEmail } from '@/src/utils/app/common';
 import {
   getFolderIdFromEntityId,
   getParentFolderIdsFromEntityId,
@@ -147,6 +148,10 @@ export function PublicationHandler({ publication }: Props) {
       ),
     [conversations, files, prompts, publishRequestModels],
   );
+
+  const publicationAuthor = useMemo(() => {
+    return extractNameFromEmail(publication.author) ?? t('Unknown');
+  }, [publication.author, t]);
 
   useEffect(() => {
     if (publication.targetFolder !== PUBLIC_URL_PREFIX) {
@@ -424,8 +429,30 @@ export function PublicationHandler({ publication }: Props) {
                   </Tooltip>
                 </button>
                 <div className="my-4">
+                  <p
+                    className="text-xs text-secondary"
+                    data-qa="publication-author-label"
+                  >
+                    {t('Author: ')}
+                  </p>
+                  <p className="my-1 text-sm" data-qa="publication-author">
+                    {publicationAuthor}
+                  </p>
+                  {/*TODO uncomment when publication.displayAuthor will be ready at the core side */}
+                  {/* <p
+                    className="text-xs text-secondary"
+                    data-qa="publication-public-author-label"
+                  >
+                    {t(`Author's public name: `)}
+                  </p>
+                  <p
+                    className="my-1 text-sm"
+                    data-qa="publication-public-author"
+                  >
+                    {publication.displayAuthor ?? publicationAuthor}
+                  </p> */}
                   <p className="text-xs text-secondary" data-qa="creation-date">
-                    {t('Request creation date: ')}
+                    {t('Request created: ')}
                   </p>
                   <p className="mt-1 text-sm" data-qa="publish-date">
                     {new Date(publication.createdAt).toLocaleString()}
