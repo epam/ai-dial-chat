@@ -390,7 +390,8 @@ dialAdminTest(
 dialTest.only(
   'RecentModelIds in NOT updated when duplicate own chat with model which is not in My workspace\n' +
     'RecentModelIds in NOT updated when duplicate when import chat with different model\n' +
-    "RecentModelIds updated when type new message to imported chat. Chat's model is not in RecentModelIds[0]",
+    "RecentModelIds updated when type new message to imported chat. Chat's model is not in RecentModelIds[0]\n" +
+    "RecentModelIds updated when regenerate message to imported chat. Chat's model is not in RecentModelIds[0]",
   async ({
     dialHomePage,
     header,
@@ -404,8 +405,10 @@ dialTest.only(
     conversations,
     conversationDropdownMenu,
     chatBar,
+    chatMessages,
   }) => {
-    setTestIds('EPMRTC-4883', 'EPMRTC-4884', 'EPMRTC-5177');
+    setTestIds('EPMRTC-4883', 'EPMRTC-4884', 'EPMRTC-5177', 'EPMRTC-5167');
+    dialTest.slow();
     let models = GeneratorUtil.randomArrayElements(
       ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
       2,
@@ -424,13 +427,19 @@ dialTest.only(
     const conversation1Api =
       conversationData.prepareDefaultConversation(addedModel);
     conversationData.resetData();
-    const conversation2Export =
-      conversationData.prepareDefaultConversation(initialModel2);
     await dataInjector.createConversations([conversation1Api]);
 
-    // Export conversation2Export
+    const conversation2Export1 =
+      conversationData.prepareDefaultConversation(initialModel2);
+    conversationData.resetData();
+    const conversation2Export2 =
+      conversationData.prepareDefaultConversation(initialModel1);
+
+    // Export conversations
     const exportedConversation =
-      ImportConversation.prepareConversationFile(conversation2Export);
+      ImportConversation.prepareConversationFile(conversation2Export1);
+    const exportedConversation2 =
+      ImportConversation.prepareConversationFile(conversation2Export2);
 
     await dialTest.step('Open the Dial', async () => {
       await dialHomePage.openHomePage({
@@ -515,7 +524,7 @@ dialTest.only(
     await dialTest.step(
       'Type new message to imported chat and verify recentModelsIds is updated',
       async () => {
-        await conversations.selectConversation(conversation2Export.name);
+        await conversations.selectConversation(conversation2Export1.name);
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -532,6 +541,32 @@ dialTest.only(
       async () => {
         await header.createNewConversation();
         await agentInfoAssertion.assertAgentName(initialModel2.name);
+      },
+    );
+
+    await dialTest.step(
+      'Import one more conversation and select it, regenerate response, and verify recentModelsIds is updated',
+      async () => {
+        await dialHomePage.importFile(exportedConversation2, () =>
+          chatBar.importButton.click(),
+        );
+        await conversations.selectConversation(conversation2Export2.name);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chatMessages.regenerateResponse();
+        const recentModels = await localStorageManager.getRecentModels();
+        expect
+          .soft(recentModels, ExpectedMessages.recentEntitiesVisible)
+          .toBe(JSON.stringify([initialModel1.id, initialModel2.id]));
+      },
+    );
+
+    await dialTest.step(
+      'Create a new conversation and verify is selected',
+      async () => {
+        await header.createNewConversation();
+        await agentInfoAssertion.assertAgentName(initialModel1.id);
       },
     );
   },
