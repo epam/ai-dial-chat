@@ -113,13 +113,30 @@ const ResultsView = ({
     [onCardClick],
   );
 
-  const ViewList =
-    selectedViewType === ViewTypes.CARD ? CardsList : AgentsTable;
+  if (
+    selectedViewType === ViewTypes.TABLE &&
+    (entities.length || suggestedResults.length)
+  ) {
+    return (
+      <AgentsTable
+        entities={entities}
+        suggestedResults={suggestedResults}
+        separator="Suggested results from DIAL Marketplace"
+        onCardClick={onCardClick}
+        onPublish={onPublish}
+        onDelete={onDelete}
+        onEdit={onEdit}
+        onBookmarkClick={onBookmarkClick}
+        onLogsClick={onLogsClick}
+        dataQA="filtered-agents"
+      />
+    );
+  }
 
   if (suggestedResults.length) {
     return (
       <>
-        <ViewList
+        <CardsList
           entities={entities}
           onCardClick={onCardClick}
           onPublish={onPublish}
@@ -152,7 +169,7 @@ const ResultsView = ({
         >
           {t('Suggested results from DIAL Marketplace')}
         </span>
-        <ViewList
+        <CardsList
           entities={suggestedResults}
           onCardClick={handleSuggestedCardClick}
           onPublish={onPublish}
@@ -168,7 +185,7 @@ const ResultsView = ({
 
   if (entities.length) {
     return (
-      <ViewList
+      <CardsList
         entities={entities}
         onCardClick={onCardClick}
         onPublish={onPublish}
@@ -306,12 +323,22 @@ export const TabRenderer = () => {
         ? filteredEntities.filter(isInstalledModel)
         : filteredEntities;
 
-    if (selectedViewType === ViewTypes.TABLE) {
-      return entitiesForTab;
-    }
-
     const shouldSuggest =
       selectedTab === MarketplaceTabs.MY_WORKSPACE && isSomeFilterNotEmpty;
+
+    if (selectedViewType === ViewTypes.TABLE) {
+      if (shouldSuggest) {
+        const suggestedListWithoutInstalled = filteredEntities.filter(
+          (entity) => !isInstalledModel(entity),
+        );
+
+        setSuggestedResults(suggestedListWithoutInstalled);
+      } else {
+        setSuggestedResults([]);
+      }
+
+      return entitiesForTab;
+    }
 
     const groupedEntities = groupModelsAndSaveOrder(
       entitiesForTab.concat(shouldSuggest ? filteredEntities : []),
