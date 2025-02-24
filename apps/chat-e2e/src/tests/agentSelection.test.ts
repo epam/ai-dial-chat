@@ -221,7 +221,7 @@ dialTest(
   },
 );
 
-dialAdminTest.only(
+dialAdminTest(
   'RecentModelIds is NOT updated when duplicate chat from Organization\n' +
     'RecentModelIds updated when regenerate message from duplicated chat from Organization\n' +
     'RecentModelIds updated when type new message to duplicated chat from Organization',
@@ -381,6 +381,87 @@ dialAdminTest.only(
         expect
           .soft(recentModels, ExpectedMessages.recentEntitiesVisible)
           .toBe(JSON.stringify([secondModel.id, firstModel.id]));
+      },
+    );
+  },
+);
+
+dialTest.only(
+  'RecentModelIds in NOT updated when duplicate own chat with model which is not in My workspace',
+  async ({
+           dialHomePage,
+           header,
+           talkToAgentDialog,
+           agentInfoAssertion,
+           setTestIds,
+           localStorageManager,
+           conversationData,
+           dataInjector,
+           chat,
+           conversations,
+           conversationDropdownMenu,
+         }) => {
+    setTestIds('EPMRTC-4883');
+    let models = GeneratorUtil.randomArrayElements(
+      ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
+      2,
+    );
+    const [initialModel1, initialModel2] = models;
+
+    await localStorageManager.setRecentModelsIdsOnce(...models);
+    // Create a conversation with the secondModel
+    const conversation2Name = GeneratorUtil.randomString(10);
+    const conversation1 =
+      conversationData.prepareDefaultConversation(initialModel2);
+    await dataInjector.createConversations([conversation1]);
+
+    await dialTest.step('Open the Dial', async () => {
+      await dialHomePage.openHomePage({
+        iconsToBeLoaded: [initialModel1.iconUrl],
+      });
+      await dialHomePage.waitForPageLoaded();
+      await agentInfoAssertion.assertAgentName(initialModel1.name);
+    });
+
+    await dialTest.step(
+      'Create a new conversation with the first model via UI',
+      async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chat.sendRequestWithButton(conversation2Name);
+      },
+    );
+
+    await dialTest.step(
+      'Duplicate previously existed chat, verify recentModelsIds in local storage is unchanged',
+      async () => {
+        await conversations.selectConversation(conversation1.name);
+        await conversations.openEntityDropdownMenu(conversation1.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.duplicate, {
+          triggeredHttpMethod: 'POST',
+        });
+        const recentModels = await localStorageManager.getRecentModels();
+        expect
+          .soft(recentModels, ExpectedMessages.recentEntitiesVisible)
+          .toBe(JSON.stringify([initialModel1.id, initialModel2.id]));
+      },
+    );
+
+    await dialTest.step(
+      'Create a new conversation and verify the first model is still selected',
+      async () => {
+        await header.createNewConversation();
+        await agentInfoAssertion.assertAgentName(initialModel1.name);
+      },
+    );
+
+    await dialTest.step(
+      'Refresh the page and verify the first model is still selected',
+      async () => {
+        await dialHomePage.reloadPage();
+        await dialHomePage.waitForPageLoaded();
+        await agentInfoAssertion.assertAgentName(initialModel1.name);
       },
     );
   },
