@@ -228,41 +228,31 @@ dialAdminTest.only(
     dialHomePage,
     conversationData,
     dataInjector,
-    adminDialHomePage,
-    adminDataInjector,
     adminPublicationApiHelper,
     publicationApiHelper,
     publishRequestBuilder,
     setTestIds,
     localStorageManager,
     header,
-    talkToAgentDialog,
     agentInfoAssertion,
     organizationConversations,
     conversationDropdownMenu,
     chatMessages,
-    chat,
     itemApiHelper,
     conversations,
   }) => {
     setTestIds('EPMRTC-4881', 'EPMRTC-5162');
 
+    //Prepare models and set recent models in local storage
     let models = GeneratorUtil.randomArrayElements(
       ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
       2,
     );
     const [firstModel, secondModel] = models;
-
     const conversation =
       conversationData.prepareDefaultConversation(secondModel);
     await dataInjector.createConversations([conversation]);
-
-    await dialAdminTest.step(
-      'Prepare models and set recent models in local storage',
-      async () => {
-        await localStorageManager.setRecentModelsIdsOnce(...models);
-      },
-    );
+    await localStorageManager.setRecentModelsIdsOnce(...models);
 
     await dialAdminTest.step(
       'Create a conversation with the second model and publish it',
@@ -274,6 +264,7 @@ dialAdminTest.only(
         const publication =
           await publicationApiHelper.createPublishRequest(publishRequest);
         await adminPublicationApiHelper.approveRequest(publication);
+        // delete the original conversation to prevent name duplicates
         await itemApiHelper.deleteEntity(conversation);
       },
     );
@@ -328,13 +319,25 @@ dialAdminTest.only(
     );
 
     await dialAdminTest.step(
-      'Click Regenerate button and check Dev recentModelIds',
+      'Click Regenerate button and check recentModelIds state',
       async () => {
         await conversations.selectConversation(conversation.name);
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
         await chatMessages.regenerateResponse();
+        const recentModels = await localStorageManager.getRecentModels();
+        expect
+          .soft(recentModels, ExpectedMessages.recentEntitiesVisible)
+          .toBe(JSON.stringify([secondModel.id, firstModel.id]));
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click New Conversation and check that the model is not changed',
+      async () => {
+        await header.createNewConversation();
+        await agentInfoAssertion.assertAgentName(secondModel.name);
         const recentModels = await localStorageManager.getRecentModels();
         expect
           .soft(recentModels, ExpectedMessages.recentEntitiesVisible)
