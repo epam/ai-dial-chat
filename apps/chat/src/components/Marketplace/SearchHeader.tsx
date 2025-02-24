@@ -116,45 +116,46 @@ export const SearchHeader = () => {
   );
 
   const menuItems: MenuItem[] = useMemo(
-    () => [
-      {
-        name: t('Custom App'),
-        type: ApplicationType.CUSTOM_APP,
-        dataQa: 'add-custom-app',
-        display: isCustomApplicationsEnabled,
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          router.push(`/apps-editor/${ApplicationType.CUSTOM_APP}`);
+    () =>
+      [
+        {
+          name: t('Custom app'),
+          type: ApplicationType.CUSTOM_APP,
+          dataQa: 'add-custom-app',
+          display: isCustomApplicationsEnabled,
+          onClick: (e: React.MouseEvent) => {
+            e.stopPropagation();
+            router.push(`/apps-editor/${ApplicationType.CUSTOM_APP}`);
+          },
         },
-      },
-      {
-        name: t('Code App'),
-        dataQa: 'add-startable-app',
-        type: ApplicationType.CODE_APP,
-        display: isCodeAppsEnabled,
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          router.push(`/apps-editor/${ApplicationType.CODE_APP}`);
+        {
+          name: t('Code app'),
+          dataQa: 'add-startable-app',
+          type: ApplicationType.CODE_APP,
+          display: isCodeAppsEnabled,
+          onClick: (e: React.MouseEvent) => {
+            e.stopPropagation();
+            router.push(`/apps-editor/${ApplicationType.CODE_APP}`);
+          },
         },
-      },
-      ...(applicationTypeSchemas?.map((schema: ApplicationTypeSchema) => ({
-        name: schema.displayName,
-        type: schema.displayName,
-        dataQa: `add-${schema.displayName}`,
-        display: true,
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          if (detailedApplicationTypeSchema?.$id !== schema.id) {
-            dispatch(
-              ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema(
-                schema.id,
-              ),
-            );
-          }
-          router.push(`/apps-editor/${encode(schema.id)}`);
-        },
-      })) ?? []),
-    ],
+        ...(applicationTypeSchemas?.map((schema: ApplicationTypeSchema) => ({
+          name: t(schema.displayName),
+          type: schema.displayName,
+          dataQa: `add-${schema.displayName}`,
+          display: true,
+          onClick: (e: React.MouseEvent) => {
+            e.stopPropagation();
+            if (detailedApplicationTypeSchema?.$id !== schema.id) {
+              dispatch(
+                ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema(
+                  schema.id,
+                ),
+              );
+            }
+            router.push(`/apps-editor/${encode(schema.id)}`);
+          },
+        })) ?? []),
+      ].sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1)),
     [
       t,
       isCustomApplicationsEnabled,
