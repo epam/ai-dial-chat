@@ -113,13 +113,30 @@ const ResultsView = ({
     [onCardClick],
   );
 
-  const ViewList =
-    selectedViewType === ViewTypes.CARD ? CardsList : AgentsTable;
+  if (
+    selectedViewType === ViewTypes.TABLE &&
+    (entities.length || suggestedResults.length)
+  ) {
+    return (
+      <AgentsTable
+        entities={entities}
+        suggestedResults={suggestedResults}
+        separator="Suggested results from DIAL Marketplace"
+        onCardClick={onCardClick}
+        onPublish={onPublish}
+        onDelete={onDelete}
+        onEdit={onEdit}
+        onBookmarkClick={onBookmarkClick}
+        onLogsClick={onLogsClick}
+        dataQA="filtered-agents"
+      />
+    );
+  }
 
   if (suggestedResults.length) {
     return (
       <>
-        <ViewList
+        <CardsList
           entities={entities}
           onCardClick={onCardClick}
           onPublish={onPublish}
@@ -147,15 +164,12 @@ const ResultsView = ({
           </div>
         )}
         <span
-          className={classNames(
-            'mb-4 mt-5 text-xl md:mt-6 lg:mt-8',
-            selectedViewType === ViewTypes.TABLE && 'px-3',
-          )}
+          className="mb-4 mt-5 text-xl md:mt-6 lg:mt-8"
           data-qa="marketplace-suggestions-label"
         >
           {t('Suggested results from DIAL Marketplace')}
         </span>
-        <ViewList
+        <CardsList
           entities={suggestedResults}
           onCardClick={handleSuggestedCardClick}
           onPublish={onPublish}
@@ -171,7 +185,7 @@ const ResultsView = ({
 
   if (entities.length) {
     return (
-      <ViewList
+      <CardsList
         entities={entities}
         onCardClick={onCardClick}
         onPublish={onPublish}

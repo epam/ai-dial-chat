@@ -69,7 +69,7 @@ export const AgentsTableLeftSideRow: React.FC<Props> = memo(
           </div>
           <div>
             <div className="flex">
-              <div className="line-clamp-1 max-w-screen-sm text-base font-semibold leading-5">
+              <div className="line-clamp-1 max-w-screen-sm break-all text-base font-semibold leading-5">
                 {entity.name}
               </div>
               <FunctionStatusIndicator entity={entity} />
