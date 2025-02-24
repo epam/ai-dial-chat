@@ -3,3 +3,5 @@ export enum ModalState {
   LOADING = 'LOADING',
   OPENED = 'OPENED',
 }
+
+export type OnItemEvent = (actionOption: string, entityId: unknown) => void;

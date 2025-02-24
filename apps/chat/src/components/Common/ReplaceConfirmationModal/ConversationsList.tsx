@@ -7,7 +7,7 @@ import { MappedReplaceActions } from '@/src/types/import-export';
 
 import Folder from '../../Folder/Folder';
 import { ConversationRow } from './Components';
-import { OnItemEvent } from './ReplaceConfirmationModal';
+import { OnItemEvent } from '@/src/types/modal';
 
 interface Props {
   folders: FolderInterface[];

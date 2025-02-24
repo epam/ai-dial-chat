@@ -7,7 +7,7 @@ import { Prompt } from '@/src/types/prompt';
 
 import Folder from '../../Folder/Folder';
 import { PromptsRow } from './Components';
-import { OnItemEvent } from './ReplaceConfirmationModal';
+import { OnItemEvent } from '@/src/types/modal';
 
 interface Props {
   folders: FolderInterface[];
