@@ -189,7 +189,7 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
       updatedMarketplaceState.selectedView =
         (query[MarketplaceQueryParams.viewType] as ViewTypes) ?? ViewTypes.CARD;
       // table sort
-      const tableSortQuery = query[MarketplaceQueryParams.tableSort] as string;
+      const tableSortQuery = query[MarketplaceQueryParams.tableSort];
       if (typeof tableSortQuery === 'string') {
         const splittedTableSortQuery = tableSortQuery.split('-');
         const tableSortColumn = (
