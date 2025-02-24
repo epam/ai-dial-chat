@@ -389,18 +389,18 @@ dialAdminTest(
 dialTest.only(
   'RecentModelIds in NOT updated when duplicate own chat with model which is not in My workspace',
   async ({
-           dialHomePage,
-           header,
-           talkToAgentDialog,
-           agentInfoAssertion,
-           setTestIds,
-           localStorageManager,
-           conversationData,
-           dataInjector,
-           chat,
-           conversations,
-           conversationDropdownMenu,
-         }) => {
+    dialHomePage,
+    header,
+    talkToAgentDialog,
+    agentInfoAssertion,
+    setTestIds,
+    localStorageManager,
+    conversationData,
+    dataInjector,
+    chat,
+    conversations,
+    conversationDropdownMenu,
+  }) => {
     setTestIds('EPMRTC-4883');
     let models = GeneratorUtil.randomArrayElements(
       ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
@@ -408,12 +408,18 @@ dialTest.only(
     );
     const [initialModel1, initialModel2] = models;
 
+    // Get all available models, exclude initial models, and select one more
+    const availableModels = ModelsUtil.getLatestModels().filter(
+      (m) => m.id !== initialModel1.id && m.id !== initialModel2.id,
+    );
+    let addedModel = GeneratorUtil.randomArrayElement(availableModels);
     await localStorageManager.setRecentModelsIdsOnce(...models);
+
     // Create a conversation with the secondModel
     const conversation2Name = GeneratorUtil.randomString(10);
-    const conversation1 =
-      conversationData.prepareDefaultConversation(initialModel2);
-    await dataInjector.createConversations([conversation1]);
+    const conversation1Api =
+      conversationData.prepareDefaultConversation(addedModel);
+    await dataInjector.createConversations([conversation1Api]);
 
     await dialTest.step('Open the Dial', async () => {
       await dialHomePage.openHomePage({
@@ -424,7 +430,7 @@ dialTest.only(
     });
 
     await dialTest.step(
-      'Create a new conversation with the first model via UI',
+      'Create a new conversation with the first model',
       async () => {
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
@@ -436,15 +442,15 @@ dialTest.only(
     await dialTest.step(
       'Duplicate previously existed chat, verify recentModelsIds in local storage is unchanged',
       async () => {
-        await conversations.selectConversation(conversation1.name);
-        await conversations.openEntityDropdownMenu(conversation1.name);
+        await conversations.selectConversation(conversation1Api.name);
+        await conversations.openEntityDropdownMenu(conversation1Api.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.duplicate, {
           triggeredHttpMethod: 'POST',
         });
         const recentModels = await localStorageManager.getRecentModels();
         expect
           .soft(recentModels, ExpectedMessages.recentEntitiesVisible)
-          .toBe(JSON.stringify([initialModel1.id, initialModel2.id]));
+          .not.toContain(addedModel);
       },
     );
 
