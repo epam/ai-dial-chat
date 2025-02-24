@@ -389,7 +389,8 @@ dialAdminTest(
 
 dialTest.only(
   'RecentModelIds in NOT updated when duplicate own chat with model which is not in My workspace\n' +
-    'RecentModelIds in NOT updated when duplicate when import chat with different model',
+    'RecentModelIds in NOT updated when duplicate when import chat with different model\n' +
+    "RecentModelIds updated when type new message to imported chat. Chat's model is not in RecentModelIds[0]",
   async ({
     dialHomePage,
     header,
@@ -404,7 +405,7 @@ dialTest.only(
     conversationDropdownMenu,
     chatBar,
   }) => {
-    setTestIds('EPMRTC-4883', 'EPMRTC-4884');
+    setTestIds('EPMRTC-4883', 'EPMRTC-4884', 'EPMRTC-5177');
     let models = GeneratorUtil.randomArrayElements(
       ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
       2,
@@ -508,6 +509,29 @@ dialTest.only(
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
         await agentInfoAssertion.assertAgentName(initialModel1.name);
+      },
+    );
+
+    await dialTest.step(
+      'Type new message to imported chat and verify recentModelsIds is updated',
+      async () => {
+        await conversations.selectConversation(conversation2Export.name);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chat.sendRequestWithButton(GeneratorUtil.randomString(10));
+        const recentModels = await localStorageManager.getRecentModels();
+        expect
+          .soft(recentModels, ExpectedMessages.recentEntitiesVisible)
+          .toBe(JSON.stringify([initialModel2.id, initialModel1.id]));
+      },
+    );
+
+    await dialTest.step(
+      'Create a new conversation and verify the first model is still selected',
+      async () => {
+        await header.createNewConversation();
+        await agentInfoAssertion.assertAgentName(initialModel2.name);
       },
     );
   },
