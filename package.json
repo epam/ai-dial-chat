@@ -51,6 +51,7 @@
     "@opentelemetry/semantic-conventions": "^1.27.0",
     "@reduxjs/toolkit": "^1.9.5",
     "@tabler/icons-react": "^2.9.0",
+    "@tanstack/react-virtual": "^3.13.0",
     "classnames": "^2.3.2",
     "css.escape": "^1.5.1",
     "downshift": "^8.1.0",
