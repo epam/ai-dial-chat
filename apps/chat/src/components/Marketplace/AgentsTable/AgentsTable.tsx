@@ -119,6 +119,11 @@ const ROW_SIZES = {
   [ScreenState.DESKTOP]: 115,
   [ScreenState.TABLET]: 115,
 };
+const sortKeyMap: Record<TableColumnSortKeys, keyof DialAIEntityModel> = {
+  [TableColumnSortKeys.RELEASED]: 'createdAt',
+  [TableColumnSortKeys.NAME]: 'name',
+  [TableColumnSortKeys.OWNER]: 'owner',
+};
 
 export const AgentsTable: React.FC<AgentsTableProps> = memo(
   ({
@@ -155,35 +160,13 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
     useSyncXScroll(rightColumnHeaderRef, rightColumnDataRef);
 
     const allEntities = useMemo(() => {
-      let sortedEntities: DialAIEntityModel[] = [];
-      let sortedSuggestedEntities: DialAIEntityModel[] = [];
-
-      if (tableSort.column === TableColumnSortKeys.RELEASED) {
-        sortedEntities = orderBy(entities, ['createdAt'], [tableSort.type]);
-        sortedSuggestedEntities = orderBy(
-          suggestedResults,
-          ['createdAt'],
-          [tableSort.type],
-        );
-      } else {
-        if (tableSort.column === TableColumnSortKeys.NAME) {
-          sortedEntities = orderBy(entities, ['name'], [tableSort.type]);
-          sortedSuggestedEntities = orderBy(
-            suggestedResults,
-            ['name'],
-            [tableSort.type],
-          );
-        }
-
-        if (tableSort.column === TableColumnSortKeys.OWNER) {
-          sortedEntities = orderBy(entities, ['owner'], [tableSort.type]);
-          sortedSuggestedEntities = orderBy(
-            suggestedResults,
-            ['owner'],
-            [tableSort.type],
-          );
-        }
-      }
+      const sortField = sortKeyMap[tableSort.column] || 'name';
+      const sortedEntities = orderBy(entities, [sortField], [tableSort.type]);
+      const sortedSuggestedEntities = orderBy(
+        suggestedResults,
+        [sortField],
+        [tableSort.type],
+      );
 
       if (!suggestedResults.length) return sortedEntities;
       if (!entities.length && suggestedResults.length)
