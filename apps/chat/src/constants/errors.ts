@@ -66,4 +66,8 @@ export const errorsMessages = {
     'Failed to create application. Please check your input and try again.',
   fetchDetailsFailed:
     'Fetching application details failed. Please try again later.',
+  fetchSchemasFailed:
+    'Fetching application schemas failed. Please try again later.',
+  fetchSchemaFailed:
+    'Fetching application schema failed. Please try again later.',
 };

@@ -481,6 +481,13 @@ export const selectCanAttachLink = createSelector(
   },
 );
 
+export const selectIsStartedCustomViewerConversation = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.isStartedCustomViewerConversation;
+  },
+);
+
 export const selectCanAttachFolders = createSelector(
   [selectSelectedConversationsModels],
   (models) => {
@@ -788,6 +795,11 @@ export const selectIsSelectedConversationBlocksInput = createSelector(
           conversation.messages,
         ),
     ),
+);
+
+export const selectPreviewConversationId = createSelector(
+  [rootSelector],
+  (state) => state.previewConversationId,
 );
 
 export const selectIsSelectedConversationsWithSchema = createSelector(

@@ -5,6 +5,7 @@ import {
   getParentFolderIdsFromEntityId,
 } from '@/src/utils/app/folders';
 
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
   ApplicationLogsType,
   ApplicationStatus,
@@ -25,6 +26,8 @@ export interface ApplicationState {
   logsLoadingStatus: UploadStatus;
   appDetails: CustomApplicationModel | undefined;
   appLogs: ApplicationLogsType | undefined;
+  shouldSaveApplication?: boolean;
+  exitAfterSave?: boolean;
   publicFolders: FolderInterface[];
 }
 
@@ -33,6 +36,8 @@ const initialState: ApplicationState = {
   logsLoadingStatus: UploadStatus.UNINITIALIZED,
   appDetails: undefined,
   appLogs: undefined,
+  shouldSaveApplication: false,
+  exitAfterSave: false,
   publicFolders: [],
 };
 
@@ -42,12 +47,24 @@ export const applicationSlice = createSlice({
   reducers: {
     create: (
       state,
-      _action: PayloadAction<Omit<CustomApplicationModel, 'id' | 'reference'>>,
+      _action: PayloadAction<{
+        applicationData: Omit<CustomApplicationModel, 'id' | 'reference'>;
+        slug?: string;
+        schema?: ApiDetailedApplicationTypeSchema;
+      }>,
     ) => {
       state.appLoading = UploadStatus.LOADING;
     },
-    createSuccess: (state) => {
+    createSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        applicationData: CustomApplicationModel;
+      }>,
+    ) => {
       state.appLoading = UploadStatus.LOADED;
+      state.appDetails = payload.applicationData;
     },
     createFail: (state) => {
       state.appLoading = UploadStatus.FAILED;
@@ -66,6 +83,8 @@ export const applicationSlice = createSlice({
       _action: PayloadAction<{
         oldApplication: CustomApplicationModel;
         updatedApplication: CustomApplicationModel;
+        redirectUrl?: string;
+        schema?: ApiDetailedApplicationTypeSchema;
       }>,
     ) => {
       state.appLoading = UploadStatus.LOADING;
@@ -91,6 +110,8 @@ export const applicationSlice = createSlice({
       }: PayloadAction<{
         oldApplication: CustomApplicationModel;
         applicationData: CustomApplicationModel;
+        redirectUrl?: string;
+        schema?: ApiDetailedApplicationTypeSchema;
       }>,
     ) => {
       state.appLoading = UploadStatus.LOADING;
@@ -164,7 +185,34 @@ export const applicationSlice = createSlice({
       state.logsLoadingStatus = UploadStatus.FAILED;
       state.appLogs = undefined;
     },
-
+    updateStart: (state) => {
+      state.appLoading = UploadStatus.LOADING;
+    },
+    updateComplete: (state) => {
+      state.appLoading = UploadStatus.LOADED;
+    },
+    updateSuccess: (state, action: PayloadAction<CustomApplicationModel>) => {
+      state.appDetails = action.payload;
+    },
+    setShouldSaveApplication: (state, action: PayloadAction<boolean>) => {
+      state.shouldSaveApplication = action.payload;
+    },
+    setExitAfterSave: (state, action: PayloadAction<boolean>) => {
+      state.exitAfterSave = action.payload;
+    },
+    enterEditMode: (
+      state,
+      _action: PayloadAction<{
+        entity: { id: string; reference: string };
+        applicationType: string;
+        detailedApplicationTypeSchemaId?: string;
+      }>,
+    ) => {
+      state.appLoading = UploadStatus.LOADING;
+    },
+    enterEditModeComplete: (state) => {
+      state.appLoading = UploadStatus.LOADED;
+    },
     setFolders: (state, { payload }: PayloadAction<string[]>) => {
       const folders = payload
         .flatMap((id) => getParentFolderIdsFromEntityId(id).slice(0, -1))

@@ -7,6 +7,7 @@ import {
   parseApplicationApiKey,
 } from '@/src/utils/server/api';
 
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
   ApiApplicationModel,
   ApiApplicationResponse,
@@ -41,8 +42,11 @@ export class ApplicationApiStorage extends ApiEntityStorage<
       ...convertApplicationFromApi(entity),
     };
   }
-  cleanUpEntity(application: CustomApplicationModel): ApiApplicationModel {
-    return convertApplicationToApi(application);
+  cleanUpEntity(
+    application: CustomApplicationModel,
+    schema?: ApiDetailedApplicationTypeSchema,
+  ): ApiApplicationModel {
+    return convertApplicationToApi(application, schema);
   }
   getEntityKey(info: ApplicationInfo): string {
     return getApplicationApiKey(info);
@@ -56,7 +60,10 @@ export class ApplicationApiStorage extends ApiEntityStorage<
 
   toggleApplicationStatus(
     applicationId: string,
-    status: SimpleApplicationStatus.DEPLOY | SimpleApplicationStatus.UNDEPLOY,
+    status:
+      | SimpleApplicationStatus.DEPLOY
+      | SimpleApplicationStatus.UNDEPLOY
+      | SimpleApplicationStatus.REDEPLOY,
   ): Observable<void> {
     try {
       return ApiUtils.request(constructPath('/api/ops/application', status), {

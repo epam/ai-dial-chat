@@ -435,7 +435,7 @@ export const PublicationItemsList = memo(
                       />
                       <a
                         download={f.name}
-                        href={constructPath('api', f.id)}
+                        href={constructPath('/api', f.id)}
                         data-qa="download"
                       >
                         <IconDownload
