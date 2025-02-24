@@ -7,6 +7,7 @@ import {
   getFilteredFolders,
   getNextDefaultName,
   getParentAndChildFolders,
+  renameFolderAndMoveEntity,
   sortByName,
 } from '@/src/utils/app/folders';
 import { getFileRootId } from '@/src/utils/app/id';
@@ -33,6 +34,7 @@ export interface FilesState {
   foldersStatus: UploadStatus;
   loadingFolderId?: string;
   newAddedFolderId?: string;
+  lastRenamedParentFolder?: { oldId: string; newId: string };
   sharedFileIds: string[];
 }
 
@@ -293,31 +295,37 @@ export const filesSlice = createSlice({
       const targetFolder = state.folders.find((f) => f.id === payload.folderId);
 
       if (!targetFolder) return;
+      const newFolderId = constructPath(targetFolder.folderId, payload.newName);
 
-      state.folders = state.folders.map((folder) => {
-        if (folder.id === payload.folderId) {
-          return {
-            ...folder,
-            name: payload.newName.trim(),
-            id: constructPath(targetFolder.folderId, payload.newName),
-          };
-        } else if (folder.id.startsWith(`${payload.folderId}/`)) {
-          const updatedFolderId = folder.folderId.replace(
-            targetFolder.id,
-            constructPath(targetFolder.folderId, payload.newName),
-          );
-
-          return {
-            ...folder,
-            folderId: updatedFolderId,
-            id: constructPath(updatedFolderId, folder.name),
-          };
-        }
-        return folder;
-      });
+      state.folders = state.folders.map((f) =>
+        renameFolderAndMoveEntity(f, payload.folderId, newFolderId),
+      );
+      state.files = state.files.map((f) =>
+        renameFolderAndMoveEntity(f, payload.folderId, newFolderId),
+      );
+    },
+    renameFolderSuccess: (
+      state,
+      { payload }: PayloadAction<{ oldId: string; newId: string }>,
+    ) => {
+      state.lastRenamedParentFolder = { ...payload };
+    },
+    renameFolderFail: (
+      state,
+      { payload }: PayloadAction<{ oldId: string; newId: string }>,
+    ) => {
+      state.folders = state.folders.map((f) =>
+        renameFolderAndMoveEntity(f, payload.newId, payload.oldId),
+      );
+      state.files = state.files.map((f) =>
+        renameFolderAndMoveEntity(f, payload.newId, payload.oldId),
+      );
     },
     resetNewFolderId: (state) => {
       state.newAddedFolderId = undefined;
+    },
+    resetLastRenamedParentFolder: (state) => {
+      state.lastRenamedParentFolder = undefined;
     },
     deleteFilesList: (
       state,
@@ -563,6 +571,9 @@ const selectFolderById = createSelector(
   },
 );
 
+const selectLastRenamedParentFolder = (state: RootState) =>
+  rootSelector(state).lastRenamedParentFolder;
+
 export const FilesSelectors = {
   selectFiles,
   selectFilteredFiles,
@@ -582,6 +593,7 @@ export const FilesSelectors = {
   selectPublicationFolders,
   selectInitialized,
   selectAreFilesLoading,
+  selectLastRenamedParentFolder,
 };
 
 export const FilesActions = filesSlice.actions;

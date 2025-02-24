@@ -19,7 +19,11 @@ import {
   getDialFilesWithInvalidFileType,
   getShortExtensionsListFromMimeType,
 } from '@/src/utils/app/file';
-import { getParentFolderIdsFromFolderId } from '@/src/utils/app/folders';
+import {
+  getParentFolderIdsFromFolderId,
+  updateMovedEntityId,
+  updateMovedFolderId,
+} from '@/src/utils/app/folders';
 import { getFileRootId, isFolderId } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
@@ -202,6 +206,9 @@ export const FileManagerModal = ({
   const canAttachFolders =
     useAppSelector(ConversationsSelectors.selectCanAttachFolders) &&
     !forceHideSelectFolders;
+  const lastRenamedParentFolder = useAppSelector(
+    FilesSelectors.selectLastRenamedParentFolder,
+  );
 
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
@@ -225,6 +232,41 @@ export const FileManagerModal = ({
   );
   const [deletingFileIds, setDeletingFileIds] = useState<string[]>([]);
   const [deletingFolderIds, setDeletingFolderIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (lastRenamedParentFolder?.newId) {
+      setSelectedFilesIds((prev) =>
+        prev.map((id) => {
+          if (id.startsWith(`${lastRenamedParentFolder.oldId}/`)) {
+            return updateMovedEntityId(
+              lastRenamedParentFolder.oldId,
+              lastRenamedParentFolder.newId,
+              id,
+            );
+          }
+          return id;
+        }),
+      );
+      setOpenedFoldersIds((prev) =>
+        prev.map((id) => {
+          if (id === lastRenamedParentFolder.oldId)
+            return lastRenamedParentFolder.newId;
+          if (id.startsWith(`${lastRenamedParentFolder.oldId}/`))
+            return updateMovedFolderId(
+              lastRenamedParentFolder.oldId,
+              lastRenamedParentFolder.newId,
+              id,
+            );
+          return id;
+        }),
+      );
+      dispatch(FilesActions.resetLastRenamedParentFolder());
+    }
+  }, [
+    dispatch,
+    lastRenamedParentFolder?.newId,
+    lastRenamedParentFolder?.oldId,
+  ]);
 
   const highlightFolderIds = useMemo(() => {
     return uniq(

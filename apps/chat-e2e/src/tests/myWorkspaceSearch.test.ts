@@ -571,12 +571,12 @@ dialTest(
           .getVersionDropdownMenu()
           .selectMenuOption(sortedVersions[1]);
         await baseAssertion.assertElementState(
-          agentDetailsModal.transparentBookmarkIcon,
+          agentDetailsModal.addBookmarkIcon,
           'visible',
         );
         await agentDetailsModal.addAgentToWorkspace();
         await baseAssertion.assertElementState(
-          agentDetailsModal.filledBookmarkIcon,
+          agentDetailsModal.removeBookmarkIcon,
           'visible',
         );
         await baseAssertion.assertElementText(
@@ -645,12 +645,12 @@ dialTest(
           .getVersionDropdownMenu()
           .selectMenuOption(sortedVersions[0]);
         await baseAssertion.assertElementState(
-          agentDetailsModal.transparentBookmarkIcon,
+          agentDetailsModal.addBookmarkIcon,
           'visible',
         );
         await agentDetailsModal.addAgentToWorkspace();
         await baseAssertion.assertElementState(
-          agentDetailsModal.filledBookmarkIcon,
+          agentDetailsModal.removeBookmarkIcon,
           'visible',
         );
         await baseAssertion.assertElementText(
