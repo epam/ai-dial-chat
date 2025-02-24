@@ -6,16 +6,14 @@ import {
 } from 'react-hook-form';
 
 import {
-  createQuickAppConfig,
   getModelDescription,
   getQuickAppConfig,
   getQuickAppDocumentUrl,
   getToolsetStr,
 } from '@/src/utils/app/application';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
-import { constructPath, notAllowedSymbols } from '@/src/utils/app/file';
+import { notAllowedSymbols } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
-import { ApiUtils } from '@/src/utils/server/api';
 
 import {
   ApplicationType,
@@ -37,9 +35,8 @@ import {
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
 import { DEFAULT_VERSION } from '@/src/constants/public';
 import {
-  DEFAULT_QUICK_APPS_HOST,
-  DEFAULT_QUICK_APPS_MODEL,
-  DEFAULT_QUICK_APPS_SCHEMA_ID,
+  // DEFAULT_QUICK_APPS_HOST,
+  DEFAULT_QUICK_APPS_MODEL, // DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
 
 import { DynamicField } from '@/src/components/Common/Forms/DynamicFormFields';
@@ -373,6 +370,7 @@ export const getApplicationData = (
   const preparedData: Omit<CustomApplicationModel, 'id' | 'reference'> = {
     name: formData.name.trim(),
     type: EntityType.Application,
+    applicationProperties: undefined,
     isDefault: false,
     folderId: '',
     topics: formData.topics,
@@ -390,25 +388,25 @@ export const getApplicationData = (
       ? JSON.parse(formData.features)
       : null;
   }
-  if (type === ApplicationType.QUICK_APP) {
-    preparedData.applicationTypeSchemaId = DefaultsService.get(
-      'quickAppsSchemaId',
-      DEFAULT_QUICK_APPS_SCHEMA_ID,
-    );
-    preparedData.applicationProperties = createQuickAppConfig({
-      config: formData.toolset,
-      instructions: formData.instructions ?? '',
-      temperature: formData.temperature,
-      model: formData.model,
-      document_relative_url: formData.documentRelativeUrl,
-    });
-    preparedData.completionUrl = constructPath(
-      DefaultsService.get('quickAppsHost', DEFAULT_QUICK_APPS_HOST),
-      'openai/deployments',
-      ApiUtils.safeEncodeURIComponent(formData.name.trim()),
-      'chat/completions',
-    );
-  }
+  // if (type === ApplicationType.QUICK_APP) {
+  //   preparedData.applicationTypeSchemaId = DefaultsService.get(
+  //     'quickAppsSchemaId',
+  //     DEFAULT_QUICK_APPS_SCHEMA_ID,
+  //   );
+  //   preparedData.applicationProperties = createQuickAppConfig({
+  //     config: formData.toolset,
+  //     instructions: formData.instructions ?? '',
+  //     temperature: formData.temperature,
+  //     model: formData.model,
+  //     document_relative_url: formData.documentRelativeUrl,
+  //   });
+  //   preparedData.completionUrl = constructPath(
+  //     DefaultsService.get('quickAppsHost', DEFAULT_QUICK_APPS_HOST),
+  //     'openai/deployments',
+  //     ApiUtils.safeEncodeURIComponent(formData.name.trim()),
+  //     'chat/completions',
+  //   );
+  // }
 
   if (type === ApplicationType.CODE_APP) {
     preparedData.function = {

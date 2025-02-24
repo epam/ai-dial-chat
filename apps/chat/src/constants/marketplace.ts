@@ -65,9 +65,7 @@ export const SourceTypeFilterOrder = {
 
 export const ApplicationTypeToSourceType = {
   [ApplicationType.CODE_APP]: SourceType.MyCodeApps,
-  [ApplicationType.QUICK_APP]: SourceType.MyQuickApps,
   [ApplicationType.CUSTOM_APP]: SourceType.MyCustomApps,
-  [ApplicationType.MINDMAP]: SourceType.MyMindMaps,
 };
 
 interface IconSize {

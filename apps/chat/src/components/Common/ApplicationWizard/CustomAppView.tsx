@@ -111,7 +111,7 @@ export const CustomAppView: React.FC<ViewProps> = ({
         }),
       );
     } else {
-      dispatch(ApplicationActions.create(preparedData));
+      dispatch(ApplicationActions.create({ applicationData: preparedData }));
     }
 
     onClose(true);
