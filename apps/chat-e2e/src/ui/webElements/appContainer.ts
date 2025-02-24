@@ -1,3 +1,5 @@
+import { Header } from './header';
+
 import { Banner } from '@/src/ui/webElements/banner';
 import { BaseLayoutContainer } from '@/src/ui/webElements/baseLayoutContainer';
 import { Chat } from '@/src/ui/webElements/chat';
@@ -7,7 +9,7 @@ import { ImportExportLoader } from '@/src/ui/webElements/importExportLoader';
 import { PromptBar } from '@/src/ui/webElements/promptBar';
 import { Toast } from '@/src/ui/webElements/toast';
 
-export class AppContainer extends BaseLayoutContainer {
+export class AppContainer extends BaseLayoutContainer<Header> {
   private banner!: Banner;
   private chat!: Chat;
   private chatBar!: ChatBar;
@@ -15,6 +17,13 @@ export class AppContainer extends BaseLayoutContainer {
   private chatLoader!: ChatLoader;
   private importExportLoader!: ImportExportLoader;
   private toast!: Toast;
+
+  getHeader(): Header {
+    if (!this.header) {
+      this.header = new Header(this.page, this.rootLocator);
+    }
+    return this.header;
+  }
 
   getBanner(): Banner {
     if (!this.banner) {

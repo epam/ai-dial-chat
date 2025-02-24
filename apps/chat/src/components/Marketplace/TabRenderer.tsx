@@ -26,6 +26,7 @@ import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MarketplaceActions,
@@ -270,6 +271,9 @@ export const TabRenderer = () => {
     MarketplaceSelectors.selectSelectedViewType,
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const applicationTypeSchemas = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectAllSchemas,
+  );
 
   const [suggestedResults, setSuggestedResults] = useState<DialAIEntityModel[]>(
     [],
@@ -307,7 +311,11 @@ export const TabRenderer = () => {
     const filteredEntities = allModels.filter(
       (entity) =>
         doesApplicationMatchSearchTerm(entity, searchTerm) &&
-        doesApplicationMatchFilters(entity, selectedFilters),
+        doesApplicationMatchFilters(
+          entity,
+          selectedFilters,
+          applicationTypeSchemas,
+        ),
     );
 
     const isInstalledModel = (entity: DialAIEntityModel) =>
@@ -360,25 +368,25 @@ export const TabRenderer = () => {
     searchTerm,
     selectedFilters,
     installedModelIds,
+    applicationTypeSchemas,
   ]);
 
-  const handleAddApplication = useCallback((type: ApplicationType) => {
-    setApplicationModel({
-      action: ApplicationActionType.ADD,
-      type,
-    });
-  }, []);
+  const detailedApplicationTypeSchema = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
+  );
 
   const handleEditApplication = useCallback(
     (entity: DialAIEntityModel) => {
-      dispatch(ApplicationActions.get({ applicationId: entity.id }));
-      setApplicationModel({
-        entity,
-        action: ApplicationActionType.EDIT,
-        type: getApplicationType(entity),
-      });
+      const applicationType = getApplicationType(entity);
+      dispatch(
+        ApplicationActions.enterEditMode({
+          entity: entity,
+          applicationType,
+          detailedApplicationTypeSchemaId: detailedApplicationTypeSchema?.$id,
+        }),
+      );
     },
-    [dispatch],
+    [dispatch, detailedApplicationTypeSchema],
   );
 
   const handleDeleteClose = useCallback(

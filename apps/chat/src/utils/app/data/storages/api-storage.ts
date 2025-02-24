@@ -14,6 +14,7 @@ import { generateNextName } from '@/src/utils/app/folders';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
 import { ApiUtils, parseApplicationApiKey } from '@/src/utils/server/api';
 
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
   ApplicationInfo,
   ApplicationLogsType,
@@ -280,14 +281,16 @@ export class ApiStorage implements DialStorage {
 
   createApplication(
     application: CustomApplicationModel,
+    schema: ApiDetailedApplicationTypeSchema,
   ): Observable<ApplicationInfo> {
-    return this._applicationApiStorage.createEntity(application);
+    return this._applicationApiStorage.createEntity(application, schema);
   }
 
   updateApplication(
     application: CustomApplicationModel,
+    schema?: ApiDetailedApplicationTypeSchema,
   ): Observable<ApplicationInfo> {
-    return this._applicationApiStorage.updateEntity(application);
+    return this._applicationApiStorage.updateEntity(application, schema);
   }
   getApplication(
     applicationId: string,
@@ -310,6 +313,13 @@ export class ApiStorage implements DialStorage {
     return this._applicationApiStorage.toggleApplicationStatus(
       applicationId,
       SimpleApplicationStatus.DEPLOY,
+    );
+  }
+
+  redeployApplication(applicationId: string): Observable<void> {
+    return this._applicationApiStorage.toggleApplicationStatus(
+      applicationId,
+      SimpleApplicationStatus.REDEPLOY,
     );
   }
 

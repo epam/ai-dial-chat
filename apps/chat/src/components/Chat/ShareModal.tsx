@@ -82,7 +82,6 @@ export function ShareModalView() {
   const shareResourceName = useAppSelector(
     ShareSelectors.selectShareResourceName,
   );
-
   const shareFeatureType = useAppSelector(
     ShareSelectors.selectShareFeatureType,
   );
