@@ -329,9 +329,9 @@ export const getQuickAppData = (
       temperature: formData.temperature,
       web_api_toolset: JSON.parse(formData.toolset),
       model: formData.model,
-      document_relative_url: ApiUtils.encodeApiUrl(
-        formData.documentRelativeUrl as string,
-      ),
+      document_relative_url: formData.documentRelativeUrl
+        ? ApiUtils.encodeApiUrl(formData.documentRelativeUrl as string)
+        : undefined,
     },
     completionUrl: constructPath(
       DefaultsService.get('quickAppsHost', DEFAULT_QUICK_APPS_HOST),
