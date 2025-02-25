@@ -1,7 +1,7 @@
 import { CustomVisualizer } from '@/src/types/custom-visualizers';
 import { StorageType } from '@/src/types/storage';
 
-import { Feature } from '@epam/ai-dial-shared';
+import { Feature, UploadStatus } from '@epam/ai-dial-shared';
 
 export interface Settings {
   theme: string;
@@ -39,4 +39,6 @@ export interface SettingsState {
   quickAppsSchemaId?: string;
   dialApiHost?: string;
   defaultSystemPrompt?: string;
+  providerId: string | null;
+  initialDataStatus?: UploadStatus;
 }

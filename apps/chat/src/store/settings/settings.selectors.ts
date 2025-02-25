@@ -235,6 +235,13 @@ const selectDefaults = createSelector(
       defaultSystemPrompt,
     }) as Defaults,
 );
+const selectInitialDataStatus = createSelector([rootSelector], (state) => {
+  return state.initialDataStatus;
+});
+
+const selectProviderId = createSelector([rootSelector], (state) => {
+  return state.providerId;
+});
 
 export const SettingsSelectors = {
   selectAppName,
@@ -265,4 +272,6 @@ export const SettingsSelectors = {
   selectCodeEditorPythonVersions,
   selectOverlayDefaultModelId,
   selectDefaults,
+  selectInitialDataStatus,
+  selectProviderId,
 };

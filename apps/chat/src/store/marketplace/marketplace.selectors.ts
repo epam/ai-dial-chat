@@ -8,8 +8,8 @@ import {
 import { pluralizeDisplayName } from '@/src/utils/app/application-type-schema';
 import { isMyApplication } from '@/src/utils/app/id';
 
-import { MarketplaceState } from '@/src/types/marketplace';
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
+import { MarketplaceState } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
 
 import {

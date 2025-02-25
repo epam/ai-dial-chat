@@ -6,6 +6,8 @@ import { StorageType } from '@/src/types/storage';
 
 import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
+import { UploadStatus } from '@epam/ai-dial-shared';
+
 const initialState: SettingsState = {
   appName: 'AI Dial',
   isOverlay: false,
@@ -27,9 +29,6 @@ const initialState: SettingsState = {
   providerId: null,
   initialDataStatus: UploadStatus.UNINITIALIZED,
 };
-// TODO: update state type after merge
-// providerId: string | null;
-// initialDataStatus?: UploadStatus;
 
 export const settingsSlice = createSlice({
   name: 'settings',
@@ -131,13 +130,6 @@ export const settingsSlice = createSlice({
     },
   },
 });
-
-// const selectInitialDataStatus = createSelector([rootSelector], (state) => {
-//   return state.initialDataStatus;
-// });
-// const selectProviderId = createSelector([rootSelector], (state) => {
-//   return state.providerId;
-// });
 
 export { SettingsSelectors } from './settings.selectors';
 

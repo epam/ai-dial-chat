@@ -18,18 +18,6 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { UploadStatus } from '@epam/ai-dial-shared';
 import uniqBy from 'lodash-es/uniqBy';
 
-// TODO: update state types after merge
-//
-// export interface ApplicationState {
-//   appLoading: UploadStatus;
-//   logsLoadingStatus: UploadStatus;
-//   appDetails: CustomApplicationModel | undefined;
-//   appLogs: ApplicationLogsType | undefined;
-//   shouldSaveApplication?: boolean;
-//   exitAfterSave?: boolean;
-//   publicFolders: FolderInterface[];
-// }
-
 const initialState: ApplicationState = {
   appLoading: UploadStatus.UNINITIALIZED,
   logsLoadingStatus: UploadStatus.UNINITIALIZED,
