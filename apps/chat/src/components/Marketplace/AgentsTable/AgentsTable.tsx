@@ -163,7 +163,8 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
     useSyncXScroll(rightColumnHeaderRef, rightColumnDataRef);
 
     const allEntities = useMemo(() => {
-      const sortField = sortKeyMap[tableSort.column] || 'name';
+      const sortField =
+        sortKeyMap[tableSort.column] || sortKeyMap[TableColumnSortKeys.NAME];
       const sortedEntities = orderBy(entities, [sortField], [tableSort.order]);
       const sortedSuggestedEntities = orderBy(
         suggestedResults,
