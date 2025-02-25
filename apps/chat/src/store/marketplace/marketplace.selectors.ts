@@ -19,7 +19,7 @@ import {
 } from '@/src/constants/marketplace';
 
 import { ApplicationTypesSchemasSelectors } from '../applicationTypeSchemas/applicationTypeSchemas.reducer';
-import { RootState } from '../index';
+import { RootState } from '@/src/types/store';
 import { ModelsSelectors } from '../models/models.reducers';
 
 import { UploadStatus } from '@epam/ai-dial-shared';

@@ -11,7 +11,7 @@ import {
   PublicationState,
 } from '@/src/types/publication';
 
-import { RootState } from '../index';
+import { RootState } from '@/src/types/store';
 
 import { ShareEntity, UploadStatus } from '@epam/ai-dial-shared';
 

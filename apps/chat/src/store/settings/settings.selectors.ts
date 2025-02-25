@@ -12,7 +12,7 @@ import {
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
 
-import { RootState } from '@/src/store';
+import { RootState } from '@/src/types/store';
 import { Feature } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 

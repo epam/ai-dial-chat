@@ -4,7 +4,7 @@ import { ModalState } from '@/src/types/modal';
 
 import { ChatState } from '@/src/store/chat/chat.reducer';
 
-import { RootState } from '@/src/store';
+import { RootState } from '@/src/types/store';
 import { DialSchemaProperties } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState): ChatState => state.chat;

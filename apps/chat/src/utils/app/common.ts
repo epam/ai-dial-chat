@@ -13,7 +13,6 @@ import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
 import { NA_VERSION } from '@/src/constants/public';
 
 import { getPublicItemIdWithoutVersion } from '../server/api';
-import { doesEntityContainSearchTerm } from './search';
 
 import { Entity, ShareEntity } from '@epam/ai-dial-shared';
 import groupBy from 'lodash-es/groupBy';
@@ -159,9 +158,6 @@ export const prepareEntityName = (
     ? trimEndDots(additionalCuttedResult)
     : additionalCuttedResult.trim();
 };
-
-export const isSearchTermMatched = (entity: ShareEntity, searchTerm?: string) =>
-  !searchTerm || doesEntityContainSearchTerm(entity, searchTerm);
 
 export const isSearchFilterMatched = (
   entity: ShareEntity,

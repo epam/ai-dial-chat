@@ -4,6 +4,7 @@ import { fromFetch } from 'rxjs/fetch';
 import {
   isPlaybackConversation,
   isReplayConversation,
+  splitEntityId,
 } from '@/src/utils/app/shared-utils';
 import { ServerUtils } from '@/src/utils/server/server';
 
@@ -16,8 +17,6 @@ import { PromptInfo } from '@/src/types/prompt';
 import { EMPTY_MODEL_ID } from '@/src/constants/default-ui-settings';
 import { NA_VERSION } from '@/src/constants/public';
 import { validVersionRegEx } from '@/src/constants/versions';
-
-import { splitEntityId } from '../app/folders';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
 

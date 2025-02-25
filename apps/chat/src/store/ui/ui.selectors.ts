@@ -5,7 +5,7 @@ import { UIState } from '@/src/types/ui';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
-import { RootState } from '@/src/store';
+import { RootState } from '@/src/types/store';
 import { Feature } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState): UIState => state.ui;

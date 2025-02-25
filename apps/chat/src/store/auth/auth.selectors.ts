@@ -5,7 +5,7 @@ import { isClientSessionValid } from '@/src/utils/auth/session';
 import { AuthState } from '@/src/types/auth';
 import { SettingsState } from '@/src/types/settings';
 
-import { RootState } from '@/src/store';
+import { RootState } from '@/src/types/store';
 
 const settingsSelector = (state: RootState): SettingsState => state.settings;
 

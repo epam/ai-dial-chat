@@ -4,7 +4,7 @@ import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
 import { EntityType } from '@/src/types/common';
 
-import { RootState } from '../index';
+import { RootState } from '@/src/types/store';
 import { ModelsState } from './models.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
