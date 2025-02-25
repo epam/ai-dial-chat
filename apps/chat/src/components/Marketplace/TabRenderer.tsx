@@ -285,6 +285,12 @@ export const TabRenderer = () => {
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
+  const detailedApplicationTypeSchema = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
+  );
+  const isBannerVisible = useAppSelector(
+    MarketplaceSelectors.selectIsBannerVisible,
+  );
 
   const [suggestedResults, setSuggestedResults] = useState<DialAIEntityModel[]>(
     [],
@@ -381,10 +387,6 @@ export const TabRenderer = () => {
     installedModelIds,
     applicationTypeSchemas,
   ]);
-
-  const detailedApplicationTypeSchema = useAppSelector(
-    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
-  );
 
   const handleEditApplication = useCallback(
     (entity: DialAIEntityModel) => {
@@ -519,8 +521,22 @@ export const TabRenderer = () => {
         )}
         data-qa="marketplace-header"
       >
-        <MarketplaceBanner />
-        <div className="flex items-center justify-end gap-2 md:mt-4 md:gap-4 xl:mt-6">
+        <div
+          className={classNames(
+            'w-full transition-all duration-500',
+            isBannerVisible
+              ? 'max-h-[104px] translate-y-0'
+              : 'max-h-0 translate-y-[-150px]',
+          )}
+        >
+          <MarketplaceBanner />
+        </div>
+        <div
+          className={classNames(
+            'flex items-center justify-end gap-2 transition-all duration-500 md:gap-4',
+            isBannerVisible ? 'md:mt-4 xl:mt-6' : 'm-0',
+          )}
+        >
           <SearchHeader />
         </div>
       </header>
