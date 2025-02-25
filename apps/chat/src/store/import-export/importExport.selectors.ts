@@ -1,8 +1,8 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 import { ImportExportState } from '@/src/types/import-export';
-
 import { RootState } from '@/src/types/store';
+
 import { UploadStatus } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState): ImportExportState =>

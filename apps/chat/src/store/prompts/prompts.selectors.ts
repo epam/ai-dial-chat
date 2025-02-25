@@ -27,6 +27,7 @@ import { translate } from '@/src/utils/app/translation';
 
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
+import { RootState } from '@/src/types/store';
 
 import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 
@@ -35,7 +36,6 @@ import {
   DEFAULT_PROMPT_NAME,
 } from '@/src/constants/default-ui-settings';
 
-import { RootState } from '@/src/types/store';
 import { PromptsState } from './prompts.types';
 
 import { ShareEntity } from '@epam/ai-dial-shared';

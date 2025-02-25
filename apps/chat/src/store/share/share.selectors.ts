@@ -1,8 +1,8 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 import { ModalState } from '@/src/types/modal';
-
 import { RootState } from '@/src/types/store';
+
 import { ShareState } from './share.types';
 
 const rootSelector = (state: RootState): ShareState => state.share;

@@ -1,7 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 import { CodeEditorState } from '@/src/types/code-editor';
-
 import { RootState } from '@/src/types/store';
 
 import { UploadStatus } from '@epam/ai-dial-shared';

@@ -11,6 +11,7 @@ import { isMyApplication } from '@/src/utils/app/id';
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { MarketplaceState } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
+import { RootState } from '@/src/types/store';
 
 import {
   ApplicationTypeToSourceType,
@@ -19,7 +20,6 @@ import {
 } from '@/src/constants/marketplace';
 
 import { ApplicationTypesSchemasSelectors } from '../applicationTypeSchemas/applicationTypeSchemas.reducer';
-import { RootState } from '@/src/types/store';
 import { ModelsSelectors } from '../models/models.reducers';
 
 import { UploadStatus } from '@epam/ai-dial-shared';

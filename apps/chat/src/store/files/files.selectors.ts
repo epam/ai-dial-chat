@@ -9,8 +9,8 @@ import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 
 import { FilesState } from '@/src/types/files';
 import { EntityFilters } from '@/src/types/search';
-
 import { RootState } from '@/src/types/store';
+
 import { UploadStatus } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState): FilesState => state.files;

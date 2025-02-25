@@ -39,11 +39,7 @@ import {
   getParentFolderIdsFromFolderId,
   sortByName,
 } from '@/src/utils/app/folders';
-import {
-  getIdWithoutRootPathSegments,
-  isEntityIdExternal,
-  isRootId,
-} from '@/src/utils/app/id';
+import { isEntityIdExternal, isRootId } from '@/src/utils/app/id';
 import {
   hasParentWithAttribute,
   hasParentWithFloatingOverlay,
@@ -61,6 +57,7 @@ import { Conversation } from '@/src/types/chat';
 import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
+import { PublicationFolderPayload } from '@/src/types/modal';
 import { PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
@@ -76,7 +73,6 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 
-import { PublishModal } from '../Chat/Publish/PublishWizard';
 import { ReviewDot } from '../Chat/Publish/ReviewDot';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { FolderContextMenu } from '../Common/FolderContextMenu';
@@ -131,8 +127,15 @@ export interface FolderProps<T, P = unknown> {
   noCaretIcon?: boolean;
   canSelectFolders?: boolean;
   isSelectAlwaysVisible?: boolean;
+  isUnpublishing?: boolean;
   showTooltip?: boolean;
   onShowError?: (error: string) => void;
+  onPublication?: ({
+    entity,
+    entities,
+    type,
+    action,
+  }: PublicationFolderPayload) => void;
 }
 
 const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
@@ -169,8 +172,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   noCaretIcon = false,
   canSelectFolders = false,
   isSelectAlwaysVisible = false,
+  isUnpublishing = false,
   showTooltip,
   onShowError,
+  onPublication,
 }: FolderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -191,8 +196,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const [isContextMenu, setIsContextMenu] = useState(false);
   const [isConfirmRenaming, setIsConfirmRenaming] = useState(false);
   const dragDropElement = useRef<HTMLDivElement>(null);
-  const [isPublishing, setIsPublishing] = useState(false);
-  const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
   const [isPartialSelected, setIsPartialSelected] = useState(false);
@@ -340,6 +343,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const handleOpenPublishing: MouseEventHandler = useCallback(
     (e) => {
       e.stopPropagation();
+      if (!isPublishingEnabled) return;
 
       if (
         featureType === FeatureType.Chat &&
@@ -353,19 +357,30 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         );
       }
 
-      setIsPublishing(true);
+      onPublication?.({
+        entity: currentFolder,
+        entities: allChildItems as ShareEntity[],
+        type:
+          featureType === FeatureType.Prompt
+            ? SharingType.PromptFolder
+            : SharingType.ConversationFolder,
+        action: PublishActions.ADD,
+      });
     },
-    [allChildItems, currentFolder.id, dispatch, featureType],
+    [
+      allChildItems,
+      currentFolder,
+      dispatch,
+      featureType,
+      isPublishingEnabled,
+      onPublication,
+    ],
   );
-
-  const handleClosePublishModal = useCallback(() => {
-    setIsPublishing(false);
-    setIsUnpublishing(false);
-  }, []);
 
   const handleOpenUnpublishing: MouseEventHandler = useCallback(
     (e) => {
       e.stopPropagation();
+      if (!isPublishingEnabled) return;
 
       if (featureType === FeatureType.Chat) {
         dispatch(
@@ -375,9 +390,24 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         );
       }
 
-      setIsUnpublishing(true);
+      onPublication?.({
+        entity: currentFolder,
+        entities: allChildItems as ShareEntity[],
+        type:
+          featureType === FeatureType.Prompt
+            ? SharingType.PromptFolder
+            : SharingType.ConversationFolder,
+        action: PublishActions.DELETE,
+      });
     },
-    [currentFolder.id, dispatch, featureType],
+    [
+      allChildItems,
+      currentFolder,
+      dispatch,
+      featureType,
+      isPublishingEnabled,
+      onPublication,
+    ],
   );
 
   const isFolderOpened = useMemo(() => {
@@ -1203,6 +1233,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 <Fragment key={item.id}>
                   <div className="h-1"></div>
                   <Folder
+                    onPublication={onPublication}
                     folderClassName={folderClassName}
                     noCaretIcon={noCaretIcon}
                     readonly={readonly}
@@ -1273,28 +1304,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               onDeleteFolder(currentFolder.id);
             }
           }}
-        />
-      )}
-      {(isPublishing || isUnpublishing) && isPublishingEnabled && (
-        <PublishModal
-          entity={currentFolder}
-          entities={allChildItems as ShareEntity[]}
-          type={
-            featureType === FeatureType.Prompt
-              ? SharingType.PromptFolder
-              : SharingType.ConversationFolder
-          }
-          isOpen={isPublishing || isUnpublishing}
-          onClose={handleClosePublishModal}
-          depth={getFoldersDepth(currentFolder, allFolders)}
-          publishAction={
-            isPublishing ? PublishActions.ADD : PublishActions.DELETE
-          }
-          defaultPath={
-            isUnpublishing && !isRootId(currentFolder.folderId)
-              ? getIdWithoutRootPathSegments(currentFolder.folderId)
-              : undefined
-          }
         />
       )}
       {isUnshareConfirmOpened && (

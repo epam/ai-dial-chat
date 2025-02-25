@@ -1,9 +1,11 @@
 // SHARED UTILS (do not import other utils)
+import { constructPath } from '@/src/utils/app/file';
+
 import { Conversation } from '@/src/types/chat';
 
-import { ConversationInfo } from '@epam/ai-dial-shared';
-import { constructPath } from '@/src/utils/app/file';
 import { ROOT_SECTION_NAME } from '@/src/constants/sections';
+
+import { ConversationInfo } from '@epam/ai-dial-shared';
 
 export const isPlaybackConversation = (conversation: ConversationInfo) =>
   (conversation as Conversation).playback?.isPlayback ??

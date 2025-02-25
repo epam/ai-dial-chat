@@ -50,13 +50,13 @@ import { Conversation } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
 import { DialAIEntityModel } from '@/src/types/models';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
+import { RootState } from '@/src/types/store';
 
 import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import { ChatSelectors } from '../chat/chat.selectors';
-import { RootState } from '@/src/types/store';
 import { ModelsSelectors } from '../models/models.reducers';
 import { SettingsSelectors } from '../settings/settings.reducers';
 import { ConversationsState } from './conversations.types';
