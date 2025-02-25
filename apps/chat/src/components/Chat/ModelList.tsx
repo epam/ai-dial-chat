@@ -348,16 +348,12 @@ export const ModelList = ({
     };
   }, [currentEntity]);
 
-  const handleOpenApplicationModal = useCallback((type: ApplicationType) => {
-    setApplicationModal({ type });
-  }, []);
-
   const handleEdit = useCallback(
     (currentEntity: DialAIEntityModel) => {
       dispatch(ApplicationActions.get({ applicationId: currentEntity.id }));
-      handleOpenApplicationModal(getApplicationType(currentEntity));
+      getApplicationType(currentEntity);
     },
-    [dispatch, handleOpenApplicationModal],
+    [dispatch],
   );
 
   const handleOpenDeleteConfirmModal = useCallback(() => {

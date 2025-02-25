@@ -128,6 +128,8 @@ export interface SelectOption<L, V> {
 export enum PageType {
   Chat = 'chat',
   Marketplace = 'marketplace',
+  AppsEditorSettings = 'application-settings',
+  AppsEditorGeneralInfo = 'application-general-info',
 }
 
 export enum ScreenState {

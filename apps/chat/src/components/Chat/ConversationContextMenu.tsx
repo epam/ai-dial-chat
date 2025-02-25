@@ -32,6 +32,7 @@ import { ContextMenuProps } from '@/src/types/menu';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
+import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { ChatActions } from '@/src/store/chat/chat.reducer';
 import {
   ConversationsActions,
@@ -39,6 +40,7 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
@@ -91,6 +93,11 @@ export const ConversationContextMenu = ({
         true,
       ),
     [],
+  );
+
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const applicationTypeSchemas = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
 
   const folders = useAppSelector(selectFilteredFoldersSelector);
@@ -355,6 +362,13 @@ export const ConversationContextMenu = ({
     dispatch(ConversationsActions.setRenamingConversationId(conversation.id));
   }, [conversation, dispatch]);
 
+  const isCustomViewerApplication = useMemo(() => {
+    return !!applicationTypeSchemas.find(
+      (schema) =>
+        schema.id === modelsMap[conversation.model.id]?.applicationTypeSchemaId,
+    )?.viewerUrl;
+  }, [conversation.model.id, modelsMap, applicationTypeSchemas]);
+
   const handleOpenInfoModal = useCallback(() => {
     const { id, updatedAt, createdAt, author, sharedWithMe } = conversation;
 
@@ -387,11 +401,21 @@ export const ConversationContextMenu = ({
           onRename={handleOpenRenameModal}
           onExport={handleExport}
           onOpenExportModal={handleOpenExportModal}
-          onCompare={!isReplay && !isPlayback ? handleCompare : undefined}
+          onCompare={
+            !isReplay && !isPlayback && !isCustomViewerApplication
+              ? handleCompare
+              : undefined
+          }
           onDuplicate={handleDuplicate}
-          onReplay={!isReplay && !isPlayback ? handleStartReplay : undefined}
+          onReplay={
+            !isReplay && !isPlayback && !isCustomViewerApplication
+              ? handleStartReplay
+              : undefined
+          }
           onPlayback={
-            !isReplay && !isPlayback ? handleCreatePlayback : undefined
+            !isReplay && !isPlayback && !isCustomViewerApplication
+              ? handleCreatePlayback
+              : undefined
           }
           onShare={!isReplay ? handleOpenSharing : undefined}
           onUnshare={!isReplay ? handleUnshare : undefined}

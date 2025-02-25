@@ -47,6 +47,16 @@ const selectApplicationLogs = createSelector([rootSelector], (state) => {
     .join('');
 });
 
+const selectShouldSaveApplication = createSelector(
+  [rootSelector],
+  (state) => state.shouldSaveApplication,
+);
+
+const selectExitAfterSave = createSelector(
+  [rootSelector],
+  (state) => state.exitAfterSave,
+);
+
 const selectPublicFolders = (state: RootState) =>
   rootSelector(state).publicFolders;
 
@@ -55,6 +65,8 @@ export const ApplicationSelectors = {
   selectIsApplicationLoading,
   selectIsLogsLoading,
   selectApplicationDetail,
+  selectShouldSaveApplication,
+  selectExitAfterSave,
   selectApplicationLogs,
   selectPublicFolders,
 };

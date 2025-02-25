@@ -240,6 +240,20 @@ export const modelsSlice = createSlice({
       );
       state.modelsMap = omit(state.modelsMap, [...payload.references, ...ids]);
     },
+    deleteSharedWithMeModel: (
+      state,
+      { payload }: PayloadAction<{ modelId: string }>,
+    ) => {
+      const modelReference = state.modelsMap[payload.modelId]?.reference;
+
+      state.models = state.models.filter(
+        (model) => model.id !== payload.modelId,
+      );
+      state.recentModelsIds = state.recentModelsIds.filter(
+        (id) => id !== modelReference,
+      );
+      state.modelsMap = omit(state.modelsMap, payload.modelId);
+    },
     addPublishRequestModels: (
       state,
       {

@@ -19,12 +19,14 @@ export enum ApplicationStatus {
   UNDEPLOYED = 'UNDEPLOYED',
   UNDEPLOYING = 'UNDEPLOYING',
   FAILED = 'FAILED',
+  REDEPLOYING = 'REDEPLOYING',
 }
 
 export enum SimpleApplicationStatus {
   DEPLOY = 'deploy',
   UNDEPLOY = 'undeploy',
   UPDATING = 'updating',
+  REDEPLOY = 'redeploy',
 }
 
 export interface ApiApplicationFunctionType {
@@ -84,6 +86,11 @@ export interface ApiApplicationModelBase {
   applicationProperties?: QuickAppConfig | Record<string, unknown>;
 }
 
+export interface ApiTypeSchemaApplication extends ApiApplicationModelBase {
+  application_type_schema_id: string;
+  application_properties: Record<string, any> | null;
+}
+
 export interface ApiApplicationModelRegular extends ApiApplicationModelBase {
   endpoint: string;
   function?: never;
@@ -101,6 +108,7 @@ export interface ApiApplicationModelFunction extends ApiApplicationModelBase {
 
 export type ApiApplicationModel =
   | ApiApplicationModelRegular
+  | ApiTypeSchemaApplication
   | ApiApplicationModelFunction
   | ApiApplicationModelSchema;
 
@@ -111,6 +119,7 @@ export interface CustomApplicationModel
   extends DialAIEntityModel,
     ApplicationInfo {
   completionUrl: string;
+  applicationTypeSchemaId?: string;
   function?: {
     status?: ApplicationStatus;
     runtime?: string;
@@ -133,7 +142,5 @@ export enum ApplicationActionType {
 
 export enum ApplicationType {
   CUSTOM_APP = 'application',
-  QUICK_APP = 'quick app',
   CODE_APP = 'code app',
-  MINDMAP = 'mindmap',
 }

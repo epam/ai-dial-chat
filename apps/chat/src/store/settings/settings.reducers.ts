@@ -24,7 +24,12 @@ const initialState: SettingsState = {
   defaultAssistantSubmodelId: FALLBACK_ASSISTANT_SUBMODEL_ID,
   topics: [],
   codeEditorPythonVersions: [],
+  providerId: null,
+  initialDataStatus: UploadStatus.UNINITIALIZED,
 };
+// TODO: update state type after merge
+// providerId: string | null;
+// initialDataStatus?: UploadStatus;
 
 export const settingsSlice = createSlice({
   name: 'settings',
@@ -118,8 +123,21 @@ export const settingsSlice = createSlice({
     setIsSignInInSameWindow: (state, { payload }: PayloadAction<boolean>) => {
       state.isSignInInSameWindow = payload;
     },
+    initStart: (state) => {
+      state.initialDataStatus = UploadStatus.LOADING;
+    },
+    initComplete: (state) => {
+      state.initialDataStatus = UploadStatus.LOADED;
+    },
   },
 });
+
+// const selectInitialDataStatus = createSelector([rootSelector], (state) => {
+//   return state.initialDataStatus;
+// });
+// const selectProviderId = createSelector([rootSelector], (state) => {
+//   return state.providerId;
+// });
 
 export { SettingsSelectors } from './settings.selectors';
 
