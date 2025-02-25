@@ -1,4 +1,10 @@
-import { FilterTypes } from '../constants/marketplace';
+import {
+  FilterTypes,
+  MarketplaceTabs,
+  ViewTypes,
+} from '../constants/marketplace';
+
+import { UploadStatus } from '@epam/ai-dial-shared';
 
 export interface MarketplaceFilters {
   [FilterTypes.ENTITY_TYPE]: string[];
@@ -6,4 +12,14 @@ export interface MarketplaceFilters {
   [FilterTypes.SOURCES]: string[];
   // [FilterTypes.CAPABILITIES]: string[];
   // [FilterTypes.ENVIRONMENT]: string[];
+}
+
+export interface MarketplaceState {
+  selectedFilters: MarketplaceFilters;
+  searchTerm: string;
+  selectedTab: MarketplaceTabs;
+  applyModelStatus: UploadStatus;
+  selectedView: ViewTypes;
+  applyModelId?: string;
+  detailsModel: { reference: string; isSuggested: boolean } | undefined;
 }

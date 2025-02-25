@@ -117,7 +117,8 @@ import { defaultReplay } from '@/src/constants/replay';
 import { CONVERSATIONS_DATE_SECTIONS } from '@/src/constants/sections';
 import { SHARE_QUERY_PARAM } from '@/src/constants/share';
 
-import { AddonsActions, AddonsSelectors } from '../addons/addons.reducers';
+import { AddonsActions } from '../addons/addons.reducers';
+import { AddonsSelectors } from '../addons/addons.selectors';
 import { ChatActions } from '../chat/chat.reducer';
 import { FilesActions } from '../files/files.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';

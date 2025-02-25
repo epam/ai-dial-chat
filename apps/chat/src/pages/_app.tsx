@@ -7,7 +7,7 @@ import { appWithTranslation } from 'next-i18next';
 import type { AppProps } from 'next/app';
 import { Inconsolata, Inter } from 'next/font/google';
 
-import { SettingsState } from '@/src/store/settings/settings.reducers';
+import { SettingsState } from '@/src/types/settings';
 
 import Layout from '../components/Layout';
 import { Toasts } from '../components/Toasts/Toasts';

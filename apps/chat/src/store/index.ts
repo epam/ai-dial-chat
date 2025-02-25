@@ -15,6 +15,8 @@ import {
   createEpicMiddleware,
 } from 'redux-observable';
 
+import { SettingsState } from '@/src/types/settings';
+
 import { ChatEpics } from '@/src/store/chat/chat.epics';
 
 import { AddonsEpics } from './addons/addons.epics';
@@ -46,7 +48,7 @@ import { publicationSlice } from './publication/publication.reducers';
 import { ServiceEpics } from './service/service.epics';
 import { serviceSlice } from './service/service.reducer';
 import { SettingsEpics } from './settings/settings.epic';
-import { SettingsState, settingsSlice } from './settings/settings.reducers';
+import { settingsSlice } from './settings/settings.reducers';
 import { ShareEpics } from './share/share.epics';
 import { shareSlice } from './share/share.reducers';
 import UIEpics from './ui/ui.epics';

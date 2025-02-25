@@ -1,12 +1,11 @@
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
+import { SettingsState } from '@/src/types/settings';
+
 import { MigrationSelectors } from '../store/migration/migration.reducers';
 import { useAppSelector } from '@/src/store/hooks';
-import {
-  SettingsSelectors,
-  SettingsState,
-} from '@/src/store/settings/settings.reducers';
-import { selectShowSelectToMigrateWindow } from '@/src/store/ui/ui.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { getLayout } from '@/src/pages/_app';
 
@@ -49,7 +48,7 @@ function Home() {
     MigrationSelectors.selectFailedMigratedPrompts,
   );
   const showSelectToMigrateWindow = useAppSelector(
-    selectShowSelectToMigrateWindow,
+    UISelectors.selectShowSelectToMigrateWindow,
   );
 
   if (conversationsToMigrateCount !== 0 || promptsToMigrateCount !== 0) {

@@ -21,7 +21,8 @@ import { DialAIEntityAddon } from '@/src/types/models';
 import { AppEpic } from '@/src/types/store';
 
 import { SettingsSelectors } from '../settings/settings.reducers';
-import { AddonsActions, AddonsSelectors } from './addons.reducers';
+import { AddonsActions } from './addons.reducers';
+import { AddonsSelectors } from './addons.selectors';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(

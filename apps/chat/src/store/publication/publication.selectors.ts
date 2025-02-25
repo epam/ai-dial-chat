@@ -5,10 +5,13 @@ import { EnumMapper } from '@/src/utils/app/mappers';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
-import { Publication, PublicationResource } from '@/src/types/publication';
+import {
+  Publication,
+  PublicationResource,
+  PublicationState,
+} from '@/src/types/publication';
 
 import { RootState } from '../index';
-import { PublicationState } from './publication.reducers';
 
 import { ShareEntity, UploadStatus } from '@epam/ai-dial-shared';
 

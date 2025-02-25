@@ -6,6 +6,7 @@ import {
 } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
 
+import { MarketplaceState } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
 
 import {
@@ -16,7 +17,6 @@ import {
 
 import { RootState } from '../index';
 import { ModelsSelectors } from '../models/models.reducers';
-import { MarketplaceState } from './marketplace.reducers';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 

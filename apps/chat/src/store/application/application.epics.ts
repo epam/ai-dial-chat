@@ -34,7 +34,7 @@ import { errorsMessages } from '../../constants/errors';
 import { DeleteType } from '@/src/constants/marketplace';
 
 import { ApplicationActions } from '../application/application.reducers';
-import { AuthSelectors } from '../auth/auth.reducers';
+import { AuthSelectors } from '../auth/auth.selectors';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { ShareActions, ShareSelectors } from '../share/share.reducers';
 

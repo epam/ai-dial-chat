@@ -1,23 +1,13 @@
-import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
+import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { translate } from '@/src/utils/app/translation';
 
+import { AddonsState } from '@/src/types/addons';
 import { ErrorMessage } from '@/src/types/error';
 import { DialAIEntityAddon } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { errorsMessages } from '@/src/constants/errors';
-
-import { RootState } from '../index';
-
-export interface AddonsState {
-  initialized: boolean;
-  isLoading: boolean;
-  error: ErrorMessage | undefined;
-  addons: DialAIEntityAddon[];
-  addonsMap: Partial<Record<string, DialAIEntityAddon>>;
-  recentAddonsIds: string[];
-}
 
 const initialState: AddonsState = {
   initialized: false,
@@ -105,35 +95,6 @@ export const addonsSlice = createSlice({
   },
 });
 
-const rootSelector = (state: RootState): AddonsState => state.addons;
-
-const selectAddonsIsLoading = createSelector([rootSelector], (state) => {
-  return state.isLoading;
-});
-const selectAddonsError = createSelector([rootSelector], (state) => {
-  return state.error;
-});
-const selectAddons = createSelector([rootSelector], (state) => {
-  return state.addons;
-});
-const selectAddonsMap = createSelector([rootSelector], (state) => {
-  return state.addonsMap;
-});
-const selectRecentAddonsIds = createSelector([rootSelector], (state) => {
-  return state.recentAddonsIds;
-});
-const selectInitialized = createSelector(
-  [rootSelector],
-  (state) => state.initialized,
-);
-
-export const AddonsSelectors = {
-  selectAddonsIsLoading,
-  selectAddonsError,
-  selectAddons,
-  selectAddonsMap,
-  selectRecentAddonsIds,
-  selectInitialized,
-};
+export { AddonsSelectors } from './addons.selectors';
 
 export const AddonsActions = addonsSlice.actions;

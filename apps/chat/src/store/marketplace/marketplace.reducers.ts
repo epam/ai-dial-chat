@@ -1,6 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { MarketplaceFilters } from '@/src/types/marketplace';
+import { MarketplaceState } from '@/src/types/marketplace';
 
 import {
   FilterTypes,
@@ -14,16 +14,6 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 import xor from 'lodash/xor';
 
 export { MarketplaceSelectors };
-
-export interface MarketplaceState {
-  selectedFilters: MarketplaceFilters;
-  searchTerm: string;
-  selectedTab: MarketplaceTabs;
-  applyModelStatus: UploadStatus;
-  selectedView: ViewTypes;
-  applyModelId?: string;
-  detailsModel: { reference: string; isSuggested: boolean } | undefined;
-}
 
 const DEFAULT_FILTERS = {
   [FilterTypes.ENTITY_TYPE]: [],

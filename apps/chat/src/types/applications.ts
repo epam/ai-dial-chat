@@ -1,7 +1,17 @@
+import { FolderInterface } from '@/src/types/folder';
+
 import { DialAIEntityFeatures, DialAIEntityModel } from './models';
 import { QuickAppConfig } from './quick-apps';
 
-import { ShareEntity } from '@epam/ai-dial-shared';
+import { ShareEntity, UploadStatus } from '@epam/ai-dial-shared';
+
+export interface ApplicationState {
+  appLoading: UploadStatus;
+  logsLoadingStatus: UploadStatus;
+  appDetails: CustomApplicationModel | undefined;
+  appLogs: ApplicationLogsType | undefined;
+  publicFolders: FolderInterface[];
+}
 
 export enum ApplicationStatus {
   DEPLOYED = 'DEPLOYED',

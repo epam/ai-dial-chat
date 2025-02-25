@@ -3,6 +3,7 @@ import { EMPTY, concat, filter, of, switchMap } from 'rxjs';
 import { combineEpics } from 'redux-observable';
 
 import { EntityType } from '@/src/types/common';
+import { MarketplaceState } from '@/src/types/marketplace';
 import { AppEpic } from '@/src/types/store';
 
 import {
@@ -19,7 +20,6 @@ import { UIActions } from '../ui/ui.reducers';
 import {
   MarketplaceActions,
   MarketplaceSelectors,
-  MarketplaceState,
 } from './marketplace.reducers';
 
 import { ParsedUrlQueryInput, parse } from 'querystring';
