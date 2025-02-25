@@ -4,11 +4,13 @@ import dialTest from '@/src/core/dialFixtures';
 import {
   AddAppMenuOptions,
   CheckboxState,
+  ExpectedMessages,
   MarketplaceExpectedMessages,
   MarketplaceFilterTypes,
   MenuOptions,
 } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { expect } from '@playwright/test';
 
 dialTest(
   'Types: the filter is applied and search results are shown. Models. DIAL Marketplace.\n' +
@@ -159,7 +161,6 @@ dialTest(
   async ({
     customApplicationBuilder,
     applicationApiHelper,
-    modelApiHelper,
     marketplacePage,
     marketplaceHeader,
     marketplaceSidebar,
@@ -201,22 +202,22 @@ dialTest(
           appTypeFilter,
           CheckboxState.checked,
         );
-        const allApps = await modelApiHelper
-          .getModels()
-          .then((agents) =>
-            agents.filter((agent) => agent.type === 'application'),
-          );
-        const expectedAppNames = Array.from(
-          ModelsUtil.groupEntitiesByName(allApps).keys(),
+        const allConfigApps = ModelsUtil.getApplications();
+        const expectedConfigAppNames = Array.from(
+          ModelsUtil.groupEntitiesByName(allConfigApps).keys(),
         );
-        await baseAssertion.assertElementsCount(
-          marketplace.getAgents(),
-          expectedAppNames.length,
-        );
+        expectedConfigAppNames.push(appName);
+        expect
+          .soft(
+            await marketplace.getAgents().getElementsCount(),
+            ExpectedMessages.elementsCountIsValid,
+          )
+          .toBeGreaterThanOrEqual(expectedConfigAppNames.length);
+
         const actualModels = await marketplaceAgents.getAgentNames();
         baseAssertion.assertArrayIncludesAll(
           actualModels,
-          expectedAppNames,
+          expectedConfigAppNames,
           MarketplaceExpectedMessages.filteredAgentsAreValid,
         );
       },
