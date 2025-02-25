@@ -8,21 +8,7 @@ import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '../constants/folders';
 
 import { FolderInterface } from './folder';
 
-import { MIMEType, ShareEntity, UploadStatus } from '@epam/ai-dial-shared';
-
-export interface FilesState {
-  initialized: boolean;
-  files: DialFile[];
-  selectedFilesIds: string[];
-  filesStatus: UploadStatus;
-
-  folders: FileFolderInterface[];
-  foldersStatus: UploadStatus;
-  loadingFolderId?: string;
-  newAddedFolderId?: string;
-  lastRenamedParentFolder?: { oldId: string; newId: string };
-  sharedFileIds: string[];
-}
+import { MIMEType, ShareEntity } from '@epam/ai-dial-shared';
 
 export interface BackendFile extends BackendEntity {
   contentLength: number;

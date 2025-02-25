@@ -3,7 +3,7 @@ import { createSelector } from '@reduxjs/toolkit';
 import { ModalState } from '@/src/types/modal';
 import { RootState } from '@/src/types/store';
 
-import { ChatState } from '@/src/store/chat/chat.reducer';
+import { ChatState } from './chat.types';
 
 import { DialSchemaProperties } from '@epam/ai-dial-shared';
 

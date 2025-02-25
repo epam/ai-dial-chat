@@ -8,12 +8,13 @@ import {
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
   ApplicationLogsType,
-  ApplicationState,
   ApplicationStatus,
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { FolderType } from '@/src/types/folder';
 import { DialAIEntityModel } from '@/src/types/models';
+
+import { ApplicationState } from './applications.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import uniqBy from 'lodash-es/uniqBy';

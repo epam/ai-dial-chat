@@ -1,5 +1,6 @@
-import { ApplicationTypesSchemasState } from '@/src/types/application-type-schema';
 import { RootState } from '@/src/types/store';
+
+import { ApplicationTypesSchemasState } from './applicationTypeSchemas.types';
 
 const rootSelector = (state: RootState): ApplicationTypesSchemasState =>
   state.applicationTypesSchemas;

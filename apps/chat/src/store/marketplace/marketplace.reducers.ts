@@ -1,7 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { SortOrder } from '@/src/types/common';
-import { MarketplaceState } from '@/src/types/marketplace';
 
 import {
   FilterTypes,
@@ -11,6 +10,7 @@ import {
 } from '@/src/constants/marketplace';
 
 import * as MarketplaceSelectors from './marketplace.selectors';
+import { MarketplaceState } from './marketplace.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import xor from 'lodash/xor';

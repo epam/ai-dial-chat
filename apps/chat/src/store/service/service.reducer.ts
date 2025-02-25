@@ -1,7 +1,8 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { RequestAPIKeyBody } from '@/src/types/request-api-key';
-import { ServiceState } from '@/src/types/service';
+
+import { ServiceState } from './service.types';
 
 const initialState: ServiceState = {
   isSuccessfullySent: undefined,

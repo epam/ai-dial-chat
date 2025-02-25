@@ -2,9 +2,10 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import { FeatureType } from '@/src/types/common';
 import { RootState } from '@/src/types/store';
-import { UIState } from '@/src/types/ui';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+
+import { UIState } from './ui.types';
 
 import { Feature } from '@epam/ai-dial-shared';
 

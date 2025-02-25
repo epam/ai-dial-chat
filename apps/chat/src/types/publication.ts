@@ -1,28 +1,6 @@
-import {
-  BackendDataNodeType,
-  BackendResourceType,
-  FeatureType,
-} from './common';
+import { BackendDataNodeType, BackendResourceType } from './common';
 
 import { MIMEType, PublishActions, UploadStatus } from '@epam/ai-dial-shared';
-
-export interface PublicationState {
-  initialized: boolean;
-  publications: (PublicationInfo & Partial<Publication>)[];
-  selectedPublicationUrl: string | null;
-  resourcesToReview: ResourceToReview[];
-  rules: Record<string, PublicationRule[]>;
-  isRulesLoading: boolean;
-  allPublishedWithMeItemsUploaded: {
-    [FeatureType.Chat]: boolean;
-    [FeatureType.Prompt]: boolean;
-    [FeatureType.File]: boolean;
-    [FeatureType.Application]: boolean;
-  };
-  selectedItemsToPublish: string[];
-  isApplicationReview: boolean;
-  publicVersionGroups: PublicVersionGroups;
-}
 
 export enum PublicationFunctions {
   Equal = 'Equal',

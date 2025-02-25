@@ -1,6 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { CodeEditorState } from '@/src/types/code-editor';
+import { CodeEditorState } from './codeEditor.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import { uniqBy } from 'lodash-es';

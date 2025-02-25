@@ -2,9 +2,11 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import { isClientSessionValid } from '@/src/utils/auth/session';
 
-import { AuthState } from '@/src/types/auth';
-import { SettingsState } from '@/src/types/settings';
 import { RootState } from '@/src/types/store';
+
+import { SettingsState } from '@/src/store/settings/settings.types';
+
+import { AuthState } from './auth.types';
 
 const settingsSelector = (state: RootState): SettingsState => state.settings;
 

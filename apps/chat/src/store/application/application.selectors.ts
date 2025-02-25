@@ -1,7 +1,8 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import { ApplicationState } from '@/src/types/applications';
 import { RootState } from '@/src/types/store';
+
+import { ApplicationState } from './applications.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 

@@ -7,9 +7,10 @@ import {
 } from '@/src/utils/app/folders';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 
-import { FilesState } from '@/src/types/files';
 import { EntityFilters } from '@/src/types/search';
 import { RootState } from '@/src/types/store';
+
+import { FilesState } from './files.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 

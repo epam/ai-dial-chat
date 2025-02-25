@@ -1,7 +1,8 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import { OverlayState } from '@/src/types/overlay';
 import { RootState } from '@/src/types/store';
+
+import { OverlayState } from './overlay.types';
 
 const rootSelector = (state: RootState): OverlayState => state.overlay;
 

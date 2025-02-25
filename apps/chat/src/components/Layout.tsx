@@ -13,7 +13,6 @@ import { delay } from '@/src/utils/auth/delay';
 import { timeoutAsync } from '@/src/utils/auth/timeout-async';
 
 import { Translation } from '../types/translation';
-import { SettingsState } from '@/src/types/settings';
 
 import { AuthActions, AuthSelectors } from '../store/auth/auth.reducers';
 import { MarketplaceSelectors } from '../store/marketplace/marketplace.reducers';
@@ -22,6 +21,7 @@ import {
   SettingsActions,
   SettingsSelectors,
 } from '@/src/store/settings/settings.reducers';
+import { SettingsState } from '@/src/store/settings/settings.types';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import Loader from './Common/Loader';

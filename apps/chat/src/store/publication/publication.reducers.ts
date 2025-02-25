@@ -10,11 +10,11 @@ import {
   PublicationInfo,
   PublicationRequestModel,
   PublicationRule,
-  PublicationState,
   ResourceToReview,
 } from '@/src/types/publication';
 
 import * as PublicationSelectors from './publication.selectors';
+import { PublicationState } from './publication.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';

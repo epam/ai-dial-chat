@@ -9,7 +9,6 @@ import { pluralizeDisplayName } from '@/src/utils/app/application-type-schema';
 import { isMyApplication } from '@/src/utils/app/id';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
-import { MarketplaceState } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
 import { RootState } from '@/src/types/store';
 
@@ -21,6 +20,7 @@ import {
 
 import { ApplicationTypesSchemasSelectors } from '../applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { ModelsSelectors } from '../models/models.reducers';
+import { MarketplaceState } from './marketplace.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 

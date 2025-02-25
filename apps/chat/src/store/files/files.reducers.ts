@@ -9,10 +9,12 @@ import {
 } from '@/src/utils/app/folders';
 import { getFileRootId } from '@/src/utils/app/id';
 
-import { DialFile, FileFolderInterface, FilesState } from '@/src/types/files';
+import { DialFile, FileFolderInterface } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
+
+import { FilesState } from './files.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';

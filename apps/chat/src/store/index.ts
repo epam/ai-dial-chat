@@ -15,9 +15,8 @@ import {
   createEpicMiddleware,
 } from 'redux-observable';
 
-import { SettingsState } from '@/src/types/settings';
-
 import { ChatEpics } from '@/src/store/chat/chat.epics';
+import { SettingsState } from '@/src/store/settings/settings.types';
 
 import { AddonsEpics } from './addons/addons.epics';
 import { addonsSlice } from './addons/addons.reducers';

@@ -2,9 +2,10 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { FeatureType } from '@/src/types/common';
 import { ToastType } from '@/src/types/toasts';
-import { UIState } from '@/src/types/ui';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
+
+import { UIState } from './ui.types';
 
 import uniq from 'lodash-es/uniq';
 

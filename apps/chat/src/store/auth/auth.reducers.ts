@@ -2,7 +2,7 @@ import { SessionContextValue } from 'next-auth/react';
 
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { AuthState } from '@/src/types/auth';
+import { AuthState } from './auth.types';
 
 const initialState: AuthState = {
   session: undefined,

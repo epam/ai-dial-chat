@@ -6,9 +6,10 @@ import { pages } from '@/src/utils/auth/auth-pages';
 import { isAuthDisabled } from '@/src/utils/auth/auth-providers';
 import { isServerSessionValid } from '@/src/utils/auth/session';
 
-import { SettingsState } from '@/src/types/settings';
 import { StorageType } from '@/src/types/storage';
 import { Translation } from '@/src/types/translation';
+
+import { SettingsState } from '@/src/store/settings/settings.types';
 
 import { ISOLATED_MODEL_QUERY_PARAM } from '@/src/constants/chat';
 import {

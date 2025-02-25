@@ -2,12 +2,13 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { translate } from '@/src/utils/app/translation';
 
-import { AddonsState } from '@/src/types/addons';
 import { ErrorMessage } from '@/src/types/error';
 import { DialAIEntityAddon } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { errorsMessages } from '@/src/constants/errors';
+
+import { AddonsState } from './addons.types';
 
 const initialState: AddonsState = {
   initialized: false,

@@ -1,13 +1,4 @@
-import { SortOrder } from '@/src/types/common';
-
-import {
-  FilterTypes,
-  MarketplaceTabs,
-  TableColumnSortKeys,
-  ViewTypes,
-} from '../constants/marketplace';
-
-import { UploadStatus } from '@epam/ai-dial-shared';
+import { FilterTypes } from '../constants/marketplace';
 
 export interface MarketplaceFilters {
   [FilterTypes.ENTITY_TYPE]: string[];
@@ -15,18 +6,4 @@ export interface MarketplaceFilters {
   [FilterTypes.SOURCES]: string[];
   // [FilterTypes.CAPABILITIES]: string[];
   // [FilterTypes.ENVIRONMENT]: string[];
-}
-
-export interface MarketplaceState {
-  selectedFilters: MarketplaceFilters;
-  searchTerm: string;
-  selectedTab: MarketplaceTabs;
-  applyModelStatus: UploadStatus;
-  selectedView: ViewTypes;
-  applyModelId?: string;
-  detailsModel: { reference: string; isSuggested: boolean } | undefined;
-  tableSort: {
-    column: TableColumnSortKeys;
-    order: SortOrder;
-  };
 }

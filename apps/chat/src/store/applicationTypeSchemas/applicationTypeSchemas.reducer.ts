@@ -3,8 +3,9 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import {
   ApiDetailedApplicationTypeSchema,
   ApplicationTypeSchema,
-  ApplicationTypesSchemasState,
 } from '@/src/types/application-type-schema';
+
+import { ApplicationTypesSchemasState } from './applicationTypeSchemas.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 

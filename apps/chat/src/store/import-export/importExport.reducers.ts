@@ -4,13 +4,14 @@ import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import {
-  ImportExportState,
   MappedReplaceActions,
   Operation,
   PromptsHistory,
   SupportedExportFormats,
 } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
+
+import { ImportExportState } from './importExport.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 

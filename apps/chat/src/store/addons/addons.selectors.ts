@@ -1,7 +1,8 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import { AddonsState } from '@/src/types/addons';
 import { RootState } from '@/src/types/store';
+
+import { AddonsState } from './addons.types';
 
 const rootSelector = (state: RootState): AddonsState => state.addons;
 

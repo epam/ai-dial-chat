@@ -4,7 +4,6 @@ import { Defaults } from '@/src/utils/app/data/defaults-service';
 
 import { FeatureType } from '@/src/types/common';
 import { MappedVisualizers } from '@/src/types/custom-visualizers';
-import { SettingsState } from '@/src/types/settings';
 import { RootState } from '@/src/types/store';
 
 import {
@@ -12,6 +11,8 @@ import {
   DEFAULT_QUICK_APPS_MODEL,
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
+
+import { SettingsState } from './settings.types';
 
 import { Feature } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';

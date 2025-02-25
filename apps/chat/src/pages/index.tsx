@@ -1,10 +1,9 @@
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
-import { SettingsState } from '@/src/types/settings';
-
 import { MigrationSelectors } from '../store/migration/migration.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { SettingsState } from '@/src/store/settings/settings.types';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { getLayout } from '@/src/pages/_app';

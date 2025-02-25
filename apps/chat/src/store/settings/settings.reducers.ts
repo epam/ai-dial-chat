@@ -1,10 +1,11 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { PageType } from '@/src/types/common';
-import { SettingsState } from '@/src/types/settings';
 import { StorageType } from '@/src/types/storage';
 
 import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
+
+import { SettingsState } from './settings.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 

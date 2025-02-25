@@ -1,7 +1,8 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import { ImportExportState } from '@/src/types/import-export';
 import { RootState } from '@/src/types/store';
+
+import { ImportExportState } from './importExport.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 

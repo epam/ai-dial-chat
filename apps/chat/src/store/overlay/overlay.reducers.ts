@@ -5,7 +5,7 @@ import {
   PostMessageRequestParams,
 } from '@/src/utils/app/overlay';
 
-import { OverlayState } from '@/src/types/overlay';
+import { OverlayState } from './overlay.types';
 
 import {
   ChatOverlayOptions,
