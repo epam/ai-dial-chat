@@ -105,7 +105,12 @@ export const convertApplicationToApi = (
   if (schema) {
     return {
       ...commonData,
-      application_properties: applicationData.applicationProperties ?? null,
+      application_properties:
+        (applicationData.applicationProperties &&
+          mapApplicationPropertiesToApi(
+            applicationData.applicationProperties,
+          )) ||
+        null,
       application_type_schema_id:
         applicationData.applicationTypeSchemaId ?? schema['$id'],
     };

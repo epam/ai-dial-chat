@@ -54,6 +54,7 @@ const ModelsSelectorField = withErrorMessage(withLabel(ModelsSelector));
 
 const myFilesFilter = new Set([FileSourceType.MY_FILES]);
 
+// TODO: this component isn't used, need to check that everything was copied correctly and then remove it
 export const QuickAppView: React.FC<ViewProps> = ({
   onClose,
   isEdit,
