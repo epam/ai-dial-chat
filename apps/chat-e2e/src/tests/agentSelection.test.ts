@@ -168,7 +168,7 @@ dialTest(
       async () => {
         await chatBar.dialMarketplaceLink.click();
         await marketplace.getAgents().getAgent(addedModel).click();
-        await agentDetailsModal.filledBookmarkIcon.click();
+        await agentDetailsModal.removeBookmarkIcon.click();
         await confirmationDialog.confirm();
         await header.backToChatButton.click();
       },
@@ -579,6 +579,8 @@ dialTest(
     agentDetailsModal,
     confirmationDialog,
     localStorageAssertion,
+    chatAssertion,
+    talkToAgentDialogAssertion,
   }) => {
     setTestIds('EPMRTC-4356');
     const models = GeneratorUtil.randomArrayElements(
@@ -602,7 +604,7 @@ dialTest(
         await chat.changeAgentButton.click();
         await talkToAgentDialog.goToMyWorkspace();
         await marketplace.getAgents().getAgent(firstModel).click();
-        await agentDetailsModal.filledBookmarkIcon.click();
+        await agentDetailsModal.removeBookmarkIcon.click();
         await confirmationDialog.confirm();
         await header.backToChatButton.click();
       },
@@ -611,11 +613,10 @@ dialTest(
     await dialTest.step(
       'Verify recentModelIds is updated and the second model is selected',
       async () => {
-        //TODO bug here - when you go back the removed model is selected
-        //workaround is :
+        await chatAssertion.assertAddAgentButtonState('visible');
         await header.createNewConversation();
+        await talkToAgentDialogAssertion.assertAgentIsSelected(secondModel);
         await talkToAgentDialog.cancelButton.click();
-
         await localStorageAssertion.assertRecentModels([secondModel.id]);
         await agentInfoAssertion.assertAgentName(secondModel.name);
       },
