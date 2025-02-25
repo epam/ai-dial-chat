@@ -212,26 +212,26 @@ export const getQuickAppDocumentUrl = (entity?: CustomApplicationModel) => {
   return entity ? getQuickAppConfig(entity).document_relative_url : undefined;
 };
 
-export const createQuickAppConfig = ({
-  instructions,
-  temperature,
-  config,
-  model,
-  document_relative_url,
-}: {
-  instructions: string;
-  temperature: number;
-  config: string;
-  model: string;
-  document_relative_url: string;
-}): QuickAppConfig => ({
-  instructions,
-  temperature,
-  web_api_toolset: JSON.parse(config ?? '{}'),
-  model:
-    model ?? DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
-  document_relative_url: document_relative_url || undefined,
-});
+// export const createQuickAppConfig = ({
+//   instructions,
+//   temperature,
+//   config,
+//   model,
+//   document_relative_url,
+// }: {
+//   instructions: string;
+//   temperature: number;
+//   config: string;
+//   model: string;
+//   document_relative_url: string;
+// }): QuickAppConfig => ({
+//   instructions,
+//   temperature,
+//   web_api_toolset: JSON.parse(config ?? '{}'),
+//   model:
+//     model ?? DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
+//   document_relative_url: document_relative_url || undefined,
+// });
 
 export const getToolsetStr = (config: QuickAppConfig) => {
   try {
