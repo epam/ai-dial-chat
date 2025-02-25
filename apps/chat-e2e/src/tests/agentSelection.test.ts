@@ -387,7 +387,7 @@ dialAdminTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'RecentModelIds in NOT updated when duplicate own chat with model which is not in My workspace\n' +
     'RecentModelIds in NOT updated when duplicate when import chat with different model\n' +
     "RecentModelIds updated when type new message to imported chat. Chat's model is not in RecentModelIds[0]\n" +
@@ -567,6 +567,65 @@ dialTest.only(
       async () => {
         await header.createNewConversation();
         await agentInfoAssertion.assertAgentName(initialModel1.id);
+      },
+    );
+  },
+);
+
+dialTest(
+  'RecentModelIds[0] is updated if remove latest used model from My applications',
+  async ({
+    dialHomePage,
+    header,
+    chat,
+    talkToAgentDialog,
+    agentInfoAssertion,
+    setTestIds,
+    localStorageManager,
+    marketplace,
+    agentDetailsModal,
+    confirmationDialog,
+  }) => {
+    setTestIds('EPMRTC-4356');
+    const models = GeneratorUtil.randomArrayElements(
+      ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
+      2,
+    );
+    const [firstModel, secondModel] = models;
+    await localStorageManager.setRecentModelsIdsOnce(...models);
+
+    await dialTest.step('Open Dial', async () => {
+      await dialHomePage.openHomePage({
+        iconsToBeLoaded: [firstModel.iconUrl],
+      });
+      await dialHomePage.waitForPageLoaded();
+      await agentInfoAssertion.assertAgentName(firstModel.name);
+    });
+
+    await dialTest.step(
+      'Navigate to "My workspace" and remove the first model',
+      async () => {
+        await chat.changeAgentButton.click();
+        await talkToAgentDialog.goToMyWorkspace();
+        await marketplace.getAgents().getAgent(firstModel).click();
+        await agentDetailsModal.filledBookmarkIcon.click();
+        await confirmationDialog.confirm();
+        await header.backToChatButton.click();
+      },
+    );
+
+    await dialTest.step(
+      'Verify recentModelIds is updated and the second model is selected',
+      async () => {
+        //TODO bug here - when you go back the removed model is selected
+        //workaround is :
+        await header.createNewConversation();
+        await talkToAgentDialog.cancelButton.click();
+        const recentModels = await localStorageManager.getRecentModels();
+        expect
+          .soft(recentModels, ExpectedMessages.recentEntitiesVisible)
+          .toBe(JSON.stringify([secondModel.id]));
+        await agentInfoAssertion.assertAgentName(secondModel.name);
       },
     );
   },
