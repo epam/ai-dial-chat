@@ -274,6 +274,7 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
       const newPrompt: Prompt = regeneratePromptId({
         ...prompt,
         ...values,
+        updatedAt: Date.now(),
       });
 
       return concat(
