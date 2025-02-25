@@ -77,6 +77,13 @@ export class ChatMessagesAssertion extends BaseAssertion {
       .toHaveText(expectedContent);
   }
 
+  public async assertLastMessageContent(expectedContent: string) {
+    const actualContent = await this.chatMessages.getLastMessageContent();
+    expect
+      .soft(actualContent.toLowerCase(), ExpectedMessages.messageContentIsValid)
+      .toBe(expectedContent);
+  }
+
   public async assertMessageEditIconState(
     message: string | number,
     expectedState: ElementState,

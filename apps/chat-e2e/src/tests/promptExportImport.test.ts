@@ -41,8 +41,8 @@ dialTest(
     sendMessage,
     talkToAgentDialog,
     marketplacePage,
+    chatMessagesAssertion,
     chat,
-    chatMessages,
   }) => {
     setTestIds('EPMRTC-883', 'EPMRTC-895', 'EPMRTC-3835', 'EPMRTC-3822');
     let promptsInsideFolder: FolderPrompt;
@@ -50,7 +50,7 @@ dialTest(
     let nestedFolders: FolderInterface[];
     let nestedPrompts: Prompt[];
     let exportedData: UploadDownloadData;
-    const promptContent = `Let's play a game. I give you a color and you respond with its antonym`;
+    const promptContent = `Let's play a game. I give you a word and you answer me a word of opposite meaning`;
 
     await dialTest.step(
       'Prepare empty folder, folder with 2 prompts, another prompt in the root and nested folders with prompts inside',
@@ -165,12 +165,7 @@ dialTest(
           );
           await chat.sendRequestWithPrompt(promptContent);
           await chat.sendRequestWithButton('white');
-          expect
-            .soft(
-              await chatMessages.getLastMessageContent(),
-              ExpectedMessages.messageContentIsValid,
-            )
-            .toContain('black');
+          await chatMessagesAssertion.assertLastMessageContent('black');
         }
       },
     );
