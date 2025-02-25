@@ -76,12 +76,12 @@ export const regenerateApplicationId = <T extends ApplicationInfo>(
 export const mapApplicationPropertiesToApi = (
   properties: CustomApplicationModel['applicationProperties'],
 ) => {
-  if (properties?.document_relative_url)
+  if (typeof properties?.document_relative_url === 'string')
     return {
       ...properties,
-      document_relative_url: ApiUtils.encodeApiUrl(
-        properties.document_relative_url as string,
-      ),
+      document_relative_url: properties.document_relative_url
+        ? ApiUtils.encodeApiUrl(properties.document_relative_url as string)
+        : undefined,
     };
   return properties;
 };
