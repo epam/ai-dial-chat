@@ -1,10 +1,12 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { MarketplaceState } from '@/src/types/marketplace';
+import { SortOrder } from '@/src/types/common';
 
 import {
   FilterTypes,
   MarketplaceTabs,
+  TableColumnSortKeys,
   ViewTypes,
 } from '@/src/constants/marketplace';
 
@@ -30,6 +32,10 @@ const initialState: MarketplaceState = {
   applyModelStatus: UploadStatus.UNINITIALIZED,
   detailsModel: undefined,
   selectedView: ViewTypes.CARD,
+  tableSort: {
+    column: TableColumnSortKeys.NAME,
+    order: 'asc',
+  },
 };
 
 export const marketplaceSlice = createSlice({
@@ -78,6 +84,17 @@ export const marketplaceSlice = createSlice({
       { payload }: PayloadAction<{ viewType: ViewTypes }>,
     ) => {
       state.selectedView = payload.viewType;
+    },
+    setTableSort: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        column: TableColumnSortKeys;
+        order: SortOrder;
+      }>,
+    ) => {
+      state.tableSort = payload;
     },
   },
 });
