@@ -153,7 +153,7 @@ export const QuickAppView: React.FC<ViewProps> = ({
     } else if (isEdit) {
       handleEdit(data);
     } else {
-      dispatch(ApplicationActions.create(preparedData));
+      dispatch(ApplicationActions.create({ applicationData: preparedData }));
     }
 
     onClose(true);

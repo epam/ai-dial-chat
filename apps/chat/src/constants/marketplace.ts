@@ -65,9 +65,7 @@ export const SourceTypeFilterOrder = {
 
 export const ApplicationTypeToSourceType = {
   [ApplicationType.CODE_APP]: SourceType.MyCodeApps,
-  [ApplicationType.QUICK_APP]: SourceType.MyQuickApps,
   [ApplicationType.CUSTOM_APP]: SourceType.MyCustomApps,
-  [ApplicationType.MINDMAP]: SourceType.MyMindMaps,
 };
 
 interface IconSize {
@@ -78,7 +76,7 @@ interface IconSize {
 export const TableIconSizes: Record<ScreenState, IconSize> = {
   [ScreenState.DESKTOP]: { iconSize: 60, shareIconSize: 24 },
   [ScreenState.TABLET]: { iconSize: 60, shareIconSize: 24 },
-  [ScreenState.MOBILE]: { iconSize: 30, shareIconSize: 16 },
+  [ScreenState.MOBILE]: { iconSize: 30, shareIconSize: 14 },
 };
 
 export const CardIconSizes: Record<ScreenState, IconSize> = {

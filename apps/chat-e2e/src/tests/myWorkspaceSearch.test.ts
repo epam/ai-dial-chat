@@ -330,7 +330,10 @@ dialTest(
     agentDetailsModal,
     customApplicationBuilder,
     applicationApiHelper,
-    addApplicationModal,
+    appEditorPage,
+    appEditorGeneralForm,
+    appEditorViewForm,
+    appEditorHeader,
     setTestIds,
     baseAssertion,
     agentVersionsDropdownMenuAssertion,
@@ -455,13 +458,18 @@ dialTest(
           await addAppDropdownMenu.selectMenuOption(
             AddAppMenuOptions.customApp,
           );
-          await addApplicationModal.fillInAppFields({
+          await appEditorPage.waitForPageLoaded();
+          await appEditorGeneralForm.fillInAppFields({
             name: addedAppNameVersion.name,
             version: addedAppNameVersion.version,
           });
-          await addApplicationModal.addApp();
+          await appEditorGeneralForm.goNext();
+          await appEditorViewForm.fillInAppFields();
+          await appEditorHeader.saveAppAndExit();
         }
 
+        //TODO: need to clarify whether search field and filters are reset after adding a new app
+        await marketplaceHeader.searchInput.fillInInput(installedAppName);
         const filteredAgents = marketplace.getFilteredAgents();
         await baseAssertion.assertElementsCount(filteredAgents, 2);
         const actualFilteredAgents = await filteredAgents.getAgentNames();
@@ -571,12 +579,12 @@ dialTest(
           .getVersionDropdownMenu()
           .selectMenuOption(sortedVersions[1]);
         await baseAssertion.assertElementState(
-          agentDetailsModal.transparentBookmarkIcon,
+          agentDetailsModal.addBookmarkIcon,
           'visible',
         );
         await agentDetailsModal.addAgentToWorkspace();
         await baseAssertion.assertElementState(
-          agentDetailsModal.filledBookmarkIcon,
+          agentDetailsModal.removeBookmarkIcon,
           'visible',
         );
         await baseAssertion.assertElementText(
@@ -645,12 +653,12 @@ dialTest(
           .getVersionDropdownMenu()
           .selectMenuOption(sortedVersions[0]);
         await baseAssertion.assertElementState(
-          agentDetailsModal.transparentBookmarkIcon,
+          agentDetailsModal.addBookmarkIcon,
           'visible',
         );
         await agentDetailsModal.addAgentToWorkspace();
         await baseAssertion.assertElementState(
-          agentDetailsModal.filledBookmarkIcon,
+          agentDetailsModal.removeBookmarkIcon,
           'visible',
         );
         await baseAssertion.assertElementText(

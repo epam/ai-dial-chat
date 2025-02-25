@@ -67,10 +67,11 @@ export const getCommonPageProps: GetServerSideProps = async ({
     params = new URL(req.url, `http://${req.headers.host}`).searchParams;
   }
 
+  let session = null;
   if (
     !Object.values(pages).some((page) => page && resolvedUrl?.includes(page))
   ) {
-    const session = await getServerSession(req, res, authOptions);
+    session = await getServerSession(req, res, authOptions);
     if (!isServerSessionValid(session)) {
       return {
         redirect: {
@@ -140,6 +141,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
       process.env.QUICK_APPS_SCHEMA_ID || DEFAULT_QUICK_APPS_SCHEMA_ID,
     dialApiHost: process.env.DIAL_API_HOST || '',
     defaultSystemPrompt: process.env.NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT || '',
+    providerId: session?.providerId ?? null,
   };
 
   if (isIsolatedView) {

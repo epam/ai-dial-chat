@@ -2,11 +2,14 @@ import { Attributes, Tags } from '@/src/ui/domData';
 import { BasePage } from '@/src/ui/pages';
 import { OverlaySelectors, layoutContainer } from '@/src/ui/selectors';
 import { BaseElement, BaseLayoutContainer } from '@/src/ui/webElements';
+import { Header } from '@/src/ui/webElements/header';
 import { Actions } from '@/src/ui/webElements/overlay/actions';
 import { Configuration } from '@/src/ui/webElements/overlay/configuration';
 import { Page } from '@playwright/test';
 
-export class OverlayBasePage<T extends BaseLayoutContainer> extends BasePage {
+export class OverlayBasePage<
+  T extends BaseLayoutContainer<Header>,
+> extends BasePage {
   readonly overlayContainer: T;
 
   constructor(page: Page, overlayContainer: T) {

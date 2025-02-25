@@ -17,6 +17,8 @@ export const MarketplaceAgentSelectors = {
   agentVersionMenuTrigger: '[data-qa="agent-version-select-trigger"]',
   header: '[data-qa="marketplace-header"]',
   description: '.text-sm',
+  addBookmarkIcon: '[data-qa="add-bookmark"]',
+  removeBookmarkIcon: '[data-qa="remove-bookmark"]',
 };
 
 export const MarketplaceDetailsModal = {

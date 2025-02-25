@@ -38,6 +38,7 @@ interface EmptyChatDescriptionViewProps {
   conversation: Conversation;
   onShowChangeModel: (conversationId: string) => void;
   onShowSettings: (show: boolean) => void;
+  isApplicationPreviewChat: boolean;
 }
 
 const getModelName = (
@@ -63,6 +64,7 @@ const EmptyChatDescriptionView = ({
   conversation,
   onShowChangeModel,
   onShowSettings,
+  isApplicationPreviewChat,
 }: EmptyChatDescriptionViewProps) => {
   const dispatch = useAppDispatch();
 
@@ -123,9 +125,9 @@ const EmptyChatDescriptionView = ({
 
   const isReplayAsIs = isReplayAsIsConversation(conversation);
   const isPlayback = isPlaybackConversation(conversation);
-  const isEmptyChatChangeAgentHidden = enabledFeatures.has(
-    Feature.HideEmptyChatChangeAgent,
-  );
+  const isEmptyChatChangeAgentHidden =
+    enabledFeatures.has(Feature.HideEmptyChatChangeAgent) ||
+    isApplicationPreviewChat;
   const isEmptyChatSettingsEnabled = enabledFeatures.has(
     Feature.EmptyChatSettings,
   );
@@ -263,17 +265,20 @@ interface Props {
   conversation: Conversation;
   onShowChangeModel: (conversationId: string) => void;
   onShowSettings: (show: boolean) => void;
+  isApplicationPreviewChat: boolean;
 }
 
 export const EmptyChatDescription = ({
   conversation,
   onShowChangeModel,
   onShowSettings,
+  isApplicationPreviewChat,
 }: Props) => {
   return (
     <div className="flex size-full flex-col items-center p-0 md:px-5 md:pt-5">
       <div className="flex size-full flex-col items-center gap-px rounded">
         <EmptyChatDescriptionView
+          isApplicationPreviewChat={isApplicationPreviewChat}
           conversation={conversation}
           onShowChangeModel={onShowChangeModel}
           onShowSettings={onShowSettings}

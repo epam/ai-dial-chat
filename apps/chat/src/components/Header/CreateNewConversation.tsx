@@ -47,6 +47,9 @@ export const CreateNewConversation = ({ iconSize }: Props) => {
             }),
           );
           dispatch(ConversationsActions.resetSearch());
+          dispatch(
+            ConversationsActions.setIsStartedCustomViewerConversation(false),
+          );
         }}
         disabled={messageIsStreaming}
         data-qa="new-entity"

@@ -1,6 +1,4 @@
 import {
-  IconBookmark,
-  IconBookmarkFilled,
   IconEdit,
   IconFileDescription,
   IconLink,
@@ -46,7 +44,6 @@ import { Translation } from '@/src/types/translation';
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { AuthSelectors } from '@/src/store/auth/auth.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -61,6 +58,7 @@ import {
 import { ModelVersionSelect } from '../../Chat/ModelVersionSelect';
 import ContextMenu from '../../Common/ContextMenu';
 import Tooltip from '../../Common/Tooltip';
+import { AgentBookmark } from '../AgentBookmark';
 import { ApplicationLogs } from '../ApplicationLogs';
 import { ApplicationCopyLink } from './ApplicationCopyLink';
 
@@ -111,9 +109,6 @@ export const ApplicationDetailsFooter = ({
   const isCodeAppsEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
   );
-  const installedModelIds = useAppSelector(
-    ModelsSelectors.selectInstalledModelIds,
-  );
 
   const isMyApp = isMyApplication(entity);
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
@@ -122,10 +117,6 @@ export const ApplicationDetailsFooter = ({
   const isPublicApp = isApplicationPublic(entity);
 
   const isSmallScreen = screenState === ScreenState.MOBILE;
-
-  const Bookmark = installedModelIds.has(entity.reference)
-    ? IconBookmarkFilled
-    : IconBookmark;
 
   const canWrite = canWriteSharedWithMe(entity);
 
@@ -440,24 +431,12 @@ export const ApplicationDetailsFooter = ({
                 )}
             </>
           )}
-          {hasBookmark && (
-            <Tooltip
-              tooltip={
-                installedModelIds.has(entity.reference)
-                  ? t('Remove from My workspace')
-                  : t('Add to My workspace')
-              }
-              isTriggerClickable
-            >
-              <button
-                onClick={() => onBookmarkClick(entity)}
-                className="icon-button"
-                data-qa="application-bookmark"
-              >
-                <Bookmark size={24} />
-              </button>
-            </Tooltip>
-          )}
+          <AgentBookmark
+            entity={entity}
+            size={24}
+            className="icon-button"
+            onBookmarkClick={onBookmarkClick}
+          />
         </div>
         <div className="flex w-full min-w-0 items-center justify-end gap-4">
           <ModelVersionSelect

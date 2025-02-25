@@ -3,10 +3,12 @@ import { PlotParams } from 'react-plotly.js';
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { combineEntities } from '@/src/utils/app/common';
+import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
+  getFolderIdFromEntityId,
   isFolderEmpty,
-  renameFolderWithChildren,
+  renameFolderAndMoveEntity,
 } from '@/src/utils/app/folders';
 import {
   getConversationRootId,
@@ -63,6 +65,8 @@ const initialState: ConversationsState = {
   chosenEmptyFoldersIds: [],
   renamingConversationId: null,
   talkToConversationId: null,
+  isStartedCustomViewerConversation: false,
+  previewConversationId: null,
 };
 
 export const conversationsSlice = createSlice({
@@ -419,12 +423,13 @@ export const conversationsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ folderId: string; name: string }>,
     ) => {
+      const parentId = getFolderIdFromEntityId(payload.folderId);
+      const newId = constructPath(parentId, payload.name);
+
+      state.temporaryFolders = state.temporaryFolders.map((f) =>
+        renameFolderAndMoveEntity(f, payload.folderId, newId),
+      );
       state.newAddedFolderId = undefined;
-      state.temporaryFolders = renameFolderWithChildren({
-        folderId: payload.folderId,
-        newName: payload.name,
-        folders: state.temporaryFolders,
-      });
     },
     resetNewFolderId: (state) => {
       state.newAddedFolderId = undefined;
@@ -483,6 +488,12 @@ export const conversationsSlice = createSlice({
       { payload }: PayloadAction<{ searchFilters: SearchFilters }>,
     ) => {
       state.searchFilters = payload.searchFilters;
+    },
+    setPreviewConversationId: (
+      state,
+      { payload }: PayloadAction<string | null>,
+    ) => {
+      state.previewConversationId = payload;
     },
     resetSearch: (state) => {
       state.searchTerm = '';
@@ -862,6 +873,12 @@ export const conversationsSlice = createSlice({
       { payload }: PayloadAction<string | null>,
     ) => {
       state.talkToConversationId = payload;
+    },
+    setIsStartedCustomViewerConversation: (
+      state,
+      { payload }: PayloadAction<boolean>,
+    ) => {
+      state.isStartedCustomViewerConversation = payload;
     },
     getConversationMetadata: (
       state,

@@ -26,6 +26,7 @@ import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MarketplaceActions,
@@ -113,13 +114,30 @@ const ResultsView = ({
     [onCardClick],
   );
 
-  const ViewList =
-    selectedViewType === ViewTypes.CARD ? CardsList : AgentsTable;
+  if (
+    selectedViewType === ViewTypes.TABLE &&
+    (entities.length || suggestedResults.length)
+  ) {
+    return (
+      <AgentsTable
+        entities={entities}
+        suggestedResults={suggestedResults}
+        separator="Suggested results from DIAL Marketplace"
+        onCardClick={onCardClick}
+        onPublish={onPublish}
+        onDelete={onDelete}
+        onEdit={onEdit}
+        onBookmarkClick={onBookmarkClick}
+        onLogsClick={onLogsClick}
+        dataQA="filtered-agents"
+      />
+    );
+  }
 
   if (suggestedResults.length) {
     return (
       <>
-        <ViewList
+        <CardsList
           entities={entities}
           onCardClick={onCardClick}
           onPublish={onPublish}
@@ -152,7 +170,7 @@ const ResultsView = ({
         >
           {t('Suggested results from DIAL Marketplace')}
         </span>
-        <ViewList
+        <CardsList
           entities={suggestedResults}
           onCardClick={handleSuggestedCardClick}
           onPublish={onPublish}
@@ -168,7 +186,7 @@ const ResultsView = ({
 
   if (entities.length) {
     return (
-      <ViewList
+      <CardsList
         entities={entities}
         onCardClick={onCardClick}
         onPublish={onPublish}
@@ -255,6 +273,10 @@ export const TabRenderer = () => {
     MarketplaceSelectors.selectSelectedViewType,
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const applicationTypeSchemas = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectAllSchemas,
+  );
+
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
@@ -295,7 +317,11 @@ export const TabRenderer = () => {
     const filteredEntities = allModels.filter(
       (entity) =>
         doesApplicationMatchSearchTerm(entity, searchTerm) &&
-        doesApplicationMatchFilters(entity, selectedFilters),
+        doesApplicationMatchFilters(
+          entity,
+          selectedFilters,
+          applicationTypeSchemas,
+        ),
     );
 
     const isInstalledModel = (entity: DialAIEntityModel) =>
@@ -306,12 +332,22 @@ export const TabRenderer = () => {
         ? filteredEntities.filter(isInstalledModel)
         : filteredEntities;
 
-    if (selectedViewType === ViewTypes.TABLE) {
-      return entitiesForTab;
-    }
-
     const shouldSuggest =
       selectedTab === MarketplaceTabs.MY_WORKSPACE && isSomeFilterNotEmpty;
+
+    if (selectedViewType === ViewTypes.TABLE) {
+      if (shouldSuggest) {
+        const suggestedListWithoutInstalled = filteredEntities.filter(
+          (entity) => !isInstalledModel(entity),
+        );
+
+        setSuggestedResults(suggestedListWithoutInstalled);
+      } else {
+        setSuggestedResults([]);
+      }
+
+      return entitiesForTab;
+    }
 
     const groupedEntities = groupModelsAndSaveOrder(
       entitiesForTab.concat(shouldSuggest ? filteredEntities : []),
@@ -338,25 +374,25 @@ export const TabRenderer = () => {
     searchTerm,
     selectedFilters,
     installedModelIds,
+    applicationTypeSchemas,
   ]);
 
-  const handleAddApplication = useCallback((type: ApplicationType) => {
-    setApplicationModel({
-      action: ApplicationActionType.ADD,
-      type,
-    });
-  }, []);
+  const detailedApplicationTypeSchema = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
+  );
 
   const handleEditApplication = useCallback(
     (entity: DialAIEntityModel) => {
-      dispatch(ApplicationActions.get({ applicationId: entity.id }));
-      setApplicationModel({
-        entity,
-        action: ApplicationActionType.EDIT,
-        type: getApplicationType(entity),
-      });
+      const applicationType = getApplicationType(entity);
+      dispatch(
+        ApplicationActions.enterEditMode({
+          entity: entity,
+          applicationType,
+          detailedApplicationTypeSchemaId: detailedApplicationTypeSchema?.$id,
+        }),
+      );
     },
-    [dispatch],
+    [dispatch, detailedApplicationTypeSchema],
   );
 
   const handleDeleteClose = useCallback(
@@ -480,10 +516,7 @@ export const TabRenderer = () => {
       >
         <MarketplaceBanner />
         <div className="flex items-center justify-end gap-2 md:mt-4 md:gap-4 xl:mt-6">
-          <SearchHeader
-            items={displayedEntities.length}
-            onAddApplication={handleAddApplication}
-          />
+          <SearchHeader />
           {enabledFeatures.has(Feature.MarketplaceTableView) && <ViewToggler />}
         </div>
       </header>

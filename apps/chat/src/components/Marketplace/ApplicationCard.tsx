@@ -1,6 +1,4 @@
 import {
-  IconBookmark,
-  IconBookmarkFilled,
   IconFileDescription,
   IconLink,
   IconPencilMinus,
@@ -42,7 +40,6 @@ import { Translation } from '@/src/types/translation';
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { AuthSelectors } from '@/src/store/auth/auth.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -56,10 +53,10 @@ import {
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
+import ShareIcon from '@/src/components/Common/ShareIcon';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
-import ShareIcon from '../Common/ShareIcon';
-import Tooltip from '../Common/Tooltip';
+import { AgentBookmark } from './AgentBookmark';
 import { TopicsList } from './TopicsList';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
@@ -97,6 +94,7 @@ export interface ApplicationCardProps {
   onEdit?: (entity: DialAIEntityModel) => void;
   onBookmarkClick?: (entity: DialAIEntityModel) => void;
   onLogsClick?: (entity: DialAIEntityModel) => void;
+  isPreview?: boolean;
 }
 
 export const ApplicationCard = ({
@@ -107,15 +105,13 @@ export const ApplicationCard = ({
   onBookmarkClick,
   onPublish,
   onLogsClick,
+  isPreview,
 }: ApplicationCardProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
   const screenState = useScreenState();
 
-  const installedModelIds = useAppSelector(
-    ModelsSelectors.selectInstalledModelIds,
-  );
   const isCodeAppsEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
   );
@@ -228,7 +224,7 @@ export const ApplicationCard = ({
       {
         name: t('Edit'),
         dataQa: 'edit',
-        display: (isMyApp || !!canWrite) && !!onEdit,
+        display: ((isMyApp || !!canWrite) && !!onEdit) || !!isPreview,
         Icon: IconPencilMinus,
         onClick: handleEdit,
       },
@@ -249,7 +245,7 @@ export const ApplicationCard = ({
       {
         name: t('Publish'),
         dataQa: 'publish',
-        display: isMyApp && !!onPublish,
+        display: (isMyApp && !!onPublish) || !!isPreview,
         Icon: IconWorldShare,
         onClick: handlePublish,
       },
@@ -271,7 +267,7 @@ export const ApplicationCard = ({
       {
         name: t('Delete'),
         dataQa: 'delete',
-        display: isMyApp && !!onDelete,
+        display: (isMyApp && !!onDelete) || !!isPreview,
         disabled: isModifyDisabled,
         Icon: IconTrashX,
         iconClassName: 'stroke-error',
@@ -303,17 +299,17 @@ export const ApplicationCard = ({
       onDelete,
       isModifyDisabled,
       handleDelete,
+      isPreview,
     ],
   );
-
-  const Bookmark = installedModelIds.has(entity.reference)
-    ? IconBookmarkFilled
-    : IconBookmark;
 
   return (
     <div
       onClick={() => onClick(entity)}
-      className="group relative h-[98px] cursor-pointer rounded-md bg-layer-2 p-3 shadow-card hover:bg-layer-3 md:h-[162px] md:p-4 xl:h-[164px] xl:p-5"
+      className={classNames(
+        'group relative h-[98px] rounded-md bg-layer-2 p-3 shadow-card hover:bg-layer-3 md:h-[162px] md:p-4 xl:h-[164px] xl:p-5',
+        !isPreview && 'cursor-pointer',
+      )}
       data-qa="agent"
     >
       <div>
@@ -325,24 +321,9 @@ export const ApplicationCard = ({
             triggerIconSize={18}
             className="m-0 xl:invisible group-hover:xl:visible"
           />
-          {!isMyApp && !entity.sharedWithMe && (
-            <Tooltip
-              tooltip={
-                installedModelIds.has(entity.reference)
-                  ? t('Remove from My workspace')
-                  : t('Add to My workspace')
-              }
-              isTriggerClickable
-            >
-              <Bookmark
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onBookmarkClick?.(entity);
-                }}
-                className="rounded text-secondary hover:text-accent-primary"
-                size={18}
-              />
-            </Tooltip>
+
+          {!isPreview && (
+            <AgentBookmark onBookmarkClick={onBookmarkClick} entity={entity} />
           )}
         </div>
         <div className="flex items-center gap-4 overflow-hidden">
