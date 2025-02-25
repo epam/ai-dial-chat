@@ -41,8 +41,9 @@ dialTest(
     sendMessage,
     talkToAgentDialog,
     marketplacePage,
+    apiAssertion,
+    sendMessageAssertion,
     chat,
-    chatMessages,
   }) => {
     setTestIds('EPMRTC-883', 'EPMRTC-895', 'EPMRTC-3835', 'EPMRTC-3822');
     let promptsInsideFolder: FolderPrompt;
@@ -50,7 +51,7 @@ dialTest(
     let nestedFolders: FolderInterface[];
     let nestedPrompts: Prompt[];
     let exportedData: UploadDownloadData;
-    const promptContent = `Let's play a game. I give you a color and you respond with its antonym`;
+    const promptContent = `Let's play a game. I give you a word and you answer me a word of opposite meaning`;
 
     await dialTest.step(
       'Prepare empty folder, folder with 2 prompts, another prompt in the root and nested folders with prompts inside',
@@ -144,17 +145,12 @@ dialTest(
           .selectPromptWithKeyboard(promptOutsideFolder.name, {
             triggeredHttpMethod: 'GET',
           });
-
-        const selectedPromptContent =
-          await sendMessage.messageInput.getElementContent();
-        expect
-          .soft(selectedPromptContent, ExpectedMessages.promptNameValid)
-          .toBe(promptContent);
+        await sendMessageAssertion.assertMessageValue(promptContent);
       },
     );
 
     await dialTest.step(
-      'Send request and verify response corresponds prompt',
+      'Send request and verify prompt content is set as a user message',
       async () => {
         const simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
         if (simpleRequestModel !== undefined) {
@@ -163,14 +159,14 @@ dialTest(
             simpleRequestModel,
             marketplacePage,
           );
-          await chat.sendRequestWithPrompt(promptContent);
-          await chat.sendRequestWithButton('white');
-          expect
-            .soft(
-              await chatMessages.getLastMessageContent(),
-              ExpectedMessages.messageContentIsValid,
-            )
-            .toContain('black');
+          const request = await chat.sendRequestWithPrompt(
+            promptContent,
+            false,
+          );
+          await apiAssertion.assertRequestMessage(
+            request.messages[0],
+            promptContent,
+          );
         }
       },
     );
