@@ -1,15 +1,10 @@
 import { Publication } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import {
-  ExpectedMessages,
-  MenuOptions,
-  MockedChatApiResponseBodies,
-} from '@/src/testData';
+import { MenuOptions, MockedChatApiResponseBodies } from '@/src/testData';
 import { ImportConversation } from '@/src/testData/conversationHistory/importConversation';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
-import { expect } from '@playwright/test';
 
 const publicationsToUnpublish: Publication[] = [];
 
@@ -37,9 +32,10 @@ dialTest(
     conversationData,
     dataInjector,
     chatAssertion,
+    localStorageAssertion,
   }) => {
     setTestIds('EPMRTC-4878', 'EPMRTC-4880', 'EPMRTC-4356', 'EPMRTC-5168');
-    let models = GeneratorUtil.randomArrayElements(
+    const models = GeneratorUtil.randomArrayElements(
       ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
       2,
     );
@@ -49,7 +45,7 @@ dialTest(
     const availableModels = ModelsUtil.getLatestModels().filter(
       (m) => m.id !== initialModel1.id && m.id !== initialModel2.id,
     );
-    let addedModel = GeneratorUtil.randomArrayElement(availableModels);
+    const addedModel = GeneratorUtil.randomArrayElement(availableModels);
 
     // Create a conversation with the addedModel, which is not in the workspace
     const conversation =
@@ -90,10 +86,10 @@ dialTest(
     await dialTest.step(
       'Verify recentModelsIds in local storage is unchanged',
       async () => {
-        const recentModels = await localStorageManager.getRecentModels();
-        expect
-          .soft(recentModels, ExpectedMessages.recentEntitiesVisible)
-          .toBe(JSON.stringify([initialModel1.id, initialModel2.id]));
+        await localStorageAssertion.assertRecentModels([
+          initialModel1.id,
+          initialModel2.id,
+        ]);
       },
     );
 
@@ -128,10 +124,10 @@ dialTest(
       async () => {
         await marketplace.getAgents().getAgent(initialModel2).click();
         await agentDetailsModal.useButton.click();
-        const recentModels = await localStorageManager.getRecentModels();
-        expect
-          .soft(recentModels, ExpectedMessages.recentEntitiesVisible)
-          .toBe(JSON.stringify([initialModel2.id, initialModel1.id])); // secondModel should be first now
+        await localStorageAssertion.assertRecentModels([
+          initialModel2.id,
+          initialModel1.id,
+        ]); // secondModel should be first now
       },
     );
 
@@ -159,12 +155,11 @@ dialTest(
         await chatBar.dialMarketplaceLink.click();
         await marketplace.getAgents().getAgent(addedModel).click();
         await agentDetailsModal.useButton.click();
-        const recentModels = await localStorageManager.getRecentModels();
-        expect
-          .soft(recentModels, ExpectedMessages.recentEntitiesVisible)
-          .toBe(
-            JSON.stringify([addedModel.id, initialModel2.id, initialModel1.id]),
-          );
+        await localStorageAssertion.assertRecentModels([
+          addedModel.id,
+          initialModel2.id,
+          initialModel1.id,
+        ]);
       },
     );
 
@@ -182,10 +177,10 @@ dialTest(
     await dialTest.step(
       'Verify recentModelsIds is updated and the second model is now first',
       async () => {
-        const recentModels = await localStorageManager.getRecentModels();
-        expect
-          .soft(recentModels, ExpectedMessages.recentEntitiesVisible)
-          .toBe(JSON.stringify([initialModel2.id, initialModel1.id]));
+        await localStorageAssertion.assertRecentModels([
+          initialModel2.id,
+          initialModel1.id,
+        ]);
       },
     );
 
@@ -211,12 +206,11 @@ dialTest(
       'Click "Add the agent to My workspace to continue" and verify recentModelsIds is updated',
       async () => {
         await chat.addModelButton.click();
-        const recentModels = await localStorageManager.getRecentModels();
-        expect
-          .soft(recentModels, ExpectedMessages.recentEntitiesVisible)
-          .toBe(
-            JSON.stringify([addedModel.id, initialModel2.id, initialModel1.id]),
-          );
+        await localStorageAssertion.assertRecentModels([
+          addedModel.id,
+          initialModel2.id,
+          initialModel1.id,
+        ]);
       },
     );
   },
@@ -242,12 +236,13 @@ dialAdminTest(
     chatMessages,
     itemApiHelper,
     conversations,
+    localStorageAssertion,
     chat,
   }) => {
     setTestIds('EPMRTC-4881', 'EPMRTC-5162', 'EPMRTC-5163');
 
     //Prepare models and set recent models in local storage
-    let models = GeneratorUtil.randomArrayElements(
+    const models = GeneratorUtil.randomArrayElements(
       ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
       2,
     );
@@ -309,10 +304,10 @@ dialAdminTest(
     await dialAdminTest.step(
       'Verify that recentModelsIds in local storage remains unchanged',
       async () => {
-        const recentModels = await localStorageManager.getRecentModels();
-        expect
-          .soft(recentModels, ExpectedMessages.recentEntitiesVisible)
-          .toBe(JSON.stringify([firstModel.id, secondModel.id]));
+        await localStorageAssertion.assertRecentModels([
+          firstModel.id,
+          secondModel.id,
+        ]);
       },
     );
 
@@ -341,10 +336,10 @@ dialAdminTest(
           MockedChatApiResponseBodies.simpleTextBody,
         );
         await chatMessages.regenerateResponse();
-        const recentModels = await localStorageManager.getRecentModels();
-        expect
-          .soft(recentModels, ExpectedMessages.recentEntitiesVisible)
-          .toBe(JSON.stringify([secondModel.id, firstModel.id]));
+        await localStorageAssertion.assertRecentModels([
+          secondModel.id,
+          firstModel.id,
+        ]);
       },
     );
 
@@ -353,10 +348,10 @@ dialAdminTest(
       async () => {
         await header.createNewConversation();
         await agentInfoAssertion.assertAgentName(secondModel.name);
-        const recentModels = await localStorageManager.getRecentModels();
-        expect
-          .soft(recentModels, ExpectedMessages.recentEntitiesVisible)
-          .toBe(JSON.stringify([secondModel.id, firstModel.id]));
+        await localStorageAssertion.assertRecentModels([
+          secondModel.id,
+          firstModel.id,
+        ]);
       },
     );
 
@@ -365,11 +360,10 @@ dialAdminTest(
       async () => {
         await conversations.selectConversation(conversation2.name); // Select the duplicated conversation
         await chat.sendRequestWithButton(GeneratorUtil.randomString(5));
-
-        const recentModels = await localStorageManager.getRecentModels();
-        expect
-          .soft(recentModels, ExpectedMessages.recentEntitiesVisible)
-          .toBe(JSON.stringify([secondModel.id, firstModel.id]));
+        await localStorageAssertion.assertRecentModels([
+          secondModel.id,
+          firstModel.id,
+        ]);
       },
     );
 
@@ -378,10 +372,10 @@ dialAdminTest(
       async () => {
         await header.createNewConversation();
         await agentInfoAssertion.assertAgentName(secondModel.name);
-        const recentModels = await localStorageManager.getRecentModels();
-        expect
-          .soft(recentModels, ExpectedMessages.recentEntitiesVisible)
-          .toBe(JSON.stringify([secondModel.id, firstModel.id]));
+        await localStorageAssertion.assertRecentModels([
+          secondModel.id,
+          firstModel.id,
+        ]);
       },
     );
   },
@@ -395,7 +389,6 @@ dialTest(
   async ({
     dialHomePage,
     header,
-    talkToAgentDialog,
     agentInfoAssertion,
     setTestIds,
     localStorageManager,
@@ -406,10 +399,11 @@ dialTest(
     conversationDropdownMenu,
     chatBar,
     chatMessages,
+    localStorageAssertion,
   }) => {
     setTestIds('EPMRTC-4883', 'EPMRTC-4884', 'EPMRTC-5177', 'EPMRTC-5167');
     dialTest.slow();
-    let models = GeneratorUtil.randomArrayElements(
+    const models = GeneratorUtil.randomArrayElements(
       ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
       2,
     );
@@ -419,7 +413,7 @@ dialTest(
     const availableModels = ModelsUtil.getLatestModels().filter(
       (m) => m.id !== initialModel1.id && m.id !== initialModel2.id,
     );
-    let addedModel = GeneratorUtil.randomArrayElement(availableModels);
+    const addedModel = GeneratorUtil.randomArrayElement(availableModels);
     await localStorageManager.setRecentModelsIdsOnce(...models);
 
     // Create conversations
@@ -467,10 +461,9 @@ dialTest(
         await conversationDropdownMenu.selectMenuOption(MenuOptions.duplicate, {
           triggeredHttpMethod: 'POST',
         });
-        const recentModels = await localStorageManager.getRecentModels();
-        expect
-          .soft(recentModels, ExpectedMessages.recentEntitiesVisible)
-          .not.toContain(addedModel.id);
+        await localStorageAssertion.assertRecentModelsDoesNotContain(
+          addedModel.id,
+        );
       },
     );
 
@@ -497,10 +490,10 @@ dialTest(
         await dialHomePage.importFile(exportedConversation, () =>
           chatBar.importButton.click(),
         );
-        const recentModels = await localStorageManager.getRecentModels();
-        expect
-          .soft(recentModels, ExpectedMessages.recentEntitiesVisible)
-          .toBe(JSON.stringify([initialModel1.id, initialModel2.id]));
+        await localStorageAssertion.assertRecentModels([
+          initialModel1.id,
+          initialModel2.id,
+        ]);
       },
     );
 
@@ -529,10 +522,10 @@ dialTest(
           MockedChatApiResponseBodies.simpleTextBody,
         );
         await chat.sendRequestWithButton(GeneratorUtil.randomString(10));
-        const recentModels = await localStorageManager.getRecentModels();
-        expect
-          .soft(recentModels, ExpectedMessages.recentEntitiesVisible)
-          .toBe(JSON.stringify([initialModel2.id, initialModel1.id]));
+        await localStorageAssertion.assertRecentModels([
+          initialModel2.id,
+          initialModel1.id,
+        ]);
       },
     );
 
@@ -555,10 +548,10 @@ dialTest(
           MockedChatApiResponseBodies.simpleTextBody,
         );
         await chatMessages.regenerateResponse();
-        const recentModels = await localStorageManager.getRecentModels();
-        expect
-          .soft(recentModels, ExpectedMessages.recentEntitiesVisible)
-          .toBe(JSON.stringify([initialModel1.id, initialModel2.id]));
+        await localStorageAssertion.assertRecentModels([
+          initialModel1.id,
+          initialModel2.id,
+        ]);
       },
     );
 
@@ -585,6 +578,7 @@ dialTest(
     marketplace,
     agentDetailsModal,
     confirmationDialog,
+    localStorageAssertion,
   }) => {
     setTestIds('EPMRTC-4356');
     const models = GeneratorUtil.randomArrayElements(
@@ -621,10 +615,8 @@ dialTest(
         //workaround is :
         await header.createNewConversation();
         await talkToAgentDialog.cancelButton.click();
-        const recentModels = await localStorageManager.getRecentModels();
-        expect
-          .soft(recentModels, ExpectedMessages.recentEntitiesVisible)
-          .toBe(JSON.stringify([secondModel.id]));
+
+        await localStorageAssertion.assertRecentModels([secondModel.id]);
         await agentInfoAssertion.assertAgentName(secondModel.name);
       },
     );

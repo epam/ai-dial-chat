@@ -47,6 +47,7 @@ export enum ExpectedMessages {
   cannotDeleteSelectedAddon = 'Selected addon cannot be deleted',
   recentAddonsVisible = 'Recent addons are visible',
   recentEntitiesVisible = 'Recent entities are visible',
+  recentEntitiesIsValid = 'Recent entities field is valid',
   recentEntitiesIsOnTop = 'Recent entity is on top of the list',
   systemPromptIsValid = 'Set System Prompt is preserved',
   conversationRenamed = 'Conversation is renamed',
