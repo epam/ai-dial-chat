@@ -49,6 +49,7 @@ dialTest(
     talkToAgentDialog,
     talkToAgents,
     baseAssertion,
+    localStorageManager,
     setTestIds,
   }) => {
     setTestIds(
@@ -63,6 +64,7 @@ dialTest(
     await dialTest.step(
       'Verify default model is selected by default',
       async () => {
+        await localStorageManager.seLastConversationSettingsOnce();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.click();
@@ -353,6 +355,7 @@ dialTest(
       ModelsUtil.getLatestModels(),
     );
     await localStorageManager.setRecentModelsIds(randomModel);
+    await localStorageManager.seLastConversationSettingsOnce();
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
     await chat.configureSettingsButton.click();

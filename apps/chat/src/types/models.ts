@@ -47,13 +47,13 @@ export interface CoreAIEntity<T = EntityType.Model> {
     allow_resume?: boolean;
     configuration?: boolean;
   };
+  application_type_schema_id?: string;
   tokenizer_model?: TokenizerModel;
   description_keywords?: string[];
 
   function?: {
     status: ApplicationStatus;
   };
-  application_type_schema_id?: string;
 }
 
 export interface DialAIEntityFeatures {

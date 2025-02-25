@@ -63,6 +63,7 @@ import {
   ApplicationActions,
   ApplicationSelectors,
 } from '../application/application.reducers';
+import { ApplicationTypesSchemasSelectors } from '../applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { CodeEditorActions } from '../codeEditor/codeEditor.reducer';
 import {
   ConversationsActions,
@@ -316,10 +317,14 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
       const applicationDetails = ApplicationSelectors.selectApplicationDetail(
         state$.value,
       );
+      const schema = ApplicationTypesSchemasSelectors.selectSchemaById(
+        state$.value,
+        applicationType,
+      );
 
       if (
         (applicationType === ApplicationType.CODE_APP ||
-          applicationType === ApplicationType.QUICK_APP) &&
+          schema?.displayName === 'Quick App') &&
         applicationDetails?.reference !== application.reference
       ) {
         return of(

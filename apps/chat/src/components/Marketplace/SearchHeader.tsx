@@ -1,15 +1,24 @@
 import { IconChevronDown, IconPlus, IconSearch } from '@tabler/icons-react';
 import { ChangeEvent, useMemo, useState } from 'react';
 
+import { useRouter } from 'next/router';
+
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { encode } from '@/src/utils/app/application-type-schema';
+
+import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { ApplicationType } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
+import {
+  ApplicationTypesSchemasActions,
+  ApplicationTypesSchemasSelectors,
+} from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MarketplaceActions,
@@ -76,79 +85,85 @@ const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
   );
 };
 
-interface SearchHeaderProps {
-  items: number;
-  onAddApplication: (type: ApplicationType) => void;
-}
-
 interface MenuItem {
-  type: ApplicationType;
+  type: ApplicationType | string;
   name: string;
   dataQa: string;
   display: boolean;
 }
 
-export const SearchHeader = ({
-  // items,
-  onAddApplication,
-}: SearchHeaderProps) => {
+export const SearchHeader = () => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
+  const router = useRouter();
+
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
   const isCustomApplicationsEnabled = enabledFeatures.has(
     Feature.CustomApplications,
   );
-  const isQuickAppsEnabled = enabledFeatures.has(Feature.QuickApps);
   const isCodeAppsEnabled = enabledFeatures.has(Feature.CodeApps);
 
   const searchTerm = useAppSelector(MarketplaceSelectors.selectSearchTerm);
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
+  const applicationTypeSchemas = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectAllSchemas,
+  );
+  const detailedApplicationTypeSchema = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
+  );
 
-  const menuItems: DisplayMenuItemProps[] = useMemo(
+  const menuItems: MenuItem[] = useMemo(
     () =>
       [
         {
-          type: ApplicationType.CODE_APP,
-          name: 'Code app',
-          dataQa: 'add-startable-app',
-          display: isCodeAppsEnabled,
-        },
-        {
+          name: t('Custom app'),
           type: ApplicationType.CUSTOM_APP,
-          name: 'Custom app',
           dataQa: 'add-custom-app',
           display: isCustomApplicationsEnabled,
+          onClick: (e: React.MouseEvent) => {
+            e.stopPropagation();
+            router.push(`/apps-editor/${ApplicationType.CUSTOM_APP}`);
+          },
         },
-        // {
-        //   type: ApplicationType.MINDMAP,
-        //   name: 'Mindmap',
-        //   dataQa: 'add-mindmap',
-        //   display: isMindmapEnabled,
-        // },
         {
-          type: ApplicationType.QUICK_APP,
-          name: 'Quick app',
-          dataQa: 'add-quick-app',
-          display: isQuickAppsEnabled,
+          name: t('Code app'),
+          dataQa: 'add-startable-app',
+          type: ApplicationType.CODE_APP,
+          display: isCodeAppsEnabled,
+          onClick: (e: React.MouseEvent) => {
+            e.stopPropagation();
+            router.push(`/apps-editor/${ApplicationType.CODE_APP}`);
+          },
         },
-      ].map(({ name, dataQa, display, type }: MenuItem) => ({
-        name: t(name),
-        dataQa: dataQa,
-        display: display,
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onAddApplication(type);
-        },
-      })),
+        ...(applicationTypeSchemas?.map((schema: ApplicationTypeSchema) => ({
+          name: t(schema.displayName),
+          type: schema.displayName,
+          dataQa: `add-${schema.displayName}`,
+          display: true,
+          onClick: (e: React.MouseEvent) => {
+            e.stopPropagation();
+            if (detailedApplicationTypeSchema?.$id !== schema.id) {
+              dispatch(
+                ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema(
+                  schema.id,
+                ),
+              );
+            }
+            router.push(`/apps-editor/${encode(schema.id)}`);
+          },
+        })) ?? []),
+      ].sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1)),
     [
-      onAddApplication,
       t,
       isCustomApplicationsEnabled,
-      isQuickAppsEnabled,
+      applicationTypeSchemas,
       isCodeAppsEnabled,
+      router,
+      dispatch,
+      detailedApplicationTypeSchema,
     ],
   );
 

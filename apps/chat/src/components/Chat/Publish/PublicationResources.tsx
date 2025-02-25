@@ -420,7 +420,7 @@ export const FilePublicationResources = ({
                 <a
                   download={props.item.name}
                   href={constructPath(
-                    'api',
+                    '/api',
                     ApiUtils.encodeApiUrl(props.item.id),
                   )}
                   data-qa="download"
@@ -454,7 +454,7 @@ export const FilePublicationResources = ({
             />
             <a
               download={f.name}
-              href={constructPath('api', ApiUtils.encodeApiUrl(f.id))}
+              href={constructPath('/api', ApiUtils.encodeApiUrl(f.id))}
               data-qa="download"
             >
               <IconDownload

@@ -8,6 +8,7 @@ import {
   isApplicationDeployed,
   topicToOption,
 } from '@/src/utils/app/application';
+import { castToString } from '@/src/utils/app/common';
 
 import {
   ApplicationType,
@@ -207,7 +208,7 @@ export const CodeAppView: FC<ViewProps> = ({
 
         handleEdit(data);
       } else {
-        dispatch(ApplicationActions.create(preparedData));
+        dispatch(ApplicationActions.create({ applicationData: preparedData }));
       }
 
       onClose(true);
@@ -344,8 +345,8 @@ export const CodeAppView: FC<ViewProps> = ({
                 label={t('Attachment types')}
                 info={t("Input the MIME type and press 'Enter' to add")}
                 initialSelectedItems={field.value}
-                getItemLabel={(i: unknown) => i as string}
-                getItemValue={(i: unknown) => i as string}
+                getItemLabel={castToString}
+                getItemValue={castToString}
                 onChangeSelectedItems={field.onChange}
                 placeholder={t('Enter one or more attachment types')}
                 className="input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full"

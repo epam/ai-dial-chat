@@ -208,7 +208,7 @@ export class ApiUtils {
   }
 
   static requestText(url: string, options?: RequestInit) {
-    return fromFetch(constructPath('api', url), {
+    return fromFetch(constructPath('/api', url), {
       headers: { 'Content-Type': 'application/json' },
       ...options,
     }).pipe(
