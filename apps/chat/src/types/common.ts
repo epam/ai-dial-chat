@@ -151,3 +151,5 @@ export interface EntityInfo
   updatedAt?: string;
   isPublic?: boolean;
 }
+
+export type SortOrder = 'asc' | 'desc';

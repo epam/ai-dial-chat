@@ -36,7 +36,6 @@ import {
   ModelsActions,
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import {
   DeleteType,
@@ -56,28 +55,40 @@ import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
 import { NoResultsFound } from '../Common/NoResultsFound';
 import { AgentsTable } from './AgentsTable/AgentsTable';
 import { ApplicationLogs } from './ApplicationLogs';
-import { ViewToggler } from './ViewToggler';
 
 import Magnifier from '@/public/images/icons/search-alt.svg';
-import { Feature, PublishActions, ShareEntity } from '@epam/ai-dial-shared';
+import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 
 interface NoAgentsFoundProps {
   children: React.ReactNode;
-  desc: string;
+  description: string;
   header?: string;
 }
 
-const NoAgentsFound = ({ children, desc, header }: NoAgentsFoundProps) => (
-  <div className="flex grow flex-col items-center justify-center">
-    {children}
-    {header && <span className="mt-5 text-lg font-semibold">{header}</span>}
-    {desc && (
-      <span className="mt-4 text-sm font-normal" data-qa="no-data-description">
-        {desc}
-      </span>
-    )}
-  </div>
-);
+const NoAgentsFound = ({
+  children,
+  description,
+  header,
+}: NoAgentsFoundProps) => {
+  const { t } = useTranslation(Translation.Marketplace);
+
+  return (
+    <div className="flex grow flex-col items-center justify-center">
+      {children}
+      {header && (
+        <span className="mt-5 text-lg font-semibold">{t(header)}</span>
+      )}
+      {description && (
+        <span
+          className="mt-4 text-sm font-normal"
+          data-qa="no-data-description"
+        >
+          {t(description)}
+        </span>
+      )}
+    </div>
+  );
+};
 
 interface ResultsViewProps {
   entities: DialAIEntityModel[];
@@ -202,8 +213,8 @@ const ResultsView = ({
   if (areAllFiltersEmpty) {
     return (
       <NoAgentsFound
-        header={t('No agents')}
-        desc={t("You don't have any agents.")}
+        header="No agents"
+        description="You don't have any agents."
       >
         <IconMessage2 size={100} className="stroke-[0.2]" />
       </NoAgentsFound>
@@ -211,9 +222,7 @@ const ResultsView = ({
   }
 
   return (
-    <NoAgentsFound
-      desc={t("Sorry, we couldn't find any results for your search.")}
-    >
+    <NoAgentsFound description="Sorry, we couldn't find any results for your search.">
       <NoResultsFound iconSize={100} className="gap-5 text-lg font-semibold" />
     </NoAgentsFound>
   );
@@ -275,10 +284,6 @@ export const TabRenderer = () => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
-  );
-
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
   );
 
   const [suggestedResults, setSuggestedResults] = useState<DialAIEntityModel[]>(
@@ -517,7 +522,6 @@ export const TabRenderer = () => {
         <MarketplaceBanner />
         <div className="flex items-center justify-end gap-2 md:mt-4 md:gap-4 xl:mt-6">
           <SearchHeader />
-          {enabledFeatures.has(Feature.MarketplaceTableView) && <ViewToggler />}
         </div>
       </header>
 

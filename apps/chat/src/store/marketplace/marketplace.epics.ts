@@ -4,7 +4,7 @@ import { EMPTY, concat, filter, of, switchMap } from 'rxjs';
 
 import { combineEpics } from 'redux-observable';
 
-import { EntityType } from '@/src/types/common';
+import { EntityType, SortOrder } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
 import {
@@ -13,6 +13,7 @@ import {
   MarketplaceQueryParams,
   MarketplaceTabs,
   SourceType,
+  TableColumnSortKeys,
   ViewTypes,
 } from '@/src/constants/marketplace';
 
@@ -64,7 +65,8 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
         MarketplaceActions.setSelectedFilters.match(action) ||
         MarketplaceActions.setState.match(action) ||
         MarketplaceActions.setSearchTerm.match(action) ||
-        MarketplaceActions.setSelectedView.match(action),
+        MarketplaceActions.setSelectedView.match(action) ||
+        MarketplaceActions.setTableSort.match(action),
     ),
     switchMap(() => {
       const state = state$.value;
@@ -113,6 +115,14 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
         query,
         MarketplaceQueryParams.viewType,
         viewType !== ViewTypes.CARD ? viewType : undefined,
+      );
+      const tableSort = MarketplaceSelectors.selectTableSort(state);
+      addToQuery(
+        query,
+        MarketplaceQueryParams.tableSort,
+        viewType !== ViewTypes.CARD
+          ? `${tableSort.column}-${tableSort.order}`
+          : undefined,
       );
 
       Router.push(
@@ -182,6 +192,22 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
       // viewType
       updatedMarketplaceState.selectedView =
         (query[MarketplaceQueryParams.viewType] as ViewTypes) ?? ViewTypes.CARD;
+      // table sort
+      const tableSortQuery = query[MarketplaceQueryParams.tableSort];
+      if (typeof tableSortQuery === 'string') {
+        const splittedTableSortQuery = tableSortQuery.split('-');
+        const tableSortColumn = (
+          splittedTableSortQuery[0] in TableColumnSortKeys
+            ? splittedTableSortQuery[0]
+            : TableColumnSortKeys.NAME
+        ) as TableColumnSortKeys;
+        const tableSortOrder: SortOrder =
+          splittedTableSortQuery[1] === 'desc' ? 'desc' : 'asc';
+        updatedMarketplaceState.tableSort = {
+          column: tableSortColumn,
+          order: tableSortOrder,
+        };
+      }
 
       return concat(
         of(MarketplaceActions.setState(updatedMarketplaceState)),
