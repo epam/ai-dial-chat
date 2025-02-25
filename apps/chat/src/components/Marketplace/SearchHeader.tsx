@@ -30,6 +30,8 @@ import { MarketplaceTabs } from '@/src/constants/marketplace';
 
 import ContextMenu from '@/src/components/Common/ContextMenu';
 
+import { ViewToggler } from './ViewToggler';
+
 import { Feature } from '@epam/ai-dial-shared';
 
 // const countLabel = {
@@ -173,7 +175,7 @@ export const SearchHeader = () => {
 
   return (
     <div className="flex w-full gap-4 sm:justify-end md:w-auto">
-      <div className="relative h-[38px] w-full shrink-0 sm:w-[315px] md:w-[504px]">
+      <div className="relative h-[38px] w-full shrink-0 sm:w-[315px] md:w-[500px]">
         <IconSearch
           className="absolute left-3 top-1/2 -translate-y-1/2"
           size={18}
@@ -187,6 +189,7 @@ export const SearchHeader = () => {
           className="w-full rounded border border-primary bg-transparent py-2.5 pl-[38px] pr-3 leading-4 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
         />
       </div>
+      {enabledFeatures.has(Feature.MarketplaceTableView) && <ViewToggler />}
       {selectedTab === MarketplaceTabs.MY_WORKSPACE && (
         <AddAppButton menuItems={menuItems} />
       )}
