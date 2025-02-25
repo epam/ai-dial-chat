@@ -4,7 +4,7 @@ import { EMPTY, concat, filter, of, switchMap } from 'rxjs';
 
 import { combineEpics } from 'redux-observable';
 
-import { EntityType } from '@/src/types/common';
+import { EntityType, SortOrder } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
 import {
@@ -121,7 +121,7 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
         query,
         MarketplaceQueryParams.tableSort,
         viewType !== ViewTypes.CARD
-          ? `${tableSort.column}-${tableSort.type}`
+          ? `${tableSort.column}-${tableSort.order}`
           : undefined,
       );
 
@@ -201,14 +201,11 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
             ? splittedTableSortQuery[0]
             : TableColumnSortKeys.NAME
         ) as TableColumnSortKeys;
-        const tableSortType = (
-          ['desc', 'asc'].includes(splittedTableSortQuery[1])
-            ? splittedTableSortQuery[1]
-            : 'asc'
-        ) as 'asc' | 'desc';
+        const tableSortOrder: SortOrder =
+          splittedTableSortQuery[1] === 'desc' ? 'desc' : 'asc';
         updatedMarketplaceState.tableSort = {
           column: tableSortColumn,
-          type: tableSortType,
+          order: tableSortOrder,
         };
       }
 

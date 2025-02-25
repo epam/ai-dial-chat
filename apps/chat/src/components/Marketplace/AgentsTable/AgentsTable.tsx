@@ -161,11 +161,11 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
 
     const allEntities = useMemo(() => {
       const sortField = sortKeyMap[tableSort.column] || 'name';
-      const sortedEntities = orderBy(entities, [sortField], [tableSort.type]);
+      const sortedEntities = orderBy(entities, [sortField], [tableSort.order]);
       const sortedSuggestedEntities = orderBy(
         suggestedResults,
         [sortField],
-        [tableSort.type],
+        [tableSort.order],
       );
 
       if (!suggestedResults.length) return sortedEntities;
@@ -178,7 +178,7 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
       separator,
       suggestedResults,
       tableSort.column,
-      tableSort.type,
+      tableSort.order,
     ]);
 
     const rowVirtualizer = useVirtualizer({
@@ -230,12 +230,12 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
         dispatch(
           MarketplaceActions.setTableSort({
             column,
-            type:
-              isSameColumnClicked && tableSort.type === 'asc' ? 'desc' : 'asc',
+            order:
+              isSameColumnClicked && tableSort.order === 'asc' ? 'desc' : 'asc',
           }),
         );
       },
-      [dispatch, tableSort.column, tableSort.type],
+      [dispatch, tableSort.column, tableSort.order],
     );
 
     const virtualRows = rowVirtualizer.getVirtualItems();
@@ -282,9 +282,9 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
                   : 'Name and Description'
               }
               sortKey={TableColumnSortKeys.NAME}
-              selectedSort={
+              sortOrder={
                 tableSort.column === TableColumnSortKeys.NAME
-                  ? tableSort.type
+                  ? tableSort.order
                   : undefined
               }
               onApplySorting={handleApplySorting}
@@ -300,9 +300,9 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
                   <HeaderItem
                     {...item}
                     key={item.label}
-                    selectedSort={
+                    sortOrder={
                       tableSort.column === item.sortKey
-                        ? tableSort.type
+                        ? tableSort.order
                         : undefined
                     }
                     onApplySorting={handleApplySorting}

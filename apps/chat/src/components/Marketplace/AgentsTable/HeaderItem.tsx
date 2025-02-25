@@ -4,6 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { SortOrder } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { TableColumnSortKeys } from '@/src/constants/marketplace';
@@ -12,7 +13,7 @@ interface Props {
   label: string;
   sortKey?: TableColumnSortKeys;
   size?: number;
-  selectedSort?: 'asc' | 'desc';
+  sortOrder?: SortOrder;
   onApplySorting: (column: TableColumnSortKeys) => void;
 }
 
@@ -20,15 +21,13 @@ export const HeaderItem: React.FC<Props> = ({
   label,
   sortKey,
   size,
-  selectedSort,
+  sortOrder,
   onApplySorting,
 }) => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const SortIcon =
-    selectedSort && selectedSort === 'desc'
-      ? IconArrowNarrowDown
-      : IconArrowNarrowUp;
+    sortOrder && sortOrder === 'desc' ? IconArrowNarrowDown : IconArrowNarrowUp;
 
   return (
     <button
@@ -50,7 +49,7 @@ export const HeaderItem: React.FC<Props> = ({
       {sortKey && (
         <SortIcon
           className={
-            selectedSort
+            sortOrder
               ? 'text-controls-permanent'
               : 'invisible text-secondary group-hover:visible'
           }

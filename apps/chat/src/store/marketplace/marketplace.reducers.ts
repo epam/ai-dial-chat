@@ -1,5 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
+import { SortOrder } from '@/src/types/common';
 import { MarketplaceFilters } from '@/src/types/marketplace';
 
 import {
@@ -24,7 +25,7 @@ export interface MarketplaceState {
   selectedView: ViewTypes;
   tableSort: {
     column: TableColumnSortKeys;
-    type: 'asc' | 'desc';
+    order: SortOrder;
   };
   detailsModel: { reference: string; isSuggested: boolean } | undefined;
   applyModelId?: string;
@@ -47,7 +48,7 @@ const initialState: MarketplaceState = {
   selectedView: ViewTypes.CARD,
   tableSort: {
     column: TableColumnSortKeys.NAME,
-    type: 'asc',
+    order: 'asc',
   },
 };
 
@@ -104,7 +105,7 @@ export const marketplaceSlice = createSlice({
         payload,
       }: PayloadAction<{
         column: TableColumnSortKeys;
-        type: 'asc' | 'desc';
+        order: SortOrder;
       }>,
     ) => {
       state.tableSort = payload;
