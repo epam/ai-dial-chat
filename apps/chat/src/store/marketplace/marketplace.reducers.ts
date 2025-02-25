@@ -1,7 +1,7 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { MarketplaceState } from '@/src/types/marketplace';
 import { SortOrder } from '@/src/types/common';
+import { MarketplaceState } from '@/src/types/marketplace';
 
 import {
   FilterTypes,

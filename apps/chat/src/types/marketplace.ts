@@ -1,6 +1,9 @@
+import { SortOrder } from '@/src/types/common';
+
 import {
   FilterTypes,
   MarketplaceTabs,
+  TableColumnSortKeys,
   ViewTypes,
 } from '../constants/marketplace';
 
@@ -22,4 +25,8 @@ export interface MarketplaceState {
   selectedView: ViewTypes;
   applyModelId?: string;
   detailsModel: { reference: string; isSuggested: boolean } | undefined;
+  tableSort: {
+    column: TableColumnSortKeys;
+    order: SortOrder;
+  };
 }
