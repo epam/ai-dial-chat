@@ -192,6 +192,15 @@ dialTest(
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
+        const appTypeFilter = marketplaceFilter.filterByPropertyOptionInput(
+          MarketplaceFilterTypes.type,
+          EntityType.Application,
+        );
+        await appTypeFilter.click();
+        await baseAssertion.assertCheckboxState(
+          appTypeFilter,
+          CheckboxState.checked,
+        );
         const allApps = await modelApiHelper
           .getModels()
           .then((agents) =>
@@ -200,12 +209,6 @@ dialTest(
         const expectedAppNames = Array.from(
           ModelsUtil.groupEntitiesByName(allApps).keys(),
         );
-        await marketplaceFilter
-          .filterByPropertyOptionInput(
-            MarketplaceFilterTypes.type,
-            EntityType.Application,
-          )
-          .click();
         await baseAssertion.assertElementsCount(
           marketplace.getAgents(),
           expectedAppNames.length,
