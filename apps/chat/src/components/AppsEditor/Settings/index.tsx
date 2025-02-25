@@ -250,11 +250,19 @@ export const ApplicationSettings: React.FC<Props> = ({
           },
         )}
       >
-        <div className="flex items-center justify-between p-2">
-          <span className="text-primary">
-            {t('Preview')}: {applicationData.name} {t('v.')}{' '}
-            {applicationData.version}
-          </span>
+        <div className="flex max-w-full items-center justify-between p-2">
+          <div className="mr-2 flex min-w-0 shrink grow gap-2 text-primary">
+            <span>{t('Preview')}:</span>
+            <span
+              data-qa="preview-app-version"
+              className="min-w-0 shrink grow truncate"
+            >
+              {applicationData.name}
+            </span>
+            <span data-qa="preview-app-version" className="text-nowrap">
+              {t('v.')} {applicationData.version}
+            </span>
+          </div>
           <div className="flex space-x-2">
             {type === ApplicationType.CODE_APP && isAppDeployed && (
               <button

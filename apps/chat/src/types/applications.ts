@@ -143,6 +143,6 @@ export enum ApplicationActionType {
 }
 
 export enum ApplicationType {
-  CUSTOM_APP = 'application',
+  CUSTOM_APP = 'custom app',
   CODE_APP = 'code app',
 }
