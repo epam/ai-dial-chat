@@ -13,11 +13,6 @@ import { EMPTY_MODEL_ID } from '@/src/constants/default-ui-settings';
 import { NA_VERSION } from '@/src/constants/public';
 import { validVersionRegEx } from '@/src/constants/versions';
 
-import {
-  isPlaybackConversation,
-  isReplayConversation,
-} from '../app/conversation';
-import { constructPath } from '../app/file';
 import { splitEntityId } from '../app/folders';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
@@ -46,8 +41,10 @@ export const isPseudoModel = (modelId: string | undefined) =>
   modelId ? Object.values(PseudoModel).includes(modelId as PseudoModel) : false;
 
 const getModelApiIdFromConversation = (conversation: Conversation): string => {
-  if (isReplayConversation(conversation)) return PseudoModel.Replay;
-  if (isPlaybackConversation(conversation)) return PseudoModel.Playback;
+  if (conversation.replay?.isReplay || conversation.isReplay)
+    return PseudoModel.Replay;
+  if (conversation.playback?.isPlayback || conversation.isPlayback)
+    return PseudoModel.Playback;
   return conversation.model.id;
 };
 
@@ -179,12 +176,14 @@ export class ApiUtils {
     );
 
   static encodeApiUrl = (path: string): string =>
-    constructPath(
+    ServerUtils.constructPath(
       ...path.split('/').map((part) => this.safeEncodeURIComponent(part)),
     );
 
   static decodeApiUrl = (path: string): string =>
-    constructPath(...path.split('/').map((part) => decodeURIComponent(part)));
+    ServerUtils.constructPath(
+      ...path.split('/').map((part) => decodeURIComponent(part)),
+    );
 
   static request(url: string, options?: RequestInit) {
     return fromFetch(url, {
@@ -208,7 +207,7 @@ export class ApiUtils {
   }
 
   static requestText(url: string, options?: RequestInit) {
-    return fromFetch(constructPath('/api', url), {
+    return fromFetch(ServerUtils.constructPath('/api', url), {
       headers: { 'Content-Type': 'application/json' },
       ...options,
     }).pipe(
