@@ -15,6 +15,7 @@ import { Spinner } from '../Common/Spinner';
 
 import {
   AttachmentData,
+  CustomVisualizerData,
   VisualizerConnectorEvents,
   VisualizerConnectorRequest,
   VisualizerConnectorRequests,
@@ -104,7 +105,8 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
             isPreview: isPreviewConversation,
             conversationId: conversationId,
             layout: { width: 0, height: 0 },
-          } as any,
+            // TODO: fix typing here
+          } as CustomVisualizerData,
         };
         await visualizer.ready();
 
