@@ -255,7 +255,7 @@ export const ApplicationSettings: React.FC<Props> = ({
             <span>{t('Preview')}:</span>
             <span
               data-qa="preview-app-version"
-              className="min-w-0 shrink grow truncate"
+              className="min-w-0 shrink truncate"
             >
               {applicationData.name}
             </span>
