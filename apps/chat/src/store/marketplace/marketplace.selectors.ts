@@ -29,6 +29,9 @@ const rootSelector = (state: RootState): MarketplaceState => state.marketplace;
 export const selectSelectedViewType = (state: RootState) =>
   rootSelector(state).selectedView;
 
+export const selectTableSort = (state: RootState) =>
+  rootSelector(state).tableSort;
+
 export const selectSelectedFilters = createSelector(
   [rootSelector],
   (state) => state.selectedFilters,
