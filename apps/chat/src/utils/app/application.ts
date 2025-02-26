@@ -76,12 +76,12 @@ export const regenerateApplicationId = <T extends ApplicationInfo>(
 export const mapApplicationPropertiesToApi = (
   properties: CustomApplicationModel['applicationProperties'],
 ) => {
-  if (properties?.document_relative_url)
+  if (typeof properties?.document_relative_url === 'string')
     return {
       ...properties,
-      document_relative_url: ApiUtils.encodeApiUrl(
-        properties.document_relative_url as string,
-      ),
+      document_relative_url: properties.document_relative_url
+        ? ApiUtils.encodeApiUrl(properties.document_relative_url as string)
+        : undefined,
     };
   return properties;
 };
@@ -105,7 +105,12 @@ export const convertApplicationToApi = (
   if (schema) {
     return {
       ...commonData,
-      application_properties: applicationData.applicationProperties ?? null,
+      application_properties:
+        (applicationData.applicationProperties &&
+          mapApplicationPropertiesToApi(
+            applicationData.applicationProperties,
+          )) ||
+        null,
       application_type_schema_id:
         applicationData.applicationTypeSchemaId ?? schema['$id'],
     };
@@ -211,27 +216,6 @@ export const getQuickAppConfig = (
 export const getQuickAppDocumentUrl = (entity?: CustomApplicationModel) => {
   return entity ? getQuickAppConfig(entity).document_relative_url : undefined;
 };
-
-// export const createQuickAppConfig = ({
-//   instructions,
-//   temperature,
-//   config,
-//   model,
-//   document_relative_url,
-// }: {
-//   instructions: string;
-//   temperature: number;
-//   config: string;
-//   model: string;
-//   document_relative_url: string;
-// }): QuickAppConfig => ({
-//   instructions,
-//   temperature,
-//   web_api_toolset: JSON.parse(config ?? '{}'),
-//   model:
-//     model ?? DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
-//   document_relative_url: document_relative_url || undefined,
-// });
 
 export const getToolsetStr = (config: QuickAppConfig) => {
   try {

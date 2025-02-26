@@ -34,10 +34,7 @@ import {
 } from '@/src/constants/default-ui-settings';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
 import { DEFAULT_VERSION } from '@/src/constants/public';
-import {
-  // DEFAULT_QUICK_APPS_HOST,
-  DEFAULT_QUICK_APPS_MODEL, // DEFAULT_QUICK_APPS_SCHEMA_ID,
-} from '@/src/constants/quick-apps';
+import { DEFAULT_QUICK_APPS_MODEL } from '@/src/constants/quick-apps';
 
 import { DynamicField } from '@/src/components/Common/Forms/DynamicFormFields';
 
@@ -388,25 +385,6 @@ export const getApplicationData = (
       ? JSON.parse(formData.features)
       : null;
   }
-  // if (type === ApplicationType.QUICK_APP) {
-  //   preparedData.applicationTypeSchemaId = DefaultsService.get(
-  //     'quickAppsSchemaId',
-  //     DEFAULT_QUICK_APPS_SCHEMA_ID,
-  //   );
-  //   preparedData.applicationProperties = createQuickAppConfig({
-  //     config: formData.toolset,
-  //     instructions: formData.instructions ?? '',
-  //     temperature: formData.temperature,
-  //     model: formData.model,
-  //     document_relative_url: formData.documentRelativeUrl,
-  //   });
-  //   preparedData.completionUrl = constructPath(
-  //     DefaultsService.get('quickAppsHost', DEFAULT_QUICK_APPS_HOST),
-  //     'openai/deployments',
-  //     ApiUtils.safeEncodeURIComponent(formData.name.trim()),
-  //     'chat/completions',
-  //   );
-  // }
 
   if (type === ApplicationType.CODE_APP) {
     preparedData.function = {
