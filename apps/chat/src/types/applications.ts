@@ -78,7 +78,7 @@ export interface ApiApplicationModelBase {
 
 export interface ApiTypeSchemaApplication extends ApiApplicationModelBase {
   application_type_schema_id: string;
-  application_properties: Record<string, any> | null;
+  application_properties: QuickAppConfig | Record<string, unknown> | null;
 }
 
 export interface ApiApplicationModelRegular extends ApiApplicationModelBase {

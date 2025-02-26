@@ -168,6 +168,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           ...preparedData,
           reference: oldApplication.reference,
           id: oldApplication.id,
+          isShared: oldApplication.isShared,
           sharedWithMe: isSharedWithMe,
         };
 
