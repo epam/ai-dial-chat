@@ -33,7 +33,8 @@ export function triggerDownload(url: string, name: string): void {
 export const constructPath = (
   ...values: (string | undefined | null)[]
 ): string => {
-  return values.filter(Boolean).join('/');
+  const path = values.filter(Boolean).join('/');
+  return path.startsWith('api/') ? path.replace('api/', '/api/') : path;
 };
 
 export const getRelativePath = (

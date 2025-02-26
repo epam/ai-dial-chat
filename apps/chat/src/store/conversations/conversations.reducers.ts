@@ -65,6 +65,8 @@ const initialState: ConversationsState = {
   chosenEmptyFoldersIds: [],
   renamingConversationId: null,
   talkToConversationId: null,
+  isStartedCustomViewerConversation: false,
+  previewConversationId: null,
 };
 
 export const conversationsSlice = createSlice({
@@ -487,6 +489,12 @@ export const conversationsSlice = createSlice({
     ) => {
       state.searchFilters = payload.searchFilters;
     },
+    setPreviewConversationId: (
+      state,
+      { payload }: PayloadAction<string | null>,
+    ) => {
+      state.previewConversationId = payload;
+    },
     resetSearch: (state) => {
       state.searchTerm = '';
       state.searchFilters = SearchFilters.None;
@@ -865,6 +873,12 @@ export const conversationsSlice = createSlice({
       { payload }: PayloadAction<string | null>,
     ) => {
       state.talkToConversationId = payload;
+    },
+    setIsStartedCustomViewerConversation: (
+      state,
+      { payload }: PayloadAction<boolean>,
+    ) => {
+      state.isStartedCustomViewerConversation = payload;
     },
     getConversationMetadata: (
       state,

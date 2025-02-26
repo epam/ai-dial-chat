@@ -225,6 +225,12 @@ export const callbacks: Partial<
       options.session.user.isAdmin = isAdmin;
     }
 
+    const providerId =
+      typeof options.token.providerId === 'string'
+        ? options.token.providerId
+        : '';
+    options.session.providerId = providerId;
+
     return options.session;
   },
 };

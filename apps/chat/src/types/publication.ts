@@ -52,6 +52,8 @@ export interface Publication {
   resources: PublicationResource[];
   rules?: PublicationRule[];
   resourceTypes: BackendResourceType[];
+  author?: string;
+  displayAuthor?: string;
 }
 
 export interface PublicationInfo {

@@ -105,6 +105,7 @@ export const CustomAppView: React.FC<ViewProps> = ({
         ...preparedData,
         reference: currentReference,
         id: selectedApplication.id,
+        isShared: selectedApplication.isShared,
         sharedWithMe: isSharedWithMe,
       };
 
@@ -115,7 +116,7 @@ export const CustomAppView: React.FC<ViewProps> = ({
         }),
       );
     } else {
-      dispatch(ApplicationActions.create(preparedData));
+      dispatch(ApplicationActions.create({ applicationData: preparedData }));
     }
 
     onClose(true);

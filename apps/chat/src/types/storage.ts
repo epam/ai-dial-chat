@@ -2,6 +2,7 @@ import { Observable } from 'rxjs';
 
 import { Conversation } from '@/src/types/chat';
 
+import { ApiDetailedApplicationTypeSchema } from './application-type-schema';
 import {
   ApplicationInfo,
   ApplicationLogsType,
@@ -156,11 +157,13 @@ export interface DialStorage {
 
   createApplication(
     application: CustomApplicationModel,
+    schema?: ApiDetailedApplicationTypeSchema,
   ): Observable<ApplicationInfo>;
 
   updateApplication(
     application: CustomApplicationModel,
-  ): Observable<ApplicationInfo | void>;
+    schema?: ApiDetailedApplicationTypeSchema,
+  ): Observable<ApplicationInfo>;
 
   getApplication(
     applicationId: string,
@@ -169,6 +172,8 @@ export interface DialStorage {
   deleteApplication(applicationId: string): Observable<void>;
 
   deployApplication(applicationName: string): Observable<void>;
+
+  redeployApplication(applicationName: string): Observable<void>;
 
   undeployApplication(applicationName: string): Observable<void>;
 

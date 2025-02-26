@@ -2467,9 +2467,14 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
         !!values.folderId &&
         values.folderId !== getConversationRootId(LOCAL_BUCKET);
 
-      const saveInStorage =
-        (values.isMessageStreaming === false && hasMessages) ||
-        isInDifferentFolder;
+      const paths = window.location.pathname.split('/');
+      const isApplicationPreviewConversation =
+        paths[1] === 'apps-editor' && paths[3] === 'settings';
+
+      const saveInStorage = isApplicationPreviewConversation
+        ? false
+        : (values.isMessageStreaming === false && hasMessages) ||
+          isInDifferentFolder;
 
       const folderId = saveInStorage
         ? (values.folderId ?? getConversationRootId())
