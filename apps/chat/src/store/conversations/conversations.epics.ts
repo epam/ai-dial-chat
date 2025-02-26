@@ -121,7 +121,7 @@ import { AddonsActions, AddonsSelectors } from '../addons/addons.reducers';
 import { ChatActions } from '../chat/chat.reducer';
 import { FilesActions } from '../files/files.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
-import { OverlaySelectors } from '../overlay/overlay.reducers';
+import { OverlaySelectors, OverlayState } from '../overlay/overlay.reducers';
 import { PublicationActions } from '../publication/publication.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import {
@@ -446,6 +446,9 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 (conversation) => !isEntityIdLocal(conversation),
               );
             const conversationFolderId = folderId ?? getConversationRootId();
+            const defaultFolderId =
+              folderId ?? getConversationRootId(LOCAL_BUCKET);
+
             const newConversations: Conversation[] = names.map((name, index) =>
               regenerateConversationId({
                 name:
@@ -468,7 +471,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 selectedAddons: [],
                 updatedAt: Date.now(),
                 status: UploadStatus.LOADED,
-                folderId: folderId ?? getConversationRootId(LOCAL_BUCKET),
+                folderId: defaultFolderId,
               }),
             );
             const selectedConversationsIds =
@@ -2448,6 +2451,10 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
         state$.value,
         id,
       ) as Conversation;
+      const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
+      const overlayNewConversationsFolder = (
+        state$.value.overlay as OverlayState
+      ).newConversationsFolder;
 
       if (!conversation) {
         return of(
@@ -2477,7 +2484,10 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
           isInDifferentFolder;
 
       const folderId = saveInStorage
-        ? (values.folderId ?? getConversationRootId())
+        ? (values.folderId ??
+          (isOverlay
+            ? (overlayNewConversationsFolder ?? getConversationRootId())
+            : getConversationRootId()))
         : getConversationRootId(LOCAL_BUCKET);
 
       const newConversation: Conversation = regenerateConversationId({

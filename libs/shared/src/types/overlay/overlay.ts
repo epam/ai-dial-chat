@@ -10,6 +10,7 @@ export interface ChatOverlayOptions {
   theme?: string;
   modelId?: string;
   overlayConversationId?: string;
+  newConversationsFolderId?: string;
 
   enabledFeatures?: Feature[] | string;
 
