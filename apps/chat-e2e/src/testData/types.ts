@@ -78,3 +78,8 @@ export enum SourcesFilterOptions {
   myQuickApps = 'My Quick apps',
   myCodeApps = 'My Code apps',
 }
+
+export enum ApplicationTypes {
+  CUSTOM_APP = 'custom app',
+  CODE_APP = 'code app',
+}

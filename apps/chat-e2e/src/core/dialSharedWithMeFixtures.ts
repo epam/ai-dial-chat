@@ -1,4 +1,4 @@
-import { DialHomePage } from '../ui/pages';
+import { DialHomePage, MarketplacePage } from '../ui/pages';
 import {
   AgentSettings,
   AttachFilesModal,
@@ -11,6 +11,11 @@ import {
   ConversationSettingsModal,
   ConversationToCompare,
   DropdownMenu,
+  Marketplace,
+  MarketplaceAgents,
+  MarketplaceContainer,
+  MarketplaceFilter,
+  MarketplaceSidebar,
   ModelInfoTooltip,
   PromptBar,
   PromptModalDialog,
@@ -22,6 +27,7 @@ import {
   VariableModalDialog,
 } from '../ui/webElements';
 
+import { BackendResourceType } from '@/chat/types/common';
 import config from '@/config/chat.playwright.config';
 import {
   ChatAssertion,
@@ -130,6 +136,12 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserChatAssertion: ChatAssertion;
   additionalShareUserConversationAssertion: ConversationAssertion;
   additionalShareUserTalkToAgentDialogAssertion: TalkToAgentDialogAssertion;
+  additionalShareUserMarketplacePage: MarketplacePage;
+  additionalShareUserMarketplaceContainer: MarketplaceContainer;
+  additionalShareUserMarketplaceSidebar: MarketplaceSidebar;
+  additionalShareUserMarketplaceFilter: MarketplaceFilter;
+  additionalShareUserMarketplace: Marketplace;
+  additionalShareUserMarketplaceAgents: MarketplaceAgents;
 }>({
   beforeAdditionalShareUserTestCleanup: [
     async (
@@ -147,27 +159,19 @@ const dialSharedWithMeTest = dialTest.extend<{
       await additionalSecondUserItemApiHelper.deleteAllData(
         BucketUtil.getAdditionalSecondShareUserBucket(),
       );
-      const additionalUserSharedConversations =
-        await additionalUserShareApiHelper.listSharedWithMeConversations();
-      const additionalUserSharedPrompts =
-        await additionalUserShareApiHelper.listSharedWithMePrompts();
-      const additionalUserSharedFiles =
-        await additionalUserShareApiHelper.listSharedWithMeFiles();
+      const additionalUserSharedEntities =
+        await additionalUserShareApiHelper.listSharedWithMeEntities(
+          ...Object.values(BackendResourceType),
+        );
       await additionalUserShareApiHelper.deleteSharedWithMeEntities([
-        ...additionalUserSharedConversations.resources,
-        ...additionalUserSharedPrompts.resources,
-        ...additionalUserSharedFiles.resources,
+        ...additionalUserSharedEntities.resources,
       ]);
-      const additionalSecondUserSharedConversations =
-        await additionalSecondUserShareApiHelper.listSharedWithMeConversations();
-      const additionalSecondUserSharedPrompts =
-        await additionalSecondUserShareApiHelper.listSharedWithMePrompts();
-      const additionalSecondUserSharedFiles =
-        await additionalSecondUserShareApiHelper.listSharedWithMeFiles();
+      const additionalSecondUserSharedEntities =
+        await additionalSecondUserShareApiHelper.listSharedWithMeEntities(
+          ...Object.values(BackendResourceType),
+        );
       await additionalSecondUserShareApiHelper.deleteSharedWithMeEntities([
-        ...additionalSecondUserSharedConversations.resources,
-        ...additionalSecondUserSharedPrompts.resources,
-        ...additionalSecondUserSharedFiles.resources,
+        ...additionalSecondUserSharedEntities.resources,
       ]);
       await use('beforeAdditionalShareUserTestCleanup');
     },
@@ -691,6 +695,55 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserTalkToAgentDialogAssertion =
       new TalkToAgentDialogAssertion(additionalShareUserTalkToAgentDialog);
     await use(additionalShareUserTalkToAgentDialogAssertion);
+  },
+  additionalShareUserMarketplacePage: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserMarketplacePage = new MarketplacePage(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserMarketplacePage);
+  },
+  additionalShareUserMarketplaceContainer: async (
+    { additionalShareUserMarketplacePage },
+    use,
+  ) => {
+    const additionalShareUserMarketplaceContainer =
+      additionalShareUserMarketplacePage.getMarketplaceContainer();
+    await use(additionalShareUserMarketplaceContainer);
+  },
+  additionalShareUserMarketplaceSidebar: async (
+    { additionalShareUserMarketplaceContainer },
+    use,
+  ) => {
+    const additionalShareUserMarketplaceSidebar =
+      additionalShareUserMarketplaceContainer.getMarketplaceSidebar();
+    await use(additionalShareUserMarketplaceSidebar);
+  },
+  additionalShareUserMarketplaceFilter: async (
+    { additionalShareUserMarketplaceSidebar },
+    use,
+  ) => {
+    const additionalShareUserMarketplaceFilter =
+      additionalShareUserMarketplaceSidebar.getMarketplaceFilter();
+    await use(additionalShareUserMarketplaceFilter);
+  },
+  additionalShareUserMarketplace: async (
+    { additionalShareUserMarketplaceContainer },
+    use,
+  ) => {
+    const additionalShareUserMarketplace =
+      additionalShareUserMarketplaceContainer.getMarketplace();
+    await use(additionalShareUserMarketplace);
+  },
+  additionalShareUserMarketplaceAgents: async (
+    { additionalShareUserMarketplace },
+    use,
+  ) => {
+    const additionalShareUserMarketplaceAgents =
+      additionalShareUserMarketplace.getAgents();
+    await use(additionalShareUserMarketplaceAgents);
   },
 });
 

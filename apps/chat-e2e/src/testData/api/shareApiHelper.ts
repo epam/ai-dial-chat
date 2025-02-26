@@ -1,5 +1,9 @@
 import { Conversation } from '@/chat/types/chat';
-import { BackendChatEntity, BackendResourceType } from '@/chat/types/common';
+import {
+  BackendChatEntity,
+  BackendEntity,
+  BackendResourceType,
+} from '@/chat/types/common';
 import { Prompt } from '@/chat/types/prompt';
 import {
   ShareAcceptRequestModel,
@@ -66,7 +70,32 @@ export class ShareApiHelper extends BaseApiHelper {
       resources: resources,
     };
     const response = await this.request.post(
-      this.getHost(API.shareConversationHost),
+      this.getHost(API.shareEntityHost),
+      {
+        data: requestData,
+      },
+    );
+    expect(
+      response.status(),
+      `Successfully created share invitation link`,
+    ).toBe(200);
+    const responseText = await response.text();
+    return JSON.parse(responseText) as ShareByLinkResponseModel;
+  }
+
+  public async shareAppByLink(app: BackendEntity) {
+    const resources: { url: string }[] = [];
+    let url: string;
+    if (!resources.find((r) => r.url === url)) {
+      resources.push({ url: app.url });
+    }
+
+    const requestData: ShareRequestModel = {
+      invitationType: ShareRequestType.link,
+      resources: resources,
+    };
+    const response = await this.request.post(
+      this.getHost(API.shareEntityHost),
       {
         data: requestData,
       },
@@ -112,9 +141,11 @@ export class ShareApiHelper extends BaseApiHelper {
     return this.listSharedWithMeEntities(BackendResourceType.PROMPT);
   }
 
-  public async listSharedWithMeEntities(resourceType: BackendResourceType) {
+  public async listSharedWithMeEntities(
+    ...resourceType: BackendResourceType[]
+  ) {
     const requestData: ShareListingRequestModel = {
-      resourceTypes: [resourceType],
+      resourceTypes: resourceType,
       with: ShareRelations.me,
       order: 'popular_asc',
     };

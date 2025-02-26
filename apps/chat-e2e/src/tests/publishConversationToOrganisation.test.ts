@@ -105,7 +105,7 @@ dialAdminTest(
         await publishingRequestModal
           .getChangePublishToPath()
           .changeButton.click();
-        await selectFoldersAssertion.assertStringsSorting(
+        selectFoldersAssertion.assertStringsSorting(
           await selectFolders.getFolderNames(),
           'asc',
         );
@@ -202,7 +202,7 @@ dialAdminTest(
     await dialTest.step(
       'Verify folders sorting in "Organization" section',
       async () => {
-        await selectFoldersAssertion.assertStringsSorting(
+        selectFoldersAssertion.assertStringsSorting(
           await adminOrganizationFolderConversations.getFolderNames(),
           'asc',
         );

@@ -5,6 +5,7 @@ import { MenuSelectors } from '@/src/ui/selectors';
 import { MarketplaceAgentSelectors } from '@/src/ui/selectors/marketplaceSelectors';
 import { BaseElement, DropdownMenu } from '@/src/ui/webElements';
 import { AgentDetailsModal } from '@/src/ui/webElements/marketplace/agentDetailsModal';
+import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
 export class MarketplaceAgents extends BaseElement {
@@ -36,7 +37,7 @@ export class MarketplaceAgents extends BaseElement {
   public agentName = (name: string) =>
     new BaseElement(
       this.page,
-      `${MarketplaceAgentSelectors.agentName}:text-is('${name}')`,
+      `${MarketplaceAgentSelectors.agentName}:text-is('${RegexUtil.escapeRegexChars(name)}')`,
     ).getElementLocator();
 
   public agentVersion = (version: string) =>
@@ -99,11 +100,15 @@ export class MarketplaceAgents extends BaseElement {
     } else {
       name = entity;
     }
-    return this.rootLocator.filter({ has: this.agentName(name) }).filter({
-      has: this.agentVersion(version!).or(
-        this.agentVersionWithPrefix(version!),
-      ),
-    });
+    if (version) {
+      return this.rootLocator.filter({ has: this.agentName(name) }).filter({
+        has: this.agentVersion(version!).or(
+          this.agentVersionWithPrefix(version!),
+        ),
+      });
+    } else {
+      return this.rootLocator.filter({ has: this.agentName(name) });
+    }
   }
 
   public getAgentTopics(entity: DialAIEntityModel | string) {
