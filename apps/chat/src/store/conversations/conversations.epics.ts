@@ -441,11 +441,22 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               return EMPTY;
             }
 
+            const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
+            const overlayNewConversationsFolder =
+              OverlaySelectors.selectOverlayNewConversationsFolder(
+                state$.value,
+              );
+
             const nonLocalConversations =
               ConversationsSelectors.selectConversations(state$.value).filter(
                 (conversation) => !isEntityIdLocal(conversation),
               );
             const conversationFolderId = folderId ?? getConversationRootId();
+            const defaultFolderId =
+              folderId ??
+              (isOverlay ? overlayNewConversationsFolder : undefined) ??
+              getConversationRootId(LOCAL_BUCKET);
+
             const newConversations: Conversation[] = names.map((name, index) =>
               regenerateConversationId({
                 name:
@@ -468,7 +479,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 selectedAddons: [],
                 updatedAt: Date.now(),
                 status: UploadStatus.LOADED,
-                folderId: folderId ?? getConversationRootId(LOCAL_BUCKET),
+                folderId: defaultFolderId,
               }),
             );
             const selectedConversationsIds =

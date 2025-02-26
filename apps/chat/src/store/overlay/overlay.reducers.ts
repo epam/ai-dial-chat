@@ -23,6 +23,7 @@ interface OverlayState {
   hostDomain: string;
 
   systemPrompt: string | null;
+  newConversationsFolder: string | null;
 
   readyToInteractSent: boolean;
   optionsReceived?: boolean;
@@ -32,6 +33,7 @@ const initialState: OverlayState = {
   hostDomain: '*',
 
   systemPrompt: null,
+  newConversationsFolder: null,
   readyToInteractSent: false,
 };
 
@@ -66,6 +68,7 @@ export const overlaySlice = createSlice({
       { payload }: PayloadAction<WithRequestId<ChatOverlayOptions>>,
     ) => {
       state.hostDomain = payload.hostDomain;
+      state.newConversationsFolder = payload.newConversationsFolderId ?? null;
     },
     setOverlayOptionsSuccess: (
       state,
@@ -115,6 +118,13 @@ const selectOverlaySystemPrompt = createSelector([rootSelector], (state) => {
   return state.systemPrompt;
 });
 
+const selectOverlayNewConversationsFolder = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.newConversationsFolder;
+  },
+);
+
 const selectOptionsReceived = createSelector([rootSelector], (state) => {
   return state.optionsReceived;
 });
@@ -128,6 +138,7 @@ export const OverlaySelectors = {
   selectOverlaySystemPrompt,
   selectOptionsReceived,
   selectReadyToInteractSent,
+  selectOverlayNewConversationsFolder,
 };
 
 export const OverlayActions = overlaySlice.actions;
