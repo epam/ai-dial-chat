@@ -108,7 +108,8 @@ export const TalkToCard = ({
 
   const canWrite = canWriteSharedWithMe(entity);
 
-  const isExecutable = isExecutableApp(entity) && (isMyEntity || isAdmin); //TODO add  ```|| canWrite``` when core issues #655 and #672 will be ready
+  const isExecutable =
+    isExecutableApp(entity) && (isMyEntity || isAdmin || canWrite);
   const screenState = useScreenState();
 
   const isApplicationsSharingEnabled = useAppSelector((state) =>
@@ -192,7 +193,7 @@ export const TalkToCard = ({
         dataQa: 'status-change',
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
         display:
-          (isAdmin || isMyEntity) && //TODO add  ```|| canWrite``` when core issues #655 will be ready
+          (isAdmin || isMyEntity || canWrite) &&
           !!entity.functionStatus &&
           isCodeAppsEnabled,
         Icon: PlayerContextIcon,

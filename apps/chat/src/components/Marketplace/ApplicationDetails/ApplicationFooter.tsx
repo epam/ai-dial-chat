@@ -120,7 +120,8 @@ export const ApplicationDetailsFooter = ({
 
   const canWrite = canWriteSharedWithMe(entity);
 
-  const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin); //TODO add  ```|| canWrite``` when core issues #655 and #672 will be ready
+  const isExecutable =
+    isExecutableApp(entity) && (isMyApp || isAdmin || canWrite);
 
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
@@ -218,8 +219,7 @@ export const ApplicationDetailsFooter = ({
       {
         name: t(getPlayerCaption(entity)),
         dataQa: 'status-change',
-        // TODO remove '&& !entity.sharedWithMe' when core issue will be ready #655
-        display: isExecutable && isCodeAppsEnabled && !entity.sharedWithMe,
+        display: isExecutable && isCodeAppsEnabled,
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
         Icon: PlayerContextIcon,
         iconClassName: PlayerContextIconClasses[playerStatus],
@@ -333,8 +333,7 @@ export const ApplicationDetailsFooter = ({
                   className="icon-button !p-[5px]"
                 />
               )}
-              {/*TODO remove '&& !entity.sharedWithMe' when core issue will be ready #655*/}
-              {isExecutable && isCodeAppsEnabled && !entity.sharedWithMe && (
+              {isExecutable && isCodeAppsEnabled && (
                 <Tooltip tooltip={t(getPlayerCaption(entity))}>
                   <button
                     disabled={playerStatus === SimpleApplicationStatus.UPDATING}
