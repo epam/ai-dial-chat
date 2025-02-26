@@ -105,7 +105,7 @@ export const ApplicationCard = ({
   onBookmarkClick,
   onPublish,
   onLogsClick,
-  isPreview,
+  isPreview = false,
 }: ApplicationCardProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -125,7 +125,7 @@ export const ApplicationCard = ({
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
   const isExecutable =
-    isExecutableApp(entity) && (isMyApp || isAdmin || !!canWrite);
+    isExecutableApp(entity) && (isMyApp || isAdmin || canWrite);
 
   const { iconSize, shareIconSize } = CardIconSizes[screenState];
 
@@ -217,7 +217,7 @@ export const ApplicationCard = ({
         dataQa: 'status-change',
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
         display:
-          (isAdmin || isMyApp || !!canWrite) &&
+          (isAdmin || isMyApp || canWrite) &&
           !!entity.functionStatus &&
           isCodeAppsEnabled,
         Icon: PlayerContextIcon,
@@ -227,7 +227,7 @@ export const ApplicationCard = ({
       {
         name: t('Edit'),
         dataQa: 'edit',
-        display: ((isMyApp || !!canWrite) && !!onEdit) || !!isPreview,
+        display: ((isMyApp || canWrite) && !!onEdit) || isPreview,
         Icon: IconPencilMinus,
         onClick: handleEdit,
       },
@@ -248,7 +248,7 @@ export const ApplicationCard = ({
       {
         name: t('Publish'),
         dataQa: 'publish',
-        display: (isMyApp && !!onPublish) || !!isPreview,
+        display: (isMyApp && !!onPublish) || isPreview,
         Icon: IconWorldShare,
         onClick: handlePublish,
       },
@@ -270,7 +270,7 @@ export const ApplicationCard = ({
       {
         name: t('Delete'),
         dataQa: 'delete',
-        display: (isMyApp && !!onDelete) || !!isPreview,
+        display: (isMyApp && !!onDelete) || isPreview,
         disabled: isModifyDisabled,
         Icon: IconTrashX,
         iconClassName: 'stroke-error',
