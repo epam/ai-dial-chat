@@ -46,7 +46,7 @@ export const validateInvitationId = (invitationId: string) => {
 
 export const hasWritePermission = (
   permissions: SharePermission[] | undefined,
-) => permissions?.includes(SharePermission.WRITE);
+) => permissions?.includes(SharePermission.WRITE) || false;
 
 export const canWriteSharedWithMe = (entity: DialAIEntityModel | ShareEntity) =>
   hasWritePermission(entity?.permissions);

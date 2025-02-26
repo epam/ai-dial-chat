@@ -203,7 +203,7 @@ export const TalkToCard = ({
       {
         name: t('Edit'),
         dataQa: 'edit',
-        display: (isMyEntity || !!canWrite) && !!onEdit,
+        display: (isMyEntity || canWrite) && !!onEdit,
         Icon: IconPencilMinus,
         onClick: handleEdit,
       },
