@@ -155,21 +155,24 @@ const updateApplicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ApplicationActions.update.match),
     switchMap(({ payload }) => {
-      if (payload.applicationData.sharedWithMe) {
-        return of(
-          ApplicationActions.edit({
-            oldApplication: payload.oldApplication,
-            updatedApplication: payload.applicationData,
-            redirectUrl: payload.redirectUrl,
-            schema: payload.schema,
-          }),
-        );
-      }
-
       const initialActions$ = of(
         ApplicationActions.updateStart(),
         ApplicationActions.setShouldSaveApplication(false),
       );
+
+      if (payload.applicationData.sharedWithMe) {
+        return concat(
+          initialActions$,
+          of(
+            ApplicationActions.edit({
+              oldApplication: payload.oldApplication,
+              updatedApplication: payload.applicationData,
+              redirectUrl: payload.redirectUrl,
+              schema: payload.schema,
+            }),
+          ),
+        );
+      }
 
       const updatedCustomApplication = regenerateApplicationId(
         payload.applicationData,
