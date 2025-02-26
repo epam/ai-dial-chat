@@ -131,7 +131,14 @@ export const GeneralInfoEditor: React.FC<Props> = ({
         }
       }
     },
-    [oldApplication, schema, isAppDeployed, router.query, dispatch, t],
+    [
+      router.query,
+      schema,
+      oldApplication,
+      dispatch,
+      isSharedWithMe,
+      isAppDeployed,
+      t,
   );
 
   useEffect(() => {
