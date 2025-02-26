@@ -61,6 +61,13 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
     dispatch(ApplicationActions.setShouldSaveApplication(true));
   };
 
+  const isMindmapSettingsPage = useMemo(
+    () =>
+      pathname === '/apps-editor/[slug]/settings' &&
+      applicationTypeDisplayName === 'Mindmap',
+    [pathname, applicationTypeDisplayName],
+  );
+
   const tabs = useMemo(
     () => [
       {
@@ -177,7 +184,10 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
             </button>
           ) : (
             <Link
-              className="hidden items-center space-x-1 hover:text-accent-primary md:flex"
+              className={classNames(
+                'hidden items-center space-x-1 hover:text-accent-primary md:flex',
+                isMindmapSettingsPage && 'text-accent-primary',
+              )}
               href={{ pathname: '/marketplace', query: { tab: 'workspace' } }}
             >
               <LogOutIcon width={14} height={14} />
