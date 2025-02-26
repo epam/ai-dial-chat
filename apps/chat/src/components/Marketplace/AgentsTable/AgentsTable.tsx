@@ -170,10 +170,10 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
         return orderBy(
           items,
           [
-            (item) =>
-              isString(item[sortField])
-                ? item[sortField].toLowerCase()
-                : item[sortField],
+            (item) => {
+              const value = item[sortField];
+              return isString(value) ? value.toLowerCase() : value;
+            },
           ],
           [tableSort.order],
         );
