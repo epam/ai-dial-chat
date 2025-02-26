@@ -1,5 +1,3 @@
-import { useMemo } from 'react';
-
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
@@ -12,7 +10,7 @@ interface infoColumnProps {
 
 function InfoColumn({ dataQa, infoLabel, info }: infoColumnProps) {
   return (
-    <div className="flex flex-col gap-4" data-qa={dataQa}>
+    <div className="flex flex-col gap-2" data-qa={dataQa}>
       <span className=" w-[148px] whitespace-pre-wrap break-words font-semibold">
         {infoLabel}:
       </span>
@@ -27,11 +25,16 @@ interface Props {
 
 export function ApplicationInfo({ entityInfo }: Props) {
   const { t } = useTranslation(Translation.Marketplace);
-  const releaseDate = useMemo(() => {
-    return entityInfo.createdAt
-      ? new Date(entityInfo.createdAt).toLocaleDateString()
-      : undefined;
-  }, [entityInfo.createdAt]);
+
+  //TODO uncomment when will be ready at the core side
+  // const releaseDate = useMemo(() => {
+  //   return entityInfo.createdAt
+  //     ? new Date(entityInfo.createdAt).toLocaleDateString()
+  //     : undefined;
+  // }, [entityInfo.createdAt]);
+  //TODO remove when owner will be ready at the core side
+
+  const releaseDate = new Date(2025, 1, 20).toLocaleDateString();
 
   return (
     <>
