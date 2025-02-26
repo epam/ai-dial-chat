@@ -139,6 +139,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
       isSharedWithMe,
       isAppDeployed,
       t,
+    ],
   );
 
   useEffect(() => {
