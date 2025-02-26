@@ -314,16 +314,21 @@ export const ApplicationCard = ({
     >
       <div>
         <div className="absolute right-4 top-4 flex gap-1 xl:right-5 xl:top-5">
-          <ContextMenu
-            menuItems={menuItems}
-            featureType={FeatureType.Application}
-            triggerIconHighlight
-            triggerIconSize={18}
-            className="m-0 xl:invisible group-hover:xl:visible"
-          />
-
           {!isPreview && (
-            <AgentBookmark onBookmarkClick={onBookmarkClick} entity={entity} />
+            <>
+              <ContextMenu
+                menuItems={menuItems}
+                featureType={FeatureType.Application}
+                triggerIconHighlight
+                triggerIconSize={18}
+                className="m-0 xl:invisible group-hover:xl:visible"
+              />
+
+              <AgentBookmark
+                onBookmarkClick={onBookmarkClick}
+                entity={entity}
+              />
+            </>
           )}
         </div>
         <div className="flex items-center gap-4 overflow-hidden">
