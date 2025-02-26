@@ -96,6 +96,7 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
     const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
     const screenState = useScreenState();
+    const userName = useAppSelector(AuthSelectors.selectUserName);
 
     const isMyApp = isMyApplication(entity);
     const isPublicApp = isApplicationPublic(entity);
@@ -340,7 +341,11 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
           )}
         </div>
         <div className="flex w-[130px] min-w-[130px] items-center">
-          <p className="truncate">{entity.owner ?? t('Unknown')}</p>
+          <p className="truncate">
+            {isMyApplication(entity)
+              ? userName
+              : (entity.owner ?? t('Unknown'))}
+          </p>
         </div>
         <div className="flex w-[86px] min-w-[86px] items-center">
           <p className="truncate">
