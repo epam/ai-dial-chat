@@ -33,6 +33,7 @@ dialTest(
     chatAssertion,
     localStorageAssertion,
     marketplaceAgents,
+    toast,
   }) => {
     setTestIds('EPMRTC-4878', 'EPMRTC-4880', 'EPMRTC-4356', 'EPMRTC-5168');
     const models = GeneratorUtil.randomArrayElements(
@@ -206,6 +207,7 @@ dialTest(
       'Click "Add the agent to My workspace to continue" and verify recentModelsIds is updated',
       async () => {
         await chat.addModelButton.click();
+        await toast.closeToast();
         await localStorageAssertion.assertRecentModels([
           addedModel.id,
           initialModel2.id,
