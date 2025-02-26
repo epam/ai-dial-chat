@@ -14,7 +14,6 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
-import { CONFIRM_ICON_FILE_VALUES } from '@/src/constants/applications';
 import { IMAGE_TYPES } from '@/src/constants/chat';
 import { DEFAULT_VERSION } from '@/src/constants/public';
 
@@ -28,7 +27,6 @@ import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
-import { withWarningMessage } from '../Forms/FieldWarningMessage';
 import {
   FormData,
   getApplicationData,
@@ -38,9 +36,7 @@ import {
 } from './form';
 import { ViewProps } from './view-props';
 
-const LogoSelector = withWarningMessage(
-  withErrorMessage(withLabel(CustomLogoSelect)),
-);
+const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const TopicsSelector = withLabel(DropdownSelector);
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const ControlledField = withController(Field);
@@ -168,12 +164,6 @@ export const CustomAppView: React.FC<ViewProps> = ({
               error={errors.iconUrl?.message}
               disabled={isSharedWithMe}
               tooltip={isSharedWithMe ? getSharedTooltip('icon') : ''}
-              warning={
-                selectedApplication?.isShared
-                  ? CONFIRM_ICON_FILE_VALUES.description
-                  : ''
-              }
-              confirmDialogValues={CONFIRM_ICON_FILE_VALUES}
             />
           )}
         />

@@ -29,10 +29,6 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
-import {
-  CONFIRM_ICON_FILE_VALUES,
-  CONFIRM_SOURCE_FOLDER_VALUES,
-} from '@/src/constants/applications';
 import { IMAGE_TYPES } from '@/src/constants/chat';
 import { CODE_APPS_ENDPOINTS } from '@/src/constants/code-apps';
 import { DEFAULT_VERSION } from '@/src/constants/public';
@@ -61,19 +57,15 @@ import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { OptionsDialog } from '@/src/components/Common/OptionsDialog';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
-import { withWarningMessage } from '../../Forms/FieldWarningMessage';
+import { ConfirmDialog } from '../../ConfirmDialog';
 import { ViewProps } from '../view-props';
 import { FormCodeEditor } from './FormCodeEditor';
 import { RuntimeVersionSelector } from './RuntimeVersionSelector';
 
-const LogoSelector = withWarningMessage(
-  withErrorMessage(withLabel(CustomLogoSelect)),
-);
+const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const TopicsSelector = withLabel(DropdownSelector);
 const ControlledField = withController(Field);
-const FilesEditor = withController(
-  withWarningMessage(withLabel(SourceFilesEditor)),
-);
+const FilesEditor = withController(withLabel(SourceFilesEditor));
 const MappingsForm = withLabel(
   DynamicFormFields<FormData, 'endpoints' | 'env'>,
 );
@@ -104,6 +96,11 @@ export const CodeAppView: FC<ViewProps> = ({
   const isSharedWithMe = selectedApplication?.sharedWithMe;
 
   const [editorConfirmation, setEditorConfirmation] = useState<FormData>();
+  const [confirmSharingRevoke, setConfirmSharingRevoke] = useState<{
+    description: string;
+    heading: string;
+    data: FormData;
+  }>();
 
   useEffect(() => {
     return () => {
@@ -201,12 +198,13 @@ export const CodeAppView: FC<ViewProps> = ({
           preparedData.function?.sourceFolder !==
             selectedApplication.function?.sourceFolder
         ) {
-          dispatch(
-            ShareActions.revokeAccess({
-              resourceId: selectedApplication.id,
-              featureType: FeatureType.Application,
-            }),
-          );
+          setConfirmSharingRevoke({
+            description:
+              'Changing of source folder will stop sharing and other users will no longer see this application.',
+            heading: 'Confirm changing source folder',
+            data,
+          });
+          return;
         }
 
         handleEdit(data);
@@ -309,12 +307,6 @@ export const CodeAppView: FC<ViewProps> = ({
                 error={errors.iconUrl?.message}
                 tooltip={isSharedWithMe ? getSharedTooltip('icon') : ''}
                 disabled={isSharedWithMe}
-                warning={
-                  selectedApplication?.isShared
-                    ? CONFIRM_ICON_FILE_VALUES.description
-                    : ''
-                }
-                confirmDialogValues={CONFIRM_ICON_FILE_VALUES}
               />
             )}
           />
@@ -389,12 +381,6 @@ export const CodeAppView: FC<ViewProps> = ({
             tooltip={
               isSharedWithMe ? getSharedTooltip('folder with source files') : ''
             }
-            warning={
-              selectedApplication?.isShared
-                ? CONFIRM_SOURCE_FOLDER_VALUES.description
-                : ''
-            }
-            confirmDialogValues={CONFIRM_SOURCE_FOLDER_VALUES}
           />
 
           {sources && <FormCodeEditor sourcesFolderId={sources} />}
@@ -426,6 +412,30 @@ export const CodeAppView: FC<ViewProps> = ({
             errors={errors.env}
           />
         </div>
+
+        {confirmSharingRevoke && selectedApplication && (
+          <ConfirmDialog
+            isOpen
+            heading={t(confirmSharingRevoke.heading)}
+            description={t(confirmSharingRevoke.description)}
+            confirmLabel={t('Confirm')}
+            cancelLabel={t('Cancel')}
+            onClose={(result) => {
+              if (result) {
+                dispatch(
+                  ShareActions.revokeAccess({
+                    resourceId: selectedApplication.id,
+                    featureType: FeatureType.Application,
+                  }),
+                );
+
+                handleEdit(confirmSharingRevoke.data);
+              }
+
+              setConfirmSharingRevoke(undefined);
+            }}
+          />
+        )}
 
         <OptionsDialog
           isOpen={!!editorConfirmation}
