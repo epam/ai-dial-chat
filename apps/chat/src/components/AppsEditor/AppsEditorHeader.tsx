@@ -168,7 +168,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
         <div className="flex h-full items-center space-x-2">
           {isEditApplication && applicationTypeDisplayName !== 'Mindmap' ? (
             <button
-              className="button flex items-center space-x-1 hover:text-accent-primary md:flex"
+              className="button flex items-center space-x-1 text-accent-primary md:flex"
               onClick={handleSaveAndRedirect}
               data-qa="save-and-exit"
             >
