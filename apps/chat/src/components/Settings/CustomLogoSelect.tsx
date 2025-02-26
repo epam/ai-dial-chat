@@ -8,6 +8,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
+import { ConfirmDialog } from '../Common/ConfirmDialog';
 import Tooltip from '../Common/Tooltip';
 import { FileManagerModal } from '../Files/FileManagerModal';
 
@@ -23,6 +24,10 @@ interface CustomLogoSelectProps {
   disabled?: boolean;
   tooltip?: string;
   sourceFilters?: Set<FileSourceType>;
+  confirmDialogValues?: {
+    description: string;
+    heading: string;
+  };
 }
 
 export const CustomLogoSelect = ({
@@ -37,15 +42,25 @@ export const CustomLogoSelect = ({
   disabled,
   tooltip,
   sourceFilters,
+  confirmDialogValues,
 }: CustomLogoSelectProps) => {
   const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
     useState(false);
   const { t } = useTranslation(Translation.Settings);
   const maximumAttachmentsAmount = 1;
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<string[] | unknown>();
 
   const onClickAddHandler = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setIsSelectFilesDialogOpened(true);
+  };
+
+  const handleSelectFiles = (files: unknown) => {
+    if ((files as string[]).length > 0) {
+      onLogoSelect(files as string[]);
+    }
+    setIsSelectFilesDialogOpened(false);
   };
 
   return (
@@ -92,8 +107,13 @@ export const CustomLogoSelect = ({
           allowedTypes={allowedTypes ?? ['image/*']}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
           onClose={(files: unknown) => {
-            if ((files as string[]).length > 0) {
-              onLogoSelect(files as string[]);
+            if (files) {
+              if (confirmDialogValues) {
+                setPendingFiles(files);
+                setConfirmDialogOpen(true);
+              } else {
+                handleSelectFiles(files);
+              }
             }
             setIsSelectFilesDialogOpened(false);
           }}
@@ -102,6 +122,21 @@ export const CustomLogoSelect = ({
           customUploadButtonLabel={t('Upload files')}
           forceShowSelectCheckBox
           sourceFilters={sourceFilters}
+        />
+      )}
+      {confirmDialogValues && confirmDialogOpen && (
+        <ConfirmDialog
+          isOpen={confirmDialogOpen}
+          heading={confirmDialogValues?.heading}
+          description={confirmDialogValues?.description}
+          confirmLabel={t('Confirm')}
+          cancelLabel={t('Cancel')}
+          onClose={(result) => {
+            setConfirmDialogOpen(false);
+            if (result) {
+              handleSelectFiles(pendingFiles);
+            }
+          }}
         />
       )}
     </div>

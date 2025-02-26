@@ -20,3 +20,21 @@ export enum CODEAPPS_REQUIRED_FILES {
   APP = 'app.py',
   REQUIREMENTS = 'requirements.txt',
 }
+
+export const CONFIRM_SOURCE_FOLDER_VALUES = {
+  heading: 'Confirm changing source folder',
+  description:
+    'Changing of source folder will stop sharing and other users will no longer see this application.',
+};
+
+export const CONFIRM_ICON_FILE_VALUES = {
+  heading: 'Confirm changing icon file',
+  description:
+    'Changing of icon file will stop sharing the file and other users will see default icon this application.',
+};
+
+export const CONFIRM_DOCUMENT_VALUES = {
+  heading: 'Confirm changing source folder',
+  description:
+    'Changing of document relative url will stop sharing and other users will no longer see this application.',
+};

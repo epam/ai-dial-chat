@@ -17,6 +17,7 @@ import { useAppDispatch } from '@/src/store/hooks';
 
 import { SelectFolderModal } from '@/src/components/Files/SelectFolderModal';
 
+import { ConfirmDialog } from '../../ConfirmDialog';
 import { FieldErrorMessage } from '../../Forms/FieldErrorMessage';
 import Tooltip from '../../Tooltip';
 
@@ -26,6 +27,10 @@ interface SourceFilesEditorProps {
   error?: string;
   tooltip?: string;
   disabled?: boolean;
+  confirmDialogValues?: {
+    description: string;
+    heading: string;
+  };
 }
 
 const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
@@ -34,16 +39,17 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
   error,
   tooltip,
   disabled,
+  confirmDialogValues,
 }) => {
   const { t } = useTranslation(Translation.Marketplace);
-
   const dispatch = useAppDispatch();
-
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [pendingFolder, setPendingFolder] = useState<string | undefined>();
 
   const handleToggleFileManager = useCallback(() => {
     setIsFolderModalOpen((p) => !p);
-  }, [setIsFolderModalOpen]);
+  }, []);
 
   const handleCloseFileManager = useCallback(
     (folder?: string) => {
@@ -54,6 +60,22 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
     },
     [onChange],
   );
+
+  const handleCloseFileManagerConfirmations = useCallback((folder?: string) => {
+    if (folder) {
+      setConfirmDialogOpen(true);
+      setPendingFolder(folder);
+    }
+    setIsFolderModalOpen(false);
+  }, []);
+
+  const handleConfirmDialogClose = (result: boolean) => {
+    if (result && pendingFolder) {
+      handleCloseFileManager(pendingFolder);
+    }
+    setConfirmDialogOpen(false);
+    setPendingFolder(undefined);
+  };
 
   useEffect(() => {
     if (value) {
@@ -94,9 +116,7 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
               </button>
               {value && (
                 <button
-                  onClick={() => {
-                    onChange?.('');
-                  }}
+                  onClick={() => onChange?.('')}
                   type="button"
                   disabled={disabled}
                   className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
@@ -114,9 +134,24 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
       <SelectFolderModal
         isOpen={isFolderModalOpen}
         rootFolderId={getFileRootId()}
-        onClose={handleCloseFileManager}
+        onClose={
+          confirmDialogValues
+            ? handleCloseFileManagerConfirmations
+            : handleCloseFileManager
+        }
         disallowSelectRootFolder
       />
+
+      {confirmDialogValues && confirmDialogOpen && (
+        <ConfirmDialog
+          isOpen
+          heading={t(confirmDialogValues.heading)}
+          description={t(confirmDialogValues.description)}
+          confirmLabel={t('Confirm')}
+          cancelLabel={t('Cancel')}
+          onClose={handleConfirmDialogClose}
+        />
+      )}
     </>
   );
 };

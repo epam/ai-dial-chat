@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -21,12 +21,15 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 
+import {
+  CONFIRM_DOCUMENT_VALUES,
+  CONFIRM_ICON_FILE_VALUES,
+} from '@/src/constants/applications';
 import { IMAGE_TYPES } from '@/src/constants/chat';
 import { DEFAULT_VERSION } from '@/src/constants/public';
 
 import { TemperatureSlider } from '@/src/components/Chat/ChatSettings/Temperature';
 import { ApplicationWizardFooter } from '@/src/components/Common/ApplicationWizard/ApplicationWizardFooter';
-import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
 import { withController } from '@/src/components/Common/Forms/ControlledFormField';
 import { Field } from '@/src/components/Common/Forms/Field';
@@ -37,6 +40,7 @@ import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
 import { MonacoEditor } from '@/src/components/Common/MonacoEditor';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
+import { withWarningMessage } from '../Forms/FieldWarningMessage';
 import {
   FormData,
   getApplicationData,
@@ -45,7 +49,9 @@ import {
 } from './form';
 import { ViewProps } from './view-props';
 
-const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
+const LogoSelector = withWarningMessage(
+  withErrorMessage(withLabel(CustomLogoSelect)),
+);
 const TopicsSelector = withLabel(DropdownSelector);
 const ToolsetEditor = withErrorMessage(withLabel(MonacoEditor));
 const Slider = withLabel(TemperatureSlider, true);
@@ -70,12 +76,6 @@ export const QuickAppView: React.FC<ViewProps> = ({
   const models = useAppSelector(ModelsSelectors.selectModels);
 
   const isSharedWithMe = selectedApplication?.sharedWithMe;
-
-  const [confirmSharingRevoke, setConfirmSharingRevoke] = useState<{
-    description: string;
-    heading: string;
-    data: FormData;
-  }>();
 
   const modelsWithFolderId = models.map((model) => ({
     ...model,
@@ -143,12 +143,12 @@ export const QuickAppView: React.FC<ViewProps> = ({
       getQuickAppDocumentUrl(preparedData as CustomApplicationModel) !==
         getQuickAppDocumentUrl(selectedApplication)
     ) {
-      setConfirmSharingRevoke({
-        description:
-          'Changing of document relative url will stop sharing and other users will no longer see this application.',
-        heading: 'Confirm changing url',
-        data,
-      });
+      dispatch(
+        ShareActions.revokeAccess({
+          resourceId: selectedApplication.id,
+          featureType: FeatureType.Application,
+        }),
+      );
       return;
     } else if (isEdit) {
       handleEdit(data);
@@ -158,24 +158,6 @@ export const QuickAppView: React.FC<ViewProps> = ({
 
     onClose(true);
   };
-
-  const handleCloseRevokeAccessModal = useCallback(
-    (result: boolean) => {
-      if (result && selectedApplication?.id && confirmSharingRevoke?.data) {
-        dispatch(
-          ShareActions.revokeAccess({
-            resourceId: selectedApplication.id,
-            featureType: FeatureType.Application,
-          }),
-        );
-
-        handleEdit(confirmSharingRevoke?.data);
-      }
-
-      setConfirmSharingRevoke(undefined);
-    },
-    [confirmSharingRevoke?.data, dispatch, handleEdit, selectedApplication?.id],
-  );
 
   return (
     <form
@@ -223,6 +205,12 @@ export const QuickAppView: React.FC<ViewProps> = ({
               error={errors.iconUrl?.message}
               disabled={isSharedWithMe}
               tooltip={isSharedWithMe ? getSharedTooltip('icon') : ''}
+              warning={
+                selectedApplication?.isShared
+                  ? CONFIRM_ICON_FILE_VALUES.description
+                  : ''
+              }
+              confirmDialogValues={CONFIRM_ICON_FILE_VALUES}
             />
           )}
         />
@@ -244,6 +232,12 @@ export const QuickAppView: React.FC<ViewProps> = ({
               disabled={isSharedWithMe}
               tooltip={isSharedWithMe ? getSharedTooltip('file') : ''}
               sourceFilters={myFilesFilter}
+              warning={
+                selectedApplication?.isShared
+                  ? CONFIRM_DOCUMENT_VALUES.description
+                  : ''
+              }
+              confirmDialogValues={CONFIRM_DOCUMENT_VALUES}
             />
           )}
         />
@@ -326,17 +320,6 @@ export const QuickAppView: React.FC<ViewProps> = ({
           )}
         />
       </div>
-
-      {confirmSharingRevoke && selectedApplication && (
-        <ConfirmDialog
-          isOpen
-          heading={t(confirmSharingRevoke.heading)}
-          description={t(confirmSharingRevoke.description)}
-          confirmLabel={t('Confirm')}
-          cancelLabel={t('Cancel')}
-          onClose={handleCloseRevokeAccessModal}
-        />
-      )}
 
       <ApplicationWizardFooter isEdit={isEdit} isValid={isValid} />
     </form>
