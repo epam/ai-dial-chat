@@ -268,6 +268,8 @@ dialAdminTest(
             .build();
           const publication =
             await publicationApiHelper.createPublishRequest(publishRequest);
+          publicationsToUnpublish.push(publication);
+
           await adminPublicationApiHelper.approveRequest(publication);
           // delete the original conversation to prevent name duplicates
           await itemApiHelper.deleteEntity(conversation);
