@@ -11,10 +11,13 @@ import React, {
 
 import { useRouter } from 'next/router';
 
+import { Routes } from '@/src/constants/routes';
+
 import { Spinner } from '../Common/Spinner';
 
 import {
   AttachmentData,
+  CustomVisualizerData,
   VisualizerConnectorEvents,
   VisualizerConnectorRequest,
   VisualizerConnectorRequests,
@@ -52,7 +55,7 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
     const router = useRouter();
 
     const isPreviewConversation = useMemo(() => {
-      return router.pathname === '/apps-editor/[slug]/settings';
+      return router.pathname === Routes.AppsEditorSettings;
     }, [router.pathname]);
 
     const [loading, setLoading] = useState<boolean>(true);
@@ -104,7 +107,8 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
             isPreview: isPreviewConversation,
             conversationId: conversationId,
             layout: { width: 0, height: 0 },
-          } as any,
+            // TODO: fix typing here
+          } as CustomVisualizerData,
         };
         await visualizer.ready();
 
