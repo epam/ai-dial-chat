@@ -561,7 +561,7 @@ dialTest(
       'Create a new conversation and verify is selected',
       async () => {
         await header.createNewConversation();
-        await agentInfoAssertion.assertAgentName(initialModel1.id);
+        await agentInfoAssertion.assertAgentName(initialModel1.name);
       },
     );
   },
