@@ -192,9 +192,9 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
           dataQa: 'status-change',
           disabled: playerStatus === SimpleApplicationStatus.UPDATING,
           display:
-            (isAdmin || isMyApp) &&
+            (isAdmin || isMyApp || canWrite) &&
             !!entity.functionStatus &&
-            isCodeAppsEnabled, //TODO add  canWrite when core issues #655 will be ready
+            isCodeAppsEnabled,
           Icon: PlayerContextIcon,
           iconClassName: PlayerContextIconClasses[playerStatus],
           onClick: handleUpdateFunctionStatus,

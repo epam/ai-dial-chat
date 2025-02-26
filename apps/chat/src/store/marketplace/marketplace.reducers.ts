@@ -28,6 +28,7 @@ export interface MarketplaceState {
     order: SortOrder;
   };
   detailsModel: { reference: string; isSuggested: boolean } | undefined;
+  isBannerVisible: boolean;
   applyModelId?: string;
 }
 
@@ -50,6 +51,7 @@ const initialState: MarketplaceState = {
     column: TableColumnSortKeys.NAME,
     order: 'asc',
   },
+  isBannerVisible: true,
 };
 
 export const marketplaceSlice = createSlice({
@@ -109,6 +111,16 @@ export const marketplaceSlice = createSlice({
       }>,
     ) => {
       state.tableSort = payload;
+    },
+    setIsBannerVisible: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        isVisible: boolean;
+      }>,
+    ) => {
+      state.isBannerVisible = payload.isVisible;
     },
   },
 });
