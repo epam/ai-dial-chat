@@ -20,6 +20,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
 import { User } from '@/src/components/Header/User/User';
@@ -184,7 +185,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
               className="hidden items-center space-x-1 px-3 text-accent-primary md:flex"
               href={{
                 pathname: Routes.Marketplace,
-                query: { tab: 'workspace' },
+                query: { tab: MarketplaceTabs.MY_WORKSPACE },
               }}
             >
               <LogOutIcon width={14} height={14} />
@@ -222,7 +223,10 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
           })}
           <Link
             className="flex items-center px-4 py-2 hover:text-accent-primary"
-            href={{ pathname: Routes.Marketplace, query: { tab: 'workspace' } }}
+            href={{
+              pathname: Routes.Marketplace,
+              query: { tab: MarketplaceTabs.MY_WORKSPACE },
+            }}
           >
             <LogOutIcon width={14} height={14} />
             <span>{t('Go to marketplace')}</span>

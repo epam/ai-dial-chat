@@ -46,7 +46,7 @@ import { AppEpic } from '@/src/types/store';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { errorsMessages } from '../../constants/errors';
-import { DeleteType } from '@/src/constants/marketplace';
+import { DeleteType, MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
 import { ApplicationActions } from '../application/application.reducers';
@@ -242,7 +242,7 @@ const updateApplicationEpic: AppEpic = (action$, state$) =>
                 if (state$.value.application.exitAfterSave) {
                   Router.push({
                     pathname: Routes.Marketplace,
-                    query: { tab: 'workspace' },
+                    query: { tab: MarketplaceTabs.MY_WORKSPACE },
                   });
                 }
               }),
@@ -296,7 +296,7 @@ const editApplicationEpic: AppEpic = (action$, state$) =>
           if (state$.value.application.exitAfterSave) {
             Router.push({
               pathname: Routes.Marketplace,
-              query: { tab: 'workspace' },
+              query: { tab: MarketplaceTabs.MY_WORKSPACE },
             });
           }
         }),
