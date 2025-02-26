@@ -7,7 +7,7 @@ import {
 
 import { Feature } from '@epam/ai-dial-shared';
 
-// Use any bucket fro testing
+// Use your bucket for testing
 const bucket = '';
 const overlayOptions = {
   ...commonOverlayProps,

@@ -441,21 +441,13 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               return EMPTY;
             }
 
-            const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
-            const overlayNewConversationsFolder =
-              OverlaySelectors.selectOverlayNewConversationsFolder(
-                state$.value,
-              );
-
             const nonLocalConversations =
               ConversationsSelectors.selectConversations(state$.value).filter(
                 (conversation) => !isEntityIdLocal(conversation),
               );
             const conversationFolderId = folderId ?? getConversationRootId();
             const defaultFolderId =
-              folderId ??
-              (isOverlay ? overlayNewConversationsFolder : undefined) ??
-              getConversationRootId(LOCAL_BUCKET);
+              folderId ?? getConversationRootId(LOCAL_BUCKET);
 
             const newConversations: Conversation[] = names.map((name, index) =>
               regenerateConversationId({
@@ -2459,6 +2451,9 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
         state$.value,
         id,
       ) as Conversation;
+      const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
+      const overlayNewConversationsFolder =
+        OverlaySelectors.selectOverlayNewConversationsFolder(state$.value);
 
       if (!conversation) {
         return of(
@@ -2488,7 +2483,10 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
           isInDifferentFolder;
 
       const folderId = saveInStorage
-        ? (values.folderId ?? getConversationRootId())
+        ? (values.folderId ??
+          (isOverlay
+            ? (overlayNewConversationsFolder ?? getConversationRootId())
+            : getConversationRootId()))
         : getConversationRootId(LOCAL_BUCKET);
 
       const newConversation: Conversation = regenerateConversationId({
