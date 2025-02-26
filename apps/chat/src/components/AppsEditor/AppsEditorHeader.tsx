@@ -177,7 +177,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
             </button>
           ) : (
             <Link
-              className="hidden items-center space-x-1 hover:text-accent-primary md:flex"
+              className="hidden items-center space-x-1 text-accent-primary md:flex"
               href={{ pathname: '/marketplace', query: { tab: 'workspace' } }}
             >
               <LogOutIcon width={14} height={14} />
