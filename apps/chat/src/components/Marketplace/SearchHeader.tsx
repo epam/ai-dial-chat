@@ -8,7 +8,7 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { encode } from '@/src/utils/app/application-type-schema';
-import { getAppEditorRoute, getRouteForSlug } from '@/src/utils/app/route';
+import { getAppEditorRoute } from '@/src/utils/app/route';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { ApplicationType } from '@/src/types/applications';
