@@ -101,6 +101,7 @@ export const CustomAppView: React.FC<ViewProps> = ({
         ...preparedData,
         reference: currentReference,
         id: selectedApplication.id,
+        isShared: selectedApplication.isShared,
         sharedWithMe: isSharedWithMe,
       };
 

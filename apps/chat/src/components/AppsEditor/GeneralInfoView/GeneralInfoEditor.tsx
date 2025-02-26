@@ -102,8 +102,10 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             ApplicationActions.update({
               applicationData: {
                 ...preparedData,
+                isShared: oldApplication.isShared,
+                sharedWithMe: isSharedWithMe,
                 reference: data.reference,
-                id: data.id,
+                id: oldApplication.id,
               },
               oldApplication: oldApplication,
               redirectUrl: `/apps-editor/${encode(slug.toString())}/settings`,
@@ -129,7 +131,15 @@ export const GeneralInfoEditor: React.FC<Props> = ({
         }
       }
     },
-    [oldApplication, schema, isAppDeployed, router.query, dispatch, t],
+    [
+      router.query,
+      schema,
+      oldApplication,
+      dispatch,
+      isSharedWithMe,
+      isAppDeployed,
+      t,
+    ],
   );
 
   useEffect(() => {
