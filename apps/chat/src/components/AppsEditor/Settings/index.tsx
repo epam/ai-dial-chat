@@ -264,26 +264,24 @@ export const ApplicationSettings: React.FC<Props> = ({
             </span>
           </div>
           <div className="flex space-x-2">
-            {type === ApplicationType.CODE_APP &&
-              isAppDeployed &&
-              !modelFromState?.sharedWithMe && (
-                <button
-                  className="button button-accent-secondary mb-2 flex items-center gap-2 text-accent-secondary md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
-                  data-qa="redeploy-code-app"
-                  disabled={!methods.formState.isValid}
-                  onClick={() => {
-                    dispatch(
-                      ApplicationActions.startUpdatingFunctionStatus({
-                        id: applicationData.id,
-                        status: ApplicationStatus.REDEPLOYING,
-                      }),
-                    );
-                  }}
-                >
-                  <IconRefresh size={18} />
-                  <span>{t('Redeploy')}</span>
-                </button>
-              )}
+            {type === ApplicationType.CODE_APP && isAppDeployed && (
+              <button
+                className="button button-accent-secondary mb-2 flex items-center gap-2 text-accent-secondary md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
+                data-qa="redeploy-code-app"
+                disabled={!methods.formState.isValid}
+                onClick={() => {
+                  dispatch(
+                    ApplicationActions.startUpdatingFunctionStatus({
+                      id: applicationData.id,
+                      status: ApplicationStatus.REDEPLOYING,
+                    }),
+                  );
+                }}
+              >
+                <IconRefresh size={18} />
+                <span>{t('Redeploy')}</span>
+              </button>
+            )}
             {previewMode === 'half' && (
               <button
                 className="text-secondary hover:text-accent-primary"
