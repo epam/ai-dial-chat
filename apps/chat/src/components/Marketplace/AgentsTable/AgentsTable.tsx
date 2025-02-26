@@ -165,12 +165,21 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
     const allEntities = useMemo(() => {
       const sortField =
         sortKeyMap[tableSort.column] || sortKeyMap[TableColumnSortKeys.NAME];
-      const sortedEntities = orderBy(entities, [sortField], [tableSort.order]);
-      const sortedSuggestedEntities = orderBy(
-        suggestedResults,
-        [sortField],
-        [tableSort.order],
-      );
+
+      const sortEntities = (items: DialAIEntityModel[]) => {
+        return orderBy(
+          items,
+          [
+            (item) =>
+              isString(item[sortField])
+                ? item[sortField].toLowerCase()
+                : item[sortField],
+          ],
+          [tableSort.order],
+        );
+      };
+      const sortedEntities = sortEntities(entities);
+      const sortedSuggestedEntities = sortEntities(suggestedResults);
 
       if (!suggestedResults.length) return sortedEntities;
       if (!entities.length && suggestedResults.length)
