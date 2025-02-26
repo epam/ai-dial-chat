@@ -19,7 +19,7 @@ import {
 
 type WithRequestId<T> = T & { requestId: string };
 
-interface OverlayState {
+export interface OverlayState {
   hostDomain: string;
 
   systemPrompt: string | null;
@@ -118,13 +118,6 @@ const selectOverlaySystemPrompt = createSelector([rootSelector], (state) => {
   return state.systemPrompt;
 });
 
-const selectOverlayNewConversationsFolder = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.newConversationsFolder;
-  },
-);
-
 const selectOptionsReceived = createSelector([rootSelector], (state) => {
   return state.optionsReceived;
 });
@@ -138,7 +131,6 @@ export const OverlaySelectors = {
   selectOverlaySystemPrompt,
   selectOptionsReceived,
   selectReadyToInteractSent,
-  selectOverlayNewConversationsFolder,
 };
 
 export const OverlayActions = overlaySlice.actions;

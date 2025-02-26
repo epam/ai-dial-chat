@@ -121,7 +121,7 @@ import { AddonsActions, AddonsSelectors } from '../addons/addons.reducers';
 import { ChatActions } from '../chat/chat.reducer';
 import { FilesActions } from '../files/files.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
-import { OverlaySelectors } from '../overlay/overlay.reducers';
+import { OverlaySelectors, OverlayState } from '../overlay/overlay.reducers';
 import { PublicationActions } from '../publication/publication.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import {
@@ -2452,8 +2452,9 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
         id,
       ) as Conversation;
       const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
-      const overlayNewConversationsFolder =
-        OverlaySelectors.selectOverlayNewConversationsFolder(state$.value);
+      const overlayNewConversationsFolder = (
+        state$.value.overlay as OverlayState
+      ).newConversationsFolder;
 
       if (!conversation) {
         return of(
