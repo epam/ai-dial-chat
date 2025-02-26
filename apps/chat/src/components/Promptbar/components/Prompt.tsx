@@ -416,7 +416,7 @@ export const PromptComponent = ({
   }, [isSelectMode]);
 
   useEffect(() => {
-    if (screenState !== ScreenState.MOBILE) {
+    if (screenState !== ScreenState.SM) {
       setIsShowMoveToModal(false);
     }
   }, [screenState]);

@@ -44,7 +44,7 @@ export const Marketplace = () => {
   const screenState = useScreenState();
 
   const showOverlay =
-    (isFilterbarOpen || isProfileOpen) && screenState === ScreenState.MOBILE;
+    (isFilterbarOpen || isProfileOpen) && screenState === ScreenState.SM;
 
   useEffect(() => {
     if (applyModelStatus === UploadStatus.LOADED) {
@@ -59,8 +59,7 @@ export const Marketplace = () => {
     <div
       className={classNames(
         'flex grow flex-col overflow-auto py-4 md:p-5 xl:px-16 xl:py-6',
-        selectedViewType === ViewTypes.TABLE &&
-          screenState === ScreenState.MOBILE
+        selectedViewType === ViewTypes.TABLE && screenState === ScreenState.SM
           ? 'px-0'
           : 'px-3',
       )}

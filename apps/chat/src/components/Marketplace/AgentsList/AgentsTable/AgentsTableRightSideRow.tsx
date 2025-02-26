@@ -52,9 +52,9 @@ import {
 import ContextMenu from '@/src/components/Common/ContextMenu';
 import Tooltip from '@/src/components/Common/Tooltip';
 
-import { AgentBookmark } from '../AgentBookmark';
-import { ApplicationTopic } from '../ApplicationTopic';
-import { TopicsList } from '../TopicsList';
+import { AgentBookmark } from '../../AgentBookmark';
+import { ApplicationTopic } from '../../ApplicationTopic';
+import { TopicsList } from '../../TopicsList';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
@@ -312,7 +312,7 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
           <p className="truncate">{entity.version}</p>
         </div>
         <div className="flex w-[161px] min-w-[161px] flex-col justify-center gap-2 overflow-hidden">
-          {screenState === ScreenState.MOBILE ? (
+          {screenState === ScreenState.SM ? (
             <TopicsList topics={entity.topics ?? []} />
           ) : (
             <>

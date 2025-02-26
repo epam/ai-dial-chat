@@ -48,15 +48,14 @@ import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import { ApplicationWizard } from '@/src/components/Common/ApplicationWizard/ApplicationWizard';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { ApplicationDetails } from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
-import { CardsList } from '@/src/components/Marketplace/CardsList';
 import { MarketplaceBanner } from '@/src/components/Marketplace/MarketplaceBanner';
 import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
 
 import { NoResultsFound } from '../Common/NoResultsFound';
-import { AgentsTable } from './AgentsTable/AgentsTable';
+import { AgentsTable } from './AgentsList/AgentsTable/AgentsTable';
+import { VirtualCardsList } from './AgentsList/AgentsTiles/AgentsTiles';
 import { ApplicationLogs } from './ApplicationLogs';
 
-import Magnifier from '@/public/images/icons/search-alt.svg';
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 
 interface NoAgentsFoundProps {
@@ -96,7 +95,7 @@ interface ResultsViewProps {
   selectedTab: MarketplaceTabs;
   areAllFiltersEmpty: boolean;
   selectedViewType: ViewTypes;
-  onCardClick: (entity: DialAIEntityModel, isSuggested?: boolean) => void;
+  onCardClick: (entity: DialAIEntityModel) => void;
   onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
   onDelete: (entity: DialAIEntityModel) => void;
   onEdit: (entity: DialAIEntityModel) => void;
@@ -116,89 +115,15 @@ const ResultsView = ({
   onBookmarkClick,
   onLogsClick,
 }: ResultsViewProps) => {
-  const { t } = useTranslation(Translation.Marketplace);
+  if (entities.length || suggestedResults.length) {
+    const AgentsListComponent =
+      selectedViewType === ViewTypes.TABLE ? AgentsTable : VirtualCardsList;
 
-  const handleSuggestedCardClick = useCallback(
-    (entity: DialAIEntityModel) => {
-      onCardClick(entity, true);
-    },
-    [onCardClick],
-  );
-
-  if (
-    selectedViewType === ViewTypes.TABLE &&
-    (entities.length || suggestedResults.length)
-  ) {
     return (
-      <AgentsTable
+      <AgentsListComponent
         entities={entities}
         suggestedResults={suggestedResults}
         separator="Suggested results from DIAL Marketplace"
-        onCardClick={onCardClick}
-        onPublish={onPublish}
-        onDelete={onDelete}
-        onEdit={onEdit}
-        onBookmarkClick={onBookmarkClick}
-        onLogsClick={onLogsClick}
-        dataQA="filtered-agents"
-      />
-    );
-  }
-
-  if (suggestedResults.length) {
-    return (
-      <>
-        <CardsList
-          entities={entities}
-          onCardClick={onCardClick}
-          onPublish={onPublish}
-          onDelete={onDelete}
-          onEdit={onEdit}
-          onBookmarkClick={onBookmarkClick}
-          onLogsClick={onLogsClick}
-          dataQA="filtered-agents"
-        />
-        {!entities.length && (
-          <div
-            className="flex items-center gap-1"
-            data-qa="no-workspace-results-found"
-          >
-            <Magnifier
-              height={32}
-              width={32}
-              className="shrink-0 text-secondary"
-            />
-            <span className="text-sm sm:text-base">
-              {t(
-                'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
-              )}
-            </span>
-          </div>
-        )}
-        <span
-          className="mb-4 mt-5 text-xl md:mt-6 lg:mt-8"
-          data-qa="marketplace-suggestions-label"
-        >
-          {t('Suggested results from DIAL Marketplace')}
-        </span>
-        <CardsList
-          entities={suggestedResults}
-          onCardClick={handleSuggestedCardClick}
-          onPublish={onPublish}
-          onDelete={onDelete}
-          onEdit={onEdit}
-          onBookmarkClick={onBookmarkClick}
-          onLogsClick={onLogsClick}
-          dataQA="suggested-agents"
-        />
-      </>
-    );
-  }
-
-  if (entities.length) {
-    return (
-      <CardsList
-        entities={entities}
         onCardClick={onCardClick}
         onPublish={onPublish}
         onDelete={onDelete}
@@ -448,15 +373,17 @@ export const TabRenderer = () => {
   );
 
   const handleSetDetailsModel = useCallback(
-    (model: DialAIEntityModel, isSuggested?: boolean) => {
+    (model: DialAIEntityModel) => {
       dispatch(
         MarketplaceActions.setDetailsModel({
           reference: model.reference,
-          isSuggested: !!isSuggested,
+          isSuggested: suggestedResults
+            .map((item) => item.reference)
+            .includes(model.reference),
         }),
       );
     },
-    [dispatch],
+    [dispatch, suggestedResults],
   );
 
   const handleSetVersion = useCallback(
@@ -514,8 +441,7 @@ export const TabRenderer = () => {
       <header
         className={classNames(
           'mb-5 md:mb-4 xl:mb-6',
-          selectedViewType === ViewTypes.TABLE &&
-            screenState === ScreenState.MOBILE
+          selectedViewType === ViewTypes.TABLE && screenState === ScreenState.SM
             ? 'px-3'
             : 'px-0',
         )}

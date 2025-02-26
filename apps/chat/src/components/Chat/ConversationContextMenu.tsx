@@ -166,7 +166,7 @@ export const ConversationContextMenu = ({
   }, []);
 
   useEffect(() => {
-    if (screenState !== ScreenState.MOBILE) {
+    if (screenState !== ScreenState.SM) {
       setIsShowMoveToModal(false);
       handleCloseExportModal();
     }
