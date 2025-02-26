@@ -18,6 +18,7 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ViewTypes } from '@/src/constants/marketplace';
+import { Routes } from '@/src/constants/routes';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 import { TabRenderer } from '@/src/components/Marketplace/TabRenderer';
@@ -51,7 +52,7 @@ export const Marketplace = () => {
       dispatch(
         MarketplaceActions.setApplyModelStatus(UploadStatus.UNINITIALIZED),
       );
-      router.push('/');
+      router.push(Routes.Chat);
     }
   }, [applyModelStatus, router, dispatch]);
 
