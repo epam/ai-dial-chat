@@ -8,6 +8,7 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { encode } from '@/src/utils/app/application-type-schema';
+import { getAppEditorRoute } from '@/src/utils/app/route';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { ApplicationType } from '@/src/types/applications';
@@ -127,7 +128,7 @@ export const SearchHeader = () => {
           display: isCustomApplicationsEnabled,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
-            router.push(`/apps-editor/${ApplicationType.CUSTOM_APP}`);
+            router.push(getAppEditorRoute(ApplicationType.CUSTOM_APP));
           },
         },
         {
@@ -137,7 +138,7 @@ export const SearchHeader = () => {
           display: isCodeAppsEnabled,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
-            router.push(`/apps-editor/${ApplicationType.CODE_APP}`);
+            router.push(getAppEditorRoute(ApplicationType.CODE_APP));
           },
         },
         ...(applicationTypeSchemas?.map((schema: ApplicationTypeSchema) => ({
@@ -154,7 +155,7 @@ export const SearchHeader = () => {
                 ),
               );
             }
-            router.push(`/apps-editor/${encode(schema.id)}`);
+            router.push(getAppEditorRoute(encode(schema.id)));
           },
         })) ?? []),
       ].sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1)),

@@ -16,10 +16,6 @@ import {
 } from '@/src/utils/marketplace';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import {
-  ApplicationActionType,
-  ApplicationType,
-} from '@/src/types/applications';
 import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
@@ -45,7 +41,6 @@ import {
 } from '@/src/constants/marketplace';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
-import { ApplicationWizard } from '@/src/components/Common/ApplicationWizard/ApplicationWizard';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { ApplicationDetails } from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
 import { CardsList } from '@/src/components/Marketplace/CardsList';
@@ -295,11 +290,6 @@ export const TabRenderer = () => {
   const [suggestedResults, setSuggestedResults] = useState<DialAIEntityModel[]>(
     [],
   );
-  const [applicationModel, setApplicationModel] = useState<{
-    action: ApplicationActionType;
-    type: ApplicationType;
-    entity?: DialAIEntityModel;
-  }>();
   const [deleteModel, setDeleteModel] = useState<{
     action: DeleteType;
     entity: DialAIEntityModel;
@@ -473,11 +463,6 @@ export const TabRenderer = () => {
     [detailsModel, dispatch],
   );
 
-  const handleCloseApplicationDialog = useCallback(
-    () => setApplicationModel(undefined),
-    [setApplicationModel],
-  );
-
   const handleCloseDetailsDialog = useCallback(
     () => dispatch(MarketplaceActions.setDetailsModel()),
     [dispatch],
@@ -556,15 +541,6 @@ export const TabRenderer = () => {
       />
 
       {/* MODALS */}
-      {!!applicationModel && (
-        <ApplicationWizard
-          isOpen={!!applicationModel}
-          onClose={handleCloseApplicationDialog}
-          isEdit={applicationModel.action === ApplicationActionType.EDIT}
-          currentReference={applicationModel.entity?.reference}
-          type={applicationModel.type}
-        />
-      )}
       {!!deleteModel && (
         <ConfirmDialog
           isOpen={!!deleteModel}
