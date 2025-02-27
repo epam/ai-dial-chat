@@ -1,6 +1,10 @@
 import { getModelDescription } from '@/src/utils/app/application';
+import { isMyApplication } from '@/src/utils/app/id';
 
 import { DialAIEntityModel } from '@/src/types/models';
+
+import { AuthSelectors } from '@/src/store/auth/auth.reducers';
+import { useAppSelector } from '@/src/store/hooks';
 
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 
@@ -36,6 +40,7 @@ interface Props {
 // };
 
 export const ApplicationDetailsContent = ({ entity }: Props) => {
+  const userName = useAppSelector(AuthSelectors.selectUserName);
   // const { t } = useTranslation(Translation.Marketplace);
 
   // const dispatch = useAppDispatch();
@@ -227,7 +232,10 @@ export const ApplicationDetailsContent = ({ entity }: Props) => {
       </section> */}
       <section className="flex flex-col gap-3 overflow-auto px-3 py-4 md:px-6">
         <ApplicationInfo
-          entityInfo={{ author: entity.owner, createdAt: entity.createdAt }}
+          entityInfo={{
+            author: isMyApplication(entity) ? userName : entity?.owner,
+            createdAt: entity.createdAt,
+          }}
         />
       </section>
       {/* {fullScreenSlide !== undefined && (
