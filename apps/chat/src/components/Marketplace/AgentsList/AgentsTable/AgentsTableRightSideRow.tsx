@@ -94,7 +94,6 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
       SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
     );
     const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
-    const userName = useAppSelector(AuthSelectors.selectUserName);
 
     const screenState = useScreenState();
 
@@ -341,16 +340,12 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
           )}
         </div>
         <div className="flex w-[130px] min-w-[130px] items-center">
-          <p className="truncate">
-            {isMyApplication(entity)
-              ? userName
-              : (entity.owner ?? t('Unknown'))}
-          </p>
+          <p className="truncate">{entity.owner ?? t('Unknown')}</p>
         </div>
         <div className="flex w-[86px] min-w-[86px] items-center">
           <p className="truncate">
             {entity?.createdAt
-              ? new Date(entity.createdAt).toLocaleDateString('en-GB')
+              ? new Date(entity.createdAt).toLocaleDateString()
               : t('Unknown')}
           </p>
         </div>
