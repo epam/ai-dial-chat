@@ -160,11 +160,8 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
           ApplicationActions.update({
             oldApplication,
             applicationData: {
+              ...oldApplication,
               ...applicationData,
-              id: oldApplication.id,
-              reference: oldApplication.reference,
-              isShared: oldApplication.isShared,
-              sharedWithMe: oldApplication.sharedWithMe,
             },
           }),
         );

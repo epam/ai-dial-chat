@@ -165,11 +165,8 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
 
         preparedData.functionStatus = applicationStatus;
         const applicationData: CustomApplicationModel = {
+          ...oldApplication,
           ...preparedData,
-          id: oldApplication.id,
-          reference: oldApplication.reference,
-          isShared: oldApplication.isShared,
-          sharedWithMe: oldApplication.sharedWithMe,
         };
 
         if (
