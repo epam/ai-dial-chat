@@ -141,8 +141,10 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
             oldApplication,
             applicationData: {
               ...applicationData,
-              id: data.id,
-              reference: data.reference,
+              id: oldApplication.id,
+              reference: oldApplication.reference,
+              isShared: oldApplication.isShared,
+              sharedWithMe: oldApplication.sharedWithMe,
             },
             schema: schema ?? undefined,
           }),
@@ -154,13 +156,13 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
       }
     },
     [
-      dispatch,
-      oldApplication,
-      schema,
-      shouldSaveApplication,
       exitAfterSave,
-      revokedSharing,
+      shouldSaveApplication,
       isShared,
+      oldApplication,
+      revokedSharing,
+      dispatch,
+      schema,
     ],
   );
 

@@ -161,8 +161,10 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
             oldApplication,
             applicationData: {
               ...applicationData,
-              id: data.id,
-              reference: data.reference,
+              id: oldApplication.id,
+              reference: oldApplication.reference,
+              isShared: oldApplication.isShared,
+              sharedWithMe: oldApplication.sharedWithMe,
             },
           }),
         );

@@ -166,10 +166,10 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
         preparedData.functionStatus = applicationStatus;
         const applicationData: CustomApplicationModel = {
           ...preparedData,
-          reference: oldApplication.reference,
           id: oldApplication.id,
+          reference: oldApplication.reference,
           isShared: oldApplication.isShared,
-          sharedWithMe: isSharedWithMe,
+          sharedWithMe: oldApplication.sharedWithMe,
         };
 
         if (
@@ -213,7 +213,6 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
       oldApplication,
       dispatch,
       isAppDeployed,
-      isSharedWithMe,
       t,
       isShared,
       shouldSaveApplication,
