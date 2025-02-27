@@ -58,6 +58,7 @@ import {
   VariableModalAssertion,
 } from '@/src/assertions';
 import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
+import { LocalStorageAssertion } from '@/src/assertions/localStorageAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
 import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateModalAssertion';
 import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
@@ -307,6 +308,7 @@ const dialTest = test.extend<{
   messageTemplateModalAssertion: MessageTemplateModalAssertion;
   agentVersionsDropdownMenuAssertion: MenuAssertion;
   sharedWithMeConversationAssertion: SharedWithMeConversationAssertion;
+  localStorageAssertion: LocalStorageAssertion;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper }, use) => {
@@ -316,6 +318,12 @@ const dialTest = test.extend<{
     },
     { scope: 'test', auto: true },
   ],
+  localStorageAssertion: async ({ localStorageManager }, use) => {
+    const localStorageAssertion = new LocalStorageAssertion(
+      localStorageManager,
+    );
+    await use(localStorageAssertion);
+  },
   sharedWithMeConversationAssertion: async (
     { sharedWithMeConversations },
     use,
