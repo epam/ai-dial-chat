@@ -1,5 +1,5 @@
 import { IconMessage2 } from '@tabler/icons-react';
-import { useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -98,55 +98,51 @@ interface ResultsViewProps {
   onLogsClick: (entity: DialAIEntityModel) => void;
 }
 
-const ResultsView = ({
-  entities,
-  suggestedResults,
-  areAllFiltersEmpty,
-  selectedViewType,
-  onCardClick,
-  onPublish,
-  onDelete,
-  onEdit,
-  onBookmarkClick,
-  onLogsClick,
-}: ResultsViewProps) => {
-  if (entities.length || suggestedResults.length) {
-    const AgentsListComponent =
-      selectedViewType === ViewTypes.TABLE ? AgentsTable : VirtualCardsList;
+const ResultsView = memo(
+  ({
+    areAllFiltersEmpty,
+    selectedViewType,
+    entities,
+    suggestedResults,
+    ...props
+  }: ResultsViewProps) => {
+    if (entities.length || suggestedResults.length) {
+      const AgentsListComponent =
+        selectedViewType === ViewTypes.TABLE ? AgentsTable : VirtualCardsList;
+
+      return (
+        <AgentsListComponent
+          entities={entities}
+          suggestedResults={suggestedResults}
+          separator="Suggested results from DIAL Marketplace"
+          {...props}
+          dataQA="filtered-agents"
+        />
+      );
+    }
+
+    if (areAllFiltersEmpty) {
+      return (
+        <NoAgentsFound
+          header="No agents"
+          description="You don't have any agents."
+        >
+          <IconMessage2 size={100} className="stroke-[0.2]" />
+        </NoAgentsFound>
+      );
+    }
 
     return (
-      <AgentsListComponent
-        entities={entities}
-        suggestedResults={suggestedResults}
-        separator="Suggested results from DIAL Marketplace"
-        onCardClick={onCardClick}
-        onPublish={onPublish}
-        onDelete={onDelete}
-        onEdit={onEdit}
-        onBookmarkClick={onBookmarkClick}
-        onLogsClick={onLogsClick}
-        dataQA="filtered-agents"
-      />
-    );
-  }
-
-  if (areAllFiltersEmpty) {
-    return (
-      <NoAgentsFound
-        header="No agents"
-        description="You don't have any agents."
-      >
-        <IconMessage2 size={100} className="stroke-[0.2]" />
+      <NoAgentsFound description="Sorry, we couldn't find any results for your search.">
+        <NoResultsFound
+          iconSize={100}
+          className="gap-5 text-lg font-semibold"
+        />
       </NoAgentsFound>
     );
-  }
-
-  return (
-    <NoAgentsFound description="Sorry, we couldn't find any results for your search.">
-      <NoResultsFound iconSize={100} className="gap-5 text-lg font-semibold" />
-    </NoAgentsFound>
-  );
-};
+  },
+);
+ResultsView.displayName = 'ResultsView';
 
 const getDeleteConfirmationText = (
   action: DeleteType,

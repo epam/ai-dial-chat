@@ -2,7 +2,6 @@ import { VirtualItem, useVirtualizer } from '@tanstack/react-virtual';
 import {
   ReactNode,
   forwardRef,
-  memo,
   useCallback,
   useEffect,
   useMemo,
@@ -119,213 +118,210 @@ const sortKeyMap: Record<TableColumnSortKeys, keyof DialAIEntityModel> = {
   [TableColumnSortKeys.OWNER]: 'owner',
 };
 
-export const AgentsTable: React.FC<Props> = memo(
-  ({
+export const AgentsTable: React.FC<Props> = ({
+  entities,
+  suggestedResults,
+  separator,
+  onCardClick,
+  onPublish,
+  onDelete,
+  onEdit,
+  onBookmarkClick,
+  onLogsClick,
+  dataQA,
+}) => {
+  const dispatch = useAppDispatch();
+
+  const wrapperRefs = useRef<{
+    parentRef: React.RefObject<HTMLDivElement>;
+    suggestedRowRef: React.RefObject<HTMLSpanElement>;
+  }>(null);
+  const headerRefs = useRef<{
+    leftColumnHeaderRef: React.RefObject<HTMLDivElement>;
+    rightColumnHeaderRef: React.RefObject<HTMLDivElement>;
+  }>(null);
+  const leftColumnDataRef = useRef<HTMLDivElement>(null);
+  const rightColumnDataRef = useRef<HTMLDivElement>(null);
+
+  const tableSort = useAppSelector(MarketplaceSelectors.selectTableSort);
+
+  const [hoveredRowId, setHoveredRowId] = useState('');
+  const [leftColumnWidth, setLeftColumnWidth] = useState(0);
+  const [rightColumnWidth, setRightColumnWidth] = useState(0);
+
+  const screenState = useScreenState();
+  useSyncXScroll(
+    headerRefs.current ? headerRefs.current.rightColumnHeaderRef : null,
+    rightColumnDataRef,
+  );
+
+  const allEntities = useMemo(() => {
+    const sortField =
+      sortKeyMap[tableSort.column] || sortKeyMap[TableColumnSortKeys.NAME];
+
+    const sortEntities = (items: DialAIEntityModel[]) => {
+      return orderBy(
+        items,
+        [
+          (item) => {
+            const value = item[sortField];
+            return isString(value) ? value.toLowerCase() : value;
+          },
+        ],
+        [tableSort.order],
+      );
+    };
+    const sortedEntities = sortEntities(entities);
+    const sortedSuggestedEntities = sortEntities(suggestedResults);
+
+    if (!suggestedResults.length) return sortedEntities;
+    if (!entities.length && suggestedResults.length)
+      return sortedSuggestedEntities;
+
+    return [...sortedEntities, separator, ...sortedSuggestedEntities];
+  }, [
     entities,
-    suggestedResults,
     separator,
-    onCardClick,
-    onPublish,
-    onDelete,
-    onEdit,
-    onBookmarkClick,
-    onLogsClick,
-    dataQA,
-  }) => {
-    const dispatch = useAppDispatch();
+    suggestedResults,
+    tableSort.column,
+    tableSort.order,
+  ]);
 
-    const wrapperRefs = useRef<{
-      parentRef: React.RefObject<HTMLDivElement>;
-      suggestedRowRef: React.RefObject<HTMLSpanElement>;
-    }>(null);
-    const headerRefs = useRef<{
-      leftColumnHeaderRef: React.RefObject<HTMLDivElement>;
-      rightColumnHeaderRef: React.RefObject<HTMLDivElement>;
-    }>(null);
-    const leftColumnDataRef = useRef<HTMLDivElement>(null);
-    const rightColumnDataRef = useRef<HTMLDivElement>(null);
+  const rowVirtualizer = useVirtualizer({
+    count: allEntities.length,
+    getScrollElement: () =>
+      wrapperRefs.current ? wrapperRefs.current.parentRef.current : null,
+    estimateSize: () => ROW_SIZES[screenState],
+    overscan: screenState === ScreenState.SM ? 9 : 3,
+  });
 
-    const tableSort = useAppSelector(MarketplaceSelectors.selectTableSort);
+  useMarketplaceBannerVisibility(
+    wrapperRefs.current ? wrapperRefs.current.parentRef : null,
+  );
 
-    const [hoveredRowId, setHoveredRowId] = useState('');
-    const [leftColumnWidth, setLeftColumnWidth] = useState(0);
-    const [rightColumnWidth, setRightColumnWidth] = useState(0);
+  useEffect(() => {
+    const headerCurrentRefs = headerRefs.current ? headerRefs.current : null;
+    let leftObserver: ResizeObserver | undefined,
+      rightObserver: ResizeObserver | undefined;
 
-    const screenState = useScreenState();
-    useSyncXScroll(
-      headerRefs.current ? headerRefs.current.rightColumnHeaderRef : null,
-      rightColumnDataRef,
-    );
+    if (headerCurrentRefs) {
+      const { leftColumnHeaderRef, rightColumnHeaderRef } = headerCurrentRefs;
+      const leftObserver = new ResizeObserver(() => {
+        setLeftColumnWidth(leftColumnHeaderRef.current?.offsetWidth ?? 0);
+      });
 
-    const allEntities = useMemo(() => {
-      const sortField =
-        sortKeyMap[tableSort.column] || sortKeyMap[TableColumnSortKeys.NAME];
-
-      const sortEntities = (items: DialAIEntityModel[]) => {
-        return orderBy(
-          items,
-          [
-            (item) => {
-              const value = item[sortField];
-              return isString(value) ? value.toLowerCase() : value;
-            },
-          ],
-          [tableSort.order],
-        );
-      };
-      const sortedEntities = sortEntities(entities);
-      const sortedSuggestedEntities = sortEntities(suggestedResults);
-
-      if (!suggestedResults.length) return sortedEntities;
-      if (!entities.length && suggestedResults.length)
-        return sortedSuggestedEntities;
-
-      return [...sortedEntities, separator, ...sortedSuggestedEntities];
-    }, [
-      entities,
-      separator,
-      suggestedResults,
-      tableSort.column,
-      tableSort.order,
-    ]);
-
-    const rowVirtualizer = useVirtualizer({
-      count: allEntities.length,
-      getScrollElement: () =>
-        wrapperRefs.current ? wrapperRefs.current.parentRef.current : null,
-      estimateSize: () => ROW_SIZES[screenState],
-      overscan: screenState === ScreenState.SM ? 9 : 3,
-    });
-
-    useMarketplaceBannerVisibility(
-      wrapperRefs.current ? wrapperRefs.current.parentRef : null,
-    );
-
-    useEffect(() => {
-      const headerCurrentRefs = headerRefs.current ? headerRefs.current : null;
-      let leftObserver: ResizeObserver | undefined,
-        rightObserver: ResizeObserver | undefined;
-
-      if (headerCurrentRefs) {
-        const { leftColumnHeaderRef, rightColumnHeaderRef } = headerCurrentRefs;
-        const leftObserver = new ResizeObserver(() => {
-          setLeftColumnWidth(leftColumnHeaderRef.current?.offsetWidth ?? 0);
-        });
-
-        if (leftColumnHeaderRef.current) {
-          leftObserver.observe(leftColumnHeaderRef.current);
-        }
-
-        const rightObserver = new ResizeObserver(() => {
-          setRightColumnWidth(rightColumnHeaderRef.current?.offsetWidth ?? 0);
-        });
-
-        if (rightColumnHeaderRef.current) {
-          rightObserver.observe(rightColumnHeaderRef.current);
-        }
+      if (leftColumnHeaderRef.current) {
+        leftObserver.observe(leftColumnHeaderRef.current);
       }
 
-      return () => {
-        leftObserver?.disconnect();
-        rightObserver?.disconnect();
-      };
-    }, [dispatch]);
+      const rightObserver = new ResizeObserver(() => {
+        setRightColumnWidth(rightColumnHeaderRef.current?.offsetWidth ?? 0);
+      });
 
-    useEffect(() => {
-      rowVirtualizer.measure();
-    }, [screenState, rowVirtualizer]);
+      if (rightColumnHeaderRef.current) {
+        rightObserver.observe(rightColumnHeaderRef.current);
+      }
+    }
 
-    const handleRowHover = useCallback((hoveredRowId: string) => {
-      setHoveredRowId(hoveredRowId);
-    }, []);
+    return () => {
+      leftObserver?.disconnect();
+      rightObserver?.disconnect();
+    };
+  }, [dispatch]);
 
-    const handleRowHoverOver = useCallback(() => {
-      setHoveredRowId('');
-    }, []);
+  useEffect(() => {
+    rowVirtualizer.measure();
+  }, [screenState, rowVirtualizer]);
 
-    const virtualRows = rowVirtualizer.getVirtualItems();
-    const listHeight = rowVirtualizer.getTotalSize();
-    const separatorRowId = allEntities.findIndex(isString);
+  const handleRowHover = useCallback((hoveredRowId: string) => {
+    setHoveredRowId(hoveredRowId);
+  }, []);
 
-    return (
-      <>
-        <SuggestedMessage entities={entities} />
-        <AgentsTableHeader ref={headerRefs} />
-        <AgentsListWrapper
-          separatorRowId={separatorRowId}
-          rowsHeight={ROW_SIZES[screenState]}
-          ref={wrapperRefs}
-          dataQA={dataQA}
+  const handleRowHoverOver = useCallback(() => {
+    setHoveredRowId('');
+  }, []);
+
+  const virtualRows = rowVirtualizer.getVirtualItems();
+  const listHeight = rowVirtualizer.getTotalSize();
+  const separatorRowId = allEntities.findIndex(isString);
+
+  return (
+    <>
+      <SuggestedMessage entities={entities} />
+      <AgentsTableHeader ref={headerRefs} />
+      <AgentsListWrapper
+        separatorRowId={separatorRowId}
+        rowsHeight={ROW_SIZES[screenState]}
+        ref={wrapperRefs}
+        dataQA={dataQA}
+      >
+        <DataRowContainer
+          ref={leftColumnDataRef}
+          width={leftColumnWidth}
+          height={listHeight}
         >
-          <DataRowContainer
-            ref={leftColumnDataRef}
-            width={leftColumnWidth}
-            height={listHeight}
-          >
-            {virtualRows.map((virtualRow) => {
-              const entity = allEntities[virtualRow.index];
+          {virtualRows.map((virtualRow) => {
+            const entity = allEntities[virtualRow.index];
 
-              return (
-                <DataRowItem
-                  key={virtualRow.key}
-                  suggestedResults={suggestedResults}
-                  entity={entity}
-                  virtualRow={virtualRow}
-                >
-                  {isString(entity) ? (
-                    <span ref={wrapperRefs.current?.suggestedRowRef}></span>
-                  ) : (
-                    <AgentsTableLeftSideRow
-                      entity={entity}
-                      isHovered={entity.id === hoveredRowId}
-                      onClick={onCardClick}
-                      onBookmarkClick={onBookmarkClick}
-                      onRowHover={handleRowHover}
-                      onRowHoverOver={handleRowHoverOver}
-                    />
-                  )}
-                </DataRowItem>
-              );
-            })}
-          </DataRowContainer>
-          <DataRowContainer
-            ref={rightColumnDataRef}
-            width={rightColumnWidth}
-            height={listHeight}
-          >
-            {virtualRows.map((virtualRow) => {
-              const entity = allEntities[virtualRow.index];
+            return (
+              <DataRowItem
+                key={virtualRow.key}
+                suggestedResults={suggestedResults}
+                entity={entity}
+                virtualRow={virtualRow}
+              >
+                {isString(entity) ? (
+                  <span ref={wrapperRefs.current?.suggestedRowRef}></span>
+                ) : (
+                  <AgentsTableLeftSideRow
+                    entity={entity}
+                    isHovered={entity.id === hoveredRowId}
+                    onClick={onCardClick}
+                    onBookmarkClick={onBookmarkClick}
+                    onRowHover={handleRowHover}
+                    onRowHoverOver={handleRowHoverOver}
+                  />
+                )}
+              </DataRowItem>
+            );
+          })}
+        </DataRowContainer>
+        <DataRowContainer
+          ref={rightColumnDataRef}
+          width={rightColumnWidth}
+          height={listHeight}
+        >
+          {virtualRows.map((virtualRow) => {
+            const entity = allEntities[virtualRow.index];
 
-              return (
-                <DataRowItem
-                  key={virtualRow.key}
-                  suggestedResults={suggestedResults}
-                  entity={entity}
-                  virtualRow={virtualRow}
-                >
-                  {isString(entity) ? (
-                    <span className="!border-t-0"></span>
-                  ) : (
-                    <AgentsTableRightSideRow
-                      entity={entity}
-                      isHovered={entity.id === hoveredRowId}
-                      onPublish={onPublish}
-                      onDelete={onDelete}
-                      onClick={onCardClick}
-                      onEdit={onEdit}
-                      onBookmarkClick={onBookmarkClick}
-                      onRowHover={handleRowHover}
-                      onRowHoverOver={handleRowHoverOver}
-                      onLogsClick={onLogsClick}
-                    />
-                  )}
-                </DataRowItem>
-              );
-            })}
-          </DataRowContainer>
-        </AgentsListWrapper>
-      </>
-    );
-  },
-);
-AgentsTable.displayName = 'AgentsTable';
+            return (
+              <DataRowItem
+                key={virtualRow.key}
+                suggestedResults={suggestedResults}
+                entity={entity}
+                virtualRow={virtualRow}
+              >
+                {isString(entity) ? (
+                  <span className="!border-t-0"></span>
+                ) : (
+                  <AgentsTableRightSideRow
+                    entity={entity}
+                    isHovered={entity.id === hoveredRowId}
+                    onPublish={onPublish}
+                    onDelete={onDelete}
+                    onClick={onCardClick}
+                    onEdit={onEdit}
+                    onBookmarkClick={onBookmarkClick}
+                    onRowHover={handleRowHover}
+                    onRowHoverOver={handleRowHoverOver}
+                    onLogsClick={onLogsClick}
+                  />
+                )}
+              </DataRowItem>
+            );
+          })}
+        </DataRowContainer>
+      </AgentsListWrapper>
+    </>
+  );
+};
