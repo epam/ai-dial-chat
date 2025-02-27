@@ -7,6 +7,7 @@ import {
   PublishRequestBuilder,
 } from '@/src/testData';
 import { CustomApplicationBuilder } from '@/src/testData/customApplications/customApplicationBuilder';
+import { MarketplaceUrlBuilder } from '@/src/testData/marketplace/marketplaceUrlBuilder';
 import { Auth0Login } from '@/src/ui/actions/auth0Login';
 import { AzureADLogin } from '@/src/ui/actions/azureADLogin';
 import { KeycloakLogin } from '@/src/ui/actions/keycloakLogin';
@@ -14,7 +15,6 @@ import { ProviderLogin } from '@/src/ui/actions/providerLogin';
 import { KeycloakPage, LoginPage } from '@/src/ui/pages';
 import { Auth0Page } from '@/src/ui/pages/auth0Page';
 import { AzureADPage } from '@/src/ui/pages/azureADPage';
-import { MarketplaceUrlBuilder } from '@/src/utils/marketplaceUrlBuilder';
 import { Page, test as base } from '@playwright/test';
 import { allure } from 'allure-playwright';
 import * as process from 'node:process';
