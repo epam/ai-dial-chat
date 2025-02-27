@@ -1,5 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
+import { extractNameFromEmail, formatDate } from '@/src/utils/app/common';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { EntityInfo, EntityType, RawEntityInfo } from '@/src/types/common';
@@ -117,20 +118,16 @@ export const chatSlice = createSlice({
     ) => {
       const { updatedAt, createdAt, author, id } = payload.entityInfo;
 
-      const formattedUpdatedAt = updatedAt
-        ? new Date(updatedAt).toLocaleDateString()
-        : undefined;
+      const formattedUpdatedAt = updatedAt ? formatDate(updatedAt) : undefined;
 
-      const formattedCreatedAt = createdAt
-        ? new Date(createdAt).toLocaleDateString()
-        : undefined;
+      const formattedCreatedAt = createdAt ? formatDate(createdAt) : undefined;
 
       const entityInfo: EntityInfo = {
         ...state.selectedEntityInfo,
         id,
         updatedAt: formattedUpdatedAt,
         createdAt: formattedCreatedAt,
-        author,
+        author: extractNameFromEmail(author),
       };
 
       state.selectedEntityInfo = entityInfo;

@@ -26,6 +26,7 @@ import {
   isApplicationStatusUpdating,
   isExecutableApp,
 } from '@/src/utils/app/application';
+import { formatDate } from '@/src/utils/app/common';
 import { isMyApplication } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
@@ -344,9 +345,7 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
         </div>
         <div className="flex w-[86px] min-w-[86px] items-center">
           <p className="truncate">
-            {entity?.createdAt
-              ? new Date(entity.createdAt).toLocaleDateString('en-GB')
-              : t('Unknown')}
+            {entity?.createdAt ? formatDate(entity.createdAt) : t('Unknown')}
           </p>
         </div>
         <div className="hidden flex-none items-center xl:flex">
