@@ -112,7 +112,7 @@ const ResultsView = memo(
 
       return (
         <AgentsListComponent
-          entities={entities.slice(0, 4)}
+          entities={entities}
           suggestedResults={suggestedResults}
           separator="Suggested results from DIAL Marketplace"
           {...props}
