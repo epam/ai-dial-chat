@@ -50,6 +50,8 @@ import { PublicationSelectors } from '@/src/store/publication/publication.reduce
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { Routes } from '@/src/constants/routes';
+
 import { ChatStarters } from '@/src/components/Chat/ChatStarters';
 
 import { CustomChatViewer } from '../AppsEditor/Settings/Previews/CustomChatViewer';
@@ -532,7 +534,7 @@ export const ChatView = memo(() => {
   const router = useRouter();
 
   const isApplicationPreviewChat = useMemo(() => {
-    return router.pathname === '/apps-editor/[slug]/settings';
+    return router.pathname === Routes.AppsEditorSettings;
   }, [router.pathname]);
 
   const isInputVisible =
@@ -940,7 +942,7 @@ const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
   const router = useRouter();
 
   const isApplicationPreviewChat = useMemo(() => {
-    return router.pathname === '/apps-editor/[slug]/settings';
+    return router.pathname === Routes.AppsEditorSettings;
   }, [router.pathname]);
 
   const isStartedCustomViewerConversation = useAppSelector(

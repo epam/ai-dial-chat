@@ -278,7 +278,7 @@ export const ApplicationSettings: React.FC<Props> = ({
                   );
                 }}
               >
-                <IconRefresh size={12} />
+                <IconRefresh size={18} />
                 <span>{t('Redeploy')}</span>
               </button>
             )}

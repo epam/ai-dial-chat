@@ -19,6 +19,7 @@ enum OverlayCases {
   enableMarketplaceOverlay = '/cases/overlay/enabled-marketplace-sandbox',
   disableMarketplaceOverlay = '/cases/overlay/disabled-marketplace-sandbox',
   conversationIdSetOverlay = '/cases/overlay/overlay-conversation-id-set-sandbox',
+  newConversationsFolderIdSetOverlay = '/cases/overlay/new-conversations-folder-id-set-sandbox',
 }
 
 export default async function Index() {

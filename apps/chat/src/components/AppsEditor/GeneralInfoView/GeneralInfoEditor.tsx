@@ -9,6 +9,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip, topicToOption } from '@/src/utils/app/application';
 import { encode } from '@/src/utils/app/application-type-schema';
+import { getRouteForSlug } from '@/src/utils/app/route';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
@@ -29,6 +30,7 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import { CONFIRM_ICON_FILE_VALUES } from '@/src/constants/applications';
 import { IMAGE_TYPES } from '@/src/constants/chat';
 import { DEFAULT_VERSION } from '@/src/constants/public';
+import { Routes } from '@/src/constants/routes';
 
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
 import { withController } from '@/src/components/Common/Forms/ControlledFormField';
@@ -112,7 +114,10 @@ export const GeneralInfoEditor: React.FC<Props> = ({
                 id: oldApplication.id,
               },
               oldApplication: oldApplication,
-              redirectUrl: `/apps-editor/${encode(slug.toString())}/settings`,
+              redirectUrl: getRouteForSlug(
+                Routes.AppsEditorSettings,
+                encode(slug.toString()),
+              ),
               schema: schema ?? undefined,
             }),
           );

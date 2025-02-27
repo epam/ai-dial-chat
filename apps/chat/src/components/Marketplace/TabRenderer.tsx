@@ -16,10 +16,6 @@ import {
 } from '@/src/utils/marketplace';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import {
-  ApplicationActionType,
-  ApplicationType,
-} from '@/src/types/applications';
 import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
@@ -45,7 +41,6 @@ import {
 } from '@/src/constants/marketplace';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
-import { ApplicationWizard } from '@/src/components/Common/ApplicationWizard/ApplicationWizard';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { ApplicationDetails } from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
 import { CardsList } from '@/src/components/Marketplace/CardsList';
@@ -285,15 +280,16 @@ export const TabRenderer = () => {
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
+  const detailedApplicationTypeSchema = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
+  );
+  const isBannerVisible = useAppSelector(
+    MarketplaceSelectors.selectIsBannerVisible,
+  );
 
   const [suggestedResults, setSuggestedResults] = useState<DialAIEntityModel[]>(
     [],
   );
-  const [applicationModel, setApplicationModel] = useState<{
-    action: ApplicationActionType;
-    type: ApplicationType;
-    entity?: DialAIEntityModel;
-  }>();
   const [deleteModel, setDeleteModel] = useState<{
     action: DeleteType;
     entity: DialAIEntityModel;
@@ -382,10 +378,6 @@ export const TabRenderer = () => {
     applicationTypeSchemas,
   ]);
 
-  const detailedApplicationTypeSchema = useAppSelector(
-    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
-  );
-
   const handleEditApplication = useCallback(
     (entity: DialAIEntityModel) => {
       const applicationType = getApplicationType(entity);
@@ -471,11 +463,6 @@ export const TabRenderer = () => {
     [detailsModel, dispatch],
   );
 
-  const handleCloseApplicationDialog = useCallback(
-    () => setApplicationModel(undefined),
-    [setApplicationModel],
-  );
-
   const handleCloseDetailsDialog = useCallback(
     () => dispatch(MarketplaceActions.setDetailsModel()),
     [dispatch],
@@ -519,8 +506,22 @@ export const TabRenderer = () => {
         )}
         data-qa="marketplace-header"
       >
-        <MarketplaceBanner />
-        <div className="flex items-center justify-end gap-2 md:mt-4 md:gap-4 xl:mt-6">
+        <div
+          className={classNames(
+            'w-full transition-all duration-500',
+            isBannerVisible
+              ? 'max-h-[104px] translate-y-0'
+              : 'max-h-0 translate-y-[-150px]',
+          )}
+        >
+          <MarketplaceBanner />
+        </div>
+        <div
+          className={classNames(
+            'flex items-center justify-end gap-2 transition-all duration-500 md:gap-4',
+            isBannerVisible ? 'md:mt-4 xl:mt-6' : 'm-0',
+          )}
+        >
           <SearchHeader />
         </div>
       </header>
@@ -540,15 +541,6 @@ export const TabRenderer = () => {
       />
 
       {/* MODALS */}
-      {!!applicationModel && (
-        <ApplicationWizard
-          isOpen={!!applicationModel}
-          onClose={handleCloseApplicationDialog}
-          isEdit={applicationModel.action === ApplicationActionType.EDIT}
-          currentReference={applicationModel.entity?.reference}
-          type={applicationModel.type}
-        />
-      )}
       {!!deleteModel && (
         <ConfirmDialog
           isOpen={!!deleteModel}

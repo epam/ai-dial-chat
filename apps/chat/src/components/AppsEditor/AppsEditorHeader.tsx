@@ -20,6 +20,9 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { MarketplaceTabs } from '@/src/constants/marketplace';
+import { Routes } from '@/src/constants/routes';
+
 import { User } from '@/src/components/Header/User/User';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
@@ -42,7 +45,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const {
-    query: { id = '', slug = '' },
+    query: { id = '', slug = '', add },
     pathname,
   } = useRouter();
   const { t } = useTranslation(Translation.Chat);
@@ -67,10 +70,11 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
         key: TabKeys.GENERAL,
         label: t('General info'),
         href: {
-          pathname: `/apps-editor/[slug]`,
+          pathname: Routes.AppsEditorGeneralInfo,
           query: {
-            id: id,
-            slug: slug,
+            id,
+            slug,
+            add,
           },
         },
       },
@@ -78,15 +82,16 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
         key: TabKeys.SETTINGS,
         label: t('Settings'),
         href: {
-          pathname: `/apps-editor/[slug]/settings`,
+          pathname: Routes.AppsEditorSettings,
           query: {
-            id: id,
-            slug: slug,
+            id,
+            slug,
+            add,
           },
         },
       },
     ],
-    [t, id, slug],
+    [t, id, slug, add],
   );
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -112,7 +117,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
           <Logo />
           <div className="h-full border-l border-tertiary"></div>
           <span className="hidden items-center text-primary md:flex">
-            {isEditApplication ? t('Edit') : t('Add')}{' '}
+            {isEditApplication && !add ? t('Edit') : t('Add')}{' '}
             {applicationTypeDisplayName}
           </span>
           <div className="hidden items-center space-x-2 md:flex">
@@ -168,7 +173,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
         <div className="flex h-full items-center space-x-2">
           {isEditApplication && applicationTypeDisplayName !== 'Mindmap' ? (
             <button
-              className="button flex items-center space-x-1 hover:text-accent-primary md:flex"
+              className="button flex items-center space-x-1 text-accent-primary md:flex"
               onClick={handleSaveAndRedirect}
               data-qa="save-and-exit"
             >
@@ -177,8 +182,11 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
             </button>
           ) : (
             <Link
-              className="hidden items-center space-x-1 hover:text-accent-primary md:flex"
-              href={{ pathname: '/marketplace', query: { tab: 'workspace' } }}
+              className="hidden items-center space-x-1 px-3 text-accent-primary md:flex"
+              href={{
+                pathname: Routes.Marketplace,
+                query: { tab: MarketplaceTabs.MY_WORKSPACE },
+              }}
             >
               <LogOutIcon width={14} height={14} />
               <span>{t('Exit')}</span>
@@ -215,7 +223,10 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
           })}
           <Link
             className="flex items-center px-4 py-2 hover:text-accent-primary"
-            href={{ pathname: '/marketplace', query: { tab: 'workspace' } }}
+            href={{
+              pathname: Routes.Marketplace,
+              query: { tab: MarketplaceTabs.MY_WORKSPACE },
+            }}
           >
             <LogOutIcon width={14} height={14} />
             <span>{t('Go to marketplace')}</span>
