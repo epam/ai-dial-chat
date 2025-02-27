@@ -94,9 +94,9 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
       SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
     );
     const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
+    const userName = useAppSelector(AuthSelectors.selectUserName);
 
     const screenState = useScreenState();
-    const userName = useAppSelector(AuthSelectors.selectUserName);
 
     const isMyApp = isMyApplication(entity);
     const isPublicApp = isApplicationPublic(entity);
