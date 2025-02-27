@@ -16,16 +16,13 @@ import {
 } from '@/src/utils/marketplace';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import {
-  ApplicationActionType,
-  ApplicationType,
-} from '@/src/types/applications';
 import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MarketplaceActions,
@@ -35,7 +32,6 @@ import {
   ModelsActions,
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import {
   DeleteType,
@@ -45,7 +41,6 @@ import {
 } from '@/src/constants/marketplace';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
-import { ApplicationWizard } from '@/src/components/Common/ApplicationWizard/ApplicationWizard';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { ApplicationDetails } from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
 import { CardsList } from '@/src/components/Marketplace/CardsList';
@@ -55,28 +50,40 @@ import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
 import { NoResultsFound } from '../Common/NoResultsFound';
 import { AgentsTable } from './AgentsTable/AgentsTable';
 import { ApplicationLogs } from './ApplicationLogs';
-import { ViewToggler } from './ViewToggler';
 
 import Magnifier from '@/public/images/icons/search-alt.svg';
-import { Feature, PublishActions, ShareEntity } from '@epam/ai-dial-shared';
+import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 
 interface NoAgentsFoundProps {
   children: React.ReactNode;
-  desc: string;
+  description: string;
   header?: string;
 }
 
-const NoAgentsFound = ({ children, desc, header }: NoAgentsFoundProps) => (
-  <div className="flex grow flex-col items-center justify-center">
-    {children}
-    {header && <span className="mt-5 text-lg font-semibold">{header}</span>}
-    {desc && (
-      <span className="mt-4 text-sm font-normal" data-qa="no-data-description">
-        {desc}
-      </span>
-    )}
-  </div>
-);
+const NoAgentsFound = ({
+  children,
+  description,
+  header,
+}: NoAgentsFoundProps) => {
+  const { t } = useTranslation(Translation.Marketplace);
+
+  return (
+    <div className="flex grow flex-col items-center justify-center">
+      {children}
+      {header && (
+        <span className="mt-5 text-lg font-semibold">{t(header)}</span>
+      )}
+      {description && (
+        <span
+          className="mt-4 text-sm font-normal"
+          data-qa="no-data-description"
+        >
+          {t(description)}
+        </span>
+      )}
+    </div>
+  );
+};
 
 interface ResultsViewProps {
   entities: DialAIEntityModel[];
@@ -201,8 +208,8 @@ const ResultsView = ({
   if (areAllFiltersEmpty) {
     return (
       <NoAgentsFound
-        header={t('No agents')}
-        desc={t("You don't have any agents.")}
+        header="No agents"
+        description="You don't have any agents."
       >
         <IconMessage2 size={100} className="stroke-[0.2]" />
       </NoAgentsFound>
@@ -210,9 +217,7 @@ const ResultsView = ({
   }
 
   return (
-    <NoAgentsFound
-      desc={t("Sorry, we couldn't find any results for your search.")}
-    >
+    <NoAgentsFound description="Sorry, we couldn't find any results for your search.">
       <NoResultsFound iconSize={100} className="gap-5 text-lg font-semibold" />
     </NoAgentsFound>
   );
@@ -272,18 +277,19 @@ export const TabRenderer = () => {
     MarketplaceSelectors.selectSelectedViewType,
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
+  const applicationTypeSchemas = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectAllSchemas,
+  );
+  const detailedApplicationTypeSchema = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
+  );
+  const isBannerVisible = useAppSelector(
+    MarketplaceSelectors.selectIsBannerVisible,
   );
 
   const [suggestedResults, setSuggestedResults] = useState<DialAIEntityModel[]>(
     [],
   );
-  const [applicationModel, setApplicationModel] = useState<{
-    action: ApplicationActionType;
-    type: ApplicationType;
-    entity?: DialAIEntityModel;
-  }>();
   const [deleteModel, setDeleteModel] = useState<{
     action: DeleteType;
     entity: DialAIEntityModel;
@@ -312,7 +318,11 @@ export const TabRenderer = () => {
     const filteredEntities = allModels.filter(
       (entity) =>
         doesApplicationMatchSearchTerm(entity, searchTerm) &&
-        doesApplicationMatchFilters(entity, selectedFilters),
+        doesApplicationMatchFilters(
+          entity,
+          selectedFilters,
+          applicationTypeSchemas,
+        ),
     );
 
     const isInstalledModel = (entity: DialAIEntityModel) =>
@@ -365,25 +375,21 @@ export const TabRenderer = () => {
     searchTerm,
     selectedFilters,
     installedModelIds,
+    applicationTypeSchemas,
   ]);
-
-  const handleAddApplication = useCallback((type: ApplicationType) => {
-    setApplicationModel({
-      action: ApplicationActionType.ADD,
-      type,
-    });
-  }, []);
 
   const handleEditApplication = useCallback(
     (entity: DialAIEntityModel) => {
-      dispatch(ApplicationActions.get({ applicationId: entity.id }));
-      setApplicationModel({
-        entity,
-        action: ApplicationActionType.EDIT,
-        type: getApplicationType(entity),
-      });
+      const applicationType = getApplicationType(entity);
+      dispatch(
+        ApplicationActions.enterEditMode({
+          entity: entity,
+          applicationType,
+          detailedApplicationTypeSchemaId: detailedApplicationTypeSchema?.$id,
+        }),
+      );
     },
-    [dispatch],
+    [dispatch, detailedApplicationTypeSchema],
   );
 
   const handleDeleteClose = useCallback(
@@ -457,11 +463,6 @@ export const TabRenderer = () => {
     [detailsModel, dispatch],
   );
 
-  const handleCloseApplicationDialog = useCallback(
-    () => setApplicationModel(undefined),
-    [setApplicationModel],
-  );
-
   const handleCloseDetailsDialog = useCallback(
     () => dispatch(MarketplaceActions.setDetailsModel()),
     [dispatch],
@@ -505,13 +506,23 @@ export const TabRenderer = () => {
         )}
         data-qa="marketplace-header"
       >
-        <MarketplaceBanner />
-        <div className="flex items-center justify-end gap-2 md:mt-4 md:gap-4 xl:mt-6">
-          <SearchHeader
-            items={displayedEntities.length}
-            onAddApplication={handleAddApplication}
-          />
-          {enabledFeatures.has(Feature.MarketplaceTableView) && <ViewToggler />}
+        <div
+          className={classNames(
+            'w-full transition-all duration-500',
+            isBannerVisible
+              ? 'max-h-[104px] translate-y-0'
+              : 'max-h-0 translate-y-[-150px]',
+          )}
+        >
+          <MarketplaceBanner />
+        </div>
+        <div
+          className={classNames(
+            'flex items-center justify-end gap-2 transition-all duration-500 md:gap-4',
+            isBannerVisible ? 'md:mt-4 xl:mt-6' : 'm-0',
+          )}
+        >
+          <SearchHeader />
         </div>
       </header>
 
@@ -530,15 +541,6 @@ export const TabRenderer = () => {
       />
 
       {/* MODALS */}
-      {!!applicationModel && (
-        <ApplicationWizard
-          isOpen={!!applicationModel}
-          onClose={handleCloseApplicationDialog}
-          isEdit={applicationModel.action === ApplicationActionType.EDIT}
-          currentReference={applicationModel.entity?.reference}
-          type={applicationModel.type}
-        />
-      )}
       {!!deleteModel && (
         <ConfirmDialog
           isOpen={!!deleteModel}

@@ -1,6 +1,7 @@
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { getTopicColors } from '@/src/utils/app/style-helpers';
 
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
   ApiApplicationModel,
   ApiApplicationModelBase,
@@ -12,17 +13,20 @@ import {
   CustomApplicationModel,
   SimpleApplicationStatus,
 } from '@/src/types/applications';
-import { EntityType, PartialBy } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
+import { ApiKeys, EntityType, PartialBy } from '@/src/types/common';
+import { DialAIEntityFeatures, DialAIEntityModel } from '@/src/types/models';
 import { QuickAppConfig } from '@/src/types/quick-apps';
 import { Translation } from '@/src/types/translation';
 
 import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
+import { ApplicationTypeToSourceType } from '@/src/constants/marketplace';
 import {
   DEFAULT_QUICK_APPS_MODEL,
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
+
+import { ApplicationGeneralInfoFormData } from '@/src/components/AppsEditor/GeneralInfoView/form';
 
 import { ApiUtils, getApplicationApiKey } from '../server/api';
 import { constructPath } from './file';
@@ -31,7 +35,21 @@ import { getApplicationRootId } from './id';
 import { isEntityIdPublic } from './publications';
 import { translate } from './translation';
 
+import { isObject } from 'lodash-es';
 import omit from 'lodash-es/omit';
+
+export const safeStringifyApplicationFeatures = (
+  featureData: DialAIEntityFeatures | Record<string, string> | undefined,
+) => {
+  if (
+    !featureData ||
+    (isObject(featureData) && !Object.keys(featureData).length)
+  ) {
+    return '';
+  }
+
+  return JSON.stringify(featureData, null, 2);
+};
 
 export const getGeneratedApplicationId = (
   application: Omit<ApplicationInfo, 'id'>,
@@ -58,18 +76,19 @@ export const regenerateApplicationId = <T extends ApplicationInfo>(
 export const mapApplicationPropertiesToApi = (
   properties: CustomApplicationModel['applicationProperties'],
 ) => {
-  if (properties?.document_relative_url)
+  if (typeof properties?.document_relative_url === 'string')
     return {
       ...properties,
-      document_relative_url: ApiUtils.encodeApiUrl(
-        properties.document_relative_url as string,
-      ),
+      document_relative_url: properties.document_relative_url
+        ? ApiUtils.encodeApiUrl(properties.document_relative_url as string)
+        : undefined,
     };
   return properties;
 };
 
 export const convertApplicationToApi = (
   applicationData: Omit<CustomApplicationModel, 'id'>,
+  schema?: ApiDetailedApplicationTypeSchema,
 ): ApiApplicationModel => {
   const commonData: ApiApplicationModelBase = {
     display_name: applicationData.name,
@@ -81,11 +100,21 @@ export const convertApplicationToApi = (
     max_input_attachments: applicationData.maxInputAttachments,
     reference: applicationData.reference || undefined,
     description_keywords: applicationData.topics,
-    applicationTypeSchemaId: applicationData.applicationTypeSchemaId,
-    applicationProperties: mapApplicationPropertiesToApi(
-      applicationData.applicationProperties,
-    ),
   };
+
+  if (schema) {
+    return {
+      ...commonData,
+      application_properties:
+        (applicationData.applicationProperties &&
+          mapApplicationPropertiesToApi(
+            applicationData.applicationProperties,
+          )) ||
+        null,
+      application_type_schema_id:
+        applicationData.applicationTypeSchemaId ?? schema['$id'],
+    };
+  }
 
   if (applicationData.function) {
     return {
@@ -143,6 +172,10 @@ export const convertApplicationFromApi = (
     type: EntityType.Application,
     id,
     inputAttachmentTypes: application.input_attachment_types,
+    applicationProperties: mapApplicationPropertiesFromApi(
+      application.application_properties,
+    ),
+    applicationTypeSchemaId: application.application_type_schema_id,
     iconUrl: ApiUtils.decodeApiUrl(application.icon_url),
     maxInputAttachments: application.max_input_attachments,
     version: application.display_version,
@@ -150,10 +183,6 @@ export const convertApplicationFromApi = (
     completionUrl: application.endpoint ?? '',
     folderId: getFolderIdFromEntityId(id),
     topics: application.description_keywords,
-    applicationTypeSchemaId: application.application_type_schema_id,
-    applicationProperties: mapApplicationPropertiesFromApi(
-      application.application_properties,
-    ),
     ...(appFunction && {
       function: appFunction,
       functionStatus: appFunction.status,
@@ -188,27 +217,6 @@ export const getQuickAppDocumentUrl = (entity?: CustomApplicationModel) => {
   return entity ? getQuickAppConfig(entity).document_relative_url : undefined;
 };
 
-export const createQuickAppConfig = ({
-  instructions,
-  temperature,
-  config,
-  model,
-  document_relative_url,
-}: {
-  instructions: string;
-  temperature: number;
-  config: string;
-  model: string;
-  document_relative_url: string;
-}): QuickAppConfig => ({
-  instructions,
-  temperature,
-  web_api_toolset: JSON.parse(config ?? '{}'),
-  model:
-    model ?? DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
-  document_relative_url: document_relative_url || undefined,
-});
-
 export const getToolsetStr = (config: QuickAppConfig) => {
   try {
     return JSON.stringify(config.web_api_toolset, null, 2);
@@ -226,10 +234,12 @@ export const topicToOption = (topic: string) => ({
 export const isExecutableApp = (entity: DialAIEntityModel) =>
   !!entity.functionStatus;
 
-export const getApplicationType = (entity: DialAIEntityModel) => {
-  if (isQuickApp(entity)) return ApplicationType.QUICK_APP;
+export const getApplicationType = (entity: DialAIEntityModel): string => {
+  if (entity.applicationTypeSchemaId) {
+    return entity.applicationTypeSchemaId;
+  }
   if (isExecutableApp(entity)) return ApplicationType.CODE_APP;
-  // TODO: Add mindmap type check in future
+
   return ApplicationType.CUSTOM_APP;
 };
 
@@ -263,15 +273,25 @@ export const isApplicationDeployed = (entity: DialAIEntityModel) => {
   return entity.functionStatus === ApplicationStatus.DEPLOYED;
 };
 
+export const isApplicationTypeKey = (
+  key: string,
+): key is keyof typeof ApplicationTypeToSourceType => {
+  return key in ApplicationTypeToSourceType;
+};
+
 export const isApplicationDeploymentInProgress = (
   entity: DialAIEntityModel,
 ) => {
   return (
     entity.functionStatus === ApplicationStatus.DEPLOYING ||
-    entity.functionStatus === ApplicationStatus.UNDEPLOYING
+    entity.functionStatus === ApplicationStatus.UNDEPLOYING ||
+    entity.functionStatus === ApplicationStatus.REDEPLOYING
   );
 };
 
+export const isApplicationType = (value: unknown): value is ApplicationType => {
+  return Object.values(ApplicationType).includes(value as ApplicationType);
+};
 export const getSharedTooltip = (context: string) => {
   return translate(
     `You cannot change the ${context} of a shared application.`,
@@ -295,4 +315,22 @@ export const getPlayerCaption = (entity: DialAIEntityModel) => {
     default:
       return 'Deploying';
   }
+};
+
+export const getApplicationEntityFields = (
+  data: ApplicationGeneralInfoFormData,
+) => {
+  return {
+    name: data.name ?? '',
+    version: data.version ?? '',
+    description: data.description ?? '',
+    iconUrl: data.iconUrl ?? '',
+    topics: data.topics ?? [],
+    reference: '',
+    features: undefined,
+    id: `${ApiKeys.Applications}/draft`,
+    completionUrl: '',
+    type: EntityType.Application,
+    isDefault: true,
+  };
 };

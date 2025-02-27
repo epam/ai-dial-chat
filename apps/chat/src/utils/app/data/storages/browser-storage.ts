@@ -381,7 +381,9 @@ export class BrowserStorage implements DialStorage {
   ): Observable<ApplicationInfo> {
     throw new Error('Method not implemented.');
   }
-  updateApplication(_application: CustomApplicationModel): Observable<void> {
+  updateApplication(
+    _application: CustomApplicationModel,
+  ): Observable<ApplicationInfo> {
     throw new Error('Method not implemented.');
   }
   getApplication(
@@ -398,6 +400,10 @@ export class BrowserStorage implements DialStorage {
   }
 
   undeployApplication(_name: string): Observable<void> {
+    throw new Error('Method not implemented.');
+  }
+
+  redeployApplication(_name: string): Observable<void> {
     throw new Error('Method not implemented.');
   }
 

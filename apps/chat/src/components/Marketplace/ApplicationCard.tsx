@@ -94,6 +94,7 @@ export interface ApplicationCardProps {
   onEdit?: (entity: DialAIEntityModel) => void;
   onBookmarkClick?: (entity: DialAIEntityModel) => void;
   onLogsClick?: (entity: DialAIEntityModel) => void;
+  isPreview?: boolean;
 }
 
 export const ApplicationCard = ({
@@ -104,6 +105,7 @@ export const ApplicationCard = ({
   onBookmarkClick,
   onPublish,
   onLogsClick,
+  isPreview = false,
 }: ApplicationCardProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -122,7 +124,8 @@ export const ApplicationCard = ({
 
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
-  const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin); //TODO add  ```|| canWrite``` when core issues #655 and #672 will be ready
+  const isExecutable =
+    isExecutableApp(entity) && (isMyApp || isAdmin || canWrite);
 
   const { iconSize, shareIconSize } = CardIconSizes[screenState];
 
@@ -214,7 +217,9 @@ export const ApplicationCard = ({
         dataQa: 'status-change',
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
         display:
-          (isAdmin || isMyApp) && !!entity.functionStatus && isCodeAppsEnabled, //TODO add  canWrite when core issues #655 will be ready
+          (isAdmin || isMyApp || canWrite) &&
+          !!entity.functionStatus &&
+          isCodeAppsEnabled,
         Icon: PlayerContextIcon,
         iconClassName: PlayerContextIconClasses[playerStatus],
         onClick: handleUpdateFunctionStatus,
@@ -222,7 +227,7 @@ export const ApplicationCard = ({
       {
         name: t('Edit'),
         dataQa: 'edit',
-        display: (isMyApp || !!canWrite) && !!onEdit,
+        display: ((isMyApp || canWrite) && !!onEdit) || isPreview,
         Icon: IconPencilMinus,
         onClick: handleEdit,
       },
@@ -243,7 +248,7 @@ export const ApplicationCard = ({
       {
         name: t('Publish'),
         dataQa: 'publish',
-        display: isMyApp && !!onPublish,
+        display: (isMyApp && !!onPublish) || isPreview,
         Icon: IconWorldShare,
         onClick: handlePublish,
       },
@@ -265,7 +270,7 @@ export const ApplicationCard = ({
       {
         name: t('Delete'),
         dataQa: 'delete',
-        display: isMyApp && !!onDelete,
+        display: (isMyApp && !!onDelete) || isPreview,
         disabled: isModifyDisabled,
         Icon: IconTrashX,
         iconClassName: 'stroke-error',
@@ -297,26 +302,37 @@ export const ApplicationCard = ({
       onDelete,
       isModifyDisabled,
       handleDelete,
+      isPreview,
     ],
   );
 
   return (
     <div
       onClick={() => onClick(entity)}
-      className="group relative h-[98px] cursor-pointer rounded-md bg-layer-2 p-3 shadow-card hover:bg-layer-3 md:h-[162px] md:p-4 xl:h-[164px] xl:p-5"
+      className={classNames(
+        'group relative h-[98px] rounded-md bg-layer-2 p-3 shadow-card hover:bg-layer-3 md:h-[162px] md:p-4 xl:h-[164px] xl:p-5',
+        !isPreview && 'cursor-pointer',
+      )}
       data-qa="agent"
     >
       <div>
         <div className="absolute right-4 top-4 flex gap-1 xl:right-5 xl:top-5">
-          <ContextMenu
-            menuItems={menuItems}
-            featureType={FeatureType.Application}
-            triggerIconHighlight
-            triggerIconSize={18}
-            className="m-0 xl:invisible group-hover:xl:visible"
-          />
+          {!isPreview && (
+            <>
+              <ContextMenu
+                menuItems={menuItems}
+                featureType={FeatureType.Application}
+                triggerIconHighlight
+                triggerIconSize={18}
+                className="m-0 xl:invisible group-hover:xl:visible"
+              />
 
-          <AgentBookmark onBookmarkClick={onBookmarkClick} entity={entity} />
+              <AgentBookmark
+                onBookmarkClick={onBookmarkClick}
+                entity={entity}
+              />
+            </>
+          )}
         </div>
         <div className="flex items-center gap-4 overflow-hidden">
           <div className="flex shrink-0 items-center justify-center xl:my-[3px]">

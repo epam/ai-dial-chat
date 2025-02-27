@@ -18,7 +18,7 @@ import {
 
 import { RootState } from '..';
 
-import { Feature } from '@epam/ai-dial-shared';
+import { Feature, UploadStatus } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 export interface SettingsState {
@@ -49,6 +49,8 @@ export interface SettingsState {
   quickAppsSchemaId?: string;
   dialApiHost?: string;
   defaultSystemPrompt?: string;
+  providerId: string | null;
+  initialDataStatus?: UploadStatus;
 }
 
 const initialState: SettingsState = {
@@ -69,6 +71,8 @@ const initialState: SettingsState = {
   defaultAssistantSubmodelId: FALLBACK_ASSISTANT_SUBMODEL_ID,
   topics: [],
   codeEditorPythonVersions: [],
+  providerId: null,
+  initialDataStatus: UploadStatus.UNINITIALIZED,
 };
 
 export const settingsSlice = createSlice({
@@ -163,6 +167,12 @@ export const settingsSlice = createSlice({
     setIsSignInInSameWindow: (state, { payload }: PayloadAction<boolean>) => {
       state.isSignInInSameWindow = payload;
     },
+    initStart: (state) => {
+      state.initialDataStatus = UploadStatus.LOADING;
+    },
+    initComplete: (state) => {
+      state.initialDataStatus = UploadStatus.LOADED;
+    },
   },
 });
 
@@ -170,6 +180,10 @@ const rootSelector = (state: RootState): SettingsState => state.settings;
 
 const selectAppName = createSelector([rootSelector], (state) => {
   return state.appName;
+});
+
+const selectInitialDataStatus = createSelector([rootSelector], (state) => {
+  return state.initialDataStatus;
 });
 
 const selectIsOverlay = createSelector([rootSelector], (state) => {
@@ -359,6 +373,10 @@ const selectDefaultSystemPrompt = createSelector(
   (state) => state.defaultSystemPrompt ?? '',
 );
 
+const selectProviderId = createSelector([rootSelector], (state) => {
+  return state.providerId;
+});
+
 const selectDefaults = createSelector(
   [
     selectDefaultAssistantSubmodelId,
@@ -416,4 +434,6 @@ export const SettingsSelectors = {
   selectCodeEditorPythonVersions,
   selectOverlayDefaultModelId,
   selectDefaults,
+  selectProviderId,
+  selectInitialDataStatus,
 };
