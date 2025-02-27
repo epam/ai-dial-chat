@@ -14,6 +14,7 @@ import { ProviderLogin } from '@/src/ui/actions/providerLogin';
 import { KeycloakPage, LoginPage } from '@/src/ui/pages';
 import { Auth0Page } from '@/src/ui/pages/auth0Page';
 import { AzureADPage } from '@/src/ui/pages/azureADPage';
+import { MarketplaceUrlBuilder } from '@/src/utils/marketplaceUrlBuilder';
 import { Page, test as base } from '@playwright/test';
 import { allure } from 'allure-playwright';
 import * as process from 'node:process';
@@ -54,6 +55,7 @@ const test = base.extend<
     promptData: PromptData;
     publishRequestBuilder: PublishRequestBuilder;
     customApplicationBuilder: CustomApplicationBuilder;
+    marketplaceUrlBuilder: MarketplaceUrlBuilder;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -216,6 +218,11 @@ const test = base.extend<
   customApplicationBuilder: async ({}, use) => {
     const customApplicationBuilder = new CustomApplicationBuilder();
     await use(customApplicationBuilder);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  marketplaceUrlBuilder: async ({}, use) => {
+    const marketplaceUrlBuilder = new MarketplaceUrlBuilder();
+    await use(marketplaceUrlBuilder);
   },
 });
 

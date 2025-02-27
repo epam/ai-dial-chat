@@ -1,10 +1,8 @@
 import { EntityType } from '@/chat/types/common';
-import config from '@/config/chat.playwright.config';
 import dialTest from '@/src/core/dialFixtures';
 import {
   AccountMenuOptions,
   CheckboxState,
-  ExpectedConstants,
   MarketplaceFilterTypes,
   SourcesFilterOptions,
 } from '@/src/testData';
@@ -33,6 +31,7 @@ dialTest(
       marketplaceSidebar,
       dialHomePage,
       chatBar,
+      marketplaceUrlBuilder,
     },
     testInfo,
   ) => {
@@ -42,10 +41,11 @@ dialTest(
     await dialTest.step(
       'Open workspace url with Type="Applications" and Sources="My Custom apps" params by logged-in user and verify no Source filter is available, Type="Applications" filter is checked',
       async () => {
-        url = config.use!.baseURL!.concat(
-          ExpectedConstants.marketplacePath +
-            `?types=${EntityType.Application}&sources=${SourcesFilterOptions.myCustomApps}&tab=workspace`,
-        );
+        url = marketplaceUrlBuilder
+          .withTypes(EntityType.Application)
+          .withSources(SourcesFilterOptions.myCustomApps)
+          .withTab('workspace')
+          .build();
         await marketplacePage.navigateToUrl(url);
         await marketplacePage.waitForPageLoaded();
         await baseAssertion.assertElementState(
@@ -80,13 +80,12 @@ dialTest(
           Attributes.value,
           searchTerm,
         );
-        baseAssertion.assertValue(
-          page.url(),
-          config.use!.baseURL!.concat(
-            ExpectedConstants.marketplacePath +
-              `?types=${EntityType.Application}&tab=workspace&search=${searchTerm}`,
-          ),
-        );
+        const expectedUrl = marketplaceUrlBuilder
+          .withTypes(EntityType.Application)
+          .withTab('workspace')
+          .withSearch(searchTerm)
+          .build();
+        baseAssertion.assertValue(page.url(), expectedUrl);
       },
     );
 
@@ -145,6 +144,7 @@ dialTest(
       incognitoProviderLogin,
       setTestIds,
       baseAssertion,
+      marketplaceUrlBuilder,
     },
     testInfo,
   ) => {
@@ -152,10 +152,12 @@ dialTest(
     const appName = GeneratorUtil.randomApplicationName();
     const firstTopic = GeneratorUtil.randomString(5);
     const secondTopic = GeneratorUtil.randomString(5);
-    const url = config.use!.baseURL!.concat(
-      ExpectedConstants.marketplacePath +
-        `?types=${EntityType.Application}&sources=${SourcesFilterOptions.myCustomApps}&topics=${firstTopic.concat(',').concat(secondTopic)}&tab=workspace`,
-    );
+    const url = marketplaceUrlBuilder
+      .withTypes(EntityType.Application)
+      .withSources(SourcesFilterOptions.myCustomApps)
+      .withTopics(firstTopic, secondTopic)
+      .withTab('workspace')
+      .build();
     const username =
       process.env.E2E_USERNAME!.split(',')[testInfo.parallelIndex];
     const incognitoMarketplacePage = new MarketplacePage(incognitoPage);
@@ -169,6 +171,10 @@ dialTest(
       .getMarketplaceFilter();
     const incognitoDialHomePage = new DialHomePage(incognitoPage);
     const incognitoAppContainer = incognitoDialHomePage.getAppContainer();
+    const operationFiltersStateMap = new Map<string, CheckboxState>([
+      ['login', CheckboxState.checked],
+      ['go-back', CheckboxState.unchecked],
+    ]);
 
     await dialTest.step(
       'Prepare custom application with some topics',
@@ -181,11 +187,6 @@ dialTest(
         await applicationApiHelper.createApplication(applicationModel);
       },
     );
-
-    const operationFiltersStateMap = new Map<string, CheckboxState>([
-      ['login', CheckboxState.checked],
-      ['go-back', CheckboxState.unchecked],
-    ]);
 
     for (const [operation, filterState] of operationFiltersStateMap.entries()) {
       await dialTest.step(
