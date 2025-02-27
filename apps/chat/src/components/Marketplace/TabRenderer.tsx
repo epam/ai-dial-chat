@@ -430,17 +430,17 @@ export const TabRenderer = () => {
       >
         <div
           className={classNames(
-            'w-full transition-all duration-500',
+            'w-full transition-all duration-1000',
             isBannerVisible
               ? 'max-h-[104px] translate-y-0'
-              : 'max-h-0 translate-y-[-150px]',
+              : 'max-h-0 translate-y-[-135px]',
           )}
         >
           <MarketplaceBanner />
         </div>
         <div
           className={classNames(
-            'flex items-center justify-end gap-2 transition-all duration-500 md:gap-4',
+            'flex items-center justify-end gap-2 transition-all duration-1000 md:gap-4',
             isBannerVisible ? 'md:mt-4 xl:mt-6' : 'm-0',
           )}
         >
