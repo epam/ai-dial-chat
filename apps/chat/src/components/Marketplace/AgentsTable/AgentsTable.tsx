@@ -36,6 +36,7 @@ import Magnifier from '@/public/images/icons/search-alt.svg';
 import { PublishActions } from '@epam/ai-dial-shared';
 import isString from 'lodash-es/isString';
 import orderBy from 'lodash-es/orderBy';
+import throttle from 'lodash-es/throttle';
 
 interface DataRowContainerProps {
   children: ReactNode;
@@ -124,6 +125,7 @@ const sortKeyMap: Record<TableColumnSortKeys, keyof DialAIEntityModel> = {
   [TableColumnSortKeys.NAME]: 'name',
   [TableColumnSortKeys.OWNER]: 'owner',
 };
+const BANNER_SCROLL_THRESHOLD = 100;
 
 export const AgentsTable: React.FC<AgentsTableProps> = memo(
   ({
@@ -149,6 +151,7 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
     const parentRef = useRef<HTMLDivElement>(null);
     const suggestedHeaderRef = useRef<HTMLDivElement>(null);
     const suggestedRowRef = useRef<HTMLDivElement>(null);
+    const prevDataScrollRef = useRef<number>(0);
 
     const tableSort = useAppSelector(MarketplaceSelectors.selectTableSort);
 
@@ -160,13 +163,23 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
     useSyncXScroll(rightColumnHeaderRef, rightColumnDataRef);
 
     const allEntities = useMemo(() => {
-      const sortField = sortKeyMap[tableSort.column] || 'name';
-      const sortedEntities = orderBy(entities, [sortField], [tableSort.order]);
-      const sortedSuggestedEntities = orderBy(
-        suggestedResults,
-        [sortField],
-        [tableSort.order],
-      );
+      const sortField =
+        sortKeyMap[tableSort.column] || sortKeyMap[TableColumnSortKeys.NAME];
+
+      const sortEntities = (items: DialAIEntityModel[]) => {
+        return orderBy(
+          items,
+          [
+            (item) => {
+              const value = item[sortField];
+              return isString(value) ? value.toLowerCase() : value;
+            },
+          ],
+          [tableSort.order],
+        );
+      };
+      const sortedEntities = sortEntities(entities);
+      const sortedSuggestedEntities = sortEntities(suggestedResults);
 
       if (!suggestedResults.length) return sortedEntities;
       if (!entities.length && suggestedResults.length)
@@ -185,7 +198,7 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
       count: allEntities.length,
       getScrollElement: () => parentRef.current,
       estimateSize: () => ROW_SIZES[screenState],
-      overscan: 2,
+      overscan: screenState === ScreenState.MOBILE ? 9 : 3,
     });
 
     useEffect(() => {
@@ -193,23 +206,52 @@ export const AgentsTable: React.FC<AgentsTableProps> = memo(
         setLeftColumnWidth(leftColumnHeaderRef.current?.offsetWidth ?? 0);
       });
 
-      const rightObserver = new ResizeObserver(() => {
-        setRightColumnWidth(rightColumnHeaderRef.current?.offsetWidth ?? 0);
-      });
-
       if (leftColumnHeaderRef.current) {
         leftObserver.observe(leftColumnHeaderRef.current);
       }
+
+      const rightObserver = new ResizeObserver(() => {
+        setRightColumnWidth(rightColumnHeaderRef.current?.offsetWidth ?? 0);
+      });
 
       if (rightColumnHeaderRef.current) {
         rightObserver.observe(rightColumnHeaderRef.current);
       }
 
+      const currentParentRef = parentRef.current;
+      const handleScroll = throttle(() => {
+        const parent = parentRef.current;
+        if (!parent) return;
+
+        const currentScroll = parent.scrollTop;
+        const wasAbove = prevDataScrollRef.current < BANNER_SCROLL_THRESHOLD;
+        const isAbove = currentScroll < BANNER_SCROLL_THRESHOLD;
+
+        if (wasAbove !== isAbove) {
+          dispatch(
+            MarketplaceActions.setIsBannerVisible({
+              isVisible: isAbove,
+            }),
+          );
+        }
+
+        prevDataScrollRef.current = currentScroll;
+      }, 50);
+
+      if (currentParentRef) {
+        currentParentRef.addEventListener('scroll', handleScroll);
+      }
+
       return () => {
         leftObserver.disconnect();
         rightObserver.disconnect();
+
+        if (currentParentRef) {
+          currentParentRef.removeEventListener('scroll', handleScroll);
+        }
+        dispatch(MarketplaceActions.setIsBannerVisible({ isVisible: true }));
       };
-    }, []);
+    }, [dispatch]);
 
     useEffect(() => {
       rowVirtualizer.measure();

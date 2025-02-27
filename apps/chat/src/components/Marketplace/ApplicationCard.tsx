@@ -105,7 +105,7 @@ export const ApplicationCard = ({
   onBookmarkClick,
   onPublish,
   onLogsClick,
-  isPreview,
+  isPreview = false,
 }: ApplicationCardProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -124,7 +124,8 @@ export const ApplicationCard = ({
 
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
-  const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin); //TODO add  ```|| canWrite``` when core issues #655 and #672 will be ready
+  const isExecutable =
+    isExecutableApp(entity) && (isMyApp || isAdmin || canWrite);
 
   const { iconSize, shareIconSize } = CardIconSizes[screenState];
 
@@ -216,7 +217,9 @@ export const ApplicationCard = ({
         dataQa: 'status-change',
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
         display:
-          (isAdmin || isMyApp) && !!entity.functionStatus && isCodeAppsEnabled, //TODO add  canWrite when core issues #655 will be ready
+          (isAdmin || isMyApp || canWrite) &&
+          !!entity.functionStatus &&
+          isCodeAppsEnabled,
         Icon: PlayerContextIcon,
         iconClassName: PlayerContextIconClasses[playerStatus],
         onClick: handleUpdateFunctionStatus,
@@ -224,7 +227,7 @@ export const ApplicationCard = ({
       {
         name: t('Edit'),
         dataQa: 'edit',
-        display: ((isMyApp || !!canWrite) && !!onEdit) || !!isPreview,
+        display: ((isMyApp || canWrite) && !!onEdit) || isPreview,
         Icon: IconPencilMinus,
         onClick: handleEdit,
       },
@@ -245,7 +248,7 @@ export const ApplicationCard = ({
       {
         name: t('Publish'),
         dataQa: 'publish',
-        display: (isMyApp && !!onPublish) || !!isPreview,
+        display: (isMyApp && !!onPublish) || isPreview,
         Icon: IconWorldShare,
         onClick: handlePublish,
       },
@@ -267,7 +270,7 @@ export const ApplicationCard = ({
       {
         name: t('Delete'),
         dataQa: 'delete',
-        display: (isMyApp && !!onDelete) || !!isPreview,
+        display: (isMyApp && !!onDelete) || isPreview,
         disabled: isModifyDisabled,
         Icon: IconTrashX,
         iconClassName: 'stroke-error',
@@ -314,16 +317,21 @@ export const ApplicationCard = ({
     >
       <div>
         <div className="absolute right-4 top-4 flex gap-1 xl:right-5 xl:top-5">
-          <ContextMenu
-            menuItems={menuItems}
-            featureType={FeatureType.Application}
-            triggerIconHighlight
-            triggerIconSize={18}
-            className="m-0 xl:invisible group-hover:xl:visible"
-          />
-
           {!isPreview && (
-            <AgentBookmark onBookmarkClick={onBookmarkClick} entity={entity} />
+            <>
+              <ContextMenu
+                menuItems={menuItems}
+                featureType={FeatureType.Application}
+                triggerIconHighlight
+                triggerIconSize={18}
+                className="m-0 xl:invisible group-hover:xl:visible"
+              />
+
+              <AgentBookmark
+                onBookmarkClick={onBookmarkClick}
+                entity={entity}
+              />
+            </>
           )}
         </div>
         <div className="flex items-center gap-4 overflow-hidden">

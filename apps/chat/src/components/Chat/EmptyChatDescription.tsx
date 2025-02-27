@@ -169,6 +169,7 @@ const EmptyChatDescriptionView = ({
               <span
                 data-qa="agent-name"
                 className={classNames(
+                  'break-words',
                   incorrectModel &&
                     !isReplayAsIs &&
                     !isPlayback &&

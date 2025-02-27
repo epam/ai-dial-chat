@@ -78,7 +78,7 @@ export interface ApiApplicationModelBase {
 
 export interface ApiTypeSchemaApplication extends ApiApplicationModelBase {
   application_type_schema_id: string;
-  application_properties: Record<string, any> | null;
+  application_properties: QuickAppConfig | Record<string, unknown> | null;
 }
 
 export interface ApiApplicationModelRegular extends ApiApplicationModelBase {
@@ -131,6 +131,6 @@ export enum ApplicationActionType {
 }
 
 export enum ApplicationType {
-  CUSTOM_APP = 'application',
+  CUSTOM_APP = 'custom app',
   CODE_APP = 'code app',
 }
