@@ -80,7 +80,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
       },
       {
         key: TabKeys.SETTINGS,
-        label: t('Settings'),
+        label: t('App settings'),
         href: {
           pathname: Routes.AppsEditorSettings,
           query: {
@@ -134,7 +134,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
                   >
                     <div
                       className={classNames(
-                        'flex cursor-pointer items-center px-2',
+                        'flex cursor-pointer items-center gap-2 rounded px-1 py-1.5 hover:bg-accent-primary-alpha',
                         isDisabled ? 'text-secondary' : 'text-primary',
                       )}
                     >
@@ -155,7 +155,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
                           height={24}
                         />
                       )}
-                      <span className="px-2">{tab.label}</span>
+                      <span className="grow truncate">{tab.label}</span>
                     </div>
                   </Link>
                   {index < tabs.length - 1 && (
