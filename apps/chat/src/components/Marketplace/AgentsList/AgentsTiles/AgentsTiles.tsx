@@ -28,6 +28,11 @@ interface Props {
   onLogsClick?: (entity: DialAIEntityModel) => void;
   dataQA?: string;
 }
+const windowOrientedScreenStates = [
+  ScreenState.SM,
+  ScreenState.MD,
+  ScreenState.XL,
+];
 
 const ROWS_INFO = {
   [ScreenState.SM]: { size: 110, cols: 1 },
@@ -61,9 +66,7 @@ export const VirtualCardsList: React.FC<Props> = ({
 
   const containerScreenState = useScreenState(currentParentRef);
   const windowScreenState = useScreenState();
-  const screenState = [ScreenState.SM, ScreenState.MD, ScreenState.XL].includes(
-    windowScreenState,
-  )
+  const screenState = windowOrientedScreenStates.includes(windowScreenState)
     ? windowScreenState
     : containerScreenState;
 
