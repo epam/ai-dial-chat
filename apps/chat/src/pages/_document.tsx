@@ -4,7 +4,6 @@ import Script from 'next/script';
 import i18nextConfig from '../../next-i18next.config';
 
 import { documentWithJss } from '@epam/ai-dial-modulify-ui';
-import * as process from 'node:process';
 
 type Props = DocumentProps & {
   //
