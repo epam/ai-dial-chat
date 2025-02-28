@@ -3,7 +3,6 @@ import { memo, useCallback, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
-import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getApplicationType } from '@/src/utils/app/application';
@@ -16,7 +15,6 @@ import {
 } from '@/src/utils/marketplace';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
@@ -221,8 +219,6 @@ export const TabRenderer = () => {
   }>();
   const [logsEntity, setLogsEntity] = useState<DialAIEntityModel>();
 
-  const screenState = useScreenState();
-
   const isSomeFilterNotEmpty =
     searchTerm.length ||
     selectedFilters[FilterTypes.ENTITY_TYPE].length ||
@@ -420,12 +416,7 @@ export const TabRenderer = () => {
   return (
     <>
       <header
-        className={classNames(
-          'mb-5 md:mb-4 xl:mb-6',
-          selectedViewType === ViewTypes.TABLE && screenState === ScreenState.SM
-            ? 'px-3'
-            : 'px-0',
-        )}
+        className="mb-5 px-3 md:mb-4 md:px-5 xl:mb-6 xl:px-16"
         data-qa="marketplace-header"
       >
         <div

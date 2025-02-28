@@ -56,7 +56,16 @@ export const VirtualCardsList: React.FC<Props> = ({
   }>(null);
   const dataRef = useRef<HTMLDivElement>(null);
 
-  const screenState = useScreenState();
+  const currentParentRef = wrapperRefs.current?.parentRef.current ?? null;
+  const suggestedRowRef = wrapperRefs.current?.suggestedRowRef;
+
+  const containerScreenState = useScreenState(currentParentRef);
+  const windowScreenState = useScreenState();
+  const screenState = [ScreenState.SM, ScreenState.MD, ScreenState.XL].includes(
+    windowScreenState,
+  )
+    ? windowScreenState
+    : containerScreenState;
 
   const colsCount = ROWS_INFO[screenState].cols;
   const rowsSize = ROWS_INFO[screenState].size;
@@ -77,15 +86,12 @@ export const VirtualCardsList: React.FC<Props> = ({
 
   const rowVirtualizer = useVirtualizer({
     count: Math.ceil(allEntities.length / colsCount),
-    getScrollElement: () =>
-      wrapperRefs.current ? wrapperRefs.current.parentRef.current : null,
+    getScrollElement: () => currentParentRef,
     estimateSize: () => rowsSize,
     overscan: 3,
   });
 
-  useMarketplaceBannerVisibility(
-    wrapperRefs.current ? wrapperRefs.current.parentRef : null,
-  );
+  useMarketplaceBannerVisibility(currentParentRef);
 
   useEffect(() => {
     rowVirtualizer.measure();
@@ -120,10 +126,17 @@ export const VirtualCardsList: React.FC<Props> = ({
             return (
               <div
                 key={virtualRow.key}
-                className="absolute left-0 top-0 grid min-w-full grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-3 xl:gap-5 3xl:grid-cols-4 4xl:grid-cols-5 5xl:grid-cols-6"
+                className="absolute left-0 top-0 grid min-w-full grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-3 xl:gap-5"
                 style={{
                   height: `${virtualRow.size}px`,
                   transform: `translateY(${virtualRow.start}px)`,
+                  gridTemplateColumns: [
+                    ScreenState.SM,
+                    ScreenState.MD,
+                    ScreenState.XL,
+                  ].includes(screenState)
+                    ? undefined
+                    : `repeat(${colsCount}, minmax(0, 1fr))`,
                 }}
                 data-qa={dataQA}
               >
@@ -139,7 +152,7 @@ export const VirtualCardsList: React.FC<Props> = ({
                         style={{
                           height: `${rowsSize}px`,
                         }}
-                        ref={wrapperRefs.current?.suggestedRowRef}
+                        ref={suggestedRowRef}
                       ></span>
                     );
                   }

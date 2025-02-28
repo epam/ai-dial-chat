@@ -133,18 +133,12 @@ export enum PageType {
 }
 
 export enum ScreenState {
-  // < 768
-  SM,
-  // 768 - 1280
-  MD,
-  // 1280 - 1770
-  XL,
-  // 1770 - 2120
-  XL3,
-  // 2120 - 2560
-  XL4,
-  // > 2560
-  XL5,
+  SM = 768,
+  MD = 1280,
+  XL = 1770,
+  XL3 = 2120,
+  XL4 = 2560,
+  XL5 = Number.MAX_SAFE_INTEGER,
 }
 
 export interface RawEntityInfo {

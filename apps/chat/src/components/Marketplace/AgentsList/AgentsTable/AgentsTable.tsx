@@ -143,6 +143,9 @@ export const AgentsTable: React.FC<Props> = ({
   const leftColumnDataRef = useRef<HTMLDivElement>(null);
   const rightColumnDataRef = useRef<HTMLDivElement>(null);
 
+  const currentParentRef = wrapperRefs.current?.parentRef.current ?? null;
+  const suggestedRowRef = wrapperRefs.current?.suggestedRowRef;
+
   const tableSort = useAppSelector(MarketplaceSelectors.selectTableSort);
 
   const [hoveredRowId, setHoveredRowId] = useState('');
@@ -189,15 +192,12 @@ export const AgentsTable: React.FC<Props> = ({
 
   const rowVirtualizer = useVirtualizer({
     count: allEntities.length,
-    getScrollElement: () =>
-      wrapperRefs.current ? wrapperRefs.current.parentRef.current : null,
+    getScrollElement: () => currentParentRef,
     estimateSize: () => ROW_SIZES[screenState],
     overscan: screenState === ScreenState.SM ? 9 : 3,
   });
 
-  useMarketplaceBannerVisibility(
-    wrapperRefs.current ? wrapperRefs.current.parentRef : null,
-  );
+  useMarketplaceBannerVisibility(currentParentRef);
 
   useEffect(() => {
     const headerCurrentRefs = headerRefs.current ? headerRefs.current : null;
@@ -253,6 +253,7 @@ export const AgentsTable: React.FC<Props> = ({
         separatorRowId={separatorRowId}
         rowsHeight={ROW_SIZES[screenState]}
         ref={wrapperRefs}
+        className={screenState === ScreenState.SM ? '!px-0' : ''}
         dataQA={dataQA}
       >
         <DataRowContainer
@@ -271,7 +272,7 @@ export const AgentsTable: React.FC<Props> = ({
                 virtualRow={virtualRow}
               >
                 {isString(entity) ? (
-                  <span ref={wrapperRefs.current?.suggestedRowRef}></span>
+                  <span ref={suggestedRowRef}></span>
                 ) : (
                   <AgentsTableLeftSideRow
                     entity={entity}

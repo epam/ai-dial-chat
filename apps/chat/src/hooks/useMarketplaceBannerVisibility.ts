@@ -8,14 +8,12 @@ import throttle from 'lodash/throttle';
 const BANNER_SCROLL_THRESHOLD = 100;
 
 export const useMarketplaceBannerVisibility = (
-  dataContainerRef: React.RefObject<HTMLElement> | null,
+  dataContainer: HTMLElement | null,
 ) => {
   const dispatch = useAppDispatch();
   const prevDataScrollRef = useRef(0);
 
   useEffect(() => {
-    if (!dataContainerRef) return;
-    const dataContainer = dataContainerRef.current;
     if (!dataContainer) return;
 
     const handleScroll = throttle(() => {
@@ -67,5 +65,5 @@ export const useMarketplaceBannerVisibility = (
       resizeObserver.disconnect();
       dispatch(MarketplaceActions.setIsBannerVisible({ isVisible: true }));
     };
-  }, [dataContainerRef, dispatch]);
+  }, [dataContainer, dispatch]);
 };

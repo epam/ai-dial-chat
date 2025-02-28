@@ -2,12 +2,15 @@ import { forwardRef, useImperativeHandle, useRef } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { Translation } from '@/src/types/translation';
 
 interface Props {
   children: React.ReactNode;
   separatorRowId: number;
   rowsHeight: number;
+  className?: string;
   dataQA?: string;
 }
 
@@ -17,7 +20,7 @@ export const AgentsListWrapper = forwardRef<
     suggestedRowRef: React.RefObject<HTMLSpanElement>;
   },
   Props
->(({ children, separatorRowId, rowsHeight, dataQA }, ref) => {
+>(({ children, separatorRowId, rowsHeight, className, dataQA }, ref) => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const parentRef = useRef<HTMLDivElement>(null);
@@ -39,7 +42,10 @@ export const AgentsListWrapper = forwardRef<
       <section
         ref={parentRef}
         data-qa={dataQA}
-        className="relative flex overflow-auto"
+        className={classNames(
+          'relative flex overflow-auto px-3 md:px-5 xl:px-16',
+          className,
+        )}
       >
         {separatorRowId >= 0 && (
           <span
