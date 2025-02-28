@@ -8,9 +8,9 @@ import { RootState } from '../index';
 import { ModelsState } from './models.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { sortBy } from 'lodash-es';
 import groupBy from 'lodash-es/groupBy';
 import orderBy from 'lodash-es/orderBy';
+import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 
 const rootSelector = (state: RootState): ModelsState => state.models;

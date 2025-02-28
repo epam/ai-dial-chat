@@ -1,32 +1,14 @@
-import { IconSearch } from '@tabler/icons-react';
-import { MouseEvent, useCallback, useMemo, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { ApplicationLogs } from '../../Marketplace/ApplicationLogs';
+import { TalkToSlider } from './TalkToSlider';
 
-import Link from 'next/link';
 
-import classNames from 'classnames';
 
+import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { Modal } from '@/src/components/Common/Modal';
+import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 import { useTranslation } from '@/src/hooks/useTranslation';
-
-import { getApplicationType } from '@/src/utils/app/application';
-import {
-  getConversationModelParams,
-  groupModelsAndSaveOrder,
-  isPlaybackConversation,
-  isReplayAsIsConversation,
-  isReplayConversation,
-} from '@/src/utils/app/conversation';
-import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
-import { ApiUtils, PseudoModel } from '@/src/utils/server/api';
-
-import { Conversation } from '@/src/types/chat';
-import { EntityType } from '@/src/types/common';
-import { ModalState } from '@/src/types/modal';
-import { DialAIEntityModel } from '@/src/types/models';
-import { SharingType } from '@/src/types/share';
-import { Translation } from '@/src/types/translation';
-
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
@@ -34,19 +16,30 @@ import { ConversationsActions } from '@/src/store/conversations/conversations.re
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-
-import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
-import { MarketplaceQueryParams } from '@/src/constants/marketplace';
-
-import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
-import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
-import { Modal } from '@/src/components/Common/Modal';
-
-import { ApplicationLogs } from '../../Marketplace/ApplicationLogs';
-import { TalkToSlider } from './TalkToSlider';
-
+import { Conversation } from '@/src/types/chat';
+import { EntityType } from '@/src/types/common';
+import { ModalState } from '@/src/types/modal';
+import { DialAIEntityModel } from '@/src/types/models';
+import { SharingType } from '@/src/types/share';
+import { Translation } from '@/src/types/translation';
+import { getApplicationType } from '@/src/utils/app/application';
+import {
+  getConversationModelParams,
+  isPlaybackConversation,
+  isReplayAsIsConversation,
+  isReplayConversation,
+} from '@/src/utils/app/conversation';
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
+import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
+import { ApiUtils, PseudoModel } from '@/src/utils/server/api';
 import { Feature, PublishActions, ShareEntity } from '@epam/ai-dial-shared';
+import { IconSearch } from '@tabler/icons-react';
+import classNames from 'classnames';
 import orderBy from 'lodash-es/orderBy';
+import Link from 'next/link';
+import { MouseEvent, useCallback, useMemo, useState } from 'react';
+import { useDispatch } from 'react-redux';
 
 interface TalkToModalViewProps {
   conversation: Conversation;

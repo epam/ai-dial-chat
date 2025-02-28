@@ -1,46 +1,3 @@
-import {
-  IconChevronDown,
-  IconDots,
-  IconPencilMinus,
-  IconTrashX,
-  IconWorldShare,
-} from '@tabler/icons-react';
-import { useCallback, useMemo, useState } from 'react';
-
-import classNames from 'classnames';
-
-import { useTranslation } from '@/src/hooks/useTranslation';
-
-import {
-  getApplicationType,
-  getModelDescription,
-  isApplicationStatusUpdating,
-} from '@/src/utils/app/application';
-import {
-  getOpenAIEntityFullName,
-  groupModelsAndSaveOrder,
-} from '@/src/utils/app/conversation';
-import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { isApplicationId } from '@/src/utils/app/id';
-import { hasParentWithAttribute } from '@/src/utils/app/modals';
-import { isEntityIdPublic } from '@/src/utils/app/publications';
-import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
-import { ApiUtils } from '@/src/utils/server/api';
-
-import { FeatureType } from '@/src/types/common';
-import { DisplayMenuItemProps } from '@/src/types/menu';
-import { DialAIEntityModel } from '@/src/types/models';
-import { SharingType } from '@/src/types/share';
-import { Translation } from '@/src/types/translation';
-
-import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-
-import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
-
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import ContextMenu from '../Common/ContextMenu';
@@ -49,8 +6,44 @@ import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { ModelVersionSelect } from './ModelVersionSelect';
 import { PublishModal } from './Publish/PublishWizard';
 
+
+
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
+import { useTranslation } from '@/src/hooks/useTranslation';
+import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { FeatureType } from '@/src/types/common';
+import { DisplayMenuItemProps } from '@/src/types/menu';
+import { DialAIEntityModel } from '@/src/types/models';
+import { SharingType } from '@/src/types/share';
+import { Translation } from '@/src/types/translation';
+import {
+  getApplicationType,
+  getModelDescription,
+  isApplicationStatusUpdating,
+} from '@/src/utils/app/application';
+import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { isApplicationId } from '@/src/utils/app/id';
+import { hasParentWithAttribute } from '@/src/utils/app/modals';
+import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
+import { ApiUtils } from '@/src/utils/server/api';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
+import {
+  IconChevronDown,
+  IconDots,
+  IconPencilMinus,
+  IconTrashX,
+  IconWorldShare,
+} from '@tabler/icons-react';
+import classNames from 'classnames';
+import { useCallback, useMemo, useState } from 'react';
 
 interface ModelGroupProps {
   entities: DialAIEntityModel[];

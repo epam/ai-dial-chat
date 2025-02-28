@@ -28,6 +28,7 @@ import { combineEpics } from 'redux-observable';
 import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { isMyApplication } from '@/src/utils/app/id';
+import { getGroupModelKey } from '@/src/utils/app/models';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { translate } from '@/src/utils/app/translation';
 
@@ -333,12 +334,23 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
       const installedModels = ModelsSelectors.selectInstalledModels(
         state$.value,
       );
+      const models = ModelsSelectors.selectModels(state$.value);
+      const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+      const modelGroupKeys = new Set(
+        payload.references
+          .map((ref) => modelsMap[ref])
+          .filter(Boolean)
+          .map((model) => getGroupModelKey(model!)),
+      );
+
       const newInstalledModels = uniqBy<InstalledModel>(
         [
           ...installedModels,
-          ...payload.references.map((ref) => ({
-            id: ref,
-          })),
+          ...models
+            .filter((model) => modelGroupKeys.has(getGroupModelKey(model)))
+            .map((model) => ({
+              id: model.reference,
+            })),
         ],
         'id',
       );
