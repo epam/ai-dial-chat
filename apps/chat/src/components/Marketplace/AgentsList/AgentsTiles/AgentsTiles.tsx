@@ -10,24 +10,10 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { ApplicationCard } from '../../ApplicationCard';
 import { AgentsListWrapper } from '../AgentsListWrapper';
 import { SuggestedMessage } from '../SuggestedMessage';
+import { AgentsListProps } from '../view-props';
 
-import { PublishActions } from '@epam/ai-dial-shared';
 import isString from 'lodash-es/isString';
 import range from 'lodash-es/range';
-
-interface Props {
-  entities: DialAIEntityModel[];
-  suggestedResults: DialAIEntityModel[];
-  separator: string;
-  onCardClick: (entity: DialAIEntityModel) => void;
-  onPublish?: (entity: DialAIEntityModel, action: PublishActions) => void;
-  onDelete?: (entity: DialAIEntityModel) => void;
-  onEdit?: (entity: DialAIEntityModel) => void;
-  onBookmarkClick?: (entity: DialAIEntityModel) => void;
-  onSelectVersion?: (entity: DialAIEntityModel) => void;
-  onLogsClick?: (entity: DialAIEntityModel) => void;
-  dataQA?: string;
-}
 
 const ROWS_INFO = {
   [ScreenState.SM]: { size: 110, cols: 1 },
@@ -43,7 +29,7 @@ const WINDOW_ORIENTED_SCREEN_STATES = [
   ScreenState.XL,
 ];
 
-export const VirtualCardsList: React.FC<Props> = ({
+export const VirtualCardsList: React.FC<AgentsListProps> = ({
   entities,
   suggestedResults,
   separator,

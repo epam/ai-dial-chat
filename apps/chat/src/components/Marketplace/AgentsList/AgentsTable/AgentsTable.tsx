@@ -25,11 +25,11 @@ import { TableColumnSortKeys } from '@/src/constants/marketplace';
 
 import { AgentsListWrapper } from '../AgentsListWrapper';
 import { SuggestedMessage } from '../SuggestedMessage';
+import { AgentsListProps } from '../view-props';
 import { AgentsTableHeader } from './AgentsTableHeader';
 import { AgentsTableLeftSideRow } from './AgentsTableLeftSideRow';
 import { AgentsTableRightSideRow } from './AgentsTableRightSideRow';
 
-import { PublishActions } from '@epam/ai-dial-shared';
 import isString from 'lodash-es/isString';
 import orderBy from 'lodash-es/orderBy';
 
@@ -90,20 +90,6 @@ const DataRowItem: React.FC<DataRowItemProps> = ({
   );
 };
 
-interface Props {
-  entities: DialAIEntityModel[];
-  suggestedResults: DialAIEntityModel[];
-  separator: string;
-  onCardClick: (entity: DialAIEntityModel) => void;
-  onPublish?: (entity: DialAIEntityModel, action: PublishActions) => void;
-  onDelete?: (entity: DialAIEntityModel) => void;
-  onEdit?: (entity: DialAIEntityModel) => void;
-  onBookmarkClick?: (entity: DialAIEntityModel) => void;
-  onSelectVersion?: (entity: DialAIEntityModel) => void;
-  onLogsClick?: (entity: DialAIEntityModel) => void;
-  dataQA?: string;
-}
-
 const ROW_SIZES = {
   [ScreenState.SM]: 55,
   [ScreenState.MD]: 115,
@@ -112,13 +98,13 @@ const ROW_SIZES = {
   [ScreenState.XL4]: 115,
   [ScreenState.XL5]: 115,
 };
-const sortKeyMap: Record<TableColumnSortKeys, keyof DialAIEntityModel> = {
+const SORT_KEY_MAP: Record<TableColumnSortKeys, keyof DialAIEntityModel> = {
   [TableColumnSortKeys.RELEASED]: 'createdAt',
   [TableColumnSortKeys.NAME]: 'name',
   [TableColumnSortKeys.OWNER]: 'owner',
 };
 
-export const AgentsTable: React.FC<Props> = ({
+export const AgentsTable: React.FC<AgentsListProps> = ({
   entities,
   suggestedResults,
   separator,
@@ -160,7 +146,7 @@ export const AgentsTable: React.FC<Props> = ({
 
   const allEntities = useMemo(() => {
     const sortField =
-      sortKeyMap[tableSort.column] || sortKeyMap[TableColumnSortKeys.NAME];
+      SORT_KEY_MAP[tableSort.column] || SORT_KEY_MAP[TableColumnSortKeys.NAME];
 
     const sortEntities = (items: DialAIEntityModel[]) => {
       return orderBy(
