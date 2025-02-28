@@ -160,9 +160,8 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
           ApplicationActions.update({
             oldApplication,
             applicationData: {
+              ...oldApplication,
               ...applicationData,
-              id: data.id,
-              reference: data.reference,
             },
           }),
         );
