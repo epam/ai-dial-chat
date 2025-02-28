@@ -276,7 +276,10 @@ const editApplicationEpic: AppEpic = (action$, state$) =>
         return EMPTY;
       }
 
-      return ApplicationService.edit(payload.updatedApplication).pipe(
+      return ApplicationService.edit(
+        payload.updatedApplication,
+        payload.schema,
+      ).pipe(
         switchMap(() =>
           of(
             ApplicationActions.editSuccess(),
