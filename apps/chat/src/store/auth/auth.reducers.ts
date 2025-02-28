@@ -20,10 +20,6 @@ export const authSlice = createSlice({
     },
   },
 });
-// TODO: add to selectors
-// const selectUserName = (state: RootState) =>
-//   selectSession(state)?.data?.user?.name ?? '';
-
 
 export { AuthSelectors } from './auth.selectors';
 

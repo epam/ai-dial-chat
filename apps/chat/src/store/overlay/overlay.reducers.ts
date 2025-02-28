@@ -25,7 +25,7 @@ const initialState: OverlayState = {
   hostDomain: '*',
 
   systemPrompt: null,
-  newConversationsFolder: null, // TODO: update types after merge
+  newConversationsFolder: null,
   readyToInteractSent: false,
 };
 

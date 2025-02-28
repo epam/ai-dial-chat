@@ -36,7 +36,7 @@ const initialState: MarketplaceState = {
     column: TableColumnSortKeys.NAME,
     order: 'asc',
   },
-  isBannerVisible: true, // TODO: add after merge dev
+  isBannerVisible: true,
 };
 
 export const marketplaceSlice = createSlice({

@@ -21,4 +21,5 @@ export interface MarketplaceState {
     column: TableColumnSortKeys;
     order: SortOrder;
   };
+  isBannerVisible: boolean;
 }

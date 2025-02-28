@@ -32,9 +32,13 @@ const selectIsAdmin = createSelector([rootSelector], (state) => {
   return !!state.session?.data?.user.isAdmin;
 });
 
+const selectUserName = (state: RootState) =>
+  selectSession(state)?.data?.user?.name ?? '';
+
 export const AuthSelectors = {
   selectIsShouldLogin,
   selectSession,
   selectStatus,
   selectIsAdmin,
+  selectUserName,
 };
