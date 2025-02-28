@@ -32,6 +32,9 @@ export const selectSelectedViewType = (state: RootState) =>
 export const selectTableSort = (state: RootState) =>
   rootSelector(state).tableSort;
 
+export const selectIsBannerVisible = (state: RootState) =>
+  rootSelector(state).isBannerVisible;
+
 export const selectSelectedFilters = createSelector(
   [rootSelector],
   (state) => state.selectedFilters,

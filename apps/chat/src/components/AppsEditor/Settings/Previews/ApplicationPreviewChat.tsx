@@ -102,7 +102,7 @@ export const ApplicationPreviewChat: React.FC<Props> = ({
                 );
               }}
             >
-              <IconPlayerPlay size={12} />
+              <IconPlayerPlay size={18} />
               <span>{t('Deploy code app')}</span>
             </button>
           </div>
