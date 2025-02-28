@@ -1,24 +1,26 @@
-import { NoResultsFound } from '../Common/NoResultsFound';
-import { AgentsTable } from './AgentsTable/AgentsTable';
-import { ApplicationLogs } from './ApplicationLogs';
+import { IconMessage2 } from '@tabler/icons-react';
+import { useCallback, useMemo, useState } from 'react';
 
+import classNames from 'classnames';
 
-
-import Magnifier from '@/public/images/icons/search-alt.svg';
-import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
-import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
-import { ApplicationDetails } from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
-import { CardsList } from '@/src/components/Marketplace/CardsList';
-import { MarketplaceBanner } from '@/src/components/Marketplace/MarketplaceBanner';
-import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
-import {
-  DeleteType,
-  FilterTypes,
-  MarketplaceTabs,
-  ViewTypes,
-} from '@/src/constants/marketplace';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
+
+import { getApplicationType } from '@/src/utils/app/application';
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
+import { translate } from '@/src/utils/app/translation';
+import {
+  doesApplicationMatchFilters,
+  doesApplicationMatchSearchTerm,
+} from '@/src/utils/marketplace';
+import { ApiUtils } from '@/src/utils/server/api';
+
+import { ScreenState } from '@/src/types/common';
+import { DialAIEntityModel } from '@/src/types/models';
+import { SharingType } from '@/src/types/share';
+import { Translation } from '@/src/types/translation';
+
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -30,23 +32,27 @@ import {
   ModelsActions,
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
-import { ScreenState } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
-import { SharingType } from '@/src/types/share';
-import { Translation } from '@/src/types/translation';
-import { getApplicationType } from '@/src/utils/app/application';
-import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
-import { translate } from '@/src/utils/app/translation';
+
 import {
-  doesApplicationMatchFilters,
-  doesApplicationMatchSearchTerm,
-} from '@/src/utils/marketplace';
-import { ApiUtils } from '@/src/utils/server/api';
+  DeleteType,
+  FilterTypes,
+  MarketplaceTabs,
+  ViewTypes,
+} from '@/src/constants/marketplace';
+
+import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { ApplicationDetails } from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
+import { CardsList } from '@/src/components/Marketplace/CardsList';
+import { MarketplaceBanner } from '@/src/components/Marketplace/MarketplaceBanner';
+import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
+
+import { NoResultsFound } from '../Common/NoResultsFound';
+import { AgentsTable } from './AgentsTable/AgentsTable';
+import { ApplicationLogs } from './ApplicationLogs';
+
+import Magnifier from '@/public/images/icons/search-alt.svg';
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
-import { IconMessage2 } from '@tabler/icons-react';
-import classNames from 'classnames';
-import { useCallback, useMemo, useState } from 'react';
 
 interface NoAgentsFoundProps {
   children: React.ReactNode;

@@ -183,14 +183,14 @@ const getModelsEpic: AppEpic = (action$, state$) =>
 const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ModelsActions.getInstalledModelIds.match),
-    map(() => {
+
+    switchMap(() => {
       const allModels = ModelsSelectors.selectModels(state$.value);
 
-      return allModels
+      const myAppIds = allModels
         .filter((model) => isMyApplication(model) || model.sharedWithMe)
         .map((app) => app.reference);
-    }),
-    switchMap((myAppIds) => {
+
       return ClientDataService.getInstalledDeployments().pipe(
         switchMap((installedModels) => {
           if (!installedModels) {
@@ -206,8 +206,23 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
           const installedModelIds = new Set(
             installedModels.map((model) => model.id),
           );
-          const modelsToInstall = [...recentModelIds, ...myAppIds].filter(
-            (id) => !installedModelIds.has(id),
+
+          const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+
+          const ids = [...recentModelIds, ...myAppIds];
+          const modelKeys = new Set(
+            ids
+              .map((id) => modelsMap[id])
+              .filter((m) => !!m)
+              .map(getGroupModelKey),
+          );
+
+          const referencesToInstall = allModels
+            .filter((model) => modelKeys.has(getGroupModelKey(model)))
+            .map((model) => model.reference);
+
+          const modelsToInstall = referencesToInstall.filter(
+            (reference) => !installedModelIds.has(reference),
           );
 
           if (modelsToInstall.length) {
@@ -339,8 +354,8 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
       const modelGroupKeys = new Set(
         payload.references
           .map((ref) => modelsMap[ref])
-          .filter(Boolean)
-          .map((model) => getGroupModelKey(model!)),
+          .filter((m) => !!m)
+          .map(getGroupModelKey),
       );
 
       const newInstalledModels = uniqBy<InstalledModel>(
@@ -380,8 +395,10 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
               }
               if (payload.updateRecentModels) {
                 actions.push(
-                  ...newInstalledModels.map(({ id }) =>
-                    of(ModelsActions.updateRecentModels({ modelId: id })),
+                  ...payload.references.map((reference) =>
+                    of(
+                      ModelsActions.updateRecentModels({ modelId: reference }),
+                    ),
                   ),
                 );
               }
