@@ -25,6 +25,7 @@ const initialState: OverlayState = {
   hostDomain: '*',
 
   systemPrompt: null,
+  newConversationsFolder: null, // TODO: update types after merge
   readyToInteractSent: false,
 };
 
@@ -59,6 +60,7 @@ export const overlaySlice = createSlice({
       { payload }: PayloadAction<WithRequestId<ChatOverlayOptions>>,
     ) => {
       state.hostDomain = payload.hostDomain;
+      state.newConversationsFolder = payload.newConversationsFolderId ?? null;
     },
     setOverlayOptionsSuccess: (
       state,

@@ -36,6 +36,7 @@ const initialState: MarketplaceState = {
     column: TableColumnSortKeys.NAME,
     order: 'asc',
   },
+  isBannerVisible: true, // TODO: add after merge dev
 };
 
 export const marketplaceSlice = createSlice({
@@ -95,6 +96,16 @@ export const marketplaceSlice = createSlice({
       }>,
     ) => {
       state.tableSort = payload;
+    },
+    setIsBannerVisible: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        isVisible: boolean;
+      }>,
+    ) => {
+      state.isBannerVisible = payload.isVisible;
     },
   },
 });

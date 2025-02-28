@@ -10,6 +10,8 @@ import { ModelsActions } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { Routes } from '@/src/constants/routes';
+
 import { IframeRenderer } from '@/src/components/IframeRenderer';
 
 import { VisualizerConnectorRequest } from '@epam/ai-dial-shared';
@@ -34,7 +36,7 @@ export const CustomChatViewer: React.FC<Props> = ({
   const router = useRouter();
 
   const isPreviewConversation = useMemo(() => {
-    return router.pathname === '/apps-editor/[slug]/settings';
+    return router.pathname === Routes.AppsEditorSettings;
   }, [router.pathname]);
 
   const generateTargetUrl = useCallback(() => {

@@ -60,6 +60,7 @@ import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import { DeleteType } from '@/src/constants/marketplace';
+import { Routes } from '@/src/constants/routes';
 
 import { ApplicationActions } from '../application/application.reducers';
 import { ApplicationSelectors } from '../application/application.selectors';
@@ -465,7 +466,7 @@ const acceptInvitationSuccessEpic: AppEpic = (action$, _state$, { router }) =>
     filter(ShareActions.acceptShareInvitationSuccess.match),
     switchMap(({ payload }) => {
       if (payload.isApplication) {
-        router.push('/marketplace', undefined, { shallow: true });
+        router.push(Routes.Marketplace, undefined, { shallow: true });
         //TODO make request for the shared applications to add them into the state when share invitation is accepted.
         return of(ModelsActions.getModels());
       } else {

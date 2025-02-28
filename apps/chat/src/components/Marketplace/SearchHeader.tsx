@@ -8,6 +8,7 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { encode } from '@/src/utils/app/application-type-schema';
+import { getAppEditorRoute } from '@/src/utils/app/route';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { ApplicationType } from '@/src/types/applications';
@@ -127,7 +128,7 @@ export const SearchHeader = () => {
           display: isCustomApplicationsEnabled,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
-            router.push(`/apps-editor/${ApplicationType.CUSTOM_APP}`);
+            router.push(getAppEditorRoute(ApplicationType.CUSTOM_APP));
           },
         },
         {
@@ -137,7 +138,7 @@ export const SearchHeader = () => {
           display: isCodeAppsEnabled,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
-            router.push(`/apps-editor/${ApplicationType.CODE_APP}`);
+            router.push(getAppEditorRoute(ApplicationType.CODE_APP));
           },
         },
         ...(applicationTypeSchemas?.map((schema: ApplicationTypeSchema) => ({
@@ -154,7 +155,7 @@ export const SearchHeader = () => {
                 ),
               );
             }
-            router.push(`/apps-editor/${encode(schema.id)}`);
+            router.push(getAppEditorRoute(encode(schema.id)));
           },
         })) ?? []),
       ].sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1)),
@@ -175,7 +176,7 @@ export const SearchHeader = () => {
 
   return (
     <div className="flex w-full gap-4 sm:justify-end md:w-auto">
-      <div className="relative h-[38px] w-full shrink-0 sm:w-[315px] md:w-[500px]">
+      <div className="relative flex h-[38px] shrink-0 grow sm:w-[315px] md:w-[500px]">
         <IconSearch
           className="absolute left-3 top-1/2 -translate-y-1/2"
           size={18}
@@ -186,7 +187,7 @@ export const SearchHeader = () => {
           type="text"
           value={searchTerm}
           onChange={onSearchChange}
-          className="w-full rounded border border-primary bg-transparent py-2.5 pl-[38px] pr-3 leading-4 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
+          className="grow rounded border border-primary bg-transparent py-2.5 pl-[38px] pr-3 leading-4 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
         />
       </div>
       {enabledFeatures.has(Feature.MarketplaceTableView) && <ViewToggler />}
