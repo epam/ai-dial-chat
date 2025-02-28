@@ -289,8 +289,23 @@ const removeInstalledModelsEpic: AppEpic = (action$, state$) =>
       const installedModels = ModelsSelectors.selectInstalledModels(
         state$.value,
       );
+      const models = ModelsSelectors.selectModels(state$.value);
+      const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+      const modelGroupKeys = new Set(
+        payload.references
+          .map((ref) => modelsMap[ref])
+          .filter((m) => !!m)
+          .map(getGroupModelKey),
+      );
+
+      const deletedReferences = new Set(
+        models
+          .filter((model) => modelGroupKeys.has(getGroupModelKey(model)))
+          .map((model) => model.reference),
+      );
+
       const newInstalledModels = installedModels.filter(
-        (model) => !payload.references.includes(model.id),
+        (model) => !deletedReferences.has(model.id),
       );
 
       return ClientDataService.saveInstalledDeployments(
