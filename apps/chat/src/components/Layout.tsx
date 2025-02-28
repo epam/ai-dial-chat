@@ -59,6 +59,8 @@ export default function Layout({
   const shouldOverlayLogin = isOverlay && shouldLogin;
 
   const handleStartRedirecting = useCallback((url: string) => {
+    console.log(removeQueryString(url));
+    console.log(window.location.pathname);
     setLoading(removeQueryString(url) !== window.location.pathname);
   }, []);
   const handleStopRedirecting = useCallback(() => setLoading(false), []);
