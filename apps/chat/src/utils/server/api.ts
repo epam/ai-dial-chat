@@ -2,6 +2,7 @@ import { Observable, from, switchMap, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
 import {
+  constructPath,
   isPlaybackConversation,
   isReplayConversation,
   splitEntityId,
@@ -177,14 +178,12 @@ export class ApiUtils {
     );
 
   static encodeApiUrl = (path: string): string =>
-    ServerUtils.constructPath(
+    constructPath(
       ...path.split('/').map((part) => this.safeEncodeURIComponent(part)),
     );
 
   static decodeApiUrl = (path: string): string =>
-    ServerUtils.constructPath(
-      ...path.split('/').map((part) => decodeURIComponent(part)),
-    );
+    constructPath(...path.split('/').map((part) => decodeURIComponent(part)));
 
   static request(url: string, options?: RequestInit) {
     return fromFetch(url, {
@@ -208,7 +207,7 @@ export class ApiUtils {
   }
 
   static requestText(url: string, options?: RequestInit) {
-    return fromFetch(ServerUtils.constructPath('/api', url), {
+    return fromFetch(constructPath('/api', url), {
       headers: { 'Content-Type': 'application/json' },
       ...options,
     }).pipe(

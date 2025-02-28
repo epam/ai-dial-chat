@@ -12,13 +12,6 @@ export class ServerUtils {
     return Array.isArray(req.query.entitytype) ? '' : req.query.entitytype;
   };
 
-  public static constructPath = (
-    ...values: (string | undefined | null)[]
-  ): string => {
-    const path = values.filter(Boolean).join('/');
-    return path.startsWith('api/') ? path.replace('api/', '/api/') : path;
-  };
-
   public static encodeSlugs = (slugs: (string | undefined)[]): string =>
     constructPath(
       ...slugs

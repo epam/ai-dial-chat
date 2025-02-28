@@ -6,8 +6,6 @@ import { AnyAction, Store } from '@reduxjs/toolkit';
 
 import { StateObservable } from 'redux-observable';
 
-// import { RootState } from '@/src/store';
-
 export type RootState = ReturnType<Store['getState']>;
 
 export type AppEpic = (

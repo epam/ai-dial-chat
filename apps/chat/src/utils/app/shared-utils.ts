@@ -1,6 +1,4 @@
 // SHARED UTILS (do not import other utils)
-import { constructPath } from '@/src/utils/app/file';
-
 import { Conversation } from '@/src/types/chat';
 
 import { ROOT_SECTION_NAME } from '@/src/constants/sections';
@@ -21,6 +19,13 @@ export const isFolderId = (id: string) => id.endsWith('/');
 
 export const isRootId = (id?: string) => {
   return id?.split('/').length === 2;
+};
+
+export const constructPath = (
+  ...values: (string | undefined | null)[]
+): string => {
+  const path = values.filter(Boolean).join('/');
+  return path.startsWith('api/') ? path.replace('api/', '/api/') : path;
 };
 
 // {apikey}/{bucket}/path.../name

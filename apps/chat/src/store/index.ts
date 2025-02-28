@@ -110,7 +110,6 @@ const getMiddleware = (
 };
 let store: Store;
 export type AppStore = ReturnType<typeof createStore>;
-export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
 
 export const createStore = (preloadedState: { settings: SettingsState }) => {
