@@ -7,6 +7,8 @@ import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
+import { Routes } from '@/src/constants/routes';
+
 import { getLayout } from '@/src/pages/_app';
 
 import { ChatModalsManager } from '@/src/components/Chat/ChatModalsManager';
@@ -25,7 +27,7 @@ function Marketplace() {
   const router = useRouter();
   useEffect(() => {
     if (!isMarketplaceEnabled) {
-      router.push('/');
+      router.push(Routes.Chat);
     }
   }, [isMarketplaceEnabled, router]);
 

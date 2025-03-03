@@ -83,6 +83,8 @@ async function getAllEntities(accessToken: string, jobTitle: string) {
   return { models, applications, assistants };
 }
 
+const fixDate = (date: number) => (date === 1672534800 ? 1740006000000 : date); // 1/20/1970 -> 2/20/2025
+
 export const getSortedEntities = async (token: JWT | null) => {
   const entities: DialAIEntityModel[] = [];
   const accessToken = token?.access_token as string;
@@ -154,8 +156,8 @@ export const getSortedEntities = async (token: JWT | null) => {
       isDefault: defaultModelId === entity.id,
       version: entity.display_version,
       description: entity.description,
-      updatedAt: entity.updated_at,
-      createdAt: entity.created_at,
+      updatedAt: fixDate(entity.updated_at),
+      createdAt: fixDate(entity.created_at),
       owner: entity.owner,
       iconUrl:
         entity.icon_url && !isAbsoluteUrl(entity.icon_url)
@@ -164,6 +166,7 @@ export const getSortedEntities = async (token: JWT | null) => {
       type: entity.object,
       selectedAddons: entity.addons,
       topics: entity.description_keywords,
+      applicationTypeSchemaId: entity.application_type_schema_id,
       limits:
         maxRequestTokens && maxResponseTokens && maxTotalTokens
           ? {
@@ -193,7 +196,6 @@ export const getSortedEntities = async (token: JWT | null) => {
       ...(entity.function && {
         functionStatus: entity.function?.status,
       }),
-      applicationTypeSchemaId: entity.application_type_schema_id,
     });
   }
 

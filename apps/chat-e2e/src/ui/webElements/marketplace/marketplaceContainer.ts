@@ -1,12 +1,20 @@
 import { ChatSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
 import { BaseLayoutContainer } from '@/src/ui/webElements/baseLayoutContainer';
+import { Header } from '@/src/ui/webElements/header';
 import { Marketplace } from '@/src/ui/webElements/marketplace/marketplace';
 import { MarketplaceSidebar } from '@/src/ui/webElements/marketplace/marketplaceSidebar';
 
-export class MarketplaceContainer extends BaseLayoutContainer {
+export class MarketplaceContainer extends BaseLayoutContainer<Header> {
   private marketplace!: Marketplace;
   private marketplaceSidebar!: MarketplaceSidebar;
+
+  getHeader(): Header {
+    if (!this.header) {
+      this.header = new Header(this.page, this.rootLocator);
+    }
+    return this.header;
+  }
 
   getMarketplace(): Marketplace {
     if (!this.marketplace) {

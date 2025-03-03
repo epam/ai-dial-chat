@@ -147,18 +147,36 @@ export class LocalStorageManager {
     );
   }
 
+  async seLastConversationSettingsOnce(temp?: number) {
+    await this.setLocalStorageItemOnce('lastConversationSettings', {
+      temperature: temp ?? 1,
+    });
+  }
+
   async setRecentModelsIdsOnce(...models: DialAIEntityModel[]) {
-    const uniqueKey = `recentModelsSet_${Date.now()}`;
+    await this.setLocalStorageItemOnce(
+      'recentModelsIds',
+      models.map((m) => m.id),
+    );
+  }
+
+  async setLocalStorageItemOnce<T>(
+    localStorageKey: string,
+    value: T,
+    transform: (value: T) => string = JSON.stringify,
+  ) {
+    const uniqueKey = Date.now().toLocaleString();
     await this.page.addInitScript(
       (data) => {
-        const { modelIds, key } = data;
+        const { localStorageKey, value, key } = data;
         if (!sessionStorage.getItem(key)) {
-          localStorage.setItem('recentModelsIds', modelIds);
+          localStorage.setItem(localStorageKey, value);
           sessionStorage.setItem(key, 'true');
         }
       },
       {
-        modelIds: JSON.stringify(models.map((m) => m.id)),
+        localStorageKey,
+        value: transform(value),
         key: uniqueKey,
       },
     );

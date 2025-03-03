@@ -19,6 +19,7 @@ export enum MarketplaceQueryParams {
   search = 'search',
   sources = 'sources',
   viewType = 'viewType',
+  tableSort = 'tableSort',
 }
 
 export enum FilterTypes {
@@ -65,9 +66,7 @@ export const SourceTypeFilterOrder = {
 
 export const ApplicationTypeToSourceType = {
   [ApplicationType.CODE_APP]: SourceType.MyCodeApps,
-  [ApplicationType.QUICK_APP]: SourceType.MyQuickApps,
   [ApplicationType.CUSTOM_APP]: SourceType.MyCustomApps,
-  [ApplicationType.MINDMAP]: SourceType.MyMindMaps,
 };
 
 interface IconSize {
@@ -119,4 +118,13 @@ export const PlayerContextIcons = {
 export enum ViewTypes {
   CARD = 'CARD',
   TABLE = 'TABLE',
+}
+
+export enum TableColumnSortKeys {
+  NAME = 'NAME',
+  OWNER = 'OWNER',
+  RELEASED = 'RELEASED',
+  // TODO: uncomment when will be decided how to sort by these fields
+  // VERSION = 'VERSION',
+  // TOPICS = 'TOPICS',
 }

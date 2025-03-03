@@ -330,7 +330,10 @@ dialTest(
     agentDetailsModal,
     customApplicationBuilder,
     applicationApiHelper,
-    addApplicationModal,
+    appEditorPage,
+    appEditorGeneralForm,
+    appEditorViewForm,
+    appEditorHeader,
     setTestIds,
     baseAssertion,
     agentVersionsDropdownMenuAssertion,
@@ -455,13 +458,18 @@ dialTest(
           await addAppDropdownMenu.selectMenuOption(
             AddAppMenuOptions.customApp,
           );
-          await addApplicationModal.fillInAppFields({
+          await appEditorPage.waitForPageLoaded();
+          await appEditorGeneralForm.fillInAppFields({
             name: addedAppNameVersion.name,
             version: addedAppNameVersion.version,
           });
-          await addApplicationModal.addApp();
+          await appEditorGeneralForm.goNext();
+          await appEditorViewForm.fillInAppFields();
+          await appEditorHeader.saveAppAndExit();
         }
 
+        //TODO: need to clarify whether search field and filters are reset after adding a new app
+        await marketplaceHeader.searchInput.fillInInput(installedAppName);
         const filteredAgents = marketplace.getFilteredAgents();
         await baseAssertion.assertElementsCount(filteredAgents, 2);
         const actualFilteredAgents = await filteredAgents.getAgentNames();

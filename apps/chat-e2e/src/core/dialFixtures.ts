@@ -1,9 +1,13 @@
 import config from '../../config/chat.playwright.config';
-import { DialHomePage, MarketplacePage } from '../ui/pages';
+import { AppEditorPage, DialHomePage, MarketplacePage } from '../ui/pages';
 import {
-  AddApplicationModal,
   AgentDetailsModal,
   AgentInfo,
+  AppEditorContainer,
+  AppEditorGeneralForm,
+  AppEditorHeader,
+  AppEditorPreview,
+  AppEditorViewForm,
   AttachFilesModal,
   Chat,
   ChatBar,
@@ -54,6 +58,7 @@ import {
   VariableModalAssertion,
 } from '@/src/assertions';
 import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
+import { LocalStorageAssertion } from '@/src/assertions/localStorageAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
 import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateModalAssertion';
 import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
@@ -140,8 +145,10 @@ const dialTest = test.extend<{
   beforeTestCleanup: string;
   dialHomePage: DialHomePage;
   marketplacePage: MarketplacePage;
+  appEditorPage: AppEditorPage;
   appContainer: AppContainer;
   marketplaceContainer: MarketplaceContainer;
+  appEditorContainer: AppEditorContainer;
   marketplaceSidebar: MarketplaceSidebar;
   marketplaceFilter: MarketplaceFilter;
   marketplace: Marketplace;
@@ -149,7 +156,10 @@ const dialTest = test.extend<{
   agentDetailsModal: AgentDetailsModal;
   marketplaceHeader: MarketplaceHeader;
   addAppDropdownMenu: DropdownMenu;
-  addApplicationModal: AddApplicationModal;
+  appEditorHeader: AppEditorHeader;
+  appEditorGeneralForm: AppEditorGeneralForm;
+  appEditorPreview: AppEditorPreview;
+  appEditorViewForm: AppEditorViewForm;
   chatBar: ChatBar;
   chatLoader: ChatLoader;
   importExportLoader: ImportExportLoader;
@@ -298,6 +308,7 @@ const dialTest = test.extend<{
   messageTemplateModalAssertion: MessageTemplateModalAssertion;
   agentVersionsDropdownMenuAssertion: MenuAssertion;
   sharedWithMeConversationAssertion: SharedWithMeConversationAssertion;
+  localStorageAssertion: LocalStorageAssertion;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper }, use) => {
@@ -307,6 +318,12 @@ const dialTest = test.extend<{
     },
     { scope: 'test', auto: true },
   ],
+  localStorageAssertion: async ({ localStorageManager }, use) => {
+    const localStorageAssertion = new LocalStorageAssertion(
+      localStorageManager,
+    );
+    await use(localStorageAssertion);
+  },
   sharedWithMeConversationAssertion: async (
     { sharedWithMeConversations },
     use,
@@ -352,6 +369,10 @@ const dialTest = test.extend<{
     const marketplacePage = new MarketplacePage(page);
     await use(marketplacePage);
   },
+  appEditorPage: async ({ page }, use) => {
+    const appEditorPage = new AppEditorPage(page);
+    await use(appEditorPage);
+  },
   appContainer: async ({ dialHomePage }, use) => {
     const appContainer = dialHomePage.getAppContainer();
     await use(appContainer);
@@ -359,6 +380,10 @@ const dialTest = test.extend<{
   marketplaceContainer: async ({ marketplacePage }, use) => {
     const marketplaceContainer = marketplacePage.getMarketplaceContainer();
     await use(marketplaceContainer);
+  },
+  appEditorContainer: async ({ appEditorPage }, use) => {
+    const appEditorContainer = appEditorPage.getAppEditorContainer();
+    await use(appEditorContainer);
   },
   marketplaceSidebar: async ({ marketplaceContainer }, use) => {
     const marketplaceSidebar = marketplaceContainer.getMarketplaceSidebar();
@@ -388,9 +413,21 @@ const dialTest = test.extend<{
     const addAppDropdownMenu = new DropdownMenu(page);
     await use(addAppDropdownMenu);
   },
-  addApplicationModal: async ({ page }, use) => {
-    const addApplicationModal = new AddApplicationModal(page);
-    await use(addApplicationModal);
+  appEditorHeader: async ({ appEditorContainer }, use) => {
+    const appEditorHeader = appEditorContainer.getAppEditorHeader();
+    await use(appEditorHeader);
+  },
+  appEditorGeneralForm: async ({ appEditorContainer }, use) => {
+    const appEditorGeneralForm = appEditorContainer.getAppEditorGeneralForm();
+    await use(appEditorGeneralForm);
+  },
+  appEditorPreview: async ({ appEditorContainer }, use) => {
+    const appEditorPreview = appEditorContainer.getAppEditorPreview();
+    await use(appEditorPreview);
+  },
+  appEditorViewForm: async ({ appEditorContainer }, use) => {
+    const appEditorViewForm = appEditorContainer.getAppEditorViewForm();
+    await use(appEditorViewForm);
   },
   chatBar: async ({ appContainer }, use) => {
     const chatBar = appContainer.getChatBar();

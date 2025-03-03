@@ -29,6 +29,7 @@ import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
@@ -38,7 +39,6 @@ import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
-import { ApplicationWizard } from '@/src/components/Common/ApplicationWizard/ApplicationWizard';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Modal } from '@/src/components/Common/Modal';
 
@@ -77,7 +77,6 @@ const TalkToModalView = ({
   const recentModelIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [editModel, setEditModel] = useState<DialAIEntityModel>();
   const [deleteModel, setDeleteModel] = useState<DialAIEntityModel>();
   const [logModel, setLogModel] = useState<DialAIEntityModel>();
   const [publishModel, setPublishModel] = useState<
@@ -208,23 +207,29 @@ const TalkToModalView = ({
           }),
         );
       }
+      dispatch(ConversationsActions.setIsStartedCustomViewerConversation(true));
 
       onClose();
     },
     [addonsMap, conversation, dispatch, modelsMap, onClose],
   );
 
-  const handleEditApplication = useCallback(
-    (entity: DialAIEntityModel) => {
-      dispatch(ApplicationActions.get({ applicationId: entity.id }));
-      setEditModel(entity);
-    },
-    [dispatch],
+  const detailedApplicationTypeSchema = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
   );
 
-  const handleCloseEditDialog = useCallback(
-    () => setEditModel(undefined),
-    [setEditModel],
+  const handleEditApplication = useCallback(
+    (entity: DialAIEntityModel) => {
+      const applicationType = getApplicationType(entity);
+      dispatch(
+        ApplicationActions.enterEditMode({
+          entity: entity,
+          applicationType,
+          detailedApplicationTypeSchemaId: detailedApplicationTypeSchema?.$id,
+        }),
+      );
+    },
+    [detailedApplicationTypeSchema, dispatch],
   );
 
   const handleDeleteClose = useCallback(
@@ -313,15 +318,6 @@ const TalkToModalView = ({
         </Link>
       )}
 
-      {editModel && (
-        <ApplicationWizard
-          isOpen
-          onClose={handleCloseEditDialog}
-          isEdit
-          currentReference={editModel.reference}
-          type={getApplicationType(editModel)}
-        />
-      )}
       {deleteModel && (
         <ConfirmDialog
           isOpen

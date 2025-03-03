@@ -1,10 +1,12 @@
 import {
   getApplicationType,
   isApplicationPublic,
+  isApplicationTypeKey,
 } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 
+import { ApplicationTypeSchema } from '../types/application-type-schema';
 import { PageType } from '../types/common';
 import { MarketplaceFilters } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
@@ -15,6 +17,8 @@ import {
   MarketplaceQueryParams,
   SourceType,
 } from '@/src/constants/marketplace';
+
+import { pluralizeDisplayName } from './app/application-type-schema';
 
 import intersection from 'lodash-es/intersection';
 
@@ -32,6 +36,7 @@ export const doesApplicationMatchSearchTerm = (
 export const doesApplicationMatchFilters = (
   model: DialAIEntityModel,
   selectedFilters: MarketplaceFilters,
+  applicationTypeSchemas?: ApplicationTypeSchema[],
 ) => {
   if (
     selectedFilters[FilterTypes.ENTITY_TYPE].length &&
@@ -50,11 +55,19 @@ export const doesApplicationMatchFilters = (
   if (selectedFilters[FilterTypes.SOURCES].length) {
     const sources = selectedFilters[FilterTypes.SOURCES];
     const applicationType = getApplicationType(model);
+    const displayName = applicationTypeSchemas?.find(
+      (schema) => schema.id === applicationType,
+    )?.displayName;
+
     if (
       (sources.includes(SourceType.Public) && isApplicationPublic(model)) ||
       (sources.includes(SourceType.SharedWithMe) && model.sharedWithMe) ||
       (isMyApplication(model) &&
-        sources.includes(ApplicationTypeToSourceType[applicationType]))
+        isApplicationTypeKey(applicationType) &&
+        sources.includes(ApplicationTypeToSourceType[applicationType])) ||
+      (isMyApplication(model) &&
+        displayName &&
+        sources.includes(pluralizeDisplayName(displayName)))
     ) {
       return true;
     }
