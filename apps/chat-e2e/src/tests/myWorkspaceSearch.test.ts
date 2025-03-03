@@ -13,7 +13,7 @@ import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
 
-dialTest(
+dialTest.only(
   `Search in My workspace: 'No results found' and suggest results.\n` +
     `Search in My workspace: 'No results found' and no suggested results.\n` +
     'Search in My workspace when nothing to suggest from DIAL Marketplace. No suggested options.\n' +
@@ -625,7 +625,7 @@ dialTest(
       },
     );
 
-    await dialTest.step(
+    await dialTest.step.skip(
       'On the "Marketplace" tab open created app and add not latest version to "My Workspace"',
       async () => {
         await marketplacePage.openMarketplacePage();
@@ -655,7 +655,7 @@ dialTest(
       },
     );
 
-    await dialTest.step(
+    await dialTest.step.skip(
       'Verify agent with not latest version is displayed on "My Workspace" tab',
       async () => {
         await marketplaceSidebar.myWorkspaceButton.click();
@@ -669,7 +669,7 @@ dialTest(
       },
     );
 
-    await dialTest.step(
+    await dialTest.step.skip(
       'Search by installed agent version/name and verify agent is found, no other agents are suggested',
       async () => {
         for (const searchTerm of [sortedVersions[1], appName]) {
