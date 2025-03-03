@@ -76,7 +76,7 @@ import {
   mergeMessages,
   parseStreamMessages,
 } from '@/src/utils/app/merge-streams';
-import { isMediumScreen } from '@/src/utils/app/mobile';
+import { isTabletScreen } from '@/src/utils/app/mobile';
 import {
   doesModelAllowAddons,
   doesModelAllowSystemPrompt,
@@ -966,7 +966,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
               of(
                 ConversationsActions.createNewConversations({
                   names: [translate(DEFAULT_CONVERSATION_NAME)],
-                  suspendHideSidebar: isMediumScreen(),
+                  suspendHideSidebar: isTabletScreen(),
                 }),
               ),
             );
@@ -978,7 +978,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
               of(
                 ConversationsActions.selectConversations({
                   conversationIds: newSelectedConversationsIds,
-                  suspendHideSidebar: isMediumScreen(),
+                  suspendHideSidebar: isTabletScreen(),
                 }),
               ),
             );
@@ -1956,7 +1956,7 @@ const hideChatbarEpic: AppEpic = (action$) =>
       // will be fixed with https://github.com/epam/ai-dial-chat/issues/792
     ),
     switchMap(() =>
-      isMediumScreen() ? of(UIActions.setShowChatbar(false)) : EMPTY,
+      isTabletScreen() ? of(UIActions.setShowChatbar(false)) : EMPTY,
     ),
   );
 
