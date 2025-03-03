@@ -1,3 +1,4 @@
+import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import {
   ElementCaretState,
   ElementState,
@@ -8,10 +9,11 @@ import { AttachFilesModal, FileModalSection } from '@/src/ui/webElements';
 import { AttachFilesTree } from '@/src/ui/webElements/entityTree';
 import { expect } from '@playwright/test';
 
-export class ManageAttachmentsAssertion {
+export class ManageAttachmentsAssertion extends BaseAssertion {
   readonly attachFilesModal: AttachFilesModal;
 
   constructor(attachFilesModal: AttachFilesModal) {
+    super();
     this.attachFilesModal = attachFilesModal;
   }
 
