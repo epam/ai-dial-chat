@@ -23,11 +23,6 @@ const ROWS_INFO = {
   [ScreenState.XL4]: { size: 184, cols: 5 },
   [ScreenState.XL5]: { size: 184, cols: 6 },
 };
-const WINDOW_ORIENTED_SCREEN_STATES = [
-  ScreenState.SM,
-  ScreenState.MD,
-  ScreenState.XL,
-];
 
 export const VirtualCardsList: React.FC<AgentsListProps> = ({
   entities,
@@ -50,11 +45,7 @@ export const VirtualCardsList: React.FC<AgentsListProps> = ({
   const currentParentRef = wrapperRefs.current?.parentRef.current ?? null;
   const suggestedRowRef = wrapperRefs.current?.suggestedRowRef;
 
-  const containerScreenState = useScreenState(currentParentRef);
-  const windowScreenState = useScreenState();
-  const screenState = WINDOW_ORIENTED_SCREEN_STATES.includes(windowScreenState)
-    ? windowScreenState
-    : containerScreenState;
+  const screenState = useScreenState();
 
   const colsCount = ROWS_INFO[screenState].cols;
   const rowsSize = ROWS_INFO[screenState].size;
@@ -119,13 +110,6 @@ export const VirtualCardsList: React.FC<AgentsListProps> = ({
                 style={{
                   height: `${virtualRow.size}px`,
                   transform: `translateY(${virtualRow.start}px)`,
-                  gridTemplateColumns: [
-                    ScreenState.SM,
-                    ScreenState.MD,
-                    ScreenState.XL,
-                  ].includes(screenState)
-                    ? undefined
-                    : `repeat(${colsCount}, minmax(0, 1fr))`,
                 }}
                 data-qa={dataQA}
               >
