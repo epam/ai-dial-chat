@@ -406,7 +406,7 @@ export const conversationsSlice = createSlice({
       });
       state.newAddedFolderId = payload.id;
     },
-    deleteFolder: (state, _action: PayloadAction<{ folderId?: string }>) =>
+    deleteFolder: (state, _action: PayloadAction<{ folderId: string }>) =>
       state,
     deleteTemporaryFolder: (
       state,

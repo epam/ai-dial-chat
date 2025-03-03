@@ -230,10 +230,7 @@ export const promptsSlice = createSlice({
       });
       state.newAddedFolderId = payload.id;
     },
-    deleteFolder: (
-      state,
-      { payload }: PayloadAction<{ folderId?: string }>,
-    ) => {
+    deleteFolder: (state, { payload }: PayloadAction<{ folderId: string }>) => {
       state.folders = state.folders.filter(({ id }) => id !== payload.folderId);
     },
     deleteTemporaryFolder: (

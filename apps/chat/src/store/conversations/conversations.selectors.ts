@@ -91,6 +91,16 @@ export const selectLocalConversations = createSelector(
     conversations.filter((conversation) => isEntityIdLocal(conversation)),
 );
 
+export const selectConversationsByFolderId = createSelector(
+  [selectConversations, (_state, folderId: string) => folderId],
+  (conversations, folderId) => {
+    const folderPath = `${folderId}/`;
+    return conversations.filter((conversation) =>
+      conversation.id.startsWith(folderPath),
+    );
+  },
+);
+
 export const selectPublishedOrSharedByMeConversations = createSelector(
   [selectConversations],
   (conversations) => conversations.filter((c) => c.isShared || c.isPublished),
