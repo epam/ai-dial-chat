@@ -69,7 +69,6 @@ export const AgentsTableLeftSideRow: React.FC<Props> = memo(
               featureType={FeatureType.Application}
               iconClassName={isHovered ? 'bg-layer-2 ' : 'bg-layer-1'}
               isMyEntity={isMyApplication(entity)}
-              isApplication
             >
               <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
             </ShareIcon>
