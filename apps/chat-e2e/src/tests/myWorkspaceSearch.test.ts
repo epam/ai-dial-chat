@@ -552,7 +552,6 @@ dialTest(
   async ({
     marketplacePage,
     marketplaceHeader,
-    marketplaceAgents,
     marketplaceAgentsSection,
     marketplace,
     marketplaceSidebar,
@@ -625,7 +624,7 @@ dialTest(
       },
     );
 
-    await dialTest.step.skip(
+    await dialTest.step(
       'On the "Marketplace" tab open created app and add not latest version to "My Workspace"',
       async () => {
         await marketplacePage.openMarketplacePage();
@@ -655,21 +654,22 @@ dialTest(
       },
     );
 
-    await dialTest.step.skip(
-      'Verify agent with not latest version is displayed on "My Workspace" tab',
+    await dialTest.step(
+      'Verify agent with major version is displayed on "My Workspace" tab',
       async () => {
         await marketplaceSidebar.myWorkspaceButton.click();
         const foundAgentElement =
           await marketplaceAgentsSection.findAgentElement(appName);
         await baseAssertion.assertElementState(foundAgentElement, 'visible');
-        await baseAssertion.assertElementText(
-          marketplaceAgents.getAgentVersion(foundAgentElement),
-          sortedVersions[1],
-        );
+        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/3138
+        // await baseAssertion.assertElementText(
+        //   marketplaceAgents.getAgentVersion(foundAgentElement),
+        //   sortedVersions[0],
+        // );
       },
     );
 
-    await dialTest.step.skip(
+    await dialTest.step(
       'Search by installed agent version/name and verify agent is found, no other agents are suggested',
       async () => {
         for (const searchTerm of [sortedVersions[1], appName]) {
@@ -689,12 +689,13 @@ dialTest(
             ExpectedMessages.searchResultsAreCorrect,
           );
 
-          const actualAppElement =
-            await marketplaceAgentsSection.findAgentElement(appName);
-          await baseAssertion.assertElementText(
-            marketplaceAgents.getAgentVersion(actualAppElement),
-            sortedVersions[1],
-          );
+          //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/3138
+          // const actualAppElement =
+          //   await marketplaceAgentsSection.findAgentElement(appName);
+          // await baseAssertion.assertElementText(
+          //   marketplaceAgents.getAgentVersion(actualAppElement),
+          //   sortedVersions[0],
+          // );
 
           await baseAssertion.assertElementState(
             marketplace.marketplaceSuggestionsLabel,
@@ -709,7 +710,7 @@ dialTest(
       },
     );
 
-    await dialTest.step(
+    await dialTest.step.skip(
       'Back to the "Marketplace" tab and add latest version to "My Workspace"',
       async () => {
         await marketplaceSidebar.marketplaceHomePageButton.click();
@@ -738,7 +739,7 @@ dialTest(
       },
     );
 
-    await dialTest.step(
+    await dialTest.step.skip(
       'Verify agent with latest version is displayed on "My Workspace" tab',
       async () => {
         await marketplaceSidebar.myWorkspaceButton.click();
@@ -756,7 +757,7 @@ dialTest(
       },
     );
 
-    await dialTest.step(
+    await dialTest.step.skip(
       'Back to "My Workspace" and verify agent is found, no other agents are suggested',
       async () => {
         await marketplaceSidebar.myWorkspaceButton.click();

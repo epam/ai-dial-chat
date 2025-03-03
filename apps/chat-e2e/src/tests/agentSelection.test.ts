@@ -32,7 +32,7 @@ dialTest(
     dataInjector,
     chatAssertion,
     localStorageAssertion,
-    marketplaceAgents,
+    marketplaceAgentsSection,
     toast,
   }) => {
     setTestIds('EPMRTC-4878', 'EPMRTC-4880', 'EPMRTC-4356', 'EPMRTC-5168');
@@ -123,8 +123,7 @@ dialTest(
     await dialTest.step(
       'Click "Use model" for the second model and verify recentModelsIds is updated',
       async () => {
-        await marketplaceAgents.getAgent(initialModel2).click();
-        await agentDetailsModal.useButton.click();
+        await marketplaceAgentsSection.findAndUseAgent(initialModel2);
         await localStorageAssertion.assertRecentModels([
           initialModel2.id,
           initialModel1.id,
@@ -154,8 +153,9 @@ dialTest(
       'Click on "DIAL Marketplace", select a new model, and click "Use model"',
       async () => {
         await chatBar.dialMarketplaceLink.click();
-        await marketplaceAgents.getAgent(addedModel).click();
-        await agentDetailsModal.useButton.click();
+        await marketplaceAgentsSection.findAndUseAgent(addedModel, {
+          isInstalledDeploymentsUpdated: true,
+        });
         await localStorageAssertion.assertRecentModels([
           addedModel.id,
           initialModel2.id,
@@ -168,7 +168,9 @@ dialTest(
       'Click "Change agent" and "Go to My workspace", remove the third model, and go back to chat',
       async () => {
         await chatBar.dialMarketplaceLink.click();
-        await marketplaceAgents.getAgent(addedModel).click();
+        const addedModelElement =
+          await marketplaceAgentsSection.findAgentElement(addedModel);
+        await addedModelElement.click();
         await agentDetailsModal.removeBookmarkIcon.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
         await header.backToChatButton.click();
@@ -583,7 +585,7 @@ dialTest(
     confirmationDialog,
     localStorageAssertion,
     chatAssertion,
-    marketplaceAgents,
+    marketplaceAgentsSection,
     talkToAgentDialogAssertion,
   }) => {
     setTestIds('EPMRTC-4356');
@@ -607,7 +609,9 @@ dialTest(
       async () => {
         await chat.changeAgentButton.click();
         await talkToAgentDialog.goToMyWorkspace();
-        await marketplaceAgents.getAgent(firstModel).click();
+        const firstModelElement =
+          await marketplaceAgentsSection.findAgentElement(firstModel);
+        await firstModelElement.click();
         await agentDetailsModal.removeBookmarkIcon.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
         await header.backToChatButton.click();
