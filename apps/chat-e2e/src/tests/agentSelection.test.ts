@@ -1,6 +1,8 @@
+import { Conversation } from '@/chat/types/chat';
 import { Publication } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
+import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import { MenuOptions, MockedChatApiResponseBodies } from '@/src/testData';
 import { ImportConversation } from '@/src/testData/conversationHistory/importConversation';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
@@ -623,6 +625,82 @@ dialTest(
         await talkToAgentDialog.cancelButton.click();
         await localStorageAssertion.assertRecentModels([secondModel.id]);
         await agentInfoAssertion.assertAgentName(secondModel.name);
+      },
+    );
+  },
+);
+
+dialSharedWithMeTest.only(
+  'RecentModelIds in NOT updated when duplicate when duplicate chat from Shared with me',
+  async ({
+    dialHomePage,
+    conversationData,
+    additionalShareUserDataInjector,
+    mainUserShareApiHelper,
+    additionalUserShareApiHelper,
+    setTestIds,
+    localStorageManager,
+    header,
+    agentInfoAssertion,
+    sharedWithMeConversations,
+    conversationDropdownMenu,
+    localStorageAssertion,
+  }) => {
+    setTestIds('EPMRTC-4882');
+    const models = GeneratorUtil.randomArrayElements(
+      ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
+      2,
+    );
+    const [initialModel1, additionalUserInitialModel1] = models;
+
+    // Prepare shared conversation
+    const conversation = conversationData.prepareDefaultConversation(
+      additionalUserInitialModel1,
+    );
+    await additionalShareUserDataInjector.createConversations([conversation]);
+    const shareByLinkResponse =
+      await additionalUserShareApiHelper.shareEntityByLink([conversation]);
+    await mainUserShareApiHelper.acceptInvite(shareByLinkResponse);
+    await localStorageManager.setRecentModelsIdsOnce(...models);
+
+    await dialSharedWithMeTest.step('Open Dial by the main user', async () => {
+      await dialHomePage.openHomePage({
+        iconsToBeLoaded: [initialModel1.iconUrl],
+      });
+      await dialHomePage.waitForPageLoaded();
+      await agentInfoAssertion.assertAgentName(initialModel1.name);
+    });
+
+    await dialSharedWithMeTest.step(
+      'Duplicate the shared chat and verify recentModelsIds is not changed',
+      async () => {
+        await sharedWithMeConversations.openEntityDropdownMenu(
+          conversation.name,
+        );
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.duplicate, {
+          triggeredHttpMethod: 'POST',
+        });
+        await localStorageAssertion.assertRecentModels([
+          initialModel1.id,
+          additionalUserInitialModel1.id,
+        ]);
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Click new conversation and check that the same model is selected',
+      async () => {
+        await header.createNewConversation();
+        await agentInfoAssertion.assertAgentName(initialModel1.name);
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Refresh the page and check that the same model is selected',
+      async () => {
+        await dialHomePage.reloadPage();
+        await dialHomePage.waitForPageLoaded();
+        await agentInfoAssertion.assertAgentName(initialModel1.name);
       },
     );
   },
