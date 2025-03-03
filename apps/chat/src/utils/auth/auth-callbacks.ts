@@ -42,7 +42,10 @@ const getUser = (accessToken: string | undefined, providerId: string) => {
 
   return {
     isAdmin,
-    canCreateCodeApps: !!intersection(codeAppRoles, roles).length || isAdmin,
+    canCreateCodeApps:
+      !codeAppRoles.length ||
+      !!intersection(codeAppRoles, roles).length ||
+      isAdmin,
   };
 };
 
