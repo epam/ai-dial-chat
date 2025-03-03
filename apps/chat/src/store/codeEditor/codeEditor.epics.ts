@@ -29,7 +29,7 @@ import { FilesActions, FilesSelectors } from '../files/files.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { CodeEditorActions, CodeEditorSelectors } from './codeEditor.reducer';
 
-import { intersectionWith } from 'lodash-es';
+import intersectionWith from 'lodash-es/intersectionWith';
 
 const initCodeEditorEpic: AppEpic = (action$, state$) =>
   action$.pipe(
