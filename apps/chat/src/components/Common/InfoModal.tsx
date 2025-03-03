@@ -2,8 +2,6 @@ import { ReactNode } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { extractNameFromEmail } from '@/src/utils/app/common';
-
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
@@ -78,7 +76,7 @@ export function InfoModalView() {
 
         {(entityInfo?.isPublic || entityInfo?.sharedWithMe) && (
           <InfoRow infoLabel={t('Author')} dataQa="author">
-            {extractNameFromEmail(entityInfo.author) ?? t('Unknown')}
+            {entityInfo.author ?? t('Unknown')}
           </InfoRow>
         )}
       </div>

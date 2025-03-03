@@ -118,7 +118,7 @@ dialAdminTest(
           'visible',
         );
         await baseAssertion.assertElementText(
-          publishingRequestModal.getChangePublishToPath().path,
+          publishingRequestModal.unpublishFrom,
           publishPath,
         );
 
@@ -877,7 +877,7 @@ dialAdminTest(
           expectedConversationIcon,
         );
         await publishingRequestModalAssertion.assertElementText(
-          publishingRequestModal.getChangePublishToPath().path,
+          publishingRequestModal.unpublishFrom,
           publishPath,
         );
         await publishingRequestModalAssertion.assertElementText(

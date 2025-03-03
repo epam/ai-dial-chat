@@ -14,7 +14,7 @@ interface infoColumnProps {
 
 function InfoColumn({ dataQa, infoLabel, children }: infoColumnProps) {
   return (
-    <div className="flex flex-col gap-4" data-qa={dataQa}>
+    <div className="flex flex-col gap-2" data-qa={dataQa}>
       <span className=" w-[148px] whitespace-pre-wrap break-words font-semibold">
         {infoLabel}:
       </span>
