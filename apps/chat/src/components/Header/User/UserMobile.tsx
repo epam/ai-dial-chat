@@ -141,6 +141,6 @@ const UserMobileView = Inversify.register('UserMobile', () => {
   );
 });
 
-export const UserMobile = withRenderForScreen([ScreenState.MOBILE])(
+export const UserMobile = withRenderForScreen([ScreenState.SM])(
   withRenderWhen(UISelectors.selectIsProfileOpen)(UserMobileView),
 );

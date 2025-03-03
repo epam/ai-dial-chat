@@ -53,9 +53,9 @@ import {
 import ContextMenu from '@/src/components/Common/ContextMenu';
 import Tooltip from '@/src/components/Common/Tooltip';
 
-import { AgentBookmark } from '../AgentBookmark';
-import { ApplicationTopic } from '../ApplicationTopic';
-import { TopicsList } from '../TopicsList';
+import { AgentBookmark } from '../../AgentBookmark';
+import { ApplicationTopic } from '../../ApplicationTopic';
+import { TopicsList } from '../../TopicsList';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
@@ -97,7 +97,6 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
     const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
     const screenState = useScreenState();
-    const userName = useAppSelector(AuthSelectors.selectUserName);
 
     const isMyApp = isMyApplication(entity);
     const isPublicApp = isApplicationPublic(entity);
@@ -314,7 +313,7 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
           <p className="truncate">{entity.version}</p>
         </div>
         <div className="flex w-[161px] min-w-[161px] flex-col justify-center gap-2 overflow-hidden">
-          {screenState === ScreenState.MOBILE ? (
+          {screenState === ScreenState.SM ? (
             <TopicsList topics={entity.topics ?? []} />
           ) : (
             <>
@@ -342,11 +341,7 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
           )}
         </div>
         <div className="flex w-[130px] min-w-[130px] items-center">
-          <p className="truncate">
-            {isMyApplication(entity)
-              ? userName
-              : (entity.owner ?? t('Unknown'))}
-          </p>
+          <p className="truncate">{entity.owner ?? t('Unknown')}</p>
         </div>
         <div className="flex w-[86px] min-w-[86px] items-center">
           <p className="truncate">
