@@ -5,7 +5,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { isMediumScreen, isSmallScreen } from '@/src/utils/app/mobile';
+import { isSmallScreen, isTabletScreen } from '@/src/utils/app/mobile';
 import { centralChatWidth, getNewSidebarWidth } from '@/src/utils/app/sidebar';
 
 import { Translation } from '@/src/types/translation';
@@ -56,7 +56,7 @@ const Header = Inversify.register('Header', () => {
   );
 
   const handleToggleChatbar = useCallback(() => {
-    if (!showChatbar && isMediumScreen()) {
+    if (!showChatbar && isTabletScreen()) {
       dispatch(UIActions.setShowPromptbar(false));
     }
 
@@ -64,7 +64,7 @@ const Header = Inversify.register('Header', () => {
       dispatch(UIActions.setIsProfileOpen(false));
     }
 
-    if (!showChatbar && !isMediumScreen()) {
+    if (!showChatbar && !isTabletScreen()) {
       if (!windowWidth) return;
       const calculatedChatWidth = centralChatWidth({
         oppositeSidebarWidth: promptbarWidth,
@@ -85,7 +85,7 @@ const Header = Inversify.register('Header', () => {
   }, [chatbarWidth, dispatch, promptbarWidth, showChatbar, windowWidth]);
 
   const handleTogglePromtbar = useCallback(() => {
-    if (!showPromptbar && isMediumScreen()) {
+    if (!showPromptbar && isTabletScreen()) {
       dispatch(UIActions.setShowChatbar(false));
     }
 
@@ -93,7 +93,7 @@ const Header = Inversify.register('Header', () => {
       dispatch(UIActions.setIsProfileOpen(false));
     }
 
-    if (!showPromptbar && !isMediumScreen()) {
+    if (!showPromptbar && !isTabletScreen()) {
       if (!windowWidth) return;
       const calculatedChatWidth = centralChatWidth({
         oppositeSidebarWidth: chatbarWidth,

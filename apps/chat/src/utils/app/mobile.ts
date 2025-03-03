@@ -10,20 +10,30 @@ export const isMobile = () => {
   return mobileRegex.test(userAgent);
 };
 
-export const isSmallScreen = () =>
-  typeof window !== 'undefined' && window.innerWidth < 768;
-export const isMediumScreen = () =>
-  typeof window !== 'undefined' && window.innerWidth < 1280;
-export const isMediumScreenOrMobile = () => isMediumScreen() || isMobile();
+const isScreenSize = (maxWidth: number): boolean =>
+  typeof window !== 'undefined' && window.innerWidth < maxWidth;
+export const isSmallScreen = () => isScreenSize(ScreenState.SM);
+export const isTabletScreen = () => isScreenSize(ScreenState.MD);
+export const isXLScreen = () => isScreenSize(ScreenState.XL);
+export const is3XLScreen = () => isScreenSize(ScreenState.XL3);
+export const is4XLScreen = () => isScreenSize(ScreenState.XL4);
+
+export const isTabletScreenOrMobile = () => isTabletScreen() || isMobile();
 
 export const getScreenState = () => {
-  if (isSmallScreen()) {
-    return ScreenState.MOBILE;
+  const screenMappings = [
+    { check: isSmallScreen, state: ScreenState.SM },
+    { check: isTabletScreen, state: ScreenState.MD },
+    { check: isXLScreen, state: ScreenState.XL },
+    { check: is3XLScreen, state: ScreenState.XL3 },
+    { check: is4XLScreen, state: ScreenState.XL4 },
+  ];
+
+  const found = screenMappings.find(({ check }) => check());
+
+  if (found) {
+    return found.state;
   }
 
-  if (isMediumScreen()) {
-    return ScreenState.TABLET;
-  }
-
-  return ScreenState.DESKTOP;
+  return ScreenState.XL5;
 };

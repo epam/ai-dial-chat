@@ -21,8 +21,8 @@ dialTest(
     marketplaceSidebar,
     page,
     marketplaceHeader,
-    marketplaceAgents,
     marketplace,
+    marketplaceAgentsSection,
     localStorageManager,
     setTestIds,
     baseAssertion,
@@ -105,10 +105,14 @@ dialTest(
         await marketplaceHeader.searchInput.fillInInput(
           leadingSpacesSearchTerm,
         );
-        await baseAssertion.assertElementsCount(marketplace.getAgents(), 2);
-        const actualAgents = await marketplaceAgents.getAgentNames();
+        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        baseAssertion.assertValue(
+          actualAgents.length,
+          2,
+          ExpectedMessages.elementsCountIsValid,
+        );
         baseAssertion.assertArrayIncludesAll(
-          actualAgents,
+          actualAgents.map((agent) => agent.name),
           [installedAppName, nonInstalledAppName],
           ExpectedMessages.searchResultsAreCorrect,
         );
@@ -130,11 +134,17 @@ dialTest(
           leadingSpacesSearchTerm,
         );
 
-        const filteredAgents = marketplace.getFilteredAgents();
-        await baseAssertion.assertElementState(filteredAgents, 'visible');
-        await baseAssertion.assertElementsCount(filteredAgents, 1);
+        const allAgents = await marketplaceAgentsSection.getAllAgents();
+        const filteredAgents = allAgents.filter(
+          (agent) => agent.isWorkspaceAgent,
+        );
+        baseAssertion.assertValue(
+          filteredAgents.length,
+          1,
+          ExpectedMessages.elementsCountIsValid,
+        );
         baseAssertion.assertArrayIncludesAll(
-          await filteredAgents.getAgentNames(),
+          filteredAgents.map((agent) => agent.name),
           [installedAppName],
           ExpectedMessages.searchResultsAreCorrect,
         );
@@ -143,10 +153,14 @@ dialTest(
           marketplace.marketplaceSuggestionsLabel,
           'visible',
         );
-        const suggestedAgents = marketplace.getSuggestedAgents();
-        await baseAssertion.assertElementsCount(suggestedAgents, 1);
+        const suggestedAgents = allAgents.filter((agent) => agent.isSuggested);
+        baseAssertion.assertValue(
+          suggestedAgents.length,
+          1,
+          ExpectedMessages.elementsCountIsValid,
+        );
         baseAssertion.assertArrayIncludesAll(
-          await suggestedAgents.getAgentNames(),
+          suggestedAgents.map((agent) => agent.name),
           [nonInstalledAppName],
           ExpectedMessages.searchResultsAreCorrect,
         );
@@ -162,10 +176,14 @@ dialTest(
         await marketplaceHeader.searchInput.click();
         await page.keyboard.press(keys.end);
         await marketplaceHeader.searchInput.typeInInput(endSpaces);
-        await baseAssertion.assertElementsCount(marketplace.getAgents(), 2);
-        const actualAgents = await marketplaceAgents.getAgentNames();
+        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        baseAssertion.assertValue(
+          actualAgents.length,
+          2,
+          ExpectedMessages.elementsCountIsValid,
+        );
         baseAssertion.assertArrayIncludesAll(
-          actualAgents,
+          actualAgents.map((agent) => agent.name),
           [installedAppName, nonInstalledAppName],
           ExpectedMessages.searchResultsAreCorrect,
         );

@@ -18,4 +18,5 @@ export enum Attributes {
   dataQA = 'data-qa',
   ariaSelected = 'aria-selected',
   id = 'id',
+  ariaDetails = 'aria-details',
 }
