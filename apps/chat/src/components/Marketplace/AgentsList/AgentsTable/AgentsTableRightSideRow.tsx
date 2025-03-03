@@ -26,7 +26,6 @@ import {
   isApplicationStatusUpdating,
   isExecutableApp,
 } from '@/src/utils/app/application';
-import { formatDate } from '@/src/utils/app/common';
 import { isMyApplication } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
@@ -51,6 +50,7 @@ import {
 } from '@/src/constants/marketplace';
 
 import ContextMenu from '@/src/components/Common/ContextMenu';
+import { DateRenderer } from '@/src/components/Common/DateRenderer';
 import Tooltip from '@/src/components/Common/Tooltip';
 
 import { AgentBookmark } from '../../AgentBookmark';
@@ -345,7 +345,11 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
         </div>
         <div className="flex w-[86px] min-w-[86px] items-center">
           <p className="truncate">
-            {entity?.createdAt ? formatDate(entity.createdAt) : t('Unknown')}
+            {entity?.createdAt ? (
+              <DateRenderer dateValue={entity.createdAt} />
+            ) : (
+              t('Unknown')
+            )}
           </p>
         </div>
         <div className="hidden flex-none items-center xl:flex">
