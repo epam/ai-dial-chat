@@ -26,7 +26,6 @@ interface ShareIconProps extends ShareInterface {
   iconClassName?: string;
   iconWrapperClassName?: string;
   isMyEntity?: boolean;
-  isApplication?: boolean;
 }
 
 export default function ShareIcon({
@@ -40,9 +39,9 @@ export default function ShareIcon({
   iconClassName,
   iconWrapperClassName,
   isMyEntity,
-  isApplication,
 }: ShareIconProps) {
   const { t } = useTranslation(Translation.SideBar);
+  const isApplication = featureType === FeatureType.Application;
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );

@@ -347,7 +347,6 @@ export const ApplicationCard = memo(
                 featureType={FeatureType.Application}
                 iconClassName="bg-layer-2 group-hover:bg-transparent"
                 isMyEntity={isMyApp}
-                isApplication
               >
                 <ModelIcon
                   entityId={entity.id}

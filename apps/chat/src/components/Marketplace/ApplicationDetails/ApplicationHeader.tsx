@@ -65,7 +65,6 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
           featureType={FeatureType.Application}
           iconClassName="bg-layer-3"
           isMyEntity={isMyApp}
-          isApplication
         >
           <ModelIcon
             enableShrinking
