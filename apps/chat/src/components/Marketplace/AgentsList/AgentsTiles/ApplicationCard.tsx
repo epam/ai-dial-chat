@@ -95,6 +95,7 @@ export interface ApplicationCardProps {
   onBookmarkClick?: (entity: DialAIEntityModel) => void;
   onLogsClick?: (entity: DialAIEntityModel) => void;
   isPreview?: boolean;
+  dataQA?: string;
 }
 
 export const ApplicationCard = memo(
@@ -107,6 +108,7 @@ export const ApplicationCard = memo(
     onPublish,
     onLogsClick,
     isPreview = false,
+    dataQA,
   }: ApplicationCardProps) => {
     const { t } = useTranslation(Translation.Marketplace);
 
@@ -315,6 +317,7 @@ export const ApplicationCard = memo(
           !isPreview && 'cursor-pointer',
         )}
         data-qa="agent"
+        aria-details={dataQA}
       >
         <div>
           <div className="absolute right-4 top-4 flex gap-1 xl:right-5 xl:top-5">
