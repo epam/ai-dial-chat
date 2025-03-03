@@ -294,8 +294,8 @@ const removeInstalledModelsEpic: AppEpic = (action$, state$) =>
       const modelGroupKeys = new Set(
         payload.references
           .map((ref) => modelsMap[ref])
-          .filter((m) => !!m)
-          .map(getGroupModelKey),
+          .filter(Boolean)
+          .map((m) => getGroupModelKey(m!)),
       );
 
       const deletedReferences = new Set(
