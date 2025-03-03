@@ -116,7 +116,7 @@ export const ApplicationDetailsFooter = ({
   const hasPublicId = isEntityIdPublic(entity);
   const isPublicApp = isApplicationPublic(entity);
 
-  const isSmallScreen = screenState === ScreenState.MOBILE;
+  const isSmallScreen = screenState === ScreenState.SM;
 
   const canWrite = canWriteSharedWithMe(entity);
 

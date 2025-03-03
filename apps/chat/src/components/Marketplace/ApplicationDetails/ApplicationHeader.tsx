@@ -86,9 +86,7 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
               {entity.topics && (
                 <TopicsList
                   topics={entity.topics}
-                  counterMarginRight={
-                    screenState === ScreenState.MOBILE ? 18 : 0
-                  }
+                  counterMarginRight={screenState === ScreenState.SM ? 18 : 0}
                 />
               )}
               <div className="flex items-center gap-[2px] whitespace-nowrap">
@@ -106,7 +104,7 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
       </div>
       {isMyApp &&
         isApplicationsSharingEnabled &&
-        screenState !== ScreenState.MOBILE && (
+        screenState !== ScreenState.SM && (
           <button
             className="flex gap-2 px-3 py-1.5 text-sm text-accent-primary"
             onClick={handleOpenSharing}
@@ -115,7 +113,7 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
             <span>{t('Share')}</span>
           </button>
         )}
-      {isPublicApp && screenState !== ScreenState.MOBILE && (
+      {isPublicApp && screenState !== ScreenState.SM && (
         <ApplicationCopyLink entity={entity} withText />
       )}
     </header>

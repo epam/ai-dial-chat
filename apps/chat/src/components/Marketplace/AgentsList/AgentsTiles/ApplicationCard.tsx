@@ -6,9 +6,7 @@ import {
   IconUserShare,
   IconWorldShare,
 } from '@tabler/icons-react';
-import { memo, useCallback, useMemo } from 'react';
-
-import { useTranslation } from 'next-i18next';
+import React, { memo, useCallback, useMemo } from 'react';
 
 import classNames from 'classnames';
 
@@ -17,10 +15,12 @@ import {
   useMenuItemHandlerWithTwoArgs,
 } from '@/src/hooks/useHandler';
 import { useScreenState } from '@/src/hooks/useScreenState';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getApplicationNextStatus,
   getApplicationSimpleStatus,
+  getModelShortDescription,
   getPlayerCaption,
   isApplicationPublic,
   isApplicationStatusUpdating,
@@ -32,7 +32,7 @@ import { canWriteSharedWithMe } from '@/src/utils/app/share';
 import { getApplicationLink } from '@/src/utils/marketplace';
 
 import { SimpleApplicationStatus } from '@/src/types/applications';
-import { FeatureType, ScreenState } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -45,65 +45,92 @@ import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import {
+  CardIconSizes,
   PlayerContextIconClasses,
   PlayerContextIcons,
 } from '@/src/constants/marketplace';
 
+import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
+import ShareIcon from '@/src/components/Common/ShareIcon';
+import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
-import { AgentBookmark } from '../AgentBookmark';
-import { ApplicationTopic } from '../ApplicationTopic';
-import { TopicsList } from '../TopicsList';
+import { AgentBookmark } from '../../AgentBookmark';
+import { TopicsList } from '../../TopicsList';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
-export interface Props {
+interface CardFooterProps {
   entity: DialAIEntityModel;
-  isHovered: boolean;
+}
+
+const CardFooter = ({ entity }: CardFooterProps) => {
+  return (
+    <>
+      <EntityMarkdownDescription className="mt-3 hidden text-ellipsis text-sm leading-[18px] text-secondary md:line-clamp-2 xl:hidden">
+        {getModelShortDescription(entity)}
+      </EntityMarkdownDescription>
+      <div className="flex flex-col gap-2 pt-3 md:pt-4">
+        {/* <span className="text-sm leading-[21px] text-secondary">
+        Capabilities: Conversation
+      </span> */}
+
+        <div className="w-full">
+          {entity.topics && <TopicsList topics={entity.topics} />}
+        </div>
+      </div>
+    </>
+  );
+};
+
+export interface ApplicationCardProps {
+  entity: DialAIEntityModel;
   onClick: (entity: DialAIEntityModel) => void;
-  onRowHoverOver: () => void;
-  onRowHover: (id: string) => void;
   onPublish?: (entity: DialAIEntityModel, action: PublishActions) => void;
   onDelete?: (entity: DialAIEntityModel) => void;
   onEdit?: (entity: DialAIEntityModel) => void;
   onBookmarkClick?: (entity: DialAIEntityModel) => void;
   onLogsClick?: (entity: DialAIEntityModel) => void;
+  isPreview?: boolean;
+  dataQA?: string;
 }
 
-export const AgentsTableRightSideRow: React.FC<Props> = memo(
+export const ApplicationCard = memo(
   ({
     entity,
-    isHovered,
     onClick,
-    onRowHover,
-    onRowHoverOver,
     onDelete,
     onEdit,
     onBookmarkClick,
     onPublish,
     onLogsClick,
-  }) => {
+    isPreview = false,
+    dataQA,
+  }: ApplicationCardProps) => {
     const { t } = useTranslation(Translation.Marketplace);
 
     const dispatch = useAppDispatch();
+    const screenState = useScreenState();
 
     const isCodeAppsEnabled = useAppSelector((state) =>
       SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
     );
     const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
-    const screenState = useScreenState();
-    const userName = useAppSelector(AuthSelectors.selectUserName);
-
     const isMyApp = isMyApplication(entity);
     const isPublicApp = isApplicationPublic(entity);
+
     const canWrite = canWriteSharedWithMe(entity);
+
     const isModifyDisabled = isApplicationStatusUpdating(entity);
     const playerStatus = getApplicationSimpleStatus(entity);
-    const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin);
+    const isExecutable =
+      isExecutableApp(entity) && (isMyApp || isAdmin || canWrite);
+
+    const { iconSize, shareIconSize } = CardIconSizes[screenState];
 
     const PlayerContextIcon = PlayerContextIcons[playerStatus];
 
@@ -203,7 +230,7 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
         {
           name: t('Edit'),
           dataQa: 'edit',
-          display: (isMyApp || !!canWrite) && !!onEdit,
+          display: ((isMyApp || canWrite) && !!onEdit) || isPreview,
           Icon: IconPencilMinus,
           onClick: handleEdit,
         },
@@ -224,7 +251,7 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
         {
           name: t('Publish'),
           dataQa: 'publish',
-          display: isMyApp && !!onPublish,
+          display: (isMyApp && !!onPublish) || isPreview,
           Icon: IconWorldShare,
           onClick: handlePublish,
         },
@@ -246,7 +273,7 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
         {
           name: t('Delete'),
           dataQa: 'delete',
-          display: isMyApp && !!onDelete,
+          display: (isMyApp && !!onDelete) || isPreview,
           disabled: isModifyDisabled,
           Icon: IconTrashX,
           iconClassName: 'stroke-error',
@@ -278,100 +305,95 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
         onDelete,
         isModifyDisabled,
         handleDelete,
+        isPreview,
       ],
     );
 
-    const { visibleTopics, hiddenTopics } = useMemo<{
-      visibleTopics: string[];
-      hiddenTopics: string[];
-    }>(() => {
-      if (!entity.topics) {
-        return { visibleTopics: [], hiddenTopics: [] };
-      }
-
-      if (entity.topics?.length <= 3) {
-        return { visibleTopics: entity.topics, hiddenTopics: [] };
-      }
-
-      return {
-        visibleTopics: entity.topics.slice(0, 2),
-        hiddenTopics: entity.topics.slice(2),
-      };
-    }, [entity.topics]);
-
     return (
-      <li
+      <div
         onClick={() => onClick(entity)}
-        onMouseEnter={() => onRowHover(entity.id)}
-        onMouseLeave={() => onRowHoverOver()}
         className={classNames(
-          'relative flex h-[55px] min-w-full cursor-pointer gap-3 py-3 pl-4 pr-3 md:h-[115px] md:gap-5 md:p-4',
-          isHovered && 'bg-layer-2',
+          'group relative h-[98px] rounded-md bg-layer-2 p-3 shadow-card hover:bg-layer-3 md:h-[162px] md:p-4 xl:h-[164px] xl:p-5',
+          !isPreview && 'cursor-pointer',
         )}
+        data-qa="agent"
+        aria-details={dataQA}
       >
-        <div className="flex w-[100px] min-w-[100px] items-center">
-          <p className="truncate">{entity.version}</p>
-        </div>
-        <div className="flex w-[161px] min-w-[161px] flex-col justify-center gap-2 overflow-hidden">
-          {screenState === ScreenState.MOBILE ? (
-            <TopicsList topics={entity.topics ?? []} />
-          ) : (
-            <>
-              {visibleTopics.map((topic) => (
-                <ApplicationTopic key={topic} topic={topic} />
-              ))}
-              {!!hiddenTopics.length && (
-                <Tooltip
-                  triggerClassName="flex"
-                  tooltip={
-                    <div className="my-1 flex max-w-48 flex-wrap gap-2">
-                      {hiddenTopics.map((topic) => (
-                        <ApplicationTopic key={topic} topic={topic} />
-                      ))}
-                    </div>
-                  }
-                  placement="top"
+        <div>
+          <div className="absolute right-4 top-4 flex gap-1 xl:right-5 xl:top-5">
+            {!isPreview && (
+              <>
+                <ContextMenu
+                  menuItems={menuItems}
+                  featureType={FeatureType.Application}
+                  triggerIconHighlight
+                  triggerIconSize={18}
+                  className="m-0 xl:invisible group-hover:xl:visible"
+                />
+
+                <AgentBookmark
+                  onBookmarkClick={onBookmarkClick}
+                  entity={entity}
+                />
+              </>
+            )}
+          </div>
+          <div className="flex items-center gap-4 overflow-hidden">
+            <div className="flex shrink-0 items-center justify-center xl:my-[3px]">
+              <ShareIcon
+                {...entity}
+                isHighlighted={false}
+                size={shareIconSize}
+                featureType={FeatureType.Application}
+                iconClassName="bg-layer-2 !stroke-[0.6] group-hover:bg-transparent !rounded-[4px]"
+                iconWrapperClassName="!rounded-[4px]"
+              >
+                <ModelIcon
+                  entityId={entity.id}
+                  entity={entity}
+                  size={iconSize}
+                />
+              </ShareIcon>
+            </div>
+            <div className="flex grow flex-col justify-center gap-2 overflow-hidden">
+              {entity.version && (
+                <div
+                  className={classNames(
+                    'mr-6 flex gap-1 text-xs leading-[14px] text-secondary',
+                    !isMyApp && '!mr-12',
+                  )}
                 >
-                  <span className="flex items-center rounded border border-accent-primary px-1.5 py-1 text-xs leading-3">
-                    +{hiddenTopics.length}
+                  {t('Version: ')}
+                  <span
+                    className="max-w-full overflow-hidden truncate whitespace-nowrap"
+                    data-qa="version"
+                  >
+                    {entity.version}
                   </span>
-                </Tooltip>
+                </div>
               )}
-            </>
-          )}
-        </div>
-        <div className="flex w-[130px] min-w-[130px] items-center">
-          <p className="truncate">
-            {isMyApplication(entity)
-              ? userName
-              : (entity.owner ?? t('Unknown'))}
-          </p>
-        </div>
-        <div className="flex w-[86px] min-w-[86px] items-center">
-          <p className="truncate">
-            {entity?.createdAt
-              ? new Date(entity.createdAt).toLocaleDateString('en-GB')
-              : t('Unknown')}
-          </p>
-        </div>
-        <div className="hidden flex-none items-center xl:flex">
-          <div className="flex gap-1">
-            <AgentBookmark onBookmarkClick={onBookmarkClick} entity={entity} />
-            <ContextMenu
-              menuItems={menuItems}
-              featureType={FeatureType.Application}
-              triggerIconHighlight
-              triggerIconSize={18}
-              className={classNames(
-                'm-0',
-                isHovered ? 'xl:visible' : 'xl:invisible',
-              )}
-            />
+              <div className="flex whitespace-nowrap">
+                <div
+                  className={classNames(
+                    'mr-6 flex shrink truncate text-base font-semibold leading-[20px] text-primary',
+                    !isMyApp && !entity.version && '!mr-12',
+                  )}
+                >
+                  <span className="truncate" data-qa="agent-name">
+                    {entity.name}
+                  </span>
+                  <FunctionStatusIndicator entity={entity} />
+                </div>
+              </div>
+              <EntityMarkdownDescription className="hidden text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
+                {getModelShortDescription(entity)}
+              </EntityMarkdownDescription>
+            </div>
           </div>
         </div>
-      </li>
+        <CardFooter entity={entity} />
+      </div>
     );
   },
 );
-
-AgentsTableRightSideRow.displayName = 'AgentsTableRightSideRow';
+ApplicationCard.displayName = 'ApplicationCard';

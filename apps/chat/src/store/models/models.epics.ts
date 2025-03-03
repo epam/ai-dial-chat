@@ -41,6 +41,7 @@ import { ApplicationActions } from '@/src/store/application/application.reducers
 
 import { DeleteType } from '@/src/constants/marketplace';
 
+import { AuthSelectors } from '../auth/auth.reducers';
 import { MarketplaceActions } from '../marketplace/marketplace.reducers';
 import { PublicationActions } from '../publication/publication.reducers';
 import {
@@ -128,6 +129,7 @@ const getModelsEpic: AppEpic = (action$, state$) =>
         }),
         switchMap((response: DialAIEntityModel[]) => {
           const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
+          const userName = AuthSelectors.selectUserName(state$.value);
           const isHeaderFeatureEnabled = SettingsSelectors.isFeatureEnabled(
             state$.value,
             Feature.Header,
@@ -157,7 +159,15 @@ const getModelsEpic: AppEpic = (action$, state$) =>
             .map(({ id }) => id);
 
           return concat(
-            of(ModelsActions.getModelsSuccess({ models: response })),
+            of(
+              ModelsActions.getModelsSuccess({
+                models: response.map((model) =>
+                  isMyApplication(model)
+                    ? { ...model, owner: userName }
+                    : model,
+                ),
+              }),
+            ),
             of(
               PublicationActions.uploadAllPublishedWithMeItems({
                 featureType: FeatureType.Application,

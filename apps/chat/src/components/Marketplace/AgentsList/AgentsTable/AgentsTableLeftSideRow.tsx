@@ -16,8 +16,8 @@ import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import ShareIcon from '@/src/components/Common/ShareIcon';
 
-import { AgentBookmark } from '../AgentBookmark';
-import { FunctionStatusIndicator } from '../FunctionStatusIndicator';
+import { AgentBookmark } from '../../AgentBookmark';
+import { FunctionStatusIndicator } from '../../FunctionStatusIndicator';
 
 interface Props {
   entity: DialAIEntityModel;
@@ -55,8 +55,7 @@ export const AgentsTableLeftSideRow: React.FC<Props> = memo(
           <div className="flex items-center gap-2 md:gap-4">
             <AgentBookmark
               className={
-                screenState !== ScreenState.TABLET &&
-                screenState !== ScreenState.MOBILE
+                screenState !== ScreenState.MD && screenState !== ScreenState.SM
                   ? 'hidden'
                   : ''
               }
