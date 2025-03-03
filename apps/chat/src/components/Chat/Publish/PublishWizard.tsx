@@ -533,9 +533,9 @@ export function PublishModal<
                 </section>
               ) : (
                 <PublicationInfoSection
-                  labelDataQa={'publish-to-label'}
+                  labelDataQa={'unpublish-from-label'}
                   label={t('Unpublish from')}
-                  valueDataQa={'publish-to-path'}
+                  valueDataQa={'unpublish-from-path'}
                   valueToDisplay={constructPath(
                     ORGANIZATION_SECTION_NAME,
                     path,

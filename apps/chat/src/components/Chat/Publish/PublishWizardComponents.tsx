@@ -48,7 +48,9 @@ export function PublicationInfoSection({
           <span className="w-full">{valueToDisplay}</span>
         </Tooltip>
       ) : (
-        <span className="w-full">{valueToDisplay}</span>
+        <span className="w-full" data-qa={valueDataQa}>
+          {valueToDisplay}
+        </span>
       )}
     </section>
   );

@@ -443,9 +443,9 @@ export function PublicationHandler({ publication }: Props) {
                 />
 
                 <PublicationInfoSection
-                  labelDataQa={'creation-date'}
+                  labelDataQa={'creation-date-label'}
                   label={t('Request created: ')}
-                  valueDataQa={'publish-date'}
+                  valueDataQa={'creation-date'}
                   valueToDisplay={formatDate(publication.createdAt)}
                 />
               </div>
