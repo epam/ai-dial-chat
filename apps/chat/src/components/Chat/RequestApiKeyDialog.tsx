@@ -362,9 +362,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
           htmlFor="projectEndDateInput"
         >
           <span>5.</span>
-          <span className="ml-1">
-            {t('End date of the project (YYYY-MM-DD)')}
-          </span>
+          <span className="ml-1">{t('End date of the project')}</span>
           <span className="ml-1 inline text-accent-primary">*</span>
         </label>
         <input

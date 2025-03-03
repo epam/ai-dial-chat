@@ -4,6 +4,8 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { fakeCallback } from '@/src/utils/app/common';
+
 import { SortOrder } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
@@ -31,13 +33,7 @@ export const HeaderItem: React.FC<Props> = ({
 
   return (
     <button
-      onClick={() =>
-        !sortKey
-          ? () => {
-              return null;
-            }
-          : onApplySorting(sortKey)
-      }
+      onClick={() => (!sortKey ? fakeCallback() : onApplySorting(sortKey))}
       className={classNames(
         'group flex items-center gap-2 font-semibold',
         !size && 'w-full min-w-full',
@@ -50,7 +46,7 @@ export const HeaderItem: React.FC<Props> = ({
         <SortIcon
           className={
             sortOrder
-              ? 'text-controls-permanent'
+              ? 'text-primary'
               : 'invisible text-secondary group-hover:visible'
           }
           size={16}

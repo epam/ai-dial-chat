@@ -264,3 +264,7 @@ export const extractNameFromEmail = (author: string | undefined) => {
   const regEx = /^[^@]+@[^@]+.[^@]+$/; // regex to test is author in an email format
   return regEx.test(author) ? author.split('@')[0] : author;
 };
+
+export const formatDate = (rawDate: number | string | Date): string => {
+  return new Date(rawDate).toLocaleDateString();
+};

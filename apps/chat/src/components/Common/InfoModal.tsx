@@ -1,3 +1,5 @@
+import { ReactNode } from 'react';
+
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { extractNameFromEmail } from '@/src/utils/app/common';
@@ -11,22 +13,25 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
+import { DateRenderer } from './DateRenderer';
 import { Modal } from './Modal';
 import { withRenderWhen } from './RenderWhen';
 
 interface infoRowProps {
   dataQa: string;
   infoLabel: string;
-  info: string;
+  children: ReactNode;
 }
 
-function InfoRow({ dataQa, infoLabel, info }: infoRowProps) {
+function InfoRow({ dataQa, infoLabel, children }: infoRowProps) {
   return (
     <div className="grid grid-cols-3 gap-4" data-qa={dataQa}>
       <span className="col-span-1 whitespace-pre-wrap break-words text-secondary">
         {infoLabel}:
       </span>
-      <span className="col-span-2 whitespace-pre-wrap break-words">{info}</span>
+      <span className="col-span-2 whitespace-pre-wrap break-words">
+        {children}
+      </span>
     </div>
   );
 }
@@ -59,25 +64,22 @@ export function InfoModalView() {
             infoLabel={
               entityInfo?.isPublic ? t('Creation date') : t('Last updated')
             }
-            info={entityInfo.updatedAt}
             dataQa={entityInfo?.isPublic ? 'created-at' : 'updated-at'}
-          />
+          >
+            <DateRenderer dateValue={entityInfo.updatedAt} />
+          </InfoRow>
         )}
 
         {!entityInfo?.isPublic && entityInfo?.createdAt && (
-          <InfoRow
-            infoLabel={t('Creation date')}
-            info={entityInfo.createdAt}
-            dataQa="created-at"
-          />
+          <InfoRow infoLabel={t('Creation date')} dataQa="created-at">
+            <DateRenderer dateValue={entityInfo.createdAt} />
+          </InfoRow>
         )}
 
         {(entityInfo?.isPublic || entityInfo?.sharedWithMe) && (
-          <InfoRow
-            infoLabel={t('Author')}
-            info={extractNameFromEmail(entityInfo.author) ?? t('Unknown')}
-            dataQa="author"
-          />
+          <InfoRow infoLabel={t('Author')} dataQa="author">
+            {extractNameFromEmail(entityInfo.author) ?? t('Unknown')}
+          </InfoRow>
         )}
       </div>
     </Modal>
