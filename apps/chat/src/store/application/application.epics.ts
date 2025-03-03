@@ -220,16 +220,7 @@ const updateApplicationEpic: AppEpic = (action$, state$) =>
               updatedCustomApplication,
               payload.schema,
             ).pipe(
-              switchMap(() =>
-                of(
-                  ApplicationActions.updateSuccess(updatedCustomApplication),
-                  ModelsActions.updateModel({
-                    model: updatedCustomApplication,
-                    oldApplicationId: payload.oldApplication.id,
-                  }),
-                ),
-              ),
-              tap(() => {
+              switchMap(() => {
                 if (
                   payload.redirectUrl &&
                   !state$.value.application.exitAfterSave
@@ -238,13 +229,20 @@ const updateApplicationEpic: AppEpic = (action$, state$) =>
                     pathname: payload.redirectUrl,
                     query: { id: updatedCustomApplication.id },
                   });
-                }
-                if (state$.value.application.exitAfterSave) {
+                } else if (state$.value.application.exitAfterSave) {
                   Router.push({
                     pathname: Routes.Marketplace,
                     query: { tab: MarketplaceTabs.MY_WORKSPACE },
                   });
                 }
+
+                return of(
+                  ApplicationActions.updateSuccess(updatedCustomApplication),
+                  ModelsActions.updateModel({
+                    model: updatedCustomApplication,
+                    oldApplicationId: payload.oldApplication.id,
+                  }),
+                );
               }),
               catchError((err) => {
                 console.error('Failed to update application:', err);
