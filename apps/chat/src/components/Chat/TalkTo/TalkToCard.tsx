@@ -321,6 +321,7 @@ export const TalkToCard = ({
                 featureType={FeatureType.Application}
                 iconClassName="bg-layer-2 !stroke-[0.6] group-hover:bg-transparent !rounded-[4px]"
                 iconWrapperClassName="!rounded-[4px]"
+                isMyEntity={isMyEntity}
               >
                 <ModelIcon
                   entityId={entity.id}

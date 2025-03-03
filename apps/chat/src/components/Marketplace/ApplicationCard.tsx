@@ -343,6 +343,7 @@ export const ApplicationCard = ({
               featureType={FeatureType.Application}
               iconClassName="bg-layer-2 !stroke-[0.6] group-hover:bg-transparent !rounded-[4px]"
               iconWrapperClassName="!rounded-[4px]"
+              isMyEntity={isMyApp}
             >
               <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
             </ShareIcon>
