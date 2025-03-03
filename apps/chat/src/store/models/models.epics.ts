@@ -207,14 +207,10 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
             installedModels.map((model) => model.id),
           );
 
-          const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
-
-          const ids = [...recentModelIds, ...myAppIds];
-          const modelKeys = new Set(
-            ids
-              .map((id) => modelsMap[id])
-              .filter(Boolean)
-              .map((m) => getGroupModelKey(m!)),
+          const references = [...recentModelIds, ...myAppIds];
+          const modelKeys = ModelsSelectors.selectAllGroupModelKeySet(
+            state$.value,
+            references,
           );
 
           const referencesToInstall = allModels
@@ -290,12 +286,9 @@ const removeInstalledModelsEpic: AppEpic = (action$, state$) =>
         state$.value,
       );
       const models = ModelsSelectors.selectModels(state$.value);
-      const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
-      const modelGroupKeys = new Set(
-        payload.references
-          .map((ref) => modelsMap[ref])
-          .filter(Boolean)
-          .map((m) => getGroupModelKey(m!)),
+      const modelGroupKeys = ModelsSelectors.selectAllGroupModelKeySet(
+        state$.value,
+        payload.references,
       );
 
       const deletedReferences = new Set(
@@ -365,12 +358,9 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
         state$.value,
       );
       const models = ModelsSelectors.selectModels(state$.value);
-      const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
-      const modelGroupKeys = new Set(
-        payload.references
-          .map((ref) => modelsMap[ref])
-          .filter(Boolean)
-          .map((m) => getGroupModelKey(m!)),
+      const modelGroupKeys = ModelsSelectors.selectAllGroupModelKeySet(
+        state$.value,
+        payload.references,
       );
 
       const newInstalledModels = uniqBy<InstalledModel>(

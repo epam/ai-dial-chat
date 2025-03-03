@@ -1,5 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import { getGroupModelKey } from '@/src/utils/app/models';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
 import { EntityType } from '@/src/types/common';
@@ -149,3 +150,16 @@ export const selectModelById = createSelector(
     return modelsMap[modelId];
   },
 );
+
+export const selectAllGroupModelKeySet = (
+  state: RootState,
+  references: string[],
+) => {
+  const modelsMap = selectModelsMap(state);
+  return new Set(
+    references
+      .map((reference) => modelsMap[reference])
+      .filter(Boolean)
+      .map((model) => getGroupModelKey(model!)),
+  );
+};
