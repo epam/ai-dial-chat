@@ -26,6 +26,7 @@ import {
   isPlaybackConversation,
 } from '@/src/utils/app/conversation';
 import { isMyApplication } from '@/src/utils/app/id';
+import { getGroupModelKey } from '@/src/utils/app/models';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
@@ -108,7 +109,8 @@ export const TalkToCard = ({
 
   const canWrite = canWriteSharedWithMe(entity);
 
-  const isExecutable = isExecutableApp(entity) && (isMyEntity || isAdmin); //TODO add  ```|| canWrite``` when core issues #655 and #672 will be ready
+  const isExecutable =
+    isExecutableApp(entity) && (isMyEntity || isAdmin || canWrite);
   const screenState = useScreenState();
 
   const isApplicationsSharingEnabled = useAppSelector((state) =>
@@ -120,19 +122,12 @@ export const TalkToCard = ({
   const versionsToSelect = useMemo(() => {
     return allModels.filter(
       (model) =>
-        entity.name === model.name &&
+        getGroupModelKey(entity) === getGroupModelKey(model) &&
         entity.version &&
         (installedModelIds.has(model.reference) ||
           (isSelected && entity.reference === model.reference)),
     );
-  }, [
-    allModels,
-    entity.name,
-    entity.reference,
-    entity.version,
-    installedModelIds,
-    isSelected,
-  ]);
+  }, [allModels, entity, installedModelIds, isSelected]);
 
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
@@ -192,7 +187,7 @@ export const TalkToCard = ({
         dataQa: 'status-change',
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
         display:
-          (isAdmin || isMyEntity) && //TODO add  ```|| canWrite``` when core issues #655 will be ready
+          (isAdmin || isMyEntity || canWrite) &&
           !!entity.functionStatus &&
           isCodeAppsEnabled,
         Icon: PlayerContextIcon,
@@ -202,7 +197,7 @@ export const TalkToCard = ({
       {
         name: t('Edit'),
         dataQa: 'edit',
-        display: (isMyEntity || !!canWrite) && !!onEdit,
+        display: (isMyEntity || canWrite) && !!onEdit,
         Icon: IconPencilMinus,
         onClick: handleEdit,
       },
@@ -326,6 +321,7 @@ export const TalkToCard = ({
                 featureType={FeatureType.Application}
                 iconClassName="bg-layer-2 !stroke-[0.6] group-hover:bg-transparent !rounded-[4px]"
                 iconWrapperClassName="!rounded-[4px]"
+                isMyEntity={isMyEntity}
               >
                 <ModelIcon
                   entityId={entity.id}

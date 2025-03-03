@@ -1,5 +1,5 @@
 import { API } from '@/src/testData';
-import { IconSelectors } from '@/src/ui/selectors';
+import { IconSelectors, MarketplaceAgentSelectors } from '@/src/ui/selectors';
 import { MarketplaceDetailsModal } from '@/src/ui/selectors/marketplaceSelectors';
 import { BaseElement } from '@/src/ui/webElements';
 import { DropdownButtonMenu } from '@/src/ui/webElements/dropdownButtonMenu';
@@ -31,11 +31,11 @@ export class AgentDetailsModal extends BaseElement {
   public versionMenuTrigger = this.getChildElementBySelector(
     MarketplaceDetailsModal.versionMenuTrigger,
   );
-  public transparentBookmarkIcon = this.getChildElementBySelector(
-    IconSelectors.transparentBookmarkIcon,
+  public addBookmarkIcon = this.getChildElementBySelector(
+    MarketplaceAgentSelectors.addBookmarkIcon,
   );
-  public filledBookmarkIcon = this.getChildElementBySelector(
-    IconSelectors.filledBookmarkIcon,
+  public removeBookmarkIcon = this.getChildElementBySelector(
+    MarketplaceAgentSelectors.removeBookmarkIcon,
   );
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
 
@@ -60,7 +60,7 @@ export class AgentDetailsModal extends BaseElement {
       (r) =>
         r.url().includes(API.installedDeploymentsHost()) && r.status() === 200,
     );
-    await this.transparentBookmarkIcon.click();
+    await this.addBookmarkIcon.click();
     await respPromise;
   }
 }

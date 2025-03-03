@@ -309,6 +309,7 @@ dialTest(
         MenuOptions.moveTo,
         MenuOptions.share,
         MenuOptions.publish,
+        MenuOptions.info,
         MenuOptions.delete,
       ]);
   },

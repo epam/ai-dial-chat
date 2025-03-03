@@ -44,7 +44,7 @@ const ModelIconTemplate = memo(
       if (!entity?.iconUrl) return fallbackUrl;
 
       if (isApplicationId(entity.id)) {
-        return constructPath('api', ApiUtils.encodeApiUrl(entity.iconUrl));
+        return constructPath('/api', ApiUtils.encodeApiUrl(entity.iconUrl));
       }
 
       return `${getThemeIconUrl(entity.iconUrl)}?v2`;

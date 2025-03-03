@@ -16,6 +16,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
+import { Routes } from '@/src/constants/routes';
 
 import { Feature } from '@epam/ai-dial-shared';
 import cssEscape from 'css.escape';
@@ -58,7 +59,7 @@ export const Logo = () => {
 
   const handleLogoClick: MouseEventHandler<HTMLAnchorElement> = (e) => {
     if (messageIsStreaming) return e.preventDefault();
-    if (router.route === '/') {
+    if (router.route === Routes.Chat) {
       e.preventDefault();
     }
     createNewConversation();
@@ -66,7 +67,7 @@ export const Logo = () => {
 
   return (
     <Link
-      href={'/'}
+      href={Routes.Chat}
       shallow
       onClick={handleLogoClick}
       className={classNames(

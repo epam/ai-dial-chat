@@ -2,6 +2,7 @@ import { Observable, map, throwError } from 'rxjs';
 
 import { ApiUtils } from '@/src/utils/server/api';
 
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
   ApiKeys,
   BackendChatEntity,
@@ -48,13 +49,13 @@ export abstract class ApiEntityStorage<
     return {
       ...info,
       id,
-      lastActivityDate: entity.updatedAt,
+      updatedAt: entity.updatedAt,
       folderId: constructPath(apiKey, bucket, parentPath),
     } as unknown as TEntityInfo;
   }
 
   private getEntityUrl = (entity: TEntityInfo): string =>
-    ApiUtils.encodeApiUrl(constructPath('api', entity.id));
+    ApiUtils.encodeApiUrl(constructPath('/api', entity.id));
 
   private getListingUrl = ({
     path,
@@ -167,28 +168,50 @@ export abstract class ApiEntityStorage<
     }
   }
 
-  createEntity(entity: TEntity): Observable<TEntityInfo> {
+  getEntityMetadata(id: string): Observable<BackendChatEntity | null> {
+    try {
+      return ApiUtils.request(
+        `/api/metadata/${ApiUtils.encodeApiUrl(id)}`,
+      ).pipe(
+        map((entityInfo: APIResponse) => {
+          return {
+            ...(entityInfo as BackendChatEntity),
+          };
+        }),
+      );
+    } catch (error) {
+      return throwError(() => error);
+    }
+  }
+
+  createEntity(
+    entity: TEntity,
+    schema?: ApiDetailedApplicationTypeSchema,
+  ): Observable<TEntityInfo> {
     try {
       return ApiUtils.request(this.getEntityUrl(entity), {
         method: HTTPMethod.POST,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(this.cleanUpEntity(entity)),
+        body: JSON.stringify(this.cleanUpEntity(entity, schema)),
       }).pipe(map((entity) => this.mapEntity(entity)));
     } catch (error) {
       return throwError(() => error);
     }
   }
 
-  updateEntity(entity: TEntity): Observable<void> {
+  updateEntity(
+    entity: TEntity,
+    schema?: ApiDetailedApplicationTypeSchema,
+  ): Observable<TEntityInfo> {
     try {
       return ApiUtils.request(this.getEntityUrl(entity), {
         method: HTTPMethod.PUT,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(this.cleanUpEntity(entity)),
+        body: JSON.stringify(this.cleanUpEntity(entity, schema)),
       });
     } catch (error) {
       return throwError(() => error);
@@ -214,7 +237,10 @@ export abstract class ApiEntityStorage<
 
   abstract getStorageKey(): ApiKeys;
 
-  abstract cleanUpEntity(entity: TEntity): APIModel;
+  abstract cleanUpEntity(
+    entity: TEntity,
+    schema?: ApiDetailedApplicationTypeSchema,
+  ): APIModel;
 
   abstract mergeGetResult(info: TEntityInfo, entity: APIResponse): TEntity;
 }

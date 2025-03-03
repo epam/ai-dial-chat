@@ -1,4 +1,5 @@
 import { FloatingOverlay } from '@floating-ui/react';
+import { IconPlayerPlay } from '@tabler/icons-react';
 import {
   memo,
   useCallback,
@@ -8,6 +9,8 @@ import {
   useRef,
   useState,
 } from 'react';
+
+import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
@@ -21,6 +24,7 @@ import {
   isReplayConversation,
 } from '@/src/utils/app/conversation';
 import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
+import { isEntityIdExternal } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { doesModelHaveConfiguration } from '@/src/utils/app/models';
 
@@ -33,6 +37,7 @@ import { EntityType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
+import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { ChatActions } from '@/src/store/chat/chat.reducer';
 import { ChatSelectors } from '@/src/store/chat/chat.selectors';
 import {
@@ -45,8 +50,11 @@ import { PublicationSelectors } from '@/src/store/publication/publication.reduce
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { Routes } from '@/src/constants/routes';
+
 import { ChatStarters } from '@/src/components/Chat/ChatStarters';
 
+import { CustomChatViewer } from '../AppsEditor/Settings/Previews/CustomChatViewer';
 import Loader from '../Common/Loader';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
 import { ChatCompareRotate } from './ChatCompareRotate';
@@ -523,12 +531,43 @@ export const ChatView = memo(() => {
       isConversationWithFormSchema(conv),
   );
 
+  const router = useRouter();
+
+  const isApplicationPreviewChat = useMemo(() => {
+    return router.pathname === Routes.AppsEditorSettings;
+  }, [router.pathname]);
+
   const isInputVisible =
     (!isReplay || isNotEmptyConversations) &&
     !isExternal &&
     (isModelsInstalled || isReplay || isIsolatedView) &&
     !(isConversationWithSchema && selectedConversations.length > 1);
 
+  const applicationTypeSchemas = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectAllSchemas,
+  );
+
+  const customViewer = useMemo(() => {
+    const model = modelsMap[selectedConversations[0]?.model?.id];
+    if (!model) return;
+    if (
+      model?.applicationTypeSchemaId &&
+      applicationTypeSchemas.some(
+        (schema) => schema.id === model.applicationTypeSchemaId,
+      )
+    ) {
+      const schema = applicationTypeSchemas.find(
+        (schema) => schema.id === model.applicationTypeSchemaId,
+      );
+      if (schema?.viewerUrl) {
+        return {
+          viewerUrl: schema.viewerUrl,
+          title: schema.displayName,
+          applicationId: model.id,
+        };
+      }
+    }
+  }, [modelsMap, applicationTypeSchemas, selectedConversations]);
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.focus();
@@ -544,6 +583,11 @@ export const ChatView = memo(() => {
       {showFloatingOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
       {modelError ? (
         <ErrorMessageDiv error={modelError} />
+      ) : customViewer ? (
+        <CustomViewerChatView
+          customViewer={customViewer}
+          setShowSettings={setIsShowChatSettings}
+        />
       ) : (
         <>
           <div
@@ -589,7 +633,8 @@ export const ChatView = memo(() => {
                         )}
                       >
                         {conv.messages.length !== 0 &&
-                          enabledFeatures.has(Feature.TopSettings) && (
+                          enabledFeatures.has(Feature.TopSettings) &&
+                          !isApplicationPreviewChat && (
                             <div className="z-10 flex flex-col">
                               <ChatHeader
                                 conversation={conv}
@@ -667,6 +712,9 @@ export const ChatView = memo(() => {
                               >
                                 <EmptyChatDescription
                                   conversation={conv}
+                                  isApplicationPreviewChat={
+                                    isApplicationPreviewChat
+                                  }
                                   onShowChangeModel={handleTalkToConversationId}
                                   onShowSettings={setIsShowChatSettings}
                                 />
@@ -720,9 +768,11 @@ export const ChatView = memo(() => {
                                           messageIndex={index}
                                           filteredMessages={filteredMessages}
                                           conversation={conv}
-                                          isLikesEnabled={enabledFeatures.has(
-                                            Feature.Likes,
-                                          )}
+                                          isLikesEnabled={
+                                            enabledFeatures.has(
+                                              Feature.Likes,
+                                            ) && !isEntityIdExternal(conv)
+                                          }
                                           editDisabled={
                                             !!notAvailableEntityType ||
                                             isExternal ||
@@ -862,6 +912,98 @@ export const ChatView = memo(() => {
   );
 });
 
+interface CustomChatViewerProps {
+  setShowSettings: (value: boolean) => void;
+  customViewer: {
+    title: string;
+    viewerUrl: string;
+    applicationId: string;
+  };
+}
+
+const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
+  setShowSettings,
+  customViewer,
+}) => {
+  const dispatch = useAppDispatch();
+  const { t } = useTranslation(Translation.Chat);
+
+  const selectedConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedConversations,
+  );
+
+  const handleTalkToConversationId = useCallback(
+    (conversationId: string | null) => {
+      dispatch(ConversationsActions.setTalkToConversationId(conversationId));
+    },
+    [dispatch],
+  );
+
+  const router = useRouter();
+
+  const isApplicationPreviewChat = useMemo(() => {
+    return router.pathname === Routes.AppsEditorSettings;
+  }, [router.pathname]);
+
+  const isStartedCustomViewerConversation = useAppSelector(
+    ConversationsSelectors.selectIsStartedCustomViewerConversation,
+  );
+  return (
+    <>
+      {selectedConversations[0].messages.length !== 0 ||
+        (!isStartedCustomViewerConversation && !isApplicationPreviewChat && (
+          <div className="flex h-full flex-col">
+            <div
+              className={classNames('flex size-full flex-col justify-center')}
+            >
+              <div className="shrink-0">
+                <EmptyChatDescription
+                  isApplicationPreviewChat={isApplicationPreviewChat}
+                  conversation={selectedConversations[0]}
+                  onShowChangeModel={handleTalkToConversationId}
+                  onShowSettings={setShowSettings}
+                />
+              </div>
+            </div>
+
+            <div className="flex w-full flex-col items-center pt-3 md:pt-5">
+              <button
+                className="button button-primary mb-2 flex items-center gap-2 md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
+                data-qa="start-working"
+                onClick={() =>
+                  dispatch(
+                    ConversationsActions.setIsStartedCustomViewerConversation(
+                      true,
+                    ),
+                  )
+                }
+              >
+                <IconPlayerPlay size={18} />
+                <span>
+                  {t('Start working with the')}
+                  {` ${customViewer.title}`}
+                </span>
+              </button>
+              <div className="p-5 max-md:hidden">
+                <ChatInputFooter />
+              </div>
+            </div>
+          </div>
+        ))}
+      {(isStartedCustomViewerConversation ||
+        isApplicationPreviewChat ||
+        selectedConversations[0].messages.length !== 0) && (
+        <CustomChatViewer
+          conversation={selectedConversations[0]}
+          id={customViewer.applicationId}
+          title={customViewer.title}
+          customViewerUrl={customViewer.viewerUrl}
+        />
+      )}
+    </>
+  );
+};
+
 ChatView.displayName = 'ChatView';
 
 export function Chat() {
@@ -954,5 +1096,6 @@ export function Chat() {
       />
     );
   }
+
   return <ChatView />;
 }

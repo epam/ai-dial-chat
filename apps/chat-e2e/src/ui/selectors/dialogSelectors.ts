@@ -226,10 +226,21 @@ export const ReportAnIssueModalSelectors = {
   reportAnIssueContainer: '[data-qa="report-issue-dialog"]',
 };
 
-export const AddApplicationModalSelector = {
-  modalContainer: '[data-qa="application-dialog"]',
+export const ApplicationEditorHeader = {
+  header: '[data-qa="app-editor-header"]',
+  saveAndExitButton: '[data-qa="save-and-exit"]',
+};
+
+export const ApplicationPreviewSelector = {
+  container: '[data-qa="app-preview"]',
+};
+
+export const AddApplicationFormSelector = {
+  appGeneralFormContainer: '[data-qa="app-general-form"]',
   name: '#name',
   version: '#version',
+  nextButton: '[data-qa="save-application-general-info"]',
   chatCompletionUrl: '#completionUrl',
   addButton: '[data-qa="add-application"]',
+  appViewFormContainer: '[data-qa="app-view-form"]',
 };

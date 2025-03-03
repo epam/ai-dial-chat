@@ -1,6 +1,7 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { combineEntities } from '@/src/utils/app/common';
+import { getGroupModelKey } from '@/src/utils/app/models';
 import { translate } from '@/src/utils/app/translation';
 
 import { ApplicationStatus } from '@/src/types/applications';
@@ -157,10 +158,12 @@ export const modelsSlice = createSlice({
       const newModel = state.modelsMap[payload.modelId];
       if (!newModel) return;
 
-      const recentModels = state.recentModelsIds.map(
-        (id) => state.modelsMap[id],
+      const recentModels = state.recentModelsIds
+        .map((id) => state.modelsMap[id])
+        .filter(Boolean);
+      const oldIndex = recentModels.findIndex(
+        (m) => getGroupModelKey(m!) === getGroupModelKey(newModel),
       );
-      const oldIndex = recentModels.findIndex((m) => m?.name === newModel.name);
       if (oldIndex >= 0) {
         if (recentModels[oldIndex]?.reference !== payload.modelId) {
           //replace
@@ -239,6 +242,20 @@ export const modelsSlice = createSlice({
         (id) => !payload.references.includes(id),
       );
       state.modelsMap = omit(state.modelsMap, [...payload.references, ...ids]);
+    },
+    deleteSharedWithMeModel: (
+      state,
+      { payload }: PayloadAction<{ modelId: string }>,
+    ) => {
+      const modelReference = state.modelsMap[payload.modelId]?.reference;
+
+      state.models = state.models.filter(
+        (model) => model.id !== payload.modelId,
+      );
+      state.recentModelsIds = state.recentModelsIds.filter(
+        (id) => id !== modelReference,
+      );
+      state.modelsMap = omit(state.modelsMap, payload.modelId);
     },
     addPublishRequestModels: (
       state,

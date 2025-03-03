@@ -39,6 +39,7 @@ export interface PublicationResource {
   sourceUrl: string | null;
   targetUrl: string;
   reviewUrl: string;
+  author?: string;
 }
 
 export interface Publication {
@@ -51,6 +52,8 @@ export interface Publication {
   resources: PublicationResource[];
   rules?: PublicationRule[];
   resourceTypes: BackendResourceType[];
+  author?: string;
+  displayAuthor?: string;
 }
 
 export interface PublicationInfo {

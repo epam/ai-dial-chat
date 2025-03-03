@@ -140,6 +140,10 @@ export const PromptVariablesDialog: FC<Props> = ({
     };
   }, [ignoreOutsideClicks, onClose]);
 
+  useEffect(() => {
+    inputsRefs.current?.[0]?.focus?.();
+  }, []);
+
   const inputClassName = classNames('input-form', 'peer', {
     'input-invalid': submitted,
     submitted: submitted,

@@ -274,6 +274,7 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
       const newPrompt: Prompt = regeneratePromptId({
         ...prompt,
         ...values,
+        updatedAt: Date.now(),
       });
 
       return concat(
@@ -903,6 +904,50 @@ const applyPromptEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const getPromptMetadataEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.getPromptMetadata.match),
+    switchMap(({ payload }) =>
+      PromptService.getPromptMetadata(payload.promptId).pipe(
+        switchMap((promptMetadata) => {
+          if (!promptMetadata) {
+            return of(
+              ChatActions.getEntityInfoFail({
+                errorText: 'Could not get prompt info. Try again later',
+              }),
+            );
+          }
+
+          return concat(
+            of(
+              ChatActions.getEntityInfoSuccess({
+                entityInfo: { id: payload.promptId, ...promptMetadata },
+              }),
+            ),
+
+            of(
+              PromptsActions.updatePromptSuccess({
+                id: payload.promptId,
+                prompt: {
+                  updatedAt: promptMetadata.updatedAt,
+                  createdAt: promptMetadata.createdAt,
+                  author: promptMetadata.author,
+                },
+              }),
+            ),
+          );
+        }),
+        catchError(() => {
+          return of(
+            ChatActions.getEntityInfoFail({
+              errorText: 'Could not get prompt info. Try again later',
+            }),
+          );
+        }),
+      ),
+    ),
+  );
+
 export const PromptsEpics = combineEpics(
   initEpic,
   uploadPromptsFromMultipleFoldersEpic,
@@ -927,4 +972,5 @@ export const PromptsEpics = combineEpics(
   uploadPromptEpic,
   deleteChosenPromptsEpic,
   applyPromptEpic,
+  getPromptMetadataEpic,
 );

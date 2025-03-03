@@ -58,11 +58,13 @@ import { AppEpic } from '@/src/types/store';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import { DeleteType } from '@/src/constants/marketplace';
+import { Routes } from '@/src/constants/routes';
 
 import {
   ApplicationActions,
   ApplicationSelectors,
 } from '../application/application.reducers';
+import { ApplicationTypesSchemasSelectors } from '../applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { CodeEditorActions } from '../codeEditor/codeEditor.reducer';
 import {
   ConversationsActions,
@@ -316,10 +318,14 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
       const applicationDetails = ApplicationSelectors.selectApplicationDetail(
         state$.value,
       );
+      const schema = ApplicationTypesSchemasSelectors.selectSchemaById(
+        state$.value,
+        applicationType,
+      );
 
       if (
         (applicationType === ApplicationType.CODE_APP ||
-          applicationType === ApplicationType.QUICK_APP) &&
+          schema?.displayName === 'Quick App') &&
         applicationDetails?.reference !== application.reference
       ) {
         return of(
@@ -460,7 +466,7 @@ const acceptInvitationSuccessEpic: AppEpic = (action$, _state$, { router }) =>
     filter(ShareActions.acceptShareInvitationSuccess.match),
     switchMap(({ payload }) => {
       if (payload.isApplication) {
-        router.push('/marketplace', undefined, { shallow: true });
+        router.push(Routes.Marketplace, undefined, { shallow: true });
         //TODO make request for the shared applications to add them into the state when share invitation is accepted.
         return of(ModelsActions.getModels());
       } else {
@@ -712,7 +718,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                     id: conv.id,
                     conversation: {
                       isShared: true,
-                      lastActivityDate: sharedConv.lastActivityDate,
+                      updatedAt: sharedConv.updatedAt,
                     },
                   });
                 }
@@ -866,7 +872,6 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                   .map((res) => ({
                     ...res,
                     sharedWithMe: true,
-                    status: UploadStatus.LOADED,
                   })) as Prompt[],
               }),
             );
@@ -1273,7 +1278,7 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
             () => !!applicationReference,
             of(
               ModelsActions.removeInstalledModels({
-                references: [applicationReference ?? ''],
+                references: [applicationReference!],
                 action: DeleteType.DELETE,
               }),
             ),

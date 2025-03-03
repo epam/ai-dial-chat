@@ -48,3 +48,16 @@ export const selectApplicationLogs = createSelector([rootSelector], (state) => {
     })
     .join('');
 });
+
+export const selectShouldSaveApplication = createSelector(
+  [rootSelector],
+  (state) => state.shouldSaveApplication,
+);
+
+export const selectExitAfterSave = createSelector(
+  [rootSelector],
+  (state) => state.exitAfterSave,
+);
+
+export const selectPublicFolders = (state: RootState) =>
+  rootSelector(state).publicFolders;
