@@ -141,17 +141,12 @@ export enum ScreenState {
   XL5 = Number.MAX_SAFE_INTEGER,
 }
 
-export interface RawEntityInfo {
+export interface EntityInfo {
   id: string;
   createdAt?: number;
   updatedAt?: number;
   author?: string;
   sharedWithMe?: boolean;
-}
-export interface EntityInfo
-  extends Omit<RawEntityInfo, 'createdAt' | 'updatedAt'> {
-  createdAt?: string;
-  updatedAt?: string;
   isPublic?: boolean;
 }
 
