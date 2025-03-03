@@ -6,6 +6,17 @@ import { BaseElement } from '@/src/ui/webElements';
 import { AgentDetailsModal } from '@/src/ui/webElements/marketplace/agentDetailsModal';
 import { Locator, Page } from '@playwright/test';
 
+export enum FoundMarketplaceAgents {
+  suggested,
+  filtered,
+}
+
+export interface MarketplaceAgentProperties {
+  name: string;
+  isSuggested: FoundMarketplaceAgents;
+  isWorkspaceAgent: FoundMarketplaceAgents;
+}
+
 export class MarketplaceAgents extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
     super(page, MarketplaceAgentSelectors.agent, parentLocator);
@@ -73,8 +84,8 @@ export class MarketplaceAgents extends BaseElement {
       .getChildElementBySelector(`${Attributes.visible}=true`);
   }
 
-  public getAgentVersion(entity: DialAIEntityModel | string) {
-    return this.getAgent(entity).getChildElementBySelector(
+  public getAgentVersion(agentElement: BaseElement) {
+    return agentElement.getChildElementBySelector(
       MarketplaceAgentSelectors.version,
     );
   }
@@ -94,85 +105,7 @@ export class MarketplaceAgents extends BaseElement {
     return this.agentNames.getElementsInnerContent();
   }
 
-  public async waitForAgentByIndex(index: number) {
-    const agent = this.getNthElement(index);
-    await agent.waitFor();
-  }
-
   public async getAgentsIcons() {
     return this.getElementIcons(this);
-  }
-
-  public async getSelectedAgent() {
-    const agentsCount = await this.getElementsCount();
-    for (let i = 1; i <= agentsCount; i++) {
-      const selectedAttr = await this.getNthElement(i).getAttribute(
-        Attributes.ariaSelected,
-      );
-      if (selectedAttr && JSON.parse(selectedAttr.toLowerCase())) {
-        const selectedAgent = this.getNthElement(i).locator(
-          MarketplaceAgentSelectors.agentName,
-        );
-        return selectedAgent.innerText();
-      }
-    }
-  }
-
-  public async isAgentUsed(
-    entity: DialAIEntityModel,
-    {
-      isInstalledDeploymentsUpdated = false,
-    }: { isInstalledDeploymentsUpdated?: boolean } = {},
-  ): Promise<boolean> {
-    let isAgentVisible = false;
-    const entityLocator = this.agentName(entity.name);
-    //open entity details modal if it is visible
-    if (await entityLocator.isVisible()) {
-      //open agent details modal
-      await entityLocator.click();
-      const agentDetailsModal = this.getAgentDetailsModal();
-      //if entity has more than one version in the config
-      if (entity.version) {
-        //check if current version match expected
-        const currentVersion =
-          await agentDetailsModal.agentVersion.getElementInnerContent();
-        //select version from dropdown menu if it does not match the current one
-        if (currentVersion !== entity.version) {
-          const menuTrigger = agentDetailsModal.versionMenuTrigger;
-          //check if version menu is available
-          if (await menuTrigger.isVisible()) {
-            await menuTrigger.click();
-            //check if menu includes version
-            const version = agentDetailsModal
-              .getVersionDropdownMenu()
-              .menuOption(entity.version);
-            if (await version.isVisible()) {
-              await agentDetailsModal
-                .getVersionDropdownMenu()
-                .selectMenuOption(entity.version);
-              await agentDetailsModal.clickUseButton({
-                isInstalledDeploymentsUpdated,
-              });
-              isAgentVisible = true;
-            } else {
-              await agentDetailsModal.closeButton.click();
-            }
-          } else {
-            await agentDetailsModal.closeButton.click();
-          }
-        } else {
-          await agentDetailsModal.clickUseButton({
-            isInstalledDeploymentsUpdated,
-          });
-          isAgentVisible = true;
-        }
-      } else {
-        await agentDetailsModal.clickUseButton({
-          isInstalledDeploymentsUpdated,
-        });
-        isAgentVisible = true;
-      }
-    }
-    return isAgentVisible;
   }
 }

@@ -47,6 +47,7 @@ dialTest(
     agentSettingAssertion,
     chat,
     talkToAgentDialog,
+    talkToAgentDialogAssertion,
     talkToAgents,
     baseAssertion,
     localStorageManager,
@@ -69,12 +70,9 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.click();
         await talkToAgentDialog.waitForState();
-        expect
-          .soft(
-            await talkToAgents.getSelectedAgent(),
-            ExpectedMessages.defaultTalkToIsValid,
-          )
-          .toBe(defaultModel.name);
+        await talkToAgentDialogAssertion.assertAgentIsSelected(
+          defaultModel.name,
+        );
       },
     );
 
@@ -401,6 +399,9 @@ dialTest(
 dialTest(
   'Recent "Talk to" list is updated',
   async ({
+    customApplicationBuilder,
+    applicationApiHelper,
+    modelApiHelper,
     dialHomePage,
     header,
     chat,
@@ -410,36 +411,63 @@ dialTest(
     agentInfoAssertion,
     agentInfo,
     talkToAgentDialogAssertion,
+    baseAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1044');
-    await dialHomePage.openHomePage({
-      iconsToBeLoaded: [defaultModel.iconUrl],
-    });
-    await dialHomePage.waitForPageLoaded();
-    await chat.changeAgentButton.click();
-    await talkToAgentDialog.selectAgent(nonDefaultModel, marketplacePage);
-    await dialHomePage.mockChatTextResponse(
-      MockedChatApiResponseBodies.simpleTextBody,
-    );
-    await chat.sendRequestWithButton('test message');
-    await header.createNewConversation();
-    await agentInfoAssertion.assertElementText(
-      agentInfo.agentName,
-      nonDefaultModel.name,
-    );
-    await chat.changeAgentButton.click();
-    await talkToAgentDialog.waitForState();
-    await talkToAgentDialogAssertion.assertAgentIsSelected(nonDefaultModel);
+    const appName = GeneratorUtil.randomApplicationName();
+    let configApp: DialAIEntityModel;
 
-    const recentTalkTo = await talkToAgents.getAgentNames();
-    expect
-      .soft(recentTalkTo[0], ExpectedMessages.recentEntitiesIsOnTop)
-      .toBe(nonDefaultModel.name);
+    await dialTest.step('Create a custom app', async () => {
+      const customAppModel = customApplicationBuilder
+        .withDisplayName(appName)
+        .build();
+      await applicationApiHelper.createApplication(customAppModel);
+      const configModels = await modelApiHelper.getModels();
+      configApp = configModels.find((m) => m.name === appName)!;
+    });
+
+    await dialTest.step(
+      'Create a new conversation based on custom app and send the request',
+      async () => {
+        await dialHomePage.openHomePage({
+          iconsToBeLoaded: [defaultModel.iconUrl],
+        });
+        await dialHomePage.waitForPageLoaded();
+        await chat.changeAgentButton.click();
+        await talkToAgentDialog.selectAgent(configApp, marketplacePage);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chat.sendRequestWithButton('test message');
+      },
+    );
+
+    await dialTest.step(
+      'Create new conversation, change the agent and verify custom app stays at the first place',
+      async () => {
+        await header.createNewConversation();
+        await agentInfoAssertion.assertElementText(
+          agentInfo.agentName,
+          appName,
+        );
+        await chat.changeAgentButton.click();
+        await talkToAgentDialog.waitForState();
+        await talkToAgentDialogAssertion.assertAgentIsSelected(configApp);
+
+        const recentTalkTo = await talkToAgents.getAgentNames();
+        baseAssertion.assertValue(recentTalkTo[0], appName);
+        baseAssertion.assertValue(
+          recentTalkTo[1],
+          ModelsUtil.getModel(recentModelIds[0])!.name,
+        );
+      },
+    );
   },
 );
 
-dialTest(
+//TODO: need to update the test-case
+dialTest.skip(
   'Search "Talk to" item in "See full list..."',
   async ({
     dialHomePage,

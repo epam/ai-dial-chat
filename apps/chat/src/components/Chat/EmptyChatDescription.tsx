@@ -133,7 +133,7 @@ const EmptyChatDescriptionView = ({
   );
   const incorrectModel = !model;
   const isExternal = isEntityIdExternal(conversation);
-  const modelIconSize = screenState === ScreenState.MOBILE ? 36 : 50;
+  const modelIconSize = screenState === ScreenState.SM ? 36 : 50;
   const isOldReplay = isOldConversationReplay(conversation.replay);
   const PseudoIcon = isPlayback
     ? PlaybackIcon
