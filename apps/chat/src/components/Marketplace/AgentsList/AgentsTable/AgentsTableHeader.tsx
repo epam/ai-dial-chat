@@ -60,7 +60,7 @@ export const AgentsTableHeader = forwardRef<
   );
 
   return (
-    <div className="flex min-w-full items-center">
+    <div className="flex min-w-full items-center px-0 md:px-5 xl:px-16">
       <div
         ref={leftColumnHeaderRef}
         className="min-w-[195px] flex-1 cursor-pointer items-center pb-3 pl-4 pr-3 pt-5 md:min-w-[316px] md:pl-4 xl:min-w-[245px]"

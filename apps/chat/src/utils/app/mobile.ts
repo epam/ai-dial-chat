@@ -10,30 +10,17 @@ export const isMobile = () => {
   return mobileRegex.test(userAgent);
 };
 
-const isScreenSize = (
-  maxWidth: number,
-  containerRef?: HTMLElement,
-): boolean => {
-  const width =
-    containerRef?.clientWidth ??
-    (typeof window !== 'undefined' ? window.innerWidth : 0);
-  return width < maxWidth;
-};
-
-export const isSmallScreen = (containerRef?: HTMLElement) =>
-  isScreenSize(ScreenState.SM, containerRef);
-export const isTabletScreen = (containerRef?: HTMLElement) =>
-  isScreenSize(ScreenState.MD, containerRef);
-export const isXLScreen = (containerRef?: HTMLElement) =>
-  isScreenSize(ScreenState.XL, containerRef);
-export const is3XLScreen = (containerRef?: HTMLElement) =>
-  isScreenSize(ScreenState.XL3, containerRef);
-export const is4XLScreen = (containerRef?: HTMLElement) =>
-  isScreenSize(ScreenState.XL4, containerRef);
+const isScreenSize = (maxWidth: number): boolean =>
+  typeof window !== 'undefined' && window.innerWidth < maxWidth;
+export const isSmallScreen = () => isScreenSize(ScreenState.SM);
+export const isTabletScreen = () => isScreenSize(ScreenState.MD);
+export const isXLScreen = () => isScreenSize(ScreenState.XL);
+export const is3XLScreen = () => isScreenSize(ScreenState.XL3);
+export const is4XLScreen = () => isScreenSize(ScreenState.XL4);
 
 export const isTabletScreenOrMobile = () => isTabletScreen() || isMobile();
 
-export const getScreenState = (containerRef?: HTMLElement) => {
+export const getScreenState = () => {
   const screenMappings = [
     { check: isSmallScreen, state: ScreenState.SM },
     { check: isTabletScreen, state: ScreenState.MD },
@@ -42,7 +29,7 @@ export const getScreenState = (containerRef?: HTMLElement) => {
     { check: is4XLScreen, state: ScreenState.XL4 },
   ];
 
-  const found = screenMappings.find(({ check }) => check(containerRef));
+  const found = screenMappings.find(({ check }) => check());
 
   if (found) {
     return found.state;

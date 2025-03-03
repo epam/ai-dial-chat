@@ -37,31 +37,29 @@ export const AgentsListWrapper = forwardRef<
   }));
 
   return (
-    <>
-      <section
-        ref={parentRef}
-        data-qa="agents-section"
-        className={classNames(
-          'relative flex overflow-auto px-3 md:px-5 xl:px-16',
-          className,
-        )}
-      >
-        {separatorRowId >= 0 && (
-          <span
-            ref={suggestedRowRef}
-            className="absolute flex w-screen max-w-full items-center px-3 text-xl"
-            style={{
-              height: `${rowsHeight}px`,
-              top: `${separatorRowId * rowsHeight}px`,
-            }}
-            data-qa="marketplace-suggestions-label"
-          >
-            {t('Suggested results from DIAL Marketplace')}
-          </span>
-        )}
-        {children}
-      </section>
-    </>
+    <section
+      ref={parentRef}
+      data-qa="agents-section"
+      className={classNames(
+        'relative flex overflow-auto px-3 md:px-5 xl:px-16',
+        className,
+      )}
+    >
+      {separatorRowId >= 0 && (
+        <span
+          ref={suggestedRowRef}
+          className="absolute flex w-screen max-w-full items-center px-3 text-xl"
+          style={{
+            height: `${rowsHeight}px`,
+            top: `${separatorRowId * rowsHeight}px`,
+          }}
+          data-qa="marketplace-suggestions-label"
+        >
+          {t('Suggested results from DIAL Marketplace')}
+        </span>
+      )}
+      {children}
+    </section>
   );
 });
 AgentsListWrapper.displayName = 'AgentsListWrapper';
