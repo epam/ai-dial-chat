@@ -37,12 +37,8 @@ export class MarketplaceContainer extends BaseLayoutContainer<Header> {
     return this.getChildElementBySelector(ChatSelectors.messageSpinner);
   }
 
-  public async goToMarketplaceHome(expectedAgentsCount?: number) {
+  public async goToMarketplaceHome() {
     await this.getMarketplaceSidebar().marketplaceHomePageButton.click();
-    if (expectedAgentsCount) {
-      await this.getMarketplace()
-        .getAgents()
-        .waitForAgentByIndex(expectedAgentsCount);
-    }
+    await this.getMarketplace().getMarketplaceAgentsSection().waitForState();
   }
 }
