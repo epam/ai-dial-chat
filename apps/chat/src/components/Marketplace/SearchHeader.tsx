@@ -136,20 +136,16 @@ export const SearchHeader = () => {
             router.push(getAppEditorRoute(ApplicationType.CUSTOM_APP));
           },
         },
-        ...(canCreateCodeApps
-          ? [
-              {
-                name: t('Code app'),
-                dataQa: 'add-startable-app',
-                type: ApplicationType.CODE_APP,
-                display: isCodeAppsEnabled,
-                onClick: (e: React.MouseEvent) => {
-                  e.stopPropagation();
-                  router.push(getAppEditorRoute(ApplicationType.CODE_APP));
-                },
-              },
-            ]
-          : []),
+        {
+          name: t('Code app'),
+          dataQa: 'add-startable-app',
+          type: ApplicationType.CODE_APP,
+          display: isCodeAppsEnabled && canCreateCodeApps,
+          onClick: (e: React.MouseEvent) => {
+            e.stopPropagation();
+            router.push(getAppEditorRoute(ApplicationType.CODE_APP));
+          },
+        },
         ...(applicationTypeSchemas?.map((schema: ApplicationTypeSchema) => ({
           name: t(schema.displayName),
           type: schema.displayName,
@@ -171,8 +167,8 @@ export const SearchHeader = () => {
     [
       t,
       isCustomApplicationsEnabled,
-      canCreateCodeApps,
       isCodeAppsEnabled,
+      canCreateCodeApps,
       applicationTypeSchemas,
       router,
       detailedApplicationTypeSchema?.$id,
