@@ -7,10 +7,10 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 
-import { ApplicationCard } from '../../ApplicationCard';
 import { AgentsListWrapper } from '../AgentsListWrapper';
 import { SuggestedMessage } from '../SuggestedMessage';
 import { AgentsListProps } from '../view-props';
+import { ApplicationCard } from './ApplicationCard';
 
 import isString from 'lodash-es/isString';
 import range from 'lodash-es/range';

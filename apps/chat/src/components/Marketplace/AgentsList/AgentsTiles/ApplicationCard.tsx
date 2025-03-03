@@ -56,8 +56,8 @@ import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescr
 import ShareIcon from '@/src/components/Common/ShareIcon';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
-import { AgentBookmark } from './AgentBookmark';
-import { TopicsList } from './TopicsList';
+import { AgentBookmark } from '../../AgentBookmark';
+import { TopicsList } from '../../TopicsList';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
