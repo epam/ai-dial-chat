@@ -287,7 +287,7 @@ export const AgentsTable: React.FC<AgentsListProps> = ({
                 virtualRow={virtualRow}
               >
                 {isString(entity) ? (
-                  <span className="!border-t-0"></span>
+                  <span></span>
                 ) : (
                   <AgentsTableRightSideRow
                     entity={entity}

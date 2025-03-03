@@ -48,7 +48,7 @@ export const AgentsListWrapper = forwardRef<
       {separatorRowId >= 0 && (
         <span
           ref={suggestedRowRef}
-          className="absolute flex w-screen max-w-full items-center px-3 text-xl"
+          className="absolute flex max-w-full items-center px-3 text-xl"
           style={{
             height: `${rowsHeight}px`,
             top: `${separatorRowId * rowsHeight}px`,
