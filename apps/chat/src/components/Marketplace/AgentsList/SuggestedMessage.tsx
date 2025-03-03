@@ -15,11 +15,11 @@ export const SuggestedMessage: React.FC<{ entities: DialAIEntityModel[] }> = ({
   }
 
   return (
-    <div
-      className="flex flex-col justify-center px-3"
-      data-qa="no-workspace-results-found"
-    >
-      <div className="flex items-center gap-1">
+    <div className="flex flex-col justify-center px-3">
+      <div
+        className="flex items-center gap-1"
+        data-qa="no-workspace-results-found"
+      >
         <Magnifier height={32} width={32} className="shrink-0 text-secondary" />
         <span className="text-sm sm:text-base">
           {t(

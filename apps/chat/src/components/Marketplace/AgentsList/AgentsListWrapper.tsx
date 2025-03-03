@@ -11,7 +11,6 @@ interface Props {
   separatorRowId: number;
   rowsHeight: number;
   className?: string;
-  dataQA?: string;
 }
 
 export const AgentsListWrapper = forwardRef<
@@ -20,7 +19,7 @@ export const AgentsListWrapper = forwardRef<
     suggestedRowRef: React.RefObject<HTMLSpanElement>;
   },
   Props
->(({ children, separatorRowId, rowsHeight, className, dataQA }, ref) => {
+>(({ children, separatorRowId, rowsHeight, className }, ref) => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const parentRef = useRef<HTMLDivElement>(null);
@@ -41,7 +40,7 @@ export const AgentsListWrapper = forwardRef<
     <>
       <section
         ref={parentRef}
-        data-qa={dataQA}
+        data-qa="agents-section"
         className={classNames(
           'relative flex overflow-auto px-3 md:px-5 xl:px-16',
           className,

@@ -39,7 +39,6 @@ export const VirtualCardsList: React.FC<AgentsListProps> = ({
   onEdit,
   onBookmarkClick,
   onLogsClick,
-  dataQA,
 }) => {
   const wrapperRefs = useRef<{
     parentRef: React.RefObject<HTMLDivElement>;
@@ -127,7 +126,7 @@ export const VirtualCardsList: React.FC<AgentsListProps> = ({
                     ? undefined
                     : `repeat(${colsCount}, minmax(0, 1fr))`,
                 }}
-                data-qa={dataQA}
+                data-qa="agents-row"
               >
                 {rowEntities.map((entity) => {
                   if (!entity) {
@@ -156,6 +155,11 @@ export const VirtualCardsList: React.FC<AgentsListProps> = ({
                       onEdit={onEdit}
                       onLogsClick={onLogsClick}
                       onBookmarkClick={onBookmarkClick}
+                      dataQA={
+                        suggestedResults.includes(entity)
+                          ? 'suggested'
+                          : 'filtered'
+                      }
                     />
                   );
                 })}

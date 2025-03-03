@@ -141,6 +141,7 @@ const SliderModelsGroup = ({
     <section
       key={modelsGroup.map((model) => model.id).join('.')}
       className="h-full min-w-full"
+      data-qa="agents-section"
     >
       <div
         className="grid"
@@ -152,7 +153,6 @@ const SliderModelsGroup = ({
               ? MOBILE_GRID_TILES_GAP
               : COMMON_GRID_TILES_GAP,
         }}
-        data-qa="agents"
       >
         {modelsGroup.map((model) => {
           const isNotPseudoModelSelected =

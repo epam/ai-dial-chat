@@ -114,7 +114,6 @@ const ResultsView = memo(
           suggestedResults={suggestedResults}
           separator="Suggested results from DIAL Marketplace"
           {...props}
-          dataQA="filtered-agents"
         />
       );
     }

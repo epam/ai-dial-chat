@@ -114,7 +114,6 @@ export const AgentsTable: React.FC<AgentsListProps> = ({
   onEdit,
   onBookmarkClick,
   onLogsClick,
-  dataQA,
 }) => {
   const dispatch = useAppDispatch();
 
@@ -240,7 +239,6 @@ export const AgentsTable: React.FC<AgentsListProps> = ({
         rowsHeight={ROW_SIZES[screenState]}
         ref={wrapperRefs}
         className={screenState === ScreenState.SM ? '!px-0' : ''}
-        dataQA={dataQA}
       >
         <DataRowContainer
           ref={leftColumnDataRef}

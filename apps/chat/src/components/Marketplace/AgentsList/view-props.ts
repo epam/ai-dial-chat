@@ -13,5 +13,4 @@ export interface AgentsListProps {
   onBookmarkClick?: (entity: DialAIEntityModel) => void;
   onSelectVersion?: (entity: DialAIEntityModel) => void;
   onLogsClick?: (entity: DialAIEntityModel) => void;
-  dataQA?: string;
 }
