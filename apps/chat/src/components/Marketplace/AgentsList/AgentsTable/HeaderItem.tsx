@@ -50,7 +50,7 @@ export const HeaderItem: React.FC<Props> = ({
         <SortIcon
           className={
             sortOrder
-              ? 'text-controls-permanent'
+              ? 'text-primary'
               : 'invisible text-secondary group-hover:visible'
           }
           size={16}
