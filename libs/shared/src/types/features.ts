@@ -30,6 +30,7 @@ export enum Feature {
   CodeApps = 'code-apps', // Enable Code apps
   DisallowChangeAgent = 'disallow-change-agent', //Disallow "Change agent" button
   MarketplaceTableView = 'marketplace-table-view', //Disallow "Change agent" button
+  HideUserSettings = 'hide-user-settings', // Hide user settings
 }
 
 export const availableFeatures: Record<Feature, boolean> = {
@@ -64,4 +65,5 @@ export const availableFeatures: Record<Feature, boolean> = {
   [Feature.CodeApps]: true,
   [Feature.DisallowChangeAgent]: true,
   [Feature.MarketplaceTableView]: true,
+  [Feature.HideUserSettings]: true,
 };
