@@ -4,6 +4,7 @@ import dialTest from '@/src/core/dialFixtures';
 import {
   AddAppMenuOptions,
   CheckboxState,
+  ExpectedMessages,
   MarketplaceExpectedMessages,
   MarketplaceFilterTypes,
   MenuOptions,
@@ -22,7 +23,7 @@ dialTest(
     marketplacePage,
     marketplaceFilter,
     marketplace,
-    marketplaceAgents,
+    marketplaceAgentsSection,
     marketplaceSidebar,
     baseAssertion,
   }) => {
@@ -58,13 +59,14 @@ dialTest(
             EntityType.Model,
           )
           .click();
-        await baseAssertion.assertElementsCount(
-          marketplace.getAgents(),
+        const actualModels = await marketplaceAgentsSection.getAllAgents();
+        baseAssertion.assertValue(
+          actualModels.length,
           groupedModelNames.length,
+          ExpectedMessages.elementsCountIsValid,
         );
-        const actualModels = await marketplaceAgents.getAgentNames();
         baseAssertion.assertArrayIncludesAll(
-          actualModels,
+          actualModels.map((model) => model.name),
           groupedModelNames,
           MarketplaceExpectedMessages.filteredAgentsAreValid,
         );
@@ -74,13 +76,18 @@ dialTest(
     await dialTest.step(
       'Switch to "My Workspace" tab and verify only installed models are displayed, other models stay under "Suggested results"',
       async () => {
+        //remove next line when fixed https://github.com/epam/ai-dial-chat/issues/3303
+        await marketplaceAgentsSection.goTop();
         await marketplaceSidebar.myWorkspaceButton.click();
-        const filteredAgents = marketplace.getFilteredAgents();
-        await baseAssertion.assertElementsCount(
-          filteredAgents,
+        const allAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualWorkspaceModels = allAgents
+          .filter((agent) => agent.isWorkspaceAgent)
+          .map((agent) => agent.name);
+        baseAssertion.assertValue(
+          actualWorkspaceModels.length,
           randomModelNames.length,
+          ExpectedMessages.elementsCountIsValid,
         );
-        const actualWorkspaceModels = await filteredAgents.getAgentNames();
         baseAssertion.assertArrayIncludesAll(
           actualWorkspaceModels,
           randomModelNames,
@@ -93,12 +100,14 @@ dialTest(
         const expectedSuggestedModelNames = Array.from(
           ModelsUtil.groupEntitiesByName(nonWorkspaceModels).keys(),
         );
-        const suggestedAgents = marketplace.getSuggestedAgents();
-        await baseAssertion.assertElementsCount(
-          suggestedAgents,
+        const actualSuggestedModels = allAgents
+          .filter((agent) => agent.isSuggested)
+          .map((agent) => agent.name);
+        baseAssertion.assertValue(
+          actualSuggestedModels.length,
           expectedSuggestedModelNames.length,
+          ExpectedMessages.elementsCountIsValid,
         );
-        const actualSuggestedModels = await suggestedAgents.getAgentNames();
         baseAssertion.assertArrayIncludesAll(
           actualSuggestedModels,
           expectedSuggestedModelNames,
@@ -137,14 +146,14 @@ dialTest(
           marketplace.noWorkspaceResultsFound,
           'visible',
         );
-        const suggestedAgents = marketplace.getSuggestedAgents();
-        await baseAssertion.assertElementsCount(
-          suggestedAgents,
+        const suggestedAgents = await marketplaceAgentsSection.getAllAgents();
+        baseAssertion.assertValue(
+          suggestedAgents.length,
           groupedModelNames.length,
+          ExpectedMessages.elementsCountIsValid,
         );
-        const actualSuggestedModels = await suggestedAgents.getAgentNames();
         baseAssertion.assertArrayIncludesAll(
-          actualSuggestedModels,
+          suggestedAgents.map((agent) => agent.name),
           groupedModelNames,
           MarketplaceExpectedMessages.filteredAgentsAreValid,
         );
@@ -165,7 +174,7 @@ dialTest(
     marketplaceSidebar,
     marketplaceFilter,
     marketplaceAgents,
-    marketplace,
+    marketplaceAgentsSection,
     confirmationDialog,
     addAppDropdownMenu,
     appEditorPage,
@@ -206,13 +215,14 @@ dialTest(
             EntityType.Application,
           )
           .click();
-        await baseAssertion.assertElementsCount(
-          marketplace.getAgents(),
+        const actualModels = await marketplaceAgentsSection.getAllAgents();
+        baseAssertion.assertValue(
+          actualModels.length,
           expectedAppNames.length,
+          ExpectedMessages.elementsCountIsValid,
         );
-        const actualModels = await marketplaceAgents.getAgentNames();
         baseAssertion.assertArrayIncludesAll(
-          actualModels,
+          actualModels.map((agent) => agent.name),
           expectedAppNames,
           MarketplaceExpectedMessages.filteredAgentsAreValid,
         );
@@ -234,11 +244,11 @@ dialTest(
         await appEditorHeader.saveAppAndExit();
         await marketplacePage.waitForPageLoaded();
 
-        const actualFilteredModels = await marketplace
-          .getFilteredAgents()
-          .getAgentNames();
+        const actualAgents = await marketplaceAgentsSection.getAllAgents();
         baseAssertion.assertArrayIncludesAll(
-          actualFilteredModels,
+          actualAgents
+            .filter((agent) => agent.isWorkspaceAgent)
+            .map((agent) => agent.name),
           [addedAppName],
           MarketplaceExpectedMessages.filteredAgentsAreValid,
         );
@@ -248,19 +258,22 @@ dialTest(
     await dialTest.step(
       'Delete added custom app and verify it disappears immediately',
       async () => {
-        const filteredAgents = marketplace.getFilteredAgents();
-        await filteredAgents.getAgent(addedAppName).hoverOver();
-        await filteredAgents.getAgentDotsMenu(addedAppName).click();
-        await filteredAgents
+        const addedAppElement =
+          await marketplaceAgentsSection.findAgentElement(addedAppName);
+        await addedAppElement.hoverOver();
+        await marketplaceAgents
+          .getAgentElementDotsMenu(addedAppElement)
+          .click();
+        await marketplaceAgents
           .getAgentDropdownMenu()
           .selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
 
-        const actualFilteredModels = await marketplace
-          .getFilteredAgents()
-          .getAgentNames();
+        const actualAgents = await marketplaceAgentsSection.getAllAgents();
         baseAssertion.assertArrayExcludesAll(
-          actualFilteredModels,
+          actualAgents
+            .filter((agent) => agent.isWorkspaceAgent)
+            .map((agent) => agent.name),
           [addedAppName],
           MarketplaceExpectedMessages.filteredAgentsAreValid,
         );
