@@ -93,7 +93,7 @@ export class MarketplaceAgentsSection extends BaseElement {
       isInstalledDeploymentsUpdated = false,
     }: { isInstalledDeploymentsUpdated?: boolean } = {},
   ) {
-    let scrollPosition: { scrollTop: scrollTop; clientHeight: clientHeight };
+    let scrollPosition: { scrollTop: number; clientHeight: number };
     const scrollHeight = await this.rootLocator.evaluate((p) => p.scrollHeight);
     let isAgentFoundAndUsed = false;
     do {
@@ -112,7 +112,7 @@ export class MarketplaceAgentsSection extends BaseElement {
   }
 
   public async findAgentElement(agent: DialAIEntityModel | string) {
-    let scrollPosition: { scrollTop: scrollTop; clientHeight: clientHeight };
+    let scrollPosition: { scrollTop: number; clientHeight: number };
     const scrollHeight = await this.rootLocator.evaluate((p) => p.scrollHeight);
     let agentElement;
     do {
@@ -140,7 +140,7 @@ export class MarketplaceAgentsSection extends BaseElement {
 
   public async getAllAgents() {
     const allAgents: MarketplaceAgentProperties[] = [];
-    let scrollPosition: { scrollTop: scrollTop; clientHeight: clientHeight };
+    let scrollPosition: { scrollTop: number; clientHeight: number };
     const scrollHeight = await this.rootLocator.evaluate((p) => p.scrollHeight);
     do {
       const visibleAgents = this.getAgents();

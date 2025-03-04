@@ -29,10 +29,8 @@ import {
   Role,
   UploadStatus,
 } from '@epam/ai-dial-shared';
-import groupBy from 'lodash-es/groupBy';
 import orderBy from 'lodash-es/orderBy';
 import uniq from 'lodash-es/uniq';
-import uniqBy from 'lodash-es/uniqBy';
 
 export const getAssistantModelId = (
   modelType: EntityType,
@@ -230,30 +228,6 @@ export const isChosenConversationValidForCompare = (
 
 export const getOpenAIEntityFullName = (model: { name?: string; id: string }) =>
   model.name || model.id;
-
-interface ModelGroup {
-  groupName: string;
-  entities: DialAIEntityModel[];
-}
-
-export const groupModelsAndSaveOrder = (
-  models: DialAIEntityModel[],
-): ModelGroup[] => {
-  const uniqModels = uniqBy(models, 'reference');
-  const groupedModels = groupBy(uniqModels, (m) => m.name ?? m.reference);
-  const insertedSet = new Set();
-  const result: ModelGroup[] = [];
-
-  uniqModels.forEach((m) => {
-    const key = m.name ?? m.reference;
-    if (!insertedSet.has(key)) {
-      result.push({ groupName: key, entities: groupedModels[key] });
-      insertedSet.add(key);
-    }
-  });
-
-  return result;
-};
 
 export const addPausedError = (
   conversation: Conversation,

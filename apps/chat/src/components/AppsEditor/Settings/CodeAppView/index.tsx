@@ -56,7 +56,7 @@ import {
   getCodeAppData,
 } from '../form';
 
-import { isEqual } from 'lodash-es';
+import isEqual from 'lodash-es/isEqual';
 
 type Options<T extends Path<CodeAppFormData>> = Omit<
   RegisterOptions<CodeAppFormData, T>,

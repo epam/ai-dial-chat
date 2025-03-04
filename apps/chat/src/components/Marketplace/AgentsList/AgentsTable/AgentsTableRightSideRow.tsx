@@ -50,6 +50,7 @@ import {
 } from '@/src/constants/marketplace';
 
 import ContextMenu from '@/src/components/Common/ContextMenu';
+import { DateRenderer } from '@/src/components/Common/DateRenderer';
 import Tooltip from '@/src/components/Common/Tooltip';
 
 import { AgentBookmark } from '../../AgentBookmark';
@@ -344,9 +345,11 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
         </div>
         <div className="flex w-[86px] min-w-[86px] items-center">
           <p className="truncate">
-            {entity?.createdAt
-              ? new Date(entity.createdAt).toLocaleDateString()
-              : t('Unknown')}
+            {entity?.createdAt ? (
+              <DateRenderer dateValue={entity.createdAt} />
+            ) : (
+              t('Unknown')
+            )}
           </p>
         </div>
         <div className="hidden flex-none items-center xl:flex">
