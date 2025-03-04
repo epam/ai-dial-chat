@@ -41,6 +41,7 @@ export default function ShareIcon({
   isMyEntity,
 }: ShareIconProps) {
   const { t } = useTranslation(Translation.SideBar);
+  const isApplication = featureType === FeatureType.Application;
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
@@ -74,8 +75,11 @@ export default function ShareIcon({
       {children}
       <div
         className={classNames(
-          'absolute -bottom-1 -left-1 bg-layer-3',
-          isPublished ? 'rounded-md' : 'rounded-sm',
+          'absolute bg-layer-3',
+          isPublished && 'rounded-md',
+          isApplication
+            ? 'bottom-0 left-0 rounded-none rounded-tr-[4px] stroke-[0.6]'
+            : '-bottom-1 -left-1 rounded-sm stroke-[1.5]',
           iconWrapperClassName,
         )}
         data-qa={
@@ -96,9 +100,12 @@ export default function ShareIcon({
             width={size}
             height={size}
             className={classNames(
-              'stroke-[1.5] p-px text-accent-primary group-hover:bg-accent-primary-alpha',
+              'p-px text-accent-primary group-hover:bg-accent-primary-alpha',
               isHighlighted && 'bg-accent-primary-alpha',
-              isPublished ? 'rounded-md' : 'rounded-sm',
+              isPublished && '!rounded-md',
+              isApplication
+                ? 'rounded-none rounded-tr-[4px] stroke-[0.6]'
+                : 'rounded-sm stroke-[1.5]',
               isMyEntityIcon && '!stroke-[1.5]',
               iconClassName,
             )}

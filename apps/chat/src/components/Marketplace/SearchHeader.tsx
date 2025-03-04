@@ -20,6 +20,7 @@ import {
   ApplicationTypesSchemasActions,
   ApplicationTypesSchemasSelectors,
 } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
+import { AuthSelectors } from '@/src/store/auth/auth.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MarketplaceActions,
@@ -104,6 +105,10 @@ export const SearchHeader = () => {
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
+  const canCreateCodeApps = useAppSelector(
+    AuthSelectors.selectCanCreateCodeApps,
+  );
+
   const isCustomApplicationsEnabled = enabledFeatures.has(
     Feature.CustomApplications,
   );
@@ -135,7 +140,7 @@ export const SearchHeader = () => {
           name: t('Code app'),
           dataQa: 'add-startable-app',
           type: ApplicationType.CODE_APP,
-          display: isCodeAppsEnabled,
+          display: isCodeAppsEnabled && canCreateCodeApps,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
             router.push(getAppEditorRoute(ApplicationType.CODE_APP));
@@ -162,11 +167,12 @@ export const SearchHeader = () => {
     [
       t,
       isCustomApplicationsEnabled,
-      applicationTypeSchemas,
       isCodeAppsEnabled,
+      canCreateCodeApps,
+      applicationTypeSchemas,
       router,
+      detailedApplicationTypeSchema?.$id,
       dispatch,
-      detailedApplicationTypeSchema,
     ],
   );
 
