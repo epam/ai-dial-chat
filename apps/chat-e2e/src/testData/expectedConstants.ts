@@ -82,7 +82,7 @@ export const ExpectedConstants = {
   regenerateResponseToContinueTooltip:
     'Please regenerate response to continue working with chat',
   regenerateResponseTooltip: 'Regenerate response',
-  sharedConversationTooltip: 'Shared',
+  sharedConversationTooltip: 'Shared by me',
   sharedConversationName: (name: string) => `Share: ${name}`,
   sharedLink: (invitationLink: string) => {
     const invitationPath = '/v1/invitations/';
