@@ -106,11 +106,5 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
   }
 
-  const commonProps = await getCommonPageProps(context);
-
-  return {
-    props: {
-      ...commonProps,
-    },
-  };
+  return getCommonPageProps(context);
 };
