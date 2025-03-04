@@ -39,7 +39,7 @@ import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
 import { QuickAppFormData, getQuickAppData } from '../form';
 
-import { isEqual } from 'lodash-es';
+import isEqual from 'lodash-es/isEqual';
 
 type Options<T extends Path<QuickAppFormData>> = Omit<
   RegisterOptions<QuickAppFormData, T>,

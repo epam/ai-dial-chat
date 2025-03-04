@@ -33,7 +33,7 @@ import {
   getCustomApplicationData,
 } from '../form';
 
-import { isEqual } from 'lodash-es';
+import isEqual from 'lodash-es/isEqual';
 
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const ControlledField = withController(Field);

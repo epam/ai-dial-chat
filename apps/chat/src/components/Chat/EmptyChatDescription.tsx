@@ -13,6 +13,7 @@ import {
   isReplayAsIsConversation,
 } from '@/src/utils/app/conversation';
 import { isEntityIdExternal } from '@/src/utils/app/id';
+import { getGroupModelKey } from '@/src/utils/app/models';
 
 import { Conversation } from '@/src/types/chat';
 import { ScreenState } from '@/src/types/common';
@@ -84,13 +85,15 @@ const EmptyChatDescriptionView = ({
   const model = modelsMap[conversation.model.id];
   const versions = useMemo(
     () =>
-      models.filter(
-        (m) =>
-          (installedModelIds.has(m.reference) ||
-            model?.reference === m.reference) &&
-          m.name === model?.name,
-      ),
-    [installedModelIds, model?.name, model?.reference, models],
+      model
+        ? models.filter(
+            (m) =>
+              (installedModelIds.has(m.reference) ||
+                model.reference === m.reference) &&
+              getGroupModelKey(m) === getGroupModelKey(model),
+          )
+        : [],
+    [installedModelIds, model, models],
   );
 
   const handleOpenChangeModel = useCallback(

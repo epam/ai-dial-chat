@@ -1,8 +1,9 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
+import { extractNameFromEmail } from '@/src/utils/app/common';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
-import { EntityInfo, EntityType, RawEntityInfo } from '@/src/types/common';
+import { EntityInfo, EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 
 import {
@@ -96,13 +97,15 @@ export const chatSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        entityInfo: RawEntityInfo;
+        entityInfo: EntityInfo;
       }>,
     ) => {
       state.selectedEntityInfo = {
         id: payload.entityInfo.id,
         sharedWithMe: payload.entityInfo.sharedWithMe,
-        isPublic: isEntityIdPublic({ id: payload.entityInfo.id }),
+        isPublic:
+          payload.entityInfo.isPublic ||
+          isEntityIdPublic({ id: payload.entityInfo.id }),
       };
 
       state.infoModalState = ModalState.LOADING;
@@ -112,25 +115,17 @@ export const chatSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        entityInfo: RawEntityInfo;
+        entityInfo: EntityInfo;
       }>,
     ) => {
       const { updatedAt, createdAt, author, id } = payload.entityInfo;
 
-      const formattedUpdatedAt = updatedAt
-        ? new Date(updatedAt).toLocaleDateString()
-        : undefined;
-
-      const formattedCreatedAt = createdAt
-        ? new Date(createdAt).toLocaleDateString()
-        : undefined;
-
       const entityInfo: EntityInfo = {
         ...state.selectedEntityInfo,
         id,
-        updatedAt: formattedUpdatedAt,
-        createdAt: formattedCreatedAt,
-        author,
+        updatedAt,
+        createdAt,
+        author: extractNameFromEmail(author),
       };
 
       state.selectedEntityInfo = entityInfo;

@@ -5,6 +5,7 @@ import classNames from 'classnames';
 import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { getModelShortDescription } from '@/src/utils/app/application';
+import { isMyApplication } from '@/src/utils/app/id';
 
 import { FeatureType, ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
@@ -66,11 +67,8 @@ export const AgentsTableLeftSideRow: React.FC<Props> = memo(
               isHighlighted={false}
               size={shareIconSize}
               featureType={FeatureType.Application}
-              iconClassName={classNames(
-                '!rounded-[4px] !stroke-[0.6]',
-                isHovered ? 'bg-layer-2 ' : 'bg-layer-1',
-              )}
-              iconWrapperClassName="!rounded-[4px]"
+              iconClassName={isHovered ? 'bg-layer-2 ' : 'bg-layer-1'}
+              isMyEntity={isMyApplication(entity)}
             >
               <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
             </ShareIcon>

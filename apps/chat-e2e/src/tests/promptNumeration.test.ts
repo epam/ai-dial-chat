@@ -263,6 +263,7 @@ dialTest(
           folderPrompts.getFolderByName(
             ExpectedConstants.newPromptFolderWithIndexTitle(1),
           ),
+          { isHttpMethodTriggered: true },
         );
 
         await expect
@@ -393,9 +394,6 @@ dialTest(
         await promptBar.dragAndDropPromptFromFolder(
           ExpectedConstants.newPromptFolderWithIndexTitle(2),
           duplicatedPromptName,
-          {
-            isHttpMethodTriggered: false,
-          },
         );
 
         // Check for error message

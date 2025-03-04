@@ -236,6 +236,7 @@ dialTest(
           folderConversation.folders.name,
           folderConversation.conversations[1].name,
           conversationToDrop.name,
+          { isHttpMethodTriggered: true },
         );
 
         const folderConversationsCount =
@@ -426,6 +427,7 @@ dialTest(
           promptInFolder.folders.name,
           promptInFolder.prompts[0].name,
           prompt.name,
+          { isHttpMethodTriggered: true },
         );
         await expect
           .soft(

@@ -6,8 +6,8 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getApplicationType } from '@/src/utils/app/application';
-import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
 import { translate } from '@/src/utils/app/translation';
 import {
   doesApplicationMatchFilters,
@@ -455,7 +455,7 @@ export const TabRenderer = () => {
       {/* MODALS */}
       {!!deleteModel && (
         <ConfirmDialog
-          isOpen={!!deleteModel}
+          isOpen
           {...getDeleteConfirmationText(deleteModel.action, deleteModel.entity)}
           onClose={handleDeleteClose}
           cancelLabel={t('Cancel')}
