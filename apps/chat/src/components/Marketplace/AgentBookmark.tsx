@@ -56,7 +56,7 @@ export const AgentBookmark: React.FC<Props> = ({
             e.stopPropagation();
             onBookmarkClick?.(entity);
           }}
-          className="rounded text-secondary hover:text-accent-primary"
+          className="rounded text-secondary hover:text-accent-primary group-hover/bookmark:text-accent-primary"
           size={size}
         />
       </button>
