@@ -312,8 +312,8 @@ export const clearPromptsEpic: AppEpic = (action$) =>
     filter(PromptsActions.clearPrompts.match),
     switchMap(() =>
       concat(
-        of(PromptsActions.clearPromptsSuccess()),
         of(PromptsActions.deleteFolder({ folderId: getPromptRootId() })),
+        of(PromptsActions.clearPromptsSuccess()),
       ),
     ),
   );

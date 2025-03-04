@@ -915,12 +915,12 @@ const clearConversationsEpic: AppEpic = (action$) =>
     filter(ConversationsActions.clearConversations.match),
     switchMap(() => {
       return concat(
-        of(ConversationsActions.clearConversationsSuccess()),
         of(
           ConversationsActions.deleteFolder({
             folderId: getConversationRootId(),
           }),
         ),
+        of(ConversationsActions.clearConversationsSuccess()),
       );
     }),
   );
