@@ -246,7 +246,7 @@ export class Folders extends BaseElement {
     await method();
   }
 
-  //3 API calls are triggered if to rename folder with content
+  //2 API calls are triggered if to rename folder with content
   //if shared folder is renamed, confirmation popup is prompted
   public async renameFolderWithContent(
     newName: string,
@@ -256,7 +256,6 @@ export class Folders extends BaseElement {
     await this.editFolderName(newName);
     if (isApiStorageType && isHttpMethodTriggered) {
       const hostsMap = new Map([
-        [API.listingHost, 'GET'],
         [API.moveHost, 'POST'],
         ['/api/', 'PUT'],
       ]);

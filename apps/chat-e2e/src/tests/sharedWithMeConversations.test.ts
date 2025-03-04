@@ -947,7 +947,7 @@ dialSharedWithMeTest(
           conversationInFolder.folders.name,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await itemApiHelper.deleteEntity(conversation);
       },
     );
