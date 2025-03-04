@@ -1278,7 +1278,7 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
             () => !!applicationReference,
             of(
               ModelsActions.removeInstalledModels({
-                references: [applicationReference ?? ''],
+                references: [applicationReference!],
                 action: DeleteType.DELETE,
               }),
             ),

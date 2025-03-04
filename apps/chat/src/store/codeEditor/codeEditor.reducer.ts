@@ -3,7 +3,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { CodeEditorState } from './codeEditor.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { uniqBy } from 'lodash-es';
+import uniqBy from 'lodash-es/uniqBy';
 
 const initialState: CodeEditorState = {
   fileContentLoadingStatus: UploadStatus.LOADED,

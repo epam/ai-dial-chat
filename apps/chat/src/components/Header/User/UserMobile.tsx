@@ -24,6 +24,7 @@ import { withRenderWhen } from '../../Common/RenderWhen';
 import { withRenderForScreen } from '../../Common/ScreenRender';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
+import { Feature } from '@epam/ai-dial-shared';
 
 const UserInfo = () => {
   const { t } = useTranslation(Translation.Header);
@@ -112,9 +113,12 @@ const Logout = () => {
   );
 };
 const UserMenu = () => {
+  const isHideUserSettingsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.HideUserSettings),
+  );
   return (
     <div className="flex flex-col gap-1 p-2">
-      <UserSettings />
+      {!isHideUserSettingsEnabled && <UserSettings />}
       <Logout />
     </div>
   );
