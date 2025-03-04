@@ -433,7 +433,7 @@ export const ApplicationDetailsFooter = ({
           <AgentBookmark
             entity={entity}
             size={24}
-            className="icon-button"
+            className="icon-button group/bookmark"
             onBookmarkClick={onBookmarkClick}
           />
         </div>
