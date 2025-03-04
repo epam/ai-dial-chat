@@ -100,7 +100,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   if (slug === ApplicationType.CODE_APP && !canCreateCodeApps) {
     return {
       redirect: {
-        destination: '/marketplace',
+        destination: '/404',
         permanent: false,
       },
     };
