@@ -55,7 +55,7 @@ export default function ShareIcon({
   );
 
   if (
-    (!isSharingEnabled || (!isShared && !sharedWithMe)) &&
+    (!isSharingEnabled || (!isShared && (!sharedWithMe || !isApplication))) &&
     (!isPublishingEnabled || !isPublished) &&
     !isMyEntity
   ) {
@@ -110,7 +110,7 @@ export default function ShareIcon({
                 ? 'rounded-none rounded-tr-[4px] stroke-[0.6]'
                 : 'rounded-sm stroke-[1.5]',
               isMyEntityIcon && '!stroke-[1.5]',
-              sharedWithMe && 'rotate-180',
+              sharedWithMe && !isShared && 'rotate-180',
               iconClassName,
             )}
           />
