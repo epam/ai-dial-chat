@@ -216,7 +216,7 @@ dialAdminTest(
           PublishPath.Organization,
         );
 
-        await adminPublishingApprovalModalAssertion.assertRequestCreationDateLabelState(
+        await adminPublishingApprovalModalAssertion.assertRequestCreatedLabelState(
           'visible',
         );
         await adminPublishingApprovalModalAssertion.assertRequestCreationDate(

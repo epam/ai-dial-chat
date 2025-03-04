@@ -19,4 +19,5 @@ export enum Attributes {
   ariaSelected = 'aria-selected',
   id = 'id',
   ariaExpanded = 'aria-expanded',
+  ariaDetails = 'aria-details',
 }

@@ -54,7 +54,7 @@ import {
   getQuickAppDefaultValues,
 } from './form';
 
-import { debounce } from 'lodash-es';
+import debounce from 'lodash-es/debounce';
 
 interface Props {
   schema: ApiDetailedApplicationTypeSchema | null;
