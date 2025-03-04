@@ -95,9 +95,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   const session = await getSession(context);
   const canCreateCodeApps = !!session?.user?.canCreateCodeApps;
 
-  const { slug } = context.query;
+  const { slug, id } = context.query;
 
-  if (slug === ApplicationType.CODE_APP && !canCreateCodeApps) {
+  if (!id && slug === ApplicationType.CODE_APP && !canCreateCodeApps) {
     return {
       notFound: true,
     };
