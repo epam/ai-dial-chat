@@ -12,6 +12,7 @@ declare module 'next-auth' {
   interface Session {
     user: {
       isAdmin: boolean;
+      canCreateCodeApps: boolean;
     } & DefaultSession['user'];
     providerId: string;
   }
@@ -21,6 +22,7 @@ declare module 'next-auth/jwt' {
   interface JWT extends DefaultJWT {
     user?: Partial<{
       isAdmin: boolean;
+      canCreateCodeApps: boolean;
     }>;
     access_token?: string;
   }
