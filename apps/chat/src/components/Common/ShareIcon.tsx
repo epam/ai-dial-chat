@@ -39,6 +39,7 @@ export default function ShareIcon({
   iconClassName,
   iconWrapperClassName,
   isMyEntity,
+  sharedWithMe,
 }: ShareIconProps) {
   const { t } = useTranslation(Translation.SideBar);
   const isApplication = featureType === FeatureType.Application;
@@ -54,7 +55,7 @@ export default function ShareIcon({
   );
 
   if (
-    (!isSharingEnabled || !isShared) &&
+    (!isSharingEnabled || (!isShared && !sharedWithMe)) &&
     (!isPublishingEnabled || !isPublished) &&
     !isMyEntity
   ) {
@@ -64,7 +65,7 @@ export default function ShareIcon({
   const AdditionalIcon =
     isPublished && isPublishingEnabled
       ? World
-      : isShared
+      : isShared || sharedWithMe
         ? ArrowUpRight
         : IconPencil;
 
@@ -89,10 +90,12 @@ export default function ShareIcon({
         <Tooltip
           tooltip={
             isPublished
-              ? t('Published')
+              ? t('Published by me')
               : isShared
-                ? t('Shared')
-                : t('Created by me')
+                ? t('Shared by me')
+                : sharedWithMe
+                  ? t('Shared with me')
+                  : t('Created by me')
           }
         >
           <AdditionalIcon
@@ -107,6 +110,7 @@ export default function ShareIcon({
                 ? 'rounded-none rounded-tr-[4px] stroke-[0.6]'
                 : 'rounded-sm stroke-[1.5]',
               isMyEntityIcon && '!stroke-[1.5]',
+              sharedWithMe && 'rotate-180',
               iconClassName,
             )}
           />
