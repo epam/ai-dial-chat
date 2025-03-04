@@ -1,5 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
+import { extractNameFromEmail } from '@/src/utils/app/common';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { EntityInfo, EntityType } from '@/src/types/common';
@@ -124,7 +125,7 @@ export const chatSlice = createSlice({
         id,
         updatedAt,
         createdAt,
-        author,
+        author: extractNameFromEmail(author),
       };
 
       state.selectedEntityInfo = entityInfo;

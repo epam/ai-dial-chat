@@ -13,8 +13,8 @@ export enum FoundMarketplaceAgents {
 
 export interface MarketplaceAgentProperties {
   name: string;
-  isSuggested: FoundMarketplaceAgents;
-  isWorkspaceAgent: FoundMarketplaceAgents;
+  isSuggested: boolean;
+  isWorkspaceAgent: boolean;
 }
 
 export class MarketplaceAgents extends BaseElement {
