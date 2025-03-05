@@ -84,7 +84,7 @@ import throttle from 'lodash/throttle';
 
 const scrollThrottlingTimeout = 250;
 
-export const ChatView = memo(() => {
+const ChatView = memo(() => {
   const dispatch = useAppDispatch();
 
   const models = useAppSelector(ModelsSelectors.selectModels);
@@ -1041,6 +1041,9 @@ export function Chat() {
   const configurationAppId = configurationAppReference
     ? modelsMap[configurationAppReference]?.id
     : undefined;
+  const isNoMessages = selectedConversations.every(
+    ({ messages }) => !messages?.length,
+  );
 
   useEffect(() => {
     dispatch(ChatActions.resetFormValue());
@@ -1048,12 +1051,12 @@ export function Chat() {
 
   useEffect(() => {
     dispatch(ChatActions.resetConfigurationSchema());
-    if (configurationAppId) {
+    if (configurationAppId && isNoMessages) {
       dispatch(
         ChatActions.getConfigurationSchema({ modelId: configurationAppId }),
       );
     }
-  }, [dispatch, configurationAppId, selectedConversationsIds]);
+  }, [dispatch, configurationAppId, isNoMessages]);
 
   if (selectedPublication?.resources && !selectedConversationsIds.length) {
     return (
