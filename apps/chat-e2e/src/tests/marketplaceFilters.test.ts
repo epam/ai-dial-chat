@@ -1,7 +1,6 @@
 import { EntityType } from '@/chat/types/common';
 import dialTest from '@/src/core/dialFixtures';
 import {
-  AccountMenuOptions,
   CheckboxState,
   MarketplaceFilterTypes,
   SourcesFilterOptions,
@@ -24,14 +23,12 @@ dialTest(
       baseAssertion,
       page,
       marketplaceHeader,
-      accountSettings,
-      accountDropdownMenu,
-      confirmationDialog,
       providerLogin,
       marketplaceSidebar,
       dialHomePage,
       chatBar,
       marketplaceUrlBuilder,
+      context,
     },
     testInfo,
   ) => {
@@ -92,25 +89,13 @@ dialTest(
     await dialTest.step(
       'Logout, re-login again and verify filters and search term are reset on the "My Workspace" tab',
       async () => {
-        await accountSettings.openAccountDropdownMenu();
-        await accountDropdownMenu.selectMenuOption(AccountMenuOptions.logout);
-        await confirmationDialog.confirm();
-        await providerLogin.navigateToCredentialsPage();
-        await page.waitForLoadState();
-        const isLoginFormVisible = await providerLogin
-          .getAuthProviderPage()
-          .getLoginForm()
-          .isVisible();
-        if (isLoginFormVisible) {
-          const username =
-            process.env.E2E_USERNAME!.split(',')[+testInfo.parallelIndex];
-          await providerLogin.login(
-            testInfo,
-            username,
-            process.env.E2E_PASSWORD!,
-            false,
-          );
-        }
+        await context.clearCookies();
+        await providerLogin.login(
+          testInfo,
+          process.env.E2E_USERNAME!.split(',')[+testInfo.parallelIndex],
+          process.env.E2E_PASSWORD!,
+          false,
+        );
         await dialHomePage.waitForPageLoaded();
         await chatBar.dialMarketplaceLink.click();
         await marketplacePage.waitForPageLoaded();
