@@ -6,6 +6,7 @@ import { Token } from '@/src/types/auth';
 import { logger } from '../server/logger';
 import NextClient, { RefreshToken } from './nextauth-client';
 
+import { Feature } from '@epam/ai-dial-shared';
 import { decodeJwt } from 'jose';
 import get from 'lodash-es/get';
 import intersection from 'lodash-es/intersection';
@@ -38,14 +39,24 @@ const getUser = (accessToken: string | undefined, providerId: string) => {
   const roles = Array.isArray(dialRoles) ? dialRoles : [dialRoles];
   const isAdmin =
     roles.length > 0 && adminRoleNames.some((role) => roles.includes(role));
-  const codeAppRoles = process.env.CODE_APPS_ROLES?.split(',') ?? [];
+
+  const featureFlags = Array.from(Object.values(Feature)).reduce(
+    (flags, feature) => {
+      const featureRoles = process.env[feature];
+      if (featureRoles) {
+        const codeAppRoles = featureRoles.split(',') ?? [];
+
+        flags[feature] =
+          !codeAppRoles.length || !!intersection(codeAppRoles, roles).length;
+      }
+      return flags;
+    },
+    {} as Record<Feature, boolean>,
+  );
 
   return {
     isAdmin,
-    canCreateCodeApps:
-      !codeAppRoles.length ||
-      !!intersection(codeAppRoles, roles).length ||
-      isAdmin,
+    ...featureFlags,
   };
 };
 
@@ -226,11 +237,14 @@ export const callbacks: Partial<
     }
 
     const isAdmin = options?.token?.user?.isAdmin ?? false;
-    const canCreateCodeApps = options?.token?.user?.canCreateCodeApps ?? false;
 
     if (options.session.user) {
       options.session.user.isAdmin = isAdmin;
-      options.session.user.canCreateCodeApps = canCreateCodeApps;
+      Object.values(Feature).forEach((feature) => {
+        if (options?.token?.user?.[feature] === false) {
+          options.session.user[feature] = false;
+        }
+      });
     }
 
     const providerId =

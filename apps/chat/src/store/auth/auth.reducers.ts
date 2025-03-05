@@ -7,6 +7,8 @@ import { isClientSessionValid } from '@/src/utils/auth/session';
 import { RootState } from '../index';
 import { SettingsState } from '../settings/settings.reducers';
 
+import { Feature } from '@epam/ai-dial-shared';
+
 interface AuthState {
   session: SessionContextValue<boolean> | undefined;
 }
@@ -50,10 +52,15 @@ const selectIsShouldLogin = createSelector(
   },
 );
 const selectIsAdmin = createSelector([rootSelector], (state) => {
-  return !!state.session?.data?.user.isAdmin;
+  return !!state?.session?.data?.user.isAdmin;
 });
+const selectCanUserUseFeature = (state: RootState, feature: Feature) => {
+  return (
+    (state?.session?.data?.user?.[feature] ?? true) || selectIsAdmin(state)
+  );
+};
 const selectCanCreateCodeApps = createSelector([rootSelector], (state) => {
-  return !!state.session?.data?.user.canCreateCodeApps;
+  return selectCanUserUseFeature(state, Feature.CodeApps);
 });
 
 export const AuthSelectors = {
