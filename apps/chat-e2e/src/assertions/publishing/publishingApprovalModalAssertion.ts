@@ -38,7 +38,7 @@ export class PublishingApprovalModalAssertion extends BaseAssertion {
   public async assertRequestCreationDate(publicationRequest: Publication) {
     expect
       .soft(
-        await this.publishingApprovalModal.publishDate.getElementInnerContent(),
+        await this.publishingApprovalModal.creationDate.getElementInnerContent(),
         PublishingExpectedMessages.publishToPathIsValid,
       )
       .toBe(
@@ -46,11 +46,9 @@ export class PublishingApprovalModalAssertion extends BaseAssertion {
       );
   }
 
-  public async assertRequestCreationDateLabelState(
-    expectedState: ElementState,
-  ) {
+  public async assertRequestCreatedLabelState(expectedState: ElementState) {
     await this.assertElementState(
-      this.publishingApprovalModal.publishDateLabel,
+      this.publishingApprovalModal.requestCreatedLabel,
       expectedState,
       ExpectedConstants.requestCreationDateLabel,
     );

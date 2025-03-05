@@ -52,6 +52,9 @@ const selectIsShouldLogin = createSelector(
 const selectIsAdmin = createSelector([rootSelector], (state) => {
   return !!state.session?.data?.user.isAdmin;
 });
+const selectCanCreateCodeApps = createSelector([rootSelector], (state) => {
+  return !!state.session?.data?.user.canCreateCodeApps;
+});
 
 export const AuthSelectors = {
   selectIsShouldLogin,
@@ -59,6 +62,7 @@ export const AuthSelectors = {
   selectUserName,
   selectStatus,
   selectIsAdmin,
+  selectCanCreateCodeApps,
 };
 
 export const AuthActions = authSlice.actions;

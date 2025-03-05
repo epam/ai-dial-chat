@@ -173,10 +173,9 @@ export const ChatHeader = Inversify.register(
         (id) => !model?.selectedAddons?.includes(id),
       ) || [];
 
-    const iconSize = screenState === ScreenState.MOBILE ? 20 : 18;
+    const iconSize = screenState === ScreenState.SM ? 20 : 18;
     const hideAddons =
-      screenState === ScreenState.MOBILE &&
-      conversationSelectedAddons.length > 2;
+      screenState === ScreenState.SM && conversationSelectedAddons.length > 2;
     const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
     const disallowChangeAgent = isChangeAgentDisallowed || isExternal;
@@ -427,7 +426,7 @@ export const ChatHeader = Inversify.register(
                   onClick={onCancelPlaybackMode}
                   data-qa="cancel-playback-mode"
                 >
-                  {screenState === ScreenState.MOBILE
+                  {screenState === ScreenState.SM
                     ? t('Stop')
                     : t('Stop playback')}
                 </button>
