@@ -137,6 +137,7 @@ import {
 import {
   ConversationInfo,
   CustomVisualizerData,
+  Feature,
   Message,
   MessageSettings,
   Role,
@@ -484,6 +485,12 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 state$.value,
               );
 
+            const isEmptyChatChangeAgentHidden =
+              SettingsSelectors.isFeatureEnabled(
+                state$.value,
+                Feature.HideEmptyChatChangeAgent,
+              );
+
             return concat(
               of(
                 ConversationsActions.createNotLocalConversations({
@@ -501,6 +508,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 }),
               ),
               headerCreateNew &&
+                !isEmptyChatChangeAgentHidden &&
                 selectedConversationsIds.length === 1 &&
                 isEntityIdLocal({ id: selectedConversationsIds[0] })
                 ? of(

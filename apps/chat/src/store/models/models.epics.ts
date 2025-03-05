@@ -217,7 +217,11 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
             installedModels.map((model) => model.id),
           );
 
-          const references = [...recentModelIds, ...myAppIds];
+          const references = [
+            ...installedModelIds,
+            ...recentModelIds,
+            ...myAppIds,
+          ];
           const modelKeys = ModelsSelectors.selectAllGroupModelKeySet(
             state$.value,
             references,

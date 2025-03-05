@@ -46,7 +46,7 @@ import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
 
 import { NoResultsFound } from '../Common/NoResultsFound';
 import { AgentsTable } from './AgentsList/AgentsTable/AgentsTable';
-import { VirtualCardsList } from './AgentsList/AgentsTiles/AgentsTiles';
+import { AgentsTiles } from './AgentsList/AgentsTiles/AgentsTiles';
 import { ApplicationLogs } from './ApplicationLogs';
 
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
@@ -106,7 +106,7 @@ const ResultsView = memo(
   }: ResultsViewProps) => {
     if (entities.length || suggestedResults.length) {
       const AgentsListComponent =
-        selectedViewType === ViewTypes.TABLE ? AgentsTable : VirtualCardsList;
+        selectedViewType === ViewTypes.TABLE ? AgentsTable : AgentsTiles;
 
       return (
         <AgentsListComponent
