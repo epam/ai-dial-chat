@@ -106,26 +106,19 @@ export class MarketplaceAgents extends BaseElement {
     );
   }
 
-  public getAgentWithVersion(
-    entity: DialAIEntityModel | string,
+  public getAgentElementWithVersion(
+    agentElement: BaseElement,
     version?: string,
   ) {
-    let name = '';
-    if (typeof entity !== 'string') {
-      version = entity.version;
-      name = entity.name;
-    } else {
-      name = entity;
-    }
-    return this.rootLocator.filter({ has: this.agentName(name) }).filter({
+    return agentElement.getElementLocator().filter({
       has: this.agentVersion(version!).or(
         this.agentVersionWithPrefix(version!),
       ),
     });
   }
 
-  public getAgentTopics(entity: DialAIEntityModel | string) {
-    return this.getAgent(entity).getChildElementBySelector(
+  public getAgentElementTopics(agentElement: BaseElement) {
+    return agentElement.getChildElementBySelector(
       MarketplaceAgentSelectors.topics,
     );
   }
@@ -140,14 +133,14 @@ export class MarketplaceAgents extends BaseElement {
     return agentElement.getChildElementBySelector(MenuSelectors.dotsMenu);
   }
 
-  public getAgentAddBookmarkIcon(entity: DialAIEntityModel | string) {
-    return this.getAgent(entity).getChildElementBySelector(
+  public getAgentElementAddBookmarkIcon(agentElement: BaseElement) {
+    return agentElement.getChildElementBySelector(
       MarketplaceAgentSelectors.addBookmarkIcon,
     );
   }
 
-  public getAgentRemoveBookmarkIcon(entity: DialAIEntityModel | string) {
-    return this.getAgent(entity).getChildElementBySelector(
+  public getAgentElementRemoveBookmarkIcon(agentElement: BaseElement) {
+    return agentElement.getChildElementBySelector(
       MarketplaceAgentSelectors.removeBookmarkIcon,
     );
   }
@@ -171,12 +164,12 @@ export class MarketplaceAgents extends BaseElement {
     return this.getElementIcons(this);
   }
 
-  public async addAgentToWorkspace(entity: DialAIEntityModel | string) {
+  public async addAgentToWorkspace(agentElement: BaseElement) {
     const respPromise = this.page.waitForResponse(
       (r) =>
         r.url().includes(API.installedDeploymentsHost()) && r.status() === 200,
     );
-    await this.getAgentAddBookmarkIcon(entity).click();
+    await this.getAgentElementAddBookmarkIcon(agentElement).click();
     await respPromise;
   }
 }

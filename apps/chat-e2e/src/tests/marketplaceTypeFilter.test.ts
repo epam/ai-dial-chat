@@ -10,7 +10,6 @@ import {
   MenuOptions,
 } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
-import { expect } from '@playwright/test';
 
 dialTest(
   'Types: the filter is applied and search results are shown. Models. DIAL Marketplace.\n' +
@@ -169,7 +168,7 @@ dialTest(
   async ({
     customApplicationBuilder,
     applicationApiHelper,
-           modelApiHelper,
+    modelApiHelper,
     marketplacePage,
     marketplaceHeader,
     marketplaceSidebar,
