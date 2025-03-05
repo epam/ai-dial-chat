@@ -58,6 +58,7 @@ import {
   VariableModalAssertion,
 } from '@/src/assertions';
 import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
+import { LocalStorageAssertion } from '@/src/assertions/localStorageAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
 import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateModalAssertion';
 import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
@@ -114,6 +115,7 @@ import { ImportExportLoader } from '@/src/ui/webElements/importExportLoader';
 import { InputAttachments } from '@/src/ui/webElements/inputAttachments';
 import { Marketplace } from '@/src/ui/webElements/marketplace/marketplace';
 import { MarketplaceAgents } from '@/src/ui/webElements/marketplace/marketplaceAgents';
+import { MarketplaceAgentsSection } from '@/src/ui/webElements/marketplace/marketplaceAgentsSection';
 import { MarketplaceContainer } from '@/src/ui/webElements/marketplace/marketplaceContainer';
 import { MarketplaceFilter } from '@/src/ui/webElements/marketplace/marketplaceFilter';
 import { MarketplaceHeader } from '@/src/ui/webElements/marketplace/marketplaceHeader';
@@ -151,6 +153,7 @@ const dialTest = test.extend<{
   marketplaceSidebar: MarketplaceSidebar;
   marketplaceFilter: MarketplaceFilter;
   marketplace: Marketplace;
+  marketplaceAgentsSection: MarketplaceAgentsSection;
   marketplaceAgents: MarketplaceAgents;
   agentDetailsModal: AgentDetailsModal;
   marketplaceHeader: MarketplaceHeader;
@@ -310,6 +313,7 @@ const dialTest = test.extend<{
   messageTemplateModalAssertion: MessageTemplateModalAssertion;
   agentVersionsDropdownMenuAssertion: MenuAssertion;
   sharedWithMeConversationAssertion: SharedWithMeConversationAssertion;
+  localStorageAssertion: LocalStorageAssertion;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper }, use) => {
@@ -319,6 +323,12 @@ const dialTest = test.extend<{
     },
     { scope: 'test', auto: true },
   ],
+  localStorageAssertion: async ({ localStorageManager }, use) => {
+    const localStorageAssertion = new LocalStorageAssertion(
+      localStorageManager,
+    );
+    await use(localStorageAssertion);
+  },
   sharedWithMeConversationAssertion: async (
     { sharedWithMeConversations },
     use,
@@ -392,8 +402,12 @@ const dialTest = test.extend<{
     const marketplace = marketplaceContainer.getMarketplace();
     await use(marketplace);
   },
-  marketplaceAgents: async ({ marketplace }, use) => {
-    const marketplaceAgents = marketplace.getAgents();
+  marketplaceAgentsSection: async ({ marketplace }, use) => {
+    const marketplaceAgentsSection = marketplace.getMarketplaceAgentsSection();
+    await use(marketplaceAgentsSection);
+  },
+  marketplaceAgents: async ({ marketplaceAgentsSection }, use) => {
+    const marketplaceAgents = marketplaceAgentsSection.getAgents();
     await use(marketplaceAgents);
   },
   agentDetailsModal: async ({ marketplaceAgents }, use) => {
@@ -542,8 +556,8 @@ const dialTest = test.extend<{
       chatBar.getOrganizationFolderConversations();
     await use(organizationFolderConversations);
   },
-  talkToAgentDialog: async ({ page, modelApiHelper }, use) => {
-    const talkToAgentDialog = new TalkToAgentDialog(page, modelApiHelper);
+  talkToAgentDialog: async ({ page }, use) => {
+    const talkToAgentDialog = new TalkToAgentDialog(page);
     await use(talkToAgentDialog);
   },
   talkToAgents: async ({ talkToAgentDialog }, use) => {

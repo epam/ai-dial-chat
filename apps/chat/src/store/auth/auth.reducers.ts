@@ -31,12 +31,14 @@ export const authSlice = createSlice({
 const settingsSelector = (state: RootState): SettingsState => state.settings;
 const rootSelector = (state: RootState): AuthState => state.auth;
 
-const selectSession = createSelector([rootSelector], (state) => {
-  return state.session;
-});
-const selectStatus = createSelector([selectSession], (state) => {
-  return state?.status ?? 'loading';
-});
+const selectSession = (state: RootState) => rootSelector(state).session;
+
+const selectUserName = (state: RootState) =>
+  selectSession(state)?.data?.user?.name ?? '';
+
+const selectStatus = (state: RootState) =>
+  selectSession(state)?.status ?? 'loading';
+
 const selectIsShouldLogin = createSelector(
   [selectSession, selectStatus, settingsSelector],
   (session, sessionStatus, settings) => {
@@ -50,12 +52,17 @@ const selectIsShouldLogin = createSelector(
 const selectIsAdmin = createSelector([rootSelector], (state) => {
   return !!state.session?.data?.user.isAdmin;
 });
+const selectCanCreateCodeApps = createSelector([rootSelector], (state) => {
+  return !!state.session?.data?.user.canCreateCodeApps;
+});
 
 export const AuthSelectors = {
   selectIsShouldLogin,
   selectSession,
+  selectUserName,
   selectStatus,
   selectIsAdmin,
+  selectCanCreateCodeApps,
 };
 
 export const AuthActions = authSlice.actions;

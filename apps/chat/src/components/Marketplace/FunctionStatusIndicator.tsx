@@ -42,7 +42,8 @@ export const FunctionStatusIndicator = ({
             entity.functionStatus === ApplicationStatus.FAILED,
           ['animate-pulse text-warning']:
             entity.functionStatus === ApplicationStatus.UNDEPLOYING ||
-            entity.functionStatus === ApplicationStatus.DEPLOYING,
+            entity.functionStatus === ApplicationStatus.DEPLOYING ||
+            entity.functionStatus === ApplicationStatus.REDEPLOYING,
         })}
       />
     </Tooltip>

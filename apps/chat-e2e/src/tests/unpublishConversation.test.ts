@@ -88,7 +88,11 @@ dialAdminTest(
           'visible',
         );
         await baseAssertion.assertElementText(
-          publishingRequestModal.getChangePublishToPath().path,
+          publishingRequestModal.unpublishFromLabel,
+          ExpectedConstants.unpublishFrom,
+        );
+        await baseAssertion.assertElementText(
+          publishingRequestModal.unpublishFrom,
           PublishPath.Organization,
         );
         await baseAssertion.assertElementText(

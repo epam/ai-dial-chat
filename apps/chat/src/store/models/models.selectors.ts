@@ -1,5 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import { getGroupModelKey } from '@/src/utils/app/models';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
 import { EntityType } from '@/src/types/common';
@@ -8,9 +9,9 @@ import { RootState } from '../index';
 import { ModelsState } from './models.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { sortBy } from 'lodash-es';
 import groupBy from 'lodash-es/groupBy';
 import orderBy from 'lodash-es/orderBy';
+import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 
 const rootSelector = (state: RootState): ModelsState => state.models;
@@ -149,3 +150,16 @@ export const selectModelById = createSelector(
     return modelsMap[modelId];
   },
 );
+
+export const selectAllGroupModelKeySet = (
+  state: RootState,
+  references: string[],
+) => {
+  const modelsMap = selectModelsMap(state);
+  return new Set(
+    references
+      .map((reference) => modelsMap[reference])
+      .filter(Boolean)
+      .map((model) => getGroupModelKey(model!)),
+  );
+};

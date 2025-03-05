@@ -400,10 +400,18 @@ export const PromptComponent = ({
   );
 
   const handleOpenInfoModal = useCallback(() => {
-    const { id, updatedAt, createdAt, author, sharedWithMe } = prompt;
+    const { id, updatedAt, createdAt, author, sharedWithMe, publicationInfo } =
+      prompt;
     dispatch(
       ChatActions.getEntityInfo({
-        entityInfo: { id, updatedAt, createdAt, author, sharedWithMe },
+        entityInfo: {
+          id,
+          updatedAt,
+          createdAt,
+          author,
+          sharedWithMe,
+          isPublic: !!publicationInfo?.action,
+        },
       }),
     );
   }, [dispatch, prompt]);
@@ -416,7 +424,7 @@ export const PromptComponent = ({
   }, [isSelectMode]);
 
   useEffect(() => {
-    if (screenState !== ScreenState.MOBILE) {
+    if (screenState !== ScreenState.SM) {
       setIsShowMoveToModal(false);
     }
   }, [screenState]);

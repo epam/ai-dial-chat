@@ -6,6 +6,9 @@ import { NextPage } from 'next';
 import { appWithTranslation } from 'next-i18next';
 import type { AppProps } from 'next/app';
 import { Inconsolata, Inter } from 'next/font/google';
+import Head from 'next/head';
+
+import { getThemeIconUrl } from '@/src/utils/app/themes';
 
 import { SettingsState } from '@/src/store/settings/settings.reducers';
 
@@ -49,17 +52,36 @@ function App({ Component, ...rest }: AppPropsWithLayout) {
   const getPage = Component.getLayout ?? ((page) => page);
 
   return (
-    <SessionProvider session={rest.pageProps.session} basePath={'/api/auth'}>
-      <Provider store={store}>
-        <div className={`${inter.variable} font`}>
-          <Toasts />
-          {getPage(
-            <Component {...rest.pageProps} />,
-            rest.pageProps.initialState?.settings,
-          )}
-        </div>
-      </Provider>
-    </SessionProvider>
+    <>
+      <Head>
+        {process.env.NODE_ENV !== 'development' && (
+          <>
+            <link
+              rel="icon"
+              href={getThemeIconUrl('favicon')}
+              sizes="any"
+              type="image/png"
+            />
+            <link
+              rel="apple-touch-icon"
+              href={getThemeIconUrl('favicon')}
+              type="image/png"
+            />
+          </>
+        )}
+      </Head>
+      <SessionProvider session={rest.pageProps.session} basePath={'/api/auth'}>
+        <Provider store={store}>
+          <div className={`${inter.variable} font`}>
+            <Toasts />
+            {getPage(
+              <Component {...rest.pageProps} />,
+              rest.pageProps.initialState?.settings,
+            )}
+          </div>
+        </Provider>
+      </SessionProvider>
+    </>
   );
 }
 
