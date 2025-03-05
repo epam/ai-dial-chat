@@ -28,6 +28,7 @@ import { combineEpics } from 'redux-observable';
 import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { isMyApplication } from '@/src/utils/app/id';
+import { getGroupModelKey } from '@/src/utils/app/models';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { translate } from '@/src/utils/app/translation';
 
@@ -40,6 +41,7 @@ import { ApplicationActions } from '@/src/store/application/application.reducers
 
 import { DeleteType } from '@/src/constants/marketplace';
 
+import { AuthSelectors } from '../auth/auth.reducers';
 import { MarketplaceActions } from '../marketplace/marketplace.reducers';
 import { PublicationActions } from '../publication/publication.reducers';
 import {
@@ -127,6 +129,7 @@ const getModelsEpic: AppEpic = (action$, state$) =>
         }),
         switchMap((response: DialAIEntityModel[]) => {
           const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
+          const userName = AuthSelectors.selectUserName(state$.value);
           const isHeaderFeatureEnabled = SettingsSelectors.isFeatureEnabled(
             state$.value,
             Feature.Header,
@@ -156,7 +159,15 @@ const getModelsEpic: AppEpic = (action$, state$) =>
             .map(({ id }) => id);
 
           return concat(
-            of(ModelsActions.getModelsSuccess({ models: response })),
+            of(
+              ModelsActions.getModelsSuccess({
+                models: response.map((model) =>
+                  isMyApplication(model)
+                    ? { ...model, owner: userName }
+                    : model,
+                ),
+              }),
+            ),
             of(
               PublicationActions.uploadAllPublishedWithMeItems({
                 featureType: FeatureType.Application,
@@ -182,14 +193,14 @@ const getModelsEpic: AppEpic = (action$, state$) =>
 const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ModelsActions.getInstalledModelIds.match),
-    map(() => {
+
+    switchMap(() => {
       const allModels = ModelsSelectors.selectModels(state$.value);
 
-      return allModels
+      const myAppIds = allModels
         .filter((model) => isMyApplication(model) || model.sharedWithMe)
         .map((app) => app.reference);
-    }),
-    switchMap((myAppIds) => {
+
       return ClientDataService.getInstalledDeployments().pipe(
         switchMap((installedModels) => {
           if (!installedModels) {
@@ -205,8 +216,23 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
           const installedModelIds = new Set(
             installedModels.map((model) => model.id),
           );
-          const modelsToInstall = [...recentModelIds, ...myAppIds].filter(
-            (id) => !installedModelIds.has(id),
+
+          const references = [
+            ...installedModelIds,
+            ...recentModelIds,
+            ...myAppIds,
+          ];
+          const modelKeys = ModelsSelectors.selectAllGroupModelKeySet(
+            state$.value,
+            references,
+          );
+
+          const referencesToInstall = allModels
+            .filter((model) => modelKeys.has(getGroupModelKey(model)))
+            .map((model) => model.reference);
+
+          const modelsToInstall = referencesToInstall.filter(
+            (reference) => !installedModelIds.has(reference),
           );
 
           if (modelsToInstall.length) {
@@ -273,8 +299,20 @@ const removeInstalledModelsEpic: AppEpic = (action$, state$) =>
       const installedModels = ModelsSelectors.selectInstalledModels(
         state$.value,
       );
+      const models = ModelsSelectors.selectModels(state$.value);
+      const modelGroupKeys = ModelsSelectors.selectAllGroupModelKeySet(
+        state$.value,
+        payload.references,
+      );
+
+      const deletedReferences = new Set(
+        models
+          .filter((model) => modelGroupKeys.has(getGroupModelKey(model)))
+          .map((model) => model.reference),
+      );
+
       const newInstalledModels = installedModels.filter(
-        (model) => !payload.references.includes(model.id),
+        (model) => !deletedReferences.has(model.id),
       );
 
       return ClientDataService.saveInstalledDeployments(
@@ -333,12 +371,20 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
       const installedModels = ModelsSelectors.selectInstalledModels(
         state$.value,
       );
+      const models = ModelsSelectors.selectModels(state$.value);
+      const modelGroupKeys = ModelsSelectors.selectAllGroupModelKeySet(
+        state$.value,
+        payload.references,
+      );
+
       const newInstalledModels = uniqBy<InstalledModel>(
         [
           ...installedModels,
-          ...payload.references.map((ref) => ({
-            id: ref,
-          })),
+          ...models
+            .filter((model) => modelGroupKeys.has(getGroupModelKey(model)))
+            .map((model) => ({
+              id: model.reference,
+            })),
         ],
         'id',
       );
@@ -368,8 +414,10 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
               }
               if (payload.updateRecentModels) {
                 actions.push(
-                  ...newInstalledModels.map(({ id }) =>
-                    of(ModelsActions.updateRecentModels({ modelId: id })),
+                  ...payload.references.map((reference) =>
+                    of(
+                      ModelsActions.updateRecentModels({ modelId: reference }),
+                    ),
                   ),
                 );
               }

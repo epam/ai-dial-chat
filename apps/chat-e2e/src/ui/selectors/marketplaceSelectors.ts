@@ -6,11 +6,11 @@ export const MarketplaceSelectors = {
   noWorkspaceResultsFound: '[data-qa="no-workspace-results-found"]',
   noResultsFoundDescription: '[data-qa="no-data-description"]',
   marketplaceSuggestions: '[data-qa="marketplace-suggestions-label"]',
+  marketplaceAgentSection: '[data-qa="agents-section"]',
+  marketplaceAgentsRow: '[data-qa="agents-row"]',
 };
 
 export const MarketplaceAgentSelectors = {
-  filteredAgents: '[data-qa="filtered-agents"]',
-  suggestedAgents: '[data-qa="suggested-agents"]',
   agent: '[data-qa="agent"]',
   agentName: '[data-qa="agent-name"]',
   version: '[data-qa="version"]',

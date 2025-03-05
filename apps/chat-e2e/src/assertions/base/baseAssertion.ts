@@ -77,7 +77,7 @@ export class BaseAssertion {
     element: BaseElement | Locator,
     expectedState: ElementActionabilityState,
   ) {
-    const elementLocator = this.getElement(element);
+    const elementLocator = this.getElementLocator(element);
     expectedState == 'enabled'
       ? await expect
           .soft(elementLocator, ExpectedMessages.elementIsEnabled)
@@ -92,7 +92,7 @@ export class BaseAssertion {
     expectedState: ElementState,
     expectedMessage?: string,
   ) {
-    const elementLocator = this.getElement(element);
+    const elementLocator = this.getElementLocator(element);
     expectedState == 'visible'
       ? await expect
           .soft(
@@ -113,7 +113,7 @@ export class BaseAssertion {
     expectedText: string,
     expectedMessage?: string,
   ) {
-    const elementLocator = this.getElement(element);
+    const elementLocator = this.getElementLocator(element);
     await expect
       .soft(
         elementLocator,
@@ -128,7 +128,7 @@ export class BaseAssertion {
     expectedValue: string,
     expectedMessage?: string,
   ) {
-    const elementLocator = this.getElement(element);
+    const elementLocator = this.getElementLocator(element);
     await expect
       .soft(
         elementLocator,
@@ -141,8 +141,8 @@ export class BaseAssertion {
     element: BaseElement | Locator,
     expectedState: CheckboxState,
   ) {
-    const elementLocator = this.getElement(element);
-    expectedState === 'checked'
+    const elementLocator = this.getElementLocator(element);
+    expectedState === CheckboxState.checked
       ? await expect
           .soft(elementLocator, ExpectedMessages.entityIsChecked)
           .toBeChecked()
@@ -155,9 +155,12 @@ export class BaseAssertion {
     element: BaseElement | Locator,
     expectedValue: string | RegExp,
   ) {
-    const elementLocator = this.getElement(element);
+    const elementLocator = this.getElementLocator(element);
     await expect
-      .soft(elementLocator, ExpectedMessages.elementAttributeValueIsValid)
+      .soft(
+        elementLocator,
+        `${ExpectedMessages.elementAttributeValueShouldBe}${expectedValue}`,
+      )
       .toHaveClass(expectedValue);
   }
 
@@ -172,7 +175,7 @@ export class BaseAssertion {
     element: BaseElement | Locator,
     expectedColor: string,
   ) {
-    const elementLocator = this.getElement(element);
+    const elementLocator = this.getElementLocator(element);
     for (const border of [
       Styles.borderBottomColor,
       Styles.borderLeftColor,
@@ -190,7 +193,7 @@ export class BaseAssertion {
     element: BaseElement | Locator,
     expectedColor: string,
   ) {
-    const elementLocator = this.getElement(element);
+    const elementLocator = this.getElementLocator(element);
     await expect(
       elementLocator,
       ExpectedMessages.entityBackgroundColorIsValid,
@@ -201,7 +204,7 @@ export class BaseAssertion {
     element: BaseElement | Locator,
     cursor: Cursors,
   ) {
-    const elementLocator = this.getElement(element);
+    const elementLocator = this.getElementLocator(element);
     await expect(
       elementLocator,
       ExpectedMessages.elementCursorIsValid,
@@ -257,7 +260,7 @@ export class BaseAssertion {
     expectedCount: number,
     expectedMessage?: string,
   ) {
-    const elementsCount = await this.getElement(element).count();
+    const elementsCount = await this.getElementLocator(element).count();
     expect
       .soft(
         elementsCount,
@@ -278,7 +281,7 @@ export class BaseAssertion {
     element: BaseElement | Locator,
     expectedInnerText: string[],
   ) {
-    const elementLocator = this.getElement(element);
+    const elementLocator = this.getElementLocator(element);
     expect
       .soft(
         await elementLocator.allInnerTexts(),
@@ -287,7 +290,7 @@ export class BaseAssertion {
       .toEqual(expectedInnerText);
   }
 
-  private getElement(element: BaseElement | Locator) {
+  private getElementLocator(element: BaseElement | Locator) {
     return element instanceof BaseElement
       ? element.getElementLocator()
       : (element as Locator);

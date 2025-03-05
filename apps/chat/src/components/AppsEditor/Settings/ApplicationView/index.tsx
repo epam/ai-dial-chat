@@ -33,7 +33,7 @@ import {
   getCustomApplicationData,
 } from '../form';
 
-import { isEqual } from 'lodash-es';
+import isEqual from 'lodash-es/isEqual';
 
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const ControlledField = withController(Field);
@@ -160,9 +160,8 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
           ApplicationActions.update({
             oldApplication,
             applicationData: {
+              ...oldApplication,
               ...applicationData,
-              id: data.id,
-              reference: data.reference,
             },
           }),
         );

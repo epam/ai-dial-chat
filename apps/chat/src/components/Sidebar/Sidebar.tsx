@@ -13,7 +13,7 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { EnumMapper } from '@/src/utils/app/mappers';
-import { isMediumScreen, isSmallScreen } from '@/src/utils/app/mobile';
+import { isSmallScreen, isTabletScreen } from '@/src/utils/app/mobile';
 import { hasDragEventEntityData } from '@/src/utils/app/move';
 import { centralChatWidth, getNewSidebarWidth } from '@/src/utils/app/sidebar';
 
@@ -130,7 +130,7 @@ const Sidebar = <T,>({
   }, [windowWidth, isLeftSidebar, chatbarWidth, promptbarWidth]);
 
   const centralChatMinWidth =
-    windowWidth && isMediumScreen()
+    windowWidth && isTabletScreen()
       ? windowWidth / 12 // windowWidth / 12 = 8% of the windowWidth
       : CENTRAL_CHAT_MIN_WIDTH; // fallback min width
 
@@ -207,7 +207,7 @@ const Sidebar = <T,>({
         ? maxOppositeSidebarWidth
         : sidebarMinWidth;
 
-    if (!isMediumScreen()) {
+    if (!isTabletScreen()) {
       if (
         isLeftSidebar &&
         centralChatWidth({
