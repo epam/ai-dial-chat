@@ -38,4 +38,5 @@ export const MarketplaceSideBarSelectors = {
   filterProperty: '[data-qa="filter-property"]',
   filterPropertyOptions: '[data-qa="filter-property-options"]',
   filterPropertyOption: '[data-qa="filter-option"]',
+  optionLabel: '[data-qa="option-label"]',
 };
