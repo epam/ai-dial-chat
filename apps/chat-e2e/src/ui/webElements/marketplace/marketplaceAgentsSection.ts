@@ -1,5 +1,6 @@
 import { DialAIEntityModel } from '@/chat/types/models';
 import { Attributes } from '@/src/ui/domData';
+import { keys } from '@/src/ui/keyboard';
 import { MarketplaceSelectors } from '@/src/ui/selectors';
 import {
   BaseElement,
@@ -167,9 +168,15 @@ export class MarketplaceAgentsSection extends BaseElement {
       scrollPosition = await this.getPositionAndScrollInto();
     } while (
       scrollPosition.clientHeight <
-      Math.round(scrollHeight - scrollPosition.scrollTop)
+      Math.ceil(scrollHeight - scrollPosition.scrollTop)
     );
     return allAgents;
+  }
+
+  public async goTop() {
+    const bounding = await this.getElementBoundingBox();
+    await this.page.mouse.click(bounding!.x, bounding!.y);
+    await this.page.keyboard.press(keys.home);
   }
 
   private async getPositionAndScrollInto() {
@@ -177,6 +184,9 @@ export class MarketplaceAgentsSection extends BaseElement {
     const clientHeight = await this.rootLocator.evaluate((p) => p.clientHeight);
     const rowsCount = await this.agentsRow.getElementsCount();
     await this.agentsRow.getNthElement(rowsCount).scrollIntoViewIfNeeded();
-    return { scrollTop: scrollTop, clientHeight: clientHeight };
+    return {
+      scrollTop: Math.ceil(scrollTop),
+      clientHeight: Math.ceil(clientHeight),
+    };
   }
 }
