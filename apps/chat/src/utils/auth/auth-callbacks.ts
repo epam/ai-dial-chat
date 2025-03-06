@@ -1,15 +1,14 @@
-import { Account, CallbacksOptions, Profile, Session } from 'next-auth';
-import { TokenEndpointHandler } from 'next-auth/providers';
-
-import { Token } from '@/src/types/auth';
-
+import { parseCommaSeparatedList } from '../app/common';
 import { logger } from '../server/logger';
 import NextClient, { RefreshToken } from './nextauth-client';
 
+import { Token } from '@/src/types/auth';
 import { Feature } from '@epam/ai-dial-shared';
 import { decodeJwt } from 'jose';
 import get from 'lodash-es/get';
 import intersection from 'lodash-es/intersection';
+import { Account, CallbacksOptions, Profile, Session } from 'next-auth';
+import { TokenEndpointHandler } from 'next-auth/providers';
 import { TokenSet } from 'openid-client';
 
 const waitRefreshTokenTimeout = 5;
@@ -29,11 +28,11 @@ const getUser = (accessToken: string | undefined, providerId: string) => {
     process.env[`AUTH_${providerId.toUpperCase()}_DIAL_ROLES_FIELD`] ??
     process.env.DIAL_ROLES_FIELD ??
     'dial_roles';
-  const adminRoleNames = (
+  const adminRoleNames = parseCommaSeparatedList(
     process.env[`AUTH_${providerId.toUpperCase()}_ADMIN_ROLE_NAMES`] ??
-    process.env.ADMIN_ROLE_NAMES ??
-    'admin'
-  ).split(',');
+      process.env.ADMIN_ROLE_NAMES ??
+      'admin',
+  );
   const decodedPayload = accessToken ? safeDecodeJwt(accessToken) : {};
   const dialRoles = get(decodedPayload, rolesFieldName, []) as string[];
   const roles = Array.isArray(dialRoles) ? dialRoles : [dialRoles];
@@ -48,7 +47,9 @@ const getUser = (accessToken: string | undefined, providerId: string) => {
     (flags, feature) => {
       const featureRoles = enabledFeaturesRoles[feature];
       if (featureRoles) {
-        const codeAppRoles = featureRoles.split(',') ?? [];
+        const codeAppRoles = Array.isArray(featureRoles)
+          ? featureRoles
+          : parseCommaSeparatedList(featureRoles);
         if (codeAppRoles.length && !intersection(codeAppRoles, roles).length) {
           flags[feature] = false;
         }
