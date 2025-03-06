@@ -67,14 +67,14 @@ export class MarketplaceAgents extends BaseElement {
     let agent;
     if (typeof entity === 'string') {
       agent = this.rootLocator
-        .filter({ has: this.agentName(RegexUtil.escapeRegexChars(entity)) })
+        .filter({ has: this.agentName(entity) })
         .first();
     } else {
       //if agent has version in the config
       if (entity.version) {
         agent = this.rootLocator
           .filter({
-            has: this.agentName(RegexUtil.escapeRegexChars(entity.name)),
+            has: this.agentName(entity.name),
           })
           .filter({
             has: this.agentVersion(entity.version).or(
@@ -86,7 +86,7 @@ export class MarketplaceAgents extends BaseElement {
         //init agent locator if no version is available in the config
         agent = this.rootLocator
           .filter({
-            has: this.agentName(RegexUtil.escapeRegexChars(entity.name)),
+            has: this.agentName(entity.name),
           })
           .first();
       }
