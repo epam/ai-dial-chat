@@ -41,7 +41,7 @@ export const AgentsListWrapper = forwardRef<
       ref={parentRef}
       data-qa="agents-section"
       className={classNames(
-        'relative flex overflow-y-auto overflow-x-hidden px-3 md:px-5 xl:px-16',
+        'relative flex grow overflow-y-auto overflow-x-hidden px-3 md:px-5 xl:px-16',
         className,
       )}
     >
