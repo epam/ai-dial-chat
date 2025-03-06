@@ -1,14 +1,16 @@
+import { Account, CallbacksOptions, Profile, Session } from 'next-auth';
+import { TokenEndpointHandler } from 'next-auth/providers';
+
+import { Token } from '@/src/types/auth';
+
 import { parseCommaSeparatedList } from '../app/common';
 import { logger } from '../server/logger';
 import NextClient, { RefreshToken } from './nextauth-client';
 
-import { Token } from '@/src/types/auth';
 import { Feature } from '@epam/ai-dial-shared';
 import { decodeJwt } from 'jose';
 import get from 'lodash-es/get';
 import intersection from 'lodash-es/intersection';
-import { Account, CallbacksOptions, Profile, Session } from 'next-auth';
-import { TokenEndpointHandler } from 'next-auth/providers';
 import { TokenSet } from 'openid-client';
 
 const waitRefreshTokenTimeout = 5;
