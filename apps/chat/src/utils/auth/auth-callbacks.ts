@@ -49,9 +49,9 @@ const getUser = (accessToken: string | undefined, providerId: string) => {
       const featureRoles = enabledFeaturesRoles[feature];
       if (featureRoles) {
         const codeAppRoles = featureRoles.split(',') ?? [];
-
-        flags[feature] =
-          !codeAppRoles.length || !!intersection(codeAppRoles, roles).length;
+        if (codeAppRoles.length && !intersection(codeAppRoles, roles).length) {
+          flags[feature] = false;
+        }
       }
       return flags;
     },

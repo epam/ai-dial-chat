@@ -10,5 +10,5 @@ export const canUserUseFeature = (
   session: Session | null | undefined,
   feature: Feature,
 ) => {
-  return (session?.user?.[feature] ?? true) || isUserAdmin(session);
+  return (session?.user?.[feature] ?? true);
 };
