@@ -4,7 +4,7 @@ import dialTest from '@/src/core/dialFixtures';
 import {
   Attachment,
   ExpectedMessages,
-  Theme,
+  ThemeId,
   UploadMenuOptions,
 } from '@/src/testData';
 import { Attributes, Colors, Overflow, Styles } from '@/src/ui/domData';
@@ -37,7 +37,7 @@ dialTest(
     let theme: string;
 
     await dialTest.step('Set random app theme', async () => {
-      theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
+      theme = GeneratorUtil.randomArrayElement(Object.keys(ThemeId));
       await localStorageManager.setSettings(theme);
     });
 
@@ -93,7 +93,7 @@ dialTest(
             ExpectedMessages.buttonTextColorIsValid,
           )
           .toBe(
-            theme === Theme.light
+            theme === ThemeId.light
               ? Colors.controlsBackgroundAccentPrimary
               : Colors.controlsBackgroundAccent,
           );
