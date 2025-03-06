@@ -418,7 +418,7 @@ dialTest(
       async () => {
         await conversations.selectConversation(thirdConversationToShare.name);
         await chatHeader.chatAgent.click();
-          await talkToAgentDialog.selectAgent(randomModel, marketplacePage);
+        await talkToAgentDialog.selectAgent(randomModel, marketplacePage);
         await conversationAssertion.assertEntityArrowIconState(
           { name: newName },
           'visible',
