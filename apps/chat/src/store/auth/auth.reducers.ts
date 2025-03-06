@@ -3,6 +3,7 @@ import { SessionContextValue } from 'next-auth/react';
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { isClientSessionValid } from '@/src/utils/auth/session';
+import { canUserUseFeature, isUserAdmin } from '@/src/utils/session';
 
 import { RootState } from '../index';
 import { SettingsState } from '../settings/settings.reducers';
@@ -52,12 +53,10 @@ const selectIsShouldLogin = createSelector(
   },
 );
 const selectIsAdmin = createSelector([rootSelector], (state) => {
-  return !!state?.session?.data?.user.isAdmin;
+  return isUserAdmin(state?.session?.data);
 });
 const selectCanUserUseFeature = (state: RootState, feature: Feature) => {
-  return (
-    (state?.session?.data?.user?.[feature] ?? true) || selectIsAdmin(state)
-  );
+  return canUserUseFeature(state?.session?.data, feature);
 };
 const selectCanCreateCodeApps = createSelector([rootSelector], (state) => {
   return selectCanUserUseFeature(state, Feature.CodeApps);
