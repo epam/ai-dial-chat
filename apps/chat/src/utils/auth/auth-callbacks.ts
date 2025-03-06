@@ -40,9 +40,13 @@ const getUser = (accessToken: string | undefined, providerId: string) => {
   const isAdmin =
     roles.length > 0 && adminRoleNames.some((role) => roles.includes(role));
 
+  const enabledFeaturesRoles = JSON.parse(
+    process.env.ENABLED_FEATURES_ROLES?.replaceAll('\\"', '"') ?? '{}',
+  );
+
   const featureFlags = Array.from(Object.values(Feature)).reduce(
     (flags, feature) => {
-      const featureRoles = process.env[feature];
+      const featureRoles = enabledFeaturesRoles[feature];
       if (featureRoles) {
         const codeAppRoles = featureRoles.split(',') ?? [];
 
