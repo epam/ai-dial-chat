@@ -63,8 +63,7 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
           isHighlighted={false}
           size={shareIconSize}
           featureType={FeatureType.Application}
-          iconClassName="bg-layer-3 !stroke-[0.6] !rounded-[4px]"
-          iconWrapperClassName="!rounded-[4px]"
+          iconClassName="bg-layer-3"
           isMyEntity={isMyApp}
         >
           <ModelIcon

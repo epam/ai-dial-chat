@@ -142,7 +142,8 @@ export const PublishingModalSelectors = {
   modalContainer: '[data-qa="publish-modal"]',
   requestName: '[data-qa="request-name"]',
   publishTo: '[data-qa="change-path-container"]',
-  publishToPath: '[data-qa="path"]',
+  unpublishFromLabel: '[data-qa="unpublish-from-label"]',
+  unpublishFromPath: '[data-qa="unpublish-from-path"]',
   changePublishToPath: '[data-qa="change-button"]',
   conversationsToPublishContainer:
     '[data-qa="conversations-to-send-request-container"]',
@@ -164,8 +165,8 @@ export const PublishingApprovalModalSelectors = {
   publishName: '[data-qa="publish-name"]',
   publishToPath: '[data-qa="publish-to-path"]',
   publishToPathLabel: '[data-qa="publish-to-label"]',
-  publishDate: '[data-qa="publish-date"]',
-  publishDateLabel: '[data-qa="creation-date"]',
+  creationDate: '[data-qa="creation-date"]',
+  requestCreatedLabel: '[data-qa="creation-date-label"]',
   conversationsToApproveContainer:
     '[data-qa="conversations-to-approve-container"]',
   filesToApproveContainer: '[data-qa="files-to-approve-container"]',
