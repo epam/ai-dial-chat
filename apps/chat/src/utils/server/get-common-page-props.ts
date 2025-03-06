@@ -114,7 +114,8 @@ export const getCommonPageProps: GetServerSideProps = async ({
       )
       .concat(isIsolatedView ? hiddenFeaturesForIsolatedView : []),
     publicationFilters: parseCommaSeparatedList(
-      process.env.PUBLICATION_FILTERS || 'title,role,dial_roles',
+      process.env.PUBLICATION_FILTERS,
+      ['title', 'role', 'dial_roles'],
     ),
     isOverlay: process.env.IS_IFRAME === 'true' || false,
     footerHtmlMessage: (process.env.FOOTER_HTML_MESSAGE ?? '').replace(
