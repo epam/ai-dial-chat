@@ -1,14 +1,12 @@
-import { SessionContextValue } from 'next-auth/react';
-
-import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
-
-import { isClientSessionValid } from '@/src/utils/auth/session';
-import { canUserUseFeature, isUserAdmin } from '@/src/utils/session';
-
 import { RootState } from '../index';
 import { SettingsState } from '../settings/settings.reducers';
 
-import { Feature } from '@epam/ai-dial-shared';
+
+
+import { isClientSessionValid } from '@/src/utils/auth/session';
+import { isUserAdmin } from '@/src/utils/session';
+import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
+import { SessionContextValue } from 'next-auth/react';
 
 interface AuthState {
   session: SessionContextValue<boolean> | undefined;
@@ -34,7 +32,9 @@ export const authSlice = createSlice({
 const settingsSelector = (state: RootState): SettingsState => state.settings;
 const rootSelector = (state: RootState): AuthState => state.auth;
 
-const selectSession = (state: RootState) => rootSelector(state).session;
+const selectSession = (state: RootState) => rootSelector(state)?.session;
+
+const selectSessionData = (state: RootState) => selectSession(state)?.data;
 
 const selectUserName = (state: RootState) =>
   selectSession(state)?.data?.user?.name ?? '';
@@ -53,22 +53,16 @@ const selectIsShouldLogin = createSelector(
   },
 );
 const selectIsAdmin = createSelector([rootSelector], (state) => {
-  return isUserAdmin(state?.session?.data);
-});
-const selectCanUserUseFeature = (state: RootState, feature: Feature) => {
-  return canUserUseFeature(state?.session?.data, feature);
-};
-const selectCanCreateCodeApps = createSelector([rootSelector], (state) => {
-  return selectCanUserUseFeature(state, Feature.CodeApps);
+  return isUserAdmin(selectSessionData(state));
 });
 
 export const AuthSelectors = {
   selectIsShouldLogin,
   selectSession,
+  selectSessionData,
   selectUserName,
   selectStatus,
   selectIsAdmin,
-  selectCanCreateCodeApps,
 };
 
 export const AuthActions = authSlice.actions;

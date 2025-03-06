@@ -1,6 +1,7 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { Defaults } from '@/src/utils/app/data/defaults-service';
+import { canUserUseFeature } from '@/src/utils/session';
 
 import { FeatureType, PageType } from '@/src/types/common';
 import {
@@ -17,6 +18,7 @@ import {
 } from '@/src/constants/quick-apps';
 
 import { RootState } from '..';
+import { AuthSelectors } from '../auth/auth.reducers';
 
 import { Feature, UploadStatus } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
@@ -194,9 +196,16 @@ const selectFooterHtmlMessage = createSelector([rootSelector], (state) => {
   return state.footerHtmlMessage;
 });
 
-const selectEnabledFeatures = createSelector([rootSelector], (state) => {
-  return new Set(state.enabledFeatures);
-});
+const selectEnabledFeatures = createSelector(
+  [rootSelector, AuthSelectors.selectSessionData],
+  (state, session) => {
+    return new Set(
+      state.enabledFeatures.filter((feature) =>
+        canUserUseFeature(session, feature),
+      ),
+    );
+  },
+);
 
 const selectIsIsolatedView = createSelector([rootSelector], (state) => {
   return !!state.isolatedModelId;
