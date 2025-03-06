@@ -20,6 +20,10 @@ export abstract class ProviderLogin<T extends BasePage & LoginInterface> {
     this.localStorageManager = localStorageManager;
   }
 
+  getAuthProviderPage(): T {
+    return this.authProviderPage;
+  }
+
   abstract navigateToCredentialsPage(): Promise<void>;
 
   public async login(
@@ -63,6 +67,7 @@ export abstract class ProviderLogin<T extends BasePage & LoginInterface> {
     if (options?.setEntitiesEnvVars) {
       process.env.MODELS = retrievedResponses.get(API.modelsHost);
       process.env.ADDONS = retrievedResponses.get(API.addonsHost);
+      process.env.THEMES = retrievedResponses.get(API.themesListingHost);
       process.env.RECENT_ADDONS =
         await this.localStorageManager.getRecentAddons();
       process.env.RECENT_MODELS =
