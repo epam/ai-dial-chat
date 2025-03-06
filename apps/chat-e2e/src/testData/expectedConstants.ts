@@ -302,6 +302,7 @@ export const API = {
   defaultAddonIconHost: () => `${API.themeUrl}/default-addon`,
   bucketHost: '/api/bucket',
   listingHost: '/api/listing',
+  themesListingHost: '/api/themes/listing',
   conversationsHost: () => `${API.listingHost}/conversations`,
   promptsHost: () => `${API.listingHost}/prompts`,
   appsHost: () => `${API.listingHost}/applications`,
@@ -393,7 +394,7 @@ export enum Rate {
   dislike = 'dislike',
 }
 
-export enum Theme {
+export enum ThemeId {
   dark = 'dark',
   light = 'light',
 }

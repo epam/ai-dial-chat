@@ -516,9 +516,10 @@ dialTest(
           await appEditorGeneralForm.goNext();
           await appEditorViewForm.fillInAppFields();
           await appEditorHeader.saveAppAndExit();
+          await marketplacePage.waitForPageLoaded();
         }
 
-        //TODO: need to clarify whether search field and filters are reset after adding a new app
+        //TODO: remove search input filling when fixed https://github.com/epam/ai-dial-chat/issues/3221
         await marketplaceHeader.searchInput.fillInInput(installedAppName);
         const allAgents = await marketplaceAgentsSection.getAllAgents();
         const filteredAgents = allAgents.filter(
