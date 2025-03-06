@@ -6,6 +6,7 @@ import {
   AddAppMenuOptions,
   ApplicationTypes,
   CheckboxState,
+  ExpectedMessages,
   MarketplaceExpectedMessages,
   MarketplaceFilterTypes,
   MenuOptions,
@@ -13,7 +14,7 @@ import {
 } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
-import { Locator } from '@playwright/test';
+import { Locator, expect } from '@playwright/test';
 
 const publicationsToUnpublish: Publication[] = [];
 
@@ -27,7 +28,7 @@ dialTest(
     marketplace,
     marketplaceFilter,
     marketplaceHeader,
-    marketplaceAgents,
+    marketplaceAgentsSection,
     modelApiHelper,
     setTestIds,
     baseAssertion,
@@ -77,20 +78,17 @@ dialTest(
             SourcesFilterOptions.myCustomApps,
           )
           .click();
-        const actualAgentNames = await marketplaceAgents.getAgentNames();
+        const actualAgents = await marketplaceAgentsSection.getAllAgents();
         baseAssertion.assertArrayIncludesAll(
-          actualAgentNames,
+          actualAgents.map((agent) => agent.name),
           [appName],
           MarketplaceExpectedMessages.filteredAgentsAreValid,
         );
 
         const configAgents = await modelApiHelper.getModels();
-        for (const agentName of actualAgentNames) {
-          const agentVersion = await marketplaceAgents
-            .getAgentVersion(agentName)
-            .getElementInnerContent();
+        for (const actualAgent of actualAgents) {
           const agent = await modelApiHelper.getAgentByNameAndVersion(
-            { name: agentName, version: agentVersion },
+            { name: actualAgent.name, version: actualAgent.version },
             configAgents,
           );
           if (agent) {
@@ -109,9 +107,14 @@ dialTest(
         await marketplaceFilter
           .filterByPropertyOptionInput(MarketplaceFilterTypes.topics, appTopic)
           .click();
-        await baseAssertion.assertElementsCount(marketplaceAgents, 1);
+        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        baseAssertion.assertValue(
+          actualAgents.length,
+          1,
+          ExpectedMessages.elementsCountIsValid,
+        );
         baseAssertion.assertArrayIncludesAll(
-          await marketplaceAgents.getAgentNames(),
+          actualAgents.map((agent) => agent.name),
           [appName],
           MarketplaceExpectedMessages.filteredAgentsAreValid,
         );
@@ -144,6 +147,7 @@ dialTest(
     marketplaceSidebar,
     marketplaceFilter,
     marketplaceHeader,
+    marketplaceAgentsSection,
     marketplaceAgents,
     appEditorPage,
     appEditorGeneralForm,
@@ -169,7 +173,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open "My Workspace", check "My Custom apps" option and verify and verify created app is displayed',
+      'Open "My Workspace", check "My Custom apps" option and verify created app is displayed',
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
@@ -183,9 +187,9 @@ dialTest(
             SourcesFilterOptions.myCustomApps,
           );
         await myCustomAppsSourceFilterElement.click();
-        const actualAgentNames = await marketplaceAgents.getAgentNames();
+        const actualAgents = await marketplaceAgentsSection.getAllAgents();
         baseAssertion.assertArrayIncludesAll(
-          actualAgentNames,
+          actualAgents.map((agent) => agent.name),
           [firstAppName],
           MarketplaceExpectedMessages.filteredAgentsAreValid,
         );
@@ -214,9 +218,9 @@ dialTest(
       async () => {
         //TODO: remove filter check when fixed https://github.com/epam/ai-dial-chat/issues/3221
         await myCustomAppsSourceFilterElement.click();
-        const actualAgentNames = await marketplaceAgents.getAgentNames();
+        const actualAgents = await marketplaceAgentsSection.getAllAgents();
         baseAssertion.assertArrayIncludesAll(
-          actualAgentNames,
+          actualAgents.map((agent) => agent.name),
           [firstAppName, secondAppName],
           MarketplaceExpectedMessages.filteredAgentsAreValid,
         );
@@ -226,8 +230,10 @@ dialTest(
     await dialTest.step(
       'Delete the first app and verify it disappears immediately',
       async () => {
-        await marketplaceAgents.getAgent(firstAppName).hoverOver();
-        await marketplaceAgents.getAgentDotsMenu(firstAppName).click();
+        const agentElement =
+          await marketplaceAgentsSection.findAgentElement(firstAppName);
+        await agentElement.hoverOver();
+        await marketplaceAgents.getAgentElementDotsMenu(agentElement).click();
         await marketplaceAgents
           .getAgentDropdownMenu()
           .selectMenuOption(MenuOptions.delete);
@@ -237,7 +243,8 @@ dialTest(
           myCustomAppsSourceFilterElement,
           CheckboxState.checked,
         );
-        const actualAgentNames = await marketplaceAgents.getAgentNames();
+        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgentNames = actualAgents.map((agent) => agent.name);
         baseAssertion.assertArrayExcludesAll(
           actualAgentNames,
           [firstAppName],
@@ -271,7 +278,7 @@ dialSharedWithMeTest(
     additionalShareUserMarketplacePage,
     additionalShareUserMarketplace,
     additionalShareUserMarketplaceFilter,
-    additionalShareUserMarketplaceAgents,
+    additionalShareUserMarketplaceAgentsSection,
     additionalShareUserMarketplaceSidebar,
     setTestIds,
     baseAssertion,
@@ -365,14 +372,15 @@ dialSharedWithMeTest(
           sharedWithMeSourceFilterElement,
           CheckboxState.checked,
         );
-        const actualAgentNames =
-          await additionalShareUserMarketplaceAgents.getAgentNames();
-        await baseAssertion.assertElementsCount(
-          additionalShareUserMarketplaceAgents,
+        const actualAgents =
+          await additionalShareUserMarketplaceAgentsSection.getAllAgents();
+        baseAssertion.assertValue(
+          actualAgents.length,
           1,
+          ExpectedMessages.elementsCountIsValid,
         );
         baseAssertion.assertArrayIncludesAll(
-          actualAgentNames,
+          actualAgents.map((agent) => agent.name),
           [sharedAppName],
           MarketplaceExpectedMessages.filteredAgentsAreValid,
         );
@@ -397,15 +405,16 @@ dialSharedWithMeTest(
           publicSourceFilterElement,
           CheckboxState.checked,
         );
-        const actualAgentNames =
-          await additionalShareUserMarketplaceAgents.getAgentNames();
+        const actualAgents =
+          await additionalShareUserMarketplaceAgentsSection.getAllAgents();
+        const actualAgentsNames = actualAgents.map((agent) => agent.name);
         baseAssertion.assertArrayIncludesAll(
-          actualAgentNames,
+          actualAgentsNames,
           [publishedAppName],
           MarketplaceExpectedMessages.filteredAgentsAreValid,
         );
         baseAssertion.assertArrayExcludesAll(
-          actualAgentNames,
+          actualAgentsNames,
           [sharedAppName, additionalUserAppName],
           MarketplaceExpectedMessages.filteredAgentsAreValid,
         );
@@ -416,10 +425,12 @@ dialSharedWithMeTest(
           (k) => k !== sharedAppName && k !== additionalUserAppName,
         );
         for (const configAgentName of expectedAgents) {
-          await baseAssertion.assertElementState(
-            additionalShareUserMarketplaceAgents.getAgent(configAgentName),
-            'visible',
-          );
+          expect
+            .soft(
+              actualAgents.find((agent) => agent.name === configAgentName),
+              MarketplaceExpectedMessages.filteredAgentsAreValid,
+            )
+            .toBeDefined();
         }
       },
     );
@@ -429,8 +440,12 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserMarketplaceSidebar.myWorkspaceButton.click();
         await additionalShareUserMarketplacePage.waitForPageLoaded();
-        await baseAssertion.assertElementsCount(
-          additionalShareUserMarketplace.getFilteredAgents(),
+        //remove next line when fixed https://github.com/epam/ai-dial-chat/issues/3303
+        await additionalShareUserMarketplaceAgentsSection.goTop();
+        const actualAgents =
+          await additionalShareUserMarketplaceAgentsSection.getAllAgents();
+        baseAssertion.assertValue(
+          actualAgents.filter((agent) => agent.isWorkspaceAgent).length,
           0,
         );
         await baseAssertion.assertElementState(
@@ -444,10 +459,12 @@ dialSharedWithMeTest(
           (k) => k !== sharedAppName && k !== additionalUserAppName,
         );
         for (const configAgentName of expectedAgents) {
-          await baseAssertion.assertElementState(
-            additionalShareUserMarketplaceAgents.getAgent(configAgentName),
-            'visible',
-          );
+          expect
+            .soft(
+              actualAgents.find((agent) => agent.name === configAgentName),
+              MarketplaceExpectedMessages.filteredAgentsAreValid,
+            )
+            .toBeDefined();
         }
       },
     );

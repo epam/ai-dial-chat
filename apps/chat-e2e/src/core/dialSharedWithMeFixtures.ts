@@ -66,6 +66,7 @@ import {
 import { SharedFolderConversations } from '@/src/ui/webElements/entityTree/sidebar/sharedFolderConversations';
 import { SharedWithMeConversationsTree } from '@/src/ui/webElements/entityTree/sidebar/sharedWithMeConversationsTree';
 import { SharedWithMePromptsTree } from '@/src/ui/webElements/entityTree/sidebar/sharedWithMePromptsTree';
+import { MarketplaceAgentsSection } from '@/src/ui/webElements/marketplace/marketplaceAgentsSection';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { BucketUtil } from '@/src/utils';
 import { Page } from '@playwright/test';
@@ -141,6 +142,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserMarketplaceSidebar: MarketplaceSidebar;
   additionalShareUserMarketplaceFilter: MarketplaceFilter;
   additionalShareUserMarketplace: Marketplace;
+  additionalShareUserMarketplaceAgentsSection: MarketplaceAgentsSection;
   additionalShareUserMarketplaceAgents: MarketplaceAgents;
 }>({
   beforeAdditionalShareUserTestCleanup: [
@@ -736,12 +738,20 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserMarketplaceContainer.getMarketplace();
     await use(additionalShareUserMarketplace);
   },
-  additionalShareUserMarketplaceAgents: async (
+  additionalShareUserMarketplaceAgentsSection: async (
     { additionalShareUserMarketplace },
     use,
   ) => {
+    const additionalShareUserMarketplaceAgentsSection =
+      additionalShareUserMarketplace.getMarketplaceAgentsSection();
+    await use(additionalShareUserMarketplaceAgentsSection);
+  },
+  additionalShareUserMarketplaceAgents: async (
+    { additionalShareUserMarketplaceAgentsSection },
+    use,
+  ) => {
     const additionalShareUserMarketplaceAgents =
-      additionalShareUserMarketplace.getAgents();
+      additionalShareUserMarketplaceAgentsSection.getAgents();
     await use(additionalShareUserMarketplaceAgents);
   },
 });

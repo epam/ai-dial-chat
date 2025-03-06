@@ -15,6 +15,7 @@ export enum FoundMarketplaceAgents {
 
 export interface MarketplaceAgentProperties {
   name: string;
+  version?: string;
   isSuggested: boolean;
   isWorkspaceAgent: boolean;
 }
@@ -66,15 +67,13 @@ export class MarketplaceAgents extends BaseElement {
   public getAgent = (entity: DialAIEntityModel | string) => {
     let agent;
     if (typeof entity === 'string') {
-      agent = this.rootLocator
-        .filter({ has: this.agentName(RegexUtil.escapeRegexChars(entity)) })
-        .first();
+      agent = this.rootLocator.filter({ has: this.agentName(entity) }).first();
     } else {
       //if agent has version in the config
       if (entity.version) {
         agent = this.rootLocator
           .filter({
-            has: this.agentName(RegexUtil.escapeRegexChars(entity.name)),
+            has: this.agentName(entity.name),
           })
           .filter({
             has: this.agentVersion(entity.version).or(
@@ -86,7 +85,7 @@ export class MarketplaceAgents extends BaseElement {
         //init agent locator if no version is available in the config
         agent = this.rootLocator
           .filter({
-            has: this.agentName(RegexUtil.escapeRegexChars(entity.name)),
+            has: this.agentName(entity.name),
           })
           .first();
       }
