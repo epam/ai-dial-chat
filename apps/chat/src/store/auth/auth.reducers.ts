@@ -1,12 +1,12 @@
-import { RootState } from '../index';
-import { SettingsState } from '../settings/settings.reducers';
+import { SessionContextValue } from 'next-auth/react';
 
-
+import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { isClientSessionValid } from '@/src/utils/auth/session';
 import { isUserAdmin } from '@/src/utils/session';
-import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
-import { SessionContextValue } from 'next-auth/react';
+
+import { RootState } from '../index';
+import { SettingsState } from '../settings/settings.reducers';
 
 interface AuthState {
   session: SessionContextValue<boolean> | undefined;
