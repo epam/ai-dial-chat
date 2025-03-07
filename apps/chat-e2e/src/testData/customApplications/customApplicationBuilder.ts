@@ -38,6 +38,11 @@ export class CustomApplicationBuilder {
     return this;
   }
 
+  withDescriptionKeywords(...keywords: string[]): CustomApplicationBuilder {
+    this.customApplication.description_keywords = keywords;
+    return this;
+  }
+
   build(): ApiApplicationModelRegular {
     const customApplication = { ...this.customApplication };
     this.reset();

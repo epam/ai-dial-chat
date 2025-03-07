@@ -5,7 +5,7 @@ import {
   ExpectedMessages,
   MockedChatApiResponseBodies,
   Rate,
-  Theme,
+  ThemeId,
 } from '@/src/testData';
 import { OverlaySandboxUrls } from '@/src/testData/overlay/overlaySandboxUrls';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
@@ -209,7 +209,7 @@ dialOverlayTest(
     );
 
     await dialTest.step('Verify Dark theme is set', async () => {
-      await overlayAssertion.assertOverlayTheme(overlayHomePage, Theme.dark);
+      await overlayAssertion.assertOverlayTheme(overlayHomePage, ThemeId.dark);
     });
   },
 );

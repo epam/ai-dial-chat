@@ -9,7 +9,7 @@ import {
   FilterMenuOptions,
   FolderPrompt,
   MenuOptions,
-  Theme,
+  ThemeId,
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
@@ -76,7 +76,7 @@ dialTest(
           folderWithPrompts.folders,
         );
 
-        theme = Theme.dark;
+        theme = ThemeId.dark;
         await localStorageManager.setSettings(theme);
         await localStorageManager.setPromptCollapsedSection(
           CollapsedSections.Organization,
