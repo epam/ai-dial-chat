@@ -52,8 +52,8 @@ const selectIsShouldLogin = createSelector(
     );
   },
 );
-const selectIsAdmin = createSelector([rootSelector], (state) => {
-  return isUserAdmin(selectSessionData(state));
+const selectIsAdmin = createSelector([selectSessionData], (sessionData) => {
+  return isUserAdmin(sessionData);
 });
 
 export const AuthSelectors = {

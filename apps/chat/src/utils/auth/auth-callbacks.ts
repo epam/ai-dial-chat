@@ -32,8 +32,8 @@ const getUser = (accessToken: string | undefined, providerId: string) => {
     'dial_roles';
   const adminRoleNames = parseCommaSeparatedList(
     process.env[`AUTH_${providerId.toUpperCase()}_ADMIN_ROLE_NAMES`] ??
-      process.env.ADMIN_ROLE_NAMES ??
-      'admin',
+      process.env.ADMIN_ROLE_NAMES,
+    ['admin'],
   );
   const decodedPayload = accessToken ? safeDecodeJwt(accessToken) : {};
   const dialRoles = get(decodedPayload, rolesFieldName, []) as string[];
