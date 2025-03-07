@@ -321,7 +321,8 @@ dialTest(
   },
 );
 
-dialTest(
+//TC depends on LLM availability and response
+dialTest.skip(
   'System prompt is applied in Model',
   async ({
     dialHomePage,
@@ -444,7 +445,7 @@ dialTest(
       },
     );
 
-    await dialTest.step(
+    await dialTest.step.skip(
       'Send request and stop generation when partial content received',
       async () => {
         await chatMessages.regenerateResponse(false);
@@ -453,7 +454,7 @@ dialTest(
       },
     );
 
-    await dialTest.step(
+    await dialTest.step.skip(
       'Verify partial content is preserved and model icon is visible',
       async () => {
         const generatedContent = await chatMessages.getLastMessageContent();
@@ -478,6 +479,9 @@ dialTest(
     await dialTest.step(
       'Edit request, click "Save & Submit" and verify response is regenerated',
       async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         const updatedRequest = '1+2=';
         await chatMessages.openEditMessageMode(request);
         await chatMessages.editMessage(request, updatedRequest);

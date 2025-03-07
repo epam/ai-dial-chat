@@ -141,9 +141,17 @@ export class MarketplaceAgentsSection extends BaseElement {
 
   public async getAllAgents() {
     const allAgents: MarketplaceAgentProperties[] = [];
-    let scrollPosition: { scrollTop: number; clientHeight: number };
+    let scrollPosition: { scrollTop: number; clientHeight: number } = {
+      scrollTop: 0,
+      clientHeight: 0,
+    };
     const scrollHeight = await this.rootLocator.evaluate((p) => p.scrollHeight);
-    do {
+    let iteration = 1;
+    let shouldProceed = true;
+    while (shouldProceed) {
+      if (iteration !== 1) {
+        scrollPosition = await this.getPositionAndScrollInto();
+      }
       const visibleAgents = this.getAgents();
       const visibleAgentNames = await visibleAgents.getAgentNames();
       const visibleAgentsCount = visibleAgentNames.length;
@@ -165,11 +173,11 @@ export class MarketplaceAgentsSection extends BaseElement {
           });
         }
       }
-      scrollPosition = await this.getPositionAndScrollInto();
-    } while (
-      scrollPosition.clientHeight <
-      Math.ceil(scrollHeight - scrollPosition.scrollTop)
-    );
+      shouldProceed =
+        scrollPosition.clientHeight <
+        Math.ceil(scrollHeight - scrollPosition.scrollTop);
+      iteration++;
+    }
     return allAgents;
   }
 
