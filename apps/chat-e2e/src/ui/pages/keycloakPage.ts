@@ -6,7 +6,7 @@ import { Keycloak } from '@/src/ui/webElements/keycloak';
 export class KeycloakPage extends BasePage implements LoginInterface {
   public keycloak!: Keycloak;
 
-  getKeycloak(): Keycloak {
+  getLoginForm(): Keycloak {
     if (!this.keycloak) {
       this.keycloak = new Keycloak(this.page);
     }
@@ -20,7 +20,7 @@ export class KeycloakPage extends BasePage implements LoginInterface {
   ) {
     await this.page.waitForLoadState();
     await this.page.waitForLoadState('domcontentloaded');
-    const keycloak = this.getKeycloak();
+    const keycloak = this.getLoginForm();
     await keycloak.setCredentials(username, password);
     return this.waitForApiResponsesReceived(
       () => keycloak.signInButton.click(),
