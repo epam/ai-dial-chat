@@ -424,6 +424,9 @@ dialTest(
         await dialHomePage.importFile(threeConversationsData, () =>
           chatBar.importButton.click(),
         );
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chatMessages.regenerateResponse();
         const messagesCount =
           await chatMessages.chatMessages.getElementsCount();
