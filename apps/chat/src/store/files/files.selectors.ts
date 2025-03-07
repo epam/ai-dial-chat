@@ -5,6 +5,7 @@ import {
   getParentAndChildFolders,
   sortByName,
 } from '@/src/utils/app/folders';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 
 import { EntityFilters } from '@/src/types/search';
@@ -13,7 +14,6 @@ import { RootState } from '@/src/types/store';
 import { FilesState } from './files.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 const rootSelector = (state: RootState): FilesState => state.files;
 
