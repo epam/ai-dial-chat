@@ -11,6 +11,7 @@ import {
   sortByName,
 } from '@/src/utils/app/folders';
 import { getFileRootId } from '@/src/utils/app/id';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 
 import { DialFile, FileFolderInterface } from '@/src/types/files';
@@ -565,6 +566,14 @@ const selectPublicationFolders = createSelector(
     return state.folders.filter((f) => f.isPublicationFolder);
   },
 );
+
+const selectPublicFolders = createSelector(
+  [rootSelector],
+  (state: FilesState) => {
+    return state.folders.filter((f) => isEntityIdPublic(f));
+  },
+);
+
 const selectInitialized = createSelector(
   [rootSelector],
   (state) => state.initialized,
@@ -600,6 +609,7 @@ export const FilesSelectors = {
   selectInitialized,
   selectAreFilesLoading,
   selectLastRenamedParentFolder,
+  selectPublicFolders,
 };
 
 export const FilesActions = filesSlice.actions;
