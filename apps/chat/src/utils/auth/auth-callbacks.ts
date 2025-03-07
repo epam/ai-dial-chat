@@ -25,6 +25,18 @@ const safeDecodeJwt = (accessToken: string) => {
   }
 };
 
+const safeParseJSON = (jsonData: string | undefined, errorMessage: string) => {
+  try {
+    if (!jsonData) {
+      return {};
+    }
+    return JSON.parse(jsonData);
+  } catch (err) {
+    logger.error(errorMessage, err);
+    throw Error(`${errorMessage}: ${err}`);
+  }
+};
+
 const getUser = (accessToken: string | undefined, providerId: string) => {
   const rolesFieldName =
     process.env[`AUTH_${providerId.toUpperCase()}_DIAL_ROLES_FIELD`] ??
@@ -41,8 +53,9 @@ const getUser = (accessToken: string | undefined, providerId: string) => {
   const isAdmin =
     roles.length > 0 && adminRoleNames.some((role) => roles.includes(role));
 
-  const enabledFeaturesRoles = JSON.parse(
-    process.env.ENABLED_FEATURES_ROLES?.replaceAll('\\"', '"') ?? '{}',
+  const enabledFeaturesRoles = safeParseJSON(
+    process.env.ENABLED_FEATURES_ROLES?.replaceAll('\\"', '"'),
+    'Error when parsing ENABLED_FEATURES_ROLES',
   );
 
   const featureFlags = Array.from(Object.values(Feature)).reduce(
