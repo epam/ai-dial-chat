@@ -1,4 +1,3 @@
-// eslint-disable-next-line @nx/enforce-module-boundaries
 import { GetServerSideProps } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
@@ -25,6 +24,7 @@ import {
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
+// eslint-disable-next-line @nx/enforce-module-boundaries
 import packageJSON from '../../../../../package.json';
 import { parseCommaSeparatedList } from '../app/common';
 
