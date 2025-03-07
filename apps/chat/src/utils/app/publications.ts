@@ -1,8 +1,14 @@
 import { getQuickAppDocumentUrl } from '@/src/utils/app/application';
+import {
+  isPlaybackConversation,
+  isReplayConversation,
+} from '@/src/utils/app/conversation';
 
 import { CustomApplicationModel } from '@/src/types/applications';
+import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
+import { FolderInterface } from '@/src/types/folder';
 import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import { PromptInfo } from '@/src/types/prompt';
 import {
@@ -27,11 +33,21 @@ import {
 } from '../server/api';
 import { isVersionValid } from './common';
 import { constructPath } from './file';
-import { getFolderIdFromEntityId, splitEntityId } from './folders';
-import { getEntityBucket, getRootId, isEntityIdExternal, isRootId } from './id';
+import { getFolderIdFromEntityId, sortByName, splitEntityId } from './folders';
+import {
+  getEntityBucket,
+  getRootId,
+  isConversationId,
+  isEntityIdExternal,
+  isRootId,
+} from './id';
 import { EnumMapper } from './mappers';
 
-import { ConversationInfo, PublishActions } from '@epam/ai-dial-shared';
+import {
+  ConversationInfo,
+  PublishActions,
+  ShareEntity,
+} from '@epam/ai-dial-shared';
 
 export const isEntityIdPublic = (
   entity: { id: string },
@@ -288,4 +304,44 @@ export const getFilesFromPublicResources = ({
   });
 
   return { publicFiles, foldersSet };
+};
+
+export const getPublishFolderResources = (
+  folder: FolderInterface,
+  entities: (ShareEntity | DialFile | ConversationInfo)[],
+  publicVersionGroups: PublicVersionGroups,
+  isUnpublishing?: boolean,
+) => {
+  const folderPath = `${folder.id}/`;
+  const sortedItems = sortByName(
+    entities?.filter((item) => item.id.startsWith(folderPath)) || [],
+  );
+
+  if (isUnpublishing) {
+    return sortedItems.filter((item) => {
+      const currentVersionGroupId = item.publicationInfo?.version
+        ? getPublicItemIdWithoutVersion(item.publicationInfo.version, item.id)
+        : null;
+
+      if (currentVersionGroupId) {
+        const selectedVersion =
+          publicVersionGroups[currentVersionGroupId]?.selectedVersion;
+
+        return selectedVersion && selectedVersion.id === item.id;
+      }
+
+      return false;
+    });
+  }
+
+  if (!isConversationId(folderPath)) {
+    return sortedItems;
+  }
+
+  return (sortedItems as (ConversationInfo & Partial<Conversation>)[]).filter(
+    (item) =>
+      isPlaybackConversation(item) ||
+      (!isReplayConversation(item) &&
+        (item.messages?.length || !item.messages)),
+  );
 };

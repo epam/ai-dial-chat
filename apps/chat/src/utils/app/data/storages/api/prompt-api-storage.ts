@@ -6,12 +6,12 @@ import { getPromptApiKey, parsePromptApiKey } from '@/src/utils/server/api';
 
 import { ApiKeys } from '@/src/types/common';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
+import { RootState } from '@/src/types/store';
 
 import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 
 import { ApiEntityStorage } from './api-entity-storage';
 
-import { RootState } from '@/src/store';
 import { Entity, UploadStatus } from '@epam/ai-dial-shared';
 
 export class PromptApiStorage extends ApiEntityStorage<PromptInfo, Prompt> {
