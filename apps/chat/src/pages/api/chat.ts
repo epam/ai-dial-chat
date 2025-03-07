@@ -60,6 +60,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       return res.status(400).send(errorsMessages[400]);
     }
 
+    if (!assistantModel && model.type === EntityType.Assistant) {
+      return res.status(400).send(errorsMessages.noAssistantModelSelected);
+    }
+
     let promptToSend = prompt;
     let filteredMessages = messages;
     if (!doesModelAllowSystemPrompt(model)) {
