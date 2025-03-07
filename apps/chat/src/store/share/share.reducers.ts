@@ -44,6 +44,8 @@ const initialState: ShareState = {
   shareIsFolder: undefined,
   isConversation: undefined,
   isPrompt: undefined,
+  isFolderShared: false,
+  unshareFolderId: undefined,
 };
 
 export const shareSlice = createSlice({
@@ -63,6 +65,7 @@ export const shareSlice = createSlice({
         resourceId: string;
         isFolder?: boolean;
         permissions?: SharePermission[];
+        isFolderShared?: boolean;
       }>,
     ) => {
       state.invitationId = undefined;
@@ -72,6 +75,7 @@ export const shareSlice = createSlice({
       state.shareIsFolder = payload.isFolder;
       state.shareResourceId = payload.resourceId;
       state.sharePermissions = payload.permissions;
+      state.isFolderShared = payload.isFolderShared;
 
       const name = splitEntityId(payload.resourceId).name;
       state.shareResourceName =
@@ -192,6 +196,12 @@ export const shareSlice = createSlice({
       { payload }: PayloadAction<Omit<ShareEntity, 'folderId'> | undefined>,
     ) => {
       state.unshareEntity = payload;
+    },
+    setUnshareFolderId: (
+      state,
+      { payload }: PayloadAction<string | undefined>,
+    ) => {
+      state.unshareFolderId = payload;
     },
     acceptShareInvitation: (
       state,

@@ -25,4 +25,6 @@ export interface ShareState {
   isConversation?: boolean;
   isPrompt?: boolean;
   sharePermissions?: SharePermission[];
+  isFolderShared?: boolean;
+  unshareFolderId?: string | undefined;
 }

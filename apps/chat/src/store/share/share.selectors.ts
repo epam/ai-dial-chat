@@ -39,6 +39,10 @@ export const selectShareResourceName = createSelector(
   },
 );
 
+export const selectIsFolderShared = createSelector([rootSelector], (state) => {
+  return state.isFolderShared;
+});
+
 export const selectShareFeatureType = createSelector(
   [rootSelector],
   (state) => {
@@ -69,4 +73,7 @@ export const selectSharePermissions = createSelector(
 );
 export const selectUnshareModel = createSelector([rootSelector], (state) => {
   return state.unshareEntity;
+});
+export const selectUnshareFolderId = createSelector([rootSelector], (state) => {
+  return state.unshareFolderId;
 });

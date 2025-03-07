@@ -27,14 +27,16 @@ import ContextMenu from '../Common/ContextMenu';
 import DownloadRenderer from './Download';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { UploadStatus } from '@epam/ai-dial-shared';
 
 interface ContextMenuProps {
   file: DialFile;
   className: string;
   onDelete: (props?: unknown) => void | MouseEventHandler<unknown>;
+  onUnshare: (props?: unknown) => void | MouseEventHandler<unknown>;
   onOpenChange?: (isOpen: boolean) => void;
-  onUnshare?: MouseEventHandler<unknown>;
+  onRemoveAccess?: MouseEventHandler<unknown>;
   onUnpublish?: MouseEventHandler<unknown>;
   onSave?: (fileId: string) => void | MouseEventHandler<unknown>;
 }
@@ -43,8 +45,9 @@ export function FileItemContextMenu({
   file,
   className,
   onDelete,
-  onOpenChange,
   onUnshare,
+  onOpenChange,
+  onRemoveAccess,
   onUnpublish,
   onSave,
 }: ContextMenuProps) {
@@ -95,10 +98,18 @@ export function FileItemContextMenu({
         CustomTriggerRenderer: DownloadRenderer,
       },
       {
-        name: t('Unshare'),
+        name: t('Remove access'),
         dataQa: 'unshare',
-        display: isSharingConversationEnabled && !!onUnshare && !!file.isShared,
+        display:
+          isSharingConversationEnabled && !!onRemoveAccess && !!file.isShared,
         Icon: IconUserX,
+        onClick: onRemoveAccess,
+      },
+      {
+        name: t('Unshare'),
+        display: !!file.sharedWithMe,
+        dataQa: 'unshare-file',
+        Icon: IconUserUnshare,
         onClick: onUnshare,
       },
       {
@@ -116,9 +127,7 @@ export function FileItemContextMenu({
         dataQa: 'delete',
         display:
           isMyEntity(file, FeatureType.File) ||
-          !!file.sharedWithMe ||
           canEditSharedFolderOrParent(folders, file.folderId),
-
         Icon: IconTrashX,
         onClick: onDelete,
       },
@@ -131,6 +140,7 @@ export function FileItemContextMenu({
       file,
       handleDownload,
       isSharingConversationEnabled,
+      onRemoveAccess,
       onUnshare,
       isPublishingConversationEnabled,
       onUnpublish,

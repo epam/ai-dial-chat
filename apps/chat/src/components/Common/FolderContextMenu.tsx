@@ -7,7 +7,6 @@ import {
   IconTrashX,
   IconUpload,
   IconUserShare,
-  IconUserX,
   IconWorldShare,
 } from '@tabler/icons-react';
 import { MouseEventHandler, useMemo } from 'react';
@@ -34,6 +33,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import ContextMenu from './ContextMenu';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 
 interface FolderContextMenuProps {
   folder: FolderInterface;
@@ -133,10 +133,9 @@ export const FolderContextMenu = ({
       },
       {
         name: t('Unshare'),
-        display:
-          isSharingEnabled && !!onUnshare && !isExternal && !!folder.isShared,
+        display: !!onUnshare && !!folder.sharedWithMe,
         dataQa: 'unshare',
-        Icon: IconUserX,
+        Icon: IconUserUnshare,
         onClick: onUnshare,
         disabled: disableAll,
       },
@@ -180,10 +179,7 @@ export const FolderContextMenu = ({
       {
         name: t('Delete'),
         display:
-          !!onDelete &&
-          (isMyEntity(folder, featureType) ||
-            !!folder.temporary ||
-            !!folder.sharedWithMe),
+          !!onDelete && (isMyEntity(folder, featureType) || !!folder.temporary),
         dataQa: 'delete',
         Icon: IconTrashX,
         onClick: onDelete,
