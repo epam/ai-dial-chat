@@ -1,37 +1,37 @@
-import { PlotParams } from 'react-plotly.js';
-
+import { AddonsActions, AddonsSelectors } from '../addons/addons.reducers';
+import { FilesActions } from '../files/files.reducers';
+import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
+import { OverlaySelectors } from '../overlay/overlay.reducers';
+import { PublicationActions } from '../publication/publication.reducers';
+import { UIActions, UISelectors } from '../ui/ui.reducers';
 import {
-  EMPTY,
-  Observable,
-  Subject,
-  TimeoutError,
-  catchError,
-  concat,
-  concatMap,
-  delay,
-  filter,
-  forkJoin,
-  from,
-  ignoreElements,
-  iif,
-  map,
-  mergeMap,
-  of,
-  startWith,
-  switchMap,
-  take,
-  takeWhile,
-  tap,
-  throwError,
-  timeout,
-  zip,
-} from 'rxjs';
-import { fromFetch } from 'rxjs/fetch';
+  ConversationsActions,
+  ConversationsSelectors,
+} from './conversations.reducers';
 
-import { AnyAction } from '@reduxjs/toolkit';
-
-import { combineEpics } from 'redux-observable';
-
+import { LOCAL_BUCKET, resetShareEntity } from '@/src/constants/chat';
+import {
+  DEFAULT_CONVERSATION_NAME,
+  DEFAULT_TEMPERATURE,
+  FALLBACK_ASSISTANT_SUBMODEL_ID,
+  FALLBACK_TEMPERATURE,
+} from '@/src/constants/default-ui-settings';
+import { errorsMessages } from '@/src/constants/errors';
+import { MarketplaceQueryParams } from '@/src/constants/marketplace';
+import { defaultReplay } from '@/src/constants/replay';
+import { CONVERSATIONS_DATE_SECTIONS } from '@/src/constants/sections';
+import { SHARE_QUERY_PARAM } from '@/src/constants/share';
+import {
+  MarketplaceActions,
+  MarketplaceSelectors,
+} from '@/src/store/marketplace/marketplace.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
+import { ChatBody, Conversation, Playback, RateBody } from '@/src/types/chat';
+import { EntityType, FeatureType } from '@/src/types/common';
+import { FolderType } from '@/src/types/folder';
+import { HTTPMethod } from '@/src/types/http';
+import { AppEpic } from '@/src/types/store';
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import {
   combineEntities,
@@ -91,43 +91,6 @@ import {
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
 import { parseConversationApiKey } from '@/src/utils/server/api';
-
-import { ChatBody, Conversation, Playback, RateBody } from '@/src/types/chat';
-import { EntityType, FeatureType } from '@/src/types/common';
-import { FolderType } from '@/src/types/folder';
-import { HTTPMethod } from '@/src/types/http';
-import { AppEpic } from '@/src/types/store';
-
-import {
-  MarketplaceActions,
-  MarketplaceSelectors,
-} from '@/src/store/marketplace/marketplace.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { ShareActions } from '@/src/store/share/share.reducers';
-
-import { LOCAL_BUCKET, resetShareEntity } from '@/src/constants/chat';
-import {
-  DEFAULT_CONVERSATION_NAME,
-  DEFAULT_TEMPERATURE,
-  FALLBACK_TEMPERATURE,
-} from '@/src/constants/default-ui-settings';
-import { errorsMessages } from '@/src/constants/errors';
-import { MarketplaceQueryParams } from '@/src/constants/marketplace';
-import { defaultReplay } from '@/src/constants/replay';
-import { CONVERSATIONS_DATE_SECTIONS } from '@/src/constants/sections';
-import { SHARE_QUERY_PARAM } from '@/src/constants/share';
-
-import { AddonsActions, AddonsSelectors } from '../addons/addons.reducers';
-import { FilesActions } from '../files/files.reducers';
-import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
-import { OverlaySelectors } from '../overlay/overlay.reducers';
-import { PublicationActions } from '../publication/publication.reducers';
-import { UIActions, UISelectors } from '../ui/ui.reducers';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from './conversations.reducers';
-
 import {
   ConversationInfo,
   CustomVisualizerData,
@@ -136,8 +99,38 @@ import {
   Role,
   UploadStatus,
 } from '@epam/ai-dial-shared';
+import { AnyAction } from '@reduxjs/toolkit';
 import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
+import { PlotParams } from 'react-plotly.js';
+import { combineEpics } from 'redux-observable';
+import {
+  EMPTY,
+  Observable,
+  Subject,
+  TimeoutError,
+  catchError,
+  concat,
+  concatMap,
+  delay,
+  filter,
+  forkJoin,
+  from,
+  ignoreElements,
+  iif,
+  map,
+  mergeMap,
+  of,
+  startWith,
+  switchMap,
+  take,
+  takeWhile,
+  tap,
+  throwError,
+  timeout,
+  zip,
+} from 'rxjs';
+import { fromFetch } from 'rxjs/fetch';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -468,6 +461,10 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 lastActivityDate: Date.now(),
                 status: UploadStatus.LOADED,
                 folderId: folderId ?? getConversationRootId(LOCAL_BUCKET),
+                assistantModelId: DefaultsService.get(
+                  'assistantSubmodelId',
+                  FALLBACK_ASSISTANT_SUBMODEL_ID,
+                ),
               }),
             );
             const selectedConversationsIds =
