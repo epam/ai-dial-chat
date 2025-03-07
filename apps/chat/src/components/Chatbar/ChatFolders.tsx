@@ -12,6 +12,7 @@ import {
   isRootId,
 } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
+import { getPublishFolderResources } from '@/src/utils/app/publications';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilters,
@@ -80,6 +81,9 @@ const ChatFolderTemplate = ({
     () =>
       ConversationsSelectors.selectFilteredConversations(filters, searchTerm),
     [filters, searchTerm],
+  );
+  const publicVersionGroups = useAppSelector(
+    PublicationSelectors.selectPublicVersionGroups,
   );
   const conversations = useAppSelector(selectFilteredConversationsSelector);
   const allConversations = useAppSelector(
@@ -290,6 +294,17 @@ const ChatFolderTemplate = ({
   const shouldDenyDrop =
     isEntityIdExternal(folder) || isSelectMode || isConversationsStreaming;
 
+  const publishConversations = useMemo(() => {
+    if (!publication) return [];
+
+    return getPublishFolderResources(
+      publication.entity,
+      publication.entities,
+      publicVersionGroups,
+      publication.action === PublishActions.DELETE,
+    );
+  }, [publication, publicVersionGroups]);
+
   return (
     <>
       <BetweenFoldersLine
@@ -333,7 +348,7 @@ const ChatFolderTemplate = ({
       {!!publication && (
         <PublishModal
           entity={publication.entity}
-          entities={publication.entities}
+          entities={publishConversations}
           type={publication.type}
           isOpen={!!publication}
           onClose={handlePublicationClose}

@@ -27,10 +27,7 @@ import {
   isEntityNameOnSameLevelUnique,
   prepareEntityName,
 } from '@/src/utils/app/common';
-import {
-  isPlaybackConversation,
-  isReplayConversation,
-} from '@/src/utils/app/conversation';
+import { isReplayConversation } from '@/src/utils/app/conversation';
 import { getEntityNameError } from '@/src/utils/app/errors';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
@@ -50,8 +47,8 @@ import {
   getFolderMoveType,
   hasDragEventAnyData,
 } from '@/src/utils/app/move';
+import { getPublishFolderResources } from '@/src/utils/app/publications';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
-import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
 import { AdditionalItemData, FeatureType } from '@/src/types/common';
@@ -297,48 +294,21 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     setIsUnshareConfirmOpened(true);
   }, []);
 
-  const allChildItems = useMemo(() => {
-    const folderPath = `${currentFolder.id}/`;
-    const sortedItems = sortByName(
-      allItemsWithoutFilters?.filter((item) =>
-        item.id.startsWith(folderPath),
-      ) || [],
-    );
-
-    if (isUnpublishing) {
-      return sortedItems.filter((item) => {
-        const currentVersionGroupId = item.publicationInfo?.version
-          ? getPublicItemIdWithoutVersion(item.publicationInfo.version, item.id)
-          : null;
-
-        if (currentVersionGroupId) {
-          const selectedVersion =
-            publicVersionGroups[currentVersionGroupId]?.selectedVersion;
-
-          return selectedVersion && selectedVersion.id === item.id;
-        }
-
-        return false;
-      });
-    }
-
-    if (featureType !== FeatureType.Chat) {
-      return sortedItems;
-    }
-
-    return (sortedItems as (ConversationInfo & Partial<Conversation>)[]).filter(
-      (item) =>
-        isPlaybackConversation(item) ||
-        (!isReplayConversation(item) &&
-          (item.messages?.length || !item.messages)),
-    );
-  }, [
-    allItemsWithoutFilters,
-    currentFolder.id,
-    featureType,
-    isUnpublishing,
-    publicVersionGroups,
-  ]);
+  const allChildItems = useMemo(
+    () =>
+      getPublishFolderResources(
+        currentFolder,
+        allItemsWithoutFilters,
+        publicVersionGroups,
+        isUnpublishing,
+      ),
+    [
+      allItemsWithoutFilters,
+      currentFolder,
+      isUnpublishing,
+      publicVersionGroups,
+    ],
+  );
 
   const handleOpenPublishing: MouseEventHandler = useCallback(
     (e) => {
