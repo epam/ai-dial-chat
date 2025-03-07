@@ -13,6 +13,7 @@ import { RootState } from '@/src/types/store';
 import { FilesState } from './files.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 const rootSelector = (state: RootState): FilesState => state.files;
 
@@ -126,6 +127,14 @@ const selectPublicationFolders = createSelector(
     return state.folders.filter((f) => f.isPublicationFolder);
   },
 );
+
+const selectPublicFolders = createSelector(
+  [rootSelector],
+  (state: FilesState) => {
+    return state.folders.filter((f) => isEntityIdPublic(f));
+  },
+);
+
 const selectInitialized = createSelector(
   [rootSelector],
   (state) => state.initialized,
@@ -158,6 +167,7 @@ export const FilesSelectors = {
   selectFileById,
   selectFoldersWithSearchTerm,
   selectPublicationFolders,
+  selectPublicFolders,
   selectInitialized,
   selectAreFilesLoading,
   selectLastRenamedParentFolder,
