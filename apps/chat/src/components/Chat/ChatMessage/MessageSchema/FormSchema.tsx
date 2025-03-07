@@ -18,7 +18,7 @@ import {
   DialSchemaProperties,
   FormSchemaButtonOption,
   FormSchemaProperty,
-  FormSchemaPropertyType,
+  FormSchemaPropertyWidget,
   MessageFormSchema,
   MessageFormValue,
   MessageFormValueType,
@@ -155,7 +155,8 @@ const PropertyRenderer = ({
         </p>
       )}
 
-      {property.type === FormSchemaPropertyType.number && (
+      {property[DialSchemaProperties.DialWidget] ===
+        FormSchemaPropertyWidget.buttons && (
         <ButtonsProperty
           options={property.oneOf}
           onClick={handleClick}
