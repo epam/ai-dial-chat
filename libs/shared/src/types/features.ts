@@ -28,8 +28,8 @@ export enum Feature {
   Marketplace = 'marketplace', // Enable Marketplace
   QuickApps = 'quick-apps', // Enable Quick apps
   CodeApps = 'code-apps', // Enable Code apps
-  DisallowChangeAgent = 'disallow-change-agent', //Disallow "Change agent" button
-  MarketplaceTableView = 'marketplace-table-view', //Disallow "Change agent" button
+  DisallowChangeAgent = 'disallow-change-agent', // Disallow "Change agent" button
+  MarketplaceTableView = 'marketplace-table-view', // Enable table view in Marketplace
   HideUserSettings = 'hide-user-settings', // Hide user settings
 }
 

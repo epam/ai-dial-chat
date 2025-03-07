@@ -1240,7 +1240,10 @@ dialTest(
     await dialTest.step(
       'Open share link by another logged out user and verify conversation is shared and selected',
       async () => {
-        const username = process.env.E2E_USERNAME!.split(',')[+config.workers!];
+        const username =
+          process.env.E2E_USERNAME!.split(',')[
+            dialTest.info().parallelIndex + +config.workers!
+          ];
         await incognitoProviderLogin.login(
           testInfo,
           username,
