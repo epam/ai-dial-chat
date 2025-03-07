@@ -73,7 +73,8 @@ dialTest(
   },
 );
 
-dialTest(
+//TC depends on LLM availability and response
+dialTest.skip(
   '"Talk to" item icon is jumping while generating an answer',
   async ({
     dialHomePage,
