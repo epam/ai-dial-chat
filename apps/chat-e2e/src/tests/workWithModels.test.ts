@@ -9,7 +9,7 @@ import {
   ExpectedConstants,
   ExpectedMessages,
   MockedChatApiResponseBodies,
-  Theme,
+  ThemeId,
 } from '@/src/testData';
 import { Overflow } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
@@ -94,7 +94,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-477', 'EPMRTC-1463');
     await dialTest.step('Set random application theme', async () => {
-      const theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
+      const theme = GeneratorUtil.randomArrayElement(Object.keys(ThemeId));
       await localStorageManager.setSettings(theme);
     });
 
@@ -389,7 +389,7 @@ dialTest(
     const expectedModelIcon = iconApiHelper.getEntityIcon(simpleRequestModel!);
 
     await dialTest.step('Set random application theme', async () => {
-      const theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
+      const theme = GeneratorUtil.randomArrayElement(Object.keys(ThemeId));
       await localStorageManager.setSettings(theme);
       await localStorageManager.setRecentModelsIds(simpleRequestModel!);
     });
