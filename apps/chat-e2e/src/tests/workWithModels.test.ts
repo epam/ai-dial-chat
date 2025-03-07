@@ -321,7 +321,8 @@ dialTest(
   },
 );
 
-dialTest(
+//TC depends on LLM availability and response
+dialTest.skip(
   'System prompt is applied in Model',
   async ({
     dialHomePage,
