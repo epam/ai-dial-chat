@@ -8,7 +8,7 @@ import {
   ExpectedMessages,
   MenuOptions,
   MockedChatApiResponseBodies,
-  Theme,
+  ThemeId,
 } from '@/src/testData';
 import { OverlaySandboxUrls } from '@/src/testData/overlay/overlaySandboxUrls';
 import { keys } from '@/src/ui/keyboard';
@@ -88,7 +88,7 @@ dialOverlayTest(
     );
 
     await dialTest.step('Verify Light theme is set', async () => {
-      await overlayAssertion.assertOverlayTheme(overlayHomePage, Theme.light);
+      await overlayAssertion.assertOverlayTheme(overlayHomePage, ThemeId.light);
     });
 
     await dialTest.step(
