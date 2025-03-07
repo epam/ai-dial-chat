@@ -55,6 +55,7 @@ dialAdminTest(
       'EPMRTC-3606',
     );
     let prompt1: Prompt;
+    
     let prompt2: Prompt;
     const folderName = GeneratorUtil.randomString(10);
     const requestName1WithoutLeadingAndTrailingSpaces = `${GeneratorUtil.randomPublicationRequestName()}    ${GeneratorUtil.randomString(7)}`;
