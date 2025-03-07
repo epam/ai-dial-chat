@@ -1,5 +1,6 @@
 import { BackendDataEntity, BackendDataNodeType } from '@/chat/types/common';
 import { BackendFile } from '@/chat/types/files';
+import { DialAIEntityModel } from '@/chat/types/models';
 import { API, Attachment } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
 import { BucketUtil, ItemUtil } from '@/src/utils';
@@ -59,6 +60,18 @@ export class FileApiHelper extends BaseApiHelper {
   ) {
     const buffer = Buffer.from(content, 'utf-8');
     return this.putFileGeneric(buffer, filename, parentPath);
+  }
+
+  public async updateInstalledDeployments(agents: DialAIEntityModel[]) {
+    const installedDeployments = agents.map((agent) => ({
+      id: agent.reference ?? agent.id,
+    }));
+    const installedDeploymentsJson = JSON.stringify(installedDeployments);
+    await this.putStringAsFile(
+      API.installedDeploymentsFile,
+      installedDeploymentsJson,
+      API.installedDeploymentsFolder,
+    );
   }
 
   public async getFile(filePath: string) {

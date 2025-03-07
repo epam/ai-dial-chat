@@ -24,7 +24,7 @@ const ROWS_INFO = {
   [ScreenState.XL5]: { size: 184, cols: 6 },
 };
 
-export const VirtualCardsList: React.FC<AgentsListProps> = ({
+export const AgentsTiles: React.FC<AgentsListProps> = ({
   entities,
   suggestedResults,
   separator,
@@ -95,7 +95,7 @@ export const VirtualCardsList: React.FC<AgentsListProps> = ({
             height: `${listHeight}px`,
           }}
           ref={dataRef}
-          className="no-scrollbar relative flex w-full shrink overflow-y-hidden"
+          className="no-scrollbar relative flex w-full shrink"
         >
           {virtualRows.map((virtualRow) => {
             const rowEntities = range(colsCount).map(
