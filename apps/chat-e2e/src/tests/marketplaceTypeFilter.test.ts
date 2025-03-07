@@ -201,16 +201,16 @@ dialTest(
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
-        const allApps = await modelApiHelper.getModels();
         await marketplaceFilter
           .filterByPropertyOptionInput(
             MarketplaceFilterTypes.type,
             EntityType.Application,
           )
           .click();
+        const allAgents = await modelApiHelper.getModels();
         const actualAgents = await marketplaceAgentsSection.getAllAgents();
         for (const actualAgent of actualAgents) {
-          const actualAgentModel = allApps.find(
+          const actualAgentModel = allAgents.find(
             (app) => app.name === actualAgent.name,
           );
           if (actualAgentModel) {
