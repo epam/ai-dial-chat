@@ -298,7 +298,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     () =>
       getPublishFolderResources(
         currentFolder,
-        allItemsWithoutFilters,
+        allItemsWithoutFilters as ShareEntity[],
         publicVersionGroups,
         isUnpublishing,
       ),

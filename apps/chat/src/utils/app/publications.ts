@@ -12,7 +12,6 @@ import { FolderInterface } from '@/src/types/folder';
 import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import { PromptInfo } from '@/src/types/prompt';
 import {
-  PublicVersionGroup,
   PublicVersionGroups,
   PublicationResource,
   ResourceToReview,
@@ -310,7 +309,7 @@ export const getFilesFromPublicResources = ({
 export const getPublishFolderResources = (
   folder: FolderInterface,
   entities: (ShareEntity | DialFile | ConversationInfo)[],
-  publicVersionGroups: PublicVersionGroup,
+  publicVersionGroups: PublicVersionGroups,
   isUnpublishing?: boolean,
 ) => {
   const folderPath = `${folder.id}/`;
