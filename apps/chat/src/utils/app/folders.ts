@@ -17,9 +17,8 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import { ROOT_SECTION_NAME } from '@/src/constants/sections';
 
 import { doesHaveDotsInTheEnd, prepareEntityName } from './common';
-import { isReplayConversation } from './conversation';
-import { isRootId } from './id';
 import { hasWritePermission } from './share';
+import { isReplayConversation, isRootId } from './shared-utils';
 
 import {
   Attachment,

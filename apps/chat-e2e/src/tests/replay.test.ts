@@ -1,6 +1,6 @@
 import { ChatBody, Conversation } from '@/chat/types/chat';
 import { FolderInterface } from '@/chat/types/folder';
-import { DialAIEntityModel } from '@/chat/types/models';
+import { DialAIEntity, DialAIEntityModel } from '@/chat/types/models';
 import { noImportModelsSkipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -26,7 +26,9 @@ dialTest.beforeAll(async () => {
   );
   defaultModel = ModelsUtil.getDefaultModel()!;
   aModel = GeneratorUtil.randomArrayElement(
-    allModels.filter((m) => m.id !== defaultModel.id),
+    allModels.filter(
+      (m) => m.id !== defaultModel.id && (m as DialAIEntity).features?.addons,
+    ),
   );
   bModel = GeneratorUtil.randomArrayElement(
     allModels.filter((m) => m.id !== defaultModel.id && m.id !== aModel.id),
@@ -501,7 +503,7 @@ dialTest(
     const addons = ModelsUtil.getAddons();
 
     await dialTest.step(
-      'Prepare reply conversation with for different models with different settings',
+      'Prepare reply conversation for different models with different settings',
       async () => {
         simpleConversation = conversationData.prepareModelConversation(
           simpleTemp,
