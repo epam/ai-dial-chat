@@ -32,9 +32,11 @@ import { FolderType } from '@/src/types/folder';
 import { AppEpic } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
+import { FilesSelectors } from '@/src/store/files/files.selectors';
+
 import { PublicationActions } from '../publication/publication.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
-import { FilesActions, FilesSelectors } from './files.reducers';
+import { FilesActions } from './files.reducers';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 
