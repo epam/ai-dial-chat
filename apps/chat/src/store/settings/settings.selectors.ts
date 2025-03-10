@@ -1,6 +1,8 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import { parseCommaSeparatedList } from '@/src/utils/app/common';
 import { Defaults } from '@/src/utils/app/data/defaults-service';
+import { canUserUseFeature } from '@/src/utils/session';
 
 import { FeatureType } from '@/src/types/common';
 import { MappedVisualizers } from '@/src/types/custom-visualizers';
@@ -12,6 +14,7 @@ import {
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
 
+import { AuthSelectors } from '../auth/auth.selectors';
 import { SettingsState } from './settings.types';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -31,9 +34,16 @@ const selectFooterHtmlMessage = createSelector([rootSelector], (state) => {
   return state.footerHtmlMessage;
 });
 
-const selectEnabledFeatures = createSelector([rootSelector], (state) => {
-  return new Set(state.enabledFeatures);
-});
+const selectEnabledFeatures = createSelector(
+  [rootSelector, AuthSelectors.selectSessionData],
+  (state, session) => {
+    return new Set(
+      state.enabledFeatures.filter((feature) =>
+        canUserUseFeature(session, feature),
+      ),
+    );
+  },
+);
 
 const selectIsIsolatedView = createSelector([rootSelector], (state) => {
   return !!state.isolatedModelId;
@@ -121,7 +131,9 @@ const selectMappedVisualizers = createSelector(
   (customVisualizers) => {
     return customVisualizers?.reduce(
       (visualizers: MappedVisualizers, currentVisualizerConfig) => {
-        const contentTypes = currentVisualizerConfig.contentType.split(',');
+        const contentTypes = parseCommaSeparatedList(
+          currentVisualizerConfig.contentType,
+        );
 
         visualizers = contentTypes.reduce(
           (visualizers: MappedVisualizers, contentType) => {
