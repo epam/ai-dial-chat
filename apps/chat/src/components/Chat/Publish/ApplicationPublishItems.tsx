@@ -13,7 +13,7 @@ import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { ApplicationRow } from '@/src/components/Common/ReplaceConfirmationModal/Components';
 
-import { PublicationItem } from './PublicationItem';
+import { PublicationItemView } from './PublicationItem';
 
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -43,7 +43,7 @@ export const ApplicationPublishItems = ({
         dataQa="applications-to-send-request"
         className="!pl-0"
       >
-        <PublicationItem
+        <PublicationItemView
           path={path}
           type={SharingType.Application}
           entity={entity}
@@ -60,7 +60,7 @@ export const ApplicationPublishItems = ({
             level={0}
             isChosen={chosenItemsIds.includes(entity.id)}
           />
-        </PublicationItem>
+        </PublicationItemView>
       </CollapsibleSection>
 
       {publishAction === PublishActions.ADD &&
