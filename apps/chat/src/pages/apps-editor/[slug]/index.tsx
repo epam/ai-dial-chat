@@ -7,6 +7,7 @@ import { useRouter } from 'next/router';
 import { isApplicationType } from '@/src/utils/app/application';
 import { decode } from '@/src/utils/app/application-type-schema';
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
+import { canUserUseFeature } from '@/src/utils/session';
 
 import { ApplicationType } from '@/src/types/applications';
 
@@ -25,7 +26,7 @@ import { Spinner } from '@/src/components/Common/Spinner';
 
 import { getLayout } from '../../_app';
 
-import { UploadStatus } from '@epam/ai-dial-shared';
+import { Feature, UploadStatus } from '@epam/ai-dial-shared';
 
 export default function AppsEditor() {
   const {
@@ -93,7 +94,7 @@ AppsEditor.getLayout = getLayout;
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const session = await getSession(context);
-  const canCreateCodeApps = !!session?.user?.canCreateCodeApps;
+  const canCreateCodeApps = canUserUseFeature(session, Feature.CodeApps);
 
   const { slug, id } = context.query;
 

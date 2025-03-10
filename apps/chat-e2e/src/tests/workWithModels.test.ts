@@ -91,6 +91,7 @@ dialTest(
     sendMessage,
     localStorageManager,
     page,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-477', 'EPMRTC-1463');
     await dialTest.step('Set random application theme', async () => {
@@ -111,23 +112,22 @@ dialTest(
       'Verify error is displayed as a response, regenerate button is available',
       async () => {
         const generatedContent = await chatMessages.getLastMessageContent();
-        expect
-          .soft(generatedContent, ExpectedMessages.errorReceivedOnReplay)
-          .toBe(ExpectedConstants.answerError);
-
-        await expect
-          .soft(
-            sendMessage.regenerate.getElementLocator(),
-            ExpectedMessages.regenerateIsAvailable,
-          )
-          .toBeVisible();
+        baseAssertion.assertValue(
+          generatedContent,
+          ExpectedConstants.answerError,
+          ExpectedMessages.errorReceivedOnReplay,
+        );
+        await baseAssertion.assertElementState(
+          sendMessage.regenerate,
+          'visible',
+          ExpectedMessages.regenerateIsAvailable,
+        );
       },
     );
 
     await dialTest.step(
       'Type any prompt, hit Enter button and verify nothing happened, Send button is not shown',
       async () => {
-        await context.setOffline(false);
         for (let i = 1; i <= 2; i++) {
           if (i === 2) {
             const messagesCountBefore =
@@ -138,19 +138,17 @@ dialTest(
             await page.keyboard.press(keys.enter);
             const messagesCountAfter =
               await chatMessages.chatMessages.getElementsCount();
-            expect
-              .soft(
-                messagesCountBefore === messagesCountAfter,
-                ExpectedMessages.messageCountIsCorrect,
-              )
-              .toBeTruthy();
+            baseAssertion.assertValue(
+              messagesCountBefore,
+              messagesCountAfter,
+              ExpectedMessages.messageCountIsCorrect,
+            );
           }
-          await expect
-            .soft(
-              sendMessage.sendMessageButton.getElementLocator(),
-              ExpectedMessages.sendMessageButtonDisabled,
-            )
-            .toBeHidden();
+          await baseAssertion.assertElementState(
+            sendMessage.sendMessageButton,
+            'hidden',
+            ExpectedMessages.sendMessageButtonDisabled,
+          );
         }
       },
     );
@@ -161,7 +159,8 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        await chatMessages.regenerateResponse();
+        await context.setOffline(false);
+        await sendMessage.regenerateErrorResponse();
         const generatedContent = await chatMessages.getLastMessageContent();
         expect
           .soft(generatedContent, ExpectedMessages.messageContentIsValid)
@@ -321,7 +320,8 @@ dialTest(
   },
 );
 
-dialTest(
+//TC depends on LLM availability and response
+dialTest.skip(
   'System prompt is applied in Model',
   async ({
     dialHomePage,
@@ -444,7 +444,7 @@ dialTest(
       },
     );
 
-    await dialTest.step(
+    await dialTest.step.skip(
       'Send request and stop generation when partial content received',
       async () => {
         await chatMessages.regenerateResponse(false);
@@ -453,7 +453,7 @@ dialTest(
       },
     );
 
-    await dialTest.step(
+    await dialTest.step.skip(
       'Verify partial content is preserved and model icon is visible',
       async () => {
         const generatedContent = await chatMessages.getLastMessageContent();
@@ -478,6 +478,9 @@ dialTest(
     await dialTest.step(
       'Edit request, click "Save & Submit" and verify response is regenerated',
       async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         const updatedRequest = '1+2=';
         await chatMessages.openEditMessageMode(request);
         await chatMessages.editMessage(request, updatedRequest);

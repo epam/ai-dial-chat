@@ -1,6 +1,12 @@
 import { Observable, from, switchMap, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
+import {
+  constructPath,
+  isPlaybackConversation,
+  isReplayConversation,
+  splitEntityId,
+} from '@/src/utils/app/shared-utils';
 import { ServerUtils } from '@/src/utils/server/server';
 
 import { ApplicationInfo } from '@/src/types/applications';
@@ -12,13 +18,6 @@ import { PromptInfo } from '@/src/types/prompt';
 import { EMPTY_MODEL_ID } from '@/src/constants/default-ui-settings';
 import { NA_VERSION } from '@/src/constants/public';
 import { validVersionRegEx } from '@/src/constants/versions';
-
-import {
-  isPlaybackConversation,
-  isReplayConversation,
-} from '../app/conversation';
-import { constructPath } from '../app/file';
-import { splitEntityId } from '../app/folders';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
 

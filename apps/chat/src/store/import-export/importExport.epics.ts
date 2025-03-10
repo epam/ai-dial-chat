@@ -103,10 +103,8 @@ import { FilesActions } from '../files/files.reducers';
 import { MigrationActions } from '../migration/migration.reducers';
 import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
-import {
-  ImportExportActions,
-  ImportExportSelectors,
-} from './importExport.reducers';
+import { ImportExportActions } from './importExport.reducers';
+import { ImportExportSelectors } from './importExport.selectors';
 
 import { Message, UploadStatus } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';

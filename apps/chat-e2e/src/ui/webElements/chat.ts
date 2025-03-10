@@ -226,7 +226,11 @@ export class Chat extends BaseElement {
 
   public async addModelToWorkspace() {
     if (await this.addModelButton.isVisible()) {
+      const respPromise = this.page.waitForResponse((resp) =>
+        resp.url().includes(API.installedDeploymentsHost()),
+      );
       await this.addModelButton.click();
+      await respPromise;
     }
   }
 

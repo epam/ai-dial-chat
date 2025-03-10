@@ -23,11 +23,14 @@ import { translate } from '@/src/utils/app/translation';
 
 import { AppEpic } from '@/src/types/store';
 
+import { FilesSelectors } from '@/src/store/files/files.selectors';
+
 import { CODEAPPS_REQUIRED_FILES } from '@/src/constants/applications';
 
-import { FilesActions, FilesSelectors } from '../files/files.reducers';
+import { FilesActions } from '../files/files.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
-import { CodeEditorActions, CodeEditorSelectors } from './codeEditor.reducer';
+import { CodeEditorActions } from './codeEditor.reducer';
+import { CodeEditorSelectors } from './codeEditor.selectors';
 
 import intersectionWith from 'lodash-es/intersectionWith';
 

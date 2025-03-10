@@ -4,8 +4,8 @@ import { getGroupModelKey } from '@/src/utils/app/models';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
 import { EntityType } from '@/src/types/common';
+import { RootState } from '@/src/types/store';
 
-import { RootState } from '../index';
 import { ModelsState } from './models.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
