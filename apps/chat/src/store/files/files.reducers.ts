@@ -284,13 +284,15 @@ export const filesSlice = createSlice({
       state.files = state.files.map((f) =>
         renameFolderAndMoveEntity(f, payload.folderId, newFolderId),
       );
+      state.lastRenamedParentFolder = {
+        newId: newFolderId,
+        oldId: targetFolder.id,
+      };
     },
     renameFolderSuccess: (
       state,
-      { payload }: PayloadAction<{ oldId: string; newId: string }>,
-    ) => {
-      state.lastRenamedParentFolder = { ...payload };
-    },
+      _action: PayloadAction<{ oldId: string; newId: string }>,
+    ) => state,
     renameFolderFail: (
       state,
       { payload }: PayloadAction<{ oldId: string; newId: string }>,
@@ -301,6 +303,10 @@ export const filesSlice = createSlice({
       state.files = state.files.map((f) =>
         renameFolderAndMoveEntity(f, payload.newId, payload.oldId),
       );
+      state.lastRenamedParentFolder = {
+        newId: payload.oldId,
+        oldId: payload.newId,
+      };
     },
     resetNewFolderId: (state) => {
       state.newAddedFolderId = undefined;

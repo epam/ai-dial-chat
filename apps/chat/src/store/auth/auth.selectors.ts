@@ -1,6 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 import { isClientSessionValid } from '@/src/utils/auth/session';
+import { isUserAdmin } from '@/src/utils/session';
 
 import { RootState } from '@/src/types/store';
 
@@ -8,42 +9,45 @@ import { SettingsState } from '@/src/store/settings/settings.types';
 
 import { AuthState } from './auth.types';
 
+// settings
 const settingsSelector = (state: RootState): SettingsState => state.settings;
 
+const selectIsAuthDisabled = (state: RootState) =>
+  settingsSelector(state).isAuthDisabled;
+
+// auth
 const rootSelector = (state: RootState): AuthState => state.auth;
 
-const selectSession = createSelector([rootSelector], (state) => {
-  return state.session;
-});
-const selectStatus = createSelector([selectSession], (state) => {
-  return state?.status ?? 'loading';
-});
+const selectSession = (state: RootState) => rootSelector(state)?.session;
+
+const selectSessionData = (state: RootState) => selectSession(state)?.data;
+
+const selectStatus = (state: RootState) =>
+  selectSession(state)?.status ?? 'loading';
+
 const selectIsShouldLogin = createSelector(
-  [selectSession, selectStatus, settingsSelector],
-  (session, sessionStatus, settings) => {
+  [selectSession, selectStatus, selectIsAuthDisabled],
+  (session, sessionStatus, isAuthDisabled) => {
     return (
-      !settings.isAuthDisabled &&
+      !isAuthDisabled &&
       (sessionStatus === 'unauthenticated' ||
         (sessionStatus === 'authenticated' && !isClientSessionValid(session)))
     );
   },
 );
-const selectIsAdmin = createSelector([rootSelector], (state) => {
-  return !!state.session?.data?.user.isAdmin;
+const selectIsAdmin = createSelector([selectSessionData], (sessionData) => {
+  return isUserAdmin(sessionData);
 });
 
 const selectUserName = (state: RootState) =>
-  selectSession(state)?.data?.user?.name ?? '';
-
-const selectCanCreateCodeApps = createSelector([rootSelector], (state) => {
-  return !!state.session?.data?.user.canCreateCodeApps;
-});
+  selectSessionData(state)?.user?.name ?? '';
 
 export const AuthSelectors = {
   selectIsShouldLogin,
+  selectIsAuthDisabled,
   selectSession,
+  selectSessionData,
+  selectUserName,
   selectStatus,
   selectIsAdmin,
-  selectUserName,
-  selectCanCreateCodeApps,
 };

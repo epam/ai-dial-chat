@@ -26,6 +26,7 @@ import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 // eslint-disable-next-line @nx/enforce-module-boundaries
 import packageJSON from '../../../../../package.json';
+import { parseCommaSeparatedList } from '../app/common';
 
 import { Feature } from '@epam/ai-dial-shared';
 import { URL, URLSearchParams } from 'url';
@@ -91,31 +92,31 @@ export const getCommonPageProps: GetServerSideProps = async ({
   const settings: SettingsState = {
     appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'AI Dial',
     codeWarning: process.env.CODE_GENERATION_WARNING ?? '',
-    defaultRecentModelsIds:
-      (process.env.RECENT_MODELS_IDS &&
-        process.env.RECENT_MODELS_IDS.split(',')) ||
-      [],
-    defaultRecentAddonsIds:
-      (process.env.RECENT_ADDONS_IDS &&
-        process.env.RECENT_ADDONS_IDS.split(',')) ||
-      [],
+    defaultRecentModelsIds: parseCommaSeparatedList(
+      process.env.RECENT_MODELS_IDS,
+    ),
+    defaultRecentAddonsIds: parseCommaSeparatedList(
+      process.env.RECENT_ADDONS_IDS,
+    ),
     defaultModelId: process.env.DEFAULT_MODEL ?? FALLBACK_MODEL_ID,
     defaultAssistantSubmodelId:
       process.env.NEXT_PUBLIC_DEFAULT_ASSISTANT_SUB_MODEL ??
       FALLBACK_ASSISTANT_SUBMODEL_ID,
-    codeEditorPythonVersions: process.env.CODE_EDITOR_PYTHON_VERSIONS?.split(
-      ',',
-    ) ?? ['python3.9', 'python3.10', 'python3.11', 'python3.12'],
+    codeEditorPythonVersions: parseCommaSeparatedList(
+      process.env.CODE_EDITOR_PYTHON_VERSIONS,
+      ['python3.9', 'python3.10', 'python3.11', 'python3.12'],
+    ),
     enabledFeatures: (
-      (process.env.ENABLED_FEATURES || '').split(',') as Feature[]
+      parseCommaSeparatedList(process.env.ENABLED_FEATURES) as Feature[]
     )
       .filter((feature) =>
         isIsolatedView ? !disabledFeaturesForIsolatedView.has(feature) : true,
       )
       .concat(isIsolatedView ? hiddenFeaturesForIsolatedView : []),
-    publicationFilters: (
-      process.env.PUBLICATION_FILTERS || 'title,role,dial_roles'
-    ).split(','),
+    publicationFilters: parseCommaSeparatedList(
+      process.env.PUBLICATION_FILTERS,
+      ['title', 'role', 'dial_roles'],
+    ),
     isOverlay: process.env.IS_IFRAME === 'true' || false,
     footerHtmlMessage: (process.env.FOOTER_HTML_MESSAGE ?? '').replace(
       '%%VERSION%%',
@@ -131,10 +132,10 @@ export const getCommonPageProps: GetServerSideProps = async ({
     themesHostDefined: !!process.env.THEMES_CONFIG_HOST,
     customRenderers: customRenderers || [],
     allowVisualizerSendMessages: !!process.env.ALLOW_VISUALIZER_SEND_MESSAGES,
-    topics: (
+    topics: parseCommaSeparatedList(
       process.env.TOPICS ??
-      'Business,Development,User Experience,Analysis,SQL,SDLC,Talk-To-Your-Data,RAG,Text Generation,Image Generation,Image Recognition'
-    ).split(','),
+        'Business,Development,User Experience,Analysis,SQL,SDLC,Talk-To-Your-Data,RAG,Text Generation,Image Generation,Image Recognition',
+    ),
     quickAppsHost: process.env.QUICK_APPS_HOST || DEFAULT_QUICK_APPS_HOST,
     quickAppsModel: process.env.QUICK_APPS_MODEL || DEFAULT_QUICK_APPS_MODEL,
     quickAppsSchemaId:
