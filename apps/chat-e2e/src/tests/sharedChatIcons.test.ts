@@ -320,6 +320,7 @@ dialTest(
     chat,
     setTestIds,
     renameConversationModal,
+    toast,
   }) => {
     setTestIds(
       'EPMRTC-1514',
@@ -383,6 +384,7 @@ dialTest(
         await temperatureSlider.setTemperature(0);
         await addons.selectAddon(randomAddon.name);
         await conversationSettingsModal.applyChangesButton.click();
+        await toast.closeToast();
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
