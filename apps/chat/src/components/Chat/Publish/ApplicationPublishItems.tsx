@@ -6,26 +6,31 @@ import { isEntityIdExternal } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { PublishRequestDialAIEntityModel } from '@/src/types/models';
+import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { ApplicationRow } from '@/src/components/Common/ReplaceConfirmationModal/Components';
 
+import { PublicationItem } from './PublicationItem';
+
 import { PublishActions } from '@epam/ai-dial-shared';
 
 interface ApplicationPublishItemsProps {
   entity: PublishRequestDialAIEntityModel;
-  handleSelectItems: (ids: string[]) => void;
   publishAction: PublishActions;
   chosenItemsIds: string[];
+  path: string;
+  handleSelectItems: (ids: string[]) => void;
 }
 
 export const ApplicationPublishItems = ({
   entity,
-  handleSelectItems,
   publishAction,
   chosenItemsIds,
+  path,
+  handleSelectItems,
 }: ApplicationPublishItemsProps) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -38,16 +43,24 @@ export const ApplicationPublishItems = ({
         dataQa="applications-to-send-request"
         className="!pl-0"
       >
-        <ApplicationRow
-          onSelect={handleSelectItems}
-          itemComponentClassNames={classNames(
-            'cursor-pointer',
-            publishAction === PublishActions.DELETE && 'text-error',
-          )}
-          item={entity}
-          level={0}
-          isChosen={chosenItemsIds.includes(entity.id)}
-        />
+        <PublicationItem
+          path={path}
+          type={SharingType.Application}
+          entity={entity}
+          publishAction={publishAction}
+        >
+          <ApplicationRow
+            onSelect={handleSelectItems}
+            itemComponentClassNames={classNames(
+              '!w-full cursor-pointer',
+              publishAction === PublishActions.DELETE && 'text-error',
+            )}
+            featureContainerClassNames="!w-full"
+            item={entity}
+            level={0}
+            isChosen={chosenItemsIds.includes(entity.id)}
+          />
+        </PublicationItem>
       </CollapsibleSection>
 
       {publishAction === PublishActions.ADD &&
