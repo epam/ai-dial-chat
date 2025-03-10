@@ -22,17 +22,12 @@ import uniq from 'lodash-es/uniq';
 
 const rootSelector = (state: RootState): SettingsState => state.settings;
 
-const selectAppName = createSelector([rootSelector], (state) => {
-  return state.appName;
-});
+const selectAppName = (state: RootState) => rootSelector(state).appName;
 
-const selectIsOverlay = createSelector([rootSelector], (state) => {
-  return state.isOverlay;
-});
+const selectIsOverlay = (state: RootState) => rootSelector(state).isOverlay;
 
-const selectFooterHtmlMessage = createSelector([rootSelector], (state) => {
-  return state.footerHtmlMessage;
-});
+const selectFooterHtmlMessage = (state: RootState) =>
+  rootSelector(state).footerHtmlMessage;
 
 const selectEnabledFeatures = createSelector(
   [rootSelector, AuthSelectors.selectSessionData],
@@ -45,13 +40,11 @@ const selectEnabledFeatures = createSelector(
   },
 );
 
-const selectIsIsolatedView = createSelector([rootSelector], (state) => {
-  return !!state.isolatedModelId;
-});
+const selectIsIsolatedView = (state: RootState) =>
+  !!rootSelector(state).isolatedModelId;
 
-const selectIsolatedModelId = createSelector([rootSelector], (state) => {
-  return state.isolatedModelId;
-});
+const selectIsolatedModelId = (state: RootState) =>
+  rootSelector(state).isolatedModelId;
 
 const isFeatureEnabled = (state: RootState, featureName: Feature) =>
   selectEnabledFeatures(state).has(featureName);
@@ -90,39 +83,30 @@ const isSharingEnabled = (state: RootState, featureType: FeatureType) => {
   }
 };
 
-const selectCodeWarning = createSelector([rootSelector], (state) => {
-  return state.codeWarning;
-});
+const selectCodeWarning = (state: RootState) => rootSelector(state).codeWarning;
 
-const selectDefaultModelId = createSelector([rootSelector], (state) => {
-  return state.defaultModelId;
-});
-const selectDefaultAssistantSubmodelId = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.defaultAssistantSubmodelId;
-  },
-);
-const selectDefaultRecentModelsIds = createSelector([rootSelector], (state) => {
-  return state.defaultRecentModelsIds;
-});
-const selectDefaultRecentAddonsIds = createSelector([rootSelector], (state) => {
-  return state.defaultRecentAddonsIds;
-});
+const selectDefaultModelId = (state: RootState) =>
+  rootSelector(state).defaultModelId;
 
-const selectStorageType = createSelector([rootSelector], (state) => {
-  return state.storageType;
-});
-const selectAnnouncement = createSelector([rootSelector], (state) => {
-  return state.announcement;
-});
-const selectThemeHostDefined = createSelector([rootSelector], (state) => {
-  return state.themesHostDefined;
-});
+const selectDefaultAssistantSubmodelId = (state: RootState) =>
+  rootSelector(state).defaultAssistantSubmodelId;
 
-const selectCustomVisualizers = createSelector([rootSelector], (state) => {
-  return state.customRenderers;
-});
+const selectDefaultRecentModelsIds = (state: RootState) =>
+  rootSelector(state).defaultRecentModelsIds;
+
+const selectDefaultRecentAddonsIds = (state: RootState) =>
+  rootSelector(state).defaultRecentAddonsIds;
+
+const selectStorageType = (state: RootState) => rootSelector(state).storageType;
+
+const selectAnnouncement = (state: RootState) =>
+  rootSelector(state).announcement;
+
+const selectThemeHostDefined = (state: RootState) =>
+  rootSelector(state).themesHostDefined;
+
+const selectCustomVisualizers = (state: RootState) =>
+  rootSelector(state).customRenderers;
 
 const selectMappedVisualizers = createSelector(
   [selectCustomVisualizers],
@@ -161,64 +145,46 @@ const selectIsCustomAttachmentType = (attachmentType: string) =>
     );
   });
 
-const selectPublicationFilters = createSelector([rootSelector], (state) => {
-  return state.publicationFilters;
+const selectPublicationFilters = (state: RootState) =>
+  rootSelector(state).publicationFilters;
+
+const selectOverlayConversationId = (state: RootState) =>
+  rootSelector(state).overlayConversationId;
+
+const selectIsSignInInSameWindow = (state: RootState) =>
+  rootSelector(state).isSignInInSameWindow;
+
+const selectAllowVisualizerSendMessages = (state: RootState) =>
+  rootSelector(state).allowVisualizerSendMessages;
+
+const _selectTopics = (state: RootState) => rootSelector(state).topics;
+
+const selectTopics = createSelector([_selectTopics], (topics) => {
+  return uniq(topics ?? []).sort();
 });
 
-const selectOverlayConversationId = createSelector([rootSelector], (state) => {
-  return state.overlayConversationId;
-});
+const selectCodeEditorPythonVersions = (state: RootState) =>
+  rootSelector(state).codeEditorPythonVersions;
 
-const selectIsSignInInSameWindow = createSelector([rootSelector], (state) => {
-  return state.isSignInInSameWindow;
-});
+const selectOverlayDefaultModelId = (state: RootState) =>
+  rootSelector(state).overlayDefaultModelId;
 
-const selectAllowVisualizerSendMessages = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.allowVisualizerSendMessages;
-  },
-);
+const selectQuickAppsHost = (state: RootState) =>
+  rootSelector(state).quickAppsHost ?? DEFAULT_QUICK_APPS_HOST;
 
-const selectTopics = createSelector([rootSelector], (state) => {
-  return uniq(state.topics ?? []).sort();
-});
+const selectQuickAppsModel = (state: RootState) =>
+  rootSelector(state).quickAppsModel ?? DEFAULT_QUICK_APPS_MODEL;
 
-const selectCodeEditorPythonVersions = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.codeEditorPythonVersions;
-  },
-);
+const selectQuickAppsSchemaId = (state: RootState) =>
+  rootSelector(state).quickAppsSchemaId ?? DEFAULT_QUICK_APPS_SCHEMA_ID;
 
-const selectOverlayDefaultModelId = createSelector([rootSelector], (state) => {
-  return state.overlayDefaultModelId;
-});
+const FALLBACK_STRING_VALUE = '';
 
-const selectQuickAppsHost = createSelector(
-  [rootSelector],
-  (state) => state.quickAppsHost ?? DEFAULT_QUICK_APPS_HOST,
-);
+const selectDialApiHost = (state: RootState) =>
+  rootSelector(state).dialApiHost ?? FALLBACK_STRING_VALUE;
 
-const selectQuickAppsModel = createSelector(
-  [rootSelector],
-  (state) => state.quickAppsModel ?? DEFAULT_QUICK_APPS_MODEL,
-);
-
-const selectQuickAppsSchemaId = createSelector(
-  [rootSelector],
-  (state) => state.quickAppsSchemaId ?? DEFAULT_QUICK_APPS_SCHEMA_ID,
-);
-
-const selectDialApiHost = createSelector(
-  [rootSelector],
-  (state) => state.dialApiHost ?? '',
-);
-
-const selectDefaultSystemPrompt = createSelector(
-  [rootSelector],
-  (state) => state.defaultSystemPrompt ?? '',
-);
+const selectDefaultSystemPrompt = (state: RootState) =>
+  rootSelector(state).defaultSystemPrompt ?? FALLBACK_STRING_VALUE;
 
 const selectDefaults = createSelector(
   [
@@ -246,13 +212,10 @@ const selectDefaults = createSelector(
       defaultSystemPrompt,
     }) as Defaults,
 );
-const selectInitialDataStatus = createSelector([rootSelector], (state) => {
-  return state.initialDataStatus;
-});
+const selectInitialDataStatus = (state: RootState) =>
+  rootSelector(state).initialDataStatus;
 
-const selectProviderId = createSelector([rootSelector], (state) => {
-  return state.providerId;
-});
+const selectProviderId = (state: RootState) => rootSelector(state).providerId;
 
 export const SettingsSelectors = {
   selectAppName,
