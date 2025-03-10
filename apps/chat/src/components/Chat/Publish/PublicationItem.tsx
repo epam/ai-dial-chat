@@ -120,32 +120,6 @@ export const PublicationItem = ({
     }
   };
 
-  // if (type === SharingType.Application) {
-  //   const dialAiEntity = entity as DialAIEntityModel;
-
-  //   console.log(dialAiEntity);
-
-  //   return (
-  //     <div
-  //       className={classNames(
-  //         'flex w-full items-center gap-2',
-  //         publishAction === PublishActions.DELETE && 'text-error',
-  //       )}
-  //     >
-  //       {children}
-  //       <span
-  //         data-qa="version"
-  //         className={classNames(
-  //           'shrink-0 text-xs',
-  //           publishAction === PublishActions.DELETE && 'text-error',
-  //         )}
-  //       >
-  //         {dialAiEntity.version}
-  //       </span>
-  //     </div>
-  //   );
-  // }
-
   return (
     <div className="flex w-full items-center gap-2">
       {children}
