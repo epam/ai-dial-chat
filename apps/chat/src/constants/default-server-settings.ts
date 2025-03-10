@@ -2,7 +2,8 @@ import { FALLBACK_MODEL_ID } from './default-ui-settings';
 
 export const DIAL_API_HOST = process.env.DIAL_API_HOST;
 
-export const DIAL_API_VERSION = process.env.DIAL_API_VERSION || '2024-02-01';
+export const DIAL_API_VERSION =
+  process.env.DIAL_API_VERSION || '2025-01-01-preview';
 
 export const DEFAULT_MODEL_ID = process.env.DEFAULT_MODEL || FALLBACK_MODEL_ID;
 
