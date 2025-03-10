@@ -16,9 +16,6 @@ const selectSession = (state: RootState) => rootSelector(state)?.session;
 
 const selectSessionData = (state: RootState) => selectSession(state)?.data;
 
-const selectUserName = (state: RootState) =>
-  selectSessionData(state)?.user?.name ?? '';
-
 const selectStatus = (state: RootState) =>
   selectSession(state)?.status ?? 'loading';
 
@@ -35,6 +32,9 @@ const selectIsShouldLogin = createSelector(
 const selectIsAdmin = createSelector([selectSessionData], (sessionData) => {
   return isUserAdmin(sessionData);
 });
+
+const selectUserName = (state: RootState) =>
+  selectSessionData(state)?.user?.name ?? '';
 
 export const AuthSelectors = {
   selectIsShouldLogin,
