@@ -20,20 +20,20 @@ The parameter supports the following formats into `.env`:
 - **JSON Object Format**:
 
 ```env
-ENABLED_FEATURES_ROLES: {"code-apps":["view-profile", "admin"],"marketplace-table-view":["quick-app-developer"],"message-templates":["admin"]}
+ENABLED_FEATURES_ROLES: {"code-apps":["code-app-developer", "admin"],"marketplace-table-view":["quick-app-developer"],"message-templates":["admin"]}
 ```
 
 - **Escaped JSON String Format**:
 
 ```env
-ENABLED_FEATURES_ROLES: "{\"code-apps\":[\"view-profile\", \"admin\"],\"marketplace-table-view\":[\"quick-app-developer\"],\"message-templates\":[\"admin\"]}"
+ENABLED_FEATURES_ROLES: "{\"code-apps\":[\"code-app-developer\", \"admin\"],\"marketplace-table-view\":[\"quick-app-developer\"],\"message-templates\":[\"admin\"]}"
 ```
 
 - **Multi-line Escaped JSON String Format**:
 
 ```env
 ENABLED_FEATURES_ROLES: "{
-  \"code-apps\":[\"view-profile\", \"admin\"],
+  \"code-apps\":[\"code-app-developer\", \"admin\"],
   \"quick-apps\":[\"quick-app-developer\"],
   \"message-templates\": [\"admin\"]
 }"
@@ -44,7 +44,7 @@ ENABLED_FEATURES_ROLES: "{
 The `ENABLED_FEATURES_ROLES` parameter works in conjunction with the `ENABLED_FEATURES` parameter. For example:
 
 ```env
-ENABLED_FEATURES="conversations-section,prompts-section,top-settings,top-clear-conversation,top-chat-info,top-chat-model-settings,empty-chat-settings,header,footer,request-api-key,report-an-issue,likes,conversations-sharing,prompts-sharing,input-files,attachments-manager,conversations-publishing,prompts-publishing,custom-logo,input-links,custom-applications,message-templates,marketplace,quick-apps,code-apps,applications-sharing,marketplace-table-view"
+ENABLED_FEATURES="custom-applications,message-templates,marketplace,quick-apps,code-apps"
 ```
 
 In this scenario:
