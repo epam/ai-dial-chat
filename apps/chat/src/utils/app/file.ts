@@ -12,7 +12,7 @@ import {
 import { ApiUtils } from '../server/api';
 import { doesHaveDotsInTheEnd } from './common';
 import { getPathToFolderById, splitEntityId } from './folders';
-import { isFolderId } from './id';
+import { isFolderId } from './shared-utils';
 
 import { Attachment, UploadStatus } from '@epam/ai-dial-shared';
 import escapeRegExp from 'lodash-es/escapeRegExp';

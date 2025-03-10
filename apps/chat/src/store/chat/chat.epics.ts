@@ -19,7 +19,8 @@ import {
   ConversationsActions,
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
-import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
+import { FilesActions } from '@/src/store/files/files.reducers';
+import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { PromptsActions } from '../prompts/prompts.reducers';
