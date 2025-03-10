@@ -264,3 +264,8 @@ export const extractNameFromEmail = (author: string | undefined) => {
 export const formatDate = (rawDate: number | string | Date): string => {
   return new Date(rawDate).toLocaleDateString();
 };
+
+export const parseCommaSeparatedList = (
+  str: string | undefined,
+  defaultValue: string[] = [],
+): string[] => str?.split(',').map((str) => str.trim()) ?? defaultValue;

@@ -1,30 +1,22 @@
-import { createSelector } from '@reduxjs/toolkit';
-
 import { RootState } from '@/src/types/store';
 
 import { AddonsState } from './addons.types';
 
 const rootSelector = (state: RootState): AddonsState => state.addons;
 
-const selectAddonsIsLoading = createSelector([rootSelector], (state) => {
-  return state.isLoading;
-});
-const selectAddonsError = createSelector([rootSelector], (state) => {
-  return state.error;
-});
-const selectAddons = createSelector([rootSelector], (state) => {
-  return state.addons;
-});
-const selectAddonsMap = createSelector([rootSelector], (state) => {
-  return state.addonsMap;
-});
-const selectRecentAddonsIds = createSelector([rootSelector], (state) => {
-  return state.recentAddonsIds;
-});
-const selectInitialized = createSelector(
-  [rootSelector],
-  (state) => state.initialized,
-);
+const selectAddonsIsLoading = (state: RootState) =>
+  rootSelector(state).isLoading;
+
+const selectAddonsError = (state: RootState) => rootSelector(state).error;
+
+const selectAddons = (state: RootState) => rootSelector(state).addons;
+
+const selectAddonsMap = (state: RootState) => rootSelector(state).addonsMap;
+
+const selectRecentAddonsIds = (state: RootState) =>
+  rootSelector(state).recentAddonsIds;
+
+const selectInitialized = (state: RootState) => rootSelector(state).initialized;
 
 export const AddonsSelectors = {
   selectAddonsIsLoading,

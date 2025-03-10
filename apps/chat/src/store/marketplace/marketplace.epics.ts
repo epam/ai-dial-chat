@@ -4,6 +4,8 @@ import { EMPTY, concat, filter, of, switchMap } from 'rxjs';
 
 import { combineEpics } from 'redux-observable';
 
+import { parseCommaSeparatedList } from '@/src/utils/app/common';
+
 import { EntityType, SortOrder } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
@@ -169,17 +171,17 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
         : MarketplaceTabs.HOME;
       // filters
       const existingTopics = ModelsSelectors.selectModelTopics(state);
-      const topics = ((query[MarketplaceQueryParams.topics] as string) ?? '')
-        .split(',')
-        .filter((topic) => topic && existingTopics.includes(topic));
+      const topics = parseCommaSeparatedList(
+        query[MarketplaceQueryParams.topics] as string,
+      ).filter((topic) => topic && existingTopics.includes(topic));
 
-      const types = ((query[MarketplaceQueryParams.types] as string) ?? '')
-        .split(',')
-        .filter((type) => type && ENTITY_TYPES.includes(type as EntityType));
+      const types = parseCommaSeparatedList(
+        query[MarketplaceQueryParams.types] as string,
+      ).filter((type) => type && ENTITY_TYPES.includes(type as EntityType));
       const sourceTypes = MarketplaceSelectors.selectSourceTypes(state);
-      const sources = ((query[MarketplaceQueryParams.sources] as string) ?? '')
-        .split(',')
-        .filter((type) => type && sourceTypes.includes(type as SourceType));
+      const sources = parseCommaSeparatedList(
+        query[MarketplaceQueryParams.sources] as string,
+      ).filter((type) => type && sourceTypes.includes(type as SourceType));
 
       updatedMarketplaceState.selectedFilters = {
         [FilterTypes.ENTITY_TYPE]: types,

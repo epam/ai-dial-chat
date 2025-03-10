@@ -20,6 +20,7 @@ import {
 
 import { combineEpics } from 'redux-observable';
 
+import { parseCommaSeparatedList } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
 import { getConversationRootId } from '@/src/utils/app/id';
@@ -393,9 +394,7 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
           let features: string[] = [];
 
           if (typeof enabledFeatures === 'string') {
-            features = enabledFeatures
-              .split(',')
-              .map((feature) => feature.trim());
+            features = parseCommaSeparatedList(enabledFeatures);
           }
 
           if (Array.isArray(enabledFeatures)) {
