@@ -425,6 +425,13 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     }
   }, [newAddedFolderId, dispatch, currentFolder]);
 
+  const scrollIntoView = useCallback(() => {
+    dragDropElement.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+    });
+  }, []);
+
   const handleRename = useCallback(() => {
     if (!onRenameFolder) {
       return;
@@ -481,15 +488,17 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     setRenameValue('');
     setIsRenaming(false);
     setIsContextMenu(false);
+    scrollIntoView();
   }, [
     onRenameFolder,
     renameValue,
     skipFolderRenameValidation,
     currentFolder,
-    allFoldersWithoutFilters,
     handleNewFolderRename,
+    allFoldersWithoutFilters,
     dispatch,
     t,
+    scrollIntoView,
   ]);
 
   const handleEnterDown = useCallback(
