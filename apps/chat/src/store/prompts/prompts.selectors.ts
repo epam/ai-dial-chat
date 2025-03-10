@@ -2,7 +2,6 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import {
   isSearchFilterMatched,
-  isSearchTermMatched,
   isSectionFilterMatched,
   isVersionFilterMatched,
 } from '@/src/utils/app/common';
@@ -22,11 +21,13 @@ import {
   PublishedWithMeFilter,
   doesEntityContainSearchTerm,
   getMyItemsFilters,
+  isSearchTermMatched,
 } from '@/src/utils/app/search';
 import { translate } from '@/src/utils/app/translation';
 
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
+import { RootState } from '@/src/types/store';
 
 import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 
@@ -35,7 +36,6 @@ import {
   DEFAULT_PROMPT_NAME,
 } from '@/src/constants/default-ui-settings';
 
-import { RootState } from '../index';
 import { PromptsState } from './prompts.types';
 
 import { ShareEntity } from '@epam/ai-dial-shared';
