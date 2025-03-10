@@ -109,9 +109,7 @@ const selectDefaultRecentModelsIds = createSelector([rootSelector], (state) => {
 const selectDefaultRecentAddonsIds = createSelector([rootSelector], (state) => {
   return state.defaultRecentAddonsIds;
 });
-const selectIsAuthDisabled = createSelector([rootSelector], (state) => {
-  return state.isAuthDisabled;
-});
+
 const selectStorageType = createSelector([rootSelector], (state) => {
   return state.storageType;
 });
@@ -268,7 +266,6 @@ export const SettingsSelectors = {
   selectDefaultModelId,
   selectDefaultRecentModelsIds,
   selectDefaultRecentAddonsIds,
-  selectIsAuthDisabled,
   selectStorageType,
   selectAnnouncement,
   selectThemeHostDefined,

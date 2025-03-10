@@ -9,7 +9,13 @@ import { SettingsState } from '@/src/store/settings/settings.types';
 
 import { AuthState } from './auth.types';
 
+// settings
 const settingsSelector = (state: RootState): SettingsState => state.settings;
+
+const selectIsAuthDisabled = (state: RootState) =>
+  settingsSelector(state).isAuthDisabled;
+
+// auth
 const rootSelector = (state: RootState): AuthState => state.auth;
 
 const selectSession = (state: RootState) => rootSelector(state)?.session;
@@ -20,10 +26,10 @@ const selectStatus = (state: RootState) =>
   selectSession(state)?.status ?? 'loading';
 
 const selectIsShouldLogin = createSelector(
-  [selectSession, selectStatus, settingsSelector],
-  (session, sessionStatus, settings) => {
+  [selectSession, selectStatus, selectIsAuthDisabled],
+  (session, sessionStatus, isAuthDisabled) => {
     return (
-      !settings.isAuthDisabled &&
+      !isAuthDisabled &&
       (sessionStatus === 'unauthenticated' ||
         (sessionStatus === 'authenticated' && !isClientSessionValid(session)))
     );
@@ -38,6 +44,7 @@ const selectUserName = (state: RootState) =>
 
 export const AuthSelectors = {
   selectIsShouldLogin,
+  selectIsAuthDisabled,
   selectSession,
   selectSessionData,
   selectUserName,
