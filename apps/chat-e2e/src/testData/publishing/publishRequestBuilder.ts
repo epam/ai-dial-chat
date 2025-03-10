@@ -26,6 +26,7 @@ export class PublishRequestBuilder {
 
   private reset(): PublicationRequestModel {
     this.publishRequest = {
+      displayAuthor: '',
       name: '',
       targetFolder: ExpectedConstants.rootPublicationFolder,
       resources: [],
