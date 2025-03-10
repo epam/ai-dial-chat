@@ -1,5 +1,3 @@
-import { createSelector } from '@reduxjs/toolkit';
-
 import { RootState } from '@/src/types/store';
 
 import { ImportExportState } from './importExport.types';
