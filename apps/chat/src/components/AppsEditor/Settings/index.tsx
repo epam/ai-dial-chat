@@ -40,6 +40,7 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_QUICK_APPS_SCHEMA_ID } from '@/src/constants/quick-apps';
 
+import Tooltip from '../../Common/Tooltip';
 import { ApplicationView } from './ApplicationView';
 import { CodeAppView } from './CodeAppView';
 import { CustomApplicationEditorView } from './CustomApplicationEditorView';
@@ -287,7 +288,9 @@ export const ApplicationSettings: React.FC<Props> = ({
                 className="text-secondary hover:text-accent-primary"
                 onClick={() => setPreviewMode('full')}
               >
-                <IconArrowsMaximize size={24} />
+                <Tooltip tooltip={t('Expand preview')}>
+                  <IconArrowsMaximize size={24} />
+                </Tooltip>
               </button>
             )}
             {previewMode === 'full' && (
@@ -295,14 +298,18 @@ export const ApplicationSettings: React.FC<Props> = ({
                 className="text-secondary hover:text-accent-primary"
                 onClick={() => setPreviewMode('half')}
               >
-                <IconLayoutSidebarRightCollapse size={24} />
+                <Tooltip tooltip={t('Split view')}>
+                  <IconLayoutSidebarRightCollapse size={24} />
+                </Tooltip>
               </button>
             )}
             <button
               className="text-secondary hover:text-accent-primary"
               onClick={() => setPreviewMode('closed')}
             >
-              <IconArrowsMinimize size={24} />
+              <Tooltip tooltip={t('Hide preview')}>
+                <IconArrowsMinimize size={24} />
+              </Tooltip>
             </button>
           </div>
         </div>
@@ -332,14 +339,20 @@ export const ApplicationSettings: React.FC<Props> = ({
               setPreviewMode('full');
             }}
           >
-            <IconArrowsMaximize size={24} />
+            <Tooltip tooltip={t('Expand preview')}>
+              <IconArrowsMaximize size={24} />
+            </Tooltip>
           </button>
+
           <button
             className="text-secondary hover:text-accent-primary"
             onClick={() => setPreviewMode('half')}
           >
-            <IconLayoutSidebarLeftCollapse size={24} />
+            <Tooltip tooltip={t('Split view')}>
+              <IconLayoutSidebarLeftCollapse size={24} />
+            </Tooltip>
           </button>
+
           <span
             className="select-none text-primary"
             style={{ writingMode: 'vertical-rl' }}

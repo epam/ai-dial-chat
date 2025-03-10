@@ -4,9 +4,15 @@ import { useSectionToggle } from '@/src/hooks/useSectionToggle';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
-import { sortByName } from '@/src/utils/app/folders';
-import { getConversationRootId, isEntityIdExternal } from '@/src/utils/app/id';
+import { getFoldersDepth, sortByName } from '@/src/utils/app/folders';
+import {
+  getConversationRootId,
+  getIdWithoutRootPathSegments,
+  isEntityIdExternal,
+  isRootId,
+} from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
+import { getPublishFolderResources } from '@/src/utils/app/publications';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilters,
@@ -15,6 +21,7 @@ import {
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
+import { PublicationFolderPayload } from '@/src/types/modal';
 import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
@@ -36,12 +43,15 @@ import {
   SHARED_WITH_ME_SECTION_NAME,
 } from '@/src/constants/sections';
 
+import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import Folder from '@/src/components/Folder/Folder';
 
 import { ApproveRequiredSection } from '../Chat/Publish/ApproveRequiredSection';
 import CollapsibleSection from '../Common/CollapsibleSection';
 import { BetweenFoldersLine } from '../Sidebar/BetweenFoldersLine';
 import { ConversationComponent } from './Conversation';
+
+import { PublishActions } from '@epam/ai-dial-shared';
 
 interface ChatFolderProps {
   folder: FolderInterface;
@@ -64,11 +74,16 @@ const ChatFolderTemplate = ({
 
   const dispatch = useAppDispatch();
 
+  const [publication, setPublication] = useState<PublicationFolderPayload>();
+
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
   const selectFilteredConversationsSelector = useMemo(
     () =>
       ConversationsSelectors.selectFilteredConversations(filters, searchTerm),
     [filters, searchTerm],
+  );
+  const publicVersionGroups = useAppSelector(
+    PublicationSelectors.selectPublicVersionGroups,
   );
   const conversations = useAppSelector(selectFilteredConversationsSelector);
   const allConversations = useAppSelector(
@@ -272,8 +287,23 @@ const ChatFolderTemplate = ({
     ],
   );
 
+  const handlePublicationClose = useCallback(() => {
+    setPublication(undefined);
+  }, []);
+
   const shouldDenyDrop =
     isEntityIdExternal(folder) || isSelectMode || isConversationsStreaming;
+
+  const publishConversations = useMemo(() => {
+    if (!publication) return [];
+
+    return getPublishFolderResources(
+      publication.entity,
+      publication.entities,
+      publicVersionGroups,
+      publication.action === PublishActions.DELETE,
+    );
+  }, [publication, publicVersionGroups]);
 
   return (
     <>
@@ -284,6 +314,8 @@ const ChatFolderTemplate = ({
         denyDrop={shouldDenyDrop}
       />
       <Folder
+        isUnpublishing={publication?.action === PublishActions.DELETE}
+        onPublication={setPublication}
         maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
         readonly={readonly}
         searchTerm={searchTerm}
@@ -311,6 +343,23 @@ const ChatFolderTemplate = ({
           onDrop={onDropBetweenFolders}
           featureType={FeatureType.Chat}
           denyDrop={shouldDenyDrop}
+        />
+      )}
+      {!!publication && (
+        <PublishModal
+          entity={publication.entity}
+          entities={publishConversations}
+          type={publication.type}
+          isOpen={!!publication}
+          onClose={handlePublicationClose}
+          publishAction={publication.action}
+          depth={getFoldersDepth(publication.entity, allFolders)}
+          defaultPath={
+            publication.action === PublishActions.DELETE &&
+            !isRootId(publication.entity.folderId)
+              ? getIdWithoutRootPathSegments(publication.entity.folderId)
+              : undefined
+          }
         />
       )}
     </>
