@@ -1,22 +1,9 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import * as CodeEditorSelectors from './codeEditor.selectors';
+import { CodeEditorState } from './codeEditor.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import uniqBy from 'lodash-es/uniqBy';
-
-export { CodeEditorSelectors };
-
-export interface CodeEditorState {
-  filesContent: {
-    id: string;
-    content: string;
-    modifiedContent: string | undefined;
-    modified: boolean;
-  }[];
-  fileContentLoadingStatus: UploadStatus;
-  selectedFileId: string | undefined;
-}
 
 const initialState: CodeEditorState = {
   fileContentLoadingStatus: UploadStatus.LOADED,
@@ -120,5 +107,7 @@ export const codeEditorSlice = createSlice({
     saveAllModifiedFiles: (state) => state,
   },
 });
+
+export { CodeEditorSelectors } from './codeEditor.selectors';
 
 export const CodeEditorActions = codeEditorSlice.actions;

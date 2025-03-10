@@ -1,7 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { SortOrder } from '@/src/types/common';
-import { MarketplaceFilters } from '@/src/types/marketplace';
 
 import {
   FilterTypes,
@@ -11,26 +10,12 @@ import {
 } from '@/src/constants/marketplace';
 
 import * as MarketplaceSelectors from './marketplace.selectors';
+import { MarketplaceState } from './marketplace.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import xor from 'lodash/xor';
 
 export { MarketplaceSelectors };
-
-export interface MarketplaceState {
-  selectedFilters: MarketplaceFilters;
-  searchTerm: string;
-  selectedTab: MarketplaceTabs;
-  applyModelStatus: UploadStatus;
-  selectedView: ViewTypes;
-  tableSort: {
-    column: TableColumnSortKeys;
-    order: SortOrder;
-  };
-  detailsModel: { reference: string; isSuggested: boolean } | undefined;
-  isBannerVisible: boolean;
-  applyModelId?: string;
-}
 
 const DEFAULT_FILTERS = {
   [FilterTypes.ENTITY_TYPE]: [],

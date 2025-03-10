@@ -33,7 +33,7 @@ import { AppEpic } from '@/src/types/store';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
-import { AuthSelectors } from '../auth/auth.reducers';
+import { AuthSelectors } from '../auth/auth.selectors';
 import {
   ConversationsActions,
   ConversationsSelectors,
