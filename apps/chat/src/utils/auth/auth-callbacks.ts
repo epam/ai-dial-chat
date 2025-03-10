@@ -62,10 +62,13 @@ const getUser = (accessToken: string | undefined, providerId: string) => {
     (flags, feature) => {
       const featureRoles = enabledFeaturesRoles[feature];
       if (featureRoles) {
-        const codeAppRoles = Array.isArray(featureRoles)
+        const featureRolesArr = Array.isArray(featureRoles)
           ? featureRoles
           : parseCommaSeparatedList(featureRoles);
-        if (codeAppRoles.length && !intersection(codeAppRoles, roles).length) {
+        if (
+          featureRolesArr.length &&
+          !intersection(featureRolesArr, roles).length
+        ) {
           flags[feature] = false;
         }
       }
