@@ -260,6 +260,20 @@ export const FileManagerModal = ({
           return id;
         }),
       );
+      setSelectedFolderIds((prev) =>
+        prev.map((id) => {
+          if (id === lastRenamedParentFolder.oldId)
+            return lastRenamedParentFolder.newId;
+          if (id.startsWith(`${lastRenamedParentFolder.oldId}/`))
+            return updateMovedFolderId(
+              lastRenamedParentFolder.oldId,
+              lastRenamedParentFolder.newId,
+              id,
+            );
+
+          return id;
+        }),
+      );
       dispatch(FilesActions.resetLastRenamedParentFolder());
     }
   }, [
