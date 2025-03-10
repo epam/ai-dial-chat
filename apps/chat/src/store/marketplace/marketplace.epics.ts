@@ -22,8 +22,8 @@ import { UIActions } from '../ui/ui.reducers';
 import {
   MarketplaceActions,
   MarketplaceSelectors,
-  MarketplaceState,
 } from './marketplace.reducers';
+import { MarketplaceState } from './marketplace.types';
 
 import { ParsedUrlQueryInput, parse } from 'querystring';
 

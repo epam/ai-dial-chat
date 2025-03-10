@@ -68,17 +68,17 @@ export default defineConfig({
     {
       name: 'chat api',
       testMatch: /\/chatApi\/.*\.test\.ts/,
-      dependencies: ['api listing'],
+      dependencies: ['cleanup'],
       fullyParallel: true,
     },
     {
-      name: 'chromium',
+      name: 'chat e2e',
       testIgnore: /\/chatApi|listingApi|monitoring|\/overlay\/.*\.test\.ts/,
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1536, height: 864 },
       },
-      dependencies: ['chat api'],
+      dependencies: ['cleanup'],
     },
   ],
 });

@@ -1,6 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import { RootState } from '../index';
+import { RootState } from '@/src/types/store';
+
 import { MigrationState } from './migration.types';
 
 const rootSelector = (state: RootState): MigrationState => state.migration;

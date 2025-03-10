@@ -5,18 +5,9 @@ import {
   ApplicationTypeSchema,
 } from '@/src/types/application-type-schema';
 
-import * as ApplicationTypesSchemasSelectors from './applicationTypeSchemas.selectors';
+import { ApplicationTypesSchemasState } from './applicationTypeSchemas.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-
-export { ApplicationTypesSchemasSelectors };
-
-export interface ApplicationTypesSchemasState {
-  schemasLoading: UploadStatus;
-  schemas: ApplicationTypeSchema[];
-  detailedApplicationTypeSchema: ApiDetailedApplicationTypeSchema | null;
-  detailedApplicationTypeSchemaLoading: UploadStatus;
-}
 
 const initialState: ApplicationTypesSchemasState = {
   schemasLoading: UploadStatus.UNINITIALIZED,
@@ -65,6 +56,8 @@ export const applicationTypesSchemasSlice = createSlice({
     },
   },
 });
+
+export { ApplicationTypesSchemasSelectors } from './applicationTypeSchemas.selectors';
 
 export const ApplicationTypesSchemasActions =
   applicationTypesSchemasSlice.actions;
