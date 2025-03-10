@@ -10,8 +10,8 @@ import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
 import { getIdWithoutRootPathSegments, getRootId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
+import { parseApplicationApiKey } from '@/src/utils/server/api';
 
-import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -33,7 +33,7 @@ import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 interface Props {
   path: string;
   children: ReactNode;
-  entity: ShareEntity | DialAIEntityModel;
+  entity: ShareEntity;
   type: SharingType;
   publishAction: PublishActions;
   parentFolderNames?: string[];
@@ -98,17 +98,36 @@ export const PublicationItem = ({
   }, [allVersions]);
 
   useEffect(() => {
-    const versionParts = latestVersion?.split('.');
+    if (onChangeVersion) {
+      const versionParts = latestVersion?.split('.');
 
-    if (versionParts && isVersionValid(latestVersion)) {
-      versionParts[2] = String(+versionParts[2] + 1);
-      setVersion(versionParts.join('.'));
-      onChangeVersion?.(entity.id, versionParts.join('.'));
-    } else {
-      setVersion(DEFAULT_VERSION);
-      onChangeVersion?.(entity.id, DEFAULT_VERSION);
+      if (versionParts && isVersionValid(latestVersion)) {
+        versionParts[2] = String(+versionParts[2] + 1);
+        setVersion(versionParts.join('.'));
+        onChangeVersion(entity.id, versionParts.join('.'));
+      } else {
+        setVersion(DEFAULT_VERSION);
+        onChangeVersion(entity.id, DEFAULT_VERSION);
+      }
     }
   }, [entity.id, latestVersion, onChangeVersion]);
+
+  if (!onChangeVersion) {
+    return (
+      <div className="flex w-full items-center gap-2">
+        {children}
+        <span
+          className={classNames(
+            'shrink-0 text-xs',
+            publishAction === PublishActions.DELETE && 'text-error',
+          )}
+          data-qa="version"
+        >
+          {parseApplicationApiKey(constructedPublicId).version}
+        </span>
+      </div>
+    );
+  }
 
   const isVersionAllowed =
     !allVersions ||
@@ -142,16 +161,11 @@ export const PublicationItem = ({
             {!isVersionAllowed ||
               (isVersionInvalid && (
                 <Tooltip
-                  tooltip={
+                  tooltip={t(
                     !isVersionAllowed
-                      ? t('This version already exists')
-                      : t(
-                          'Version format is invalid (example: {{defaultVersion}})',
-                          {
-                            defaultVersion: DEFAULT_VERSION,
-                          },
-                        )
-                  }
+                      ? 'This version already exists'
+                      : 'Version format is invalid (example: 0.0.1)',
+                  )}
                   contentClassName="text-error text-xs"
                   triggerClassName="pl-0.5 absolute text-error top-1/2 -translate-y-1/2"
                 >
@@ -159,7 +173,6 @@ export const PublicationItem = ({
                 </Tooltip>
               ))}
             <input
-              disabled={!onChangeVersion}
               onBlur={handleBlur}
               onFocus={() => setIsVersionInvalid(false)}
               value={version}
