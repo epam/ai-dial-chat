@@ -331,6 +331,10 @@ export const isSystemMessage = (message?: Message) =>
 export const excludeSystemMessages = (messages: Message[]) =>
   messages.filter((m) => !isSystemMessage(m));
 
+export const getSystemMessageContent = (
+  messages: Message[],
+): string | undefined => messages.filter((m) => isSystemMessage(m))[0]?.content;
+
 export const getDefaultModelReference = ({
   recentModelReferences,
   modelReferences,
