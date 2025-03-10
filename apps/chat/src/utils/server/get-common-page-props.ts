@@ -9,7 +9,7 @@ import { isServerSessionValid } from '@/src/utils/auth/session';
 import { StorageType } from '@/src/types/storage';
 import { Translation } from '@/src/types/translation';
 
-import { SettingsState } from '@/src/store/settings/settings.reducers';
+import { SettingsState } from '@/src/store/settings/settings.types';
 
 import { ISOLATED_MODEL_QUERY_PARAM } from '@/src/constants/chat';
 import {
