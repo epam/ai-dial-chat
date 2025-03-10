@@ -99,11 +99,13 @@ const UserSchemaView = memo(function UserSchemaView({
     );
 
   return userForm.length ? (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-col gap-2">
       {userForm.map((row) => (
         <div key={row.property}>
           {!!row.description && (
-            <p className="mb-3 text-base text-primary">{row.description}</p>
+            <p className="mb-3 whitespace-pre-line text-base text-primary">
+              {row.description}
+            </p>
           )}
 
           <div className="flex flex-wrap gap-2">
