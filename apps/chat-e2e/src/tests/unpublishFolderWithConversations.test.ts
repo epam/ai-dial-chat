@@ -54,6 +54,7 @@ dialAdminTest(
     organizationFolderConversationAssertions,
     setTestIds,
   }) => {
+    dialAdminTest.slow();
     setTestIds('EPMRTC-3386', 'EPMRTC-3802', 'EPMRTC-3389');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
