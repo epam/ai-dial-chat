@@ -30,10 +30,10 @@ dialSharedWithMeTest(
     additionalShareUserDialHomePage,
     additionalShareUserSharedWithMeConversations,
     additionalShareUserSharedWithMeConversationDropdownMenu,
-    additionalShareUserConversations,
     additionalShareUserChatMessages,
     additionalShareUserChat,
-    dialHomePage,
+    baseAssertion,
+    additionalShareUserConversationAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1845', 'EPMRTC-2768');
@@ -63,33 +63,32 @@ dialSharedWithMeTest(
           MenuOptions.duplicate,
           { triggeredHttpMethod: 'POST' },
         );
-        await additionalShareUserConversations
-          .getEntityByName(conversation.name)
-          .waitFor();
+        await additionalShareUserConversationAssertion.assertEntityState(
+          { name: conversation.name },
+          'visible',
+        );
       },
     );
 
     await dialSharedWithMeTest.step(
       'Verify response regenerating, sending new request',
       async () => {
-        await dialHomePage.mockChatTextResponse(
+        await additionalShareUserDialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
         await additionalShareUserChatMessages.regenerateResponse();
-        let messagesCount =
-          await additionalShareUserChatMessages.chatMessages.getElementsCount();
-        expect
-          .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
-          .toBe(2);
+        await baseAssertion.assertElementsCount(
+          additionalShareUserChatMessages.chatMessages,
+          2,
+        );
 
         await additionalShareUserChat.sendRequestWithButton(
           'another test request',
         );
-        messagesCount =
-          await additionalShareUserChatMessages.chatMessages.getElementsCount();
-        expect
-          .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
-          .toBe(4);
+        await baseAssertion.assertElementsCount(
+          additionalShareUserChatMessages.chatMessages,
+          4,
+        );
       },
     );
   },

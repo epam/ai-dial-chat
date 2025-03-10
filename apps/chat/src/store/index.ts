@@ -16,6 +16,7 @@ import {
 } from 'redux-observable';
 
 import { ChatEpics } from '@/src/store/chat/chat.epics';
+import { SettingsState } from '@/src/store/settings/settings.types';
 
 import { AddonsEpics } from './addons/addons.epics';
 import { addonsSlice } from './addons/addons.reducers';
@@ -48,7 +49,7 @@ import { publicationSlice } from './publication/publication.reducers';
 import { ServiceEpics } from './service/service.epics';
 import { serviceSlice } from './service/service.reducer';
 import { SettingsEpics } from './settings/settings.epic';
-import { SettingsState, settingsSlice } from './settings/settings.reducers';
+import { settingsSlice } from './settings/settings.reducers';
 import { ShareEpics } from './share/share.epics';
 import { shareSlice } from './share/share.reducers';
 import UIEpics from './ui/ui.epics';
@@ -109,7 +110,6 @@ const getMiddleware = (
 };
 let store: Store;
 export type AppStore = ReturnType<typeof createStore>;
-export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
 
 export const createStore = (preloadedState: { settings: SettingsState }) => {

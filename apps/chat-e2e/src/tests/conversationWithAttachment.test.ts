@@ -139,6 +139,9 @@ dialTest(
     await dialTest.step(
       'Send request and verify conversation is named by the 1st attachment in the textarea',
       async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await sendMessage.send();
         await expect
           .soft(
