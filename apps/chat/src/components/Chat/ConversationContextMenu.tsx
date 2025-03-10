@@ -370,8 +370,7 @@ export const ConversationContextMenu = ({
   }, [conversation.model.id, modelsMap, applicationTypeSchemas]);
 
   const handleOpenInfoModal = useCallback(() => {
-    const { id, updatedAt, createdAt, author, sharedWithMe, publicationInfo } =
-      conversation;
+    const { id, updatedAt, createdAt, author } = conversation;
 
     dispatch(
       ChatActions.getEntityInfo({
@@ -380,8 +379,6 @@ export const ConversationContextMenu = ({
           updatedAt,
           createdAt,
           author,
-          sharedWithMe,
-          isPublic: !!publicationInfo?.action,
         },
       }),
     );

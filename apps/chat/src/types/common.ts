@@ -146,7 +146,6 @@ export interface EntityInfo {
   createdAt?: number;
   updatedAt?: number;
   author?: string;
-  sharedWithMe?: boolean;
   isPublic?: boolean;
 }
 
