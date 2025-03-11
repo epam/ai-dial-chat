@@ -239,12 +239,10 @@ export const selectSelectedConversationsFoldersIds = createSelector(
   },
 );
 
-export const selectFirstSelectedConversation = createSelector(
-  [selectSelectedConversations],
-  (conversations): Conversation | undefined => {
-    return conversations[0];
-  },
-);
+export const selectFirstSelectedConversation = (
+  state: RootState,
+): Conversation | undefined => selectSelectedConversations(state)[0];
+
 export const selectIsConversationsStreaming = createSelector(
   [selectSelectedConversations],
   (conversations) => {
@@ -314,12 +312,8 @@ export const selectWillReplayRequireVariables = createSelector(
     );
   },
 );
-export const selectIsSendMessageAborted = createSelector(
-  [selectConversationSignal],
-  (abortController) => {
-    return abortController.signal.aborted;
-  },
-);
+export const selectIsSendMessageAborted = (state: RootState) =>
+  selectConversationSignal(state).signal.aborted;
 
 export const selectIsReplaySelectedConversations = createSelector(
   [selectSelectedConversations],
@@ -481,12 +475,8 @@ export const selectCanAttachLink = createSelector(
   },
 );
 
-export const selectIsStartedCustomViewerConversation = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.isStartedCustomViewerConversation;
-  },
-);
+export const selectIsStartedCustomViewerConversation = (state: RootState) =>
+  rootSelector(state).isStartedCustomViewerConversation;
 
 export const selectCanAttachFolders = createSelector(
   [selectSelectedConversationsModels],
@@ -797,10 +787,8 @@ export const selectIsSelectedConversationBlocksInput = createSelector(
     ),
 );
 
-export const selectPreviewConversationId = createSelector(
-  [rootSelector],
-  (state) => state.previewConversationId,
-);
+export const selectPreviewConversationId = (state: RootState) =>
+  rootSelector(state).previewConversationId;
 
 export const selectIsSelectedConversationsWithSchema = createSelector(
   [selectSelectedConversations],
