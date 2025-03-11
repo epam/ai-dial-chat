@@ -39,6 +39,7 @@ dialTest(
       ),
     );
     await localStorageManager.setRecentModelsIds(defaultModel, randomModel);
+    await localStorageManager.setShowSideBarPanels();
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
 
@@ -76,7 +77,13 @@ dialTest(
 
 dialTest(
   'System prompt contains combinations with :',
-  async ({ dialHomePage, agentSettings, chat, setTestIds }) => {
+  async ({
+    dialHomePage,
+    agentSettings,
+    chat,
+    setTestIds,
+    localStorageManager,
+  }) => {
     setTestIds('EPMRTC-1084');
     const prompts = [
       'test:',
@@ -85,6 +92,7 @@ dialTest(
       ' test:',
       'test test. test:',
     ];
+    await localStorageManager.setShowSideBarPanels();
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
     await chat.configureSettingsButton.click();

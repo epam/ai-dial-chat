@@ -16,6 +16,8 @@ dialSharedWithMeTest(
     prompts,
     promptDropdownMenu,
     shareModalAssertion,
+    localStorageManager,
+    additionalShareUserLocalStorageManager,
   }) => {
     let prompt: Prompt;
     let shareLinkResponse: ShareByLinkResponseModel;
@@ -23,6 +25,7 @@ dialSharedWithMeTest(
     await dialTest.step('Prepare a new prompt', async () => {
       prompt = promptData.prepareDefaultPrompt();
       await dataInjector.createPrompts([prompt]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -41,6 +44,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Open share link by another user and verify prompt stays under expanded "Shared with me" section and prompt details popup is opened',
       async () => {
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
         await additionalShareUserDialHomePage.navigateToUrl(
           ExpectedConstants.sharedConversationUrl(
             shareLinkResponse.invitationLink,

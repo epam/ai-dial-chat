@@ -59,6 +59,7 @@ dialTest(
       'Prepare models and set recent models in local storage',
       async () => {
         await localStorageManager.setRecentModelsIdsOnce(...models);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -284,6 +285,7 @@ dialAdminTest(
           await adminPublicationApiHelper.approveRequest(publication);
           // delete the original conversation to prevent name duplicates
           await itemApiHelper.deleteEntity(conversation);
+          await localStorageManager.setShowSideBarPanels();
         }
       },
     );
@@ -454,6 +456,7 @@ dialTest(
       });
       await dialHomePage.waitForPageLoaded();
       await agentInfoAssertion.assertAgentName(initialModel1.name);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -602,6 +605,7 @@ dialTest(
     );
     const [firstModel, secondModel] = models;
     await localStorageManager.setRecentModelsIdsOnce(...models);
+    await localStorageManager.setShowSideBarPanels();
 
     await dialTest.step('Open Dial', async () => {
       await dialHomePage.openHomePage({
@@ -684,6 +688,7 @@ dialSharedWithMeTest(
       ]);
     await mainUserShareApiHelper.acceptInvite(shareByLinkResponse);
     await localStorageManager.setRecentModelsIdsOnce(...models);
+    await localStorageManager.setShowSideBarPanels();
 
     await dialSharedWithMeTest.step('Open Dial by the main user', async () => {
       await dialHomePage.openHomePage({

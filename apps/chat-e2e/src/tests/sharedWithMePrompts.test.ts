@@ -25,6 +25,7 @@ dialSharedWithMeTest(
     additionalShareUserVariableModalAssertion,
     additionalShareUserSendMessageAssertion,
     setTestIds,
+    additionalShareUserLocalStorageManager,
   }) => {
     setTestIds('EPMRTC-1857', 'EPMRTC-2036', 'EPMRTC-1935', 'EPMRTC-3173');
     let prompt: Prompt;
@@ -43,6 +44,7 @@ dialSharedWithMeTest(
       shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink([
         prompt,
       ]);
+      await additionalShareUserLocalStorageManager.setShowSideBarPanels();
     });
 
     await dialSharedWithMeTest.step(
@@ -146,6 +148,7 @@ dialTest(
     shareApiAssertion,
     promptAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3179');
     let prompt: Prompt;
@@ -158,6 +161,7 @@ dialTest(
         prompt,
       ]);
       await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(

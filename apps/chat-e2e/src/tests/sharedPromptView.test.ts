@@ -24,6 +24,7 @@ dialSharedWithMeTest(
     downloadAssertion,
     additionalShareUserConfirmationDialogAssertion,
     setTestIds,
+    additionalShareUserLocalStorageManager,
   }) => {
     setTestIds('EPMRTC-2035', 'EPMRTC-3183', 'EPMRTC-3184');
     let prompt: Prompt;
@@ -36,6 +37,7 @@ dialSharedWithMeTest(
         prompt,
       ]);
       await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+      await additionalShareUserLocalStorageManager.setShowSideBarPanels();
     });
 
     await dialSharedWithMeTest.step(
@@ -153,6 +155,7 @@ dialSharedWithMeTest(
     additionalShareUserPromptModalDialog,
     apiAssertion,
     setTestIds,
+    additionalShareUserLocalStorageManager,
   }) => {
     setTestIds('EPMRTC-3185', 'EPMRTC-2032');
     let prompt: Prompt;
@@ -175,6 +178,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Click on "Duplicate" button on prompt preview modal and verify prompt is duplicated in Recent section',
       async () => {
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
         await additionalShareUserDialHomePage.navigateToUrl(
           ExpectedConstants.sharedConversationUrl(
             shareByLinkResponse.invitationLink,
@@ -224,7 +228,7 @@ dialSharedWithMeTest(
           { name: updatedName },
           'visible',
         );
-        await apiAssertion.assertMoveRequest(request, updatedName, prompt.name);
+        apiAssertion.assertMoveRequest(request, updatedName, prompt.name);
       },
     );
 

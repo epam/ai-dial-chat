@@ -16,11 +16,13 @@ dialTest(
     promptDropdownMenu,
     toast,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2969');
     const duplicatedFolderName = 'Folder prompt';
 
     await dialTest.step('Create 2 new prompt folders', async () => {
+      await localStorageManager.setShowSideBarPanels();
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       for (let i = 1; i <= 2; i++) {
@@ -87,6 +89,7 @@ dialTest(
           CollapsedSections.Organization,
           CollapsedSections.SharedWithMe,
         );
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         for (let i = 1; i <= 2; i++) {
@@ -166,6 +169,7 @@ dialTest(
         CollapsedSections.Organization,
         CollapsedSections.SharedWithMe,
       );
+      await localStorageManager.setShowSideBarPanels();
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       for (let i = 1; i <= 3; i++) {
@@ -256,6 +260,7 @@ dialTest(
         CollapsedSections.Organization,
         CollapsedSections.SharedWithMe,
       );
+      await localStorageManager.setShowSideBarPanels();
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       for (let i = 1; i <= 2; i++) {

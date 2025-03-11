@@ -22,6 +22,7 @@ dialSharedWithMeTest(
     additionalShareUserSharedWithMePromptAssertion,
     additionalShareUserSharedPromptPreviewModalAssertion,
     setTestIds,
+    additionalShareUserLocalStorageManager,
   }) => {
     setTestIds('EPMRTC-1858', 'EPMRTC-1861', 'EPMRTC-3182');
     let folderPrompt: FolderPrompt;
@@ -54,6 +55,7 @@ dialSharedWithMeTest(
             folderPrompt.prompts,
             true,
           );
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -120,6 +122,7 @@ dialSharedWithMeTest(
     additionalShareUserSharedWithMeFolderDropdownMenu,
     additionalShareUserConfirmationDialog,
     setTestIds,
+    additionalShareUserLocalStorageManager,
   }) => {
     dialSharedWithMeTest.slow();
     setTestIds('EPMRTC-1860', 'EPMRTC-1866', 'EPMRTC-1863');
@@ -146,6 +149,7 @@ dialSharedWithMeTest(
             [nestedPrompts[sharedFolderIndex]],
             true,
           );
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -265,6 +269,7 @@ dialSharedWithMeTest(
     additionalShareUserPromptsDropdownMenuAssertion,
     additionalShareUserFolderDropdownMenuAssertion,
     setTestIds,
+    additionalShareUserLocalStorageManager,
   }) => {
     setTestIds('EPMRTC-1859', 'EPMRTC-3110', 'EPMRTC-1865');
     let nestedFolders: FolderInterface[];
@@ -290,6 +295,7 @@ dialSharedWithMeTest(
             [nestedPrompts[sharedFolderIndex]],
             true,
           );
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -392,6 +398,7 @@ dialSharedWithMeTest(
     additionalShareUserSendMessageAssertion,
     shareApiAssertion,
     setTestIds,
+    additionalShareUserLocalStorageManager,
   }) => {
     setTestIds('EPMRTC-2033', 'EPMRTC-1862', 'EPMRTC-3500', 'EPMRTC-1864');
     let folderPrompt: FolderPrompt;
@@ -433,6 +440,7 @@ dialSharedWithMeTest(
           sharedEntities,
           folder,
         );
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
       },
     );
 

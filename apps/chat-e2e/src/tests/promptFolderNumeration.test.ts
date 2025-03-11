@@ -10,12 +10,19 @@ import { expect } from '@playwright/test';
 
 dialTest(
   'Prompt folder: default numeration',
-  async ({ dialHomePage, promptBar, folderPrompts, setTestIds }) => {
+  async ({
+    dialHomePage,
+    promptBar,
+    folderPrompts,
+    setTestIds,
+    localStorageManager,
+  }) => {
     setTestIds('EPMRTC-1621');
 
     await dialTest.step(
       'Create several new prompt folders and verify their names are incremented',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         for (let i = 1; i <= 3; i++) {

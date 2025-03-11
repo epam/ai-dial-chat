@@ -20,6 +20,7 @@ dialTest(
     conversationData,
     dataInjector,
     chatMessages,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3000', 'EPMRTC-3056');
     let conversation: Conversation;
@@ -32,6 +33,7 @@ dialTest(
         secondRequest,
       ]);
       await dataInjector.createConversations([conversation]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -92,6 +94,7 @@ dialTest(
       await localStorageManager.setChatCollapsedSection(
         CollapsedSections.Organization,
       );
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(

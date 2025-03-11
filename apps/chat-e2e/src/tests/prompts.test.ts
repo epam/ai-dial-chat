@@ -22,6 +22,8 @@ dialTest(
     prompts,
     promptModalDialog,
     setTestIds,
+    header,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-945', 'EPMRTC-956', 'EPMRTC-1452');
     await dialTest.step(
@@ -30,7 +32,9 @@ dialTest(
         'Prompt body can not be empty',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded();
+        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
+        await header.rightPanelToggle.click();
+        await baseAssertion.assertElementState(promptBar, 'visible');
         await promptBar.hoverOverNewEntity();
         const newPromptCursor = await promptBar.getNewEntityCursor();
         expect
@@ -288,10 +292,12 @@ dialTest(
     dataInjector,
     promptDropdownMenu,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-952');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -325,10 +331,12 @@ dialTest(
     promptDropdownMenu,
     promptModalDialog,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-953');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -364,10 +372,12 @@ dialTest(
     promptDropdownMenu,
     promptModalDialog,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-954');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -423,10 +433,12 @@ dialTest(
     promptDropdownMenu,
     promptModalDialog,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-955', 'EPMRTC-1278');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -485,10 +497,12 @@ dialTest(
     promptDropdownMenu,
     setTestIds,
     confirmationDialog,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-969');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -514,10 +528,12 @@ dialTest(
     promptDropdownMenu,
     setTestIds,
     confirmationDialog,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-970');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -547,6 +563,7 @@ dialTest(
     confirmationDialog,
     prompts,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-971');
     const singlePrompt = promptData.prepareDefaultPrompt();
@@ -566,6 +583,7 @@ dialTest(
       [singleConversation, ...conversationInFolder.conversations],
       conversationInFolder.folders,
     );
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -647,6 +665,7 @@ dialTest(
     conversationData.resetData();
     const conversationInFolder =
       conversationData.prepareDefaultConversationInFolder();
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -770,8 +789,9 @@ dialTest(
 
 dialTest(
   `[UI] Delete all prompts button doesn't exist if not prompts are created`,
-  async ({ dialHomePage, promptBar, setTestIds }) => {
+  async ({ dialHomePage, promptBar, setTestIds, localStorageManager }) => {
     setTestIds('EPMRTC-973');
+    await localStorageManager.setShowSideBarPanels();
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
 
@@ -797,6 +817,7 @@ dialTest(
     variableModalAssertion,
     sendMessageAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1012', 'EPMRTC-2007', 'EPMRTC-2911');
     const promptDescription = 'Prompt description';
@@ -810,6 +831,7 @@ dialTest(
       promptDescription,
     );
     await dataInjector.createPrompts([prompt]);
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -847,6 +869,7 @@ dialTest(
     variableModalDialog,
     sendMessageAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1013');
     const promptContent = (first: string, second: string) =>
@@ -857,6 +880,7 @@ dialTest(
       promptContent(`{{${aVariable}}}`, `{{${bVariable}}}`),
     );
     await dataInjector.createPrompts([prompt]);
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -890,6 +914,7 @@ dialTest(
     promptBar,
     promptBarSearch,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1173');
     let firstPrompt: Prompt;
@@ -922,6 +947,7 @@ dialTest(
         fourthPrompt,
         fifthPrompt,
       ]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
