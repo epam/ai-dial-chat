@@ -2,7 +2,10 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
-import { excludeSystemMessages } from '@/src/utils/app/conversation';
+import {
+  excludeSystemMessages,
+  getSystemMessageContent,
+} from '@/src/utils/app/conversation';
 import { getConfigurationValue } from '@/src/utils/app/form-schema';
 import {
   doesModelAllowAddons,
@@ -65,12 +68,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     let promptToSend = prompt;
-    let filteredMessages = messages;
+    const filteredMessages = excludeSystemMessages(messages);
     if (!doesModelAllowSystemPrompt(model)) {
       promptToSend = '';
-      filteredMessages = excludeSystemMessages(messages);
     } else if (!promptToSend && model.type === EntityType.Model) {
-      promptToSend = DEFAULT_SYSTEM_PROMPT;
+      promptToSend = getSystemMessageContent(messages) ?? DEFAULT_SYSTEM_PROMPT;
     }
 
     let temperatureToUse = temperature;
