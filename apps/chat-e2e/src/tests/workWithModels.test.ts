@@ -495,59 +495,35 @@ dialTest(
 );
 
 dialTest(
-  'Send button in new message is available for Model if previous response is partly received when Stop generating was used.\n' +
-    'Compare mode button is not available while response is being generated',
+  'Compare mode button is not available while response is being generated.\n' +
+    '"Talk to" item icon is jumping while generating an answer',
   async ({
     dialHomePage,
     chat,
     setTestIds,
     chatMessages,
-    sendMessage,
     localStorageManager,
+    baseAssertion,
     chatBar,
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
-    setTestIds('EPMRTC-1533', 'EPMRTC-538');
+    setTestIds('EPMRTC-538', 'EPMRTC-386');
     await dialTest.step(
-      'Send request, verify Compare button is disabled while generating the response and stop generation immediately',
+      'Send request, verify Compare button is disabled while generating the response, model icon is jumping',
       async () => {
         const width = SIDEBAR_MIN_WIDTH + SIDEBAR_MIN_WIDTH / 3;
         await localStorageManager.setChatbarWidth(width.toFixed());
         await localStorageManager.setRecentModelsIds(simpleRequestModel!);
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await dialHomePage.throttleAPIResponse(API.chatHost);
         await chat.sendRequestWithButton(request, false);
-        await expect
-          .soft(
-            chatBar.compareButton.getElementLocator(),
-            ExpectedMessages.compareButtonIsDisabled,
-          )
-          .toBeDisabled();
-
-        await chatMessages.waitForPartialMessageReceived(2);
-        // eslint-disable-next-line playwright/no-force-option
-        await sendMessage.stopGenerating.click({ force: true });
-        await expect
-          .soft(
-            sendMessage.stopGenerating.getElementLocator(),
-            ExpectedMessages.stopGeneratingIsNotVisible,
-          )
-          .toBeHidden();
-      },
-    );
-
-    await dialTest.step(
-      'Type a new message and verify Send button is enabled',
-      async () => {
-        await sendMessage.messageInput.fillInInput(
-          GeneratorUtil.randomString(10),
+        await baseAssertion.assertElementActionabilityState(
+          chatBar.compareButton,
+          'disabled',
         );
-        await expect
-          .soft(
-            sendMessage.sendMessageButton.getElementLocator(),
-            ExpectedMessages.sendMessageButtonEnabled,
-          )
-          .toBeEnabled();
+        const jumpingIcon = await chatMessages.getMessageJumpingIcon();
+        await baseAssertion.assertElementState(jumpingIcon, 'visible');
       },
     );
   },
