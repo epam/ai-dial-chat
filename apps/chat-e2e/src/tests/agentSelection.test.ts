@@ -430,6 +430,7 @@ dialTest(
     );
     const addedModel = GeneratorUtil.randomArrayElement(availableModels);
     await localStorageManager.setRecentModelsIdsOnce(...models);
+    await localStorageManager.setShowSideBarPanels();
 
     // Create conversations
     const conversation2Name = GeneratorUtil.randomString(10);
@@ -456,7 +457,6 @@ dialTest(
       });
       await dialHomePage.waitForPageLoaded();
       await agentInfoAssertion.assertAgentName(initialModel1.name);
-      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(

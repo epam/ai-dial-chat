@@ -21,7 +21,7 @@ dialTest(
 
     await dialTest.step('Open chat panel', async () => {
       await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded();
+      await dialHomePage.waitForPageLoaded({ skipSidebars: true });
       await header.leftPanelToggle.click();
       await baseAssertion.assertElementState(chatBar, 'visible');
     });

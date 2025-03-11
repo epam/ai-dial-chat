@@ -972,6 +972,7 @@ dialTest(
       CollapsedSections.Organization,
       CollapsedSections.SharedWithMe,
     );
+    await localStorageManager.setShowSideBarPanels();
 
     await dialTest.step(
       'Create New conversation and send any message there',
@@ -979,7 +980,6 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(conversation.name);
-        await localStorageManager.setShowSideBarPanels();
       },
     );
 
