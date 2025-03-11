@@ -36,6 +36,7 @@ dialTest(
     marketplaceAgentsSection,
     toast,
   }) => {
+    dialTest.slow();
     setTestIds('EPMRTC-4878', 'EPMRTC-4880', 'EPMRTC-4356', 'EPMRTC-5168');
     const models = GeneratorUtil.randomArrayElements(
       ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),

@@ -69,6 +69,7 @@ dialAdminTest(
     fileApiHelper,
     setTestIds,
   }) => {
+    dialAdminTest.slow();
     setTestIds(
       'EPMRTC-3463',
       'EPMRTC-3213',
