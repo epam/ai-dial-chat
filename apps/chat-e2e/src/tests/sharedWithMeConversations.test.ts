@@ -45,7 +45,6 @@ dialSharedWithMeTest(
     additionalShareUserConfirmationDialog,
     additionalShareUserToast,
     setTestIds,
-    additionalShareUserLocalStorageManager,
   }) => {
     dialSharedWithMeTest.slow();
     setTestIds(
@@ -66,7 +65,6 @@ dialSharedWithMeTest(
       shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink([
         conversation,
       ]);
-      await additionalShareUserLocalStorageManager.setShowSideBarPanels();
     });
 
     await dialSharedWithMeTest.step(
@@ -94,6 +92,7 @@ dialSharedWithMeTest(
         );
         await additionalShareUserDialHomePage.waitForPageLoaded({
           selectedSharedConversationName: conversation.name,
+          skipSidebars: true,
         });
         await expect
           .soft(
@@ -1245,6 +1244,7 @@ dialTest(
       incognitoPage,
       incognitoProviderLogin,
       setTestIds,
+      baseAssertion,
     },
     testInfo,
   ) => {
@@ -1280,16 +1280,22 @@ dialTest(
         const dialHomePage = new DialHomePage(incognitoPage);
         await dialHomePage.waitForPageLoaded({
           selectedSharedConversationName: conversation.name,
+          skipSidebars: true,
         });
-        await dialHomePage
-          .getAppContainer()
-          .getHeader()
-          .leftPanelToggle.click();
-        const conversationBackgroundColor = await dialHomePage
-          .getAppContainer()
-          .getChatBar()
-          .getSharedWithMeConversationsTree()
-          .getEntityBackgroundColor(conversation.name);
+        const appContainer = dialHomePage.getAppContainer();
+        // await appContainer.getHeader().leftPanelToggle.click();
+        const chatBar = appContainer.getChatBar();
+        await baseAssertion.assertElementState(chatBar, 'visible');
+        const sharedWithMeConversationsTree =
+          chatBar.getSharedWithMeConversationsTree();
+        await baseAssertion.assertElementState(
+          sharedWithMeConversationsTree.getEntityByName(conversation.name),
+          'visible',
+        );
+        const conversationBackgroundColor =
+          await sharedWithMeConversationsTree.getEntityBackgroundColor(
+            conversation.name,
+          );
         expect
           .soft(
             conversationBackgroundColor,

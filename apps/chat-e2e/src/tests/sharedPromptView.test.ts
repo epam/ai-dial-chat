@@ -155,7 +155,6 @@ dialSharedWithMeTest(
     additionalShareUserPromptModalDialog,
     apiAssertion,
     setTestIds,
-    additionalShareUserLocalStorageManager,
   }) => {
     setTestIds('EPMRTC-3185', 'EPMRTC-2032');
     let prompt: Prompt;
@@ -178,7 +177,6 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Click on "Duplicate" button on prompt preview modal and verify prompt is duplicated in Recent section',
       async () => {
-        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
         await additionalShareUserDialHomePage.navigateToUrl(
           ExpectedConstants.sharedConversationUrl(
             shareByLinkResponse.invitationLink,
@@ -186,6 +184,7 @@ dialSharedWithMeTest(
         );
         await additionalShareUserDialHomePage.waitForPageLoaded({
           isPromptShared: true,
+          skipSidebars: true,
         });
         await additionalShareUserPromptPreviewModal.duplicatePrompt();
         await additionalShareUserPromptAssertion.assertEntityState(

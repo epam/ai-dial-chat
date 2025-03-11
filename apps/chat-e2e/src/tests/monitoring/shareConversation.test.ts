@@ -18,7 +18,6 @@ dialSharedWithMeTest(
     shareModal,
     shareModalAssertion,
     localStorageManager,
-    additionalShareUserLocalStorageManager,
   }) => {
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
@@ -49,7 +48,6 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Open share link by another user and verify chat stays under Shared with me and is selected automatically',
       async () => {
-        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
         await additionalShareUserDialHomePage.navigateToUrl(
           ExpectedConstants.sharedConversationUrl(
             shareByLinkResponse.invitationLink,
@@ -57,6 +55,7 @@ dialSharedWithMeTest(
         );
         await additionalShareUserDialHomePage.waitForPageLoaded({
           selectedSharedConversationName: conversation.name,
+          skipSidebars: true,
         });
         await expect
           .soft(
