@@ -379,6 +379,7 @@ dialTest(
     sendMessageAssertion,
     chat,
     localStorageManager,
+    marketplacePage,
   }) => {
     setTestIds('EPMRTC-4832');
     const models = GeneratorUtil.randomArrayElements(
@@ -400,6 +401,7 @@ dialTest(
       await dialHomePage.waitForPageLoaded();
       await conversations.selectConversation(conversation.name);
       await chatBar.dialMarketplaceLink.click();
+      await marketplacePage.waitForPageLoaded();
     });
 
     await dialTest.step(

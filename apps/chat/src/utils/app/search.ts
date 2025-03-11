@@ -20,6 +20,9 @@ export const doesEntityContainSearchTerm = (
   return entity.name.toLowerCase().includes(searchTerm.toLowerCase());
 };
 
+export const isSearchTermMatched = (entity: ShareEntity, searchTerm?: string) =>
+  !searchTerm || doesEntityContainSearchTerm(entity, searchTerm);
+
 export const doesOpenAIEntityContainSearchTerm = (
   model: DialAIEntity,
   searchTerm: string,

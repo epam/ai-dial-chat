@@ -1,4 +1,4 @@
-import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
+import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -11,7 +11,7 @@ import {
 } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 
-import { RootState } from '..';
+import { ImportExportState } from './importExport.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 
@@ -20,25 +20,6 @@ export type UploadedAttachment = Partial<DialFile> & {
 };
 
 export type AttachmentToUpload = DialFile;
-
-interface ImportExportState {
-  attachmentsIdsToUpload: string[];
-  uploadedAttachments: UploadedAttachment[];
-  ignoredAttachmentsIds?: string[];
-  nonDuplicatedFiles: DialFile[];
-  importedConversations: Conversation[];
-  attachmentsErrors: string[];
-  status?: UploadStatus;
-  operation?: Operation;
-  isPromptsBackedUp: boolean;
-  isChatsBackedUp: boolean;
-  duplicatedConversations?: Conversation[];
-  duplicatedPrompts: Prompt[];
-  duplicatedFiles: DialFile[];
-  isShowReplaceDialog: boolean;
-  featureType: FeatureType;
-  mappedActions?: MappedReplaceActions;
-}
 
 const initialState: ImportExportState = {
   attachmentsIdsToUpload: [],
@@ -254,87 +235,6 @@ export const importExportSlice = createSlice({
   },
 });
 
-const rootSelector = (state: RootState): ImportExportState =>
-  state.importExport;
-
-const selectAttachmentsIdsToUpload = createSelector([rootSelector], (state) => {
-  return state.attachmentsIdsToUpload;
-});
-const selectUploadedAttachments = createSelector([rootSelector], (state) => {
-  return state.uploadedAttachments;
-});
-
-const selectAttachmentsErrors = createSelector([rootSelector], (state) => {
-  return state.attachmentsErrors;
-});
-
-const selectImportedConversations = createSelector([rootSelector], (state) => {
-  return state.importedConversations;
-});
-
-const selectImportStatus = createSelector([rootSelector], (state) => {
-  return state.status;
-});
-
-const selectOperationName = createSelector([rootSelector], (state) => {
-  return state.operation;
-});
-
-const selectIsLoadingImportExport = createSelector([rootSelector], (state) => {
-  return state.status === UploadStatus.LOADING;
-});
-
-const selectIsShowReplaceDialog = createSelector([rootSelector], (state) => {
-  return state.isShowReplaceDialog;
-});
-
-const selectFeatureType = createSelector([rootSelector], (state) => {
-  return state.featureType;
-});
-
-const selectDuplicatedConversations = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.duplicatedConversations;
-  },
-);
-
-const selectDuplicatedPrompts = createSelector([rootSelector], (state) => {
-  return state.duplicatedPrompts;
-});
-
-const selectDuplicatedFiles = createSelector([rootSelector], (state) => {
-  return state.duplicatedFiles;
-});
-
-const selectNonDuplicatedFiles = createSelector([rootSelector], (state) => {
-  return state.nonDuplicatedFiles;
-});
-
-const selectIgnoredAttachmentsIds = createSelector([rootSelector], (state) => {
-  return state.ignoredAttachmentsIds;
-});
-
-const selectMappedActions = createSelector([rootSelector], (state) => {
-  return state.mappedActions;
-});
-
-export const ImportExportSelectors = {
-  selectAttachmentsIdsToUpload,
-  selectUploadedAttachments,
-  selectAttachmentsErrors,
-  selectImportedConversations,
-  selectImportStatus,
-  selectOperationName,
-  selectIsLoadingImportExport,
-  selectIsShowReplaceDialog,
-  selectFeatureType,
-  selectDuplicatedConversations,
-  selectDuplicatedPrompts,
-  selectDuplicatedFiles,
-  selectNonDuplicatedFiles,
-  selectIgnoredAttachmentsIds,
-  selectMappedActions,
-};
+export { ImportExportSelectors } from './importExport.selectors';
 
 export const ImportExportActions = importExportSlice.actions;

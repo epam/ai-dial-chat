@@ -98,12 +98,24 @@ import { FolderType } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
 import { AppEpic } from '@/src/types/store';
 
+import { AddonsActions } from '@/src/store/addons/addons.reducers';
+import { AddonsSelectors } from '@/src/store/addons/addons.selectors';
+import { ChatActions } from '@/src/store/chat/chat.reducer';
+import { FilesActions } from '@/src/store/files/files.reducers';
 import {
   MarketplaceActions,
   MarketplaceSelectors,
 } from '@/src/store/marketplace/marketplace.reducers';
+import {
+  ModelsActions,
+  ModelsSelectors,
+} from '@/src/store/models/models.reducers';
+import { OverlaySelectors } from '@/src/store/overlay/overlay.reducers';
+import { OverlayState } from '@/src/store/overlay/overlay.types';
+import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
+import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { LOCAL_BUCKET, resetShareEntity } from '@/src/constants/chat';
 import {
@@ -118,13 +130,6 @@ import { defaultReplay } from '@/src/constants/replay';
 import { CONVERSATIONS_DATE_SECTIONS } from '@/src/constants/sections';
 import { SHARE_QUERY_PARAM } from '@/src/constants/share';
 
-import { AddonsActions, AddonsSelectors } from '../addons/addons.reducers';
-import { ChatActions } from '../chat/chat.reducer';
-import { FilesActions } from '../files/files.reducers';
-import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
-import { OverlaySelectors, OverlayState } from '../overlay/overlay.reducers';
-import { PublicationActions } from '../publication/publication.reducers';
-import { UIActions, UISelectors } from '../ui/ui.reducers';
 import {
   ConversationsActions,
   ConversationsSelectors,
