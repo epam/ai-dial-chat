@@ -105,10 +105,11 @@ export const AgentsTiles: React.FC<AgentsListProps> = ({
             return (
               <div
                 key={virtualRow.key}
-                className="absolute left-0 top-0 grid min-w-full grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-3 xl:gap-5"
+                className="absolute left-0 top-0 grid min-w-full gap-3 md:gap-4 xl:gap-5"
                 style={{
                   height: `${virtualRow.size}px`,
                   transform: `translateY(${virtualRow.start}px)`,
+                  gridTemplateColumns: `repeat(${colsCount}, minmax(0, 1fr))`,
                 }}
                 data-qa="agents-row"
               >
