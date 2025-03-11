@@ -490,7 +490,22 @@ export const ApplicationPublicationResources = ({
   return (
     <div className={classNames(!isOpen && 'hidden')}>
       {filteredApps.map((application) => (
-        <ApplicationRow item={application} key={application.id} />
+        <div
+          className="flex items-center justify-between gap-4"
+          key={application.id}
+        >
+          <ApplicationRow item={application} />
+          <span
+            className={classNames(
+              'shrink-0 text-xs',
+              application.publicationInfo?.action === PublishActions.DELETE &&
+                'text-error',
+            )}
+            data-qa="version"
+          >
+            {application.publicationInfo?.version || NA_VERSION}
+          </span>
+        </div>
       ))}
     </div>
   );
