@@ -16,34 +16,23 @@ import uniq from 'lodash-es/uniq';
 
 const rootSelector = (state: RootState): ModelsState => state.models;
 
-export const selectModelsIsLoading = createSelector([rootSelector], (state) => {
-  return (
-    state.status === UploadStatus.LOADING ||
-    state.status === UploadStatus.UNINITIALIZED
-  );
-});
+const selectModelStatus = (state: RootState) => rootSelector(state).status;
 
-export const selectIsModelsLoaded = createSelector([rootSelector], (state) => {
-  return state.status === UploadStatus.LOADED;
-});
+export const selectModelsIsLoading = (state: RootState) =>
+  selectModelStatus(state) === UploadStatus.LOADING ||
+  selectModelStatus(state) === UploadStatus.UNINITIALIZED;
 
-export const selectIsInstalledModelsInitialized = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.isInstalledModelsInitialized;
-  },
-);
+export const selectIsModelsLoaded = (state: RootState) =>
+  rootSelector(state).status === UploadStatus.LOADED;
 
-export const selectModelsError = createSelector([rootSelector], (state) => {
-  return state.error;
-});
+export const selectIsInstalledModelsInitialized = (state: RootState) =>
+  rootSelector(state).isInstalledModelsInitialized;
 
-export const selectIsRecentModelsLoaded = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.recentModelsStatus === UploadStatus.LOADED;
-  },
-);
+export const selectModelsError = (state: RootState) =>
+  rootSelector(state).error;
+
+export const selectIsRecentModelsLoaded = (state: RootState) =>
+  rootSelector(state).recentModelsStatus === UploadStatus.LOADED;
 
 export const selectModels = createSelector([rootSelector], (state) => {
   const groups = groupBy(state.models, (model) =>
@@ -53,7 +42,7 @@ export const selectModels = createSelector([rootSelector], (state) => {
   return sortBy(
     [
       ...(groups.rest ?? []),
-      ...orderBy(groups.custom ?? [], 'version', 'desc'),
+      ...orderBy(groups.custom ?? [], 'version', 'desc'), //TODO: fix semVer sorting
     ],
     (model) => model.name.toLowerCase(),
   );
@@ -66,13 +55,11 @@ export const selectModelTopics = createSelector([rootSelector], (state) => {
   );
 });
 
-export const selectModelsMap = createSelector([rootSelector], (state) => {
-  return state.modelsMap;
-});
+export const selectModelsMap = (state: RootState) =>
+  rootSelector(state).modelsMap;
 
-export const selectRecentModelsIds = createSelector([rootSelector], (state) => {
-  return state.recentModelsIds;
-});
+export const selectRecentModelsIds = (state: RootState) =>
+  rootSelector(state).recentModelsIds;
 
 export const selectRecentModels = createSelector(
   [selectRecentModelsIds, selectModelsMap],
@@ -85,28 +72,19 @@ export const selectModelsOnly = createSelector([selectModels], (models) => {
   return models.filter((model) => model.type === EntityType.Model);
 });
 
-export const selectPublishRequestModels = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.publishRequestModels;
-  },
-);
+export const selectPublishRequestModels = (state: RootState) =>
+  rootSelector(state).publishRequestModels;
 
-export const selectPublishedApplicationIds = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.publishedApplicationIds;
-  },
-);
+export const selectPublishedApplicationIds = (state: RootState) =>
+  rootSelector(state).publishedApplicationIds;
 
-export const selectInstalledModels = createSelector([rootSelector], (state) => {
-  return state.installedModels;
-});
+export const selectInstalledModels = (state: RootState) =>
+  rootSelector(state).installedModels;
 
 export const selectInstalledModelIds = createSelector(
-  [rootSelector],
-  (state) => {
-    return new Set(state.installedModels.map(({ id }) => id));
+  [selectInstalledModels],
+  (installedModels) => {
+    return new Set(installedModels.map(({ id }) => id));
   },
 );
 
@@ -121,10 +99,8 @@ export const selectRecentWithInstalledModelsIds = createSelector(
   },
 );
 
-export const selectInitialized = createSelector(
-  [rootSelector],
-  (state) => state.initialized,
-);
+export const selectInitialized = (state: RootState) =>
+  rootSelector(state).initialized;
 
 export const selectCustomModels = createSelector([rootSelector], (state) => {
   return state.models.filter((model) => model.reference !== model.id);
@@ -144,12 +120,10 @@ export const selectSharedWriteModels = createSelector(
   },
 );
 
-export const selectModelById = createSelector(
-  [selectModelsMap, (_state, modelId) => modelId],
-  (modelsMap, modelId) => {
-    return modelsMap[modelId];
-  },
-);
+export const selectModelById = (
+  state: RootState,
+  modelId: string | undefined,
+) => (modelId ? selectModelsMap(state)[modelId] : undefined);
 
 export const selectAllGroupModelKeySet = (
   state: RootState,

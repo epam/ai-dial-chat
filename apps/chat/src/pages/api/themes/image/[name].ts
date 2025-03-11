@@ -36,7 +36,7 @@ const getImage = async (
     if (name === 'default-model' || name === 'default-addon') {
       return res.redirect(
         307,
-        `//${req.headers.host}/images/icons/message-square-lines-alt.svg`,
+        `//${req.headers.origin}/images/icons/message-square-lines-alt.svg`,
       );
     }
     return res.status(404).send('Image not found');
