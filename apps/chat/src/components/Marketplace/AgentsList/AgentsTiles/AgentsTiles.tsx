@@ -16,12 +16,12 @@ import isString from 'lodash-es/isString';
 import range from 'lodash-es/range';
 
 const ROWS_INFO = {
-  [ScreenState.SM]: { size: 110, cols: 1 },
-  [ScreenState.MD]: { size: 178, cols: 2 },
-  [ScreenState.XL]: { size: 184, cols: 3 },
-  [ScreenState.XL3]: { size: 184, cols: 4 },
-  [ScreenState.XL4]: { size: 184, cols: 5 },
-  [ScreenState.XL5]: { size: 184, cols: 6 },
+  [ScreenState.SM]: { height: 110, cols: 1 },
+  [ScreenState.MD]: { height: 178, cols: 2 },
+  [ScreenState.XL]: { height: 184, cols: 3 },
+  [ScreenState.XL3]: { height: 184, cols: 4 },
+  [ScreenState.XL4]: { height: 184, cols: 5 },
+  [ScreenState.XL5]: { height: 184, cols: 6 },
 };
 
 export const AgentsTiles: React.FC<AgentsListProps> = ({
@@ -46,8 +46,7 @@ export const AgentsTiles: React.FC<AgentsListProps> = ({
 
   const screenState = useScreenState();
 
-  const colsCount = ROWS_INFO[screenState].cols;
-  const rowsSize = ROWS_INFO[screenState].size;
+  const { cols: colsCount, height: rowsHeight } = ROWS_INFO[screenState];
   const allEntities: (DialAIEntityModel | string)[] = useMemo(() => {
     if (!suggestedResults.length) return entities;
     if (!entities.length && suggestedResults.length) return suggestedResults;
@@ -66,7 +65,7 @@ export const AgentsTiles: React.FC<AgentsListProps> = ({
   const rowVirtualizer = useVirtualizer({
     count: Math.ceil(allEntities.length / colsCount),
     getScrollElement: () => currentParentRef,
-    estimateSize: () => rowsSize,
+    estimateSize: () => rowsHeight,
     overscan: 3,
   });
 
@@ -87,7 +86,7 @@ export const AgentsTiles: React.FC<AgentsListProps> = ({
       <SuggestedMessage entities={entities} />
       <AgentsListWrapper
         separatorRowId={separatorRowId}
-        rowsHeight={rowsSize}
+        rowsHeight={rowsHeight}
         ref={wrapperRefs}
       >
         <div
@@ -123,7 +122,7 @@ export const AgentsTiles: React.FC<AgentsListProps> = ({
                       <span
                         key={entity}
                         style={{
-                          height: `${rowsSize}px`,
+                          height: `${rowsHeigth}px`,
                         }}
                         ref={suggestedRowRef}
                       ></span>
