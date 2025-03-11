@@ -30,7 +30,7 @@ import { PublicVersionSelector } from './PublicVersionSelector';
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 
 interface ReadonlyPublicItemsProps {
-  constructedPublicId: string;
+  entityId: string;
   children: ReactNode;
   publishAction: PublishActions;
 }
@@ -38,7 +38,7 @@ interface ReadonlyPublicItemsProps {
 const ReadonlyPublicationItem: React.FC<ReadonlyPublicItemsProps> = ({
   children,
   publishAction,
-  constructedPublicId,
+  entityId,
 }) => {
   return (
     <div className="flex w-full items-center gap-2">
@@ -50,7 +50,7 @@ const ReadonlyPublicationItem: React.FC<ReadonlyPublicItemsProps> = ({
         )}
         data-qa="version"
       >
-        {getVersionFromId(constructedPublicId)}
+        {getVersionFromId(entityId)}
       </span>
     </div>
   );
@@ -225,6 +225,17 @@ export const PublicationItemView: React.FC<Props> = ({
   publishAction,
   onChangeVersion,
 }) => {
+  if (!onChangeVersion || publishAction === PublishActions.DELETE) {
+    return (
+      <ReadonlyPublicationItem
+        entityId={entity.id}
+        publishAction={publishAction}
+      >
+        {children}
+      </ReadonlyPublicationItem>
+    );
+  }
+
   const constructedPublicId = constructPath(
     getRootId({
       featureType: EnumMapper.getFeatureTypeBySharingType(type),
@@ -234,17 +245,6 @@ export const PublicationItemView: React.FC<Props> = ({
     ...parentFolderNames,
     splitEntityId(entity.id).name,
   );
-
-  if (!onChangeVersion || publishAction === PublishActions.DELETE) {
-    return (
-      <ReadonlyPublicationItem
-        constructedPublicId={constructedPublicId}
-        publishAction={publishAction}
-      >
-        {children}
-      </ReadonlyPublicationItem>
-    );
-  }
 
   return (
     <PublicationItem
