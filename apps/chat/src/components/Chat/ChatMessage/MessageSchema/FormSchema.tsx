@@ -150,7 +150,9 @@ const PropertyRenderer = ({
   return (
     <div className={classNames('flex flex-col gap-3', className)}>
       {property.description && (
-        <p className="text-base text-primary">{property.description}</p>
+        <p className="whitespace-pre-line text-base text-primary">
+          {property.description}
+        </p>
       )}
 
       {property[DialSchemaProperties.DialWidget] ===

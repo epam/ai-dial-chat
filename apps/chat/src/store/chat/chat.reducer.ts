@@ -6,22 +6,9 @@ import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { EntityInfo, EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 
-import {
-  MessageFormSchema,
-  MessageFormValue,
-  MessageFormValueType,
-} from '@epam/ai-dial-shared';
+import { ChatState } from './chat.types';
 
-export interface ChatState {
-  inputContent: string;
-  formValue?: MessageFormValue;
-  configurationSchema?: MessageFormSchema;
-  isConfigurationSchemaLoading: boolean;
-  shouldFocusAndScroll?: boolean;
-  notAvailableEntityType?: EntityType;
-  infoModalState: ModalState;
-  selectedEntityInfo?: EntityInfo;
-}
+import { MessageFormSchema, MessageFormValueType } from '@epam/ai-dial-shared';
 
 const initialState: ChatState = {
   inputContent: '',

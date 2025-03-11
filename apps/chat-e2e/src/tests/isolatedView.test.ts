@@ -274,7 +274,7 @@ dialTest(
     let chatName: string;
 
     await dialTest.step(
-      'prepare a model that is not added to the users workspace',
+      'Prepare a model that is not added to the users workspace',
       async () => {
         models = ModelsUtil.getModels();
 
@@ -284,7 +284,7 @@ dialTest(
         nonWorkspaceModel = GeneratorUtil.randomArrayElement(
           models.filter((model) => {
             const isNotInstalled = !randomModels.some(
-              (deployment) => deployment.id === model.id,
+              (deployment) => deployment.name === model.name,
             );
             const hasNoColon = !model.id.includes(':');
             return isNotInstalled && hasNoColon;

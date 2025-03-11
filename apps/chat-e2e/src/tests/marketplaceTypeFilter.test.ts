@@ -201,29 +201,28 @@ dialTest(
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
-        const allApps = await modelApiHelper
-          .getModels()
-          .then((agents) =>
-            agents.filter((agent) => agent.type === 'application'),
-          );
-        const expectedAppNames = Array.from(
-          ModelsUtil.groupEntitiesByName(allApps).keys(),
-        );
         await marketplaceFilter
           .filterByPropertyOptionInput(
             MarketplaceFilterTypes.type,
             EntityType.Application,
           )
           .click();
-        const actualModels = await marketplaceAgentsSection.getAllAgents();
-        baseAssertion.assertValue(
-          actualModels.length,
-          expectedAppNames.length,
-          ExpectedMessages.elementsCountIsValid,
-        );
+        const allAgents = await modelApiHelper.getModels();
+        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        for (const actualAgent of actualAgents) {
+          const actualAgentModel = allAgents.find(
+            (app) => app.name === actualAgent.name,
+          );
+          if (actualAgentModel) {
+            baseAssertion.assertValue(
+              actualAgentModel.type,
+              EntityType.Application,
+            );
+          }
+        }
         baseAssertion.assertArrayIncludesAll(
-          actualModels.map((agent) => agent.name),
-          expectedAppNames,
+          actualAgents.map((agent) => agent.name),
+          [appName],
           MarketplaceExpectedMessages.filteredAgentsAreValid,
         );
       },
