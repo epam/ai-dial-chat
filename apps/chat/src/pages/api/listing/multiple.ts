@@ -33,10 +33,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const { recursive = false, limit = 1000 } = req.query as {
+    const { recursive = 'false', limit = '1000' } = req.query as {
       recursive?: string;
-      limit?: number;
+      limit?: string;
     };
+    const searchParams = new URLSearchParams();
+    searchParams.set('recursive', recursive);
+    searchParams.set('limit', limit);
+
     const token = await getToken({ req });
 
     const apiUrls = body.urls
@@ -47,7 +51,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             process.env.DIAL_API_HOST,
             'v1/metadata',
             sanitizeUri(url),
-          )}/?limit=${limit}&recursive=${recursive}`;
+          )}/?${searchParams}`;
         }
         return;
       })

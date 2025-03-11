@@ -8,9 +8,8 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState): CodeEditorState => state.codeEditor;
 
-const selectFilesContent = createSelector([rootSelector], (state) => {
-  return state.filesContent;
-});
+const selectFilesContent = (state: RootState) =>
+  rootSelector(state).filesContent;
 
 const selectModifiedFileIds = createSelector(
   [selectFilesContent],
@@ -29,13 +28,11 @@ const selectFileContent = (fileId: string) =>
     return filesContents.find((file) => file.id === fileId);
   });
 
-const selectIsFileContentLoading = createSelector([rootSelector], (state) => {
-  return state.fileContentLoadingStatus === UploadStatus.LOADING;
-});
+const selectIsFileContentLoading = (state: RootState) =>
+  rootSelector(state).fileContentLoadingStatus === UploadStatus.LOADING;
 
-const selectSelectedFile = createSelector([rootSelector], (state) => {
-  return state.selectedFileId;
-});
+const selectSelectedFile = (state: RootState) =>
+  rootSelector(state).selectedFileId;
 
 export const CodeEditorSelectors = {
   selectFilesContent,

@@ -47,9 +47,9 @@ const selectFileById = createSelector(
     return files.find((file) => fileId === file.id);
   },
 );
-const selectSelectedFilesIds = createSelector([rootSelector], (state) => {
-  return state.selectedFilesIds;
-});
+const selectSelectedFilesIds = (state: RootState) =>
+  rootSelector(state).selectedFilesIds;
+
 const selectFolders = createSelector([rootSelector], (state) => {
   return [...state.folders].sort((a, b) =>
     a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1,
@@ -99,18 +99,18 @@ const selectIsUploadingFilePresent = createSelector(
     selectedFiles.some((file) => file.status === UploadStatus.LOADING),
 );
 
-const selectAreFoldersLoading = createSelector([rootSelector], (state) => {
-  return state.foldersStatus === UploadStatus.LOADING;
-});
-const selectAreFilesLoading = createSelector([rootSelector], (state) => {
-  return state.filesStatus === UploadStatus.LOADING;
-});
+const selectAreFoldersLoading = (state: RootState) =>
+  rootSelector(state).foldersStatus === UploadStatus.LOADING;
+
+const selectAreFilesLoading = (state: RootState) =>
+  rootSelector(state).filesStatus === UploadStatus.LOADING;
+
 const selectLoadingFolderIds = createSelector([rootSelector], (state) => {
   return state.loadingFolderId ? [state.loadingFolderId] : [];
 });
-const selectNewAddedFolderId = createSelector([rootSelector], (state) => {
-  return state.newAddedFolderId;
-});
+const selectNewAddedFolderId = (state: RootState) =>
+  rootSelector(state).newAddedFolderId;
+
 const selectFoldersWithSearchTerm = createSelector(
   [selectFolders, (_state, searchTerm: string) => searchTerm],
   (folders, searchTerm) => {
@@ -135,10 +135,7 @@ const selectPublicFolders = createSelector(
   },
 );
 
-const selectInitialized = createSelector(
-  [rootSelector],
-  (state) => state.initialized,
-);
+const selectInitialized = (state: RootState) => rootSelector(state).initialized;
 
 const selectFolderById = createSelector(
   [selectFolders, (_state, folderId: string) => folderId],

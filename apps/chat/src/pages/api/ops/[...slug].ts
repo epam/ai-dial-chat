@@ -15,6 +15,7 @@ import { errorsMessages } from '@/src/constants/errors';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
+import { sanitizeUri } from 'micromark-util-sanitize-uri';
 import fetch from 'node-fetch';
 
 const getEntityUrlFromSlugs = (
@@ -29,11 +30,8 @@ const getEntityUrlFromSlugs = (
     throw new DialAIError(`No path provided`, '', '', '400');
   }
 
-  return constructPath(
-    dialApiHost,
-    'v1',
-    'ops',
-    ServerUtils.encodeSlugs(slugs),
+  return sanitizeUri(
+    constructPath(dialApiHost, 'v1', 'ops', ServerUtils.encodeSlugs(slugs)),
   );
 };
 

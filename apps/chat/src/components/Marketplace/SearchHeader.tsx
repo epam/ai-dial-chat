@@ -16,6 +16,7 @@ import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
+import { ApplicationActions } from '@/src/store/application/application.reducers';
 import {
   ApplicationTypesSchemasActions,
   ApplicationTypesSchemasSelectors,
@@ -129,6 +130,7 @@ export const SearchHeader = () => {
           display: isCustomApplicationsEnabled,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
+            dispatch(ApplicationActions.setShouldSaveApplication(false));
             router.push(getAppEditorRoute(ApplicationType.CUSTOM_APP));
           },
         },
@@ -139,6 +141,7 @@ export const SearchHeader = () => {
           display: isCodeAppsEnabled,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
+            dispatch(ApplicationActions.setShouldSaveApplication(false));
             router.push(getAppEditorRoute(ApplicationType.CODE_APP));
           },
         },
@@ -149,6 +152,7 @@ export const SearchHeader = () => {
           display: true,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
+            dispatch(ApplicationActions.setShouldSaveApplication(false));
             if (detailedApplicationTypeSchema?.$id !== schema.id) {
               dispatch(
                 ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema(

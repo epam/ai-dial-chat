@@ -1,26 +1,19 @@
-import { createSelector } from '@reduxjs/toolkit';
-
 import { RootState } from '@/src/types/store';
 
 import { OverlayState } from './overlay.types';
 
 const rootSelector = (state: RootState): OverlayState => state.overlay;
 
-const selectHostDomain = createSelector([rootSelector], (state) => {
-  return state.hostDomain;
-});
+const selectHostDomain = (state: RootState) => rootSelector(state).hostDomain;
 
-const selectOverlaySystemPrompt = createSelector([rootSelector], (state) => {
-  return state.systemPrompt;
-});
+const selectOverlaySystemPrompt = (state: RootState) =>
+  rootSelector(state).systemPrompt;
 
-const selectOptionsReceived = createSelector([rootSelector], (state) => {
-  return state.optionsReceived;
-});
+const selectOptionsReceived = (state: RootState) =>
+  rootSelector(state).optionsReceived;
 
-const selectReadyToInteractSent = createSelector([rootSelector], (state) => {
-  return state.readyToInteractSent;
-});
+const selectReadyToInteractSent = (state: RootState) =>
+  rootSelector(state).readyToInteractSent;
 
 export const OverlaySelectors = {
   selectHostDomain,
