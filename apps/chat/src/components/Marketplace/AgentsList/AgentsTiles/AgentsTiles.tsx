@@ -122,7 +122,7 @@ export const AgentsTiles: React.FC<AgentsListProps> = ({
                       <span
                         key={entity}
                         style={{
-                          height: `${rowsHeigth}px`,
+                          height: `${rowsHeight}px`,
                         }}
                         ref={suggestedRowRef}
                       ></span>
