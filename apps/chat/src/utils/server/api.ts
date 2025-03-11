@@ -95,12 +95,10 @@ export const parseConversationApiKey = (
   if (options?.parseVersion) {
     const version = getVersionFromId(apiKey);
 
-    if (parts.length > 2) {
-      parsedApiKey.publicationInfo = { version };
-    }
+    parsedApiKey.publicationInfo = { version };
 
-    if (version !== NA_VERSION) {
-      parsedApiKey.name = getPublicItemIdWithoutVersion(version, apiKey);
+    if (version && version !== NA_VERSION) {
+      parsedApiKey.name = getPublicItemIdWithoutVersion(version, name);
     }
   }
 
@@ -314,6 +312,11 @@ export const getIdWithoutVersionFromApiKey = (
 export const getVersionFromId = (id: string) => {
   const parts = id.split(pathKeySeparator);
   const version = parts.at(-1);
+
+  // conversations also have model (example: conversations/public/gpt-3.5-turbo__name__0.0.1)
+  if (id.startsWith(`${ApiKeys.Conversations}/`) && parts.length <= 2) {
+    return NA_VERSION;
+  }
 
   return version && validVersionRegEx.test(version) ? version : NA_VERSION;
 };
