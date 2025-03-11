@@ -8,7 +8,7 @@ import { usePublicationResources } from '@/src/hooks/usePublicationResources';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { constructPath } from '@/src/utils/app/file';
-import { ApiUtils } from '@/src/utils/server/api';
+import { ApiUtils, getVersionFromId } from '@/src/utils/server/api';
 
 import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { PublicationResource } from '@/src/types/publication';
@@ -490,7 +490,22 @@ export const ApplicationPublicationResources = ({
   return (
     <div className={classNames(!isOpen && 'hidden')}>
       {filteredApps.map((application) => (
-        <ApplicationRow item={application} key={application.id} />
+        <div
+          className="flex items-center justify-between gap-4"
+          key={application.id}
+        >
+          <ApplicationRow item={application} />
+          <span
+            className={classNames(
+              'shrink-0 text-xs',
+              application.publicationInfo?.action === PublishActions.DELETE &&
+                'text-error',
+            )}
+            data-qa="version"
+          >
+            {getVersionFromId(application.id)}
+          </span>
+        </div>
       ))}
     </div>
   );
