@@ -7,47 +7,30 @@ import { ShareState } from './share.types';
 
 const rootSelector = (state: RootState): ShareState => state.share;
 
-export const selectInvitationId = createSelector([rootSelector], (state) => {
-  return state.invitationId;
-});
+export const selectInvitationId = (state: RootState) =>
+  rootSelector(state).invitationId;
 
-export const selectWriteInvitationId = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.writeInvitationId;
-  },
-);
+export const selectWriteInvitationId = (state: RootState) =>
+  rootSelector(state).writeInvitationId;
 
-export const selectShareModalState = createSelector([rootSelector], (state) => {
-  return state.shareModalState;
-});
-export const selectShareModalOpened = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.shareModalState !== ModalState.CLOSED;
-  },
-);
+export const selectShareModalState = (state: RootState) =>
+  rootSelector(state).shareModalState;
 
-export const selectShareResourceId = createSelector([rootSelector], (state) => {
-  return state.shareResourceId;
-});
+export const selectShareModalOpened = (state: RootState) =>
+  rootSelector(state).shareModalState !== ModalState.CLOSED;
 
-export const selectShareResourceName = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.shareResourceName;
-  },
-);
+export const selectShareResourceId = (state: RootState) =>
+  rootSelector(state).shareResourceId;
 
-export const selectShareFeatureType = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.shareFeatureType;
-  },
-);
-export const selectShareIsFolder = createSelector([rootSelector], (state) => {
-  return state.shareIsFolder;
-});
+export const selectShareResourceName = (state: RootState) =>
+  rootSelector(state).shareResourceName;
+
+export const selectShareFeatureType = (state: RootState) =>
+  rootSelector(state).shareFeatureType;
+
+export const selectShareIsFolder = (state: RootState) =>
+  rootSelector(state).shareIsFolder;
+
 export const selectAcceptedEntityInfo = createSelector(
   [rootSelector],
   (state) => {
@@ -59,14 +42,12 @@ export const selectAcceptedEntityInfo = createSelector(
     };
   },
 );
-export const selectInitialized = createSelector(
-  [rootSelector],
-  (state) => state.initialized,
-);
-export const selectSharePermissions = createSelector(
-  [rootSelector],
-  (state) => state.sharePermissions,
-);
-export const selectUnshareModel = createSelector([rootSelector], (state) => {
-  return state.unshareEntity;
-});
+
+export const selectInitialized = (state: RootState) =>
+  rootSelector(state).initialized;
+
+export const selectSharePermissions = (state: RootState) =>
+  rootSelector(state).sharePermissions;
+
+export const selectUnshareModel = (state: RootState) =>
+  rootSelector(state).unshareEntity;

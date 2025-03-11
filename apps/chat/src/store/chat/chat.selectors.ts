@@ -37,9 +37,8 @@ const selectNotAvailableEntityType = (state: RootState) =>
 const selectInfoModalState = (state: RootState) =>
   rootSelector(state).infoModalState;
 
-const selectInfoModalOpened = createSelector([rootSelector], (state) => {
-  return state.infoModalState !== ModalState.CLOSED;
-});
+const selectInfoModalOpened = (state: RootState) =>
+  selectInfoModalState(state) !== ModalState.CLOSED;
 
 const selectSelectedEntityInfo = (state: RootState) =>
   rootSelector(state).selectedEntityInfo;
