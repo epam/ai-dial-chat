@@ -8,7 +8,7 @@ import { usePublicationResources } from '@/src/hooks/usePublicationResources';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { constructPath } from '@/src/utils/app/file';
-import { ApiUtils } from '@/src/utils/server/api';
+import { ApiUtils, getVersionFromId } from '@/src/utils/server/api';
 
 import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { PublicationResource } from '@/src/types/publication';
@@ -503,7 +503,7 @@ export const ApplicationPublicationResources = ({
             )}
             data-qa="version"
           >
-            {application.publicationInfo?.version || NA_VERSION}
+            {getVersionFromId(application.id)}
           </span>
         </div>
       ))}
