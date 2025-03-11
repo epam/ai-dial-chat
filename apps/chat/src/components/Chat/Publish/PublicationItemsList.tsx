@@ -33,7 +33,7 @@ import {
 } from '@/src/components/Common/ReplaceConfirmationModal/Components';
 import Folder from '@/src/components/Folder/Folder';
 
-import { PublicationItemView } from './PublicationItem';
+import { PublicationItem } from './PublicationItem';
 
 import {
   ConversationInfo,
@@ -172,7 +172,7 @@ export const PublicationItemsList = memo(
               dataQa="conversations-to-send-request"
             >
               {type === SharingType.Conversation ? (
-                <PublicationItemView
+                <PublicationItem
                   path={path}
                   type={type}
                   entity={entity}
@@ -189,7 +189,7 @@ export const PublicationItemsList = memo(
                     level={0}
                     isChosen={chosenItemsIds.some((id) => id === entity.id)}
                   />
-                </PublicationItemView>
+                </PublicationItem>
               ) : (
                 <Folder
                   readonly
@@ -205,7 +205,7 @@ export const PublicationItemsList = memo(
                   allItems={entities}
                   itemComponent={({ item, ...props }) => (
                     <div className="flex w-full items-center">
-                      <PublicationItemView
+                      <PublicationItem
                         parentFolderNames={getParentFolderNames(
                           item.id,
                           entity.id,
@@ -228,7 +228,7 @@ export const PublicationItemsList = memo(
                           onSelect={handleSelectItems}
                           isChosen={chosenItemsIds.some((id) => id === item.id)}
                         />
-                      </PublicationItemView>
+                      </PublicationItem>
                     </div>
                   )}
                   featureType={FeatureType.Chat}
@@ -302,7 +302,7 @@ export const PublicationItemsList = memo(
             className="!pl-0"
           >
             {type === SharingType.Prompt ? (
-              <PublicationItemView
+              <PublicationItem
                 path={path}
                 type={type}
                 entity={entity}
@@ -319,7 +319,7 @@ export const PublicationItemsList = memo(
                   level={0}
                   isChosen={chosenItemsIds.some((id) => id === entity.id)}
                 />
-              </PublicationItemView>
+              </PublicationItem>
             ) : (
               <Folder
                 readonly
@@ -334,7 +334,7 @@ export const PublicationItemsList = memo(
                 allItems={entities}
                 itemComponent={({ item, ...props }) => (
                   <div className="flex w-full items-center">
-                    <PublicationItemView
+                    <PublicationItem
                       parentFolderNames={getParentFolderNames(
                         item.id,
                         entity.id,
@@ -357,7 +357,7 @@ export const PublicationItemsList = memo(
                         onSelect={handleSelectItems}
                         isChosen={chosenItemsIds.some((id) => id === item.id)}
                       />
-                    </PublicationItemView>
+                    </PublicationItem>
                   </div>
                 )}
                 featureType={FeatureType.Prompt}

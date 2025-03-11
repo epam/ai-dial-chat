@@ -66,7 +66,7 @@ interface PublicItemsProps {
   onChangeVersion: (id: string, version: string) => void;
 }
 
-const PublicationItem: React.FC<PublicItemsProps> = ({
+const EditablePublicationItem: React.FC<PublicItemsProps> = ({
   path,
   children,
   entity,
@@ -216,7 +216,7 @@ interface Props {
   onChangeVersion?: (id: string, version: string) => void;
 }
 
-export const PublicationItemView: React.FC<Props> = ({
+export const PublicationItem: React.FC<Props> = ({
   path,
   entity,
   type,
@@ -247,7 +247,7 @@ export const PublicationItemView: React.FC<Props> = ({
   );
 
   return (
-    <PublicationItem
+    <EditablePublicationItem
       path={path}
       onChangeVersion={onChangeVersion}
       entity={entity}
@@ -256,6 +256,6 @@ export const PublicationItemView: React.FC<Props> = ({
       constructedPublicId={constructedPublicId}
     >
       {children}
-    </PublicationItem>
+    </EditablePublicationItem>
   );
 };
