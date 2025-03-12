@@ -15,7 +15,7 @@ import { ApplicationCard } from './ApplicationCard';
 import isString from 'lodash-es/isString';
 import range from 'lodash-es/range';
 
-const MIN_CARD_WIDTH = 400;
+const MIN_CARD_WIDTH = 356;
 interface RowInfo {
   height: number;
   gap?: number;
