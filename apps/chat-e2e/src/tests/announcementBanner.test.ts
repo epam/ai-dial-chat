@@ -21,6 +21,7 @@ dialTest(
       context,
       providerLogin,
       setTestIds,
+      localStorageManager,
     },
     testInfo,
   ) => {
@@ -32,6 +33,7 @@ dialTest(
     await dialTest.step('Prepare any conversation', async () => {
       conversation = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversation]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(

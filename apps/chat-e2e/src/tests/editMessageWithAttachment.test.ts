@@ -32,6 +32,7 @@ dialTest(
     attachmentDropdownMenu,
     uploadFromDeviceModal,
     page,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1613', 'EPMRTC-1776');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -46,6 +47,7 @@ dialTest(
           randomModelWithAttachment,
         );
         await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -132,6 +134,7 @@ dialTest(
     conversations,
     chatMessages,
     editMessageInputAttachments,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1762', 'EPMRTC-1902');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -157,6 +160,7 @@ dialTest(
             imageUrl,
           );
         await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -238,6 +242,7 @@ dialTest(
     conversations,
     editMessageInputAttachments,
     chat,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1903');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -275,6 +280,7 @@ dialTest(
             ...attachmentUrls.slice(0, 2),
           );
         await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -351,6 +357,7 @@ dialTest(
     dataInjector,
     chatMessages,
     conversations,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3331', 'EPMRTC-3332');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -381,6 +388,7 @@ dialTest(
             ...attachmentUrls.slice(0, 3),
           );
         await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 

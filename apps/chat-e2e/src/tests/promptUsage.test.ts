@@ -27,6 +27,7 @@ dialTest(
     sendMessagePromptListAssertion,
     page,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-3843',
@@ -56,6 +57,7 @@ dialTest(
         promptData.resetData();
       }
       await dataInjector.createPrompts(prompts);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -133,6 +135,7 @@ dialTest(
     sendMessageAssertion,
     variableModalDialog,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3823', 'EPMRTC-3803', 'EPMRTC-4371');
     let simplePrompt: Prompt;
@@ -155,6 +158,7 @@ dialTest(
         ExpectedConstants.newPromptTitle(2),
       );
       await dataInjector.createPrompts([simplePrompt, promptWithVariable]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -218,6 +222,7 @@ dialTest(
     sendMessageAssertion,
     page,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3844', 'EPMRTC-3838');
     let prompt: Prompt;
@@ -233,6 +238,7 @@ dialTest(
       async () => {
         prompt = promptData.preparePrompt(content);
         await dataInjector.createPrompts([prompt]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -271,6 +277,7 @@ dialTest(
     variableModalDialog,
     sendMessageAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3829', 'EPMRTC-3830', 'EPMRTC-3842', 'EPMRTC-3832');
     let prompt: Prompt;
@@ -295,6 +302,7 @@ dialTest(
       async () => {
         prompt = promptData.preparePrompt(content);
         await dataInjector.createPrompts([prompt]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -435,6 +443,7 @@ dialTest(
     variableModalDialog,
     sendMessageAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3833', 'EPMRTC-1015', 'EPMRTC-3865');
     let prompt: Prompt;
@@ -453,6 +462,7 @@ dialTest(
           promptName,
         );
         await dataInjector.createPrompts([prompt]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -519,6 +529,7 @@ dialTest(
     conversationDropdownMenu,
     chat,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3821', 'EPMRTC-3883');
     let prompt: Prompt;
@@ -535,6 +546,7 @@ dialTest(
     await dialTest.step('Prepare prompt with vars', async () => {
       prompt = promptData.preparePrompt(promptContent);
       await dataInjector.createPrompts([prompt]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -611,6 +623,7 @@ dialSharedWithMeTest(
     additionalShareUserAgentSettingAssertion,
     apiAssertion,
     setTestIds,
+    additionalShareUserLocalStorageManager,
   }) => {
     setTestIds('EPMRTC-3502');
     let folderPrompt: FolderPrompt;
@@ -647,6 +660,7 @@ dialSharedWithMeTest(
         await additionalUserShareApiHelper.acceptInvite(
           shareFolderByLinkResponse,
         );
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -706,7 +720,7 @@ dialSharedWithMeTest(
           'test',
           false,
         );
-        await apiAssertion.assertRequestPrompt(
+        apiAssertion.assertRequestPrompt(
           request,
           promptTemplate(promptParamValue) + promptInFolder.content,
         );
