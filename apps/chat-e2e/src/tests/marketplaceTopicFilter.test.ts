@@ -1,7 +1,14 @@
 import { EntityType } from '@/chat/types/common';
 import { Publication } from '@/chat/types/publication';
 import dialTest from '@/src/core/dialFixtures';
-import { CheckboxState, ExpectedConstants,ExpectedMessages, MarketplaceExpectedMessages, MarketplaceFilterTypes, MenuOptions } from '@/src/testData';
+import {
+  CheckboxState,
+  ExpectedConstants,
+  ExpectedMessages,
+  MarketplaceExpectedMessages,
+  MarketplaceFilterTypes,
+  MenuOptions,
+} from '@/src/testData';
 import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
@@ -120,10 +127,7 @@ dialTest(
           [firstTopic, secondTopic],
           MarketplaceExpectedMessages.filterOptionsAreValid,
         );
-        baseAssertion.assertStringsSorting(
-          actualTopicsFilterOptions,
-          'asc',
-        );
+        baseAssertion.assertStringsSorting(actualTopicsFilterOptions, 'asc');
       },
     );
 
