@@ -167,10 +167,6 @@ export const ChatInputMessage = Inversify.register(
         : Infinity;
     const { getTokensLength } = useTokenizer(modelTokenizer);
 
-    const isIsolatedView = useAppSelector(
-      SettingsSelectors.selectIsIsolatedView,
-    );
-
     const {
       content,
       setContent,
@@ -484,9 +480,8 @@ export const ChatInputMessage = Inversify.register(
 
     const chatInputPlaceholder = useMemo(() => {
       if (isChatInputDisabled) return '';
-      if (isOverlay || isIsolatedView) return t('Type a message');
-      return t('Type a text or «/» to use a prompt...');
-    }, [isOverlay, isIsolatedView, isChatInputDisabled, t]);
+      return t('Talk to your agent');
+    }, [isChatInputDisabled, t]);
 
     const paddingLeftClass = canAttach
       ? isOverlay
