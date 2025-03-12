@@ -22,7 +22,7 @@ for (const entity of entityPlusAddonsRequests) {
         conversation.prompt = entity.systemPrompt;
       }
       const response = await chatApiHelper.postRequest(conversation);
-      await apiAssertion.assertResponseCode(response, entity.entityId, 200);
+      apiAssertion.assertResponseCode(response, entity.entityId, 200);
       await apiAssertion.assertResponseTextContent(
         response,
         entity.entityId,

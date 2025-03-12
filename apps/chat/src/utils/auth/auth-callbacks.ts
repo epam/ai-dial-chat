@@ -3,9 +3,11 @@ import { TokenEndpointHandler } from 'next-auth/providers';
 
 import { Token } from '@/src/types/auth';
 
+import { parseCommaSeparatedList } from '../app/common';
 import { logger } from '../server/logger';
 import NextClient, { RefreshToken } from './nextauth-client';
 
+import { Feature } from '@epam/ai-dial-shared';
 import { decodeJwt } from 'jose';
 import get from 'lodash-es/get';
 import intersection from 'lodash-es/intersection';
@@ -23,29 +25,61 @@ const safeDecodeJwt = (accessToken: string) => {
   }
 };
 
+const safeParseJSON = (jsonData: string | undefined, errorMessage: string) => {
+  try {
+    if (!jsonData) {
+      return {};
+    }
+    return JSON.parse(jsonData);
+  } catch (err) {
+    logger.error(errorMessage, err);
+    throw Error(`${errorMessage}: ${err}`);
+  }
+};
+
 const getUser = (accessToken: string | undefined, providerId: string) => {
   const rolesFieldName =
     process.env[`AUTH_${providerId.toUpperCase()}_DIAL_ROLES_FIELD`] ??
     process.env.DIAL_ROLES_FIELD ??
     'dial_roles';
-  const adminRoleNames = (
+  const adminRoleNames = parseCommaSeparatedList(
     process.env[`AUTH_${providerId.toUpperCase()}_ADMIN_ROLE_NAMES`] ??
-    process.env.ADMIN_ROLE_NAMES ??
-    'admin'
-  ).split(',');
+      process.env.ADMIN_ROLE_NAMES,
+    ['admin'],
+  );
   const decodedPayload = accessToken ? safeDecodeJwt(accessToken) : {};
   const dialRoles = get(decodedPayload, rolesFieldName, []) as string[];
   const roles = Array.isArray(dialRoles) ? dialRoles : [dialRoles];
   const isAdmin =
     roles.length > 0 && adminRoleNames.some((role) => roles.includes(role));
-  const codeAppRoles = process.env.CODE_APPS_ROLES?.split(',') ?? [];
+
+  const enabledFeaturesRoles = safeParseJSON(
+    process.env.ENABLED_FEATURES_ROLES?.replaceAll('\\"', '"'),
+    'Error when parsing ENABLED_FEATURES_ROLES',
+  );
+
+  const featureFlags = Array.from(Object.values(Feature)).reduce(
+    (flags, feature) => {
+      const featureRoles = enabledFeaturesRoles[feature];
+      if (featureRoles) {
+        const featureRolesArr = Array.isArray(featureRoles)
+          ? featureRoles
+          : parseCommaSeparatedList(featureRoles);
+        if (
+          featureRolesArr.length &&
+          !intersection(featureRolesArr, roles).length
+        ) {
+          flags[feature] = false;
+        }
+      }
+      return flags;
+    },
+    {} as Record<Feature, boolean>,
+  );
 
   return {
     isAdmin,
-    canCreateCodeApps:
-      !codeAppRoles.length ||
-      !!intersection(codeAppRoles, roles).length ||
-      isAdmin,
+    ...featureFlags,
   };
 };
 
@@ -226,11 +260,14 @@ export const callbacks: Partial<
     }
 
     const isAdmin = options?.token?.user?.isAdmin ?? false;
-    const canCreateCodeApps = options?.token?.user?.canCreateCodeApps ?? false;
 
     if (options.session.user) {
       options.session.user.isAdmin = isAdmin;
-      options.session.user.canCreateCodeApps = canCreateCodeApps;
+      Object.values(Feature).forEach((feature) => {
+        if (options?.token?.user?.[feature] === false) {
+          options.session.user[feature] = false;
+        }
+      });
     }
 
     const providerId =

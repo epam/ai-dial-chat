@@ -13,6 +13,7 @@ dialTest(
     chatMessages,
     chatMessagesAssertion,
     conversations,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1757');
     let conversation: Conversation;
@@ -27,6 +28,7 @@ dialTest(
           stagesCount,
         );
         await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 

@@ -44,6 +44,7 @@ dialTest(
     await localStorageManager.setRecentModelsIdsOnce(...models);
     await localStorageManager.setRecentAddonsIds(addon);
     await localStorageManager.setLastConversationSettings('');
+    await localStorageManager.setShowSideBarPanels();
 
     await dialTest.step('Open Dial', async () => {
       await dialHomePage.openHomePage({
@@ -175,6 +176,7 @@ dialSharedWithMeTest(
     sharedWithMeFolderDropdownMenu,
     sharedFolderConversations,
     sharedWithMeConversationAssertion,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-4791',
@@ -224,6 +226,7 @@ dialSharedWithMeTest(
           true,
         );
       await mainUserShareApiHelper.acceptInvite(shareFolderByLinkResponse);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step('Open app and create new conversation', async () => {
@@ -379,6 +382,7 @@ dialTest(
     sendMessageAssertion,
     chat,
     localStorageManager,
+    marketplacePage,
   }) => {
     setTestIds('EPMRTC-4832');
     const models = GeneratorUtil.randomArrayElements(
@@ -394,12 +398,14 @@ dialTest(
     const conversation = conversationData.prepareDefaultConversation(models[0]);
     await dataInjector.createConversations([conversation]);
     await localStorageManager.setRecentModelsIdsOnce(...models);
+    await localStorageManager.setShowSideBarPanels();
 
     await dialTest.step('Open Dial, navigate to Marketplace', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await conversations.selectConversation(conversation.name);
       await chatBar.dialMarketplaceLink.click();
+      await marketplacePage.waitForPageLoaded();
     });
 
     await dialTest.step(
@@ -464,6 +470,7 @@ dialTest(
     await localStorageManager.setRecentModelsIdsOnce(model);
     await localStorageManager.setRecentAddonsIds(addon);
     await localStorageManager.setLastConversationSettings('');
+    await localStorageManager.setShowSideBarPanels();
     let initialConversationIds: string | undefined;
 
     await dialTest.step(

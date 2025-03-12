@@ -24,6 +24,7 @@ dialTest(
     marketplaceAgentsAssertion,
     chat,
     setTestIds,
+    localStorageManager,
   }) => {
     dialTest.slow();
     setTestIds('EPMRTC-1036', 'EPMRTC-1038');
@@ -31,6 +32,7 @@ dialTest(
     await dialTest.step(
       'Open "Select an agent for conversation" modal for new conversation',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.click();
@@ -73,7 +75,8 @@ dialTest(
   },
 );
 
-dialTest(
+//TC depends on LLM availability and response
+dialTest.skip(
   '"Talk to" item icon is jumping while generating an answer',
   async ({
     dialHomePage,
@@ -95,6 +98,7 @@ dialTest(
           conversationData.prepareEmptyConversation(simpleRequestModel);
         await dataInjector.createConversations([conversation]);
         await localStorageManager.setRecentModelsIds(simpleRequestModel!);
+        await localStorageManager.setShowSideBarPanels();
 
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();

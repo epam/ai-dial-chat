@@ -3,11 +3,11 @@ import { isRootId } from '@/src/utils/app/id';
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { MappedReplaceActions } from '@/src/types/import-export';
+import { OnItemEvent } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
 
 import Folder from '../../Folder/Folder';
 import { PromptsRow } from './Components';
-import { OnItemEvent } from './ReplaceConfirmationModal';
 
 interface Props {
   folders: FolderInterface[];

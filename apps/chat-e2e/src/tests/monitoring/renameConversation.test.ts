@@ -13,6 +13,7 @@ dialTest(
     dataInjector,
     conversationAssertion,
     renameConversationModal,
+    localStorageManager,
   }) => {
     const updatedConversationName = GeneratorUtil.randomString(5);
     let conversation: Conversation;
@@ -20,6 +21,7 @@ dialTest(
     await dialTest.step('Prepare new conversation', async () => {
       conversation = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversation]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step('Rename conversation', async () => {

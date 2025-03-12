@@ -48,6 +48,7 @@ dialTest(
           );
         await dataInjector.createConversations([responseImageConversation]);
         await localStorageManager.setRecentModelsIds(updatedModel);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 

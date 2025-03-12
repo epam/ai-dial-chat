@@ -20,8 +20,8 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   SettingsActions,
   SettingsSelectors,
-  SettingsState,
 } from '@/src/store/settings/settings.reducers';
+import { SettingsState } from '@/src/store/settings/settings.types';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import Loader from './Common/Loader';

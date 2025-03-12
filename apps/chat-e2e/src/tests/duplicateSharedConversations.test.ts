@@ -30,10 +30,11 @@ dialSharedWithMeTest(
     additionalShareUserDialHomePage,
     additionalShareUserSharedWithMeConversations,
     additionalShareUserSharedWithMeConversationDropdownMenu,
-    additionalShareUserConversations,
     additionalShareUserChatMessages,
     additionalShareUserChat,
-    dialHomePage,
+    baseAssertion,
+    additionalShareUserConversationAssertion,
+    additionalShareUserLocalStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1845', 'EPMRTC-2768');
@@ -47,6 +48,7 @@ dialSharedWithMeTest(
         conversation,
       ]);
       await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+      await additionalShareUserLocalStorageManager.setShowSideBarPanels();
     });
 
     await dialSharedWithMeTest.step(
@@ -63,33 +65,32 @@ dialSharedWithMeTest(
           MenuOptions.duplicate,
           { triggeredHttpMethod: 'POST' },
         );
-        await additionalShareUserConversations
-          .getEntityByName(conversation.name)
-          .waitFor();
+        await additionalShareUserConversationAssertion.assertEntityState(
+          { name: conversation.name },
+          'visible',
+        );
       },
     );
 
     await dialSharedWithMeTest.step(
       'Verify response regenerating, sending new request',
       async () => {
-        await dialHomePage.mockChatTextResponse(
+        await additionalShareUserDialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
         await additionalShareUserChatMessages.regenerateResponse();
-        let messagesCount =
-          await additionalShareUserChatMessages.chatMessages.getElementsCount();
-        expect
-          .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
-          .toBe(2);
+        await baseAssertion.assertElementsCount(
+          additionalShareUserChatMessages.chatMessages,
+          2,
+        );
 
         await additionalShareUserChat.sendRequestWithButton(
           'another test request',
         );
-        messagesCount =
-          await additionalShareUserChatMessages.chatMessages.getElementsCount();
-        expect
-          .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
-          .toBe(4);
+        await baseAssertion.assertElementsCount(
+          additionalShareUserChatMessages.chatMessages,
+          4,
+        );
       },
     );
   },
@@ -108,6 +109,7 @@ dialSharedWithMeTest(
     additionalShareUserChat,
     additionalShareUserSharedFolderConversations,
     setTestIds,
+    additionalShareUserLocalStorageManager,
   }) => {
     setTestIds('EPMRTC-1844');
     let folderConversation: FolderConversation;
@@ -129,6 +131,7 @@ dialSharedWithMeTest(
         );
         await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
         conversationName = folderConversation.conversations[0].name;
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -192,6 +195,7 @@ dialSharedWithMeTest(
     setTestIds,
     baseAssertion,
     additionalShareUserConversationAssertion,
+    additionalShareUserLocalStorageManager,
   }) => {
     setTestIds('EPMRTC-1835', 'EPMRTC-1843', 'EPMRTC-1838');
     let firstComparedConversation: Conversation;
@@ -231,6 +235,7 @@ dialSharedWithMeTest(
           [thirdComparedConversation],
           BucketUtil.getAdditionalShareUserBucket(),
         );
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
       },
     );
 

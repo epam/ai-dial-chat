@@ -55,22 +55,22 @@ import {
 } from '@/src/types/share';
 import { AppEpic } from '@/src/types/store';
 
+import { FilesSelectors } from '@/src/store/files/files.selectors';
+
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import { DeleteType } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
-import {
-  ApplicationActions,
-  ApplicationSelectors,
-} from '../application/application.reducers';
+import { ApplicationActions } from '../application/application.reducers';
+import { ApplicationSelectors } from '../application/application.selectors';
 import { ApplicationTypesSchemasSelectors } from '../applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { CodeEditorActions } from '../codeEditor/codeEditor.reducer';
 import {
   ConversationsActions,
   ConversationsSelectors,
 } from '../conversations/conversations.reducers';
-import { FilesActions, FilesSelectors } from '../files/files.reducers';
+import { FilesActions } from '../files/files.reducers';
 import { MarketplaceActions } from '../marketplace/marketplace.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { ModelUpdatedValues } from '../models/models.types';

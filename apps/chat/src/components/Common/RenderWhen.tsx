@@ -1,8 +1,8 @@
 import { ComponentType, ReactNode } from 'react';
 
-import { useAppSelector } from '@/src/store/hooks';
+import { RootState } from '@/src/types/store';
 
-import { RootState } from '@/src/store';
+import { useAppSelector } from '@/src/store/hooks';
 
 interface RenderWhenProps {
   children: ReactNode;
