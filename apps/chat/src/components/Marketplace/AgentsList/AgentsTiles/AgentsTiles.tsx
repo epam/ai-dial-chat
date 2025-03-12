@@ -82,7 +82,7 @@ export const AgentsTiles: React.FC<AgentsListProps> = ({
     return () => {
       resizeObserver.disconnect();
     };
-  }, []);
+  }, [gap]);
 
   const allEntities: (DialAIEntityModel | string)[] = useMemo(() => {
     if (!suggestedResults.length) return entities;
