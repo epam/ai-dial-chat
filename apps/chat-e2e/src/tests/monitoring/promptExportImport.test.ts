@@ -13,6 +13,7 @@ dialTest(
     promptBar,
     confirmationDialog,
     promptData,
+    localStorageManager,
   }) => {
     const levelsCount = 4;
     let nestedFolders: FolderInterface[];
@@ -26,6 +27,7 @@ dialTest(
         nestedPrompts =
           promptData.preparePromptsForNestedFolders(nestedFolders);
         await dataInjector.createPrompts(nestedPrompts, ...nestedFolders);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 

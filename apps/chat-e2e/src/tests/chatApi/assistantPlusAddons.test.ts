@@ -20,7 +20,7 @@ for (const entity of entityPlusAddonsRequests) {
         entity.request,
       );
       const response = await chatApiHelper.postRequest(conversation);
-      await apiAssertion.assertResponseCode(response, entity.assistantId, 200);
+      apiAssertion.assertResponseCode(response, entity.assistantId, 200);
       await apiAssertion.assertResponseTextContent(
         response,
         entity.assistantId,

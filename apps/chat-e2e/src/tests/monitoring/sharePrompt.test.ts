@@ -16,6 +16,7 @@ dialSharedWithMeTest(
     prompts,
     promptDropdownMenu,
     shareModalAssertion,
+    localStorageManager,
   }) => {
     let prompt: Prompt;
     let shareLinkResponse: ShareByLinkResponseModel;
@@ -23,6 +24,7 @@ dialSharedWithMeTest(
     await dialTest.step('Prepare a new prompt', async () => {
       prompt = promptData.prepareDefaultPrompt();
       await dataInjector.createPrompts([prompt]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -48,6 +50,7 @@ dialSharedWithMeTest(
         );
         await additionalShareUserDialHomePage.waitForPageLoaded({
           isPromptShared: true,
+          skipSidebars: true,
         });
         await additionalShareUserSharedWithMePromptAssertion.assertEntityState(
           { name: prompt.name },

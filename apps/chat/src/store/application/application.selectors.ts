@@ -8,25 +8,16 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState): ApplicationState => state.application;
 
-const selectAppLoading = createSelector(
-  [rootSelector],
-  (state) => state.appLoading,
-);
+const selectAppLoading = (state: RootState) => rootSelector(state).appLoading;
 
-const selectIsApplicationLoading = createSelector(
-  [selectAppLoading],
-  (status) => {
-    return status === UploadStatus.LOADING;
-  },
-);
+const selectIsApplicationLoading = (state: RootState) =>
+  selectAppLoading(state) === UploadStatus.LOADING;
 
-const selectIsLogsLoading = createSelector([rootSelector], (state) => {
-  return state.logsLoadingStatus === UploadStatus.LOADING;
-});
+const selectIsLogsLoading = (state: RootState) =>
+  rootSelector(state).logsLoadingStatus === UploadStatus.LOADING;
 
-const selectApplicationDetail = createSelector([rootSelector], (state) => {
-  return state.appDetails;
-});
+const selectApplicationDetail = (state: RootState) =>
+  rootSelector(state).appDetails;
 
 const selectApplicationLogs = createSelector([rootSelector], (state) => {
   const ansiRegex = new RegExp(String.fromCharCode(27) + '\\[[0-9;]*[mK]', 'g');
@@ -47,15 +38,11 @@ const selectApplicationLogs = createSelector([rootSelector], (state) => {
     .join('');
 });
 
-const selectShouldSaveApplication = createSelector(
-  [rootSelector],
-  (state) => state.shouldSaveApplication,
-);
+const selectShouldSaveApplication = (state: RootState) =>
+  rootSelector(state).shouldSaveApplication;
 
-const selectExitAfterSave = createSelector(
-  [rootSelector],
-  (state) => state.exitAfterSave,
-);
+const selectExitAfterSave = (state: RootState) =>
+  rootSelector(state).exitAfterSave;
 
 const selectPublicFolders = (state: RootState) =>
   rootSelector(state).publicFolders;

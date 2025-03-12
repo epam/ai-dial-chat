@@ -93,13 +93,12 @@ export const parseConversationApiKey = (
   };
 
   if (options?.parseVersion) {
-    const version = parts.length > 2 && parts.at(-1);
+    const version = getVersionFromId(apiKey);
 
-    if (version && validVersionRegEx.test(version)) {
-      parsedApiKey.publicationInfo = { version };
+    parsedApiKey.publicationInfo = { version };
+
+    if (version && version !== NA_VERSION) {
       parsedApiKey.name = getPublicItemIdWithoutVersion(version, name);
-    } else {
-      parsedApiKey.publicationInfo = { version: NA_VERSION };
     }
   }
 
@@ -123,20 +122,16 @@ export const parsePromptApiKey = (
   apiKey: string,
   options?: Partial<{ parseVersion: boolean }>,
 ): Omit<PromptInfo, 'folderId' | 'id'> => {
-  const parts = apiKey.split(pathKeySeparator);
-
   const parsedApiKey: Omit<PromptInfo, 'folderId' | 'id'> = {
     name: apiKey,
   };
 
   if (options?.parseVersion) {
-    const version = parts.at(-1);
+    const version = getVersionFromId(apiKey);
 
-    if (version && validVersionRegEx.test(version)) {
-      parsedApiKey.publicationInfo = { version };
+    parsedApiKey.publicationInfo = { version };
+    if (version !== NA_VERSION) {
       parsedApiKey.name = getPublicItemIdWithoutVersion(version, apiKey);
-    } else {
-      parsedApiKey.publicationInfo = { version: NA_VERSION };
     }
   }
 
@@ -312,4 +307,16 @@ export const getIdWithoutVersionFromApiKey = (
     parsedApiKey.publicationInfo?.version ?? NA_VERSION,
     id,
   );
+};
+
+export const getVersionFromId = (id: string) => {
+  const parts = id.split(pathKeySeparator);
+  const version = parts.at(-1);
+
+  // conversations also have model (example: conversations/public/gpt-3.5-turbo__name__0.0.1)
+  if (id.startsWith(`${ApiKeys.Conversations}/`) && parts.length <= 2) {
+    return NA_VERSION;
+  }
+
+  return version && validVersionRegEx.test(version) ? version : NA_VERSION;
 };

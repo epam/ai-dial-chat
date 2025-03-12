@@ -37,7 +37,16 @@ dialTest(
     'Chat sorting. Today for newly created chat.\n' +
     'A dot at the end is removed if chat was named automatically\n' +
     'Chat name: restricted special characters are removed from chat name if to name automatically',
-  async ({ dialHomePage, conversations, chat, chatMessages, setTestIds }) => {
+  async ({
+    dialHomePage,
+    conversations,
+    chat,
+    chatMessages,
+    setTestIds,
+    header,
+    baseAssertion,
+    chatBar,
+  }) => {
     setTestIds('EPMRTC-583', 'EPMRTC-776', 'EPMRTC-2894', 'EPMRTC-2957');
     const messageToSend = `.Hi${ExpectedConstants.restrictedNameChars}...`;
     const expectedConversationName = '.Hi';
@@ -48,7 +57,9 @@ dialTest(
         await dialHomePage.openHomePage({
           iconsToBeLoaded: [defaultModel.iconUrl],
         });
-        await dialHomePage.waitForPageLoaded();
+        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
+        await header.leftPanelToggle.click();
+        await baseAssertion.assertElementState(chatBar, 'visible');
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -103,6 +114,7 @@ dialTest(
     setTestIds,
     renameConversationModal,
     renameConversationModalAssertion,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-588', 'EPMRTC-816', 'EPMRTC-1494');
     const newName = 'new name to cancel';
@@ -115,6 +127,7 @@ dialTest(
         conversationName,
       );
       await dataInjector.createConversations([conversation]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -206,10 +219,12 @@ dialTest(
     dataInjector,
     setTestIds,
     renameConversationModal,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-584', 'EPMRTC-819');
     const conversation = conversationData.prepareDefaultConversation();
     await dataInjector.createConversations([conversation]);
+    await localStorageManager.setShowSideBarPanels();
 
     const newName = GeneratorUtil.randomString(70);
     await dialHomePage.openHomePage();
@@ -266,6 +281,7 @@ dialTest(
     errorPopup,
     toast,
     renameConversationModal,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-585',
@@ -283,6 +299,7 @@ dialTest(
     );
     const conversation = conversationData.prepareDefaultConversation();
     await dataInjector.createConversations([conversation]);
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -342,10 +359,12 @@ dialTest.skip(
     conversationData,
     dataInjector,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-594', 'EPMRTC-3054');
     const conversation = conversationData.prepareDefaultConversation();
     await dataInjector.createConversations([conversation]);
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -381,6 +400,7 @@ dialTest(
     dataInjector,
     setTestIds,
     renameConversationModal,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-595',
@@ -396,6 +416,7 @@ dialTest(
     await dialTest.step('Prepare simple conversation', async () => {
       conversation = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversation]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -509,6 +530,7 @@ dialTest(
     conversationDropdownMenu,
     setTestIds,
     confirmationDialog,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-607');
     const conversationInFolder =
@@ -517,6 +539,7 @@ dialTest(
       conversationInFolder.conversations,
       conversationInFolder.folders,
     );
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -549,10 +572,12 @@ dialTest(
     dataInjector,
     confirmationDialog,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-608');
     const conversation = conversationData.prepareDefaultConversation();
     await dataInjector.createConversations([conversation]);
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage({
       iconsToBeLoaded: [defaultModel.iconUrl],
@@ -586,6 +611,7 @@ dialTest.skip(
     conversationData,
     dataInjector,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-775',
@@ -613,6 +639,7 @@ dialTest.skip(
       lastWeekConversation,
       lastMonthConversation,
     ]);
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -684,10 +711,12 @@ dialTest(
     dataInjector,
     folderConversations,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-864');
     const conversation = conversationData.prepareDefaultConversation();
     await dataInjector.createConversations([conversation]);
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -735,6 +764,7 @@ dialTest(
     folderDropdownMenu,
     chatBar,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-863', 'EPMRTC-942');
     const folderName = GeneratorUtil.randomString(70);
@@ -745,6 +775,7 @@ dialTest(
       async () => {
         conversation = conversationData.prepareDefaultConversation();
         await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -807,6 +838,7 @@ dialTest(
     confirmationDialog,
     dataInjector,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-610');
     conversationData.resetData();
@@ -818,6 +850,7 @@ dialTest(
       [singleConversation, ...conversationInFolder.conversations],
       conversationInFolder.folders,
     );
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -884,6 +917,7 @@ dialTest(
     const promptInFolder = promptData.prepareDefaultPromptInFolder();
     promptData.resetData();
     const singlePrompt = promptData.prepareDefaultPrompt();
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -1057,6 +1091,7 @@ dialTest.skip(
           lastMonthConversation,
           otherConversation,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -1108,6 +1143,7 @@ dialTest(
     chatBar,
     chatBarSearch,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1188');
     const firstSearchTerm = 'EPAM';
@@ -1132,6 +1168,7 @@ dialTest(
           firstConversation,
           secondConversation,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -1196,6 +1233,7 @@ dialTest(
     folderConversations,
     chatBarSearch,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1201');
 
@@ -1251,6 +1289,7 @@ dialTest(
           firstFolder,
           secondFolder,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -1317,6 +1356,7 @@ dialTest(
     chat,
     setTestIds,
     renameConversationModal,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2849', 'EPMRTC-2959');
     const updatedConversationName = `😂👍🥳 😷 🤧 🤠 🥴😇 😈 ⭐あおㅁㄹñ¿äß`;
@@ -1325,6 +1365,7 @@ dialTest(
     await dialTest.step('Prepare new conversation', async () => {
       conversation = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversation]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -1390,12 +1431,14 @@ for (const [request, expectedConversationName] of testRequestMap.entries()) {
       sendMessage,
       chatMessages,
       setTestIds,
+      localStorageManager,
     }) => {
       setTestIds('EPMRTC-3007', 'EPMRTC-3015', 'EPMRTC-2853', 'EPMRTC-2961');
 
       await dialTest.step(
         'Send request to chat and verify control chars are replaced with spaces',
         async () => {
+          await localStorageManager.setShowSideBarPanels();
           await dialHomePage.openHomePage();
           await dialHomePage.waitForPageLoaded();
           await sendMessage.send(request);
@@ -1431,6 +1474,7 @@ dialTest(
     dataInjector,
     chatMessages,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2958');
     const updatedRequest = `Chat${ExpectedConstants.restrictedNameChars}name.....`;
@@ -1440,6 +1484,7 @@ dialTest(
     await dialTest.step('Prepare new conversation', async () => {
       conversation = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversation]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(

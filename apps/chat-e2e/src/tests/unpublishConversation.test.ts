@@ -45,6 +45,8 @@ dialAdminTest(
     adminConversationToApproveAssertion,
     adminChatHeaderAssertion,
     setTestIds,
+    adminLocalStorageManager,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3383', 'EPMRTC-3579', 'EPMRTC-3433');
     let publishedConversation: Conversation;
@@ -71,6 +73,7 @@ dialAdminTest(
         const publication =
           await publicationApiHelper.createPublishRequest(publishRequest);
         await adminPublicationApiHelper.approveRequest(publication);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -167,6 +170,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Login as admin and verify conversation unpublishing request is displayed under "Approve required" section',
       async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversationsAssertion.assertFolderState(

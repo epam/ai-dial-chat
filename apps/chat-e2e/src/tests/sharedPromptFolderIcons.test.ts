@@ -58,6 +58,7 @@ dialTest(
           CollapsedSections.Organization,
           CollapsedSections.SharedWithMe,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -191,6 +192,7 @@ dialTest(
     additionalUserShareApiHelper,
     additionalSecondUserShareApiHelper,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3166', 'EPMRTC-3161');
     let nestedFolders: FolderInterface[];
@@ -224,6 +226,7 @@ dialTest(
         await additionalUserShareApiHelper.acceptInvite(
           sharePromptByLinkResponse,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -317,6 +320,7 @@ dialTest(
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3167');
     let nestedFolders: FolderInterface[];
@@ -338,6 +342,7 @@ dialTest(
         await additionalUserShareApiHelper.acceptInvite(
           sharePromptByLinkResponse,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -388,6 +393,7 @@ dialTest(
     additionalUserShareApiHelper,
     shareApiAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3169', 'EPMRTC-2806');
     let folderPrompt: FolderPrompt;
@@ -410,6 +416,7 @@ dialTest(
         await additionalUserShareApiHelper.acceptInvite(
           sharePromptByLinkResponse,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 

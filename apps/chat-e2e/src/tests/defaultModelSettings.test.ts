@@ -66,6 +66,7 @@ dialTest(
       'Verify default model is selected by default',
       async () => {
         await localStorageManager.seLastConversationSettingsOnce();
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.click();
@@ -233,6 +234,7 @@ dialTest(
       'Verify Send button is disabled if no request message set and tooltip is shown on button hover',
       async () => {
         await localStorageManager.setRecentModelsIds(nonDefaultModel);
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         const isSendMessageBtnEnabled =
@@ -354,6 +356,7 @@ dialTest(
     );
     await localStorageManager.setRecentModelsIds(randomModel);
     await localStorageManager.seLastConversationSettingsOnce();
+    await localStorageManager.setShowSideBarPanels();
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
     await chat.configureSettingsButton.click();
@@ -413,6 +416,7 @@ dialTest(
     talkToAgentDialogAssertion,
     baseAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1044');
     const appName = GeneratorUtil.randomApplicationName();
@@ -425,6 +429,7 @@ dialTest(
       await applicationApiHelper.createApplication(customAppModel);
       const configModels = await modelApiHelper.getModels();
       configApp = configModels.find((m) => m.name === appName)!;
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -479,6 +484,7 @@ dialTest.skip(
     chat,
     modelApiHelper,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-408');
     const randomEntity = GeneratorUtil.randomArrayElement(
@@ -492,6 +498,7 @@ dialTest.skip(
     await dialTest.step(
       'Create new conversation and click "Search on My workspace" link',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.click();

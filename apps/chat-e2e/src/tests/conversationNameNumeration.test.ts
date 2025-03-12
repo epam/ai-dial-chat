@@ -27,6 +27,7 @@ dialTest.skip(
     conversationData,
     dataInjector,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1624', 'EPMRTC-2955');
     let conversation: Conversation;
@@ -42,6 +43,7 @@ dialTest.skip(
           initialConversationName,
         );
         await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -80,6 +82,7 @@ dialTest.skip(
     conversationDropdownMenu,
     setTestIds,
     renameConversationModal,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1625');
     let firstConversation: Conversation;
@@ -105,6 +108,7 @@ dialTest.skip(
           firstConversation,
           secondConversation,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -164,6 +168,7 @@ dialTest.skip(
     conversationDropdownMenu,
     confirmationDialog,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1626');
     const latestIndex = 3;
@@ -181,6 +186,7 @@ dialTest.skip(
           conversationData.resetData();
         }
         await dataInjector.createConversations(conversationsArray);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -248,6 +254,7 @@ dialTest(
           CollapsedSections.Organization,
           CollapsedSections.SharedWithMe,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -302,6 +309,7 @@ dialTest(
     chat,
     chatHeader,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2798');
     const requestBasedConversationName = 'test';
@@ -315,6 +323,7 @@ dialTest(
           requestBasedConversationName,
         );
         await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -409,6 +418,7 @@ dialTest(
           CollapsedSections.Organization,
           CollapsedSections.SharedWithMe,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -521,6 +531,7 @@ dialTest(
     conversationDropdownMenu,
     setTestIds,
     renameConversationModal,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2933');
     let firstConversation: Conversation;
@@ -534,6 +545,7 @@ dialTest(
         firstConversation,
         secondConversation,
       ]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -597,6 +609,7 @@ dialTest(
         await localStorageManager.setChatCollapsedSection(
           CollapsedSections.Organization,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
