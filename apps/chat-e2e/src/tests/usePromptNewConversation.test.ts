@@ -5,16 +5,16 @@ import { GeneratorUtil } from '@/src/utils';
 dialTest.only(
   'Use own prompt for new conversation',
   async ({
-           dialHomePage,
-           header,
-           prompts,
-           promptDropdownMenu,
-           sendMessageAssertion,
-           setTestIds,
-           promptData,
-           dataInjector,
-           sendMessage,
-         }) => {
+    dialHomePage,
+    header,
+    prompts,
+    promptDropdownMenu,
+    sendMessageAssertion,
+    setTestIds,
+    promptData,
+    dataInjector,
+    sendMessage,
+  }) => {
     setTestIds('EPMRTC-5486');
     // const promptContent = GeneratorUtil.randomString(20);
     const prompt = promptData.prepareDefaultPrompt();
@@ -38,7 +38,7 @@ dialTest.only(
         triggeredHttpMethod: 'GET',
       });
       await sendMessageAssertion.assertMessageValue(
-        `${initialMessage} ${prompt.content}`
+        `${initialMessage} ${prompt.content}`,
       );
     });
   },
