@@ -19,12 +19,14 @@ dialTest(
     attachFilesModal,
     attachedAllFiles,
     uploadFromDeviceModal,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3295', 'EPMRTC-3048');
 
     await dialTest.step(
       'Open "Manage attachments" modal, click on "New folder" icon and verify new folder with default name is created in edit mode',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
@@ -118,12 +120,14 @@ dialTest(
     dialHomePage,
     tooltip,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3022', 'EPMRTC-1615');
     const folderName = GeneratorUtil.randomString(7);
 
     await dialTest.step('Upload file to some folder', async () => {
       await fileApiHelper.putFile(Attachment.longImageName, folderName);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(

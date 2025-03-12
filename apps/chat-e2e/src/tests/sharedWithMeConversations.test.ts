@@ -92,6 +92,7 @@ dialSharedWithMeTest(
         );
         await additionalShareUserDialHomePage.waitForPageLoaded({
           selectedSharedConversationName: conversation.name,
+          skipSidebars: true,
         });
         await expect
           .soft(
@@ -188,6 +189,7 @@ dialSharedWithMeTest(
     dataInjector,
     mainUserShareApiHelper,
     setTestIds,
+    additionalShareUserLocalStorageManager,
   }) => {
     setTestIds('EPMRTC-1827', 'EPMRTC-1854');
     let conversationInFolder: FolderConversation;
@@ -207,6 +209,7 @@ dialSharedWithMeTest(
         shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink([
           conversation,
         ]);
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -263,6 +266,7 @@ dialSharedWithMeTest(
     mainUserShareApiHelper,
     additionalShareUserPage,
     setTestIds,
+    additionalShareUserLocalStorageManager,
   }) => {
     setTestIds('EPMRTC-1828', 'EPMRTC-2767', 'EPMRTC-1833', 'EPMRTC-2869');
     let nestedFolders: FolderInterface[];
@@ -285,6 +289,7 @@ dialSharedWithMeTest(
           [nestedConversations[0]],
           true,
         );
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -418,6 +423,7 @@ dialSharedWithMeTest(
     additionalUserShareApiHelper,
     setTestIds,
     localStorageManager,
+    additionalShareUserLocalStorageManager,
   }) => {
     setTestIds('EPMRTC-1829', 'EPMRTC-2771');
     let nestedFolders: FolderInterface[];
@@ -442,6 +448,8 @@ dialSharedWithMeTest(
         await localStorageManager.setChatCollapsedSection(
           CollapsedSections.Organization,
         );
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -543,6 +551,7 @@ dialSharedWithMeTest(
     additionalUserShareApiHelper,
     additionalUserItemApiHelper,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2758');
     let sharedConversationInFolder: FolderConversation;
@@ -582,6 +591,7 @@ dialSharedWithMeTest(
           true,
         );
         await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -756,6 +766,7 @@ dialSharedWithMeTest(
     additionalShareUserSharedWithMeConversationDropdownMenu,
     additionalShareUserConfirmationDialog,
     setTestIds,
+    additionalShareUserLocalStorageManager,
   }) => {
     setTestIds('EPMRTC-1834');
     let conversationInFolder: FolderConversation;
@@ -776,6 +787,7 @@ dialSharedWithMeTest(
           conversation,
         ]);
         await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -902,6 +914,8 @@ dialSharedWithMeTest(
     additionalShareUserToast,
     shareApiAssertion,
     setTestIds,
+    localStorageManager,
+    additionalShareUserLocalStorageManager,
   }) => {
     setTestIds('EPMRTC-2770', 'EPMRTC-2772', 'EPMRTC-2726');
     let conversationInFolder: FolderConversation;
@@ -935,6 +949,7 @@ dialSharedWithMeTest(
         await additionalUserShareApiHelper.acceptInvite(
           shareByLinkConversationResponse,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -981,6 +996,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Open again share conversation link by another user and verify error message is shown',
       async () => {
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
         await additionalShareUserDialHomePage.navigateToUrl(
           ExpectedConstants.sharedConversationUrl(
             shareByLinkConversationResponse.invitationLink,
@@ -1009,6 +1025,7 @@ dialSharedWithMeTest(
     additionalShareUserChat,
     setTestIds,
     additionalShareUserSharedFolderConversations,
+    additionalShareUserLocalStorageManager,
   }) => {
     setTestIds('EPMRTC-1846');
     let conversationInFolder: FolderConversation;
@@ -1030,6 +1047,7 @@ dialSharedWithMeTest(
           true,
         );
         await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -1096,6 +1114,7 @@ dialSharedWithMeTest(
     additionalShareUserConversations,
     additionalShareUserPlaybackControl,
     setTestIds,
+    additionalShareUserLocalStorageManager,
   }) => {
     setTestIds('EPMRTC-1847');
     let conversation: Conversation;
@@ -1108,6 +1127,7 @@ dialSharedWithMeTest(
         conversation,
       ]);
       await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+      await additionalShareUserLocalStorageManager.setShowSideBarPanels();
     });
 
     await dialSharedWithMeTest.step(
@@ -1155,6 +1175,7 @@ dialSharedWithMeTest(
     dataInjector,
     mainUserShareApiHelper,
     setTestIds,
+    additionalShareUserLocalStorageManager,
   }) => {
     setTestIds('EPMRTC-2807');
     let nestedFolders: FolderInterface[];
@@ -1180,6 +1201,7 @@ dialSharedWithMeTest(
           true,
           nestedFolders[nestedFolder - 2].name,
         );
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -1222,6 +1244,7 @@ dialTest(
       incognitoPage,
       incognitoProviderLogin,
       setTestIds,
+      baseAssertion,
     },
     testInfo,
   ) => {
@@ -1257,12 +1280,22 @@ dialTest(
         const dialHomePage = new DialHomePage(incognitoPage);
         await dialHomePage.waitForPageLoaded({
           selectedSharedConversationName: conversation.name,
+          skipSidebars: true,
         });
-        const conversationBackgroundColor = await dialHomePage
-          .getAppContainer()
-          .getChatBar()
-          .getSharedWithMeConversationsTree()
-          .getEntityBackgroundColor(conversation.name);
+        const appContainer = dialHomePage.getAppContainer();
+        // await appContainer.getHeader().leftPanelToggle.click();
+        const chatBar = appContainer.getChatBar();
+        await baseAssertion.assertElementState(chatBar, 'visible');
+        const sharedWithMeConversationsTree =
+          chatBar.getSharedWithMeConversationsTree();
+        await baseAssertion.assertElementState(
+          sharedWithMeConversationsTree.getEntityByName(conversation.name),
+          'visible',
+        );
+        const conversationBackgroundColor =
+          await sharedWithMeConversationsTree.getEntityBackgroundColor(
+            conversation.name,
+          );
         expect
           .soft(
             conversationBackgroundColor,

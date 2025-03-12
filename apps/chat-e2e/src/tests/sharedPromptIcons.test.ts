@@ -27,6 +27,7 @@ dialTest(
     shareModalAssertion,
     promptAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-1517',
@@ -44,6 +45,7 @@ dialTest(
     await dialTest.step('Prepare a new prompt', async () => {
       prompt = promptData.prepareDefaultPrompt();
       await dataInjector.createPrompts([prompt]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -172,6 +174,7 @@ dialTest(
     additionalUserShareApiHelper,
     shareApiAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1524', 'EPMRTC-3157', 'EPMRTC-3180');
     let prompt: Prompt;
@@ -185,6 +188,7 @@ dialTest(
         prompt,
       ]);
       await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -250,6 +254,7 @@ dialTest(
     additionalSecondUserShareApiHelper,
     promptAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3158');
     let prompt: Prompt;
@@ -267,6 +272,7 @@ dialTest(
         await additionalSecondUserShareApiHelper.acceptInvite(
           shareByLinkResponse,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -321,6 +327,7 @@ dialTest(
     promptAssertion,
     shareApiAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3159', 'EPMRTC-3181');
     let prompt: Prompt;
@@ -330,6 +337,7 @@ dialTest(
       prompt = promptData.prepareDefaultPrompt();
       recreatedPrompt = JSON.parse(JSON.stringify(prompt));
       await dataInjector.createPrompts([prompt]);
+      await localStorageManager.setShowSideBarPanels();
 
       const shareByLinkResponse =
         await mainUserShareApiHelper.shareEntityByLink([prompt]);

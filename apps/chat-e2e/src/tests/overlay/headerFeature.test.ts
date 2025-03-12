@@ -269,8 +269,8 @@ dialOverlayTest(
       async () => {
         await overlayConversations.selectConversation(
           conversation.name,
-          { exactMatch: true },
           { isHttpMethodTriggered: false },
+          { exactMatch: true },
         );
         await overlayHeader.logo.click();
         await overlayBaseAssertion.assertElementState(
