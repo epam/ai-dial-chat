@@ -5,7 +5,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { FileSourceType } from '@/src/types/files';
+import { ConfirmDialogValueTypes, FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import { ConfirmDialog } from '../Common/ConfirmDialog';
@@ -24,10 +24,7 @@ interface CustomLogoSelectProps {
   disabled?: boolean;
   tooltip?: string;
   sourceFilters?: Set<FileSourceType>;
-  confirmDialogValues?: {
-    description: string;
-    heading: string;
-  };
+  confirmDialogValues?: ConfirmDialogValueTypes;
 }
 
 export const CustomLogoSelect = ({
@@ -49,16 +46,16 @@ export const CustomLogoSelect = ({
   const { t } = useTranslation(Translation.Settings);
   const maximumAttachmentsAmount = 1;
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [pendingFiles, setPendingFiles] = useState<string[] | unknown>();
+  const [pendingFiles, setPendingFiles] = useState<string[]>();
 
   const onClickAddHandler = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setIsSelectFilesDialogOpened(true);
   };
 
-  const handleSelectFiles = (files: unknown) => {
-    if ((files as string[]).length > 0) {
-      onLogoSelect(files as string[]);
+  const handleSelectFiles = (files: string[]) => {
+    if (files.length > 0) {
+      onLogoSelect(files);
     }
     setIsSelectFilesDialogOpened(false);
   };
@@ -106,13 +103,15 @@ export const CustomLogoSelect = ({
           isOpen
           allowedTypes={allowedTypes ?? ['image/*']}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
-          onClose={(files: unknown) => {
-            if (files) {
-              if (confirmDialogValues) {
-                setPendingFiles(files);
-                setConfirmDialogOpen(true);
-              } else {
-                handleSelectFiles(files);
+          onClose={(files: boolean | string[]) => {
+            if (Array.isArray(files)) {
+              if (files.length > 0) {
+                if (confirmDialogValues) {
+                  setPendingFiles(files);
+                  setConfirmDialogOpen(true);
+                } else {
+                  handleSelectFiles(files);
+                }
               }
             }
             setIsSelectFilesDialogOpened(false);
@@ -127,13 +126,13 @@ export const CustomLogoSelect = ({
       {confirmDialogValues && confirmDialogOpen && (
         <ConfirmDialog
           isOpen={confirmDialogOpen}
-          heading={confirmDialogValues?.heading}
-          description={confirmDialogValues?.description}
+          heading={t(confirmDialogValues?.heading)}
+          description={t(confirmDialogValues?.description)}
           confirmLabel={t('Confirm')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {
             setConfirmDialogOpen(false);
-            if (result) {
+            if (result && pendingFiles) {
               handleSelectFiles(pendingFiles);
             }
           }}

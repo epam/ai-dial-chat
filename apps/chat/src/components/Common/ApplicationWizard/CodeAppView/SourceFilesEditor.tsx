@@ -10,6 +10,7 @@ import {
   getIdWithoutRootPathSegments,
 } from '@/src/utils/app/id';
 
+import { ConfirmDialogValueTypes } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import { FilesActions } from '@/src/store/files/files.reducers';
@@ -27,10 +28,7 @@ interface SourceFilesEditorProps {
   error?: string;
   tooltip?: string;
   disabled?: boolean;
-  confirmDialogValues?: {
-    description: string;
-    heading: string;
-  };
+  confirmDialogValues?: ConfirmDialogValueTypes;
 }
 
 const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
