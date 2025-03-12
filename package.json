@@ -60,6 +60,7 @@
     "isomorphic-dompurify": "^1.8.0",
     "jszip": "^3.10.1",
     "lodash-es": "^4.17.21",
+    "micromark-util-sanitize-uri": "^2.0.1",
     "mime-types": "^2.1.35",
     "next": "14.2.22",
     "next-auth": "4.24.10",
@@ -162,10 +163,10 @@
   "optionalDependencies": {
     "@nx/playwright": "^17.2.8",
     "@playwright/test": "^1.51.0",
+    "@types/tinycolor2": "^1.4.6",
     "allure-playwright": "^2.15.1",
     "eslint-plugin-playwright": "^1.6.2",
-    "playwright-chromium": "^1.51.0",
-    "@types/tinycolor2": "^1.4.6"
+    "playwright-chromium": "^1.51.0"
   },
   "engines": {
     "node": ">=22.2.0",
