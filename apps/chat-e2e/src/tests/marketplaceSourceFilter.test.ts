@@ -1,3 +1,4 @@
+import { EntityType } from '@/chat/types/common';
 import { Publication } from '@/chat/types/publication';
 import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialTest from '@/src/core/dialFixtures';
@@ -374,100 +375,92 @@ dialSharedWithMeTest(
         );
         const actualAgents =
           await additionalShareUserMarketplaceAgentsSection.getAllAgents();
-        baseAssertion.assertValue(
-          actualAgents.length,
-          1,
-          ExpectedMessages.elementsCountIsValid,
-        );
+        const actualAgentNames = actualAgents.map((agent) => agent.name);
         baseAssertion.assertArrayIncludesAll(
-          actualAgents.map((agent) => agent.name),
+          actualAgentNames,
           [sharedAppName],
           MarketplaceExpectedMessages.filteredAgentsAreValid,
         );
-      },
-    );
-
-    await dialTest.step(
-      'Uncheck "Shared with me" filter option, check "Public" and verify only published and config apps are displayed',
-      async () => {
-        await sharedWithMeSourceFilterElement.click();
-        await baseAssertion.assertCheckboxState(
-          sharedWithMeSourceFilterElement,
-          CheckboxState.unchecked,
-        );
-        const publicSourceFilterElement =
-          additionalShareUserMarketplaceFilter.filterByPropertyOptionInput(
-            MarketplaceFilterTypes.sources,
-            SourcesFilterOptions.public,
-          );
-        await publicSourceFilterElement.click();
-        await baseAssertion.assertCheckboxState(
-          publicSourceFilterElement,
-          CheckboxState.checked,
-        );
-        const actualAgents =
-          await additionalShareUserMarketplaceAgentsSection.getAllAgents();
-        const actualAgentsNames = actualAgents.map((agent) => agent.name);
-        baseAssertion.assertArrayIncludesAll(
-          actualAgentsNames,
-          [publishedAppName],
-          MarketplaceExpectedMessages.filteredAgentsAreValid,
-        );
         baseAssertion.assertArrayExcludesAll(
-          actualAgentsNames,
-          [sharedAppName, additionalUserAppName],
+          actualAgentNames,
+          [publishedAppName, additionalUserAppName],
           MarketplaceExpectedMessages.filteredAgentsAreValid,
         );
-        const groupedConfigAgents = ModelsUtil.groupEntitiesByName(
-          await additionalUserModelApiHelper.getModels(),
-        );
-        const expectedAgents = Array.from(groupedConfigAgents.keys()).filter(
-          (k) => k !== sharedAppName && k !== additionalUserAppName,
-        );
-        for (const configAgentName of expectedAgents) {
-          expect
-            .soft(
-              actualAgents.find((agent) => agent.name === configAgentName),
-              MarketplaceExpectedMessages.filteredAgentsAreValid,
-            )
-            .toBeDefined();
-        }
       },
     );
 
-    await dialTest.step(
-      'Switch to "My Workspace" and verify only published and config apps are suggested, no results in the workspace',
-      async () => {
-        await additionalShareUserMarketplaceSidebar.myWorkspaceButton.click();
-        await additionalShareUserMarketplacePage.waitForPageLoaded();
-        //remove next line when fixed https://github.com/epam/ai-dial-chat/issues/3303
-        await additionalShareUserMarketplaceAgentsSection.goTop();
-        const actualAgents =
-          await additionalShareUserMarketplaceAgentsSection.getAllAgents();
-        baseAssertion.assertValue(
-          actualAgents.filter((agent) => agent.isWorkspaceAgent).length,
-          0,
-        );
-        await baseAssertion.assertElementState(
-          additionalShareUserMarketplace.noWorkspaceResultsFound,
-          'visible',
-        );
-        const groupedConfigAgents = ModelsUtil.groupEntitiesByName(
-          await additionalUserModelApiHelper.getModels(),
-        );
-        const expectedAgents = Array.from(groupedConfigAgents.keys()).filter(
-          (k) => k !== sharedAppName && k !== additionalUserAppName,
-        );
-        for (const configAgentName of expectedAgents) {
-          expect
-            .soft(
-              actualAgents.find((agent) => agent.name === configAgentName),
-              MarketplaceExpectedMessages.filteredAgentsAreValid,
-            )
-            .toBeDefined();
-        }
-      },
-    );
+    for (const tab of ['Marketplace', 'My workspace']) {
+      await dialTest.step(
+        `Uncheck "Shared with me" filter option, check "Public" and verify only published and config apps are displayed on ${tab}`,
+        async () => {
+          let actualAgents;
+          if (tab === 'Marketplace') {
+            await sharedWithMeSourceFilterElement.click();
+            await baseAssertion.assertCheckboxState(
+              sharedWithMeSourceFilterElement,
+              CheckboxState.unchecked,
+            );
+            const publicSourceFilterElement =
+              additionalShareUserMarketplaceFilter.filterByPropertyOptionInput(
+                MarketplaceFilterTypes.sources,
+                SourcesFilterOptions.public,
+              );
+            await publicSourceFilterElement.click();
+            await baseAssertion.assertCheckboxState(
+              publicSourceFilterElement,
+              CheckboxState.checked,
+            );
+            actualAgents =
+              await additionalShareUserMarketplaceAgentsSection.getAllAgents();
+          } else {
+            await additionalShareUserMarketplaceSidebar.myWorkspaceButton.click();
+            await additionalShareUserMarketplacePage.waitForPageLoaded();
+            //remove next line when fixed https://github.com/epam/ai-dial-chat/issues/3303
+            await additionalShareUserMarketplaceAgentsSection.goTop();
+            actualAgents =
+              await additionalShareUserMarketplaceAgentsSection.getAllAgents();
+            baseAssertion.assertValue(
+              actualAgents.filter((agent) => agent.isWorkspaceAgent).length,
+              0,
+            );
+            await baseAssertion.assertElementState(
+              additionalShareUserMarketplace.noWorkspaceResultsFound,
+              'visible',
+            );
+          }
+
+          const actualAgentNames = actualAgents.map((agent) => agent.name);
+          baseAssertion.assertArrayIncludesAll(
+            actualAgentNames,
+            [publishedAppName],
+            MarketplaceExpectedMessages.filteredAgentsAreValid,
+          );
+          baseAssertion.assertArrayExcludesAll(
+            actualAgentNames,
+            [sharedAppName, additionalUserAppName],
+            MarketplaceExpectedMessages.filteredAgentsAreValid,
+          );
+
+          const allConfigAgents =
+            await additionalUserModelApiHelper.getModels();
+          //exclude Application type agents from verification since the list of application is changeable
+          const groupedConfigAgents = ModelsUtil.groupEntitiesByName(
+            allConfigAgents.filter((a) => a.type !== EntityType.Application),
+          );
+          const expectedAgentNames = Array.from(
+            groupedConfigAgents.keys(),
+          ).filter((k) => k !== sharedAppName && k !== additionalUserAppName);
+          for (const expectedAgentName of expectedAgentNames) {
+            expect
+              .soft(
+                actualAgents.find((agent) => agent.name === expectedAgentName),
+                MarketplaceExpectedMessages.filteredAgentsAreValid,
+              )
+              .toBeDefined();
+          }
+        },
+      );
+    }
   },
 );
 

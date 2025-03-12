@@ -192,6 +192,8 @@ export class MarketplaceAgentsSection extends BaseElement {
     const bounding = await this.getElementBoundingBox();
     await this.page.mouse.click(bounding!.x, bounding!.y);
     await this.page.keyboard.press(keys.home);
+    // eslint-disable-next-line playwright/no-wait-for-timeout
+    await this.page.waitForTimeout(1500);
   }
 
   private async getPositionAndScrollInto() {
