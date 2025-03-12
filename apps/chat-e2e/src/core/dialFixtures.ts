@@ -57,6 +57,7 @@ import {
   TooltipAssertion,
   VariableModalAssertion,
 } from '@/src/assertions';
+import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
 import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
 import { LocalStorageAssertion } from '@/src/assertions/localStorageAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
@@ -176,6 +177,7 @@ const dialTest = test.extend<{
   sendMessage: SendMessage;
   attachmentDropdownMenu: DropdownMenu;
   sendMessageInputAttachments: InputAttachments;
+  sendMessageInputAttachmentsAssertions: InputAttachmentsAssertions;
   conversations: ConversationsTree;
   prompts: PromptsTree;
   folderConversations: FolderConversations;
@@ -320,6 +322,14 @@ const dialTest = test.extend<{
     },
     { scope: 'test', auto: true },
   ],
+  sendMessageInputAttachmentsAssertions: async (
+    { sendMessageInputAttachments },
+    use,
+  ) => {
+    const sendMessageInputAttachmentsAssertions =
+      new InputAttachmentsAssertions(sendMessageInputAttachments);
+    await use(sendMessageInputAttachmentsAssertions);
+  },
   localStorageAssertion: async ({ localStorageManager }, use) => {
     const localStorageAssertion = new LocalStorageAssertion(
       localStorageManager,

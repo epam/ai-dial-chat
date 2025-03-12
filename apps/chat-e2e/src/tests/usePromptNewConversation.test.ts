@@ -1,14 +1,19 @@
+import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  Attachment,
   ExpectedMessages,
   MenuOptions,
   MockedChatApiResponseBodies,
+  UploadMenuOptions,
 } from '@/src/testData';
-import { GeneratorUtil } from '@/src/utils';
+import { FileModalSection } from '@/src/ui/webElements';
+import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 
 dialTest.only(
   'Use own prompt for new conversation\n' +
-    'Use own prompt for chat with history',
+    'Use own prompt for chat with history\n' +
+    'Use prompt for chat with attached file',
   async ({
     dialHomePage,
     header,
@@ -21,16 +26,31 @@ dialTest.only(
     sendMessage,
     chat,
     localStorageManager,
+    attachFilesModal,
+    attachmentDropdownMenu,
+    uploadFromDeviceModal,
+    manageAttachmentsAssertion,
+    fileApiHelper,
+    sendMessageInputAttachmentsAssertions,
   }) => {
-    setTestIds('EPMRTC-5486', 'EPMRTC-5487');
+    setTestIds('EPMRTC-5486', 'EPMRTC-5487', 'EPMRTC-5490');
+    // Select a model that allows file attachments
+    const modelWithAttachment = GeneratorUtil.randomArrayElement(
+      ModelsUtil.getLatestModelsWithAttachment(),
+    );
+    await localStorageManager.setRecentModelsIds(modelWithAttachment);
+
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
     const initialMessage = GeneratorUtil.randomString(10);
     const message = GeneratorUtil.randomString(10);
     await localStorageManager.setShowSideBarPanels();
+    await fileApiHelper.putFile(Attachment.sunImageName);
 
-    await dialTest.step('Open Dial and create a new conversation', async () => {
-      await dialHomePage.openHomePage();
+    await dialTest.step('Open the Dial', async () => {
+      await dialHomePage.openHomePage({
+        iconsToBeLoaded: [modelWithAttachment.iconUrl],
+      });
       await dialHomePage.waitForPageLoaded();
     });
 
@@ -62,6 +82,31 @@ dialTest.only(
         await promptDropdownMenu.selectMenuOption(MenuOptions.use);
         await sendMessageAssertion.assertMessageValue(
           `${initialMessage} ${prompt.content}`,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Attach file, type message, and use prompt from context menu',
+      async () => {
+        await sendMessage.clearMessageInput();
+        await sendMessage.attachmentMenuTrigger.click();
+        await attachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
+        );
+        await attachFilesModal.checkAttachedFile(
+          Attachment.sunImageName,
+          FileModalSection.AllFiles,
+        );
+        await attachFilesModal.attachFiles();
+        await sendMessage.messageInput.fillInInput(initialMessage);
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenu.selectMenuOption(MenuOptions.use);
+        await sendMessageAssertion.assertMessageValue(
+          `${initialMessage} ${prompt.content}`,
+        );
+        await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
+          Attachment.sunImageName,
         );
       },
     );
