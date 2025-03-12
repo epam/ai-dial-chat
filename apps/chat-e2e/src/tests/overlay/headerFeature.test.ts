@@ -635,3 +635,31 @@ dialOverlayTest(
     );
   },
 );
+
+dialOverlayTest(
+  '[Overlay] Hide Settings - Feature.HideUserSettings',
+  async ({
+    overlayHomePage,
+    overlayAccountSettings,
+    overlayProfilePanel,
+    overlayBaseAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-5692');
+
+    await dialTest.step(
+      'Click on the user avatar and verify Settings option is not displayed on the panel',
+      async () => {
+        await overlayHomePage.navigateToUrl(
+          OverlaySandboxUrls.enableHideUserSettingsUrl,
+        );
+        await overlayHomePage.waitForPageLoaded();
+        await overlayAccountSettings.click();
+        await overlayBaseAssertion.assertElementState(
+          overlayProfilePanel.settings,
+          'hidden',
+        );
+      },
+    );
+  },
+);
