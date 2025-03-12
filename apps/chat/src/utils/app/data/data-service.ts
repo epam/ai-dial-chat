@@ -113,22 +113,16 @@ export class DataService {
     );
   }
 
-  public static getShowChatbar(): Observable<boolean> {
-    return BrowserStorage.getData(
-      UIStorageKeys.ShowChatbar,
-      !isTabletScreenOrMobile(),
-    );
+  public static getShowChatbar(defaultValue: boolean): Observable<boolean> {
+    return BrowserStorage.getData(UIStorageKeys.ShowChatbar, defaultValue);
   }
 
   public static setShowChatbar(showChatbar: boolean): Observable<void> {
     return BrowserStorage.setData(UIStorageKeys.ShowChatbar, showChatbar);
   }
 
-  public static getShowPromptbar(): Observable<boolean> {
-    return BrowserStorage.getData(
-      UIStorageKeys.ShowPromptbar,
-      !isTabletScreenOrMobile(),
-    );
+  public static getShowPromptbar(defaultValue: boolean): Observable<boolean> {
+    return BrowserStorage.getData(UIStorageKeys.ShowPromptbar, defaultValue);
   }
 
   public static setShowPromptbar(showPromptbar: boolean): Observable<void> {

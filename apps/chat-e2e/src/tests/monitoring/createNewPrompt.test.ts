@@ -2,12 +2,19 @@ import dialTest from '@/src/core/dialFixtures';
 
 dialTest(
   'Create new prompt',
-  async ({ dialHomePage, promptBar, promptModalDialog, promptAssertion }) => {
+  async ({
+    dialHomePage,
+    promptBar,
+    promptModalDialog,
+    promptAssertion,
+    localStorageManager,
+  }) => {
     const newName = 'test prompt';
     const newDescr = 'test description';
     const newValue = 'what is {{}}';
 
     await dialTest.step('Click "New prompt" button', async () => {
+      await localStorageManager.setShowSideBarPanels();
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await promptBar.createNewPrompt();

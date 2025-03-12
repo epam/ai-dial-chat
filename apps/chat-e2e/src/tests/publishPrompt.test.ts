@@ -44,6 +44,8 @@ dialAdminTest(
     organizationFolderPrompts,
     confirmationDialog,
     folderDropdownMenu,
+    localStorageManager,
+    adminLocalStorageManager,
   }) => {
     dialAdminTest.slow();
     setTestIds(
@@ -70,6 +72,7 @@ dialAdminTest(
       promptData.resetData();
       prompt2 = promptData.prepareDefaultPrompt();
       await dataInjector.createPrompts([prompt1, prompt2]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step('Publish a single prompt', async () => {
@@ -173,6 +176,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Login as admin and verify conversation publishing request is displayed under "Approve required" section',
       async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredPromptsAssertion.assertFolderState(
@@ -472,6 +476,8 @@ dialAdminTest(
     folderDropdownMenu,
     publishingRequestModalAssertion,
     tooltipAssertion,
+    localStorageManager,
+    adminLocalStorageManager,
   }) => {
     dialAdminTest.slow();
     setTestIds(
@@ -497,6 +503,7 @@ dialAdminTest(
     await dialTest.step('Prepare a new prompt', async () => {
       prompt1 = promptData.prepareDefaultPrompt();
       await dataInjector.createPrompts([prompt1]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step('Publish a single prompt', async () => {
@@ -599,6 +606,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Login as admin and verify conversation publishing request is displayed under "Approve required" section',
       async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredPromptsAssertion.assertFolderState(

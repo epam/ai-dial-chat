@@ -43,6 +43,7 @@ dialTest(
       CollapsedSections.Organization,
       CollapsedSections.SharedWithMe,
     );
+    await localStorageManager.setShowSideBarPanels();
     await dialHomePage.openHomePage({
       iconsToBeLoaded: [gpt35Model.iconUrl],
     });
@@ -122,6 +123,7 @@ dialTest(
           CollapsedSections.Organization,
           CollapsedSections.SharedWithMe,
         );
+        await localStorageManager.setShowSideBarPanels();
 
         await dataInjector.createConversations([
           conversationToDrop,
@@ -222,6 +224,7 @@ dialTest(
           CollapsedSections.Organization,
           CollapsedSections.SharedWithMe,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -280,6 +283,7 @@ dialTest(
       CollapsedSections.Organization,
       CollapsedSections.SharedWithMe,
     );
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -332,6 +336,7 @@ dialTest(
           CollapsedSections.Organization,
           CollapsedSections.SharedWithMe,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -414,6 +419,7 @@ dialTest(
           CollapsedSections.Organization,
           CollapsedSections.SharedWithMe,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 

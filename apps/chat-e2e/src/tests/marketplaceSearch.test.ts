@@ -52,6 +52,7 @@ dialTest(
       'Prepare one application visible in "My Workspace" and one available in the "Marketplace", both have common part in the name',
       async () => {
         const recentModelIds = await localStorageManager.getRecentModelsIds();
+        await localStorageManager.setShowSideBarPanels();
         const recentNames = ModelsUtil.getRecentAgentsNames(recentModelIds);
         const recentVersions =
           ModelsUtil.getRecentAgentsVersions(recentModelIds);

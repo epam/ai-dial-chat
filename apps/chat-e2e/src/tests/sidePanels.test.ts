@@ -9,47 +9,34 @@ dialTest(
   'Hide panel with chats.\n' +
     'Hide panel with prompts.\n' +
     "Browser refresh doesn't open hidden panels",
-  async ({ dialHomePage, setTestIds, chatBar, header, promptBar }) => {
+  async ({
+    dialHomePage,
+    setTestIds,
+    chatBar,
+    header,
+    promptBar,
+    baseAssertion,
+  }) => {
     setTestIds('EPMRTC-352', 'EPMRTC-353', 'EPMRTC-354');
-    let isChatPanelVisible;
-    let isPromptsPanelVisible;
 
-    await dialTest.step('Hide chat panel', async () => {
+    await dialTest.step('Open chat panel', async () => {
       await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded();
+      await dialHomePage.waitForPageLoaded({ skipSidebars: true });
       await header.leftPanelToggle.click();
-      await expect
-        .soft(
-          chatBar.getElementLocator(),
-          ExpectedMessages.sideBarPanelIsHidden,
-        )
-        .toBeHidden();
+      await baseAssertion.assertElementState(chatBar, 'visible');
     });
 
-    await dialTest.step('Hide prompts panel', async () => {
+    await dialTest.step('Open prompts panel', async () => {
       await header.rightPanelToggle.click();
-      await expect
-        .soft(
-          promptBar.getElementLocator(),
-          ExpectedMessages.sideBarPanelIsHidden,
-        )
-        .toBeHidden();
+      await baseAssertion.assertElementState(promptBar, 'visible');
     });
 
     await dialTest.step(
       'Refresh page and verify both panels are hidden',
       async () => {
         await dialHomePage.reloadPage();
-        isChatPanelVisible = await chatBar.isVisible();
-        isPromptsPanelVisible = await promptBar.isVisible();
-        for (const isPanelVisible of [
-          isChatPanelVisible,
-          isPromptsPanelVisible,
-        ]) {
-          expect
-            .soft(isPanelVisible, ExpectedMessages.sideBarPanelIsHidden)
-            .toBeFalsy();
-        }
+        await baseAssertion.assertElementState(chatBar, 'visible');
+        await baseAssertion.assertElementState(promptBar, 'visible');
       },
     );
   },
@@ -70,6 +57,7 @@ dialTest(
     tooltip,
     conversationData,
     dataInjector,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1642', 'EPMRTC-1650', 'EPMRTC-1641', 'EPMRTC-1647');
     let appBounding;
@@ -79,6 +67,7 @@ dialTest(
     await dialTest.step('Prepare conversation with the history', async () => {
       const conversation = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversation]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
