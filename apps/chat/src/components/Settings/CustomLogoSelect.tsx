@@ -1,5 +1,5 @@
 import { IconX } from '@tabler/icons-react';
-import { MouseEvent, useState } from 'react';
+import { MouseEvent, useCallback, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -53,12 +53,32 @@ export const CustomLogoSelect = ({
     setIsSelectFilesDialogOpened(true);
   };
 
-  const handleSelectFiles = (files: string[]) => {
-    if (files.length > 0) {
-      onLogoSelect(files);
-    }
-    setIsSelectFilesDialogOpened(false);
-  };
+  const handleSelectFiles = useCallback(
+    (files: string[]) => {
+      if (files.length > 0) {
+        onLogoSelect(files);
+      }
+      setIsSelectFilesDialogOpened(false);
+    },
+    [onLogoSelect],
+  );
+
+  const handleOnClose = useCallback(
+    (files: boolean | string[]) => {
+      if (Array.isArray(files)) {
+        if (files.length > 0) {
+          if (confirmDialogValues) {
+            setPendingFiles(files);
+            setConfirmDialogOpen(true);
+          } else {
+            handleSelectFiles(files);
+          }
+        }
+      }
+      setIsSelectFilesDialogOpened(false);
+    },
+    [confirmDialogValues, handleSelectFiles],
+  );
 
   return (
     <div className="flex items-center gap-5" data-qa="custom-logo">
@@ -103,19 +123,7 @@ export const CustomLogoSelect = ({
           isOpen
           allowedTypes={allowedTypes ?? ['image/*']}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
-          onClose={(files: boolean | string[]) => {
-            if (Array.isArray(files)) {
-              if (files.length > 0) {
-                if (confirmDialogValues) {
-                  setPendingFiles(files);
-                  setConfirmDialogOpen(true);
-                } else {
-                  handleSelectFiles(files);
-                }
-              }
-            }
-            setIsSelectFilesDialogOpened(false);
-          }}
+          onClose={handleOnClose}
           headerLabel={fileManagerModalTitle || t('Select custom logo')}
           customButtonLabel={t('Select file')}
           customUploadButtonLabel={t('Upload files')}
