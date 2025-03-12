@@ -50,4 +50,14 @@ export class ChatHeaderAssertion<T extends ChatHeader> extends BaseAssertion {
       expectedIcon,
     );
   }
+
+  public async assertHeaderAddonIcon(expectedAddonIcons: string[]) {
+    const actualAddonIcons = await this.chatHeader.getHeaderAddonsIcons();
+    for (let i = 0; i < actualAddonIcons.length; i++) {
+      await super.assertEntityIcon(
+        actualAddonIcons[i].iconLocator,
+        expectedAddonIcons[i],
+      );
+    }
+  }
 }

@@ -492,6 +492,7 @@ dialTest(
     await dialTest.step(
       'Reload into regular Dial and verify conversation exists',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversationAssertion.assertEntityState(

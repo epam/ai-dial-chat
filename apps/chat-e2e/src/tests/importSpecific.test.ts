@@ -56,6 +56,7 @@ dialTest(
       await localStorageManager.setChatCollapsedSection(
         CollapsedSections.Organization,
       );
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step('Export conversation', async () => {
@@ -171,6 +172,7 @@ dialTest(
       await localStorageManager.setPromptCollapsedSection(
         CollapsedSections.Organization,
       );
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step('Export prompt', async () => {

@@ -58,6 +58,7 @@ dialTest(
     addons,
     conversationDropdownMenu,
     conversationDropdownMenuAssertion,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-501', 'EPMRTC-1264', 'EPMRTC-3452');
     let replayConversation: Conversation;
@@ -87,6 +88,7 @@ dialTest(
           firstConversation,
           replayConversation,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -186,6 +188,7 @@ dialTest(
     dataInjector,
     setTestIds,
     conversationDropdownMenu,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-503');
     let nestedFolders: FolderInterface[];
@@ -202,6 +205,7 @@ dialTest(
           nestedConversations,
           ...nestedFolders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -287,6 +291,7 @@ dialTest(
         replayConversation,
       ]);
       await localStorageManager.setRecentModelsIds(replayModel);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     let replayRequest: ChatBody;
@@ -380,10 +385,13 @@ dialTest(
     dataInjector,
     setTestIds,
     chatHeader,
+    iconApiHelper,
     chatHeaderAssertion,
     modelInfoTooltip,
     errorPopup,
-    iconApiHelper,
+    apiAssertion,
+    baseAssertion,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1323', 'EPMRTC-1324');
     const replayTemp = 0.8;
@@ -391,12 +399,16 @@ dialTest(
     let conversation: Conversation;
     let replayConversation: Conversation;
     const expectedModelIcon = iconApiHelper.getEntityIcon(defaultModel);
+    const randomAddon = GeneratorUtil.randomArrayElement(
+      ModelsUtil.getAddons(),
+    )!;
+    const expectedAddonIcon = iconApiHelper.getEntityIcon(randomAddon);
 
     await dialTest.step('Prepare conversation to replay', async () => {
       conversation = conversationData.prepareModelConversation(
         replayTemp,
         replayPrompt,
-        [],
+        [randomAddon.id],
         defaultModel,
       );
       replayConversation =
@@ -405,6 +417,7 @@ dialTest(
         conversation,
         replayConversation,
       ]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     let replayRequest: ChatBody;
@@ -416,25 +429,18 @@ dialTest(
         });
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(replayConversation.name);
-        await dialHomePage.throttleAPIResponse(API.chatHost);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         replayRequest = await chat.startReplay(
           conversation.messages[0].content,
         );
-        expect
-          .soft(
-            replayRequest.model?.id,
-            ExpectedMessages.chatRequestModelIsValid,
-          )
-          .toBe(conversation.model.id);
-        expect
-          .soft(replayRequest.prompt, ExpectedMessages.chatRequestPromptIsValid)
-          .toBe(conversation.prompt);
-        expect
-          .soft(
-            replayRequest.temperature,
-            ExpectedMessages.chatRequestTemperatureIsValid,
-          )
-          .toBe(conversation.temperature);
+        apiAssertion.assertRequestModelId(replayRequest, conversation.model);
+        apiAssertion.assertRequestPrompt(replayRequest, conversation.prompt);
+        apiAssertion.assertRequestTemperature(
+          replayRequest,
+          conversation.temperature,
+        );
       },
     );
 
@@ -442,6 +448,7 @@ dialTest(
       'Verify chat header icons are the same as initial model',
       async () => {
         await chatHeaderAssertion.assertHeaderIcon(expectedModelIcon);
+        await chatHeaderAssertion.assertHeaderAddonIcon([expectedAddonIcon]);
       },
     );
 
@@ -451,25 +458,17 @@ dialTest(
         await errorPopup.cancelPopup();
         await chatHeader.hoverOverChatModel();
         const modelInfo = await modelInfoTooltip.getModelInfo();
-        expect
-          .soft(modelInfo, ExpectedMessages.chatInfoModelIsValid)
-          .toBe(defaultModel.name);
-
+        baseAssertion.assertValue(
+          modelInfo,
+          defaultModel.name,
+          ExpectedMessages.chatInfoModelIsValid,
+        );
         const modelVersionInfo = await modelInfoTooltip.getVersionInfo();
-        expect
-          .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
-          .toBe(defaultModel.version);
-
-        //TODO: add setting verification when clarified where to display (TBD: Do we need to show settings icon for replay as is?)
-        // const promptInfo = await chatInfoTooltip.getPromptInfo();
-        // expect
-        //   .soft(promptInfo, ExpectedMessages.chatInfoPromptIsValid)
-        //   .toBe(conversation.prompt);
-        //
-        // const tempInfo = await chatInfoTooltip.getTemperatureInfo();
-        // expect
-        //   .soft(tempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
-        //   .toBe(conversation.temperature.toString());
+        baseAssertion.assertValue(
+          modelVersionInfo,
+          defaultModel.version!,
+          ExpectedMessages.chatInfoVersionIsValid,
+        );
       },
     );
   },
@@ -490,6 +489,7 @@ dialTest(
     iconApiHelper,
     chatMessagesAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1322', 'EPMRTC-388', 'EPMRTC-1466');
     let replayConversation: Conversation;
@@ -532,6 +532,7 @@ dialTest(
           historyConversation,
           replayConversation,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -546,27 +547,24 @@ dialTest(
         );
         const replayRequests = await chat.startReplayForDifferentModels();
 
-        await apiAssertion.assertRequestModelId(replayRequests[0], simpleModel);
-        await apiAssertion.assertRequestTemperature(
-          replayRequests[0],
-          simpleTemp,
-        );
-        await apiAssertion.assertRequestPrompt(replayRequests[0], simplePrompt);
-        await apiAssertion.assertRequestAddons(
+        apiAssertion.assertRequestModelId(replayRequests[0], simpleModel);
+        apiAssertion.assertRequestTemperature(replayRequests[0], simpleTemp);
+        apiAssertion.assertRequestPrompt(replayRequests[0], simplePrompt);
+        apiAssertion.assertRequestAddons(
           replayRequests[0],
           simpleConversation.selectedAddons,
         );
 
-        await apiAssertion.assertRequestModelId(replayRequests[1], addonModel);
-        await apiAssertion.assertRequestTemperature(
+        apiAssertion.assertRequestModelId(replayRequests[1], addonModel);
+        apiAssertion.assertRequestTemperature(
           replayRequests[1],
           addonConversation.temperature,
         );
-        await apiAssertion.assertRequestPrompt(
+        apiAssertion.assertRequestPrompt(
           replayRequests[1],
           addonConversation.prompt,
         );
-        await apiAssertion.assertRequestAddons(
+        apiAssertion.assertRequestAddons(
           replayRequests[1],
           addonConversation.selectedAddons,
         );
@@ -609,6 +607,7 @@ dialTest(
     setTestIds,
     conversationDropdownMenu,
     renameConversationModal,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-505', 'EPMRTC-506', 'EPMRTC-515', 'EPMRTC-516');
     let conversation: Conversation;
@@ -626,6 +625,7 @@ dialTest(
           conversation,
           replayConversation,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -718,6 +718,7 @@ dialTest(
     talkToAgentDialog,
     talkToAgentDialogAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1328', 'EPMRTC-2839');
     let notAllowedModelConversation: Conversation;
@@ -736,6 +737,7 @@ dialTest(
           notAllowedModelConversation,
           replayConversation,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -767,7 +769,7 @@ dialTest(
       async () => {
         await talkToAgentDialog.selectAgent(defaultModel, marketplacePage);
         const replayRequest = await chat.startReplay();
-        await apiAssertion.assertRequestModelId(replayRequest, defaultModel);
+        apiAssertion.assertRequestModelId(replayRequest, defaultModel);
       },
     );
   },
@@ -816,6 +818,7 @@ dialTest(
         await localStorageManager.setRecentModelsIds(
           ...newModels.map((m) => ModelsUtil.getModel(m)!),
         );
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await dialHomePage.importFile({ path: filename }, () =>
@@ -884,6 +887,7 @@ dialTest(
     conversations,
     conversationDropdownMenu,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-500');
     let conversation: Conversation;
@@ -891,6 +895,7 @@ dialTest(
     await dialTest.step('Prepare empty conversation', async () => {
       conversation = conversationData.prepareEmptyConversation();
       await dataInjector.createConversations([conversation]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(

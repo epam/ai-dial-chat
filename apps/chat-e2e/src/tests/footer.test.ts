@@ -4,12 +4,19 @@ import { expect } from '@playwright/test';
 
 dialTest(
   'EPAM AI Dial leads to kb',
-  async ({ dialHomePage, chat, footerAssertion, setTestIds }) => {
+  async ({
+    dialHomePage,
+    chat,
+    footerAssertion,
+    setTestIds,
+    localStorageManager,
+  }) => {
     setTestIds('EPMRTC-361');
 
     await dialTest.step(
       'Open app and verify footer with configured content is displayed',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await footerAssertion.assertFooterState('visible');

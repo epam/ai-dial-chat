@@ -31,6 +31,7 @@ export enum Feature {
   DisallowChangeAgent = 'disallow-change-agent', // Disallow "Change agent" button
   MarketplaceTableView = 'marketplace-table-view', // Enable table view in Marketplace
   HideUserSettings = 'hide-user-settings', // Hide user settings
+  AdvancedView = 'advanced-view', // Enable advanced view: show chat and prompt sidebars by default on descktop
 }
 
 export const availableFeatures: Record<Feature, boolean> = {
@@ -66,4 +67,5 @@ export const availableFeatures: Record<Feature, boolean> = {
   [Feature.DisallowChangeAgent]: true,
   [Feature.MarketplaceTableView]: true,
   [Feature.HideUserSettings]: true,
+  [Feature.AdvancedView]: true,
 };
