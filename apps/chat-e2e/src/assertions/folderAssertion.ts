@@ -1,4 +1,4 @@
-import { BaseAssertion } from '@/src/assertions/baseAssertion';
+import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { CheckboxState, ElementState, ExpectedMessages } from '@/src/testData';
 import { EntityType, TreeEntity } from '@/src/testData/types';
 import { Attributes } from '@/src/ui/domData';

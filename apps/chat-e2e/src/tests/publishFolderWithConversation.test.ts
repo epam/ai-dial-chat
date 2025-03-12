@@ -12,6 +12,7 @@ import {
   PublishPath,
 } from '@/src/testData';
 import { GeneratorUtil } from '@/src/utils';
+import { SortingUtil } from '@/src/utils/sortingUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
@@ -219,7 +220,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Admin clicks on "Go to a review" button and verify the first conversation is opened, navigation buttons are available',
       async () => {
-        orderedConversations = baseAssertion.sortStringsArray(
+        orderedConversations = SortingUtil.sortStringsArray(
           [firstConversation.name, secondConversation.name],
           (f) => f.toLowerCase(),
           'asc',
@@ -378,8 +379,11 @@ dialAdminTest(
 
 dialAdminTest(
   'Published folder became available in Change path form for publish request.\n' +
+    'Publish chat: Change path: context menu for existing folders.\n' +
     'Publish folder into nested folder structure with depth 4.\n' +
-    'Publish folder: update path in publish request',
+    'Publish folder: update path in publish request.\n' +
+    'Publish request toooltips.\n' +
+    'admin view: create publication request when open request from Approve required',
   async ({
     dialHomePage,
     conversationData,
@@ -387,6 +391,7 @@ dialAdminTest(
     folderConversations,
     folderDropdownMenu,
     publishingRequestModal,
+    folderConversationsToPublish,
     selectFolders,
     selectFoldersAssertion,
     publicationApiHelper,
@@ -395,12 +400,18 @@ dialAdminTest(
     selectFolderModal,
     toastAssertion,
     adminDialHomePage,
+    adminPublishingRequestModal,
     adminApproveRequiredConversationsAssertion,
     adminChatHeaderAssertion,
     adminChatMessagesAssertion,
     baseAssertion,
+    tooltipAssertion,
     adminPublicationReviewControl,
+    adminDataInjector,
     adminApproveRequiredConversations,
+    adminConversations,
+    adminConversationDropdownMenu,
+    adminConversationToPublishAssertion,
     adminPublishingApprovalModalAssertion,
     adminFolderToApproveAssertion,
     adminPublishingApprovalModal,
@@ -408,9 +419,17 @@ dialAdminTest(
     adminOrganizationFolderConversationAssertions,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-3613', 'EPMRTC-3460', 'EPMRTC-3204');
+    setTestIds(
+      'EPMRTC-3613',
+      'EPMRTC-3456',
+      'EPMRTC-3460',
+      'EPMRTC-3204',
+      'EPMRTC-3457',
+      'EPMRTC-3943',
+    );
     let publishedFolderConversation: FolderConversation;
     let folderConversationToPublish: FolderConversation;
+    let adminConversation: Conversation;
     const orgFolder = GeneratorUtil.randomString(5);
     const requestName = GeneratorUtil.randomPublicationRequestName();
     const publicationPath = `${PublishPath.Organization}/${orgFolder}`;
@@ -423,6 +442,7 @@ dialAdminTest(
         conversationData.resetData();
         folderConversationToPublish =
           conversationData.prepareDefaultConversationInFolder();
+        conversationData.resetData();
         await dataInjector.createConversations(
           [
             ...publishedFolderConversation.conversations,
@@ -483,11 +503,23 @@ dialAdminTest(
     );
 
     await dialTest.step(
-      'Create max length folder hierarchy and verify error toast is shown on attempt to select low-level folder',
+      'Open folder dropdown menu and verify available options',
       async () => {
         await selectFolders.openFolderDropdownMenu(
           publishedFolderConversation.folders.name,
         );
+        const actualOptions = await folderDropdownMenu.getAllMenuOptions();
+        baseAssertion.assertArrayIncludesAll(
+          actualOptions,
+          [MenuOptions.addNewFolder],
+          ExpectedMessages.contextMenuOptionsValid,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Create max length folder hierarchy and verify error toast is shown on attempt to select low-level folder',
+      async () => {
         await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
         await selectFolders.getEditFolderInputActions().clickTickButton();
 
@@ -516,7 +548,7 @@ dialAdminTest(
       'Create new folder, select it and verify publish path changed',
       async () => {
         await selectFolderModal.newFolderButton.click();
-        await selectFolders.editFolderNameWithTick(orgFolder, {
+        await selectFolders.renameEmptyFolderWithTick(orgFolder, {
           isHttpMethodTriggered: false,
         });
         await selectFolderModal.clickSelectFolderButton({
@@ -530,12 +562,55 @@ dialAdminTest(
     );
 
     await dialTest.step(
+      'Hover over "Publish to" path and verify tooltip is shown',
+      async () => {
+        await publishingRequestModal.getChangePublishToPath().path.hoverOver();
+        await tooltipAssertion.assertTooltipContent(publicationPath);
+      },
+    );
+
+    await dialTest.step(
+      'Hover over conversation and verify tooltip is shown',
+      async () => {
+        await folderConversationsToPublish
+          .getFolderEntityNameElement(
+            folderConversationToPublish.folders.name,
+            folderConversationToPublish.conversations[0].name,
+          )
+          .hoverOver();
+        await tooltipAssertion.assertTooltipContent(
+          folderConversationToPublish.conversations[0].name,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Hover over conversation folder and verify tooltip is shown',
+      async () => {
+        await folderConversationsToPublish
+          .getFolderName(folderConversationToPublish.folders.name)
+          .hoverOver();
+        await tooltipAssertion.assertTooltipContent(
+          folderConversationToPublish.folders.name,
+        );
+      },
+    );
+
+    await dialTest.step(
       'Set publication request name and send request',
       async () => {
         await publishingRequestModal.requestName.fillInInput(requestName);
         const publishApiModels =
           await publishingRequestModal.sendPublicationRequest();
         publicationsToUnpublish.push(publishApiModels.response);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Prepare conversation for admin user',
+      async () => {
+        adminConversation = conversationData.prepareDefaultConversation();
+        await adminDataInjector.createConversations([adminConversation]);
       },
     );
 
@@ -583,6 +658,25 @@ dialAdminTest(
         await adminPublishingApprovalModalAssertion.assertPublishToPath(
           publicationPath,
         );
+      },
+    );
+
+    await dialAdminTest.step(
+      `Create publication request for today's chat and verify request modal with conversation details is displayed`,
+      async () => {
+        await adminConversations.openEntityDropdownMenu(adminConversation.name);
+        await adminConversationDropdownMenu.selectMenuOption(
+          MenuOptions.publish,
+        );
+        await baseAssertion.assertElementState(
+          adminPublishingRequestModal,
+          'visible',
+        );
+        await adminConversationToPublishAssertion.assertEntityState(
+          { name: adminConversation.name },
+          'visible',
+        );
+        await adminPublishingRequestModal.cancelButton.click();
       },
     );
 

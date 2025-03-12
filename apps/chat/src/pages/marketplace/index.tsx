@@ -4,15 +4,15 @@ import { useRouter } from 'next/router';
 
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
+import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+
+import { Routes } from '@/src/constants/routes';
 
 import { getLayout } from '@/src/pages/_app';
 
+import { ChatModalsManager } from '@/src/components/Chat/ChatModalsManager';
 import Loader from '@/src/components/Common/Loader';
-import { UserMobile } from '@/src/components/Header/User/UserMobile';
 import { Marketplace as MarketplaceView } from '@/src/components/Marketplace/Marketplace';
 import { MarketplaceFilterbar } from '@/src/components/Marketplace/MarketplaceFilterbar';
 import { MarketplaceHeader } from '@/src/components/Marketplace/MarketplaceHeader';
@@ -20,10 +20,6 @@ import { MarketplaceHeader } from '@/src/components/Marketplace/MarketplaceHeade
 import { Feature } from '@epam/ai-dial-shared';
 
 function Marketplace() {
-  const dispatch = useAppDispatch();
-
-  const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
-
   const isMarketplaceEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
   );
@@ -31,13 +27,9 @@ function Marketplace() {
   const router = useRouter();
   useEffect(() => {
     if (!isMarketplaceEnabled) {
-      router.push('/');
+      router.push(Routes.Chat);
     }
   }, [isMarketplaceEnabled, router]);
-
-  useEffect(() => {
-    dispatch(MarketplaceActions.resetFiltering());
-  }, [dispatch]);
 
   if (!isMarketplaceEnabled) return <Loader />;
 
@@ -49,7 +41,7 @@ function Marketplace() {
 
         <MarketplaceView />
 
-        {isProfileOpen && <UserMobile />}
+        <ChatModalsManager />
       </div>
     </div>
   );

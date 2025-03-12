@@ -61,8 +61,11 @@ export interface Message {
     attachments?: Attachment[];
     stages?: Stage[];
     state?: object;
+    // schema support properties
     form_schema?: MessageFormSchema;
     form_value?: MessageFormValue;
+    configuration_schema?: MessageFormSchema;
+    configuration_value?: MessageFormValue;
   };
   like?: LikeState;
   errorMessage?: string;
@@ -85,6 +88,9 @@ export interface Entity {
   name: string;
   folderId: string;
   status?: UploadStatus;
+  createdAt?: number;
+  updatedAt?: number;
+  author?: string;
 }
 
 export enum PublishActions {
@@ -100,6 +106,11 @@ export interface EntityPublicationInfo {
   versionGroup?: string;
 }
 
+export enum SharePermission {
+  READ = 'READ',
+  WRITE = 'WRITE',
+}
+
 export interface ShareInterface {
   isShared?: boolean;
   sharedWithMe?: boolean;
@@ -107,12 +118,15 @@ export interface ShareInterface {
   isPublished?: boolean;
   publishedWithMe?: boolean;
   publicationInfo?: EntityPublicationInfo;
+
+  permissions?: SharePermission[];
 }
 
 export interface ShareEntity extends Entity, ShareInterface {}
 
 export interface ConversationInfo extends ShareEntity {
   model: ConversationEntityModel;
+  //TODO remove lastActivityDate when no need for the migration. See migration.epics.ts
   lastActivityDate?: number;
   isPlayback?: boolean;
   isReplay?: boolean;

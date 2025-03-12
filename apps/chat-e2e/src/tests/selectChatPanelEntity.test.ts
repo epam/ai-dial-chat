@@ -9,7 +9,7 @@ import {
   FilterMenuOptions,
   FolderConversation,
   MenuOptions,
-  Theme,
+  ThemeId,
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 
@@ -84,7 +84,7 @@ dialTest(
           folderWithConversations.folders,
         );
 
-        theme = Theme.dark;
+        theme = ThemeId.dark;
         await localStorageManager.setSettings(theme);
         await localStorageManager.setChatCollapsedSection(
           CollapsedSections.Organization,

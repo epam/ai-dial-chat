@@ -1,4 +1,4 @@
-//@ts-check
+// @ts-check
 
 const { i18n } = require('./next-i18next.config');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -75,10 +75,15 @@ const nextConfig = {
     instrumentationHook: true,
   },
   // @ts-ignore
-  basePath: new BasePathResolver(),
+  basePath: process.env.NODE_ENV !== 'development' ? new BasePathResolver() : '',
 
   async redirects() {
     return [
+      {
+        source: '/marketplace/share/:slug([A-Za-z0-9-]+)',
+        destination: '/marketplace/?share=:slug',
+        permanent: false,
+      },
       {
         source: '/share/:slug([A-Za-z0-9-]+)',
         destination: '/?share=:slug',

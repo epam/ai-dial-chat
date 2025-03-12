@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getAssitantModelId } from '@/src/utils/app/conversation';
+import { getAssistantModelId } from '@/src/utils/app/conversation';
 import {
   cleanData,
   isExportFormatV1,
@@ -120,7 +120,8 @@ describe('cleanData Functions', () => {
     selectedAddons: [],
     assistantModelId: 'gpt-4',
     folderId: getConversationRootId(bucket),
-    lastActivityDate: expect.any(Number),
+    updatedAt: expect.any(Number),
+    isNameChanged: undefined,
   };
 
   describe('cleaning v1 data', () => {
@@ -261,7 +262,7 @@ describe('Export helpers functions', () => {
   describe('getAssitantModelId', () => {
     it('should return default assistant model id', () => {
       expect(
-        getAssitantModelId(
+        getAssistantModelId(
           EntityType.Assistant,
           FALLBACK_ASSISTANT_SUBMODEL_ID,
         ),
@@ -270,7 +271,7 @@ describe('Export helpers functions', () => {
   });
   it('should return assistant model id', () => {
     expect(
-      getAssitantModelId(
+      getAssistantModelId(
         EntityType.Assistant,
         FALLBACK_ASSISTANT_SUBMODEL_ID,
         FALLBACK_MODEL_ID,
@@ -279,14 +280,14 @@ describe('Export helpers functions', () => {
   });
   it('should return undefined', () => {
     expect(
-      getAssitantModelId(
+      getAssistantModelId(
         EntityType.Model,
         FALLBACK_ASSISTANT_SUBMODEL_ID,
         FALLBACK_MODEL_ID,
       ),
     ).toBeUndefined();
     expect(
-      getAssitantModelId(
+      getAssistantModelId(
         EntityType.Application,
         FALLBACK_ASSISTANT_SUBMODEL_ID,
         FALLBACK_MODEL_ID,

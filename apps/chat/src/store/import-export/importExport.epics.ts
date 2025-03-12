@@ -80,6 +80,7 @@ import { HTTPMethod } from '@/src/types/http';
 import { LatestExportFormat, ReplaceOptions } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 import { AppEpic } from '@/src/types/store';
+import { Translation } from '@/src/types/translation';
 
 import {
   PromptsActions,
@@ -234,7 +235,7 @@ const exportPromptEpic: AppEpic = (action$, state$) =>
     switchMap(({ payload }) => getOrUploadPrompt(payload, state$.value)),
 
     switchMap((promptAndPayload) => {
-      const { prompt } = promptAndPayload;
+      const { prompt, wasUploaded } = promptAndPayload;
       if (!prompt) {
         return concat(
           of(
@@ -253,7 +254,11 @@ const exportPromptEpic: AppEpic = (action$, state$) =>
         PromptsSelectors.selectParentFolders(state$.value, prompt.folderId),
         appName,
       );
-      return EMPTY;
+      return iif(
+        () => wasUploaded,
+        of(PromptsActions.updatePromptSuccess({ id: prompt.id, prompt })),
+        EMPTY,
+      );
     }),
   );
 
@@ -407,7 +412,7 @@ const importPromptsEpic: AppEpic = (action$) =>
           of(
             UIActions.showErrorToast(
               translate(errorsMessages.unsupportedPromptsDataFormat, {
-                ns: 'common',
+                ns: Translation.Common,
               }),
             ),
           ),
@@ -868,7 +873,7 @@ const replaceConversationsEpic: AppEpic = (action$, state$) =>
                     folderId: oldConversation.folderId,
                     id: oldConversation.id,
                     status: UploadStatus.UNINITIALIZED,
-                    lastActivityDate: Date.now(),
+                    updatedAt: Date.now(),
                   },
                 ],
                 errorsAcc,

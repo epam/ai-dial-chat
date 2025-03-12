@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { DialAIEntity, DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -31,15 +31,17 @@ interface ModelVersionSelectProps {
   currentEntity: DialAIEntity;
   className?: string;
   showVersionPrefix?: boolean;
+  readonly?: boolean;
   onSelect: (entity: DialAIEntityModel) => void;
 }
 
 export const ModelVersionSelect = ({
-  currentEntity,
   entities,
-  onSelect,
+  currentEntity,
   className,
   showVersionPrefix = false,
+  readonly = false,
+  onSelect,
 }: ModelVersionSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -52,11 +54,15 @@ export const ModelVersionSelect = ({
     if (entities.length && entities[0].version) {
       return (
         <div
-          className={classNames('flex truncate', className)}
-          data-qa="version"
+          className={classNames('flex truncate font-theme text-sm', className)}
         >
           {showVersionPrefix && <VersionPrefix />}
-          {entities[0].version}
+          <span
+            className="mr-3 max-w-full overflow-hidden truncate whitespace-nowrap"
+            data-qa="version"
+          >
+            {entities[0].version}
+          </span>
         </div>
       );
     }
@@ -74,13 +80,16 @@ export const ModelVersionSelect = ({
       data-qa="model-version-select"
       trigger={
         <div
-          className="flex cursor-pointer items-center justify-between"
+          className="flex cursor-pointer items-center justify-between font-theme text-sm"
           data-qa="agent-version-select-trigger"
           data-model-versions
           onClick={stopBubbling}
         >
           {showVersionPrefix && <VersionPrefix />}
-          <span className="truncate" data-qa="version">
+          <span
+            className="max-w-full overflow-hidden truncate whitespace-nowrap"
+            data-qa="version"
+          >
             {currentEntity.version || currentEntity.id}
           </span>
           <ChevronDownIcon
@@ -107,6 +116,7 @@ export const ModelVersionSelect = ({
               {entity.version || entity.id}
             </div>
           }
+          disabled={readonly}
           value={entity.id}
           onClick={(e) => {
             e.stopPropagation();

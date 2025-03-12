@@ -598,7 +598,7 @@ dialSharedWithMeTest(
             folderName,
             `${sharedFolderName}/${folderName}`,
           );
-        const singleConversationName = `${singleConversation.model.id}${ItemUtil.conversationIdSeparator}${singleConversation.name}`;
+        const singleConversationName = `${singleConversation.model.id}${ItemUtil.entityIdSeparator}${singleConversation.name}`;
         singleConversation.id = singleConversation.id.replace(
           singleConversationName,
           `${sharedFolderName}/${singleConversationName}`,
@@ -1240,7 +1240,10 @@ dialTest(
     await dialTest.step(
       'Open share link by another logged out user and verify conversation is shared and selected',
       async () => {
-        const username = process.env.E2E_USERNAME!.split(',')[+config.workers!];
+        const username =
+          process.env.E2E_USERNAME!.split(',')[
+            dialTest.info().parallelIndex + +config.workers!
+          ];
         await incognitoProviderLogin.login(
           testInfo,
           username,

@@ -1,4 +1,5 @@
 import { Conversation } from '@/chat/types/chat';
+import { BackendEntity } from '@/chat/types/common';
 import {
   PublicationRequestModel,
   PublicationRule,
@@ -70,12 +71,39 @@ export class PublishRequestBuilder {
     return this;
   }
 
-  withFileResource(attachment: Attachment): PublishRequestBuilder {
-    const resource = {
-      action: PublishActions.ADD,
-      sourceUrl: attachment.url,
+  withApplicationResource(
+    application: BackendEntity,
+    action: PublishActions,
+  ): PublishRequestBuilder {
+    const targetUrl = `applications/${this.getPublishRequest().targetFolder}${application.name}`;
+    let resource: PublicationResource = {
+      action: action,
+      targetUrl: targetUrl,
+    };
+    if (action === 'ADD' || action === 'ADD_IF_ABSENT') {
+      resource = {
+        ...resource,
+        sourceUrl: application.url,
+      };
+    }
+    this.publishRequest.resources.push(resource);
+    return this;
+  }
+
+  withFileResource(
+    attachment: Attachment,
+    action: PublishActions,
+  ): PublishRequestBuilder {
+    let resource: PublicationResource = {
+      action: action,
       targetUrl: `files/${this.getPublishRequest().targetFolder}${attachment.title}`,
     };
+    if (action === 'ADD' || action === 'ADD_IF_ABSENT') {
+      resource = {
+        ...resource,
+        sourceUrl: attachment.url,
+      };
+    }
     this.publishRequest.resources.push(resource);
     return this;
   }

@@ -9,18 +9,21 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
 import { useSectionToggle } from '@/src/hooks/useSectionToggle';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getDialFilesWithInvalidFileType,
   getShortExtensionsListFromMimeType,
 } from '@/src/utils/app/file';
-import { getParentFolderIdsFromFolderId } from '@/src/utils/app/folders';
+import {
+  getParentFolderIdsFromFolderId,
+  updateMovedEntityId,
+  updateMovedFolderId,
+} from '@/src/utils/app/folders';
 import { getFileRootId, isFolderId } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
@@ -29,7 +32,7 @@ import {
 } from '@/src/utils/app/search';
 
 import { FeatureType } from '@/src/types/common';
-import { DialFile } from '@/src/types/files';
+import { DialFile, FileSourceType } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
@@ -45,9 +48,8 @@ import {
   SHARED_WITH_ME_SECTION_NAME,
 } from '@/src/constants/sections';
 
-import Modal from '@/src/components/Common/Modal';
+import { Modal } from '@/src/components/Common/Modal';
 
-import FolderPlus from '../../../public/images/icons/folder-plus.svg';
 import CollapsibleSection from '../Common/CollapsibleSection';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { ErrorMessage } from '../Common/ErrorMessage';
@@ -59,6 +61,7 @@ import Folder from '../Folder/Folder';
 import { FileItem, FileItemEventIds } from './FileItem';
 import { PreUploadDialog } from './PreUploadModal';
 
+import FolderPlus from '@/public/images/icons/folder-plus.svg';
 import uniq from 'lodash-es/uniq';
 
 interface FilesSectionProps {
@@ -67,6 +70,8 @@ interface FilesSectionProps {
   children: ReactNode;
   files: DialFile[];
   folders: FolderInterface[];
+  sourceType: FileSourceType;
+  filters?: Set<FileSourceType>;
 }
 
 const FilesSectionWrapper = ({
@@ -75,12 +80,14 @@ const FilesSectionWrapper = ({
   folders,
   files,
   children,
+  sourceType,
+  filters,
 }: FilesSectionProps) => {
   const { handleToggle, isExpanded } = useSectionToggle(name, FeatureType.File);
 
   const isNothingExists = folders.length === 0 && files.length === 0;
 
-  if (isNothingExists) return null;
+  if (isNothingExists || (filters && !filters.has(sourceType))) return null;
 
   return (
     <CollapsibleSection
@@ -116,6 +123,7 @@ interface Props {
   forceShowSelectCheckBox?: boolean;
   forceHideSelectFolders?: boolean;
   showTooltip?: boolean;
+  sourceFilters?: Set<FileSourceType>;
 }
 
 export const FileManagerModal = ({
@@ -131,6 +139,7 @@ export const FileManagerModal = ({
   forceHideSelectFolders,
   onClose,
   showTooltip,
+  sourceFilters,
 }: Props) => {
   const dispatch = useAppDispatch();
 
@@ -197,6 +206,9 @@ export const FileManagerModal = ({
   const canAttachFolders =
     useAppSelector(ConversationsSelectors.selectCanAttachFolders) &&
     !forceHideSelectFolders;
+  const lastRenamedParentFolder = useAppSelector(
+    FilesSelectors.selectLastRenamedParentFolder,
+  );
 
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
@@ -220,6 +232,41 @@ export const FileManagerModal = ({
   );
   const [deletingFileIds, setDeletingFileIds] = useState<string[]>([]);
   const [deletingFolderIds, setDeletingFolderIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (lastRenamedParentFolder?.newId) {
+      setSelectedFilesIds((prev) =>
+        prev.map((id) => {
+          if (id.startsWith(`${lastRenamedParentFolder.oldId}/`)) {
+            return updateMovedEntityId(
+              lastRenamedParentFolder.oldId,
+              lastRenamedParentFolder.newId,
+              id,
+            );
+          }
+          return id;
+        }),
+      );
+      setOpenedFoldersIds((prev) =>
+        prev.map((id) => {
+          if (id === lastRenamedParentFolder.oldId)
+            return lastRenamedParentFolder.newId;
+          if (id.startsWith(`${lastRenamedParentFolder.oldId}/`))
+            return updateMovedFolderId(
+              lastRenamedParentFolder.oldId,
+              lastRenamedParentFolder.newId,
+              id,
+            );
+          return id;
+        }),
+      );
+      dispatch(FilesActions.resetLastRenamedParentFolder());
+    }
+  }, [
+    dispatch,
+    lastRenamedParentFolder?.newId,
+    lastRenamedParentFolder?.oldId,
+  ]);
 
   const highlightFolderIds = useMemo(() => {
     return uniq(
@@ -284,6 +331,8 @@ export const FileManagerModal = ({
 
   useEffect(() => {
     if (isOpen) {
+      dispatch(FilesActions.resetAllFoldersStatus());
+
       dispatch(FilesActions.getFilesWithFolders({}));
       dispatch(FilesActions.resetNewFolderId());
     }
@@ -488,7 +537,7 @@ export const FileManagerModal = ({
             maxAttachmentsAmount: maximumAttachmentsAmount,
             selectedAttachmentsAmount: selectedFilesIds.length,
           },
-        ) as string,
+        ),
       );
       return;
     }
@@ -503,11 +552,11 @@ export const FileManagerModal = ({
     if (filesWithIncorrectTypes.length > 0) {
       setErrorMessage(
         t(
-          `You've trying to upload files with incorrect type: {{incorrectTypeFileNames}}`,
+          `You're trying to upload files with incorrect type: {{incorrectTypeFileNames}}`,
           {
             incorrectTypeFileNames: filesWithIncorrectTypes.join(', '),
           },
-        ) as string,
+        ),
       );
       return;
     }
@@ -669,7 +718,7 @@ export const FileManagerModal = ({
           <div className="group/modal flex flex-col gap-2 overflow-auto">
             <input
               name="titleInput"
-              placeholder={t('Search files') || ''}
+              placeholder={t('Search files')}
               type="text"
               onChange={handleSearch}
               className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
@@ -686,6 +735,8 @@ export const FileManagerModal = ({
                 dataQa="organization-files"
                 folders={organizationRootFolders}
                 files={organizationRootFiles}
+                sourceType={FileSourceType.PUBLIC}
+                filters={sourceFilters}
               >
                 <div className="flex flex-col gap-1 overflow-auto">
                   {organizationRootFolders.map((folder) => {
@@ -728,6 +779,7 @@ export const FileManagerModal = ({
                         canSelectFolders={canAttachFolders}
                         showTooltip={showTooltip}
                         onSelectFolder={handleFolderToggle}
+                        onShowError={setErrorMessage}
                       />
                     );
                   })}
@@ -759,6 +811,8 @@ export const FileManagerModal = ({
                 dataQa="shared-with-me-files"
                 folders={sharedWithMeRootFolders}
                 files={sharedWithMeRootFiles}
+                sourceType={FileSourceType.SHARED_WITH_ME}
+                filters={sourceFilters}
               >
                 <div className="flex flex-col gap-1 overflow-auto">
                   {sharedWithMeRootFolders.map((folder) => {
@@ -792,6 +846,7 @@ export const FileManagerModal = ({
                         showTooltip={showTooltip}
                         onSelectFolder={handleFolderToggle}
                         onDeleteFolder={handleDiscardSharedWithMeFolder}
+                        onShowError={setErrorMessage}
                       />
                     );
                   })}
@@ -819,6 +874,8 @@ export const FileManagerModal = ({
                 dataQa="all-files"
                 folders={myRootFolders}
                 files={myRootFiles}
+                sourceType={FileSourceType.MY_FILES}
+                filters={sourceFilters}
               >
                 <div className="flex flex-col gap-1 overflow-auto">
                   {myRootFolders.map((folder) => {
@@ -852,6 +909,7 @@ export const FileManagerModal = ({
                         canSelectFolders={canAttachFolders}
                         showTooltip={showTooltip}
                         onSelectFolder={handleFolderToggle}
+                        onShowError={setErrorMessage}
                       />
                     );
                   })}
@@ -975,26 +1033,24 @@ export const FileManagerModal = ({
               : '',
           ].join(''),
         )}
-        description={
-          t(
-            [
-              'Are you sure that you want to delete ',
-              deletingFileIds.length + deletingFolderIds.length > 1
-                ? 'these '
-                : 'this ',
-              deletingFolderIds.length > 0
-                ? `folder${deletingFolderIds.length > 1 ? 's' : ''}`
-                : '',
-              deletingFileIds.length > 0 && deletingFolderIds.length > 0
-                ? ' and '
-                : '',
-              deletingFileIds.length > 0
-                ? `file${deletingFileIds.length > 1 ? 's' : ''}`
-                : '',
-              '?',
-            ].join(''),
-          ) || ''
-        }
+        description={t(
+          [
+            'Are you sure that you want to delete ',
+            deletingFileIds.length + deletingFolderIds.length > 1
+              ? 'these '
+              : 'this ',
+            deletingFolderIds.length > 0
+              ? `folder${deletingFolderIds.length > 1 ? 's' : ''}`
+              : '',
+            deletingFileIds.length > 0 && deletingFolderIds.length > 0
+              ? ' and '
+              : '',
+            deletingFileIds.length > 0
+              ? `file${deletingFileIds.length > 1 ? 's' : ''}`
+              : '',
+            '?',
+          ].join(''),
+        )}
         confirmLabel={t('Delete')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {

@@ -1,11 +1,11 @@
 import { IconX } from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
-import { isMediumScreen, isSmallScreen } from '@/src/utils/app/mobile';
+import { useTranslation } from '@/src/hooks/useTranslation';
+
+import { isSmallScreen, isTabletScreen } from '@/src/utils/app/mobile';
 import { centralChatWidth, getNewSidebarWidth } from '@/src/utils/app/sidebar';
 
 import { Translation } from '@/src/types/translation';
@@ -20,14 +20,14 @@ import {
   OVERLAY_HEADER_ICON_SIZE,
 } from '@/src/constants/default-ui-settings';
 
-import MoveLeftIcon from '../../../public/images/icons/move-left.svg';
-import MoveRightIcon from '../../../public/images/icons/move-right.svg';
 import Tooltip from '../Common/Tooltip';
 import { SettingDialog } from '../Settings/SettingDialog';
 import { CreateNewConversation } from './CreateNewConversation';
 import { Logo } from './Logo';
 import { User } from './User/User';
 
+import MoveLeftIcon from '@/public/images/icons/move-left.svg';
+import MoveRightIcon from '@/public/images/icons/move-right.svg';
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature } from '@epam/ai-dial-shared';
 
@@ -56,7 +56,7 @@ const Header = Inversify.register('Header', () => {
   );
 
   const handleToggleChatbar = useCallback(() => {
-    if (!showChatbar && isMediumScreen()) {
+    if (!showChatbar && isTabletScreen()) {
       dispatch(UIActions.setShowPromptbar(false));
     }
 
@@ -64,7 +64,7 @@ const Header = Inversify.register('Header', () => {
       dispatch(UIActions.setIsProfileOpen(false));
     }
 
-    if (!showChatbar && !isMediumScreen()) {
+    if (!showChatbar && !isTabletScreen()) {
       if (!windowWidth) return;
       const calculatedChatWidth = centralChatWidth({
         oppositeSidebarWidth: promptbarWidth,
@@ -85,7 +85,7 @@ const Header = Inversify.register('Header', () => {
   }, [chatbarWidth, dispatch, promptbarWidth, showChatbar, windowWidth]);
 
   const handleTogglePromtbar = useCallback(() => {
-    if (!showPromptbar && isMediumScreen()) {
+    if (!showPromptbar && isTabletScreen()) {
       dispatch(UIActions.setShowChatbar(false));
     }
 
@@ -93,7 +93,7 @@ const Header = Inversify.register('Header', () => {
       dispatch(UIActions.setIsProfileOpen(false));
     }
 
-    if (!showPromptbar && !isMediumScreen()) {
+    if (!showPromptbar && !isTabletScreen()) {
       if (!windowWidth) return;
       const calculatedChatWidth = centralChatWidth({
         oppositeSidebarWidth: chatbarWidth,

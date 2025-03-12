@@ -3,7 +3,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import * as CodeEditorSelectors from './codeEditor.selectors';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { uniqBy } from 'lodash-es';
+import uniqBy from 'lodash-es/uniqBy';
 
 export { CodeEditorSelectors };
 

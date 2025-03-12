@@ -54,7 +54,7 @@ export interface Playback {
   activePlaybackIndex: number;
 }
 
-export type MergedMessages = [Conversation, Message, number][];
+export type MergedMessages = [Conversation, Message, number, Message[]][];
 
 export interface ConversationsTemporarySettings {
   modelId: string;

@@ -3,10 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 
 import { pages } from '@/src/utils/auth/auth-pages';
-import {
-  DEFAULT_PROVIDER,
-  isAuthDisabled,
-} from '@/src/utils/auth/auth-providers';
+import { isAuthDisabled } from '@/src/utils/auth/auth-providers';
 import { isServerSessionValid } from '@/src/utils/auth/session';
 
 import { StorageType } from '@/src/types/storage';
@@ -70,15 +67,16 @@ export const getCommonPageProps: GetServerSideProps = async ({
     params = new URL(req.url, `http://${req.headers.host}`).searchParams;
   }
 
+  let session = null;
   if (
     !Object.values(pages).some((page) => page && resolvedUrl?.includes(page))
   ) {
-    const session = await getServerSession(req, res, authOptions);
+    session = await getServerSession(req, res, authOptions);
     if (!isServerSessionValid(session)) {
       return {
         redirect: {
           permanent: false,
-          destination: `/api/auth/signin${params?.size ? `?callbackUrl=/?${params.toString()}` : ''}`,
+          destination: `/api/auth/signin${req.url ? `?callbackUrl=${encodeURIComponent(req.url)}` : ''}`,
         },
       };
     }
@@ -87,6 +85,8 @@ export const getCommonPageProps: GetServerSideProps = async ({
   const customRenderers =
     process.env.CUSTOM_VISUALIZERS &&
     JSON.parse(process.env.CUSTOM_VISUALIZERS);
+
+  const isIsolatedView = params?.has(ISOLATED_MODEL_QUERY_PARAM);
 
   const settings: SettingsState = {
     appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'AI Dial',
@@ -110,15 +110,9 @@ export const getCommonPageProps: GetServerSideProps = async ({
       (process.env.ENABLED_FEATURES || '').split(',') as Feature[]
     )
       .filter((feature) =>
-        params?.has(ISOLATED_MODEL_QUERY_PARAM)
-          ? !disabledFeaturesForIsolatedView.has(feature)
-          : true,
+        isIsolatedView ? !disabledFeaturesForIsolatedView.has(feature) : true,
       )
-      .concat(
-        params?.has(ISOLATED_MODEL_QUERY_PARAM)
-          ? hiddenFeaturesForIsolatedView
-          : [],
-      ),
+      .concat(isIsolatedView ? hiddenFeaturesForIsolatedView : []),
     publicationFilters: (
       process.env.PUBLICATION_FILTERS || 'title,role,dial_roles'
     ).split(','),
@@ -147,10 +141,11 @@ export const getCommonPageProps: GetServerSideProps = async ({
       process.env.QUICK_APPS_SCHEMA_ID || DEFAULT_QUICK_APPS_SCHEMA_ID,
     dialApiHost: process.env.DIAL_API_HOST || '',
     defaultSystemPrompt: process.env.NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT || '',
+    providerId: session?.providerId ?? null,
   };
 
-  if (params?.has(ISOLATED_MODEL_QUERY_PARAM)) {
-    settings.isolatedModelId = params.get(ISOLATED_MODEL_QUERY_PARAM) || '';
+  if (isIsolatedView) {
+    settings.isolatedModelId = params?.get(ISOLATED_MODEL_QUERY_PARAM) || '';
   }
 
   return {
@@ -163,7 +158,6 @@ export const getCommonPageProps: GetServerSideProps = async ({
         locale ?? 'en',
         Object.values(Translation),
       )),
-      defaultAuthProvider: DEFAULT_PROVIDER,
     },
   };
 };

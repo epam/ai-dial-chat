@@ -10,9 +10,9 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isVersionValid } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
@@ -20,11 +20,12 @@ import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import {
   getIdWithoutRootPathSegments,
   getRootId,
-  isEntityIdExternal,
+  isApplicationId,
 } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
   createTargetUrl,
+  getApplicationPublishResources,
   isEntityIdPublic,
 } from '@/src/utils/app/publications';
 import { NotReplayFilter } from '@/src/utils/app/search';
@@ -41,6 +42,11 @@ import {
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
+import {
+  ApplicationActions,
+  ApplicationSelectors,
+} from '@/src/store/application/application.reducers';
+import { AuthSelectors } from '@/src/store/auth/auth.reducers';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -53,11 +59,12 @@ import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 import { ORGANIZATION_SECTION_NAME } from '@/src/constants/sections';
 
 import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
-import Modal from '@/src/components/Common/Modal';
+import { Modal } from '@/src/components/Common/Modal';
 import Tooltip from '@/src/components/Common/Tooltip';
 
 import { Spinner } from '../../Common/Spinner';
 import { PublicationItemsList } from './PublicationItemsList';
+import { PublicationInfoSection } from './PublishWizardComponents';
 import { RuleListItem } from './RuleListItem';
 import { TargetAudienceFilterComponent } from './TargetAudienceFilterComponent';
 
@@ -108,11 +115,18 @@ export function PublishModal<
   const [otherTargetAudienceFilters, setOtherTargetAudienceFilters] = useState<
     TargetAudienceFilter[]
   >([]);
+  const userName = useAppSelector(AuthSelectors.selectUserName);
+  const [publicationAuthor, setPublicationAuthor] = useState<string>(
+    () => userName ?? '',
+  );
 
   const versionsRef = useRef<Record<string, string | undefined>>({});
 
   const areConversationsWithContentUploading = useAppSelector(
     ConversationsSelectors.selectAreConversationsWithContentUploading,
+  );
+  const isApplicationLoading = useAppSelector(
+    ApplicationSelectors.selectIsApplicationLoading,
   );
   const isRulesLoading = useAppSelector(
     PublicationSelectors.selectIsRulesLoading,
@@ -129,6 +143,11 @@ export function PublishModal<
   const selectedItemsIds = useAppSelector(
     PublicationSelectors.selectSelectedItemsToPublish,
   );
+  const applicationDetails = useAppSelector(
+    ApplicationSelectors.selectApplicationDetail,
+  );
+
+  const applicationId = isApplicationId(entity?.id) ? entity.id : null;
 
   const filteredFiles = useMemo(() => {
     if (publishAction === PublishActions.DELETE) {
@@ -167,6 +186,12 @@ export function PublishModal<
       dispatch(PublicationActions.uploadRules({ path }));
     }
   }, [dispatch, path]);
+
+  useEffect(() => {
+    if (applicationId && isOpen) {
+      dispatch(ApplicationActions.get({ applicationId }));
+    }
+  }, [applicationId, dispatch, isOpen]);
 
   useEffect(() => {
     if (currentFolderRules) {
@@ -222,6 +247,7 @@ export function PublishModal<
 
       const trimmedPath = path.trim();
       const trimmedName = publishRequestName.trim();
+      const trimmedPublicationAuthor = publicationAuthor.trim();
       const notEmptyFilters = otherTargetAudienceFilters.filter(
         (filter) =>
           // TODO: uncomment when it will be supported on core
@@ -278,6 +304,7 @@ export function PublishModal<
       dispatch(
         PublicationActions.publish({
           name: trimmedName,
+          displayAuthor: trimmedPublicationAuthor,
           targetFolder: constructPath(PUBLIC_URL_PREFIX, trimmedPath),
           resources: [
             ...(publishAction === PublishActions.DELETE
@@ -312,6 +339,7 @@ export function PublishModal<
               : selectedFiles.reduce<PublicationRequestModel['resources']>(
                   (acc, file) => {
                     const decodedFileId = ApiUtils.decodeApiUrl(file.id);
+
                     const item = mappedFiles.find(
                       (f) => f.oldUrl === decodedFileId,
                     );
@@ -322,34 +350,33 @@ export function PublishModal<
                         sourceUrl: decodedFileId,
                         targetUrl: item.newUrl,
                       });
+                    } else {
+                      acc.push({
+                        action: publishAction,
+                        sourceUrl: decodedFileId,
+                        targetUrl: ApiUtils.decodeApiUrl(
+                          constructPath(
+                            file.id.split('/')[0],
+                            PUBLIC_URL_PREFIX,
+                            trimmedPath,
+                            getIdWithoutRootPathSegments(entity.folderId),
+                            file.id.split('/').at(-1),
+                          ),
+                        ),
+                      });
                     }
 
                     return acc;
                   },
                   [],
                 )),
-            ...(type === SharingType.Application &&
-            'iconUrl' in entity &&
-            entity.iconUrl &&
-            !isEntityIdExternal({ id: entity.iconUrl })
-              ? [
-                  {
-                    action: publishAction,
-                    targetUrl: ApiUtils.decodeApiUrl(
-                      constructPath(
-                        entity.iconUrl.split('/')[0],
-                        PUBLIC_URL_PREFIX,
-                        trimmedPath,
-                        getIdWithoutRootPathSegments(entity.folderId),
-                        entity.iconUrl.split('/').at(-1),
-                      ),
-                    ),
-                    sourceUrl:
-                      publishAction === PublishActions.DELETE
-                        ? undefined
-                        : ApiUtils.decodeApiUrl(entity.iconUrl),
-                  },
-                ]
+            ...(type === SharingType.Application
+              ? getApplicationPublishResources({
+                  entity: entity as PublishRequestDialAIEntityModel,
+                  path: trimmedPath,
+                  publishAction,
+                  applicationDetails,
+                })
               : []),
           ],
           rules: preparedFilters.map((filter) => ({
@@ -363,18 +390,20 @@ export function PublishModal<
       onClose();
     },
     [
-      currentFolderRules,
-      dispatch,
-      entitiesArray,
       entity,
-      filteredFiles,
-      onClose,
-      otherTargetAudienceFilters,
       path,
-      publishAction,
       publishRequestName,
-      selectedItemsIds,
+      publicationAuthor,
+      otherTargetAudienceFilters,
+      currentFolderRules,
+      entitiesArray,
+      filteredFiles,
+      dispatch,
+      publishAction,
       type,
+      applicationDetails,
+      onClose,
+      selectedItemsIds,
     ],
   );
 
@@ -414,10 +443,12 @@ export function PublishModal<
       (!otherTargetAudienceFilters.length && !currentFolderRules));
   const isSendBtnDisabled =
     !publishRequestName.trim().length ||
+    !publicationAuthor.trim().length ||
     isRuleSetterOpened ||
     isNothingSelectedAndNoRuleChanges ||
     isSomeVersionInvalid ||
-    areConversationsWithContentUploading;
+    areConversationsWithContentUploading ||
+    isApplicationLoading;
   const isSendBtnTooltipHidden =
     !!publishRequestName.trim().length &&
     !isRuleSetterOpened &&
@@ -460,8 +491,8 @@ export function PublishModal<
             value={publishRequestName}
             placeholder={
               publishAction === PublishActions.ADD
-                ? (t('Type publication request name...') ?? '')
-                : (t('Type unpublish request name...') ?? '')
+                ? t('Type publication request name...')
+                : t('Type unpublish request name...')
             }
             className="w-full bg-transparent text-base font-semibold outline-none"
             data-qa="request-name"
@@ -469,40 +500,75 @@ export function PublishModal<
         </div>
         <div className="flex min-h-0 grow flex-col divide-y divide-tertiary overflow-y-auto md:flex-row md:divide-x md:divide-y-0">
           <div className="flex w-full shrink flex-col divide-y divide-tertiary md:max-w-[550px] md:overflow-y-auto">
-            <section className="px-3 py-4 md:px-5">
-              <h3 className="mb-4 flex text-sm">
-                {publishAction === PublishActions.DELETE
-                  ? t('Unpublish from')
-                  : t('Publish to')}
-              </h3>
-              <button
-                className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2"
-                data-qa="change-path-container"
-              >
-                <div className="flex w-full justify-between truncate whitespace-pre break-all">
-                  <Tooltip
-                    tooltip={constructPath(ORGANIZATION_SECTION_NAME, path)}
-                    contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
-                    triggerClassName="truncate whitespace-pre"
-                    dataQa="path"
+            <div className="flex w-full shrink flex-col px-3 py-4 md:px-5">
+              <h2 className="mb-4 font-semibold">{t('General info')}</h2>
+              {publishAction !== PublishActions.DELETE ? (
+                <section className="mb-3">
+                  <h3 className="mb-1 flex text-xs text-secondary">
+                    {t('Publish to')}
+                  </h3>
+                  <button
+                    className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2"
+                    data-qa="change-path-container"
                   >
-                    {constructPath(ORGANIZATION_SECTION_NAME, path)}
-                  </Tooltip>
-                  {publishAction !== PublishActions.DELETE && (
-                    <span
-                      className="h-full cursor-pointer text-accent-primary"
-                      data-qa="change-button"
-                      onClick={handleFolderChange}
-                    >
-                      {t('Change')}
-                    </span>
-                  )}
-                </div>
-              </button>
-            </section>
+                    <div className="flex w-full justify-between truncate whitespace-pre break-all">
+                      <Tooltip
+                        tooltip={constructPath(ORGANIZATION_SECTION_NAME, path)}
+                        contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+                        triggerClassName="truncate whitespace-pre"
+                        dataQa="path"
+                      >
+                        {constructPath(ORGANIZATION_SECTION_NAME, path)}
+                      </Tooltip>
 
+                      <span
+                        className="h-full cursor-pointer text-accent-primary"
+                        data-qa="change-button"
+                        onClick={handleFolderChange}
+                      >
+                        {t('Change')}
+                      </span>
+                    </div>
+                  </button>
+                </section>
+              ) : (
+                <PublicationInfoSection
+                  labelDataQa={'unpublish-from-label'}
+                  label={t('Unpublish from')}
+                  valueDataQa={'unpublish-from-path'}
+                  valueToDisplay={constructPath(
+                    ORGANIZATION_SECTION_NAME,
+                    path,
+                  )}
+                  tooltip={constructPath(ORGANIZATION_SECTION_NAME, path)}
+                />
+              )}
+
+              {publishAction !== PublishActions.DELETE && (
+                <section>
+                  <h3
+                    className="mb-1 flex text-xs text-secondary"
+                    data-qa="public-author-label"
+                  >
+                    {t('Author')}
+                  </h3>
+                  <div className="input-form mx-0 flex grow cursor-default items-center border-primary px-3 py-2">
+                    <input
+                      onChange={(e) => setPublicationAuthor(e.target.value)}
+                      value={publicationAuthor}
+                      placeholder={t(`Type publication's author name...`)}
+                      className="flex w-full justify-between truncate whitespace-pre break-all bg-transparent outline-none"
+                      data-qa="public-author-input"
+                    />
+                  </div>
+                </section>
+              )}
+            </div>
             <section className="flex h-full flex-col overflow-y-auto px-3 py-4 md:px-5">
-              <h2 className="mb-4 flex gap-2" data-qa="allow-access-label">
+              <h2
+                className="mb-4 flex gap-2 font-semibold"
+                data-qa="allow-access-label"
+              >
                 {t('Allow access if all match')}
               </h2>
               {isRulesLoading ? (

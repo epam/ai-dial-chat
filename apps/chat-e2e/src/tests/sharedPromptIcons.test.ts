@@ -170,8 +170,6 @@ dialTest(
     promptModalDialog,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
-    confirmationDialogAssertion,
-    confirmationDialog,
     shareApiAssertion,
     setTestIds,
   }) => {
@@ -209,47 +207,24 @@ dialTest(
     );
 
     await dialTest.step(
-      'Edit prompt name and verify confirmation modal appears on prompt save',
+      'Edit prompt name and verify shared icon is displayed on the prompt',
       async () => {
         await prompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-        await promptModalDialog.setField(promptModalDialog.name, newName);
-        await promptModalDialog.saveButton.click();
-        await confirmationDialogAssertion.assertConfirmationDialogTitle(
-          ExpectedConstants.renameSharedPromptDialogTitle,
+        await promptModalDialog.updatePromptDetailsWithButton(newName);
+        await promptAssertion.assertElementState(
+          prompts.getEntityByName(newName),
+          'visible',
         );
-        await confirmationDialogAssertion.assertConfirmationMessage(
-          ExpectedConstants.renameSharedPromptMessage,
-        );
-      },
-    );
-
-    await dialTest.step(
-      'Cancel confirmation modal and verify shared icon is displayed on prompt',
-      async () => {
-        await confirmationDialog.cancelDialog();
         await promptAssertion.assertEntityArrowIconState(
-          { name: prompt.name },
+          { name: newName },
           'visible',
         );
       },
     );
 
     await dialTest.step(
-      'Confirm prompt renaming and verify shared icon is not displayed on prompt',
-      async () => {
-        await promptModalDialog.setField(promptModalDialog.name, newName);
-        await promptModalDialog.saveButton.click();
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-        await promptAssertion.assertEntityArrowIconState(
-          { name: newName },
-          'hidden',
-        );
-      },
-    );
-
-    await dialTest.step(
-      'Verify prompt is not shared with another user',
+      'Verify prompt remained shared with another user',
       async () => {
         const sharedEntities =
           await additionalUserShareApiHelper.listSharedWithMePrompts();
@@ -257,7 +232,7 @@ dialTest(
         await shareApiAssertion.assertSharedWithMeEntityState(
           sharedEntities,
           prompt,
-          'hidden',
+          'visible',
         );
       },
     );

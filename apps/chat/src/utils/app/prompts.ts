@@ -111,3 +111,15 @@ export const getEntitiesFromTemplateMapping = (
     ? templateMapping
     : Object.entries(templateMapping);
 };
+
+export const replaceTemplates = (
+  templates: TemplateMapping[],
+  text: string,
+): string => {
+  if (!templates.length) return text;
+  const [[key, value], ...rest] = templates;
+  return text
+    .split(key.trim())
+    .map((part) => replaceTemplates(rest, part))
+    .join(value.trim());
+};

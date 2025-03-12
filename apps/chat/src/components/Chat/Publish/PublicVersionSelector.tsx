@@ -1,9 +1,9 @@
 import { IconChevronDown } from '@tabler/icons-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { groupAllVersions } from '@/src/utils/app/common';
 
@@ -23,13 +23,13 @@ interface Props {
   readonly?: boolean;
   groupVersions?: boolean;
   textBeforeSelector?: string | null;
+  selectedEntityId?: string;
+  excludeEntityId?: string;
   onChangeSelectedVersion?: (
     versionGroupId: string,
     newVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
     oldVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
   ) => void;
-  selectedEntityId?: string;
-  excludeEntityId?: string;
 }
 
 export function PublicVersionSelector({
@@ -38,9 +38,9 @@ export function PublicVersionSelector({
   readonly,
   groupVersions,
   textBeforeSelector,
-  onChangeSelectedVersion,
   selectedEntityId,
   excludeEntityId,
+  onChangeSelectedVersion,
 }: Props) {
   const { t } = useTranslation(Translation.Chat);
 

@@ -10,25 +10,15 @@ export class ModelsUtil {
     return JSON.parse(process.env.MODELS!) as DialAIEntityModel[];
   }
 
-  public static getLatestOpenAIEntities() {
+  public static getLatestOpenAIEntities(
+    allOpenAIEntities?: DialAIEntityModel[],
+  ) {
     const latestOpenAIEntities: DialAIEntityModel[] = [];
-    const allOpenAIEntities = ModelsUtil.getOpenAIEntities();
-    const recentModels = ModelsUtil.getRecentModelIds();
-    let groupedOpenAIEntities = allOpenAIEntities.map((object) => ({
+    allOpenAIEntities = allOpenAIEntities ?? ModelsUtil.getOpenAIEntities();
+    const groupedOpenAIEntities = allOpenAIEntities.map((object) => ({
       key: object.name,
       object: object,
     }));
-    for (const recentModelId of recentModels) {
-      const groupedOpenAIEntity = groupedOpenAIEntities.find(
-        (e) => e.object.id === recentModelId,
-      );
-      if (groupedOpenAIEntity) {
-        latestOpenAIEntities.push(groupedOpenAIEntity.object);
-        groupedOpenAIEntities = groupedOpenAIEntities.filter(
-          (e) => e.key !== groupedOpenAIEntity.key,
-        );
-      }
-    }
     groupedOpenAIEntities.forEach((e) => {
       if (!latestOpenAIEntities.find((le) => le.name === e.key)) {
         latestOpenAIEntities.push(e.object);
@@ -216,5 +206,22 @@ export class ModelsUtil {
     return process.env.SIMPLE_REQUEST_MODEL
       ? ModelsUtil.getModel(process.env.SIMPLE_REQUEST_MODEL)
       : undefined;
+  }
+
+  public static getRecentAgents(recentAgentIds: string[]) {
+    const allAgents = ModelsUtil.getOpenAIEntities();
+    return allAgents.filter((a) =>
+      recentAgentIds.includes(a.reference || a.id),
+    );
+  }
+
+  public static getRecentAgentsNames(recentAgentIds: string[]) {
+    return ModelsUtil.getRecentAgents(recentAgentIds).map(({ name }) => name);
+  }
+
+  public static getRecentAgentsVersions(recentAgentIds: string[]) {
+    return ModelsUtil.getRecentAgents(recentAgentIds)
+      .filter((r) => r.version !== undefined)
+      .map(({ version }) => version ?? '');
   }
 }

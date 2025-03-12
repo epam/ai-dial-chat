@@ -65,6 +65,7 @@ export const ModelTooltip = {
   modelTooltip: '[data-qa="chat-model-tooltip"]',
   modelInfo: '[data-qa="agent-info"]',
   versionInfo: '[data-qa="version-info"]',
+  title: '[data-qa="tooltip-title"]',
 };
 
 export const SettingsTooltip = {
@@ -132,6 +133,7 @@ export const SelectFolderModalSelectors = {
 export const AccountSettingsModalSelector = {
   settingsModal: '[data-qa="settings-modal"]',
   theme: '[data-qa="theme"]',
+  customLogo: '[data-qa="custom-logo"]',
   fullWidthChatToggle: '[data-qa="toggle-switch"]',
   save: '[data-qa="save"]',
 };
@@ -140,7 +142,8 @@ export const PublishingModalSelectors = {
   modalContainer: '[data-qa="publish-modal"]',
   requestName: '[data-qa="request-name"]',
   publishTo: '[data-qa="change-path-container"]',
-  publishToPath: '[data-qa="path"]',
+  unpublishFromLabel: '[data-qa="unpublish-from-label"]',
+  unpublishFromPath: '[data-qa="unpublish-from-path"]',
   changePublishToPath: '[data-qa="change-button"]',
   conversationsToPublishContainer:
     '[data-qa="conversations-to-send-request-container"]',
@@ -162,8 +165,8 @@ export const PublishingApprovalModalSelectors = {
   publishName: '[data-qa="publish-name"]',
   publishToPath: '[data-qa="publish-to-path"]',
   publishToPathLabel: '[data-qa="publish-to-label"]',
-  publishDate: '[data-qa="publish-date"]',
-  publishDateLabel: '[data-qa="creation-date"]',
+  creationDate: '[data-qa="creation-date"]',
+  requestCreatedLabel: '[data-qa="creation-date-label"]',
   conversationsToApproveContainer:
     '[data-qa="conversations-to-approve-container"]',
   filesToApproveContainer: '[data-qa="files-to-approve-container"]',
@@ -214,4 +217,31 @@ export const MessageTemplateModalSelectors = {
   templatePreview: '[data-qa="result-message-template"]',
   showMoreButton: '[data-qa="show-more"]',
   showLessButton: '[data-qa="show-less"]',
+};
+
+export const RequestApiKeyModalSelectors = {
+  requestApiKeyContainer: '[data-qa="request-api-key-dialog"]',
+};
+
+export const ReportAnIssueModalSelectors = {
+  reportAnIssueContainer: '[data-qa="report-issue-dialog"]',
+};
+
+export const ApplicationEditorHeader = {
+  header: '[data-qa="app-editor-header"]',
+  saveAndExitButton: '[data-qa="save-and-exit"]',
+};
+
+export const ApplicationPreviewSelector = {
+  container: '[data-qa="app-preview"]',
+};
+
+export const AddApplicationFormSelector = {
+  appGeneralFormContainer: '[data-qa="app-general-form"]',
+  name: '#name',
+  version: '#version',
+  nextButton: '[data-qa="save-application-general-info"]',
+  chatCompletionUrl: '#completionUrl',
+  addButton: '[data-qa="add-application"]',
+  appViewFormContainer: '[data-qa="app-view-form"]',
 };

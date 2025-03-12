@@ -2,7 +2,7 @@ import { ApplicationStatus } from '@/src/types/applications';
 
 import { EntityType } from './common';
 
-import { EntityPublicationInfo } from '@epam/ai-dial-shared';
+import { EntityPublicationInfo, ShareEntity } from '@epam/ai-dial-shared';
 import { TiktokenEncoding } from 'tiktoken';
 
 export type ModelsMap = Partial<Record<string, DialAIEntityModel>>;
@@ -21,6 +21,9 @@ export interface CoreAIEntity<T = EntityType.Model> {
   display_version?: string;
   icon_url?: string;
   description?: string;
+  created_at: number;
+  updated_at: number;
+  owner: string;
   capabilities?: {
     embeddings: boolean;
     chat_completion: boolean;
@@ -42,7 +45,9 @@ export interface CoreAIEntity<T = EntityType.Model> {
     url_attachments?: boolean;
     folder_attachments?: boolean;
     allow_resume?: boolean;
+    configuration?: boolean;
   };
+  application_type_schema_id?: string;
   tokenizer_model?: TokenizerModel;
   description_keywords?: string[];
 
@@ -60,6 +65,7 @@ export interface DialAIEntityFeatures {
   urlAttachments?: boolean;
   folderAttachments?: boolean;
   allowResume?: boolean;
+  configuration?: boolean;
 }
 
 export interface DialAIEntity {
@@ -67,6 +73,9 @@ export interface DialAIEntity {
   name: string;
   description?: string | undefined;
   iconUrl?: string | undefined;
+  createdAt?: number;
+  updatedAt?: number;
+  owner?: string;
   type: EntityType;
   selectedAddons?: string[];
   inputAttachmentTypes?: string[];
@@ -79,7 +88,9 @@ export interface DialAIEntity {
   };
 }
 
-export interface DialAIEntityModel extends Omit<DialAIEntity, 'type'> {
+export interface DialAIEntityModel
+  extends Omit<ShareEntity, 'folderId'>,
+    Omit<DialAIEntity, 'type'> {
   limits?: {
     maxTotalTokens: number;
     maxResponseTokens: number;

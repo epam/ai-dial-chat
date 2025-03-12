@@ -7,27 +7,24 @@ import {
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getApplicationType,
   getModelDescription,
   isApplicationStatusUpdating,
 } from '@/src/utils/app/application';
-import {
-  getOpenAIEntityFullName,
-  groupModelsAndSaveOrder,
-} from '@/src/utils/app/conversation';
+import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { isApplicationId } from '@/src/utils/app/id';
 import { hasParentWithAttribute } from '@/src/utils/app/modals';
+import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { ApplicationType } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
@@ -41,8 +38,6 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
-
-import { ApplicationWizard } from '@/src/components/Common/ApplicationWizard/ApplicationWizard';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
@@ -328,9 +323,6 @@ export const ModelList = ({
     ModelsSelectors.selectInstalledModelIds,
   );
 
-  const [applicationModal, setApplicationModal] = useState<{
-    type: ApplicationType;
-  }>();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentEntity, setCurrentEntity] = useState<DialAIEntityModel>();
   const [publishAction, setPublishAction] = useState<PublishActions>();
@@ -348,16 +340,12 @@ export const ModelList = ({
     };
   }, [currentEntity]);
 
-  const handleOpenApplicationModal = useCallback((type: ApplicationType) => {
-    setApplicationModal({ type });
-  }, []);
-
   const handleEdit = useCallback(
     (currentEntity: DialAIEntityModel) => {
-      dispatch(ApplicationActions.get(currentEntity.id));
-      handleOpenApplicationModal(getApplicationType(currentEntity));
+      dispatch(ApplicationActions.get({ applicationId: currentEntity.id }));
+      getApplicationType(currentEntity);
     },
-    [dispatch, handleOpenApplicationModal],
+    [dispatch],
   );
 
   const handleOpenDeleteConfirmModal = useCallback(() => {
@@ -388,10 +376,6 @@ export const ModelList = ({
     },
     [handleDelete],
   );
-
-  const handleCloseApplicationDialog = useCallback(() => {
-    setApplicationModal(undefined);
-  }, []);
 
   const groupedModels = useMemo(() => {
     const nameSet = new Set(entities.map((m) => m.name));
@@ -448,15 +432,6 @@ export const ModelList = ({
           confirmLabel="Delete"
           cancelLabel="Cancel"
           onClose={handleConfirmDialogClose}
-        />
-      )}
-      {!!applicationModal && (
-        <ApplicationWizard
-          isOpen={!!applicationModal}
-          onClose={handleCloseApplicationDialog}
-          type={applicationModal.type}
-          currentReference={currentEntity?.reference}
-          isEdit
         />
       )}
       {publishAction && entityForPublish && entityForPublish.id && (

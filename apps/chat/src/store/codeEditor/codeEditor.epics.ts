@@ -17,6 +17,7 @@ import { combineEpics } from 'redux-observable';
 
 import { FileService } from '@/src/utils/app/data/file-service';
 import { TextFileService } from '@/src/utils/app/data/text-file-service';
+import { splitEntityId } from '@/src/utils/app/folders';
 import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
 import { translate } from '@/src/utils/app/translation';
 
@@ -28,14 +29,16 @@ import { FilesActions, FilesSelectors } from '../files/files.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { CodeEditorActions, CodeEditorSelectors } from './codeEditor.reducer';
 
-import { intersectionWith } from 'lodash-es';
+import intersectionWith from 'lodash-es/intersectionWith';
 
 const initCodeEditorEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(CodeEditorActions.initCodeEditor.match),
     switchMap(({ payload }) => {
+      const sourceFolderId = `${payload.sourcesFolderId}${payload.sourcesFolderId.endsWith('/') ? '' : '/'}`;
+
       const folderFiles = FilesSelectors.selectFiles(state$.value).filter(
-        (file) => file.id.startsWith(`${payload.sourcesFolderId}/`),
+        (file) => file.id.startsWith(sourceFolderId),
       );
       const rootFiles = FilesSelectors.selectFiles(state$.value).filter(
         (file) => file.folderId === payload.sourcesFolderId,
@@ -189,12 +192,15 @@ const updateFileContentEpic: AppEpic = (action$, state$) =>
         return EMPTY;
       }
 
-      return TextFileService.updateContent(
-        file.relativePath ?? getIdWithoutRootPathSegments(file.id),
-        file.name,
-        payload.content,
-        file.contentType,
-      ).pipe(
+      const { bucket } = splitEntityId(file.id);
+      return TextFileService.updateContent({
+        relativePath:
+          file.relativePath ?? getIdWithoutRootPathSegments(file.id),
+        fileName: file.name,
+        content: payload.content,
+        contentType: file.contentType,
+        bucket,
+      }).pipe(
         filter(({ success }) => !!success),
         switchMap(({ success }) => {
           if (success) {

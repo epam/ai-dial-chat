@@ -199,8 +199,8 @@ dialTest(
           .toBe(expectedModels.length);
 
         for (const expectedModel of expectedModels) {
-          const actualOptionIcon = compareOptionsIcons.find((o) =>
-            o.entityName.includes(expectedModel.name),
+          const actualOptionIcon = compareOptionsIcons.find(
+            (o) => o.entityId === expectedModel.id,
           )!;
           const expectedModelIcon = iconApiHelper.getEntityIcon(expectedModel);
 
@@ -264,9 +264,13 @@ dialTest(
           iconsToBeLoaded: [defaultModel.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(modelConversation.name, {
-          exactMatch: true,
-        });
+        await conversations.selectConversation(
+          modelConversation.name,
+          { isHttpMethodTriggered: false },
+          {
+            exactMatch: true,
+          },
+        );
         await conversations.openEntityDropdownMenu(modelConversation.name, {
           exactMatch: true,
         });
@@ -531,6 +535,9 @@ dialTest(
           secondConversation.name,
         );
         await compare.waitForComparedConversationsLoaded();
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         const requestsData = await chat.sendRequestInCompareMode(
           'how are you?',
           {
@@ -605,21 +612,15 @@ dialTest(
       'Put like/dislike for compared chat, open this chat and verify like/dislike saved',
       async () => {
         const rate = GeneratorUtil.randomArrayElement(Object.values(Rate));
-        await chatMessages.rateCompareRowMessage(Side.left, rate);
+        await chatMessages.rateCompareRowMessage(Side.left, rate, 2);
         const isComparedMessageRated =
-          await chatMessages.isComparedRowMessageRated(Side.left, rate);
+          await chatMessages.isComparedRowMessageRated(Side.left, rate, 2);
         expect
           .soft(isComparedMessageRated, ExpectedMessages.chatMessageIsRated)
           .toBeTruthy();
 
-        await conversations.selectConversation(
-          firstConversation.name,
-          undefined,
-          { isHttpMethodTriggered: false },
-        );
-        await chatMessages
-          .getChatMessageRate(firstConversation.messages.length + 2, rate)
-          .waitFor();
+        await conversations.selectConversation(firstConversation.name);
+        await chatMessages.getChatMessageRate(2, rate).waitFor();
       },
     );
   },
@@ -738,6 +739,7 @@ dialTest(
     conversations,
     conversationDropdownMenu,
     compareConversation,
+    compare,
   }) => {
     dialTest.slow();
     setTestIds('EPMRTC-1021');
@@ -806,16 +808,19 @@ dialTest(
         await compareConversation.selectCompareConversation(
           secondConversation.name,
         );
+        await compare.waitForComparedConversationsLoaded();
         await leftChatHeader.chatAgent.click();
         await talkToAgentDialog.selectAgent(
           firstUpdatedRandomModel,
           marketplacePage,
         );
+        await compare.waitForComparedConversationsLoaded();
         await rightChatHeader.chatAgent.click();
         await talkToAgentDialog.selectAgent(
           secondUpdatedRandomModel,
           marketplacePage,
         );
+        await compare.waitForComparedConversationsLoaded();
 
         await leftChatHeader.openConversationSettingsPopup();
         const leftEntitySettings =
@@ -1373,11 +1378,7 @@ dialTest(
     await dialTest.step(
       'Switch to comparing conversation and verify Compare mode is closed',
       async () => {
-        await conversations.selectConversation(
-          firstConversation.name,
-          undefined,
-          { isHttpMethodTriggered: false },
-        );
+        await conversations.selectConversation(firstConversation.name);
         await expect
           .soft(compare.getElementLocator(), ExpectedMessages.compareModeClosed)
           .toBeHidden();

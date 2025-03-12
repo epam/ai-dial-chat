@@ -254,3 +254,17 @@ export const groupAllVersions = (versions: PublicVersionOption[]) =>
       ? [{ version: latestVersion, id: latestVersionItemId }]
       : [];
   });
+
+export const fakeCallback = () => null;
+
+export const castToString = (value: unknown): string => value as string;
+
+export const extractNameFromEmail = (author: string | undefined) => {
+  if (typeof author !== 'string') return; // we expecting only string
+  const regEx = /^[^@]+@[^@]+.[^@]+$/; // regex to test is author in an email format
+  return regEx.test(author) ? author.split('@')[0] : author;
+};
+
+export const formatDate = (rawDate: number | string | Date): string => {
+  return new Date(rawDate).toLocaleDateString();
+};

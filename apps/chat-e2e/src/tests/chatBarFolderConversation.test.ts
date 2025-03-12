@@ -181,7 +181,7 @@ dialTest(
       ExpectedConstants.newFolderWithIndexTitle(randomFolderIndex),
     );
     await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-    await folderConversations.editFolderNameWithEnter(newNameWithSpaces);
+    await folderConversations.renameEmptyFolderWithEnter(newNameWithSpaces);
     await expect
       .soft(
         folderConversations.getFolderByName(newNameWithSpaces.trim()),
@@ -393,7 +393,9 @@ dialTest(
     await dialTest.step(
       'Edit folder name using tick button and verify it is renamed',
       async () => {
-        await folderConversations.editFolderNameWithTick(newFolderNameToSet);
+        await folderConversations.renameFolderWithContentWithTick(
+          newFolderNameToSet,
+        );
         await expect
           .soft(toast.getElementLocator(), ExpectedMessages.noErrorToastIsShown)
           .toBeHidden();

@@ -1,5 +1,5 @@
 import { DialAIEntityModel } from '@/chat/types/models';
-import { BaseAssertion } from '@/src/assertions/baseAssertion';
+import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ExpectedMessages } from '@/src/testData';
 import { TalkToAgentDialog } from '@/src/ui/webElements/talkToAgentDialog';
 import { expect } from '@playwright/test';
@@ -17,7 +17,7 @@ export class TalkToAgentDialogAssertion extends BaseAssertion {
   ) {
     expect
       .soft(
-        await this.talkToAgentDialog.getAgents().getSelectedAgent(),
+        await this.talkToAgentDialog.getSelectedAgent(),
         ExpectedMessages.talkToEntityIsSelected,
       )
       .toBe(

@@ -1,9 +1,9 @@
 import { IconX } from '@tabler/icons-react';
 import { useCallback } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
@@ -21,14 +21,16 @@ import {
 import { Logo } from '@/src/components/Header/Logo';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
-import MoveLeftIcon from '../../../public/images/icons/move-left.svg';
-import MoveRightIcon from '../../../public/images/icons/move-right.svg';
 import Tooltip from '../Common/Tooltip';
 import { BackToChat } from '../Header/BackToChat';
 import { User } from '../Header/User/User';
 
+import MoveLeftIcon from '@/public/images/icons/move-left.svg';
+import MoveRightIcon from '@/public/images/icons/move-right.svg';
+
 export const MarketplaceHeader = () => {
   const { t } = useTranslation(Translation.Header);
+
   const showFilterbar = useAppSelector(
     UISelectors.selectShowMarketplaceFilterbar,
   );

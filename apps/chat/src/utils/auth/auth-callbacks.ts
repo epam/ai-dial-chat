@@ -8,6 +8,7 @@ import NextClient, { RefreshToken } from './nextauth-client';
 
 import { decodeJwt } from 'jose';
 import get from 'lodash-es/get';
+import intersection from 'lodash-es/intersection';
 import { TokenSet } from 'openid-client';
 
 const waitRefreshTokenTimeout = 5;
@@ -37,9 +38,14 @@ const getUser = (accessToken: string | undefined, providerId: string) => {
   const roles = Array.isArray(dialRoles) ? dialRoles : [dialRoles];
   const isAdmin =
     roles.length > 0 && adminRoleNames.some((role) => roles.includes(role));
+  const codeAppRoles = process.env.CODE_APPS_ROLES?.split(',') ?? [];
 
   return {
     isAdmin,
+    canCreateCodeApps:
+      !codeAppRoles.length ||
+      !!intersection(codeAppRoles, roles).length ||
+      isAdmin,
   };
 };
 
@@ -183,7 +189,6 @@ export const callbacks: Partial<
         refreshToken: options.account.refresh_token,
         providerId: options.account.provider,
         userId: options.user.id,
-        idToken: options.account.id_token,
       };
     }
 
@@ -221,10 +226,18 @@ export const callbacks: Partial<
     }
 
     const isAdmin = options?.token?.user?.isAdmin ?? false;
+    const canCreateCodeApps = options?.token?.user?.canCreateCodeApps ?? false;
 
     if (options.session.user) {
       options.session.user.isAdmin = isAdmin;
+      options.session.user.canCreateCodeApps = canCreateCodeApps;
     }
+
+    const providerId =
+      typeof options.token.providerId === 'string'
+        ? options.token.providerId
+        : '';
+    options.session.providerId = providerId;
 
     return options.session;
   },

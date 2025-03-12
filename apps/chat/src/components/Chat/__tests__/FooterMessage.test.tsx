@@ -39,12 +39,11 @@ interface DialogProps {
 
 function makeMockDialog(dataTestId: string) {
   // eslint-disable-next-line react/display-name
-  return ({ isOpen, onClose }: DialogProps) =>
-    isOpen ? (
-      <div data-qa={dataTestId}>
-        <button onClick={onClose}>Close</button>
-      </div>
-    ) : null;
+  return ({ onClose }: DialogProps) => (
+    <div data-qa={dataTestId}>
+      <button onClick={onClose}>Close</button>
+    </div>
+  );
 }
 const reportIssueDialogTestId = 'reportIssueDialog';
 const requestAPIKeyDialogTestId = 'requestAPIKeyDialog';

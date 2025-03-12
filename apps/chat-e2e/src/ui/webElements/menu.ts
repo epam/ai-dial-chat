@@ -4,8 +4,8 @@ import { Locator, Page } from '@playwright/test';
 import { Response } from 'playwright-core';
 
 export abstract class Menu extends BaseElement {
-  constructor(page: Page) {
-    super(page, MenuSelectors.dropdownMenu);
+  constructor(page: Page, parentLocator?: Locator) {
+    super(page, MenuSelectors.dropdownMenu, parentLocator);
   }
 
   abstract menuOptions(): BaseElement;

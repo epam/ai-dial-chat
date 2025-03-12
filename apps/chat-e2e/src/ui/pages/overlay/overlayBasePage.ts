@@ -2,9 +2,14 @@ import { Attributes, Tags } from '@/src/ui/domData';
 import { BasePage } from '@/src/ui/pages';
 import { OverlaySelectors, layoutContainer } from '@/src/ui/selectors';
 import { BaseElement, BaseLayoutContainer } from '@/src/ui/webElements';
+import { Header } from '@/src/ui/webElements/header';
+import { Actions } from '@/src/ui/webElements/overlay/actions';
+import { Configuration } from '@/src/ui/webElements/overlay/configuration';
 import { Page } from '@playwright/test';
 
-export class OverlayBasePage<T extends BaseLayoutContainer> extends BasePage {
+export class OverlayBasePage<
+  T extends BaseLayoutContainer<Header>,
+> extends BasePage {
   readonly overlayContainer: T;
 
   constructor(page: Page, overlayContainer: T) {
@@ -35,6 +40,23 @@ export class OverlayBasePage<T extends BaseLayoutContainer> extends BasePage {
     this.page,
     OverlaySelectors.overlayManagerContainer,
   );
+
+  public actions!: Actions;
+  public configuration!: Configuration;
+
+  getActions(): Actions {
+    if (!this.actions) {
+      this.actions = new Actions(this.page);
+    }
+    return this.actions;
+  }
+
+  getConfiguration(): Configuration {
+    if (!this.configuration) {
+      this.configuration = new Configuration(this.page);
+    }
+    return this.configuration;
+  }
 
   public async getTheme() {
     return new BaseElement(

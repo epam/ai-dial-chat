@@ -3,9 +3,9 @@ import { IconDownload, IconFile, IconFolder } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { PlotParams } from 'react-plotly.js';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
 
@@ -28,12 +28,12 @@ import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { PlotlyComponent } from '@/src/components/Plotly/Plotly';
 
-import LinkIcon from '../../../public/images/icons/arrow-up-right-from-square.svg';
-import ChevronDown from '../../../public/images/icons/chevron-down.svg';
 import Tooltip from '../Common/Tooltip';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { VisualizerRenderer } from '../VisualalizerRenderer/VisualizerRenderer';
 
+import LinkIcon from '@/public/images/icons/arrow-up-right-from-square.svg';
+import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import { Attachment, MIMEType } from '@epam/ai-dial-shared';
 import { sanitize } from 'isomorphic-dompurify';
 
@@ -328,7 +328,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
                 ? 'max-w-full'
                 : 'max-w-[calc(100%-30px)]',
             )}
-            title={attachment.title || attachment.url || t('Attachment') || ''}
+            title={attachment.title || attachment.url || t('Attachment')}
           >
             {attachment.title || attachment.url || t('Attachment')}
           </span>

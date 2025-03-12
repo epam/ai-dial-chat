@@ -1,18 +1,22 @@
 import { IconClipboardX } from '@tabler/icons-react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
 export const NoData = () => {
   const { t } = useTranslation(Translation.Common);
   return (
-    <div className="flex flex-col items-center justify-center gap-3">
+    <div
+      className="flex flex-col items-center justify-center gap-3"
+      data-qa="no-data-placeholder"
+    >
       <IconClipboardX
         height={60}
         width={60}
         stroke={0.5}
         className="text-secondary"
+        data-qa="no-data-icon"
       />
       <span>{t('No data')}</span>
     </div>

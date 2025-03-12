@@ -1,4 +1,4 @@
-import config from './chat.playwright.config';
+import config, { overlayHost } from './chat.playwright.config';
 
 import { ResultFolder } from '@/src/testData';
 import { workspaceRoot } from '@nx/devkit';
@@ -21,14 +21,14 @@ config.reporter = [
     },
   ],
 ];
-config.use!.baseURL = 'http://localhost:4200';
+config.use!.baseURL = overlayHost;
 config.use!.navigationTimeout = 60000;
 config.use!.actionTimeout = 60000;
 
 config.webServer = {
   cwd: workspaceRoot,
   command: 'npx nx serve:sandbox:production overlay-sandbox',
-  url: 'http://localhost:4200',
+  url: overlayHost,
   timeout: 300000,
   reuseExistingServer: true,
   stdout: 'pipe',

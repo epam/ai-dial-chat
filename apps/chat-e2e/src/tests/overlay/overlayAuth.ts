@@ -10,6 +10,10 @@ const overlayUsernames = process.env
   .E2E_OVERLAY_USERNAME!.split(',')
   .slice(0, +config.workers!);
 
+if (process.env.E2E_ADMIN) {
+  overlayUsernames.push(process.env.E2E_ADMIN);
+}
+
 for (let i = 0; i < overlayUsernames.length; i++) {
   // eslint-disable-next-line playwright/expect-expect
   test(`[Overlay] Login: ${overlayUsernames[i]}`, async ({
@@ -19,18 +23,17 @@ for (let i = 0; i < overlayUsernames.length; i++) {
     setTestIds('EPMRTC-3785');
     const overlayLoginPage = new OverlayLoginPage(page);
     await overlayLoginPage.navigateToUrl(
-      OverlaySandboxUrls.modelIdSetSandboxUrl,
+      OverlaySandboxUrls.disableAllFeaturesUrl,
     );
     const newPage = await overlayLoginPage.clickLoginButton();
 
     const loginPage = new LoginPage(newPage);
     await newPage.waitForLoadState();
-    if (await loginPage.auth0SignInButton.isVisible()) {
-      await loginPage.auth0SignInButton.click();
-    }
+    await loginPage.auth0SignInButton.click();
+
     const auth0Page = new Auth0Page(newPage);
     await newPage.waitForLoadState();
-    const auth0Form = auth0Page.getAuth0();
+    const auth0Form = auth0Page.getLoginForm();
     await auth0Form.setCredentials(
       overlayUsernames[i],
       process.env.E2E_PASSWORD!,

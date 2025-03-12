@@ -1,6 +1,15 @@
+import { getQuickAppDocumentUrl } from '@/src/utils/app/application';
+
+import { CustomApplicationModel } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
+import { DialFile } from '@/src/types/files';
+import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import { PromptInfo } from '@/src/types/prompt';
-import { PublicVersionGroups } from '@/src/types/publication';
+import {
+  PublicVersionGroups,
+  PublicationResource,
+  ResourceToReview,
+} from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 
 import {
@@ -10,6 +19,7 @@ import {
 } from '@/src/constants/public';
 
 import {
+  ApiUtils,
   addVersionToId,
   getPublicItemIdWithoutVersion,
   parseConversationApiKey,
@@ -18,10 +28,10 @@ import {
 import { isVersionValid } from './common';
 import { constructPath } from './file';
 import { getFolderIdFromEntityId, splitEntityId } from './folders';
-import { getEntityBucket, getRootId, isRootId } from './id';
+import { getEntityBucket, getRootId, isEntityIdExternal, isRootId } from './id';
 import { EnumMapper } from './mappers';
 
-import { ConversationInfo } from '@epam/ai-dial-shared';
+import { ConversationInfo, PublishActions } from '@epam/ai-dial-shared';
 
 export const isEntityIdPublic = (
   entity: { id: string },
@@ -94,7 +104,7 @@ export const findLatestVersion = (versions: string[]) => {
 };
 
 export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
-  items: { id: string; lastActivityDate?: number }[],
+  items: { id: string; updatedAt?: number }[],
   featureType: FeatureType,
 ) =>
   items.reduce<{
@@ -154,8 +164,7 @@ export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
       } as T;
 
       if (featureType === FeatureType.Chat) {
-        (itemToAdd as ConversationInfo).lastActivityDate =
-          item.lastActivityDate;
+        (itemToAdd as ConversationInfo).updatedAt = item.updatedAt;
       }
 
       acc.items.push(itemToAdd);
@@ -170,3 +179,113 @@ export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
 
 export const getPublicationId = (url: string) =>
   url.split('/').slice(-1).shift();
+
+export const getItemsIdsToRemoveAndHide = (
+  allResources: PublicationResource[],
+  resourcesToReview: ResourceToReview[],
+) => {
+  const itemsToHide: PublicationResource[] = [];
+  const itemsToRemove: PublicationResource[] = [];
+
+  const reviewUrlCountMap = resourcesToReview.reduce<Record<string, number>>(
+    (acc, res) => {
+      acc[res.reviewUrl] = (acc[res.reviewUrl] || 0) + 1;
+      return acc;
+    },
+    {},
+  );
+
+  allResources.forEach((resource) => {
+    const count = reviewUrlCountMap[resource.reviewUrl] || 0;
+
+    if (count > 1) {
+      itemsToHide.push(resource);
+    } else {
+      itemsToRemove.push(resource);
+    }
+  });
+
+  return {
+    itemsToHideIds: itemsToHide.map((item) => item.reviewUrl),
+    itemsToRemoveIds: itemsToRemove.map((item) => item.reviewUrl),
+  };
+};
+
+export const getApplicationPublishResources = ({
+  entity,
+  publishAction,
+  path,
+  applicationDetails,
+}: {
+  entity: PublishRequestDialAIEntityModel;
+  publishAction: PublishActions;
+  path: string;
+  applicationDetails?: CustomApplicationModel;
+}) => {
+  const iconUrl = entity.iconUrl;
+  const documentUrl = getQuickAppDocumentUrl(applicationDetails);
+
+  const resources = [
+    iconUrl && !isEntityIdExternal({ id: iconUrl }) ? iconUrl : undefined,
+    documentUrl,
+  ];
+
+  return resources.reduce(
+    (
+      acc: {
+        action: PublishActions;
+        sourceUrl?: string | undefined;
+        targetUrl: string;
+      }[],
+      id,
+    ) => {
+      if (id) {
+        return [
+          ...acc,
+          {
+            action: publishAction,
+            targetUrl:
+              publishAction === PublishActions.DELETE
+                ? ApiUtils.decodeApiUrl(id)
+                : createTargetUrl(FeatureType.File, path, id, SharingType.File),
+            sourceUrl:
+              publishAction === PublishActions.DELETE
+                ? undefined
+                : ApiUtils.decodeApiUrl(id),
+          },
+        ];
+      }
+      return acc;
+    },
+    [],
+  );
+};
+
+export const getFilesFromPublicResources = ({
+  fileResources,
+  payloadUrl,
+}: {
+  fileResources: PublicationResource[];
+  payloadUrl: string;
+}): { publicFiles: DialFile[]; foldersSet: Set<string> } => {
+  const foldersSet = new Set<string>();
+  const publicFiles: DialFile[] = fileResources.map((r) => {
+    const folderId = getFolderIdFromEntityId(r.reviewUrl);
+    foldersSet.add(folderId); // Add folderId to the Set
+
+    return {
+      id: r.reviewUrl,
+      folderId,
+      name: splitEntityId(r.targetUrl).name,
+      contentLength: 0,
+      contentType: '',
+      isPublicationFile: true,
+      publicationInfo: {
+        action: r.action,
+        publicationUrl: payloadUrl,
+      },
+    };
+  });
+
+  return { publicFiles, foldersSet };
+};

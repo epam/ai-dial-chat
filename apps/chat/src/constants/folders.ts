@@ -8,3 +8,5 @@ export const PROMPT_VARIABLE_REGEX_GLOBAL = new RegExp(
   PROMPT_VARIABLE_REGEX_TEST,
   'g',
 );
+
+export const METADATA_PREFIX = 'metadata/';

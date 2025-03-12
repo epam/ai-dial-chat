@@ -1,4 +1,8 @@
-import { MenuSelectors, SideBarSelectors } from '../../../selectors';
+import {
+  EntitySelectors,
+  MenuSelectors,
+  SideBarSelectors,
+} from '../../../selectors';
 
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { EditInput } from '@/src/ui/webElements/editInput';
@@ -7,6 +11,10 @@ import { EntitiesTree } from '@/src/ui/webElements/entityTree';
 
 export class SideBarEntitiesTree extends EntitiesTree {
   private editEntityInput!: EditInput;
+
+  public treeEntityNames = this.getChildElementBySelector(
+    EntitySelectors.entityName,
+  );
 
   getEditEntityInput(): EditInput {
     if (!this.editEntityInput) {
@@ -67,6 +75,7 @@ export class SideBarEntitiesTree extends EntitiesTree {
     await this.entityDotsMenu(name, indexOrOptions).click({ force: true });
     await this.getDropdownMenu().waitForState();
   }
+
   async openEditEntityNameMode(newName: string) {
     const input = this.getEditEntityInput();
     await input.editValue(newName);
@@ -78,7 +87,7 @@ export class SideBarEntitiesTree extends EntitiesTree {
     { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
   ) {
     return this.getDropdownMenu().selectMenuOption(name, {
-      triggeredHttpMethod: 'DELETE',
+      triggeredHttpMethod: 'POST',
       isHttpMethodTriggered,
     });
   }

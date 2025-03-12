@@ -146,7 +146,7 @@ dialSharedWithMeTest(
           folderConversation.folders.name,
           folderConversation.conversations[0].name,
         );
-        await additionalShareUserChat.duplicateSharedConversation();
+        await additionalShareUserChat.duplicateConversation();
 
         await expect
           .soft(
@@ -162,10 +162,8 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserSharedWithMeConversations.selectConversation(
           conversationName,
-          undefined,
-          { isHttpMethodTriggered: false },
         );
-        await additionalShareUserChat.duplicateSharedConversation();
+        await additionalShareUserChat.duplicateConversation();
         await additionalShareUserConversations
           .getEntityByName(`${conversationName} 1`)
           .waitFor();
@@ -282,7 +280,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Click on "Duplicate the conversation to be able to edit it" button and verify comparing conversations are duplicated and opened in Compare mode',
       async () => {
-        await additionalShareUserChat.duplicateSharedConversation();
+        await additionalShareUserChat.duplicateConversation();
         await additionalShareUserCompare.waitForComparedConversationsLoaded();
         await additionalShareUserChatAssertion.assertDuplicateButtonState(
           'hidden',
@@ -317,7 +315,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Click on "Duplicate the conversation to be able to edit it" button and verify comparing conversations are duplicated and opened in Compare mode',
       async () => {
-        await additionalShareUserChat.duplicateSharedConversation();
+        await additionalShareUserChat.duplicateConversation();
         await additionalShareUserCompare.waitForComparedConversationsLoaded();
         await additionalShareUserChatAssertion.assertDuplicateButtonState(
           'hidden',

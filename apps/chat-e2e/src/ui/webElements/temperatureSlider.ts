@@ -15,11 +15,14 @@ export class TemperatureSlider extends BaseElement {
     return this.slider.getElementContent();
   }
 
-  async setTemperature(temperature: number) {
+  async setTemperature(temperature: string | number) {
+    const numericTemperature =
+      typeof temperature === 'string' ? parseFloat(temperature) : temperature;
+
     await this.slider.scrollIntoElementView();
     const bounding = await this.slider.getElementBoundingBox();
     await this.page.mouse.move(
-      bounding!.x + bounding!.width! * temperature,
+      bounding!.x + bounding!.width! * numericTemperature,
       bounding!.y + bounding!.height! / 2,
     );
     await this.page.mouse.down();

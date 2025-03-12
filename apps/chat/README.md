@@ -34,29 +34,29 @@ Once you have Node.js and npm installed, follow these steps to set up your devel
 
 1. Clone the AI DIAL Chat repository:
 
-```
-git clone https://github.com/epam/ai-dial-chat.git
-```
+   ```bash
+   git clone https://github.com/epam/ai-dial-chat.git
+   ```
 
 2. Install project dependencies:
 
-```bash
-npm install
-```
+   ```bash
+   npm install
+   ```
 
 3. Create `.env.local` file in the `\apps\chat` project directory and add the required variables with appropriate values. These three are the only required environment variables. Refer to [Environment Variables](#environment-variables) to learn more.
 
-```
-DIAL_API_HOST="ADD_VALUE_HERE"
-DIAL_API_KEY="ADD_VALUE_HERE"
-NEXTAUTH_SECRET="ADD_VALUE_HERE"
-```
+   ```bash
+   DIAL_API_HOST="ADD_VALUE_HERE"
+   DIAL_API_KEY="ADD_VALUE_HERE"
+   NEXTAUTH_SECRET="ADD_VALUE_HERE"
+   ```
 
 4. To start the development server, run:
 
-```bash
-npm run nx serve chat
-```
+   ```bash
+   npm run nx serve chat
+   ```
 
 Once the server is up and running, open `http://localhost:3000` in your browser to view the AI DIAL Chat application.
 
@@ -103,7 +103,7 @@ AI DIAL Chat uses environment variables for configuration. All environment varia
 | Variable                                  | Required | Description                                                                                                                                                                                                                                                                                                                   | Available Values                                                                                 | Default values                                                                                                                     |
 | ----------------------------------------- | :------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `DIAL_API_HOST`                           |   Yes    | AI DIAL Core API Host.<br />Refer to [AI DIAL Core](https://github.com/epam/ai-dial-core?tab=readme-ov-file#dynamic-settings).                                                                                                                                                                                                | Any string                                                                                       |                                                                                                                                    |
-| `DIAL_API_KEY`                            |   Yes    | AI DIAL Core API Key.<br />Refer to [AI DIAL Core](https://github.com/epam/ai-dial-core?tab=readme-ov-file#dynamic-settings) to learn how to set up AI DIAL Core and define API keys.                                                                                                                                         | Any string                                                                                       |                                                                                                                                    |
+| `DIAL_API_KEY`                            | Optional | AI DIAL Core API Key.<br />Define this variable if authorization using JWT is not configured.<br />Refer to [AI DIAL Core](https://github.com/epam/ai-dial-core?tab=readme-ov-file#dynamic-settings) to learn how to set up AI DIAL Core and define API keys.                                                                 | Any string                                                                                       |                                                                                                                                    |
 | `DIAL_API_VERSION`                        |    No    | AI DIAL API Version                                                                                                                                                                                                                                                                                                           | Any string                                                                                       | `2024-02-01`                                                                                                                       |
 | `APP_BASE_PATH`                           |    No    | The root directory in the file system where the application is located                                                                                                                                                                                                                                                        | Any string                                                                                       |                                                                                                                                    |
 | `APP_BASE_ORIGIN`                         | Optional | A base URL or origin of the application.<br />Required if `APP_BASE_PATH` is set.                                                                                                                                                                                                                                             | Any string                                                                                       |                                                                                                                                    |
@@ -156,6 +156,7 @@ The table below presents a list of environment variables you can use to configur
 | `NEXTAUTH_SECRET`                |                           Yes                            | NextAuth Secret (generate by `openssl rand -base64 32` for example)                                                                                                                                                                                | Any string                                                                                                                      |                                                 |
 | `ADMIN_ROLE_NAMES`               |                            No                            | Defines default administrator role names                                                                                                                                                                                                           | Any string. Values must be separated by a comma.                                                                                | `admin`                                         |
 | `DIAL_ROLES_FIELD`               |                            No                            | Defines the path of the roles field in JWT token                                                                                                                                                                                                   | Any string. Value can be dot-separated. E.g. path `realm_access.roles` if there is a claim `realm_access: { roles: ['admin'] }` | `dial_roles`                                    |
+| `CODE_APPS_ROLES`                |                            No                            | Defines roles that allows to create code applications                                                                                                                                                                                              | Any string. Values must be separated by a comma.                                                                                |
 | `AUTH_AUTH0_AUDIENCE`            |                            No                            | Auth0 Audience                                                                                                                                                                                                                                     | Any string                                                                                                                      |                                                 |
 | `AUTH_AUTH0_CLIENT_ID`           |                            No                            | Auth0 Client ID                                                                                                                                                                                                                                    | Any string                                                                                                                      |                                                 |
 | `AUTH_AUTH0_HOST`                |                            No                            | Auth0 Host                                                                                                                                                                                                                                         | Any string                                                                                                                      |                                                 |

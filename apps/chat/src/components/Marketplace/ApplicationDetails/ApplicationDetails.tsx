@@ -2,6 +2,8 @@ import { useCallback, useMemo } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
+import { getGroupModelKey } from '@/src/utils/app/models';
+
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 
@@ -11,7 +13,7 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 
-import Modal from '../../Common/Modal';
+import { Modal } from '../../Common/Modal';
 import { ApplicationDetailsContent } from './ApplicationContent';
 import { ApplicationDetailsFooter } from './ApplicationFooter';
 import { ApplicationDetailsHeader } from './ApplicationHeader';
@@ -19,7 +21,6 @@ import { ApplicationDetailsHeader } from './ApplicationHeader';
 import { PublishActions } from '@epam/ai-dial-shared';
 
 interface Props {
-  isMobileView: boolean;
   entity: DialAIEntityModel;
   allEntities: DialAIEntityModel[];
   isMyAppsTab: boolean;
@@ -34,7 +35,6 @@ interface Props {
 
 export const ApplicationDetails = ({
   entity,
-  isMobileView,
   allEntities,
   isMyAppsTab,
   isSuggested,
@@ -56,10 +56,10 @@ export const ApplicationDetails = ({
   const filteredEntities = useMemo(() => {
     return allEntities.filter(
       (e) =>
-        entity.name === e.name &&
+        getGroupModelKey(entity) === getGroupModelKey(e) &&
         (!isMyAppsTab || installedModelIds.has(e.reference) || isSuggested),
     );
-  }, [allEntities, entity.name, installedModelIds, isMyAppsTab, isSuggested]);
+  }, [allEntities, entity, installedModelIds, isMyAppsTab, isSuggested]);
 
   const handleUseEntity = useCallback(() => {
     dispatch(
@@ -70,6 +70,7 @@ export const ApplicationDetails = ({
         selectedModelId: entity.reference,
       }),
     );
+    dispatch(ConversationsActions.setIsStartedCustomViewerConversation(true));
   }, [dispatch, entity.reference, searchParams]);
 
   return (
@@ -78,10 +79,10 @@ export const ApplicationDetails = ({
       state={ModalState.OPENED}
       dataQa="marketplace-agent-details"
       overlayClassName="!z-40"
-      containerClassName="flex w-full flex-col divide-y divide-tertiary divide-tertiary xl:max-w-[720px] max-w-[700px]"
+      containerClassName="flex w-full flex-col divide-y divide-tertiary xl:max-w-[720px] max-w-[700px]"
       onClose={onClose}
     >
-      <ApplicationDetailsHeader isMobileView={isMobileView} entity={entity} />
+      <ApplicationDetailsHeader entity={entity} />
       <ApplicationDetailsContent entity={entity} />
       <ApplicationDetailsFooter
         onPublish={onPublish}

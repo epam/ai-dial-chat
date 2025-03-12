@@ -1,4 +1,5 @@
-import { BaseAssertion } from '@/src/assertions/baseAssertion';
+import { DialAIEntityModel } from '@/chat/types/models';
+import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ExpectedMessages } from '@/src/testData';
 import { AgentInfo } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
@@ -18,10 +19,18 @@ export class AgentInfoAssertion extends BaseAssertion {
     );
   }
 
-  public async assertDescription(expectedDescription?: string) {
+  public async assertShortDescription(expectedModel: DialAIEntityModel) {
     const description = await this.agentInfo.getAgentDescription();
     expect
       .soft(description, ExpectedMessages.agentDescriptionIsValid)
-      .toBe(expectedDescription ?? '');
+      .toBe(expectedModel.description?.split(/\s*\n\s*\n\s*/g)[0] ?? '');
+  }
+
+  public async assertAgentName(expectedName: string) {
+    await this.assertElementText(
+      this.agentInfo.agentName,
+      expectedName,
+      ExpectedMessages.agentNameIsValid,
+    );
   }
 }

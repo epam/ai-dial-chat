@@ -76,6 +76,9 @@ module.exports = {
       },
       screens: {
         sm: '560px',
+        '3xl': '1770px',
+        '4xl': '2120px',
+        '5xl': '2560px',
       },
       borderRadius: {
         DEFAULT: '3px',
@@ -89,6 +92,7 @@ module.exports = {
       },
       fontFamily: {
         DEFAULT: ['var(--theme-font, var(--font-inter))'],
+        theme: ['var(--theme-font, var(--font-inter))'],
         codeblock: ['var(--codeblock-font, var(--theme-font))'],
       },
       fontSize: {

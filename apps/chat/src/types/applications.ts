@@ -1,7 +1,7 @@
 import { DialAIEntityFeatures, DialAIEntityModel } from './models';
 import { QuickAppConfig } from './quick-apps';
 
-import { Entity } from '@epam/ai-dial-shared';
+import { ShareEntity } from '@epam/ai-dial-shared';
 
 export enum ApplicationStatus {
   DEPLOYED = 'DEPLOYED',
@@ -9,12 +9,14 @@ export enum ApplicationStatus {
   UNDEPLOYED = 'UNDEPLOYED',
   UNDEPLOYING = 'UNDEPLOYING',
   FAILED = 'FAILED',
+  REDEPLOYING = 'REDEPLOYING',
 }
 
 export enum SimpleApplicationStatus {
   DEPLOY = 'deploy',
   UNDEPLOY = 'undeploy',
   UPDATING = 'updating',
+  REDEPLOY = 'redeploy',
 }
 
 export interface ApiApplicationFunctionType {
@@ -74,6 +76,11 @@ export interface ApiApplicationModelBase {
   applicationProperties?: QuickAppConfig | Record<string, unknown>;
 }
 
+export interface ApiTypeSchemaApplication extends ApiApplicationModelBase {
+  application_type_schema_id: string;
+  application_properties: QuickAppConfig | Record<string, unknown> | null;
+}
+
 export interface ApiApplicationModelRegular extends ApiApplicationModelBase {
   endpoint: string;
   function?: never;
@@ -91,16 +98,18 @@ export interface ApiApplicationModelFunction extends ApiApplicationModelBase {
 
 export type ApiApplicationModel =
   | ApiApplicationModelRegular
+  | ApiTypeSchemaApplication
   | ApiApplicationModelFunction
   | ApiApplicationModelSchema;
 
-export interface ApplicationInfo extends Entity {
+export interface ApplicationInfo extends ShareEntity {
   version: string;
 }
 export interface CustomApplicationModel
   extends DialAIEntityModel,
     ApplicationInfo {
   completionUrl: string;
+  applicationTypeSchemaId?: string;
   function?: {
     status?: ApplicationStatus;
     runtime?: string;
@@ -122,7 +131,6 @@ export enum ApplicationActionType {
 }
 
 export enum ApplicationType {
-  CUSTOM_APP = 'application',
-  QUICK_APP = 'quick app',
+  CUSTOM_APP = 'custom app',
   CODE_APP = 'code app',
 }

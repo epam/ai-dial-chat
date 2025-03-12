@@ -93,7 +93,7 @@ export const cleanConversation = (
     messages: conversation.messages?.map(migrateMessageAttachmentUrls) || [],
     selectedAddons: conversation.selectedAddons ?? [],
     assistantModelId,
-    lastActivityDate: conversation.lastActivityDate || 0,
+    updatedAt: conversation.updatedAt || conversation.lastActivityDate || 0,
     isNameChanged: conversation.isNameChanged,
     ...(conversation.playback && {
       playback: {

@@ -5,13 +5,13 @@ import {
   IconLayoutGrid,
   TablerIconsProps,
 } from '@tabler/icons-react';
-import { JSX, useCallback, useState } from 'react';
-
-import { useTranslation } from 'next-i18next';
+import { JSX, memo, useCallback, useState } from 'react';
 
 import classNames from 'classnames';
 
-import { EntityType } from '@/src/types/common';
+import { useTranslation } from '@/src/hooks/useTranslation';
+
+import { MarketplaceFilters } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -22,7 +22,11 @@ import {
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { FilterTypes, MarketplaceTabs } from '@/src/constants/marketplace';
+import {
+  ENTITY_TYPES,
+  FilterTypes,
+  MarketplaceTabs,
+} from '@/src/constants/marketplace';
 
 import Tooltip from '../Common/Tooltip';
 
@@ -58,7 +62,7 @@ const FilterItem = ({
         size={18}
         className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
       />
-      <span className="ml-2 whitespace-nowrap text-sm">
+      <span className="ml-2 whitespace-nowrap text-sm" data-qa="option-label">
         {displayValue ?? filterValue}
       </span>
     </label>
@@ -68,10 +72,7 @@ const FilterItem = ({
 interface FilterSectionProps {
   sectionName: string;
   openedSections: Record<FilterTypes, boolean>;
-  selectedFilters: {
-    Type: string[];
-    Topics: string[];
-  };
+  selectedFilters: MarketplaceFilters;
   filterValues: string[];
   filterType: FilterTypes;
   onToggleFilterSection: (filterType: FilterTypes) => void;
@@ -98,6 +99,7 @@ const FilterSection = ({
         onClick={() => onToggleFilterSection(filterType)}
         className="flex w-full justify-between font-semibold"
         data-qa="filter-property"
+        aria-expanded={openedSections[filterType]}
       >
         <h5 className="text-sm">{sectionName}</h5>
         <IconChevronUp
@@ -128,12 +130,6 @@ const FilterSection = ({
     </div>
   );
 };
-
-const entityTypes = [
-  EntityType.Model,
-  EntityType.Assistant,
-  EntityType.Application,
-];
 
 interface ActionButtonProps {
   isOpen: boolean;
@@ -179,7 +175,7 @@ const ActionButton = ({
 
 const getTypeLabel = (value: string) => `${capitalize(value)}s`;
 
-export const MarketplaceFilterbar = () => {
+export const MarketplaceFilterbar = memo(() => {
   const { t } = useTranslation(Translation.SideBar);
 
   const dispatch = useAppDispatch();
@@ -193,12 +189,14 @@ export const MarketplaceFilterbar = () => {
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
 
   const topics = useAppSelector(ModelsSelectors.selectModelTopics);
+  const sourceTypes = useAppSelector(MarketplaceSelectors.selectSourceTypes);
 
   const [openedSections, setOpenedSections] = useState({
     [FilterTypes.ENTITY_TYPE]: true,
     // [FilterTypes.CAPABILITIES]: false,
     // [FilterTypes.ENVIRONMENT]: false,
     [FilterTypes.TOPICS]: true,
+    [FilterTypes.SOURCES]: true,
   });
 
   const handleApplyFilter = (type: FilterTypes, value: string) => {
@@ -220,7 +218,7 @@ export const MarketplaceFilterbar = () => {
   );
 
   const handleMyAppsClick = useCallback(
-    () => handleChangeTab(MarketplaceTabs.MY_APPLICATIONS),
+    () => handleChangeTab(MarketplaceTabs.MY_WORKSPACE),
     [handleChangeTab],
   );
 
@@ -236,7 +234,7 @@ export const MarketplaceFilterbar = () => {
         showFilterbar
           ? 'w-[320px] lg:w-[260px]'
           : 'invisible lg:visible lg:w-[64px]',
-        'group/sidebar absolute left-0 top-0 z-40 h-full shrink-0 flex-col gap-px divide-y divide-tertiary bg-layer-3 lg:sticky lg:z-0',
+        'group/sidebar absolute left-0 top-0 z-40 flex h-full shrink-0 flex-col gap-px divide-y divide-tertiary bg-layer-3 lg:sticky lg:z-0',
       )}
       data-qa="marketplace-sidebar"
     >
@@ -254,15 +252,15 @@ export const MarketplaceFilterbar = () => {
           onClick={handleMyAppsClick}
           caption={t('My workspace')}
           Icon={IconHome2}
-          selected={selectedTab === MarketplaceTabs.MY_APPLICATIONS}
-          dataQa="my-applications"
+          selected={selectedTab === MarketplaceTabs.MY_WORKSPACE}
+          dataQa="my-workspace"
         />
       </div>
       {showFilterbar && (
-        <>
+        <div className="h-full overflow-y-auto">
           <FilterSection
             sectionName={t('Type')}
-            filterValues={entityTypes}
+            filterValues={ENTITY_TYPES}
             openedSections={openedSections}
             selectedFilters={selectedFilters}
             filterType={FilterTypes.ENTITY_TYPE}
@@ -279,8 +277,21 @@ export const MarketplaceFilterbar = () => {
             onToggleFilterSection={handleToggleFilterSection}
             onApplyFilter={handleApplyFilter}
           />
-        </>
+          {sourceTypes.length > 1 && (
+            <FilterSection
+              sectionName={t('Sources')}
+              filterValues={sourceTypes}
+              openedSections={openedSections}
+              selectedFilters={selectedFilters}
+              filterType={FilterTypes.SOURCES}
+              onToggleFilterSection={handleToggleFilterSection}
+              onApplyFilter={handleApplyFilter}
+            />
+          )}
+        </div>
       )}
     </nav>
   );
-};
+});
+
+MarketplaceFilterbar.displayName = 'MarketplaceFilterbar';

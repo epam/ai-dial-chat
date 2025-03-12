@@ -7,10 +7,15 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState): ApplicationState => state.application;
 
-export const selectIsApplicationLoading = createSelector(
+export const selectAppLoading = createSelector(
   [rootSelector],
-  (state) => {
-    return state.appLoading === UploadStatus.LOADING;
+  (state) => state.appLoading,
+);
+
+export const selectIsApplicationLoading = createSelector(
+  [selectAppLoading],
+  (status) => {
+    return status === UploadStatus.LOADING;
   },
 );
 
@@ -43,3 +48,16 @@ export const selectApplicationLogs = createSelector([rootSelector], (state) => {
     })
     .join('');
 });
+
+export const selectShouldSaveApplication = createSelector(
+  [rootSelector],
+  (state) => state.shouldSaveApplication,
+);
+
+export const selectExitAfterSave = createSelector(
+  [rootSelector],
+  (state) => state.exitAfterSave,
+);
+
+export const selectPublicFolders = (state: RootState) =>
+  rootSelector(state).publicFolders;

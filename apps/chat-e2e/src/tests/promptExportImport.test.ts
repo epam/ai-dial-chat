@@ -41,7 +41,8 @@ dialTest(
     sendMessage,
     talkToAgentDialog,
     marketplacePage,
-    chatMessagesAssertion,
+    apiAssertion,
+    sendMessageAssertion,
     chat,
   }) => {
     setTestIds('EPMRTC-883', 'EPMRTC-895', 'EPMRTC-3835', 'EPMRTC-3822');
@@ -144,17 +145,12 @@ dialTest(
           .selectPromptWithKeyboard(promptOutsideFolder.name, {
             triggeredHttpMethod: 'GET',
           });
-
-        const selectedPromptContent =
-          await sendMessage.messageInput.getElementContent();
-        expect
-          .soft(selectedPromptContent, ExpectedMessages.promptNameValid)
-          .toBe(promptContent);
+        await sendMessageAssertion.assertMessageValue(promptContent);
       },
     );
 
     await dialTest.step(
-      'Send request and verify response corresponds prompt',
+      'Send request and verify prompt content is set as a user message',
       async () => {
         const simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
         if (simpleRequestModel !== undefined) {
@@ -163,9 +159,14 @@ dialTest(
             simpleRequestModel,
             marketplacePage,
           );
-          await chat.sendRequestWithPrompt(promptContent);
-          await chat.sendRequestWithButton('white');
-          await chatMessagesAssertion.assertLastMessageContent('black');
+          const request = await chat.sendRequestWithPrompt(
+            promptContent,
+            false,
+          );
+          await apiAssertion.assertRequestMessage(
+            request.messages[0],
+            promptContent,
+          );
         }
       },
     );

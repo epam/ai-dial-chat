@@ -9,20 +9,15 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { findLatestVersion, isVersionValid } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
-import {
-  getIdWithoutRootPathSegments,
-  getRootId,
-  isEntityIdExternal,
-} from '@/src/utils/app/id';
+import { getIdWithoutRootPathSegments, getRootId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
-import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -46,15 +41,14 @@ import {
   PUBLIC_URL_PREFIX,
 } from '@/src/constants/public';
 
+import { ApplicationPublishItems } from '@/src/components/Chat/Publish/ApplicationPublishItems';
 import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
 import {
-  ApplicationRow,
   ConversationRow,
   FilesRow,
   PromptsRow,
 } from '@/src/components/Common/ReplaceConfirmationModal/Components';
 
-import { ErrorMessage } from '../../Common/ErrorMessage';
 import Tooltip from '../../Common/Tooltip';
 import Folder from '../../Folder/Folder';
 import { PublicVersionSelector } from './PublicVersionSelector';
@@ -441,7 +435,7 @@ export const PublicationItemsList = memo(
                       />
                       <a
                         download={f.name}
-                        href={constructPath('api', f.id)}
+                        href={constructPath('/api', f.id)}
                         data-qa="download"
                       >
                         <IconDownload
@@ -546,48 +540,12 @@ export const PublicationItemsList = memo(
           </CollapsibleSection>
         )}
         {type === SharingType.Application && (
-          <>
-            <CollapsibleSection
-              togglerClassName="!text-sm !text-primary"
-              name={t('Applications')}
-              openByDefault
-              dataQa="applications-to-send-request"
-              className="!pl-0"
-            >
-              <ApplicationRow
-                onSelect={handleSelectItems}
-                itemComponentClassNames={classNames(
-                  'cursor-pointer',
-                  publishAction === PublishActions.DELETE && 'text-error',
-                )}
-                item={entity}
-                level={0}
-                isChosen={chosenItemsIds.some((id) => id === entity.id)}
-              />
-            </CollapsibleSection>
-
-            {publishAction === PublishActions.ADD &&
-              'iconUrl' in entity &&
-              entity.iconUrl &&
-              isEntityIdExternal({ id: entity.iconUrl }) && (
-                <CollapsibleSection
-                  togglerClassName="!text-sm !text-primary"
-                  name={t('Files')}
-                  openByDefault
-                  dataQa="files-to-send-request"
-                  className="!pl-0"
-                >
-                  <ErrorMessage
-                    type="warning"
-                    error={
-                      t(
-                        `The icon used for this app is in the ${isEntityIdPublic({ id: entity.iconUrl }) ? 'organization' : 'shared'} section and cannot be published. Please replace the icon, otherwise the app will be published with the default one.`,
-                      ) ?? ''
-                    }
-                  />
-                </CollapsibleSection>
-              )}
-          </>
+          <ApplicationPublishItems
+            entity={entity as PublishRequestDialAIEntityModel}
+            handleSelectItems={handleSelectItems}
+            publishAction={publishAction}
+            chosenItemsIds={chosenItemsIds}
+          />
         )}
       </div>
     );

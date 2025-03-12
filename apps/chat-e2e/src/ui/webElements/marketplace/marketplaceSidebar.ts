@@ -23,7 +23,7 @@ export class MarketplaceSidebar extends BaseElement {
   public marketplaceHomePageButton = this.getChildElementBySelector(
     MarketplaceSideBarSelectors.marketplaceHomePageButton,
   );
-  public myApplicationsButton = this.getChildElementBySelector(
-    MarketplaceSideBarSelectors.myApplicationsButton,
+  public myWorkspaceButton = this.getChildElementBySelector(
+    MarketplaceSideBarSelectors.myWorkspaceButton,
   );
 }

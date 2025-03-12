@@ -14,6 +14,7 @@ import { generateNextName } from '@/src/utils/app/folders';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
 import { ApiUtils, parseApplicationApiKey } from '@/src/utils/server/api';
 
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
   ApplicationInfo,
   ApplicationLogsType,
@@ -21,7 +22,11 @@ import {
   SimpleApplicationStatus,
 } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
-import { BackendResourceType, MoveModel } from '@/src/types/common';
+import {
+  BackendChatEntity,
+  BackendResourceType,
+  MoveModel,
+} from '@/src/types/common';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
@@ -36,7 +41,11 @@ import { ApplicationApiStorage } from './api/application-api-storage';
 import { ConversationApiStorage } from './api/conversation-api-storage';
 import { PromptApiStorage } from './api/prompt-api-storage';
 
-import { ConversationInfo, Entity } from '@epam/ai-dial-shared';
+import {
+  ConversationInfo,
+  Entity,
+  MessageFormSchema,
+} from '@epam/ai-dial-shared';
 
 const MAX_RETRIES_COUNT = 3;
 
@@ -134,6 +143,10 @@ export class ApiStorage implements DialStorage {
     return this._conversationApiStorage.getEntity(info);
   }
 
+  getConversationMetadata(id: string): Observable<BackendChatEntity | null> {
+    return this._conversationApiStorage.getEntityMetadata(id);
+  }
+
   createConversation(
     conversation: Conversation,
   ): Observable<ConversationInfo | null> {
@@ -160,7 +173,7 @@ export class ApiStorage implements DialStorage {
     );
   }
 
-  updateConversation(conversation: Conversation): Observable<void> {
+  updateConversation(conversation: Conversation): Observable<ConversationInfo> {
     return this._conversationApiStorage.updateEntity(conversation);
   }
 
@@ -206,6 +219,10 @@ export class ApiStorage implements DialStorage {
     return this._promptApiStorage.getEntity(info);
   }
 
+  getPromptMetadata(id: string): Observable<BackendChatEntity | null> {
+    return this._promptApiStorage.getEntityMetadata(id);
+  }
+
   createPrompt(prompt: Prompt): Observable<PromptInfo | null> {
     return this._promptApiStorage.createEntity(prompt).pipe(
       catchError(() => {
@@ -226,7 +243,7 @@ export class ApiStorage implements DialStorage {
     );
   }
 
-  updatePrompt(prompt: Prompt): Observable<void> {
+  updatePrompt(prompt: Prompt): Observable<PromptInfo> {
     return this._promptApiStorage.updateEntity(prompt);
   }
 
@@ -264,12 +281,16 @@ export class ApiStorage implements DialStorage {
 
   createApplication(
     application: CustomApplicationModel,
+    schema: ApiDetailedApplicationTypeSchema,
   ): Observable<ApplicationInfo> {
-    return this._applicationApiStorage.createEntity(application);
+    return this._applicationApiStorage.createEntity(application, schema);
   }
 
-  updateApplication(application: CustomApplicationModel): Observable<void> {
-    return this._applicationApiStorage.updateEntity(application);
+  updateApplication(
+    application: CustomApplicationModel,
+    schema?: ApiDetailedApplicationTypeSchema,
+  ): Observable<ApplicationInfo> {
+    return this._applicationApiStorage.updateEntity(application, schema);
   }
   getApplication(
     applicationId: string,
@@ -295,6 +316,13 @@ export class ApiStorage implements DialStorage {
     );
   }
 
+  redeployApplication(applicationId: string): Observable<void> {
+    return this._applicationApiStorage.toggleApplicationStatus(
+      applicationId,
+      SimpleApplicationStatus.REDEPLOY,
+    );
+  }
+
   undeployApplication(applicationId: string): Observable<void> {
     return this._applicationApiStorage.toggleApplicationStatus(
       applicationId,
@@ -304,5 +332,9 @@ export class ApiStorage implements DialStorage {
 
   getApplicationLogs(path: string): Observable<ApplicationLogsType> {
     return this._applicationApiStorage.getLogs(path);
+  }
+
+  getApplicationConfig(applicationId: string): Observable<MessageFormSchema> {
+    return this._applicationApiStorage.getConfigurationSchema(applicationId);
   }
 }

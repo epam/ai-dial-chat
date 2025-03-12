@@ -1,9 +1,9 @@
 import { IconCheck, IconX } from '@tabler/icons-react';
 import { useCallback, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { translate } from '@/src/utils/app/translation';
@@ -18,7 +18,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
-import Modal from '../../Common/Modal';
+import { Modal } from '../../Common/Modal';
 import { MultipleComboBox } from '../../Common/MultipleComboBox';
 import { RegexParamInput } from './RegexParamInput';
 import { RulesSelect } from './RulesSelect';
@@ -215,7 +215,7 @@ export function TargetAudienceFilterComponent({
                   getItemLabel={getItemLabel}
                   getItemValue={getItemLabel}
                   onChangeSelectedItems={handleChangeFilterParams}
-                  placeholder={t('Enter one or more options...') as string}
+                  placeholder={t('Enter one or more options...')}
                 />
               )}
             </div>
@@ -272,7 +272,7 @@ export function TargetAudienceFilterComponent({
           getItemValue={getItemLabel}
           onChangeSelectedItems={handleChangeFilterParams}
           fontSize="text-xs"
-          placeholder={t('Enter one or more options...') as string}
+          placeholder={t('Enter one or more options...')}
         />
       )}
       {/* } */}

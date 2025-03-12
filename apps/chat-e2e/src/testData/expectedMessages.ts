@@ -47,6 +47,7 @@ export enum ExpectedMessages {
   cannotDeleteSelectedAddon = 'Selected addon cannot be deleted',
   recentAddonsVisible = 'Recent addons are visible',
   recentEntitiesVisible = 'Recent entities are visible',
+  recentEntitiesIsValid = 'Recent entities field is valid',
   recentEntitiesIsOnTop = 'Recent entity is on top of the list',
   systemPromptIsValid = 'Set System Prompt is preserved',
   conversationRenamed = 'Conversation is renamed',
@@ -91,9 +92,9 @@ export enum ExpectedMessages {
   chatRequestAddonsAreValid = 'Chat API request addons are valid',
   chatRequestMessageIsValid = 'Chat API request message is valid',
   chatRequestAttachmentIsValid = 'Chat API request attachment is valid',
-  promptRequestNameIsValid = 'Prompt API request name is valid',
-  promptRequestDescriptionIsValid = 'Prompt API request description is valid',
-  promptRequestContentIsValid = 'Prompt API request content is valid',
+  moveDestinationIsValid = 'Move API request destination is valid',
+  moveSourceIsValid = 'Move API request source is valid',
+  moveOverwriteIsValid = 'Move API request overwrite is valid',
   sendMessageButtonDisabled = 'Send message button is disabled',
   sendMessageButtonEnabled = 'Send message button is enabled',
   tooltipContentIsValid = 'Tooltip content is valid',
@@ -287,6 +288,7 @@ export enum ExpectedMessages {
   fileIsAttached = 'File is attached to message box',
   fileIsNotHighlighted = 'File is not highlighted',
   fileIsNotAttached = 'File is removed from message box',
+  fileContentIsValid = 'File content is valid',
   attachedFilesCountIsValid = 'Attached files count is valid',
   removeAttachmentIconIsHighlighted = 'Remove attachment icon is highlighted',
   attachmentsAreGrouped = 'Attachments are grouped',
@@ -299,6 +301,7 @@ export enum ExpectedMessages {
   filesCountIsValid = 'Files count is valid',
   fileExtensionIsValid = 'File extension is valid',
   elementAttributeValueIsValid = 'Element attribute value is valid',
+  elementAttributeValueShouldBe = 'Element attribute value should be: ',
   uploadedFilesAreaIsScrollable = 'Uploaded files area is scrollable vertically',
   fieldIsInFocus = 'Field is in focus',
   errorMessageIsShown = 'Error message is shown',
@@ -310,6 +313,7 @@ export enum ExpectedMessages {
   folderTextColorIsValid = 'Folder text color is valid',
   selectFolderAreaIsScrollable = 'Select folder area is scrollable vertically',
   borderColorsAreValid = 'Element border colors are valid',
+  elementCursorIsValid = 'Element cursor is valid',
   uploadToPathIsValid = 'Upload to path is valid',
   uploadToPathIsTruncated = 'Upload to path is truncated',
   folderCheckboxIsNotVisible = 'Folder check-box is not visible',
@@ -365,10 +369,18 @@ export enum ExpectedMessages {
   elementIsDisabled = 'Elements is disabled',
   elementIsVisible = 'Elements is visible',
   elementIsNotVisible = 'Elements is not visible',
+  noConversationIsSelected = 'No conversation is selected',
+  noData = 'No data in the conversation section',
+  agentNameIsValid = 'Agent name is valid',
 }
 
 export enum PublishingExpectedMessages {
   noFilesToPublishRequested = 'No files to publish requested',
   publishToPathIsValid = 'Publish to path is valid',
   entityVersionIsValid = 'Publish entity version is valid',
+}
+
+export enum MarketplaceExpectedMessages {
+  agentIsVisible = 'Agent is visible in Marketplace',
+  filteredAgentsAreValid = 'Filtered agents are valid',
 }

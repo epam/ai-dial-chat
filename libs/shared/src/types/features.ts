@@ -15,6 +15,7 @@ export enum Feature {
   Likes = 'likes', // Display likes
   ConversationsSharing = 'conversations-sharing', // Display conversation sharing
   PromptsSharing = 'prompts-sharing', // Display prompts sharing
+  ApplicationsSharing = 'applications-sharing', // Display applications sharing
   InputFiles = 'input-files', // Allow attach files to conversation
   InputLinks = 'input-links', // Allow attach links to conversation
   AttachmentsManager = 'attachments-manager', // Display attachments manager in conversation sidebar
@@ -27,7 +28,9 @@ export enum Feature {
   Marketplace = 'marketplace', // Enable Marketplace
   QuickApps = 'quick-apps', // Enable Quick apps
   CodeApps = 'code-apps', // Enable Code apps
-  DisallowChangeAgent = 'disallow-change-agent', //Disallow "Change agent" button
+  DisallowChangeAgent = 'disallow-change-agent', // Disallow "Change agent" button
+  MarketplaceTableView = 'marketplace-table-view', // Enable table view in Marketplace
+  HideUserSettings = 'hide-user-settings', // Hide user settings
 }
 
 export const availableFeatures: Record<Feature, boolean> = {
@@ -47,6 +50,7 @@ export const availableFeatures: Record<Feature, boolean> = {
   [Feature.Likes]: true,
   [Feature.ConversationsSharing]: true,
   [Feature.PromptsSharing]: true,
+  [Feature.ApplicationsSharing]: true,
   [Feature.InputFiles]: true,
   [Feature.InputLinks]: true,
   [Feature.AttachmentsManager]: true,
@@ -60,4 +64,6 @@ export const availableFeatures: Record<Feature, boolean> = {
   [Feature.QuickApps]: true,
   [Feature.CodeApps]: true,
   [Feature.DisallowChangeAgent]: true,
+  [Feature.MarketplaceTableView]: true,
+  [Feature.HideUserSettings]: true,
 };

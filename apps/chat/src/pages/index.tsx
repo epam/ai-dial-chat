@@ -1,20 +1,16 @@
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
-import { ImportExportSelectors } from '../store/import-export/importExport.reducers';
 import { MigrationSelectors } from '../store/migration/migration.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import {
   SettingsSelectors,
   SettingsState,
 } from '@/src/store/settings/settings.reducers';
-import {
-  UISelectors,
-  selectShowSelectToMigrateWindow,
-} from '@/src/store/ui/ui.reducers';
+import { selectShowSelectToMigrateWindow } from '@/src/store/ui/ui.reducers';
 
 import { getLayout } from '@/src/pages/_app';
 
-import { MainModalManager } from '../components/Chat/MainModalManager';
+import { ChatModalsManager } from '../components/Chat/ChatModalsManager';
 import { ImportExportLoader } from '../components/Chatbar/ImportExportLoader';
 import { AnnouncementsBanner } from '../components/Common/AnnouncementBanner';
 import { Chat } from '@/src/components/Chat/Chat';
@@ -22,7 +18,6 @@ import { Migration } from '@/src/components/Chat/Migration/Migration';
 import { MigrationFailedWindow } from '@/src/components/Chat/Migration/MigrationFailedModal';
 import { Chatbar } from '@/src/components/Chatbar/Chatbar';
 import Header from '@/src/components/Header/Header';
-import { UserMobile } from '@/src/components/Header/User/UserMobile';
 import Promptbar from '@/src/components/Promptbar';
 
 import { useCustomizations } from '@/src/customizations';
@@ -36,8 +31,6 @@ export interface HomeProps {
 
 function Home() {
   useCustomizations();
-
-  const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
 
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
@@ -57,9 +50,6 @@ function Home() {
   );
   const showSelectToMigrateWindow = useAppSelector(
     selectShowSelectToMigrateWindow,
-  );
-  const isImportingExporting = useAppSelector(
-    ImportExportSelectors.selectIsLoadingImportExport,
   );
 
   if (conversationsToMigrateCount !== 0 || promptsToMigrateCount !== 0) {
@@ -96,14 +86,10 @@ function Home() {
             <div className="flex min-w-0 grow flex-col">
               <AnnouncementsBanner />
               <Chat />
-
-              {isImportingExporting && (
-                <ImportExportLoader isOpen={isImportingExporting} />
-              )}
+              <ImportExportLoader />
             </div>
             {enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
-            {isProfileOpen && <UserMobile />}
-            <MainModalManager />
+            <ChatModalsManager />
           </div>
         </div>
       )}

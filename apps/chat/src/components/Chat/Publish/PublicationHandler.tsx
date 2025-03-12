@@ -1,10 +1,11 @@
 import { IconExclamationCircle } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
+import { useTranslation } from '@/src/hooks/useTranslation';
+
+import { extractNameFromEmail, formatDate } from '@/src/utils/app/common';
 import {
   getFolderIdFromEntityId,
   getParentFolderIdsFromEntityId,
@@ -52,7 +53,8 @@ import {
   FilePublicationResources,
   PromptPublicationResources,
 } from './PublicationResources';
-import { ReviewApplicationDialog } from './ReviewApplicationDialog';
+import { PublicationInfoSection } from './PublishWizardComponents';
+import { ReviewApplicationDialog } from './ReviewApplicationDialog/ReviewApplicationDialog';
 import { RuleListItem } from './RuleListItem';
 
 import isEqual from 'lodash-es/isEqual';
@@ -147,6 +149,10 @@ export function PublicationHandler({ publication }: Props) {
       ),
     [conversations, files, prompts, publishRequestModels],
   );
+
+  const publicationAuthor = useMemo(() => {
+    return extractNameFromEmail(publication.author) ?? t('Unknown');
+  }, [publication.author, t]);
 
   useEffect(() => {
     if (publication.targetFolder !== PUBLIC_URL_PREFIX) {
@@ -284,13 +290,10 @@ export function PublicationHandler({ publication }: Props) {
     };
 
     const startApplicationsReview = () => {
-      dispatch(
-        ApplicationActions.get(
-          applicationsToReviewIds.length
-            ? applicationsToReviewIds[0].reviewUrl
-            : reviewedApplicationsIds[0].reviewUrl,
-        ),
-      );
+      const applicationId = applicationsToReviewIds.length
+        ? applicationsToReviewIds[0].reviewUrl
+        : reviewedApplicationsIds[0].reviewUrl;
+      dispatch(ApplicationActions.get({ applicationId }));
       dispatch(PublicationActions.setIsApplicationReview(true));
     };
 
@@ -407,33 +410,44 @@ export function PublicationHandler({ publication }: Props) {
         <div className="flex w-full flex-col gap-px overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
           <div className="relative size-full gap-px divide-y divide-tertiary overflow-auto md:grid md:grid-cols-2 md:grid-rows-1 md:divide-y-0">
             <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
-              <div className="px-3 md:px-5">
-                <h3 className="flex text-sm" data-qa="publish-to-label">
-                  {t('Publish to')}
-                </h3>
-                <button
-                  className="mt-4 flex w-full items-center rounded border border-primary bg-transparent px-3 py-2"
-                  disabled
-                >
-                  <Tooltip
-                    contentClassName="max-w-[400px] break-all"
-                    triggerClassName="truncate whitespace-pre"
-                    tooltip={
-                      <div className="flex break-words">{publishToUrl}</div>
-                    }
-                    dataQa="publish-to-path"
-                  >
-                    <span className="w-full">{publishToUrl}</span>
-                  </Tooltip>
-                </button>
-                <div className="my-4">
-                  <p className="text-xs text-secondary" data-qa="creation-date">
-                    {t('Request creation date: ')}
-                  </p>
-                  <p className="mt-1 text-sm" data-qa="publish-date">
-                    {new Date(publication.createdAt).toLocaleString()}
-                  </p>
-                </div>
+              <div className="flex flex-col px-3 pb-4 md:px-5">
+                <h2 className="mb-4 font-semibold">{t('General info')}</h2>
+                <PublicationInfoSection
+                  labelDataQa={'publish-to-label'}
+                  label={t('Publish to')}
+                  valueDataQa={'publish-to-path'}
+                  valueToDisplay={publishToUrl}
+                  tooltip={
+                    <div className="flex break-words">{publishToUrl}</div>
+                  }
+                />
+
+                <PublicationInfoSection
+                  labelDataQa={'publication-author-label'}
+                  label={t('Author: ')}
+                  valueDataQa={'publication-author'}
+                  valueToDisplay={publicationAuthor}
+                />
+
+                {/*TODO remove publicationAuthor when publication.displayAuthor will be ready at the core side */}
+                <PublicationInfoSection
+                  labelDataQa={'publication-display-author-label'}
+                  label={t(`Author's public name: `)}
+                  valueDataQa={'publication-display-author'}
+                  valueToDisplay={
+                    publication.displayAuthor ?? publicationAuthor
+                  }
+                  infoTooltip={t(
+                    'The name will be displayed instead of the author name for this publication.',
+                  )}
+                />
+
+                <PublicationInfoSection
+                  labelDataQa={'creation-date-label'}
+                  label={t('Request created: ')}
+                  valueDataQa={'creation-date'}
+                  valueToDisplay={formatDate(publication.createdAt)}
+                />
               </div>
               <section className="px-3 py-4 md:px-5">
                 <h2 className="mb-4 flex items-center gap-2 text-sm">

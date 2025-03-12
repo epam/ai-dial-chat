@@ -1,8 +1,8 @@
 import { IconPlus } from '@tabler/icons-react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
@@ -37,6 +37,7 @@ export const CreateNewConversation = ({ iconSize }: Props) => {
     <Tooltip isTriggerClickable tooltip={t('New conversation')}>
       <button
         className="flex h-full items-center justify-center border-r border-tertiary px-[9px] disabled:cursor-not-allowed"
+        aria-label={t('New conversation')}
         onClick={() => {
           if (!areConversationsLoaded) return;
           dispatch(
@@ -46,6 +47,9 @@ export const CreateNewConversation = ({ iconSize }: Props) => {
             }),
           );
           dispatch(ConversationsActions.resetSearch());
+          dispatch(
+            ConversationsActions.setIsStartedCustomViewerConversation(false),
+          );
         }}
         disabled={messageIsStreaming}
         data-qa="new-entity"

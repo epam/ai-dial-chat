@@ -5,11 +5,13 @@ import {
   IconTrashX,
   IconUserX,
 } from '@tabler/icons-react';
-import { MouseEvent, MouseEventHandler, useMemo } from 'react';
+import { MouseEventHandler, useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useMenuItemHandler } from '@/src/hooks/useHandler';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getRootId } from '@/src/utils/app/id';
+import { canEditSharedFolderOrParent } from '@/src/utils/app/folders';
+import { isMyEntity } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
@@ -17,10 +19,9 @@ import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { CodeEditorSelectors } from '@/src/store/codeEditor/codeEditor.reducer';
+import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-
-import { stopBubbling } from '@/src/constants/chat';
 
 import ContextMenu from '../Common/ContextMenu';
 import DownloadRenderer from './Download';
@@ -61,6 +62,11 @@ export function FileItemContextMenu({
   );
   const isCodeEditorFile = !!useAppSelector(selectFileContentSelector);
 
+  const folders = useAppSelector(FilesSelectors.selectFolders);
+
+  const handleSave = useMenuItemHandler(onSave, file.id);
+  const handleDownload = useMenuItemHandler(onOpenChange, false, false);
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
@@ -75,7 +81,7 @@ export function FileItemContextMenu({
         ) : null,
         display: !!onSave,
         Icon: IconDeviceFloppy,
-        onClick: () => onSave?.(file.id),
+        onClick: handleSave,
       },
       {
         name: t('Download'),
@@ -84,10 +90,7 @@ export function FileItemContextMenu({
           file.status !== UploadStatus.FAILED,
         dataQa: 'download',
         Icon: IconDownload,
-        onClick: (e: MouseEvent) => {
-          stopBubbling(e);
-          onOpenChange?.(false);
-        },
+        onClick: handleDownload,
         customTriggerData: file,
         CustomTriggerRenderer: DownloadRenderer,
       },
@@ -112,11 +115,10 @@ export function FileItemContextMenu({
         name: t('Delete'),
         dataQa: 'delete',
         display:
-          file.id.startsWith(
-            getRootId({
-              featureType: FeatureType.File,
-            }),
-          ) || !!file.sharedWithMe,
+          isMyEntity(file, FeatureType.File) ||
+          !!file.sharedWithMe ||
+          canEditSharedFolderOrParent(folders, file.folderId),
+
         Icon: IconTrashX,
         onClick: onDelete,
       },
@@ -125,13 +127,15 @@ export function FileItemContextMenu({
       t,
       isCodeEditorFile,
       onSave,
+      handleSave,
       file,
+      handleDownload,
       isSharingConversationEnabled,
       onUnshare,
       isPublishingConversationEnabled,
       onUnpublish,
+      folders,
       onDelete,
-      onOpenChange,
     ],
   );
 

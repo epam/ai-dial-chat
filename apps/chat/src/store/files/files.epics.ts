@@ -3,6 +3,7 @@ import {
   catchError,
   concat,
   filter,
+  forkJoin,
   ignoreElements,
   iif,
   map,
@@ -17,11 +18,19 @@ import { combineEpics } from 'redux-observable';
 
 import { FileService } from '@/src/utils/app/data/file-service';
 import { getDownloadPath, triggerDownload } from '@/src/utils/app/file';
+import {
+  getFolderFromId,
+  getGeneratedFolderId,
+  updateMovedEntityId,
+} from '@/src/utils/app/folders';
+import { getFileRootId } from '@/src/utils/app/id';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
+import { FolderType } from '@/src/types/folder';
 import { AppEpic } from '@/src/types/store';
+import { Translation } from '@/src/types/translation';
 
 import { PublicationActions } from '../publication/publication.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
@@ -59,6 +68,8 @@ const uploadFileEpic: AppEpic = (action$) =>
         formData,
         payload.relativePath,
         payload.name,
+        undefined,
+        payload.bucket,
       ).pipe(
         filter(
           ({ percent, result }) =>
@@ -111,6 +122,74 @@ const reuploadFileEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const renameFolderEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(FilesActions.renameFolder.match),
+    switchMap(({ payload }) => {
+      const oldFolder = getFolderFromId(payload.folderId, FolderType.File);
+      const targetFolderId = getGeneratedFolderId({
+        ...oldFolder,
+        name: payload.newName,
+      });
+      const files = FilesSelectors.selectFiles(state$.value);
+
+      const updatedFileIds = files
+        .filter((file) => file.id?.startsWith(`${targetFolderId}/`))
+        .map(({ id }) => id);
+
+      if (!updatedFileIds.length) return EMPTY;
+
+      const sourceFileIds = updatedFileIds.map((id) =>
+        updateMovedEntityId(targetFolderId, payload.folderId, id),
+      );
+
+      return forkJoin(
+        ...updatedFileIds.map((destinationUrl, i) =>
+          FileService.moveFile({
+            destinationUrl,
+            sourceUrl: sourceFileIds[i],
+            overwrite: true,
+          }),
+        ),
+      ).pipe(
+        switchMap(() =>
+          of(
+            FilesActions.renameFolderSuccess({
+              oldId: payload.folderId,
+              newId: targetFolderId,
+            }),
+          ),
+        ),
+        catchError(() =>
+          of(
+            FilesActions.renameFolderFail({
+              oldId: payload.folderId,
+              newId: targetFolderId,
+            }),
+          ),
+        ),
+      );
+    }),
+  );
+
+const renameFolderFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(FilesActions.renameFolderFail.match),
+    switchMap(({ payload }) => {
+      return of(
+        UIActions.showErrorToast(
+          translate(
+            'Renaming folder {{folderName}} failed. Please try again later',
+            {
+              ns: Translation.Files,
+              folderName: getFolderFromId(payload.oldId, FolderType.File).name,
+            },
+          ),
+        ),
+      );
+    }),
+  );
+
 const getFilesEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(FilesActions.getFiles.match),
@@ -119,6 +198,7 @@ const getFilesEpic: AppEpic = (action$) =>
         map((files) =>
           FilesActions.getFilesSuccess({
             files,
+            foldersSet: new Set([payload.id ?? getFileRootId()]),
           }),
         ),
         catchError(() => of(FilesActions.getFilesFail())),
@@ -228,7 +308,7 @@ const deleteFileFailEpic: AppEpic = (action$) =>
         message: translate(
           'Deleting file {{fileName}} failed. Please try again later',
           {
-            ns: 'file',
+            ns: Translation.Files,
             fileName: payload.fileName,
           },
         ),
@@ -289,6 +369,8 @@ export const FilesEpics = combineEpics(
   getFileFoldersEpic,
   getFilesEpic,
   reuploadFileEpic,
+  renameFolderEpic,
+  renameFolderFailEpic,
   getFilesWithFoldersEpic,
   deleteFileEpic,
   getFoldersListEpic,

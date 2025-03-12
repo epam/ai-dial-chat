@@ -1,10 +1,13 @@
 import {
   EMPTY,
+  Observable,
   catchError,
   concat,
+  endWith,
   filter,
   first,
   of,
+  startWith,
   switchMap,
   tap,
 } from 'rxjs';
@@ -21,9 +24,11 @@ import { AppEpic } from '@/src/types/store';
 import { errorsMessages } from '@/src/constants/errors';
 
 import { AddonsActions } from '../addons/addons.reducers';
+import { ApplicationTypesSchemasActions } from '../applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { AuthSelectors } from '../auth/auth.reducers';
 import { ConversationsActions } from '../conversations/conversations.reducers';
 import { FilesActions } from '../files/files.reducers';
+import { MarketplaceActions } from '../marketplace/marketplace.reducers';
 import { MigrationActions } from '../migration/migration.reducers';
 import { ModelsActions } from '../models/models.reducers';
 import { PromptsActions } from '../prompts/prompts.reducers';
@@ -32,7 +37,12 @@ import { ShareActions } from '../share/share.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import { SettingsActions, SettingsSelectors } from './settings.reducers';
 
-const getInitActions = (page?: PageType) => {
+interface ActionInit {
+  payload: undefined;
+  type: string;
+}
+
+const getInitActions = (page?: PageType): Observable<ActionInit>[] => {
   switch (page) {
     case PageType.Marketplace:
       return [
@@ -41,9 +51,11 @@ const getInitActions = (page?: PageType) => {
         of(AddonsActions.init()),
         of(FilesActions.init()),
         of(PublicationActions.init()),
+        of(ApplicationTypesSchemasActions.init()),
+        of(ConversationsActions.initShare()),
+        of(MarketplaceActions.init()),
       ];
     case PageType.Chat:
-    default:
       return [
         of(UIActions.init()),
         of(MigrationActions.init()),
@@ -54,6 +66,28 @@ const getInitActions = (page?: PageType) => {
         of(ShareActions.init()),
         of(FilesActions.init()),
         of(PublicationActions.init()),
+        of(ApplicationTypesSchemasActions.init()),
+      ];
+    case PageType.AppsEditorSettings:
+    case PageType.AppsEditorGeneralInfo:
+      return [
+        of(UIActions.init()),
+        of(ModelsActions.init()),
+        of(AddonsActions.init()),
+        of(FilesActions.init()),
+        of(PublicationActions.init()),
+        of(ConversationsActions.init()),
+        of(ApplicationTypesSchemasActions.init()),
+      ];
+    default:
+      return [
+        of(UIActions.init()),
+        of(ModelsActions.init()),
+        of(AddonsActions.init()),
+        of(FilesActions.init()),
+        of(PublicationActions.init()),
+        of(ConversationsActions.init()),
+        of(ApplicationTypesSchemasActions.init()),
       ];
   }
 };
@@ -64,7 +98,6 @@ const initEpic: AppEpic = (action$, state$) =>
     tap(() => {
       const storageType = SettingsSelectors.selectStorageType(state$.value);
       const defaults = SettingsSelectors.selectDefaults(state$.value);
-
       DefaultsService.setDefaults(defaults);
       DataService.init(storageType);
     }),
@@ -73,7 +106,6 @@ const initEpic: AppEpic = (action$, state$) =>
         filter(() => {
           const authStatus = AuthSelectors.selectStatus(state$.value);
           const shouldLogin = AuthSelectors.selectIsShouldLogin(state$.value);
-
           return authStatus !== 'loading' && !shouldLogin;
         }),
         first(),
@@ -84,7 +116,6 @@ const initEpic: AppEpic = (action$, state$) =>
           ).pipe(
             switchMap(({ bucket }) => {
               BucketService.setBucket(bucket);
-
               return concat(...getInitActions(payload));
             }),
             catchError((error) => {
@@ -99,6 +130,8 @@ const initEpic: AppEpic = (action$, state$) =>
                 );
               }
             }),
+            startWith(SettingsActions.initStart()),
+            endWith(SettingsActions.initComplete()),
           ),
         ),
       );

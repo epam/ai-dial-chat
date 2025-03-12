@@ -3,6 +3,7 @@ import { webcrypto } from 'node:crypto';
 
 export const publicationRequestPrefix = 'E2EPublish';
 export const unpublishRequestPrefix = 'E2EUnpublish';
+export const applicationNamePrefix = 'E2EApp';
 
 export class GeneratorUtil {
   static randomIntegerNumber() {
@@ -16,6 +17,23 @@ export class GeneratorUtil {
   static randomArrayElement<T>(array: T[]) {
     const index = this.randomNumberInRange(array.length);
     return array[index];
+  }
+
+  static randomArrayElements<T>(array: T[], count: number): T[] {
+    if (count >= array.length) return array.slice();
+    if (count <= 0) return [];
+
+    const result: T[] = [];
+    const taken = new Set<number>();
+
+    while (result.length < count) {
+      const index = Math.floor(Math.random() * array.length);
+      if (!taken.has(index)) {
+        taken.add(index);
+        result.push(array[index]);
+      }
+    }
+    return result;
   }
 
   static randomString(length: number) {
@@ -38,11 +56,28 @@ export class GeneratorUtil {
     return unpublishRequestPrefix + GeneratorUtil.randomString(7);
   }
 
+  static randomApplicationName() {
+    return applicationNamePrefix + GeneratorUtil.randomString(10);
+  }
+
   static exportedWithoutAttachmentsFilename() {
     return `${GeneratorUtil.randomString(7)}${ExpectedConstants.exportedFileExtension}`;
   }
 
   static exportedWithAttachmentsFilename() {
     return `${GeneratorUtil.randomString(7)}${Import.importAttachmentExtension}`;
+  }
+
+  static randomApplicationVersion(stringsToExclude?: string[]) {
+    const major = GeneratorUtil.randomIntegerNumber();
+    const minor = GeneratorUtil.randomIntegerNumber();
+    const patch = GeneratorUtil.randomIntegerNumber();
+    let version = `${major}.${minor}.${patch}`;
+    if (stringsToExclude) {
+      while (stringsToExclude.some((s) => s.includes(version))) {
+        version = GeneratorUtil.randomApplicationVersion(stringsToExclude);
+      }
+    }
+    return version;
   }
 }

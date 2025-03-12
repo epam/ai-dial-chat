@@ -14,6 +14,7 @@ import {
   Import,
   ImportedModelIds,
   MenuOptions,
+  MockedChatApiResponseBodies,
   ScrollState,
 } from '@/src/testData';
 import { ImportConversation } from '@/src/testData/conversationHistory/importConversation';
@@ -499,6 +500,7 @@ dialTest(
     chat,
     iconApiHelper,
     agentInfo,
+    baseAssertion,
   }) => {
     dialTest.skip(
       [
@@ -584,14 +586,16 @@ dialTest(
       'Send new request in Gpr-3.5 and verify response is received',
       async () => {
         const newRequest = '1+2=';
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chat.sendRequestWithButton(newRequest);
-        const lastResponseContent = await chatMessages.getLastMessageContent();
-        expect
-          .soft(
-            lastResponseContent !== '',
-            ExpectedMessages.messageContentIsValid,
-          )
-          .toBeTruthy();
+        await baseAssertion.assertElementText(
+          chatMessages.chatMessages.getNthElement(
+            await chatMessages.chatMessages.getElementsCount(),
+          ),
+          'Response',
+        );
       },
     );
 

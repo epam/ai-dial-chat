@@ -1,11 +1,10 @@
 import { IconFileArrowRight, IconTrashX } from '@tabler/icons-react';
 import { MouseEventHandler, useCallback } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
@@ -28,7 +27,7 @@ import Tooltip from '@/src/components/Common/Tooltip';
 import { TemplateRenderer } from '../../Chat/ChatMessage/ChatMessageTemplatesModal/TemplateRenderer';
 import { PublicVersionSelector } from '../../Chat/Publish/PublicVersionSelector';
 import { PublicationControls } from '../../Chat/Publish/PublicationChatControls';
-import Modal from '../../Common/Modal';
+import { Modal } from '../../Common/Modal';
 
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -128,7 +127,7 @@ export const PreviewPromptModal = ({
               >
                 {t('Name: ')}
               </p>
-              <p className="line-clamp-2 break-all" data-qa="prompt-name">
+              <p className="line-clamp-2 break-words" data-qa="prompt-name">
                 {prompt.name}
               </p>
             </li>
@@ -140,7 +139,10 @@ export const PreviewPromptModal = ({
                 >
                   {t('Description: ')}
                 </p>
-                <p className="break-all" data-qa="prompt-description">
+                <p
+                  className="overflow-hidden break-words"
+                  data-qa="prompt-description"
+                >
                   {prompt.description}
                 </p>
               </li>
@@ -153,7 +155,10 @@ export const PreviewPromptModal = ({
                 >
                   {t('Prompt: ')}
                 </p>
-                <p className="break-all" data-qa="prompt-content">
+                <p
+                  className="overflow-hidden break-words"
+                  data-qa="prompt-content"
+                >
                   <TemplateRenderer template={prompt.content} />
                 </p>
               </li>

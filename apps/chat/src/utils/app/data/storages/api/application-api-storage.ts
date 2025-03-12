@@ -7,6 +7,7 @@ import {
   parseApplicationApiKey,
 } from '@/src/utils/server/api';
 
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
   ApiApplicationModel,
   ApiApplicationResponse,
@@ -15,7 +16,7 @@ import {
   CustomApplicationModel,
   SimpleApplicationStatus,
 } from '@/src/types/applications';
-import { ApiKeys } from '@/src/types/common';
+import { ApiKeys, CoreApiKeys } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
 
 import {
@@ -24,7 +25,7 @@ import {
 } from '../../../application';
 import { ApiEntityStorage } from './api-entity-storage';
 
-import { Entity } from '@epam/ai-dial-shared';
+import { Entity, MessageFormSchema } from '@epam/ai-dial-shared';
 
 export class ApplicationApiStorage extends ApiEntityStorage<
   ApplicationInfo,
@@ -41,8 +42,11 @@ export class ApplicationApiStorage extends ApiEntityStorage<
       ...convertApplicationFromApi(entity),
     };
   }
-  cleanUpEntity(application: CustomApplicationModel): ApiApplicationModel {
-    return convertApplicationToApi(application);
+  cleanUpEntity(
+    application: CustomApplicationModel,
+    schema?: ApiDetailedApplicationTypeSchema,
+  ): ApiApplicationModel {
+    return convertApplicationToApi(application, schema);
   }
   getEntityKey(info: ApplicationInfo): string {
     return getApplicationApiKey(info);
@@ -56,7 +60,10 @@ export class ApplicationApiStorage extends ApiEntityStorage<
 
   toggleApplicationStatus(
     applicationId: string,
-    status: SimpleApplicationStatus.DEPLOY | SimpleApplicationStatus.UNDEPLOY,
+    status:
+      | SimpleApplicationStatus.DEPLOY
+      | SimpleApplicationStatus.UNDEPLOY
+      | SimpleApplicationStatus.REDEPLOY,
   ): Observable<void> {
     try {
       return ApiUtils.request(constructPath('/api/ops/application', status), {
@@ -78,6 +85,21 @@ export class ApplicationApiStorage extends ApiEntityStorage<
           url: ApiUtils.encodeApiUrl(path),
         }),
       });
+    } catch (error) {
+      return throwError(() => error);
+    }
+  }
+
+  getConfigurationSchema(applicationId: string): Observable<MessageFormSchema> {
+    try {
+      return ApiUtils.request(
+        constructPath(
+          '/api',
+          CoreApiKeys.Deployments,
+          ApiUtils.encodeApiUrl(applicationId),
+          'configuration',
+        ),
+      );
     } catch (error) {
       return throwError(() => error);
     }

@@ -1,4 +1,4 @@
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
@@ -13,23 +13,17 @@ const InvalidSchemaMessage = () => {
 
   return (
     <div className="mt-2">
-      <ErrorMessage error={t('Form schema is invalid') ?? ''} />
+      <ErrorMessage error={t('Form schema is invalid')} />
     </div>
   );
-};
-
-const config = {
-  errorLogMessage: 'Invalid schema error:',
 };
 
 export const UserSchema = withErrorBoundary(
   MemoUserSchema,
   <InvalidSchemaMessage />,
-  config,
 );
 
 export const AssistantSchema = withErrorBoundary(
   MemoAssistantSchema,
   <InvalidSchemaMessage />,
-  config,
 );

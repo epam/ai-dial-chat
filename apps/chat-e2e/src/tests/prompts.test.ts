@@ -301,6 +301,7 @@ dialTest(
     expect
       .soft(menuOptions, ExpectedMessages.contextMenuOptionsValid)
       .toEqual([
+        MenuOptions.use,
         MenuOptions.select,
         MenuOptions.edit,
         MenuOptions.duplicate,
@@ -308,6 +309,7 @@ dialTest(
         MenuOptions.moveTo,
         MenuOptions.share,
         MenuOptions.publish,
+        MenuOptions.info,
         MenuOptions.delete,
       ]);
   },

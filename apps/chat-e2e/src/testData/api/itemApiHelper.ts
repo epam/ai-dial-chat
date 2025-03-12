@@ -1,76 +1,70 @@
 import { Conversation } from '@/chat/types/chat';
-import { BackendDataEntity, BackendDataNodeType } from '@/chat/types/common';
+import {
+  BackendChatEntity,
+  BackendDataNodeType,
+  BackendEntity,
+} from '@/chat/types/common';
 import { Prompt } from '@/chat/types/prompt';
 import { API } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
-import { BucketUtil, ItemUtil } from '@/src/utils';
+import { BucketUtil, ItemUtil, applicationNamePrefix } from '@/src/utils';
 import { Entity } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
-import { APIRequestContext } from 'playwright-core';
 
 export class ItemApiHelper extends BaseApiHelper {
-  private readonly userBucket?: string;
-
-  constructor(request: APIRequestContext, userBucket?: string) {
-    super(request);
-    this.userBucket = userBucket;
-  }
-
-  public async deleteAllData(bucket?: string, isOverlay = false) {
+  public async deleteAllData(bucket?: string) {
     const bucketToUse = this.userBucket ?? bucket;
     const conversations = await this.listItems(
       API.conversationsHost(),
       bucketToUse,
-      isOverlay,
     );
-    const prompts = await this.listItems(
-      API.promptsHost(),
-      bucketToUse,
-      isOverlay,
+    const prompts = await this.listItems(API.promptsHost(), bucketToUse);
+    const apps = await this.listItems(API.appsHost(), bucketToUse);
+    await this.deleteBackendItem(
+      ...conversations,
+      ...prompts,
+      ...apps.filter((a) => a.name.includes(applicationNamePrefix)),
     );
-    await this.deleteBackendItem(isOverlay, ...conversations, ...prompts);
   }
 
-  public async listItems(url: string, bucket?: string, isOverlay?: boolean) {
+  public async listItems(url: string, bucket?: string) {
     const bucketToUse = this.userBucket ?? bucket;
-    return this.getItems(
-      `${url}/${bucketToUse ?? BucketUtil.getBucket()}`,
-      isOverlay,
-    );
+    return this.getItems(`${url}/${bucketToUse ?? BucketUtil.getBucket()}`);
   }
 
   public async listItem(itemUrl: string) {
     return this.getItems(`${API.listingHost}/${itemUrl}`);
   }
 
-  public async getItems(url: string, isOverlay?: boolean) {
-    const response = await this.request.get(
-      isOverlay ? process.env.NEXT_PUBLIC_OVERLAY_HOST + url : url,
-      {
-        params: {
-          filter: BackendDataNodeType.ITEM,
-          recursive: true,
-        },
+  public async getItems(url: string) {
+    const response = await this.request.get(this.getHost(url), {
+      params: {
+        filter: BackendDataNodeType.ITEM,
+        recursive: true,
       },
-    );
+    });
     const statusCode = response.status();
     expect(
       statusCode,
       `Received response code: ${statusCode} with body: ${await response.text()}`,
     ).toBe(200);
-    return (await response.json()) as BackendDataEntity[];
+    return (await response.json()) as BackendChatEntity[];
   }
 
-  public async deleteBackendItem(
-    isOverlay?: boolean,
-    ...items: BackendDataEntity[]
-  ) {
+  public async getItem(id: string) {
+    const response = await this.request.get(this.getHost(`/api/${id}`));
+    const statusCode = response.status();
+    expect(
+      statusCode,
+      `Received response code: ${statusCode} with body: ${await response.text()}`,
+    ).toBe(200);
+    return (await response.json()) as Conversation;
+  }
+
+  public async deleteBackendItem(...items: BackendEntity[]) {
     for (const item of items) {
       const path = `/api/${item.url}`;
-      const url = isOverlay
-        ? process.env.NEXT_PUBLIC_OVERLAY_HOST + path
-        : path;
-      const response = await this.request.delete(url);
+      const response = await this.request.delete(this.getHost(path));
       expect(
         response.status(),
         `Backend item with id: ${item.name} was successfully deleted`,
@@ -80,7 +74,7 @@ export class ItemApiHelper extends BaseApiHelper {
 
   public async deleteEntity(entity: Entity) {
     const url = `/api/${entity.id}`;
-    const response = await this.request.delete(url);
+    const response = await this.request.delete(this.getHost(url));
     expect(
       response.status(),
       `Entity with id: ${entity.name} was successfully deleted`,
@@ -115,7 +109,7 @@ export class ItemApiHelper extends BaseApiHelper {
 
   public async createItem(item: Prompt | Conversation) {
     const url = `/api/${ItemUtil.getEncodedItemId(item.id)}`;
-    const response = await this.request.put(url, {
+    const response = await this.request.put(this.getHost(url), {
       data: item,
     });
     expect(

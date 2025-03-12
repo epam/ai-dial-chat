@@ -1,6 +1,6 @@
 import { MappedReplaceActions } from './import-export';
 
-import { UploadStatus } from '@epam/ai-dial-shared';
+import { SharePermission, UploadStatus } from '@epam/ai-dial-shared';
 
 export enum EntityType {
   Model = 'model',
@@ -35,6 +35,7 @@ export interface BackendDataEntity {
   bucket: string;
   parentPath?: string | null;
   url: string;
+  permissions?: SharePermission[];
 }
 
 export interface BackendEntity extends BackendDataEntity {
@@ -43,6 +44,8 @@ export interface BackendEntity extends BackendDataEntity {
 
 export interface BackendChatEntity extends BackendEntity {
   updatedAt: number;
+  createdAt?: number;
+  author?: string;
 }
 
 export interface BackendFolder<ItemType> extends BackendDataEntity {
@@ -86,6 +89,10 @@ export enum ApiKeys {
   Applications = 'applications',
 }
 
+export enum CoreApiKeys {
+  Deployments = 'deployments',
+}
+
 export interface AdditionalItemData {
   publicationUrl?: string;
   canAttachFiles?: boolean;
@@ -121,10 +128,26 @@ export interface SelectOption<L, V> {
 export enum PageType {
   Chat = 'chat',
   Marketplace = 'marketplace',
+  AppsEditorSettings = 'application-settings',
+  AppsEditorGeneralInfo = 'application-general-info',
 }
 
 export enum ScreenState {
-  MOBILE,
-  TABLET,
-  DESKTOP,
+  SM = 768,
+  MD = 1280,
+  XL = 1770,
+  XL3 = 2120,
+  XL4 = 2560,
+  XL5 = Number.MAX_SAFE_INTEGER,
 }
+
+export interface EntityInfo {
+  id: string;
+  createdAt?: number;
+  updatedAt?: number;
+  author?: string;
+  sharedWithMe?: boolean;
+  isPublic?: boolean;
+}
+
+export type SortOrder = 'asc' | 'desc';

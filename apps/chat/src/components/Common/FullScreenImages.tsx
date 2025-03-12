@@ -9,7 +9,7 @@ import { useSwipe } from '@/src/hooks/useSwipe';
 
 import { ModalState } from '@/src/types/modal';
 
-import Modal from './Modal';
+import { Modal } from './Modal';
 
 interface Props {
   images: string[];

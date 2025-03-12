@@ -1,7 +1,7 @@
 import { IconX } from '@tabler/icons-react';
 import Select, { components } from 'react-select';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { DropdownSelectorOption } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';

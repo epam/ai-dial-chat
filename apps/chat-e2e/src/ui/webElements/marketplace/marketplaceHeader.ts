@@ -13,4 +13,7 @@ export class MarketplaceHeader extends BaseElement {
   public searchInput = this.getChildElementBySelector(
     MarketplaceSideBarSelectors.searchInput,
   );
+  public addAppButton = this.getChildElementBySelector(
+    MarketplaceSelectors.addApp,
+  );
 }

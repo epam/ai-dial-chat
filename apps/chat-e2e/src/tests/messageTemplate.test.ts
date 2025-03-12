@@ -1012,9 +1012,13 @@ dialTest(
     await dialTest.step(
       'Start replaying the main conversation and verify modal variable is displayed for the second conversation request',
       async () => {
-        await conversations.selectConversation(replayName, {
-          exactMatch: true,
-        });
+        await conversations.selectConversation(
+          replayName,
+          { isHttpMethodTriggered: false },
+          {
+            exactMatch: true,
+          },
+        );
         await chat.startReplay(
           simpleConversationMessage.messages[0].content,
           true,

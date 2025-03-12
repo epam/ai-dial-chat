@@ -2,19 +2,23 @@ import {
   KeyboardEvent,
   MutableRefObject,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { usePromptSelection } from '@/src/hooks/usePromptSelection';
 import { useTokenizer } from '@/src/hooks/useTokenizer';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getUserCustomContent } from '@/src/utils/app/file';
+import {
+  getConversationSchema,
+  isFormValueValid,
+} from '@/src/utils/app/form-schema';
 import { isMobile } from '@/src/utils/app/mobile';
 import { getPromptLimitDescription } from '@/src/utils/app/modals';
 
@@ -85,6 +89,9 @@ export const ChatInputMessage = Inversify.register(
     const messageIsStreaming = useAppSelector(
       ConversationsSelectors.selectIsConversationsStreaming,
     );
+    const selectedConversations = useAppSelector(
+      ConversationsSelectors.selectSelectedConversations,
+    );
     const isConversationNameInvalid = useAppSelector(
       ConversationsSelectors.selectIsConversationNameInvalid,
     );
@@ -131,9 +138,26 @@ export const ChatInputMessage = Inversify.register(
     const selectedModels = useAppSelector(
       ConversationsSelectors.selectSelectedConversationsModels,
     );
+
     const isChatInputDisabled = useAppSelector(
       ConversationsSelectors.selectIsSelectedConversationBlocksInput,
     );
+    const configurationSchema = useAppSelector(
+      ChatSelectors.selectConfigurationSchema,
+    );
+    const shouldFocusAndScroll = useAppSelector(
+      ChatSelectors.selectShouldFocusAndScroll,
+    );
+
+    useEffect(() => {
+      if (shouldFocusAndScroll && textareaRef.current) {
+        textareaRef.current.focus();
+        textareaRef.current.scrollIntoView();
+        dispatch(ChatActions.setShouldFocusAndScroll(false));
+      }
+    }, [dispatch, shouldFocusAndScroll, textareaRef]);
+
+    const isChatEmpty = !selectedConversations[0]?.messages?.length;
 
     const modelTokenizer =
       selectedModels?.length === 1 ? selectedModels[0]?.tokenizer : undefined;
@@ -167,6 +191,18 @@ export const ChatInputMessage = Inversify.register(
       selectedPrompt,
     } = usePromptSelection(maxTokensLength, modelTokenizer, '');
 
+    const isSchemaValueValid = useMemo(() => {
+      const schema =
+        selectedConversations.map(getConversationSchema)?.[0] ??
+        (selectedConversations[0]?.messages?.length === 0
+          ? configurationSchema
+          : undefined);
+
+      if (!schema) return true;
+
+      return isFormValueValid(schema, chatFormValue);
+    }, [selectedConversations, configurationSchema, chatFormValue]);
+
     const isInputEmpty = useMemo(() => {
       return (
         !content.trim().length &&
@@ -187,7 +223,8 @@ export const ChatInputMessage = Inversify.register(
       !isModelsLoaded ||
       isUploadingFilePresent ||
       isConversationNameInvalid ||
-      isConversationPathInvalid;
+      isConversationPathInvalid ||
+      !isSchemaValueValid;
 
     const canAttach =
       (canAttachFiles || canAttachFolders || canAttachLinks) &&
@@ -245,9 +282,14 @@ export const ChatInputMessage = Inversify.register(
             selectedFolders,
             selectedDialLinks,
           ),
-          ...(chatFormValue && {
-            form_value: chatFormValue,
-          }),
+          ...(chatFormValue && isChatEmpty
+            ? {
+                configuration_value: chatFormValue,
+                configuration_schema: configurationSchema,
+              }
+            : {
+                form_value: chatFormValue,
+              }),
         },
         templateMapping,
       });
@@ -265,11 +307,13 @@ export const ChatInputMessage = Inversify.register(
       isSendDisabled,
       dispatch,
       onSend,
-      chatFormValue,
       content,
       selectedFiles,
       selectedFolders,
       selectedDialLinks,
+      chatFormValue,
+      isChatEmpty,
+      configurationSchema,
       setContent,
       textareaRef,
       onStopConversation,
@@ -432,6 +476,9 @@ export const ChatInputMessage = Inversify.register(
       if (isConversationPathInvalid) {
         return t(errorsMessages.entityPathInvalid);
       }
+      if (!isSchemaValueValid) {
+        return t('Please select one of the options above');
+      }
       return t('Please type a message');
     };
 
@@ -550,11 +597,9 @@ export const ChatInputMessage = Inversify.register(
         <ConfirmDialog
           isOpen={isPromptLimitModalOpen}
           heading={t('Prompt limit exceeded')}
-          description={
-            t(
-              `Prompt limit is ${maxTokensLength} tokens. ${getPromptLimitDescription(getTokensLength(content), maxTokensLength)}`,
-            ) || ''
-          }
+          description={t(
+            `Prompt limit is ${maxTokensLength} tokens. ${getPromptLimitDescription(getTokensLength(content), maxTokensLength)}`,
+          )}
           confirmLabel={t('Confirm')}
           onClose={() => {
             setIsPromptLimitModalOpen(false);

@@ -7,7 +7,7 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   doesHaveDotsInTheEnd,
@@ -28,34 +28,25 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { DISALLOW_INTERACTIONS } from '@/src/constants/modal';
 
-import { ConfirmDialog } from '../Common/ConfirmDialog';
-import Modal from '../Common/Modal';
+import { Modal } from '../Common/Modal';
+import { withRenderWhen } from '../Common/RenderWhen';
 
-export const RenameConversationModal = () => {
-  const renamingConversation = useAppSelector(
-    ConversationsSelectors.selectRenamingConversation,
-  );
-  if (renamingConversation) {
-    return <RenameConversationView />;
-  }
-};
-
-const RenameConversationView = () => {
+function RenameConversationView() {
   const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const allConversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );
-
   const renamingConversation = useAppSelector(
     ConversationsSelectors.selectRenamingConversation,
   );
 
   const [newConversationName, setNewConversationName] = useState('');
-  const [isConfirmRenaming, setIsConfirmRenaming] = useState(false);
   const [originConversationName, setOriginConversationName] = useState('');
+
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (renamingConversation) {
@@ -68,33 +59,12 @@ const RenameConversationView = () => {
     } else {
       setNewConversationName('');
       setOriginConversationName('');
-      setIsConfirmRenaming(false);
     }
   }, [renamingConversation]);
 
   const newName = useMemo(
     () => prepareEntityName(newConversationName, { forRenaming: true }),
     [newConversationName],
-  );
-
-  const performRename = useCallback(
-    (name: string) => {
-      if (!name.trim()) return;
-      if (name.length > 0 && renamingConversation) {
-        dispatch(
-          ConversationsActions.updateConversation({
-            id: renamingConversation.id,
-            values: {
-              name,
-              isNameChanged: true,
-              isShared: false,
-            },
-          }),
-        );
-        dispatch(ConversationsActions.setRenamingConversationId(null));
-      }
-    },
-    [renamingConversation, dispatch],
   );
 
   const handleRename = useCallback(() => {
@@ -112,7 +82,7 @@ const RenameConversationView = () => {
           t(
             'Conversation with name "{{newName}}" already exists in this folder.',
             {
-              ns: 'chat',
+              ns: Translation.Chat,
               newName,
             },
           ),
@@ -131,23 +101,16 @@ const RenameConversationView = () => {
       return;
     }
 
-    if (
-      renamingConversation.isShared &&
-      newName !== renamingConversation.name
-    ) {
-      setIsConfirmRenaming(true);
-      return;
+    if (newName.length > 0) {
+      dispatch(
+        ConversationsActions.updateConversation({
+          id: renamingConversation.id,
+          values: { name: newName, isNameChanged: true },
+        }),
+      );
+      dispatch(ConversationsActions.setRenamingConversationId(null));
     }
-
-    performRename(newName);
-  }, [
-    newName,
-    renamingConversation,
-    allConversations,
-    performRename,
-    dispatch,
-    t,
-  ]);
+  }, [newName, renamingConversation, allConversations, dispatch, t]);
 
   const handleEnterDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
@@ -212,22 +175,10 @@ const RenameConversationView = () => {
           {t('Save')}
         </button>
       </div>
-      <ConfirmDialog
-        isOpen={isConfirmRenaming}
-        heading={t('Confirm renaming conversation')}
-        confirmLabel={t('Rename')}
-        cancelLabel={t('Cancel')}
-        description={
-          t(
-            'Renaming will stop sharing and other users will no longer see this conversation.',
-          ) || ''
-        }
-        onClose={(result) => {
-          setIsConfirmRenaming(false);
-          if (result) performRename(newName);
-          handleClose();
-        }}
-      />
     </Modal>
   );
-};
+}
+
+export const RenameConversationModal = withRenderWhen(
+  ConversationsSelectors.selectRenamingConversation,
+)(RenameConversationView);

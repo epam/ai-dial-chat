@@ -22,6 +22,7 @@ export interface Props {
   message: Message;
   messageIndex: number;
   conversation: Conversation;
+  allMessages: Message[];
   isLikesEnabled: boolean;
   isEditing: boolean;
   isLastMessage: boolean;
@@ -50,6 +51,7 @@ export function ChatMessageContent({
   messageIndex,
   isLastMessage,
   message,
+  allMessages,
   conversation,
   onEdit,
   editDisabled,
@@ -136,6 +138,7 @@ export function ChatMessageContent({
           {isUser ? (
             <UserMessage
               message={message}
+              allMessages={allMessages}
               conversation={conversation}
               messageIndex={messageIndex}
               isEditing={isEditing}

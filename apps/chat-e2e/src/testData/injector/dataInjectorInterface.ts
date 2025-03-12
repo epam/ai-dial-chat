@@ -19,5 +19,5 @@ export interface DataInjectorInterface {
     prompts: Prompt[],
     ...folders: FolderInterface[]
   ): Promise<void>;
-  deleteAllData(isOverlay?: boolean): Promise<void>;
+  deleteAllData(): Promise<void>;
 }

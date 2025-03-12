@@ -3,10 +3,12 @@ import { PlotParams } from 'react-plotly.js';
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { combineEntities } from '@/src/utils/app/common';
+import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
+  getFolderIdFromEntityId,
   isFolderEmpty,
-  renameFolderWithChildren,
+  renameFolderAndMoveEntity,
 } from '@/src/utils/app/folders';
 import {
   getConversationRootId,
@@ -63,6 +65,8 @@ const initialState: ConversationsState = {
   chosenEmptyFoldersIds: [],
   renamingConversationId: null,
   talkToConversationId: null,
+  isStartedCustomViewerConversation: false,
+  previewConversationId: null,
 };
 
 export const conversationsSlice = createSlice({
@@ -70,6 +74,7 @@ export const conversationsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
+    initShare: (state) => state,
     initFinish: (state) => {
       state.initialized = true;
     },
@@ -100,43 +105,37 @@ export const conversationsSlice = createSlice({
       });
       state.isNewConversationUpdating = false;
     },
-    recreateConversation: (
+    moveConversation: (
       state,
-      action: PayloadAction<{ new: Conversation; old: Conversation }>,
+      action: PayloadAction<{
+        newConversation: Conversation;
+        oldConversation: Conversation;
+      }>,
     ) => {
-      if (!action.payload.old.messages.length) {
+      if (!action.payload.oldConversation.messages.length) {
         state.isNewConversationUpdating = true;
       }
     },
-    recreateConversationFail: (
+    moveConversationFail: (
       state,
       {
         payload,
       }: PayloadAction<{
-        newId: string;
         oldConversation: Conversation;
+        newConversation: Conversation;
       }>,
     ) => {
-      state.isNewConversationUpdating = false;
       state.conversations = state.conversations.map((conv) => {
-        if (conv.id === payload.newId) {
-          const conversation = conv as Conversation;
-          return {
-            ...conversation,
-            ...payload.oldConversation,
-            messages: conversation.messages,
-            isMessageStreaming: false,
-          };
+        if (payload.newConversation.id === conv.id) {
+          return payload.oldConversation;
         }
 
         return conv;
       });
-
-      if (payload.newId !== payload.oldConversation.id) {
-        state.selectedConversationsIds = state.selectedConversationsIds.map(
-          (id) => (id === payload.newId ? payload.oldConversation.id! : id),
-        );
-      }
+      state.selectedConversationsIds = state.selectedConversationsIds.map(
+        (id) =>
+          id === payload.newConversation.id ? payload.oldConversation.id : id,
+      );
     },
     updateConversation: (
       state,
@@ -155,7 +154,7 @@ export const conversationsSlice = createSlice({
         if (conv.id === payload.id) {
           return {
             ...conv,
-            lastActivityDate: Date.now(),
+            updatedAt: Date.now(),
             ...payload.conversation,
           };
         }
@@ -291,9 +290,6 @@ export const conversationsSlice = createSlice({
         selectedIdToReplaceWithNewOne?: string;
       }>,
     ) => {
-      state.conversations = combineEntities(state.conversations, [
-        newConversation,
-      ]);
       state.selectedConversationsIds =
         selectedIdToReplaceWithNewOne &&
         state.selectedConversationsIds.length > 1
@@ -301,6 +297,9 @@ export const conversationsSlice = createSlice({
               id === selectedIdToReplaceWithNewOne ? newConversation.id : id,
             )
           : [newConversation.id];
+      state.conversations = combineEntities(state.conversations, [
+        newConversation,
+      ]);
 
       state.areSelectedConversationsLoaded = true;
     },
@@ -424,12 +423,13 @@ export const conversationsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ folderId: string; name: string }>,
     ) => {
+      const parentId = getFolderIdFromEntityId(payload.folderId);
+      const newId = constructPath(parentId, payload.name);
+
+      state.temporaryFolders = state.temporaryFolders.map((f) =>
+        renameFolderAndMoveEntity(f, payload.folderId, newId),
+      );
       state.newAddedFolderId = undefined;
-      state.temporaryFolders = renameFolderWithChildren({
-        folderId: payload.folderId,
-        newName: payload.name,
-        folders: state.temporaryFolders,
-      });
     },
     resetNewFolderId: (state) => {
       state.newAddedFolderId = undefined;
@@ -488,6 +488,12 @@ export const conversationsSlice = createSlice({
       { payload }: PayloadAction<{ searchFilters: SearchFilters }>,
     ) => {
       state.searchFilters = payload.searchFilters;
+    },
+    setPreviewConversationId: (
+      state,
+      { payload }: PayloadAction<string | null>,
+    ) => {
+      state.previewConversationId = payload;
     },
     resetSearch: (state) => {
       state.searchTerm = '';
@@ -868,6 +874,16 @@ export const conversationsSlice = createSlice({
     ) => {
       state.talkToConversationId = payload;
     },
+    setIsStartedCustomViewerConversation: (
+      state,
+      { payload }: PayloadAction<boolean>,
+    ) => {
+      state.isStartedCustomViewerConversation = payload;
+    },
+    getConversationMetadata: (
+      state,
+      _action: PayloadAction<{ conversationId: string }>,
+    ) => state,
   },
 });
 

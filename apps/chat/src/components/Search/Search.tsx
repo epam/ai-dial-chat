@@ -1,7 +1,7 @@
 import { IconSearch } from '@tabler/icons-react';
 import { useCallback } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { FeatureType } from '@/src/types/common';
 import { SearchFilters } from '@/src/types/search';
@@ -44,7 +44,7 @@ export default function Search({
         className="w-full bg-transparent py-2 pl-9 pr-8 text-[14px] leading-3 outline-none placeholder:text-secondary"
         data-qa="search-input"
         type="text"
-        placeholder={t(placeholder) || ''}
+        placeholder={t(placeholder)}
         value={searchTerm}
         onChange={handleSearchChange}
       />

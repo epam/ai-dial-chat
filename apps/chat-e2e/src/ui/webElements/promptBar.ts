@@ -10,11 +10,11 @@ import {
 } from '@/src/ui/webElements/entityTree';
 import { OrganizationPromptsTree } from '@/src/ui/webElements/entityTree/sidebar/organizationPromptsTree';
 import { SideBar } from '@/src/ui/webElements/sideBar';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class PromptBar extends SideBar {
-  constructor(page: Page) {
-    super(page, SideBarSelectors.promptBar);
+  constructor(page: Page, parentLocator: Locator) {
+    super(page, SideBarSelectors.promptBar, parentLocator);
   }
 
   private promptsTree!: PromptsTree;

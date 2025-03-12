@@ -2,7 +2,7 @@ import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
 import {
   AccountMenuOptions,
-  Theme,
+  ThemeId,
   ToggleState,
   toTitleCase,
 } from '@/src/testData';
@@ -67,7 +67,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await accountSettings.openAccountDropdownMenu();
         await accountDropdownMenu.selectMenuOption(AccountMenuOptions.settings);
-        await settingsModalAssertion.assertThemeValue(Theme.dark);
+        await settingsModalAssertion.assertThemeValue(ThemeId.dark);
         await settingsModalAssertion.assertSaveButtonState('visible');
       },
     );
@@ -76,7 +76,9 @@ dialTest(
       'Expand "Theme" dropdown and verify available options',
       async () => {
         await settingsModal.theme.click();
-        const expectedThemes = Object.values(Theme).map((t) => toTitleCase(t));
+        const expectedThemes = Object.values(ThemeId).map((t) =>
+          toTitleCase(t),
+        );
         await settingsModalAssertion.assertThemeMenuOptions(...expectedThemes);
       },
     );

@@ -1,6 +1,6 @@
 import { IconRefreshDot } from '@tabler/icons-react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 

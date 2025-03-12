@@ -120,6 +120,12 @@ export class LocalStorageManager {
     );
   }
 
+  async removeFromLocalStorage(key: string) {
+    await this.page.evaluate((storageKey) => {
+      window.localStorage.removeItem(storageKey);
+    }, key);
+  }
+
   async getRecentModels() {
     return this.page.evaluate(
       () => window.localStorage.getItem('recentModelsIds') ?? undefined,
@@ -141,6 +147,54 @@ export class LocalStorageManager {
     );
   }
 
+  async seLastConversationSettingsOnce(temp?: number) {
+    await this.setLocalStorageItemOnce('lastConversationSettings', {
+      temperature: temp ?? 1,
+    });
+  }
+
+  async setRecentModelsIdsOnce(...models: DialAIEntityModel[]) {
+    await this.setLocalStorageItemOnce(
+      'recentModelsIds',
+      models.map((m) => m.id),
+    );
+  }
+
+  async setLocalStorageItemOnce<T>(
+    localStorageKey: string,
+    value: T,
+    transform: (value: T) => string = JSON.stringify,
+  ) {
+    const uniqueKey = Date.now().toLocaleString();
+    await this.page.addInitScript(
+      (data) => {
+        const { localStorageKey, value, key } = data;
+        if (!sessionStorage.getItem(key)) {
+          localStorage.setItem(localStorageKey, value);
+          sessionStorage.setItem(key, 'true');
+        }
+      },
+      {
+        localStorageKey,
+        value: transform(value),
+        key: uniqueKey,
+      },
+    );
+  }
+
+  async setLastConversationSettings(storageValue: string) {
+    await this.page.addInitScript(
+      (data) => {
+        const { storageKey, storageValue } = data;
+        localStorage.setItem(storageKey, storageValue);
+      },
+      {
+        storageKey: 'lastConversationSettings',
+        storageValue: storageValue,
+      },
+    );
+  }
+
   async setRecentAddonsIds(...addons: DialAIEntityModel[]) {
     await this.page.addInitScript(
       this.setRecentAddonsIdsKey(),
@@ -150,5 +204,26 @@ export class LocalStorageManager {
 
   async setChatbarWidth(width: string) {
     await this.page.addInitScript(this.setChatbarWidthKey(), width);
+  }
+
+  async getSelectedConversationIds(originHost?: string) {
+    const selectedConversationIds = await this.getKey(
+      'selectedConversationIds',
+      originHost,
+    );
+    return selectedConversationIds ? JSON.parse(selectedConversationIds) : '';
+  }
+
+  async getRecentModelsIds(originHost?: string) {
+    const recentModelsIds = await this.getKey('recentModelsIds', originHost);
+    return recentModelsIds ? JSON.parse(recentModelsIds) : '';
+  }
+
+  private async getKey(key: string, originHost?: string) {
+    const storage = await this.page.context().storageState();
+    const origin = originHost
+      ? storage.origins.find((o) => o.origin === originHost)
+      : storage.origins[0];
+    return origin?.localStorage.find((s) => s.name === key)?.value;
   }
 }

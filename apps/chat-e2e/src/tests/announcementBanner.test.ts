@@ -1,6 +1,6 @@
 import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
-import { AccountMenuOptions, ExpectedMessages } from '@/src/testData';
+import { ExpectedMessages } from '@/src/testData';
 import { expect } from '@playwright/test';
 
 dialTest(
@@ -18,17 +18,13 @@ dialTest(
       banner,
       header,
       appContainer,
-      accountSettings,
-      accountDropdownMenu,
-      confirmationDialog,
+      context,
       providerLogin,
       setTestIds,
     },
     testInfo,
   ) => {
     setTestIds('EPMRTC-1576', 'EPMRTC-1580', 'EPMRTC-1577');
-    const username =
-      process.env.E2E_USERNAME!.split(',')[+process.env.TEST_PARALLEL_INDEX!];
     let conversation: Conversation;
     let chatBarBounding;
     let promptBarBounding;
@@ -136,6 +132,7 @@ dialTest(
       'Refresh page and verify banner is not shown',
       async () => {
         await dialHomePage.reloadPage();
+        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
         await expect
           .soft(banner.getElementLocator(), ExpectedMessages.bannerIsClosed)
           .toBeHidden();
@@ -145,16 +142,14 @@ dialTest(
     await dialTest.step(
       'Re-login to app and verify banner is not shown',
       async () => {
-        await accountSettings.openAccountDropdownMenu();
-        await accountDropdownMenu.selectMenuOption(AccountMenuOptions.logout);
-        await confirmationDialog.confirm();
-        await providerLogin.navigateToCredentialsPage();
-        await providerLogin.authProviderLogin(
+        await context.clearCookies();
+        await providerLogin.login(
           testInfo,
-          username,
+          process.env.E2E_USERNAME!.split(',')[+testInfo.parallelIndex],
           process.env.E2E_PASSWORD!,
           false,
         );
+        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
         await expect
           .soft(banner.getElementLocator(), ExpectedMessages.bannerIsClosed)
           .toBeHidden();

@@ -5,6 +5,7 @@ import {
   IconFileArrowRight,
   IconFolderPlus,
   IconFolderShare,
+  IconInfoCircle,
   IconPencilMinus,
   IconPlayerPlay,
   IconRefreshDot,
@@ -17,9 +18,9 @@ import {
 } from '@tabler/icons-react';
 import { MouseEventHandler, useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   hasInvalidNameInPath,
@@ -40,6 +41,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import ContextMenu from './ContextMenu';
 
+import InsertPromptIcon from '@/public/images/icons/insert-prompt.svg';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import { ShareEntity } from '@epam/ai-dial-shared';
 
@@ -68,8 +70,11 @@ interface ItemContextMenuProps {
   onDuplicate?: MouseEventHandler<unknown>;
   onView?: MouseEventHandler<unknown>;
   onSelect?: MouseEventHandler<unknown>;
+  disableUse?: boolean;
+  onUse?: MouseEventHandler<unknown>;
   isLoading?: boolean;
   TriggerIcon?: ContextMenuProps['TriggerIcon'];
+  onShowInfo?: () => void;
 }
 
 export default function ItemContextMenu({
@@ -98,6 +103,9 @@ export default function ItemContextMenu({
   onView,
   isLoading,
   onSelect,
+  disableUse,
+  onUse,
+  onShowInfo,
   TriggerIcon,
 }: ItemContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
@@ -120,6 +128,14 @@ export default function ItemContextMenu({
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
+      {
+        name: t('Use'),
+        display: !!onUse,
+        disabled: disableUse,
+        dataQa: 'use',
+        Icon: InsertPromptIcon,
+        onClick: onUse,
+      },
       {
         name: t('Select'),
         display: !isExternal && !!onSelect,
@@ -296,6 +312,13 @@ export default function ItemContextMenu({
         disabled: disableAll,
       },
       {
+        name: t('Info'),
+        display: !!onShowInfo,
+        dataQa: 'info',
+        Icon: IconInfoCircle,
+        onClick: onShowInfo,
+      },
+      {
         name: t('Delete'),
         dataQa: 'delete',
         display: !isExternal || !!entity.sharedWithMe,
@@ -305,6 +328,7 @@ export default function ItemContextMenu({
     ],
     [
       disableAll,
+      disableUse,
       entity,
       featureType,
       folders,
@@ -327,8 +351,10 @@ export default function ItemContextMenu({
       onReplay,
       onSelect,
       onShare,
+      onShowInfo,
       onUnpublish,
       onUnshare,
+      onUse,
       onView,
       t,
     ],

@@ -1,27 +1,9 @@
-diff --git a/node_modules/next-auth/core/lib/callback-url.js b/node_modules/next-auth/core/lib/callback-url.js
-index 2046352..c6976d3 100644
---- a/node_modules/next-auth/core/lib/callback-url.js
-+++ b/node_modules/next-auth/core/lib/callback-url.js
-@@ -17,12 +17,12 @@ async function createCallbackUrl({
-   if (paramValue) {
-     callbackUrl = await callbacks.redirect({
-       url: paramValue,
--      baseUrl: url.origin
-+      baseUrl: '' + url.origin + (process.env.APP_BASE_PATH || '')
-     });
-   } else if (cookieValue) {
-     callbackUrl = await callbacks.redirect({
-       url: cookieValue,
--      baseUrl: url.origin
-+      baseUrl: '' + url.origin + (process.env.APP_BASE_PATH || '')
-     });
-   }
-   return {
+
 diff --git a/node_modules/next-auth/core/lib/oauth/client.js b/node_modules/next-auth/core/lib/oauth/client.js
-index 52c51eb..ccee28c 100644
+index 52c51eb..6842b60 100644
 --- a/node_modules/next-auth/core/lib/oauth/client.js
 +++ b/node_modules/next-auth/core/lib/oauth/client.js
-@@ -5,9 +5,15 @@ Object.defineProperty(exports, "__esModule", {
+@@ -5,9 +5,17 @@ Object.defineProperty(exports, "__esModule", {
  });
  exports.openidClient = openidClient;
  var _openidClient = require("openid-client");
@@ -30,16 +12,18 @@ index 52c51eb..ccee28c 100644
    const provider = options.provider;
 -  if (provider.httpOptions) _openidClient.custom.setHttpOptionsDefaults(provider.httpOptions);
 +  let httpOptions = {};
-+  if (provider.httpOptions) httpOptions = { ...provider.httpOptions };
++  if (provider.httpOptions){ 
++    httpOptions = { ...provider.httpOptions };
 +  if (process.env.http_proxy) {
 +    httpOptions.agent = new HttpsProxyAgent(process.env.http_proxy);
 +  }
 +  _openidClient.custom.setHttpOptionsDefaults(httpOptions)
++}
    let issuer;
    if (provider.wellKnown) {
      issuer = await _openidClient.Issuer.discover(provider.wellKnown);
 diff --git a/node_modules/next-auth/providers/azure-ad.js b/node_modules/next-auth/providers/azure-ad.js
-index c47f6b1..299ec1c 100644
+index c47f6b1..bcd1269 100644
 --- a/node_modules/next-auth/providers/azure-ad.js
 +++ b/node_modules/next-auth/providers/azure-ad.js
 @@ -4,6 +4,9 @@ Object.defineProperty(exports, "__esModule", {

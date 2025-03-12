@@ -1,5 +1,5 @@
 import { FolderInterface } from '@/src/types/folder';
-import { PromptInfo } from '@/src/types/prompt';
+import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 
 export interface PromptsState {
@@ -20,4 +20,5 @@ export interface PromptsState {
   isNewPromptCreating: boolean;
   chosenPromptIds: string[];
   chosenEmptyFoldersIds: string[];
+  promptWithVariablesForApply?: Prompt;
 }

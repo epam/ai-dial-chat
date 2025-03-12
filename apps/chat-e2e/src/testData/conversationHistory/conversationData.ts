@@ -21,6 +21,8 @@ export interface FolderConversation {
   folders: FolderInterface;
 }
 
+export const responseIdPrefix = 'chatcmpl-';
+
 export class ConversationData extends FolderData {
   private conversationBuilder: ConversationBuilder;
 
@@ -59,15 +61,16 @@ export class ConversationData extends FolderData {
       content: 'test response',
       model: { id: modelToUse.id },
       settings: settings,
+      responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
     };
     let conversationName;
     let conversationId;
     if (name !== undefined) {
       conversationName = name;
-      conversationId = `${modelToUse.id}${ItemUtil.conversationIdSeparator}${name}`;
+      conversationId = `${modelToUse.id}${ItemUtil.entityIdSeparator}${name}`;
     } else {
       conversationName = GeneratorUtil.randomString(10);
-      conversationId = `${modelToUse.id}${ItemUtil.conversationIdSeparator}${conversationName}`;
+      conversationId = `${modelToUse.id}${ItemUtil.entityIdSeparator}${conversationName}`;
     }
     return this.conversationBuilder
       .withMessage(userMessage)
@@ -129,6 +132,7 @@ export class ConversationData extends FolderData {
           content: `response on ${r}`,
           model: messageModel,
           settings: settings,
+          responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
         },
       );
     });
@@ -302,6 +306,7 @@ export class ConversationData extends FolderData {
         },
       },
       settings: messageSettings,
+      responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
     };
     conversation.messages = [userMessage, assistantMessage];
     return this.conversationBuilder.build();
@@ -328,6 +333,7 @@ export class ConversationData extends FolderData {
       content: responseContent,
       model: conversation.model,
       settings: messageSettings,
+      responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
     };
     conversation.messages = [userMessage, assistantMessage];
     return this.conversationBuilder.build();
@@ -441,13 +447,13 @@ export class ConversationData extends FolderData {
     name?: string,
   ) {
     const conversation = this.prepareDefaultConversation(model, name);
-    conversation.lastActivityDate = DateUtil.getYesterdayDate();
+    conversation.updatedAt = DateUtil.getYesterdayDate();
     return conversation;
   }
 
   public prepareLastWeekConversation(model?: DialAIEntityModel, name?: string) {
     const conversation = this.prepareDefaultConversation(model, name);
-    conversation.lastActivityDate = DateUtil.getLastWeekDate();
+    conversation.updatedAt = DateUtil.getLastWeekDate();
     return conversation;
   }
 
@@ -456,13 +462,13 @@ export class ConversationData extends FolderData {
     name?: string,
   ) {
     const conversation = this.prepareDefaultConversation(model, name);
-    conversation.lastActivityDate = DateUtil.getLastMonthDate();
+    conversation.updatedAt = DateUtil.getLastMonthDate();
     return conversation;
   }
 
   public prepareOlderConversation(model?: DialAIEntityModel, name?: string) {
     const conversation = this.prepareDefaultConversation(model, name);
-    conversation.lastActivityDate = DateUtil.getOlderDate();
+    conversation.updatedAt = DateUtil.getOlderDate();
     return conversation;
   }
 
@@ -473,7 +479,7 @@ export class ConversationData extends FolderData {
     const messages = conversation.messages;
     const playbackConversation = JSON.parse(JSON.stringify(conversation));
     playbackConversation.name = `${ExpectedConstants.playbackConversation}${conversation.name}`;
-    playbackConversation.id = `playback${ItemUtil.conversationIdSeparator}${playbackConversation.name}`;
+    playbackConversation.id = `playback${ItemUtil.entityIdSeparator}${playbackConversation.name}`;
     playbackConversation.messages = [];
     if (playbackIndex) {
       for (let i = 0; i < playbackIndex; i++) {
@@ -543,10 +549,11 @@ export class ConversationData extends FolderData {
       content: 'Images',
       model: modelToUse,
       settings: settings,
+      responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
     };
     const name = GeneratorUtil.randomString(10);
     return this.conversationBuilder
-      .withId(`${modelToUse.id}${ItemUtil.conversationIdSeparator}${name}`)
+      .withId(`${modelToUse.id}${ItemUtil.entityIdSeparator}${name}`)
       .withName(name)
       .withMessage(userMessage)
       .withMessage(assistantMessage)
@@ -580,6 +587,7 @@ export class ConversationData extends FolderData {
     attachmentUrl: string,
     model: DialAIEntityModel | string,
     folderName?: string,
+    name?: string,
   ) {
     const modelToUse = { id: typeof model === 'string' ? model : model.id };
     const conversation = this.conversationBuilder.getConversation();
@@ -602,8 +610,9 @@ export class ConversationData extends FolderData {
         attachments: [this.getAttachmentData(attachmentUrl)],
       },
       settings: settings,
+      responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
     };
-    const name = GeneratorUtil.randomString(10);
+    name = name ?? GeneratorUtil.randomString(10);
 
     let conversationBuilder = this.conversationBuilder
       .withName(name)
@@ -611,7 +620,7 @@ export class ConversationData extends FolderData {
       .withMessage(assistantMessage)
       .withModel(modelToUse);
 
-    let conversationId = `${modelToUse.id}${ItemUtil.conversationIdSeparator}${name}`;
+    let conversationId = `${modelToUse.id}${ItemUtil.entityIdSeparator}${name}`;
 
     if (folderName !== undefined) {
       const folder = this.prepareFolder(folderName);
@@ -659,10 +668,11 @@ export class ConversationData extends FolderData {
       },
       model: modelToUse,
       settings: settings,
+      responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
     };
     const name = GeneratorUtil.randomString(10);
     return this.conversationBuilder
-      .withId(`${modelToUse.id}${ItemUtil.conversationIdSeparator}${name}`)
+      .withId(`${modelToUse.id}${ItemUtil.entityIdSeparator}${name}`)
       .withName(name)
       .withMessage(userMessage)
       .withMessage(assistantMessage)
@@ -707,10 +717,11 @@ export class ConversationData extends FolderData {
         stages: stages,
       },
       settings: settings,
+      responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
     };
     const name = GeneratorUtil.randomString(10);
     return this.conversationBuilder
-      .withId(`${modelToUse.id}${ItemUtil.conversationIdSeparator}${name}`)
+      .withId(`${modelToUse.id}${ItemUtil.entityIdSeparator}${name}`)
       .withName(name)
       .withMessage(userMessage)
       .withMessage(assistantMessage)
@@ -777,7 +788,7 @@ export class ConversationData extends FolderData {
     const replayUserMessages = JSON.parse(
       JSON.stringify(conversation.messages.filter((m) => m.role === 'user')),
     ) as Message[];
-    replayConversation.id = `replay${ItemUtil.conversationIdSeparator}${ExpectedConstants.replayConversation}${conversation.name}`;
+    replayConversation.id = `replay${ItemUtil.entityIdSeparator}${ExpectedConstants.replayConversation}${conversation.name}`;
     replayConversation.name = `${ExpectedConstants.replayConversation}${conversation.name}`;
     replayConversation.messages = [];
     replayConversation.replay = {

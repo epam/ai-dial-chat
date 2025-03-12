@@ -17,7 +17,7 @@ import {
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
-import { MoveModel } from '@/src/types/common';
+import { BackendChatEntity, MoveModel } from '@/src/types/common';
 import {
   FolderInterface,
   FolderType,
@@ -34,7 +34,11 @@ import { errorsMessages } from '@/src/constants/errors';
 
 import { cleanConversationHistory } from '../../clean';
 
-import { ConversationInfo, Entity } from '@epam/ai-dial-shared';
+import {
+  ConversationInfo,
+  Entity,
+  MessageFormSchema,
+} from '@epam/ai-dial-shared';
 
 const isLocalStorageEnabled = () => {
   const testData = 'test';
@@ -377,7 +381,9 @@ export class BrowserStorage implements DialStorage {
   ): Observable<ApplicationInfo> {
     throw new Error('Method not implemented.');
   }
-  updateApplication(_application: CustomApplicationModel): Observable<void> {
+  updateApplication(
+    _application: CustomApplicationModel,
+  ): Observable<ApplicationInfo> {
     throw new Error('Method not implemented.');
   }
   getApplication(
@@ -397,7 +403,21 @@ export class BrowserStorage implements DialStorage {
     throw new Error('Method not implemented.');
   }
 
+  redeployApplication(_name: string): Observable<void> {
+    throw new Error('Method not implemented.');
+  }
+
   getApplicationLogs(_path: string): Observable<ApplicationLogsType> {
+    throw new Error('Method not implemented.');
+  }
+
+  getApplicationConfig(_path: string): Observable<MessageFormSchema> {
+    throw new Error('Method not implemented.');
+  }
+  getConversationMetadata(_id: string): Observable<BackendChatEntity | null> {
+    throw new Error('Method not implemented.');
+  }
+  getPromptMetadata(_id: string): Observable<BackendChatEntity | null> {
     throw new Error('Method not implemented.');
   }
 }

@@ -1,6 +1,14 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { FilterTypes, MarketplaceTabs } from '@/src/constants/marketplace';
+import { SortOrder } from '@/src/types/common';
+import { MarketplaceFilters } from '@/src/types/marketplace';
+
+import {
+  FilterTypes,
+  MarketplaceTabs,
+  TableColumnSortKeys,
+  ViewTypes,
+} from '@/src/constants/marketplace';
 
 import * as MarketplaceSelectors from './marketplace.selectors';
 
@@ -10,21 +18,24 @@ import xor from 'lodash/xor';
 export { MarketplaceSelectors };
 
 export interface MarketplaceState {
-  selectedFilters: {
-    [FilterTypes.ENTITY_TYPE]: string[];
-    [FilterTypes.TOPICS]: string[];
-    // [FilterTypes.CAPABILITIES]: string[];
-    // [FilterTypes.ENVIRONMENT]: string[];
-  };
+  selectedFilters: MarketplaceFilters;
   searchTerm: string;
   selectedTab: MarketplaceTabs;
   applyModelStatus: UploadStatus;
+  selectedView: ViewTypes;
+  tableSort: {
+    column: TableColumnSortKeys;
+    order: SortOrder;
+  };
   detailsModel: { reference: string; isSuggested: boolean } | undefined;
+  isBannerVisible: boolean;
+  applyModelId?: string;
 }
 
 const DEFAULT_FILTERS = {
   [FilterTypes.ENTITY_TYPE]: [],
   [FilterTypes.TOPICS]: [],
+  [FilterTypes.SOURCES]: [],
   // [FilterTypes.CAPABILITIES]: [],
   // [FilterTypes.ENVIRONMENT]: [],
 };
@@ -35,12 +46,26 @@ const initialState: MarketplaceState = {
   selectedTab: MarketplaceTabs.HOME,
   applyModelStatus: UploadStatus.UNINITIALIZED,
   detailsModel: undefined,
+  selectedView: ViewTypes.CARD,
+  tableSort: {
+    column: TableColumnSortKeys.NAME,
+    order: 'asc',
+  },
+  isBannerVisible: true,
 };
 
 export const marketplaceSlice = createSlice({
   name: 'marketplace',
   initialState,
   reducers: {
+    init: () => initialState,
+    initQueryParams: (state) => state,
+    setState: (
+      state,
+      { payload }: PayloadAction<Partial<MarketplaceState>>,
+    ) => {
+      return { ...state, ...payload };
+    },
     setSelectedFilters: (
       state,
       { payload }: PayloadAction<{ filterType: FilterTypes; value: string }>,
@@ -51,17 +76,16 @@ export const marketplaceSlice = createSlice({
       );
     },
     setSearchTerm: (state, { payload }: PayloadAction<string>) => {
-      state.searchTerm = payload;
+      state.searchTerm = payload.slice(0, 120); // limit to 120 characters
     },
     setSelectedTab: (state, { payload }: PayloadAction<MarketplaceTabs>) => {
       state.selectedTab = payload;
     },
-    resetFiltering: (state) => {
-      state.searchTerm = '';
-      state.selectedFilters = DEFAULT_FILTERS;
-    },
     setApplyModelStatus: (state, { payload }: PayloadAction<UploadStatus>) => {
       state.applyModelStatus = payload;
+    },
+    setApplyModelId: (state, { payload }: PayloadAction<string>) => {
+      state.applyModelId = payload;
     },
     setDetailsModel: (
       state,
@@ -70,6 +94,33 @@ export const marketplaceSlice = createSlice({
       }: PayloadAction<{ reference: string; isSuggested: boolean } | undefined>,
     ) => {
       state.detailsModel = payload;
+    },
+    setSelectedView: (
+      state,
+      { payload }: PayloadAction<{ viewType: ViewTypes }>,
+    ) => {
+      state.selectedView = payload.viewType;
+    },
+    setTableSort: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        column: TableColumnSortKeys;
+        order: SortOrder;
+      }>,
+    ) => {
+      state.tableSort = payload;
+    },
+    setIsBannerVisible: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        isVisible: boolean;
+      }>,
+    ) => {
+      state.isBannerVisible = payload.isVisible;
     },
   },
 });

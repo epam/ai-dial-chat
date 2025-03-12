@@ -15,6 +15,8 @@ export const FALLBACK_ASSISTANT_SUBMODEL_ID = 'gpt-4';
 
 export const MAX_ENTITY_LENGTH = 160;
 
-export const DEFAULT_TEMPERATURE = parseFloat(
-  process.env.NEXT_PUBLIC_DEFAULT_TEMPERATURE ?? '1',
-);
+export const FALLBACK_TEMPERATURE = 1;
+
+export const DEFAULT_TEMPERATURE = process.env.NEXT_PUBLIC_DEFAULT_TEMPERATURE
+  ? parseFloat(process.env.NEXT_PUBLIC_DEFAULT_TEMPERATURE)
+  : FALLBACK_TEMPERATURE;

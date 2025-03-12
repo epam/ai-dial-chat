@@ -1,12 +1,13 @@
 import { ModelTooltip } from '@/src/ui/selectors/dialogSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class ModelInfoTooltip extends BaseElement {
-  constructor(page: Page) {
-    super(page, ModelTooltip.modelTooltip);
+  constructor(page: Page, parentLocator?: Locator) {
+    super(page, ModelTooltip.modelTooltip, parentLocator);
   }
 
+  public title = this.getChildElementBySelector(ModelTooltip.title);
   public modelInfo = this.getChildElementBySelector(ModelTooltip.modelInfo);
   public versionInfo = this.getChildElementBySelector(ModelTooltip.versionInfo);
 

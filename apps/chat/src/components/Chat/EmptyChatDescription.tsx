@@ -1,14 +1,19 @@
 import { useCallback, useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getModelDescription } from '@/src/utils/app/application';
-import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
+import {
+  getOpenAIEntityFullName,
+  isOldConversationReplay,
+  isPlaybackConversation,
+  isReplayAsIsConversation,
+} from '@/src/utils/app/conversation';
 import { isEntityIdExternal } from '@/src/utils/app/id';
+import { getGroupModelKey } from '@/src/utils/app/models';
 
 import { Conversation } from '@/src/types/chat';
 import { ScreenState } from '@/src/types/common';
@@ -25,6 +30,8 @@ import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { Spinner } from '../Common/Spinner';
 import { FunctionStatusIndicator } from '../Marketplace/FunctionStatusIndicator';
 import { ModelVersionSelect } from './ModelVersionSelect';
+import { PlaybackIcon } from './Playback/PlaybackIcon';
+import { ReplayAsIsIcon } from './ReplayAsIsIcon';
 
 import { Feature } from '@epam/ai-dial-shared';
 
@@ -32,18 +39,39 @@ interface EmptyChatDescriptionViewProps {
   conversation: Conversation;
   onShowChangeModel: (conversationId: string) => void;
   onShowSettings: (show: boolean) => void;
+  isApplicationPreviewChat: boolean;
 }
+
+const getModelName = (
+  conversation: Conversation,
+  model: DialAIEntityModel | undefined,
+) => {
+  if (isPlaybackConversation(conversation)) {
+    return 'Playback';
+  }
+
+  if (isReplayAsIsConversation(conversation)) {
+    return 'Replay as is';
+  }
+
+  if (model) {
+    return getOpenAIEntityFullName(model);
+  }
+
+  return conversation.model.id;
+};
 
 const EmptyChatDescriptionView = ({
   conversation,
   onShowChangeModel,
   onShowSettings,
+  isApplicationPreviewChat,
 }: EmptyChatDescriptionViewProps) => {
   const dispatch = useAppDispatch();
 
   const { t } = useTranslation(Translation.Chat);
+
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const model = modelsMap[conversation.model.id];
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
@@ -51,25 +79,22 @@ const EmptyChatDescriptionView = ({
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
-  const isEmptyChatChangeAgentHidden = enabledFeatures.has(
-    Feature.HideEmptyChatChangeAgent,
-  );
-  const isEmptyChatSettingsEnabled = enabledFeatures.has(
-    Feature.EmptyChatSettings,
-  );
-  const isExternal = isEntityIdExternal(conversation);
 
   const screenState = useScreenState();
 
+  const model = modelsMap[conversation.model.id];
   const versions = useMemo(
     () =>
-      models.filter(
-        (m) => installedModelIds.has(m.reference) && m.name === model?.name,
-      ),
-    [installedModelIds, model?.name, models],
+      model
+        ? models.filter(
+            (m) =>
+              (installedModelIds.has(m.reference) ||
+                model.reference === m.reference) &&
+              getGroupModelKey(m) === getGroupModelKey(model),
+          )
+        : [],
+    [installedModelIds, model, models],
   );
-
-  const incorrectModel = !model;
 
   const handleOpenChangeModel = useCallback(
     () => onShowChangeModel(conversation.id),
@@ -101,7 +126,23 @@ const EmptyChatDescriptionView = ({
     );
   }
 
-  const modelIconSize = screenState === ScreenState.MOBILE ? 36 : 50;
+  const isReplayAsIs = isReplayAsIsConversation(conversation);
+  const isPlayback = isPlaybackConversation(conversation);
+  const isEmptyChatChangeAgentHidden =
+    enabledFeatures.has(Feature.HideEmptyChatChangeAgent) ||
+    isApplicationPreviewChat;
+  const isEmptyChatSettingsEnabled = enabledFeatures.has(
+    Feature.EmptyChatSettings,
+  );
+  const incorrectModel = !model;
+  const isExternal = isEntityIdExternal(conversation);
+  const modelIconSize = screenState === ScreenState.SM ? 36 : 50;
+  const isOldReplay = isOldConversationReplay(conversation.replay);
+  const PseudoIcon = isPlayback
+    ? PlaybackIcon
+    : isReplayAsIs
+      ? ReplayAsIsIcon
+      : null;
 
   return (
     <div className="flex size-full flex-col items-center gap-5 rounded-t px-3 py-4 md:px-0 lg:max-w-3xl">
@@ -117,23 +158,62 @@ const EmptyChatDescriptionView = ({
             className="flex flex-col items-center justify-center gap-5 text-3xl leading-10"
             data-qa="agent-info"
           >
-            <ModelIcon
-              entity={model}
-              entityId={model?.id ?? conversation.model.id}
-              size={modelIconSize}
-              isCustomTooltip
-            />
+            {PseudoIcon ? (
+              <PseudoIcon size={modelIconSize} />
+            ) : (
+              <ModelIcon
+                entity={model}
+                entityId={model?.id ?? conversation.model.id}
+                size={modelIconSize}
+                isCustomTooltip
+              />
+            )}
             <div className="flex items-center gap-2 whitespace-pre-wrap">
               <span
                 data-qa="agent-name"
-                className={classNames(incorrectModel && 'text-secondary')}
+                className={classNames(
+                  'break-words',
+                  incorrectModel &&
+                    !isReplayAsIs &&
+                    !isPlayback &&
+                    'text-secondary',
+                )}
               >
-                {model ? getOpenAIEntityFullName(model) : conversation.model.id}
+                {getModelName(conversation, model)}
               </span>
               {model && <FunctionStatusIndicator entity={model} />}
             </div>
           </div>
-          {model && (
+          {isReplayAsIs && (
+            <>
+              <span
+                className="whitespace-pre-wrap text-secondary"
+                data-qa="agent-descr"
+              >
+                <EntityMarkdownDescription
+                  className="!text-base"
+                  isShortDescription
+                >
+                  {t(
+                    'This mode replicates user requests from the original conversation including settings set in each message.',
+                  )}
+                </EntityMarkdownDescription>
+              </span>
+              {isOldReplay && (
+                <span className="text-error">
+                  <EntityMarkdownDescription
+                    className="!text-sm"
+                    isShortDescription
+                  >
+                    {t(
+                      'Some messages were created in an older DIAL version and may not replay as expected.',
+                    )}
+                  </EntityMarkdownDescription>
+                </span>
+              )}
+            </>
+          )}
+          {model && !(isPlayback || isReplayAsIs) && (
             <>
               <ModelVersionSelect
                 className="h-max w-fit self-center"
@@ -170,17 +250,15 @@ const EmptyChatDescriptionView = ({
               {t('Change agent')}
             </button>
           )}
-          {!conversation.replay?.replayAsIs &&
-            !conversation.playback?.isPlayback &&
-            isEmptyChatSettingsEnabled && (
-              <button
-                className="pl-3 text-left text-accent-primary"
-                data-qa="configure-settings"
-                onClick={handleOpenSettings}
-              >
-                {t('Configure settings')}
-              </button>
-            )}
+          {!isReplayAsIs && !isPlayback && isEmptyChatSettingsEnabled && (
+            <button
+              className="pl-3 text-left text-accent-primary"
+              data-qa="configure-settings"
+              onClick={handleOpenSettings}
+            >
+              {t('Configure settings')}
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -191,17 +269,20 @@ interface Props {
   conversation: Conversation;
   onShowChangeModel: (conversationId: string) => void;
   onShowSettings: (show: boolean) => void;
+  isApplicationPreviewChat: boolean;
 }
 
 export const EmptyChatDescription = ({
   conversation,
   onShowChangeModel,
   onShowSettings,
+  isApplicationPreviewChat,
 }: Props) => {
   return (
     <div className="flex size-full flex-col items-center p-0 md:px-5 md:pt-5">
       <div className="flex size-full flex-col items-center gap-px rounded">
         <EmptyChatDescriptionView
+          isApplicationPreviewChat={isApplicationPreviewChat}
           conversation={conversation}
           onShowChangeModel={onShowChangeModel}
           onShowSettings={onShowSettings}

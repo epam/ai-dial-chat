@@ -1,9 +1,9 @@
 import { IconPaperclip } from '@tabler/icons-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
 import {
@@ -13,6 +13,8 @@ import {
   getUserCustomContent,
 } from '@/src/utils/app/file';
 import {
+  getConfigurationSchema,
+  getConfigurationValue,
   getMessageFormValue,
   isMessageInputDisabled,
 } from '@/src/utils/app/form-schema';
@@ -54,6 +56,7 @@ interface UserMessageProps {
   message: Message;
   conversation: Conversation;
   messageIndex: number;
+  allMessages: Message[];
   isEditing: boolean;
   isEditingTemplates: boolean;
   toggleEditing: (value: boolean) => void;
@@ -68,6 +71,7 @@ export const UserMessage = memo(function UserMessage({
   message,
   conversation,
   messageIndex,
+  allMessages,
   isEditing,
   isEditingTemplates,
   toggleEditing,
@@ -108,14 +112,17 @@ export const UserMessage = memo(function UserMessage({
     SettingsSelectors.isFeatureEnabled(state, Feature.MessageTemplates),
   );
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
+
   const isMobileOrOverlay = isSmallScreen() || isOverlay;
-  const isInputDisabled = isMessageInputDisabled(
-    messageIndex,
-    conversation.messages,
+  const isInputDisabled = isMessageInputDisabled(messageIndex, allMessages);
+
+  const currentFormValue = useMemo(
+    () => getMessageFormValue(message) ?? getConfigurationValue(message),
+    [message],
   );
 
   const [messageContent, setMessageContent] = useState(message.content);
-  const [formValue, setFormValue] = useState(getMessageFormValue(message));
+  const [formValue, setFormValue] = useState(currentFormValue);
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [shouldScroll, setShouldScroll] = useState(false);
   const [selectedDialLinks, setSelectedDialLinks] = useState<DialLink[]>([]);
@@ -267,7 +274,7 @@ export const UserMessage = memo(function UserMessage({
         attachments?.attachments,
       );
       const isFormValueChanged = !isEqual(
-        getMessageFormValue(message),
+        getMessageFormValue(message) ?? getConfigurationValue(message),
         formValue,
       );
       const isContentChanged =
@@ -284,9 +291,15 @@ export const UserMessage = memo(function UserMessage({
                   message.custom_content?.attachments && !attachments
                     ? []
                     : attachments?.attachments,
-                ...(getMessageFormValue(message) && {
-                  form_value: formValue ?? getMessageFormValue(message),
-                }),
+                ...(formValue &&
+                  (getConfigurationSchema(message)
+                    ? {
+                        configuration_value: formValue,
+                        configuration_schema: getConfigurationSchema(message),
+                      }
+                    : {
+                        form_value: formValue,
+                      })),
               },
               templateMapping: getEntitiesFromTemplateMapping(
                 message.templateMapping,
@@ -314,7 +327,7 @@ export const UserMessage = memo(function UserMessage({
   const handlePressEnter = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !isTyping && !e.shiftKey) {
       e.preventDefault();
-      handleEditMessage();
+      handleEditMessage(formValue, messageContent);
     }
   };
 
@@ -379,10 +392,8 @@ export const UserMessage = memo(function UserMessage({
   }, [message.content]);
 
   useEffect(() => {
-    if (getMessageFormValue(message)) {
-      setFormValue(getMessageFormValue(message));
-    }
-  }, [message]);
+    setFormValue(currentFormValue);
+  }, [currentFormValue, isEditing]);
 
   useEffect(() => {
     const links = getDialLinksFromAttachments(
@@ -413,7 +424,7 @@ export const UserMessage = memo(function UserMessage({
       <div className="flex w-full flex-col gap-3">
         <UserSchema
           messageIndex={messageIndex}
-          allMessages={conversation.messages}
+          allMessages={allMessages}
           isEditing={isEditing}
           setInputValue={setMessageContent}
           onSubmit={handleEditMessage}
@@ -508,7 +519,7 @@ export const UserMessage = memo(function UserMessage({
             {!isInputHidden && (
               <button
                 className="button button-primary"
-                onClick={() => handleEditMessage()}
+                onClick={() => handleEditMessage(formValue, messageContent)}
                 disabled={
                   isUploadingAttachmentPresent || isContentEmptyAndNoAttachments
                 }
@@ -527,9 +538,9 @@ export const UserMessage = memo(function UserMessage({
     <>
       <div className="relative mr-2 flex w-full flex-col gap-5">
         <UserSchema
-          formValue={formValue}
+          formValue={currentFormValue}
           messageIndex={messageIndex}
-          allMessages={conversation.messages}
+          allMessages={allMessages}
           isEditing={isEditing}
         />
         {message.content && (

@@ -1,6 +1,11 @@
-import { marketplaceContainer } from '@/src/ui/selectors';
+import { Tags } from '@/src/ui/domData';
+import {
+  ErrorLabelSelectors,
+  MarketplaceSelectors,
+  marketplaceContainer,
+} from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
-import { MarketplaceAgents } from '@/src/ui/webElements/marketplace/marketplaceAgents';
+import { MarketplaceAgentsSection } from '@/src/ui/webElements/marketplace/marketplaceAgentsSection';
 import { MarketplaceHeader } from '@/src/ui/webElements/marketplace/marketplaceHeader';
 import { Locator, Page } from '@playwright/test';
 
@@ -9,15 +14,8 @@ export class Marketplace extends BaseElement {
     super(page, marketplaceContainer, parentLocator);
   }
 
-  private agents!: MarketplaceAgents;
   private marketplaceHeader!: MarketplaceHeader;
-
-  getAgents(): MarketplaceAgents {
-    if (!this.agents) {
-      this.agents = new MarketplaceAgents(this.page, this.rootLocator);
-    }
-    return this.agents;
-  }
+  private marketplaceAgentsSection!: MarketplaceAgentsSection;
 
   getMarketplaceHeader(): MarketplaceHeader {
     if (!this.marketplaceHeader) {
@@ -28,4 +26,32 @@ export class Marketplace extends BaseElement {
     }
     return this.marketplaceHeader;
   }
+
+  getMarketplaceAgentsSection(): MarketplaceAgentsSection {
+    if (!this.marketplaceAgentsSection) {
+      this.marketplaceAgentsSection = new MarketplaceAgentsSection(
+        this.page,
+        this.rootLocator,
+      );
+    }
+    return this.marketplaceAgentsSection;
+  }
+
+  public marketplaceSuggestionsLabel = this.getChildElementBySelector(
+    MarketplaceSelectors.marketplaceSuggestions,
+  );
+  public noWorkspaceResultsFound = this.getChildElementBySelector(
+    MarketplaceSelectors.noWorkspaceResultsFound,
+  );
+  public noWorkspaceResultsFoundIcon =
+    this.noWorkspaceResultsFound.getChildElementBySelector(Tags.svg);
+  public noResultsFound = this.getChildElementBySelector(
+    ErrorLabelSelectors.noResultFound,
+  );
+  public noResultsFoundIcon = this.noResultsFound.getChildElementBySelector(
+    Tags.svg,
+  );
+  public noResultsFoundDescription = this.getChildElementBySelector(
+    MarketplaceSelectors.noResultsFoundDescription,
+  );
 }

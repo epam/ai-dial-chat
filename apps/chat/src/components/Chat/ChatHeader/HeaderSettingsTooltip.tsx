@@ -1,6 +1,6 @@
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
 
@@ -15,6 +15,7 @@ interface Props {
   temperature: number | null;
   selectedAddons: DialAIEntityAddon[] | null;
   disallowChangeSettings: boolean;
+  hasSettings: boolean;
 }
 
 const SM_HEIGHT_THRESHOLDS = [
@@ -31,6 +32,7 @@ export const HeaderSettingsTooltip = ({
   temperature,
   selectedAddons,
   disallowChangeSettings,
+  hasSettings,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -46,7 +48,7 @@ export const HeaderSettingsTooltip = ({
     >
       <div className="font-semibold">
         {t(
-          disallowChangeSettings
+          disallowChangeSettings || !hasSettings
             ? 'Conversation settings'
             : 'Change conversation settings',
         )}

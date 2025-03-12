@@ -157,6 +157,9 @@ dialSharedWithMeTest(
     setTestIds('EPMRTC-3185', 'EPMRTC-2032');
     let prompt: Prompt;
     let shareByLinkResponse: ShareByLinkResponseModel;
+    const updatedName = GeneratorUtil.randomString(10);
+    const updatedDescription = GeneratorUtil.randomString(10);
+    const updatedContent = GeneratorUtil.randomString(10);
 
     await dialSharedWithMeTest.step('Prepare shared prompt', async () => {
       prompt = promptData.preparePrompt(
@@ -211,9 +214,6 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Verify prompt params can be updated',
       async () => {
-        const updatedName = GeneratorUtil.randomString(10);
-        const updatedDescription = GeneratorUtil.randomString(10);
-        const updatedContent = GeneratorUtil.randomString(10);
         const request =
           await additionalShareUserPromptModalDialog.updatePromptDetailsWithButton(
             updatedName,
@@ -224,12 +224,27 @@ dialSharedWithMeTest(
           { name: updatedName },
           'visible',
         );
-        await apiAssertion.assertRequestPromptName(request, updatedName);
-        await apiAssertion.assertRequestPromptDescription(
-          request,
+        await apiAssertion.assertMoveRequest(request, updatedName, prompt.name);
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Open duplicated prompt and verify params are updated',
+      async () => {
+        await additionalShareUserPrompts.openEntityDropdownMenu(updatedName);
+        await additionalShareUserPromptDropdownMenu.selectMenuOption(
+          MenuOptions.edit,
+          { triggeredHttpMethod: 'GET' },
+        );
+        await additionalShareUserPromptModalAssertion.assertPromptName(
+          updatedName,
+        );
+        await additionalShareUserPromptModalAssertion.assertPromptDescription(
           updatedDescription,
         );
-        await apiAssertion.assertRequestPromptContent(request, updatedContent);
+        await additionalShareUserPromptModalAssertion.assertPromptContent(
+          updatedContent,
+        );
       },
     );
   },

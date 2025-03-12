@@ -1,4 +1,4 @@
-import { BaseAssertion } from '@/src/assertions/baseAssertion';
+import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ExpectedMessages } from '@/src/testData';
 import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { expect } from '@playwright/test';

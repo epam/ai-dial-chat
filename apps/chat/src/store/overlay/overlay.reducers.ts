@@ -19,10 +19,11 @@ import {
 
 type WithRequestId<T> = T & { requestId: string };
 
-interface OverlayState {
+export interface OverlayState {
   hostDomain: string;
 
   systemPrompt: string | null;
+  newConversationsFolder: string | null;
 
   readyToInteractSent: boolean;
   optionsReceived?: boolean;
@@ -32,6 +33,7 @@ const initialState: OverlayState = {
   hostDomain: '*',
 
   systemPrompt: null,
+  newConversationsFolder: null,
   readyToInteractSent: false,
 };
 
@@ -66,6 +68,7 @@ export const overlaySlice = createSlice({
       { payload }: PayloadAction<WithRequestId<ChatOverlayOptions>>,
     ) => {
       state.hostDomain = payload.hostDomain;
+      state.newConversationsFolder = payload.newConversationsFolderId ?? null;
     },
     setOverlayOptionsSuccess: (
       state,

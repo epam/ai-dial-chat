@@ -13,9 +13,9 @@ import {
   useFormContext,
 } from 'react-hook-form';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { SelectOption } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
@@ -95,7 +95,7 @@ export const DynamicFormFields = <
     <div className="flex flex-col gap-2">
       {fields.map((field, i) => (
         <div
-          key={field.id}
+          key={field.label}
           className="flex gap-3 rounded border border-tertiary bg-layer-3 px-3 py-2"
         >
           {!field.editableKey ? (

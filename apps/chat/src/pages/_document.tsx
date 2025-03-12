@@ -1,8 +1,6 @@
 import { DocumentProps, Head, Html, Main, NextScript } from 'next/document';
 import Script from 'next/script';
 
-import { getThemeIconUrl } from '../utils/app/themes';
-
 import i18nextConfig from '../../next-i18next.config';
 
 import { documentWithJss } from '@epam/ai-dial-modulify-ui';
@@ -14,6 +12,7 @@ type Props = DocumentProps & {
 function Document(props: Props) {
   const currentLocale =
     props.__NEXT_DATA__.locale ?? i18nextConfig.i18n.defaultLocale;
+
   return (
     <Html lang={currentLocale}>
       <Head>
@@ -30,17 +29,6 @@ function Document(props: Props) {
         {!!process.env.THEMES_CONFIG_HOST && (
           <link rel="stylesheet" href={'/api/themes/styles'} />
         )}
-        <link
-          rel="icon"
-          href={getThemeIconUrl('favicon')}
-          sizes="any"
-          type="image/png"
-        />
-        <link
-          rel="apple-touch-icon"
-          href={getThemeIconUrl('favicon')}
-          type="image/png"
-        />
       </Head>
       <body>
         <Script id="theme-script" strategy="beforeInteractive">

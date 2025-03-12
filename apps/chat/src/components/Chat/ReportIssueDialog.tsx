@@ -8,9 +8,9 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { checkValidity } from '@/src/utils/app/forms';
 import { onBlur } from '@/src/utils/app/style-helpers';
@@ -25,16 +25,15 @@ import {
 } from '@/src/store/service/service.reducer';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
-import Modal from '@/src/components/Common/Modal';
+import { Modal } from '@/src/components/Common/Modal';
 
 import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
 
 interface Props {
-  isOpen: boolean;
   onClose: () => void;
 }
 
-export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
+export const ReportIssueDialog: FC<Props> = ({ onClose }) => {
   const { t } = useTranslation(Translation.Settings);
 
   const isSuccessfullySent = useAppSelector(
@@ -102,9 +101,9 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
     <Modal
       initialFocus={titleInputRef}
       portalId="theme-main"
-      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
+      state={ModalState.OPENED}
       onClose={handleClose}
-      dataQa="request-api-key-dialog"
+      dataQa="report-issue-dialog"
       overlayClassName="fixed inset-0"
       containerClassName="inline-block w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[780px]"
       form={{

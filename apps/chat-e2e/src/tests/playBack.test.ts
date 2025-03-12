@@ -6,7 +6,7 @@ import {
   ExpectedMessages,
   MenuOptions,
   MockedChatApiResponseBodies,
-  Theme,
+  ThemeId,
 } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
@@ -66,7 +66,7 @@ dialTest(
 
         await dataInjector.createConversations([conversation]);
 
-        theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
+        theme = GeneratorUtil.randomArrayElement(Object.keys(ThemeId));
         await localStorageManager.setSettings(theme);
       },
     );

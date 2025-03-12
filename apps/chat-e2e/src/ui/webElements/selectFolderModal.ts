@@ -1,10 +1,7 @@
-import {
-  ErrorLabelSelectors,
-  IconSelectors,
-  SelectFolderModalSelectors,
-} from '@/src/ui/selectors';
+import { IconSelectors, SelectFolderModalSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Folders } from '@/src/ui/webElements/entityTree/folders';
+import { ModalError } from '@/src/ui/webElements/modalError';
 import { Page } from '@playwright/test';
 import { Response } from 'playwright-core';
 
@@ -14,6 +11,7 @@ export class SelectFolderModal extends BaseElement {
   }
 
   private selectFolders!: Folders;
+  public modalError!: ModalError;
 
   public allFoldersSection = this.getChildElementBySelector(
     SelectFolderModalSelectors.allFolders,
@@ -21,10 +19,6 @@ export class SelectFolderModal extends BaseElement {
 
   public rootFolder = this.getChildElementBySelector(
     SelectFolderModalSelectors.rootFolder,
-  );
-
-  public selectFolderErrorText = this.getChildElementBySelector(
-    ErrorLabelSelectors.errorText,
   );
 
   public searchInput = this.getChildElementBySelector(
@@ -42,6 +36,13 @@ export class SelectFolderModal extends BaseElement {
       );
     }
     return this.selectFolders;
+  }
+
+  getModalError(): ModalError {
+    if (!this.modalError) {
+      this.modalError = new ModalError(this.page, this.rootLocator);
+    }
+    return this.modalError;
   }
 
   public newFolderButton = this.getChildElementBySelector(
@@ -103,17 +104,5 @@ export class SelectFolderModal extends BaseElement {
     } else {
       await this.selectFolderButton.click();
     }
-  }
-
-  public async getErrorMessage() {
-    return this.getChildElementBySelector(
-      ErrorLabelSelectors.errorText,
-    ).getElementContent();
-  }
-
-  public async getErrorContainer() {
-    return this.getChildElementBySelector(
-      ErrorLabelSelectors.errorContainer,
-    ).getElementLocator();
   }
 }

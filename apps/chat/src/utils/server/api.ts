@@ -5,7 +5,7 @@ import { ServerUtils } from '@/src/utils/server/server';
 
 import { ApplicationInfo } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
-import { ApiKeys } from '@/src/types/common';
+import { ApiKeys, CoreApiKeys } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
 import { PromptInfo } from '@/src/types/prompt';
 
@@ -13,7 +13,12 @@ import { EMPTY_MODEL_ID } from '@/src/constants/default-ui-settings';
 import { NA_VERSION } from '@/src/constants/public';
 import { validVersionRegEx } from '@/src/constants/versions';
 
+import {
+  isPlaybackConversation,
+  isReplayConversation,
+} from '../app/conversation';
 import { constructPath } from '../app/file';
+import { splitEntityId } from '../app/folders';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
 
@@ -41,10 +46,8 @@ export const isPseudoModel = (modelId: string | undefined) =>
   modelId ? Object.values(PseudoModel).includes(modelId as PseudoModel) : false;
 
 const getModelApiIdFromConversation = (conversation: Conversation): string => {
-  if (conversation.replay?.isReplay ?? conversation.isReplay)
-    return PseudoModel.Replay;
-  if (conversation.playback?.isPlayback ?? conversation.isPlayback)
-    return PseudoModel.Playback;
+  if (isReplayConversation(conversation)) return PseudoModel.Replay;
+  if (isPlaybackConversation(conversation)) return PseudoModel.Playback;
   return conversation.model.id;
 };
 
@@ -205,7 +208,7 @@ export class ApiUtils {
   }
 
   static requestText(url: string, options?: RequestInit) {
-    return fromFetch(constructPath('api', url), {
+    return fromFetch(constructPath('/api', url), {
       headers: { 'Content-Type': 'application/json' },
       ...options,
     }).pipe(
@@ -274,17 +277,40 @@ export class ApiUtils {
   }
 }
 
+export const getModelIdWithoutVersion = (id: string) =>
+  id.split(pathKeySeparator).slice(0, -1).join(pathKeySeparator);
+
 export const getPublicItemIdWithoutVersion = (version: string, id: string) => {
   if (version === NA_VERSION) {
     return id;
   }
 
-  return id.split(pathKeySeparator).slice(0, -1).join(pathKeySeparator);
+  return getModelIdWithoutVersion(id);
 };
 
 export const addVersionToId = (id: string, version: string) =>
   [id, version].join(pathKeySeparator);
 
 export const isValidEntityApiType = (apiKey: string): boolean => {
-  return Object.values(ApiKeys).includes(apiKey as ApiKeys);
+  return (
+    Object.values(ApiKeys).includes(apiKey as ApiKeys) ||
+    Object.values(CoreApiKeys).includes(apiKey as CoreApiKeys)
+  );
+};
+
+export const getIdWithoutVersionFromApiKey = (
+  id: string,
+  parseMethod:
+    | typeof parseApplicationApiKey
+    | typeof parseConversationApiKey
+    | typeof parsePromptApiKey,
+) => {
+  const parsedApiKey = parseMethod(splitEntityId(id).name, {
+    parseVersion: true,
+  });
+
+  return getPublicItemIdWithoutVersion(
+    parsedApiKey.publicationInfo?.version ?? NA_VERSION,
+    id,
+  );
 };

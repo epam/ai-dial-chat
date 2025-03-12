@@ -10,11 +10,10 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   hasInvalidNameInPath,
@@ -45,8 +44,11 @@ import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
+import { ChatActions } from '@/src/store/chat/chat.reducer';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import {
   PromptsActions,
   PromptsSelectors,
@@ -102,6 +104,12 @@ export const PromptComponent = ({
   const selectedPublicationUrl = useAppSelector(
     PublicationSelectors.selectSelectedPublicationUrl,
   );
+  const selectedConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedConversations,
+  );
+  const installedModelIds = useAppSelector(
+    ModelsSelectors.selectInstalledModelIds,
+  );
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
   const { showModal, isModalPreviewMode } = useAppSelector(
     PromptsSelectors.selectIsEditModalOpen,
@@ -117,6 +125,9 @@ export const PromptComponent = ({
   const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Prompt),
+  );
+  const isConversationBlocksInput = useAppSelector(
+    ConversationsSelectors.selectIsSelectedConversationBlocksInput,
   );
 
   const collapsedSectionsSelector = useMemo(
@@ -141,7 +152,7 @@ export const PromptComponent = ({
   const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
 
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isRenaming, setIsRenaming] = useState(false);
+  const [isOpened, setIsOpened] = useState(false);
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
@@ -154,6 +165,9 @@ export const PromptComponent = ({
     () => chosenPromptIds.includes(prompt.id),
     [chosenPromptIds, prompt.id],
   );
+  const isModelsInstalled = selectedConversations.every((conv) =>
+    installedModelIds.has(conv.model.id),
+  );
 
   const { refs, context } = useFloating({
     open: isContextMenu,
@@ -165,7 +179,7 @@ export const PromptComponent = ({
 
   useEffect(() => {
     if (!showModal) {
-      setIsRenaming(false);
+      setIsOpened(false);
     }
   }, [showModal]);
 
@@ -199,29 +213,26 @@ export const PromptComponent = ({
     }, []);
 
   const handleDelete = useCallback(() => {
-    if (isDeleting) {
-      if (prompt.sharedWithMe) {
-        dispatch(
-          ShareActions.discardSharedWithMe({
-            resourceIds: [prompt.id],
-            featureType: FeatureType.Prompt,
-          }),
-        );
-      } else {
-        dispatch(PromptsActions.deletePrompt({ prompt }));
-      }
-      dispatch(PromptsActions.resetSearch());
+    if (prompt.sharedWithMe) {
+      dispatch(
+        ShareActions.discardSharedWithMe({
+          resourceIds: [prompt.id],
+          featureType: FeatureType.Prompt,
+        }),
+      );
+    } else {
+      dispatch(PromptsActions.deletePrompt({ prompt }));
     }
+    dispatch(PromptsActions.resetSearch());
 
-    setIsDeleting(false);
     dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
-  }, [dispatch, isDeleting, prompt]);
+  }, [dispatch, prompt]);
 
   const handleOpenDeleteModal: MouseEventHandler = useCallback((e) => {
     e.stopPropagation();
     e.preventDefault();
 
-    setIsRenaming(false);
+    setIsOpened(false);
     setIsDeleting(true);
   }, []);
 
@@ -239,7 +250,7 @@ export const PromptComponent = ({
     (e: MouseEvent<unknown, globalThis.MouseEvent>, isPreview = false) => {
       e.stopPropagation();
       e.preventDefault();
-      setIsRenaming(true);
+      setIsOpened(true);
       dispatch(
         PromptsActions.setSelectedPrompt({
           promptId: prompt.id,
@@ -301,7 +312,7 @@ export const PromptComponent = ({
         dispatch(
           UIActions.showErrorToast(
             t('Prompt with name "{{name}}" already exists in this folder.', {
-              ns: 'prompt',
+              ns: Translation.PromptBar,
               name: prompt.name,
             }),
           ),
@@ -356,7 +367,7 @@ export const PromptComponent = ({
     setIsContextMenu(true);
   };
   const isHighlighted = !isSelectMode
-    ? isDeleting || isRenaming || (showModal && isSelected) || isContextMenu
+    ? isDeleting || isOpened || (showModal && isSelected) || isContextMenu
     : isChosen;
 
   const handleDuplicate: MouseEventHandler<HTMLButtonElement> = useCallback(
@@ -377,15 +388,43 @@ export const PromptComponent = ({
     [dispatch, prompt.id],
   );
 
+  const disableUsePrompt = isConversationBlocksInput || !isModelsInstalled;
+
+  const handleUse: MouseEventHandler<HTMLButtonElement> = useCallback(
+    (e) => {
+      e.stopPropagation();
+      setIsContextMenu(false);
+      dispatch(PromptsActions.applyPrompt(prompt));
+    },
+    [dispatch, prompt],
+  );
+
+  const handleOpenInfoModal = useCallback(() => {
+    const { id, updatedAt, createdAt, author, sharedWithMe, publicationInfo } =
+      prompt;
+    dispatch(
+      ChatActions.getEntityInfo({
+        entityInfo: {
+          id,
+          updatedAt,
+          createdAt,
+          author,
+          sharedWithMe,
+          isPublic: !!publicationInfo?.action,
+        },
+      }),
+    );
+  }, [dispatch, prompt]);
+
   useEffect(() => {
     if (isSelectMode) {
-      setIsRenaming(false);
+      setIsOpened(false);
       setIsDeleting(false);
     }
   }, [isSelectMode]);
 
   useEffect(() => {
-    if (screenState !== ScreenState.MOBILE) {
+    if (screenState !== ScreenState.SM) {
       setIsShowMoveToModal(false);
     }
   }, [screenState]);
@@ -412,7 +451,7 @@ export const PromptComponent = ({
         onClick={() => {
           if (isSelectMode && !isExternal) {
             setIsDeleting(false);
-            setIsRenaming(false);
+            setIsOpened(false);
             dispatch(PromptsActions.setChosenPrompts({ ids: [prompt.id] }));
           }
         }}
@@ -426,7 +465,7 @@ export const PromptComponent = ({
         <div
           className={classNames('flex size-full items-center gap-2', {
             'pr-6 xl:pr-0':
-              !isSelectMode && !isDeleting && !isRenaming && isSelected,
+              !isSelectMode && !isDeleting && !isOpened && isSelected,
           })}
           draggable={!isExternal && !isNameOrPathInvalid && !isSelectMode}
           onDragStart={(e) => handleDragStart(e, prompt)}
@@ -506,7 +545,7 @@ export const PromptComponent = ({
             </Tooltip>
           </div>
         </div>
-        {!isSelectMode && !isDeleting && !isRenaming && (
+        {!isSelectMode && !isDeleting && !isOpened && (
           <div
             ref={refs.setFloating}
             {...getFloatingProps()}
@@ -540,6 +579,9 @@ export const PromptComponent = ({
               onView={(e) => handleOpenEditModal(e, true)}
               isOpen={isContextMenu}
               onSelect={handleSelect}
+              disableUse={disableUsePrompt}
+              onUse={handleUse}
+              onShowInfo={handleOpenInfoModal}
             />
           </div>
         )}
@@ -600,8 +642,8 @@ export const PromptComponent = ({
           confirmLabel={t('Delete')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {
-            setIsDeleting(false);
             if (result) handleDelete();
+            setIsDeleting(false);
           }}
         />
       )}
@@ -611,9 +653,7 @@ export const PromptComponent = ({
           heading={t('Confirm unsharing: {{promptName}}', {
             promptName: prompt.name,
           })}
-          description={
-            t('Are you sure that you want to unshare this prompt?') || ''
-          }
+          description={t('Are you sure that you want to unshare this prompt?')}
           confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {

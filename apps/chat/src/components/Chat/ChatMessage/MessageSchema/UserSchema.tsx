@@ -1,12 +1,14 @@
 import { memo, useCallback, useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
+import { useTranslation } from '@/src/hooks/useTranslation';
+
 import {
+  getConfigurationSchema,
   getFormButtonType,
   getMessageSchema,
+  isFormSchemaValid,
 } from '@/src/utils/app/form-schema';
 
 import { FormButtonType } from '@/src/types/chat';
@@ -16,7 +18,9 @@ import { FormSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/Form
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 
 import {
+  DialSchemaProperties,
   Message,
+  MessageFormSchema,
   MessageFormValue,
   MessageFormValueType,
 } from '@epam/ai-dial-shared';
@@ -30,28 +34,26 @@ interface UserSchemaProps {
   setFormValue?: (value: MessageFormValue) => void;
   onSubmit?: (formValue?: MessageFormValue, content?: string) => void;
   disabled?: boolean;
+  schema?: MessageFormSchema;
 }
 
-export const UserSchema = memo(function UserSchema({
-  messageIndex,
-  allMessages,
+const UserSchemaView = memo(function UserSchemaView({
   isEditing,
   setInputValue,
   formValue,
   setFormValue,
   onSubmit,
   disabled,
+  schema,
 }: UserSchemaProps) {
   const { t } = useTranslation(Translation.Chat);
-
-  const schema = getMessageSchema(allMessages[messageIndex - 1]);
 
   const handleChange = useCallback(
     (property: string, value: MessageFormValueType, submit?: boolean) => {
       if (schema && formValue) {
         const populateText = schema.properties[property]?.oneOf?.find(
           (option) => option.const === value,
-        )?.['dial:widgetOptions']?.populateText;
+        )?.[DialSchemaProperties.DialWidgetOptions]?.populateText;
 
         setFormValue?.({ ...formValue, [property]: value });
 
@@ -81,7 +83,7 @@ export const UserSchema = memo(function UserSchema({
   }, [formValue, schema]);
 
   if (!schema && formValue)
-    return <ErrorMessage error={t('Form schema is missing') ?? ''} />;
+    return <ErrorMessage error={t('Form schema is missing')} />;
 
   if (!formValue || !schema) return null;
 
@@ -123,4 +125,23 @@ export const UserSchema = memo(function UserSchema({
       ))}
     </div>
   ) : null;
+});
+
+export const UserSchema = memo(function UserSchema(props: UserSchemaProps) {
+  const { t } = useTranslation(Translation.Chat);
+
+  const schema = useMemo(() => {
+    if (props.messageIndex === 0)
+      return getConfigurationSchema(props.allMessages[0]);
+    return getMessageSchema(props.allMessages[props.messageIndex - 1]);
+  }, [props.allMessages, props.messageIndex]);
+
+  if (schema && !isFormSchemaValid(schema))
+    return (
+      <div className="mt-2">
+        <ErrorMessage error={t('Form schema is invalid')} />
+      </div>
+    );
+
+  return <UserSchemaView {...props} schema={schema} />;
 });

@@ -2,7 +2,12 @@ import {
   isEntityNameOrPathInvalid,
   prepareEntityName,
 } from '@/src/utils/app/common';
-import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
+import {
+  getConfigurationSchema,
+  getConfigurationValue,
+  getFormValueDefinitions,
+  isConversationWithFormSchema,
+} from '@/src/utils/app/form-schema';
 
 import { Conversation, Replay } from '@/src/types/chat';
 import { EntityType, PartialBy } from '@/src/types/common';
@@ -24,12 +29,10 @@ import {
   Role,
   UploadStatus,
 } from '@epam/ai-dial-shared';
-import groupBy from 'lodash-es/groupBy';
 import orderBy from 'lodash-es/orderBy';
 import uniq from 'lodash-es/uniq';
-import uniqBy from 'lodash-es/uniqBy';
 
-export const getAssitantModelId = (
+export const getAssistantModelId = (
   modelType: EntityType,
   defaultAssistantModelId: string,
   conversationAssistantModelId?: string,
@@ -98,12 +101,19 @@ export const getNewConversationName = (
   const convName = prepareEntityName(conversation.name);
   const content = prepareEntityName(message.content);
 
+  const formValue = getConfigurationValue(message);
+  const configurationSchema = getConfigurationSchema(message);
+
   if (content.length > 0) {
     return content;
   } else if (message.custom_content?.attachments?.length) {
     const { title, reference_url } = message.custom_content.attachments[0];
 
     return prepareEntityName(!title && reference_url ? reference_url : title);
+  } else if (formValue && configurationSchema) {
+    const definitions = getFormValueDefinitions(formValue, configurationSchema);
+
+    if (definitions.length) return prepareEntityName(definitions[0].title);
   }
 
   return convName;
@@ -150,7 +160,7 @@ export const sortByDateAndName = <T extends ConversationInfo>(
 ): T[] =>
   orderBy(
     conversations,
-    ['lastActivityDate', (conv) => conv.name.toLowerCase()],
+    ['updatedAt', (conv) => conv.name.toLowerCase()],
     ['desc', 'desc'],
   );
 
@@ -169,8 +179,8 @@ export const isValidConversationForCompare = (
   dontCompareNames?: boolean,
 ): boolean => {
   if (
-    candidate.isReplay ||
-    candidate.isPlayback ||
+    isReplayConversation(candidate) ||
+    isPlaybackConversation(candidate) ||
     isEntityIdLocal(candidate) ||
     isEntityNameOrPathInvalid(candidate)
   ) {
@@ -194,8 +204,8 @@ export const isChosenConversationValidForCompare = (
 ): boolean => {
   if (
     chosenSelection.status !== UploadStatus.LOADED ||
-    chosenSelection.replay?.isReplay ||
-    chosenSelection.playback?.isPlayback
+    isReplayConversation(chosenSelection) ||
+    isPlaybackConversation(chosenSelection)
   ) {
     return false;
   }
@@ -218,30 +228,6 @@ export const isChosenConversationValidForCompare = (
 
 export const getOpenAIEntityFullName = (model: { name?: string; id: string }) =>
   model.name || model.id;
-
-interface ModelGroup {
-  groupName: string;
-  entities: DialAIEntityModel[];
-}
-
-export const groupModelsAndSaveOrder = (
-  models: DialAIEntityModel[],
-): ModelGroup[] => {
-  const uniqModels = uniqBy(models, 'reference');
-  const groupedModels = groupBy(uniqModels, (m) => m.name ?? m.reference);
-  const insertedSet = new Set();
-  const result: ModelGroup[] = [];
-
-  uniqModels.forEach((m) => {
-    const key = m.name ?? m.reference;
-    if (!insertedSet.has(key)) {
-      result.push({ groupName: key, entities: groupedModels[key] });
-      insertedSet.add(key);
-    }
-  });
-
-  return result;
-};
 
 export const addPausedError = (
   conversation: Conversation,
@@ -319,9 +305,8 @@ export const getConversationModelParams = (
         replayAsIs: false,
       };
   const updatedAddons =
-    conversation.replay &&
-    conversation.replay.isReplay &&
-    conversation.replay.replayAsIs &&
+    isReplayConversation(conversation) &&
+    isReplayAsIsConversation(conversation) &&
     !updatedReplay?.replayAsIs
       ? conversation.selectedAddons.filter((addonId) => addonsMap[addonId])
       : conversation.selectedAddons;
@@ -340,8 +325,11 @@ export const getConversationModelParams = (
   };
 };
 
+export const isSystemMessage = (message?: Message) =>
+  message?.role === Role.System;
+
 export const excludeSystemMessages = (messages: Message[]) =>
-  messages.filter((m) => m.role !== Role.System);
+  messages.filter((m) => !isSystemMessage(m));
 
 export const getDefaultModelReference = ({
   recentModelReferences,
@@ -358,3 +346,22 @@ export const getDefaultModelReference = ({
     ...modelReferences,
   ][0];
 };
+
+export const isOldConversationReplay = (replay: Replay | undefined) =>
+  replay &&
+  replay.isReplay &&
+  replay.replayUserMessagesStack &&
+  replay.replayUserMessagesStack.some((message) => !message.model);
+
+export const isPlaybackConversation = (conversation: ConversationInfo) =>
+  (conversation as Conversation).playback?.isPlayback ??
+  conversation.isPlayback ??
+  false;
+
+export const isReplayConversation = (conversation: ConversationInfo) =>
+  (conversation as Conversation).replay?.isReplay ??
+  conversation.isReplay ??
+  false;
+
+export const isReplayAsIsConversation = (conversation: ConversationInfo) =>
+  (conversation as Conversation).replay?.replayAsIs ?? false;

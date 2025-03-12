@@ -6,9 +6,9 @@ import {
   oneLight,
 } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   languageExtensionMapping,
@@ -21,8 +21,9 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import Download from '../../../public/images/icons/download.svg';
 import Tooltip from '../Common/Tooltip';
+
+import Download from '@/public/images/icons/download.svg';
 
 interface Props {
   language: string;
@@ -71,10 +72,7 @@ export const CodeBlock: FC<Props> = memo(
       const suggestedFileName =
         languageFilenameMapping[displayLanguage] ??
         `ai-chat-code-${currentDate()}${fileExtension}`;
-      const fileName = window.prompt(
-        t('Enter file name') || '',
-        suggestedFileName,
-      );
+      const fileName = window.prompt(t('Enter file name'), suggestedFileName);
 
       if (!fileName) {
         // User pressed cancel on prompt

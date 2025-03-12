@@ -1,12 +1,11 @@
 import { IconDownload } from '@tabler/icons-react';
 import { useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 import { usePublicationResources } from '@/src/hooks/usePublicationResources';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { constructPath } from '@/src/utils/app/file';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -421,7 +420,7 @@ export const FilePublicationResources = ({
                 <a
                   download={props.item.name}
                   href={constructPath(
-                    'api',
+                    '/api',
                     ApiUtils.encodeApiUrl(props.item.id),
                   )}
                   data-qa="download"
@@ -455,7 +454,7 @@ export const FilePublicationResources = ({
             />
             <a
               download={f.name}
-              href={constructPath('api', ApiUtils.encodeApiUrl(f.id))}
+              href={constructPath('/api', ApiUtils.encodeApiUrl(f.id))}
               data-qa="download"
             >
               <IconDownload

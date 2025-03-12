@@ -2,7 +2,7 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import { noSimpleModelSkipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import { API, ExpectedMessages } from '@/src/testData';
-import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 let simpleRequestModel: DialAIEntityModel | undefined;
@@ -12,18 +12,14 @@ dialTest.beforeAll(async () => {
 });
 
 dialTest(
-  '"Talk to" icons on See full list screen.\n' +
+  '[Select an agent for conversation] Agent ICONs are shown correctly. Set in config.\n' +
     'Addon icons on See full addons screen',
   async ({
     dialHomePage,
     talkToAgentDialog,
-    header,
     addons,
     addonsDialog,
     iconApiHelper,
-    localStorageManager,
-    marketplaceContainer,
-    marketplaceAgents,
     addonsDialogAssertion,
     marketplaceAgentsAssertion,
     chat,
@@ -32,72 +28,45 @@ dialTest(
     dialTest.slow();
     setTestIds('EPMRTC-1036', 'EPMRTC-1038');
 
-    const allExpectedEntities = ModelsUtil.getLatestOpenAIEntities();
-    const randomEntity = GeneratorUtil.randomArrayElement(allExpectedEntities);
-    const randomUpdateEntity = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getLatestModels(),
-    );
-    const defaultModel = ModelsUtil.getDefaultModel()!;
-
     await dialTest.step(
-      'Open initial screen and click "Go to my workspace" to view all available entities',
+      'Open "Select an agent for conversation" modal for new conversation',
       async () => {
-        await localStorageManager.setRecentModelsIds(
-          defaultModel,
-          randomUpdateEntity,
-        );
-        await dialHomePage.openHomePage({
-          iconsToBeLoaded: [defaultModel.iconUrl],
-        });
+        await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.click();
-        await talkToAgentDialog.goToMyWorkspace();
-        await marketplaceContainer.goToMarketplaceHome();
+        await talkToAgentDialog.waitForState();
       },
     );
 
-    await dialTest.step('Verify all entities have valid icons', async () => {
-      await marketplaceAgents.waitForAgentByIndex(allExpectedEntities.length);
-
-      const actualIcons = await marketplaceAgents.getAgentsIcons();
-      expect
-        .soft(actualIcons.length, ExpectedMessages.entitiesIconsCountIsValid)
-        .toBe(allExpectedEntities.length);
-
-      const actualEntity = actualIcons.find((e) =>
-        e.entityName.includes(randomEntity.name),
-      )!;
-      const expectedEntityIcon = iconApiHelper.getEntityIcon(randomEntity);
-      await marketplaceAgentsAssertion.assertEntityIcon(
-        actualEntity.iconLocator,
-        expectedEntityIcon,
-      );
+    await dialTest.step('Verify all agents have valid icons', async () => {
+      const actualIcons = await talkToAgentDialog.getAgents().getAgentsIcons();
+      for (const actualIcon of actualIcons) {
+        const expectedEntityIcon = iconApiHelper.getEntityIcon(
+          ModelsUtil.getOpenAIEntity(actualIcon.entityId)!,
+        );
+        await marketplaceAgentsAssertion.assertEntityIcon(
+          actualIcon.iconLocator,
+          expectedEntityIcon,
+        );
+      }
+      await talkToAgentDialog.cancelButton.click();
     });
 
     await dialTest.step(
       'Click "See all addons" and verify all addons have valid icons',
       async () => {
-        await header.backToChatButton.click();
         await chat.configureSettingsButton.click();
-        const expectedAddons = ModelsUtil.getAddons();
         await addons.seeAllAddons();
         const actualAddonsIcons = await addonsDialog.getAddonsIcons();
-        expect
-          .soft(
-            actualAddonsIcons.length,
-            ExpectedMessages.addonsIconsCountIsValid,
-          )
-          .toBeGreaterThanOrEqual(expectedAddons.length);
-
-        const randomAddon = GeneratorUtil.randomArrayElement(expectedAddons);
-        const actualAddon = actualAddonsIcons.find(
-          (a) => a.entityName === randomAddon.name,
-        )!;
-        const expectedAddonIcon = iconApiHelper.getEntityIcon(randomAddon);
-        await addonsDialogAssertion.assertEntityIcon(
-          actualAddon.iconLocator,
-          expectedAddonIcon,
-        );
+        for (const actualIcon of actualAddonsIcons) {
+          const expectedAddonIcon = iconApiHelper.getEntityIcon(
+            ModelsUtil.getAddon(actualIcon.entityId)!,
+          );
+          await addonsDialogAssertion.assertEntityIcon(
+            actualIcon.iconLocator,
+            expectedAddonIcon,
+          );
+        }
         await addonsDialog.closeDialog();
       },
     );

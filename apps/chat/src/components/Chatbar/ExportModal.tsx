@@ -1,11 +1,11 @@
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
 import { OUTSIDE_PRESS } from '@/src/constants/modal';
 
-import Modal from '../Common/Modal';
+import { Modal } from '../Common/Modal';
 
 interface Props {
   onExport: (args?: { withAttachments?: boolean }) => void;

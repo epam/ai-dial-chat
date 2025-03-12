@@ -4,6 +4,7 @@ import {
   catchError,
   concat,
   filter,
+  iif,
   map,
   mergeMap,
   of,
@@ -15,6 +16,10 @@ import { AnyAction } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
+import {
+  getApplicationType,
+  getQuickAppDocumentUrl,
+} from '@/src/utils/app/application';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { ShareService } from '@/src/utils/app/data/share-service';
 import {
@@ -23,11 +28,20 @@ import {
   isConversationHasExternalAttachments,
 } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
-import { isConversationId, isFolderId, isPromptId } from '@/src/utils/app/id';
+import {
+  isApplicationId,
+  isConversationId,
+  isEntityIdExternal,
+  isFolderId,
+  isPromptId,
+} from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { hasWritePermission } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils, parseConversationApiKey } from '@/src/utils/server/api';
 
+import { ApplicationType } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
@@ -37,17 +51,29 @@ import {
   ShareByLinkResponseModel,
   ShareRelations,
   ShareRequestType,
+  ShareResource,
 } from '@/src/types/share';
 import { AppEpic } from '@/src/types/store';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
+import { DeleteType } from '@/src/constants/marketplace';
+import { Routes } from '@/src/constants/routes';
 
+import {
+  ApplicationActions,
+  ApplicationSelectors,
+} from '../application/application.reducers';
+import { ApplicationTypesSchemasSelectors } from '../applicationTypeSchemas/applicationTypeSchemas.reducer';
+import { CodeEditorActions } from '../codeEditor/codeEditor.reducer';
 import {
   ConversationsActions,
   ConversationsSelectors,
 } from '../conversations/conversations.reducers';
 import { FilesActions, FilesSelectors } from '../files/files.reducers';
+import { MarketplaceActions } from '../marketplace/marketplace.reducers';
+import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
+import { ModelUpdatedValues } from '../models/models.types';
 import { PromptsActions, PromptsSelectors } from '../prompts/prompts.reducers';
 import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';
@@ -85,7 +111,7 @@ const shareEpic: AppEpic = (action$) =>
             }),
           );
         }
-      } else {
+      } else if (payload.featureType === FeatureType.Prompt) {
         if (!payload.isFolder) {
           return of(
             ShareActions.sharePrompt({ resourceId: payload.resourceId }),
@@ -97,6 +123,13 @@ const shareEpic: AppEpic = (action$) =>
             }),
           );
         }
+      } else {
+        return of(
+          ShareActions.shareApplication({
+            resourceId: payload.resourceId,
+            permissions: payload.permissions,
+          }),
+        );
       }
     }),
   );
@@ -270,6 +303,109 @@ const sharePromptFolderEpic: AppEpic = (action$) =>
     }),
   );
 
+const shareApplicationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ShareActions.shareApplication.match),
+    switchMap(({ payload }) => {
+      const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+      const application = modelsMap[payload.resourceId];
+
+      if (!application) {
+        return of(ShareActions.shareFail());
+      }
+
+      const applicationType = getApplicationType(application);
+      const applicationDetails = ApplicationSelectors.selectApplicationDetail(
+        state$.value,
+      );
+      const schema = ApplicationTypesSchemasSelectors.selectSchemaById(
+        state$.value,
+        applicationType,
+      );
+
+      if (
+        (applicationType === ApplicationType.CODE_APP ||
+          schema?.displayName === 'Quick App') &&
+        applicationDetails?.reference !== application.reference
+      ) {
+        return of(
+          ApplicationActions.get({
+            applicationId: payload.resourceId,
+            isForSharing: true,
+          }),
+        );
+      }
+
+      const resources: ShareResource[] = [
+        {
+          url: ApiUtils.encodeApiUrl(payload.resourceId),
+          permissions: payload.permissions,
+        },
+      ];
+
+      const actions: Observable<AnyAction>[] = [];
+
+      if (application?.iconUrl) {
+        const iconId = application.iconUrl;
+        if (isEntityIdExternal({ id: iconId })) {
+          actions.push(
+            of(
+              UIActions.showWarningToast(
+                `The icon used for this application is in the "${isEntityIdPublic({ id: iconId }) ? 'Organization' : 'Shared with me'}" section and cannot be shared. Please replace the icon, otherwise the application will be shared with the default one.`,
+              ),
+            ),
+          );
+        } else {
+          resources.push({
+            url: ApiUtils.encodeApiUrl(iconId),
+          });
+        }
+      }
+
+      if (getQuickAppDocumentUrl(applicationDetails)) {
+        resources.push({
+          url: ApiUtils.encodeApiUrl(
+            getQuickAppDocumentUrl(applicationDetails) as string,
+          ),
+        });
+      }
+
+      if (
+        hasWritePermission(payload.permissions) &&
+        applicationType &&
+        applicationDetails?.function?.sourceFolder
+      ) {
+        resources.push({
+          url:
+            ApiUtils.encodeApiUrl(applicationDetails.function.sourceFolder) +
+            '/',
+          permissions: payload.permissions,
+        });
+      }
+
+      return ShareService.share({
+        invitationType: ShareRequestType.link,
+        resources,
+      }).pipe(
+        switchMap((response: ShareByLinkResponseModel) => {
+          return concat(
+            of(
+              ShareActions.shareSuccess({
+                invitationId: response.invitationLink.split('/').slice(-1)?.[0],
+                permissions: payload.permissions,
+              }),
+            ),
+            ...actions,
+          );
+        }),
+        catchError((err) => {
+          console.error(err);
+          return of(ShareActions.shareFail());
+        }),
+      );
+    }),
+  );
+
 const shareFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.shareFail.match),
@@ -294,15 +430,20 @@ const acceptInvitationEpic: AppEpic = (action$) =>
             switchMap((data) => {
               const acceptedIds = data.resources.filter(
                 (resource) =>
-                  isPromptId(resource.url) || isConversationId(resource.url),
+                  isPromptId(resource.url) ||
+                  isConversationId(resource.url) ||
+                  isApplicationId(resource.url),
               );
+
+              const acceptedId = ApiUtils.decodeApiUrl(acceptedIds[0].url);
 
               return of(
                 ShareActions.acceptShareInvitationSuccess({
-                  acceptedId: ApiUtils.decodeApiUrl(acceptedIds[0].url),
-                  isFolder: isFolderId(data.resources[0].url),
-                  isConversation: isConversationId(data.resources[0].url),
-                  isPrompt: isPromptId(data.resources[0].url),
+                  acceptedId,
+                  isFolder: isFolderId(acceptedIds[0].url),
+                  isConversation: isConversationId(acceptedIds[0].url),
+                  isPrompt: isPromptId(acceptedIds[0].url),
+                  isApplication: isApplicationId(acceptedId),
                 }),
               );
             }),
@@ -320,11 +461,17 @@ const acceptInvitationEpic: AppEpic = (action$) =>
     }),
   );
 
-const acceptInvitationSuccessEpic: AppEpic = (action$) =>
+const acceptInvitationSuccessEpic: AppEpic = (action$, _state$, { router }) =>
   action$.pipe(
     filter(ShareActions.acceptShareInvitationSuccess.match),
     switchMap(({ payload }) => {
-      history.replaceState({}, '', window.location.origin);
+      if (payload.isApplication) {
+        router.push(Routes.Marketplace, undefined, { shallow: true });
+        //TODO make request for the shared applications to add them into the state when share invitation is accepted.
+        return of(ModelsActions.getModels());
+      } else {
+        router.push('/', undefined, { shallow: true });
+      }
 
       if (payload.isPrompt) {
         return of(UIActions.setShowPromptbar(true));
@@ -423,7 +570,9 @@ const triggerGettingSharedListingsAttachmentsEpic: AppEpic = (
       (action) =>
         (FilesActions.getFilesWithFolders.match(action) &&
           !action.payload.id) ||
-        ShareActions.acceptShareInvitationSuccess.match(action),
+        ShareActions.acceptShareInvitationSuccess.match(action) ||
+        ShareActions.triggerGettingSharedFilesListings.match(action) ||
+        CodeEditorActions.initCodeEditor.match(action),
     ),
     filter(() => {
       return SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Chat);
@@ -439,6 +588,40 @@ const triggerGettingSharedListingsAttachmentsEpic: AppEpic = (
         of(
           ShareActions.getSharedListing({
             featureType: FeatureType.File,
+            sharedWith: ShareRelations.others,
+          }),
+        ),
+      );
+    }),
+  );
+
+const triggerGettingSharedListingsApplicationsEpic: AppEpic = (
+  action$,
+  state$,
+) =>
+  action$.pipe(
+    filter(
+      (action) =>
+        ModelsActions.getModelsSuccess.match(action) ||
+        ShareActions.triggerGettingSharedApplicationsListings.match(action),
+    ),
+    filter(() => {
+      return SettingsSelectors.isSharingEnabled(
+        state$.value,
+        FeatureType.Application,
+      );
+    }),
+    switchMap(() => {
+      return concat(
+        of(
+          ShareActions.getSharedListing({
+            featureType: FeatureType.Application,
+            sharedWith: ShareRelations.me,
+          }),
+        ),
+        of(
+          ShareActions.getSharedListing({
+            featureType: FeatureType.Application,
             sharedWith: ShareRelations.others,
           }),
         ),
@@ -535,7 +718,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                     id: conv.id,
                     conversation: {
                       isShared: true,
-                      lastActivityDate: sharedConv.lastActivityDate,
+                      updatedAt: sharedConv.updatedAt,
                     },
                   });
                 }
@@ -689,7 +872,6 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                   .map((res) => ({
                     ...res,
                     sharedWithMe: true,
-                    status: UploadStatus.LOADED,
                   })) as Prompt[],
               }),
             );
@@ -738,7 +920,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
 
           payload.resources.entities.length &&
             actions.push(
-              FilesActions.addFiles({
+              FilesActions.addSharedFiles({
                 files: payload.resources.entities
                   // do not override selected files
                   .filter((res) => !selectedFilesIds.includes(res.id))
@@ -761,6 +943,77 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
         }
       }
 
+      if (payload.featureType === FeatureType.Application) {
+        const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+        if (payload.sharedWith === ShareRelations.others) {
+          const modelsToUpdate = payload.resources.entities
+            .map((sharedItem) => {
+              const sharedModel = modelsMap[sharedItem.id];
+
+              if (sharedModel) {
+                return {
+                  reference: sharedModel.reference,
+                  updatedValues: {
+                    isShared: true,
+                  },
+                };
+              }
+              return undefined;
+            })
+            .filter(Boolean) as ModelUpdatedValues[];
+
+          actions.push(ModelsActions.updateLocalModels({ modelsToUpdate }));
+        } else {
+          //TODO make request for the shared applications to add them into the state when share invitation is accepted.
+          //TODO new action-service needs to be created.
+
+          const updateSharedActions: AnyAction[] = [];
+          const modelsToUpdate = payload.resources.entities
+            .map((sharedItem) => {
+              const sharedModel = modelsMap[sharedItem.id];
+
+              if (sharedModel) {
+                return {
+                  reference: sharedModel.reference,
+                  updatedValues: {
+                    sharedWithMe: true,
+                    permissions: sharedItem.permissions,
+                  },
+                };
+              }
+              return undefined;
+            })
+            .filter(Boolean) as ModelUpdatedValues[];
+
+          if (modelsToUpdate.length) {
+            updateSharedActions.push(
+              ModelsActions.updateLocalModels({ modelsToUpdate }),
+            );
+
+            updateSharedActions.push(ModelsActions.getInstalledModelIds());
+
+            const { acceptedId } = ShareSelectors.selectAcceptedEntityInfo(
+              state$.value,
+            );
+
+            const acceptedApplicationReference =
+              acceptedId && modelsMap[acceptedId]?.reference;
+
+            if (acceptedApplicationReference) {
+              updateSharedActions.push(
+                MarketplaceActions.setDetailsModel({
+                  reference: acceptedApplicationReference,
+                  isSuggested: false,
+                }),
+              );
+              updateSharedActions.push(ShareActions.resetAcceptedEntityInfo());
+            }
+
+            actions.push(...updateSharedActions);
+          }
+        }
+      }
+
       return concat(actions);
     }),
   );
@@ -780,7 +1033,7 @@ const revokeAccessEpic: AppEpic = (action$) =>
     }),
   );
 
-const revokeAccessSuccessEpic: AppEpic = (action$) =>
+const revokeAccessSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ShareActions.revokeAccessSuccess.match),
     switchMap(({ payload }) => {
@@ -832,6 +1085,27 @@ const revokeAccessSuccessEpic: AppEpic = (action$) =>
             file: {
               isShared: false,
             },
+          }),
+        );
+      }
+
+      if (payload.featureType === FeatureType.Application) {
+        const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+        const applicationReference = modelsMap[payload.resourceId]?.reference;
+
+        if (!applicationReference) {
+          return EMPTY;
+        }
+        return of(
+          ModelsActions.updateLocalModels({
+            modelsToUpdate: [
+              {
+                reference: applicationReference,
+                updatedValues: {
+                  isShared: false,
+                },
+              },
+            ],
           }),
         );
       }
@@ -996,6 +1270,25 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
         );
       }
 
+      if (payload.featureType === FeatureType.Application) {
+        const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+        const applicationReference = modelsMap[payload.resourceId]?.reference;
+        return concat(
+          iif(
+            () => !!applicationReference,
+            of(
+              ModelsActions.removeInstalledModels({
+                references: [applicationReference!],
+                action: DeleteType.DELETE,
+              }),
+            ),
+            EMPTY,
+          ),
+
+          of(MarketplaceActions.setDetailsModel()),
+        );
+      }
+
       console.error(`Entity not updated: ${payload.resourceId}`);
       return EMPTY;
     }),
@@ -1050,6 +1343,7 @@ export const ShareEpics = combineEpics(
   sharePromptEpic,
   shareConversationFolderEpic,
   sharePromptFolderEpic,
+  shareApplicationEpic,
 
   acceptInvitationEpic,
   acceptInvitationSuccessEpic,
@@ -1070,6 +1364,7 @@ export const ShareEpics = combineEpics(
   triggerGettingSharedListingsConversationsEpic,
   triggerGettingSharedListingsPromptsEpic,
   triggerGettingSharedListingsAttachmentsEpic,
+  triggerGettingSharedListingsApplicationsEpic,
 
   deleteOrRenameSharedFolderEpic,
 );

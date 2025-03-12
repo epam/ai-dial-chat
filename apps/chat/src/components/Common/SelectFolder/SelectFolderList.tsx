@@ -27,6 +27,7 @@ interface Props<T, P = unknown> {
   initiallySelectedFolderId?: string;
   highlightTemporaryFolders?: boolean;
   showAllRootFolders?: boolean;
+  onShowError?: (error: string) => void;
 }
 
 export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
@@ -39,6 +40,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
   rootFolderName,
   rootFolderId,
   showAllRootFolders,
+  onShowError,
 }: Props<T>) => {
   const highlightedFolders = useMemo(
     () => [selectedFolderId].filter(Boolean) as string[],
@@ -97,6 +99,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
                         currentFolder={folder}
                         highlightedFolders={highlightedFolders}
                         highlightTemporaryFolders={highlightTemporaryFolders}
+                        onShowError={onShowError}
                       />
                     </div>
                   );

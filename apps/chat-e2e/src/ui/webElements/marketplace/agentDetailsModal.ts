@@ -1,4 +1,5 @@
-import { IconSelectors } from '@/src/ui/selectors';
+import { API } from '@/src/testData';
+import { IconSelectors, MarketplaceAgentSelectors } from '@/src/ui/selectors';
 import { MarketplaceDetailsModal } from '@/src/ui/selectors/marketplaceSelectors';
 import { BaseElement } from '@/src/ui/webElements';
 import { DropdownButtonMenu } from '@/src/ui/webElements/dropdownButtonMenu';
@@ -30,13 +31,36 @@ export class AgentDetailsModal extends BaseElement {
   public versionMenuTrigger = this.getChildElementBySelector(
     MarketplaceDetailsModal.versionMenuTrigger,
   );
+  public addBookmarkIcon = this.getChildElementBySelector(
+    MarketplaceAgentSelectors.addBookmarkIcon,
+  );
+  public removeBookmarkIcon = this.getChildElementBySelector(
+    MarketplaceAgentSelectors.removeBookmarkIcon,
+  );
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
 
-  public async clickUseButton() {
-    const responsePromise = this.page.waitForResponse(
-      (resp) => resp.request().method() === 'PUT',
+  public async clickUseButton({
+    isInstalledDeploymentsUpdated = false,
+  }: {
+    isInstalledDeploymentsUpdated?: boolean;
+  }) {
+    if (isInstalledDeploymentsUpdated) {
+      const responsePromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'PUT',
+      );
+      await this.useButton.click();
+      await responsePromise;
+    } else {
+      await this.useButton.click();
+    }
+  }
+
+  public async addAgentToWorkspace() {
+    const respPromise = this.page.waitForResponse(
+      (r) =>
+        r.url().includes(API.installedDeploymentsHost()) && r.status() === 200,
     );
-    await this.useButton.click();
-    await responsePromise;
+    await this.addBookmarkIcon.click();
+    await respPromise;
   }
 }

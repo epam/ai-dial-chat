@@ -1,10 +1,12 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { combineEntities } from '@/src/utils/app/common';
+import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
+  getFolderIdFromEntityId,
   isFolderEmpty,
-  renameFolderWithChildren,
+  renameFolderAndMoveEntity,
 } from '@/src/utils/app/folders';
 import { getPromptRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
@@ -105,20 +107,32 @@ export const promptsSlice = createSlice({
       );
     },
     savePrompt: (state, _action: PayloadAction<Prompt>) => state,
-    recreatePrompt: (
+    moveOrUpdatePrompt: (
       state,
-      _action: PayloadAction<{ new: Prompt; old: PromptInfo }>,
+      _action: PayloadAction<{
+        prompt: PromptInfo;
+        newValues: Partial<Prompt>;
+      }>,
     ) => state,
-    recreatePromptFail: (
+    movePrompt: (
       state,
-      { payload }: PayloadAction<{ oldPrompt: Prompt; newId: string }>,
+      _action: PayloadAction<{
+        newPrompt: Prompt;
+        oldPrompt: Prompt;
+      }>,
+    ) => state,
+    movePromptFail: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        newPrompt: Prompt;
+        oldPrompt: Prompt;
+      }>,
     ) => {
       state.prompts = state.prompts.map((prompt) => {
-        if (prompt.id === payload.newId) {
-          return {
-            ...prompt,
-            ...payload.oldPrompt,
-          };
+        if (payload.newPrompt.id === prompt.id) {
+          return payload.oldPrompt;
         }
 
         return prompt;
@@ -144,6 +158,7 @@ export const promptsSlice = createSlice({
       });
     },
     duplicatePrompt: (state, _action: PayloadAction<PromptInfo>) => state,
+    applyPrompt: (state, _action: PayloadAction<PromptInfo>) => state,
     setPrompts: (
       state,
       { payload }: PayloadAction<{ prompts: PromptInfo[] }>,
@@ -236,12 +251,13 @@ export const promptsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ folderId: string; name: string }>,
     ) => {
+      const parentId = getFolderIdFromEntityId(payload.folderId);
+      const newId = constructPath(parentId, payload.name);
+
+      state.temporaryFolders = state.temporaryFolders.map((f) =>
+        renameFolderAndMoveEntity(f, payload.folderId, newId),
+      );
       state.newAddedFolderId = undefined;
-      state.temporaryFolders = renameFolderWithChildren({
-        folderId: payload.folderId,
-        newName: payload.name,
-        folders: state.temporaryFolders,
-      });
     },
     resetNewFolderId: (state) => {
       state.newAddedFolderId = undefined;
@@ -437,6 +453,14 @@ export const promptsSlice = createSlice({
         payload.ids,
       );
     },
+    setPromptWithVariablesForApply: (
+      state,
+      { payload }: PayloadAction<Prompt | undefined>,
+    ) => {
+      state.promptWithVariablesForApply = payload;
+    },
+    getPromptMetadata: (state, _action: PayloadAction<{ promptId: string }>) =>
+      state,
   },
 });
 

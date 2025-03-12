@@ -16,7 +16,7 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { combineEpics } from 'redux-observable';
 
 import { DataService } from '@/src/utils/app/data/data-service';
-import { isMediumScreen, isSmallScreen } from '@/src/utils/app/mobile';
+import { isSmallScreen, isTabletScreen } from '@/src/utils/app/mobile';
 
 import { FeatureType } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
@@ -315,7 +315,7 @@ const resizeEpic: AppEpic = (action$, state$) =>
         }
       }
 
-      if (isMediumScreen()) {
+      if (isTabletScreen()) {
         if (
           [showChatbar, showPromptbar].filter(Boolean).length > 1 // more then one panel open for the medium screen)
         ) {

@@ -1,25 +1,25 @@
 import {
   constructPath,
   getDialFilesFromAttachments,
+  getRelativePath,
   notAllowedSymbols,
   notAllowedSymbolsRegex,
 } from '@/src/utils/app/file';
 
 import { Conversation, PrepareNameOptions } from '@/src/types/chat';
-import { PartialBy } from '@/src/types/common';
+import { BaseDialEntity, PartialBy } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
+import { ROOT_SECTION_NAME } from '@/src/constants/sections';
 
-import {
-  doesHaveDotsInTheEnd,
-  prepareEntityName,
-  updateEntitiesFoldersAndIds,
-} from './common';
+import { doesHaveDotsInTheEnd, prepareEntityName } from './common';
+import { isReplayConversation } from './conversation';
 import { isRootId } from './id';
+import { hasWritePermission } from './share';
 
 import {
   Attachment,
@@ -29,7 +29,6 @@ import {
   UploadStatus,
 } from '@epam/ai-dial-shared';
 import escapeRegExp from 'lodash-es/escapeRegExp';
-import groupBy from 'lodash-es/groupBy';
 import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 
@@ -387,7 +386,7 @@ export const getConversationAttachmentWithPath = <
 ): DialFile[] => {
   const { path } = getPathToFolderById(folders, conversation.folderId);
   const isReplay =
-    'replay' in conversation ? conversation?.replay?.isReplay : false;
+    'replay' in conversation ? isReplayConversation(conversation) : false;
   const attachments =
     'messages' in conversation
       ? (
@@ -417,8 +416,9 @@ export const getConversationAttachmentWithPath = <
   }));
 };
 
-const getGeneratedFolderId = (folder: PartialBy<FolderInterface, 'id'>) =>
-  constructPath(folder.folderId, folder.name);
+export const getGeneratedFolderId = (
+  folder: PartialBy<FolderInterface, 'id'>,
+) => constructPath(folder.folderId, folder.name);
 
 export const addGeneratedFolderId = (
   folder: PartialBy<FolderInterface, 'id'>,
@@ -441,6 +441,7 @@ export const splitEntityId = (
   name: string;
   parentPath: string | undefined;
   apiKey: string;
+  isRoot: boolean;
 } => {
   const parts = id.split('/');
   const parentPath =
@@ -448,11 +449,16 @@ export const splitEntityId = (
       ? constructPath(...parts.slice(2, parts.length - 1))
       : undefined;
 
+  const isRoot = parts.length < 3;
+
+  const name = isRoot ? ROOT_SECTION_NAME : parts[parts.length - 1];
+
   return {
     apiKey: parts[0],
     bucket: parts[1],
     parentPath,
-    name: parts[parts.length - 1],
+    name,
+    isRoot,
   };
 };
 
@@ -570,32 +576,61 @@ export const isFolderEmpty = ({
   );
 };
 
-export const renameFolderWithChildren = ({
-  folderId,
-  newName,
-  folders,
-}: {
-  folderId: string;
-  newName: string;
-  folders: FolderInterface[];
-}) => {
-  const {
-    target: [targetFolder],
-    otherFolders = [],
-  } = groupBy(folders, (f) => (f.id === folderId ? 'target' : 'otherFolders'));
+export const canEditSharedFolderOrParent = (
+  folders: FolderInterface[],
+  folderId: string | undefined,
+): boolean => {
+  while (folderId) {
+    const folder = folders.find((folder) => folder.id === folderId);
 
-  if (!targetFolder) return folders;
+    if (folder?.sharedWithMe && hasWritePermission(folder.permissions)) {
+      return true;
+    }
 
-  const newFolder = addGeneratedFolderId({
-    ...targetFolder,
-    name: newName.trim(),
-  });
-  const { updatedFolders } = updateEntitiesFoldersAndIds(
-    [],
-    otherFolders,
-    (id) => updateMovedFolderId(folderId, newFolder.id, id),
-    [],
-  );
+    folderId = folder?.folderId;
+  }
 
-  return updatedFolders.concat(newFolder);
+  return false;
+};
+
+export const updateEntityFolder = <T extends Entity | BaseDialEntity>(
+  entity: T,
+  sourceFolderId: string,
+  targetFolderId: string,
+): T => {
+  if (entity.id.startsWith(`${sourceFolderId}/`)) {
+    const folderId =
+      entity.folderId === sourceFolderId
+        ? targetFolderId
+        : updateMovedFolderId(sourceFolderId, targetFolderId, entity.folderId);
+    return {
+      ...entity,
+      id: updateMovedEntityId(sourceFolderId, targetFolderId, entity.id),
+      folderId,
+      ...('absolutePath' in entity && {
+        absolutePath: folderId,
+      }),
+      ...('relativePath' in entity && {
+        relativePath: getRelativePath(folderId),
+      }),
+    };
+  }
+
+  return entity;
+};
+
+export const renameFolderAndMoveEntity = <T extends Entity | BaseDialEntity>(
+  entity: T,
+  sourceFolderId: string,
+  targetFolderId: string,
+) => {
+  if (entity.id === sourceFolderId) {
+    return {
+      ...entity,
+      name: splitEntityId(targetFolderId).name,
+      id: targetFolderId,
+    };
+  }
+
+  return updateEntityFolder(entity, sourceFolderId, targetFolderId);
 };

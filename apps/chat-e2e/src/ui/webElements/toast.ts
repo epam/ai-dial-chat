@@ -1,11 +1,11 @@
 import { Tags } from '@/src/ui/domData';
 import { ToastSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class Toast extends BaseElement {
-  constructor(page: Page) {
-    super(page, ToastSelectors.toast);
+  constructor(page: Page, parentLocator?: Locator) {
+    super(page, ToastSelectors.toast, parentLocator);
   }
 
   public closeButton = this.getChildElementBySelector(Tags.button);

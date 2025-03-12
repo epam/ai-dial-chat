@@ -60,7 +60,8 @@ const _Conversations = ({ conversations }: Props) => {
       other: [],
     };
     sortByDateAndName(conversationsToDisplay).forEach((conv) => {
-      const lastActivityDateNumber = conv.lastActivityDate;
+      const lastActivityDateNumber = conv.updatedAt;
+
       if (
         !lastActivityDateNumber ||
         typeof lastActivityDateNumber !== 'number'

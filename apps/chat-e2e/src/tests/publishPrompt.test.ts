@@ -87,10 +87,14 @@ dialAdminTest(
           .getChangePublishToPath()
           .changeButton.click();
         await selectFolderModal.newFolderButton.click();
-        await selectFolders.editFolderNameWithEnter(folderName);
+        await selectFolders.renameEmptyFolderWithEnter(folderName, {
+          isHttpMethodTriggered: false,
+        });
         await selectFolders.openFolderDropdownMenu(folderName);
         await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
-        await selectFolders.editFolderNameWithEnter(`${folderName} 2`);
+        await selectFolders.renameEmptyFolderWithEnter(`${folderName} 2`, {
+          isHttpMethodTriggered: false,
+        });
         await selectFolders.openFolderDropdownMenu(`${folderName} 2`);
         await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm();
@@ -121,10 +125,14 @@ dialAdminTest(
       'User creates folder and rename it under Organization, user renames folder',
       async () => {
         await selectFolderModal.newFolderButton.click();
-        await selectFolders.editFolderNameWithEnter(`${folderName}_rename`);
+        await selectFolders.renameEmptyFolderWithEnter(`${folderName}_rename`, {
+          isHttpMethodTriggered: false,
+        });
         await selectFolders.openFolderDropdownMenu(`${folderName}_rename`);
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await selectFolders.editFolderNameWithEnter(folderName);
+        await selectFolders.renameEmptyFolderWithEnter(folderName, {
+          isHttpMethodTriggered: false,
+        });
       },
     );
 
@@ -143,7 +151,9 @@ dialAdminTest(
           .getChangePublishToPath()
           .changeButton.click();
         await selectFolderModal.newFolderButton.click();
-        await selectFolders.editFolderNameWithEnter(folderName);
+        await selectFolders.renameEmptyFolderWithEnter(folderName, {
+          isHttpMethodTriggered: false,
+        });
       },
     );
 
@@ -470,8 +480,6 @@ dialAdminTest(
     promptBarOrganizationFolderAssertion,
     organizationFolderPrompts,
     folderDropdownMenu,
-    toastAssertion,
-    toast,
     publishingRequestModalAssertion,
     tooltipAssertion,
   }) => {
@@ -516,32 +524,30 @@ dialAdminTest(
           .getChangePublishToPath()
           .changeButton.click();
         await selectFolderModal.newFolderButton.click();
-        await selectFolders.editFolderNameWithEnter(`${folderNameTemplate} 1`);
+        await selectFolders.renameEmptyFolderWithEnter(
+          `${folderNameTemplate} 1`,
+          { isHttpMethodTriggered: false },
+        );
         for (let i = 1; i < 4; i++) {
           await selectFolders.openFolderDropdownMenu(
             `${folderNameTemplate} ${i}`,
           );
           await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
-          await selectFolders.editFolderNameWithEnter(
+          await selectFolders.renameEmptyFolderWithEnter(
             `${folderNameTemplate} ${i + 1}`,
+            { isHttpMethodTriggered: false },
           );
         }
         await selectFolders.openFolderDropdownMenu(`${folderNameTemplate} 4`);
         await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
         // Assertions
-        await toastAssertion.assertToastIsVisible();
-        await toastAssertion.assertToastMessage(
+        const error = selectFolderModal.getModalError();
+        await baseAssertion.assertElementState(error, 'visible');
+        await baseAssertion.assertElementText(
+          error.errorMessage,
           ExpectedConstants.tooManyNestedFolders,
           ExpectedMessages.tooManyNestedFolders,
         );
-        // Bug that closing the toast leads to the closing the modal
-        await toast.closeToast();
-        await publishingRequestModal
-          .getChangePublishToPath()
-          .changeButton.click();
-        await selectFolders
-          .getFolderByName(folderNameTemplate)
-          .waitFor({ state: 'visible' });
         for (let i = 1; i < 4; i++) {
           await selectFolders
             .getFolderByName(`${folderNameTemplate} ${i}`)

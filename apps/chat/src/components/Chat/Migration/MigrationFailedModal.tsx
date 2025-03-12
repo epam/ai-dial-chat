@@ -8,10 +8,11 @@ import {
 import { ReactElement, useCallback, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
-import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { isSmallScreen } from '@/src/utils/app/mobile';
@@ -450,15 +451,15 @@ export const MigrationFailedWindow = ({
           {t('contact us.')}
         </button>
       </p>
-      {enabledFeatures.has(Feature.ReportAnIssue) && (
-        <ReportIssueDialog
-          isOpen={isReportIssueDialogOpen}
-          onClose={() => {
-            setIsReportIssueDialogOpen(false);
-            router.replace(router.basePath);
-          }}
-        />
-      )}
+      {enabledFeatures.has(Feature.ReportAnIssue) &&
+        isReportIssueDialogOpen && (
+          <ReportIssueDialog
+            onClose={() => {
+              setIsReportIssueDialogOpen(false);
+              router.replace(router.basePath);
+            }}
+          />
+        )}
     </div>
   );
 };

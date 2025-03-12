@@ -1,10 +1,11 @@
 import { IconApps } from '@tabler/icons-react';
 import { DragEvent, useCallback, useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
 import Link from 'next/link';
 
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { getConversationRootId } from '@/src/utils/app/id';
@@ -143,7 +144,7 @@ export const Chatbar = () => {
                 t(
                   'Conversation with name "{{name}}" already exists at the root.',
                   {
-                    ns: 'chat',
+                    ns: Translation.Chat,
                     name: conversation.name,
                   },
                 ),

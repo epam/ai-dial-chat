@@ -339,7 +339,11 @@ dialTest(
     await dialTest.step(
       'Send one more request to "test" conversation and verify name is not changed',
       async () => {
-        await conversations.selectConversation(requestBasedConversationName, 2);
+        await conversations.selectConversation(
+          requestBasedConversationName,
+          { isHttpMethodTriggered: false },
+          2,
+        );
         await chat.sendRequestWithButton('1+2', false);
         expect
           .soft(

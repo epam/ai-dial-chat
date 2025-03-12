@@ -1,5 +1,6 @@
 import { Observable, map } from 'rxjs';
 
+import { ApplicationInfo } from '@/src/types/applications';
 import {
   ApiKeys,
   BackendChatEntity,
@@ -22,13 +23,33 @@ import {
   ShareRevokeRequestModel,
 } from '@/src/types/share';
 
-import { ApiUtils, parseConversationApiKey } from '../../server/api';
+import {
+  ApiUtils,
+  parseApplicationApiKey,
+  parseConversationApiKey,
+} from '../../server/api';
 import { constructPath } from '../file';
 import { splitEntityId } from '../folders';
 import { EnumMapper } from '../mappers';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
 import { contentType } from 'mime-types';
+
+export const getFolderFromShareResult = (
+  folder: BackendChatFolder,
+  apiKeyType: ApiKeys,
+) => {
+  const id = ApiUtils.decodeApiUrl(folder.url.slice(0, folder.url.length - 1));
+  const { apiKey, bucket, parentPath } = splitEntityId(id);
+
+  return {
+    id,
+    name: folder.name,
+    folderId: constructPath(apiKey, bucket, parentPath),
+    type: EnumMapper.getFolderTypeByApiKey(apiKeyType),
+    permissions: folder.permissions,
+  };
+};
 
 export class ShareService {
   public static share(
@@ -79,7 +100,12 @@ export class ShareService {
   public static getSharedListing(
     sharedListingData: ShareListingRequestModel,
   ): Observable<{
-    entities: (ConversationInfo | PromptInfo | DialFile)[];
+    entities: (
+      | ConversationInfo
+      | PromptInfo
+      | DialFile
+      | Omit<ApplicationInfo, 'folderId'>
+    )[];
     folders: FolderInterface[];
   }> {
     return ApiUtils.request('/api/share/listing', {
@@ -88,7 +114,12 @@ export class ShareService {
     }).pipe(
       map((resp: { resources: BackendDataEntity[] }) => {
         const folders: FolderInterface[] = [];
-        const entities: (ConversationInfo | PromptInfo | DialFile)[] = [];
+        const entities: (
+          | ConversationInfo
+          | PromptInfo
+          | DialFile
+          | Omit<ApplicationInfo, 'folderId'>
+        )[] = [];
 
         resp.resources.forEach((entity) => {
           if (entity.resourceType === BackendResourceType.CONVERSATION) {
@@ -105,23 +136,17 @@ export class ShareService {
               entities.push({
                 ...parseConversationApiKey(conversation.name),
                 id,
-                lastActivityDate: conversation.updatedAt,
+                updatedAt: conversation.updatedAt,
                 folderId: constructPath(apiKey, bucket, parentPath),
               });
             }
             if (entity.nodeType === BackendDataNodeType.FOLDER) {
               const folder = conversationResource as BackendChatFolder;
-              const id = ApiUtils.decodeApiUrl(
-                folder.url.slice(0, folder.url.length - 1),
+              const conversationFolder = getFolderFromShareResult(
+                folder,
+                ApiKeys.Conversations,
               );
-              const { apiKey, bucket, parentPath } = splitEntityId(id);
-
-              folders.push({
-                id,
-                name: folder.name,
-                folderId: constructPath(apiKey, bucket, parentPath),
-                type: EnumMapper.getFolderTypeByApiKey(ApiKeys.Conversations),
-              });
+              folders.push(conversationFolder);
             }
           }
 
@@ -138,29 +163,26 @@ export class ShareService {
               entities.push({
                 name: prompt.name,
                 id,
-                lastActivityDate: prompt.updatedAt,
+                updatedAt: prompt.updatedAt,
                 folderId: constructPath(apiKey, bucket, parentPath),
               });
             }
             if (entity.nodeType === BackendDataNodeType.FOLDER) {
               const folder = promptResource as BackendChatFolder;
-              const id = ApiUtils.decodeApiUrl(
-                folder.url.slice(0, folder.url.length - 1),
+              const promptFolder = getFolderFromShareResult(
+                folder,
+                ApiKeys.Prompts,
               );
-              const { apiKey, bucket, parentPath } = splitEntityId(id);
-
-              folders.push({
-                id,
-                name: folder.name,
-                folderId: constructPath(apiKey, bucket, parentPath),
-                type: EnumMapper.getFolderTypeByApiKey(ApiKeys.Prompts),
-              });
+              folders.push(promptFolder);
             }
           }
 
           if (entity.resourceType === BackendResourceType.FILE) {
+            const fileResource = entity as
+              | BackendChatEntity
+              | BackendChatFolder;
             if (entity.nodeType === BackendDataNodeType.ITEM) {
-              const file = entity as BackendEntity;
+              const file = fileResource as BackendEntity;
               const id = ApiUtils.decodeApiUrl(file.url);
               const { apiKey, bucket, parentPath } = splitEntityId(id);
 
@@ -173,6 +195,41 @@ export class ShareService {
                 absolutePath: absolutePath,
                 contentType: mimeType ? mimeType : 'application/octet-stream',
               });
+            }
+
+            if (entity.nodeType === BackendDataNodeType.FOLDER) {
+              const folder = fileResource as BackendChatFolder;
+              const fileFolder = getFolderFromShareResult(
+                folder,
+                ApiKeys.Files,
+              );
+              folders.push(fileFolder);
+            }
+          }
+
+          if (entity.resourceType === BackendResourceType.APPLICATION) {
+            const applicationResource = entity as
+              | BackendChatEntity
+              | BackendChatFolder;
+            if (entity.nodeType === BackendDataNodeType.ITEM) {
+              const application = applicationResource as BackendEntity;
+              const id = ApiUtils.decodeApiUrl(application.url);
+
+              entities.push({
+                name: application.name,
+                version: parseApplicationApiKey(application.name).version,
+                id,
+                permissions: application.permissions,
+              });
+            }
+
+            if (entity.nodeType === BackendDataNodeType.FOLDER) {
+              const folder = applicationResource as BackendChatFolder;
+              const fileFolder = getFolderFromShareResult(
+                folder,
+                ApiKeys.Files,
+              );
+              folders.push(fileFolder);
             }
           }
         });

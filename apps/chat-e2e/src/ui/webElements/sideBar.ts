@@ -206,4 +206,12 @@ export class SideBar extends BaseElement {
       httpMethod: 'POST',
     });
   }
+
+  public noDataIcon = this.getChildElementBySelector(
+    SideBarSelectors.noDataIcon,
+  );
+
+  public noDataPlaceholder = this.getChildElementBySelector(
+    SideBarSelectors.noData,
+  );
 }

@@ -1,7 +1,8 @@
 import { ReactNode } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isPlaybackConversation } from '@/src/utils/app/conversation';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import {
   doesModelAllowAddons,
@@ -67,6 +68,7 @@ export function SettingContainer({ children }: SettingContainerProps) {
 
 function EmptySettings() {
   const { t } = useTranslation(Translation.Chat);
+
   return (
     <SettingContainer>
       <FieldContainer>
@@ -96,10 +98,14 @@ export const ConversationSettings = Inversify.register(
     const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
     const model = modelsMap[conversation.model.id];
-    const isPlayback = !!conversation.playback?.isPlayback;
+    const isPlayback = isPlaybackConversation(conversation);
 
     if (!model) {
-      return <SettingContainer>{t('Agent is not available')}</SettingContainer>;
+      return (
+        <SettingContainer>
+          <FieldContainer>{t('Agent is not available')}</FieldContainer>
+        </SettingContainer>
+      );
     }
 
     if (!doesModelHaveSettings(model)) {
@@ -139,7 +145,7 @@ export const ConversationSettings = Inversify.register(
         {doesModelAllowTemperature(model) && (
           <FieldContainer>
             <TemperatureSlider
-              label={t('Temperature') ?? ''}
+              label={t('Temperature')}
               onChangeTemperature={onChangeTemperature}
               temperature={temperature}
               disabled={isPlayback}

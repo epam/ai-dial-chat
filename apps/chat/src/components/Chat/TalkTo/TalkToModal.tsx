@@ -1,18 +1,22 @@
 import { IconSearch } from '@tabler/icons-react';
-import { useCallback, useMemo, useState } from 'react';
+import { MouseEvent, useCallback, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
-import { useTranslation } from 'next-i18next';
 import Link from 'next/link';
 
 import classNames from 'classnames';
 
+import { useTranslation } from '@/src/hooks/useTranslation';
+
 import { getApplicationType } from '@/src/utils/app/application';
 import {
   getConversationModelParams,
-  groupModelsAndSaveOrder,
+  isPlaybackConversation,
+  isReplayAsIsConversation,
+  isReplayConversation,
 } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils, PseudoModel } from '@/src/utils/server/api';
 
@@ -25,6 +29,7 @@ import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
@@ -34,9 +39,8 @@ import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
-import { ApplicationWizard } from '@/src/components/Common/ApplicationWizard/ApplicationWizard';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
-import Modal from '@/src/components/Common/Modal';
+import { Modal } from '@/src/components/Common/Modal';
 
 import { ApplicationLogs } from '../../Marketplace/ApplicationLogs';
 import { TalkToSlider } from './TalkToSlider';
@@ -73,17 +77,14 @@ const TalkToModalView = ({
   const recentModelIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [editModel, setEditModel] = useState<DialAIEntityModel>();
   const [deleteModel, setDeleteModel] = useState<DialAIEntityModel>();
   const [logModel, setLogModel] = useState<DialAIEntityModel>();
   const [publishModel, setPublishModel] = useState<
     ShareEntity & { iconUrl?: string }
   >();
-  const [sharedConversationNewModel, setSharedConversationNewModel] =
-    useState<DialAIEntityModel>();
 
-  const isPlayback = conversation.playback?.isPlayback;
-  const isReplay = conversation.replay?.isReplay;
+  const isPlayback = isPlaybackConversation(conversation);
+  const isReplay = isReplayConversation(conversation);
 
   const displayedModels = useMemo(() => {
     const currentModel = modelsMap[conversation.model.id];
@@ -102,7 +103,10 @@ const TalkToModalView = ({
     );
 
     const sortedModels = [
-      ...(currentModel ? [currentModel] : []),
+      ...(currentModel &&
+      (installedModelIdsSet.has(currentModel.id) || !isReplay)
+        ? [currentModel]
+        : []),
       ...recentInstalledModels,
       ...installedModels,
     ];
@@ -138,10 +142,9 @@ const TalkToModalView = ({
       orderedModels.unshift({
         id: REPLAY_AS_IS_MODEL,
         name: t('Replay as is'),
-        description:
-          t(
-            'This mode replicates user requests from the original conversation including settings set in each message.',
-          ) ?? '',
+        description: t(
+          'This mode replicates user requests from the original conversation including settings set in each message.',
+        ),
         reference: REPLAY_AS_IS_MODEL,
         type: EntityType.Model,
         isDefault: false,
@@ -151,10 +154,9 @@ const TalkToModalView = ({
         id: conversation.model.id,
         name: conversation.model.id,
         reference: conversation.model.id,
-        description:
-          t('chat.error.incorrect-selected', {
-            context: EntityType.Model,
-          }) ?? '',
+        description: t('chat.error.incorrect-selected', {
+          context: EntityType.Model,
+        }),
         type: EntityType.Model,
         isDefault: false,
       });
@@ -173,14 +175,23 @@ const TalkToModalView = ({
     t,
   ]);
 
-  const handleUpdateConversationModel = useCallback(
+  const handleCloseApplicationLogs = useCallback(
+    () => setLogModel(undefined),
+    [],
+  );
+
+  const handleOpenApplicationLogs = useCallback((entity: DialAIEntityModel) => {
+    setLogModel(entity);
+  }, []);
+
+  const handleSelectModel = useCallback(
     (entity: DialAIEntityModel) => {
       const model = modelsMap[entity.reference];
 
       if (
         (model || entity.reference === REPLAY_AS_IS_MODEL) &&
         (conversation.model.id !== entity.reference ||
-          conversation.replay?.replayAsIs)
+          isReplayAsIsConversation(conversation))
       ) {
         dispatch(
           ConversationsActions.updateConversation({
@@ -196,48 +207,29 @@ const TalkToModalView = ({
           }),
         );
       }
+      dispatch(ConversationsActions.setIsStartedCustomViewerConversation(true));
 
       onClose();
     },
     [addonsMap, conversation, dispatch, modelsMap, onClose],
   );
 
-  const handleCloseApplicationLogs = useCallback(
-    () => setLogModel(undefined),
-    [],
-  );
-
-  const handleOpenApplicationLogs = useCallback((entity: DialAIEntityModel) => {
-    setLogModel(entity);
-  }, []);
-
-  const handleSelectModel = useCallback(
-    (entity: DialAIEntityModel) => {
-      if (conversation.isShared && entity.reference !== conversation.model.id) {
-        setSharedConversationNewModel(entity);
-        return;
-      }
-
-      handleUpdateConversationModel(entity);
-    },
-    [
-      conversation.isShared,
-      conversation.model.id,
-      handleUpdateConversationModel,
-    ],
+  const detailedApplicationTypeSchema = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
   );
 
   const handleEditApplication = useCallback(
     (entity: DialAIEntityModel) => {
-      dispatch(ApplicationActions.get(entity.id));
-      setEditModel(entity);
+      const applicationType = getApplicationType(entity);
+      dispatch(
+        ApplicationActions.enterEditMode({
+          entity: entity,
+          applicationType,
+          detailedApplicationTypeSchemaId: detailedApplicationTypeSchema?.$id,
+        }),
+      );
     },
-    [dispatch],
-  );
-
-  const handleCloseEditDialog = useCallback(
-    () => setEditModel(undefined),
-    [setEditModel],
+    [detailedApplicationTypeSchema, dispatch],
   );
 
   const handleDeleteClose = useCallback(
@@ -269,6 +261,17 @@ const TalkToModalView = ({
     [setDeleteModel],
   );
 
+  const handleGoToWorkspace = useCallback(
+    (e: MouseEvent<HTMLAnchorElement>) => {
+      if (isPlayback) {
+        e.preventDefault();
+      } else {
+        dispatch(ConversationsActions.setTalkToConversationId(null));
+      }
+    },
+    [isPlayback, dispatch],
+  );
+
   return (
     <>
       <h3 className="text-base font-semibold">
@@ -284,7 +287,7 @@ const TalkToModalView = ({
         <input
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder={t('Search') ?? ''}
+          placeholder={t('Search')}
           className="input-form peer m-0 pl-[38px]"
           data-qa="search-agents"
         />
@@ -304,14 +307,10 @@ const TalkToModalView = ({
         <Link
           href={`/marketplace?${MarketplaceQueryParams.fromConversation}=${ApiUtils.encodeApiUrl(conversation.id)}`}
           shallow
-          onClick={(e) =>
-            conversation.playback?.isPlayback
-              ? e.preventDefault()
-              : dispatch(ConversationsActions.setTalkToConversationId(null))
-          }
+          onClick={handleGoToWorkspace}
           className={classNames(
             'm-auto mt-4 text-accent-primary md:absolute md:bottom-6 md:right-6',
-            conversation.playback?.isPlayback && 'cursor-not-allowed',
+            isPlayback && 'cursor-not-allowed',
           )}
           data-qa="go-to-my-workspace"
         >
@@ -319,32 +318,21 @@ const TalkToModalView = ({
         </Link>
       )}
 
-      {editModel && (
-        <ApplicationWizard
-          isOpen
-          onClose={handleCloseEditDialog}
-          isEdit
-          currentReference={editModel.reference}
-          type={getApplicationType(editModel)}
-        />
-      )}
       {deleteModel && (
         <ConfirmDialog
           isOpen
           heading={t('Confirm deleting application')}
-          description={
-            t(
-              'Are you sure you want to delete the {{modelName}}{{modelVersion}}?',
-              {
-                modelName: deleteModel.name,
-                modelVersion: deleteModel.version
-                  ? t(' (version {{version}})', {
-                      version: deleteModel.version,
-                    })
-                  : '',
-              },
-            ) ?? ''
-          }
+          description={t(
+            'Are you sure you want to delete the {{modelName}}{{modelVersion}}?',
+            {
+              modelName: deleteModel.name,
+              modelVersion: deleteModel.version
+                ? t(' (version {{version}})', {
+                    version: deleteModel.version,
+                  })
+                : '',
+            },
+          )}
           confirmLabel={t('Delete')}
           onClose={handleDeleteClose}
           cancelLabel={t('Cancel')}
@@ -364,26 +352,6 @@ const TalkToModalView = ({
           isOpen
           onClose={handleCloseApplicationLogs}
           entityId={logModel.id}
-        />
-      )}
-      {sharedConversationNewModel && (
-        <ConfirmDialog
-          isOpen
-          heading={t('Confirm model changing')}
-          confirmLabel={t('Confirm')}
-          cancelLabel={t('Cancel')}
-          description={
-            t(
-              'Model changing will stop sharing and other users will no longer see this conversation.',
-            ) || ''
-          }
-          onClose={(result) => {
-            if (result && sharedConversationNewModel) {
-              handleUpdateConversationModel(sharedConversationNewModel);
-            }
-
-            setSharedConversationNewModel(undefined);
-          }}
         />
       )}
     </>

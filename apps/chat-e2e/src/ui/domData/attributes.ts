@@ -16,6 +16,8 @@ export enum Attributes {
   download = 'download',
   href = 'href',
   dataQA = 'data-qa',
-  dataImageName = 'data-image-name',
   ariaSelected = 'aria-selected',
+  id = 'id',
+  ariaExpanded = 'aria-expanded',
+  ariaDetails = 'aria-details',
 }

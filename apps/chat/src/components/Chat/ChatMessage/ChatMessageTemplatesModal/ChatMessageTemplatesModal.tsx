@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getEntitiesFromTemplateMapping,
+  replaceTemplates,
   templateMatchContent,
 } from '@/src/utils/app/prompts';
 
@@ -18,7 +19,7 @@ import { useAppDispatch } from '@/src/store/hooks';
 
 import { PROMPT_VARIABLE_REGEX_TEST } from '@/src/constants/folders';
 
-import Modal from '@/src/components/Common/Modal';
+import { Modal } from '@/src/components/Common/Modal';
 
 import { TabButton } from '../../../Buttons/TabButton';
 import { TemplateRenderer } from './TemplateRenderer';
@@ -108,12 +109,8 @@ export const ChatMessageTemplatesModal = ({
   ]);
 
   const templateResult = useMemo(() => {
-    return templates
-      .slice(0, templates.length - 1)
-      .reduce(
-        (acc, [key, value]) => acc.replaceAll(key.trim(), value.trim()),
-        message.content,
-      );
+    const items = templates.slice(0, templates.length - 1);
+    return replaceTemplates(items, message.content);
   }, [message.content, templates]);
 
   const isInvalid = useMemo(

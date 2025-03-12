@@ -6,7 +6,7 @@ import { AzureAD } from '@/src/ui/webElements/azureAD';
 export class AzureADPage extends BasePage implements LoginInterface {
   public azureAD!: AzureAD;
 
-  getAzureAD(): AzureAD {
+  getLoginForm(): AzureAD {
     if (!this.azureAD) {
       this.azureAD = new AzureAD(this.page);
     }
@@ -20,7 +20,7 @@ export class AzureADPage extends BasePage implements LoginInterface {
   ) {
     await this.page.waitForLoadState();
     await this.page.waitForLoadState('domcontentloaded');
-    const azureAD = this.getAzureAD();
+    const azureAD = this.getLoginForm();
     await azureAD.setCredentials(username, password);
     return this.waitForApiResponsesReceived(
       () => azureAD.signInButton.click(),

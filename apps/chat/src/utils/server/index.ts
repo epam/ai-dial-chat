@@ -14,7 +14,7 @@ import { hardLimitMessages } from './chat';
 import { getApiHeaders } from './get-headers';
 import { logger } from './logger';
 
-import { Message } from '@epam/ai-dial-shared';
+import { Message, MessageFormValue } from '@epam/ai-dial-shared';
 import {
   ParsedEvent,
   ReconnectInterval,
@@ -70,6 +70,7 @@ export const OpenAIStream = async ({
   userJWT,
   jobTitle,
   maxRequestTokens,
+  configurationSchemaValue,
 }: {
   model: DialAIEntityModel;
   temperature: number | undefined;
@@ -80,6 +81,7 @@ export const OpenAIStream = async ({
   chatId: string;
   jobTitle: string | undefined;
   maxRequestTokens: number | undefined;
+  configurationSchemaValue?: MessageFormValue;
 }) => {
   let messagesToSend = messages;
   const url = getUrl(model, selectedAddonsIds);
@@ -101,6 +103,9 @@ export const OpenAIStream = async ({
       model: assistantModelId ?? model.reference,
       addons: selectedAddonsIds?.map((addonId) => ({ name: addonId })),
       max_prompt_tokens: retries === 0 ? maxRequestTokens : undefined,
+      ...(configurationSchemaValue && {
+        custom_fields: { configuration: configurationSchemaValue },
+      }),
     });
 
     res = await fetch(url, {

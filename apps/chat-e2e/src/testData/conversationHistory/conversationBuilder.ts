@@ -14,7 +14,7 @@ export class ConversationBuilder {
   constructor() {
     const model = ModelsUtil.getDefaultModel()!;
     this.conversation = {
-      id: `${model.id}${ItemUtil.conversationIdSeparator}${DEFAULT_CONVERSATION_NAME}`,
+      id: `${model.id}${ItemUtil.entityIdSeparator}${DEFAULT_CONVERSATION_NAME}`,
       name: DEFAULT_CONVERSATION_NAME,
       messages: [],
       model: { id: model.id },
@@ -22,7 +22,7 @@ export class ConversationBuilder {
       temperature: DEFAULT_TEMPERATURE,
       replay: defaultReplay,
       selectedAddons: model.selectedAddons ?? [],
-      lastActivityDate: Date.now(),
+      updatedAt: Date.now(),
       folderId: '',
     };
   }
@@ -81,8 +81,8 @@ export class ConversationBuilder {
     return this;
   }
 
-  withLastActivityDate(lastActivityDate: number): ConversationBuilder {
-    this.conversation.lastActivityDate = lastActivityDate;
+  withUpdatedAt(updatedAt: number): ConversationBuilder {
+    this.conversation.updatedAt = updatedAt;
     return this;
   }
 
