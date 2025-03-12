@@ -29,6 +29,7 @@ dialTest(
     conversationDropdownMenu,
     compareConversation,
     conversationToCompareAssertion,
+    localStorageManager,
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
     setTestIds(
@@ -71,6 +72,7 @@ dialTest(
           replayConversation,
           comparedConversation,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 

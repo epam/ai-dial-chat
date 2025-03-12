@@ -59,6 +59,7 @@ dialTest(
     conversationData,
     dataInjector,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-4251',
@@ -81,6 +82,7 @@ dialTest(
         requestContent,
       ]);
       await dataInjector.createConversations([conversation]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -227,6 +229,7 @@ dialTest(
     conversationData,
     dataInjector,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-4270', 'EPMRTC-4276');
     const updatedSecondRowContent = secondRowContent.substring(0, 3);
@@ -240,6 +243,7 @@ dialTest(
           [requestContent],
         );
         await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -355,6 +359,7 @@ dialTest(
     conversationData,
     dataInjector,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-4273');
     const request = requestContent.split('\n').slice(0, 2).join('\n');
@@ -376,6 +381,7 @@ dialTest(
             rowsMap,
           );
         await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -448,6 +454,7 @@ dialTest(
     conversationData,
     dataInjector,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-4297',
@@ -471,6 +478,7 @@ dialTest(
           [request],
         );
         await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -774,6 +782,7 @@ dialTest(
     variableModalDialog,
     variableModalAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-4298', 'EPMRTC-4372');
     const aVar = 'A';
@@ -811,6 +820,7 @@ dialTest(
           secondPromptContent(cVarPlaceholder, dVarPlaceholder),
         );
         await dataInjector.createPrompts([firstPrompt, secondPrompt]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -922,6 +932,7 @@ dialTest(
     apiAssertion,
     toast,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-4277', 'EPMRTC-4283', 'EPMRTC-4287');
     let simpleConversationMessage: Conversation;
@@ -948,6 +959,7 @@ dialTest(
         );
         await dataInjector.createConversations([conversation]);
         replayName = `${ExpectedConstants.replayConversation}${conversation.name}`;
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -1078,7 +1090,7 @@ dialTest(
           secondUpdatedValue,
         );
         const request = await variableModalDialog.submitReplayVariables();
-        await apiAssertion.assertRequestMessage(
+        apiAssertion.assertRequestMessage(
           request.messages[2],
           requestContent
             .replaceAll(thirdVarValue, firstUpdatedValue)
@@ -1102,6 +1114,7 @@ dialSharedWithMeTest(
     additionalShareUserChat,
     additionalShareUserVariableModalDialog,
     additionalShareUserVariableModalAssertion,
+    additionalShareUserLocalStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-4280');
@@ -1132,6 +1145,7 @@ dialSharedWithMeTest(
       const shareByLinkResponse =
         await mainUserShareApiHelper.shareEntityByLink([conversation]);
       await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+      await additionalShareUserLocalStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -1189,6 +1203,8 @@ dialAdminTest(
     adminVariableModal,
     adminVariableModalAssertion,
     setTestIds,
+    adminLocalStorageManager,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-4281', 'EPMRTC-4282');
     let simpleConversationMessage: Conversation;
@@ -1213,6 +1229,7 @@ dialAdminTest(
           templateConversationMessage,
         );
         await dataInjector.createConversations([conversation]);
+        await adminLocalStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -1274,6 +1291,7 @@ dialAdminTest(
     await dialTest.step(
       'Create a replay conversation from "Organization" section for published conversation and verify modal variable is displayed for the second conversation request on replaying',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await organizationConversations.openEntityDropdownMenu(

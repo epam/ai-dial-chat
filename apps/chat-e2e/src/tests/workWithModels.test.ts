@@ -36,6 +36,7 @@ dialTest(
     dataInjector,
     setTestIds,
     chatMessages,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-476');
     let conversation: Conversation;
@@ -48,6 +49,7 @@ dialTest(
       conversation =
         conversationData.prepareModelConversationBasedOnRequests(userRequests);
       await dataInjector.createConversations([conversation]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -97,6 +99,7 @@ dialTest(
     await dialTest.step('Set random application theme', async () => {
       const theme = GeneratorUtil.randomArrayElement(Object.keys(ThemeId));
       await localStorageManager.setSettings(theme);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -181,6 +184,7 @@ dialTest(
     dataInjector,
     setTestIds,
     chatMessages,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-485', 'EPMRTC-486', 'EPMRTC-487');
     const editData = 'updated message';
@@ -190,6 +194,7 @@ dialTest(
       conversation =
         conversationData.prepareModelConversationBasedOnRequests(userRequests);
       await dataInjector.createConversations([conversation]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -273,12 +278,14 @@ dialTest(
     setTestIds,
     chatMessages,
     confirmationDialog,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-488', 'EPMRTC-489');
     const conversation =
       conversationData.prepareModelConversationBasedOnRequests(userRequests);
     await dialTest.step('Prepare conversation with 3 requests', async () => {
       await dataInjector.createConversations([conversation]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -340,6 +347,7 @@ dialTest.skip(
       'Set system prompt for model and send request',
       async () => {
         await localStorageManager.setRecentModelsIds(simpleRequestModel!);
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.click();
@@ -392,6 +400,7 @@ dialTest(
       const theme = GeneratorUtil.randomArrayElement(Object.keys(ThemeId));
       await localStorageManager.setSettings(theme);
       await localStorageManager.setRecentModelsIds(simpleRequestModel!);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -514,6 +523,7 @@ dialTest(
         const width = SIDEBAR_MIN_WIDTH + SIDEBAR_MIN_WIDTH / 3;
         await localStorageManager.setChatbarWidth(width.toFixed());
         await localStorageManager.setRecentModelsIds(simpleRequestModel!);
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await dialHomePage.throttleAPIResponse(API.chatHost);
@@ -553,6 +563,7 @@ dialTest(
       prompt = promptData.preparePrompt(promptContent);
       await dataInjector.createPrompts([prompt]);
       await localStorageManager.setRecentModelsIds(simpleRequestModel!);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(

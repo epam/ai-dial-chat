@@ -60,6 +60,7 @@ dialTest(
         await fileApiHelper.putFile(file);
       }
       await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -183,6 +184,7 @@ dialTest(
     await dialTest.step('Upload file to app', async () => {
       await fileApiHelper.putFile(Attachment.sunImageName);
       await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -245,6 +247,7 @@ dialTest(
       'Create new conversation based on model with input attachments and upload attachment from device',
       async () => {
         await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await sendMessage.attachmentMenuTrigger.click();
@@ -325,6 +328,7 @@ dialTest(
     await dialTest.step('Upload file to app', async () => {
       await fileApiHelper.putFile(Attachment.longImageName);
       await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -484,6 +488,7 @@ dialTest(
       'Create new conversation based on model with input attachments and upload attachment from device in offline mode',
       async () => {
         await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await sendMessage.attachmentMenuTrigger.click();
@@ -598,6 +603,7 @@ dialTest(
         await localStorageManager.setRecentModelsIds(
           randomModelWithImageAttachment,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -684,6 +690,7 @@ dialTest(
         await localStorageManager.setRecentModelsIds(
           randomModelWithoutFolderLinkAttachments,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 

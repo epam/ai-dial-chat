@@ -27,6 +27,7 @@ dialTest(
       marketplaceSidebar,
       dialHomePage,
       chatBar,
+      header,
       marketplaceUrlBuilder,
       context,
     },
@@ -96,7 +97,8 @@ dialTest(
           process.env.E2E_PASSWORD!,
           false,
         );
-        await dialHomePage.waitForPageLoaded();
+        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
+        await header.leftPanelToggle.click();
         await chatBar.dialMarketplaceLink.click();
         await marketplacePage.waitForPageLoaded();
         await marketplaceSidebar.myWorkspaceButton.click();
@@ -192,7 +194,10 @@ dialTest(
                 GeneratorUtil.randomString(5),
               );
               await incognitoAppContainer.getHeader().backToChatButton.click();
-              await incognitoDialHomePage.waitForPageLoaded();
+              await incognitoDialHomePage.waitForPageLoaded({
+                skipSidebars: true,
+              });
+              await incognitoAppContainer.getHeader().leftPanelToggle.click();
               await incognitoAppContainer
                 .getChatBar()
                 .dialMarketplaceLink.click();

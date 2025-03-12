@@ -61,6 +61,7 @@ dialTest(
     chatAssertion,
     page,
     chatMessagesAssertion,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-3886',
@@ -91,6 +92,7 @@ dialTest(
           conversation,
           replayConversation,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -246,6 +248,7 @@ dialTest(
           replayConversation,
         ]);
         await localStorageManager.setRecentModelsIds(randomModel);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -332,6 +335,8 @@ dialSharedWithMeTest(
     additionalShareUserChat,
     additionalShareUserVariableModalAssertion,
     conversations,
+    localStorageManager,
+    additionalShareUserLocalStorageManager,
   }) => {
     setTestIds('EPMRTC-3895', 'EPMRTC-3893');
     let prompt: Prompt;
@@ -357,6 +362,8 @@ dialSharedWithMeTest(
         const shareByLinkResponse =
           await mainUserShareApiHelper.shareEntityByLink([conversation]);
         await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+        await localStorageManager.setShowSideBarPanels();
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -422,6 +429,7 @@ dialTest(
     variableModalAssertion,
     variableModalDialog,
     apiAssertion,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3884');
     let firstPrompt: Prompt;
@@ -494,6 +502,7 @@ dialTest(
           historyConversation,
           replayConversation,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -527,7 +536,7 @@ dialTest(
       'Press Submit and verify modal with second prompt parameters is shown',
       async () => {
         const firstRequest = await variableModalDialog.submitReplayVariables();
-        await apiAssertion.assertRequestModelId(firstRequest, defaultModel);
+        apiAssertion.assertRequestModelId(firstRequest, defaultModel);
         await variableModalAssertion.assertVariableModalState('visible');
         await variableModalAssertion.assertPromptVariableValue(
           secondPromptCountryVar,
@@ -540,7 +549,7 @@ dialTest(
       'Press Submit and verify modal with third prompt parameters is shown',
       async () => {
         const secondRequest = await variableModalDialog.submitReplayVariables();
-        await apiAssertion.assertRequestModelId(secondRequest, defaultModel);
+        apiAssertion.assertRequestModelId(secondRequest, defaultModel);
         await variableModalAssertion.assertVariableModalState('visible');
         await variableModalAssertion.assertPromptVariableValue(
           thirdPromptPersonVar,
@@ -557,7 +566,7 @@ dialTest(
       'Press Submit and verify request with valid model is sent',
       async () => {
         const thirdRequest = await variableModalDialog.submitReplayVariables();
-        await apiAssertion.assertRequestModelId(thirdRequest, randomModel);
+        apiAssertion.assertRequestModelId(thirdRequest, randomModel);
       },
     );
   },
