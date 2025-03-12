@@ -17,6 +17,7 @@ dialSharedWithMeTest(
     conversationDropdownMenu,
     shareModal,
     shareModalAssertion,
+    localStorageManager,
   }) => {
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
@@ -24,6 +25,7 @@ dialSharedWithMeTest(
     await dialTest.step('Prepare default conversation', async () => {
       conversation = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversation]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -53,6 +55,7 @@ dialSharedWithMeTest(
         );
         await additionalShareUserDialHomePage.waitForPageLoaded({
           selectedSharedConversationName: conversation.name,
+          skipSidebars: true,
         });
         await expect
           .soft(

@@ -31,6 +31,7 @@ dialTest(
     dataInjector,
     page,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-569',
@@ -70,6 +71,7 @@ dialTest(
           folderEmptyConversation.folders,
           folderReplayConversation.folders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -157,6 +159,7 @@ dialTest(
       CollapsedSections.Organization,
       CollapsedSections.SharedWithMe,
     );
+    await localStorageManager.setShowSideBarPanels();
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
 
@@ -219,6 +222,7 @@ dialTest(
     sendMessage,
     page,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-572',
@@ -231,6 +235,7 @@ dialTest(
     let editFolderInput: EditInput;
 
     await dialTest.step('Start editing folder and cancel', async () => {
+      await localStorageManager.setShowSideBarPanels();
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await chatBar.createNewFolder();
@@ -328,6 +333,7 @@ dialTest(
     folderDropdownMenu,
     toast,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-573', 'EPMRTC-574', 'EPMRTC-3190');
     const folderName = GeneratorUtil.randomString(70);
@@ -346,6 +352,7 @@ dialTest(
           conversationInFolder.conversations,
           conversationInFolder.folders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -420,6 +427,7 @@ dialTest(
     folderConversations,
     dataInjector,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-579');
     let conversationInFolder: FolderConversation;
@@ -430,7 +438,9 @@ dialTest(
         conversationInFolder.conversations,
         conversationInFolder.folders,
       );
+      await localStorageManager.setShowSideBarPanels();
     });
+
     await dialTest.step(
       'Verify folder arrow icon is changes on expand/collapse folder',
       async () => {
@@ -476,6 +486,7 @@ dialTest(
         CollapsedSections.Organization,
         CollapsedSections.SharedWithMe,
       );
+      await localStorageManager.setShowSideBarPanels();
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
 
@@ -559,6 +570,7 @@ dialTest(
     chatBarFolderAssertion,
     conversationAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-605');
     const conversationInFolder =
@@ -567,6 +579,7 @@ dialTest(
       conversationInFolder.conversations,
       conversationInFolder.folders,
     );
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -597,6 +610,7 @@ dialTest(
     conversations,
     confirmationDialog,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1372');
     const levelsCount = 4;
@@ -614,6 +628,7 @@ dialTest(
           nestedConversations,
           ...nestedFolders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -676,12 +691,14 @@ dialTest(
     conversationDropdownMenu,
     chatBar,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1277');
 
     await dialTest.step(
       'Create a new folder and rename to name with special symbols',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.createNewFolder();
@@ -717,6 +734,7 @@ dialTest(
     chatMessages,
     chat,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2954');
     const updatedFolderName = `😂👍🥳 😷 🤧 🤠 🥴😇 😈 ⭐あおㅁㄹñ¿äß`;
@@ -729,6 +747,7 @@ dialTest(
         folderConversation.conversations,
         folderConversation.folders,
       );
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -802,6 +821,7 @@ dialTest(
         CollapsedSections.Organization,
         CollapsedSections.SharedWithMe,
       );
+      await localStorageManager.setShowSideBarPanels();
 
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
@@ -952,6 +972,7 @@ dialTest(
       CollapsedSections.Organization,
       CollapsedSections.SharedWithMe,
     );
+    await localStorageManager.setShowSideBarPanels();
 
     await dialTest.step(
       'Create New conversation and send any message there',
