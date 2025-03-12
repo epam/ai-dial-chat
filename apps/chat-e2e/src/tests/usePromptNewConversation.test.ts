@@ -10,7 +10,7 @@ import {
 import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 
-dialTest.only(
+dialTest(
   'Use own prompt for new conversation\n' +
     'Use own prompt for chat with history\n' +
     'Use prompt for chat with attached file',
@@ -107,6 +107,62 @@ dialTest.only(
         );
         await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
           Attachment.sunImageName,
+        );
+      },
+    );
+  },
+);
+
+dialTest.only(
+  'Use prompt with parameters for chat',
+  async ({
+    dialHomePage,
+    prompts,
+    promptDropdownMenu,
+    sendMessageAssertion,
+    setTestIds,
+    promptData,
+    dataInjector,
+    sendMessage,
+    conversations,
+    conversationData,
+    variableModalDialog,
+    chat,
+    localStorageManager,
+  }) => {
+    setTestIds('EPMRTC-5493');
+    const promptParam = 'testParam';
+    const promptContent = `This is a prompt with a parameter: {{${promptParam}}}`;
+    const prompt = promptData.preparePrompt(promptContent);
+    const conversation = conversationData.prepareDefaultConversation();
+    await dataInjector.createPrompts([prompt]);
+    await dataInjector.createConversations([conversation]);
+    const paramValue = GeneratorUtil.randomString(10);
+    const initialMessage = GeneratorUtil.randomString(10);
+    await localStorageManager.setShowSideBarPanels();
+
+    await dialTest.step('Open Dial', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'Use prompt from context menu and input parameter value',
+      async () => {
+        await conversations.selectConversation(conversation.name);
+        await sendMessage.messageInput.fillInInput(initialMessage);
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenu.selectMenuOption(MenuOptions.use, {
+          triggeredHttpMethod: 'GET',
+        });
+        await variableModalDialog.waitForState();
+        await variableModalDialog.setVariableValue(promptParam, paramValue);
+        await variableModalDialog.submitButton.click();
+        await sendMessageAssertion.assertMessageValue(
+          `${initialMessage} ${promptContent.replace(
+            `{{${promptParam}}}`,
+            paramValue,
+          )}`,
         );
       },
     );
