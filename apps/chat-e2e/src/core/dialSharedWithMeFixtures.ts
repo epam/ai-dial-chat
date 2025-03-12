@@ -392,12 +392,11 @@ const dialSharedWithMeTest = dialTest.extend<{
     await use(additionalShareUserModelApiHelper);
   },
   additionalShareUserTalkToAgentDialog: async (
-    { additionalShareUserPage, additionalShareUserModelApiHelper },
+    { additionalShareUserPage },
     use,
   ) => {
     const additionalShareUserTalkToAgentDialog = new TalkToAgentDialog(
       additionalShareUserPage,
-      additionalShareUserModelApiHelper,
     );
     await use(additionalShareUserTalkToAgentDialog);
   },

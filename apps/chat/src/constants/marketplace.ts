@@ -75,21 +75,30 @@ interface IconSize {
 }
 
 export const TableIconSizes: Record<ScreenState, IconSize> = {
-  [ScreenState.DESKTOP]: { iconSize: 60, shareIconSize: 24 },
-  [ScreenState.TABLET]: { iconSize: 60, shareIconSize: 24 },
-  [ScreenState.MOBILE]: { iconSize: 30, shareIconSize: 14 },
+  [ScreenState.XL5]: { iconSize: 60, shareIconSize: 24 },
+  [ScreenState.XL4]: { iconSize: 60, shareIconSize: 24 },
+  [ScreenState.XL3]: { iconSize: 60, shareIconSize: 24 },
+  [ScreenState.XL]: { iconSize: 60, shareIconSize: 24 },
+  [ScreenState.MD]: { iconSize: 60, shareIconSize: 24 },
+  [ScreenState.SM]: { iconSize: 30, shareIconSize: 14 },
 };
 
 export const CardIconSizes: Record<ScreenState, IconSize> = {
-  [ScreenState.DESKTOP]: { iconSize: 80, shareIconSize: 30 },
-  [ScreenState.TABLET]: { iconSize: 48, shareIconSize: 20 },
-  [ScreenState.MOBILE]: { iconSize: 40, shareIconSize: 16 },
+  [ScreenState.XL5]: { iconSize: 80, shareIconSize: 30 },
+  [ScreenState.XL4]: { iconSize: 80, shareIconSize: 30 },
+  [ScreenState.XL3]: { iconSize: 80, shareIconSize: 30 },
+  [ScreenState.XL]: { iconSize: 80, shareIconSize: 30 },
+  [ScreenState.MD]: { iconSize: 48, shareIconSize: 20 },
+  [ScreenState.SM]: { iconSize: 40, shareIconSize: 16 },
 };
 
 export const HeaderIconSizes: Record<ScreenState, IconSize> = {
-  [ScreenState.DESKTOP]: { iconSize: 96, shareIconSize: 30 },
-  [ScreenState.TABLET]: { iconSize: 96, shareIconSize: 30 },
-  [ScreenState.MOBILE]: { iconSize: 48, shareIconSize: 20 },
+  [ScreenState.XL5]: { iconSize: 96, shareIconSize: 30 },
+  [ScreenState.XL4]: { iconSize: 96, shareIconSize: 30 },
+  [ScreenState.XL3]: { iconSize: 96, shareIconSize: 30 },
+  [ScreenState.XL]: { iconSize: 96, shareIconSize: 30 },
+  [ScreenState.MD]: { iconSize: 96, shareIconSize: 30 },
+  [ScreenState.SM]: { iconSize: 48, shareIconSize: 20 },
 };
 
 export const PlayerContextIconClasses = {

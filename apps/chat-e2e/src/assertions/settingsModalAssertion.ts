@@ -2,7 +2,7 @@ import { MenuAssertion } from '@/src/assertions/menuAssertion';
 import {
   ElementState,
   ExpectedMessages,
-  Theme,
+  ThemeId,
   ToggleState,
   toTitleCase,
 } from '@/src/testData';
@@ -20,7 +20,7 @@ export class SettingsModalAssertion {
     );
   }
 
-  public async assertThemeValue(expectedTheme: Theme) {
+  public async assertThemeValue(expectedTheme: ThemeId) {
     expect
       .soft(
         await this.settingsModal.theme.getElementInnerContent(),

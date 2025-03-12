@@ -30,6 +30,7 @@ dialTest(
     conversationAssertion,
     chatBarFolderAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1597', 'EPMRTC-1631');
     let nestedFolders: FolderInterface[];
@@ -90,6 +91,7 @@ dialTest(
             ...nestedSharedConversations,
           ]);
         await additionalUserShareApiHelper.acceptInvite(shareConversationsLink);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -208,6 +210,7 @@ dialTest(
     promptAssertion,
     promptBarFolderAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1635', 'EPMRTC-1636');
     let nestedFolders: FolderInterface[];
@@ -262,6 +265,7 @@ dialTest(
             ...nestedSharedPrompts,
           ]);
         await additionalUserShareApiHelper.acceptInvite(shareNestedPromptsLink);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 

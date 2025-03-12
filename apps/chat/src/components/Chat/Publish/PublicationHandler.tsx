@@ -5,7 +5,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { extractNameFromEmail } from '@/src/utils/app/common';
+import { extractNameFromEmail, formatDate } from '@/src/utils/app/common';
 import {
   getFolderIdFromEntityId,
   getParentFolderIdsFromEntityId,
@@ -53,6 +53,7 @@ import {
   FilePublicationResources,
   PromptPublicationResources,
 } from './PublicationResources';
+import { PublicationInfoSection } from './PublishWizardComponents';
 import { ReviewApplicationDialog } from './ReviewApplicationDialog/ReviewApplicationDialog';
 import { RuleListItem } from './RuleListItem';
 
@@ -409,55 +410,44 @@ export function PublicationHandler({ publication }: Props) {
         <div className="flex w-full flex-col gap-px overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
           <div className="relative size-full gap-px divide-y divide-tertiary overflow-auto md:grid md:grid-cols-2 md:grid-rows-1 md:divide-y-0">
             <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
-              <div className="px-3 md:px-5">
-                <h3 className="flex text-sm" data-qa="publish-to-label">
-                  {t('Publish to')}
-                </h3>
-                <button
-                  className="mt-4 flex w-full items-center rounded border border-primary bg-transparent px-3 py-2"
-                  disabled
-                >
-                  <Tooltip
-                    contentClassName="max-w-[400px] break-all"
-                    triggerClassName="truncate whitespace-pre"
-                    tooltip={
-                      <div className="flex break-words">{publishToUrl}</div>
-                    }
-                    dataQa="publish-to-path"
-                  >
-                    <span className="w-full">{publishToUrl}</span>
-                  </Tooltip>
-                </button>
-                <div className="my-4">
-                  <p
-                    className="text-xs text-secondary"
-                    data-qa="publication-author-label"
-                  >
-                    {t('Author: ')}
-                  </p>
-                  <p className="my-1 text-sm" data-qa="publication-author">
-                    {publicationAuthor}
-                  </p>
-                  {/*TODO uncomment when publication.displayAuthor will be ready at the core side */}
-                  {/* <p
-                    className="text-xs text-secondary"
-                    data-qa="publication-public-author-label"
-                  >
-                    {t(`Author's public name: `)}
-                  </p>
-                  <p
-                    className="my-1 text-sm"
-                    data-qa="publication-public-author"
-                  >
-                    {publication.displayAuthor ?? publicationAuthor}
-                  </p> */}
-                  <p className="text-xs text-secondary" data-qa="creation-date">
-                    {t('Request created: ')}
-                  </p>
-                  <p className="mt-1 text-sm" data-qa="publish-date">
-                    {new Date(publication.createdAt).toLocaleString()}
-                  </p>
-                </div>
+              <div className="flex flex-col px-3 pb-4 md:px-5">
+                <h2 className="mb-4 font-semibold">{t('General info')}</h2>
+                <PublicationInfoSection
+                  labelDataQa={'publish-to-label'}
+                  label={t('Publish to')}
+                  valueDataQa={'publish-to-path'}
+                  valueToDisplay={publishToUrl}
+                  tooltip={
+                    <div className="flex break-words">{publishToUrl}</div>
+                  }
+                />
+
+                <PublicationInfoSection
+                  labelDataQa={'publication-author-label'}
+                  label={t('Author: ')}
+                  valueDataQa={'publication-author'}
+                  valueToDisplay={publicationAuthor}
+                />
+
+                {/*TODO remove publicationAuthor when publication.displayAuthor will be ready at the core side */}
+                <PublicationInfoSection
+                  labelDataQa={'publication-display-author-label'}
+                  label={t(`Author's public name: `)}
+                  valueDataQa={'publication-display-author'}
+                  valueToDisplay={
+                    publication.displayAuthor ?? publicationAuthor
+                  }
+                  infoTooltip={t(
+                    'The name will be displayed instead of the author name for this publication.',
+                  )}
+                />
+
+                <PublicationInfoSection
+                  labelDataQa={'creation-date-label'}
+                  label={t('Request created: ')}
+                  valueDataQa={'creation-date'}
+                  valueToDisplay={formatDate(publication.createdAt)}
+                />
               </div>
               <section className="px-3 py-4 md:px-5">
                 <h2 className="mb-4 flex items-center gap-2 text-sm">

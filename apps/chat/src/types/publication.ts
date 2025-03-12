@@ -19,6 +19,7 @@ export interface PublicationRule {
 
 export interface PublicationRequestModel {
   name: string;
+  displayAuthor: string;
   targetFolder: string;
   resources: {
     action: PublishActions;
@@ -63,6 +64,7 @@ export interface PublicationInfo {
   status: PublicationStatus;
   createdAt: number;
   resourceTypes: BackendResourceType[];
+  displayAuthor?: string;
 }
 
 export interface PublicationsListModel {

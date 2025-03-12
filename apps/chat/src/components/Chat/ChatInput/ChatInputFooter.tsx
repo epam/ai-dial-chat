@@ -12,6 +12,9 @@ function ChatInputFooterView() {
 }
 
 export const ChatInputFooter = withRenderForScreen([
-  ScreenState.TABLET,
-  ScreenState.DESKTOP,
+  ScreenState.MD,
+  ScreenState.XL,
+  ScreenState.XL3,
+  ScreenState.XL4,
+  ScreenState.XL5,
 ])(ChatInputFooterView);

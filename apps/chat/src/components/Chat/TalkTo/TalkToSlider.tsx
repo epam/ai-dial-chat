@@ -28,17 +28,32 @@ import chunk from 'lodash-es/chunk';
 import range from 'lodash-es/range';
 
 const maxChunksCountConfig = {
-  [ScreenState.DESKTOP]: {
+  [ScreenState.XL5]: {
     cardHeight: 166,
     maxRows: 3,
     cols: 3,
   },
-  [ScreenState.TABLET]: {
+  [ScreenState.XL4]: {
+    cardHeight: 166,
+    maxRows: 3,
+    cols: 3,
+  },
+  [ScreenState.XL3]: {
+    cardHeight: 166,
+    maxRows: 3,
+    cols: 3,
+  },
+  [ScreenState.XL]: {
+    cardHeight: 166,
+    maxRows: 3,
+    cols: 3,
+  },
+  [ScreenState.MD]: {
     cardHeight: 160,
     maxRows: 4,
     cols: 2,
   },
-  [ScreenState.MOBILE]: {
+  [ScreenState.SM]: {
     cardHeight: 98,
     maxRows: 5,
     cols: 1,
@@ -126,6 +141,7 @@ const SliderModelsGroup = ({
     <section
       key={modelsGroup.map((model) => model.id).join('.')}
       className="h-full min-w-full"
+      data-qa="agents-section"
     >
       <div
         className="grid"
@@ -133,11 +149,10 @@ const SliderModelsGroup = ({
           gridTemplateColumns: `repeat(${maxChunksCountConfig[screenState].cols}, minmax(0, 1fr))`,
           gridTemplateRows: `repeat(${rowsCount}, ${maxChunksCountConfig[screenState].cardHeight}px)`,
           gap:
-            screenState === ScreenState.MOBILE
+            screenState === ScreenState.SM
               ? MOBILE_GRID_TILES_GAP
               : COMMON_GRID_TILES_GAP,
         }}
-        data-qa="agents"
       >
         {modelsGroup.map((model) => {
           const isNotPseudoModelSelected =
@@ -204,7 +219,7 @@ export const TalkToSlider = ({ conversation, items, ...restProps }: Props) => {
         : Math.floor(
             (sliderHeight -
               (availableRows - 1) *
-                (screenState === ScreenState.MOBILE
+                (screenState === ScreenState.SM
                   ? MOBILE_GRID_TILES_GAP
                   : COMMON_GRID_TILES_GAP)) /
               maxChunksCountConfig[screenState].cardHeight,
@@ -313,7 +328,7 @@ export const TalkToSlider = ({ conversation, items, ...restProps }: Props) => {
     Math.min(maxDotsTranslate, (activeSlide - 3) * SLIDER_DOT_SIZE_WITH_GAPS),
   );
   const isMobileOrTablet =
-    screenState === ScreenState.MOBILE || screenState === ScreenState.TABLET;
+    screenState === ScreenState.SM || screenState === ScreenState.MD;
 
   return (
     <>
@@ -356,10 +371,9 @@ export const TalkToSlider = ({ conversation, items, ...restProps }: Props) => {
       <div className="mt-4 flex w-full items-center justify-center md:justify-end">
         <div className="flex flex-col items-center md:h-5 md:w-1/2 md:flex-row md:justify-between">
           <div className="relative flex items-center gap-4 md:-translate-x-1/2">
-            {sliderDotsArray.length <= 1 &&
-              screenState === ScreenState.MOBILE && (
-                <span className="h-[18px] bg-transparent"></span>
-              )}
+            {sliderDotsArray.length <= 1 && screenState === ScreenState.SM && (
+              <span className="h-[18px] bg-transparent"></span>
+            )}
             {sliderDotsArray.length > 1 && (
               <>
                 {!isMobileOrTablet && (

@@ -29,6 +29,7 @@ dialTest(
     dataInjector,
     conversations,
     chatMessages,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1583');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -51,6 +52,7 @@ dialTest(
             imageUrl,
           );
         await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -121,6 +123,7 @@ dialTest(
         await fileApiHelper.putFile(file);
       }
       await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(

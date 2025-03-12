@@ -447,7 +447,7 @@ export class ChatOverlayManager {
   public async selectConversation(id: string, conversationId: string) {
     const { overlay } = this.getOverlay(id);
 
-    return overlay.createConversation(conversationId);
+    return overlay.selectConversation(conversationId);
   }
 
   public async setOverlayOptions(id: string, options: ChatOverlayOptions) {

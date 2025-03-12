@@ -26,6 +26,7 @@ import {
   isPlaybackConversation,
 } from '@/src/utils/app/conversation';
 import { isMyApplication } from '@/src/utils/app/id';
+import { getGroupModelKey } from '@/src/utils/app/models';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
@@ -121,19 +122,12 @@ export const TalkToCard = ({
   const versionsToSelect = useMemo(() => {
     return allModels.filter(
       (model) =>
-        entity.name === model.name &&
+        getGroupModelKey(entity) === getGroupModelKey(model) &&
         entity.version &&
         (installedModelIds.has(model.reference) ||
           (isSelected && entity.reference === model.reference)),
     );
-  }, [
-    allModels,
-    entity.name,
-    entity.reference,
-    entity.version,
-    installedModelIds,
-    isSelected,
-  ]);
+  }, [allModels, entity, installedModelIds, isSelected]);
 
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
@@ -325,8 +319,8 @@ export const TalkToCard = ({
                 isHighlighted={false}
                 size={shareIconSize}
                 featureType={FeatureType.Application}
-                iconClassName="bg-layer-2 !stroke-[0.6] group-hover:bg-transparent !rounded-[4px]"
-                iconWrapperClassName="!rounded-[4px]"
+                iconClassName="bg-layer-2 group-hover:bg-transparent"
+                isMyEntity={isMyEntity}
               >
                 <ModelIcon
                   entityId={entity.id}

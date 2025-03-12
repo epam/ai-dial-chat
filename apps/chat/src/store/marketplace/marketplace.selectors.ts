@@ -10,6 +10,7 @@ import { isMyApplication } from '@/src/utils/app/id';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { DialAIEntityModel } from '@/src/types/models';
+import { RootState } from '@/src/types/store';
 
 import {
   ApplicationTypeToSourceType,
@@ -18,9 +19,8 @@ import {
 } from '@/src/constants/marketplace';
 
 import { ApplicationTypesSchemasSelectors } from '../applicationTypeSchemas/applicationTypeSchemas.reducer';
-import { RootState } from '../index';
 import { ModelsSelectors } from '../models/models.reducers';
-import { MarketplaceState } from './marketplace.reducers';
+import { MarketplaceState } from './marketplace.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 
@@ -35,42 +35,29 @@ export const selectTableSort = (state: RootState) =>
 export const selectIsBannerVisible = (state: RootState) =>
   rootSelector(state).isBannerVisible;
 
-export const selectSelectedFilters = createSelector(
-  [rootSelector],
-  (state) => state.selectedFilters,
-);
+export const selectSelectedFilters = (state: RootState) =>
+  rootSelector(state).selectedFilters;
 
-export const selectSearchTerm = createSelector(
-  [rootSelector],
-  (state) => state.searchTerm,
-);
+export const selectSearchTerm = (state: RootState) =>
+  rootSelector(state).searchTerm;
 
 export const selectTrimmedSearchTerm = createSelector(
   [selectSearchTerm],
   (searchTerm) => searchTerm.trim(),
 );
 
-export const selectSelectedTab = createSelector(
-  [rootSelector],
-  (state) => state.selectedTab,
-);
+export const selectSelectedTab = (state: RootState) =>
+  rootSelector(state).selectedTab;
 
-export const selectApplyModelStatus = createSelector(
-  [rootSelector],
-  (state) => state.applyModelStatus,
-);
+export const selectApplyModelStatus = (state: RootState) =>
+  rootSelector(state).applyModelStatus;
 
-export const selectIsApplyingModel = createSelector(
-  [selectApplyModelStatus],
-  (applyModelStatus) =>
-    applyModelStatus !== UploadStatus.UNINITIALIZED &&
-    applyModelStatus !== UploadStatus.FAILED,
-);
+export const selectIsApplyingModel = (state: RootState) =>
+  selectApplyModelStatus(state) !== UploadStatus.UNINITIALIZED &&
+  selectApplyModelStatus(state) !== UploadStatus.FAILED;
 
-export const selectDetailsModel = createSelector(
-  [rootSelector],
-  (state) => state.detailsModel,
-);
+export const selectDetailsModel = (state: RootState) =>
+  rootSelector(state).detailsModel;
 
 export const selectSourceTypes = createSelector(
   [

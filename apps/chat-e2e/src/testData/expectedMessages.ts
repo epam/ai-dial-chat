@@ -301,6 +301,7 @@ export enum ExpectedMessages {
   filesCountIsValid = 'Files count is valid',
   fileExtensionIsValid = 'File extension is valid',
   elementAttributeValueIsValid = 'Element attribute value is valid',
+  elementAttributeValueShouldBe = 'Element attribute value should be: ',
   uploadedFilesAreaIsScrollable = 'Uploaded files area is scrollable vertically',
   fieldIsInFocus = 'Field is in focus',
   errorMessageIsShown = 'Error message is shown',
@@ -312,6 +313,7 @@ export enum ExpectedMessages {
   folderTextColorIsValid = 'Folder text color is valid',
   selectFolderAreaIsScrollable = 'Select folder area is scrollable vertically',
   borderColorsAreValid = 'Element border colors are valid',
+  elementCursorIsValid = 'Element cursor is valid',
   uploadToPathIsValid = 'Upload to path is valid',
   uploadToPathIsTruncated = 'Upload to path is truncated',
   folderCheckboxIsNotVisible = 'Folder check-box is not visible',
@@ -380,4 +382,5 @@ export enum PublishingExpectedMessages {
 
 export enum MarketplaceExpectedMessages {
   agentIsVisible = 'Agent is visible in Marketplace',
+  filteredAgentsAreValid = 'Filtered agents are valid',
 }

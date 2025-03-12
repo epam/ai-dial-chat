@@ -1,10 +1,23 @@
 import { DialAIEntityModel } from '@/chat/types/models';
 import { ExpectedConstants } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
+import { MenuSelectors } from '@/src/ui/selectors';
 import { MarketplaceAgentSelectors } from '@/src/ui/selectors/marketplaceSelectors';
-import { BaseElement } from '@/src/ui/webElements';
+import { BaseElement, DropdownMenu } from '@/src/ui/webElements';
 import { AgentDetailsModal } from '@/src/ui/webElements/marketplace/agentDetailsModal';
+import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
+
+export enum FoundMarketplaceAgents {
+  suggested,
+  filtered,
+}
+
+export interface MarketplaceAgentProperties {
+  name: string;
+  isSuggested: boolean;
+  isWorkspaceAgent: boolean;
+}
 
 export class MarketplaceAgents extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
@@ -12,12 +25,20 @@ export class MarketplaceAgents extends BaseElement {
   }
 
   private applicationDetailsModal!: AgentDetailsModal;
+  private agentDropdownMenu!: DropdownMenu;
 
   getAgentDetailsModal(): AgentDetailsModal {
     if (!this.applicationDetailsModal) {
       this.applicationDetailsModal = new AgentDetailsModal(this.page);
     }
     return this.applicationDetailsModal;
+  }
+
+  getAgentDropdownMenu(): DropdownMenu {
+    if (!this.agentDropdownMenu) {
+      this.agentDropdownMenu = new DropdownMenu(this.page);
+    }
+    return this.agentDropdownMenu;
   }
 
   public agentNames = this.getChildElementBySelector(
@@ -45,12 +66,16 @@ export class MarketplaceAgents extends BaseElement {
   public getAgent = (entity: DialAIEntityModel | string) => {
     let agent;
     if (typeof entity === 'string') {
-      agent = this.rootLocator.filter({ has: this.agentName(entity) }).first();
+      agent = this.rootLocator
+        .filter({ has: this.agentName(RegexUtil.escapeRegexChars(entity)) })
+        .first();
     } else {
       //if agent has version in the config
       if (entity.version) {
         agent = this.rootLocator
-          .filter({ has: this.agentName(entity.name) })
+          .filter({
+            has: this.agentName(RegexUtil.escapeRegexChars(entity.name)),
+          })
           .filter({
             has: this.agentVersion(entity.version).or(
               this.agentVersionWithPrefix(entity.version),
@@ -60,7 +85,9 @@ export class MarketplaceAgents extends BaseElement {
       } else {
         //init agent locator if no version is available in the config
         agent = this.rootLocator
-          .filter({ has: this.agentName(entity.name) })
+          .filter({
+            has: this.agentName(RegexUtil.escapeRegexChars(entity.name)),
+          })
           .first();
       }
     }
@@ -73,10 +100,20 @@ export class MarketplaceAgents extends BaseElement {
       .getChildElementBySelector(`${Attributes.visible}=true`);
   }
 
-  public getAgentVersion(entity: DialAIEntityModel | string) {
-    return this.getAgent(entity).getChildElementBySelector(
+  public getAgentVersion(agentElement: BaseElement) {
+    return agentElement.getChildElementBySelector(
       MarketplaceAgentSelectors.version,
     );
+  }
+
+  public getAgentDotsMenu(entity: DialAIEntityModel | string) {
+    return this.getAgent(entity).getChildElementBySelector(
+      MenuSelectors.dotsMenu,
+    );
+  }
+
+  public getAgentElementDotsMenu(agentElement: BaseElement) {
+    return agentElement.getChildElementBySelector(MenuSelectors.dotsMenu);
   }
 
   public async agentWithVersionToSet(entity: DialAIEntityModel) {
@@ -94,85 +131,7 @@ export class MarketplaceAgents extends BaseElement {
     return this.agentNames.getElementsInnerContent();
   }
 
-  public async waitForAgentByIndex(index: number) {
-    const agent = this.getNthElement(index);
-    await agent.waitFor();
-  }
-
   public async getAgentsIcons() {
     return this.getElementIcons(this);
-  }
-
-  public async getSelectedAgent() {
-    const agentsCount = await this.getElementsCount();
-    for (let i = 1; i <= agentsCount; i++) {
-      const selectedAttr = await this.getNthElement(i).getAttribute(
-        Attributes.ariaSelected,
-      );
-      if (selectedAttr && JSON.parse(selectedAttr.toLowerCase())) {
-        const selectedAgent = this.getNthElement(i).locator(
-          MarketplaceAgentSelectors.agentName,
-        );
-        return selectedAgent.innerText();
-      }
-    }
-  }
-
-  public async isAgentUsed(
-    entity: DialAIEntityModel,
-    {
-      isInstalledDeploymentsUpdated = false,
-    }: { isInstalledDeploymentsUpdated?: boolean } = {},
-  ): Promise<boolean> {
-    let isAgentVisible = false;
-    const entityLocator = this.agentName(entity.name);
-    //open entity details modal if it is visible
-    if (await entityLocator.isVisible()) {
-      //open agent details modal
-      await entityLocator.click();
-      const agentDetailsModal = this.getAgentDetailsModal();
-      //if entity has more than one version in the config
-      if (entity.version) {
-        //check if current version match expected
-        const currentVersion =
-          await agentDetailsModal.agentVersion.getElementInnerContent();
-        //select version from dropdown menu if it does not match the current one
-        if (currentVersion !== entity.version) {
-          const menuTrigger = agentDetailsModal.versionMenuTrigger;
-          //check if version menu is available
-          if (await menuTrigger.isVisible()) {
-            await menuTrigger.click();
-            //check if menu includes version
-            const version = agentDetailsModal
-              .getVersionDropdownMenu()
-              .menuOption(entity.version);
-            if (await version.isVisible()) {
-              await agentDetailsModal
-                .getVersionDropdownMenu()
-                .selectMenuOption(entity.version);
-              await agentDetailsModal.clickUseButton({
-                isInstalledDeploymentsUpdated,
-              });
-              isAgentVisible = true;
-            } else {
-              await agentDetailsModal.closeButton.click();
-            }
-          } else {
-            await agentDetailsModal.closeButton.click();
-          }
-        } else {
-          await agentDetailsModal.clickUseButton({
-            isInstalledDeploymentsUpdated,
-          });
-          isAgentVisible = true;
-        }
-      } else {
-        await agentDetailsModal.clickUseButton({
-          isInstalledDeploymentsUpdated,
-        });
-        isAgentVisible = true;
-      }
-    }
-    return isAgentVisible;
   }
 }

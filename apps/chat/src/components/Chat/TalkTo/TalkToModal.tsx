@@ -11,12 +11,12 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { getApplicationType } from '@/src/utils/app/application';
 import {
   getConversationModelParams,
-  groupModelsAndSaveOrder,
   isPlaybackConversation,
   isReplayAsIsConversation,
   isReplayConversation,
 } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils, PseudoModel } from '@/src/utils/server/api';
 

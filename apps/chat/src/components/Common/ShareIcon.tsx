@@ -1,3 +1,4 @@
+import { IconPencil } from '@tabler/icons-react';
 import { ReactNode } from 'react';
 
 import classNames from 'classnames';
@@ -24,6 +25,7 @@ interface ShareIconProps extends ShareInterface {
   containerClassName?: string;
   iconClassName?: string;
   iconWrapperClassName?: string;
+  isMyEntity?: boolean;
 }
 
 export default function ShareIcon({
@@ -36,8 +38,10 @@ export default function ShareIcon({
   containerClassName,
   iconClassName,
   iconWrapperClassName,
+  isMyEntity,
 }: ShareIconProps) {
   const { t } = useTranslation(Translation.SideBar);
+  const isApplication = featureType === FeatureType.Application;
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
@@ -51,36 +55,58 @@ export default function ShareIcon({
 
   if (
     (!isSharingEnabled || !isShared) &&
-    (!isPublishingEnabled || !isPublished)
+    (!isPublishingEnabled || !isPublished) &&
+    !isMyEntity
   ) {
     return <div className={containerClass}>{children}</div>;
   }
 
   const AdditionalIcon =
-    isPublished && isPublishingEnabled ? World : ArrowUpRight;
+    isPublished && isPublishingEnabled
+      ? World
+      : isShared
+        ? ArrowUpRight
+        : IconPencil;
+
+  const isMyEntityIcon = isMyEntity && !isPublished && !isShared;
 
   return (
     <div className={containerClass}>
       {children}
       <div
         className={classNames(
-          'absolute -bottom-1 -left-1 bg-layer-3',
-          isPublished ? 'rounded-md' : 'rounded-sm',
+          'absolute bg-layer-3',
+          isPublished && 'rounded-md',
+          isApplication
+            ? 'bottom-0 left-0 rounded-none rounded-tr-[4px] stroke-[0.6]'
+            : '-bottom-1 -left-1 rounded-sm stroke-[1.5]',
           iconWrapperClassName,
         )}
         data-qa={
           isPublished && isPublishingEnabled ? 'world-icon' : 'arrow-icon'
         }
       >
-        <Tooltip tooltip={isPublished ? t('Published') : t('Shared')}>
+        <Tooltip
+          tooltip={
+            isPublished
+              ? t('Published')
+              : isShared
+                ? t('Shared')
+                : t('Created by me')
+          }
+        >
           <AdditionalIcon
             size={size}
             width={size}
             height={size}
             className={classNames(
-              'stroke-[1.5] p-px text-accent-primary group-hover:bg-accent-primary-alpha',
+              'p-px text-accent-primary group-hover:bg-accent-primary-alpha',
               isHighlighted && 'bg-accent-primary-alpha',
-              isPublished ? 'rounded-md' : 'rounded-sm',
+              isPublished && '!rounded-md',
+              isApplication
+                ? 'rounded-none rounded-tr-[4px] stroke-[0.6]'
+                : 'rounded-sm stroke-[1.5]',
+              isMyEntityIcon && '!stroke-[1.5]',
               iconClassName,
             )}
           />

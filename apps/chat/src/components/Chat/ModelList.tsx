@@ -16,13 +16,11 @@ import {
   getModelDescription,
   isApplicationStatusUpdating,
 } from '@/src/utils/app/application';
-import {
-  getOpenAIEntityFullName,
-  groupModelsAndSaveOrder,
-} from '@/src/utils/app/conversation';
+import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { isApplicationId } from '@/src/utils/app/id';
 import { hasParentWithAttribute } from '@/src/utils/app/modals';
+import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils } from '@/src/utils/server/api';

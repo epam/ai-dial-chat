@@ -1,7 +1,7 @@
 import { getApplicationEntityFields } from '@/src/utils/app/application';
 import { fakeCallback } from '@/src/utils/app/common';
 
-import { ApplicationCard } from '../../Marketplace/ApplicationCard';
+import { ApplicationCard } from '../../Marketplace/AgentsList/AgentsTiles/ApplicationCard';
 import { ApplicationGeneralInfoFormData } from './form';
 
 interface GeneralInfoPreviewProps {

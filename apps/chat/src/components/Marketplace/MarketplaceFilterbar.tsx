@@ -62,7 +62,7 @@ const FilterItem = ({
         size={18}
         className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
       />
-      <span className="ml-2 whitespace-nowrap text-sm">
+      <span className="ml-2 whitespace-nowrap text-sm" data-qa="option-label">
         {displayValue ?? filterValue}
       </span>
     </label>
@@ -99,6 +99,7 @@ const FilterSection = ({
         onClick={() => onToggleFilterSection(filterType)}
         className="flex w-full justify-between font-semibold"
         data-qa="filter-property"
+        aria-expanded={openedSections[filterType]}
       >
         <h5 className="text-sm">{sectionName}</h5>
         <IconChevronUp

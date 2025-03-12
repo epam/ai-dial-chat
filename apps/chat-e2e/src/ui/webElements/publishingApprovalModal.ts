@@ -108,11 +108,11 @@ export class PublishingApprovalModal extends BaseElement {
   public publishToPath = this.getChildElementBySelector(
     PublishingApprovalModalSelectors.publishToPath,
   );
-  public publishDateLabel = this.getChildElementBySelector(
-    PublishingApprovalModalSelectors.publishDateLabel,
+  public requestCreatedLabel = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.requestCreatedLabel,
   );
-  public publishDate = this.getChildElementBySelector(
-    PublishingApprovalModalSelectors.publishDate,
+  public creationDate = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.creationDate,
   );
   public allowAccessLabel = this.getChildElementBySelector(
     PublishingApprovalModalSelectors.allowAccessLabel,

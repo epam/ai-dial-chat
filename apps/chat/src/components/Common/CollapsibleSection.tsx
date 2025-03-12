@@ -58,7 +58,7 @@ export default function CollapsibleSection({
         <div
           onClick={handleClick}
           className={classNames(
-            'flex cursor-pointer items-center gap-1 whitespace-pre py-1 text-xs',
+            'flex cursor-pointer items-center gap-1 whitespace-pre py-1 text-xs font-semibold',
             isHighlighted
               ? 'text-accent-primary'
               : '[&:not(:hover)]:text-secondary',

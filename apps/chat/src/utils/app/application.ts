@@ -35,7 +35,7 @@ import { getApplicationRootId } from './id';
 import { isEntityIdPublic } from './publications';
 import { translate } from './translation';
 
-import { isObject } from 'lodash-es';
+import isObject from 'lodash-es/isObject';
 import omit from 'lodash-es/omit';
 
 export const safeStringifyApplicationFeatures = (

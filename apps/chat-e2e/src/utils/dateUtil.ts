@@ -18,6 +18,6 @@ export class DateUtil {
   }
 
   public static convertUnixTimestampToLocalDate(timestamp: number) {
-    return new Date(timestamp).toLocaleString();
+    return new Date(timestamp).toLocaleDateString();
   }
 }

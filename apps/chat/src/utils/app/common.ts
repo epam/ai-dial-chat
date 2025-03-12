@@ -13,7 +13,6 @@ import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
 import { NA_VERSION } from '@/src/constants/public';
 
 import { getPublicItemIdWithoutVersion } from '../server/api';
-import { doesEntityContainSearchTerm } from './search';
 
 import { Entity, ShareEntity } from '@epam/ai-dial-shared';
 import groupBy from 'lodash-es/groupBy';
@@ -160,9 +159,6 @@ export const prepareEntityName = (
     : additionalCuttedResult.trim();
 };
 
-export const isSearchTermMatched = (entity: ShareEntity, searchTerm?: string) =>
-  !searchTerm || doesEntityContainSearchTerm(entity, searchTerm);
-
 export const isSearchFilterMatched = (
   entity: ShareEntity,
   filters: EntityFilters,
@@ -264,3 +260,12 @@ export const extractNameFromEmail = (author: string | undefined) => {
   const regEx = /^[^@]+@[^@]+.[^@]+$/; // regex to test is author in an email format
   return regEx.test(author) ? author.split('@')[0] : author;
 };
+
+export const formatDate = (rawDate: number | string | Date): string => {
+  return new Date(rawDate).toLocaleDateString();
+};
+
+export const parseCommaSeparatedList = (
+  str: string | undefined,
+  defaultValue: string[] = [],
+): string[] => str?.split(',').map((str) => str.trim()) ?? defaultValue;

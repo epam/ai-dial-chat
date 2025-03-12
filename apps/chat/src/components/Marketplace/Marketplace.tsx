@@ -3,8 +3,6 @@ import { useEffect } from 'react';
 
 import { useRouter } from 'next/router';
 
-import classNames from 'classnames';
-
 import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { ScreenState } from '@/src/types/common';
@@ -17,7 +15,6 @@ import {
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { ViewTypes } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -38,14 +35,11 @@ export const Marketplace = () => {
   const applyModelStatus = useAppSelector(
     MarketplaceSelectors.selectApplyModelStatus,
   );
-  const selectedViewType = useAppSelector(
-    MarketplaceSelectors.selectSelectedViewType,
-  );
 
   const screenState = useScreenState();
 
   const showOverlay =
-    (isFilterbarOpen || isProfileOpen) && screenState === ScreenState.MOBILE;
+    (isFilterbarOpen || isProfileOpen) && screenState === ScreenState.SM;
 
   useEffect(() => {
     if (applyModelStatus === UploadStatus.LOADED) {
@@ -58,13 +52,7 @@ export const Marketplace = () => {
 
   return (
     <div
-      className={classNames(
-        'flex grow flex-col overflow-auto py-4 md:p-5 xl:px-16 xl:py-6',
-        selectedViewType === ViewTypes.TABLE &&
-          screenState === ScreenState.MOBILE
-          ? 'px-0'
-          : 'px-3',
-      )}
+      className="flex grow flex-col overflow-auto py-4 md:py-5 xl:py-6"
       data-qa="marketplace"
     >
       {isLoading ? (

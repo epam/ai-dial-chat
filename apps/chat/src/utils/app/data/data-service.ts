@@ -1,7 +1,7 @@
 /* eslint-disable no-restricted-globals */
 import { Observable, map } from 'rxjs';
 
-import { isMediumScreenOrMobile } from '@/src/utils/app/mobile';
+import { isTabletScreenOrMobile } from '@/src/utils/app/mobile';
 
 import { LastConversationSettings } from '@/src/types/settings';
 import { DialStorage, StorageType, UIStorageKeys } from '@/src/types/storage';
@@ -113,22 +113,16 @@ export class DataService {
     );
   }
 
-  public static getShowChatbar(): Observable<boolean> {
-    return BrowserStorage.getData(
-      UIStorageKeys.ShowChatbar,
-      !isMediumScreenOrMobile(),
-    );
+  public static getShowChatbar(defaultValue: boolean): Observable<boolean> {
+    return BrowserStorage.getData(UIStorageKeys.ShowChatbar, defaultValue);
   }
 
   public static setShowChatbar(showChatbar: boolean): Observable<void> {
     return BrowserStorage.setData(UIStorageKeys.ShowChatbar, showChatbar);
   }
 
-  public static getShowPromptbar(): Observable<boolean> {
-    return BrowserStorage.getData(
-      UIStorageKeys.ShowPromptbar,
-      !isMediumScreenOrMobile(),
-    );
+  public static getShowPromptbar(defaultValue: boolean): Observable<boolean> {
+    return BrowserStorage.getData(UIStorageKeys.ShowPromptbar, defaultValue);
   }
 
   public static setShowPromptbar(showPromptbar: boolean): Observable<void> {
@@ -138,7 +132,7 @@ export class DataService {
   public static getShowMarketplaceFilterbar(): Observable<boolean> {
     return BrowserStorage.getData(
       UIStorageKeys.ShowMarketplaceFilterbar,
-      !isMediumScreenOrMobile(),
+      !isTabletScreenOrMobile(),
     );
   }
 

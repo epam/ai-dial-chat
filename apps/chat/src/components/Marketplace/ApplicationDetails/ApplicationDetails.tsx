@@ -2,6 +2,8 @@ import { useCallback, useMemo } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
+import { getGroupModelKey } from '@/src/utils/app/models';
+
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 
@@ -54,10 +56,10 @@ export const ApplicationDetails = ({
   const filteredEntities = useMemo(() => {
     return allEntities.filter(
       (e) =>
-        entity.name === e.name &&
+        getGroupModelKey(entity) === getGroupModelKey(e) &&
         (!isMyAppsTab || installedModelIds.has(e.reference) || isSuggested),
     );
-  }, [allEntities, entity.name, installedModelIds, isMyAppsTab, isSuggested]);
+  }, [allEntities, entity, installedModelIds, isMyAppsTab, isSuggested]);
 
   const handleUseEntity = useCallback(() => {
     dispatch(

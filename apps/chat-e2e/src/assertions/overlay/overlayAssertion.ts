@@ -1,5 +1,5 @@
 import { BaseAssertion } from '@/src/assertions';
-import { ExpectedMessages, Theme } from '@/src/testData';
+import { ExpectedMessages, ThemeId } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
 import { OverlayHomePage } from '@/src/ui/pages/overlay/overlayHomePage';
 import { BaseElement } from '@/src/ui/webElements';
@@ -46,7 +46,7 @@ export class OverlayAssertion extends BaseAssertion {
 
   public async assertOverlayTheme(
     overlayHomePage: OverlayHomePage,
-    expectedTheme: Theme,
+    expectedTheme: ThemeId,
   ) {
     expect
       .soft(

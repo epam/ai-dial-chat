@@ -241,13 +241,9 @@ const dialOverlayTest = test.extend<{
     const overlayApiAssertion = new ApiAssertion();
     await use(overlayApiAssertion);
   },
-  overlayTalkToAgentDialog: async (
-    { page, overlayHomePage, overlayModelApiHelper },
-    use,
-  ) => {
+  overlayTalkToAgentDialog: async ({ page, overlayHomePage }, use) => {
     const overlayTalkToAgentDialog = new TalkToAgentDialog(
       page,
-      overlayModelApiHelper,
       overlayHomePage.getOverlayContainer().getElementLocator(),
     );
     await use(overlayTalkToAgentDialog);

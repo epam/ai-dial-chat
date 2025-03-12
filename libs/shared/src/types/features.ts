@@ -28,8 +28,10 @@ export enum Feature {
   Marketplace = 'marketplace', // Enable Marketplace
   QuickApps = 'quick-apps', // Enable Quick apps
   CodeApps = 'code-apps', // Enable Code apps
-  DisallowChangeAgent = 'disallow-change-agent', //Disallow "Change agent" button
-  MarketplaceTableView = 'marketplace-table-view', //Disallow "Change agent" button
+  DisallowChangeAgent = 'disallow-change-agent', // Disallow "Change agent" button
+  MarketplaceTableView = 'marketplace-table-view', // Enable table view in Marketplace
+  HideUserSettings = 'hide-user-settings', // Hide user settings
+  AdvancedView = 'advanced-view', // Enable advanced view: show chat and prompt sidebars by default on descktop
 }
 
 export const availableFeatures: Record<Feature, boolean> = {
@@ -64,4 +66,6 @@ export const availableFeatures: Record<Feature, boolean> = {
   [Feature.CodeApps]: true,
   [Feature.DisallowChangeAgent]: true,
   [Feature.MarketplaceTableView]: true,
+  [Feature.HideUserSettings]: true,
+  [Feature.AdvancedView]: true,
 };

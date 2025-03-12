@@ -12,6 +12,7 @@ dialTest(
     confirmationDialog,
     promptBarFolderAssertion,
     promptAssertion,
+    localStorageManager,
   }) => {
     let promptInFolder: FolderPrompt;
 
@@ -21,6 +22,7 @@ dialTest(
         promptInFolder.prompts,
         promptInFolder.folders,
       );
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(

@@ -1,3 +1,4 @@
+import { getSession } from 'next-auth/react';
 import { useEffect, useMemo } from 'react';
 
 import { GetServerSideProps } from 'next';
@@ -6,6 +7,9 @@ import { useRouter } from 'next/router';
 import { isApplicationType } from '@/src/utils/app/application';
 import { decode } from '@/src/utils/app/application-type-schema';
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
+import { canUserUseFeature } from '@/src/utils/session';
+
+import { ApplicationType } from '@/src/types/applications';
 
 import {
   ApplicationActions,
@@ -22,7 +26,7 @@ import { Spinner } from '@/src/components/Common/Spinner';
 
 import { getLayout } from '../../_app';
 
-import { UploadStatus } from '@epam/ai-dial-shared';
+import { Feature, UploadStatus } from '@epam/ai-dial-shared';
 
 export default function AppsEditor() {
   const {
@@ -33,8 +37,6 @@ export default function AppsEditor() {
   const schema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
   );
-  const isSchemaApplicationType = !isApplicationType(decode(slug.toString()));
-
   const applicationData = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
@@ -44,6 +46,7 @@ export default function AppsEditor() {
   );
   const isLoadingModels = useAppSelector(ModelsSelectors.selectModelsIsLoading);
 
+  const isSchemaApplicationType = !isApplicationType(decode(slug.toString()));
   useEffect(() => {
     const applicationId = modelsMap[id.toString()]?.id;
     if (!applicationData && id && applicationId) {
@@ -89,4 +92,17 @@ export default function AppsEditor() {
 
 AppsEditor.getLayout = getLayout;
 
-export const getServerSideProps: GetServerSideProps = getCommonPageProps;
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const session = await getSession(context);
+  const canCreateCodeApps = canUserUseFeature(session, Feature.CodeApps);
+
+  const { slug, id } = context.query;
+
+  if (!id && slug === ApplicationType.CODE_APP && !canCreateCodeApps) {
+    return {
+      notFound: true,
+    };
+  }
+
+  return getCommonPageProps(context);
+};

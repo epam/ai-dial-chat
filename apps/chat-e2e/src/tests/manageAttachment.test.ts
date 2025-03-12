@@ -29,11 +29,14 @@ dialTest(
     fileApiHelper,
     confirmationDialog,
     chatBar,
+    manageAttachmentsAssertion,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1884', 'EPMRTC-3296');
 
     await dialTest.step('Upload file to app', async () => {
       await fileApiHelper.putFile(Attachment.sunImageName);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -74,14 +77,11 @@ dialTest(
       'Close modal and verify file is not deleted',
       async () => {
         await confirmationDialog.cancelDialog();
-        await expect
-          .soft(
-            attachFilesModal
-              .getAllFilesTree()
-              .getEntityByName(Attachment.sunImageName),
-            ExpectedMessages.fileIsAttached,
-          )
-          .toBeVisible();
+        await manageAttachmentsAssertion.assertEntityState(
+          { name: Attachment.sunImageName },
+          FileModalSection.AllFiles,
+          'visible',
+        );
       },
     );
 
@@ -124,6 +124,7 @@ dialTest(
     conversations,
     attachmentDropdownMenu,
     localStorageManager,
+    manageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-3298', 'EPMRTC-3299');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -145,6 +146,7 @@ dialTest(
         );
         await dataInjector.createConversations([conversation]);
         await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -185,12 +187,11 @@ dialTest(
       async () => {
         await confirmationDialog.cancelDialog();
         for (const file of attachedFiles) {
-          await expect
-            .soft(
-              attachFilesModal.getAllFilesTree().getEntityByName(file),
-              ExpectedMessages.fileIsAttached,
-            )
-            .toBeVisible();
+          await manageAttachmentsAssertion.assertEntityState(
+            { name: file },
+            FileModalSection.AllFiles,
+            'visible',
+          );
         }
       },
     );
@@ -221,12 +222,14 @@ dialTest(
     attachFilesModal,
     uploadFromDeviceModal,
     chatBar,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3302');
 
     await dialTest.step(
       'Open "Manage attachments" modal through chat side bar menu icon',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
@@ -308,12 +311,14 @@ dialTest(
     uploadFromDeviceModal,
     chatBar,
     context,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3304');
 
     await dialTest.step(
       'Open "Manage attachments" modal through chat side bar menu icon',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
@@ -378,12 +383,14 @@ dialTest(
     uploadFromDeviceModal,
     chatBar,
     context,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3303');
 
     await dialTest.step(
       'Open "Manage attachments" modal through chat side bar menu icon',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
@@ -439,12 +446,14 @@ dialTest(
     attachFilesModal,
     uploadFromDeviceModal,
     chatBar,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2015', 'EPMRTC-3187');
 
     await dialTest.step(
       'Upload file and set his name to contain special symbols',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
@@ -525,6 +534,7 @@ dialTest(
         );
         await dataInjector.createConversations([conversation]);
         await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -571,5 +581,104 @@ dialTest(
         }
       },
     );
+  },
+);
+
+dialTest(
+  '[Manage attachments] Single User, Multiple Tabs. Added and Deleted file appears/disappears without browser refresh\n' +
+    '[Manage attachments] Single User, Multiple Tabs. Added and Deleted file LOCATED IN FOLDER appears/disappears without browser refresh',
+  async ({
+    dialHomePage,
+    setTestIds,
+    attachFilesModal,
+    fileApiHelper,
+    chatBar,
+    manageAttachmentsAssertion,
+    attachedAllFiles,
+    localStorageManager,
+  }) => {
+    setTestIds('EPMRTC-5396', 'EPMRTC-5526');
+    const filesToTest = [
+      {
+        name: `${GeneratorUtil.randomString(7)}.txt`,
+        url: '',
+        isText: true,
+        folderName: '',
+      },
+      {
+        name: Attachment.sunImageName,
+        url: '',
+        isText: false,
+        folderName: '',
+      },
+      {
+        name: `${GeneratorUtil.randomString(7)}.txt`,
+        url: '',
+        isText: true,
+        folderName: GeneratorUtil.randomString(7),
+      },
+    ];
+
+    await dialTest.step('Open Dial', async () => {
+      await localStorageManager.setShowSideBarPanels();
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded();
+    });
+
+    await dialTest.step('Upload 2 files via API', async () => {
+      for (const file of filesToTest) {
+        if (file.folderName !== '' && file.isText) {
+          file.url = await fileApiHelper.putStringAsFile(
+            file.name,
+            GeneratorUtil.randomString(100),
+            file.folderName,
+          );
+        } else if (file.isText) {
+          file.url = await fileApiHelper.putStringAsFile(
+            file.name,
+            GeneratorUtil.randomString(100),
+          );
+        } else {
+          file.url = await fileApiHelper.putFile(file.name);
+        }
+      }
+    });
+
+    await dialTest.step(
+      'Open the "Manage Attachments" modal and confirm files are present.',
+      async () => {
+        await chatBar.openManageAttachmentsModal();
+        for (const file of filesToTest) {
+          if (file.folderName !== '') {
+            await attachedAllFiles.expandCollapseFolder(file.folderName);
+          }
+          await manageAttachmentsAssertion.assertEntityState(
+            { name: file.name },
+            FileModalSection.AllFiles,
+            'visible',
+          );
+        }
+        await attachFilesModal.closeButton.click();
+      },
+    );
+
+    for (const file of filesToTest) {
+      await dialTest.step(
+        `Delete ${file.isText ? 'text' : 'non-text'} file via API and verify it's not visible`,
+        async () => {
+          await fileApiHelper.deleteFromAllFiles(file.url);
+          await chatBar.openManageAttachmentsModal();
+          if (file.folderName !== '') {
+            await attachedAllFiles.expandCollapseFolder(file.folderName);
+          }
+          await manageAttachmentsAssertion.assertEntityState(
+            { name: file.name },
+            FileModalSection.AllFiles,
+            'hidden',
+          );
+          await attachFilesModal.closeButton.click();
+        },
+      );
+    }
   },
 );

@@ -36,6 +36,7 @@ dialTest(
     conversationDropdownMenu,
     importExportLoader,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1980');
     let cancelExportConversation: Conversation;
@@ -50,6 +51,7 @@ dialTest(
             defaultModel.id,
           );
         await dataInjector.createConversations([cancelExportConversation]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -93,12 +95,14 @@ dialTest(
     conversations,
     importExportLoader,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1982');
 
     await dialTest.step(
       'Import file, stop import in the middle and verify chat is not imported',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         const beforeImportConversations =
@@ -142,6 +146,7 @@ dialTest(
     talkToAgentDialog,
     marketplacePage,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-1975',
@@ -185,6 +190,7 @@ dialTest(
           requestImageConversation,
         );
         await dataInjector.createConversations([historyConversation]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -377,6 +383,7 @@ dialTest(
     chatMessagesAssertion,
     conversationAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3521');
     let responseImageConversation: Conversation;
@@ -421,6 +428,7 @@ dialTest(
           historyConversation,
           playbackConversation,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -535,6 +543,7 @@ dialTest(
     agentInfoAssertion,
     apiAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-914');
     let historyConversation: Conversation;
@@ -568,6 +577,7 @@ dialTest(
           historyConversation,
           replayConversation,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -617,14 +627,11 @@ dialTest(
           MockedChatApiResponseBodies.simpleTextBody,
         );
         const replayRequests = await chat.startReplayForDifferentModels();
-        await apiAssertion.verifyRequestAttachments(
+        apiAssertion.verifyRequestAttachments(
           replayRequests[0],
           requestImageUrl,
         );
-        await apiAssertion.verifyRequestAttachments(
-          replayRequests[1],
-          requestDocUrl,
-        );
+        apiAssertion.verifyRequestAttachments(replayRequests[1], requestDocUrl);
       },
     );
 
@@ -675,6 +682,7 @@ dialTest(
     conversationAssertion,
     sendMessageAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3942');
     let historyConversation: Conversation;
@@ -709,6 +717,7 @@ dialTest(
           historyConversation,
           replayConversation,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 

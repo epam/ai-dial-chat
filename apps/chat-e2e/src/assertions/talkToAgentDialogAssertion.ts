@@ -17,7 +17,7 @@ export class TalkToAgentDialogAssertion extends BaseAssertion {
   ) {
     expect
       .soft(
-        await this.talkToAgentDialog.getAgents().getSelectedAgent(),
+        await this.talkToAgentDialog.getSelectedAgent(),
         ExpectedMessages.talkToEntityIsSelected,
       )
       .toBe(
