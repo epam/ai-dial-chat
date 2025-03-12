@@ -18,7 +18,7 @@ import {
   DialSchemaProperties,
   FormSchemaButtonOption,
   FormSchemaProperty,
-  FormSchemaPropertyType,
+  FormSchemaPropertyWidget,
   MessageFormSchema,
   MessageFormValue,
   MessageFormValueType,
@@ -150,10 +150,13 @@ const PropertyRenderer = ({
   return (
     <div className={classNames('flex flex-col gap-3', className)}>
       {property.description && (
-        <p className="text-base text-primary">{property.description}</p>
+        <p className="whitespace-pre-line text-base text-primary">
+          {property.description}
+        </p>
       )}
 
-      {property.type === FormSchemaPropertyType.number && (
+      {property[DialSchemaProperties.DialWidget] ===
+        FormSchemaPropertyWidget.buttons && (
         <ButtonsProperty
           options={property.oneOf}
           onClick={handleClick}

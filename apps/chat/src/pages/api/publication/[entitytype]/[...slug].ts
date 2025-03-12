@@ -15,6 +15,7 @@ import { errorsMessages } from '@/src/constants/errors';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
+import { sanitizeUri } from 'micromark-util-sanitize-uri';
 import fetch from 'node-fetch';
 
 const getEntityUrlFromSlugs = (
@@ -47,9 +48,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   const url = getEntityUrlFromSlugs(process.env.DIAL_API_HOST, req);
 
-  const { recursive = false, limit = 1000 } = req.query as {
+  const { recursive = 'false', limit = '1000' } = req.query as {
     recursive?: string;
-    limit?: number;
+    limit?: string;
   };
 
   const session = await getServerSession(req, res, authOptions);
@@ -61,13 +62,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   const token = await getToken({ req });
 
+  const searchParams = new URLSearchParams();
+  searchParams.set('recursive', recursive);
+  searchParams.set('limit', limit);
+
   try {
-    const proxyRes = await fetch(
-      `${url}/?recursive=${recursive}&limit=${limit}`,
-      {
-        headers: getApiHeaders({ jwt: token?.access_token as string }),
-      },
-    );
+    const proxyRes = await fetch(`${sanitizeUri(url)}/?${searchParams}`, {
+      headers: getApiHeaders({ jwt: token?.access_token as string }),
+    });
 
     let json: unknown;
     if (!proxyRes.ok) {

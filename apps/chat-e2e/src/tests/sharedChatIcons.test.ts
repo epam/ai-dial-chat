@@ -310,6 +310,7 @@ dialTest(
     localStorageManager,
     chatHeader,
     talkToAgentDialog,
+    marketplacePage,
     temperatureSlider,
     agentSettings,
     addons,
@@ -417,7 +418,7 @@ dialTest(
       async () => {
         await conversations.selectConversation(thirdConversationToShare.name);
         await chatHeader.chatAgent.click();
-        await talkToAgentDialog.selectRecentAgent(randomModel);
+        await talkToAgentDialog.selectAgent(randomModel, marketplacePage);
         await conversationAssertion.assertEntityArrowIconState(
           { name: newName },
           'visible',

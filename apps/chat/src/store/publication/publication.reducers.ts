@@ -14,6 +14,7 @@ import {
 } from '@/src/types/publication';
 
 import * as PublicationSelectors from './publication.selectors';
+import { PublicationState } from './publication.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
@@ -21,24 +22,6 @@ import uniqBy from 'lodash-es/uniqBy';
 import xor from 'lodash-es/xor';
 
 export { PublicationSelectors };
-
-export interface PublicationState {
-  initialized: boolean;
-  publications: (PublicationInfo & Partial<Publication>)[];
-  selectedPublicationUrl: string | null;
-  resourcesToReview: ResourceToReview[];
-  rules: Record<string, PublicationRule[]>;
-  isRulesLoading: boolean;
-  allPublishedWithMeItemsUploaded: {
-    [FeatureType.Chat]: boolean;
-    [FeatureType.Prompt]: boolean;
-    [FeatureType.File]: boolean;
-    [FeatureType.Application]: boolean;
-  };
-  selectedItemsToPublish: string[];
-  isApplicationReview: boolean;
-  publicVersionGroups: PublicVersionGroups;
-}
 
 const initialState: PublicationState = {
   initialized: false,

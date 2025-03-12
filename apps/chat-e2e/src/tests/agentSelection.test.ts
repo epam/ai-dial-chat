@@ -36,6 +36,7 @@ dialTest(
     marketplaceAgentsSection,
     toast,
   }) => {
+    dialTest.slow();
     setTestIds('EPMRTC-4878', 'EPMRTC-4880', 'EPMRTC-4356', 'EPMRTC-5168');
     const models = GeneratorUtil.randomArrayElements(
       ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
@@ -118,6 +119,7 @@ dialTest(
       async () => {
         await chat.changeAgentButton.click();
         await talkToAgentDialog.goToMyWorkspace();
+        await marketplacePage.waitForPageLoaded();
       },
     );
 
@@ -125,6 +127,7 @@ dialTest(
       'Click "Use model" for the second model and verify recentModelsIds is updated',
       async () => {
         await marketplaceAgentsSection.findAndUseAgent(initialModel2);
+        await dialHomePage.waitForPageLoaded();
         await localStorageAssertion.assertRecentModels([
           initialModel2.id,
           initialModel1.id,
@@ -154,9 +157,11 @@ dialTest(
       'Click on "DIAL Marketplace", select a new model, and click "Use model"',
       async () => {
         await chatBar.dialMarketplaceLink.click();
+        await marketplacePage.waitForPageLoaded();
         await marketplaceAgentsSection.findAndUseAgent(addedModel, {
           isInstalledDeploymentsUpdated: true,
         });
+        await dialHomePage.waitForPageLoaded();
         await localStorageAssertion.assertRecentModels([
           addedModel.id,
           initialModel2.id,
@@ -169,6 +174,7 @@ dialTest(
       'Click "Change agent" and "Go to My workspace", remove the third model, and go back to chat',
       async () => {
         await chatBar.dialMarketplaceLink.click();
+        await marketplacePage.waitForPageLoaded();
         const addedModelElement =
           await marketplaceAgentsSection.findAgentElement(addedModel);
         await addedModelElement.click();
@@ -209,7 +215,7 @@ dialTest(
     await dialTest.step(
       'Click "Add the agent to My workspace to continue" and verify recentModelsIds is updated',
       async () => {
-        await chat.addModelButton.click();
+        await chat.addModelToWorkspace();
         await toast.closeToast();
         await localStorageAssertion.assertRecentModels([
           addedModel.id,

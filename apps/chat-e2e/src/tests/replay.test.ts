@@ -503,7 +503,7 @@ dialTest(
     const addons = ModelsUtil.getAddons();
 
     await dialTest.step(
-      'Prepare reply conversation with for different models with different settings',
+      'Prepare reply conversation for different models with different settings',
       async () => {
         simpleConversation = conversationData.prepareModelConversation(
           simpleTemp,

@@ -16,11 +16,11 @@ import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
+import { ApplicationActions } from '@/src/store/application/application.reducers';
 import {
   ApplicationTypesSchemasActions,
   ApplicationTypesSchemasSelectors,
 } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
-import { AuthSelectors } from '@/src/store/auth/auth.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MarketplaceActions,
@@ -105,9 +105,6 @@ export const SearchHeader = () => {
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
-  const canCreateCodeApps = useAppSelector(
-    AuthSelectors.selectCanCreateCodeApps,
-  );
 
   const isCustomApplicationsEnabled = enabledFeatures.has(
     Feature.CustomApplications,
@@ -133,6 +130,7 @@ export const SearchHeader = () => {
           display: isCustomApplicationsEnabled,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
+            dispatch(ApplicationActions.setShouldSaveApplication(false));
             router.push(getAppEditorRoute(ApplicationType.CUSTOM_APP));
           },
         },
@@ -140,9 +138,10 @@ export const SearchHeader = () => {
           name: t('Code app'),
           dataQa: 'add-startable-app',
           type: ApplicationType.CODE_APP,
-          display: isCodeAppsEnabled && canCreateCodeApps,
+          display: isCodeAppsEnabled,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
+            dispatch(ApplicationActions.setShouldSaveApplication(false));
             router.push(getAppEditorRoute(ApplicationType.CODE_APP));
           },
         },
@@ -153,6 +152,7 @@ export const SearchHeader = () => {
           display: true,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
+            dispatch(ApplicationActions.setShouldSaveApplication(false));
             if (detailedApplicationTypeSchema?.$id !== schema.id) {
               dispatch(
                 ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema(
@@ -168,7 +168,6 @@ export const SearchHeader = () => {
       t,
       isCustomApplicationsEnabled,
       isCodeAppsEnabled,
-      canCreateCodeApps,
       applicationTypeSchemas,
       router,
       detailedApplicationTypeSchema?.$id,

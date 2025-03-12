@@ -23,10 +23,10 @@ import {
 import { Conversation } from '@/src/types/chat';
 import { ApiKeys } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
+import { RootState } from '@/src/types/store';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 
-import { RootState } from '@/src/store';
 import { ConversationInfo, UploadStatus } from '@epam/ai-dial-shared';
 
 export class ConversationApiStorage extends ApiEntityStorage<

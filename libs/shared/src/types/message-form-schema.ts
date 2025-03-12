@@ -18,13 +18,21 @@ export interface FormSchemaButtonOption {
   };
 }
 
-export type MessageFormValueType = string[] | number | undefined;
+export type MessageFormValueType =
+  | string[]
+  | number
+  | string
+  | boolean
+  | undefined;
 
 export type MessageFormValue = Record<string, MessageFormValueType>;
 
 export enum FormSchemaPropertyType {
   array = 'array',
   number = 'number',
+  type = 'integer',
+  string = 'string',
+  boolean = 'boolean',
 }
 
 export interface FormSchemaProperty {

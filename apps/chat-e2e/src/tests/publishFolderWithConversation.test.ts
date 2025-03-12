@@ -51,7 +51,9 @@ dialAdminTest(
     adminTooltipAssertion,
     baseAssertion,
     setTestIds,
+    setIssueIds,
   }) => {
+    setIssueIds('3350');
     setTestIds(
       'EPMRTC-3372',
       'EPMRTC-3275',
