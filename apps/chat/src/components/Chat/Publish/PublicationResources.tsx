@@ -491,10 +491,14 @@ export const ApplicationPublicationResources = ({
     <div className={classNames(!isOpen && 'hidden')}>
       {filteredApps.map((application) => (
         <div
-          className="flex items-center justify-between gap-4"
+          className="flex w-full items-center justify-between gap-4"
           key={application.id}
         >
-          <ApplicationRow item={application} />
+          <ApplicationRow
+            itemComponentClassNames="min-w-0 flex-1 w-full"
+            featureContainerClassNames="!w-full"
+            item={application}
+          />
           <span
             className={classNames(
               'shrink-0 text-xs',
