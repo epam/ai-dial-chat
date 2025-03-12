@@ -113,7 +113,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'Use prompt with parameters for chat',
   async ({
     dialHomePage,
@@ -163,6 +163,52 @@ dialTest.only(
             `{{${promptParam}}}`,
             paramValue,
           )}`,
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Use prompt option is not available for Chat in Replay mode',
+  async ({
+    dialHomePage,
+    conversations,
+    chatAssertion,
+    prompts,
+    promptDropdownMenuAssertion,
+    setTestIds,
+    conversationData,
+    dataInjector,
+    promptData,
+    localStorageManager,
+  }) => {
+    setTestIds('EPMRTC-5494');
+    const conversation = conversationData.prepareDefaultConversation();
+    const replayConversation =
+      conversationData.prepareDefaultReplayConversation(conversation);
+    const prompt = promptData.prepareDefaultPrompt();
+    await dataInjector.createConversations([conversation, replayConversation]);
+    await dataInjector.createPrompts([prompt]);
+    await localStorageManager.setShowSideBarPanels();
+
+    await dialTest.step(
+      'Select replay chat and verify "Start replay" screen',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(replayConversation.name);
+        await chatAssertion.assertReplayButtonState('visible');
+      },
+    );
+
+    await dialTest.step(
+      'Hover over prompt and verify "Use" option is not available',
+      async () => {
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenuAssertion.assertMenuOptionState(
+          MenuOptions.use,
+          'disabled',
         );
       },
     );

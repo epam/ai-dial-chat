@@ -278,6 +278,7 @@ const dialTest = test.extend<{
   accountSettingsAssertion: AccountSettingsAssertion;
   accountDropdownMenuAssertion: MenuAssertion;
   conversationDropdownMenuAssertion: MenuAssertion;
+  promptDropdownMenuAssertion: MenuAssertion;
   folderDropdownMenuAssertion: MenuAssertion;
   settingsModalAssertion: SettingsModalAssertion;
   sendMessageAssertion: SendMessageAssertion;
@@ -975,6 +976,10 @@ const dialTest = test.extend<{
       conversationDropdownMenu,
     );
     await use(conversationDropdownMenuAssertion);
+  },
+  promptDropdownMenuAssertion: async ({ promptDropdownMenu }, use) => {
+    const promptDropdownMenuAssertion = new MenuAssertion(promptDropdownMenu);
+    await use(promptDropdownMenuAssertion);
   },
   folderDropdownMenuAssertion: async ({ folderDropdownMenu }, use) => {
     const folderDropdownMenuAssertion = new MenuAssertion(folderDropdownMenu);
