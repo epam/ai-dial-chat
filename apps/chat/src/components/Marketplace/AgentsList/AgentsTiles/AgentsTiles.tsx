@@ -16,23 +16,23 @@ import isString from 'lodash-es/isString';
 import range from 'lodash-es/range';
 
 const MIN_CARD_WIDTH = 356;
+const MIN_CARD_WIDTH_XL = 450;
+const DEFAULT_GAP = 20;
+const DEFAULT_WIDTH = 184;
+
 interface RowInfo {
   height: number;
   gap?: number;
+  minWidth?: number;
 }
-
-const DEFAULT_ROW: RowInfo = {
-  height: 184,
-  gap: 20,
-};
 
 const ROWS_INFO: Record<ScreenState, RowInfo> = {
   [ScreenState.SM]: { height: 110, gap: 12 },
   [ScreenState.MD]: { height: 178, gap: 16 },
-  [ScreenState.XL]: DEFAULT_ROW,
-  [ScreenState.XL3]: DEFAULT_ROW,
-  [ScreenState.XL4]: DEFAULT_ROW,
-  [ScreenState.XL5]: DEFAULT_ROW,
+  [ScreenState.XL]: { height: DEFAULT_WIDTH },
+  [ScreenState.XL3]: { height: DEFAULT_WIDTH },
+  [ScreenState.XL4]: { height: DEFAULT_WIDTH, minWidth: MIN_CARD_WIDTH_XL },
+  [ScreenState.XL5]: { height: DEFAULT_WIDTH, minWidth: MIN_CARD_WIDTH_XL },
 };
 
 export const AgentsTiles: React.FC<AgentsListProps> = ({
@@ -58,13 +58,17 @@ export const AgentsTiles: React.FC<AgentsListProps> = ({
 
   const screenState = useScreenState();
 
-  const { height: rowsHeight, gap = 20 } = ROWS_INFO[screenState];
+  const {
+    height: rowsHeight,
+    gap = DEFAULT_GAP,
+    minWidth = MIN_CARD_WIDTH,
+  } = ROWS_INFO[screenState];
   useEffect(() => {
     const handleResize = () => {
       if (dataRef.current) {
         let count = 1;
         while (
-          MIN_CARD_WIDTH * (count + 1) + gap * count <=
+          minWidth * (count + 1) + gap * count <=
           dataRef.current.offsetWidth
         ) {
           count++;
@@ -82,7 +86,7 @@ export const AgentsTiles: React.FC<AgentsListProps> = ({
     return () => {
       resizeObserver.disconnect();
     };
-  }, [gap]);
+  }, [gap, minWidth]);
 
   const allEntities: (DialAIEntityModel | string)[] = useMemo(() => {
     if (!suggestedResults.length) return entities;
