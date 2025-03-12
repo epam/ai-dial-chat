@@ -34,6 +34,7 @@ dialTest(
     conversationDropdownMenu,
     downloadAssertion,
     renameConversationModal,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-934',
@@ -61,6 +62,7 @@ dialTest(
         firstConversation,
         secondConversation,
       ]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step('Open start page', async () => {

@@ -33,6 +33,7 @@ dialTest(
     talkToAgentDialog,
     conversationSettingsModal,
     addons,
+    localStorageManager,
   }) => {
     const expectedAddons = ModelsUtil.getAddons();
     const request = 'test request';
@@ -40,6 +41,7 @@ dialTest(
     await dialTest.step(
       'Verify the list of recent entities and default settings for default model',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.click();

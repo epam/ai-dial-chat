@@ -31,7 +31,7 @@ for (const entity of arithmeticRequestModels) {
       );
       conversation.messages[0].content = request;
       const response = await chatApiHelper.postRequest(conversation);
-      await apiAssertion.assertResponseCode(response, entity.entityId, 200);
+      apiAssertion.assertResponseCode(response, entity.entityId, 200);
       await apiAssertion.assertResponseTextContent(
         response,
         entity.entityId,

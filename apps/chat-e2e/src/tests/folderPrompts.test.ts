@@ -13,8 +13,15 @@ import { expect } from '@playwright/test';
 
 dialTest(
   'Create new prompt folder',
-  async ({ dialHomePage, promptBar, folderPrompts, setTestIds }) => {
+  async ({
+    dialHomePage,
+    promptBar,
+    folderPrompts,
+    setTestIds,
+    localStorageManager,
+  }) => {
     setTestIds('EPMRTC-944');
+    await localStorageManager.setShowSideBarPanels();
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
     await promptBar.createNewFolder();
@@ -37,6 +44,7 @@ dialTest(
     folderPrompts,
     dataInjector,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-946');
     const promptInFolder = promptData.prepareDefaultPromptInFolder();
@@ -45,6 +53,7 @@ dialTest(
       promptInFolder.folders,
     );
     const folderName = promptInFolder.folders.name;
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -76,6 +85,7 @@ dialTest(
     folderDropdownMenuAssertion,
     promptBarFolderAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2730', 'EPMRTC-948', 'EPMRTC-1382');
     const newName = 'updated folder name';
@@ -84,6 +94,7 @@ dialTest(
     await dialTest.step(
       'Prepare nested folders hierarchy and expand it',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
 
@@ -151,9 +162,11 @@ dialTest(
     folderPrompts,
     folderDropdownMenu,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-949');
     const newName = 'updated folder name';
+    await localStorageManager.setShowSideBarPanels();
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
     await promptBar.createNewFolder();
@@ -183,6 +196,7 @@ dialTest(
     folderPrompts,
     folderDropdownMenu,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-950');
     const promptInFolder = promptData.prepareDefaultPromptInFolder();
@@ -190,6 +204,7 @@ dialTest(
       promptInFolder.prompts,
       promptInFolder.folders,
     );
+    await localStorageManager.setShowSideBarPanels();
 
     const newName = 'updated folder name';
     await dialHomePage.openHomePage();
@@ -216,10 +231,12 @@ dialTest(
     dataInjector,
     folderPrompts,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-962');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -251,10 +268,12 @@ dialTest(
     folderPrompts,
     promptBar,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-963');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -289,6 +308,7 @@ dialTest(
     prompts,
     confirmationDialog,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-966');
     const promptInFolder = promptData.prepareDefaultPromptInFolder();
@@ -296,6 +316,7 @@ dialTest(
       promptInFolder.prompts,
       promptInFolder.folders,
     );
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -327,8 +348,10 @@ dialTest(
     promptDropdownMenu,
     confirmationDialog,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-967', 'EPMRTC-1383');
+    await localStorageManager.setShowSideBarPanels();
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
     for (let i = 1; i <= 3; i++) {
@@ -396,6 +419,7 @@ dialTest(
     promptDropdownMenu,
     setTestIds,
     confirmationDialog,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-968');
     const promptInFolder = promptData.prepareDefaultPromptInFolder();
@@ -403,6 +427,7 @@ dialTest(
       promptInFolder.prompts,
       promptInFolder.folders,
     );
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -436,6 +461,7 @@ dialTest(
     confirmationDialog,
     promptData,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1384');
     const levelsCount = 4;
@@ -455,6 +481,7 @@ dialTest(
           promptData.resetData();
         }
         await dataInjector.createPrompts(nestedPrompts, ...nestedFolders);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -518,6 +545,7 @@ dialTest(
     folderPrompts,
     promptBarSearch,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1174');
     let firstFolderPrompt: FolderPrompt;
@@ -542,6 +570,7 @@ dialTest(
           firstFolderPrompt.folders,
           secondFolderPrompts.folders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 

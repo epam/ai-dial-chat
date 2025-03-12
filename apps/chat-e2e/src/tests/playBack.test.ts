@@ -68,6 +68,7 @@ dialTest(
 
         theme = GeneratorUtil.randomArrayElement(Object.keys(ThemeId));
         await localStorageManager.setSettings(theme);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -399,6 +400,7 @@ dialTest(
     chatHeader,
     agentInfo,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1420', 'EPMRTC-1421');
     let conversation: Conversation;
@@ -430,6 +432,7 @@ dialTest(
           conversation,
           playbackConversation,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -662,6 +665,7 @@ dialTest(
     playbackControl,
     setTestIds,
     conversations,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1425');
     let conversation: Conversation;
@@ -684,6 +688,7 @@ dialTest(
           conversation,
           playbackConversation,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -741,6 +746,7 @@ dialTest(
     playbackControl,
     baseAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1427', 'EPMRTC-1470', 'EPMRTC-1473', 'EPMRTC-1428');
     let conversation: Conversation;
@@ -760,6 +766,7 @@ dialTest(
           conversation,
           playbackConversation,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
