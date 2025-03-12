@@ -29,7 +29,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     const { invitationId } = req.body;
 
-    validateInvitationId(invitationId);
+    validateInvitationId(invitationId, req);
 
     const proxyRes = await fetch(
       `${process.env.DIAL_API_HOST}/v1/invitations/${invitationId}?accept=true`,
@@ -40,7 +40,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     );
 
     if (!proxyRes.ok) {
-      throw new DialAIError(proxyRes.statusText, '', '', proxyRes.status + '');
+      throw new DialAIError(proxyRes.statusText, proxyRes.status, req);
     }
 
     return res.status(200).send(JSON.stringify({}));
