@@ -167,10 +167,6 @@ export const ChatInputMessage = Inversify.register(
         : Infinity;
     const { getTokensLength } = useTokenizer(modelTokenizer);
 
-    const isIsolatedView = useAppSelector(
-      SettingsSelectors.selectIsIsolatedView,
-    );
-
     const {
       content,
       setContent,
