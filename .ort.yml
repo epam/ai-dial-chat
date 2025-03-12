@@ -44,3 +44,11 @@ resolutions:
         'NPM::process:0\\.10\\.1'\\."
       reason: 'CANT_FIX_EXCEPTION'
       comment: 'The dependency has MIT license in github repo'
+    - message: "No license information is available for dependency \
+        'NPM::only:0\\.0\\.2'\\."
+      reason: 'CANT_FIX_EXCEPTION'
+      comment: 'The dependency has MIT license in github repo'
+    - message: "The dependency 'NPM::node-forge:1\\.3\\.1' is licensed under \
+        the ScanCode 'copyleft' categorized license GPL-2\\.0-only\\."
+      reason: 'CANT_FIX_EXCEPTION'
+      comment: 'The dependency has GPL-2.0 license in github repo'
