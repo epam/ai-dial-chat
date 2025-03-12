@@ -54,3 +54,6 @@ export const selectUnshareModel = (state: RootState) =>
 
 export const selectUnshareFolderId = (state: RootState) =>
   rootSelector(state).unshareFolderId;
+
+export const selectIsFolderShared = (state: RootState) =>
+  rootSelector(state).isFolderShared;
