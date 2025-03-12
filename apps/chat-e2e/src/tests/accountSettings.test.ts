@@ -18,12 +18,14 @@ dialTest(
     setTestIds,
     chatBar,
     accountSettingsAssertion,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-812');
 
     await dialTest.step(
       'Open account menu and verify icon is changed to expanded',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await accountSettings.openAccountDropdownMenu();
@@ -57,12 +59,14 @@ dialTest(
     settingsModalAssertion,
     setTestIds,
     settingsModal,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-360');
 
     await dialTest.step(
       'Open account settings and verify "Theme" field has "Dark" value, "Save" button is available',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await accountSettings.openAccountDropdownMenu();
@@ -103,6 +107,7 @@ dialTest(
     conversationData,
     dataInjector,
     conversations,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1704', 'EPMRTC-1705', 'EPMRTC-1708');
     let sendMessageInputInitWidth: number;
@@ -119,6 +124,7 @@ dialTest(
           name,
         );
         await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 

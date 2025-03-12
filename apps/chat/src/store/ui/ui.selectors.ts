@@ -11,78 +11,55 @@ import { Feature } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState): UIState => state.ui;
 
-const selectThemeState = createSelector([rootSelector], (state) => {
-  return state.theme;
-});
-const selectAvailableThemes = createSelector([rootSelector], (state) => {
-  return state.availableThemes;
-});
+const selectThemeState = (state: RootState) => rootSelector(state).theme;
 
-const selectShowChatbar = createSelector([rootSelector], (state) => {
-  return state.showChatbar;
-});
+const selectAvailableThemes = (state: RootState) =>
+  rootSelector(state).availableThemes;
 
-const selectShowPromptbar = createSelector([rootSelector], (state) => {
-  return state.showPromptbar;
-});
+const selectShowChatbar = (state: RootState) => rootSelector(state).showChatbar;
 
-const selectShowMarketplaceFilterbar = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.showMarketplaceFilterbar;
-  },
-);
+const selectShowPromptbar = (state: RootState) =>
+  rootSelector(state).showPromptbar;
 
-const selectIsUserSettingsOpen = createSelector([rootSelector], (state) => {
-  return state.isUserSettingsOpen;
-});
+const selectShowMarketplaceFilterbar = (state: RootState) =>
+  rootSelector(state).showMarketplaceFilterbar;
 
-const selectIsProfileOpen = createSelector([rootSelector], (state) => {
-  return state.isProfileOpen;
-});
+const selectIsUserSettingsOpen = (state: RootState) =>
+  rootSelector(state).isUserSettingsOpen;
 
-const selectIsCompareMode = createSelector([rootSelector], (state) => {
-  return state.isCompareMode;
-});
+const selectIsProfileOpen = (state: RootState) =>
+  rootSelector(state).isProfileOpen;
 
-const selectAllOpenedFoldersIds = createSelector([rootSelector], (state) => {
-  return state.openedFoldersIds;
-});
+const selectIsCompareMode = (state: RootState) =>
+  rootSelector(state).isCompareMode;
 
-const selectOpenedFoldersIds = (featureType: FeatureType) =>
-  createSelector([selectAllOpenedFoldersIds], (openedFoldersIds) => {
-    return openedFoldersIds[featureType];
-  });
+const selectAllOpenedFoldersIds = (state: RootState) =>
+  rootSelector(state).openedFoldersIds;
+
+const selectOpenedFoldersIds =
+  (featureType: FeatureType) => (state: RootState) =>
+    selectAllOpenedFoldersIds(state)[featureType];
+
 const selectIsFolderOpened = (featureType: FeatureType, id: string) =>
   createSelector([selectOpenedFoldersIds(featureType)], (ids): boolean => {
     return ids.includes(id);
   });
-const selectTextOfClosedAnnouncement = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.textOfClosedAnnouncement;
-  },
-);
+const selectTextOfClosedAnnouncement = (state: RootState) =>
+  rootSelector(state).textOfClosedAnnouncement;
 
-const selectChatbarWidth = createSelector([rootSelector], (state) => {
-  return state.chatbarWidth;
-});
+const selectChatbarWidth = (state: RootState) =>
+  rootSelector(state).chatbarWidth;
 
-const selectPromptbarWidth = createSelector([rootSelector], (state) => {
-  return state.promptbarWidth;
-});
-const selectIsChatFullWidth = createSelector([rootSelector], (state) => {
-  return state.isChatFullWidth;
-});
+const selectPromptbarWidth = (state: RootState) =>
+  rootSelector(state).promptbarWidth;
 
-const selectCustomLogo = createSelector([rootSelector], (state) => {
-  return state.customLogo;
-});
+const selectIsChatFullWidth = (state: RootState) =>
+  rootSelector(state).isChatFullWidth;
 
-export const selectShowSelectToMigrateWindow = createSelector(
-  [rootSelector],
-  (state) => state.showSelectToMigrateWindow,
-);
+const selectCustomLogo = (state: RootState) => rootSelector(state).customLogo;
+
+export const selectShowSelectToMigrateWindow = (state: RootState) =>
+  rootSelector(state).showSelectToMigrateWindow;
 
 export const selectIsAnyMenuOpen = createSelector(
   [rootSelector, SettingsSelectors.selectEnabledFeatures],
@@ -92,20 +69,15 @@ export const selectIsAnyMenuOpen = createSelector(
     state.isProfileOpen,
 );
 
-export const selectCollapsedSections = (featureType: FeatureType) =>
-  createSelector([rootSelector], (state) => {
-    return state.collapsedSections[featureType];
-  });
+export const selectCollapsedSections = //TODO: review later how it is used
+  (featureType: FeatureType) => (state: RootState) =>
+    rootSelector(state).collapsedSections[featureType];
 
-export const selectPreviousRoute = createSelector(
-  [rootSelector],
-  (state) => state.previousRoute,
-);
+export const selectPreviousRoute = (state: RootState) =>
+  rootSelector(state).previousRoute;
 
-export const selectInitialized = createSelector(
-  [rootSelector],
-  (state) => state.initialized,
-);
+export const selectInitialized = (state: RootState) =>
+  rootSelector(state).initialized;
 
 export const UISelectors = {
   selectThemeState,

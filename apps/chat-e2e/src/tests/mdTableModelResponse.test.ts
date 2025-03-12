@@ -60,6 +60,7 @@ dialTest(
     await dialTest.step('Set random application theme', async () => {
       theme = GeneratorUtil.randomArrayElement(Object.keys(ThemeId));
       await localStorageManager.setSettings(theme);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -203,6 +204,7 @@ dialTest.fixme(
     conversations,
     conversationData,
     dataInjector,
+    localStorageManager,
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
     setTestIds('EPMRTC-3123');
@@ -213,6 +215,7 @@ dialTest.fixme(
         simpleRequestModel!,
       );
       await dataInjector.createConversations([tableConversation]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(

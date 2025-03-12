@@ -51,6 +51,7 @@ dialTest(
           2,
         );
         await localStorageManager.setRecentModelsIdsOnce(...models);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -248,6 +249,7 @@ dialTest(
         await localStorageManager.setChatCollapsedSection(
           CollapsedSections.Organization,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 

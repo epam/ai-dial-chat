@@ -2,7 +2,12 @@ import { FolderInterface } from '@/chat/types/folder';
 import { Prompt } from '@/chat/types/prompt';
 import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
-import { ExpectedConstants, FolderPrompt, MenuOptions } from '@/src/testData';
+import {
+  CollapsedSections,
+  ExpectedConstants,
+  FolderPrompt,
+  MenuOptions,
+} from '@/src/testData';
 import { GeneratorUtil, ItemUtil } from '@/src/utils';
 import { Entity } from '@epam/ai-dial-shared';
 
@@ -67,6 +72,7 @@ dialSharedWithMeTest(
         );
         await additionalShareUserDialHomePage.waitForPageLoaded({
           isPromptShared: true,
+          skipSidebars: true,
         });
         await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
@@ -90,6 +96,7 @@ dialSharedWithMeTest(
         );
         await additionalShareUserDialHomePage.waitForPageLoaded({
           isPromptShared: true,
+          skipSidebars: true,
         });
         await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
@@ -159,6 +166,7 @@ dialSharedWithMeTest(
         );
         await additionalShareUserDialHomePage.waitForPageLoaded({
           isPromptShared: true,
+          skipSidebars: true,
         });
         await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
@@ -229,6 +237,7 @@ dialSharedWithMeTest(
         );
         await additionalShareUserDialHomePage.waitForPageLoaded({
           isPromptShared: true,
+          skipSidebars: true,
         });
         await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
@@ -264,6 +273,7 @@ dialSharedWithMeTest(
     additionalShareUserSharedFolderPrompts,
     additionalShareUserPromptsDropdownMenuAssertion,
     additionalShareUserFolderDropdownMenuAssertion,
+    additionalShareUserLocalStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1859', 'EPMRTC-3110', 'EPMRTC-1865');
@@ -296,6 +306,9 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Accept share folder link and verify shared folder prompt preview modal is opened',
       async () => {
+        await additionalShareUserLocalStorageManager.setPromptCollapsedSection(
+          CollapsedSections.Organization,
+        );
         await additionalShareUserDialHomePage.navigateToUrl(
           ExpectedConstants.sharedConversationUrl(
             shareFolderByLinkResponse.invitationLink,
@@ -303,6 +316,7 @@ dialSharedWithMeTest(
         );
         await additionalShareUserDialHomePage.waitForPageLoaded({
           isPromptShared: true,
+          skipSidebars: true,
         });
         await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
@@ -392,6 +406,7 @@ dialSharedWithMeTest(
     additionalShareUserSendMessageAssertion,
     shareApiAssertion,
     setTestIds,
+    additionalShareUserLocalStorageManager,
   }) => {
     setTestIds('EPMRTC-2033', 'EPMRTC-1862', 'EPMRTC-3500', 'EPMRTC-1864');
     let folderPrompt: FolderPrompt;
@@ -433,6 +448,7 @@ dialSharedWithMeTest(
           sharedEntities,
           folder,
         );
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
       },
     );
 

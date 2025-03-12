@@ -34,6 +34,7 @@ dialSharedWithMeTest(
     additionalShareUserChat,
     baseAssertion,
     additionalShareUserConversationAssertion,
+    additionalShareUserLocalStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1845', 'EPMRTC-2768');
@@ -47,6 +48,7 @@ dialSharedWithMeTest(
         conversation,
       ]);
       await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+      await additionalShareUserLocalStorageManager.setShowSideBarPanels();
     });
 
     await dialSharedWithMeTest.step(
@@ -107,6 +109,7 @@ dialSharedWithMeTest(
     additionalShareUserChat,
     additionalShareUserSharedFolderConversations,
     setTestIds,
+    additionalShareUserLocalStorageManager,
   }) => {
     setTestIds('EPMRTC-1844');
     let folderConversation: FolderConversation;
@@ -128,6 +131,7 @@ dialSharedWithMeTest(
         );
         await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
         conversationName = folderConversation.conversations[0].name;
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -191,6 +195,7 @@ dialSharedWithMeTest(
     setTestIds,
     baseAssertion,
     additionalShareUserConversationAssertion,
+    additionalShareUserLocalStorageManager,
   }) => {
     setTestIds('EPMRTC-1835', 'EPMRTC-1843', 'EPMRTC-1838');
     let firstComparedConversation: Conversation;
@@ -230,6 +235,7 @@ dialSharedWithMeTest(
           [thirdComparedConversation],
           BucketUtil.getAdditionalShareUserBucket(),
         );
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
       },
     );
 

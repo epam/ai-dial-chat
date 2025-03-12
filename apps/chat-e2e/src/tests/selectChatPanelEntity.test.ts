@@ -89,6 +89,7 @@ dialTest(
         await localStorageManager.setChatCollapsedSection(
           CollapsedSections.Organization,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -391,6 +392,7 @@ dialTest(
     chatBarFolderAssertion,
     conversationAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3641', 'EPMRTC-3643');
     let nestedFolders: FolderInterface[];
@@ -425,6 +427,7 @@ dialTest(
           ...nestedFolders,
           rootFolder.folders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -560,6 +563,7 @@ dialTest(
     chatBarFolderAssertion,
     conversationAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3645', 'EPMRTC-3647', 'EPMRTC-3646');
     let nestedFolders: FolderInterface[];
@@ -594,6 +598,7 @@ dialTest(
           ...nestedFolders,
           rootFolder.folders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -752,6 +757,7 @@ dialTest(
     dataInjector,
     chatBarFolderAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3654');
     let nestedFolders: FolderInterface[];
@@ -790,6 +796,7 @@ dialTest(
           ...nestedFolders,
           secondLevelFolder.folders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -972,6 +979,7 @@ dialTest(
     dataInjector,
     chatBarFolderAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3663', 'EPMRTC-3649');
     let nestedFolders: FolderInterface[];
@@ -1010,6 +1018,7 @@ dialTest(
           ...nestedFolders,
           secondLevelFolder.folders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -1268,6 +1277,7 @@ dialTest(
         await localStorageManager.setChatCollapsedSection(
           CollapsedSections.Organization,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -1448,6 +1458,7 @@ dialTest(
     dataInjector,
     chatBarAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3650');
     let nestedFolders: FolderInterface[];
@@ -1468,6 +1479,7 @@ dialTest(
           [...nestedConversations, singleConversation],
           ...nestedFolders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -1572,6 +1584,7 @@ dialTest(
     chatBar,
     confirmationDialog,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3911');
     let nestedFolders: FolderInterface[];
@@ -1604,6 +1617,7 @@ dialTest(
           [...nestedConversations, lowLevelFolderConversation],
           ...nestedFolders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
