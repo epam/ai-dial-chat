@@ -431,6 +431,10 @@ dialTest(
           { name: thirdConversationToShare.name },
           expectedRandomModelIcon,
         );
+        await conversationAssertion.assertEntityArrowIconState(
+          { name: thirdConversationToShare.name },
+          'visible',
+        );
       },
     );
 

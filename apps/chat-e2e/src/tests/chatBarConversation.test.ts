@@ -40,11 +40,12 @@ dialTest(
   async ({
     dialHomePage,
     conversations,
-    chat,
+    sendMessage,
     chatMessages,
     setTestIds,
     header,
     baseAssertion,
+    conversationAssertion,
     chatBar,
   }) => {
     setTestIds('EPMRTC-583', 'EPMRTC-776', 'EPMRTC-2894', 'EPMRTC-2957');
@@ -63,26 +64,22 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        await chat.sendRequestWithButton(messageToSend);
-
-        await expect
-          .soft(
-            conversations.getEntityByName(expectedConversationName),
-            ExpectedMessages.conversationNameUpdated,
-          )
-          .toBeVisible();
+        await sendMessage.send(messageToSend);
+        await conversationAssertion.assertEntityState(
+          { name: expectedConversationName },
+          'visible',
+        );
       },
     );
 
     await dialTest.step(
       'Verify request is fully displayed in chat history',
       async () => {
-        await expect
-          .soft(
-            chatMessages.getChatMessage(1),
-            ExpectedMessages.messageContentIsValid,
-          )
-          .toHaveText(messageToSend);
+        await baseAssertion.assertElementText(
+          chatMessages.getChatMessage(1),
+          messageToSend,
+          ExpectedMessages.messageContentIsValid,
+        );
       },
     );
 
@@ -90,12 +87,11 @@ dialTest(
       'Verify conversation is placed in Today section',
       async () => {
         const todayConversations = await conversations.getTodayConversations();
-        expect
-          .soft(
-            todayConversations.includes(expectedConversationName),
-            ExpectedMessages.conversationOfToday,
-          )
-          .toBeTruthy();
+        baseAssertion.assertArrayIncludesAll(
+          todayConversations,
+          [expectedConversationName],
+          ExpectedMessages.conversationOfToday,
+        );
       },
     );
   },
