@@ -171,7 +171,8 @@ dialTest(
 
 dialTest.only(
   'Use prompt option is not available for Chat in Replay mode\n' +
-    'Use prompt is available for chat in Replay mode when response generation was stopped',
+    'Use prompt is available for chat in Replay mode when response generation was stopped\n' +
+    'Use prompt option is not available for Chat in Playback mode',
   async ({
     dialHomePage,
     conversations,
@@ -183,9 +184,10 @@ dialTest.only(
     dataInjector,
     promptData,
     sendMessageAssertion,
+    chat,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-5494', 'EPMRTC-5504');
+    setTestIds('EPMRTC-5494', 'EPMRTC-5504', 'EPMRTC-5495');
     const conversation = conversationData.prepareDefaultConversation();
     conversationData.resetData();
     const conversation2 = conversationData.prepareDefaultConversation();
@@ -196,11 +198,13 @@ dialTest.only(
     const partiallyReplayedConversation =
       conversationData.preparePartiallyReplayedConversation(conversation2);
     conversationData.resetData();
+    const playbackConversation =
+      conversationData.prepareDefaultPlaybackConversation(conversation);
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createConversations([
-      // conversation,
       replayConversation,
       partiallyReplayedConversation,
+      playbackConversation,
     ]);
     await dataInjector.createPrompts([prompt]);
     await localStorageManager.setShowSideBarPanels();
@@ -243,6 +247,31 @@ dialTest.only(
         await promptDropdownMenuAssertion.assertMenuOptionActionabilityState(
           MenuOptions.use,
           'enabled',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Select playback chat and verify "Use" option is disabled',
+      async () => {
+        await conversations.selectConversation(playbackConversation.name);
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenuAssertion.assertMenuOptionActionabilityState(
+          MenuOptions.use,
+          'disabled',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click "Continue" and verify "Use" option is still disabled',
+      async () => {
+        await chat.playNextChatMessage(false);
+        await chat.playNextChatMessage(false);
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenuAssertion.assertMenuOptionActionabilityState(
+          MenuOptions.use,
+          'disabled',
         );
       },
     );
