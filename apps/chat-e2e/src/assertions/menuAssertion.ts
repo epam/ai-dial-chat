@@ -7,7 +7,6 @@ import {
 } from '@/src/testData';
 import { Menu } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
-import { Base } from 'next/dist/client/components/react-dev-overlay/internal/styles/Base';
 
 export class MenuAssertion extends BaseAssertion {
   readonly menu: Menu;

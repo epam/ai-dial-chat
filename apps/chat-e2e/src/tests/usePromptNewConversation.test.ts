@@ -1,17 +1,14 @@
-import { Conversation } from '@/chat/types/chat';
 import { Publication } from '@/chat/types/publication';
-import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
+import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
   Attachment,
-  ExpectedMessages,
   MenuOptions,
   MockedChatApiResponseBodies,
   UploadMenuOptions,
 } from '@/src/testData';
-import { FileSelectors } from '@/src/ui/selectors';
-import { FileModalSection, InputAttachments } from '@/src/ui/webElements';
+import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -23,7 +20,6 @@ dialTest(
     "prompt body is applied on 'Use' click into the Input message, in the end of existing content",
   async ({
     dialHomePage,
-    header,
     prompts,
     promptDropdownMenu,
     sendMessageAssertion,
@@ -35,13 +31,10 @@ dialTest(
     localStorageManager,
     attachFilesModal,
     attachmentDropdownMenu,
-    uploadFromDeviceModal,
-    manageAttachmentsAssertion,
     fileApiHelper,
     sendMessageInputAttachmentsAssertions,
     chatBar,
     compare,
-    editMessageInputAttachments,
     sendMessageInputAttachments,
   }) => {
     setTestIds(
@@ -169,7 +162,6 @@ dialTest(
     conversations,
     conversationData,
     variableModalDialog,
-    chat,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-5493');
@@ -427,9 +419,10 @@ dialAdminTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'Use prompt is not available for chat with not available agent\n' +
-    'Use prompt is not available for chat with agent which not added to My workspace',
+    'Use prompt is not available for chat with agent which not added to My workspace\n' +
+    'Use prompt is not available for chat with not available addon',
   async ({
     dialHomePage,
     conversations,
@@ -446,31 +439,45 @@ dialTest.only(
     marketplaceAgents,
     agentDetailsModal,
     confirmationDialog,
-    chatBar,
-    chat,
     chatHeader,
   }) => {
-    setTestIds('EPMRTC-5506', 'EPMRTC-5507');
+    setTestIds('EPMRTC-5506', 'EPMRTC-5507', 'EPMRTC-5508');
     const prompt = promptData.prepareDefaultPrompt();
     const nonExistentAppName = GeneratorUtil.randomApplicationName();
+
+    // Models setup
     const models = GeneratorUtil.randomArrayElements(
       ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
-      1,
+      2,
     );
-    const [initialModel] = models;
+    const [initialModel, modelWithAddons] = models;
+    const nonExistentAddon = GeneratorUtil.randomString(10);
 
+    // Conversations setup
     const conversationWithNonExistentApp =
       conversationData.prepareDefaultConversation(nonExistentAppName);
     conversationData.resetData();
     const conversationWithAModelToDelete =
       conversationData.prepareDefaultConversation(initialModel);
+    conversationData.resetData();
+    const conversationWithNonExistentAddon =
+      conversationData.prepareModelConversation(
+        1,
+        'test',
+        [nonExistentAddon],
+        modelWithAddons,
+      );
 
     await dataInjector.createPrompts([prompt]);
     await dataInjector.createConversations([
       conversationWithNonExistentApp,
       conversationWithAModelToDelete,
+      conversationWithNonExistentAddon,
     ]);
-    await localStorageManager.setRecentModelsIdsOnce(initialModel);
+    await localStorageManager.setRecentModelsIdsOnce(
+      initialModel,
+      modelWithAddons,
+    );
     await localStorageManager.setShowSideBarPanels();
 
     await dialTest.step(
@@ -514,6 +521,69 @@ dialTest.only(
     await dialTest.step(
       'Hover over a prompt and check context menu options',
       async () => {
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenuAssertion.assertMenuOptionActionabilityState(
+          MenuOptions.use,
+          'disabled',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Select conversation with non-existent addon and verify "Use" prompt option is disabled',
+      async () => {
+        await conversations.selectConversation(
+          conversationWithNonExistentAddon.name,
+        );
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenuAssertion.assertMenuOptionActionabilityState(
+          MenuOptions.use,
+          'disabled',
+        );
+      },
+    );
+  },
+);
+
+dialSharedWithMeTest.only(
+  'Use prompt not available for chat from Shared with me',
+  async ({
+    dialHomePage,
+    sharedWithMeConversations,
+    prompts,
+    promptDropdownMenuAssertion,
+    setTestIds,
+    promptData,
+    additionalShareUserDataInjector,
+    mainUserShareApiHelper,
+    additionalUserShareApiHelper,
+    conversationData,
+    localStorageManager,
+    dataInjector,
+  }) => {
+    setTestIds('EPMRTC-5498');
+    const prompt = promptData.prepareDefaultPrompt();
+    const model = GeneratorUtil.randomArrayElement(
+      ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
+    );
+    const conversation = conversationData.prepareDefaultConversation(model);
+
+    await additionalShareUserDataInjector.createConversations([conversation]);
+    await dataInjector.createPrompts([prompt]);
+
+    const shareConversationLink =
+      await additionalUserShareApiHelper.shareEntityByLink([conversation]);
+    await mainUserShareApiHelper.acceptInvite(shareConversationLink);
+
+    await localStorageManager.setRecentModelsIdsOnce(model);
+    await localStorageManager.setShowSideBarPanels();
+
+    await dialSharedWithMeTest.step(
+      'Select chat from Shared with me section and verify "Use" prompt option is disabled',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await sharedWithMeConversations.selectConversation(conversation.name);
         await prompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenuAssertion.assertMenuOptionActionabilityState(
           MenuOptions.use,

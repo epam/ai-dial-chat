@@ -1,6 +1,5 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
-import { LocalStorageManager } from '@/src/core/localStorageManager';
-import { ElementState, ExpectedMessages } from '@/src/testData';
+import { ElementState } from '@/src/testData';
 import { InputAttachments } from '@/src/ui/webElements';
 
 export class InputAttachmentsAssertions extends BaseAssertion {
