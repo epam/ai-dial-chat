@@ -291,12 +291,13 @@ export class BaseAssertion {
   public async assertElementInnerText(
     element: BaseElement | Locator,
     expectedInnerText: string[],
+    expectedMessage?: string,
   ) {
     const elementLocator = this.getElementLocator(element);
     expect
       .soft(
         await elementLocator.allInnerTexts(),
-        ExpectedMessages.elementsOrderIsCorrect,
+        expectedMessage ?? ExpectedMessages.elementTextIsValid,
       )
       .toEqual(expectedInnerText);
   }

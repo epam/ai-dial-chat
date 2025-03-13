@@ -121,9 +121,8 @@ export const OpenAIStream = async ({
       } catch (e) {
         throw new DialAIError(
           `Chat Server error: ${res.statusText}`,
-          '',
-          '',
-          res.status + '',
+          res.status,
+          url,
         );
       }
 
@@ -135,10 +134,13 @@ export const OpenAIStream = async ({
 
       const dial_error = new DialAIError(
         result.error.message ?? '',
-        result.error.type ?? '',
-        result.error.param ?? '',
-        result.error.code ?? res.status.toString(10),
-        result.error.display_message,
+        result.error.code ?? res.status,
+        url,
+        {
+          type: result.error.type,
+          param: result.error.param,
+          displayMessage: result.error.display_message,
+        },
       );
 
       if (
@@ -183,13 +185,11 @@ export const OpenAIStream = async ({
             const data = event.data;
             const json = JSON.parse(data);
             if (json.error) {
-              throw new DialAIError(
-                json.error.message,
-                json.error.type,
-                json.error.param,
-                json.error.code,
-                json.error.display_message,
-              );
+              throw new DialAIError(json.error.message, json.error.code, url, {
+                type: json.error.type,
+                param: json.error.param,
+                displayMessage: json.error.display_message,
+              });
             }
             if (!idSend) {
               appendChunk(controller, { responseId: json.id });
@@ -200,9 +200,8 @@ export const OpenAIStream = async ({
               if (json.choices[0].finish_reason === 'content_filter') {
                 throw new DialAIError(
                   errorsMessages.contentFiltering,
-                  '',
-                  '',
                   'content_filter',
+                  url,
                 );
               }
 
