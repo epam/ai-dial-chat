@@ -68,11 +68,17 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     let promptToSend = prompt;
-    const filteredMessages = excludeSystemMessages(messages);
+    let filteredMessages = messages;
     if (!doesModelAllowSystemPrompt(model)) {
+      // model doesn't support system prompt
+      promptToSend = '';
+      filteredMessages = excludeSystemMessages(messages);
+    } else if (getSystemMessageContent(messages)) {
+      // system prompt is already added by overlay
       promptToSend = '';
     } else if (!promptToSend && model.type === EntityType.Model) {
-      promptToSend = getSystemMessageContent(messages) ?? DEFAULT_SYSTEM_PROMPT;
+      // if no any system prompt was added
+      promptToSend = DEFAULT_SYSTEM_PROMPT;
     }
 
     let temperatureToUse = temperature;
