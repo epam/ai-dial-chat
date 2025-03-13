@@ -16,7 +16,11 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { combineEpics } from 'redux-observable';
 
 import { DataService } from '@/src/utils/app/data/data-service';
-import { isSmallScreen, isTabletScreen } from '@/src/utils/app/mobile';
+import {
+  isSmallScreen,
+  isTabletScreen,
+  isTabletScreenOrMobile,
+} from '@/src/utils/app/mobile';
 
 import { FeatureType } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
@@ -29,6 +33,8 @@ import { Spinner } from '@/src/components/Common/Spinner';
 import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions, UISelectors } from './ui.reducers';
 
+import { Feature } from '@epam/ai-dial-shared';
+
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(
@@ -40,14 +46,19 @@ const initEpic: AppEpic = (action$, state$) =>
       const isThemesDefined = SettingsSelectors.selectThemeHostDefined(
         state$.value,
       );
+      const isAdvancedView = SettingsSelectors.isFeatureEnabled(
+        state$.value,
+        Feature.AdvancedView,
+      );
+      const showPanelsByDefault = isAdvancedView && !isTabletScreenOrMobile();
 
       return forkJoin({
         theme: DataService.getTheme(),
         availableThemes: isThemesDefined
           ? DataService.getAvailableThemes()
           : of([]),
-        showChatbar: DataService.getShowChatbar(),
-        showPromptbar: DataService.getShowPromptbar(),
+        showChatbar: DataService.getShowChatbar(showPanelsByDefault),
+        showPromptbar: DataService.getShowPromptbar(showPanelsByDefault),
         showMarketplaceFilterbar: DataService.getShowMarketplaceFilterbar(),
         textOfClosedAnnouncement: DataService.getClosedAnnouncement(),
         chatbarWidth: DataService.getChatbarWidth(),

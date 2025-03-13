@@ -40,6 +40,7 @@ dialTest(
         conversation = conversationData.prepareDefaultConversation();
         await dataInjector.createConversations([conversation]);
         await localStorageManager.setRecentModelsIds(randomModel);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 

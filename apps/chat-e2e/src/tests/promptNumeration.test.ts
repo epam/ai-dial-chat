@@ -22,6 +22,7 @@ dialTest(
     confirmationDialog,
     toast,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-1619',
@@ -37,6 +38,7 @@ dialTest(
     await dialTest.step(
       'Create several new prompts and verify their names are incremented',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         for (let i = 1; i <= 3; i++) {
@@ -243,6 +245,7 @@ dialTest(
           CollapsedSections.Organization,
           CollapsedSections.SharedWithMe,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 

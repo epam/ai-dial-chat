@@ -24,6 +24,7 @@ dialTest(
     promptAssertion,
     setTestIds,
     promptModalAssertion,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-2991',
@@ -42,6 +43,7 @@ dialTest(
       '😂👍🥳 😷 🤧 🤠 🥴😇 😈 ⭐あおㅁㄹñ¿äß😂👍🥳 😷 🤧 🤠 🥴😇 😈 ⭐あおㅁㄹñ¿äß😂👍🥳 😷 🤧 🤠 🥴😇 😈 ⭐あおㅁㄹñ¿äß';
     const nameWithSpaces = ' Prompt 1 ';
     const expectedNameWithSpaces = nameWithSpaces.trim();
+    await localStorageManager.setShowSideBarPanels();
 
     await dialTest.step('Add a dot at the end of a prompt name', async () => {
       await dialHomePage.openHomePage();

@@ -194,6 +194,7 @@ dialSharedWithMeTest(
       await additionalUserShareApiHelper.acceptInvite(
         shareFolderByLinkResponse,
       );
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step('Open start page', async () => {
@@ -296,6 +297,7 @@ dialSharedWithMeTest(
         await additionalShareUserLocalStorageManager.setRecentModelsIds(
           defaultModel,
         );
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
         const newRequest = GeneratorUtil.randomString(10);
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
@@ -625,6 +627,7 @@ dialSharedWithMeTest(
         await additionalShareUserLocalStorageManager.setRecentModelsIds(
           attachmentModel,
         );
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
         await localStorageManager.setRecentModelsIds(attachmentModel);
       },
     );

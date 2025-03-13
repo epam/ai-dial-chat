@@ -2,12 +2,12 @@ import { ChatBody } from '@/chat/types/chat';
 import { MoveModel } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { ExpectedConstants, ExpectedMessages } from '@/src/testData';
-import { Message } from '@epam/ai-dial-shared';
+import { ConversationEntityModel, Message } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 import { APIResponse } from 'playwright-core';
 
 export class ApiAssertion {
-  public async assertResponseCode(
+  public assertResponseCode(
     response: APIResponse,
     modelId: string,
     expectedStatus: number,
@@ -53,16 +53,16 @@ export class ApiAssertion {
       .toMatch(ExpectedConstants.responseFileUrlContentPattern(modelId));
   }
 
-  public async assertRequestModelId(
+  public assertRequestModelId(
     request: ChatBody,
-    expectedModel: DialAIEntityModel,
+    expectedModel: DialAIEntityModel | ConversationEntityModel,
   ) {
     expect
       .soft(request.model?.id, ExpectedMessages.chatRequestModelIsValid)
       .toBe(expectedModel.id);
   }
 
-  public async assertRequestTemperature(
+  public assertRequestTemperature(
     request: ChatBody,
     expectedTemperature: number,
   ) {
@@ -71,7 +71,7 @@ export class ApiAssertion {
       .toBe(expectedTemperature);
   }
 
-  public async assertRequestPrompt(
+  public assertRequestPrompt(
     request: ChatBody,
     expectedPrompt: string | undefined,
   ) {
@@ -86,16 +86,13 @@ export class ApiAssertion {
     }
   }
 
-  public async assertRequestAddons(
-    request: ChatBody,
-    expectedAddons: string[],
-  ) {
+  public assertRequestAddons(request: ChatBody, expectedAddons: string[]) {
     expect
       .soft(request.selectedAddons, ExpectedMessages.chatRequestAddonsAreValid)
       .toEqual(expectedAddons);
   }
 
-  public async verifyRequestAttachments(
+  public verifyRequestAttachments(
     request: ChatBody,
     ...expectedAttachmentUrls: string[]
   ) {
@@ -114,7 +111,7 @@ export class ApiAssertion {
     }
   }
 
-  public async assertRequestMessage(
+  public assertRequestMessage(
     requestMessage: Message,
     expectedMessage: string,
   ) {
@@ -123,7 +120,7 @@ export class ApiAssertion {
       .toBe(expectedMessage);
   }
 
-  public async assertMoveRequest(
+  public assertMoveRequest(
     request: MoveModel,
     expectedDestination: string,
     expectedSource: string,

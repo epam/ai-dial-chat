@@ -39,6 +39,7 @@ dialTest(
     await dialTest.step('Set random app theme', async () => {
       theme = GeneratorUtil.randomArrayElement(Object.keys(ThemeId));
       await localStorageManager.setSettings(theme);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -139,6 +140,7 @@ dialTest(
     attachFilesModal,
     uploadFromDeviceModal,
     page,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3203', 'EPMRTC-3195', 'EPMRTC-3236');
     let deleteUploadedFileIcon: BaseElement;
@@ -150,6 +152,7 @@ dialTest(
     await dialTest.step(
       'Upload from device 2 files and verify file with long name is cut with dots, file extension is separated from file name',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
@@ -314,6 +317,7 @@ dialTest(
         await localStorageManager.setRecentModelsIds(
           randomModelWithImageAttachment,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -387,6 +391,7 @@ dialTest(
     setTestIds,
     attachFilesModal,
     uploadFromDeviceModal,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3196', 'EPMRTC-3235');
     const attachments = [
@@ -397,6 +402,7 @@ dialTest(
     await dialTest.step(
       'Verify files with same names, zero size but different extensions can be uploaded',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
@@ -428,6 +434,7 @@ dialTest(
     attachFilesModal,
     uploadFromDeviceModal,
     page,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1674', 'EPMRTC-3023', 'EPMRTC-3215', 'EPMRTC-2922');
     const fileNameExtension = Attachment.sunImageName.split('.');
@@ -436,6 +443,7 @@ dialTest(
     await dialTest.step(
       'Upload files through "Upload from device" modal',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
@@ -515,6 +523,7 @@ dialTest(
     conversationData,
     conversations,
     dataInjector,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1614');
     const modelWithAttachmentExtensions = modelsWithAttachments.find(
@@ -532,6 +541,7 @@ dialTest(
         conversation =
           conversationData.prepareDefaultConversation(conversationModel);
         await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 

@@ -48,6 +48,7 @@ dialTest(
     setTestIds,
     conversationData,
     dataInjector,
+    localStorageManager,
     chatBar,
     folderDropdownMenu,
     conversationDropdownMenu,
@@ -69,6 +70,7 @@ dialTest(
           [...conversationInFolder.conversations, conversationOutsideFolder],
           conversationInFolder.folders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -164,6 +166,7 @@ dialTest(
     conversations,
     chatBar,
     confirmationDialog,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-907');
     let nestedFolders: FolderInterface[];
@@ -186,6 +189,7 @@ dialTest(
           [...nestedConversations, conversationOutsideFolder],
           ...nestedFolders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -253,6 +257,7 @@ dialTest(
     conversations,
     chatBar,
     chatHeader,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-913');
     let conversationsInFolder: FolderConversation;
@@ -276,6 +281,7 @@ dialTest(
           [...conversationsInFolder.conversations, conversationOutsideFolder],
           conversationsInFolder.folders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -396,6 +402,7 @@ dialTest(
     chatMessages,
     chat,
     chatBar,
+    localStorageManager,
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
     setTestIds('EPMRTC-923', 'EPMRTC-924', 'EPMRTC-925', 'EPMRTC-3075');
@@ -413,6 +420,7 @@ dialTest(
         threeConversationsData = ImportConversation.prepareConversationFile(
           importedRootConversation,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -504,6 +512,7 @@ dialTest(
     iconApiHelper,
     agentInfo,
     baseAssertion,
+    localStorageManager,
   }) => {
     dialTest.skip(
       [
@@ -523,6 +532,7 @@ dialTest(
     await dialTest.step(
       'Import conversation from 1.4 app version and verify folder with Gpt-3.5 chat and its history is visible',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await dialHomePage.importFile(
@@ -633,6 +643,7 @@ dialTest(
     confirmationDialog,
     conversationDropdownMenu,
     folderDropdownMenu,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1359', 'EPMRTC-1368', 'EPMRTC-1369');
     let nestedFolders: FolderInterface[];
@@ -649,6 +660,7 @@ dialTest(
           nestedConversations,
           ...nestedFolders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -795,6 +807,7 @@ dialTest(
           nestedConversations,
           ...nestedFolders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -932,6 +945,7 @@ dialTest(
           CollapsedSections.Organization,
           CollapsedSections.SharedWithMe,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 

@@ -23,6 +23,7 @@ dialTest(
     setTestIds,
     promptBarFolderAssertion,
     toastAssertion,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-2975',
@@ -45,6 +46,7 @@ dialTest(
     const newNameWithEmojis = '😂👍🥳 😷 🤧 🤠 🥴😇 😈 ⭐あおㅁㄹñ¿äß';
 
     await dialTest.step('Create prompt folder', async () => {
+      await localStorageManager.setShowSideBarPanels();
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
 

@@ -95,7 +95,7 @@ dialOverlayTest(
         );
         const request =
           await overlayChat.sendRequestWithButton(randomAgentRequest);
-        await overlayApiAssertion.assertRequestModelId(request, randomModel);
+        overlayApiAssertion.assertRequestModelId(request, randomModel);
       },
     );
 
@@ -169,7 +169,7 @@ dialOverlayTest(
       async () => {
         const request =
           await overlayChat.sendRequestWithButton('second request');
-        await overlayApiAssertion.assertRequestModelId(request, expectedModel);
+        overlayApiAssertion.assertRequestModelId(request, expectedModel);
       },
     );
 

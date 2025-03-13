@@ -63,6 +63,8 @@ dialAdminTest(
     adminTooltipAssertion,
     baseAssertion,
     setTestIds,
+    localStorageManager,
+    adminLocalStorageManager,
   }) => {
     dialAdminTest.slow();
     setTestIds(
@@ -93,6 +95,7 @@ dialAdminTest(
     await dialTest.step('Prepare a new conversation', async () => {
       conversation = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversation]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -159,6 +162,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Login as admin and verify conversation publishing request is displayed under "Approve required" section',
       async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversationsAssertion.assertFolderState(
@@ -423,6 +427,7 @@ dialAdminTest(
     adminChat,
     baseAssertion,
     setTestIds,
+    adminLocalStorageManager,
   }) => {
     setTestIds('EPMRTC-3575', 'EPMRTC-3584', 'EPMRTC-3589', 'EPMRTC-4057');
     const publicationNames = [
@@ -459,6 +464,7 @@ dialAdminTest(
             .build();
           await publicationApiHelper.createPublishRequest(publishRequest);
         }
+        await adminLocalStorageManager.setShowSideBarPanels();
 
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();

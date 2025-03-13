@@ -25,6 +25,7 @@ dialTest(
     attachFilesModal,
     selectFolderModal,
     selectFolders,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-3253',
@@ -39,6 +40,7 @@ dialTest(
     await dialTest.step(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
@@ -158,6 +160,7 @@ dialTest(
     selectFolders,
     sendMessage,
     page,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3248', 'EPMRTC-3249');
     const nameWithRestrictedChars = `Folder${ExpectedConstants.restrictedNameChars}name`;
@@ -165,6 +168,7 @@ dialTest(
     await dialTest.step(
       'Copy restricted symbols into buffer, open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await sendMessage.fillRequestData(nameWithRestrictedChars);
@@ -230,6 +234,7 @@ dialTest(
     selectFolderModal,
     selectFolders,
     folderDropdownMenu,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-3271',
@@ -243,6 +248,7 @@ dialTest(
     await dialTest.step(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
@@ -339,6 +345,7 @@ dialTest(
     attachFilesModal,
     selectFolderModal,
     selectFolders,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3244');
     const updateFoldeNameIndex = 999;
@@ -346,6 +353,7 @@ dialTest(
     await dialTest.step(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
@@ -408,12 +416,14 @@ dialTest(
     attachFilesModal,
     selectFolderModal,
     page,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3269');
 
     await dialTest.step(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
@@ -462,6 +472,7 @@ dialTest(
     selectFolderModal,
     selectFolders,
     folderDropdownMenu,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3256', 'EPMRTC-3258', 'EPMRTC-3257');
     const newChildFolderName = GeneratorUtil.randomString(10);
@@ -470,6 +481,7 @@ dialTest(
     await dialTest.step(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
@@ -567,12 +579,14 @@ dialTest(
     selectFolderModal,
     baseAssertion,
     selectFolders,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3017', 'EPMRTC-3246');
 
     await dialTest.step(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
@@ -643,12 +657,14 @@ dialTest(
     attachFilesModal,
     selectFolderModal,
     selectFolders,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3251');
 
     await dialTest.step(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
