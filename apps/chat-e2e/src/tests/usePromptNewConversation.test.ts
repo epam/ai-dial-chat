@@ -430,21 +430,22 @@ dialAdminTest(
 dialTest.only(
   'Use prompt is not available for chat with not available agent',
   async ({
-           dialHomePage,
-           conversations,
-           prompts,
-           promptDropdownMenuAssertion,
-           setTestIds,
-           promptData,
-           dataInjector,
-           conversationData,
-           chatAssertion,
-           localStorageManager,
-         }) => {
+    dialHomePage,
+    conversations,
+    prompts,
+    promptDropdownMenuAssertion,
+    setTestIds,
+    promptData,
+    dataInjector,
+    conversationData,
+    chatAssertion,
+    localStorageManager,
+  }) => {
     setTestIds('EPMRTC-5506');
     const prompt = promptData.prepareDefaultPrompt();
     const nonExistentAppName = GeneratorUtil.randomApplicationName();
-    const conversation = conversationData.prepareDefaultConversation(nonExistentAppName); // Use non-existent app name
+    const conversation =
+      conversationData.prepareDefaultConversation(nonExistentAppName); // Use non-existent app name
     await dataInjector.createPrompts([prompt]);
     await dataInjector.createConversations([conversation]);
     await localStorageManager.setShowSideBarPanels();
