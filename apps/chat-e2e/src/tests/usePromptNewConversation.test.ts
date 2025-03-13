@@ -141,9 +141,6 @@ dialTest.only(
       'Enter compare mode and use prompt from context menu',
       async () => {
         await sendMessage.clearMessageInput();
-        await sendMessage
-          .getChildElementBySelector(FileSelectors.remove)
-          .click();
         await chatBar.openCompareMode();
         await compare.waitForState({ state: 'visible' });
         await prompts.openEntityDropdownMenu(prompt.name);
