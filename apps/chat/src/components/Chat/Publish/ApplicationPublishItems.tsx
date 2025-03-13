@@ -52,7 +52,7 @@ export const ApplicationPublishItems = ({
           <ApplicationRow
             onSelect={handleSelectItems}
             itemComponentClassNames={classNames(
-              '!w-full cursor-pointer',
+              'w-full min-w-0 flex-1',
               publishAction === PublishActions.DELETE && 'text-error',
             )}
             featureContainerClassNames="!w-full"
