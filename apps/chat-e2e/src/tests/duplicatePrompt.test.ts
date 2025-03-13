@@ -21,6 +21,7 @@ dialTest(
     promptDropdownMenu,
     dataInjector,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2998', 'EPMRTC-3049');
     let prompt: Prompt;
@@ -28,6 +29,7 @@ dialTest(
     await dialTest.step('Prepare prompt', async () => {
       prompt = promptData.preparePrompt(promptContent, promptDescr);
       await dataInjector.createPrompts([prompt]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -73,6 +75,7 @@ dialTest(
     promptData,
     promptDropdownMenu,
     dataInjector,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2999');
     let folderPrompt: FolderPrompt;
@@ -86,6 +89,7 @@ dialTest(
         folderPrompt.prompts,
         folderPrompt.folders,
       );
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(

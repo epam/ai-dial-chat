@@ -14,6 +14,7 @@ dialTest(
     conversationDropdownMenu,
     confirmationDialog,
     conversationAssertion,
+    localStorageManager,
   }) => {
     let exportedData: UploadDownloadData;
     let conversationOutsideFolder: Conversation;
@@ -21,6 +22,7 @@ dialTest(
     await dialTest.step('Prepare conversation', async () => {
       conversationOutsideFolder = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversationOutsideFolder]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(

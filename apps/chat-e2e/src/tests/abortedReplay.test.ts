@@ -106,6 +106,7 @@ dialTest(
         await localStorageManager.setChatCollapsedSection(
           CollapsedSections.Organization,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -332,6 +333,7 @@ dialTest(
         await localStorageManager.setChatCollapsedSection(
           CollapsedSections.Organization,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -382,6 +384,7 @@ dialTest(
     chatMessages,
     conversations,
     baseAssertion,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1535');
     const message = GeneratorUtil.randomString(10);
@@ -400,6 +403,7 @@ dialTest(
         conversation,
         replayConversation,
       ]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -466,6 +470,7 @@ dialTest(
     context,
     sendMessage,
     conversations,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-514', 'EPMRTC-1165');
     let conversation: Conversation;
@@ -478,6 +483,7 @@ dialTest(
         conversation,
         replayConversation,
       ]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -534,6 +540,7 @@ dialTest(
     dataInjector,
     setTestIds,
     conversations,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1312');
     let errorConversation: Conversation;
@@ -550,6 +557,7 @@ dialTest(
           errorConversation,
           replayConversation,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 

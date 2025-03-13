@@ -52,6 +52,8 @@ dialAdminTest(
     baseAssertion,
     setTestIds,
     setIssueIds,
+    localStorageManager,
+    adminLocalStorageManager,
   }) => {
     setIssueIds('3350');
     setTestIds(
@@ -113,6 +115,7 @@ dialAdminTest(
           [...allConversations, conversationToReplay],
           ...nestedFolders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -153,6 +156,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Login as admin and verify publishing request is displayed under "Approve required" section',
       async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversationsAssertion.assertFolderState(
@@ -420,6 +424,8 @@ dialAdminTest(
     adminOrganizationFolderConversations,
     adminOrganizationFolderConversationAssertions,
     setTestIds,
+    localStorageManager,
+    adminLocalStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-3613',
@@ -465,6 +471,7 @@ dialAdminTest(
           await publicationApiHelper.createPublishRequest(publishRequest);
         publicationsToUnpublish.push(publication);
         await adminPublicationApiHelper.approveRequest(publication);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -619,6 +626,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Login as admin and verify publishing request is displayed under "Approve required" section',
       async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversationsAssertion.assertFolderState(

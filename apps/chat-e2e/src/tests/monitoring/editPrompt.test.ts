@@ -17,12 +17,14 @@ dialTest(
     promptDropdownMenu,
     promptModalDialog,
     promptAssertion,
+    localStorageManager,
   }) => {
     let prompt: Prompt;
 
     await dialTest.step('Prepare a prompt with all fields', async () => {
       prompt = promptData.prepareDefaultPrompt();
       await dataInjector.createPrompts([prompt]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(

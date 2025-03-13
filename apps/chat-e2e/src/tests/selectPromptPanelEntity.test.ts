@@ -44,6 +44,7 @@ dialTest(
     await localStorageManager.setPromptCollapsedSection(
       CollapsedSections.Organization,
     );
+    await localStorageManager.setShowSideBarPanels();
 
     await dialTest.step(
       'Prepare nested folders with prompts inside each one, one more root folder with 2 prompts inside and one single prompt',
@@ -376,6 +377,7 @@ dialTest(
     promptBarFolderAssertion,
     promptAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3670', 'EPMRTC-3671');
     let nestedFolders: FolderInterface[];
@@ -401,6 +403,7 @@ dialTest(
           ...nestedFolders,
           rootFolder.folders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -522,6 +525,7 @@ dialTest(
     promptBarFolderAssertion,
     promptAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3675', 'EPMRTC-3676', 'EPMRTC-3672');
     let nestedFolders: FolderInterface[];
@@ -549,6 +553,7 @@ dialTest(
           ...nestedFolders,
           rootFolder.folders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -687,6 +692,7 @@ dialTest(
     promptBarFolderAssertion,
     page,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3677');
     let nestedFolders: FolderInterface[];
@@ -714,6 +720,7 @@ dialTest(
           ...nestedFolders,
           secondLevelFolder.folders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -885,6 +892,7 @@ dialTest(
     dataInjector,
     promptBarFolderAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3678', 'EPMRTC-3681');
     let nestedFolders: FolderInterface[];
@@ -920,6 +928,7 @@ dialTest(
           ...nestedFolders,
           secondLevelFolder.folders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -1143,6 +1152,7 @@ dialTest(
     promptBarFolderAssertion,
     page,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3679', 'EPMRTC-3680', 'EPMRTC-3682');
     let nestedFolders: FolderInterface[];
@@ -1165,6 +1175,7 @@ dialTest(
           [...nestedPrompts, lowLevelFolderPrompt],
           ...nestedFolders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -1344,6 +1355,7 @@ dialTest(
     dataInjector,
     promptModalDialog,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3684');
     let nestedFolders: FolderInterface[];
@@ -1364,6 +1376,7 @@ dialTest(
           [...nestedPrompts, singlePrompt],
           ...nestedFolders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -1462,6 +1475,7 @@ dialTest(
     promptBar,
     confirmationDialog,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3912');
     let nestedFolders: FolderInterface[];
@@ -1490,6 +1504,7 @@ dialTest(
           [...nestedPrompts, lowLevelFolderPrompt],
           ...nestedFolders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 

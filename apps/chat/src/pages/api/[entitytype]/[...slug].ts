@@ -16,6 +16,7 @@ import { errorsMessages } from '@/src/constants/errors';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
+import { sanitizeUri } from 'micromark-util-sanitize-uri';
 import fetch from 'node-fetch';
 import { Readable } from 'stream';
 
@@ -29,14 +30,16 @@ const getEntityUrlFromSlugs = (
     : [req.query.slug];
 
   if (!slugs || slugs.length === 0) {
-    throw new DialAIError(`No ${entityType} path provided`, '', '', '400');
+    throw new DialAIError(`No ${entityType} path provided`, 400, req);
   }
 
-  return constructPath(
-    dialApiHost,
-    'v1',
-    entityType,
-    ServerUtils.encodeSlugs(slugs),
+  return sanitizeUri(
+    constructPath(
+      dialApiHost,
+      'v1',
+      entityType,
+      ServerUtils.encodeSlugs(slugs),
+    ),
   );
 };
 
@@ -120,9 +123,8 @@ async function handlePutRequest(
   if (!proxyRes.ok) {
     throw new DialAIError(
       (typeof json === 'string' && json) || proxyRes.statusText,
-      '',
-      '',
-      proxyRes.status + '',
+      proxyRes.status,
+      req,
     );
   }
 
@@ -142,9 +144,8 @@ async function handleGetRequest(
   if (!proxyRes.ok) {
     throw new DialAIError(
       `Requesting entity failed - '${url}'` + proxyRes.statusText,
-      '',
-      '',
-      proxyRes.status + '',
+      proxyRes.status,
+      req,
     );
   }
 
@@ -180,9 +181,8 @@ async function handleDeleteRequest(
     }
     throw new DialAIError(
       (typeof json === 'string' && json) || proxyRes.statusText,
-      '',
-      '',
-      proxyRes.status + '',
+      proxyRes.status,
+      req,
     );
   }
 

@@ -33,6 +33,7 @@ dialTest(
     chatHeaderAssertion,
     conversationInfoTooltipAssertion,
     conversations,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1115', 'EPMRTC-473');
     let conversation: Conversation;
@@ -50,6 +51,7 @@ dialTest(
           defaultModel,
         );
         await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -175,6 +177,7 @@ dialTest(
     agentInfoAssertion,
     agentInfo,
     conversations,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-490', 'EPMRTC-491');
     let conversation: Conversation;
@@ -185,6 +188,7 @@ dialTest(
         'third request',
       ]);
       await dataInjector.createConversations([conversation]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(

@@ -44,6 +44,7 @@ dialTest(
     apiAssertion,
     sendMessageAssertion,
     chat,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-883', 'EPMRTC-895', 'EPMRTC-3835', 'EPMRTC-3822');
     let promptsInsideFolder: FolderPrompt;
@@ -75,6 +76,7 @@ dialTest(
           promptsInsideFolder.folders,
           ...nestedFolders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -163,10 +165,7 @@ dialTest(
             promptContent,
             false,
           );
-          await apiAssertion.assertRequestMessage(
-            request.messages[0],
-            promptContent,
-          );
+          apiAssertion.assertRequestMessage(request.messages[0], promptContent);
         }
       },
     );
@@ -188,6 +187,7 @@ dialTest(
     promptDropdownMenu,
     promptModalDialog,
     confirmationDialog,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-884', 'EPMRTC-885', 'EPMRTC-896');
     let promptInsideFolder: FolderPrompt;
@@ -205,6 +205,7 @@ dialTest(
           promptOutsideFolder,
           ...promptInsideFolder.prompts,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -312,6 +313,7 @@ dialTest(
     promptData,
     promptDropdownMenu,
     confirmationDialog,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-886');
     let promptInsideFolder: FolderPrompt;
@@ -331,6 +333,7 @@ dialTest(
           [...promptInsideFolder.prompts, promptOutsideFolder],
           promptInsideFolder.folders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -384,6 +387,7 @@ dialTest(
     folderPrompts,
     promptBar,
     promptData,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-889');
     let promptsInsideFolder: FolderPrompt;
@@ -405,6 +409,7 @@ dialTest(
           [...promptsInsideFolder.prompts, promptOutsideFolder],
           promptsInsideFolder.folders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -508,12 +513,14 @@ dialTest(
     promptModalDialog,
     variableModalAssertion,
     sendMessageAssertion,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1135');
     const aVariable = 'A';
     await dialTest.step(
       'Import prompt from 1.4 app version and verify folder with prompt is visible',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await dialHomePage.importFile(
@@ -583,6 +590,7 @@ dialTest(
     promptData,
     promptDropdownMenu,
     folderDropdownMenu,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1375', 'EPMRTC-1376', 'EPMRTC-1377');
     let nestedFolders: FolderInterface[];
@@ -597,6 +605,7 @@ dialTest(
           promptData.preparePromptsForNestedFolders(nestedFolders);
 
         await dataInjector.createPrompts([...nestedPrompts], ...nestedFolders);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -716,6 +725,7 @@ dialTest(
     promptBar,
     promptData,
     promptDropdownMenu,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1378');
     let nestedFolders: FolderInterface[];
@@ -730,6 +740,7 @@ dialTest(
           promptData.preparePromptsForNestedFolders(nestedFolders);
 
         await dataInjector.createPrompts(nestedPrompts, ...nestedFolders);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -853,6 +864,7 @@ dialTest(
           CollapsedSections.Organization,
           CollapsedSections.SharedWithMe,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
