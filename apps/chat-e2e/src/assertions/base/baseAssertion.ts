@@ -164,12 +164,12 @@ export class BaseAssertion {
       .toHaveClass(expectedValue);
   }
 
-  public async assertElementColor(element: BaseElement, expectedColor: string) {
-    const style = await element.getComputedStyleProperty(Styles.color);
-    expect
-      .soft(style[0], ExpectedMessages.elementColorIsValid)
-      .toBe(expectedColor);
-  }
+  // public async assertElementColor(element: BaseElement, expectedColor: string) {
+  //   const style = await element.getComputedStyleProperty(Styles.color);
+  //   expect
+  //     .soft(style[0], ExpectedMessages.elementColorIsValid)
+  //     .toBe(expectedColor);
+  // }
 
   public async assertElementBorderColors(
     element: BaseElement | Locator,
@@ -198,6 +198,17 @@ export class BaseAssertion {
       elementLocator,
       ExpectedMessages.entityBackgroundColorIsValid,
     ).toHaveCSS(Styles.backgroundColor, expectedColor);
+  }
+
+  public async assertElementColor(
+    element: BaseElement | Locator,
+    expectedColor: string,
+  ) {
+    const elementLocator = this.getElementLocator(element);
+    await expect(
+      elementLocator,
+      ExpectedMessages.entityBackgroundColorIsValid,
+    ).toHaveCSS(Styles.color, expectedColor);
   }
 
   public async assertElementCursor(

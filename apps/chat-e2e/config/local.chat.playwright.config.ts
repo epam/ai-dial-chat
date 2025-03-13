@@ -17,7 +17,7 @@ dotenv.config({ path: './.env.local' });
  */
 config.retries = 0;
 config.timeout = 300000;
-config.use!.headless = true;
+config.use!.headless = false;
 config.use!.video = 'on';
 config.use!.trace = 'on';
 (config.reporter as ReporterDescription[]).push([

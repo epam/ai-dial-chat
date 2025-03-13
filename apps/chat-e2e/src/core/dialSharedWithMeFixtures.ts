@@ -1,5 +1,6 @@
 import { DialHomePage, MarketplacePage } from '../ui/pages';
 import {
+  AgentDetailsModal,
   AgentSettings,
   AttachFilesModal,
   Chat,
@@ -144,6 +145,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserMarketplace: Marketplace;
   additionalShareUserMarketplaceAgentsSection: MarketplaceAgentsSection;
   additionalShareUserMarketplaceAgents: MarketplaceAgents;
+  additionalShareUserAgentDetailsModal: AgentDetailsModal;
 }>({
   beforeAdditionalShareUserTestCleanup: [
     async (
@@ -753,6 +755,14 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserMarketplaceAgents =
       additionalShareUserMarketplaceAgentsSection.getAgents();
     await use(additionalShareUserMarketplaceAgents);
+  },
+  additionalShareUserAgentDetailsModal: async (
+    { additionalShareUserMarketplaceAgents },
+    use,
+  ) => {
+    const additionalShareUserAgentDetailsModal =
+      additionalShareUserMarketplaceAgents.getAgentDetailsModal();
+    await use(additionalShareUserAgentDetailsModal);
   },
 });
 

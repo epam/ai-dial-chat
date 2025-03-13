@@ -295,6 +295,10 @@ export class BasePage {
     );
   }
 
+  public async readFromClipboard() {
+    return this.page.evaluate(() => navigator.clipboard.readText());
+  }
+
   public async mockChatImageResponse(
     modelId: string,
     imageName: string,
