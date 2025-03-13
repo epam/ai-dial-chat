@@ -106,6 +106,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       limits,
       features,
       tokenizer,
+      request: req,
     });
 
     const configurationValue = getConfigurationValue(

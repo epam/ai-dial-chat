@@ -1,4 +1,4 @@
-import { NextApiResponse } from 'next';
+import { NextApiRequest, NextApiResponse } from 'next';
 
 import { DialAIError } from '@/src/types/error';
 import { DialAIEntityModel } from '@/src/types/models';
@@ -24,12 +24,14 @@ export function limitMessagesByTokens({
   limits,
   features,
   tokenizer,
+  request,
 }: {
   promptToSend: string | undefined;
   messages: Message[];
   limits: DialAIEntityModel['limits'];
   features: DialAIEntityModel['features'];
   tokenizer: DialAIEntityModel['tokenizer'];
+  request: NextApiRequest;
 }): Message[] {
   if (!limits || !limits.maxRequestTokens || features?.truncatePrompt) {
     return messages;
@@ -75,9 +77,8 @@ export function limitMessagesByTokens({
   if (messagesToSend.length === 0) {
     throw new DialAIError(
       'User sended messages cannot be empty after limit messages by tokens process',
-      '',
-      '',
-      '400',
+      400,
+      request,
     );
   }
 
