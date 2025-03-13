@@ -27,7 +27,6 @@ dialTest(
     adminApplicationApiHelper,
     publishRequestBuilder,
     adminPublicationApiHelper,
-    fileApiHelper,
     modelApiHelper,
     localStorageManager,
     marketplacePage,
@@ -103,7 +102,6 @@ dialTest(
             a.name === secondAppName ||
             a.name === fourthAppName,
         );
-        await fileApiHelper.updateInstalledDeployments(addedApps);
         await localStorageManager.setRecentModelsIdsOnce(...addedApps);
       },
     );
