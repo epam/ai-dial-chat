@@ -27,6 +27,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
+import { CONFIRM_ICON_FILE_VALUES } from '@/src/constants/applications';
 import { IMAGE_TYPES } from '@/src/constants/chat';
 import { DEFAULT_VERSION } from '@/src/constants/public';
 import { Routes } from '@/src/constants/routes';
@@ -39,6 +40,7 @@ import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
+import { withWarningMessage } from '../../Common/Forms/FieldWarningMessage';
 import {
   ApplicationGeneralInfoFormData,
   getApplicationData,
@@ -53,7 +55,9 @@ interface Props {
 }
 
 const ControlledField = withController(Field);
-const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
+const LogoSelector = withErrorMessage(
+  withWarningMessage(withLabel(CustomLogoSelect)),
+);
 const TopicsSelector = withLabel(DropdownSelector);
 
 export const GeneralInfoEditor: React.FC<Props> = ({
@@ -225,6 +229,12 @@ export const GeneralInfoEditor: React.FC<Props> = ({
                 error={errors.iconUrl?.message}
                 disabled={isSharedWithMe}
                 tooltip={isSharedWithMe ? getSharedTooltip('icon') : ''}
+                warning={
+                  oldApplication?.isShared
+                    ? CONFIRM_ICON_FILE_VALUES.description
+                    : ''
+                }
+                confirmDialogValues={CONFIRM_ICON_FILE_VALUES}
               />
             )}
           />
