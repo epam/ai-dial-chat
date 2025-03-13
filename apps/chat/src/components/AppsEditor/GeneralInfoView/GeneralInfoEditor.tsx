@@ -174,7 +174,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
   ]);
 
   return (
-    <div className="size-full max-w-[1000px] overflow-hidden bg-layer-2">
+    <div className="size-full overflow-hidden bg-layer-2">
       <form
         onSubmit={submitWrapper(handleSubmit)}
         className="flex size-full flex-col"

@@ -59,7 +59,7 @@ export const GeneralInfoView: React.FC<Props> = ({
 
   return (
     <div className="flex size-full">
-      <div className="w-1/2">
+      <div className="size-full max-w-[1000px]">
         <FormProvider {...methods}>
           <GeneralInfoEditor
             oldApplication={applicationData ? applicationData : undefined}
@@ -69,7 +69,7 @@ export const GeneralInfoView: React.FC<Props> = ({
           />
         </FormProvider>
       </div>
-      <div className="w-1/2">
+      <div className="size-full grow">
         <GeneralInfoPreview data={getApplicationEntityFields(formData)} />
       </div>
     </div>
