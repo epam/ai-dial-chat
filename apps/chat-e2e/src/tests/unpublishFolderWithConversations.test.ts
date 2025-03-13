@@ -11,17 +11,26 @@ import {
   PublishPath,
 } from '@/src/testData';
 import { PublicationProps } from '@/src/testData/api';
-import { Colors } from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { SortingUtil } from '@/src/utils/sortingUtil';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
 
 let expectedConversationIcon: string;
 let folderConversationToUnpublish: Conversation;
+let expectedErrorColor: string;
+let expectedBgDisabledColor: string;
 
 dialTest.beforeAll(async ({ iconApiHelper }) => {
   const defaultModel = ModelsUtil.getDefaultModel()!;
   expectedConversationIcon = iconApiHelper.getEntityIcon(defaultModel);
+  expectedErrorColor = ThemesUtil.getRgbColorByKey(
+    ThemeColorAttributes.textError,
+  );
+  expectedBgDisabledColor = ThemesUtil.getRgbColorByKey(
+    ThemeColorAttributes.controlsBgDisable,
+  );
 });
 
 dialAdminTest(
@@ -132,7 +141,7 @@ dialAdminTest(
         );
         await conversationToPublishAssertion.assertEntityColor(
           { name: firstConversation.name },
-          Colors.textError,
+          expectedErrorColor,
         );
         await conversationToPublishAssertion.assertEntityCheckboxState(
           { name: firstConversation.name },
@@ -145,7 +154,7 @@ dialAdminTest(
         );
         await conversationToPublishAssertion.assertEntityVersionColor(
           { name: firstConversation.name },
-          Colors.textError,
+          expectedErrorColor,
         );
         await conversationToPublishAssertion.assertTreeEntityIcon(
           { name: firstConversation.name },
@@ -245,7 +254,7 @@ dialAdminTest(
         await adminApproveRequiredConversationsAssertion.assertFolderEntityColor(
           { name: firstConversationUnpublishingRequestName },
           { name: firstConversation.name },
-          Colors.textError,
+          expectedErrorColor,
         );
         await adminApproveRequiredConversationsAssertion.assertFolderEntityState(
           { name: firstConversationUnpublishingRequestName },
@@ -280,7 +289,7 @@ dialAdminTest(
         await adminFolderToApproveAssertion.assertFolderEntityColor(
           { name: publishedFolderName },
           { name: firstConversation.name },
-          Colors.textError,
+          expectedErrorColor,
         );
         await adminFolderToApproveAssertion.assertFolderEntityVersion(
           { name: publishedFolderName },
@@ -290,7 +299,7 @@ dialAdminTest(
         await adminFolderToApproveAssertion.assertFolderEntityVersionColor(
           { name: publishedFolderName },
           { name: firstConversation.name },
-          Colors.textError,
+          expectedErrorColor,
         );
         await adminFolderToApproveAssertion.assertFolderEntityIcon(
           { name: publishedFolderName },
@@ -377,7 +386,7 @@ dialAdminTest(
         await adminFolderToApproveAssertion.assertFolderEntityColor(
           { name: publishedFolderName },
           { name: firstConversation.name },
-          Colors.controlsBackgroundDisable,
+          expectedBgDisabledColor,
         );
 
         await adminFolderToApproveAssertion.assertFolderEntityState(
@@ -388,7 +397,7 @@ dialAdminTest(
         await adminFolderToApproveAssertion.assertFolderEntityColor(
           { name: publishedFolderName },
           { name: firstConversation.name },
-          Colors.controlsBackgroundDisable,
+          expectedBgDisabledColor,
         );
       },
     );
@@ -520,7 +529,7 @@ dialAdminTest(
           );
           await conversationToPublishAssertion.assertEntityColor(
             { name: conversation },
-            Colors.textError,
+            expectedErrorColor,
           );
           await conversationToPublishAssertion.assertEntityCheckboxState(
             { name: conversation },
@@ -532,7 +541,7 @@ dialAdminTest(
           );
           await conversationToPublishAssertion.assertEntityVersionColor(
             { name: conversation },
-            Colors.textError,
+            expectedErrorColor,
           );
           await conversationToPublishAssertion.assertTreeEntityIcon(
             { name: conversation },
@@ -608,7 +617,7 @@ dialAdminTest(
           await adminApproveRequiredConversationsAssertion.assertFolderEntityColor(
             { name: firstFolderUnpublishingRequestName },
             { name: conversation },
-            Colors.textError,
+            expectedErrorColor,
           );
         }
         await adminPublishingApprovalModalAssertion.assertElementState(
@@ -640,7 +649,7 @@ dialAdminTest(
           await adminFolderToApproveAssertion.assertFolderEntityColor(
             { name: publishedFolderName },
             { name: conversation },
-            Colors.textError,
+            expectedErrorColor,
           );
           await adminFolderToApproveAssertion.assertFolderEntityVersion(
             { name: publishedFolderName },
@@ -650,7 +659,7 @@ dialAdminTest(
           await adminFolderToApproveAssertion.assertFolderEntityVersionColor(
             { name: publishedFolderName },
             { name: conversation },
-            Colors.textError,
+            expectedErrorColor,
           );
           await adminFolderToApproveAssertion.assertFolderEntityIcon(
             { name: publishedFolderName },
@@ -736,7 +745,7 @@ dialAdminTest(
           await adminFolderToApproveAssertion.assertFolderEntityColor(
             { name: publishedFolderName },
             { name: conversation },
-            Colors.controlsBackgroundDisable,
+            expectedBgDisabledColor,
           );
 
           await adminFolderToApproveAssertion.assertFolderEntityState(
@@ -747,7 +756,7 @@ dialAdminTest(
           await adminFolderToApproveAssertion.assertFolderEntityColor(
             { name: publishedFolderName },
             { name: conversation },
-            Colors.controlsBackgroundDisable,
+            expectedBgDisabledColor,
           );
         }
       },
@@ -862,7 +871,7 @@ dialAdminTest(
         await folderToPublishAssertion.assertFolderEntityColor(
           { name: innerFolderName },
           { name: innerFolderConversationName },
-          Colors.textError,
+          expectedErrorColor,
         );
         await folderToPublishAssertion.assertFolderCheckboxState(
           { name: innerFolderName },
@@ -881,7 +890,7 @@ dialAdminTest(
         await folderToPublishAssertion.assertFolderEntityVersionColor(
           { name: innerFolderName },
           { name: innerFolderConversationName },
-          Colors.textError,
+          expectedErrorColor,
         );
         await folderToPublishAssertion.assertFolderEntityIcon(
           { name: innerFolderName },
@@ -954,7 +963,7 @@ dialAdminTest(
         await adminApproveRequiredConversationsAssertion.assertFolderEntityColor(
           { name: innerFolderName },
           { name: innerFolderConversationName },
-          Colors.textError,
+          expectedErrorColor,
         );
         await adminApproveRequiredConversationsAssertion.assertFolderState(
           { name: rootFolderName },
@@ -997,7 +1006,7 @@ dialAdminTest(
         await adminFolderToApproveAssertion.assertFolderEntityColor(
           { name: innerFolderName },
           { name: innerFolderConversationName },
-          Colors.textError,
+          expectedErrorColor,
         );
         await adminFolderToApproveAssertion.assertFolderEntityVersion(
           { name: innerFolderName },
@@ -1007,7 +1016,7 @@ dialAdminTest(
         await adminFolderToApproveAssertion.assertFolderEntityVersionColor(
           { name: innerFolderName },
           { name: innerFolderConversationName },
-          Colors.textError,
+          expectedErrorColor,
         );
         await adminFolderToApproveAssertion.assertFolderEntityIcon(
           { name: innerFolderName },

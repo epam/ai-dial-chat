@@ -9,8 +9,9 @@ import {
   PublishPath,
 } from '@/src/testData';
 import { PublicationProps } from '@/src/testData/api';
-import { Colors } from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
 
 dialAdminTest(
@@ -58,6 +59,9 @@ dialAdminTest(
     let secondUnpublishResponse: PublicationProps;
     const expectedConversationIcon = iconApiHelper.getEntityIcon(
       ModelsUtil.getDefaultModel()!,
+    );
+    const expectedErrorColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.textError,
     );
 
     await dialTest.step(
@@ -112,7 +116,7 @@ dialAdminTest(
         );
         await conversationToPublishAssertion.assertEntityColor(
           { name: publishedConversation.name },
-          Colors.textError,
+          expectedErrorColor,
         );
         await conversationToPublishAssertion.assertEntityCheckboxState(
           { name: publishedConversation.name },
@@ -125,7 +129,7 @@ dialAdminTest(
         );
         await conversationToPublishAssertion.assertEntityVersionColor(
           { name: publishedConversation.name },
-          Colors.textError,
+          expectedErrorColor,
         );
         await conversationToPublishAssertion.assertTreeEntityIcon(
           { name: publishedConversation.name },
@@ -214,7 +218,7 @@ dialAdminTest(
         );
         await adminConversationToApproveAssertion.assertEntityColor(
           { name: publishedConversation.name },
-          Colors.textError,
+          expectedErrorColor,
         );
         await adminConversationToApproveAssertion.assertEntityVersion(
           { name: publishedConversation.name },
@@ -222,7 +226,7 @@ dialAdminTest(
         );
         await adminConversationToApproveAssertion.assertEntityVersionColor(
           { name: publishedConversation.name },
-          Colors.textError,
+          expectedErrorColor,
         );
         await adminConversationToApproveAssertion.assertTreeEntityIcon(
           { name: publishedConversation.name },
@@ -260,7 +264,7 @@ dialAdminTest(
         );
         await adminChatHeaderAssertion.assertElementColor(
           adminChatHeader.chatTitle,
-          Colors.textError,
+          expectedErrorColor,
         );
         await adminChatHeaderAssertion.assertElementText(
           adminChatHeader.version,
@@ -268,7 +272,7 @@ dialAdminTest(
         );
         await adminChatHeaderAssertion.assertElementColor(
           adminChatHeader.version,
-          Colors.textError,
+          expectedErrorColor,
         );
         await adminChatMessagesAssertion.assertMessagesCount(
           publishedConversation.messages.length,
