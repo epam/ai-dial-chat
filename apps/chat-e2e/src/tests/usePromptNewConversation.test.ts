@@ -428,7 +428,8 @@ dialAdminTest(
 );
 
 dialTest.only(
-  'Use prompt is not available for chat with not available agent',
+  'Use prompt is not available for chat with not available agent\n' +
+    'Use prompt is not available for chat with agent which not added to My workspace',
   async ({
     dialHomePage,
     conversations,
@@ -440,22 +441,73 @@ dialTest.only(
     conversationData,
     chatAssertion,
     localStorageManager,
+    talkToAgentDialog,
+    header,
+    marketplaceAgents,
+    agentDetailsModal,
+    confirmationDialog,
+    chatBar,
+    chat,
+    chatHeader,
   }) => {
-    setTestIds('EPMRTC-5506');
+    setTestIds('EPMRTC-5506', 'EPMRTC-5507');
     const prompt = promptData.prepareDefaultPrompt();
     const nonExistentAppName = GeneratorUtil.randomApplicationName();
-    const conversation =
-      conversationData.prepareDefaultConversation(nonExistentAppName); // Use non-existent app name
+    const models = GeneratorUtil.randomArrayElements(
+      ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
+      1,
+    );
+    const [initialModel] = models;
+
+    const conversationWithNonExistentApp =
+      conversationData.prepareDefaultConversation(nonExistentAppName);
+    conversationData.resetData();
+    const conversationWithAModelToDelete =
+      conversationData.prepareDefaultConversation(initialModel);
+
     await dataInjector.createPrompts([prompt]);
-    await dataInjector.createConversations([conversation]);
+    await dataInjector.createConversations([
+      conversationWithNonExistentApp,
+      conversationWithAModelToDelete,
+    ]);
+    await localStorageManager.setRecentModelsIdsOnce(initialModel);
     await localStorageManager.setShowSideBarPanels();
+
     await dialTest.step(
       'Open DIAL main page and select the chat with a non-existent agent',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectConversation(
+          conversationWithNonExistentApp.name,
+        );
         await chatAssertion.assertNotAllowedModelLabelContent(); // Assert error message
+      },
+    );
+
+    await dialTest.step(
+      'Hover over a prompt and check context menu options',
+      async () => {
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenuAssertion.assertMenuOptionActionabilityState(
+          MenuOptions.use,
+          'disabled',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Open dial and select conversation, open My workspace, remove agent, and go back',
+      async () => {
+        await conversations.selectConversation(
+          conversationWithAModelToDelete.name,
+        );
+        await chatHeader.chatModelIcon.click();
+        await talkToAgentDialog.goToMyWorkspace();
+        await marketplaceAgents.getAgent(initialModel).click();
+        await agentDetailsModal.removeBookmarkIcon.click();
+        await confirmationDialog.confirm();
+        await header.backToChatButton.click();
       },
     );
 
