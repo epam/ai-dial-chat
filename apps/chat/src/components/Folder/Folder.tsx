@@ -53,7 +53,7 @@ import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 import { Conversation } from '@/src/types/chat';
 import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { FolderInterface } from '@/src/types/folder';
+import { DraggedInterface, FolderInterface } from '@/src/types/folder';
 import { PublicationFolderPayload } from '@/src/types/modal';
 import { PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
@@ -104,7 +104,10 @@ export interface FolderProps<T, P = unknown> {
   loadingFolderIds?: string[];
   displayCaretAlways?: boolean;
   additionalItemData?: AdditionalItemData;
-  handleDrop?: (e: DragEvent, folder: FolderInterface) => void;
+  handleDrop?: (
+    currentFolder: FolderInterface,
+    draggedData: DraggedInterface,
+  ) => void;
   onRenameFolder?: (newName: string, folderId: string) => void;
   onDeleteFolder?: (folderId: string) => void;
   onSelectFolder?: (folderId: string, isSelected: boolean) => void;
@@ -192,6 +195,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
   const [isConfirmRenaming, setIsConfirmRenaming] = useState(false);
+  const [sharedFolderDropModel, setSharedFolderDropModel] = useState<{
+    currentFolder: FolderInterface;
+    draggedData: FolderInterface;
+  } | null>(null);
   const dragDropElement = useRef<HTMLDivElement>(null);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
@@ -512,6 +519,69 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     [handleRename],
   );
 
+  const handleFolderDrop = useCallback(
+    (currentFolder: FolderInterface, draggedFolder: FolderInterface) => {
+      if (draggedFolder.id === currentFolder.id) {
+        return;
+      }
+
+      const childIds = new Set(
+        getChildAndCurrentFoldersIdsById(draggedFolder.id, allFolders),
+      );
+
+      if (childIds.has(currentFolder.id)) {
+        dispatch(
+          UIActions.showErrorToast(
+            t("It's not allowed to move parent folder in child folder"),
+          ),
+        );
+        return;
+      }
+
+      const foldersDepth = getFoldersDepth(draggedFolder, allFolders);
+
+      if (maxDepth && level + foldersDepth > maxDepth) {
+        dispatch(
+          UIActions.showErrorToast(
+            t("It's not allowed to have more nested folders"),
+          ),
+        );
+        return;
+      }
+
+      if (
+        !isEntityNameOnSameLevelUnique(
+          draggedFolder.name,
+          { ...draggedFolder, folderId: currentFolder.id },
+          allFoldersWithoutFilters,
+        )
+      ) {
+        dispatch(
+          UIActions.showErrorToast(
+            t(
+              'Folder with name "{{folderName}}" already exists in this folder.',
+              {
+                ns: Translation.Chat,
+                folderName: draggedFolder.name,
+              },
+            ),
+          ),
+        );
+      }
+
+      handleDrop?.(currentFolder, draggedFolder);
+    },
+    [
+      allFolders,
+      allFoldersWithoutFilters,
+      dispatch,
+      handleDrop,
+      level,
+      maxDepth,
+      t,
+    ],
+  );
+
   const dropHandler = useCallback(
     (e: DragEvent) => {
       if (!handleDrop || isExternal || canSelectFolders) {
@@ -530,57 +600,17 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         );
 
         if (folderData) {
-          const draggedFolder = JSON.parse(folderData);
+          const draggedFolder: FolderInterface = JSON.parse(folderData);
 
-          if (draggedFolder.id === currentFolder.id) {
-            return;
+          if (!draggedFolder.isShared) {
+            handleFolderDrop(currentFolder, draggedFolder);
+          } else {
+            setSharedFolderDropModel({
+              currentFolder,
+              draggedData: draggedFolder,
+            });
           }
-
-          const childIds = new Set(
-            getChildAndCurrentFoldersIdsById(draggedFolder.id, allFolders),
-          );
-
-          if (childIds.has(currentFolder.id)) {
-            dispatch(
-              UIActions.showErrorToast(
-                t("It's not allowed to move parent folder in child folder"),
-              ),
-            );
-            return;
-          }
-
-          const foldersDepth = getFoldersDepth(draggedFolder, allFolders);
-
-          if (maxDepth && level + foldersDepth > maxDepth) {
-            dispatch(
-              UIActions.showErrorToast(
-                t("It's not allowed to have more nested folders"),
-              ),
-            );
-            return;
-          }
-
-          if (
-            !isEntityNameOnSameLevelUnique(
-              draggedFolder.name,
-              { ...draggedFolder, folderId: currentFolder.id },
-              allFoldersWithoutFilters,
-            )
-          ) {
-            dispatch(
-              UIActions.showErrorToast(
-                t(
-                  'Folder with name "{{folderName}}" already exists in this folder.',
-                  {
-                    ns: Translation.Chat,
-                    folderName: draggedFolder.name,
-                  },
-                ),
-              ),
-            );
-
-            return;
-          }
+          return;
         }
 
         const entityData = e.dataTransfer.getData(
@@ -611,26 +641,22 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 ),
               ),
             );
-
             return;
           }
-        }
 
-        handleDrop(e, currentFolder);
+          handleDrop(currentFolder, draggedEntity);
+        }
       }
     },
     [
-      allFolders,
-      allFoldersWithoutFilters,
       allItemsWithoutFilters,
       canSelectFolders,
       currentFolder,
       dispatch,
       featureType,
       handleDrop,
+      handleFolderDrop,
       isExternal,
-      level,
-      maxDepth,
       t,
     ],
   );
@@ -1330,6 +1356,26 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           }
         }}
       />
+      {sharedFolderDropModel && (
+        <ConfirmDialog
+          isOpen
+          heading={t('Confirm Moving Folder')}
+          confirmLabel={t('Move')}
+          cancelLabel={t('Cancel')}
+          description={t(
+            'Moving this folder will stop sharing and other users will no longer see this folder.',
+          )}
+          onClose={(result) => {
+            if (result) {
+              handleFolderDrop(
+                sharedFolderDropModel.currentFolder,
+                sharedFolderDropModel.draggedData,
+              );
+            }
+            setSharedFolderDropModel(null);
+          }}
+        />
+      )}
     </div>
   );
 };

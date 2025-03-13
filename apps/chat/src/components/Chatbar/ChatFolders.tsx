@@ -1,4 +1,4 @@
-import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useSectionToggle } from '@/src/hooks/useSectionToggle';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -8,19 +8,22 @@ import { getFoldersDepth, sortByName } from '@/src/utils/app/folders';
 import {
   getConversationRootId,
   getIdWithoutRootPathSegments,
+  isConversationId,
   isEntityIdExternal,
   isRootId,
 } from '@/src/utils/app/id';
-import { MoveType } from '@/src/utils/app/move';
 import { getPublishFolderResources } from '@/src/utils/app/publications';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilters,
 } from '@/src/utils/app/search';
 
-import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
-import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
+import {
+  DraggedInterface,
+  FolderInterface,
+  FolderSectionProps,
+} from '@/src/types/folder';
 import { PublicationFolderPayload } from '@/src/types/modal';
 import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
@@ -149,37 +152,32 @@ const ChatFolderTemplate = ({
   );
 
   const handleDrop = useCallback(
-    (e: DragEvent, folder: FolderInterface) => {
-      if (e.dataTransfer) {
-        const conversationData = e.dataTransfer.getData(MoveType.Conversation);
-        const folderData = e.dataTransfer.getData(MoveType.ConversationFolder);
-
-        if (conversationData) {
-          const conversation: Conversation = JSON.parse(conversationData);
+    (currentFolder: FolderInterface, draggedData: DraggedInterface) => {
+      if (isConversationId(draggedData.id)) {
+        dispatch(
+          ConversationsActions.updateConversation({
+            id: draggedData.id,
+            values: { folderId: currentFolder.id },
+          }),
+        );
+      } else if (draggedData) {
+        if (
+          draggedData.id !== currentFolder.id &&
+          draggedData.folderId !== currentFolder.id
+        ) {
           dispatch(
-            ConversationsActions.updateConversation({
-              id: conversation.id,
-              values: { folderId: folder.id },
+            ConversationsActions.updateFolder({
+              folderId: draggedData.id,
+              values: { folderId: currentFolder.id, isShared: false },
+              currentIsShared: draggedData.isShared,
             }),
           );
-        } else if (folderData) {
-          const movedFolder: FolderInterface = JSON.parse(folderData);
-          if (
-            movedFolder.id !== folder.id &&
-            movedFolder.folderId !== folder.id
-          ) {
-            dispatch(
-              ConversationsActions.updateFolder({
-                folderId: movedFolder.id,
-                values: { folderId: folder.id },
-              }),
-            );
-          }
         }
       }
     },
     [dispatch],
   );
+
   const onDropBetweenFolders = useCallback(
     (folder: FolderInterface) => {
       const folderId = getConversationRootId();
@@ -226,10 +224,11 @@ const ChatFolderTemplate = ({
         ConversationsActions.updateFolder({
           folderId,
           values: { name, isShared: false },
+          currentIsShared: folder.isShared,
         }),
       );
     },
-    [dispatch],
+    [dispatch, folder.isShared],
   );
 
   const handleFolderDelete = useCallback(
@@ -242,11 +241,18 @@ const ChatFolderTemplate = ({
             featureType: FeatureType.Chat,
           }),
         );
+      } else if (folder.isShared) {
+        dispatch(
+          ConversationsActions.deleteFolder({
+            folderId,
+            currentIsShared: folder.isShared,
+          }),
+        );
       } else {
         dispatch(ConversationsActions.deleteFolder({ folderId }));
       }
     },
-    [dispatch, folder.id, folder.sharedWithMe],
+    [dispatch, folder.id, folder.isShared, folder.sharedWithMe],
   );
 
   const handleFolderSelect = useCallback(

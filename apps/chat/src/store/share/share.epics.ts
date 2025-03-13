@@ -1054,6 +1054,7 @@ const revokeAccessSuccessEpic: AppEpic = (action$, state$) =>
             values: {
               isShared: false,
             },
+            currentIsShared: false,
           }),
         );
       }
@@ -1074,6 +1075,7 @@ const revokeAccessSuccessEpic: AppEpic = (action$, state$) =>
             values: {
               isShared: false,
             },
+            currentIsShared: false,
           }),
         );
       }
@@ -1317,11 +1319,15 @@ const deleteOrRenameSharedFolderEpic: AppEpic = (action$, state$) =>
     ),
     switchMap(({ payload }) => {
       const folders = ConversationsSelectors.selectFolders(state$.value);
-      const isSharedFolder = folders.find(
-        (folder) => folder.id === payload.folderId,
-      )?.isShared;
-      const requireRevoke =
+
+      const isSharedFolder =
+        payload.currentIsShared ||
+        folders.find((folder) => folder.id === payload.folderId)?.isShared;
+      const requireName =
         'values' in payload && payload.values ? payload.values.name : true;
+      const requireFolderId =
+        'values' in payload && payload.values ? payload.values.folderId : true;
+      const requireRevoke = requireName || requireFolderId;
 
       return payload.folderId && isSharedFolder && requireRevoke
         ? of(
