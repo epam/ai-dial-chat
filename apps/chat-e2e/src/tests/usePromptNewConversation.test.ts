@@ -169,8 +169,9 @@ dialTest(
   },
 );
 
-dialTest(
-  'Use prompt option is not available for Chat in Replay mode',
+dialTest.only(
+  'Use prompt option is not available for Chat in Replay mode\n' +
+    'Use prompt is available for chat in Replay mode when response generation was stopped',
   async ({
     dialHomePage,
     conversations,
@@ -181,14 +182,26 @@ dialTest(
     conversationData,
     dataInjector,
     promptData,
+    sendMessageAssertion,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-5494');
+    setTestIds('EPMRTC-5494', 'EPMRTC-5504');
     const conversation = conversationData.prepareDefaultConversation();
+    conversationData.resetData();
+    const conversation2 = conversationData.prepareDefaultConversation();
+    conversationData.resetData();
     const replayConversation =
       conversationData.prepareDefaultReplayConversation(conversation);
+    conversationData.resetData();
+    const partiallyReplayedConversation =
+      conversationData.preparePartiallyReplayedConversation(conversation2);
+    conversationData.resetData();
     const prompt = promptData.prepareDefaultPrompt();
-    await dataInjector.createConversations([conversation, replayConversation]);
+    await dataInjector.createConversations([
+      // conversation,
+      replayConversation,
+      partiallyReplayedConversation,
+    ]);
     await dataInjector.createPrompts([prompt]);
     await localStorageManager.setShowSideBarPanels();
 
@@ -209,6 +222,27 @@ dialTest(
         await promptDropdownMenuAssertion.assertMenuOptionActionabilityState(
           MenuOptions.use,
           'disabled',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Select partially replayed chat and verify "Continue replay" screen',
+      async () => {
+        await conversations.selectConversation(
+          partiallyReplayedConversation.name,
+        );
+        await sendMessageAssertion.assertContinueReplayButtonState('visible');
+      },
+    );
+
+    await dialTest.step(
+      'Hover over prompt and verify "Use" option is enabled',
+      async () => {
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenuAssertion.assertMenuOptionActionabilityState(
+          MenuOptions.use,
+          'enabled',
         );
       },
     );
