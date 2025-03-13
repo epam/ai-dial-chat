@@ -15,7 +15,8 @@ dialTest.only(
   'Use own prompt for new conversation\n' +
     'Use own prompt for chat with history\n' +
     'Use prompt for chat with attached file\n' +
-    'Use prompt for chats in Compare mode',
+    'Use prompt for chats in Compare mode\n' +
+    "prompt body is applied on 'Use' click into the Input message, in the end of existing content",
   async ({
     dialHomePage,
     header,
@@ -39,7 +40,13 @@ dialTest.only(
     editMessageInputAttachments,
     sendMessageInputAttachments,
   }) => {
-    setTestIds('EPMRTC-5486', 'EPMRTC-5487', 'EPMRTC-5490', 'EPMRTC-5512');
+    setTestIds(
+      'EPMRTC-5486',
+      'EPMRTC-5487',
+      'EPMRTC-5490',
+      'EPMRTC-5512',
+      'EPMRTC-5497',
+    );
     // Select a model that allows file attachments
     const modelWithAttachment = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModelsWithAttachment(),
@@ -60,20 +67,29 @@ dialTest.only(
       await dialHomePage.waitForPageLoaded();
     });
 
-    await dialTest.step('Type initial message', async () => {
-      await sendMessage.messageInput.fillInInput(initialMessage);
-      await sendMessageAssertion.assertMessageValue(initialMessage);
-    });
+    await dialTest.step(
+      'Use prompt from context menu in the empty message text area',
+      async () => {
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenu.selectMenuOption(MenuOptions.use, {
+          triggeredHttpMethod: 'GET',
+        });
+        await sendMessageAssertion.assertMessageValue(` ${prompt.content}`);
+      },
+    );
 
-    await dialTest.step('Use prompt from context menu', async () => {
-      await prompts.openEntityDropdownMenu(prompt.name);
-      await promptDropdownMenu.selectMenuOption(MenuOptions.use, {
-        triggeredHttpMethod: 'GET',
-      });
-      await sendMessageAssertion.assertMessageValue(
-        `${initialMessage} ${prompt.content}`,
-      );
-    });
+    await dialTest.step(
+      'Type initial message and use the prompt from context menu',
+      async () => {
+        await sendMessage.messageInput.fillInInput(initialMessage);
+        await sendMessageAssertion.assertMessageValue(initialMessage);
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenu.selectMenuOption(MenuOptions.use);
+        await sendMessageAssertion.assertMessageValue(
+          `${initialMessage} ${prompt.content}`,
+        );
+      },
+    );
 
     await dialTest.step(
       'Type message, get response, type data, and use prompt from context menu',
