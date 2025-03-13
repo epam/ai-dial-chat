@@ -1,4 +1,6 @@
+import { Publication } from '@/chat/types/publication';
 import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
+import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import {
   Attachment,
@@ -10,8 +12,9 @@ import {
 import { FileSelectors } from '@/src/ui/selectors';
 import { FileModalSection, InputAttachments } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { PublishActions } from '@epam/ai-dial-shared';
 
-dialTest.only(
+dialTest(
   'Use own prompt for new conversation\n' +
     'Use own prompt for chat with history\n' +
     'Use prompt for chat with attached file\n' +
@@ -313,5 +316,67 @@ dialTest(
         );
       },
     );
+  },
+);
+
+const publicationsToUnpublish: Publication[] = [];
+
+dialAdminTest.only(
+  'Use prompt not available for chat from Organization',
+  async ({
+    dialHomePage,
+    organizationConversations,
+    prompts,
+    promptDropdownMenuAssertion,
+    setTestIds,
+    promptData,
+    dataInjector,
+    conversationData,
+    publishRequestBuilder,
+    publicationApiHelper,
+    adminPublicationApiHelper,
+    localStorageManager,
+  }) => {
+    setTestIds('EPMRTC-5499');
+    const prompt = promptData.prepareDefaultPrompt();
+    const conversation = conversationData.prepareDefaultConversation();
+    await dataInjector.createPrompts([prompt]);
+    await dataInjector.createConversations([conversation]);
+    await localStorageManager.setShowSideBarPanels();
+
+    await dialAdminTest.step('Publish conversation', async () => {
+      const publishRequest = publishRequestBuilder
+        .withName(GeneratorUtil.randomPublicationRequestName())
+        .withConversationResource(conversation, PublishActions.ADD)
+        .build();
+      const publication =
+        await publicationApiHelper.createPublishRequest(publishRequest);
+      publicationsToUnpublish.push(publication);
+      await adminPublicationApiHelper.approveRequest(publication);
+    });
+
+    await dialAdminTest.step(
+      'Select chat from Organization section and verify "Use" option is disabled',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await organizationConversations.selectConversation(conversation.name);
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenuAssertion.assertMenuOptionActionabilityState(
+          MenuOptions.use,
+          'disabled',
+        );
+      },
+    );
+  },
+);
+
+dialTest.afterAll(
+  async ({ publicationApiHelper, adminPublicationApiHelper }) => {
+    for (const publication of publicationsToUnpublish) {
+      const unpublishResponse =
+        await publicationApiHelper.createUnpublishRequest(publication);
+      await adminPublicationApiHelper.approveRequest(unpublishResponse);
+    }
   },
 );
