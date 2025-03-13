@@ -323,7 +323,7 @@ dialTest(
 const publicationsToUnpublish: Publication[] = [];
 const publicationsToReject: Publication[] = [];
 
-dialAdminTest.only(
+dialAdminTest(
   'Use prompt not available for chat from Organization\n' +
     'Use prompt not available for chat from Approve required',
   async ({
@@ -419,6 +419,50 @@ dialAdminTest.only(
         // await adminApproveRequiredConversations.getFolderEntity(publicationsToUnpublish[1].name!, conversationToPublish.name).click();
         await adminPrompts.openEntityDropdownMenu(adminPrompt.name); // Use admin prompt
         await adminPromptDropdownMenuAssertion.assertMenuOptionActionabilityState(
+          MenuOptions.use,
+          'disabled',
+        );
+      },
+    );
+  },
+);
+
+dialTest.only(
+  'Use prompt is not available for chat with not available agent',
+  async ({
+           dialHomePage,
+           conversations,
+           prompts,
+           promptDropdownMenuAssertion,
+           setTestIds,
+           promptData,
+           dataInjector,
+           conversationData,
+           chatAssertion,
+           localStorageManager,
+         }) => {
+    setTestIds('EPMRTC-5506');
+    const prompt = promptData.prepareDefaultPrompt();
+    const nonExistentAppName = GeneratorUtil.randomApplicationName();
+    const conversation = conversationData.prepareDefaultConversation(nonExistentAppName); // Use non-existent app name
+    await dataInjector.createPrompts([prompt]);
+    await dataInjector.createConversations([conversation]);
+    await localStorageManager.setShowSideBarPanels();
+    await dialTest.step(
+      'Open DIAL main page and select the chat with a non-existent agent',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
+        await chatAssertion.assertNotAllowedModelLabelContent(); // Assert error message
+      },
+    );
+
+    await dialTest.step(
+      'Hover over a prompt and check context menu options',
+      async () => {
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenuAssertion.assertMenuOptionActionabilityState(
           MenuOptions.use,
           'disabled',
         );
