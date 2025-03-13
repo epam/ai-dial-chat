@@ -203,10 +203,10 @@ dialTest(
     );
 
     await dialTest.step(
-      'Hover over prompt and verify "Use" option is not available',
+      'Verify "Use" option is not available for the prompt',
       async () => {
         await prompts.openEntityDropdownMenu(prompt.name);
-        await promptDropdownMenuAssertion.assertMenuOptionState(
+        await promptDropdownMenuAssertion.assertMenuOptionActionabilityState(
           MenuOptions.use,
           'disabled',
         );

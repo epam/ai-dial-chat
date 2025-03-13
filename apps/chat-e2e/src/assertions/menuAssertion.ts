@@ -45,7 +45,7 @@ export class MenuAssertion extends BaseAssertion {
       : await expect.soft(menu, ExpectedMessages.menuIsNotVisible).toBeHidden();
   }
 
-  public async assertMenuOptionState(
+  public async assertMenuOptionActionabilityState(
     option: MenuOptions,
     state: ElementActionabilityState,
   ) {
