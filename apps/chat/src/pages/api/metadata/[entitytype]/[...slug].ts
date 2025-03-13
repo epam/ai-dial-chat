@@ -28,7 +28,7 @@ const getEntityUrlFromSlugs = (
     : [req.query.slug];
 
   if (!slugs || slugs.length === 0) {
-    throw new DialAIError(`No ${entityType} path provided`, '', '', '400');
+    throw new DialAIError(`No ${entityType} path provided`, 400, req);
   }
 
   return constructPath(
@@ -72,9 +72,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
       throw new DialAIError(
         (typeof json === 'string' && json) || proxyRes.statusText,
-        '',
-        '',
-        proxyRes.status + '',
+        proxyRes.status,
+        req,
       );
     }
     json = await proxyRes.json();
