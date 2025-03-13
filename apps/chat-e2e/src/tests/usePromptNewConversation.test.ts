@@ -7,13 +7,15 @@ import {
   MockedChatApiResponseBodies,
   UploadMenuOptions,
 } from '@/src/testData';
-import { FileModalSection } from '@/src/ui/webElements';
+import { FileSelectors } from '@/src/ui/selectors';
+import { FileModalSection, InputAttachments } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 
-dialTest(
+dialTest.only(
   'Use own prompt for new conversation\n' +
     'Use own prompt for chat with history\n' +
-    'Use prompt for chat with attached file',
+    'Use prompt for chat with attached file\n' +
+    'Use prompt for chats in Compare mode',
   async ({
     dialHomePage,
     header,
@@ -32,8 +34,12 @@ dialTest(
     manageAttachmentsAssertion,
     fileApiHelper,
     sendMessageInputAttachmentsAssertions,
+    chatBar,
+    compare,
+    editMessageInputAttachments,
+    sendMessageInputAttachments,
   }) => {
-    setTestIds('EPMRTC-5486', 'EPMRTC-5487', 'EPMRTC-5490');
+    setTestIds('EPMRTC-5486', 'EPMRTC-5487', 'EPMRTC-5490', 'EPMRTC-5512');
     // Select a model that allows file attachments
     const modelWithAttachment = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModelsWithAttachment(),
@@ -107,7 +113,26 @@ dialTest(
         );
         await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
           Attachment.sunImageName,
+          'visible',
         );
+        await sendMessageInputAttachments
+          .removeInputAttachmentIcon(Attachment.sunImageName)
+          .click();
+      },
+    );
+
+    await dialTest.step(
+      'Enter compare mode and use prompt from context menu',
+      async () => {
+        await sendMessage.clearMessageInput();
+        await sendMessage
+          .getChildElementBySelector(FileSelectors.remove)
+          .click();
+        await chatBar.openCompareMode();
+        await compare.waitForState({ state: 'visible' });
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenu.selectMenuOption(MenuOptions.use);
+        await sendMessageAssertion.assertMessageValue(` ${prompt.content}`);
       },
     );
   },
@@ -169,7 +194,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'Use prompt option is not available for Chat in Replay mode\n' +
     'Use prompt is available for chat in Replay mode when response generation was stopped\n' +
     'Use prompt option is not available for Chat in Playback mode',

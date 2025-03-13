@@ -1,6 +1,6 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
-import { ExpectedMessages } from '@/src/testData';
+import { ElementState, ExpectedMessages } from '@/src/testData';
 import { InputAttachments } from '@/src/ui/webElements';
 
 export class InputAttachmentsAssertions extends BaseAssertion {
@@ -10,10 +10,13 @@ export class InputAttachmentsAssertions extends BaseAssertion {
     this.inputAttachments = inputAttachments;
   }
 
-  public async assertAttachedFileState(name: string) {
+  public async assertAttachedFileState(
+    name: string,
+    expectedState: ElementState,
+  ) {
     return this.assertElementState(
       this.inputAttachments.inputAttachment(name),
-      'visible',
+      expectedState,
     );
   }
 }
