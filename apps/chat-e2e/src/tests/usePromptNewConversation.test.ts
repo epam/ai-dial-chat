@@ -1,3 +1,4 @@
+import { Conversation } from '@/chat/types/chat';
 import { Publication } from '@/chat/types/publication';
 import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
@@ -320,9 +321,11 @@ dialTest(
 );
 
 const publicationsToUnpublish: Publication[] = [];
+const publicationsToReject: Publication[] = [];
 
 dialAdminTest.only(
-  'Use prompt not available for chat from Organization',
+  'Use prompt not available for chat from Organization\n' +
+    'Use prompt not available for chat from Approve required',
   async ({
     dialHomePage,
     organizationConversations,
@@ -330,24 +333,44 @@ dialAdminTest.only(
     promptDropdownMenuAssertion,
     setTestIds,
     promptData,
+    adminDataInjector,
     dataInjector,
     conversationData,
     publishRequestBuilder,
     publicationApiHelper,
     adminPublicationApiHelper,
+    adminDialHomePage,
+    adminApproveRequiredConversations,
     localStorageManager,
+    adminLocalStorageManager,
+    adminPrompts,
+    adminPromptDropdownMenuAssertion,
   }) => {
-    setTestIds('EPMRTC-5499');
+    setTestIds('EPMRTC-5499', 'EPMRTC-5500');
     const prompt = promptData.prepareDefaultPrompt();
-    const conversation = conversationData.prepareDefaultConversation();
-    await dataInjector.createPrompts([prompt]);
-    await dataInjector.createConversations([conversation]);
-    await localStorageManager.setShowSideBarPanels();
+    promptData.resetData();
+    const adminPrompt = promptData.prepareDefaultPrompt();
+    const conversationForApproval1 =
+      conversationData.prepareDefaultConversation();
+    conversationData.resetData();
+    const conversationToPublish = conversationData.prepareDefaultConversation();
+    conversationData.resetData();
+    // const conversationToTest = conversationData.prepareDefaultConversation();
 
-    await dialAdminTest.step('Publish conversation', async () => {
+    await dataInjector.createPrompts([prompt]);
+    await adminDataInjector.createPrompts([adminPrompt]);
+    // await adminDataInjector.createConversations([conversationToTest]);
+    await dataInjector.createConversations([
+      conversationForApproval1,
+      conversationToPublish,
+    ]);
+    await localStorageManager.setShowSideBarPanels();
+    await adminLocalStorageManager.setShowSideBarPanels();
+
+    await dialAdminTest.step('Publish and approve a conversation', async () => {
       const publishRequest = publishRequestBuilder
         .withName(GeneratorUtil.randomPublicationRequestName())
-        .withConversationResource(conversation, PublishActions.ADD)
+        .withConversationResource(conversationForApproval1, PublishActions.ADD)
         .build();
       const publication =
         await publicationApiHelper.createPublishRequest(publishRequest);
@@ -355,14 +378,47 @@ dialAdminTest.only(
       await adminPublicationApiHelper.approveRequest(publication);
     });
 
+    await dialAdminTest.step('Publish a conversation', async () => {
+      const publishRequest = publishRequestBuilder
+        .withName(GeneratorUtil.randomPublicationRequestName())
+        .withConversationResource(conversationToPublish, PublishActions.ADD)
+        .build();
+      const publication =
+        await publicationApiHelper.createPublishRequest(publishRequest);
+      publicationsToReject.push(publication);
+    });
+
     await dialAdminTest.step(
       'Select chat from Organization section and verify "Use" option is disabled',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await organizationConversations.selectConversation(conversation.name);
+        await organizationConversations.selectConversation(
+          conversationForApproval1.name,
+        );
         await prompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenuAssertion.assertMenuOptionActionabilityState(
+          MenuOptions.use,
+          'disabled',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Select publication request, go to review, and verify "Use" option is disabled',
+      async () => {
+        await adminDialHomePage.openHomePage();
+        await adminDialHomePage.waitForPageLoaded();
+        await adminApproveRequiredConversations.expandApproveRequiredFolder(
+          publicationsToUnpublish[1].name!,
+        );
+        await adminApproveRequiredConversations.selectFolderEntity(
+          publicationsToUnpublish[1].name!,
+          conversationToPublish.name,
+        );
+        // await adminApproveRequiredConversations.getFolderEntity(publicationsToUnpublish[1].name!, conversationToPublish.name).click();
+        await adminPrompts.openEntityDropdownMenu(adminPrompt.name); // Use admin prompt
+        await adminPromptDropdownMenuAssertion.assertMenuOptionActionabilityState(
           MenuOptions.use,
           'disabled',
         );
@@ -377,6 +433,10 @@ dialTest.afterAll(
       const unpublishResponse =
         await publicationApiHelper.createUnpublishRequest(publication);
       await adminPublicationApiHelper.approveRequest(unpublishResponse);
+    }
+
+    for (const publication of publicationsToReject) {
+      await publicationApiHelper.rejectRequest(publication);
     }
   },
 );
