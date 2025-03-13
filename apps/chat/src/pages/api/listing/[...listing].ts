@@ -46,7 +46,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       : [req.query.listing];
 
     if (!slugs || slugs.length === 0) {
-      throw new DialAIError(`No path provided`, '', '', '400');
+      throw new DialAIError(`No path provided`, 400, req);
     }
 
     const path = constructPath(
@@ -68,7 +68,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       return res.status(200).send([]);
     } else if (!response.ok) {
       const serverErrorMessage = await response.text();
-      throw new DialAIError(serverErrorMessage, '', '', response.status + '');
+      throw new DialAIError(serverErrorMessage, response.status, req);
     }
 
     const json = (await response.json()) as
