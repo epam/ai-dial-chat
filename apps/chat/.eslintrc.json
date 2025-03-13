@@ -40,7 +40,8 @@
             "name": "sessionStorage",
             "message": "Use DataService instead."
           }
-        ]
+        ],
+        "@typescript-eslint/no-non-null-assertion": "off"
       }
     },
     {
