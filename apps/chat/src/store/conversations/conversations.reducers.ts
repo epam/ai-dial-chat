@@ -440,7 +440,11 @@ export const conversationsSlice = createSlice({
       state,
       {
         payload,
-      }: PayloadAction<{ folderId: string; values: Partial<FolderInterface>, currentIsShared?: boolean }>,
+      }: PayloadAction<{
+        folderId: string;
+        values: Partial<FolderInterface>;
+        currentIsShared?: boolean;
+      }>,
     ) => {
       state.folders = state.folders.map((folder) => {
         if (folder.id === payload.folderId) {
