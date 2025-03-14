@@ -37,11 +37,13 @@ enum TabKeys {
 interface AppsEditorHeaderProps {
   applicationTypeDisplayName: string;
   isEditApplication?: boolean;
+  hasCustomEditor?: boolean;
 }
 
 export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
   applicationTypeDisplayName,
   isEditApplication,
+  hasCustomEditor,
 }) => {
   const dispatch = useAppDispatch();
   const {
@@ -171,7 +173,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
         </div>
 
         <div className="flex h-full items-center space-x-2">
-          {isEditApplication && applicationTypeDisplayName !== 'Mindmap' ? (
+          {isEditApplication && !hasCustomEditor ? (
             <button
               className="button flex items-center space-x-1 text-accent-primary md:flex"
               onClick={handleSaveAndRedirect}
