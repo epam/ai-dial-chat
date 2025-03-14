@@ -8,6 +8,7 @@ import {
   ApplicationStatus,
   CustomApplicationModel,
 } from '@/src/types/applications';
+import { DialAIEntityModel } from '@/src/types/models';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
@@ -70,7 +71,12 @@ export const GeneralInfoView: React.FC<Props> = ({
         </FormProvider>
       </div>
       <div className="size-full grow">
-        <GeneralInfoPreview data={getApplicationEntityFields(formData)} />
+        <GeneralInfoPreview
+          entity={getApplicationEntityFields(
+            formData,
+            modelFromState as DialAIEntityModel,
+          )}
+        />
       </div>
     </div>
   );
