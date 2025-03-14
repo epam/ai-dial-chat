@@ -346,8 +346,8 @@ dialAdminTest(
     conversationData.resetData();
     const conversationToPublish = conversationData.prepareDefaultConversation();
     conversationData.resetData();
-    let approvedPublication;
-    let notApprovedPublication;
+    let approvedPublication: Publication;
+    let notApprovedPublication: Publication;
 
     await dataInjector.createPrompts([prompt]);
     await adminDataInjector.createPrompts([adminPrompt]);
@@ -400,10 +400,10 @@ dialAdminTest(
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversations.expandApproveRequiredFolder(
-          notApprovedPublication!,
+          notApprovedPublication.name!,
         );
         await adminApproveRequiredConversations.selectFolderEntity(
-          notApprovedPublication!,
+          notApprovedPublication.name!,
           conversationToPublish.name,
         );
         await adminPrompts.openEntityDropdownMenu(adminPrompt.name); // Use admin prompt
