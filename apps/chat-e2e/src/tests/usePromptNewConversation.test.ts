@@ -313,7 +313,6 @@ dialTest(
 );
 
 const publicationsToUnpublish: Publication[] = [];
-const publicationsToReject: Publication[] = [];
 
 dialAdminTest(
   'Use prompt not available for chat from Organization\n' +
@@ -347,11 +346,11 @@ dialAdminTest(
     conversationData.resetData();
     const conversationToPublish = conversationData.prepareDefaultConversation();
     conversationData.resetData();
-    // const conversationToTest = conversationData.prepareDefaultConversation();
+    let approvedPublication;
+    let notApprovedPublication;
 
     await dataInjector.createPrompts([prompt]);
     await adminDataInjector.createPrompts([adminPrompt]);
-    // await adminDataInjector.createConversations([conversationToTest]);
     await dataInjector.createConversations([
       conversationForApproval1,
       conversationToPublish,
@@ -364,10 +363,10 @@ dialAdminTest(
         .withName(GeneratorUtil.randomPublicationRequestName())
         .withConversationResource(conversationForApproval1, PublishActions.ADD)
         .build();
-      const publication =
+      approvedPublication =
         await publicationApiHelper.createPublishRequest(publishRequest);
-      publicationsToUnpublish.push(publication);
-      await adminPublicationApiHelper.approveRequest(publication);
+      publicationsToUnpublish.push(approvedPublication);
+      await adminPublicationApiHelper.approveRequest(approvedPublication);
     });
 
     await dialAdminTest.step('Publish a conversation', async () => {
@@ -375,9 +374,8 @@ dialAdminTest(
         .withName(GeneratorUtil.randomPublicationRequestName())
         .withConversationResource(conversationToPublish, PublishActions.ADD)
         .build();
-      const publication =
+      notApprovedPublication =
         await publicationApiHelper.createPublishRequest(publishRequest);
-      publicationsToReject.push(publication);
     });
 
     await dialAdminTest.step(
@@ -402,13 +400,12 @@ dialAdminTest(
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversations.expandApproveRequiredFolder(
-          publicationsToUnpublish[1].name!,
+          notApprovedPublication!,
         );
         await adminApproveRequiredConversations.selectFolderEntity(
-          publicationsToUnpublish[1].name!,
+          notApprovedPublication!,
           conversationToPublish.name,
         );
-        // await adminApproveRequiredConversations.getFolderEntity(publicationsToUnpublish[1].name!, conversationToPublish.name).click();
         await adminPrompts.openEntityDropdownMenu(adminPrompt.name); // Use admin prompt
         await adminPromptDropdownMenuAssertion.assertMenuOptionActionabilityState(
           MenuOptions.use,
@@ -440,17 +437,23 @@ dialTest(
     agentDetailsModal,
     confirmationDialog,
     chatHeader,
+    marketplaceAgentsSection,
   }) => {
     setTestIds('EPMRTC-5506', 'EPMRTC-5507', 'EPMRTC-5508');
     const prompt = promptData.prepareDefaultPrompt();
     const nonExistentAppName = GeneratorUtil.randomApplicationName();
 
-    // Models setup
-    const models = GeneratorUtil.randomArrayElements(
+    const initialModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
-      2,
     );
-    const [initialModel, modelWithAddons] = models;
+    const modelWithAddons = GeneratorUtil.randomArrayElement(
+      ModelsUtil.getLatestModels().filter(
+        (m) =>
+          ModelsUtil.doesModelAllowAddons(m) &&
+          m.iconUrl !== undefined &&
+          m.id !== initialModel.id,
+      ),
+    );
     const nonExistentAddon = GeneratorUtil.randomString(10);
 
     // Conversations setup
@@ -511,7 +514,9 @@ dialTest(
         );
         await chatHeader.chatModelIcon.click();
         await talkToAgentDialog.goToMyWorkspace();
-        await marketplaceAgents.getAgent(initialModel).click();
+        const agentElement =
+          await marketplaceAgentsSection.findAgentElement(initialModel);
+        await agentElement.click();
         await agentDetailsModal.removeBookmarkIcon.click();
         await confirmationDialog.confirm();
         await header.backToChatButton.click();
@@ -626,10 +631,6 @@ dialTest.afterAll(
       const unpublishResponse =
         await publicationApiHelper.createUnpublishRequest(publication);
       await adminPublicationApiHelper.approveRequest(unpublishResponse);
-    }
-    //TODO
-    for (const publication of publicationsToReject) {
-      await publicationApiHelper.rejectRequest(publication);
     }
   },
 );
