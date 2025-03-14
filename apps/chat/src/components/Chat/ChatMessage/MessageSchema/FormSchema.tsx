@@ -37,7 +37,7 @@ interface HiddenButtonsPropertyProps {
 }
 
 const buttonsWrapperClassName = 'flex flex-wrap items-center gap-2';
-const MAX_LINES = 1;
+const MAX_LINES = 3;
 
 const HiddenButtonsProperty = ({
   options,
