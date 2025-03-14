@@ -54,7 +54,7 @@ const ChatStartersView = ({ schema }: ChatStartersViewProps) => {
       formValue={formValue}
       showSelected
       onChange={handleChange}
-      buttonsWrapperClassName="md:justify-center overflow-y-hidden px-2 line-clamp-2"
+      buttonsWrapperClassName="md:justify-center overflow-y-hidden px-2"
       buttonClassName="shrink-0"
       propertyWrapperClassName="items-center"
     />
