@@ -164,13 +164,6 @@ export class BaseAssertion {
       .toHaveClass(expectedValue);
   }
 
-  // public async assertElementColor(element: BaseElement, expectedColor: string) {
-  //   const style = await element.getComputedStyleProperty(Styles.color);
-  //   expect
-  //     .soft(style[0], ExpectedMessages.elementColorIsValid)
-  //     .toBe(expectedColor);
-  // }
-
   public async assertElementBorderColors(
     element: BaseElement | Locator,
     expectedColor: string,
