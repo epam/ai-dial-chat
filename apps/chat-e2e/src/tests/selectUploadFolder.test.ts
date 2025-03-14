@@ -549,10 +549,6 @@ dialTest(
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
         await selectFolders.renameEmptyFolderWithTick(newParentFolderName);
-        //TODO: remove next line when fixed https://github.com/epam/ai-dial-chat/issues/1551
-        await selectFolders.expandCollapseFolder(newParentFolderName, {
-          isHttpMethodTriggered: true,
-        });
         await expect
           .soft(
             selectFolders.getNestedFolder(
