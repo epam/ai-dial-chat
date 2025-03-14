@@ -1,13 +1,14 @@
 import { IconX } from '@tabler/icons-react';
-import { MouseEvent, useState } from 'react';
+import { MouseEvent, useCallback, useState } from 'react';
 
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { FileSourceType } from '@/src/types/files';
+import { ConfirmDialogValueTypes, FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
+import { ConfirmDialog } from '../Common/ConfirmDialog';
 import Tooltip from '../Common/Tooltip';
 import { FileManagerModal } from '../Files/FileManagerModal';
 
@@ -23,6 +24,7 @@ interface CustomLogoSelectProps {
   disabled?: boolean;
   tooltip?: string;
   sourceFilters?: Set<FileSourceType>;
+  confirmDialogValues?: ConfirmDialogValueTypes;
 }
 
 export const CustomLogoSelect = ({
@@ -37,16 +39,46 @@ export const CustomLogoSelect = ({
   disabled,
   tooltip,
   sourceFilters,
+  confirmDialogValues,
 }: CustomLogoSelectProps) => {
   const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
     useState(false);
   const { t } = useTranslation(Translation.Settings);
   const maximumAttachmentsAmount = 1;
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<string[]>();
 
   const onClickAddHandler = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setIsSelectFilesDialogOpened(true);
   };
+
+  const handleSelectFiles = useCallback(
+    (files: string[]) => {
+      if (files.length > 0) {
+        onLogoSelect(files);
+      }
+      setIsSelectFilesDialogOpened(false);
+    },
+    [onLogoSelect],
+  );
+
+  const handleOnClose = useCallback(
+    (files: boolean | string[]) => {
+      if (Array.isArray(files)) {
+        if (files.length > 0) {
+          if (confirmDialogValues) {
+            setPendingFiles(files);
+            setConfirmDialogOpen(true);
+          } else {
+            handleSelectFiles(files);
+          }
+        }
+      }
+      setIsSelectFilesDialogOpened(false);
+    },
+    [confirmDialogValues, handleSelectFiles],
+  );
 
   return (
     <div className="flex items-center gap-5" data-qa="custom-logo">
@@ -91,17 +123,27 @@ export const CustomLogoSelect = ({
           isOpen
           allowedTypes={allowedTypes ?? ['image/*']}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
-          onClose={(files: unknown) => {
-            if ((files as string[]).length > 0) {
-              onLogoSelect(files as string[]);
-            }
-            setIsSelectFilesDialogOpened(false);
-          }}
+          onClose={handleOnClose}
           headerLabel={fileManagerModalTitle || t('Select custom logo')}
           customButtonLabel={t('Select file')}
           customUploadButtonLabel={t('Upload files')}
           forceShowSelectCheckBox
           sourceFilters={sourceFilters}
+        />
+      )}
+      {confirmDialogValues && confirmDialogOpen && (
+        <ConfirmDialog
+          isOpen={confirmDialogOpen}
+          heading={t(confirmDialogValues?.heading)}
+          description={t(confirmDialogValues?.description)}
+          confirmLabel={t('Confirm')}
+          cancelLabel={t('Cancel')}
+          onClose={(result) => {
+            setConfirmDialogOpen(false);
+            if (result && pendingFiles) {
+              handleSelectFiles(pendingFiles);
+            }
+          }}
         />
       )}
     </div>

@@ -1427,11 +1427,12 @@ for (const [request, expectedConversationName] of testRequestMap.entries()) {
       ` for ${expectedConversationName}`,
     async ({
       dialHomePage,
-      conversations,
       sendMessage,
       chatMessages,
       setTestIds,
       localStorageManager,
+      baseAssertion,
+      conversationAssertion,
     }) => {
       setTestIds('EPMRTC-3007', 'EPMRTC-3015', 'EPMRTC-2853', 'EPMRTC-2961');
 
@@ -1441,23 +1442,19 @@ for (const [request, expectedConversationName] of testRequestMap.entries()) {
           await localStorageManager.setShowSideBarPanels();
           await dialHomePage.openHomePage();
           await dialHomePage.waitForPageLoaded();
+          await dialHomePage.mockChatTextResponse(
+            MockedChatApiResponseBodies.simpleTextBody,
+          );
           await sendMessage.send(request);
 
-          const actualConversationName = await conversations
-            .getEntityName(expectedConversationName)
-            .getElementInnerContent();
-          expect
-            .soft(
-              actualConversationName,
-              ExpectedMessages.conversationNameUpdated,
-            )
-            .toBe(expectedConversationName);
-          await expect
-            .soft(
-              chatMessages.getChatMessage(1),
-              ExpectedMessages.messageContentIsValid,
-            )
-            .toHaveText(request);
+          await conversationAssertion.assertEntityState(
+            { name: expectedConversationName },
+            'visible',
+          );
+          await baseAssertion.assertElementText(
+            chatMessages.getChatMessage(1),
+            request,
+          );
         },
       );
     },
