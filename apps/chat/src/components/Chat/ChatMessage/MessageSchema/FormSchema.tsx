@@ -44,7 +44,7 @@ interface HiddenButtonsPropertyProps {
 }
 
 const buttonsWrapperClassName = 'flex flex-wrap items-center gap-2';
-const MAX_LINES = 1;
+const MAX_LINES = 3;
 
 const HiddenButtonsProperty = forwardRef<
   HTMLDivElement,
@@ -199,6 +199,7 @@ export const ButtonsProperty = ({
 
       onClick(option.const, getFormButtonType(option));
       setConfirmation(undefined);
+      setHiddenOptionsModal(false);
     },
     [confirmation, onClick],
   );
