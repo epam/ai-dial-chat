@@ -37,7 +37,7 @@ interface HiddenButtonsPropertyProps {
 }
 
 const buttonsWrapperClassName = 'flex flex-wrap items-center gap-2';
-const MAX_LINES = 3;
+const MAX_LINES = 1;
 
 const HiddenButtonsProperty = ({
   options,
@@ -65,11 +65,11 @@ const HiddenButtonsProperty = ({
 
     const visible: FormSchemaButtonOption[] = [];
     const hidden: FormSchemaButtonOption[] = [];
-    const hasDotsButton = !!dotsButtonRef.current;
     let currentLine = 1;
     let lastOffsetTop = hiddenButtons[0].offsetTop;
+    let currentOptionIdx = 0;
 
-    hiddenButtons.forEach((btn, index) => {
+    hiddenButtons.forEach((btn) => {
       const offsetTop = btn.offsetTop;
       if (offsetTop > lastOffsetTop) {
         currentLine += 1;
@@ -80,14 +80,15 @@ const HiddenButtonsProperty = ({
         return;
       }
 
-      const optionIndex = hasDotsButton ? index - 1 : index;
-      const option = options[optionIndex];
+      const option = options[currentOptionIdx];
 
       if (currentLine <= MAX_LINES) {
         visible.push(option);
       } else {
         hidden.push(option);
       }
+
+      currentOptionIdx++;
     });
 
     onSetVisibleOptions(visible);

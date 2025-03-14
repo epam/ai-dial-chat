@@ -30,7 +30,7 @@ export const ButtonsSchemaModal: React.FC<Props> = ({
   onClose,
 }) => {
   useEffect(() => {
-    if (options.length === 0) {
+    if (!options.length) {
       onClose();
     }
   }, [onClose, options.length]);
