@@ -3,7 +3,11 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import { Publication } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import { MenuOptions, MockedChatApiResponseBodies } from '@/src/testData';
+import {
+  CollapsedSections,
+  MenuOptions,
+  MockedChatApiResponseBodies,
+} from '@/src/testData';
 import { loadingTimeout } from '@/src/ui/pages';
 import { ModelsUtil } from '@/src/utils';
 import { GeneratorUtil } from '@/src/utils/generatorUtil';
@@ -201,52 +205,29 @@ dialTest(
   },
 );
 
-dialAdminTest(
+dialTest(
   'New conversation is created on browser refresh if two chats with history are in compare mode\n' +
     'New conversation is created on browser refresh if conversation in Playback mode is selected\n' +
-    'New conversation is created on browser refresh if conversation in Replay mode is selected.\n' +
-    'New conversation is created on user re-login if conversation with history from Organization was focused.\n' +
-    'New conversation is created on user re-login if conversation with history from Shared with me was focused',
-  async (
-    {
-      dialHomePage,
-      chat,
-      setTestIds,
-      localStorageManager,
-      conversationAssertion,
-      conversationData,
-      dataInjector,
-      mainUserShareApiHelper,
-      adminDataInjector,
-      publishRequestBuilder,
-      adminPublicationApiHelper,
-      adminShareApiHelper,
-      conversations,
-      organizationConversations,
-      sharedWithMeConversations,
-      conversationDropdownMenu,
-      compareConversation,
-      appContainer,
-      providerLogin,
-      context,
-      organizationConversationAssertion,
-      sharedWithMeConversationAssertion,
-    },
-    testInfo,
-  ) => {
-    setTestIds(
-      'EPMRTC-4682',
-      'EPMRTC-4683',
-      'EPMRTC-4593',
-      'EPMRTC-4591',
-      'EPMRTC-4589',
-    );
+    'New conversation is created on browser refresh if conversation in Replay mode is selected',
+  async ({
+    dialHomePage,
+    chat,
+    setTestIds,
+    localStorageManager,
+    conversationAssertion,
+    conversationData,
+    dataInjector,
+    conversations,
+    conversationDropdownMenu,
+    compareConversation,
+    appContainer,
+  }) => {
+    setTestIds('EPMRTC-4682', 'EPMRTC-4683', 'EPMRTC-4593');
     let models: DialAIEntityModel[];
     let initialConversation: Conversation;
     let conversationToCompare: Conversation;
     let playbackConversation: Conversation;
     let replayConversation: Conversation;
-    let adminConversation: Conversation;
 
     await dialTest.step(
       'Set 2 random models to recent and create a conversation and playback conversation via API',
@@ -272,33 +253,15 @@ dialAdminTest(
         replayConversation = conversationData.prepareDefaultReplayConversation(
           conversationToCompare,
         );
-        conversationData.resetData();
         await dataInjector.createConversations([
           conversationToCompare,
           playbackConversation,
           replayConversation,
           initialConversation,
         ]);
-
-        //create conversation by admin user
-        adminConversation = conversationData.prepareDefaultConversation(
-          models[1],
+        await localStorageManager.setChatCollapsedSection(
+          CollapsedSections.Organization,
         );
-        await adminDataInjector.createConversations([adminConversation]);
-        //publish it
-        const publishRequest = publishRequestBuilder
-          .withName(GeneratorUtil.randomPublicationRequestName())
-          .withConversationResource(adminConversation, PublishActions.ADD)
-          .build();
-        const appPublication =
-          await adminPublicationApiHelper.createPublishRequest(publishRequest);
-        publicationsToUnpublish.push(appPublication);
-        await adminPublicationApiHelper.approveRequest(appPublication);
-        //share it with the main user
-        const shareByLinkResponse = await adminShareApiHelper.shareEntityByLink(
-          [adminConversation],
-        );
-        await mainUserShareApiHelper.acceptInvite(shareByLinkResponse);
         await localStorageManager.setShowSideBarPanels();
       },
     );
@@ -371,10 +334,65 @@ dialAdminTest(
         await conversationAssertion.assertNoConversationIsSelected();
       },
     );
+  },
+);
+
+dialAdminTest(
+  'New conversation is created on user re-login if conversation with history from Organization was focused.\n' +
+    'New conversation is created on user re-login if conversation with history from Shared with me was focused',
+  async (
+    {
+      dialHomePage,
+      chat,
+      setTestIds,
+      localStorageManager,
+      conversationData,
+      mainUserShareApiHelper,
+      adminDataInjector,
+      publishRequestBuilder,
+      adminPublicationApiHelper,
+      adminShareApiHelper,
+      organizationConversations,
+      sharedWithMeConversations,
+      providerLogin,
+      context,
+      organizationConversationAssertion,
+      sharedWithMeConversationAssertion,
+    },
+    testInfo,
+  ) => {
+    setTestIds('EPMRTC-4591', 'EPMRTC-4589');
+    let adminConversation: Conversation;
+
+    await dialTest.step(
+      'Create published and shared conversations',
+      async () => {
+        //create conversation by admin user
+        adminConversation = conversationData.prepareDefaultConversation();
+        await adminDataInjector.createConversations([adminConversation]);
+        //publish it
+        const publishRequest = publishRequestBuilder
+          .withName(GeneratorUtil.randomPublicationRequestName())
+          .withConversationResource(adminConversation, PublishActions.ADD)
+          .build();
+        const appPublication =
+          await adminPublicationApiHelper.createPublishRequest(publishRequest);
+        publicationsToUnpublish.push(appPublication);
+        await adminPublicationApiHelper.approveRequest(appPublication);
+        //share it with the main user
+        const shareByLinkResponse = await adminShareApiHelper.shareEntityByLink(
+          [adminConversation],
+        );
+        await mainUserShareApiHelper.acceptInvite(shareByLinkResponse);
+        await localStorageManager.setShowSideBarPanels();
+      },
+    );
 
     await dialTest.step(
       'Select published conversation, re-login and verify new conversation is created, no conversation is selected',
       async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
         await organizationConversations.selectConversation(
           adminConversation.name,
         );
