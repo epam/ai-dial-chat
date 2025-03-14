@@ -49,7 +49,6 @@ const ChatStartersView = ({ schema }: ChatStartersViewProps) => {
 
   return (
     <FormSchema
-      isChatStarters
       schema={schemaWithoutDescription}
       formValue={formValue}
       showSelected
@@ -80,8 +79,9 @@ export const ChatStarters = memo(function ChatStarters() {
     isSchemaLoading ||
     !schema ||
     isReplay
-  )
+  ) {
     return null;
+  }
 
   return <ChatStartersView schema={schema} />;
 });

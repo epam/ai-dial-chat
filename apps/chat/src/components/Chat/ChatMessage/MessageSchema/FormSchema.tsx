@@ -12,6 +12,9 @@ import { FormButtonType } from '@/src/types/chat';
 import { ScreenState } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import { useAppSelector } from '@/src/store/hooks';
+
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
 import { ButtonsSchemaModal } from './ButtonsSchemaModal';
@@ -37,7 +40,7 @@ interface HiddenButtonsPropertyProps {
 }
 
 const buttonsWrapperClassName = 'flex flex-wrap items-center gap-2';
-const MAX_LINES = 3;
+const MAX_LINES = 2;
 
 const HiddenButtonsProperty = ({
   options,
@@ -139,7 +142,6 @@ const HiddenButtonsProperty = ({
 };
 
 interface ButtonsPropertyProps {
-  isChatStarters: boolean;
   options?: FormSchemaButtonOption[];
   formValue?: MessageFormValue;
   onClick: (value: number, type: FormButtonType) => void;
@@ -150,7 +152,6 @@ interface ButtonsPropertyProps {
 }
 
 export const ButtonsProperty = ({
-  isChatStarters,
   options = [],
   onClick,
   formValue,
@@ -160,6 +161,10 @@ export const ButtonsProperty = ({
   buttonClassName,
 }: ButtonsPropertyProps) => {
   const { t } = useTranslation(Translation.Chat);
+
+  const selectedConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedConversations,
+  );
 
   const [confirmation, setConfirmation] = useState<FormSchemaButtonOption>();
   const [visibleOptions, setVisibleOptions] =
@@ -225,16 +230,17 @@ export const ButtonsProperty = ({
         )}
       </div>
 
-      {screenState === ScreenState.SM && isChatStarters && (
-        <HiddenButtonsProperty
-          onSetVisibleOptions={setVisibleOptions}
-          onSetHiddenOptions={setHiddenOptions}
-          hiddenOptions={hiddenOptions}
-          options={options}
-          className={className}
-          buttonClassName={buttonClassName}
-        />
-      )}
+      {screenState === ScreenState.SM &&
+        !selectedConversations[0].messages.length && (
+          <HiddenButtonsProperty
+            onSetVisibleOptions={setVisibleOptions}
+            onSetHiddenOptions={setHiddenOptions}
+            hiddenOptions={hiddenOptions}
+            options={options}
+            className={className}
+            buttonClassName={buttonClassName}
+          />
+        )}
 
       {hiddenOptionsModal && (
         <ButtonsSchemaModal
@@ -266,7 +272,6 @@ export const ButtonsProperty = ({
 interface PropertyRendererProps {
   property: FormSchemaProperty;
   name: string;
-  isChatStarters: boolean;
   onChange: (
     name: string,
     value: MessageFormValueType,
@@ -284,7 +289,6 @@ interface PropertyRendererProps {
 const PropertyRenderer = ({
   property,
   name,
-  isChatStarters,
   onChange,
   formValue,
   showSelected,
@@ -312,7 +316,6 @@ const PropertyRenderer = ({
       {property[DialSchemaProperties.DialWidget] ===
         FormSchemaPropertyWidget.buttons && (
         <ButtonsProperty
-          isChatStarters={isChatStarters}
           options={property.oneOf}
           onClick={handleClick}
           disabled={disabled}
@@ -333,7 +336,6 @@ interface FormSchemaProps {
     value: MessageFormValueType,
     submit?: boolean,
   ) => void;
-  isChatStarters?: boolean;
   showSelected?: boolean;
   disabled?: boolean;
   formValue?: MessageFormValue;
@@ -348,7 +350,6 @@ export const FormSchema = memo(function FormSchema({
   schema,
   formValue,
   onChange,
-  isChatStarters,
   showSelected,
   disabled,
   wrapperClassName,
@@ -360,7 +361,6 @@ export const FormSchema = memo(function FormSchema({
     <div className={classNames('flex flex-col gap-2', wrapperClassName)}>
       {Object.entries(schema.properties).map(([name, property]) => (
         <PropertyRenderer
-          isChatStarters={!!isChatStarters}
           property={property}
           name={name}
           onChange={onChange}
