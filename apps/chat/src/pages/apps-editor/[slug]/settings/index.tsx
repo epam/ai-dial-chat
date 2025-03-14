@@ -96,6 +96,7 @@ export default function AppsSettings() {
                   ] ?? '')
                 : decode(slug.toString())
             }
+            hasCustomEditor={!!schema?.['dial:applicationTypeEditorUrl']}
           />
           <div className="flex size-full grow overflow-hidden">
             {applicationData && (
