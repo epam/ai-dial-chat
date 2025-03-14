@@ -27,7 +27,7 @@ const getEntityUrlFromSlugs = (
     : [req.query.slug];
 
   if (!slugs || slugs.length === 0) {
-    throw new DialAIError(`No path provided`, '', '', '400');
+    throw new DialAIError(`No path provided`, 400, req);
   }
 
   return sanitizeUri(
@@ -53,7 +53,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     });
 
     if (!opsRes.ok) {
-      throw new DialAIError(`Operation failed`, '', '', opsRes.status + '');
+      throw new DialAIError(`Operation failed`, opsRes.status, req);
     }
     let json: unknown;
     try {

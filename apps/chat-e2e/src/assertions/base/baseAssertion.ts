@@ -277,6 +277,20 @@ export class BaseAssertion {
     expect.soft(actualValue, expectedMessage ?? '').toBe(expectedValue);
   }
 
+  public async assertElementInnerText(
+    element: BaseElement | Locator,
+    expectedInnerText: string[],
+    expectedMessage?: string,
+  ) {
+    const elementLocator = this.getElementLocator(element);
+    expect
+      .soft(
+        await elementLocator.allInnerTexts(),
+        expectedMessage ?? ExpectedMessages.elementTextIsValid,
+      )
+      .toEqual(expectedInnerText);
+  }
+
   private getElementLocator(element: BaseElement | Locator) {
     return element instanceof BaseElement
       ? element.getElementLocator()

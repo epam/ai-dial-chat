@@ -347,6 +347,7 @@ export enum ExpectedMessages {
   elementColorIsValid = 'Element color is valid',
   elementsCountIsValid = 'Elements count is valid',
   elementFontIsValid = 'Element name font is valid',
+  elementTextIsValid = 'Element text is valid',
   menuIsVisible = 'Menu is visible',
   menuIsNotVisible = 'Menu is not visible',
   elementWidthIsValid = 'Element width is valid',
@@ -383,4 +384,5 @@ export enum PublishingExpectedMessages {
 export enum MarketplaceExpectedMessages {
   agentIsVisible = 'Agent is visible in Marketplace',
   filteredAgentsAreValid = 'Filtered agents are valid',
+  filterOptionsAreValid = 'Filter options are valid',
 }

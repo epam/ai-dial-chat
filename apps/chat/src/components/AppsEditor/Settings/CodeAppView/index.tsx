@@ -30,18 +30,21 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
-import { CODEAPPS_REQUIRED_FILES } from '@/src/constants/applications';
+import {
+  CODEAPPS_REQUIRED_FILES,
+  CONFIRM_SOURCE_FOLDER_VALUES,
+} from '@/src/constants/applications';
 import { CODE_APPS_ENDPOINTS } from '@/src/constants/code-apps';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
 
 import { FormCodeEditor } from '@/src/components/Common/ApplicationWizard/CodeAppView/FormCodeEditor';
 import { RuntimeVersionSelector } from '@/src/components/Common/ApplicationWizard/CodeAppView/RuntimeVersionSelector';
 import { SourceFilesEditor } from '@/src/components/Common/ApplicationWizard/CodeAppView/SourceFilesEditor';
-import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { withController } from '@/src/components/Common/Forms/ControlledFormField';
 import { DynamicFormFields } from '@/src/components/Common/Forms/DynamicFormFields';
 import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
+import { withWarningMessage } from '@/src/components/Common/Forms/FieldWarningMessage';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { OptionsDialog } from '@/src/components/Common/OptionsDialog';
@@ -100,7 +103,9 @@ const validators: Validators = {
 
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const ControlledField = withController(Field);
-const FilesEditor = withController(withLabel(SourceFilesEditor));
+const FilesEditor = withController(
+  withWarningMessage(withLabel(SourceFilesEditor)),
+);
 const RuntimeSelector = withController(withLabel(RuntimeVersionSelector));
 const MappingsForm = withLabel(
   DynamicFormFields<CodeAppFormData, 'endpoints' | 'env'>,
@@ -122,11 +127,6 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
   applicationStatus,
 }) => {
   const { t } = useTranslation(Translation.Chat);
-  const [confirmSharingRevoke, setConfirmSharingRevoke] = useState<{
-    description: string;
-    heading: string;
-    data: CodeAppFormData;
-  }>();
   const [editorConfirmation, setEditorConfirmation] =
     useState<CodeAppFormData>();
   const dispatch = useAppDispatch();
@@ -140,7 +140,6 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     watch,
     register,
   } = useFormContext<CodeAppFormData>();
-  const [revokedSharing, setRevokedSharing] = useState(false);
 
   const lastSubmittedValuesRef = useRef<CodeAppFormData | undefined>(
     defaultValues as CodeAppFormData,
@@ -172,18 +171,14 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
         if (
           isShared &&
           preparedData.function?.sourceFolder !==
-            oldApplication.function?.sourceFolder &&
-          !revokedSharing
+            oldApplication.function?.sourceFolder
         ) {
-          setConfirmSharingRevoke({
-            description:
-              'Changing of source folder will stop sharing and other users will no longer see this application.',
-            heading: 'Confirm changing source folder',
-            data,
-          });
-          dispatch(ApplicationActions.setShouldSaveApplication(false));
-          dispatch(ApplicationActions.setExitAfterSave(false));
-          return;
+          dispatch(
+            ShareActions.revokeAccess({
+              resourceId: oldApplication.id,
+              featureType: FeatureType.Application,
+            }),
+          );
         }
 
         dispatch(
@@ -215,7 +210,6 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
       shouldSaveApplication,
       applicationStatus,
       exitAfterSave,
-      revokedSharing,
     ],
   );
 
@@ -332,6 +326,12 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           tooltip={
             isSharedWithMe ? getSharedTooltip('folder with source files') : ''
           }
+          warning={
+            oldApplication?.isShared
+              ? CONFIRM_SOURCE_FOLDER_VALUES.description
+              : ''
+          }
+          confirmDialogValues={CONFIRM_SOURCE_FOLDER_VALUES}
         />
 
         {sources && <FormCodeEditor sourcesFolderId={sources} />}
@@ -362,29 +362,6 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           valueOptions={envValueValidator}
           errors={errors.env}
         />
-
-        {confirmSharingRevoke && !revokedSharing && (
-          <ConfirmDialog
-            isOpen
-            heading={t(confirmSharingRevoke.heading)}
-            description={t(confirmSharingRevoke.description)}
-            confirmLabel={t('Confirm')}
-            cancelLabel={t('Cancel')}
-            onClose={(result) => {
-              if (result) {
-                dispatch(
-                  ShareActions.revokeAccess({
-                    resourceId: oldApplication.id,
-                    featureType: FeatureType.Application,
-                  }),
-                );
-                setRevokedSharing(true);
-                handleEdit(confirmSharingRevoke.data);
-              }
-              setConfirmSharingRevoke(undefined);
-            }}
-          />
-        )}
 
         <OptionsDialog
           isOpen={!!editorConfirmation}
