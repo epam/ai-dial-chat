@@ -10,7 +10,7 @@ export interface ApiApplicationTypeSchema {
 export interface ApplicationTypeSchema {
   id: string;
   displayName: string;
-  editorUrl: string;
+  editorUrl?: string;
   viewerUrl?: string;
 }
 
