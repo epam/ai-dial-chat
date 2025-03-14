@@ -1,12 +1,5 @@
 import { IconDotsVertical } from '@tabler/icons-react';
-import {
-  forwardRef,
-  memo,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -46,111 +39,103 @@ interface HiddenButtonsPropertyProps {
 const buttonsWrapperClassName = 'flex flex-wrap items-center gap-2';
 const MAX_LINES = 3;
 
-const HiddenButtonsProperty = forwardRef<
-  HTMLDivElement,
-  HiddenButtonsPropertyProps
->(
-  (
-    {
-      options,
-      hiddenOptions,
-      className,
-      buttonClassName,
-      onSetVisibleOptions,
-      onSetHiddenOptions,
-    },
-    containerRef,
-  ) => {
-    const hiddenContainerRef = useRef<HTMLDivElement>(null);
-    const dotsButtonRef = useRef<HTMLButtonElement>(null);
+const HiddenButtonsProperty = ({
+  options,
+  hiddenOptions,
+  className,
+  buttonClassName,
+  onSetVisibleOptions,
+  onSetHiddenOptions,
+}: HiddenButtonsPropertyProps) => {
+  const hiddenContainerRef = useRef<HTMLDivElement>(null);
+  const dotsButtonRef = useRef<HTMLButtonElement>(null);
 
-    const determineVisibility = useCallback(() => {
-      if (
-        !hiddenContainerRef.current ||
-        !(containerRef as React.RefObject<HTMLDivElement>).current
-      )
-        return;
+  const determineVisibility = useCallback(() => {
+    if (!hiddenContainerRef.current) return;
 
-      const hiddenButtons = Array.from(
-        hiddenContainerRef.current.children,
-      ) as HTMLElement[];
-      if (hiddenButtons.length === 0) {
-        onSetVisibleOptions(options);
-        onSetHiddenOptions([]);
+    const hiddenButtons = Array.from(
+      hiddenContainerRef.current.children,
+    ) as HTMLElement[];
+
+    if (hiddenButtons.length === 0) {
+      onSetVisibleOptions(options);
+      onSetHiddenOptions([]);
+      return;
+    }
+
+    const visible: FormSchemaButtonOption[] = [];
+    const hidden: FormSchemaButtonOption[] = [];
+    const hasDotsButton = !!dotsButtonRef.current;
+    let currentLine = 1;
+    let lastOffsetTop = hiddenButtons[0].offsetTop;
+
+    hiddenButtons.forEach((btn, index) => {
+      const offsetTop = btn.offsetTop;
+      if (offsetTop > lastOffsetTop) {
+        currentLine += 1;
+        lastOffsetTop = offsetTop;
+      }
+
+      if (btn === dotsButtonRef.current) {
         return;
       }
 
-      const visible: FormSchemaButtonOption[] = [];
-      const hidden: FormSchemaButtonOption[] = [];
-      let currentLine = 1;
-      let lastOffsetTop = hiddenButtons[0].offsetTop;
+      const optionIndex = hasDotsButton ? index - 1 : index;
+      const option = options[optionIndex];
 
-      hiddenButtons.forEach((btn, index) => {
-        const offsetTop = btn.offsetTop;
-        if (offsetTop > lastOffsetTop) {
-          currentLine += 1;
-          lastOffsetTop = offsetTop;
-        }
-
-        if (currentLine <= MAX_LINES) {
-          if (btn !== dotsButtonRef.current) {
-            visible.push(options[dotsButtonRef.current ? index - 1 : index]);
-          }
-        } else {
-          if (btn !== dotsButtonRef.current) {
-            hidden.push(options[dotsButtonRef.current ? index - 1 : index]);
-          }
-        }
-      });
-
-      onSetVisibleOptions(visible);
-      onSetHiddenOptions(hidden);
-    }, [containerRef, onSetHiddenOptions, onSetVisibleOptions, options]);
-
-    useEffect(() => {
-      const handleResize = () => {
-        determineVisibility();
-      };
-
-      const resizeObserver = new ResizeObserver(handleResize);
-
-      if (hiddenContainerRef.current) {
-        resizeObserver.observe(hiddenContainerRef.current);
+      if (currentLine <= MAX_LINES) {
+        visible.push(option);
+      } else {
+        hidden.push(option);
       }
+    });
 
-      return () => {
-        resizeObserver.disconnect();
-      };
-    }, [determineVisibility, options]);
+    onSetVisibleOptions(visible);
+    onSetHiddenOptions(hidden);
+  }, [onSetHiddenOptions, onSetVisibleOptions, options]);
 
-    return (
-      <div
-        ref={hiddenContainerRef}
-        className={classNames(
-          'invisible absolute',
-          buttonsWrapperClassName,
-          className,
-        )}
-      >
-        {hiddenOptions.length > 0 && (
-          <button ref={dotsButtonRef} className="chat-button">
-            <IconDotsVertical size={18} />
-          </button>
-        )}
-        {options.map((option) => (
-          <button
-            key={option.const}
-            className={classNames('chat-button', buttonClassName)}
-            disabled
-          >
-            {option.title}
-          </button>
-        ))}
-      </div>
-    );
-  },
-);
-HiddenButtonsProperty.displayName = 'HiddenButtonsProperty';
+  useEffect(() => {
+    const handleResize = () => {
+      determineVisibility();
+    };
+
+    const resizeObserver = new ResizeObserver(handleResize);
+
+    if (hiddenContainerRef.current) {
+      resizeObserver.observe(hiddenContainerRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [determineVisibility, options]);
+
+  return (
+    <div
+      ref={hiddenContainerRef}
+      className={classNames(
+        'invisible absolute',
+        buttonsWrapperClassName,
+        className,
+      )}
+    >
+      {hiddenOptions.length > 0 && (
+        <button ref={dotsButtonRef} className="chat-button">
+          <IconDotsVertical size={18} />
+        </button>
+      )}
+      {options.map((option) => (
+        <button
+          key={option.const}
+          className={classNames('chat-button', buttonClassName)}
+          disabled
+        >
+          {option.title}
+        </button>
+      ))}
+    </div>
+  );
+};
 
 interface ButtonsPropertyProps {
   isChatStarters: boolean;
@@ -182,8 +167,6 @@ export const ButtonsProperty = ({
     [],
   );
   const [hiddenOptionsModal, setHiddenOptionsModal] = useState(false);
-
-  const containerRef = useRef<HTMLDivElement>(null);
 
   const screenState = useScreenState();
 
@@ -218,10 +201,7 @@ export const ButtonsProperty = ({
 
   return (
     <>
-      <div
-        className={classNames(buttonsWrapperClassName, className)}
-        ref={containerRef}
-      >
+      <div className={classNames(buttonsWrapperClassName, className)}>
         {visibleOptions.map((option) => (
           <SchemaButton
             key={option.title}
@@ -246,7 +226,6 @@ export const ButtonsProperty = ({
 
       {screenState === ScreenState.SM && isChatStarters && (
         <HiddenButtonsProperty
-          ref={containerRef}
           onSetVisibleOptions={setVisibleOptions}
           onSetHiddenOptions={setHiddenOptions}
           hiddenOptions={hiddenOptions}
