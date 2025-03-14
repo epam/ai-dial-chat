@@ -1,4 +1,4 @@
-import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
+import { SideBarConversationAssertion } from '@/src/assertions/sideBarConversationAssertion';
 import { SharedWithMeConversationsTree } from '@/src/ui/webElements/entityTree';
 
-export class SharedWithMeConversationAssertion extends SideBarEntityAssertion<SharedWithMeConversationsTree> {}
+export class SharedWithMeConversationAssertion extends SideBarConversationAssertion<SharedWithMeConversationsTree> {}

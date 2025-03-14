@@ -65,6 +65,7 @@ import { RenameConversationModalAssertion } from '@/src/assertions/renameConvers
 import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
 import { SharedWithMeConversationAssertion } from '@/src/assertions/sharedWithMeConversationAssertion';
+import { SideBarConversationAssertion } from '@/src/assertions/sideBarConversationAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import test from '@/src/core/baseFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
@@ -232,6 +233,7 @@ const dialTest = test.extend<{
   additionalSecondShareUserRequestContext: APIRequestContext;
   adminUserRequestContext: APIRequestContext;
   adminUserItemApiHelper: ItemApiHelper;
+  adminShareApiHelper: ShareApiHelper;
   adminApplicationApiHelper: ApplicationApiHelper;
   mainUserShareApiHelper: ShareApiHelper;
   sharedWithMeConversations: SharedWithMeConversationsTree;
@@ -264,7 +266,7 @@ const dialTest = test.extend<{
   publishingRules: PublishingRules;
   conversationAssertion: ConversationAssertion;
   chatBarFolderAssertion: FolderAssertion<FolderConversations>;
-  organizationConversationAssertion: SideBarEntityAssertion<OrganizationConversationsTree>;
+  organizationConversationAssertion: SideBarConversationAssertion<OrganizationConversationsTree>;
   organizationPromptAssertion: SideBarEntityAssertion<OrganizationPromptsTree>;
   toastAssertion: ToastAssertion;
   downloadAssertion: DownloadAssertion;
@@ -736,6 +738,13 @@ const dialTest = test.extend<{
     );
     await use(adminApplicationApiHelper);
   },
+  adminShareApiHelper: async ({ adminUserRequestContext }, use) => {
+    const adminShareApiHelper = new ShareApiHelper(
+      adminUserRequestContext,
+      BucketUtil.getAdminUserBucket(),
+    );
+    await use(adminShareApiHelper);
+  },
   additionalShareUserRequestContext: async ({ playwright }, use) => {
     const additionalShareUserRequestContext =
       await playwright.request.newContext({
@@ -915,7 +924,7 @@ const dialTest = test.extend<{
     use,
   ) => {
     const organizationConversationAssertion =
-      new SideBarEntityAssertion<OrganizationConversationsTree>(
+      new SideBarConversationAssertion<OrganizationConversationsTree>(
         organizationConversations,
       );
     await use(organizationConversationAssertion);

@@ -1,20 +1,22 @@
 import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
+import { Publication } from '@/chat/types/publication';
+import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import {
-  CollapsedSections,
-  MenuOptions,
-  MockedChatApiResponseBodies,
-} from '@/src/testData';
+import { MenuOptions, MockedChatApiResponseBodies } from '@/src/testData';
 import { loadingTimeout } from '@/src/ui/pages';
 import { ModelsUtil } from '@/src/utils';
 import { GeneratorUtil } from '@/src/utils/generatorUtil';
+import { PublishActions } from '@epam/ai-dial-shared';
+
+const publicationsToUnpublish: Publication[] = [];
 
 dialTest(
   'New conversation stays on Back to Chat if new conversation was on the screen\n' +
     'New conversation is NOT created on browser refresh if conversation with cleared history is focused\n' +
     'New conversation is NOT created on Back to Chat if conversation with history was focused\n' +
     'New conversation is NOT created on Search on My workspace opened from the chat header\n' +
+    'Autofocus on chat input when refresh page.\n' +
     'New conversation is created on browser refresh if conversation with history from Pinned or Today is focused',
   async ({
     dialHomePage,
@@ -31,6 +33,8 @@ dialTest(
     marketplacePage,
     conversations,
     iconApiHelper,
+    sendMessage,
+    baseAssertion,
   }) => {
     setTestIds(
       'EPMRTC-4587',
@@ -38,6 +42,7 @@ dialTest(
       'EPMRTC-4718',
       'EPMRTC-4590',
       'EPMRTC-4588',
+      'EPMRTC-5450',
       'EPMRTC-4592',
     );
     const initialConversationName = GeneratorUtil.randomString(7);
@@ -136,13 +141,17 @@ dialTest(
     );
 
     await dialTest.step(
-      'Reload the page after the selection of the non-empty conversation and verify the regular start page is opened. No conversation is selected',
+      'Reload the page after the selection of the non-empty conversation and verify the regular start page is opened. No conversation is selected. Focus stays in the send input',
       async () => {
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.waitForState();
         await chat.configureSettingsButton.waitForState();
         await conversationAssertion.assertNoConversationIsSelected();
+        await baseAssertion.assertIsElementFocused(
+          sendMessage.messageInput,
+          true,
+        );
       },
     );
 
@@ -192,29 +201,52 @@ dialTest(
   },
 );
 
-dialTest(
+dialAdminTest(
   'New conversation is created on browser refresh if two chats with history are in compare mode\n' +
     'New conversation is created on browser refresh if conversation in Playback mode is selected\n' +
-    'New conversation is created on browser refresh if conversation in Replay mode is selected',
-  async ({
-    dialHomePage,
-    chat,
-    setTestIds,
-    localStorageManager,
-    conversationAssertion,
-    conversationData,
-    dataInjector,
-    conversations,
-    conversationDropdownMenu,
-    compareConversation,
-    appContainer,
-  }) => {
-    setTestIds('EPMRTC-4682', 'EPMRTC-4683', 'EPMRTC-4593');
+    'New conversation is created on browser refresh if conversation in Replay mode is selected.\n' +
+    'New conversation is created on user re-login if conversation with history from Organization was focused.\n' +
+    'New conversation is created on user re-login if conversation with history from Shared with me was focused',
+  async (
+    {
+      dialHomePage,
+      chat,
+      setTestIds,
+      localStorageManager,
+      conversationAssertion,
+      conversationData,
+      dataInjector,
+      mainUserShareApiHelper,
+      adminDataInjector,
+      publishRequestBuilder,
+      adminPublicationApiHelper,
+      adminShareApiHelper,
+      conversations,
+      organizationConversations,
+      sharedWithMeConversations,
+      conversationDropdownMenu,
+      compareConversation,
+      appContainer,
+      providerLogin,
+      context,
+      organizationConversationAssertion,
+      sharedWithMeConversationAssertion,
+    },
+    testInfo,
+  ) => {
+    setTestIds(
+      'EPMRTC-4682',
+      'EPMRTC-4683',
+      'EPMRTC-4593',
+      'EPMRTC-4591',
+      'EPMRTC-4589',
+    );
     let models: DialAIEntityModel[];
     let initialConversation: Conversation;
     let conversationToCompare: Conversation;
     let playbackConversation: Conversation;
     let replayConversation: Conversation;
+    let adminConversation: Conversation;
 
     await dialTest.step(
       'Set 2 random models to recent and create a conversation and playback conversation via API',
@@ -240,15 +272,33 @@ dialTest(
         replayConversation = conversationData.prepareDefaultReplayConversation(
           conversationToCompare,
         );
+        conversationData.resetData();
         await dataInjector.createConversations([
           conversationToCompare,
           playbackConversation,
           replayConversation,
           initialConversation,
         ]);
-        await localStorageManager.setChatCollapsedSection(
-          CollapsedSections.Organization,
+
+        //create conversation by admin user
+        adminConversation = conversationData.prepareDefaultConversation(
+          models[1],
         );
+        await adminDataInjector.createConversations([adminConversation]);
+        //publish it
+        const publishRequest = publishRequestBuilder
+          .withName(GeneratorUtil.randomPublicationRequestName())
+          .withConversationResource(adminConversation, PublishActions.ADD)
+          .build();
+        const appPublication =
+          await adminPublicationApiHelper.createPublishRequest(publishRequest);
+        publicationsToUnpublish.push(appPublication);
+        await adminPublicationApiHelper.approveRequest(appPublication);
+        //share it with the main user
+        const shareByLinkResponse = await adminShareApiHelper.shareEntityByLink(
+          [adminConversation],
+        );
+        await mainUserShareApiHelper.acceptInvite(shareByLinkResponse);
         await localStorageManager.setShowSideBarPanels();
       },
     );
@@ -321,5 +371,55 @@ dialTest(
         await conversationAssertion.assertNoConversationIsSelected();
       },
     );
+
+    await dialTest.step(
+      'Select published conversation, re-login and verify new conversation is created, no conversation is selected',
+      async () => {
+        await organizationConversations.selectConversation(
+          adminConversation.name,
+        );
+        await context.clearCookies();
+        await providerLogin.login(
+          testInfo,
+          process.env.E2E_USERNAME!.split(',')[+testInfo.parallelIndex],
+          process.env.E2E_PASSWORD!,
+          false,
+        );
+        await dialHomePage.waitForPageLoaded();
+        await chat.changeAgentButton.waitForState();
+        await chat.configureSettingsButton.waitForState();
+        await organizationConversationAssertion.assertNoConversationIsSelected();
+      },
+    );
+
+    await dialTest.step(
+      'Select shared conversation, re-login and verify new conversation is created, no conversation is selected',
+      async () => {
+        await sharedWithMeConversations.selectConversation(
+          adminConversation.name,
+        );
+        await context.clearCookies();
+        await providerLogin.login(
+          testInfo,
+          process.env.E2E_USERNAME!.split(',')[+testInfo.parallelIndex],
+          process.env.E2E_PASSWORD!,
+          false,
+        );
+        await dialHomePage.waitForPageLoaded();
+        await chat.changeAgentButton.waitForState();
+        await chat.configureSettingsButton.waitForState();
+        await sharedWithMeConversationAssertion.assertNoConversationIsSelected();
+      },
+    );
+  },
+);
+
+dialTest.afterAll(
+  async ({ publicationApiHelper, adminPublicationApiHelper }) => {
+    for (const publication of publicationsToUnpublish) {
+      const unpublishResponse =
+        await publicationApiHelper.createUnpublishRequest(publication);
+      await adminPublicationApiHelper.approveRequest(unpublishResponse);
+    }
   },
 );

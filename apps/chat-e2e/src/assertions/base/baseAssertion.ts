@@ -211,6 +211,22 @@ export class BaseAssertion {
     ).toHaveCSS(Styles.color, expectedColor);
   }
 
+  public async assertIsElementFocused(
+    element: BaseElement | Locator,
+    isFocused: boolean,
+  ) {
+    const elementLocator = this.getElementLocator(element);
+    isFocused
+      ? await expect(
+          elementLocator,
+          ExpectedMessages.elementIsInFocus,
+        ).toBeFocused()
+      : await expect(
+          elementLocator,
+          ExpectedMessages.elementIsNotInFocus,
+        ).not.toBeFocused();
+  }
+
   public async assertElementCursor(
     element: BaseElement | Locator,
     cursor: Cursors,
