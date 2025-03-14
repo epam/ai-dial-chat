@@ -545,8 +545,9 @@ dialTest(
   },
 );
 
-dialSharedWithMeTest.only(
-  'Use prompt not available for chat from Shared with me',
+dialSharedWithMeTest(
+  'Use prompt not available for chat from Shared with me\n' +
+    'Use prompt from "Shared with me" section for chat with history',
   async ({
     dialHomePage,
     sharedWithMeConversations,
@@ -560,13 +561,18 @@ dialSharedWithMeTest.only(
     conversationData,
     localStorageManager,
     dataInjector,
+    sendMessage,
+    sendMessageAssertion,
+    header,
+    promptDropdownMenu,
   }) => {
-    setTestIds('EPMRTC-5498');
+    setTestIds('EPMRTC-5498', 'EPMRTC-5488');
     const prompt = promptData.prepareDefaultPrompt();
     const model = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
     );
     const conversation = conversationData.prepareDefaultConversation(model);
+    const initialMessage = GeneratorUtil.randomString(10);
 
     await additionalShareUserDataInjector.createConversations([conversation]);
     await dataInjector.createPrompts([prompt]);
@@ -574,6 +580,11 @@ dialSharedWithMeTest.only(
     const shareConversationLink =
       await additionalUserShareApiHelper.shareEntityByLink([conversation]);
     await mainUserShareApiHelper.acceptInvite(shareConversationLink);
+
+    const sharePromptLink = await mainUserShareApiHelper.shareEntityByLink([
+      prompt,
+    ]);
+    await additionalUserShareApiHelper.acceptInvite(sharePromptLink);
 
     await localStorageManager.setRecentModelsIdsOnce(model);
     await localStorageManager.setShowSideBarPanels();
@@ -591,6 +602,21 @@ dialSharedWithMeTest.only(
         );
       },
     );
+
+    await dialSharedWithMeTest.step(
+      'Type message and use prompt from Shared with me',
+      async () => {
+        await header.createNewConversation();
+        await sendMessage.messageInput.fillInInput(initialMessage);
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenu.selectMenuOption(MenuOptions.use, {
+          triggeredHttpMethod: 'GET',
+        });
+        await sendMessageAssertion.assertMessageValue(
+          `${initialMessage} ${prompt.content}`,
+        );
+      },
+    );
   },
 );
 
@@ -601,7 +627,7 @@ dialTest.afterAll(
         await publicationApiHelper.createUnpublishRequest(publication);
       await adminPublicationApiHelper.approveRequest(unpublishResponse);
     }
-
+    //TODO
     for (const publication of publicationsToReject) {
       await publicationApiHelper.rejectRequest(publication);
     }
