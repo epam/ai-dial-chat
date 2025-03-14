@@ -32,7 +32,7 @@ export default function Signin(props: PageProps) {
     }
   }, [status, router, defaultAuthProvider, session]);
 
-  return <div></div>;
+  return null;
 }
 
 export const getServerSideProps: GetServerSideProps = async () => {

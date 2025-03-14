@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getToken } from 'next-auth/jwt';
 
+import { parseCommaSeparatedList } from '@/src/utils/app/common';
 import NextClient from '@/src/utils/auth/nextauth-client';
 import { logger } from '@/src/utils/server/logger';
 
@@ -33,8 +34,14 @@ const handler = async (
       return;
     }
 
-    const skipFederatedLogoutProviders =
-      process.env.SKIP_FEDERATED_LOGOUT_PROVIDERS;
+    const skipFederatedLogoutProviders = parseCommaSeparatedList(
+      process.env.SKIP_FEDERATED_LOGOUT_PROVIDERS,
+    );
+
+    if (skipFederatedLogoutProviders.includes(token.providerId)) {
+      res.status(200).json({ url: null });
+      return;
+    }
 
     const client = NextClient.getClient(token.providerId);
 
@@ -49,11 +56,7 @@ const handler = async (
       id_token_hint: token.idToken as string,
     });
 
-    if (
-      !url ||
-      (skipFederatedLogoutProviders &&
-        skipFederatedLogoutProviders.split(',').includes(token.providerId))
-    ) {
+    if (!url) {
       logger.warn(
         `End session URL not found for providerId ${token.providerId}.`,
       );
