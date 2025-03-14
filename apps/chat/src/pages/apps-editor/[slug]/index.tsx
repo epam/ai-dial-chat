@@ -9,6 +9,7 @@ import { decode } from '@/src/utils/app/application-type-schema';
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 import { canUserUseFeature } from '@/src/utils/session';
 
+import { ApplicationTypeSchemaProperties } from '@/src/types/application-type-schema';
 import { ApplicationType } from '@/src/types/applications';
 
 import {
@@ -73,7 +74,9 @@ export default function AppsEditor() {
           <AppsEditorHeader
             applicationTypeDisplayName={
               isSchemaApplicationType
-                ? (schema?.['dial:applicationTypeDisplayName'] ?? '')
+                ? (schema?.[
+                    ApplicationTypeSchemaProperties.applicationTypeDisplayName
+                  ] ?? '')
                 : decode(slug.toString())
             }
             isEditApplication={!!id}
