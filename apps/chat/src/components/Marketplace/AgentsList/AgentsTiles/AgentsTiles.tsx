@@ -1,5 +1,5 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useMarketplaceBannerVisibility } from '@/src/hooks/useMarketplaceBannerVisibility';
 import { useScreenState } from '@/src/hooks/useScreenState';
@@ -15,13 +15,24 @@ import { ApplicationCard } from './ApplicationCard';
 import isString from 'lodash-es/isString';
 import range from 'lodash-es/range';
 
-const ROWS_INFO = {
-  [ScreenState.SM]: { height: 110, cols: 1 },
-  [ScreenState.MD]: { height: 178, cols: 2 },
-  [ScreenState.XL]: { height: 184, cols: 3 },
-  [ScreenState.XL3]: { height: 184, cols: 4 },
-  [ScreenState.XL4]: { height: 184, cols: 5 },
-  [ScreenState.XL5]: { height: 184, cols: 6 },
+const MIN_CARD_WIDTH = 356;
+const MIN_CARD_WIDTH_XL = 450;
+const DEFAULT_GAP = 20;
+const DEFAULT_WIDTH = 184;
+
+interface RowInfo {
+  height: number;
+  gap?: number;
+  minWidth?: number;
+}
+
+const ROWS_INFO: Record<ScreenState, RowInfo> = {
+  [ScreenState.SM]: { height: 110, gap: 12 },
+  [ScreenState.MD]: { height: 178, gap: 16 },
+  [ScreenState.XL]: { height: DEFAULT_WIDTH },
+  [ScreenState.XL3]: { height: DEFAULT_WIDTH },
+  [ScreenState.XL4]: { height: DEFAULT_WIDTH, minWidth: MIN_CARD_WIDTH_XL },
+  [ScreenState.XL5]: { height: DEFAULT_WIDTH, minWidth: MIN_CARD_WIDTH_XL },
 };
 
 export const AgentsTiles: React.FC<AgentsListProps> = ({
@@ -43,10 +54,40 @@ export const AgentsTiles: React.FC<AgentsListProps> = ({
 
   const currentParentRef = wrapperRefs.current?.parentRef.current ?? null;
   const suggestedRowRef = wrapperRefs.current?.suggestedRowRef;
+  const [colsCount, setColumnCount] = useState(1);
 
   const screenState = useScreenState();
 
-  const { cols: colsCount, height: rowsHeight } = ROWS_INFO[screenState];
+  const {
+    height: rowsHeight,
+    gap = DEFAULT_GAP,
+    minWidth = MIN_CARD_WIDTH,
+  } = ROWS_INFO[screenState];
+  useEffect(() => {
+    const handleResize = () => {
+      if (dataRef.current) {
+        let count = 1;
+        while (
+          minWidth * (count + 1) + gap * count <=
+          dataRef.current.offsetWidth
+        ) {
+          count++;
+        }
+        setColumnCount(count);
+      }
+    };
+
+    const resizeObserver = new ResizeObserver(handleResize);
+
+    if (dataRef.current) {
+      resizeObserver.observe(dataRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [gap, minWidth]);
+
   const allEntities: (DialAIEntityModel | string)[] = useMemo(() => {
     if (!suggestedResults.length) return entities;
     if (!entities.length && suggestedResults.length) return suggestedResults;
@@ -57,10 +98,10 @@ export const AgentsTiles: React.FC<AgentsListProps> = ({
         null,
       ),
       separator,
-      ...Array(ROWS_INFO[screenState].cols - 1).fill(null),
+      ...Array(colsCount - 1).fill(null),
       ...suggestedResults,
     ];
-  }, [suggestedResults, entities, colsCount, separator, screenState]);
+  }, [suggestedResults, entities, colsCount, separator]);
 
   const rowVirtualizer = useVirtualizer({
     count: Math.ceil(allEntities.length / colsCount),
@@ -104,11 +145,12 @@ export const AgentsTiles: React.FC<AgentsListProps> = ({
             return (
               <div
                 key={virtualRow.key}
-                className="absolute left-0 top-0 grid min-w-full gap-3 md:gap-4 xl:gap-5"
+                className="absolute left-0 top-0 grid min-w-full"
                 style={{
                   height: `${virtualRow.size}px`,
                   transform: `translateY(${virtualRow.start}px)`,
                   gridTemplateColumns: `repeat(${colsCount}, minmax(0, 1fr))`,
+                  gap: `${gap}px`,
                 }}
                 data-qa="agents-row"
               >

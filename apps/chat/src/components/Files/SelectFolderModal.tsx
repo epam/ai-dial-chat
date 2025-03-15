@@ -5,6 +5,7 @@ import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
 import {
   getParentFolderIdsFromFolderId,
   splitEntityId,
+  updateMovedFolderId,
 } from '@/src/utils/app/folders';
 
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
@@ -69,6 +70,9 @@ export const SelectFolderModal = ({
   const loadingFolderIds = useAppSelector(
     FilesSelectors.selectLoadingFolderIds,
   );
+  const lastRenamedParentFolder = useAppSelector(
+    FilesSelectors.selectLastRenamedParentFolder,
+  );
 
   const {
     handleRenameFolder,
@@ -84,6 +88,42 @@ export const SelectFolderModal = ({
     setIsAllFilesOpened,
   );
   const showSpinner = folders.length === 0 && areFoldersLoading;
+
+  useEffect(() => {
+    if (lastRenamedParentFolder?.newId) {
+      setOpenedFoldersIds((prev) =>
+        prev.map((id) => {
+          if (id === lastRenamedParentFolder.oldId)
+            return lastRenamedParentFolder.newId;
+          if (id.startsWith(`${lastRenamedParentFolder.oldId}/`))
+            return updateMovedFolderId(
+              lastRenamedParentFolder.oldId,
+              lastRenamedParentFolder.newId,
+              id,
+            );
+          return id;
+        }),
+      );
+      setSelectedFolderId((id) => {
+        if (!id) return id;
+
+        if (id === lastRenamedParentFolder.oldId)
+          return lastRenamedParentFolder.newId;
+        if (id.startsWith(`${lastRenamedParentFolder.oldId}/`))
+          return updateMovedFolderId(
+            lastRenamedParentFolder.oldId,
+            lastRenamedParentFolder.newId,
+            id,
+          );
+        return id;
+      });
+      dispatch(FilesActions.resetLastRenamedParentFolder());
+    }
+  }, [
+    dispatch,
+    lastRenamedParentFolder?.newId,
+    lastRenamedParentFolder?.oldId,
+  ]);
 
   useEffect(() => {
     if (isOpen) {

@@ -1,5 +1,5 @@
 import { DialAIEntityModel } from '@/chat/types/models';
-import { ExpectedConstants } from '@/src/testData';
+import { API, ExpectedConstants } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
 import { MenuSelectors } from '@/src/ui/selectors';
 import { MarketplaceAgentSelectors } from '@/src/ui/selectors/marketplaceSelectors';
@@ -48,7 +48,7 @@ export class MarketplaceAgents extends BaseElement {
   public agentName = (name: string) =>
     new BaseElement(
       this.page,
-      `${MarketplaceAgentSelectors.agentName}:text-is('${name}')`,
+      `${MarketplaceAgentSelectors.agentName}:text-is('${RegexUtil.escapeRegexChars(name)}')`,
     ).getElementLocator();
 
   public agentVersion = (version: string) =>
@@ -66,15 +66,13 @@ export class MarketplaceAgents extends BaseElement {
   public getAgent = (entity: DialAIEntityModel | string) => {
     let agent;
     if (typeof entity === 'string') {
-      agent = this.rootLocator
-        .filter({ has: this.agentName(RegexUtil.escapeRegexChars(entity)) })
-        .first();
+      agent = this.rootLocator.filter({ has: this.agentName(entity) }).first();
     } else {
       //if agent has version in the config
       if (entity.version) {
         agent = this.rootLocator
           .filter({
-            has: this.agentName(RegexUtil.escapeRegexChars(entity.name)),
+            has: this.agentName(entity.name),
           })
           .filter({
             has: this.agentVersion(entity.version).or(
@@ -86,7 +84,7 @@ export class MarketplaceAgents extends BaseElement {
         //init agent locator if no version is available in the config
         agent = this.rootLocator
           .filter({
-            has: this.agentName(RegexUtil.escapeRegexChars(entity.name)),
+            has: this.agentName(entity.name),
           })
           .first();
       }
@@ -106,6 +104,23 @@ export class MarketplaceAgents extends BaseElement {
     );
   }
 
+  public getAgentElementWithVersion(
+    agentElement: BaseElement,
+    version?: string,
+  ) {
+    return agentElement.getElementLocator().filter({
+      has: this.agentVersion(version!).or(
+        this.agentVersionWithPrefix(version!),
+      ),
+    });
+  }
+
+  public getAgentElementTopics(agentElement: BaseElement) {
+    return agentElement.getChildElementBySelector(
+      MarketplaceAgentSelectors.topics,
+    );
+  }
+
   public getAgentDotsMenu(entity: DialAIEntityModel | string) {
     return this.getAgent(entity).getChildElementBySelector(
       MenuSelectors.dotsMenu,
@@ -114,6 +129,18 @@ export class MarketplaceAgents extends BaseElement {
 
   public getAgentElementDotsMenu(agentElement: BaseElement) {
     return agentElement.getChildElementBySelector(MenuSelectors.dotsMenu);
+  }
+
+  public getAgentElementAddBookmarkIcon(agentElement: BaseElement) {
+    return agentElement.getChildElementBySelector(
+      MarketplaceAgentSelectors.addBookmarkIcon,
+    );
+  }
+
+  public getAgentElementRemoveBookmarkIcon(agentElement: BaseElement) {
+    return agentElement.getChildElementBySelector(
+      MarketplaceAgentSelectors.removeBookmarkIcon,
+    );
   }
 
   public async agentWithVersionToSet(entity: DialAIEntityModel) {
@@ -133,5 +160,14 @@ export class MarketplaceAgents extends BaseElement {
 
   public async getAgentsIcons() {
     return this.getElementIcons(this);
+  }
+
+  public async addAgentToWorkspace(agentElement: BaseElement) {
+    const respPromise = this.page.waitForResponse(
+      (r) =>
+        r.url().includes(API.installedDeploymentsHost()) && r.status() === 200,
+    );
+    await this.getAgentElementAddBookmarkIcon(agentElement).click();
+    await respPromise;
   }
 }

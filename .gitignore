@@ -61,5 +61,5 @@ pnpm-lock.yaml
 */coverage
 
 # NX
-.nx/cache
+.nx
 tmp
