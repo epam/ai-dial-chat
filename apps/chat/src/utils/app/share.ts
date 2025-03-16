@@ -1,3 +1,5 @@
+import { NextApiRequest } from 'next';
+
 import { FeatureType } from '@/src/types/common';
 import { DialAIError } from '@/src/types/error';
 import { DialAIEntityModel } from '@/src/types/models';
@@ -36,11 +38,14 @@ export const getShareType = (
   }
 };
 
-export const validateInvitationId = (invitationId: string) => {
+export const validateInvitationId = (
+  invitationId: string,
+  request: NextApiRequest,
+) => {
   // Validate invitationId to ensure it only contains alphanumeric characters and is of a reasonable length
   const isValidInvitationId = /^[A-Za-z0-9-]+$/.test(invitationId);
   if (!isValidInvitationId) {
-    throw new DialAIError('Invalid invitationId', '', '', '400');
+    throw new DialAIError('Invalid invitationId', 400, request);
   }
 };
 

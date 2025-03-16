@@ -30,7 +30,7 @@ const getEntityUrlFromSlugs = (
     : [req.query.slug];
 
   if (!slugs || slugs.length === 0) {
-    throw new DialAIError(`No ${entityType} path provided`, '', '', '400');
+    throw new DialAIError(`No ${entityType} path provided`, 400, req);
   }
 
   return sanitizeUri(
@@ -123,9 +123,8 @@ async function handlePutRequest(
   if (!proxyRes.ok) {
     throw new DialAIError(
       (typeof json === 'string' && json) || proxyRes.statusText,
-      '',
-      '',
-      proxyRes.status + '',
+      proxyRes.status,
+      req,
     );
   }
 
@@ -145,9 +144,8 @@ async function handleGetRequest(
   if (!proxyRes.ok) {
     throw new DialAIError(
       `Requesting entity failed - '${url}'` + proxyRes.statusText,
-      '',
-      '',
-      proxyRes.status + '',
+      proxyRes.status,
+      req,
     );
   }
 
@@ -183,9 +181,8 @@ async function handleDeleteRequest(
     }
     throw new DialAIError(
       (typeof json === 'string' && json) || proxyRes.statusText,
-      '',
-      '',
-      proxyRes.status + '',
+      proxyRes.status,
+      req,
     );
   }
 

@@ -19,6 +19,7 @@ export const MarketplaceAgentSelectors = {
   description: '.text-sm',
   addBookmarkIcon: '[data-qa="add-bookmark"]',
   removeBookmarkIcon: '[data-qa="remove-bookmark"]',
+  topics: '[data-qa="app-topics"]',
 };
 
 export const MarketplaceDetailsModal = {
