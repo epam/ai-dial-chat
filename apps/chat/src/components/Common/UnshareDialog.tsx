@@ -15,7 +15,12 @@ function UnshareDialogView() {
   const dispatch = useAppDispatch();
 
   const unshareEntity = useAppSelector(ShareSelectors.selectUnshareModel);
-  const unshareFolderId = useAppSelector(ShareSelectors.selectUnshareFolderId);
+  const unshareResourceId = useAppSelector(
+    ShareSelectors.selectUnshareResourceId,
+  );
+  const shareResourceName = useAppSelector(
+    ShareSelectors.selectShareResourceName,
+  );
 
   const shareFeatureType = useAppSelector(
     ShareSelectors.selectShareFeatureType,
@@ -24,34 +29,35 @@ function UnshareDialogView() {
   const isFolder = useAppSelector(ShareSelectors.selectShareIsFolder);
 
   const description = isFolder
-    ? t('Are you sure you want to remove access for all users to this folder?')
+    ? t(
+        `Are you sure you want to remove access for all users to ${shareResourceName}?`,
+      )
     : t(
         `Are you sure you want to remove ${
           unshareEntity?.isShared ? 'access for all users' : 'your access'
-        } to ${unshareEntity?.name}?`,
+        } to ${unshareEntity ? unshareEntity?.name : shareResourceName}?`,
       );
 
   const handleConfirmUnshare = useCallback(
     (confirmation: boolean) => {
       if (!confirmation) {
         dispatch(
-          isFolder
-            ? ShareActions.setUnshareFolderId(undefined)
-            : ShareActions.setUnshareEntity(undefined),
+          unshareEntity
+            ? ShareActions.setUnshareEntity(undefined)
+            : ShareActions.setUnshareResourceId(undefined),
         );
         return;
       }
       if (shareFeatureType) {
-        if (isFolder) {
-          unshareFolderId &&
-            dispatch(
-              ShareActions.revokeAccess({
-                resourceId: unshareFolderId,
-                isFolder: true,
-                featureType: shareFeatureType,
-              }),
-            );
-          dispatch(ShareActions.setUnshareFolderId(undefined));
+        if (unshareResourceId) {
+          dispatch(
+            ShareActions.revokeAccess({
+              resourceId: unshareResourceId,
+              isFolder: isFolder,
+              featureType: shareFeatureType,
+            }),
+          );
+          dispatch(ShareActions.setUnshareResourceId(undefined));
         } else {
           if (unshareEntity?.isShared) {
             dispatch(
@@ -75,7 +81,7 @@ function UnshareDialogView() {
         }
       }
     },
-    [dispatch, shareFeatureType, isFolder, unshareEntity, unshareFolderId],
+    [dispatch, shareFeatureType, isFolder, unshareEntity, unshareResourceId],
   );
 
   return (
@@ -92,7 +98,7 @@ function UnshareDialogView() {
 
 export const UnshareDialog = withRenderWhen((state) => {
   const unshareModel = ShareSelectors.selectUnshareModel(state);
-  const unshareFolder = ShareSelectors.selectUnshareFolderId(state);
+  const unshareResource = ShareSelectors.selectUnshareResourceId(state);
 
-  return !!unshareModel || !!unshareFolder;
+  return !!unshareModel || !!unshareResource;
 })(UnshareDialogView);

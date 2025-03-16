@@ -124,7 +124,6 @@ export const ConversationContextMenu = ({
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isShowExportModal, setIsShowExportModal] = useState(false);
-  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
 
@@ -178,12 +177,6 @@ export const ConversationContextMenu = ({
 
       setIsDeleting(true);
     }, []);
-
-  const handleUnshare: MouseEventHandler<HTMLButtonElement> =
-    useCallback(() => {
-      setIsUnshareConfirmOpened(true);
-      setIsOpen(false);
-    }, [setIsOpen]);
 
   const handleOpenPublishing = useCallback(() => {
     setIsPublishing(true);
@@ -322,10 +315,11 @@ export const ConversationContextMenu = ({
         ShareActions.share({
           featureType: FeatureType.Chat,
           resourceId: conversation.id,
+          isShared: conversation.isShared,
         }),
       );
       setIsOpen(false);
-    }, [conversation.id, dispatch, setIsOpen]);
+    }, [conversation, dispatch, setIsOpen]);
 
   const handleSelect: MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
@@ -426,7 +420,6 @@ export const ConversationContextMenu = ({
               : undefined
           }
           onShare={!isReplay ? handleOpenSharing : undefined}
-          onUnshare={!isReplay ? handleUnshare : undefined}
           onPublish={!isReplay ? handleOpenPublishing : undefined}
           onUnpublish={isUnpublishVisible ? handleOpenUnpublishing : undefined}
           onOpenChange={setIsOpen}
@@ -466,31 +459,6 @@ export const ConversationContextMenu = ({
               ? getIdWithoutRootPathSegments(conversation.folderId)
               : undefined
           }
-        />
-      )}
-
-      {isUnshareConfirmOpened && (
-        <ConfirmDialog
-          isOpen
-          heading={t('Confirm unsharing: {{conversationName}}', {
-            conversationName: conversation.name,
-          })}
-          description={t(
-            'Are you sure that you want to unshare this conversation?',
-          )}
-          confirmLabel={t('Unshare')}
-          cancelLabel={t('Cancel')}
-          onClose={(result) => {
-            setIsUnshareConfirmOpened(false);
-            if (result) {
-              dispatch(
-                ShareActions.revokeAccess({
-                  resourceId: conversation.id,
-                  featureType: FeatureType.Chat,
-                }),
-              );
-            }
-          }}
         />
       )}
 

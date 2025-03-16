@@ -157,7 +157,6 @@ export const PromptComponent = ({
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
-  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
 
   const screenState = useScreenState();
 
@@ -189,13 +188,11 @@ export const PromptComponent = ({
         ShareActions.share({
           featureType: FeatureType.Prompt,
           resourceId: prompt.id,
+          isShared: prompt.isShared,
         }),
       );
-    }, [dispatch, prompt.id]);
-  const handleOpenUnsharing: MouseEventHandler<HTMLButtonElement> =
-    useCallback(() => {
-      setIsUnshareConfirmOpened(true);
-    }, []);
+      setIsOpened(false);
+    }, [dispatch, prompt]);
 
   const handleOpenPublishing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
@@ -567,7 +564,6 @@ export const PromptComponent = ({
                 setIsShowMoveToModal(true);
               }}
               onShare={handleOpenSharing}
-              onUnshare={handleOpenUnsharing}
               onPublish={handleOpenPublishing}
               onUnpublish={
                 additionalItemData?.publicationUrl
@@ -644,28 +640,6 @@ export const PromptComponent = ({
           onClose={(result) => {
             if (result) handleDelete();
             setIsDeleting(false);
-          }}
-        />
-      )}
-      {isUnshareConfirmOpened && (
-        <ConfirmDialog
-          isOpen
-          heading={t('Confirm unsharing: {{promptName}}', {
-            promptName: prompt.name,
-          })}
-          description={t('Are you sure that you want to unshare this prompt?')}
-          confirmLabel={t('Unshare')}
-          cancelLabel={t('Cancel')}
-          onClose={(result) => {
-            setIsUnshareConfirmOpened(false);
-            if (result) {
-              dispatch(
-                ShareActions.revokeAccess({
-                  resourceId: prompt.id,
-                  featureType: FeatureType.Prompt,
-                }),
-              );
-            }
           }}
         />
       )}

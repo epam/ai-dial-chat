@@ -111,6 +111,10 @@ export function ShareModalView() {
     ShareSelectors.selectShareResourceName,
   );
 
+  const isResourceShared = useAppSelector(
+    ShareSelectors.selectIsResourceShared,
+  );
+
   const isFolderShared = useAppSelector(ShareSelectors.selectIsFolderShared);
 
   const shareFeatureType = useAppSelector(
@@ -187,9 +191,9 @@ export function ShareModalView() {
     dispatch(ShareActions.setUnshareEntity(entity));
   }, [dispatch, entity, handleClose]);
 
-  const handleOpenUnshareFolder = useCallback(() => {
+  const handleOpenUnshareResource = useCallback(() => {
     handleClose();
-    dispatch(ShareActions.setUnshareFolderId(shareResourceId));
+    dispatch(ShareActions.setUnshareResourceId(shareResourceId));
   }, [dispatch, handleClose, shareResourceId]);
 
   useEffect(() => () => clearTimeout(timeoutRef.current), []);
@@ -278,15 +282,27 @@ export function ShareModalView() {
           unshareLabel={t('Remove access for all users')}
         />
       )}
-      {isFolder && (
+      {isFolder ? (
         <ShareAccessSection
           isShared={!!isFolderShared}
-          onUnshare={handleOpenUnshareFolder}
+          onUnshare={handleOpenUnshareResource}
           notSharedMessage={t(
             'This folder has not been shared with anyone yet.',
           )}
           unshareLabel={t('Remove access for all users')}
         />
+      ) : (
+        (shareFeatureType === FeatureType.Chat ||
+          shareFeatureType === FeatureType.Prompt) && (
+          <ShareAccessSection
+            isShared={!!isResourceShared}
+            onUnshare={handleOpenUnshareResource}
+            notSharedMessage={t(
+              `This ${shareFeatureType} has not been shared with anyone yet.`,
+            )}
+            unshareLabel={t('Remove access for all users')}
+          />
+        )
       )}
     </Modal>
   );

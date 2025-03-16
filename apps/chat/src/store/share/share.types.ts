@@ -26,5 +26,6 @@ export interface ShareState {
   isPrompt?: boolean;
   sharePermissions?: SharePermission[];
   isFolderShared?: boolean;
-  unshareFolderId?: string | undefined;
+  unshareResourceId?: string;
+  isShared?: boolean;
 }
