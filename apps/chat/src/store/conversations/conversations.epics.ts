@@ -2414,7 +2414,6 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
     mergeMap(({ payload, conversation }) => {
       const { id, values } = payload;
       if (!conversation) {
-        
         return of(
           UIActions.showErrorToast(
             translate(
