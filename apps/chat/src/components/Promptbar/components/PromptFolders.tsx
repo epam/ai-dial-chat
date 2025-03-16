@@ -9,7 +9,6 @@ import {
   getIdWithoutRootPathSegments,
   getPromptRootId,
   isEntityIdExternal,
-  isPromptId,
   isRootId,
 } from '@/src/utils/app/id';
 import {
@@ -132,26 +131,27 @@ const PromptFolderTemplate = ({
 
   const handleDrop = useCallback(
     (currentFolder: FolderInterface, draggedData: DraggedInterface) => {
-      if (isPromptId(draggedData.id)) {
-        dispatch(
-          PromptsActions.updatePrompt({
-            id: draggedData.id,
-            values: { folderId: currentFolder.id },
-          }),
-        );
-      } else if (draggedData) {
+      const { entity, isFolder } = draggedData;
+      if (isFolder) {
         if (
-          draggedData.id !== currentFolder.id &&
-          draggedData.folderId !== currentFolder.id
+          entity.id !== currentFolder.id &&
+          entity.folderId !== currentFolder.id
         ) {
           dispatch(
             PromptsActions.updateFolder({
-              folderId: draggedData.id,
+              folderId: entity.id,
               values: { folderId: currentFolder.id, isShared: false },
-              currentIsShared: draggedData.isShared,
+              currentIsShared: entity.isShared,
             }),
           );
         }
+      } else if (entity) {
+        dispatch(
+          PromptsActions.updatePrompt({
+            id: entity.id,
+            values: { folderId: currentFolder.id },
+          }),
+        );
       }
     },
     [dispatch],

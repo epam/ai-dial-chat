@@ -8,7 +8,6 @@ import { getFoldersDepth, sortByName } from '@/src/utils/app/folders';
 import {
   getConversationRootId,
   getIdWithoutRootPathSegments,
-  isConversationId,
   isEntityIdExternal,
   isRootId,
 } from '@/src/utils/app/id';
@@ -153,26 +152,27 @@ const ChatFolderTemplate = ({
 
   const handleDrop = useCallback(
     (currentFolder: FolderInterface, draggedData: DraggedInterface) => {
-      if (isConversationId(draggedData.id)) {
-        dispatch(
-          ConversationsActions.updateConversation({
-            id: draggedData.id,
-            values: { folderId: currentFolder.id },
-          }),
-        );
-      } else if (draggedData) {
+      const { entity, isFolder } = draggedData;
+      if (isFolder) {
         if (
-          draggedData.id !== currentFolder.id &&
-          draggedData.folderId !== currentFolder.id
+          entity.id !== currentFolder.id &&
+          entity.folderId !== currentFolder.id
         ) {
           dispatch(
             ConversationsActions.updateFolder({
-              folderId: draggedData.id,
+              folderId: entity.id,
               values: { folderId: currentFolder.id, isShared: false },
-              currentIsShared: draggedData.isShared,
+              currentIsShared: entity.isShared,
             }),
           );
         }
+      } else if (entity) {
+        dispatch(
+          ConversationsActions.updateConversation({
+            id: entity.id,
+            values: { folderId: currentFolder.id },
+          }),
+        );
       }
     },
     [dispatch],

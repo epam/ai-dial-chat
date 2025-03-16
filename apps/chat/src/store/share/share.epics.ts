@@ -1318,26 +1318,64 @@ const deleteOrRenameSharedFolderEpic: AppEpic = (action$, state$) =>
         PromptsActions.updateFolder.match(action),
     ),
     switchMap(({ payload }) => {
-      const folders = ConversationsSelectors.selectFolders(state$.value);
+      const conversationFolders = ConversationsSelectors.selectFolders(
+        state$.value,
+      );
+      const sharedSubfolders = conversationFolders.filter((folder) => {
+        console.log(folder.id, 'folder.id');
+        console.log(payload.folderId, 'payload.folderId');
+        console.log(folder.isShared, 'folder.isShared');
+
+        return folder.id.startsWith(`${payload.folderId}`) && folder.isShared;
+      });
+      console.log(conversationFolders, 'conversationFolders');
+
+      console.log(sharedSubfolders, 'sharedSubfolders');
+
+      // const promptFolders = PromptsSelectors.selectFolders(state$.value);
 
       const isSharedFolder =
         payload.currentIsShared ||
-        folders.find((folder) => folder.id === payload.folderId)?.isShared;
+        conversationFolders.find((folder) => folder.id === payload.folderId)
+          ?.isShared;
       const requireName =
         'values' in payload && payload.values ? payload.values.name : true;
       const requireFolderId =
         'values' in payload && payload.values ? payload.values.folderId : true;
       const requireRevoke = requireName || requireFolderId;
+      // console.log(conversationFolders, 'conversationFolders');
+      // console.log(promptFolders, 'promptFolders');
+      //.startsWith(`${payload.folderId}/`),
+      // console.log(payload, 'payload');
 
-      return payload.folderId && isSharedFolder && requireRevoke
-        ? of(
+      if (
+        payload.folderId &&
+        (isSharedFolder || sharedSubfolders.length > 0) &&
+        requireRevoke
+      ) {
+        const revokeActions = [
+          ...(isSharedFolder
+            ? [
+                ShareActions.revokeAccess({
+                  resourceId: payload.folderId,
+                  featureType: FeatureType.Chat,
+                  isFolder: true,
+                }),
+              ]
+            : []),
+          ...sharedSubfolders.map((folder) =>
             ShareActions.revokeAccess({
-              resourceId: payload.folderId,
+              resourceId: folder.id,
               featureType: FeatureType.Chat,
               isFolder: true,
             }),
-          )
-        : EMPTY;
+          ),
+        ];
+
+        return of(...revokeActions);
+      }
+
+      return EMPTY;
     }),
   );
 

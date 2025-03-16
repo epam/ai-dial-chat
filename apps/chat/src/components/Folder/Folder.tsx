@@ -106,7 +106,7 @@ export interface FolderProps<T, P = unknown> {
   additionalItemData?: AdditionalItemData;
   handleDrop?: (
     currentFolder: FolderInterface,
-    draggedData: DraggedInterface,
+    droppedEntity: DraggedInterface,
   ) => void;
   onRenameFolder?: (newName: string, folderId: string) => void;
   onDeleteFolder?: (folderId: string) => void;
@@ -198,7 +198,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const [sharedFolderDropModel, setSharedFolderDropModel] = useState<{
     currentFolder: FolderInterface;
     draggedData: FolderInterface;
-  } | null>(null);
+  }>();
   const dragDropElement = useRef<HTMLDivElement>(null);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
@@ -479,7 +479,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       }
     }
 
-    if (currentFolder.isShared && newName !== currentFolder.name) {
+    if (currentFolder.isShared && newName && newName !== currentFolder.name) {
       setIsConfirmRenaming(true);
       setIsRenaming(false);
       setIsContextMenu(false);
@@ -520,13 +520,13 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   );
 
   const handleFolderDrop = useCallback(
-    (currentFolder: FolderInterface, draggedFolder: FolderInterface) => {
-      if (draggedFolder.id === currentFolder.id) {
+    (currentFolder: FolderInterface, droppedFolder: FolderInterface) => {
+      if (droppedFolder.id === currentFolder.id) {
         return;
       }
 
       const childIds = new Set(
-        getChildAndCurrentFoldersIdsById(draggedFolder.id, allFolders),
+        getChildAndCurrentFoldersIdsById(droppedFolder.id, allFolders),
       );
 
       if (childIds.has(currentFolder.id)) {
@@ -538,7 +538,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         return;
       }
 
-      const foldersDepth = getFoldersDepth(draggedFolder, allFolders);
+      const foldersDepth = getFoldersDepth(droppedFolder, allFolders);
 
       if (maxDepth && level + foldersDepth > maxDepth) {
         dispatch(
@@ -551,8 +551,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
       if (
         !isEntityNameOnSameLevelUnique(
-          draggedFolder.name,
-          { ...draggedFolder, folderId: currentFolder.id },
+          droppedFolder.name,
+          { ...droppedFolder, folderId: currentFolder.id },
           allFoldersWithoutFilters,
         )
       ) {
@@ -562,14 +562,14 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               'Folder with name "{{folderName}}" already exists in this folder.',
               {
                 ns: Translation.Chat,
-                folderName: draggedFolder.name,
+                folderName: droppedFolder.name,
               },
             ),
           ),
         );
       }
 
-      handleDrop?.(currentFolder, draggedFolder);
+      handleDrop?.(currentFolder, { entity: droppedFolder, isFolder: true });
     },
     [
       allFolders,
@@ -617,12 +617,12 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           getEntityMoveType(featureType),
         );
         if (entityData) {
-          const draggedEntity = JSON.parse(entityData);
+          const droppedEntity = JSON.parse(entityData);
 
           if (
             !isEntityNameOnSameLevelUnique(
-              draggedEntity.name,
-              { ...draggedEntity, folderId: currentFolder.id },
+              droppedEntity.name,
+              { ...droppedEntity, folderId: currentFolder.id },
               allItemsWithoutFilters || [],
             )
           ) {
@@ -636,7 +636,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       featureType === FeatureType.Chat
                         ? 'Conversation'
                         : 'Prompt',
-                    entityName: draggedEntity.name,
+                    entityName: droppedEntity.name,
                   },
                 ),
               ),
@@ -644,7 +644,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             return;
           }
 
-          handleDrop(currentFolder, draggedEntity);
+          handleDrop(currentFolder, {
+            entity: droppedEntity,
+            isFolder: !!folderData,
+          });
         }
       }
     },
@@ -1372,7 +1375,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 sharedFolderDropModel.draggedData,
               );
             }
-            setSharedFolderDropModel(null);
+            setSharedFolderDropModel(undefined);
           }}
         />
       )}

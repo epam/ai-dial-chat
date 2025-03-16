@@ -38,4 +38,7 @@ export interface MoveToFolderProps {
   isNewFolder?: boolean;
 }
 
-export type DraggedInterface = FolderInterface | ConversationInfo | PromptInfo;
+export interface DraggedInterface {
+  entity: FolderInterface | ConversationInfo | PromptInfo;
+  isFolder: boolean;
+}
