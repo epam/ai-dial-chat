@@ -3,13 +3,11 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
-import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getFormButtonType } from '@/src/utils/app/form-schema';
 
 import { FormButtonType } from '@/src/types/chat';
-import { ScreenState } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
@@ -32,7 +30,6 @@ import {
 
 interface HiddenButtonsPropertyProps {
   options: FormSchemaButtonOption[];
-  hiddenOptions: FormSchemaButtonOption[];
   className?: string;
   buttonClassName?: string;
   onSetVisibleOptions: (options: FormSchemaButtonOption[]) => void;
@@ -44,7 +41,6 @@ const MAX_LINES = 3;
 
 const HiddenButtonsProperty = ({
   options,
-  hiddenOptions,
   className,
   buttonClassName,
   onSetVisibleOptions,
@@ -66,7 +62,11 @@ const HiddenButtonsProperty = ({
       return;
     }
 
-    const visible: FormSchemaButtonOption[] = [];
+    const visible: {
+      option: FormSchemaButtonOption;
+      line: number;
+      btn: HTMLElement;
+    }[] = [];
     const hidden: FormSchemaButtonOption[] = [];
     let currentLine = 1;
     let lastOffsetTop = hiddenButtons[0].offsetTop;
@@ -86,7 +86,7 @@ const HiddenButtonsProperty = ({
       const option = options[currentOptionIdx];
 
       if (currentLine <= MAX_LINES) {
-        visible.push(option);
+        visible.push({ option, line: currentLine, btn });
       } else {
         hidden.push(option);
       }
@@ -94,7 +94,30 @@ const HiddenButtonsProperty = ({
       currentOptionIdx++;
     });
 
-    onSetVisibleOptions(visible);
+    const maxLineItems = visible.filter((item) => item.line === MAX_LINES);
+    if (maxLineItems.length) {
+      const style = window.getComputedStyle(hiddenContainerRef.current);
+      const gap = parseFloat(style.gap);
+      const paddingsWidth =
+        parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+      const allBtnsWidth = maxLineItems.reduce<number>(
+        (acc, item) => (item.btn.offsetWidth ?? 0) + gap + acc,
+        0,
+      );
+
+      if (
+        allBtnsWidth + (dotsButtonRef.current?.clientWidth ?? 0) + gap >=
+        hiddenContainerRef.current.clientWidth - paddingsWidth
+      ) {
+        const lastItem = visible.pop();
+
+        if (lastItem?.option) {
+          hidden.unshift(lastItem?.option);
+        }
+      }
+    }
+
+    onSetVisibleOptions(visible.map((item) => item.option));
     onSetHiddenOptions(hidden);
   }, [onSetHiddenOptions, onSetVisibleOptions, options]);
 
@@ -111,32 +134,32 @@ const HiddenButtonsProperty = ({
 
     return () => {
       resizeObserver.disconnect();
+      onSetHiddenOptions([]);
+      onSetVisibleOptions(options);
     };
-  }, [determineVisibility, options]);
+  }, [determineVisibility, onSetHiddenOptions, onSetVisibleOptions, options]);
 
   return (
     <div
       ref={hiddenContainerRef}
       className={classNames(
-        'invisible absolute',
+        'invisible absolute w-full',
         buttonsWrapperClassName,
         className,
       )}
     >
-      {hiddenOptions.length > 0 && (
-        <button ref={dotsButtonRef} className="chat-button">
-          <IconDotsVertical size={18} />
-        </button>
-      )}
-      {options.map((option) => (
+      {options.map((option, i) => (
         <button
-          key={option.const}
+          key={i}
           className={classNames('chat-button', buttonClassName)}
           disabled
         >
           {option.title}
         </button>
       ))}
+      <button ref={dotsButtonRef} className="chat-button">
+        <IconDotsVertical size={18} />
+      </button>
     </div>
   );
 };
@@ -174,8 +197,6 @@ export const ButtonsProperty = ({
   );
   const [hiddenOptionsModal, setHiddenOptionsModal] = useState(false);
 
-  const screenState = useScreenState();
-
   const handleClick = useCallback(
     (option: FormSchemaButtonOption) => {
       if (
@@ -208,9 +229,9 @@ export const ButtonsProperty = ({
   return (
     <>
       <div className={classNames(buttonsWrapperClassName, className)}>
-        {visibleOptions.map((option) => (
+        {visibleOptions.map((option, i) => (
           <SchemaButton
-            key={option.title}
+            key={i}
             option={option}
             showSelected={!!showSelected}
             disabled={!!disabled}
@@ -230,17 +251,15 @@ export const ButtonsProperty = ({
         )}
       </div>
 
-      {screenState === ScreenState.SM &&
-        !selectedConversations[0].messages.length && (
-          <HiddenButtonsProperty
-            onSetVisibleOptions={setVisibleOptions}
-            onSetHiddenOptions={setHiddenOptions}
-            hiddenOptions={hiddenOptions}
-            options={options}
-            className={className}
-            buttonClassName={buttonClassName}
-          />
-        )}
+      {!selectedConversations[0].messages.length && (
+        <HiddenButtonsProperty
+          onSetVisibleOptions={setVisibleOptions}
+          onSetHiddenOptions={setHiddenOptions}
+          options={options}
+          className={className}
+          buttonClassName={buttonClassName}
+        />
+      )}
 
       {hiddenOptionsModal && (
         <ButtonsSchemaModal
@@ -306,7 +325,7 @@ const PropertyRenderer = ({
   );
 
   return (
-    <div className={classNames('flex flex-col gap-3', className)}>
+    <div className={classNames('relative flex flex-col gap-3', className)}>
       {property.description && (
         <p className="whitespace-pre-line text-base text-primary">
           {property.description}

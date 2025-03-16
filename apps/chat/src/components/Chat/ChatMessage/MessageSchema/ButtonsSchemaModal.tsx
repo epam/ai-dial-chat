@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 
+import classNames from 'classnames';
+
 import { ModalState } from '@/src/types/modal';
 
 import { Modal } from '@/src/components/Common/Modal';
@@ -45,7 +47,7 @@ export const ButtonsSchemaModal: React.FC<Props> = ({
       headingClassName="px-3"
       onClose={onClose}
     >
-      <div className={containerClassName}>
+      <div className={classNames('!px-3', containerClassName)}>
         {options.map((option) => (
           <SchemaButton
             key={option.title}
