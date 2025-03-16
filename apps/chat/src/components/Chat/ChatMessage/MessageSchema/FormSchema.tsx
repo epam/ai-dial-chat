@@ -263,7 +263,7 @@ export const ButtonsProperty = ({
 
       {hiddenOptionsModal && (
         <ButtonsSchemaModal
-          options={hiddenOptions}
+          options={options}
           disabled={!!disabled}
           showSelected={!!showSelected}
           formValue={formValue}
