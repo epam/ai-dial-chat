@@ -148,9 +148,9 @@ const HiddenButtonsProperty = ({
         className,
       )}
     >
-      {options.map((option, i) => (
+      {options.map((option) => (
         <button
-          key={i}
+          key={option.const}
           className={classNames('chat-button', buttonClassName)}
           disabled
         >
@@ -229,9 +229,9 @@ export const ButtonsProperty = ({
   return (
     <>
       <div className={classNames(buttonsWrapperClassName, className)}>
-        {visibleOptions.map((option, i) => (
+        {visibleOptions.map((option) => (
           <SchemaButton
-            key={i}
+            key={option.const}
             option={option}
             showSelected={!!showSelected}
             disabled={!!disabled}
