@@ -1322,15 +1322,8 @@ const deleteOrRenameSharedFolderEpic: AppEpic = (action$, state$) =>
         state$.value,
       );
       const sharedSubfolders = conversationFolders.filter((folder) => {
-        console.log(folder.id, 'folder.id');
-        console.log(payload.folderId, 'payload.folderId');
-        console.log(folder.isShared, 'folder.isShared');
-
         return folder.id.startsWith(`${payload.folderId}`) && folder.isShared;
       });
-      console.log(conversationFolders, 'conversationFolders');
-
-      console.log(sharedSubfolders, 'sharedSubfolders');
 
       // const promptFolders = PromptsSelectors.selectFolders(state$.value);
 
@@ -1343,10 +1336,6 @@ const deleteOrRenameSharedFolderEpic: AppEpic = (action$, state$) =>
       const requireFolderId =
         'values' in payload && payload.values ? payload.values.folderId : true;
       const requireRevoke = requireName || requireFolderId;
-      // console.log(conversationFolders, 'conversationFolders');
-      // console.log(promptFolders, 'promptFolders');
-      //.startsWith(`${payload.folderId}/`),
-      // console.log(payload, 'payload');
 
       if (
         payload.folderId &&
