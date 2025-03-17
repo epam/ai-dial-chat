@@ -1,5 +1,3 @@
-import { useEffect } from 'react';
-
 import classNames from 'classnames';
 
 import { ModalState } from '@/src/types/modal';
@@ -31,19 +29,13 @@ export const ButtonsSchemaModal: React.FC<Props> = ({
   onButtonClick,
   onClose,
 }) => {
-  useEffect(() => {
-    if (!options.length) {
-      onClose();
-    }
-  }, [onClose, options.length]);
-
   return (
     <Modal
       portalId="theme-main"
       dataQa="hidden-schema-buttons"
       heading="Chat starters"
       state={ModalState.OPENED}
-      containerClassName="h-fit flex flex-col py-4 max-h-full inline-block w-full max-w-[336px]"
+      containerClassName="h-fit flex flex-col py-4 max-h-full inline-block w-full max-w-[768px]"
       headingClassName="px-3"
       onClose={onClose}
     >

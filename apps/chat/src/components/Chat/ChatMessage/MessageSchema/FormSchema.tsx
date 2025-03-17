@@ -34,6 +34,7 @@ interface HiddenButtonsPropertyProps {
   buttonClassName?: string;
   onSetVisibleOptions: (options: FormSchemaButtonOption[]) => void;
   onSetHiddenOptions: (options: FormSchemaButtonOption[]) => void;
+  onCloseModal: () => void;
 }
 
 const buttonsWrapperClassName = 'flex flex-wrap items-center gap-2';
@@ -45,6 +46,7 @@ const HiddenButtonsProperty = ({
   buttonClassName,
   onSetVisibleOptions,
   onSetHiddenOptions,
+  onCloseModal,
 }: HiddenButtonsPropertyProps) => {
   const hiddenContainerRef = useRef<HTMLDivElement>(null);
   const dotsButtonRef = useRef<HTMLButtonElement>(null);
@@ -117,9 +119,13 @@ const HiddenButtonsProperty = ({
       }
     }
 
+    if (!hidden.length) {
+      onCloseModal();
+    }
+
     onSetVisibleOptions(visible.map((item) => item.option));
     onSetHiddenOptions(hidden);
-  }, [onSetHiddenOptions, onSetVisibleOptions, options]);
+  }, [onCloseModal, onSetHiddenOptions, onSetVisibleOptions, options]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -253,11 +259,12 @@ export const ButtonsProperty = ({
 
       {!selectedConversations[0].messages.length && (
         <HiddenButtonsProperty
-          onSetVisibleOptions={setVisibleOptions}
-          onSetHiddenOptions={setHiddenOptions}
           options={options}
           className={className}
           buttonClassName={buttonClassName}
+          onSetVisibleOptions={setVisibleOptions}
+          onSetHiddenOptions={setHiddenOptions}
+          onCloseModal={handleCloseButtonsModal}
         />
       )}
 
