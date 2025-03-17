@@ -34,11 +34,11 @@ const handler = async (
       return;
     }
 
-    const skipFederatedLogoutProviders = parseCommaSeparatedList(
-      process.env.SKIP_FEDERATED_LOGOUT_PROVIDERS,
+    const federatedLogoutProviders = parseCommaSeparatedList(
+      process.env.FEDERATED_LOGOUT_PROVIDERS,
     );
 
-    if (skipFederatedLogoutProviders.includes(token.providerId)) {
+    if (!federatedLogoutProviders.includes(token.providerId)) {
       res.status(200).json({ url: null });
       return;
     }
