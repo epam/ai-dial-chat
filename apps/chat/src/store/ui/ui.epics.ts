@@ -46,19 +46,23 @@ const initEpic: AppEpic = (action$, state$) =>
       const isThemesDefined = SettingsSelectors.selectThemeHostDefined(
         state$.value,
       );
-      const isAdvancedView = SettingsSelectors.isFeatureEnabled(
+      const enabledFeatures = SettingsSelectors.selectEnabledFeatures(
         state$.value,
-        Feature.AdvancedView,
       );
-      const showPanelsByDefault = isAdvancedView && !isTabletScreenOrMobile();
 
       return forkJoin({
         theme: DataService.getTheme(),
         availableThemes: isThemesDefined
           ? DataService.getAvailableThemes()
           : of([]),
-        showChatbar: DataService.getShowChatbar(showPanelsByDefault),
-        showPromptbar: DataService.getShowPromptbar(showPanelsByDefault),
+        showChatbar: DataService.getShowChatbar(
+          enabledFeatures.has(Feature.ShowConversationsSectionByDefault) &&
+            !isTabletScreenOrMobile(),
+        ),
+        showPromptbar: DataService.getShowPromptbar(
+          enabledFeatures.has(Feature.ShowPromptsSectionByDefault) &&
+            !isTabletScreenOrMobile(),
+        ),
         showMarketplaceFilterbar: DataService.getShowMarketplaceFilterbar(),
         textOfClosedAnnouncement: DataService.getClosedAnnouncement(),
         chatbarWidth: DataService.getChatbarWidth(),

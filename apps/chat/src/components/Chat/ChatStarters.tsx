@@ -1,11 +1,14 @@
 import { memo, useCallback, useMemo } from 'react';
 
+import classNames from 'classnames';
+
 import { removeDescriptionsFromSchema } from '@/src/utils/app/form-schema';
 
 import { ChatActions } from '@/src/store/chat/chat.reducer';
 import { ChatSelectors } from '@/src/store/chat/chat.selectors';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { FormSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/FormSchema';
 
@@ -23,6 +26,7 @@ const ChatStartersView = ({ schema }: ChatStartersViewProps) => {
   const dispatch = useAppDispatch();
 
   const formValue = useAppSelector(ChatSelectors.selectChatFormValue);
+  const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
 
   const handleChange = useCallback(
     (property: string, value: MessageFormValueType, submit?: boolean) => {
@@ -53,9 +57,12 @@ const ChatStartersView = ({ schema }: ChatStartersViewProps) => {
       formValue={formValue}
       showSelected
       onChange={handleChange}
-      buttonsWrapperClassName="md:justify-center flex-nowrap overflow-x-auto overflow-y-hidden px-2"
+      buttonsWrapperClassName="overflow-y-hidden md:px-4 px-2 lg:px-0"
       buttonClassName="shrink-0"
-      propertyWrapperClassName="items-center"
+      wrapperClassName={classNames(!isChatFullWidth && 'lg:items-center')}
+      propertyWrapperClassName={
+        isChatFullWidth ? 'lg:ml-20 lg:mr-[84px]' : 'lg:w-[768px]'
+      }
     />
   );
 };
@@ -78,8 +85,9 @@ export const ChatStarters = memo(function ChatStarters() {
     isSchemaLoading ||
     !schema ||
     isReplay
-  )
+  ) {
     return null;
+  }
 
   return <ChatStartersView schema={schema} />;
 });
