@@ -7,6 +7,8 @@ import { isApplicationType } from '@/src/utils/app/application';
 import { decode } from '@/src/utils/app/application-type-schema';
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
+import { ApplicationTypeSchemaProperties } from '@/src/types/application-type-schema';
+
 import {
   ApplicationActions,
   ApplicationSelectors,
@@ -89,7 +91,9 @@ export default function AppsSettings() {
             isEditApplication
             applicationTypeDisplayName={
               isSchemaApplicationType
-                ? (schema?.['dial:applicationTypeDisplayName'] ?? '')
+                ? (schema?.[
+                    ApplicationTypeSchemaProperties.applicationTypeDisplayName
+                  ] ?? '')
                 : decode(slug.toString())
             }
             hasCustomEditor={!!schema?.['dial:applicationTypeEditorUrl']}

@@ -1,4 +1,5 @@
 import { ConfirmDialogValueTypes } from '../types/files';
+import { ApiKeys } from '@/src/types/common';
 
 export const FEATURES_ENDPOINTS = {
   chat_completion: 'chat_completion',
@@ -40,3 +41,5 @@ export const CONFIRM_DOCUMENT_VALUES: ConfirmDialogValueTypes = {
   description:
     'Changing of document relative url will stop sharing and other users will no longer see this application.',
 };
+
+export const DRAFT_APPLICATION_ID = `${ApiKeys.Applications}/draft`;
