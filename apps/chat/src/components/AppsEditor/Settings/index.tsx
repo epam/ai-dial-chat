@@ -108,7 +108,7 @@ export const ApplicationSettings: React.FC<Props> = ({
   );
   const theme = useAppSelector(UISelectors.selectThemeState);
   const { t } = useTranslation(Translation.Chat);
-  // TODO: replace literals with enum
+
   const [previewMode, setPreviewMode] = useState<PreviewMode>(
     schema?.[ApplicationTypeSchemaProperties.applicationTypeViewerUrl]
       ? PreviewMode.closed
