@@ -210,9 +210,11 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
               warning={
                 oldApplication?.isShared
                   ? CONFIRM_DOCUMENT_VALUES.description
-                  : ''
+                  : undefined
               }
-              confirmDialogValues={CONFIRM_DOCUMENT_VALUES}
+              confirmDialogValues={
+                oldApplication?.isShared ? CONFIRM_DOCUMENT_VALUES : undefined
+              }
             />
           )}
         />

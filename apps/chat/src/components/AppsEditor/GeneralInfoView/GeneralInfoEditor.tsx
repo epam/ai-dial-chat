@@ -232,9 +232,13 @@ export const GeneralInfoEditor: React.FC<Props> = ({
                 warning={
                   oldApplication?.isShared
                     ? CONFIRM_ICON_FILE_VALUES.description
-                    : ''
+                    : undefined
                 }
-                confirmDialogValues={CONFIRM_ICON_FILE_VALUES}
+                confirmDialogValues={
+                  oldApplication?.isShared
+                    ? CONFIRM_ICON_FILE_VALUES
+                    : undefined
+                }
               />
             )}
           />
