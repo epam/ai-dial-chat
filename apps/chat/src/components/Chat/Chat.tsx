@@ -197,7 +197,7 @@ const ChatView = memo(() => {
           }
 
           const model = modelsMap[conv.model.id];
-          const isCustomAppDeployed =
+          const isNotDeployedCustomApp =
             model &&
             model.type === EntityType.Application &&
             model.functionStatus &&
@@ -205,7 +205,7 @@ const ChatView = memo(() => {
 
           return (
             !model ||
-            isCustomAppDeployed ||
+            isNotDeployedCustomApp ||
             (model.type === EntityType.Assistant &&
               conv.assistantModelId &&
               !modelsMap[conv.assistantModelId])
