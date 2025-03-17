@@ -28,6 +28,7 @@ import { isEntityIdExternal } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { doesModelHaveConfiguration } from '@/src/utils/app/models';
 
+import { ApplicationStatus } from '@/src/types/applications';
 import {
   Conversation,
   ConversationsTemporarySettings,
@@ -196,9 +197,15 @@ const ChatView = memo(() => {
           }
 
           const model = modelsMap[conv.model.id];
+          const isCustomAppDeployed =
+            model &&
+            model.type === EntityType.Application &&
+            model.functionStatus &&
+            model?.functionStatus !== ApplicationStatus.DEPLOYED;
 
           return (
             !model ||
+            isCustomAppDeployed ||
             (model.type === EntityType.Assistant &&
               conv.assistantModelId &&
               !modelsMap[conv.assistantModelId])
