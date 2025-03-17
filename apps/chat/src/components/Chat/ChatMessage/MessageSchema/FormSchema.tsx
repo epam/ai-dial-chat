@@ -325,7 +325,12 @@ const PropertyRenderer = ({
   );
 
   return (
-    <div className={classNames('relative flex flex-col gap-3', className)}>
+    <div
+      className={classNames(
+        'relative flex flex-col gap-3 overflow-hidden',
+        className,
+      )}
+    >
       {property.description && (
         <p className="whitespace-pre-line text-base text-primary">
           {property.description}
