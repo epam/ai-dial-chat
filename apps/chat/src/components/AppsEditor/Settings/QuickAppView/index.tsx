@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   Controller,
   Path,
@@ -28,10 +28,12 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
+import { CONFIRM_DOCUMENT_VALUES } from '@/src/constants/applications';
+
 import { TemperatureSlider } from '@/src/components/Chat/ChatSettings/Temperature';
-import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
+import { withWarningMessage } from '@/src/components/Common/Forms/FieldWarningMessage';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
 import { MonacoEditor } from '@/src/components/Common/MonacoEditor';
@@ -64,7 +66,9 @@ export const validators: Validators = {
   },
 };
 
-const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
+const LogoSelector = withErrorMessage(
+  withWarningMessage(withLabel(CustomLogoSelect)),
+);
 const ToolsetEditor = withErrorMessage(withLabel(MonacoEditor));
 const Slider = withLabel(TemperatureSlider, true);
 const ModelsSelectorField = withErrorMessage(withLabel(ModelsSelector));
@@ -92,12 +96,6 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
     handleSubmit: submitWrapper,
     formState: { errors, defaultValues, isValid },
   } = useFormContext<QuickAppFormData>();
-  const [revokedSharing, setRevokedSharing] = useState(false);
-  const [confirmSharingRevoke, setConfirmSharingRevoke] = useState<{
-    description: string;
-    heading: string;
-    data: QuickAppFormData;
-  }>();
 
   const lastSubmittedValuesRef = useRef<QuickAppFormData | undefined>(
     defaultValues as QuickAppFormData,
@@ -122,15 +120,14 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
         if (
           isShared &&
           getQuickAppDocumentUrl(applicationData as CustomApplicationModel) !==
-            getQuickAppDocumentUrl(oldApplication) &&
-          !revokedSharing
+            getQuickAppDocumentUrl(oldApplication)
         ) {
-          setConfirmSharingRevoke({
-            description:
-              'Changing of document relative url will stop sharing and other users will no longer see this application.',
-            heading: 'Confirm changing url',
-            data,
-          });
+          dispatch(
+            ShareActions.revokeAccess({
+              resourceId: oldApplication.id,
+              featureType: FeatureType.Application,
+            }),
+          );
           dispatch(ApplicationActions.setShouldSaveApplication(false));
           dispatch(ApplicationActions.setExitAfterSave(false));
           return;
@@ -157,7 +154,6 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
       shouldSaveApplication,
       isShared,
       oldApplication,
-      revokedSharing,
       dispatch,
       schema,
     ],
@@ -211,6 +207,12 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
               disabled={isSharedWithMe}
               tooltip={isSharedWithMe ? getSharedTooltip('file') : ''}
               sourceFilters={myFilesFilter}
+              warning={
+                oldApplication?.isShared
+                  ? CONFIRM_DOCUMENT_VALUES.description
+                  : ''
+              }
+              confirmDialogValues={CONFIRM_DOCUMENT_VALUES}
             />
           )}
         />
@@ -266,29 +268,6 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
             />
           )}
         />
-
-        {confirmSharingRevoke && !revokedSharing && (
-          <ConfirmDialog
-            isOpen
-            heading={t(confirmSharingRevoke.heading)}
-            description={t(confirmSharingRevoke.description)}
-            confirmLabel={t('Confirm')}
-            cancelLabel={t('Cancel')}
-            onClose={(result) => {
-              if (result) {
-                dispatch(
-                  ShareActions.revokeAccess({
-                    resourceId: oldApplication.id,
-                    featureType: FeatureType.Application,
-                  }),
-                );
-                setRevokedSharing(true);
-                handleSubmit(confirmSharingRevoke.data);
-              }
-              setConfirmSharingRevoke(undefined);
-            }}
-          />
-        )}
       </div>
     </form>
   );

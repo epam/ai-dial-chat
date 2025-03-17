@@ -66,7 +66,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         return [];
       } else if (!response.ok) {
         const serverErrorMessage = await response.text();
-        throw new DialAIError(serverErrorMessage, '', '', response.status + '');
+        throw new DialAIError(serverErrorMessage, response.status, req);
       }
 
       return response.json() as Promise<BackendFileFolder | BackendChatFolder>;
