@@ -43,11 +43,16 @@ export const ButtonsSchemaModal: React.FC<Props> = ({
       dataQa="hidden-schema-buttons"
       heading="Chat starters"
       state={ModalState.OPENED}
-      containerClassName="h-fit py-4 max-h-full inline-block w-full max-w-[336px]"
+      containerClassName="h-fit flex flex-col py-4 max-h-full inline-block w-full max-w-[336px]"
       headingClassName="px-3"
       onClose={onClose}
     >
-      <div className={classNames('!px-3', containerClassName)}>
+      <div
+        className={classNames(
+          'flex-1 !overflow-auto !px-3',
+          containerClassName,
+        )}
+      >
         {options.map((option) => (
           <SchemaButton
             key={option.title}
