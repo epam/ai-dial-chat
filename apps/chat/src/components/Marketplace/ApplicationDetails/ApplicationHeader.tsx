@@ -30,9 +30,10 @@ import { Feature } from '@epam/ai-dial-shared';
 
 interface Props {
   entity: DialAIEntityModel;
+  isPreview?: boolean;
 }
 
-export const ApplicationDetailsHeader = ({ entity }: Props) => {
+export const ApplicationDetailsHeader = ({ entity, isPreview }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
   const dispatch = useAppDispatch();
   const screenState = useScreenState();
@@ -103,7 +104,8 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
       </div>
       {isMyApp &&
         isApplicationsSharingEnabled &&
-        screenState !== ScreenState.SM && (
+        screenState !== ScreenState.SM &&
+        !isPreview && (
           <button
             className="flex gap-2 px-3 py-1.5 text-sm text-accent-primary"
             onClick={handleOpenSharing}
