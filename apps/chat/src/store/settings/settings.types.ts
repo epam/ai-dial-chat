@@ -1,3 +1,5 @@
+import { OAuthProviderType } from 'next-auth/providers';
+
 import { CustomVisualizer } from '@/src/types/custom-visualizers';
 import { StorageType } from '@/src/types/storage';
 
@@ -33,4 +35,5 @@ export interface SettingsState {
   defaultSystemPrompt?: string;
   providerId: string | null;
   initialDataStatus?: UploadStatus;
+  defaultAuthProvider?: OAuthProviderType | null;
 }

@@ -49,3 +49,8 @@ export enum FileSourceType {
   SHARED_WITH_ME = 'SHARED_WITH_ME',
   PUBLIC = 'PUBLIC',
 }
+
+export interface ConfirmDialogValueTypes {
+  description: string;
+  heading: string;
+}
