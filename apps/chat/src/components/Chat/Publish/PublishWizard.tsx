@@ -248,7 +248,7 @@ export function PublishModal<
   const onChangePublicationAuthor = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       const cleanAuthor = prepareEntityName(e.target.value, {
-        maxNameLength: 20,
+        maxNameLength: 50,
       });
       setPublicationAuthor(cleanAuthor);
     },
