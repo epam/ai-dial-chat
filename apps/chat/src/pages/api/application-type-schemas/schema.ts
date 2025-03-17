@@ -48,9 +48,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       const serverErrorMessage = await detailedSchemaResponse.text();
       throw new DialAIError(
         serverErrorMessage,
-        '',
-        '',
-        detailedSchemaResponse.status + '',
+        detailedSchemaResponse.status,
+        req,
       );
     }
 
