@@ -17,7 +17,10 @@ import {
   isApplicationDeploymentInProgress,
 } from '@/src/utils/app/application';
 
-import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
+import {
+  ApiDetailedApplicationTypeSchema,
+  ApplicationTypeSchemaProperties,
+} from '@/src/types/application-type-schema';
 import {
   ApplicationStatus,
   ApplicationType,
@@ -56,6 +59,12 @@ import {
 } from './form';
 
 import debounce from 'lodash-es/debounce';
+
+enum PreviewMode {
+  half,
+  full,
+  closed,
+}
 
 interface Props {
   schema: ApiDetailedApplicationTypeSchema | null;
@@ -99,8 +108,11 @@ export const ApplicationSettings: React.FC<Props> = ({
   );
   const theme = useAppSelector(UISelectors.selectThemeState);
   const { t } = useTranslation(Translation.Chat);
-  const [previewMode, setPreviewMode] = useState<'half' | 'full' | 'closed'>(
-    schema?.['dial:applicationTypeViewerUrl'] ? 'closed' : 'half',
+
+  const [previewMode, setPreviewMode] = useState<PreviewMode>(
+    schema?.[ApplicationTypeSchemaProperties.applicationTypeViewerUrl]
+      ? PreviewMode.closed
+      : PreviewMode.half,
   );
 
   const getDefaultValues = useCallback(
@@ -155,15 +167,21 @@ export const ApplicationSettings: React.FC<Props> = ({
         );
       default:
         if (
-          schema?.['dial:applicationTypeEditorUrl'] &&
-          schema['dial:applicationTypeDisplayName']
+          schema?.[ApplicationTypeSchemaProperties.applicationTypeEditorUrl] &&
+          schema[ApplicationTypeSchemaProperties.applicationTypeDisplayName]
         ) {
           return (
             <CustomApplicationEditorView
               id={applicationData.id}
-              host={schema['dial:applicationTypeEditorUrl']}
+              host={
+                schema[ApplicationTypeSchemaProperties.applicationTypeEditorUrl]
+              }
               theme={theme}
-              title={schema['dial:applicationTypeDisplayName']}
+              title={
+                schema[
+                  ApplicationTypeSchemaProperties.applicationTypeDisplayName
+                ]
+              }
             />
           );
         }
@@ -234,9 +252,9 @@ export const ApplicationSettings: React.FC<Props> = ({
     <div className="flex w-full overflow-hidden">
       <div
         className={classNames('transition-all duration-300 ease-in-out', {
-          'w-full opacity-100': previewMode === 'closed',
-          'w-1/2 opacity-100': previewMode === 'half',
-          'w-0 opacity-0': previewMode === 'full',
+          'w-full opacity-100': previewMode === PreviewMode.closed,
+          'w-1/2 opacity-100': previewMode === PreviewMode.half,
+          'w-0 opacity-0': previewMode === PreviewMode.full,
         })}
       >
         <FormProvider {...methods}>{formViewElement}</FormProvider>
@@ -245,9 +263,9 @@ export const ApplicationSettings: React.FC<Props> = ({
         className={classNames(
           'flex h-full flex-col border-l border-primary transition-all duration-300 ease-in-out',
           {
-            'w-1/2 opacity-100': previewMode === 'half',
-            'w-full opacity-100': previewMode === 'full',
-            'w-0 overflow-hidden opacity-0': previewMode === 'closed',
+            'w-1/2 opacity-100': previewMode === PreviewMode.half,
+            'w-full opacity-100': previewMode === PreviewMode.full,
+            'w-0 overflow-hidden opacity-0': previewMode === PreviewMode.closed,
           },
         )}
       >
@@ -283,20 +301,20 @@ export const ApplicationSettings: React.FC<Props> = ({
                 <span>{t('Redeploy')}</span>
               </button>
             )}
-            {previewMode === 'half' && (
+            {previewMode === PreviewMode.half && (
               <button
                 className="text-secondary hover:text-accent-primary"
-                onClick={() => setPreviewMode('full')}
+                onClick={() => setPreviewMode(PreviewMode.full)}
               >
                 <Tooltip tooltip={t('Expand preview')}>
                   <IconArrowsMaximize size={24} />
                 </Tooltip>
               </button>
             )}
-            {previewMode === 'full' && (
+            {previewMode === PreviewMode.full && (
               <button
                 className="text-secondary hover:text-accent-primary"
-                onClick={() => setPreviewMode('half')}
+                onClick={() => setPreviewMode(PreviewMode.half)}
               >
                 <Tooltip tooltip={t('Split view')}>
                   <IconLayoutSidebarRightCollapse size={24} />
@@ -305,7 +323,7 @@ export const ApplicationSettings: React.FC<Props> = ({
             )}
             <button
               className="text-secondary hover:text-accent-primary"
-              onClick={() => setPreviewMode('closed')}
+              onClick={() => setPreviewMode(PreviewMode.closed)}
             >
               <Tooltip tooltip={t('Hide preview')}>
                 <IconArrowsMinimize size={24} />
@@ -313,7 +331,7 @@ export const ApplicationSettings: React.FC<Props> = ({
             </button>
           </div>
         </div>
-        {previewMode !== 'closed' && (
+        {previewMode !== PreviewMode.closed && (
           <div className="flex-1 overflow-auto">
             <ApplicationPreviewChat
               handlePreviewMouseEnter={handlePreviewMouseEnter}
@@ -327,16 +345,16 @@ export const ApplicationSettings: React.FC<Props> = ({
           </div>
         )}
       </div>
-      {previewMode === 'closed' && (
+      {previewMode === PreviewMode.closed && (
         <div
           className="flex h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-2 transition-all duration-300 ease-in-out hover:cursor-pointer"
-          onClick={() => setPreviewMode('half')}
+          onClick={() => setPreviewMode(PreviewMode.half)}
         >
           <button
             className="text-secondary hover:text-accent-primary"
             onClick={(e) => {
               e.stopPropagation();
-              setPreviewMode('full');
+              setPreviewMode(PreviewMode.full);
             }}
           >
             <Tooltip tooltip={t('Expand preview')}>
@@ -346,7 +364,7 @@ export const ApplicationSettings: React.FC<Props> = ({
 
           <button
             className="text-secondary hover:text-accent-primary"
-            onClick={() => setPreviewMode('half')}
+            onClick={() => setPreviewMode(PreviewMode.half)}
           >
             <Tooltip tooltip={t('Split view')}>
               <IconLayoutSidebarLeftCollapse size={24} />
