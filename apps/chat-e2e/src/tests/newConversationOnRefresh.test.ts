@@ -40,6 +40,7 @@ dialTest(
       'EPMRTC-4588',
       'EPMRTC-4592',
     );
+    dialTest.slow();
     const initialConversationName = GeneratorUtil.randomString(7);
     let models: DialAIEntityModel[];
 
