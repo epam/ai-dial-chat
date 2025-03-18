@@ -279,7 +279,7 @@ export const EmptyChatDescription = ({
   isApplicationPreviewChat,
 }: Props) => {
   return (
-    <div className="flex size-full flex-col items-center p-0 md:px-5 md:pt-5">
+    <div className="flex size-full flex-col items-center p-0 md:px-5">
       <div className="flex size-full flex-col items-center gap-px rounded">
         <EmptyChatDescriptionView
           isApplicationPreviewChat={isApplicationPreviewChat}
