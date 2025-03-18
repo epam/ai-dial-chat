@@ -33,7 +33,7 @@ export const CONFIRM_SOURCE_FOLDER_VALUES: ConfirmDialogValueTypes = {
 export const CONFIRM_ICON_FILE_VALUES: ConfirmDialogValueTypes = {
   heading: 'Confirm changing icon file',
   description:
-    'Changing of icon file will stop sharing the file and other users will see default icon this application.',
+    'Changing of icon file will stop sharing the file and other users will see default icon for this application.',
 };
 
 export const CONFIRM_DOCUMENT_VALUES: ConfirmDialogValueTypes = {
