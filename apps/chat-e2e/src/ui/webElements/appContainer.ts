@@ -5,6 +5,7 @@ import { BaseLayoutContainer } from '@/src/ui/webElements/baseLayoutContainer';
 import { Chat } from '@/src/ui/webElements/chat';
 import { ChatBar } from '@/src/ui/webElements/chatBar';
 import { ChatLoader } from '@/src/ui/webElements/chatLoader';
+import { Footer } from '@/src/ui/webElements/footer';
 import { ImportExportLoader } from '@/src/ui/webElements/importExportLoader';
 import { PromptBar } from '@/src/ui/webElements/promptBar';
 import { Toast } from '@/src/ui/webElements/toast';
@@ -17,6 +18,7 @@ export class AppContainer extends BaseLayoutContainer<Header> {
   private chatLoader!: ChatLoader;
   private importExportLoader!: ImportExportLoader;
   private toast!: Toast;
+  private footer!: Footer;
 
   getHeader(): Header {
     if (!this.header) {
@@ -75,5 +77,12 @@ export class AppContainer extends BaseLayoutContainer<Header> {
       this.toast = new Toast(this.page);
     }
     return this.toast;
+  }
+
+  getFooter(): Footer {
+    if (!this.footer) {
+      this.footer = new Footer(this.page, this.rootLocator);
+    }
+    return this.footer;
   }
 }
