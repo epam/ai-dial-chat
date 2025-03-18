@@ -15,7 +15,6 @@ import { NA_VERSION } from '@/src/constants/public';
 import { getPublicItemIdWithoutVersion } from '../server/api';
 
 import { Entity, ShareEntity } from '@epam/ai-dial-shared';
-import { compareVersions } from 'compare-versions';
 import groupBy from 'lodash-es/groupBy';
 import keyBy from 'lodash-es/keyBy';
 import merge from 'lodash-es/merge';
@@ -200,6 +199,22 @@ export const isVersionValid = (version: string | undefined) => {
     versionParts.every((part) => /^\d+$/.test(part))
   );
 };
+
+function compareVersions(version1: string, version2: string) {
+  const parts1 = version1.split('.').map(Number);
+  const parts2 = version2.split('.').map(Number);
+
+  const maxLength = Math.max(parts1.length, parts2.length);
+
+  for (let i = 0; i < maxLength; i++) {
+    const num1 = parts1[i] || 0;
+    const num2 = parts2[i] || 0;
+
+    if (num1 > num2) return 1;
+    if (num1 < num2) return -1;
+  }
+  return 0;
+}
 
 export const findLatestVersion = (versions: string[]) => {
   const filteredVersions = versions.filter((v) => v !== NA_VERSION);
