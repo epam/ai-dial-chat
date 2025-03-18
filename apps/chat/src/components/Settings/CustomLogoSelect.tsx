@@ -5,7 +5,8 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { ConfirmDialogValueTypes, FileSourceType } from '@/src/types/files';
+import { ConfirmDialogValueTypes } from '@/src/types/common';
+import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import { ConfirmDialog } from '../Common/ConfirmDialog';

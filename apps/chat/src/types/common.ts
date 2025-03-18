@@ -151,3 +151,8 @@ export interface EntityInfo {
 }
 
 export type SortOrder = 'asc' | 'desc';
+
+export interface ConfirmDialogValueTypes {
+  description: string;
+  heading: string;
+}
