@@ -153,6 +153,10 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     ApplicationSelectors.selectExitAfterSave,
   );
 
+  const confirmSourceFolderValues = oldApplication?.isShared
+    ? CONFIRM_SOURCE_FOLDER_VALUES
+    : undefined;
+
   const handleEdit = useCallback(
     (data: CodeAppFormData) => {
       if (
@@ -326,12 +330,8 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           tooltip={
             isSharedWithMe ? getSharedTooltip('folder with source files') : ''
           }
-          warning={
-            oldApplication?.isShared
-              ? CONFIRM_SOURCE_FOLDER_VALUES.description
-              : ''
-          }
-          confirmDialogValues={CONFIRM_SOURCE_FOLDER_VALUES}
+          warning={confirmSourceFolderValues?.description}
+          confirmDialogValues={confirmSourceFolderValues}
         />
 
         {sources && <FormCodeEditor sourcesFolderId={sources} />}
