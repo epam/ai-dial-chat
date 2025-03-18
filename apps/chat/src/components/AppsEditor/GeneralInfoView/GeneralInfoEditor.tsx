@@ -93,6 +93,10 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     ApplicationSelectors.selectShouldSaveApplication,
   );
 
+  const confirmIconValues = oldApplication?.isShared
+    ? CONFIRM_ICON_FILE_VALUES
+    : undefined;
+
   const handleSubmit = useCallback(
     (data: ApplicationGeneralInfoFormData) => {
       const { slug } = router.query;
@@ -174,7 +178,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
   ]);
 
   return (
-    <div className="size-full max-w-[1000px] overflow-hidden bg-layer-2">
+    <div className="size-full overflow-hidden bg-layer-2">
       <form
         onSubmit={submitWrapper(handleSubmit)}
         className="flex size-full flex-col"
@@ -229,12 +233,8 @@ export const GeneralInfoEditor: React.FC<Props> = ({
                 error={errors.iconUrl?.message}
                 disabled={isSharedWithMe}
                 tooltip={isSharedWithMe ? getSharedTooltip('icon') : ''}
-                warning={
-                  oldApplication?.isShared
-                    ? CONFIRM_ICON_FILE_VALUES.description
-                    : ''
-                }
-                confirmDialogValues={CONFIRM_ICON_FILE_VALUES}
+                warning={confirmIconValues?.description}
+                confirmDialogValues={confirmIconValues}
               />
             )}
           />
