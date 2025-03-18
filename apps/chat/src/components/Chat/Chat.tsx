@@ -26,10 +26,7 @@ import {
 } from '@/src/utils/app/conversation';
 import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
 import { isEntityIdExternal } from '@/src/utils/app/id';
-import {
-  isSmallScreen,
-  is4XLScreen as isWideScreen,
-} from '@/src/utils/app/mobile';
+import { is4XLScreen, isSmallScreen } from '@/src/utils/app/mobile';
 import { doesModelHaveConfiguration } from '@/src/utils/app/models';
 
 import {
@@ -87,6 +84,11 @@ import {
 import throttle from 'lodash/throttle';
 
 const scrollThrottlingTimeout = 250;
+
+const isWideScreen = () => !is4XLScreen();
+
+const checkIsWideLayout = (messagesLength: number, isCompareMode: boolean) =>
+  isWideScreen() && !messagesLength && !isCompareMode;
 
 const ChatView = memo(() => {
   const dispatch = useAppDispatch();
@@ -151,7 +153,7 @@ const ChatView = memo(() => {
   const [prevSelectedIds, setPrevSelectedIds] = useState<string[]>([]);
   const [inputHeight, setInputHeight] = useState<number>(142);
   const [isWideLayout, setIsWideLayout] = useState(
-    !isWideScreen() && !mergedMessages.length && !isCompareMode,
+    checkIsWideLayout(mergedMessages.length, isCompareMode),
   );
 
   const handleTalkToConversationId = useCallback(
@@ -312,15 +314,8 @@ const ChatView = memo(() => {
   }, [handleScroll, mergedMessages.length, messageIsStreaming]);
 
   const handleChatResize = useCallback(() => {
-    if (
-      !isWideScreen() &&
-      !mergedMessages.length &&
-      !isCompareMode &&
-      !isWideLayout
-    ) {
-      setIsWideLayout(true);
-    } else if (isWideLayout && isWideScreen()) setIsWideLayout(false);
-  }, [isCompareMode, isWideLayout, mergedMessages.length]);
+    setIsWideLayout(checkIsWideLayout(mergedMessages.length, isCompareMode));
+  }, [isCompareMode, mergedMessages.length]);
 
   useResizeObserver(chatMessagesRef.current, handleChatMessagesResize);
 
