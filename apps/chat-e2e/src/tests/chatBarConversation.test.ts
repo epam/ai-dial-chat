@@ -40,7 +40,8 @@ dialTest(
   async ({
     dialHomePage,
     conversations,
-    chat,
+    conversationAssertion,
+    sendMessage,
     chatMessages,
     setTestIds,
     header,
@@ -63,26 +64,22 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        await chat.sendRequestWithButton(messageToSend);
-
-        await expect
-          .soft(
-            conversations.getEntityByName(expectedConversationName),
-            ExpectedMessages.conversationNameUpdated,
-          )
-          .toBeVisible();
+        await sendMessage.send(messageToSend);
+        await conversationAssertion.assertEntityState(
+          { name: expectedConversationName },
+          'visible',
+        );
       },
     );
 
     await dialTest.step(
       'Verify request is fully displayed in chat history',
       async () => {
-        await expect
-          .soft(
-            chatMessages.getChatMessage(1),
-            ExpectedMessages.messageContentIsValid,
-          )
-          .toHaveText(messageToSend);
+        await baseAssertion.assertElementText(
+          chatMessages.getChatMessage(1),
+          messageToSend,
+          ExpectedMessages.messageContentIsValid,
+        );
       },
     );
 
@@ -90,12 +87,11 @@ dialTest(
       'Verify conversation is placed in Today section',
       async () => {
         const todayConversations = await conversations.getTodayConversations();
-        expect
-          .soft(
-            todayConversations.includes(expectedConversationName),
-            ExpectedMessages.conversationOfToday,
-          )
-          .toBeTruthy();
+        baseAssertion.assertArrayIncludesAll(
+          todayConversations,
+          [expectedConversationName],
+          ExpectedMessages.conversationOfToday,
+        );
       },
     );
   },
@@ -282,6 +278,8 @@ dialTest(
     toast,
     renameConversationModal,
     localStorageManager,
+    baseAssertion,
+    conversationAssertion,
   }) => {
     setTestIds(
       'EPMRTC-585',
@@ -309,16 +307,11 @@ dialTest(
     await renameConversationModal.editConversationNameWithEnter(
       newLongNameWithMiddleSpacesEndDot,
     );
-
-    await expect
-      .soft(toast.getElementLocator(), ExpectedMessages.noErrorToastIsShown)
-      .toBeHidden();
-    const actualName = await conversations
-      .getEntityName(expectedName)
-      .getElementInnerContent();
-    expect
-      .soft(actualName, ExpectedMessages.conversationNameUpdated)
-      .toBe(expectedName);
+    await baseAssertion.assertElementState(toast, 'hidden');
+    await conversationAssertion.assertEntityState(
+      { name: expectedName },
+      'visible',
+    );
 
     const isChatHeaderTitleTruncated =
       await chatHeader.chatTitle.isElementWidthTruncated();
@@ -330,13 +323,11 @@ dialTest(
       .toBeTruthy();
     await errorPopup.cancelPopup();
     await chatHeader.chatTitle.hoverOver();
-    const tooltipChatHeaderTitle = await tooltip.getContent();
-    expect
-      .soft(
-        tooltipChatHeaderTitle,
-        ExpectedMessages.headerTitleCorrespondRequest,
-      )
-      .toBe(expectedName);
+    await baseAssertion.assertElementText(
+      tooltip,
+      expectedName,
+      ExpectedMessages.headerTitleCorrespondRequest,
+    );
 
     const isTooltipChatHeaderTitleTruncated =
       await tooltip.isElementWidthTruncated();
