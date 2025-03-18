@@ -433,7 +433,6 @@ dialTest(
     localStorageManager,
     talkToAgentDialog,
     header,
-    marketplaceAgents,
     agentDetailsModal,
     confirmationDialog,
     chatHeader,
