@@ -4,8 +4,6 @@ import { useTranslation } from '../hooks/useTranslation';
 
 import { Translation } from '../types/translation';
 
-import { getLayout } from './_app';
-
 function Custom404() {
   const { t } = useTranslation(Translation.Common);
 
@@ -31,5 +29,4 @@ function Custom404() {
   );
 }
 
-Custom404.getLayout = getLayout;
 export default Custom404;
