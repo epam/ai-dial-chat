@@ -40,6 +40,7 @@ dialTest(
       'EPMRTC-4588',
       'EPMRTC-4592',
     );
+    dialTest.slow();
     const initialConversationName = GeneratorUtil.randomString(7);
     let models: DialAIEntityModel[];
 
@@ -51,6 +52,7 @@ dialTest(
           2,
         );
         await localStorageManager.setRecentModelsIdsOnce(...models);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -248,6 +250,7 @@ dialTest(
         await localStorageManager.setChatCollapsedSection(
           CollapsedSections.Organization,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 

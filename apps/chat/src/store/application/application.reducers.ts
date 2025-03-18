@@ -11,25 +11,13 @@ import {
   ApplicationStatus,
   CustomApplicationModel,
 } from '@/src/types/applications';
-import { FolderInterface, FolderType } from '@/src/types/folder';
+import { FolderType } from '@/src/types/folder';
 import { DialAIEntityModel } from '@/src/types/models';
 
-import * as ApplicationSelectors from './application.selectors';
+import { ApplicationState } from './applications.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import uniqBy from 'lodash-es/uniqBy';
-
-export { ApplicationSelectors };
-
-export interface ApplicationState {
-  appLoading: UploadStatus;
-  logsLoadingStatus: UploadStatus;
-  appDetails: CustomApplicationModel | undefined;
-  appLogs: ApplicationLogsType | undefined;
-  shouldSaveApplication?: boolean;
-  exitAfterSave?: boolean;
-  publicFolders: FolderInterface[];
-}
 
 const initialState: ApplicationState = {
   appLoading: UploadStatus.UNINITIALIZED,
@@ -224,6 +212,8 @@ export const applicationSlice = createSlice({
     },
   },
 });
+
+export { ApplicationSelectors } from './application.selectors';
 
 export const ApplicationActions = applicationSlice.actions;
 

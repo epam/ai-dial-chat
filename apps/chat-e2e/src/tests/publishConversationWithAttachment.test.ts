@@ -68,7 +68,10 @@ dialAdminTest(
     baseAssertion,
     fileApiHelper,
     setTestIds,
+    localStorageManager,
+    adminLocalStorageManager,
   }) => {
+    dialAdminTest.slow();
     setTestIds(
       'EPMRTC-3463',
       'EPMRTC-3213',
@@ -105,6 +108,7 @@ dialAdminTest(
           );
         conversationData.resetData();
         await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -188,6 +192,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Login as admin and verify publishing request is displayed under "Approve required" section',
       async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversationsAssertion.assertFolderState(
@@ -419,6 +424,8 @@ dialAdminTest(
     adminApproveRequiredConversations,
     adminFilesToApproveAssertion,
     setTestIds,
+    localStorageManager,
+    adminLocalStorageManager,
   }) => {
     dialAdminTest.slow();
     setTestIds('EPMRTC-3625');
@@ -444,6 +451,7 @@ dialAdminTest(
             modelWithInputAttachments,
           );
         await dataInjector.createConversations([plotlyConversation]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -483,6 +491,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Login as admin and verify publishing request is displayed under "Approve required" section',
       async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversationsAssertion.assertFolderState(
@@ -648,7 +657,7 @@ dialAdminTest(
         );
         await adminConversationAssertion.assertSelectedConversation(replayName);
         const replayRequest = await adminChat.startReplay();
-        await apiAssertion.assertRequestMessage(
+        apiAssertion.assertRequestMessage(
           replayRequest.messages[0],
           plotlyConversation.messages[0].content,
         );

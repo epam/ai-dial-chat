@@ -93,7 +93,7 @@ export const ChangePathDialog = ({
   const applicationFolders = useAppSelector(
     ApplicationSelectors.selectPublicFolders,
   );
-  const fileFolders = useAppSelector(FilesSelectors.selectPublicationFolders);
+  const fileFolders = useAppSelector(FilesSelectors.selectPublicFolders);
   const loadingFolderIds = useAppSelector(selectors.selectLoadingFolderIds);
 
   const folders = useMemo(

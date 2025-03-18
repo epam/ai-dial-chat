@@ -40,6 +40,8 @@ dialAdminTest(
     adminApproveRequiredConversationsAssertion,
     adminPublishingApprovalModalAssertion,
     setTestIds,
+    localStorageManager,
+    adminLocalStorageManager,
   }) => {
     dialAdminTest.slow();
     setTestIds('EPMRTC-3198', 'EPMRTC-3515', 'EPMRTC-4061');
@@ -92,6 +94,7 @@ dialAdminTest(
     await dialTest.step('Prepare a new conversation to publish', async () => {
       conversationToPublish = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversationToPublish]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -145,6 +148,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Login as admin and verify conversation publishing request is displayed under "Approve required" section',
       async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversationsAssertion.assertFolderState(
@@ -243,6 +247,8 @@ dialAdminTest(
     adminApproveRequiredConversationsAssertion,
     adminPublishingApprovalModalAssertion,
     setTestIds,
+    localStorageManager,
+    adminLocalStorageManager,
   }) => {
     dialAdminTest.slow();
     setTestIds(
@@ -270,6 +276,7 @@ dialAdminTest(
     await dialTest.step('Prepare a new conversation to publish', async () => {
       conversationToPublish = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversationToPublish]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -444,6 +451,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Login as admin and verify conversation publishing request is displayed under "Approve required" section',
       async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversationsAssertion.assertFolderState(

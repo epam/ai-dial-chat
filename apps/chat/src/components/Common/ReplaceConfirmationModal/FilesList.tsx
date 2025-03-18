@@ -4,10 +4,10 @@ import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { MappedReplaceActions } from '@/src/types/import-export';
+import { OnItemEvent } from '@/src/types/modal';
 
 import Folder from '../../Folder/Folder';
 import { FilesRow } from './Components';
-import { OnItemEvent } from './ReplaceConfirmationModal';
 
 interface Props {
   folders: FolderInterface[];

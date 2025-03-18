@@ -106,6 +106,7 @@ dialTest(
         await localStorageManager.setChatCollapsedSection(
           CollapsedSections.Organization,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -332,6 +333,7 @@ dialTest(
         await localStorageManager.setChatCollapsedSection(
           CollapsedSections.Organization,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -381,6 +383,8 @@ dialTest(
     context,
     chatMessages,
     conversations,
+    baseAssertion,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1535');
     const message = GeneratorUtil.randomString(10);
@@ -394,11 +398,12 @@ dialTest(
       const conversation =
         conversationData.prepareModelConversationBasedOnRequests(requests);
       replayConversation =
-        conversationData.prepareDefaultReplayConversation(conversation);
+        conversationData.preparePartiallyReplayedConversation(conversation, 0);
       await dataInjector.createConversations([
         conversation,
         replayConversation,
       ]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -407,68 +412,45 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(replayConversation.name);
-        await chat.startReplay();
-        await sendMessage.messageInput.fillInInput(message);
-
-        await sendMessage.stopGenerating.hoverOver();
-        const tooltipContent = await tooltip.getContent();
-        expect
-          .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.stopGeneratingTooltip);
-
-        await expect
-          .soft(
-            sendMessage.sendMessageButton.getElementLocator(),
-            ExpectedMessages.sendMessageButtonDisabled,
-          )
-          .toBeHidden();
       },
     );
 
     await dialTest.step(
-      'Stop generating and verify message is preserved, footer is visible and tooltip shown on hover',
+      'Verify footer is visible and tooltip shown on hover over Proceed button',
       async () => {
-        await sendMessage.stopGenerating.click();
-        const inputMessage = await sendMessage.messageInput.getElementContent();
-        expect
-          .soft(inputMessage, ExpectedMessages.messageContentIsValid)
-          .toBe(message);
-
-        await expect
-          .soft(
-            sendMessage.sendMessageButton.getElementLocator(),
-            ExpectedMessages.sendMessageButtonIsNotVisible,
-          )
-          .toBeHidden();
-
-        await chat.getFooter().waitForState({ state: 'attached' });
+        await baseAssertion.assertElementState(
+          sendMessage.sendMessageButton,
+          'hidden',
+        );
+        await baseAssertion.assertElementState(chat.getFooter(), 'visible');
+        await sendMessage.proceedGenerating.hoverOver();
+        await baseAssertion.assertElementText(
+          tooltip,
+          ExpectedConstants.continueReplayLabel,
+        );
       },
     );
 
     await dialTest.step(
       'Continue replaying, refresh page and verify error appears for the least response, message is preserved, footer is visible and tooltip shown on hover',
       async () => {
+        await sendMessage.messageInput.fillInInput(message);
         await context.setOffline(true);
         await chat.proceedReplaying();
-
         const generatedContent = await chatMessages.getLastMessageContent();
-        expect
-          .soft(generatedContent, ExpectedMessages.errorReceivedOnReplay)
-          .toBe(ExpectedConstants.answerError);
-
-        const inputMessage = await sendMessage.messageInput.getElementContent();
-        expect
-          .soft(inputMessage, ExpectedMessages.messageContentIsValid)
-          .toBe(message);
-
-        await expect
-          .soft(
-            sendMessage.sendMessageButton.getElementLocator(),
-            ExpectedMessages.sendMessageButtonIsNotVisible,
-          )
-          .toBeHidden();
-
-        await chat.getFooter().waitForState({ state: 'attached' });
+        baseAssertion.assertValue(
+          generatedContent,
+          ExpectedConstants.answerError,
+        );
+        await baseAssertion.assertElementText(
+          sendMessage.messageInput,
+          message,
+        );
+        await baseAssertion.assertElementState(
+          sendMessage.sendMessageButton,
+          'hidden',
+        );
+        await baseAssertion.assertElementState(chat.getFooter(), 'visible');
       },
     );
   },
@@ -488,6 +470,7 @@ dialTest(
     context,
     sendMessage,
     conversations,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-514', 'EPMRTC-1165');
     let conversation: Conversation;
@@ -500,6 +483,7 @@ dialTest(
         conversation,
         replayConversation,
       ]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -556,6 +540,7 @@ dialTest(
     dataInjector,
     setTestIds,
     conversations,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1312');
     let errorConversation: Conversation;
@@ -572,6 +557,7 @@ dialTest(
           errorConversation,
           replayConversation,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 

@@ -30,11 +30,13 @@ dialTest(
     confirmationDialog,
     chatBar,
     manageAttachmentsAssertion,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1884', 'EPMRTC-3296');
 
     await dialTest.step('Upload file to app', async () => {
       await fileApiHelper.putFile(Attachment.sunImageName);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -144,6 +146,7 @@ dialTest(
         );
         await dataInjector.createConversations([conversation]);
         await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -219,12 +222,14 @@ dialTest(
     attachFilesModal,
     uploadFromDeviceModal,
     chatBar,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3302');
 
     await dialTest.step(
       'Open "Manage attachments" modal through chat side bar menu icon',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
@@ -306,12 +311,14 @@ dialTest(
     uploadFromDeviceModal,
     chatBar,
     context,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3304');
 
     await dialTest.step(
       'Open "Manage attachments" modal through chat side bar menu icon',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
@@ -376,12 +383,14 @@ dialTest(
     uploadFromDeviceModal,
     chatBar,
     context,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3303');
 
     await dialTest.step(
       'Open "Manage attachments" modal through chat side bar menu icon',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
@@ -437,12 +446,14 @@ dialTest(
     attachFilesModal,
     uploadFromDeviceModal,
     chatBar,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2015', 'EPMRTC-3187');
 
     await dialTest.step(
       'Upload file and set his name to contain special symbols',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
@@ -523,6 +534,7 @@ dialTest(
         );
         await dataInjector.createConversations([conversation]);
         await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -583,6 +595,7 @@ dialTest(
     chatBar,
     manageAttachmentsAssertion,
     attachedAllFiles,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-5396', 'EPMRTC-5526');
     const filesToTest = [
@@ -607,6 +620,7 @@ dialTest(
     ];
 
     await dialTest.step('Open Dial', async () => {
+      await localStorageManager.setShowSideBarPanels();
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
     });

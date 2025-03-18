@@ -53,6 +53,14 @@ export class LocalStorageManager {
     window.localStorage.setItem('chatbarWidth', width);
   };
 
+  setShowChatBarKey = () => (isDisplayed: boolean) => {
+    window.localStorage.setItem('showChatbar', JSON.stringify(isDisplayed));
+  };
+
+  setShowPromptBarKey = () => (isDisplayed: boolean) => {
+    window.localStorage.setItem('showPromptbar', JSON.stringify(isDisplayed));
+  };
+
   async setConversationHistory(...conversation: Conversation[]) {
     await this.page.addInitScript(
       this.setConversationHistoryKey(),
@@ -204,6 +212,24 @@ export class LocalStorageManager {
 
   async setChatbarWidth(width: string) {
     await this.page.addInitScript(this.setChatbarWidthKey(), width);
+  }
+
+  async setShowChatBar(isDisplayed: boolean) {
+    await this.page.addInitScript(this.setShowChatBarKey(), isDisplayed);
+  }
+
+  async setShowPromptBar(isDisplayed: boolean) {
+    await this.page.addInitScript(this.setShowPromptBarKey(), isDisplayed);
+  }
+
+  async setShowSideBarPanels(
+    options: {
+      isChatBarDisplayed: boolean;
+      isPromptBarDisplayed: boolean;
+    } = { isChatBarDisplayed: true, isPromptBarDisplayed: true },
+  ) {
+    await this.setShowChatBar(options.isChatBarDisplayed);
+    await this.setShowPromptBar(options.isPromptBarDisplayed);
   }
 
   async getSelectedConversationIds(originHost?: string) {

@@ -2,7 +2,10 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
-import { excludeSystemMessages } from '@/src/utils/app/conversation';
+import {
+  excludeSystemMessages,
+  getSystemMessageContent,
+} from '@/src/utils/app/conversation';
 import { getConfigurationValue } from '@/src/utils/app/form-schema';
 import {
   doesModelAllowAddons,
@@ -60,12 +63,21 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       return res.status(400).send(errorsMessages[400]);
     }
 
+    if (!assistantModel && model.type === EntityType.Assistant) {
+      return res.status(400).send(errorsMessages.noAssistantModelSelected);
+    }
+
     let promptToSend = prompt;
     let filteredMessages = messages;
     if (!doesModelAllowSystemPrompt(model)) {
+      // model doesn't support system prompt
       promptToSend = '';
       filteredMessages = excludeSystemMessages(messages);
+    } else if (getSystemMessageContent(messages)) {
+      // system prompt is already added by overlay
+      promptToSend = '';
     } else if (!promptToSend && model.type === EntityType.Model) {
+      // if no any system prompt was added
       promptToSend = DEFAULT_SYSTEM_PROMPT;
     }
 
@@ -100,6 +112,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       limits,
       features,
       tokenizer,
+      request: req,
     });
 
     const configurationValue = getConfigurationValue(

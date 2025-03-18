@@ -45,9 +45,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     if (!proxyRes.ok) {
       throw new DialAIError(
         (typeof json === 'string' && json) || proxyRes.statusText,
-        '',
-        '',
-        proxyRes.status + '',
+        proxyRes.status,
+        req,
       );
     }
 

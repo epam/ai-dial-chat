@@ -15,6 +15,7 @@ import { errorsMessages } from '@/src/constants/errors';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
+import { sanitizeUri } from 'micromark-util-sanitize-uri';
 import fetch from 'node-fetch';
 
 const getEntityUrlFromSlugs = (
@@ -26,14 +27,11 @@ const getEntityUrlFromSlugs = (
     : [req.query.slug];
 
   if (!slugs || slugs.length === 0) {
-    throw new DialAIError(`No path provided`, '', '', '400');
+    throw new DialAIError(`No path provided`, 400, req);
   }
 
-  return constructPath(
-    dialApiHost,
-    'v1',
-    'ops',
-    ServerUtils.encodeSlugs(slugs),
+  return sanitizeUri(
+    constructPath(dialApiHost, 'v1', 'ops', ServerUtils.encodeSlugs(slugs)),
   );
 };
 
@@ -55,7 +53,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     });
 
     if (!opsRes.ok) {
-      throw new DialAIError(`Operation failed`, '', '', opsRes.status + '');
+      throw new DialAIError(`Operation failed`, opsRes.status, req);
     }
     let json: unknown;
     try {

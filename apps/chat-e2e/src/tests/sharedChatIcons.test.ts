@@ -45,6 +45,7 @@ dialTest(
     confirmationDialog,
     conversationAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-1502',
@@ -67,6 +68,7 @@ dialTest(
     await dialTest.step('Prepare default conversation', async () => {
       conversation = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversation]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -310,6 +312,7 @@ dialTest(
     localStorageManager,
     chatHeader,
     talkToAgentDialog,
+    marketplacePage,
     temperatureSlider,
     agentSettings,
     addons,
@@ -319,6 +322,8 @@ dialTest(
     chat,
     setTestIds,
     renameConversationModal,
+    iconApiHelper,
+    toast,
   }) => {
     setTestIds(
       'EPMRTC-1514',
@@ -368,6 +373,7 @@ dialTest(
         );
         await localStorageManager.setRecentAddonsIds(randomAddon);
         await localStorageManager.setRecentModelsIds(randomModel);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -382,6 +388,7 @@ dialTest(
         await temperatureSlider.setTemperature(0);
         await addons.selectAddon(randomAddon.name);
         await conversationSettingsModal.applyChangesButton.click();
+        await toast.closeToast();
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -417,10 +424,12 @@ dialTest(
       async () => {
         await conversations.selectConversation(thirdConversationToShare.name);
         await chatHeader.chatAgent.click();
-        await talkToAgentDialog.selectRecentAgent(randomModel);
-        await conversationAssertion.assertEntityArrowIconState(
-          { name: newName },
-          'visible',
+        await talkToAgentDialog.selectAgent(randomModel, marketplacePage);
+        const expectedRandomModelIcon =
+          iconApiHelper.getEntityIcon(randomModel);
+        await conversationAssertion.assertTreeEntityIcon(
+          { name: thirdConversationToShare.name },
+          expectedRandomModelIcon,
         );
       },
     );
@@ -467,6 +476,7 @@ dialTest(
     itemApiHelper,
     conversationAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1510', 'EPMRTC-2002');
     const defaultModel = ModelsUtil.getDefaultModel()!;
@@ -525,6 +535,7 @@ dialTest(
           conversationToDeleteName,
         );
         await dataInjector.createConversations([conversationToDelete]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -563,6 +574,7 @@ dialTest(
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1600', 'EPMRTC-1511');
     let firstSharedConversation: Conversation;
@@ -584,6 +596,7 @@ dialTest(
         const shareByLinkResponse =
           await mainUserShareApiHelper.shareEntityByLink([conversation]);
         await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+        await localStorageManager.setShowSideBarPanels();
       }
     });
 
@@ -661,6 +674,7 @@ dialTest(
     folderDropdownMenu,
     confirmationDialog,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-1810',
@@ -696,6 +710,7 @@ dialTest(
         await additionalUserShareApiHelper.acceptInvite(
           shareConversationByLinkResponse,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -806,6 +821,7 @@ dialTest(
     tooltip,
     setTestIds,
     page,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-2729',
@@ -824,6 +840,7 @@ dialTest(
       folderConversation =
         conversationData.prepareDefaultConversationInFolder(folderName);
       await dataInjector.createConversations(folderConversation.conversations);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -983,6 +1000,7 @@ dialTest(
     chat,
     conversationAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-2748',
@@ -1002,6 +1020,7 @@ dialTest(
         conversation,
       ]);
       await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -1117,6 +1136,7 @@ dialTest(
     additionalSecondUserShareApiHelper,
     conversationAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1507');
     let conversation: Conversation;
@@ -1145,6 +1165,7 @@ dialTest(
         await additionalSecondUserShareApiHelper.deleteSharedWithMeEntities(
           sharedEntities.resources.filter((e) => e.url === conversation.id),
         );
+        await localStorageManager.setShowSideBarPanels();
 
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
@@ -1186,6 +1207,7 @@ dialTest(
     additionalUserShareApiHelper,
     additionalSecondUserShareApiHelper,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2755');
     let folderConversation: FolderConversation;
@@ -1221,6 +1243,7 @@ dialTest(
             (e) => e.name === folderConversation.folders.name,
           ),
         );
+        await localStorageManager.setShowSideBarPanels();
 
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();

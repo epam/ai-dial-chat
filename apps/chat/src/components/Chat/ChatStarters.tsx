@@ -53,9 +53,10 @@ const ChatStartersView = ({ schema }: ChatStartersViewProps) => {
       formValue={formValue}
       showSelected
       onChange={handleChange}
-      buttonsWrapperClassName="md:justify-center flex-nowrap overflow-x-auto overflow-y-hidden px-2"
+      buttonsWrapperClassName="overflow-y-hidden md:px-4 px-2 lg:px-0"
       buttonClassName="shrink-0"
-      propertyWrapperClassName="items-center"
+      wrapperClassName="lg:items-center"
+      propertyWrapperClassName="lg:w-[768px]"
     />
   );
 };
@@ -63,6 +64,9 @@ const ChatStartersView = ({ schema }: ChatStartersViewProps) => {
 export const ChatStarters = memo(function ChatStarters() {
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
+  );
+  const isReplay = useAppSelector(
+    ConversationsSelectors.selectIsReplaySelectedConversations,
   );
   const schema = useAppSelector(ChatSelectors.selectConfigurationSchema);
   const isSchemaLoading = useAppSelector(
@@ -73,9 +77,11 @@ export const ChatStarters = memo(function ChatStarters() {
     selectedConversations.length > 1 ||
     selectedConversations[0]?.messages?.length > 0 ||
     isSchemaLoading ||
-    !schema
-  )
+    !schema ||
+    isReplay
+  ) {
     return null;
+  }
 
   return <ChatStartersView schema={schema} />;
 });

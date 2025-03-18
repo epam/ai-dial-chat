@@ -53,7 +53,10 @@ dialAdminTest(
     adminFolderToApproveAssertion,
     organizationFolderConversationAssertions,
     setTestIds,
+    localStorageManager,
+    adminLocalStorageManager,
   }) => {
+    dialAdminTest.slow();
     setTestIds('EPMRTC-3386', 'EPMRTC-3802', 'EPMRTC-3389');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
@@ -99,6 +102,7 @@ dialAdminTest(
         await adminPublicationApiHelper.approveRequest(
           folderPublicationRequest,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -213,6 +217,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Login as admin and verify conversation unpublishing request is displayed under "Approve required" section',
       async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversationsAssertion.assertFolderState(
@@ -444,6 +449,8 @@ dialAdminTest(
     adminFolderToApproveAssertion,
     organizationFolderConversationAssertions,
     setTestIds,
+    localStorageManager,
+    adminLocalStorageManager,
   }) => {
     setTestIds('EPMRTC-3429', 'EPMRTC-3800', 'EPMRTC-3801');
     let firstConversation: Conversation;
@@ -489,6 +496,7 @@ dialAdminTest(
           folderPublicationRequest,
         );
         folderConversations = [firstConversation.name, secondConversation.name];
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -567,6 +575,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Login as admin and verify both folder unpublishing requests are displayed under "Approve required" section',
       async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversationsAssertion.assertFolderState(
@@ -772,6 +781,8 @@ dialAdminTest(
     adminFolderToApproveAssertion,
     organizationFolderConversationAssertions,
     setTestIds,
+    localStorageManager,
+    adminLocalStorageManager,
   }) => {
     setTestIds('EPMRTC-3808');
     let nestedFolders: FolderInterface[];
@@ -810,6 +821,7 @@ dialAdminTest(
         await adminPublicationApiHelper.approveRequest(
           folderPublicationRequest,
         );
+        await localStorageManager.setShowSideBarPanels();
 
         rootFolderName = nestedFolders[0].name;
         rootFolderConversationName = nestedConversations[0].name;
@@ -910,6 +922,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Login as admin and verify inner folder unpublishing request is displayed under "Approve required" section',
       async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversationsAssertion.assertFolderState(

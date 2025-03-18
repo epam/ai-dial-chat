@@ -26,6 +26,7 @@ dialTest(
     chatBar,
     confirmationDialog,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1628', 'EPMRTC-2948', 'EPMRTC-1629');
     let folderConversation: FolderConversation;
@@ -49,6 +50,7 @@ dialTest(
           folderConversation.folders,
         );
         conversation = folderConversation.conversations[0];
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -143,6 +145,7 @@ dialTest(
     chatBar,
     toast,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2949', 'EPMRTC-2952');
     let nestedFolders: FolderInterface[];
@@ -159,6 +162,7 @@ dialTest(
         ...nestedFolders,
       );
       expectedDuplicatedFolderName = nestedFolders[nestedFolderLevel - 2].name;
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -258,6 +262,7 @@ dialTest(
           CollapsedSections.Organization,
           CollapsedSections.SharedWithMe,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 

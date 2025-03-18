@@ -55,6 +55,7 @@ dialSharedWithMeTest(
         );
         await additionalShareUserDialHomePage.waitForPageLoaded({
           isPromptShared: true,
+          skipSidebars: true,
         });
         await additionalShareUserSharedWithMePromptAssertion.assertEntityState(
           { name: prompt.name },
@@ -146,6 +147,7 @@ dialTest(
     shareApiAssertion,
     promptAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3179');
     let prompt: Prompt;
@@ -158,6 +160,7 @@ dialTest(
         prompt,
       ]);
       await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(

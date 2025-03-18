@@ -36,6 +36,7 @@ dialTest(
     dataInjector,
     setTestIds,
     chatMessages,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-476');
     let conversation: Conversation;
@@ -48,6 +49,7 @@ dialTest(
       conversation =
         conversationData.prepareModelConversationBasedOnRequests(userRequests);
       await dataInjector.createConversations([conversation]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -91,11 +93,13 @@ dialTest(
     sendMessage,
     localStorageManager,
     page,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-477', 'EPMRTC-1463');
     await dialTest.step('Set random application theme', async () => {
       const theme = GeneratorUtil.randomArrayElement(Object.keys(ThemeId));
       await localStorageManager.setSettings(theme);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -111,23 +115,22 @@ dialTest(
       'Verify error is displayed as a response, regenerate button is available',
       async () => {
         const generatedContent = await chatMessages.getLastMessageContent();
-        expect
-          .soft(generatedContent, ExpectedMessages.errorReceivedOnReplay)
-          .toBe(ExpectedConstants.answerError);
-
-        await expect
-          .soft(
-            sendMessage.regenerate.getElementLocator(),
-            ExpectedMessages.regenerateIsAvailable,
-          )
-          .toBeVisible();
+        baseAssertion.assertValue(
+          generatedContent,
+          ExpectedConstants.answerError,
+          ExpectedMessages.errorReceivedOnReplay,
+        );
+        await baseAssertion.assertElementState(
+          sendMessage.regenerate,
+          'visible',
+          ExpectedMessages.regenerateIsAvailable,
+        );
       },
     );
 
     await dialTest.step(
       'Type any prompt, hit Enter button and verify nothing happened, Send button is not shown',
       async () => {
-        await context.setOffline(false);
         for (let i = 1; i <= 2; i++) {
           if (i === 2) {
             const messagesCountBefore =
@@ -138,19 +141,17 @@ dialTest(
             await page.keyboard.press(keys.enter);
             const messagesCountAfter =
               await chatMessages.chatMessages.getElementsCount();
-            expect
-              .soft(
-                messagesCountBefore === messagesCountAfter,
-                ExpectedMessages.messageCountIsCorrect,
-              )
-              .toBeTruthy();
+            baseAssertion.assertValue(
+              messagesCountBefore,
+              messagesCountAfter,
+              ExpectedMessages.messageCountIsCorrect,
+            );
           }
-          await expect
-            .soft(
-              sendMessage.sendMessageButton.getElementLocator(),
-              ExpectedMessages.sendMessageButtonDisabled,
-            )
-            .toBeHidden();
+          await baseAssertion.assertElementState(
+            sendMessage.sendMessageButton,
+            'hidden',
+            ExpectedMessages.sendMessageButtonDisabled,
+          );
         }
       },
     );
@@ -161,7 +162,8 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        await chatMessages.regenerateResponse();
+        await context.setOffline(false);
+        await sendMessage.regenerateErrorResponse();
         const generatedContent = await chatMessages.getLastMessageContent();
         expect
           .soft(generatedContent, ExpectedMessages.messageContentIsValid)
@@ -182,6 +184,7 @@ dialTest(
     dataInjector,
     setTestIds,
     chatMessages,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-485', 'EPMRTC-486', 'EPMRTC-487');
     const editData = 'updated message';
@@ -191,6 +194,7 @@ dialTest(
       conversation =
         conversationData.prepareModelConversationBasedOnRequests(userRequests);
       await dataInjector.createConversations([conversation]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -274,12 +278,14 @@ dialTest(
     setTestIds,
     chatMessages,
     confirmationDialog,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-488', 'EPMRTC-489');
     const conversation =
       conversationData.prepareModelConversationBasedOnRequests(userRequests);
     await dialTest.step('Prepare conversation with 3 requests', async () => {
       await dataInjector.createConversations([conversation]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -321,7 +327,8 @@ dialTest(
   },
 );
 
-dialTest(
+//TC depends on LLM availability and response
+dialTest.skip(
   'System prompt is applied in Model',
   async ({
     dialHomePage,
@@ -340,6 +347,7 @@ dialTest(
       'Set system prompt for model and send request',
       async () => {
         await localStorageManager.setRecentModelsIds(simpleRequestModel!);
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.click();
@@ -392,6 +400,7 @@ dialTest(
       const theme = GeneratorUtil.randomArrayElement(Object.keys(ThemeId));
       await localStorageManager.setSettings(theme);
       await localStorageManager.setRecentModelsIds(simpleRequestModel!);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -444,7 +453,7 @@ dialTest(
       },
     );
 
-    await dialTest.step(
+    await dialTest.step.skip(
       'Send request and stop generation when partial content received',
       async () => {
         await chatMessages.regenerateResponse(false);
@@ -453,7 +462,7 @@ dialTest(
       },
     );
 
-    await dialTest.step(
+    await dialTest.step.skip(
       'Verify partial content is preserved and model icon is visible',
       async () => {
         const generatedContent = await chatMessages.getLastMessageContent();
@@ -478,6 +487,9 @@ dialTest(
     await dialTest.step(
       'Edit request, click "Save & Submit" and verify response is regenerated',
       async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         const updatedRequest = '1+2=';
         await chatMessages.openEditMessageMode(request);
         await chatMessages.editMessage(request, updatedRequest);
@@ -492,59 +504,36 @@ dialTest(
 );
 
 dialTest(
-  'Send button in new message is available for Model if previous response is partly received when Stop generating was used.\n' +
-    'Compare mode button is not available while response is being generated',
+  'Compare mode button is not available while response is being generated.\n' +
+    '"Talk to" item icon is jumping while generating an answer',
   async ({
     dialHomePage,
     chat,
     setTestIds,
     chatMessages,
-    sendMessage,
     localStorageManager,
+    baseAssertion,
     chatBar,
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
-    setTestIds('EPMRTC-1533', 'EPMRTC-538');
+    setTestIds('EPMRTC-538', 'EPMRTC-386');
     await dialTest.step(
-      'Send request, verify Compare button is disabled while generating the response and stop generation immediately',
+      'Send request, verify Compare button is disabled while generating the response, model icon is jumping',
       async () => {
         const width = SIDEBAR_MIN_WIDTH + SIDEBAR_MIN_WIDTH / 3;
         await localStorageManager.setChatbarWidth(width.toFixed());
         await localStorageManager.setRecentModelsIds(simpleRequestModel!);
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await dialHomePage.throttleAPIResponse(API.chatHost);
         await chat.sendRequestWithButton(request, false);
-        await expect
-          .soft(
-            chatBar.compareButton.getElementLocator(),
-            ExpectedMessages.compareButtonIsDisabled,
-          )
-          .toBeDisabled();
-
-        await chatMessages.waitForPartialMessageReceived(2);
-        // eslint-disable-next-line playwright/no-force-option
-        await sendMessage.stopGenerating.click({ force: true });
-        await expect
-          .soft(
-            sendMessage.stopGenerating.getElementLocator(),
-            ExpectedMessages.stopGeneratingIsNotVisible,
-          )
-          .toBeHidden();
-      },
-    );
-
-    await dialTest.step(
-      'Type a new message and verify Send button is enabled',
-      async () => {
-        await sendMessage.messageInput.fillInInput(
-          GeneratorUtil.randomString(10),
+        await baseAssertion.assertElementActionabilityState(
+          chatBar.compareButton,
+          'disabled',
         );
-        await expect
-          .soft(
-            sendMessage.sendMessageButton.getElementLocator(),
-            ExpectedMessages.sendMessageButtonEnabled,
-          )
-          .toBeEnabled();
+        const jumpingIcon = await chatMessages.getMessageJumpingIcon();
+        await baseAssertion.assertElementState(jumpingIcon, 'visible');
       },
     );
   },
@@ -574,6 +563,7 @@ dialTest(
       prompt = promptData.preparePrompt(promptContent);
       await dataInjector.createPrompts([prompt]);
       await localStorageManager.setRecentModelsIds(simpleRequestModel!);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(

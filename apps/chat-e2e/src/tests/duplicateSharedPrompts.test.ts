@@ -19,6 +19,7 @@ dialSharedWithMeTest(
     additionalShareUserFolderPrompts,
     additionalShareUserPromptAssertion,
     setTestIds,
+    additionalShareUserLocalStorageManager,
   }) => {
     setTestIds('EPMRTC-1872', 'EPMRTC-2037');
     let folderPrompt: FolderPrompt;
@@ -42,6 +43,7 @@ dialSharedWithMeTest(
         await additionalUserShareApiHelper.acceptInvite(
           shareFolderByLinkResponse,
         );
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
       },
     );
 

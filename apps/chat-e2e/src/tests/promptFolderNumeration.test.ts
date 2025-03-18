@@ -10,12 +10,19 @@ import { expect } from '@playwright/test';
 
 dialTest(
   'Prompt folder: default numeration',
-  async ({ dialHomePage, promptBar, folderPrompts, setTestIds }) => {
+  async ({
+    dialHomePage,
+    promptBar,
+    folderPrompts,
+    setTestIds,
+    localStorageManager,
+  }) => {
     setTestIds('EPMRTC-1621');
 
     await dialTest.step(
       'Create several new prompt folders and verify their names are incremented',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         for (let i = 1; i <= 3; i++) {
@@ -45,6 +52,7 @@ dialTest(
     folderPrompts,
     promptDropdownMenu,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1623');
     let prompt: Prompt;
@@ -53,6 +61,7 @@ dialTest(
     await dialTest.step('Preparation', async () => {
       prompt = promptData.prepareDefaultPrompt();
       await dataInjector.createPrompts([prompt]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step('Create a new folder', async () => {
@@ -106,6 +115,7 @@ dialTest(
     promptDropdownMenu,
     confirmationDialog,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1622');
     let folderNumber = 1;
@@ -113,6 +123,7 @@ dialTest(
     await dialTest.step(
       'Create several new prompt folders and verify their names are incremented',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         for (folderNumber = 1; folderNumber < 3; folderNumber++) {
@@ -187,10 +198,12 @@ dialTest(
     folderPrompts,
     promptDropdownMenu,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2967');
 
     await dialTest.step('Create a new folder', async () => {
+      await localStorageManager.setShowSideBarPanels();
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await promptBar.createNewFolder();
@@ -248,6 +261,7 @@ dialTest(
         CollapsedSections.Organization,
         CollapsedSections.SharedWithMe,
       );
+      await localStorageManager.setShowSideBarPanels();
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       for (let i = 1; i <= 3; i++) {
