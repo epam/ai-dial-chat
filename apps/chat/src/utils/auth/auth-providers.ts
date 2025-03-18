@@ -1,4 +1,4 @@
-import { Provider } from 'next-auth/providers';
+import { OAuthProviderType, Provider } from 'next-auth/providers';
 import Auth0Provider from 'next-auth/providers/auth0';
 import AzureProvider from 'next-auth/providers/azure-ad';
 import CognitoProvider from 'next-auth/providers/cognito';
@@ -6,6 +6,7 @@ import GoogleProvider from 'next-auth/providers/google';
 import KeycloakProvider from 'next-auth/providers/keycloak';
 import OktaProvider from 'next-auth/providers/okta';
 
+import { parseCommaSeparatedList } from '../app/common';
 import { tokenConfig } from './auth-callbacks';
 import { GitLab } from './custom-gitlab';
 import PingId from './ping-identity';
@@ -155,6 +156,27 @@ const allProviders: (Provider | boolean)[] = [
 ];
 
 export const authProviders = allProviders.filter(Boolean) as Provider[];
+
+/**
+ * Sets the DEFAULT_PROVIDER to the single available provider's ID if:
+ * - There is only one authentication provider configured.
+ * - The provider supports federated logout.
+ *
+ * This allows us to skip the NextAuth provider selection page and
+ * directly use the single available provider for authentication.
+ * By ensuring the provider supports federated logout, we maintain
+ * proper session management and user experience during logout operations.
+ */
+const FEDERATED_LOGOUT_PROVIDERS = parseCommaSeparatedList(
+  process.env.FEDERATED_LOGOUT_PROVIDERS,
+);
+
+export const DEFAULT_PROVIDER: OAuthProviderType | null =
+  authProviders.length === 1 &&
+  process.env.SKIP_AUTH_PROVIDER_SELECTION &&
+  FEDERATED_LOGOUT_PROVIDERS.includes(authProviders[0]?.id as OAuthProviderType)
+    ? (authProviders[0]?.id as OAuthProviderType)
+    : null;
 
 /**
  * Is authorization enabled

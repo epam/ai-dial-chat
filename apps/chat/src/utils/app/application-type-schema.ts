@@ -1,6 +1,7 @@
 import {
   ApiApplicationTypeSchema,
   ApplicationTypeSchema,
+  ApplicationTypeSchemaProperties,
 } from '@/src/types/application-type-schema';
 
 export const convertApplicationTypeSchemaFromApi = (
@@ -8,9 +9,10 @@ export const convertApplicationTypeSchemaFromApi = (
 ): ApplicationTypeSchema => {
   return {
     id: schema.$id,
-    displayName: schema['dial:applicationTypeDisplayName'],
-    editorUrl: schema['dial:applicationTypeEditorUrl'],
-    viewerUrl: schema['dial:applicationTypeViewerUrl'],
+    displayName:
+      schema[ApplicationTypeSchemaProperties.applicationTypeDisplayName],
+    editorUrl: schema[ApplicationTypeSchemaProperties.applicationTypeEditorUrl],
+    viewerUrl: schema[ApplicationTypeSchemaProperties.applicationTypeViewerUrl],
   };
 };
 
