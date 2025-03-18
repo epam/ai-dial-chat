@@ -25,7 +25,7 @@ import {
 } from '@/src/utils/app/conversation';
 import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
 import { isEntityIdExternal } from '@/src/utils/app/id';
-import { isSmallScreen } from '@/src/utils/app/mobile';
+import { is4XLScreen, isSmallScreen } from '@/src/utils/app/mobile';
 import { doesModelHaveConfiguration } from '@/src/utils/app/models';
 
 import {
@@ -175,6 +175,9 @@ const ChatView = memo(() => {
   const isNotEmptyConversations =
     isReplayRequiresVariables ||
     selectedConversations.some((conv) => conv.messages.length > 0);
+
+  const isWideLayout =
+    !is4XLScreen() && !mergedMessages.length && !isCompareMode;
 
   useLayoutEffect(() => {
     const isNotAllowedModel =
@@ -686,8 +689,9 @@ const ChatView = memo(() => {
                       }
                     }}
                     ref={setChatContainerRef}
-                    className={classNames('h-full overflow-x-hidden', {
+                    className={classNames('overflow-x-hidden', {
                       'content-center': areSelectedConversationsEmpty,
+                      'h-full': !isWideLayout,
                     })}
                     data-qa="scrollable-area"
                   >
@@ -823,10 +827,11 @@ const ChatView = memo(() => {
                         />
                       )}
 
-                      <ChatStarters />
+                      {!isWideLayout && <ChatStarters />}
 
                       {!isPlayback && (
                         <ChatInput
+                          isWideLayout={isWideLayout}
                           showReplayControls={showReplayControls}
                           textareaRef={textareaRef}
                           showScrollDownButton={showScrollDownButton}
@@ -861,6 +866,8 @@ const ChatView = memo(() => {
                           onResize={onChatInputResize}
                         />
                       )}
+
+                      {isWideLayout && <ChatStarters />}
                     </>
                   )}
                 </div>
@@ -1100,5 +1107,10 @@ export function Chat() {
     );
   }
 
-  return <ChatView />;
+  return (
+    <>
+      <ChatView />
+      <ChatInputFooter />
+    </>
+  );
 }
