@@ -119,7 +119,7 @@ dialTest(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Filters are applied, DIAL Marketplace is opened for another user if user opens the URL. User has to log-in firstly.\n' +
     'Search phrase is cleared if to reopen DIAL Marketplace.\n' +
     'Filters are unselected if to reopen DIAL Marketplace',
