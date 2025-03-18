@@ -14,6 +14,7 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
+import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
@@ -25,7 +26,10 @@ import {
 } from '@/src/utils/app/conversation';
 import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
 import { isEntityIdExternal } from '@/src/utils/app/id';
-import { is4XLScreen, isSmallScreen } from '@/src/utils/app/mobile';
+import {
+  isSmallScreen,
+  is4XLScreen as isWideScreen,
+} from '@/src/utils/app/mobile';
 import { doesModelHaveConfiguration } from '@/src/utils/app/models';
 
 import {
@@ -146,6 +150,9 @@ const ChatView = memo(() => {
   const [isLastMessageError, setIsLastMessageError] = useState(false);
   const [prevSelectedIds, setPrevSelectedIds] = useState<string[]>([]);
   const [inputHeight, setInputHeight] = useState<number>(142);
+  const [isWideLayout, setIsWideLayout] = useState(
+    !isWideScreen() && !mergedMessages.length && !isCompareMode,
+  );
 
   const handleTalkToConversationId = useCallback(
     (conversationId: string | null) => {
@@ -175,9 +182,6 @@ const ChatView = memo(() => {
   const isNotEmptyConversations =
     isReplayRequiresVariables ||
     selectedConversations.some((conv) => conv.messages.length > 0);
-
-  const isWideLayout =
-    !is4XLScreen() && !mergedMessages.length && !isCompareMode;
 
   useLayoutEffect(() => {
     const isNotAllowedModel =
@@ -297,6 +301,31 @@ const ChatView = memo(() => {
     }
   }, []);
 
+  const handleChatMessagesResize = useCallback(() => {
+    if (
+      chatMessagesRef.current &&
+      !messageIsStreaming &&
+      mergedMessages.length
+    ) {
+      handleScroll();
+    }
+  }, [handleScroll, mergedMessages.length, messageIsStreaming]);
+
+  const handleChatResize = useCallback(() => {
+    if (
+      !isWideScreen() &&
+      !mergedMessages.length &&
+      !isCompareMode &&
+      !isWideLayout
+    ) {
+      setIsWideLayout(true);
+    } else if (isWideLayout && isWideScreen()) setIsWideLayout(false);
+  }, [isCompareMode, isWideLayout, mergedMessages.length]);
+
+  useResizeObserver(chatMessagesRef.current, handleChatMessagesResize);
+
+  useResizeObserver(document.body, handleChatResize);
+
   useEffect(() => {
     const lastMergedMessages = mergedMessages.length
       ? mergedMessages[mergedMessages.length - 1]
@@ -308,28 +337,6 @@ const ChatView = memo(() => {
     );
     setIsLastMessageError(isErrorInSomeLastMessage);
   }, [mergedMessages]);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (
-        chatMessagesRef.current &&
-        !messageIsStreaming &&
-        mergedMessages.length
-      ) {
-        handleScroll();
-      }
-    };
-
-    const resizeObserver = new ResizeObserver(handleResize);
-
-    if (chatMessagesRef.current) {
-      resizeObserver.observe(chatMessagesRef.current);
-    }
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [handleScroll, mergedMessages.length, messageIsStreaming]);
 
   useLayoutEffect(() => {
     if (selectedConversations.length > 0) {
