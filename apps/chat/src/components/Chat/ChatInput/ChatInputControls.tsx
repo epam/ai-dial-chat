@@ -1,3 +1,5 @@
+import classNames from 'classnames';
+
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
@@ -13,6 +15,7 @@ interface Props {
   isModelsInstalled: boolean;
   isConversationWithSchema: boolean;
   showScrollDownButton: boolean;
+  isWideLayout?: boolean;
   onScrollDown: () => void;
 }
 
@@ -22,6 +25,7 @@ export const ChatInputControls = ({
   isModelsInstalled,
   isConversationWithSchema,
   showScrollDownButton,
+  isWideLayout,
   onScrollDown,
 }: Props) => {
   const selectedConversations = useAppSelector(
@@ -36,7 +40,15 @@ export const ChatInputControls = ({
   }
 
   if (showReplayControls && !isNotEmptyConversations) {
-    return <StartReplayButton />;
+    return (
+      <div
+        className={classNames({
+          'mt-10': isWideLayout,
+        })}
+      >
+        <StartReplayButton />
+      </div>
+    );
   }
 
   if (isExternal) {
