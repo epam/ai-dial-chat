@@ -125,10 +125,7 @@ dialTest(
           [firstTopic, secondTopic],
           MarketplaceExpectedMessages.filterOptionsAreValid,
         );
-        await baseAssertion.assertStringsSorting(
-          actualTopicsFilterOptions,
-          'asc',
-        );
+        baseAssertion.assertStringsSorting(actualTopicsFilterOptions, 'asc');
       },
     );
 

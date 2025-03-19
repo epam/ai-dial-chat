@@ -46,6 +46,7 @@ dialTest(
     setTestIds,
     header,
     baseAssertion,
+    conversationAssertion,
     chatBar,
   }) => {
     setTestIds('EPMRTC-583', 'EPMRTC-776', 'EPMRTC-2894', 'EPMRTC-2957');

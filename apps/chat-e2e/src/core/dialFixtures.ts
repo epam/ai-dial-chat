@@ -244,6 +244,9 @@ const dialTest = test.extend<{
   sharedWithMeFolderDropdownMenu: DropdownMenu;
   additionalUserShareApiHelper: ShareApiHelper;
   additionalUserItemApiHelper: ItemApiHelper;
+  additionalUserFileApiHelper: FileApiHelper;
+  additionalUserApplicationApiHelper: ApplicationApiHelper;
+  additionalUserModelApiHelper: ModelApiHelper;
   additionalSecondUserShareApiHelper: ShareApiHelper;
   additionalSecondUserItemApiHelper: ItemApiHelper;
   chatNotFound: ChatNotFound;
@@ -803,6 +806,36 @@ const dialTest = test.extend<{
       BucketUtil.getAdditionalShareUserBucket(),
     ); // Use User2's bucket
     await use(additionalUserItemApiHelper);
+  },
+  additionalUserFileApiHelper: async (
+    { additionalShareUserRequestContext },
+    use,
+  ) => {
+    const additionalUserFileApiHelper = new FileApiHelper(
+      additionalShareUserRequestContext,
+      BucketUtil.getAdditionalShareUserBucket(),
+    ); // Use User2's bucket
+    await use(additionalUserFileApiHelper);
+  },
+  additionalUserApplicationApiHelper: async (
+    { additionalShareUserRequestContext },
+    use,
+  ) => {
+    const additionalUserApplicationApiHelper = new ApplicationApiHelper(
+      additionalShareUserRequestContext,
+      BucketUtil.getAdditionalShareUserBucket(),
+    ); // Use User2's bucket
+    await use(additionalUserApplicationApiHelper);
+  },
+  additionalUserModelApiHelper: async (
+    { additionalShareUserRequestContext },
+    use,
+  ) => {
+    const additionalUserModelApiHelper = new ModelApiHelper(
+      additionalShareUserRequestContext,
+      BucketUtil.getAdditionalShareUserBucket(),
+    ); // Use User2's bucket
+    await use(additionalUserModelApiHelper);
   },
   chatNotFound: async ({ page }, use) => {
     const chatNotFound = new ChatNotFound(page);
