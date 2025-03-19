@@ -848,6 +848,7 @@ const ChatView = memo(() => {
                           isShowInput={isInputVisible}
                         >
                           <ChatInputControls
+                            isWideLayout={isWideLayout}
                             isNotEmptyConversations={isNotEmptyConversations}
                             showReplayControls={showReplayControls}
                             isModelsInstalled={
@@ -993,9 +994,6 @@ const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
                   {` ${customViewer.title}`}
                 </span>
               </button>
-              <div className="p-5 max-md:hidden">
-                <ChatInputFooter />
-              </div>
             </div>
           </div>
         ))}
