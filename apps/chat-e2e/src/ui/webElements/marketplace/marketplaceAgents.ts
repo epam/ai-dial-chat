@@ -15,6 +15,7 @@ export enum FoundMarketplaceAgents {
 
 export interface MarketplaceAgentProperties {
   name: string;
+  version?: string;
   isSuggested: boolean;
   isWorkspaceAgent: boolean;
 }
