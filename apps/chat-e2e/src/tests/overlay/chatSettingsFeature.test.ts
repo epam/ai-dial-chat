@@ -201,7 +201,7 @@ dialOverlayTest(
     );
 
     await dialTest.step(
-      'Click on + button un the header and verify "Select agent" modal is not displayed',
+      'Click on + button in the header and verify "Select agent" modal is not displayed',
       async () => {
         await overlayHeader.createNewConversation();
         await overlayBaseAssertion.assertElementState(
