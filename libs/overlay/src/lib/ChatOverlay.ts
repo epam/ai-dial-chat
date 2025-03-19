@@ -223,16 +223,32 @@ export class ChatOverlay {
   protected process = (event: MessageEvent<OverlayRequest>): void => {
     if (event.data.type === `${overlayAppName}/${OverlayEvents.initReady}`) {
       this.showLoader();
+
+      if (this.options.loaderHideEvent === OverlayEvents.initReady) {
+        this.hideLoader();
+      }
+
       return;
     }
     if (event.data.type === `${overlayAppName}/${OverlayEvents.ready}`) {
       this.setOverlayOptions(this.options);
-      this.hideLoader();
+
+      if (
+        !this.options.loaderHideEvent ||
+        this.options.loaderHideEvent === OverlayEvents.ready
+      ) {
+        this.hideLoader();
+      }
+
       return;
     }
     if (
       event.data.type === `${overlayAppName}/${OverlayEvents.readyToInteract}`
     ) {
+      if (this.options.loaderHideEvent === OverlayEvents.readyToInteract) {
+        this.hideLoader();
+      }
+
       this.iframeInteraction.complete();
       return;
     }
@@ -241,6 +257,10 @@ export class ChatOverlay {
 
     // Try to map event, because type doesn't have requestId
     if (!event.data?.requestId) {
+      if (this.options.loaderHideEvent === event.data.type) {
+        this.hideLoader();
+      }
+
       this.processEvent(event.data.type, event.data?.payload);
 
       return;

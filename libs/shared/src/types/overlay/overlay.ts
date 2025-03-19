@@ -1,3 +1,4 @@
+import { type OverlayEvents } from '../../constants';
 import { DialLibRequest, Styles } from '../common';
 import { Feature } from '../features';
 
@@ -19,6 +20,7 @@ export interface ChatOverlayOptions {
   loaderStyles?: Styles;
   loaderClass?: string;
   loaderInnerHTML?: string;
+  loaderHideEvent?: OverlayEvents;
 
   signInOptions?: OverlaySignInOptions;
   signInInSameWindow?: boolean;
