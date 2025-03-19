@@ -1,7 +1,6 @@
+import { type OverlayEvents } from '../../constants';
 import { DialLibRequest, Styles } from '../common';
 import { Feature } from '../features';
-
-import { type OverlayEvents } from 'src/constants';
 
 export type OverlayRequest = DialLibRequest;
 
