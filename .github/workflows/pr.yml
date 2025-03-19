@@ -14,5 +14,5 @@ jobs:
     secrets: inherit
     with:
       node_version: 22
-      severity_trivy: "CRITICAL,HIGH,MEDIUM,LOW"
+      severity_trivy: "CRITICAL,HIGH,MEDIUM"
       limit_severities_for_sarif_trivy: false
