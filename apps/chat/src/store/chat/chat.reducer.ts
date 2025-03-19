@@ -89,7 +89,6 @@ export const chatSlice = createSlice({
     ) => {
       state.selectedEntityInfo = {
         id: payload.entityInfo.id,
-        sharedWithMe: payload.entityInfo.sharedWithMe,
         isPublic:
           payload.entityInfo.isPublic ||
           isEntityIdPublic({ id: payload.entityInfo.id }),

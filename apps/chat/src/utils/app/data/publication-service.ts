@@ -35,6 +35,7 @@ export class PublicationService {
       method: HTTPMethod.POST,
       body: JSON.stringify({
         name: publicationData.name,
+        displayAuthor: publicationData.displayAuthor,
         targetFolder: `${encodedTargetFolder}${targetFolderSuffix}`,
         resources: publicationData.resources.map((r) => ({
           action: r.action,

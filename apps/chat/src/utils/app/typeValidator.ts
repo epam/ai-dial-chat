@@ -23,6 +23,10 @@ export class TypeValidator {
     return (v: unknown) => options.includes(v);
   }
 
+  static oneOfType(types: Validator[]) {
+    return (v: unknown) => types.some((t) => t(v));
+  }
+
   static shape(shapeType: Record<string, Validator>) {
     return (v: unknown) =>
       isObject(v) &&
