@@ -2,6 +2,8 @@ import { ReactNode } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isEntityIdExternal } from '@/src/utils/app/id';
+
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
@@ -57,24 +59,19 @@ export function InfoModalView() {
       loaderClassName="min-h-[80px]"
     >
       <div className="flex flex-col justify-between gap-4">
-        {entityInfo?.updatedAt && (
-          <InfoRow
-            infoLabel={
-              entityInfo?.isPublic ? t('Creation date') : t('Last updated')
-            }
-            dataQa={entityInfo?.isPublic ? 'created-at' : 'updated-at'}
-          >
+        {!entityInfo?.isPublic && entityInfo?.updatedAt && (
+          <InfoRow infoLabel={t('Last updated')} dataQa="updated-at">
             <DateRenderer dateValue={entityInfo.updatedAt} />
           </InfoRow>
         )}
 
-        {!entityInfo?.isPublic && entityInfo?.createdAt && (
+        {entityInfo?.createdAt && (
           <InfoRow infoLabel={t('Creation date')} dataQa="created-at">
             <DateRenderer dateValue={entityInfo.createdAt} />
           </InfoRow>
         )}
 
-        {(entityInfo?.isPublic || entityInfo?.sharedWithMe) && (
+        {entityInfo && isEntityIdExternal({ id: entityInfo.id }) && (
           <InfoRow infoLabel={t('Author')} dataQa="author">
             {entityInfo.author ?? t('Unknown')}
           </InfoRow>

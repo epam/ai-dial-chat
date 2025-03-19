@@ -94,7 +94,11 @@ export const isFormSchemaValid = TypeValidator.shape({
         TypeValidator.array(
           TypeValidator.shape({
             title: TypeValidator.string(),
-            const: TypeValidator.number(),
+            const: TypeValidator.oneOfType([
+              TypeValidator.number(),
+              TypeValidator.string(),
+              TypeValidator.boolean(),
+            ]),
             [DialSchemaProperties.DialWidgetOptions]: TypeValidator.optional(
               TypeValidator.shape({
                 confirmationMessage: TypeValidator.optional(
