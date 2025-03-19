@@ -8,10 +8,7 @@ export enum DialSchemaProperties {
   DialChatMessageInputDisabled = 'dial:chatMessageInputDisabled',
 }
 
-export type MessageFormValueType =
-  | number
-  | string
-  | boolean;
+export type MessageFormValueType = number | string | boolean;
 
 export interface FormSchemaButtonOption {
   title: string;
