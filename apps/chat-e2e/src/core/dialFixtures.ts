@@ -57,6 +57,7 @@ import {
   TooltipAssertion,
   VariableModalAssertion,
 } from '@/src/assertions';
+import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
 import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
 import { LocalStorageAssertion } from '@/src/assertions/localStorageAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
@@ -110,6 +111,7 @@ import {
 import { OrganizationPromptsTree } from '@/src/ui/webElements/entityTree/sidebar/organizationPromptsTree';
 import { ErrorPopup } from '@/src/ui/webElements/errorPopup';
 import { Filter } from '@/src/ui/webElements/filter';
+import { Footer } from '@/src/ui/webElements/footer';
 import { Header } from '@/src/ui/webElements/header';
 import { ImportExportLoader } from '@/src/ui/webElements/importExportLoader';
 import { InputAttachments } from '@/src/ui/webElements/inputAttachments';
@@ -171,11 +173,13 @@ const dialTest = test.extend<{
   banner: Banner;
   promptBar: PromptBar;
   chat: Chat;
+  footer: Footer;
   chatMessages: ChatMessages;
   editMessageInputAttachments: InputAttachments;
   sendMessage: SendMessage;
   attachmentDropdownMenu: DropdownMenu;
   sendMessageInputAttachments: InputAttachments;
+  sendMessageInputAttachmentsAssertions: InputAttachmentsAssertions;
   conversations: ConversationsTree;
   prompts: PromptsTree;
   folderConversations: FolderConversations;
@@ -276,6 +280,7 @@ const dialTest = test.extend<{
   accountSettingsAssertion: AccountSettingsAssertion;
   accountDropdownMenuAssertion: MenuAssertion;
   conversationDropdownMenuAssertion: MenuAssertion;
+  promptDropdownMenuAssertion: MenuAssertion;
   folderDropdownMenuAssertion: MenuAssertion;
   settingsModalAssertion: SettingsModalAssertion;
   sendMessageAssertion: SendMessageAssertion;
@@ -320,6 +325,14 @@ const dialTest = test.extend<{
     },
     { scope: 'test', auto: true },
   ],
+  sendMessageInputAttachmentsAssertions: async (
+    { sendMessageInputAttachments },
+    use,
+  ) => {
+    const sendMessageInputAttachmentsAssertions =
+      new InputAttachmentsAssertions(sendMessageInputAttachments);
+    await use(sendMessageInputAttachmentsAssertions);
+  },
   localStorageAssertion: async ({ localStorageManager }, use) => {
     const localStorageAssertion = new LocalStorageAssertion(
       localStorageManager,
@@ -474,6 +487,10 @@ const dialTest = test.extend<{
   chat: async ({ appContainer }, use) => {
     const chat = appContainer.getChat();
     await use(chat);
+  },
+  footer: async ({ appContainer }, use) => {
+    const footer = appContainer.getFooter();
+    await use(footer);
   },
   chatMessages: async ({ chat }, use) => {
     const chatMessages = chat.getChatMessages();
@@ -966,6 +983,10 @@ const dialTest = test.extend<{
     );
     await use(conversationDropdownMenuAssertion);
   },
+  promptDropdownMenuAssertion: async ({ promptDropdownMenu }, use) => {
+    const promptDropdownMenuAssertion = new MenuAssertion(promptDropdownMenu);
+    await use(promptDropdownMenuAssertion);
+  },
   folderDropdownMenuAssertion: async ({ folderDropdownMenu }, use) => {
     const folderDropdownMenuAssertion = new MenuAssertion(folderDropdownMenu);
     await use(folderDropdownMenuAssertion);
@@ -994,8 +1015,8 @@ const dialTest = test.extend<{
     const chatMessagesAssertion = new ChatMessagesAssertion(chatMessages);
     await use(chatMessagesAssertion);
   },
-  footerAssertion: async ({ chat }, use) => {
-    const footerAssertion = new FooterAssertion(chat.getFooter());
+  footerAssertion: async ({ footer }, use) => {
+    const footerAssertion = new FooterAssertion(footer);
     await use(footerAssertion);
   },
   sendMessagePromptListAssertion: async ({ sendMessage }, use) => {

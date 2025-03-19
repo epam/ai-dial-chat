@@ -99,10 +99,11 @@ export class ItemApiHelper extends BaseApiHelper {
     }
   }
 
-  public async createPrompts(prompts: Prompt[]) {
+  public async createPrompts(prompts: Prompt[], bucket?: string) {
+    const bucketToUse = this.userBucket ?? bucket;
     for (const prompt of prompts) {
-      prompt.folderId = ItemUtil.getApiPromptFolderId(prompt);
-      prompt.id = ItemUtil.getApiPromptId(prompt);
+      prompt.folderId = ItemUtil.getApiPromptFolderId(prompt, bucketToUse);
+      prompt.id = ItemUtil.getApiPromptId(prompt, bucketToUse);
       await this.createItem(prompt);
     }
   }

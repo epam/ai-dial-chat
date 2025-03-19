@@ -7,8 +7,6 @@ import { useRouter } from 'next/router';
 import { DEFAULT_PROVIDER } from '@/src/utils/auth/auth-providers';
 import { isClientSessionValid } from '@/src/utils/auth/session';
 
-import { sanitizeUri } from 'micromark-util-sanitize-uri';
-
 interface PageProps {
   provider?: string;
 }
@@ -27,7 +25,7 @@ export default function Signin(props: PageProps) {
       signIn(defaultAuthProvider ?? undefined);
     } else if (status === 'authenticated') {
       const { callbackUrl } = router.query;
-      const safeUrl = callbackUrl ? sanitizeUri(callbackUrl.toString()) : '/';
+      const safeUrl = callbackUrl ? callbackUrl.toString() : '/';
       window.location.href = safeUrl;
     }
   }, [status, router, defaultAuthProvider, session]);
