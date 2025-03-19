@@ -123,7 +123,7 @@ const HiddenButtonsProperty = ({
       if (buttonsContentWidth >= containerContentWidth) {
         const lastItem = visible.pop();
 
-        if (lastItem?.option) {
+        if (lastItem) {
           hidden.unshift(lastItem);
         }
       }
