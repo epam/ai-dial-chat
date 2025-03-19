@@ -567,6 +567,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             ),
           ),
         );
+        return;
       }
 
       handleDrop?.(currentFolder, { entity: droppedFolder, isFolder: true });

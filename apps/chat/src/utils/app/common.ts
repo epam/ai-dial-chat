@@ -138,7 +138,6 @@ export const prepareEntityName = (
           notAllowedSymbolsRegex,
           options?.replaceWithSpacesForRenaming ? ' ' : '',
         )
-        .replace(/\s+/g, ' ')
         .trim()
     : (name
         .replace(/\r\n|\r/gm, '\n')
