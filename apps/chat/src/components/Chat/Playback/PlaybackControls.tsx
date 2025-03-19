@@ -30,7 +30,6 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
-import { ChatInputFooter } from '../ChatInput/ChatInputFooter';
 import { PlaybackAttachments } from './PlaybackAttachments';
 
 import { Attachment } from '@epam/ai-dial-shared';
@@ -307,7 +306,6 @@ export const PlaybackControls = ({
           />
         )}
       </div>
-      <ChatInputFooter />
     </div>
   );
 };

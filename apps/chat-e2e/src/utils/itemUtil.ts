@@ -12,8 +12,8 @@ export class ItemUtil {
       : `conversations/${BucketUtil.getBucket()}`;
   }
 
-  public static getPromptBucketPath() {
-    return `prompts/${BucketUtil.getBucket()}`;
+  public static getPromptBucketPath(bucket?: string) {
+    return bucket ? `prompts/${bucket}` : `prompts/${BucketUtil.getBucket()}`;
   }
 
   public static getApiConversationId(
@@ -24,13 +24,13 @@ export class ItemUtil {
     return `${bucketPath}/${conversation.id}`;
   }
 
-  public static getApiPromptId(prompt: Prompt) {
-    const bucketPath = ItemUtil.getPromptBucketPath();
+  public static getApiPromptId(prompt: Prompt, bucket?: string) {
+    const bucketPath = ItemUtil.getPromptBucketPath(bucket);
     return `${bucketPath}/${prompt.id}`;
   }
 
-  public static getApiPromptFolderId(prompt: Prompt) {
-    const promptBucket = ItemUtil.getPromptBucketPath();
+  public static getApiPromptFolderId(prompt: Prompt, bucket?: string) {
+    const promptBucket = ItemUtil.getPromptBucketPath(bucket);
     return prompt.folderId?.length === 0
       ? promptBucket
       : `${promptBucket}/${prompt.folderId}`;
