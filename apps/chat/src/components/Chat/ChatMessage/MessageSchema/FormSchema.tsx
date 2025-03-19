@@ -27,6 +27,7 @@ import {
   MessageFormValue,
   MessageFormValueType,
 } from '@epam/ai-dial-shared';
+import intersection from 'lodash-es/intersection';
 
 interface HiddenButtonsPropertyProps {
   options: FormSchemaButtonOption[];
@@ -250,7 +251,15 @@ export const ButtonsProperty = ({
         {hiddenOptions.length > 0 && (
           <button
             onClick={() => setHiddenOptionsModal(true)}
-            className="chat-button"
+            className={classNames(
+              'chat-button',
+              showSelected &&
+                intersection(
+                  Object.values(formValue ?? {}),
+                  hiddenOptions.map((option) => option.const),
+                ).length &&
+                'button-accent-primary',
+            )}
           >
             <IconDotsVertical size={18} />
           </button>
