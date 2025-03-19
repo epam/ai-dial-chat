@@ -1,8 +1,8 @@
 diff --git a/node_modules/next-auth/core/lib/oauth/client.js b/node_modules/next-auth/core/lib/oauth/client.js
-index 52c51eb..e21b626 100644
+index 52c51eb..d1c6bb4 100644
 --- a/node_modules/next-auth/core/lib/oauth/client.js
 +++ b/node_modules/next-auth/core/lib/oauth/client.js
-@@ -5,9 +5,29 @@ Object.defineProperty(exports, "__esModule", {
+@@ -5,9 +5,19 @@ Object.defineProperty(exports, "__esModule", {
  });
  exports.openidClient = openidClient;
  var _openidClient = require("openid-client");
@@ -14,18 +14,8 @@ index 52c51eb..e21b626 100644
 +  let httpOptions = {};
 +  if (provider.httpOptions) httpOptions = { ...provider.httpOptions };
 +  
-+  const isHttpProvider =
-+    (provider.wellKnown && provider.wellKnown.startsWith('http:')) ||
-+    provider.issuer.startsWith('http:');
-+  const isHttpsProvider =
-+    (provider.wellKnown && provider.wellKnown.startsWith('https:')) ||
-+    provider.issuer.startsWith('https:');
-+
-+  if (isHttpProvider && process.env.http_proxy) {
-+    httpOptions.agent = new HttpsProxyAgent(process.env.http_proxy);
-+  }
-+  if (isHttpsProvider && process.env.https_proxy) {
-+    httpOptions.agent = new HttpsProxyAgent(process.env.https_proxy);
++  if (process.env.https_proxy || process.env.http_proxy) {
++    httpOptions.agent = new HttpsProxyAgent(process.env.https_proxy ?? process.env.http_proxy);
 +  }
 +
 +  _openidClient.custom.setHttpOptionsDefaults(httpOptions);
