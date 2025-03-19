@@ -13,7 +13,6 @@ import { keys } from '@/src/ui/keyboard';
 import { AgentInfo } from '@/src/ui/webElements/agentInfo';
 import { ChatHeader } from '@/src/ui/webElements/chatHeader';
 import { Compare } from '@/src/ui/webElements/compare';
-import { Footer } from '@/src/ui/webElements/footer';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { PublicationReviewControl } from '@/src/ui/webElements/publicationReviewControl';
 import { Locator, Page } from '@playwright/test';
@@ -32,7 +31,6 @@ export class Chat extends BaseElement {
   private compare!: Compare;
   private playbackControl!: PlaybackControl;
   private agentInfo!: AgentInfo;
-  private footer!: Footer;
   private publicationReviewControl!: PublicationReviewControl;
   public replay = this.getChildElementBySelector(ReplaySelectors.startReplay);
   public chatSpinner = this.getChildElementBySelector(ChatSelectors.spinner);
@@ -93,13 +91,6 @@ export class Chat extends BaseElement {
       this.agentInfo = new AgentInfo(this.page, this.rootLocator);
     }
     return this.agentInfo;
-  }
-
-  getFooter(): Footer {
-    if (!this.footer) {
-      this.footer = new Footer(this.page, this.rootLocator);
-    }
-    return this.footer;
   }
 
   getPublicationReviewControl(): PublicationReviewControl {

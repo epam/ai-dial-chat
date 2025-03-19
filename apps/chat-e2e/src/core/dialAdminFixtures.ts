@@ -84,6 +84,8 @@ const dialAdminTest = dialTest.extend<{
   adminFilesToApproveAssertion: EntityTreeAssertion<FilesToApproveTree>;
   adminPromptToApproveAssertion: PublishEntityAssertion<PromptsToApproveTree>;
   adminFolderToApproveAssertion: PublishFolderAssertion<FolderConversationsToApprove>;
+  adminPromptDropdownMenuAssertion: MenuAssertion;
+  adminPromptDropdownMenu: DropdownMenu;
   adminPublicationReviewControl: PublicationReviewControl;
   adminChatHeader: ChatHeader;
   adminChatMessages: ChatMessages;
@@ -105,6 +107,19 @@ const dialAdminTest = dialTest.extend<{
   adminConversationsToPublishTree: ConversationsToPublishTree;
   adminConversationToPublishAssertion: PublishEntityAssertion<ConversationsToPublishTree>;
 }>({
+  adminPromptDropdownMenuAssertion: async (
+    { adminPromptDropdownMenu },
+    use,
+  ) => {
+    const adminPromptDropdownMenuAssertion = new MenuAssertion(
+      adminPromptDropdownMenu,
+    );
+    await use(adminPromptDropdownMenuAssertion);
+  },
+  adminPromptDropdownMenu: async ({ adminPrompts }, use) => {
+    const adminPromptDropdownMenu = adminPrompts.getDropdownMenu();
+    await use(adminPromptDropdownMenu);
+  },
   adminPublishedPromptPreviewModalAssertion: async (
     { adminPublishedPromptPreviewModal },
     use,
