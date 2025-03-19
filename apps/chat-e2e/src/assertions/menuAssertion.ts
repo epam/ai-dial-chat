@@ -1,11 +1,18 @@
-import { ElementState, ExpectedMessages } from '@/src/testData';
+import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
+import {
+  ElementActionabilityState,
+  ElementState,
+  ExpectedMessages,
+  MenuOptions,
+} from '@/src/testData';
 import { Menu } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
-export class MenuAssertion {
+export class MenuAssertion extends BaseAssertion {
   readonly menu: Menu;
 
   constructor(menu: Menu) {
+    super();
     this.menu = menu;
   }
 
@@ -35,5 +42,13 @@ export class MenuAssertion {
     expectedState === 'visible'
       ? await expect.soft(menu, ExpectedMessages.menuIsVisible).toBeVisible()
       : await expect.soft(menu, ExpectedMessages.menuIsNotVisible).toBeHidden();
+  }
+
+  public async assertMenuOptionActionabilityState(
+    option: MenuOptions,
+    state: ElementActionabilityState,
+  ) {
+    const optionLocator = this.menu.menuOption(option);
+    await this.assertElementActionabilityState(optionLocator, state);
   }
 }
