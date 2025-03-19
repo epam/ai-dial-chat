@@ -1,5 +1,6 @@
 import { IconPlus, IconX } from '@tabler/icons-react';
 import {
+  ChangeEvent,
   ClipboardEvent,
   Fragment,
   MouseEvent,
@@ -14,7 +15,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { isVersionValid } from '@/src/utils/app/common';
+import { isVersionValid, prepareEntityName } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import {
@@ -236,6 +237,24 @@ export function PublishModal<
     [],
   );
 
+  const onChangePublicationRequestName = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      const cleanName = prepareEntityName(e.target.value);
+      setPublishRequestName(cleanName);
+    },
+    [],
+  );
+
+  const onChangePublicationAuthor = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      const cleanAuthor = prepareEntityName(e.target.value, {
+        maxNameLength: 50,
+      });
+      setPublicationAuthor(cleanAuthor);
+    },
+    [],
+  );
+
   const handlePublish = useCallback(
     (e: MouseEvent<HTMLButtonElement> | ClipboardEvent<HTMLInputElement>) => {
       e.preventDefault();
@@ -246,8 +265,6 @@ export function PublishModal<
       );
 
       const trimmedPath = path.trim();
-      const trimmedName = publishRequestName.trim();
-      const trimmedPublicationAuthor = publicationAuthor.trim();
       const notEmptyFilters = otherTargetAudienceFilters.filter(
         (filter) =>
           // TODO: uncomment when it will be supported on core
@@ -303,8 +320,8 @@ export function PublishModal<
 
       dispatch(
         PublicationActions.publish({
-          name: trimmedName,
-          displayAuthor: trimmedPublicationAuthor,
+          name: publishRequestName,
+          displayAuthor: publicationAuthor,
           targetFolder: constructPath(PUBLIC_URL_PREFIX, trimmedPath),
           resources: [
             ...(publishAction === PublishActions.DELETE
@@ -487,7 +504,7 @@ export function PublishModal<
         <div className="px-3 py-4 md:pl-4 md:pr-10">
           <input
             autoFocus
-            onChange={(e) => setPublishRequestName(e.target.value)}
+            onChange={onChangePublicationRequestName}
             value={publishRequestName}
             placeholder={
               publishAction === PublishActions.ADD
@@ -554,7 +571,7 @@ export function PublishModal<
                   </h3>
                   <div className="input-form mx-0 flex grow cursor-default items-center border-primary px-3 py-2">
                     <input
-                      onChange={(e) => setPublicationAuthor(e.target.value)}
+                      onChange={onChangePublicationAuthor}
                       value={publicationAuthor}
                       placeholder={t(`Type publication's author name...`)}
                       className="flex w-full justify-between truncate whitespace-pre break-all bg-transparent outline-none"

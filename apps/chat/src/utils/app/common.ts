@@ -144,14 +144,16 @@ export const prepareEntityName = (
         .split('\n')
         .map((s) => s.replace(notAllowedSymbolsRegex, ' ').trim())
         .filter(Boolean)[0] ?? '');
+
+  const maxEntityLength = options?.maxNameLength ?? MAX_ENTITY_LENGTH;
   const result =
-    clearName.length > MAX_ENTITY_LENGTH
-      ? substring(clearName, 0, MAX_ENTITY_LENGTH)
+    clearName.length > maxEntityLength
+      ? substring(clearName, 0, maxEntityLength)
       : clearName;
 
   const additionalCuttedResult =
-    result.length > MAX_ENTITY_LENGTH
-      ? result.substring(0, MAX_ENTITY_LENGTH)
+    result.length > maxEntityLength
+      ? result.substring(0, maxEntityLength)
       : result;
 
   return !options?.forRenaming || options?.trimEndDotsRequired
