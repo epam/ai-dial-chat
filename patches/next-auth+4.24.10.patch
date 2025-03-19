@@ -1,8 +1,8 @@
 diff --git a/node_modules/next-auth/core/lib/oauth/client.js b/node_modules/next-auth/core/lib/oauth/client.js
-index 52c51eb..cf0e29f 100644
+index 52c51eb..e21b626 100644
 --- a/node_modules/next-auth/core/lib/oauth/client.js
 +++ b/node_modules/next-auth/core/lib/oauth/client.js
-@@ -5,9 +5,20 @@ Object.defineProperty(exports, "__esModule", {
+@@ -5,9 +5,29 @@ Object.defineProperty(exports, "__esModule", {
  });
  exports.openidClient = openidClient;
  var _openidClient = require("openid-client");
@@ -13,19 +13,28 @@ index 52c51eb..cf0e29f 100644
 -  if (provider.httpOptions) _openidClient.custom.setHttpOptionsDefaults(provider.httpOptions);
 +  let httpOptions = {};
 +  if (provider.httpOptions) httpOptions = { ...provider.httpOptions };
-+  if (process.env.http_proxy) {
++  
++  const isHttpProvider =
++    (provider.wellKnown && provider.wellKnown.startsWith('http:')) ||
++    provider.issuer.startsWith('http:');
++  const isHttpsProvider =
++    (provider.wellKnown && provider.wellKnown.startsWith('https:')) ||
++    provider.issuer.startsWith('https:');
++
++  if (isHttpProvider && process.env.http_proxy) {
 +    httpOptions.agent = new HttpsProxyAgent(process.env.http_proxy);
 +  }
-+  if (process.env.https_proxy) {
++  if (isHttpsProvider && process.env.https_proxy) {
 +    httpOptions.agent = new HttpsProxyAgent(process.env.https_proxy);
 +  }
-+  _openidClient.custom.setHttpOptionsDefaults(httpOptions)
++
++  _openidClient.custom.setHttpOptionsDefaults(httpOptions);
 +
    let issuer;
    if (provider.wellKnown) {
      issuer = await _openidClient.Issuer.discover(provider.wellKnown);
 diff --git a/node_modules/next-auth/providers/azure-ad.js b/node_modules/next-auth/providers/azure-ad.js
-index c47f6b1..8c4ec25 100644
+index c47f6b1..44e69b4 100644
 --- a/node_modules/next-auth/providers/azure-ad.js
 +++ b/node_modules/next-auth/providers/azure-ad.js
 @@ -4,6 +4,9 @@ Object.defineProperty(exports, "__esModule", {
@@ -38,7 +47,7 @@ index c47f6b1..8c4ec25 100644
  function AzureAD(options) {
    var _options$tenantId, _options$profilePhoto;
    const tenant = (_options$tenantId = options.tenantId) !== null && _options$tenantId !== void 0 ? _options$tenantId : "common";
-@@ -20,11 +23,18 @@ function AzureAD(options) {
+@@ -20,11 +23,16 @@ function AzureAD(options) {
      },
      async profile(profile, tokens) {
        var _image;
@@ -49,11 +58,9 @@ index c47f6b1..8c4ec25 100644
          }
 -      });
 +      };
-+      if (process.env.http_proxy) {
-+        fetchOptions.agent = new HttpsProxyAgent(process.env.http_proxy);
-+      }
-+      if (process.env.https_proxy) {
-+        fetchOptions.agent = new HttpsProxyAgent(process.env.https_proxy);
++      
++      if (process.env.https_proxy || process.env.http_proxy) {
++        fetchOptions.agent = new HttpsProxyAgent(process.env.https_proxy ?? process.env.http_proxy);
 +      }
 +      const response = await fetch(`https://graph.microsoft.com/v1.0/me/photos/${profilePhotoSize}x${profilePhotoSize}/$value`, fetchOptions);
        let image;
