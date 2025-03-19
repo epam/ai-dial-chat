@@ -6,9 +6,9 @@ dialTest(
   'EPAM AI Dial leads to kb',
   async ({
     dialHomePage,
-    chat,
     footerAssertion,
     setTestIds,
+    footer,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-361');
@@ -28,7 +28,7 @@ dialTest(
       'Click on any footer link and verify it is opened in a new tab',
       async () => {
         const newPage = await dialHomePage.getNewPage(() =>
-          chat.getFooter().openFooterLink(),
+          footer.openFooterLink(),
         );
         expect.soft(newPage, ExpectedMessages.newPageIsOpened).toBeDefined();
       },

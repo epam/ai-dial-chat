@@ -2,7 +2,7 @@
 
 This is a default UI for [AI DIAL](https://epam-rail.com). AI DIAL can be used as headless system, but UI is recommended to learn the capability.
 
-Originally forked from [chatbot-ui](https://github.com/mckaywrigley/chatbot-ui) and then completely reworked and published under [apache 2.0 license](../../LICENSE), while code taken from original repository is still subject to [original MIT license](../../license-original). Due to rework we introduced lots of new features such as various [IDP support](https://github.com/epam/ai-dial/blob/main/docs/Auth/2.%20Web/1.overview.md), model side-by-side compare, [DIAL extensions](https://epam-rail.com/extension-framework) support, conversation replays, branding and many more.
+Originally forked from [chatbot-ui](https://github.com/mckaywrigley/chatbot-ui) and then completely reworked and published under [apache 2.0 license](../../LICENSE), while code taken from original repository is still subject to [original MIT license](../../license-original). Due to rework we introduced lots of new features such as various [IDP support](https://github.com/epam/ai-dial/blob/main/docs/tutorials/2.devops/2.auth-and-access-control/3.configure-idps/0.overview.md), model side-by-side compare, [DIAL extensions](https://epam-rail.com/extension-framework) support, conversation replays, branding and many more.
 
 ![ai-dial-chat](../../docs/ai-dial-chat.png)
 
@@ -10,7 +10,7 @@ Originally forked from [chatbot-ui](https://github.com/mckaywrigley/chatbot-ui) 
 
 - **AI DIAL Overlay** documentation is placed [here](../../libs/overlay/README.md).
 - **Theming and branding** documentation is placed [here](../../docs/THEME-CUSTOMIZATION.md).
-- In [AI DIAL repository](https://github.com/epam/ai-dial/blob/main/docs/user-guide.md), you can find a **User Guide** for the AI DIAL Chat.
+- In [AI DIAL repository](https://github.com/epam/ai-dial/blob/main/docs/tutorials/0.user-guide.md), you can find a **User Guide** for the AI DIAL Chat.
 
 ## Overview
 
@@ -147,7 +147,7 @@ If no value set for the **OTEL_METRICS_EXPORTER** then [OpenTelemetry Prometheus
 
 ### Environment Variables for the Configuration of Auth Providers
 
-> Refer to [IDP Configuration](https://github.com/epam/ai-dial/blob/main/docs/Auth/2.%20Web/1.overview.md) to view configuration examples for supported IDP providers.
+> Refer to [IDP Configuration](https://github.com/epam/ai-dial/blob/main/docs/tutorials/2.devops/2.auth-and-access-control/3.configure-idps/0.overview.md) to view configuration examples for supported IDP providers.
 
 The table below presents a list of environment variables you can use to configure a specific IDP provider.
 
