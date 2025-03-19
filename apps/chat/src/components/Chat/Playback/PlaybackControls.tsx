@@ -32,7 +32,7 @@ import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
 import { PlaybackAttachments } from './PlaybackAttachments';
 
-import { Attachment } from '@epam/ai-dial-shared';
+import { Attachment, MessageFormValueType } from '@epam/ai-dial-shared';
 
 interface Props {
   showScrollDownButton: boolean;
@@ -228,7 +228,12 @@ export const PlaybackControls = ({
     ) {
       Object.entries(activeMessage.custom_content.form_value).forEach(
         ([property, value]) => {
-          dispatch(ChatActions.setFormValue({ property, value }));
+          dispatch(
+            ChatActions.setFormValue({
+              property,
+              value: value as MessageFormValueType,
+            }),
+          );
         },
       );
     } else if (phase === PlaybackPhases.EMPTY) {

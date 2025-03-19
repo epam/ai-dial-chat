@@ -157,7 +157,7 @@ const HiddenButtonsProperty = ({
     >
       {options.map((option) => (
         <button
-          key={option.const}
+          key={`${option.const}`}
           className={classNames('chat-button', buttonClassName)}
           disabled
         >
@@ -174,7 +174,7 @@ const HiddenButtonsProperty = ({
 interface ButtonsPropertyProps {
   options?: FormSchemaButtonOption[];
   formValue?: MessageFormValue;
-  onClick: (value: number, type: FormButtonType) => void;
+  onClick: (value: MessageFormValueType, type: FormButtonType) => void;
   showSelected?: boolean;
   disabled?: boolean;
   className?: string;
@@ -238,7 +238,7 @@ export const ButtonsProperty = ({
       <div className={classNames(buttonsWrapperClassName, className)}>
         {visibleOptions.map((option) => (
           <SchemaButton
-            key={option.const}
+            key={`${option.const}`}
             option={option}
             showSelected={!!showSelected}
             disabled={!!disabled}
@@ -334,7 +334,7 @@ const PropertyRenderer = ({
   buttonClassName,
 }: PropertyRendererProps) => {
   const handleClick = useCallback(
-    (value: number, type: FormButtonType) => {
+    (value: MessageFormValueType, type: FormButtonType) => {
       onChange(name, value, type === FormButtonType.Submit);
     },
     [name, onChange],
