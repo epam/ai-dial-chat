@@ -9,8 +9,6 @@ import { RootState } from '@/src/types/store';
 import { ModelsState } from './models.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-import groupBy from 'lodash-es/groupBy';
-import orderBy from 'lodash-es/orderBy';
 import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 
@@ -34,19 +32,7 @@ export const selectModelsError = (state: RootState) =>
 export const selectIsRecentModelsLoaded = (state: RootState) =>
   rootSelector(state).recentModelsStatus === UploadStatus.LOADED;
 
-export const selectModels = createSelector([rootSelector], (state) => {
-  const groups = groupBy(state.models, (model) =>
-    model.reference === model.id ? 'rest' : 'custom',
-  );
-
-  return sortBy(
-    [
-      ...(groups.rest ?? []),
-      ...orderBy(groups.custom ?? [], 'version', 'desc'), //TODO: fix semVer sorting
-    ],
-    (model) => model.name.toLowerCase(),
-  );
-});
+export const selectModels = (state: RootState) => rootSelector(state).models;
 
 export const selectModelTopics = createSelector([rootSelector], (state) => {
   return sortBy(
