@@ -557,9 +557,7 @@ dialAdminTest(
       'Create new folder, select it and verify publish path changed',
       async () => {
         await selectFolderModal.newFolderButton.click();
-        await selectFolders.renameEmptyFolderWithTick(orgFolder, {
-          isHttpMethodTriggered: false,
-        });
+        await selectFolders.renameEmptyFolderWithTick(orgFolder);
         await selectFolderModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });

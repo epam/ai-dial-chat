@@ -230,6 +230,7 @@ dialTest(
     chatBar,
     toast,
     localStorageManager,
+    baseAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2950', 'EPMRTC-2951');
@@ -277,17 +278,14 @@ dialTest(
             nestedFolders[nestedFolderLevel - 2].name,
           ),
         );
-        await expect
-          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
-          .toBeVisible();
-        const errorMessage = await toast.getElementContent();
-        expect
-          .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
-          .toBe(
-            ExpectedConstants.duplicatedFolderNameErrorMessage(
-              duplicatedFolderName,
-            ),
-          );
+        await baseAssertion.assertElementState(toast, 'visible');
+        await baseAssertion.assertElementText(
+          toast,
+          ExpectedConstants.duplicatedFolderNameErrorMessage(
+            duplicatedFolderName,
+          ),
+          ExpectedMessages.notAllowedNameErrorShown,
+        );
         await toast.closeToast();
       },
     );
@@ -303,15 +301,14 @@ dialTest(
           duplicatedFolderName,
         );
         await chatBar.dragAndDropFolderToRoot(elementLocator);
-
-        const errorMessage = await toast.getElementContent();
-        expect
-          .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
-          .toBe(
-            ExpectedConstants.duplicatedFolderRootNameErrorMessage(
-              duplicatedFolderName,
-            ),
-          );
+        await baseAssertion.assertElementState(toast, 'visible');
+        await baseAssertion.assertElementText(
+          toast,
+          ExpectedConstants.duplicatedFolderRootNameErrorMessage(
+            duplicatedFolderName,
+          ),
+          ExpectedMessages.notAllowedNameErrorShown,
+        );
       },
     );
   },
