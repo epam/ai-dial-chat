@@ -15,7 +15,7 @@ import {
   sortByName,
   splitEntityId,
 } from '@/src/utils/app/folders';
-import { getPromptRootId, isRootId } from '@/src/utils/app/id';
+import { getPromptRootId, isEntityIdLocal, isRootId } from '@/src/utils/app/id';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
 import {
   PublishedWithMeFilter,
@@ -144,6 +144,18 @@ export const selectParentFoldersIds = createSelector(
   [selectParentFolders],
   (folders) => {
     return folders.map((folder) => folder.id);
+  },
+);
+
+export const selectLocalPrompts = createSelector([selectPrompts], (prompts) =>
+  prompts.filter((prompts) => isEntityIdLocal(prompts)),
+);
+
+export const selectPromptsByFolderId = createSelector(
+  [selectPrompts, (_state, folderId: string) => folderId],
+  (prompts, folderId) => {
+    const folderPath = `${folderId}/`;
+    return prompts.filter((prompt) => prompt.id.startsWith(folderPath));
   },
 );
 

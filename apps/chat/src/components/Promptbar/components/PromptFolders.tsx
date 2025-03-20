@@ -1,11 +1,4 @@
-import {
-  DragEvent,
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useSectionToggle } from '@/src/hooks/useSectionToggle';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -18,16 +11,18 @@ import {
   isEntityIdExternal,
   isRootId,
 } from '@/src/utils/app/id';
-import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilters,
 } from '@/src/utils/app/search';
 
 import { FeatureType } from '@/src/types/common';
-import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
+import {
+  DraggedInterface,
+  FolderInterface,
+  FolderSectionProps,
+} from '@/src/types/folder';
 import { PublicationFolderPayload } from '@/src/types/modal';
-import { PromptInfo } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
@@ -135,33 +130,28 @@ const PromptFolderTemplate = ({
   );
 
   const handleDrop = useCallback(
-    (e: DragEvent, folder: FolderInterface) => {
-      if (e.dataTransfer) {
-        const promptData = e.dataTransfer.getData(MoveType.Prompt);
-        const folderData = e.dataTransfer.getData(MoveType.PromptFolder);
-
-        if (promptData) {
-          const prompt: PromptInfo = JSON.parse(promptData);
+    (currentFolder: FolderInterface, draggedData: DraggedInterface) => {
+      const { entity, isFolder } = draggedData;
+      if (isFolder) {
+        if (
+          entity.id !== currentFolder.id &&
+          entity.folderId !== currentFolder.id
+        ) {
           dispatch(
-            PromptsActions.updatePrompt({
-              id: prompt.id,
-              values: { folderId: folder.id },
+            PromptsActions.updateFolder({
+              folderId: entity.id,
+              values: { folderId: currentFolder.id, isShared: false },
+              currentIsShared: entity.isShared,
             }),
           );
-        } else if (folderData) {
-          const movedFolder: FolderInterface = JSON.parse(folderData);
-          if (
-            movedFolder.id !== folder.id &&
-            movedFolder.folderId !== folder.id
-          ) {
-            dispatch(
-              PromptsActions.updateFolder({
-                folderId: movedFolder.id,
-                values: { folderId: folder.id },
-              }),
-            );
-          }
         }
+      } else if (entity) {
+        dispatch(
+          PromptsActions.updatePrompt({
+            id: entity.id,
+            values: { folderId: currentFolder.id },
+          }),
+        );
       }
     },
     [dispatch],
@@ -217,10 +207,11 @@ const PromptFolderTemplate = ({
         PromptsActions.updateFolder({
           folderId,
           values: { name, isShared: false },
+          currentIsShared: folder.isShared,
         }),
       );
     },
-    [dispatch],
+    [dispatch, folder.isShared],
   );
 
   const handleFolderDelete = useCallback(
@@ -233,11 +224,18 @@ const PromptFolderTemplate = ({
             featureType: FeatureType.Prompt,
           }),
         );
+      } else if (folder.isShared) {
+        dispatch(
+          PromptsActions.deleteFolder({
+            folderId,
+            currentIsShared: folder.isShared,
+          }),
+        );
       } else {
         dispatch(PromptsActions.deleteFolder({ folderId }));
       }
     },
-    [dispatch, folder.id, folder.sharedWithMe],
+    [dispatch, folder.id, folder.isShared, folder.sharedWithMe],
   );
 
   const handleFolderSelect = useCallback(

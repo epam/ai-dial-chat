@@ -111,7 +111,7 @@ const UserSchemaView = memo(function UserSchemaView({
           <div className="flex flex-wrap gap-2">
             {row.options?.map((option) => (
               <button
-                key={option.const}
+                key={`${option.const}`}
                 className={classNames(
                   'chat-button',
                   formValue[row.property] === option.const &&
