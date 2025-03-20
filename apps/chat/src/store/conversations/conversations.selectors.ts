@@ -142,6 +142,22 @@ export const selectFilteredConversations = (
 export const selectFolders = (state: RootState) =>
   rootSelector(state).folders || [];
 
+export const selectFolderById = createSelector(
+  [selectFolders, (_state, id: string) => id],
+  (folders, id) => {
+    return folders.find((folder) => folder.id === id);
+  },
+);
+
+export const selectFoldersByFolderId = createSelector(
+  [selectFolders, (_state, folderId: string) => folderId],
+  (folders, folderId) => {
+    const folderPath = `${folderId}/`;
+
+    return folders.filter((folder) => folder.id.startsWith(folderPath));
+  },
+);
+
 export const selectPublicationFolders = createSelector(
   [rootSelector],
   (state: ConversationsState) => {
