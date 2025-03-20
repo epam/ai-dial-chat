@@ -230,12 +230,7 @@ export const promptsSlice = createSlice({
       });
       state.newAddedFolderId = payload.id;
     },
-    deleteFolder: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{ folderId: string; currentIsShared?: boolean }>,
-    ) => {
+    deleteFolder: (state, { payload }: PayloadAction<{ folderId: string }>) => {
       state.folders = state.folders.filter(({ id }) => id !== payload.folderId);
     },
     deleteTemporaryFolder: (
@@ -271,7 +266,6 @@ export const promptsSlice = createSlice({
       }: PayloadAction<{
         folderId: string;
         values: Partial<FolderInterface>;
-        currentIsShared?: boolean;
       }>,
     ) => {
       state.folders = state.folders.map((folder) => {
