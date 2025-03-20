@@ -867,7 +867,6 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
           state,
           payload.folderId,
         );
-
       return concat(
         ...conversations.map((conv) => {
           return of(
@@ -1568,8 +1567,12 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
         );
 
       const errorMessage = responseJSON?.message || payload.message;
+      const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
 
       const messages = [...payload.conversation.messages];
+      const modelId = messages[messages.length - 1].model?.id;
+      const modelReference = modelId && modelsMap[modelId]?.reference;
+
       messages[messages.length - 1] = {
         ...messages[messages.length - 1],
         errorMessage,
@@ -1595,6 +1598,10 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
           }),
         ),
         isReplay ? of(ConversationsActions.stopReplayConversation()) : EMPTY,
+        payload.response?.status === 404 && modelReference
+          ? of(ModelsActions.deleteModels({ references: [modelReference] }))
+          : EMPTY,
+
         of(UIActions.showErrorToast(translate(errorMessage))),
         of(
           ConversationsActions.updateMessage({
