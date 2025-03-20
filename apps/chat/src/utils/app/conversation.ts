@@ -32,16 +32,6 @@ import {
 import orderBy from 'lodash-es/orderBy';
 import uniq from 'lodash-es/uniq';
 
-export const getAssistantModelId = (
-  modelType: EntityType,
-  defaultAssistantModelId: string,
-  conversationAssistantModelId?: string,
-): string | undefined => {
-  return modelType === EntityType.Assistant
-    ? (conversationAssistantModelId ?? defaultAssistantModelId)
-    : undefined;
-};
-
 export const getValidEntitiesFromIds = <T>(
   entitiesIds: string[],
   addonsMap: Partial<Record<string, T>>,
