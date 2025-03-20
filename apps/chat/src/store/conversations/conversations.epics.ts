@@ -781,26 +781,17 @@ const saveNewConversationEpic: AppEpic = (action$) =>
 const deleteFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.deleteFolder.match),
-    switchMap(({ payload }) =>
-      forkJoin({
-        folderId: of(payload.folderId),
-        conversations: ConversationService.getConversations(
-          payload.folderId,
-          true,
-        ).pipe(
-          catchError((err) => {
-            console.error('Error during delete folder:', err);
-            return of([]);
-          }),
-        ),
-        folders: of(ConversationsSelectors.selectFolders(state$.value)),
-      }),
-    ),
-    switchMap(({ folderId, conversations, folders }) => {
+    switchMap(({ payload: { folderId } }) => {
       const actions: Observable<AnyAction>[] = [];
+      const conversations =
+        ConversationsSelectors.selectConversationsByFolderId(
+          state$.value,
+          folderId,
+        );
+      const folders = ConversationsSelectors.selectFolders(state$.value);
 
       const localConversations =
-        ConversationsSelectors.selectLocalConversations(state$.value); // TODO: remove in https://github.com/epam/ai-dial-chat/issues/2651
+        ConversationsSelectors.selectLocalConversations(state$.value);
 
       const conversationIds = [...conversations, ...localConversations].map(
         (conv) => conv.id,
@@ -844,94 +835,96 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
         return EMPTY;
       }
 
-      return ConversationService.getConversations(payload.folderId, true).pipe(
-        switchMap((conversations) => {
-          const updateFolderId = updateMovedFolderId.bind(
-            null,
-            payload.folderId,
-            newFolder.id,
-          );
-          const updateEntityId = updateMovedEntityId.bind(
-            null,
-            payload.folderId,
-            newFolder.id,
-          );
+      const conversations =
+        ConversationsSelectors.selectConversationsByFolderId(
+          state$.value,
+          payload.folderId,
+        );
 
-          const folders = ConversationsSelectors.selectFolders(state$.value);
-          const allConversations = ConversationsSelectors.selectConversations(
-            state$.value,
-          );
-          const openedFoldersIds = UISelectors.selectOpenedFoldersIds(
-            FeatureType.Chat,
-          )(state$.value);
-          const selectedConversationsIds =
-            ConversationsSelectors.selectSelectedConversationsIds(state$.value);
+      const updateFolderId = updateMovedFolderId.bind(
+        null,
+        payload.folderId,
+        newFolder.id,
+      );
+      const updateEntityId = updateMovedEntityId.bind(
+        null,
+        payload.folderId,
+        newFolder.id,
+      );
 
-          const { updatedFolders, updatedOpenedFoldersIds } =
-            updateEntitiesFoldersAndIds(
-              conversations,
-              folders,
-              updateFolderId,
-              openedFoldersIds,
-            );
+      const folders = ConversationsSelectors.selectFolders(state$.value);
+      const allConversations = ConversationsSelectors.selectConversations(
+        state$.value,
+      );
+      const openedFoldersIds = UISelectors.selectOpenedFoldersIds(
+        FeatureType.Chat,
+      )(state$.value);
+      const selectedConversationsIds =
+        ConversationsSelectors.selectSelectedConversationsIds(state$.value);
 
-          const updatedConversations = combineEntities(
-            allConversations.map((conv) =>
-              regenerateConversationId({
-                ...conv,
-                folderId: updateFolderId(conv.folderId),
-              }),
-            ),
-            conversations.map((conv) =>
-              regenerateConversationId({
-                ...conv,
-                folderId: updateFolderId(conv.folderId),
-              }),
-            ),
-          );
+      const { updatedFolders, updatedOpenedFoldersIds } =
+        updateEntitiesFoldersAndIds(
+          conversations,
+          folders,
+          updateFolderId,
+          openedFoldersIds,
+        );
 
-          const updatedSelectedConversationsIds = selectedConversationsIds.map(
-            (id) => updateEntityId(id),
-          );
+      const updatedConversations = combineEntities(
+        allConversations.map((conv) =>
+          regenerateConversationId({
+            ...conv,
+            folderId: updateFolderId(conv.folderId),
+          }),
+        ),
+        conversations.map((conv) =>
+          regenerateConversationId({
+            ...conv,
+            folderId: updateFolderId(conv.folderId),
+          }),
+        ),
+      );
 
-          const actions: Observable<AnyAction>[] = [];
-          if (conversations.length) {
-            conversations.forEach((conversation) => {
-              actions.push(
-                of(
-                  ConversationsActions.updateConversation({
-                    id: conversation.id,
-                    values: {
-                      folderId: updateFolderId(conversation.folderId),
-                    },
-                  }),
-                ),
-              );
-            });
-          }
+      const updatedSelectedConversationsIds = selectedConversationsIds.map(
+        (id) => updateEntityId(id),
+      );
+
+      const actions: Observable<AnyAction>[] = [];
+      if (conversations.length) {
+        conversations.forEach((conversation) => {
           actions.push(
             of(
-              ConversationsActions.updateFolderSuccess({
-                folders: updatedFolders,
-                conversations: updatedConversations,
-                selectedConversationsIds: updatedSelectedConversationsIds,
-              }),
-            ),
-            of(
-              UIActions.setOpenedFoldersIds({
-                openedFolderIds: updatedOpenedFoldersIds,
-                featureType: FeatureType.Chat,
+              ConversationsActions.updateConversation({
+                id: conversation.id,
+                values: {
+                  folderId: updateFolderId(conversation.folderId),
+                },
               }),
             ),
           );
-
-          return concat(...actions);
-        }),
-        catchError((err) => {
-          console.error('Error during upload conversations and folders', err);
-          return of(ConversationsActions.uploadConversationsFail());
-        }),
+        });
+      }
+      actions.push(
+        of(
+          ConversationsActions.updateFolderSuccess({
+            folders: updatedFolders,
+            conversations: updatedConversations,
+            selectedConversationsIds: updatedSelectedConversationsIds,
+          }),
+        ),
+        of(
+          UIActions.setOpenedFoldersIds({
+            openedFolderIds: updatedOpenedFoldersIds,
+            featureType: FeatureType.Chat,
+          }),
+        ),
       );
+
+      return concat(...actions);
+    }),
+    catchError((err) => {
+      console.error('Error during upload conversations and folders', err);
+      return of(ConversationsActions.uploadConversationsFail());
     }),
   );
 
@@ -940,8 +933,12 @@ const clearConversationsEpic: AppEpic = (action$) =>
     filter(ConversationsActions.clearConversations.match),
     switchMap(() => {
       return concat(
+        of(
+          ConversationsActions.deleteFolder({
+            folderId: getConversationRootId(),
+          }),
+        ),
         of(ConversationsActions.clearConversationsSuccess()),
-        of(ConversationsActions.deleteFolder({})),
       );
     }),
   );
@@ -2416,7 +2413,6 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
     mergeMap(({ payload }) => getOrUploadConversation(payload, state$.value)),
     mergeMap(({ payload, conversation }) => {
       const { id, values } = payload;
-
       if (!conversation) {
         return of(
           UIActions.showErrorToast(

@@ -383,6 +383,7 @@ dialTest(
     context,
     chatMessages,
     conversations,
+    footer,
     baseAssertion,
     localStorageManager,
   }) => {
@@ -422,7 +423,7 @@ dialTest(
           sendMessage.sendMessageButton,
           'hidden',
         );
-        await baseAssertion.assertElementState(chat.getFooter(), 'visible');
+        await baseAssertion.assertElementState(footer, 'visible');
         await sendMessage.proceedGenerating.hoverOver();
         await baseAssertion.assertElementText(
           tooltip,
@@ -450,7 +451,7 @@ dialTest(
           sendMessage.sendMessageButton,
           'hidden',
         );
-        await baseAssertion.assertElementState(chat.getFooter(), 'visible');
+        await baseAssertion.assertElementState(footer, 'visible');
       },
     );
   },

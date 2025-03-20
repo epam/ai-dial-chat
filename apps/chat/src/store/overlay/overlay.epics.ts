@@ -402,10 +402,18 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
           }
 
           if (features.every(validateFeature)) {
+            const isLoginRequired = AuthSelectors.selectIsShouldLogin(
+              state$.value,
+            );
+
             actions.push(
               of(SettingsActions.setEnabledFeatures(features as Feature[])),
             );
-            if (features.includes(Feature.ConversationsSharing)) {
+
+            if (
+              !isLoginRequired &&
+              features.includes(Feature.ConversationsSharing)
+            ) {
               actions.push(
                 of(ShareActions.triggerGettingSharedConversationListings()),
               );
@@ -506,12 +514,13 @@ const checkReadyToInteract: AppEpic = (action$, state$) =>
     filter(OverlayActions.checkReadyToInteract.match),
     switchMap(() =>
       state$.pipe(
-        filter(
-          (state) =>
-            ConversationsSelectors.selectAreSelectedConversationsLoaded(
-              state,
-            ) && !AuthSelectors.selectIsShouldLogin(state),
-        ),
+        filter((state) => {
+          const areConvLoaded =
+            ConversationsSelectors.selectAreSelectedConversationsLoaded(state);
+          const isShouldLogin = AuthSelectors.selectIsShouldLogin(state);
+
+          return areConvLoaded && !isShouldLogin;
+        }),
         switchMap(() =>
           !OverlaySelectors.selectReadyToInteractSent(state$.value)
             ? of(OverlayActions.sendReadyToInteract())

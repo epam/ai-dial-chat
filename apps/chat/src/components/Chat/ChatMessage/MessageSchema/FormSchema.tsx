@@ -27,6 +27,7 @@ import {
   MessageFormValue,
   MessageFormValueType,
 } from '@epam/ai-dial-shared';
+import intersection from 'lodash-es/intersection';
 
 interface HiddenButtonsPropertyProps {
   options: FormSchemaButtonOption[];
@@ -37,8 +38,23 @@ interface HiddenButtonsPropertyProps {
   onCloseModal: () => void;
 }
 
+interface HTMLSchemaButtonType {
+  option: FormSchemaButtonOption;
+  line: number;
+  btn: HTMLElement;
+}
+
 const buttonsWrapperClassName = 'flex flex-wrap items-center gap-2';
 const MAX_LINES = 3;
+
+const getContainerStyles = (element: HTMLElement) => {
+  const style = window.getComputedStyle(element);
+
+  return {
+    gap: parseFloat(style.gap),
+    paddingX: parseFloat(style.paddingRight) + parseFloat(style.paddingLeft),
+  };
+};
 
 const HiddenButtonsProperty = ({
   options,
@@ -64,12 +80,8 @@ const HiddenButtonsProperty = ({
       return;
     }
 
-    const visible: {
-      option: FormSchemaButtonOption;
-      line: number;
-      btn: HTMLElement;
-    }[] = [];
-    const hidden: FormSchemaButtonOption[] = [];
+    const visible: HTMLSchemaButtonType[] = [];
+    const hidden: HTMLSchemaButtonType[] = [];
     let currentLine = 1;
     let lastOffsetTop = hiddenButtons[0].offsetTop;
     let currentOptionIdx = 0;
@@ -90,7 +102,7 @@ const HiddenButtonsProperty = ({
       if (currentLine <= MAX_LINES) {
         visible.push({ option, line: currentLine, btn });
       } else {
-        hidden.push(option);
+        hidden.push({ option, line: currentLine, btn });
       }
 
       currentOptionIdx++;
@@ -98,24 +110,34 @@ const HiddenButtonsProperty = ({
 
     const maxLineItems = visible.filter((item) => item.line === MAX_LINES);
     if (maxLineItems.length) {
-      const style = window.getComputedStyle(hiddenContainerRef.current);
-      const gap = parseFloat(style.gap);
-      const paddingsWidth =
-        parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
-      const allBtnsWidth = maxLineItems.reduce<number>(
+      const { gap, paddingX } = getContainerStyles(hiddenContainerRef.current);
+      const allBtnsWidth = maxLineItems.reduce(
         (acc, item) => (item.btn.offsetWidth ?? 0) + gap + acc,
         0,
       );
+      const containerContentWidth =
+        hiddenContainerRef.current.clientWidth - paddingX;
+      const buttonsContentWidth =
+        allBtnsWidth + (dotsButtonRef.current?.clientWidth ?? 0) + gap;
 
-      if (
-        allBtnsWidth + (dotsButtonRef.current?.clientWidth ?? 0) + gap >=
-        hiddenContainerRef.current.clientWidth - paddingsWidth
-      ) {
+      if (buttonsContentWidth >= containerContentWidth) {
         const lastItem = visible.pop();
 
-        if (lastItem?.option) {
-          hidden.unshift(lastItem?.option);
+        if (lastItem) {
+          hidden.unshift(lastItem);
         }
+      }
+    }
+
+    const isSomethingVisibleOnLastLine = visible.some(
+      ({ line }) => line === MAX_LINES,
+    );
+
+    if (hidden.length === 1 && !isSomethingVisibleOnLastLine) {
+      const hiddenOption = hidden.pop();
+
+      if (hiddenOption) {
+        visible.push(hiddenOption);
       }
     }
 
@@ -124,7 +146,7 @@ const HiddenButtonsProperty = ({
     }
 
     onSetVisibleOptions(visible.map((item) => item.option));
-    onSetHiddenOptions(hidden);
+    onSetHiddenOptions(hidden.map((item) => item.option));
   }, [onCloseModal, onSetHiddenOptions, onSetVisibleOptions, options]);
 
   useEffect(() => {
@@ -156,7 +178,7 @@ const HiddenButtonsProperty = ({
     >
       {options.map((option) => (
         <button
-          key={option.const}
+          key={`${option.const}`}
           className={classNames('chat-button', buttonClassName)}
           disabled
         >
@@ -173,7 +195,7 @@ const HiddenButtonsProperty = ({
 interface ButtonsPropertyProps {
   options?: FormSchemaButtonOption[];
   formValue?: MessageFormValue;
-  onClick: (value: number, type: FormButtonType) => void;
+  onClick: (value: MessageFormValueType, type: FormButtonType) => void;
   showSelected?: boolean;
   disabled?: boolean;
   className?: string;
@@ -237,7 +259,7 @@ export const ButtonsProperty = ({
       <div className={classNames(buttonsWrapperClassName, className)}>
         {visibleOptions.map((option) => (
           <SchemaButton
-            key={option.const}
+            key={`${option.const}`}
             option={option}
             showSelected={!!showSelected}
             disabled={!!disabled}
@@ -250,7 +272,15 @@ export const ButtonsProperty = ({
         {hiddenOptions.length > 0 && (
           <button
             onClick={() => setHiddenOptionsModal(true)}
-            className="chat-button"
+            className={classNames(
+              'chat-button',
+              showSelected &&
+                intersection(
+                  Object.values(formValue ?? {}),
+                  hiddenOptions.map((option) => option.const),
+                ).length &&
+                'button-accent-primary',
+            )}
           >
             <IconDotsVertical size={18} />
           </button>
@@ -325,7 +355,7 @@ const PropertyRenderer = ({
   buttonClassName,
 }: PropertyRendererProps) => {
   const handleClick = useCallback(
-    (value: number, type: FormButtonType) => {
+    (value: MessageFormValueType, type: FormButtonType) => {
       onChange(name, value, type === FormButtonType.Submit);
     },
     [name, onChange],

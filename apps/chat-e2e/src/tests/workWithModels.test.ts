@@ -549,10 +549,11 @@ dialTest(
     agentSettings,
     chat,
     conversationSettingsModal,
-    chatMessages,
     chatHeader,
     systemPromptListAssertion,
     localStorageManager,
+    baseAssertion,
+    apiAssertion,
     setTestIds,
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
@@ -584,22 +585,23 @@ dialTest(
         await promptsList.selectPromptWithKeyboard(prompt.name, {
           triggeredHttpMethod: 'GET',
         });
-        const actualPrompt = await agentSettings.getSystemPrompt();
-        expect
-          .soft(actualPrompt, ExpectedMessages.systemPromptValid)
-          .toBe(prompt.content);
+        await baseAssertion.assertElementText(
+          agentSettings.systemPrompt,
+          prompt.content!,
+          ExpectedMessages.systemPromptValid,
+        );
         await conversationSettingsModal.applyChangesButton.click();
       },
     );
 
     await dialTest.step(
-      'Send request and verify response corresponds system prompt',
+      'Send request and verify system prompt is sent in the request',
       async () => {
-        await chat.sendRequestWithButton(requestTerm);
-        const response = await chatMessages.getLastMessageContent();
-        expect
-          .soft(response, ExpectedMessages.messageContentIsValid)
-          .toBe(expectedResponse);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        const request = await chat.sendRequestWithButton(requestTerm);
+        apiAssertion.assertRequestPrompt(request, prompt.content);
       },
     );
 
@@ -607,10 +609,11 @@ dialTest(
       'Open chat settings and verify system prompt is preserved',
       async () => {
         await chatHeader.openConversationSettingsPopup();
-        const actualPrompt = await agentSettings.getSystemPrompt();
-        expect
-          .soft(actualPrompt, ExpectedMessages.systemPromptValid)
-          .toBe(prompt.content);
+        await baseAssertion.assertElementText(
+          agentSettings.systemPrompt,
+          prompt.content!,
+          ExpectedMessages.systemPromptValid,
+        );
       },
     );
   },

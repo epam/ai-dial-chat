@@ -29,7 +29,7 @@ export const SchemaButton: React.FC<Props> = ({
   return (
     <button
       data-no-context-menu
-      key={option.const}
+      key={`${option.const}`}
       onClick={isPlayback ? undefined : () => onClick(option)}
       className={classNames('chat-button max-w-full truncate', className, {
         'button-accent-primary':

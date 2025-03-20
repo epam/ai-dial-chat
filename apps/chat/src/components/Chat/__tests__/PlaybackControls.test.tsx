@@ -17,10 +17,6 @@ import { PlaybackControls } from '@/src/components/Chat/Playback/PlaybackControl
 
 import { Role } from '@epam/ai-dial-shared';
 
-vi.mock('@/src/components/Common/FooterMessage', () => ({
-  FooterMessage: () => <div data-qa="footer-message">footer</div>,
-}));
-
 vi.mock('@/src/store/hooks', async () => {
   return {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -138,7 +134,6 @@ describe('PlaybackControls', () => {
         showScrollDownButton
       />,
     );
-    const footer = screen.getByTestId('footer-message');
     const scrollDownButton = screen.getByTestId('scroll-down-button');
     const buttons = screen.getAllByRole('button');
     const messageBox = screen.getByTestId('playback-message-content');
@@ -146,7 +141,6 @@ describe('PlaybackControls', () => {
 
     expect(buttons.length).toBe(3);
     expect(messageBox).toBeInTheDocument();
-    expect(footer).toBeVisible();
     expect(scrollDownButton).toBeInTheDocument();
     expect(spinner).toBeNull();
   });

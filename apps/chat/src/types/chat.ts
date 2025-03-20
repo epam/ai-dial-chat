@@ -69,6 +69,7 @@ export interface PrepareNameOptions {
   forRenaming: boolean;
   replaceWithSpacesForRenaming: boolean;
   trimEndDotsRequired: boolean;
+  maxNameLength?: number;
 }
 
 export enum SidebarSide {

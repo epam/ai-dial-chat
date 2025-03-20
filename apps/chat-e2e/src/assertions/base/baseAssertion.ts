@@ -12,7 +12,7 @@ import { SortingUtil } from '@/src/utils/sortingUtil';
 import { Locator, expect } from '@playwright/test';
 
 export class BaseAssertion {
-  public async assertStringsSorting(arrayToSort: string[], sorting: Sorting) {
+  public assertStringsSorting(arrayToSort: string[], sorting: Sorting) {
     const expectedOrder = SortingUtil.sortStringsArray(
       arrayToSort,
       (f) => f.toLowerCase(),
@@ -110,7 +110,7 @@ export class BaseAssertion {
 
   public async assertElementText(
     element: BaseElement | Locator,
-    expectedText: string,
+    expectedText: string | RegExp,
     expectedMessage?: string,
   ) {
     const elementLocator = this.getElementLocator(element);
