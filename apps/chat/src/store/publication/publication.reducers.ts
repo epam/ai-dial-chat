@@ -1,6 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { sortAllVersions } from '@/src/utils/app/common';
+import { sortItemsVersions } from '@/src/utils/app/common';
 
 import { FeatureType } from '@/src/types/common';
 import {
@@ -218,7 +218,7 @@ export const publicationSlice = createSlice({
         if (selectedVersion) {
           state.publicVersionGroups[key] = {
             selectedVersion,
-            allVersions: sortAllVersions(
+            allVersions: sortItemsVersions(
               uniqBy(
                 [
                   ...(state.publicVersionGroups[key]?.allVersions || []),

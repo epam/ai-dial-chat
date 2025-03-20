@@ -18,7 +18,6 @@ import { Entity, ShareEntity } from '@epam/ai-dial-shared';
 import groupBy from 'lodash-es/groupBy';
 import keyBy from 'lodash-es/keyBy';
 import merge from 'lodash-es/merge';
-import orderBy from 'lodash-es/orderBy';
 import trimEnd from 'lodash-es/trimEnd';
 import uniq from 'lodash-es/uniq';
 import values from 'lodash-es/values';
@@ -203,6 +202,22 @@ export const isVersionValid = (version: string | undefined) => {
   );
 };
 
+function compareVersions(version1: string, version2: string) {
+  const parts1 = version1.split('.').map(Number);
+  const parts2 = version2.split('.').map(Number);
+
+  const maxLength = Math.max(parts1.length, parts2.length);
+
+  for (let i = 0; i < maxLength; i++) {
+    const num1 = parts1[i] || 0;
+    const num2 = parts2[i] || 0;
+
+    if (num1 > num2) return 1;
+    if (num1 < num2) return -1;
+  }
+  return 0;
+}
+
 export const findLatestVersion = (versions: string[]) => {
   const filteredVersions = versions.filter((v) => v !== NA_VERSION);
 
@@ -210,29 +225,23 @@ export const findLatestVersion = (versions: string[]) => {
     return NA_VERSION;
   }
 
-  const sortedVersions = orderBy(
-    filteredVersions,
-    [(version) => version.split('.').map(Number)],
-    ['asc'],
-  );
-
-  return sortedVersions.pop();
+  return versions.reduce((max, current) => {
+    return compareVersions(current, max) > 0 ? current : max;
+  });
 };
 
-export const sortAllVersions = (
-  versions: NonNullable<PublicVersionGroups[string]>['allVersions'],
-) =>
-  orderBy(
-    versions,
-    ({ version }) => {
-      if (version === 'N/A') {
-        return [-1, -1, -1];
-      }
+export const sortItemsVersions = <T extends { version?: string | undefined }>(
+  items: T[],
+): T[] =>
+  items.sort((a, b) => {
+    const versionA = a.version;
+    const versionB = b.version;
 
-      return version.split('.').map(Number);
-    },
-    ['desc', 'desc', 'desc'],
-  );
+    if (!versionA || versionA === NA_VERSION) return 1;
+    if (!versionB || versionB === NA_VERSION) return -1;
+
+    return compareVersions(versionB, versionA);
+  });
 
 export const groupAllVersions = (versions: PublicVersionOption[]) =>
   Object.values(
