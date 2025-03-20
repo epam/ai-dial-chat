@@ -585,6 +585,7 @@ dialSharedWithMeTest(
     additionalShareUserChatMessages,
     localStorageManager,
   }) => {
+    dialSharedWithMeTest.slow();
     setTestIds('EPMRTC-3518', 'EPMRTC-3102', 'EPMRTC-3101', 'EPMRTC-5524');
     let imageConversation: Conversation;
     let firstImageUrl: string;
