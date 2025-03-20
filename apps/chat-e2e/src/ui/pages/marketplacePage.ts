@@ -1,3 +1,4 @@
+import config from '@/config/chat.playwright.config';
 import { API, ExpectedConstants } from '@/src/testData';
 import { BasePage } from '@/src/ui/pages/basePage';
 import { MarketplaceContainer } from '@/src/ui/webElements/marketplace/marketplaceContainer';
@@ -52,10 +53,10 @@ export class MarketplacePage extends BasePage {
   async waitForPageLoaded() {
     const marketplaceContainer = this.getMarketplaceContainer();
     const marketplace = marketplaceContainer.getMarketplace();
+    await marketplace.waitForState({ timeout: config.use!.actionTimeout! * 3 });
     await this.marketplaceContainer
       .getChatLoader()
       .waitForState({ state: 'hidden' });
-    await marketplace.waitForState();
     await marketplace.getMarketplaceHeader().waitForState();
   }
 }

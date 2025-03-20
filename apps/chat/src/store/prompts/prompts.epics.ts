@@ -5,7 +5,6 @@ import {
   concat,
   concatMap,
   filter,
-  forkJoin,
   ignoreElements,
   iif,
   map,
@@ -313,8 +312,8 @@ export const clearPromptsEpic: AppEpic = (action$) =>
     filter(PromptsActions.clearPrompts.match),
     switchMap(() =>
       concat(
+        of(PromptsActions.deleteFolder({ folderId: getPromptRootId() })),
         of(PromptsActions.clearPromptsSuccess()),
-        of(PromptsActions.deleteFolder({})),
       ),
     ),
   );
@@ -373,83 +372,84 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
         return EMPTY;
       }
 
-      return PromptService.getPrompts(payload.folderId, true).pipe(
-        switchMap((prompts) => {
-          const updateFolderId = updateMovedFolderId.bind(
-            null,
-            payload.folderId,
-            newFolder.id,
-          );
+      const prompts = PromptsSelectors.selectPromptsByFolderId(
+        state$.value,
+        payload.folderId,
+      );
 
-          const folders = PromptsSelectors.selectFolders(state$.value);
-          const allPrompts = PromptsSelectors.selectPrompts(state$.value);
-          const openedFoldersIds = UISelectors.selectOpenedFoldersIds(
-            FeatureType.Prompt,
-          )(state$.value);
+      const updateFolderId = updateMovedFolderId.bind(
+        null,
+        payload.folderId,
+        newFolder.id,
+      );
 
-          const { updatedFolders, updatedOpenedFoldersIds } =
-            updateEntitiesFoldersAndIds(
-              prompts,
-              folders,
-              updateFolderId,
-              openedFoldersIds,
-            );
+      const folders = PromptsSelectors.selectFolders(state$.value);
+      const allPrompts = PromptsSelectors.selectPrompts(state$.value);
+      const openedFoldersIds = UISelectors.selectOpenedFoldersIds(
+        FeatureType.Prompt,
+      )(state$.value);
 
-          const updatedPrompts = combineEntities(
-            allPrompts.map((prompt) =>
-              regeneratePromptId({
-                ...prompt,
-                folderId: updateFolderId(prompt.folderId),
-              }),
-            ),
-            prompts.map((prompt) =>
-              regeneratePromptId({
-                ...prompt,
-                folderId: updateFolderId(prompt.folderId),
-              }),
-            ),
-          );
+      const { updatedFolders, updatedOpenedFoldersIds } =
+        updateEntitiesFoldersAndIds(
+          prompts,
+          folders,
+          updateFolderId,
+          openedFoldersIds,
+        );
 
-          const actions: Observable<AnyAction>[] = [];
+      const updatedPrompts = combineEntities(
+        allPrompts.map((prompt) =>
+          regeneratePromptId({
+            ...prompt,
+            folderId: updateFolderId(prompt.folderId),
+          }),
+        ),
+        prompts.map((prompt) =>
+          regeneratePromptId({
+            ...prompt,
+            folderId: updateFolderId(prompt.folderId),
+          }),
+        ),
+      );
 
-          if (prompts.length) {
-            prompts.forEach((prompt) => {
-              actions.push(
-                of(
-                  PromptsActions.updatePrompt({
-                    id: prompt.id,
-                    values: { folderId: updateFolderId(prompt.folderId) },
-                  }),
-                ),
-              );
-            });
-          }
+      const actions: Observable<AnyAction>[] = [];
 
+      if (prompts.length) {
+        prompts.forEach((prompt) => {
           actions.push(
             of(
-              PromptsActions.updateFolderSuccess({
-                folders: updatedFolders,
-                prompts: updatedPrompts,
-              }),
-            ),
-            of(
-              UIActions.setOpenedFoldersIds({
-                openedFolderIds: updatedOpenedFoldersIds,
-                featureType: FeatureType.Prompt,
+              PromptsActions.updatePrompt({
+                id: prompt.id,
+                values: { folderId: updateFolderId(prompt.folderId) },
               }),
             ),
           );
+        });
+      }
 
-          return concat(...actions);
-        }),
-        catchError((err) => {
-          console.error('An error occurred while updating the folder:', err);
-          return of(
-            UIActions.showErrorToast(
-              translate('An error occurred while updating the folder.'),
-            ),
-          );
-        }),
+      actions.push(
+        of(
+          PromptsActions.updateFolderSuccess({
+            folders: updatedFolders,
+            prompts: updatedPrompts,
+          }),
+        ),
+        of(
+          UIActions.setOpenedFoldersIds({
+            openedFolderIds: updatedOpenedFoldersIds,
+            featureType: FeatureType.Prompt,
+          }),
+        ),
+      );
+
+      return concat(...actions);
+    }),
+    catchError((err) => {
+      console.error('An error occurred while updating the folder:', err);
+      return of(
+        UIActions.showErrorToast(
+          translate('An error occurred while updating the folder.'),
+        ),
       );
     }),
   );
@@ -457,32 +457,32 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
 const deleteFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.deleteFolder.match),
-    switchMap(({ payload }) =>
-      forkJoin({
-        folderId: of(payload.folderId),
-        promptsToDelete: PromptService.getPrompts(payload.folderId, true).pipe(
-          catchError((err) => {
-            console.error(
-              'An error occurred while uploading prompts and folders:',
-              err,
-            );
-            return of([]);
-          }),
-        ),
-        folders: of(PromptsSelectors.selectFolders(state$.value)),
-      }),
-    ),
-    switchMap(({ folderId, promptsToDelete, folders }) => {
+    switchMap(({ payload: { folderId } }) => {
       const actions: Observable<AnyAction>[] = [];
-      const promptIds = promptsToDelete.map((p) => p.id);
+
+      const prompts = PromptsSelectors.selectPromptsByFolderId(
+        state$.value,
+        folderId,
+      );
+
+      const localPrompts = PromptsSelectors.selectLocalPrompts(state$.value);
+
+      const promptIds = [...prompts, ...localPrompts].map(
+        (prompt) => prompt.id,
+      );
 
       if (promptIds.length) {
         actions.push(of(PromptsActions.deletePrompts({ promptIds })));
-      } else {
+      } else
         actions.push(
-          of(PromptsActions.deletePromptsComplete({ promptIds: new Set([]) })),
+          of(
+            PromptsActions.deletePromptsComplete({
+              promptIds: new Set([]),
+            }),
+          ),
         );
-      }
+
+      const folders = PromptsSelectors.selectFolders(state$.value);
 
       return concat(
         of(
