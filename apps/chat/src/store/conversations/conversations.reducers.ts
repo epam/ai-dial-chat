@@ -441,18 +441,6 @@ export const conversationsSlice = createSlice({
         values: Partial<FolderInterface>;
       }>,
     ) => state,
-    updateFolderSuccess: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        folder: FolderInterface;
-      }>,
-    ) => {
-      state.folders = state.folders.map((folder) =>
-        folder.id === payload.folder.id ? payload.folder : folder,
-      );
-    },
     updateFoldersSuccess: (
       state,
       {

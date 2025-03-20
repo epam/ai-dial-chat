@@ -838,8 +838,8 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
 
       if (payload.folderId === newFolder.id) {
         return of(
-          ConversationsActions.updateFolderSuccess({
-            folder: newFolder,
+          ConversationsActions.updateFoldersSuccess({
+            folders: [{ oldId: payload.folderId, newFolder }],
           }),
         );
       }
@@ -1900,7 +1900,7 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
       (action) =>
         ConversationsActions.createFolder.match(action) ||
         ConversationsActions.deleteFolder.match(action) ||
-        ConversationsActions.updateFolderSuccess.match(action) ||
+        ConversationsActions.updateFoldersSuccess.match(action) ||
         ConversationsActions.clearConversations.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
         ConversationsActions.addFolders.match(action) ||
@@ -1955,7 +1955,7 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(
       (action) =>
-        ConversationsActions.updateFolderSuccess.match(action) ||
+        ConversationsActions.updateFoldersSuccess.match(action) ||
         ConversationsActions.selectConversations.match(action) ||
         ConversationsActions.unselectConversations.match(action) ||
         ConversationsActions.updateConversationSuccess.match(action) ||
@@ -3113,7 +3113,7 @@ const updateLastConversationSettingsEpic: AppEpic = (action$, state$) =>
       (action) =>
         ConversationsActions.initFoldersAndConversationsSuccess.match(action) ||
         ConversationsActions.deleteConversationsComplete.match(action) ||
-        ConversationsActions.updateFolderSuccess.match(action) ||
+        ConversationsActions.updateFoldersSuccess.match(action) ||
         ConversationsActions.setConversations.match(action) ||
         ConversationsActions.uploadConversationsWithFoldersRecursiveSuccess.match(
           action,

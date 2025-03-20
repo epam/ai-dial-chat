@@ -373,8 +373,8 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
 
       if (payload.folderId === newFolder.id) {
         return of(
-          PromptsActions.updateFolderSuccess({
-            folder: newFolder,
+          PromptsActions.updateFoldersSuccess({
+            folders: [{ oldId: payload.folderId, newFolder }],
           }),
         );
       }
