@@ -479,7 +479,7 @@ dialSharedWithMeTest(
     'Search: File from "Shared with me" is found\n' +
     'Search: No results found\n' +
     'Collapsed or expanded state of "Shared with me" is stored\n' +
-    'Deleted by the owner file disappears from "Shared with me"\n' +
+    'Deleted by the owner file disappears from "Shared with me". Other files exist and stay in "Shared with me".\n' +
     'Shared with me: the file stays if the chat was unshared, renamed, model was changed, the chat was deleted by the owner',
   async ({
     setTestIds,
@@ -983,6 +983,7 @@ dialSharedWithMeTest(
           FileModalSection.SharedWithMe,
           'hidden',
         );
+        await additionalShareUserAttachFilesModal.closeButton.click();
       },
     );
 
@@ -993,10 +994,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'User 2 check that the file has disappeared',
       async () => {
-        await additionalShareUserDialHomePage.reloadPage();
-        await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserSendMessage.attachmentMenuTrigger.click();
-
         await additionalShareUserAttachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
@@ -1039,9 +1037,116 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       "The 'Shared with me' section disappears from Manage Attachments without shared files",
       async () => {
-        await additionalShareUserAttachFilesModal
-          .getSharedWithMeFilesContainer()
-          .waitForState({ state: 'hidden' });
+        await additionalShareUserManageAttachmentsAssertion.assertElementState(
+          additionalShareUserAttachFilesModal.getSectionElement(
+            FileModalSection.SharedWithMe,
+          ),
+          'hidden',
+        );
+      },
+    );
+  },
+);
+
+dialSharedWithMeTest(
+  'Deleted by the owner file disappears from "Shared with me". There was only one shared and existed file. "Shared with me" disappears.',
+  async ({
+    setTestIds,
+    conversationData,
+    dataInjector,
+    fileApiHelper,
+    mainUserShareApiHelper,
+    additionalUserShareApiHelper,
+    dialHomePage,
+    manageAttachmentsAssertion,
+    chatBar,
+    localStorageManager,
+    additionalShareUserChatBar,
+    additionalShareUserDialHomePage,
+    additionalShareUserLocalStorageManager,
+    additionalShareUserAttachFilesModal,
+    attachFilesModal,
+    confirmationDialog,
+    additionalSecondUserShareApiHelper,
+    additionalShareUserManageAttachmentsAssertion,
+  }) => {
+    setTestIds('EPMRTC-5821');
+    let imageUrl: string;
+    let shareByLinkResponse: ShareByLinkResponseModel;
+    let conversation: Conversation;
+    const defaultModel = ModelsUtil.getDefaultModel()!;
+
+    await localStorageManager.setChatCollapsedSection(
+      CollapsedSections.Organization,
+    );
+
+    await dialTest.step(
+      'Upload image file to a conversation and prepare conversation with attachments in response',
+      async () => {
+        imageUrl = await fileApiHelper.putFile(Attachment.sunImageName);
+        conversation =
+          conversationData.prepareConversationWithAttachmentInResponse(
+            imageUrl,
+            defaultModel.id,
+          );
+        await dataInjector.createConversations([conversation]);
+        shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink([
+          conversation,
+        ]);
+      },
+    );
+
+    await dialTest.step('Accept share invitation by another user', async () => {
+      await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+      await additionalSecondUserShareApiHelper.acceptInvite(
+        shareByLinkResponse,
+      );
+      await localStorageManager.setShowSideBarPanels();
+    });
+
+    await dialTest.step('Open Dial by additional user', async () => {
+      await additionalShareUserLocalStorageManager.setShowSideBarPanels();
+      await additionalShareUserDialHomePage.openHomePage();
+      await additionalShareUserDialHomePage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'Delete the file from shared conversation by main user',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
+        await manageAttachmentsAssertion.assertEntityState(
+          { name: Attachment.sunImageName },
+          FileModalSection.AllFiles,
+          'visible',
+        );
+        await attachFilesModal.openFileDropdownMenu(
+          Attachment.sunImageName,
+          FileModalSection.AllFiles,
+        );
+        await attachFilesModal
+          .getFileDropdownMenu()
+          .selectMenuOption(MenuOptions.delete);
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await manageAttachmentsAssertion.assertEntityState(
+          { name: Attachment.sunImageName },
+          FileModalSection.AllFiles,
+          'hidden',
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Open the attach modal by additional user and verify "Shared with me" section is not visible',
+      async () => {
+        await additionalShareUserChatBar.openManageAttachmentsModal();
+        await additionalShareUserManageAttachmentsAssertion.assertElementState(
+          additionalShareUserAttachFilesModal.getSectionElement(
+            FileModalSection.SharedWithMe,
+          ),
+          'hidden',
+        );
       },
     );
   },
