@@ -162,7 +162,6 @@ const ChatFolderTemplate = ({
             ConversationsActions.updateFolder({
               folderId: entity.id,
               values: { folderId: currentFolder.id, isShared: false },
-              currentIsShared: entity.isShared,
             }),
           );
         }
@@ -224,11 +223,10 @@ const ChatFolderTemplate = ({
         ConversationsActions.updateFolder({
           folderId,
           values: { name, isShared: false },
-          currentIsShared: folder.isShared,
         }),
       );
     },
-    [dispatch, folder.isShared],
+    [dispatch],
   );
 
   const handleFolderDelete = useCallback(
@@ -245,7 +243,6 @@ const ChatFolderTemplate = ({
         dispatch(
           ConversationsActions.deleteFolder({
             folderId,
-            currentIsShared: folder.isShared,
           }),
         );
       } else {
