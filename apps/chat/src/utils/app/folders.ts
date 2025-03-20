@@ -633,3 +633,42 @@ export const renameFolderAndMoveEntity = <T extends Entity | BaseDialEntity>(
 
   return updateEntityFolder(entity, sourceFolderId, targetFolderId);
 };
+
+export const updateFoldersAndOpenedIds = ({
+  openedFolderIds,
+  folders,
+  oldId,
+  newFolder,
+}: {
+  openedFolderIds: string[];
+  oldId: string;
+  newFolder: FolderInterface;
+  folders: FolderInterface[];
+}) => {
+  const updatedOpenedFolderIds = openedFolderIds.map((id) => {
+    const modifiedOldId = id === oldId ? oldId : `${oldId}/`;
+    return id.includes(modifiedOldId)
+      ? id.replace(modifiedOldId, newFolder.id)
+      : id;
+  });
+  const updatedFolders = folders.map((folder) => {
+    if (folder.id === oldId) {
+      return { oldId: folder.id, newFolder };
+    }
+
+    const newFolderId = folder.folderId.replace(
+      `${oldId}/`,
+      `${newFolder.id}/`,
+    );
+
+    return {
+      oldId: folder.id,
+      newFolder: addGeneratedFolderId({ ...folder, folderId: newFolderId }),
+    };
+  });
+
+  return {
+    updatedOpenedFolderIds,
+    updatedFolders,
+  };
+};

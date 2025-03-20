@@ -18,10 +18,6 @@ import { AnyAction } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
-import {
-  combineEntities,
-  updateEntitiesFoldersAndIds,
-} from '@/src/utils/app/common';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { getOrUploadPrompt } from '@/src/utils/app/data/storages/api/prompt-api-storage';
 import {
@@ -29,7 +25,7 @@ import {
   generateNextName,
   getFolderFromId,
   getParentFolderIdsFromFolderId,
-  updateMovedFolderId,
+  updateFoldersAndOpenedIds,
 } from '@/src/utils/app/folders';
 import { getPromptRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import {
@@ -365,90 +361,66 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.updateFolder.match),
     switchMap(({ payload }) => {
-      const folder = getFolderFromId(payload.folderId, FolderType.Prompt);
-      const newFolder = addGeneratedFolderId({ ...folder, ...payload.values });
+      const state = state$.value;
+      const folder = PromptsSelectors.selectFolderById(state, payload.folderId);
 
-      if (payload.folderId === newFolder.id) {
+      if (!folder) {
         return EMPTY;
       }
 
-      const prompts = PromptsSelectors.selectPromptsByFolderId(
-        state$.value,
-        payload.folderId,
-      );
+      const newFolder = addGeneratedFolderId({ ...folder, ...payload.values });
 
-      const updateFolderId = updateMovedFolderId.bind(
-        null,
-        payload.folderId,
-        newFolder.id,
-      );
-
-      const folders = PromptsSelectors.selectFolders(state$.value);
-      const allPrompts = PromptsSelectors.selectPrompts(state$.value);
-      const openedFoldersIds = UISelectors.selectOpenedFoldersIds(
-        FeatureType.Prompt,
-      )(state$.value);
-
-      const { updatedFolders, updatedOpenedFoldersIds } =
-        updateEntitiesFoldersAndIds(
-          prompts,
-          folders,
-          updateFolderId,
-          openedFoldersIds,
+      if (payload.folderId === newFolder.id) {
+        return of(
+          PromptsActions.updateFolderSuccess({
+            folder: newFolder,
+          }),
         );
-
-      const updatedPrompts = combineEntities(
-        allPrompts.map((prompt) =>
-          regeneratePromptId({
-            ...prompt,
-            folderId: updateFolderId(prompt.folderId),
-          }),
-        ),
-        prompts.map((prompt) =>
-          regeneratePromptId({
-            ...prompt,
-            folderId: updateFolderId(prompt.folderId),
-          }),
-        ),
-      );
-
-      const actions: Observable<AnyAction>[] = [];
-
-      if (prompts.length) {
-        prompts.forEach((prompt) => {
-          actions.push(
-            of(
-              PromptsActions.updatePrompt({
-                id: prompt.id,
-                values: { folderId: updateFolderId(prompt.folderId) },
-              }),
-            ),
-          );
-        });
       }
 
-      actions.push(
-        of(
-          PromptsActions.updateFolderSuccess({
-            folders: updatedFolders,
-            prompts: updatedPrompts,
-          }),
-        ),
+      const openedFolderIds = UISelectors.selectOpenedFoldersIds(
+        FeatureType.Prompt,
+      )(state);
+      const folders = [
+        ...PromptsSelectors.selectFoldersByFolderId(state, payload.folderId),
+        folder,
+      ];
+      const { updatedFolders, updatedOpenedFolderIds } =
+        updateFoldersAndOpenedIds({
+          newFolder,
+          oldId: payload.folderId,
+          openedFolderIds,
+          folders,
+        });
+      const prompts = PromptsSelectors.selectPromptsByFolderId(
+        state,
+        payload.folderId,
+      );
+
+      return concat(
+        ...prompts.map((prompt) => {
+          return of(
+            PromptsActions.updatePrompt({
+              id: prompt.id,
+              values: {
+                folderId: prompt.folderId.replace(
+                  payload.folderId,
+                  newFolder.id,
+                ),
+              },
+            }),
+          );
+        }),
         of(
           UIActions.setOpenedFoldersIds({
-            openedFolderIds: updatedOpenedFoldersIds,
+            openedFolderIds: updatedOpenedFolderIds,
             featureType: FeatureType.Prompt,
           }),
         ),
-      );
-
-      return concat(...actions);
-    }),
-    catchError((err) => {
-      console.error('An error occurred while updating the folder:', err);
-      return of(
-        UIActions.showErrorToast(
-          translate('An error occurred while updating the folder.'),
+        of(
+          PromptsActions.updateFoldersSuccess({
+            folders: updatedFolders,
+          }),
         ),
       );
     }),

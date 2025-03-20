@@ -59,6 +59,7 @@ import {
   getParentFolderIdsFromEntityId,
   getParentFolderIdsFromFolderId,
   splitEntityId,
+  updateFoldersAndOpenedIds,
 } from '@/src/utils/app/folders';
 import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
 import {
@@ -842,10 +843,9 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      const openedFolderIds = [
-        ...UISelectors.selectOpenedFoldersIds(FeatureType.Chat)(state),
-      ];
-
+      const openedFolderIds = UISelectors.selectOpenedFoldersIds(
+        FeatureType.Chat,
+      )(state);
       const folders = [
         ...ConversationsSelectors.selectFoldersByFolderId(
           state,
@@ -853,38 +853,19 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
         ),
         folder,
       ];
-
-      const updatedFolders = folders.map((folder) => {
-        if (openedFolderIds.includes(folder.id)) {
-          const newId = folder.id.replace(payload.folderId, newFolder.id);
-          openedFolderIds.forEach((id, i) => {
-            if (id === folder.id) {
-              openedFolderIds[i] = newId;
-            }
-          });
-        }
-
-        if (folder.id === payload.folderId) {
-          return { oldId: folder.id, newFolder };
-        }
-
-        const newFolderId = folder.folderId.replace(
-          payload.folderId,
-          newFolder.id,
-        );
-
-        return {
-          oldId: folder.id,
-          newFolder: addGeneratedFolderId({ ...folder, folderId: newFolderId }),
-        };
-      });
+      const { updatedFolders, updatedOpenedFolderIds } =
+        updateFoldersAndOpenedIds({
+          newFolder,
+          oldId: payload.folderId,
+          openedFolderIds,
+          folders,
+        });
 
       const conversations =
         ConversationsSelectors.selectConversationsByFolderId(
           state,
           payload.folderId,
         );
-
       return concat(
         ...conversations.map((conv) => {
           return of(
@@ -898,7 +879,7 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
         }),
         of(
           UIActions.setOpenedFoldersIds({
-            openedFolderIds: openedFolderIds,
+            openedFolderIds: updatedOpenedFolderIds,
             featureType: FeatureType.Chat,
           }),
         ),
@@ -908,10 +889,6 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
           }),
         ),
       );
-    }),
-    catchError((err) => {
-      console.error('Error during upload conversations and folders', err);
-      return of(ConversationsActions.uploadConversationsFail());
     }),
   );
 

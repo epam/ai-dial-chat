@@ -1326,8 +1326,9 @@ const revokeFolderAccessEpic: AppEpic = (action$, state$) =>
       const folders = Selector.selectFolders(state$.value);
       const foldersToRevoke = folders.filter(
         (folder) =>
-          folder.id.startsWith(`${payload.folderId}/`) ||
-          folder.id === payload.folderId,
+          (folder.id.startsWith(`${payload.folderId}/`) ||
+            folder.id === payload.folderId) &&
+          folder.isShared,
       );
 
       if (!foldersToRevoke.length) {
