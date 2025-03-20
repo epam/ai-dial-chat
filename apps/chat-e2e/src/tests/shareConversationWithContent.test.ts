@@ -682,29 +682,11 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'User2 opens the file in the shared chat and verifies pictures are shown in requests',
+      'User 2 open the attach modal and verifies that the file is visible',
       async () => {
         await additionalShareUserLocalStorageManager.setShowSideBarPanels();
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserSharedWithMeConversations.selectConversation(
-          imageConversation.name,
-        );
-
-        await additionalShareUserChatMessages.expandChatMessageAttachment(
-          1,
-          Attachment.cloudImageName,
-        );
-        await additionalShareUserChatMessages.expandChatMessageAttachment(
-          3,
-          Attachment.sunImageName,
-        );
-      },
-    );
-
-    await dialSharedWithMeTest.step(
-      'User 2 open the attach modal and verifies that the file is visible',
-      async () => {
         await additionalShareUserConversations.selectConversation(
           secondUserEmptyConversation.name,
         );
@@ -751,10 +733,12 @@ dialSharedWithMeTest(
         await additionalShareUserChatMessages.expandChatMessageAttachment(
           1,
           Attachment.cloudImageName,
+          { isHttpMethodTriggered: false },
         );
         await additionalShareUserChatMessages.expandChatMessageAttachment(
           3,
           Attachment.sunImageName,
+          { isHttpMethodTriggered: false },
         );
       },
     );
