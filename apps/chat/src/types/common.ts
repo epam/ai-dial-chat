@@ -146,8 +146,12 @@ export interface EntityInfo {
   createdAt?: number;
   updatedAt?: number;
   author?: string;
-  sharedWithMe?: boolean;
   isPublic?: boolean;
 }
 
 export type SortOrder = 'asc' | 'desc';
+
+export interface ConfirmDialogValueTypes {
+  description: string;
+  heading: string;
+}
