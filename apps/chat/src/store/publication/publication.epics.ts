@@ -31,7 +31,6 @@ import {
   getParentFolderIdsFromEntityId,
   getParentFolderIdsFromFolderId,
   getRootFolderIdFromEntityId,
-  splitEntityId,
 } from '@/src/utils/app/folders';
 import {
   isApplicationId,
@@ -46,6 +45,7 @@ import {
   isEntityIdPublic,
   mapPublishedItems,
 } from '@/src/utils/app/publications';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 import {
   ApiUtils,

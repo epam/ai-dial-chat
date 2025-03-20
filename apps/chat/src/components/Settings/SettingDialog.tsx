@@ -2,8 +2,8 @@ import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { splitEntityId } from '@/src/utils/app/folders';
 import { isSmallScreen } from '@/src/utils/app/mobile';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';

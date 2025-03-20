@@ -58,7 +58,6 @@ import {
   getNextDefaultName,
   getParentFolderIdsFromEntityId,
   getParentFolderIdsFromFolderId,
-  splitEntityId,
   updateChildFoldersIds,
   updateFolderIds,
 } from '@/src/utils/app/folders';
@@ -84,6 +83,7 @@ import {
   isEntityIdPublic,
   mapPublishedItems,
 } from '@/src/utils/app/publications';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
 import { parseConversationApiKey } from '@/src/utils/server/api';

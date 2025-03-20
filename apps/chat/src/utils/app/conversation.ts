@@ -8,6 +8,7 @@ import {
   getFormValueDefinitions,
   isConversationWithFormSchema,
 } from '@/src/utils/app/form-schema';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { Conversation, Replay } from '@/src/types/chat';
 import { EntityType, PartialBy } from '@/src/types/common';
@@ -19,7 +20,6 @@ import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-setti
 import { getConversationApiKey, parseConversationApiKey } from '../server/api';
 import { DefaultsService } from './data/defaults-service';
 import { constructPath } from './file';
-import { splitEntityId } from './folders';
 import { getConversationRootId, isEntityIdLocal } from './id';
 
 import {

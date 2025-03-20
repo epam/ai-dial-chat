@@ -1,5 +1,5 @@
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
-import { splitEntityId } from '@/src/utils/app/folders';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { PrepareNameOptions } from '@/src/types/chat';
 import {

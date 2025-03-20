@@ -1,4 +1,5 @@
 import { BucketService } from '@/src/utils/app/data/bucket-service';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { Conversation } from '@/src/types/chat';
 import { DialFile, DialLink, FileFolderAttachment } from '@/src/types/files';
@@ -11,7 +12,6 @@ import {
 
 import { ApiUtils } from '../server/api';
 import { doesHaveDotsInTheEnd } from './common';
-import { splitEntityId } from './folders';
 import { isFolderId } from './shared-utils';
 
 import { Attachment, UploadStatus } from '@epam/ai-dial-shared';

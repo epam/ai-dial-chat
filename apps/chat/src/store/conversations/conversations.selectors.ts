@@ -25,7 +25,6 @@ import {
   getParentFolderIdsFromEntityId,
   isFolderEmpty,
   sortByName,
-  splitEntityId,
 } from '@/src/utils/app/folders';
 import {
   isConversationWithFormSchema,
@@ -44,6 +43,7 @@ import {
   getMyItemsFilters,
   isSearchTermMatched,
 } from '@/src/utils/app/search';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 
 import { Conversation } from '@/src/types/chat';

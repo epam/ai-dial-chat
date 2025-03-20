@@ -13,7 +13,6 @@ import {
   getParentAndCurrentFoldersById,
   isFolderEmpty,
   sortByName,
-  splitEntityId,
 } from '@/src/utils/app/folders';
 import { getPromptRootId, isEntityIdLocal, isRootId } from '@/src/utils/app/id';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
@@ -23,6 +22,7 @@ import {
   getMyItemsFilters,
   isSearchTermMatched,
 } from '@/src/utils/app/search';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 
 import { Prompt } from '@/src/types/prompt';
