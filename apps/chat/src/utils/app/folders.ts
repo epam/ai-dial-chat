@@ -634,41 +634,34 @@ export const renameFolderAndMoveEntity = <T extends Entity | BaseDialEntity>(
   return updateEntityFolder(entity, sourceFolderId, targetFolderId);
 };
 
-export const updateFoldersAndOpenedIds = ({
-  openedFolderIds,
-  folders,
-  oldId,
-  newFolder,
-}: {
-  openedFolderIds: string[];
-  oldId: string;
-  newFolder: FolderInterface;
-  folders: FolderInterface[];
-}) => {
-  const updatedOpenedFolderIds = openedFolderIds.map((id) => {
-    const modifiedOldId = id === oldId ? oldId : `${oldId}/`;
-    return id.includes(modifiedOldId)
-      ? id.replace(modifiedOldId, newFolder.id)
-      : id;
-  });
-  const updatedFolders = folders.map((folder) => {
-    if (folder.id === oldId) {
-      return { oldId: folder.id, newFolder };
+export const updateFolderIds = (
+  ids: string[],
+  oldFolderId: string,
+  newFolderId: string,
+) => {
+  return ids.map((id) => {
+    if (id.startsWith(`${oldFolderId}/`) || id === oldFolderId) {
+      return id.replace(oldFolderId, newFolderId);
     }
 
-    const newFolderId = folder.folderId.replace(
-      `${oldId}/`,
-      `${newFolder.id}/`,
-    );
-
-    return {
-      oldId: folder.id,
-      newFolder: addGeneratedFolderId({ ...folder, folderId: newFolderId }),
-    };
+    return id;
   });
+};
 
-  return {
-    updatedOpenedFolderIds,
-    updatedFolders,
-  };
+export const updateChildFoldersIds = (
+  folders: FolderInterface[],
+  oldFolderId: string,
+  newFolderId: string,
+) => {
+  return folders
+    .filter((folder) => folder.id.startsWith(`${oldFolderId}/`))
+    .map((folder) => {
+      return {
+        oldId: folder.id,
+        newFolder: addGeneratedFolderId({
+          ...folder,
+          folderId: folder.folderId.replace(oldFolderId, newFolderId),
+        }),
+      };
+    });
 };
