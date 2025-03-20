@@ -270,6 +270,7 @@ dialTest(
         await chatBar.dragAndDropEntityToFolder(
           conversations.getEntityByName(initConversationName),
           folderConversations.getFolderByName(nestedFolders[0].name),
+          { isHttpMethodTriggered: true },
         );
         await expect
           .soft(

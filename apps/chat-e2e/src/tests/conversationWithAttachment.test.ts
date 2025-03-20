@@ -168,12 +168,12 @@ dialTest(
     setTestIds,
     attachFilesModal,
     sendMessage,
-    conversations,
-    chatHeader,
     fileApiHelper,
     attachmentDropdownMenu,
     chat,
     localStorageManager,
+    conversationAssertion,
+    chatHeaderAssertion,
   }) => {
     setTestIds('EPMRTC-1640');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -207,19 +207,15 @@ dialTest(
     await dialTest.step(
       'Set request in textarea and verify conversation is named with request text',
       async () => {
-        await chat.sendRequestWithKeyboard(request, false);
-        await expect
-          .soft(
-            conversations.getEntityByName(request),
-            ExpectedMessages.conversationIsVisible,
-          )
-          .toBeVisible();
-        expect
-          .soft(
-            await chatHeader.chatTitle.getElementInnerContent(),
-            ExpectedMessages.headerTitleIsValid,
-          )
-          .toBe(request);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chat.sendRequestWithKeyboard(request);
+        await conversationAssertion.assertEntityState(
+          { name: request },
+          'visible',
+        );
+        await chatHeaderAssertion.assertHeaderTitle(request);
       },
     );
   },

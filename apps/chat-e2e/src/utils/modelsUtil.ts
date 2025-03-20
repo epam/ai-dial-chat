@@ -4,6 +4,7 @@ import {
   doesModelAllowSystemPrompt,
   doesModelAllowTemperature,
 } from '@/chat/utils/app/models';
+import { ApplicationTypes } from '@/src/testData';
 
 export class ModelsUtil {
   public static getOpenAIEntities() {
@@ -223,5 +224,17 @@ export class ModelsUtil {
     return ModelsUtil.getRecentAgents(recentAgentIds)
       .filter((r) => r.version !== undefined)
       .map(({ version }) => version ?? '');
+  }
+
+  public static getApplicationType(entity: DialAIEntityModel) {
+    if (entity.applicationTypeSchemaId) {
+      return entity.applicationTypeSchemaId;
+    }
+    if (ModelsUtil.isExecutableApp(entity)) return ApplicationTypes.CODE_APP;
+    return ApplicationTypes.CUSTOM_APP;
+  }
+
+  public static isExecutableApp(entity: DialAIEntityModel) {
+    return !!entity.functionStatus;
   }
 }

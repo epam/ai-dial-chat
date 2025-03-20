@@ -45,4 +45,5 @@ export enum ThemeColorAttributes {
   textAccentTertiary = 'text-accent-tertiary',
   textAccentPrimary = 'text-accent-primary',
   bgLayer3 = 'bg-layer-3',
+  bgAccentPrimaryAlpha = 'bg-accent-primary-alpha',
 }
