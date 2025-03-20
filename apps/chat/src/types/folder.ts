@@ -1,6 +1,7 @@
+import { PromptInfo } from './prompt';
 import { EntityFilters } from './search';
 
-import { ShareEntity } from '@epam/ai-dial-shared';
+import { ConversationInfo, ShareEntity } from '@epam/ai-dial-shared';
 
 export interface FolderInterface extends ShareEntity {
   type: FolderType;
@@ -35,4 +36,9 @@ export interface FolderSectionProps {
 export interface MoveToFolderProps {
   folderId?: string;
   isNewFolder?: boolean;
+}
+
+export interface DraggedInterface {
+  entity: FolderInterface | ConversationInfo | PromptInfo;
+  isFolder: boolean;
 }

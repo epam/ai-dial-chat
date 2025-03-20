@@ -90,14 +90,10 @@ dialAdminTest(
           .getChangePublishToPath()
           .changeButton.click();
         await selectFolderModal.newFolderButton.click();
-        await selectFolders.renameEmptyFolderWithEnter(folderName, {
-          isHttpMethodTriggered: false,
-        });
+        await selectFolders.renameEmptyFolderWithEnter(folderName);
         await selectFolders.openFolderDropdownMenu(folderName);
         await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
-        await selectFolders.renameEmptyFolderWithEnter(`${folderName} 2`, {
-          isHttpMethodTriggered: false,
-        });
+        await selectFolders.renameEmptyFolderWithEnter(`${folderName} 2`);
         await selectFolders.openFolderDropdownMenu(`${folderName} 2`);
         await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm();
@@ -128,14 +124,10 @@ dialAdminTest(
       'User creates folder and rename it under Organization, user renames folder',
       async () => {
         await selectFolderModal.newFolderButton.click();
-        await selectFolders.renameEmptyFolderWithEnter(`${folderName}_rename`, {
-          isHttpMethodTriggered: false,
-        });
+        await selectFolders.renameEmptyFolderWithEnter(`${folderName}_rename`);
         await selectFolders.openFolderDropdownMenu(`${folderName}_rename`);
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await selectFolders.renameEmptyFolderWithEnter(folderName, {
-          isHttpMethodTriggered: false,
-        });
+        await selectFolders.renameEmptyFolderWithEnter(folderName);
       },
     );
 
@@ -154,9 +146,7 @@ dialAdminTest(
           .getChangePublishToPath()
           .changeButton.click();
         await selectFolderModal.newFolderButton.click();
-        await selectFolders.renameEmptyFolderWithEnter(folderName, {
-          isHttpMethodTriggered: false,
-        });
+        await selectFolders.renameEmptyFolderWithEnter(folderName);
       },
     );
 
@@ -533,7 +523,6 @@ dialAdminTest(
         await selectFolderModal.newFolderButton.click();
         await selectFolders.renameEmptyFolderWithEnter(
           `${folderNameTemplate} 1`,
-          { isHttpMethodTriggered: false },
         );
         for (let i = 1; i < 4; i++) {
           await selectFolders.openFolderDropdownMenu(
@@ -542,7 +531,6 @@ dialAdminTest(
           await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
           await selectFolders.renameEmptyFolderWithEnter(
             `${folderNameTemplate} ${i + 1}`,
-            { isHttpMethodTriggered: false },
           );
         }
         await selectFolders.openFolderDropdownMenu(`${folderNameTemplate} 4`);

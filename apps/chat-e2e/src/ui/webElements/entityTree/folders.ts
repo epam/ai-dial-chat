@@ -205,14 +205,9 @@ export class Folders extends BaseElement {
     return this.folderDotsMenu(name, index);
   }
 
-  public async renameEmptyFolderWithEnter(
-    newName: string,
-    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
-  ) {
-    await this.renameEmptyFolder(
-      newName,
-      () => this.page.keyboard.press(keys.enter),
-      { isHttpMethodTriggered },
+  public async renameEmptyFolderWithEnter(newName: string) {
+    await this.renameEmptyFolder(newName, () =>
+      this.page.keyboard.press(keys.enter),
     );
   }
 
@@ -227,17 +222,10 @@ export class Folders extends BaseElement {
     );
   }
 
-  public async renameEmptyFolderWithTick(
-    newName: string,
-    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
-  ) {
+  public async renameEmptyFolderWithTick(newName: string) {
     const folderInputActions = this.getEditFolderInputActions();
-    await this.renameEmptyFolder(
-      newName,
-      () => folderInputActions.clickTickButton(),
-      {
-        isHttpMethodTriggered,
-      },
+    await this.renameEmptyFolder(newName, () =>
+      folderInputActions.clickTickButton(),
     );
   }
 
@@ -253,25 +241,12 @@ export class Folders extends BaseElement {
     );
   }
 
-  //listing API is triggered if to rename folder on side panel
-  //no API is triggered if to rename folder in 'Manage Attachments' or 'Change path' modals
-  public async renameEmptyFolder(
-    newName: string,
-    method: () => Promise<void>,
-    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
-  ) {
+  public async renameEmptyFolder(newName: string, method: () => Promise<void>) {
     await this.editFolderName(newName);
-    if (isHttpMethodTriggered && isApiStorageType) {
-      const respPromise = this.page.waitForResponse((resp) =>
-        resp.url().includes(API.listingHost),
-      );
-      await method();
-      return respPromise;
-    }
     await method();
   }
 
-  //3 API calls are triggered if to rename folder with content
+  //2 API calls are triggered if to rename folder with content
   //if shared folder is renamed, confirmation popup is prompted
   public async renameFolderWithContent(
     newName: string,
@@ -281,7 +256,6 @@ export class Folders extends BaseElement {
     await this.editFolderName(newName);
     if (isApiStorageType && isHttpMethodTriggered) {
       const hostsMap = new Map([
-        [API.listingHost, 'GET'],
         [API.moveHost, 'POST'],
         ['/api/', 'PUT'],
       ]);
