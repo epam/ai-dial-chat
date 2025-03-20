@@ -141,7 +141,6 @@ const PromptFolderTemplate = ({
             PromptsActions.updateFolder({
               folderId: entity.id,
               values: { folderId: currentFolder.id, isShared: false },
-              currentIsShared: entity.isShared,
             }),
           );
         }
@@ -207,11 +206,10 @@ const PromptFolderTemplate = ({
         PromptsActions.updateFolder({
           folderId,
           values: { name, isShared: false },
-          currentIsShared: folder.isShared,
         }),
       );
     },
-    [dispatch, folder.isShared],
+    [dispatch],
   );
 
   const handleFolderDelete = useCallback(
@@ -228,7 +226,6 @@ const PromptFolderTemplate = ({
         dispatch(
           PromptsActions.deleteFolder({
             folderId,
-            currentIsShared: folder.isShared,
           }),
         );
       } else {

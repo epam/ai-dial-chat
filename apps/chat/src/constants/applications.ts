@@ -1,4 +1,4 @@
-import { ConfirmDialogValueTypes } from '../types/files';
+import { ConfirmDialogValueTypes } from '../types/common';
 import { ApiKeys } from '@/src/types/common';
 
 export const FEATURES_ENDPOINTS = {
