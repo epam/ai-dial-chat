@@ -890,6 +890,7 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
       );
 
       const actions: Observable<AnyAction>[] = [];
+
       if (conversations.length) {
         conversations.forEach((conversation) => {
           actions.push(
@@ -904,6 +905,7 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
           );
         });
       }
+
       actions.push(
         of(
           ConversationsActions.updateFolderSuccess({
