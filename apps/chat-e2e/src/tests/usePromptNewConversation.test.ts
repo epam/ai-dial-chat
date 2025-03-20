@@ -624,7 +624,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'Use prompt from Organization for chat',
   async ({
     dialHomePage,
