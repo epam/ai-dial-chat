@@ -1323,13 +1323,10 @@ const revokeFolderAccessEpic: AppEpic = (action$, state$) =>
       const { Selector, featureType } = isConversationId(payload.folderId)
         ? { Selector: ConversationsSelectors, featureType: FeatureType.Chat }
         : { Selector: PromptsSelectors, featureType: FeatureType.Prompt };
-      const folders = Selector.selectFolders(state$.value);
-      const foldersToRevoke = folders.filter(
-        (folder) =>
-          (folder.id.startsWith(`${payload.folderId}/`) ||
-            folder.id === payload.folderId) &&
-          folder.isShared,
-      );
+      const foldersToRevoke = [
+        ...Selector.selectFoldersByFolderId(state$.value, payload.folderId),
+        Selector.selectFolderById(state$.value, payload.folderId),
+      ].filter((folder) => folder && folder.isShared) as FolderInterface[];
 
       if (!foldersToRevoke.length) {
         return EMPTY;
