@@ -937,7 +937,7 @@ dialTest(
       fourthPrompt = promptData.prepareDefaultPrompt();
       promptData.resetData();
       fifthPrompt = promptData.prepareDefaultPrompt(
-        'Prompt_!@$^&()_[]"\'.<>-`~',
+        `Prompt${ExpectedConstants.allowedSpecialChars}`,
       );
 
       await dataInjector.createPrompts([
