@@ -442,11 +442,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
         folderId,
       );
 
-      const localPrompts = PromptsSelectors.selectLocalPrompts(state$.value);
-
-      const promptIds = [...prompts, ...localPrompts].map(
-        (prompt) => prompt.id,
-      );
+      const promptIds = prompts.map((prompt) => prompt.id);
 
       if (promptIds.length) {
         actions.push(of(PromptsActions.deletePrompts({ promptIds })));
