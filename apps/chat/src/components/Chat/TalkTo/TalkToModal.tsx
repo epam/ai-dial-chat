@@ -104,7 +104,7 @@ const TalkToModalView = ({
 
     const sortedModels = [
       ...(currentModel &&
-      (installedModelIdsSet.has(currentModel.id) || !isReplay)
+      (installedModelIdsSet.has(currentModel.reference) || !isReplay)
         ? [currentModel]
         : []),
       ...recentInstalledModels,
@@ -118,9 +118,10 @@ const TalkToModalView = ({
           doesEntityContainSearchTerm({ name: entity.version }, searchTerm)),
     );
     const groupedModels = groupModelsAndSaveOrder(filteredModels);
+
     const orderedModels = groupedModels.map(({ entities }) => {
       const selectedEntity = entities.find(
-        ({ id }) => id === conversation.model.id,
+        ({ reference }) => reference === conversation.model.id,
       );
 
       if (selectedEntity) {
