@@ -2415,7 +2415,7 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         of(
           ConversationsActions.updateConversationSuccess({
             id,
-            conversation: { ...newConversation },
+            conversation: newConversation,
           }),
         ),
       );
