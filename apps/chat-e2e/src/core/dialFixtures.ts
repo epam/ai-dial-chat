@@ -65,7 +65,6 @@ import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateM
 import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
 import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
-import { SharedWithMeConversationAssertion } from '@/src/assertions/sharedWithMeConversationAssertion';
 import { SideBarConversationAssertion } from '@/src/assertions/sideBarConversationAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import test from '@/src/core/baseFixtures';
@@ -319,7 +318,7 @@ const dialTest = test.extend<{
   organizationFolderConversationAssertions: FolderAssertion<Folders>;
   messageTemplateModalAssertion: MessageTemplateModalAssertion;
   agentVersionsDropdownMenuAssertion: MenuAssertion;
-  sharedWithMeConversationAssertion: SharedWithMeConversationAssertion;
+  sharedWithMeConversationAssertion: SideBarConversationAssertion<SharedWithMeConversationsTree>;
   localStorageAssertion: LocalStorageAssertion;
 }>({
   beforeTestCleanup: [
@@ -349,7 +348,9 @@ const dialTest = test.extend<{
     use,
   ) => {
     const sharedWithMeConversationAssertion =
-      new SharedWithMeConversationAssertion(sharedWithMeConversations);
+      new SideBarConversationAssertion<SharedWithMeConversationsTree>(
+        sharedWithMeConversations,
+      );
     await use(sharedWithMeConversationAssertion);
   },
   sharedWithMeFolderDropdownMenu: async (

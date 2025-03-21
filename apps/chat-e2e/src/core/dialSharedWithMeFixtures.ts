@@ -47,8 +47,8 @@ import { PromptListAssertion } from '@/src/assertions/promptListAssertion';
 import { PromptModalAssertion } from '@/src/assertions/promptModalAssertion';
 import { SendMessageAssertion } from '@/src/assertions/sendMessageAssertion';
 import { SharedPromptPreviewModalAssertion } from '@/src/assertions/sharedPromptPreviewModalAssertion';
-import { SharedWithMeConversationAssertion } from '@/src/assertions/sharedWithMeConversationAssertion';
 import { SharedWithMePromptsAssertion } from '@/src/assertions/sharedWithMePromptsAssertion';
+import { SideBarConversationAssertion } from '@/src/assertions/sideBarConversationAssertion';
 import { VariableModalAssertion } from '@/src/assertions/variableModalAssertion';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
@@ -116,7 +116,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserFileApiHelper: FileApiHelper;
   additionalShareUserPromptModalDialog: PromptModalDialog;
   additionalShareUserSharedWithMePromptAssertion: SharedWithMePromptsAssertion;
-  additionalShareUserSharedWithMeConversationAssertion: SharedWithMeConversationAssertion;
+  additionalShareUserSharedWithMeConversationAssertion: SideBarConversationAssertion<SharedWithMeConversationsTree>;
   additionalShareUserSharedPromptPreviewModalAssertion: SharedPromptPreviewModalAssertion;
   additionalShareUserSendMessageAssertion: SendMessageAssertion;
   additionalShareUserVariableModalAssertion: VariableModalAssertion;
@@ -561,7 +561,7 @@ const dialSharedWithMeTest = dialTest.extend<{
     use,
   ) => {
     const additionalShareUserSharedWithMeConversationAssertion =
-      new SharedWithMeConversationAssertion(
+      new SideBarConversationAssertion<SharedWithMeConversationsTree>(
         additionalShareUserSharedWithMeConversations,
       );
     await use(additionalShareUserSharedWithMeConversationAssertion);
