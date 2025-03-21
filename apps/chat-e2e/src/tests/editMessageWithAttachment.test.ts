@@ -4,10 +4,12 @@ import dialTest from '@/src/core/dialFixtures';
 import {
   Attachment,
   ExpectedMessages,
+  MockedChatApiResponseBodies,
   UploadMenuOptions,
 } from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
+import { responseThrottlingTimeout } from '@/src/ui/pages';
 import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { Attachment as AttachmentInterface } from '@epam/ai-dial-shared';
@@ -31,8 +33,10 @@ dialTest(
     chat,
     attachmentDropdownMenu,
     uploadFromDeviceModal,
+    editMessageInputAttachments,
     page,
     localStorageManager,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-1613', 'EPMRTC-1776');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -62,12 +66,10 @@ dialTest(
           conversation.messages[0].content,
         );
         await page.keyboard.press(keys.delete);
-        await expect
-          .soft(
-            chatMessages.saveAndSubmit.getElementLocator(),
-            ExpectedMessages.buttonIsDisabled,
-          )
-          .toBeDisabled();
+        await baseAssertion.assertElementActionabilityState(
+          chatMessages.saveAndSubmit,
+          'disabled',
+        );
       },
     );
 
@@ -82,33 +84,40 @@ dialTest(
               UploadMenuOptions.uploadFromDevice,
             ),
         );
-        await dialHomePage.throttleAPIResponse('**/*');
+        await dialHomePage.throttleAPIResponse(
+          '**/*',
+          responseThrottlingTimeout * 2,
+        );
         await uploadFromDeviceModal.uploadButton.click();
-        await expect
-          .soft(
-            chatMessages.saveAndSubmit.getElementLocator(),
-            ExpectedMessages.buttonIsDisabled,
-          )
-          .toBeDisabled();
+        await baseAssertion.assertElementActionabilityState(
+          chatMessages.saveAndSubmit,
+          'disabled',
+        );
       },
     );
 
     await dialTest.step(
       'Verify Save&Submit is enabled when file is uploaded',
       async () => {
-        await page.unrouteAll();
-        await expect
-          .soft(
-            chatMessages.saveAndSubmit.getElementLocator(),
-            ExpectedMessages.buttonIsEnabled,
-          )
-          .toBeEnabled();
+        await baseAssertion.assertElementState(
+          editMessageInputAttachments.inputAttachmentLoadingIndicator(
+            Attachment.sunImageName,
+          ),
+          'hidden',
+        );
+        await baseAssertion.assertElementActionabilityState(
+          chatMessages.saveAndSubmit,
+          'enabled',
+        );
       },
     );
 
     await dialTest.step(
       'Click Save&Submit button and verify attachment data is sent in the request',
       async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         const request = await chat.saveAndSubmitRequest();
         expect
           .soft(

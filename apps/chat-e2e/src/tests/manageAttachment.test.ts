@@ -8,10 +8,13 @@ import {
   MenuOptions,
   UploadMenuOptions,
 } from '@/src/testData';
-import { Colors, Styles } from '@/src/ui/domData';
-import { FileModalSection } from '@/src/ui/webElements';
+import { Colors, Styles, ThemeColorAttributes } from '@/src/ui/domData';
+import { responseThrottlingTimeout } from '@/src/ui/pages';
+import { BaseElement, FileModalSection } from '@/src/ui/webElements';
+import { AttachFilesTree } from '@/src/ui/webElements/entityTree';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
-import { expect } from '@playwright/test';
+import { ThemesUtil } from '@/src/utils/themesUtil';
+import { Locator, expect } from '@playwright/test';
 
 let modelsWithAttachments: DialAIEntityModel[];
 dialTest.beforeAll(async () => {
@@ -223,8 +226,13 @@ dialTest(
     uploadFromDeviceModal,
     chatBar,
     localStorageManager,
+    baseAssertion,
+    manageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-3302');
+    let removeAttachedFileIconElement: BaseElement;
+    let attachedFileLoadingIndicatorElement: Locator;
+    let allFilesTreeElement: AttachFilesTree;
 
     await dialTest.step(
       'Open "Manage attachments" modal through chat side bar menu icon',
@@ -241,62 +249,50 @@ dialTest(
         { path: Attachment.sunImageName, dataType: 'upload' },
         () => attachFilesModal.uploadFromDeviceButton.click(),
       );
-      await dialHomePage.throttleAPIResponse('**/*');
+      await dialHomePage.throttleAPIResponse(
+        '**/*',
+        responseThrottlingTimeout * 3,
+      );
       await uploadFromDeviceModal.uploadButton.click();
     });
 
     await dialTest.step(
       'Verify loading indicator is shown while file is uploading, cancel button is highlighted on hover',
       async () => {
+        allFilesTreeElement = attachFilesModal.getAllFilesTree();
+        attachedFileLoadingIndicatorElement =
+          allFilesTreeElement.attachedFileLoadingIndicator(
+            Attachment.sunImageName,
+          );
         await expect
           .soft(
-            attachFilesModal
-              .getAllFilesTree()
-              .attachedFileLoadingIndicator(Attachment.sunImageName),
+            attachedFileLoadingIndicatorElement,
             ExpectedMessages.attachmentLoadingIndicatorIsVisible,
           )
           .toBeAttached();
-
-        await attachFilesModal
-          .getAllFilesTree()
-          .removeAttachedFileIcon(Attachment.sunImageName)
-          .hoverOver();
-        const removeIconColor = await attachFilesModal
-          .getAllFilesTree()
-          .removeAttachedFileIcon(Attachment.sunImageName)
-          .getComputedStyleProperty(Styles.color);
-        expect
-          .soft(
-            removeIconColor[0],
-            ExpectedMessages.removeAttachmentIconIsHighlighted,
-          )
-          .toBe(Colors.controlsBackgroundAccent);
+        removeAttachedFileIconElement =
+          allFilesTreeElement.removeAttachedFileIcon(Attachment.sunImageName);
+        await removeAttachedFileIconElement.hoverOver();
+        await baseAssertion.assertElementColor(
+          removeAttachedFileIconElement,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+        );
       },
     );
 
     await dialTest.step(
       'Click on cancel button near loading indicator and verify uploading stops, file disappears from the list',
       async () => {
-        await attachFilesModal
-          .getAllFilesTree()
-          .removeAttachedFileIcon(Attachment.sunImageName)
-          .click();
-        await expect
-          .soft(
-            attachFilesModal
-              .getAllFilesTree()
-              .attachedFileLoadingIndicator(Attachment.sunImageName),
-            ExpectedMessages.attachmentLoadingIndicatorNotVisible,
-          )
-          .toBeHidden();
-        await expect
-          .soft(
-            attachFilesModal
-              .getAllFilesTree()
-              .getEntityByName(Attachment.sunImageName),
-            ExpectedMessages.fileIsNotAttached,
-          )
-          .toBeHidden();
+        await removeAttachedFileIconElement.click();
+        await baseAssertion.assertElementState(
+          attachedFileLoadingIndicatorElement,
+          'hidden',
+        );
+        await manageAttachmentsAssertion.assertEntityState(
+          { name: Attachment.sunImageName },
+          FileModalSection.AllFiles,
+          'hidden',
+        );
       },
     );
   },

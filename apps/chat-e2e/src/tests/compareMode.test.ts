@@ -1525,10 +1525,12 @@ dialTest(
     conversations,
     leftChatHeader,
     conversationDropdownMenu,
+    baseAssertion,
     compare,
     compareConversation,
     renameConversationModal,
     localStorageManager,
+    conversationAssertion,
   }) => {
     setTestIds(
       'EPMRTC-560',
@@ -1557,6 +1559,9 @@ dialTest(
             secondConversationRequests,
             aModel,
           );
+        updatedRequestContent =
+          secondConversation.messages[secondConversationRequests.length * 2 - 1]
+            .content;
 
         await dataInjector.createConversations([
           firstConversation,
@@ -1573,32 +1578,27 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
-        await expect
-          .soft(
-            compareConversation.getElementLocator(),
-            ExpectedMessages.conversationToCompareVisible,
-          )
-          .toBeVisible();
+        await baseAssertion.assertElementState(compareConversation, 'visible');
         await compareConversation.checkShowAllConversations();
         await compareConversation.selectCompareConversation(
           secondConversation.name,
         );
         await chatMessages.openDeleteCompareRowMessageDialog(Side.left, 1);
-        await confirmationDialog.confirm();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
 
-        const comparedMessagesCount =
-          await chatMessages.getCompareMessagesCount();
-        expect
-          .soft(comparedMessagesCount, ExpectedMessages.messageCountIsCorrect)
-          .toBe((firstConversationRequests.length - 1) * 4);
+        await baseAssertion.assertElementsCount(
+          chatMessages.compareChatMessages,
+          (firstConversationRequests.length - 1) * 4,
+        );
 
         const firstComparedMessage = await chatMessages.getCompareRowMessage(
           Side.left,
           1,
         );
-        await expect
-          .soft(firstComparedMessage, ExpectedMessages.messageContentIsValid)
-          .toHaveText(firstConversationRequests[1]);
+        await baseAssertion.assertElementText(
+          firstComparedMessage,
+          firstConversationRequests[1],
+        );
       },
     );
 
@@ -1613,6 +1613,9 @@ dialTest(
         await chatMessages.selectEditTextareaContent(
           firstConversationRequests[1],
         );
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await page.keyboard.press(keys.ctrlPlusV);
         await chatMessages.saveAndSubmit.click();
         await chatMessages.waitForResponseReceived();
@@ -1622,23 +1625,20 @@ dialTest(
     await dialTest.step(
       'Verify both first requests updated, messages below are deleted',
       async () => {
-        updatedRequestContent =
-          secondConversation.messages[secondConversation.messages.length - 1]
-            .content;
-        const comparedMessagesCount =
-          await chatMessages.getCompareMessagesCount();
-        expect
-          .soft(comparedMessagesCount, ExpectedMessages.messageCountIsCorrect)
-          .toBe(4);
+        await baseAssertion.assertElementsCount(
+          chatMessages.compareChatMessages,
+          4,
+        );
 
         for (const side of Object.values(Side)) {
           const firstComparedMessage = await chatMessages.getCompareRowMessage(
             side,
             1,
           );
-          await expect
-            .soft(firstComparedMessage, ExpectedMessages.messageContentIsValid)
-            .toHaveText(updatedRequestContent);
+          await baseAssertion.assertElementText(
+            firstComparedMessage,
+            updatedRequestContent,
+          );
         }
       },
     );
@@ -1647,31 +1647,31 @@ dialTest(
       'Edit left chat title and verify it is updated in the header',
       async () => {
         const newLeftChatName = GeneratorUtil.randomString(7);
-        await conversations.openEntityDropdownMenu(updatedRequestContent, 1);
+        await conversations.openEntityDropdownMenu(updatedRequestContent, {
+          exactMatch: true,
+        });
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         await renameConversationModal.editConversationNameWithSaveButton(
           newLeftChatName,
         );
-
-        const chatTitle = await leftChatHeader.chatTitle.getElementContent();
-        expect
-          .soft(chatTitle, ExpectedMessages.headerTitleCorrespondRequest)
-          .toBe(chatTitle);
+        await baseAssertion.assertElementText(
+          leftChatHeader.chatTitle,
+          newLeftChatName,
+        );
       },
     );
 
     await dialTest.step(
       'Delete right chat and compare mode closed, left chat is active',
       async () => {
-        await conversations.openEntityDropdownMenu(updatedRequestContent);
+        await conversations.openEntityDropdownMenu(updatedRequestContent, 1);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-        await conversations
-          .getEntityByName(updatedRequestContent)
-          .waitFor({ state: 'hidden' });
-        await expect
-          .soft(compare.getElementLocator(), ExpectedMessages.compareModeClosed)
-          .toBeHidden();
+        await conversationAssertion.assertEntityState(
+          { name: updatedRequestContent, index: 1 },
+          'hidden',
+        );
+        await baseAssertion.assertElementState(compare, 'hidden');
       },
     );
   },
