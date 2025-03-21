@@ -786,12 +786,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
         );
       const folders = ConversationsSelectors.selectFolders(state$.value);
 
-      const localConversations =
-        ConversationsSelectors.selectLocalConversations(state$.value);
-
-      const conversationIds = [...conversations, ...localConversations].map(
-        (conv) => conv.id,
-      );
+      const conversationIds = conversations.map((conv) => conv.id);
 
       if (conversationIds.length) {
         actions.push(
