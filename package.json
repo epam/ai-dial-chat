@@ -159,11 +159,11 @@
     "argparse": "2.0.1"
   },
   "optionalDependencies": {
-    "@nx/playwright": "^17.2.8",
+    "@nx/playwright": "^20.6.2",
     "@playwright/test": "^1.51.0",
     "@types/tinycolor2": "^1.4.6",
-    "allure-playwright": "^2.15.1",
-    "eslint-plugin-playwright": "^1.6.2",
+    "allure-playwright": "^3.2.0",
+    "eslint-plugin-playwright": "^2.2.0",
     "playwright-chromium": "^1.51.0"
   },
   "engines": {
