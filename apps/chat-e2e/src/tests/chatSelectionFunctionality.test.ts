@@ -6,7 +6,6 @@ import {
   MenuOptions,
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
-import { expect } from '@playwright/test';
 
 dialTest(
   '[UI] Check highlight of chat1 when chat2 is opened.\n' +
@@ -32,6 +31,7 @@ dialTest(
     chatBarFolderAssertion,
     shareModal,
     conversationDropdownMenu,
+    baseAssertion,
     downloadAssertion,
     renameConversationModal,
     localStorageManager,
@@ -112,25 +112,23 @@ dialTest(
       await renameConversationModal.editConversationNameWithSaveButton(
         firstConversation.name,
       );
-      await conversations.getEntityByName(firstConversation.name).waitFor();
-      await conversationAssertion.assertSelectedConversation(
-        secondConversation.name,
-      );
       await conversationAssertion.assertEntityState(
         { name: firstConversation.name },
         'visible',
+      );
+      await conversationAssertion.assertSelectedConversation(
+        secondConversation.name,
       );
     });
 
     await dialTest.step('Click on Compare', async () => {
       await conversations.openEntityDropdownMenu(firstConversation.name);
       await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
-      await expect
-        .soft(
-          compareConversation.getElementLocator(),
-          ExpectedMessages.conversationToCompareVisible,
-        )
-        .toBeVisible();
+      await baseAssertion.assertElementState(
+        compareConversation,
+        'visible',
+        ExpectedMessages.conversationToCompareVisible,
+      );
       await conversationAssertion.assertSelectedConversation(
         firstConversation.name,
       );
@@ -141,7 +139,10 @@ dialTest(
         ExpectedConstants.replayConversation + secondConversation.name;
       await conversations.openEntityDropdownMenu(secondConversation.name);
       await conversationDropdownMenu.selectMenuOption(MenuOptions.replay);
-      await conversations.getEntityByName(replayConversation).waitFor();
+      await conversationAssertion.assertEntityState(
+        { name: replayConversation },
+        'visible',
+      );
       await conversationAssertion.assertSelectedConversation(
         replayConversation,
       );
@@ -152,7 +153,10 @@ dialTest(
         ExpectedConstants.playbackConversation + firstConversation.name;
       await conversations.openEntityDropdownMenu(firstConversation.name);
       await conversationDropdownMenu.selectMenuOption(MenuOptions.playback);
-      await conversations.getEntityByName(playbackConversation).waitFor();
+      await conversationAssertion.assertEntityState(
+        { name: playbackConversation },
+        'visible',
+      );
       await conversationAssertion.assertSelectedConversation(
         playbackConversation,
       );
@@ -221,7 +225,10 @@ dialTest(
         triggeredHttpMethod: 'POST',
       });
       clonedConversation = `${ExpectedConstants.playbackConversation}${firstConversation.name} 1`;
-      await conversations.getEntityByName(clonedConversation).waitFor();
+      await conversationAssertion.assertEntityState(
+        { name: clonedConversation },
+        'visible',
+      );
       await conversationAssertion.assertSelectedConversation(
         clonedConversation,
       );
@@ -230,12 +237,11 @@ dialTest(
     await dialTest.step('Click on Share', async () => {
       await conversations.openEntityDropdownMenu(playbackConversation);
       await conversationDropdownMenu.selectMenuOption(MenuOptions.share);
-      await expect
-        .soft(
-          shareModal.getElementLocator(),
-          ExpectedMessages.modalWindowIsOpened,
-        )
-        .toBeVisible();
+      await baseAssertion.assertElementState(
+        shareModal,
+        'visible',
+        ExpectedMessages.modalWindowIsOpened,
+      );
       await shareModal.closeButton.click();
       await conversationAssertion.assertSelectedConversation(
         clonedConversation,

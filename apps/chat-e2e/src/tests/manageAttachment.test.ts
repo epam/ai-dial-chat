@@ -245,6 +245,7 @@ dialTest(
     );
 
     await dialTest.step('Start upload attachment from device', async () => {
+      await baseAssertion.assertElementState(attachFilesModal, 'visible');
       await dialHomePage.uploadData(
         { path: Attachment.sunImageName, dataType: 'upload' },
         () => attachFilesModal.uploadFromDeviceButton.click(),
@@ -257,6 +258,10 @@ dialTest(
         downloadThroughput: (5 * 1024 * 1024) / 8, // 780 kbps
         uploadThroughput: (50 * 1024) / 8, // 100 kbps (slow upload)
       });
+      await baseAssertion.assertElementState(
+        uploadFromDeviceModal.getUploadedFile(Attachment.sunImageName),
+        'visible',
+      );
       await uploadFromDeviceModal.uploadButton.click();
     });
 
@@ -447,6 +452,8 @@ dialTest(
     uploadFromDeviceModal,
     chatBar,
     localStorageManager,
+    baseAssertion,
+    manageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-2015', 'EPMRTC-3187');
 
@@ -457,6 +464,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
+        await baseAssertion.assertElementState(attachFilesModal, 'visible');
         await dialHomePage.uploadData(
           { path: Attachment.sunImageName, dataType: 'upload' },
           () => attachFilesModal.uploadFromDeviceButton.click(),
@@ -472,6 +480,11 @@ dialTest(
     await dialTest.step(
       'Select "Download" option from file dropdown menu and verify file is successfully downloaded, file is not highlighted in "Manage attachments" modal',
       async () => {
+        await manageAttachmentsAssertion.assertEntityState(
+          { name: ExpectedConstants.allowedSpecialSymbolsInName() },
+          FileModalSection.AllFiles,
+          'visible',
+        );
         await attachFilesModal.openFileDropdownMenu(
           ExpectedConstants.allowedSpecialSymbolsInName(),
           FileModalSection.AllFiles,

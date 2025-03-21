@@ -46,6 +46,10 @@ dialTest(
           { path: Attachment.longImageName, dataType: 'upload' },
           () => attachFilesModal.uploadFromDeviceButton.click(),
         );
+        await baseAssertion.assertElementState(
+          uploadFromDeviceModal.getUploadedFile(Attachment.longImageName),
+          'visible',
+        );
         await uploadFromDeviceModal.uploadButton.click();
       },
     );
@@ -97,6 +101,7 @@ dialTest(
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await chatBar.openManageAttachmentsModal();
+      await baseAssertion.assertElementState(attachFilesModal, 'visible');
       await dialHomePage.uploadData(
         { path: Attachment.sunImageName, dataType: 'upload' },
         () => attachFilesModal.uploadFromDeviceButton.click(),
@@ -193,6 +198,17 @@ dialTest(
           Attachment.cloudImageName,
           Attachment.cloudImageName,
         );
+        for (const file of [
+          Attachment.sunImageName,
+          Attachment.restrictedSemicolonCharFilename,
+          Attachment.restrictedEqualCharFilename,
+          Attachment.cloudImageName,
+        ]) {
+          await baseAssertion.assertElementState(
+            uploadFromDeviceModal.getUploadedFile(file).nth(0),
+            'visible',
+          );
+        }
         await uploadFromDeviceModal.uploadButton.click();
       },
     );
