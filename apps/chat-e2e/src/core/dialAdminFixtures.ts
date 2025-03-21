@@ -27,7 +27,7 @@ import {
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { PublishedPromptPreviewModalAssertion } from '@/src/assertions/publishing/publishedPromptPreviewModalAssertion';
 import { PublishingApprovalModalAssertion } from '@/src/assertions/publishing/publishingApprovalModalAssertion';
-import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
+import { SideBarConversationAssertion } from '@/src/assertions/sideBarConversationAssertion';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
 import { isApiStorageType } from '@/src/hooks/global-setup';
@@ -100,7 +100,7 @@ const dialAdminTest = dialTest.extend<{
   adminOrganizationFolderDropdownMenuAssertion: MenuAssertion;
   adminApproveRequiredConversationDropdownMenuAssertion: MenuAssertion;
   adminTooltipAssertion: TooltipAssertion;
-  adminOrganizationConversationAssertion: SideBarEntityAssertion<OrganizationConversationsTree>;
+  adminOrganizationConversationAssertion: SideBarConversationAssertion<OrganizationConversationsTree>;
   adminPublishedPromptPreviewModalAssertion: PublishedPromptPreviewModalAssertion;
   adminVariableModalAssertion: VariableModalAssertion;
   adminConversationAssertion: ConversationAssertion;
@@ -389,7 +389,7 @@ const dialAdminTest = dialTest.extend<{
     use,
   ) => {
     const adminOrganizationConversationAssertion =
-      new SideBarEntityAssertion<OrganizationConversationsTree>(
+      new SideBarConversationAssertion<OrganizationConversationsTree>(
         adminOrganizationConversations,
       );
     await use(adminOrganizationConversationAssertion);

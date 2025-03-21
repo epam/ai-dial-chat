@@ -8,6 +8,7 @@ import { ThemesUtil } from '@/src/utils/themesUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
+let isUnpublished = false;
 
 dialTest(
   `Copy link on detailed model card and it's particular version by User1. Open the link by User2 who is logged into DIAL.\n` +
@@ -113,50 +114,31 @@ dialTest(
     });
 
     await dialTest.step(
-      'Click on "Copy link" text and verify link text and icon are changed for the moment',
+      'Click on "Copy link" text/icon and verify link text and icon are changed for the moment',
       async () => {
-        await agentDetailsModal.copyLinkText.click();
-        await baseAssertion.assertElementText(
-          agentDetailsModal.copiedLink,
-          ExpectedConstants.copiedLinkText,
-        );
-        await baseAssertion.assertElementState(
-          agentDetailsModal.copiedLinkIcon,
-          'visible',
-        );
-
-        await baseAssertion.assertElementText(
+        for (const linkElement of [
           agentDetailsModal.copyLinkText,
-          ExpectedConstants.copyLinkText,
-        );
-        await baseAssertion.assertElementState(
           agentDetailsModal.copyLinkIcon,
-          'visible',
-        );
-      },
-    );
+        ]) {
+          await linkElement.click();
+          await baseAssertion.assertElementText(
+            agentDetailsModal.copiedLink,
+            ExpectedConstants.copiedLinkText,
+          );
+          await baseAssertion.assertElementState(
+            agentDetailsModal.copiedLinkIcon,
+            'visible',
+          );
 
-    await dialTest.step(
-      'Click on "Copy link" icon and verify link text and icon are changed for the moment',
-      async () => {
-        await agentDetailsModal.copyLinkIcon.click();
-        await baseAssertion.assertElementText(
-          agentDetailsModal.copiedLink,
-          ExpectedConstants.copiedLinkText,
-        );
-        await baseAssertion.assertElementState(
-          agentDetailsModal.copiedLinkIcon,
-          'visible',
-        );
-
-        await baseAssertion.assertElementText(
-          agentDetailsModal.copyLinkText,
-          ExpectedConstants.copyLinkText,
-        );
-        await baseAssertion.assertElementState(
-          agentDetailsModal.copyLinkIcon,
-          'visible',
-        );
+          await baseAssertion.assertElementText(
+            agentDetailsModal.copyLinkText,
+            ExpectedConstants.copyLinkText,
+          );
+          await baseAssertion.assertElementState(
+            agentDetailsModal.copyLinkIcon,
+            'visible',
+          );
+        }
         await agentDetailsModal.closeButton.click();
         cardCopiedLink = await marketplacePage.readFromClipboard();
       },
@@ -246,6 +228,8 @@ dialTest(
             await adminPublicationApiHelper.createUnpublishRequest(publication);
           await adminPublicationApiHelper.approveRequest(unpublishResponse);
         }
+        isUnpublished = true;
+
         await marketplacePage.navigateToUrl(cardCopiedLink);
         await baseAssertion.assertElementState(errorPopup, 'visible');
         await baseAssertion.assertElementText(
@@ -260,5 +244,17 @@ dialTest(
         );
       },
     );
+  },
+);
+
+dialTest.afterAll(
+  async ({ publicationApiHelper, adminPublicationApiHelper }) => {
+    if (!isUnpublished) {
+      for (const publication of publicationsToUnpublish) {
+        const unpublishResponse =
+          await publicationApiHelper.createUnpublishRequest(publication);
+        await adminPublicationApiHelper.approveRequest(unpublishResponse);
+      }
+    }
   },
 );
