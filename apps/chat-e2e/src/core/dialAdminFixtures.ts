@@ -9,6 +9,7 @@ import {
   PublicationReviewControl,
   PublishingApprovalModal,
   PublishingRequestModal,
+  Toast,
   VariableModalDialog,
 } from '../ui/webElements';
 
@@ -50,6 +51,7 @@ import {
   PromptsTree,
 } from '@/src/ui/webElements/entityTree';
 import { PublishedPromptPreviewModal } from '@/src/ui/webElements/publishedPromptPreviewModal';
+import { ShareModal } from '@/src/ui/webElements/shareModal';
 import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { Page } from '@playwright/test';
 
@@ -76,6 +78,8 @@ const dialAdminTest = dialTest.extend<{
   adminBrowserStorageInjector: BrowserStorageInjector;
   adminDataInjector: DataInjectorInterface;
   adminPublishingRequestModal: PublishingRequestModal;
+  adminToast: Toast;
+  adminShareModal: ShareModal;
   adminApproveRequiredConversationsAssertion: FolderAssertion<ApproveRequiredConversationsTree>;
   adminApproveRequiredPromptsAssertion: FolderAssertion<ApproveRequiredPrompts>;
   adminOrganizationFolderConversationAssertions: FolderAssertion<Folders>;
@@ -284,6 +288,14 @@ const dialAdminTest = dialTest.extend<{
       adminLocalStorageManager,
     );
     await use(adminBrowserStorageInjector);
+  },
+  adminToast: async ({ adminPage }, use) => {
+    const adminToast = new Toast(adminPage);
+    await use(adminToast);
+  },
+  adminShareModal: async ({ adminPage }, use) => {
+    const adminShareModal = new ShareModal(adminPage);
+    await use(adminShareModal);
   },
   adminPublishingRequestModal: async ({ adminPage }, use) => {
     const adminPublishingRequestModal = new PublishingRequestModal(adminPage);
