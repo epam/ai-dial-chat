@@ -252,10 +252,7 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
     filter(PromptsActions.updatePrompt.match),
     mergeMap(({ payload }) => getOrUploadPrompt(payload, state$.value)),
     mergeMap(({ payload, prompt }) => {
-      const { values, id } = payload as {
-        id: string;
-        values: Partial<Prompt>;
-      };
+      const { values, id } = payload;
 
       if (!prompt) {
         return of(
