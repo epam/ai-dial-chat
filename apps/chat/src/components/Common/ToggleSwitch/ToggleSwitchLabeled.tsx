@@ -1,4 +1,5 @@
-import { ToggleSwitch, ToggleSwitchProps } from './ToggleSwitch';
+import { ToggleSwitch } from './ToggleSwitch';
+import { ToggleSwitchProps } from './view-props';
 
 interface ToggleSwitchLabeledProps extends ToggleSwitchProps {
   labelText?: string | null;
