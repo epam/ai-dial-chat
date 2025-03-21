@@ -26,7 +26,7 @@ import { ModalState } from '@/src/types/modal';
 import { Spinner } from './Spinner';
 import Tooltip from './Tooltip';
 
-interface Props extends FormHTMLAttributes<HTMLFormElement> {
+export interface Props extends FormHTMLAttributes<HTMLFormElement> {
   children: ReactNode | ReactNode[];
   portalId: string;
   state?: ModalState | boolean;
