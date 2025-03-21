@@ -10,7 +10,7 @@ import {
   getIdWithoutRootPathSegments,
 } from '@/src/utils/app/id';
 
-import { ConfirmDialogValueTypes } from '@/src/types/files';
+import { ConfirmDialogValueTypes } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { FilesActions } from '@/src/store/files/files.reducers';

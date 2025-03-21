@@ -239,18 +239,16 @@ export function PublishModal<
 
   const onChangePublicationRequestName = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
-      const cleanName = prepareEntityName(e.target.value);
-      setPublishRequestName(cleanName);
+      if (e.target.value.length > 160) return;
+      setPublishRequestName(e.target.value);
     },
     [],
   );
 
   const onChangePublicationAuthor = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
-      const cleanAuthor = prepareEntityName(e.target.value, {
-        maxNameLength: 50,
-      });
-      setPublicationAuthor(cleanAuthor);
+      if (e.target.value.length > 50) return;
+      setPublicationAuthor(e.target.value);
     },
     [],
   );
@@ -265,6 +263,10 @@ export function PublishModal<
       );
 
       const trimmedPath = path.trim();
+      const cleanPublishRequestName = prepareEntityName(publishRequestName);
+      const cleanPublicationAuthor = prepareEntityName(publicationAuthor, {
+        maxNameLength: 50,
+      });
       const notEmptyFilters = otherTargetAudienceFilters.filter(
         (filter) =>
           // TODO: uncomment when it will be supported on core
@@ -320,8 +322,8 @@ export function PublishModal<
 
       dispatch(
         PublicationActions.publish({
-          name: publishRequestName,
-          displayAuthor: publicationAuthor,
+          name: cleanPublishRequestName,
+          displayAuthor: cleanPublicationAuthor,
           targetFolder: constructPath(PUBLIC_URL_PREFIX, trimmedPath),
           resources: [
             ...(publishAction === PublishActions.DELETE

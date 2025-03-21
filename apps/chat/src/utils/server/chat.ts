@@ -160,6 +160,7 @@ export const chatErrorHandler = ({
   const postfix = isStreamingError ? '\0' : '';
   const fieldName = isStreamingError ? 'errorMessage' : 'message';
   let fallbackErrorMessage = errorsMessages.generalServer;
+  let statusCode = 500;
 
   logger.error(error, msg);
 
@@ -169,6 +170,9 @@ export const chatErrorHandler = ({
       fallbackErrorMessage = errorsMessages[429];
     } else if (error.code === 'content_filter') {
       fallbackErrorMessage = errorsMessages.contentFiltering;
+    } else if (['404'].includes(error.code)) {
+      statusCode = 404;
+      fallbackErrorMessage = errorsMessages[404];
     }
   }
 
@@ -178,5 +182,5 @@ export const chatErrorHandler = ({
     fallbackErrorMessage,
   );
 
-  return res.status(500).send(JSON.stringify(responseBody) + postfix);
+  return res.status(statusCode).send(JSON.stringify(responseBody) + postfix);
 };

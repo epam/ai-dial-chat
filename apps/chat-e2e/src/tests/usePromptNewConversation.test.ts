@@ -624,6 +624,67 @@ dialSharedWithMeTest(
   },
 );
 
+dialTest(
+  'Use prompt from Organization for chat',
+  async ({
+    dialHomePage,
+    sendMessageAssertion,
+    setTestIds,
+    promptData,
+    dataInjector,
+    sendMessage,
+    localStorageManager,
+    publicationApiHelper,
+    adminPublicationApiHelper,
+    publishRequestBuilder,
+    organizationPrompts,
+    promptDropdownMenu,
+  }) => {
+    setTestIds('EPMRTC-5489');
+    let version = 1;
+    const prompt1 = promptData.preparePrompt(GeneratorUtil.randomString(20));
+    promptData.resetData();
+    const prompt2 = promptData.preparePrompt(
+      GeneratorUtil.randomString(20),
+      prompt1.description,
+      prompt1.name,
+    );
+
+    const initialMessage = GeneratorUtil.randomString(10);
+    await localStorageManager.setShowSideBarPanels();
+
+    await dialTest.step('Create and publish prompts one by one', async () => {
+      for (const prompt of [prompt1, prompt2]) {
+        await dataInjector.createPrompts([prompt]);
+        const publishRequest = publishRequestBuilder
+          .withName(GeneratorUtil.randomPublicationRequestName())
+          .withPromptResource(prompt, PublishActions.ADD, `0.0.${version++}`)
+          .build();
+        const publication =
+          await publicationApiHelper.createPublishRequest(publishRequest);
+        publicationsToUnpublish.push(publication);
+        await adminPublicationApiHelper.approveRequest(publication);
+      }
+    });
+
+    await dialTest.step(
+      'Open Dial, type message, and use prompt from Organization',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await sendMessage.messageInput.fillInInput(initialMessage);
+        await organizationPrompts.openEntityDropdownMenu(prompt2.name);
+        await promptDropdownMenu.selectMenuOption(MenuOptions.use, {
+          triggeredHttpMethod: 'GET',
+        });
+        await sendMessageAssertion.assertMessageValue(
+          `${initialMessage} ${prompt2.content}`,
+        );
+      },
+    );
+  },
+);
+
 dialTest.afterAll(
   async ({ publicationApiHelper, adminPublicationApiHelper }) => {
     for (const publication of publicationsToUnpublish) {
