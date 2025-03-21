@@ -19,7 +19,7 @@ export default defineConfig({
       'allure-playwright',
       {
         detail: true,
-        outputFolder: `apps/chat-e2e/${ResultFolder.allureChatReport}`,
+        resultsDir: `apps/chat-e2e/${ResultFolder.allureChatReport}`,
       },
     ],
   ],
