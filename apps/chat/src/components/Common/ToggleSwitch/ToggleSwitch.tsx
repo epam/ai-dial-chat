@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 
-export interface ToggleSwitchProps {
+interface ToggleSwitchProps {
   isOn: boolean;
   handleSwitch: () => void;
   switchOnText?: string | null;

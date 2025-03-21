@@ -20,7 +20,7 @@ import { ChatMessageTemplatesModal } from './ChatMessageTemplatesModal/ChatMessa
 
 import { Feature, LikeState, Message } from '@epam/ai-dial-shared';
 
-export interface Props {
+interface Props {
   message: Message;
   messageIndex: number;
   filteredMessages: Message[];

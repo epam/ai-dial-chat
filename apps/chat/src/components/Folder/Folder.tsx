@@ -84,7 +84,7 @@ import {
   UploadStatus,
 } from '@epam/ai-dial-shared';
 
-export interface FolderProps<T, P = unknown> {
+interface FolderProps<T, P = unknown> {
   currentFolder: FolderInterface;
   itemComponent?: FC<{
     item: T;

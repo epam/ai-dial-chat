@@ -5,7 +5,7 @@ import classNames from 'classnames';
 
 import { Menu, MenuItem } from './DropdownMenu';
 
-export interface SelectOption {
+interface SelectOption {
   id: string;
   displayName: string;
 }
