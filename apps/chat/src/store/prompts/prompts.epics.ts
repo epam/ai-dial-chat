@@ -315,12 +315,9 @@ export const clearPromptsEpic: AppEpic = (action$) =>
 const deletePromptsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.deletePrompts.match),
-    map(({ payload }) => ({
-      promptIds: new Set(payload.promptIds),
-    })),
-    switchMap(({ promptIds }) =>
+    switchMap(({ payload }) =>
       zip(
-        Array.from(promptIds).map((id) =>
+        payload.promptIds.map((id) =>
           PromptService.deletePrompt(getPromptInfoFromId(id)).pipe(
             map(() => null),
             catchError((err) => {
@@ -348,7 +345,11 @@ const deletePromptsEpic: AppEpic = (action$) =>
               ),
               EMPTY,
             ),
-            of(PromptsActions.deletePromptsComplete({ promptIds })),
+            of(
+              PromptsActions.deletePromptsComplete({
+                promptIds: new Set(payload.promptIds),
+              }),
+            ),
           ),
         ),
       ),

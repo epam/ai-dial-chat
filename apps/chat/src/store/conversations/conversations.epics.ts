@@ -1013,14 +1013,12 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
 const rateMessageEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.rateMessage.match),
-    map(({ payload }) => ({
-      payload,
-      conversations: ConversationsSelectors.selectConversations(state$.value),
-    })),
-    switchMap(({ conversations, payload }) => {
-      const conversation = conversations.find(
-        (conv) => conv.id === payload.conversationId,
+    switchMap(({ payload }) => {
+      const conversation = ConversationsSelectors.selectConversation(
+        state$.value,
+        payload.conversationId,
       );
+
       if (!conversation) {
         return of(
           ConversationsActions.rateMessageFail({
@@ -1030,6 +1028,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
           }),
         );
       }
+
       const message = (conversation as Conversation).messages[
         payload.messageIndex
       ];
@@ -1079,19 +1078,17 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
 const updateMessageEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.updateMessage.match),
-    map(({ payload }) => ({
-      payload,
-      conversations: ConversationsSelectors.selectConversations(state$.value),
-    })),
-    switchMap(({ conversations, payload }) => {
-      const conversation = conversations.find(
-        (conv) => conv.id === payload.conversationId,
+    switchMap(({ payload }) => {
+      const conversation = ConversationsSelectors.selectConversation(
+        state$.value,
+        payload.conversationId,
       ) as Conversation;
+
       if (!conversation || !conversation.messages[payload.messageIndex]) {
         return EMPTY;
       }
 
-      const actions = [];
+      const actions: Observable<AnyAction>[] = [];
       const messages = [...conversation.messages];
       messages[payload.messageIndex] = {
         ...messages[payload.messageIndex],
@@ -1325,11 +1322,8 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
 const streamMessageEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.streamMessage.match),
-    map(({ payload }) => ({
-      payload,
-      modelsMap: ModelsSelectors.selectModelsMap(state$.value),
-    })),
-    map(({ payload, modelsMap }) => {
+    map(({ payload }) => {
+      const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
       const lastModel = modelsMap[payload.conversation.model.id];
       const selectedAddons = uniq([
         ...payload.conversation.selectedAddons,
@@ -1667,13 +1661,10 @@ const cleanMessagesEpic: AppEpic = (action$, state$) =>
 const deleteMessageEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.deleteMessage.match),
-    map(({ payload }) => ({
-      payload,
-      selectedConversations: ConversationsSelectors.selectSelectedConversations(
-        state$.value,
-      ),
-    })),
-    switchMap(({ payload, selectedConversations }) => {
+    switchMap(({ payload }) => {
+      const selectedConversations =
+        ConversationsSelectors.selectSelectedConversations(state$.value);
+
       return concat(
         ...selectedConversations.map((conv) => {
           const { messages } = conv;
@@ -2128,15 +2119,12 @@ const playbackNextMessageEndEpic: AppEpic = (action$, state$) =>
       ) as Conversation,
     })),
     switchMap(({ selectedConversation }) => {
-      if (!selectedConversation) {
-        return EMPTY;
-      }
-      if (!selectedConversation.playback) {
+      if (!selectedConversation || !selectedConversation.playback) {
         return EMPTY;
       }
       const activeIndex = selectedConversation.playback.activePlaybackIndex;
 
-      const assistantMessage: Message =
+      const assistantMessage =
         selectedConversation.playback.messagesStack[activeIndex];
 
       const messagesDeletedLastMessage = selectedConversation.messages.slice(
