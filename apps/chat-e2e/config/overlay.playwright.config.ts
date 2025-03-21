@@ -1,11 +1,8 @@
 import config, { overlayHost } from './chat.playwright.config';
 
-
-
 import { ResultFolder } from '@/src/testData';
 import { workspaceRoot } from '@nx/devkit';
 import { devices } from '@playwright/test';
-
 
 /**
  * Config used for overlay run
