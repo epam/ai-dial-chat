@@ -9,7 +9,6 @@ import {
   UploadMenuOptions,
 } from '@/src/testData';
 import { Colors, Styles, ThemeColorAttributes } from '@/src/ui/domData';
-import { responseThrottlingTimeout } from '@/src/ui/pages';
 import { BaseElement, FileModalSection } from '@/src/ui/webElements';
 import { AttachFilesTree } from '@/src/ui/webElements/entityTree';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
@@ -228,6 +227,7 @@ dialTest(
     localStorageManager,
     baseAssertion,
     manageAttachmentsAssertion,
+    page,
   }) => {
     setTestIds('EPMRTC-3302');
     let removeAttachedFileIconElement: BaseElement;
@@ -249,10 +249,14 @@ dialTest(
         { path: Attachment.sunImageName, dataType: 'upload' },
         () => attachFilesModal.uploadFromDeviceButton.click(),
       );
-      await dialHomePage.throttleAPIResponse(
-        '**/*',
-        responseThrottlingTimeout * 3,
-      );
+      const client = await page.context().newCDPSession(page);
+      await client.send('Network.enable');
+      await client.send('Network.emulateNetworkConditions', {
+        offline: false,
+        latency: 20, // 200ms latency
+        downloadThroughput: (5 * 1024 * 1024) / 8, // 780 kbps
+        uploadThroughput: (50 * 1024) / 8, // 100 kbps (slow upload)
+      });
       await uploadFromDeviceModal.uploadButton.click();
     });
 
@@ -264,12 +268,10 @@ dialTest(
           allFilesTreeElement.attachedFileLoadingIndicator(
             Attachment.sunImageName,
           );
-        await expect
-          .soft(
-            attachedFileLoadingIndicatorElement,
-            ExpectedMessages.attachmentLoadingIndicatorIsVisible,
-          )
-          .toBeAttached();
+        await baseAssertion.assertElementState(
+          attachedFileLoadingIndicatorElement,
+          'visible',
+        );
         removeAttachedFileIconElement =
           allFilesTreeElement.removeAttachedFileIcon(Attachment.sunImageName);
         await removeAttachedFileIconElement.hoverOver();
@@ -308,6 +310,7 @@ dialTest(
     chatBar,
     context,
     localStorageManager,
+    manageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-3304');
 
@@ -330,6 +333,11 @@ dialTest(
         );
         await context.setOffline(true);
         await uploadFromDeviceModal.uploadButton.click();
+        await manageAttachmentsAssertion.assertEntityState(
+          { name: Attachment.sunImageName },
+          FileModalSection.AllFiles,
+          'visible',
+        );
 
         const filenameColor = await attachFilesModal
           .getAllFilesTree()
@@ -338,14 +346,13 @@ dialTest(
         expect
           .soft(filenameColor[0], ExpectedMessages.attachmentNameColorIsValid)
           .toBe(Colors.textError);
-        await expect
-          .soft(
-            attachFilesModal
-              .getAllFilesTree()
-              .attachedFileErrorIcon(Attachment.sunImageName),
-            ExpectedMessages.attachmentHasErrorIcon,
-          )
-          .toBeVisible();
+        await manageAttachmentsAssertion.assertElementState(
+          attachFilesModal
+            .getAllFilesTree()
+            .attachedFileErrorIcon(Attachment.sunImageName),
+          'visible',
+          ExpectedMessages.attachmentHasErrorIcon,
+        );
       },
     );
 
@@ -357,14 +364,11 @@ dialTest(
           .getAllFilesTree()
           .removeAttachedFileIcon(Attachment.sunImageName)
           .click();
-        await expect
-          .soft(
-            attachFilesModal
-              .getAllFilesTree()
-              .getEntityByName(Attachment.sunImageName),
-            ExpectedMessages.fileIsNotAttached,
-          )
-          .toBeHidden();
+        await manageAttachmentsAssertion.assertEntityState(
+          { name: Attachment.sunImageName },
+          FileModalSection.AllFiles,
+          'hidden',
+        );
       },
     );
   },

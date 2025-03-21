@@ -9,11 +9,11 @@ import {
 } from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
-import { responseThrottlingTimeout } from '@/src/ui/pages';
 import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { Attachment as AttachmentInterface } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
+import { CDPSession } from 'playwright-chromium';
 
 let modelsWithAttachments: DialAIEntityModel[];
 dialTest.beforeAll(async () => {
@@ -43,6 +43,7 @@ dialTest(
       modelsWithAttachments,
     );
     let conversation: Conversation;
+    let client: CDPSession;
 
     await dialTest.step(
       'Create conversation with model that accept attachments only with text in request',
@@ -84,10 +85,14 @@ dialTest(
               UploadMenuOptions.uploadFromDevice,
             ),
         );
-        await dialHomePage.throttleAPIResponse(
-          '**/*',
-          responseThrottlingTimeout * 2,
-        );
+        client = await page.context().newCDPSession(page);
+        await client.send('Network.enable');
+        await client.send('Network.emulateNetworkConditions', {
+          offline: false,
+          latency: 20, // 200ms latency
+          downloadThroughput: (5 * 1024 * 1024) / 8, // 780 kbps
+          uploadThroughput: (50 * 1024) / 8, // 100 kbps (slow upload)
+        });
         await uploadFromDeviceModal.uploadButton.click();
         await baseAssertion.assertElementActionabilityState(
           chatMessages.saveAndSubmit,
@@ -99,6 +104,12 @@ dialTest(
     await dialTest.step(
       'Verify Save&Submit is enabled when file is uploaded',
       async () => {
+        await client.send('Network.emulateNetworkConditions', {
+          offline: false,
+          latency: 0,
+          downloadThroughput: -1, // Disable throttling
+          uploadThroughput: -1, // Disable throttling
+        });
         await baseAssertion.assertElementState(
           editMessageInputAttachments.inputAttachmentLoadingIndicator(
             Attachment.sunImageName,

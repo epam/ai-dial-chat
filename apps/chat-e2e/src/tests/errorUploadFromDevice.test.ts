@@ -5,6 +5,7 @@ import {
   ExpectedMessages,
 } from '@/src/testData';
 import { Attributes, Colors, Styles } from '@/src/ui/domData';
+import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -18,6 +19,7 @@ dialTest(
     fileApiHelper,
     chatBar,
     uploadFromDeviceModal,
+    manageAttachmentsAssertion,
     baseAssertion,
     localStorageManager,
   }) => {
@@ -35,6 +37,11 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
+        await manageAttachmentsAssertion.assertEntityState(
+          { name: Attachment.longImageName },
+          FileModalSection.AllFiles,
+          'visible',
+        );
         await dialHomePage.uploadData(
           { path: Attachment.longImageName, dataType: 'upload' },
           () => attachFilesModal.uploadFromDeviceButton.click(),
@@ -158,6 +165,7 @@ dialTest(
     fileApiHelper,
     baseAssertion,
     localStorageManager,
+    manageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-3217', 'EPMRTC-3194', 'EPMRTC-1779');
 
@@ -172,6 +180,11 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
+        await manageAttachmentsAssertion.assertEntityState(
+          { name: Attachment.sunImageName },
+          FileModalSection.AllFiles,
+          'visible',
+        );
         await attachFilesModal.uploadFromDeviceButton.click();
         await uploadFromDeviceModal.addMoreFilesToUpload(
           Attachment.sunImageName,
@@ -188,21 +201,18 @@ dialTest(
       const error = uploadFromDeviceModal.getModalError();
       await baseAssertion.assertElementState(error, 'visible');
       const errorText = await error.errorMessage.getElementContent();
-      expect
-        .soft(
-          errorText?.replaceAll('\n', ''),
-          ExpectedMessages.errorMessageContentIsValid,
-        )
-        .toBe(
-          ExpectedConstants.notAllowedFilenameError(
-            [
-              Attachment.restrictedSemicolonCharFilename,
-              Attachment.restrictedEqualCharFilename,
-            ].join(', '),
-          ) +
-            ExpectedConstants.duplicatedFilenameError(Attachment.sunImageName) +
-            ExpectedConstants.sameFilenamesError(Attachment.cloudImageName),
-        );
+      baseAssertion.assertValue(
+        errorText?.replaceAll('\n', ''),
+        ExpectedConstants.notAllowedFilenameError(
+          [
+            Attachment.restrictedSemicolonCharFilename,
+            Attachment.restrictedEqualCharFilename,
+          ].join(', '),
+        ) +
+          ExpectedConstants.duplicatedFilenameError(Attachment.sunImageName) +
+          ExpectedConstants.sameFilenamesError(Attachment.cloudImageName),
+        ExpectedMessages.errorMessageContentIsValid,
+      );
     });
   },
 );

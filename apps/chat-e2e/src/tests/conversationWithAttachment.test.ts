@@ -19,6 +19,7 @@ import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
+import { CDPSession } from 'playwright-chromium';
 
 let modelsWithAttachments: DialAIEntityModel[];
 dialTest.beforeAll(async () => {
@@ -277,14 +278,12 @@ dialTest(
     await dialTest.step(
       'Verify loading indicator is shown under the file, send button is disabled and have tooltip on hover',
       async () => {
-        await expect
-          .soft(
-            sendMessageInputAttachments.inputAttachmentLoadingIndicator(
-              Attachment.sunImageName,
-            ),
-            ExpectedMessages.attachmentLoadingIndicatorIsVisible,
-          )
-          .toBeAttached();
+        await baseAssertion.assertElementState(
+          sendMessageInputAttachments.inputAttachmentLoadingIndicator(
+            Attachment.sunImageName,
+          ),
+          'visible',
+        );
         await baseAssertion.assertElementActionabilityState(
           sendMessage.sendMessageButton,
           'disabled',
@@ -481,14 +480,15 @@ dialTest(
     uploadFromDeviceModal,
     attachmentDropdownMenu,
     sendMessageInputAttachments,
-    context,
     localStorageManager,
     baseAssertion,
+    page,
   }) => {
     setTestIds('EPMRTC-1905');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
       modelsWithAttachments,
     );
+    let client: CDPSession;
 
     await dialTest.step(
       'Create new conversation based on model with input attachments and upload attachment from device in offline mode',
@@ -505,7 +505,14 @@ dialTest(
               UploadMenuOptions.uploadFromDevice,
             ),
         );
-        await context.setOffline(true);
+        client = await page.context().newCDPSession(page);
+        await client.send('Network.enable');
+        await client.send('Network.emulateNetworkConditions', {
+          offline: true,
+          latency: 20, // 200ms latency
+          downloadThroughput: (5 * 1024 * 1024) / 8, // 780 kbps
+          uploadThroughput: (50 * 1024) / 8, // 100 kbps (slow upload)
+        });
         await uploadFromDeviceModal.uploadButton.click();
       },
     );
@@ -538,7 +545,12 @@ dialTest(
     await dialTest.step(
       'Click on Retry icon in online mode and verify attachment is uploaded',
       async () => {
-        await context.setOffline(false);
+        await client.send('Network.emulateNetworkConditions', {
+          offline: false,
+          latency: 0,
+          downloadThroughput: -1, // Disable throttling
+          uploadThroughput: -1, // Disable throttling
+        });
         await sendMessageInputAttachments
           .inputAttachmentLoadingRetry(Attachment.sunImageName)
           .click();
