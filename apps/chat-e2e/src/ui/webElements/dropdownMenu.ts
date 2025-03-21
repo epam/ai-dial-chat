@@ -32,7 +32,9 @@ export class DropdownMenu extends Menu {
   ) {
     if (isApiStorageType && isHttpMethodTriggered && triggeredHttpMethod) {
       const respPromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === triggeredHttpMethod,
+        (resp) =>
+          resp.request().method() === triggeredHttpMethod &&
+          resp.status() === 200,
       );
       await super.selectMenuOption(option);
       return respPromise;

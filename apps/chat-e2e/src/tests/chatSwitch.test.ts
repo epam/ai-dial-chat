@@ -1,16 +1,7 @@
 import { Conversation } from '@/chat/types/chat';
-import { DialAIEntityModel } from '@/chat/types/models';
-import { noSimpleModelSkipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import { API, MenuOptions } from '@/src/testData';
+import { API, MenuOptions, MockedChatApiResponseBodies } from '@/src/testData';
 import { Cursors } from '@/src/ui/domData';
-import { ModelsUtil } from '@/src/utils';
-
-let simpleRequestModel: DialAIEntityModel | undefined;
-
-dialTest.beforeAll(async () => {
-  simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
-});
 
 dialTest(
   'Another chat is not available while AI is generating a response.\n' +
@@ -30,8 +21,8 @@ dialTest(
     compareConversation,
     conversationToCompareAssertion,
     localStorageManager,
+    sendMessageAssertion,
   }) => {
-    dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
     setTestIds(
       'EPMRTC-598',
       'EPMRTC-599',
@@ -49,17 +40,11 @@ dialTest(
     await dialTest.step(
       'Prepare 1 empty conversation, replay conversation and 2 default conversations',
       async () => {
-        firstConversation = conversationData.prepareEmptyConversation(
-          simpleRequestModel!,
-        );
+        firstConversation = conversationData.prepareEmptyConversation();
         conversationData.resetData();
-        preReplayConversation = conversationData.prepareDefaultConversation(
-          simpleRequestModel!,
-        );
+        preReplayConversation = conversationData.prepareDefaultConversation();
         conversationData.resetData();
-        comparedConversation = conversationData.prepareDefaultConversation(
-          simpleRequestModel!,
-        );
+        comparedConversation = conversationData.prepareDefaultConversation();
         conversationData.resetData();
         replayConversation = conversationData.prepareDefaultReplayConversation(
           preReplayConversation,
@@ -101,10 +86,17 @@ dialTest(
         await conversationAssertion.assertSelectedConversation(
           firstConversation.name,
         );
+        await sendMessageAssertion.assertElementState(
+          sendMessage.messageInput,
+          'visible',
+        );
       },
     );
 
     await dialTest.step('Send request to the first conversation', async () => {
+      await dialHomePage.mockChatTextResponse(
+        MockedChatApiResponseBodies.simpleTextBody,
+      );
       await dialHomePage.throttleAPIResponse(API.chatHost);
       await chat.sendRequestWithButton(request, false);
       firstConversation.name = request;
@@ -137,7 +129,10 @@ dialTest(
     await dialTest.step(
       'Select [Replay] conversation and start generation',
       async () => {
-        await sendMessage.stopGenerating.waitForState({ state: 'visible' });
+        await sendMessageAssertion.assertElementState(
+          sendMessage.stopGenerating,
+          'visible',
+        );
         await sendMessage.stopGenerating.click();
         await conversations.getEntityByName(replayConversation.name).click();
         await chat.startReplay();
