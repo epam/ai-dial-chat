@@ -174,14 +174,17 @@ dialOverlayTest(
 );
 
 dialOverlayTest(
-  `[Overlay] Display change agent for empty chat - Feature.HideEmptyChatChangeAgent. p2`,
+  `[Overlay] Display change agent for empty chat - Feature.HideEmptyChatChangeAgent. p2.\n` +
+    '[Overlay] Nothing happens on + "New conversation" button when Feature.HideEmptyChatChangeAgent is enabled',
   async ({
     overlayHomePage,
     overlayChat,
     overlayBaseAssertion,
+    overlayHeader,
+    overlayTalkToAgentDialog,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-4868');
+    setTestIds('EPMRTC-4868', 'EPMRTC-5694');
 
     await dialTest.step(
       'Open sandbox and verify "Change agent" link is not displayed for a new conversation',
@@ -192,6 +195,17 @@ dialOverlayTest(
         await overlayHomePage.waitForPageLoaded();
         await overlayBaseAssertion.assertElementState(
           overlayChat.changeAgentButton,
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on + button in the header and verify "Select agent" modal is not displayed',
+      async () => {
+        await overlayHeader.createNewConversation();
+        await overlayBaseAssertion.assertElementState(
+          overlayTalkToAgentDialog,
           'hidden',
         );
       },
