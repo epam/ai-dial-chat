@@ -89,19 +89,12 @@ const TalkToModalView = ({
   const displayedModels = useMemo(() => {
     const currentModel = modelsMap[conversation.model.id];
     const recentInstalledModels = recentModelIds
-      .filter(
-        (recentModelId) =>
-          installedModelIdsSet.has(recentModelId) && modelsMap[recentModelId],
-      )
-      .map((recentModelId) => {
-        return modelsMap[recentModelId] as DialAIEntityModel;
-      })
-      .filter(Boolean);
+      .filter((id) => installedModelIdsSet.has(id) && modelsMap[id])
+      .map((id) => modelsMap[id]) as DialAIEntityModel[];
     const installedModels = allModels.filter(
       (model) =>
         installedModelIdsSet.has(model.reference) && modelsMap[model.reference],
     );
-
     const sortedModels = [
       ...(currentModel &&
       (installedModelIdsSet.has(currentModel.reference) || !isReplay)
@@ -110,7 +103,6 @@ const TalkToModalView = ({
       ...recentInstalledModels,
       ...installedModels,
     ];
-
     const filteredModels = sortedModels.filter(
       (entity) =>
         doesEntityContainSearchTerm(entity, searchTerm) ||
@@ -118,7 +110,6 @@ const TalkToModalView = ({
           doesEntityContainSearchTerm({ name: entity.version }, searchTerm)),
     );
     const groupedModels = groupModelsAndSaveOrder(filteredModels);
-
     const orderedModels = groupedModels.map(({ entities }) => {
       const selectedEntity = entities.find(
         ({ reference }) => reference === conversation.model.id,
@@ -176,10 +167,9 @@ const TalkToModalView = ({
     t,
   ]);
 
-  const handleCloseApplicationLogs = useCallback(
-    () => setLogModel(undefined),
-    [],
-  );
+  const handleCloseApplicationLogs = useCallback(() => {
+    setLogModel(undefined);
+  }, []);
 
   const handleOpenApplicationLogs = useCallback((entity: DialAIEntityModel) => {
     setLogModel(entity);
@@ -255,12 +245,9 @@ const TalkToModalView = ({
 
   const handlePublishClose = useCallback(() => setPublishModel(undefined), []);
 
-  const handleDeleteApplication = useCallback(
-    (entity: DialAIEntityModel) => {
-      setDeleteModel(entity);
-    },
-    [setDeleteModel],
-  );
+  const handleDeleteApplication = useCallback((entity: DialAIEntityModel) => {
+    setDeleteModel(entity);
+  }, []);
 
   const handleGoToWorkspace = useCallback(
     (e: MouseEvent<HTMLAnchorElement>) => {
