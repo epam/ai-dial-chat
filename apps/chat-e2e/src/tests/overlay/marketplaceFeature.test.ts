@@ -5,7 +5,8 @@ import { OverlaySandboxUrls } from '@/src/testData';
 
 dialOverlayTest(
   '[Overlay] DIAL Marketplace feature is enabled - Feature.Marketplace.\n' +
-    '[Overlay] Add app button is not available in Overlay (Mobile view)',
+    '[Overlay] Add app button is not available in Overlay (Mobile view).\n' +
+    '[Overlay] Add app button on My workspace is unavailable even though all the features for apps creation is on',
   async ({
     overlayHomePage,
     overlayChat,
@@ -21,7 +22,7 @@ dialOverlayTest(
     overlayChatBar,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-4447', 'EPMRTC-4712');
+    setTestIds('EPMRTC-4447', 'EPMRTC-4712', 'EPMRTC-5782');
 
     let conversation: Conversation;
 

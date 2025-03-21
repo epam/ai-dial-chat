@@ -31,6 +31,8 @@ const overlayOptions = {
     Feature.PromptsPublishing,
     Feature.CustomLogo,
     Feature.MessageTemplates,
+    Feature.ShowConversationsSectionByDefault,
+    Feature.ShowPromptsSectionByDefault,
   ],
 };
 
