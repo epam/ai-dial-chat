@@ -126,7 +126,7 @@ export class UploadFromDeviceModal extends BaseElement {
 
   public async uploadFiles() {
     const respPremise = this.page.waitForResponse(
-      (r) => r.request().method() === 'POST',
+      (r) => r.request().method() === 'POST' && r.status() === 200,
     );
     await this.uploadButton.click();
     await respPremise;
