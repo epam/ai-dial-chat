@@ -70,12 +70,14 @@ interface Props {
   schema: ApiDetailedApplicationTypeSchema | null;
   applicationData: CustomApplicationModel;
   type: string;
+  isExiting?: boolean;
 }
 
 export const ApplicationSettings: React.FC<Props> = ({
   applicationData,
   schema,
   type,
+  isExiting,
 }) => {
   const dispatch = useAppDispatch();
   const pythonVersions = useAppSelector(
@@ -341,6 +343,7 @@ export const ApplicationSettings: React.FC<Props> = ({
               applicationId={applicationData.id}
               type={type}
               isAppDeployed={isAppDeployed}
+              isExiting={isExiting}
             />
           </div>
         )}
