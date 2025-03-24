@@ -542,7 +542,7 @@ export const renameFolderAndMoveEntity = <T extends Entity | BaseDialEntity>(
   return updateEntityFolder(entity, sourceFolderId, targetFolderId);
 };
 
-export const updateFolderIds = (
+export const updateChildAndCurrentFoldersIds = (
   ids: string[],
   oldFolderId: string,
   newFolderId: string,

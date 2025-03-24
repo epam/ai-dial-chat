@@ -25,8 +25,8 @@ import {
   generateNextName,
   getFolderFromId,
   getParentFolderIdsFromFolderId,
+  updateChildAndCurrentFoldersIds,
   updateChildFoldersIds,
-  updateFolderIds,
 } from '@/src/utils/app/folders';
 import { getPromptRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import {
@@ -380,7 +380,7 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
       const openedFolderIds = UISelectors.selectOpenedFoldersIds(
         FeatureType.Prompt,
       )(state);
-      const updatedOpenedFolderIds = updateFolderIds(
+      const updatedOpenedFolderIds = updateChildAndCurrentFoldersIds(
         openedFolderIds,
         payload.folderId,
         newFolder.id,

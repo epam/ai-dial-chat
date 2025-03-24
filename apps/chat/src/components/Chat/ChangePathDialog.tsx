@@ -9,7 +9,7 @@ import {
   getNextDefaultName,
   getPathToFolderById,
   sortByName,
-  updateFolderIds,
+  updateChildAndCurrentFoldersIds,
   validateFolderRenaming,
 } from '@/src/utils/app/folders';
 
@@ -183,7 +183,11 @@ export const ChangePathDialog = ({
 
       dispatch(actions.renameTemporaryFolder({ folderId, name: newName }));
       setOpenedFoldersIds(
-        updateFolderIds(openedFoldersIds, folderId, newFolderId),
+        updateChildAndCurrentFoldersIds(
+          openedFoldersIds,
+          folderId,
+          newFolderId,
+        ),
       );
     },
     [actions, dispatch, folders, t, openedFoldersIds, setOpenedFoldersIds],

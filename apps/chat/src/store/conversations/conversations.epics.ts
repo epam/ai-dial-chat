@@ -58,8 +58,8 @@ import {
   getNextDefaultName,
   getParentFolderIdsFromEntityId,
   getParentFolderIdsFromFolderId,
+  updateChildAndCurrentFoldersIds,
   updateChildFoldersIds,
-  updateFolderIds,
 } from '@/src/utils/app/folders';
 import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
 import {
@@ -842,7 +842,7 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
       const openedFolderIds = UISelectors.selectOpenedFoldersIds(
         FeatureType.Chat,
       )(state);
-      const updatedOpenedFolderIds = updateFolderIds(
+      const updatedOpenedFolderIds = updateChildAndCurrentFoldersIds(
         openedFolderIds,
         payload.folderId,
         newFolder.id,
