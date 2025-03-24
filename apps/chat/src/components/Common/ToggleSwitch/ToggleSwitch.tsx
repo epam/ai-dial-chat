@@ -1,11 +1,6 @@
 import classNames from 'classnames';
 
-export interface ToggleSwitchProps {
-  isOn: boolean;
-  handleSwitch: () => void;
-  switchOnText?: string | null;
-  switchOFFText?: string | null;
-}
+import { ToggleSwitchProps } from './view-props';
 
 interface SwitchStateTextProps {
   switchText: string;

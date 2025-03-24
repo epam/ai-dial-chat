@@ -52,7 +52,7 @@ type Validators = {
   [K in keyof QuickAppFormData]?: Options<K>;
 };
 
-export const validators: Validators = {
+const validators: Validators = {
   toolset: {
     required: 'Toolset config is required',
     validate: (v) => {

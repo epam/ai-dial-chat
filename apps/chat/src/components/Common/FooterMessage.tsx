@@ -5,13 +5,12 @@ import { useUrlHash } from '@/src/hooks/useUrlHash';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
+import { reportAnIssueHash, requestApiKeyHash } from '@/src/constants/footer';
+
 import { ReportIssueDialog } from '@/src/components/Chat/ReportIssueDialog';
 import { RequestAPIKeyDialog } from '@/src/components/Chat/RequestApiKeyDialog';
 
 import { Feature } from '@epam/ai-dial-shared';
-
-export const requestApiKeyHash = '#requestApiKey';
-export const reportAnIssueHash = '#reportAnIssue';
 
 export const FooterMessage = () => {
   const footerHtmlMessage = useAppSelector(

@@ -61,7 +61,7 @@ import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
-export interface Props {
+interface Props {
   entity: DialAIEntityModel;
   isHovered: boolean;
   onClick: (entity: DialAIEntityModel) => void;

@@ -232,7 +232,7 @@ const ConversationView = ({
   );
 };
 
-export interface ConversationRowProps extends ConversationViewProps {
+interface ConversationRowProps extends ConversationViewProps {
   level?: number;
   onEvent?: (eventId: ReplaceOptions, data: string) => void;
   additionalItemData?: AdditionalItemData;
@@ -323,7 +323,7 @@ const PromptView = ({
   );
 };
 
-export interface PromptRowProps extends PromptViewProps {
+interface PromptRowProps extends PromptViewProps {
   level?: number;
   onEvent?: (eventId: ReplaceOptions, data: string) => void;
   additionalItemData?: AdditionalItemData;
@@ -409,7 +409,7 @@ const FileView = ({
   );
 };
 
-export interface FileRowProps extends FileViewProps {
+interface FileRowProps extends FileViewProps {
   level?: number;
   onEvent?: (eventId: ReplaceOptions, data: string) => void;
   additionalItemData?: AdditionalItemData;
@@ -452,7 +452,7 @@ interface ApplicationViewProps {
   onSelect?: (ids: string[]) => void;
 }
 
-export interface ApplicationRowProps extends ApplicationViewProps {
+interface ApplicationRowProps extends ApplicationViewProps {
   level?: number;
   additionalItemData?: Record<string, unknown>;
   itemComponentClassNames?: string;

@@ -18,7 +18,7 @@ import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 
 import { LikeState, Message, Role } from '@epam/ai-dial-shared';
 
-export interface Props {
+interface Props {
   message: Message;
   messageIndex: number;
   conversation: Conversation;
