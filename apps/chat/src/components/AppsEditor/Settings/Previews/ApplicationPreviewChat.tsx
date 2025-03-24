@@ -25,7 +25,7 @@ interface Props {
   applicationId: string;
   type: string;
   isAppDeployed: boolean;
-  isExiting: boolean;
+  isExiting?: boolean;
 }
 
 export const ApplicationPreviewChat: React.FC<Props> = ({
