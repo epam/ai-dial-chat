@@ -4,8 +4,14 @@ import {
   ExpectedConstants,
   ExpectedMessages,
 } from '@/src/testData';
-import { Attributes, Colors, Styles } from '@/src/ui/domData';
+import {
+  Attributes,
+  Colors,
+  Styles,
+  ThemeColorAttributes,
+} from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 dialTest(
@@ -55,7 +61,7 @@ dialTest(
         );
         await baseAssertion.assertElementColor(
           error.errorMessage,
-          Colors.textPrimary,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textPrimary),
         );
         await baseAssertion.assertElementAttribute(
           error.errorMessage,

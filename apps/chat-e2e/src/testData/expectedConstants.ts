@@ -224,6 +224,10 @@ export const ExpectedConstants = {
   noMarketplaceAgentsFoundMessage: `Sorry, we couldn't find any results for your search.`,
   versionPrefix: 'Version: ',
   agentAddedToWorkspaceMessage: 'The agent added to my workspace',
+  agentNotFoundError: 'Agent by this link not found',
+  copiedLinkText: 'Copied!',
+  copyLinkText: 'Copy link',
+  copiedToastMessage: 'Link copied!',
 };
 
 export enum Types {
@@ -260,6 +264,7 @@ export enum MenuOptions {
   view = 'View',
   use = 'Use',
   info = 'Info',
+  copyLink = 'Copy link',
 }
 
 export enum FilterMenuOptions {

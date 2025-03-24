@@ -6,6 +6,4 @@ export const IconSelectors = {
   copyIcon: '.tabler-icon-copy',
   replayIcon: '[data-qa="replay-icon"]',
   listDetailsIcon: '.tabler-icon-list-details',
-  transparentBookmarkIcon: '.tabler-icon-bookmark',
-  filledBookmarkIcon: '.tabler-icon-bookmark-filled',
 };
