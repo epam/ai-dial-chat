@@ -144,6 +144,7 @@ const ChatView = memo(() => {
   const notAvailableEntityType = useAppSelector(
     ChatSelectors.selectNotAvailableEntityType,
   );
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
   const [showScrollDownButton, setShowScrollDownButton] =
@@ -581,10 +582,10 @@ const ChatView = memo(() => {
     }
   }, [modelsMap, applicationTypeSchemas, selectedConversations]);
   useEffect(() => {
-    if (textareaRef.current) {
+    if (textareaRef.current && !isOverlay) {
       textareaRef.current.focus();
     }
-  }, []);
+  }, [isOverlay]);
 
   return (
     <div
