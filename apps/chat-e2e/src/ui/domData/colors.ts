@@ -48,4 +48,5 @@ export enum ThemeColorAttributes {
   bgAccentPrimaryAlpha = 'bg-accent-primary-alpha',
   textPrimary = 'text-primary',
   textError = 'text-error',
+  controlsBgDisable = 'controls-bg-disable',
 }
