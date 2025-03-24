@@ -19,7 +19,6 @@ import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
-import { CDPSession } from 'playwright-chromium';
 
 let modelsWithAttachments: DialAIEntityModel[];
 dialTest.beforeAll(async () => {
@@ -487,13 +486,11 @@ dialTest(
     context,
     localStorageManager,
     baseAssertion,
-    page,
   }) => {
     setTestIds('EPMRTC-1905');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
       modelsWithAttachments,
     );
-    let client: CDPSession;
 
     await dialTest.step(
       'Create new conversation based on model with input attachments and upload attachment from device in offline mode',

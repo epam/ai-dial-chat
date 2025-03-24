@@ -8,7 +8,7 @@ import {
   MenuOptions,
   UploadMenuOptions,
 } from '@/src/testData';
-import { Colors, Styles, ThemeColorAttributes } from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
 import { BaseElement, FileModalSection } from '@/src/ui/webElements';
 import { AttachFilesTree } from '@/src/ui/webElements/entityTree';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';

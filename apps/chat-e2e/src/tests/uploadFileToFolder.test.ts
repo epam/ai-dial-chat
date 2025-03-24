@@ -6,10 +6,9 @@ import {
   ExpectedMessages,
   MenuOptions,
 } from '@/src/testData';
-import { Attributes, Colors, ThemeColorAttributes } from '@/src/ui/domData';
+import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
-import { Locator, expect } from '@playwright/test';
 
 dialTest(
   '[Manage attachments] Create new folder.\n' +
@@ -118,7 +117,6 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-3022', 'EPMRTC-1615');
     const folderName = GeneratorUtil.randomString(7);
-    let uploadingFileElement: Locator;
 
     await dialTest.step('Upload file to some folder', async () => {
       await fileApiHelper.putFile(Attachment.longImageName, folderName);
