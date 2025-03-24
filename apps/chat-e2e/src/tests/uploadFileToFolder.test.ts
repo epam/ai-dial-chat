@@ -1,6 +1,7 @@
 import dialTest from '@/src/core/dialFixtures';
 import {
   Attachment,
+  CheckboxState,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
@@ -174,7 +175,10 @@ for (let i = 1; i <= 10; i++) {
             () =>
               attachedAllFiles
                 .getDropdownMenu()
-                .selectMenuOption(MenuOptions.upload),
+                .selectMenuOption(MenuOptions.upload, {
+                  isHttpMethodTriggered: true,
+                  triggeredHttpMethod: 'GET',
+                }),
           );
           await baseAssertion.assertElementState(
             uploadFromDeviceModal.getUploadedFile(Attachment.cloudImageName),
@@ -188,6 +192,10 @@ for (let i = 1; i <= 10; i++) {
           uploadingFileElement = attachedAllFiles.getFolderEntity(
             folderName,
             Attachment.cloudImageName,
+          );
+          await baseAssertion.assertElementState(
+            uploadingFileElement,
+            'visible',
           );
           await manageAttachmentsAssertion.assertElementState(
             uploadingFileElement.locator(FileSelectors.loadingIndicator),
@@ -212,7 +220,7 @@ for (let i = 1; i <= 10; i++) {
               folderName,
               Attachment.cloudImageName,
             ),
-            'checked',
+            CheckboxState.checked,
           );
 
           const fileNameColor = await attachedAllFiles.getFolderEntityColor(
