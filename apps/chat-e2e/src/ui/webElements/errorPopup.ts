@@ -1,5 +1,5 @@
+import { Tags } from '@/src/ui/domData';
 import { Popup } from '@/src/ui/selectors/dialogSelectors';
-import { IconSelectors } from '@/src/ui/selectors/iconSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Page } from '@playwright/test';
 
@@ -8,9 +8,7 @@ export class ErrorPopup extends BaseElement {
     super(page, Popup.errorPopup);
   }
 
-  public cancelButton = this.getChildElementBySelector(
-    IconSelectors.cancelIcon,
-  );
+  public cancelButton = this.getChildElementBySelector(Tags.button);
 
   public async cancelPopup() {
     const isPopupVisible = await this.isVisible();
