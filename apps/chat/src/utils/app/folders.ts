@@ -549,7 +549,9 @@ export const updateChildAndCurrentFoldersIds = (
 ) => {
   return ids.map((id) => {
     if (id.startsWith(`${oldFolderId}/`) || id === oldFolderId) {
-      return id.replace(oldFolderId, newFolderId);
+      return id !== oldFolderId
+        ? id.replace(`${oldFolderId}/`, `${newFolderId}/`)
+        : id.replace(oldFolderId, newFolderId);
     }
 
     return id;
