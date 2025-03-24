@@ -261,6 +261,10 @@ dialTest(
           () =>
             attachmentDropdownMenu.selectMenuOption(
               UploadMenuOptions.uploadFromDevice,
+              {
+                isHttpMethodTriggered: true,
+                triggeredHttpMethod: 'GET',
+              },
             ),
         );
         const client = await page.context().newCDPSession(page);
@@ -480,6 +484,7 @@ dialTest(
     uploadFromDeviceModal,
     attachmentDropdownMenu,
     sendMessageInputAttachments,
+    context,
     localStorageManager,
     baseAssertion,
     page,
@@ -503,16 +508,13 @@ dialTest(
           () =>
             attachmentDropdownMenu.selectMenuOption(
               UploadMenuOptions.uploadFromDevice,
+              {
+                isHttpMethodTriggered: true,
+                triggeredHttpMethod: 'GET',
+              },
             ),
         );
-        client = await page.context().newCDPSession(page);
-        await client.send('Network.enable');
-        await client.send('Network.emulateNetworkConditions', {
-          offline: true,
-          latency: 20, // 200ms latency
-          downloadThroughput: (5 * 1024 * 1024) / 8, // 780 kbps
-          uploadThroughput: (50 * 1024) / 8, // 100 kbps (slow upload)
-        });
+        await context.setOffline(true);
         await uploadFromDeviceModal.uploadButton.click();
       },
     );
@@ -522,9 +524,9 @@ dialTest(
       async () => {
         for (let retryAttempt = 1; retryAttempt <= 2; retryAttempt++) {
           if (retryAttempt === 2) {
-            await sendMessageInputAttachments
-              .inputAttachmentLoadingRetry(Attachment.sunImageName)
-              .click();
+            await sendMessageInputAttachments.retryLoading(
+              Attachment.sunImageName,
+            );
           }
           await baseAssertion.assertElementColor(
             sendMessageInputAttachments.inputAttachmentName(
@@ -545,15 +547,11 @@ dialTest(
     await dialTest.step(
       'Click on Retry icon in online mode and verify attachment is uploaded',
       async () => {
-        await client.send('Network.emulateNetworkConditions', {
-          offline: false,
-          latency: 0,
-          downloadThroughput: -1, // Disable throttling
-          uploadThroughput: -1, // Disable throttling
-        });
-        await sendMessageInputAttachments
-          .inputAttachmentLoadingRetry(Attachment.sunImageName)
-          .click();
+        await context.setOffline(false);
+        await sendMessageInputAttachments.retryLoading(
+          Attachment.sunImageName,
+          { isHttpMethodTriggered: true },
+        );
         await baseAssertion.assertElementColor(
           sendMessageInputAttachments.inputAttachmentName(
             Attachment.sunImageName,

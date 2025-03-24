@@ -34,6 +34,8 @@ dialTest(
     chatAssertion,
     localStorageAssertion,
     marketplaceAgentsSection,
+    marketplaceAgents,
+    marketplaceAgentsAssertion,
     toast,
   }) => {
     dialTest.slow();
@@ -188,6 +190,7 @@ dialTest(
     await dialTest.step(
       'Verify recentModelsIds is updated and the second model is now first',
       async () => {
+        await dialHomePage.waitForPageLoaded();
         await localStorageAssertion.assertRecentModels([
           initialModel2.id,
           initialModel1.id,
@@ -199,6 +202,10 @@ dialTest(
       'Create a new conversation and verify the second model is still selected',
       async () => {
         await header.createNewConversation();
+        await marketplaceAgentsAssertion.assertElementState(
+          marketplaceAgents.getAgent(initialModel2),
+          'visible',
+        );
         await talkToAgentDialogAssertion.assertAgentIsSelected(initialModel2);
         await talkToAgentDialog.cancelButton.click();
         await agentInfoAssertion.assertAgentName(initialModel2.name);

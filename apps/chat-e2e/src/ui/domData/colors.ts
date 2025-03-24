@@ -49,4 +49,5 @@ export enum ThemeColorAttributes {
   textPrimary = 'text-primary',
   textError = 'text-error',
   controlsBgDisable = 'controls-bg-disable',
+  bgLayer0 = 'bg-layer-0',
 }

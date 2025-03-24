@@ -535,6 +535,7 @@ dialTest(
     conversations,
     dataInjector,
     localStorageManager,
+    manageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-1614');
     const modelWithAttachmentExtensions = modelsWithAttachments.find(
@@ -563,12 +564,11 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(conversation.name);
         await chatBar.openManageAttachmentsModal();
-        expect
-          .soft(
-            await attachFilesModal.getModalHeader().getSupportedTypes(),
-            ExpectedMessages.supportedTypesLabelIsCorrect,
-          )
-          .toBe(Attachment.allTypesLabel);
+        manageAttachmentsAssertion.assertValue(
+          await attachFilesModal.getModalHeader().getSupportedTypes(),
+          Attachment.allTypesLabel,
+          ExpectedMessages.supportedTypesLabelIsCorrect,
+        );
       },
     );
 
@@ -577,17 +577,14 @@ dialTest(
       async () => {
         await dialHomePage.uploadData(
           { path: Attachment.cloudImageName, dataType: 'upload' },
-          () => attachFilesModal.uploadFromDeviceButton.click(),
+          () => attachFilesModal.uploadFromDevice(),
         );
         await uploadFromDeviceModal.uploadFiles();
-        await expect
-          .soft(
-            attachFilesModal
-              .getAllFilesTree()
-              .getEntityByName(Attachment.cloudImageName),
-            ExpectedMessages.fileIsAttached,
-          )
-          .toBeVisible();
+        await manageAttachmentsAssertion.assertEntityState(
+          { name: Attachment.cloudImageName },
+          FileModalSection.AllFiles,
+          'visible',
+        );
       },
     );
   },

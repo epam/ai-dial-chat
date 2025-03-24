@@ -248,7 +248,7 @@ dialTest(
       await baseAssertion.assertElementState(attachFilesModal, 'visible');
       await dialHomePage.uploadData(
         { path: Attachment.sunImageName, dataType: 'upload' },
-        () => attachFilesModal.uploadFromDeviceButton.click(),
+        () => attachFilesModal.uploadFromDevice(),
       );
       const client = await page.context().newCDPSession(page);
       await client.send('Network.enable');
@@ -316,6 +316,7 @@ dialTest(
     context,
     localStorageManager,
     manageAttachmentsAssertion,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-3304');
 
@@ -334,7 +335,7 @@ dialTest(
       async () => {
         await dialHomePage.uploadData(
           { path: Attachment.sunImageName, dataType: 'upload' },
-          () => attachFilesModal.uploadFromDeviceButton.click(),
+          () => attachFilesModal.uploadFromDevice(),
         );
         await context.setOffline(true);
         await uploadFromDeviceModal.uploadButton.click();
@@ -343,14 +344,12 @@ dialTest(
           FileModalSection.AllFiles,
           'visible',
         );
-
-        const filenameColor = await attachFilesModal
-          .getAllFilesTree()
-          .getEntityName(Attachment.sunImageName)
-          .getComputedStyleProperty(Styles.color);
-        expect
-          .soft(filenameColor[0], ExpectedMessages.attachmentNameColorIsValid)
-          .toBe(Colors.textError);
+        await baseAssertion.assertElementColor(
+          attachFilesModal
+            .getAllFilesTree()
+            .getEntityName(Attachment.sunImageName),
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textError),
+        );
         await manageAttachmentsAssertion.assertElementState(
           attachFilesModal
             .getAllFilesTree()
@@ -389,6 +388,7 @@ dialTest(
     chatBar,
     context,
     localStorageManager,
+    manageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-3303');
 
@@ -407,7 +407,7 @@ dialTest(
       async () => {
         await dialHomePage.uploadData(
           { path: Attachment.sunImageName, dataType: 'upload' },
-          () => attachFilesModal.uploadFromDeviceButton.click(),
+          () => attachFilesModal.uploadFromDevice(),
         );
         await context.setOffline(true);
         await uploadFromDeviceModal.uploadButton.click();
@@ -418,25 +418,19 @@ dialTest(
       'Set online mode, click on Reload button near loading indicator and verify file displayed in the list and change color to blue',
       async () => {
         await context.setOffline(false);
-        await attachFilesModal
-          .getAllFilesTree()
-          .attachedFileLoadingRetry(Attachment.sunImageName)
-          .click();
-        await expect
-          .soft(
-            attachFilesModal
-              .getAllFilesTree()
-              .attachedFileLoadingRetry(Attachment.sunImageName),
-            ExpectedMessages.attachmentLoadingIndicatorNotVisible,
-          )
-          .toBeHidden();
-        const filenameColor = await attachFilesModal
-          .getAllFilesTree()
-          .getEntityName(Attachment.sunImageName)
-          .getComputedStyleProperty(Styles.color);
-        expect
-          .soft(filenameColor[0], ExpectedMessages.attachmentNameColorIsValid)
-          .toBe(Colors.controlsBackgroundAccent);
+        const allFilesTreeElement = attachFilesModal.getAllFilesTree();
+        const loadingRetryElement =
+          allFilesTreeElement.attachedFileLoadingRetry(Attachment.sunImageName);
+        await loadingRetryElement.click();
+        await manageAttachmentsAssertion.assertElementState(
+          loadingRetryElement,
+          'hidden',
+          ExpectedMessages.attachmentLoadingIndicatorNotVisible,
+        );
+        await manageAttachmentsAssertion.assertElementColor(
+          allFilesTreeElement.getEntityName(Attachment.sunImageName),
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+        );
       },
     );
   },
@@ -467,7 +461,7 @@ dialTest(
         await baseAssertion.assertElementState(attachFilesModal, 'visible');
         await dialHomePage.uploadData(
           { path: Attachment.sunImageName, dataType: 'upload' },
-          () => attachFilesModal.uploadFromDeviceButton.click(),
+          () => attachFilesModal.uploadFromDevice(),
         );
         await uploadFromDeviceModal.setUploadedFilename(
           Attachment.sunImageName,
@@ -500,14 +494,12 @@ dialTest(
             ExpectedMessages.attachmentIsSuccessfullyDownloaded,
           )
           .toContain(ExpectedConstants.winAllowedSpecialSymbolsInName);
-
-        const fileBackgroundColor = await attachFilesModal
-          .getAllFilesTree()
-          .getEntityName(ExpectedConstants.allowedSpecialSymbolsInName())
-          .getComputedStyleProperty(Styles.backgroundColor);
-        expect
-          .soft(fileBackgroundColor[0], ExpectedMessages.fileIsNotHighlighted)
-          .toBe(Colors.defaultBackground);
+        await manageAttachmentsAssertion.assertElementBackgroundColors(
+          attachFilesModal
+            .getAllFilesTree()
+            .getEntityName(ExpectedConstants.allowedSpecialSymbolsInName()),
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgLayer0),
+        );
       },
     );
   },

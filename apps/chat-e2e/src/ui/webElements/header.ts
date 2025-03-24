@@ -1,3 +1,4 @@
+import { API } from '@/src/testData';
 import { HeaderSelectors } from '@/src/ui/selectors';
 import { AccountSettings } from '@/src/ui/webElements/accountSettings';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
@@ -34,7 +35,20 @@ export class Header extends BaseElement {
 
   public logo = this.getChildElementBySelector(HeaderSelectors.logo);
 
-  public async createNewConversation() {
-    await this.newEntityButton.click();
+  public async createNewConversation(options?: {
+    isHttpMethodTriggered: boolean;
+  }) {
+    if (options?.isHttpMethodTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (r) =>
+          r.url().includes(API.configurationHost) &&
+          r.request().method() === 'GET' &&
+          r.status() === 200,
+      );
+      await this.newEntityButton.click();
+      await respPromise;
+    } else {
+      await this.newEntityButton.click();
+    }
   }
 }

@@ -83,6 +83,10 @@ dialTest(
           () =>
             attachmentDropdownMenu.selectMenuOption(
               UploadMenuOptions.uploadFromDevice,
+              {
+                isHttpMethodTriggered: true,
+                triggeredHttpMethod: 'GET',
+              },
             ),
         );
         client = await page.context().newCDPSession(page);

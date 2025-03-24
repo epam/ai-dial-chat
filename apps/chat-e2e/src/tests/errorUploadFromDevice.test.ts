@@ -50,7 +50,7 @@ dialTest(
         );
         await dialHomePage.uploadData(
           { path: Attachment.longImageName, dataType: 'upload' },
-          () => attachFilesModal.uploadFromDeviceButton.click(),
+          () => attachFilesModal.uploadFromDevice(),
         );
         await baseAssertion.assertElementState(
           uploadFromDeviceModal.getUploadedFile(Attachment.longImageName),
@@ -110,7 +110,7 @@ dialTest(
       await baseAssertion.assertElementState(attachFilesModal, 'visible');
       await dialHomePage.uploadData(
         { path: Attachment.sunImageName, dataType: 'upload' },
-        () => attachFilesModal.uploadFromDeviceButton.click(),
+        () => attachFilesModal.uploadFromDevice(),
       );
     });
 
@@ -263,7 +263,7 @@ dialTest(
         await chatBar.openManageAttachmentsModal();
         await dialHomePage.uploadData(
           { path: Attachment.fileWithoutExtension, dataType: 'upload' },
-          () => attachFilesModal.uploadFromDeviceButton.click(),
+          () => attachFilesModal.uploadFromDevice(),
         );
       },
     );
