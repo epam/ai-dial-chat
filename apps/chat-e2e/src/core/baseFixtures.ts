@@ -16,7 +16,7 @@ import { KeycloakPage, LoginPage } from '@/src/ui/pages';
 import { Auth0Page } from '@/src/ui/pages/auth0Page';
 import { AzureADPage } from '@/src/ui/pages/azureADPage';
 import { Page, test as base } from '@playwright/test';
-import { allure } from 'allure-playwright';
+import * as allure from 'allure-js-commons';
 import * as process from 'node:process';
 
 export const skipReason = 'Execute test on CI env only';

@@ -17,7 +17,7 @@ config.reporter = [
     'allure-playwright',
     {
       detail: true,
-      outputFolder: `apps/chat-e2e/${ResultFolder.allureOverlayReport}`,
+      resultsDir: `apps/chat-e2e/${ResultFolder.allureOverlayReport}`,
     },
   ],
 ];

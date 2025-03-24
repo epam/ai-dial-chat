@@ -9,8 +9,9 @@ import {
   MenuOptions,
   PublishPath,
 } from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 
 const publicationsToUnpublish: Publication[] = [];
 
@@ -66,6 +67,9 @@ dialAdminTest(
       request: PublicationRequestModel;
       response: Publication;
     };
+    const expectedColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.textPrimary,
+    );
 
     await dialTest.step('Prepare 2 prompts', async () => {
       prompt1 = promptData.prepareDefaultPrompt();
@@ -214,7 +218,7 @@ dialAdminTest(
         );
         await adminPromptToApproveAssertion.assertEntityColor(
           { name: prompt1.name },
-          Colors.textPrimary,
+          expectedColor,
         );
         await adminPromptToApproveAssertion.assertEntityVersion(
           { name: prompt1.name },
@@ -222,7 +226,7 @@ dialAdminTest(
         );
         await adminPromptToApproveAssertion.assertEntityVersionColor(
           { name: prompt1.name },
-          Colors.textPrimary,
+          expectedColor,
         );
         //TODO
         // await adminPromptToApproveAssertion.assertTreeEntityIcon(
@@ -374,7 +378,7 @@ dialAdminTest(
         );
         await adminPromptToApproveAssertion.assertEntityColor(
           { name: prompt2.name },
-          Colors.textPrimary,
+          expectedColor,
         );
         await adminPromptToApproveAssertion.assertEntityVersion(
           { name: prompt2.name },
@@ -382,7 +386,7 @@ dialAdminTest(
         );
         await adminPromptToApproveAssertion.assertEntityVersionColor(
           { name: prompt2.name },
-          Colors.textPrimary,
+          expectedColor,
         );
         await adminPromptToApproveAssertion.assertElementState(
           adminPublishingApprovalModal.goToReviewButton,
@@ -499,6 +503,9 @@ dialAdminTest(
       request: PublicationRequestModel;
       response: Publication;
     };
+    const expectedColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.textPrimary,
+    );
 
     await dialTest.step('Prepare a new prompt', async () => {
       prompt1 = promptData.prepareDefaultPrompt();
@@ -637,7 +644,7 @@ dialAdminTest(
         );
         await adminPromptToApproveAssertion.assertEntityColor(
           { name: prompt1.name },
-          Colors.textPrimary,
+          expectedColor,
         );
         await adminPromptToApproveAssertion.assertEntityVersion(
           { name: prompt1.name },
@@ -645,7 +652,7 @@ dialAdminTest(
         );
         await adminPromptToApproveAssertion.assertEntityVersionColor(
           { name: prompt1.name },
-          Colors.textPrimary,
+          expectedColor,
         );
       },
     );
