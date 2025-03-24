@@ -397,6 +397,9 @@ dialAdminTest(
         await organizationConversations.selectConversation(
           adminConversation.name,
         );
+        await organizationConversationAssertion.assertSelectedConversation(
+          adminConversation.name,
+        );
         await context.clearCookies();
         await providerLogin.login(
           testInfo,

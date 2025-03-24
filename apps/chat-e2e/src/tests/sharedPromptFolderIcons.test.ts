@@ -32,6 +32,7 @@ dialTest(
     confirmationDialog,
     confirmationDialogAssertion,
     localStorageManager,
+    shareModal,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1816', 'EPMRTC-2731', 'EPMRTC-1817', 'EPMRTC-2817');
@@ -98,6 +99,10 @@ dialTest(
           await folderDropdownMenu.selectShareMenuOption();
         shareResponse = shareRequestResponse!.response;
         await shareModalAssertion.assertModalState('visible');
+        await shareModalAssertion.assertElementState(
+          shareModal.linkInputLoader,
+          'hidden',
+        );
         await shareModalAssertion.assertMessageContent(
           ExpectedConstants.sharePromptFolderText,
         );

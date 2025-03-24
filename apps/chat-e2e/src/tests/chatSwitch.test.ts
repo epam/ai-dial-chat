@@ -82,7 +82,7 @@ dialTest(
           firstConversation.name,
           Cursors.pointer,
         );
-        await conversations.getEntityByName(firstConversation.name).click();
+        await conversations.selectConversation(firstConversation.name);
         await conversationAssertion.assertSelectedConversation(
           firstConversation.name,
         );
@@ -119,7 +119,7 @@ dialTest(
     await dialTest.step(
       'Verify another conversation is not selectable during text generation',
       async () => {
-        await conversations.getEntityByName(preReplayConversation.name).click();
+        await conversations.selectConversation(preReplayConversation.name);
         await conversationAssertion.assertSelectedConversation(
           firstConversation.name,
         );
@@ -134,7 +134,7 @@ dialTest(
           'visible',
         );
         await sendMessage.stopGenerating.click();
-        await conversations.getEntityByName(replayConversation.name).click();
+        await conversations.selectConversation(replayConversation.name);
         await chat.startReplay();
       },
     );
@@ -156,7 +156,7 @@ dialTest(
     await dialTest.step(
       'Verify another conversation is not selectable during text generation in Replay',
       async () => {
-        await conversations.getEntityByName(preReplayConversation.name).click();
+        await conversations.selectConversation(preReplayConversation.name);
         await conversationAssertion.assertSelectedConversation(
           replayConversation.name,
         );

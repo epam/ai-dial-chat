@@ -52,42 +52,44 @@ export class DialHomePage extends BasePage {
     await chat.waitForState({ state: 'attached' });
     await chat.waitForChatLoaded();
     await chat.getSendMessage().waitForMessageInputLoaded();
-    if (!options?.skipSidebars) {
+    //if (!options?.skipSidebars) {
+
+    if (
+      options?.selectedSharedConversationName &&
+      !options.selectedSharedFolderName
+    ) {
       const chatBar = appContainer.getChatBar();
-      if (
-        options?.selectedSharedConversationName &&
-        !options.selectedSharedFolderName
-      ) {
-        const sharedConversation = chatBar
-          .getSharedWithMeConversationsTree()
-          .getEntityByName(options.selectedSharedConversationName);
-        await sharedConversation.waitFor();
-        await sharedConversation.waitFor({ state: 'attached' });
-        await chat.getChatHeader().waitForState();
-      } else if (
-        options?.selectedSharedConversationName &&
-        options.selectedSharedFolderName
-      ) {
-        const sharedFolderConversation = chatBar
-          .getSharedFolderConversations()
-          .getFolderEntity(
-            options.selectedSharedFolderName,
-            options.selectedSharedConversationName,
-          );
-        await sharedFolderConversation.waitFor();
-        await sharedFolderConversation.waitFor({ state: 'attached' });
-        await chat.getChatHeader().waitForState();
-      } else if (options?.isPromptShared) {
-        const promptPreviewModal = new SharedPromptPreviewModal(this.page);
-        await promptPreviewModal.waitForState();
-        await promptPreviewModal.promptName.waitForState();
-      } else {
-        await chat.getAgentInfo().waitForState({ state: 'attached' });
-        await chat.configureSettingsButton.waitForState({
-          state: 'attached',
-        });
-      }
+      const sharedConversation = chatBar
+        .getSharedWithMeConversationsTree()
+        .getEntityByName(options.selectedSharedConversationName);
+      await sharedConversation.waitFor();
+      await sharedConversation.waitFor({ state: 'attached' });
+      await chat.getChatHeader().waitForState();
+    } else if (
+      options?.selectedSharedConversationName &&
+      options.selectedSharedFolderName
+    ) {
+      const chatBar = appContainer.getChatBar();
+      const sharedFolderConversation = chatBar
+        .getSharedFolderConversations()
+        .getFolderEntity(
+          options.selectedSharedFolderName,
+          options.selectedSharedConversationName,
+        );
+      await sharedFolderConversation.waitFor();
+      await sharedFolderConversation.waitFor({ state: 'attached' });
+      await chat.getChatHeader().waitForState();
+    } else if (options?.isPromptShared) {
+      const promptPreviewModal = new SharedPromptPreviewModal(this.page);
+      await promptPreviewModal.waitForState();
+      await promptPreviewModal.promptName.waitForState();
+    } else {
+      await chat.getAgentInfo().waitForState({ state: 'attached' });
+      await chat.configureSettingsButton.waitForState({
+        state: 'attached',
+      });
     }
+    //
   }
 
   async reloadPage() {

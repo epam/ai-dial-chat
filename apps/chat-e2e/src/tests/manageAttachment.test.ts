@@ -479,6 +479,12 @@ dialTest(
           FileModalSection.AllFiles,
           'visible',
         );
+        await attachFilesModal
+          .getAllFilesTree()
+          .getEntityCheckbox(ExpectedConstants.allowedSpecialSymbolsInName())
+          .click();
+        await attachFilesModal.getModalHeader().hoverOver();
+
         await attachFilesModal.openFileDropdownMenu(
           ExpectedConstants.allowedSpecialSymbolsInName(),
           FileModalSection.AllFiles,
@@ -497,8 +503,7 @@ dialTest(
         await manageAttachmentsAssertion.assertElementBackgroundColors(
           attachFilesModal
             .getAllFilesTree()
-            .getEntityName(ExpectedConstants.allowedSpecialSymbolsInName()),
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgLayer0),
+            .getEntityByName(ExpectedConstants.allowedSpecialSymbolsInName()),
         );
       },
     );

@@ -44,6 +44,7 @@ export class DropdownMenu extends Menu {
 
   public async selectShareMenuOption() {
     const response = await this.selectMenuOption(MenuOptions.share, {
+      isHttpMethodTriggered: true,
       triggeredHttpMethod: 'POST',
     });
     if (response !== undefined) {

@@ -34,8 +34,6 @@ dialTest(
     chatAssertion,
     localStorageAssertion,
     marketplaceAgentsSection,
-    marketplaceAgents,
-    marketplaceAgentsAssertion,
     toast,
   }) => {
     dialTest.slow();
@@ -202,8 +200,8 @@ dialTest(
       'Create a new conversation and verify the second model is still selected',
       async () => {
         await header.createNewConversation();
-        await marketplaceAgentsAssertion.assertElementState(
-          marketplaceAgents.getAgent(initialModel2),
+        await talkToAgentDialogAssertion.assertAgentState(
+          initialModel2,
           'visible',
         );
         await talkToAgentDialogAssertion.assertAgentIsSelected(initialModel2);
