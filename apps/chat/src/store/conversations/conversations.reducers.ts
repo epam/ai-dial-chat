@@ -406,7 +406,7 @@ export const conversationsSlice = createSlice({
       });
       state.newAddedFolderId = payload.id;
     },
-    deleteFolder: (state, _action: PayloadAction<{ folderId?: string }>) =>
+    deleteFolder: (state, _action: PayloadAction<{ folderId: string }>) =>
       state,
     deleteTemporaryFolder: (
       state,
@@ -438,7 +438,10 @@ export const conversationsSlice = createSlice({
       state,
       {
         payload,
-      }: PayloadAction<{ folderId: string; values: Partial<FolderInterface> }>,
+      }: PayloadAction<{
+        folderId: string;
+        values: Partial<FolderInterface>;
+      }>,
     ) => {
       state.folders = state.folders.map((folder) => {
         if (folder.id === payload.folderId) {

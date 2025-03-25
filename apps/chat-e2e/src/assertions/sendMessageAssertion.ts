@@ -33,10 +33,11 @@ export class SendMessageAssertion extends BaseAssertion {
   }
 
   public async assertMessageValue(expectedValue: string | undefined) {
-    const messageValue = await this.sendMessage.getMessage();
-    expect
-      .soft(messageValue, ExpectedMessages.messageContentIsValid)
-      .toBe(expectedValue ?? '');
+    await super.assertElementText(
+      this.sendMessage.messageInput,
+      expectedValue ?? '',
+      ExpectedMessages.messageContentIsValid,
+    );
   }
 
   public async assertContinueReplayButtonState(expectedState: ElementState) {

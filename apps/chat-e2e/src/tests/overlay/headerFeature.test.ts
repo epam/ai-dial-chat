@@ -112,7 +112,8 @@ dialOverlayTest(
 );
 
 dialOverlayTest(
-  '[Overlay] Display conversations panel - Feature.ConversationsSection.\n' +
+  '[Overlay] Chat and Prompt panels stay hidden by default even when Feature.AdvancedView is enabled.\n' +
+    '[Overlay] Display conversations panel - Feature.ConversationsSection.\n' +
     '[Overlay] Display prompts panel - Feature.PromptsSection.\n' +
     '[Overlay] Display conversation sharing - ConversationsSharing.\n' +
     '[Overlay] Display prompts sharing - PromptsSharing.\n' +
@@ -128,6 +129,7 @@ dialOverlayTest(
     overlayHomePage,
     overlayHeader,
     overlayChatBar,
+    overlayPromptBar,
     overlayConversations,
     overlayConversationDropdownMenu,
     overlayPublishingRequestModal,
@@ -151,6 +153,7 @@ dialOverlayTest(
     setTestIds,
   }) => {
     setTestIds(
+      'EPMRTC-5779',
       'EPMRTC-3759',
       'EPMRTC-3760',
       'EPMRTC-3771',
@@ -175,13 +178,21 @@ dialOverlayTest(
       await overlayDataInjector.createPrompts([prompt]);
     });
 
-    await dialTest.step('Verify header is visible', async () => {
-      await overlayHomePage.navigateToUrl(
-        OverlaySandboxUrls.enabledHeaderSandboxUrl,
-      );
-      await overlayHomePage.waitForPageLoaded();
-      await overlayBaseAssertion.assertElementState(overlayHeader, 'visible');
-    });
+    await dialTest.step(
+      'Verify header is visible, side panels are hidden',
+      async () => {
+        await overlayHomePage.navigateToUrl(
+          OverlaySandboxUrls.enabledHeaderSandboxUrl,
+        );
+        await overlayHomePage.waitForPageLoaded();
+        await overlayBaseAssertion.assertElementState(overlayHeader, 'visible');
+        await overlayBaseAssertion.assertElementState(overlayChatBar, 'hidden');
+        await overlayBaseAssertion.assertElementState(
+          overlayPromptBar,
+          'hidden',
+        );
+      },
+    );
 
     await dialTest.step('Verify side bar toggles are available', async () => {
       await overlayBaseAssertion.assertElementState(
@@ -629,6 +640,34 @@ dialOverlayTest(
         await overlayHeader.leftPanelToggle.click();
         await overlayBaseAssertion.assertElementState(
           overlayChatBar.attachments,
+          'hidden',
+        );
+      },
+    );
+  },
+);
+
+dialOverlayTest(
+  '[Overlay] Hide Settings - Feature.HideUserSettings',
+  async ({
+    overlayHomePage,
+    overlayAccountSettings,
+    overlayProfilePanel,
+    overlayBaseAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-5692');
+
+    await dialTest.step(
+      'Click on the user avatar and verify Settings option is not displayed on the panel',
+      async () => {
+        await overlayHomePage.navigateToUrl(
+          OverlaySandboxUrls.enableHideUserSettingsUrl,
+        );
+        await overlayHomePage.waitForPageLoaded();
+        await overlayAccountSettings.click();
+        await overlayBaseAssertion.assertElementState(
+          overlayProfilePanel.settings,
           'hidden',
         );
       },

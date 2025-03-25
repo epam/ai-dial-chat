@@ -40,12 +40,12 @@ dialTest(
   async ({
     dialHomePage,
     conversations,
+    conversationAssertion,
     sendMessage,
     chatMessages,
     setTestIds,
     header,
     baseAssertion,
-    conversationAssertion,
     chatBar,
   }) => {
     setTestIds('EPMRTC-583', 'EPMRTC-776', 'EPMRTC-2894', 'EPMRTC-2957');
@@ -278,6 +278,8 @@ dialTest(
     toast,
     renameConversationModal,
     localStorageManager,
+    baseAssertion,
+    conversationAssertion,
   }) => {
     setTestIds(
       'EPMRTC-585',
@@ -305,16 +307,11 @@ dialTest(
     await renameConversationModal.editConversationNameWithEnter(
       newLongNameWithMiddleSpacesEndDot,
     );
-
-    await expect
-      .soft(toast.getElementLocator(), ExpectedMessages.noErrorToastIsShown)
-      .toBeHidden();
-    const actualName = await conversations
-      .getEntityName(expectedName)
-      .getElementInnerContent();
-    expect
-      .soft(actualName, ExpectedMessages.conversationNameUpdated)
-      .toBe(expectedName);
+    await baseAssertion.assertElementState(toast, 'hidden');
+    await conversationAssertion.assertEntityState(
+      { name: expectedName },
+      'visible',
+    );
 
     const isChatHeaderTitleTruncated =
       await chatHeader.chatTitle.isElementWidthTruncated();
@@ -326,13 +323,11 @@ dialTest(
       .toBeTruthy();
     await errorPopup.cancelPopup();
     await chatHeader.chatTitle.hoverOver();
-    const tooltipChatHeaderTitle = await tooltip.getContent();
-    expect
-      .soft(
-        tooltipChatHeaderTitle,
-        ExpectedMessages.headerTitleCorrespondRequest,
-      )
-      .toBe(expectedName);
+    await baseAssertion.assertElementText(
+      tooltip,
+      expectedName,
+      ExpectedMessages.headerTitleCorrespondRequest,
+    );
 
     const isTooltipChatHeaderTitleTruncated =
       await tooltip.isElementWidthTruncated();

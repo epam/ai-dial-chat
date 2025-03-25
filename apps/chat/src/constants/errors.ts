@@ -7,6 +7,7 @@ export const errorsMessages = {
   401: 'Authorization failed. Please reload the page and login again.',
   403: 'Forbidden',
   400: 'Invalid request',
+  404: 'Not found',
   noAssistantModelSelected:
     'No assistant model selected. Please select an assistant model and try again.',
   contentFiltering:

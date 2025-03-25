@@ -469,7 +469,7 @@ dialTest(
         await expect
           .soft(
             uploadFromDeviceModal.getUploadedFilenameInputLocator(expectedName),
-            ExpectedMessages.fieldIsInFocus,
+            ExpectedMessages.elementIsInFocus,
           )
           .toBeFocused();
       },

@@ -47,7 +47,7 @@ type Validators = {
   [K in keyof CustomApplicationFormData]?: Options<K>;
 };
 
-export const validators: Validators = {
+const validators: Validators = {
   features: {
     validate: (data) => {
       if (!data?.trim()) return true;

@@ -1,5 +1,6 @@
 import { IconPlus, IconX } from '@tabler/icons-react';
 import {
+  ChangeEvent,
   ClipboardEvent,
   Fragment,
   MouseEvent,
@@ -14,7 +15,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { isVersionValid } from '@/src/utils/app/common';
+import { isVersionValid, prepareEntityName } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import {
@@ -236,6 +237,22 @@ export function PublishModal<
     [],
   );
 
+  const onChangePublicationRequestName = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      if (e.target.value.length > 160) return;
+      setPublishRequestName(e.target.value);
+    },
+    [],
+  );
+
+  const onChangePublicationAuthor = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      if (e.target.value.length > 50) return;
+      setPublicationAuthor(e.target.value);
+    },
+    [],
+  );
+
   const handlePublish = useCallback(
     (e: MouseEvent<HTMLButtonElement> | ClipboardEvent<HTMLInputElement>) => {
       e.preventDefault();
@@ -246,8 +263,10 @@ export function PublishModal<
       );
 
       const trimmedPath = path.trim();
-      const trimmedName = publishRequestName.trim();
-      const trimmedPublicationAuthor = publicationAuthor.trim();
+      const cleanPublishRequestName = prepareEntityName(publishRequestName);
+      const cleanPublicationAuthor = prepareEntityName(publicationAuthor, {
+        maxNameLength: 50,
+      });
       const notEmptyFilters = otherTargetAudienceFilters.filter(
         (filter) =>
           // TODO: uncomment when it will be supported on core
@@ -303,8 +322,8 @@ export function PublishModal<
 
       dispatch(
         PublicationActions.publish({
-          name: trimmedName,
-          displayAuthor: trimmedPublicationAuthor,
+          name: cleanPublishRequestName,
+          displayAuthor: cleanPublicationAuthor,
           targetFolder: constructPath(PUBLIC_URL_PREFIX, trimmedPath),
           resources: [
             ...(publishAction === PublishActions.DELETE
@@ -487,7 +506,7 @@ export function PublishModal<
         <div className="px-3 py-4 md:pl-4 md:pr-10">
           <input
             autoFocus
-            onChange={(e) => setPublishRequestName(e.target.value)}
+            onChange={onChangePublicationRequestName}
             value={publishRequestName}
             placeholder={
               publishAction === PublishActions.ADD
@@ -554,7 +573,7 @@ export function PublishModal<
                   </h3>
                   <div className="input-form mx-0 flex grow cursor-default items-center border-primary px-3 py-2">
                     <input
-                      onChange={(e) => setPublicationAuthor(e.target.value)}
+                      onChange={onChangePublicationAuthor}
                       value={publicationAuthor}
                       placeholder={t(`Type publication's author name...`)}
                       className="flex w-full justify-between truncate whitespace-pre break-all bg-transparent outline-none"

@@ -557,7 +557,8 @@ dialSharedWithMeTest(
 dialSharedWithMeTest(
   'Arrow icon appears for file in Manage attachments if it was shared along with chat. The files are located in root "All files" and in folder. The files are used in the prompt request.\n' +
     'Unshare image file. Arrow icon disappears after Unshare on the confirmation message\n' +
-    'Unshared by the owner file disappears from "Shared with me"',
+    'Unshared by the owner file disappears from "Shared with me". User1 shares two files, unshares one file.\n' +
+    'Unshared by the owner file disappears from "Shared with me". User1 shares one file, unshares one file.',
   async ({
     dialHomePage,
     conversationData,
@@ -578,12 +579,14 @@ dialSharedWithMeTest(
     additionalShareUserSendMessage,
     additionalShareUserAttachmentDropdownMenu,
     additionalShareUserLocalStorageManager,
+    additionalShareUserAttachFilesModal,
     additionalShareUserManageAttachmentsAssertion,
     additionalShareUserSharedWithMeConversations,
     additionalShareUserChatMessages,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3518', 'EPMRTC-3102', 'EPMRTC-3101');
+    dialSharedWithMeTest.slow();
+    setTestIds('EPMRTC-3518', 'EPMRTC-3102', 'EPMRTC-3101', 'EPMRTC-5524');
     let imageConversation: Conversation;
     let firstImageUrl: string;
     let secondImageUrl: string;
@@ -679,29 +682,11 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'User2 opens the file in the shared chat and verifies pictures are shown in requests',
+      'User 2 open the attach modal and verifies that the file is visible',
       async () => {
         await additionalShareUserLocalStorageManager.setShowSideBarPanels();
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserSharedWithMeConversations.selectConversation(
-          imageConversation.name,
-        );
-
-        await additionalShareUserChatMessages.expandChatMessageAttachment(
-          1,
-          Attachment.cloudImageName,
-        );
-        await additionalShareUserChatMessages.expandChatMessageAttachment(
-          3,
-          Attachment.sunImageName,
-        );
-      },
-    );
-
-    await dialSharedWithMeTest.step(
-      'User 2 open the attach modal and verifies that the file is visible',
-      async () => {
         await additionalShareUserConversations.selectConversation(
           secondUserEmptyConversation.name,
         );
@@ -740,8 +725,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'User2 opens the file in the shared chat and verifies the picture is shown in requests',
       async () => {
-        await additionalShareUserDialHomePage.reloadPage();
-        await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserAttachFilesModal.closeButton.click();
         await additionalShareUserSharedWithMeConversations.selectConversation(
           imageConversation.name,
         );
@@ -749,10 +733,12 @@ dialSharedWithMeTest(
         await additionalShareUserChatMessages.expandChatMessageAttachment(
           1,
           Attachment.cloudImageName,
+          { isHttpMethodTriggered: false },
         );
         await additionalShareUserChatMessages.expandChatMessageAttachment(
           3,
           Attachment.sunImageName,
+          { isHttpMethodTriggered: false },
         );
       },
     );
@@ -774,6 +760,7 @@ dialSharedWithMeTest(
           FileModalSection.SharedWithMe,
           'hidden',
         );
+        await additionalShareUserAttachFilesModal.closeButton.click();
       },
     );
 
@@ -799,6 +786,58 @@ dialSharedWithMeTest(
           sharedFiles,
           secondImageUrl,
           'visible',
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Select "Unshare" option for the second file and verify arrow icon disappears for file',
+      async () => {
+        await attachFilesModal.openFileDropdownMenu(
+          Attachment.sunImageName,
+          FileModalSection.AllFiles,
+        );
+        await attachFilesModal
+          .getFileDropdownMenu()
+          .selectMenuOption(MenuOptions.unshare);
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
+        await manageAttachmentsAssertion.assertSharedFileArrowIconState(
+          { name: Attachment.sunImageName },
+          'hidden',
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'User 2 open the attach modal and verifies "Shared with me" section is not visible',
+      async () => {
+        await additionalShareUserSendMessage.attachmentMenuTrigger.click();
+        await additionalShareUserAttachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
+        );
+        await additionalShareUserManageAttachmentsAssertion.assertElementState(
+          additionalShareUserAttachFilesModal.getSectionElement(
+            FileModalSection.SharedWithMe,
+          ),
+          'hidden',
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Verify no files are shared with another user',
+      async () => {
+        const sharedFiles =
+          await additionalUserShareApiHelper.listSharedWithMeFiles();
+        await shareApiAssertion.assertSharedWithMeEntityState(
+          sharedFiles,
+          firstImageUrl,
+          'hidden',
+        );
+        await shareApiAssertion.assertSharedWithMeEntityState(
+          sharedFiles,
+          secondImageUrl,
+          'hidden',
         );
       },
     );

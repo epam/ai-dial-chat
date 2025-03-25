@@ -9,6 +9,7 @@ import {
   PublicationReviewControl,
   PublishingApprovalModal,
   PublishingRequestModal,
+  Toast,
   VariableModalDialog,
 } from '../ui/webElements';
 
@@ -27,7 +28,7 @@ import {
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { PublishedPromptPreviewModalAssertion } from '@/src/assertions/publishing/publishedPromptPreviewModalAssertion';
 import { PublishingApprovalModalAssertion } from '@/src/assertions/publishing/publishingApprovalModalAssertion';
-import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
+import { SideBarConversationAssertion } from '@/src/assertions/sideBarConversationAssertion';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
 import { isApiStorageType } from '@/src/hooks/global-setup';
@@ -50,6 +51,7 @@ import {
   PromptsTree,
 } from '@/src/ui/webElements/entityTree';
 import { PublishedPromptPreviewModal } from '@/src/ui/webElements/publishedPromptPreviewModal';
+import { ShareModal } from '@/src/ui/webElements/shareModal';
 import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { Page } from '@playwright/test';
 
@@ -76,6 +78,8 @@ const dialAdminTest = dialTest.extend<{
   adminBrowserStorageInjector: BrowserStorageInjector;
   adminDataInjector: DataInjectorInterface;
   adminPublishingRequestModal: PublishingRequestModal;
+  adminToast: Toast;
+  adminShareModal: ShareModal;
   adminApproveRequiredConversationsAssertion: FolderAssertion<ApproveRequiredConversationsTree>;
   adminApproveRequiredPromptsAssertion: FolderAssertion<ApproveRequiredPrompts>;
   adminOrganizationFolderConversationAssertions: FolderAssertion<Folders>;
@@ -100,7 +104,7 @@ const dialAdminTest = dialTest.extend<{
   adminOrganizationFolderDropdownMenuAssertion: MenuAssertion;
   adminApproveRequiredConversationDropdownMenuAssertion: MenuAssertion;
   adminTooltipAssertion: TooltipAssertion;
-  adminOrganizationConversationAssertion: SideBarEntityAssertion<OrganizationConversationsTree>;
+  adminOrganizationConversationAssertion: SideBarConversationAssertion<OrganizationConversationsTree>;
   adminPublishedPromptPreviewModalAssertion: PublishedPromptPreviewModalAssertion;
   adminVariableModalAssertion: VariableModalAssertion;
   adminConversationAssertion: ConversationAssertion;
@@ -285,6 +289,14 @@ const dialAdminTest = dialTest.extend<{
     );
     await use(adminBrowserStorageInjector);
   },
+  adminToast: async ({ adminPage }, use) => {
+    const adminToast = new Toast(adminPage);
+    await use(adminToast);
+  },
+  adminShareModal: async ({ adminPage }, use) => {
+    const adminShareModal = new ShareModal(adminPage);
+    await use(adminShareModal);
+  },
   adminPublishingRequestModal: async ({ adminPage }, use) => {
     const adminPublishingRequestModal = new PublishingRequestModal(adminPage);
     await use(adminPublishingRequestModal);
@@ -389,7 +401,7 @@ const dialAdminTest = dialTest.extend<{
     use,
   ) => {
     const adminOrganizationConversationAssertion =
-      new SideBarEntityAssertion<OrganizationConversationsTree>(
+      new SideBarConversationAssertion<OrganizationConversationsTree>(
         adminOrganizationConversations,
       );
     await use(adminOrganizationConversationAssertion);

@@ -74,10 +74,19 @@ export const getCommonPageProps: GetServerSideProps = async ({
   ) {
     session = await getServerSession(req, res, authOptions);
     if (!isServerSessionValid(session)) {
+      let callbackUrl: string | undefined;
+      if (req.url) {
+        const url = new URL(
+          req.url,
+          `${req.headers['x-forwarded-proto']}://${req.headers.host}`,
+        );
+        url.searchParams.delete('callbackUrl');
+        callbackUrl = url.toString();
+      }
       return {
         redirect: {
           permanent: false,
-          destination: `/api/auth/signin${req.url ? `?callbackUrl=${encodeURIComponent(req.url)}` : ''}`,
+          destination: `/api/auth/signin${req.url ? `?callbackUrl=${encodeURIComponent(callbackUrl ?? '/')}` : ''}`,
         },
       };
     }

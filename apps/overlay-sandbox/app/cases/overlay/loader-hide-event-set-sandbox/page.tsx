@@ -5,13 +5,20 @@ import {
   commonOverlayProps,
 } from '../../components/chatOverlayWrapper';
 
-import { Feature } from '@epam/ai-dial-shared';
+import {
+  ChatOverlayOptions,
+  Feature,
+  OverlayEvents,
+} from '@epam/ai-dial-shared';
 
 const overlayOptions = {
   ...commonOverlayProps,
+  loaderHideEvent: OverlayEvents.readyToInteract,
+  signInOptions: {
+    autoSignIn: true,
+    signInProvider: 'keycloak',
+  },
   enabledFeatures: [
-    Feature.Header,
-    Feature.Footer,
     Feature.ConversationsSection,
     Feature.PromptsSection,
     Feature.TopSettings,
@@ -19,22 +26,14 @@ const overlayOptions = {
     Feature.TopChatInfo,
     Feature.TopChatModelSettings,
     Feature.EmptyChatSettings,
+    Feature.Header,
+    Feature.Footer,
     Feature.RequestApiKey,
     Feature.ReportAnIssue,
     Feature.Likes,
     Feature.Marketplace,
-    Feature.HideNewConversation,
-    Feature.ConversationsSharing,
-    Feature.PromptsSharing,
-    Feature.AttachmentsManager,
-    Feature.ConversationsPublishing,
-    Feature.PromptsPublishing,
-    Feature.CustomLogo,
-    Feature.MessageTemplates,
-    Feature.ShowConversationsSectionByDefault,
-    Feature.ShowPromptsSectionByDefault,
   ],
-};
+} as ChatOverlayOptions;
 
 export default function Index() {
   return <ChatOverlayWrapper overlayOptions={overlayOptions} />;

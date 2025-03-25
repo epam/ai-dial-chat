@@ -263,7 +263,8 @@ dialTest(
 
 dialSharedWithMeTest(
   'Sources: check Shared with me.\n' +
-    'Sources: check Public. And Sorting order - alphabetically',
+    'Sources: check Public. And Sorting order - alphabetically.\n' +
+    'Copy link is not available for Shared with me applications',
   async ({
     customApplicationBuilder,
     applicationApiHelper,
@@ -281,10 +282,11 @@ dialSharedWithMeTest(
     additionalShareUserMarketplaceFilter,
     additionalShareUserMarketplaceAgentsSection,
     additionalShareUserMarketplaceSidebar,
+    additionalShareUserAgentDetailsModal,
     setTestIds,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-5237', 'EPMRTC-5233');
+    setTestIds('EPMRTC-5237', 'EPMRTC-5233', 'EPMRTC-5276');
     const sharedAppName = GeneratorUtil.randomApplicationName();
     const publishedAppName = GeneratorUtil.randomApplicationName();
     const additionalUserAppName = GeneratorUtil.randomApplicationName();
@@ -386,6 +388,22 @@ dialSharedWithMeTest(
           [publishedAppName, additionalUserAppName],
           MarketplaceExpectedMessages.filteredAgentsAreValid,
         );
+      },
+    );
+
+    await dialTest.step(
+      'Open shared app and verify no Copy link is available',
+      async () => {
+        const sharedAppElement =
+          await additionalShareUserMarketplaceAgentsSection.findAgentElement(
+            sharedAppName,
+          );
+        await sharedAppElement.click();
+        await baseAssertion.assertElementState(
+          additionalShareUserAgentDetailsModal.copyLink,
+          'hidden',
+        );
+        await additionalShareUserAgentDetailsModal.closeButton.click();
       },
     );
 
