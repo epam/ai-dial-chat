@@ -6,7 +6,7 @@ import { BucketUtil } from '@/src/utils';
 import { Page } from '@playwright/test';
 import * as fs from 'node:fs';
 import path from 'path';
-import { Download } from 'playwright-chromium';
+import { CDPSession, Download } from 'playwright-chromium';
 
 export interface UploadDownloadData {
   path: string;
@@ -125,6 +125,33 @@ export class BasePage {
         setTimeout(f, timeout ?? responseThrottlingTimeout),
       );
       await route.continue();
+    });
+  }
+
+  async emulateSlowNetworkConditions(conditions?: {
+    offline?: boolean;
+    latency?: number;
+    downloadThroughput?: number;
+    uploadThroughput?: number;
+  }) {
+    const client = await this.page.context().newCDPSession(this.page);
+    await client.send('Network.enable');
+    await client.send('Network.emulateNetworkConditions', {
+      offline: conditions?.offline ?? false,
+      latency: conditions?.latency ?? 20, // keep latency low (20ms) to not affect UI responsiveness
+      downloadThroughput:
+        conditions?.downloadThroughput ?? (5 * 1024 * 1024) / 8, // 5 Mbps download - reasonably fast
+      uploadThroughput: conditions?.uploadThroughput ?? (50 * 1024) / 8, // 50 Kbps upload - very slow,
+    });
+    return client;
+  }
+
+  async stopNetworkConditionsEmulating(client: CDPSession) {
+    await client.send('Network.emulateNetworkConditions', {
+      offline: false,
+      latency: 0,
+      downloadThroughput: -1, // Disable throttling
+      uploadThroughput: -1, // Disable throttling
     });
   }
 

@@ -179,6 +179,7 @@ dialSharedWithMeTest(
     sharedFolderConversations,
     sharedWithMeConversationAssertion,
     localStorageManager,
+    chatMessages,
   }) => {
     setTestIds(
       'EPMRTC-4791',
@@ -242,6 +243,12 @@ dialSharedWithMeTest(
         await conversations.selectConversation(firstConversation.name);
         await conversationAssertion.assertSelectedConversation(
           firstConversation.name,
+        );
+        await chatMessagesAssertion.assertElementState(
+          chatMessages.chatMessages.getNthElement(
+            firstConversation.messages.length,
+          ),
+          'visible',
         );
         await chatMessagesAssertion.assertMessagesCount(
           firstConversation.messages.length,

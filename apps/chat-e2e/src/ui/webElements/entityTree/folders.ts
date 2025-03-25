@@ -433,15 +433,18 @@ export class Folders extends BaseElement {
     entityName: string,
     { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
-    const folderEntity = this.getFolderEntity(folderName, entityName);
+    const folderEntityName = this.getFolderEntityNameElement(
+      folderName,
+      entityName,
+    );
     if (isApiStorageType && isHttpMethodTriggered) {
       const respPromise = this.page.waitForResponse(
         (resp) => resp.request().method() === 'GET',
       );
-      await folderEntity.click();
+      await folderEntityName.click();
       return respPromise;
     }
-    await folderEntity.click();
+    await folderEntityName.click();
   }
 
   public async openFolderEntityDropdownMenu(

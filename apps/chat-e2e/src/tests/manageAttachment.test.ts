@@ -14,6 +14,7 @@ import { AttachFilesTree } from '@/src/ui/webElements/entityTree';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Locator, expect } from '@playwright/test';
+import { CDPSession } from 'playwright-chromium';
 
 let modelsWithAttachments: DialAIEntityModel[];
 dialTest.beforeAll(async () => {
@@ -227,7 +228,6 @@ dialTest(
     localStorageManager,
     baseAssertion,
     manageAttachmentsAssertion,
-    page,
   }) => {
     setTestIds('EPMRTC-3302');
     let removeAttachedFileIconElement: BaseElement;
@@ -250,14 +250,7 @@ dialTest(
         { path: Attachment.sunImageName, dataType: 'upload' },
         () => attachFilesModal.uploadFromDevice(),
       );
-      const client = await page.context().newCDPSession(page);
-      await client.send('Network.enable');
-      await client.send('Network.emulateNetworkConditions', {
-        offline: false,
-        latency: 20, // 200ms latency
-        downloadThroughput: (5 * 1024 * 1024) / 8, // 780 kbps
-        uploadThroughput: (50 * 1024) / 8, // 100 kbps (slow upload)
-      });
+      await dialHomePage.emulateSlowNetworkConditions();
       await baseAssertion.assertElementState(
         uploadFromDeviceModal.getUploadedFile(Attachment.sunImageName),
         'visible',
@@ -313,12 +306,12 @@ dialTest(
     attachFilesModal,
     uploadFromDeviceModal,
     chatBar,
-    context,
     localStorageManager,
     manageAttachmentsAssertion,
     baseAssertion,
   }) => {
     setTestIds('EPMRTC-3304');
+    let client: CDPSession;
 
     await dialTest.step(
       'Open "Manage attachments" modal through chat side bar menu icon',
@@ -327,6 +320,10 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
+        await manageAttachmentsAssertion.assertElementState(
+          attachFilesModal,
+          'visible',
+        );
       },
     );
 
@@ -337,7 +334,9 @@ dialTest(
           { path: Attachment.sunImageName, dataType: 'upload' },
           () => attachFilesModal.uploadFromDevice(),
         );
-        await context.setOffline(true);
+        client = await dialHomePage.emulateSlowNetworkConditions({
+          offline: true,
+        });
         await uploadFromDeviceModal.uploadButton.click();
         await manageAttachmentsAssertion.assertEntityState(
           { name: Attachment.sunImageName },
@@ -363,7 +362,7 @@ dialTest(
     await dialTest.step(
       'Set online mode, click on cancel button near loading indicator and verify file disappears from the list',
       async () => {
-        await context.setOffline(false);
+        await dialHomePage.stopNetworkConditionsEmulating(client);
         await attachFilesModal
           .getAllFilesTree()
           .removeAttachedFileIcon(Attachment.sunImageName)
@@ -386,11 +385,11 @@ dialTest(
     attachFilesModal,
     uploadFromDeviceModal,
     chatBar,
-    context,
     localStorageManager,
     manageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-3303');
+    let client: CDPSession;
 
     await dialTest.step(
       'Open "Manage attachments" modal through chat side bar menu icon',
@@ -409,7 +408,9 @@ dialTest(
           { path: Attachment.sunImageName, dataType: 'upload' },
           () => attachFilesModal.uploadFromDevice(),
         );
-        await context.setOffline(true);
+        client = await dialHomePage.emulateSlowNetworkConditions({
+          offline: true,
+        });
         await uploadFromDeviceModal.uploadButton.click();
       },
     );
@@ -417,7 +418,7 @@ dialTest(
     await dialTest.step(
       'Set online mode, click on Reload button near loading indicator and verify file displayed in the list and change color to blue',
       async () => {
-        await context.setOffline(false);
+        await dialHomePage.stopNetworkConditionsEmulating(client);
         const allFilesTreeElement = attachFilesModal.getAllFilesTree();
         const loadingRetryElement =
           allFilesTreeElement.attachedFileLoadingRetry(Attachment.sunImageName);

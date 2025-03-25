@@ -240,7 +240,6 @@ dialTest(
     sendMessageInputAttachments,
     localStorageManager,
     baseAssertion,
-    page,
   }) => {
     setTestIds('EPMRTC-1767', 'EPMRTC-1904');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -266,14 +265,7 @@ dialTest(
               },
             ),
         );
-        const client = await page.context().newCDPSession(page);
-        await client.send('Network.enable');
-        await client.send('Network.emulateNetworkConditions', {
-          offline: false,
-          latency: 20, // 200ms latency
-          downloadThroughput: (5 * 1024 * 1024) / 8, // 780 kbps
-          uploadThroughput: (50 * 1024) / 8, // 100 kbps (slow upload)
-        });
+        await dialHomePage.emulateSlowNetworkConditions();
         await uploadFromDeviceModal.uploadButton.click();
       },
     );
