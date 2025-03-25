@@ -1,5 +1,5 @@
+import { ExampleURLs } from '@/src/testData';
 import { AddApplicationFormSelector } from '@/src/ui/selectors';
-import { BaseElement } from '@/src/ui/webElements';
 import { AppEditorForm } from '@/src/ui/webElements/appEditor/appEditorForm';
 import { Locator, Page } from '@playwright/test';
 
@@ -14,7 +14,7 @@ export class AppEditorViewForm extends AppEditorForm {
 
   public async fillInAppFields(options?: { chatCompletionUrl?: string }) {
     const chatCompletionUrl =
-      options?.chatCompletionUrl ?? 'http://test.example.com';
+      options?.chatCompletionUrl ?? ExampleURLs.chatCompletionURL;
     await this.chatCompletionUrl.fillInInput(chatCompletionUrl);
   }
 }

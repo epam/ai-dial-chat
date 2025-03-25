@@ -1,4 +1,3 @@
-// createCustomApp.test.ts
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -23,7 +22,6 @@ dialTest.only(
     marketplaceAgentsSection,
     setTestIds,
     baseAssertion,
-    appEditorContainer,
   }) => {
     setTestIds('EPMRTC-5130');
     const appName = GeneratorUtil.randomApplicationName();

@@ -54,7 +54,7 @@ export class AppEditorHeader extends BaseElement {
     return this.singleStepTitle.getElementLocator().all();
   }
 
-  public async getStepByTitle(title: string, index: number = 0) {
+  public async getStepByTitle(title: string, index = 0) {
     return this.stepsContainer
       .getElementLocator()
       .locator(ApplicationEditorHeader.singleStepLink)

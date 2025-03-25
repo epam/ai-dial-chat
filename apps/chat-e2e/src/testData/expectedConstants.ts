@@ -282,6 +282,10 @@ export enum UploadMenuOptions {
   uploadFromDevice = 'Upload from device',
 }
 
+export enum ExampleURLs {
+  chatCompletionURL = 'http://test.example.com',
+}
+
 export enum AddAppMenuOptions {
   codeApp = 'Code app',
   customApp = 'Custom app',
