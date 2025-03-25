@@ -69,6 +69,9 @@ dialTest(
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await conversations.selectConversation(secondConversation.name);
+      await conversationAssertion.assertSelectedConversation(
+        secondConversation.name,
+      );
     });
 
     await dialTest.step('Hover over chat1', async () => {

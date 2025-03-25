@@ -1307,7 +1307,11 @@ dialTest(
     chatHeader,
     compareConversation,
     conversationDropdownMenu,
+    chat,
+    conversationToCompareAssertion,
+    chatAssertion,
     leftChatHeader,
+    chatHeaderAssertion,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-542', 'EPMRTC-543', 'EPMRTC-548', 'EPMRTC-828');
@@ -1349,12 +1353,9 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
-        await expect
-          .soft(
-            compareConversation.getElementLocator(),
-            ExpectedMessages.conversationToCompareVisible,
-          )
-          .toBeVisible();
+        await conversationToCompareAssertion.assertConversationToCompareState(
+          'visible',
+        );
         await compareConversation.checkShowAllConversations();
         await compareConversation.selectCompareConversation(
           secondConversation.name,
@@ -1371,7 +1372,11 @@ dialTest(
       'Create new chat and verify Compare mode is closed',
       async () => {
         await header.createNewConversation();
-        await compare.waitForState({ state: 'hidden' });
+        await conversationToCompareAssertion.assertElementState(
+          compare,
+          'hidden',
+        );
+        await chatAssertion.assertElementState(chat.chatSpinner, 'hidden');
       },
     );
 
@@ -1380,12 +1385,15 @@ dialTest(
       async () => {
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
-        await expect
-          .soft(
-            leftChatHeader.deleteConversationFromComparison.getElementLocator(),
-            ExpectedMessages.closeChatIconIsNotVisible,
-          )
-          .toBeHidden();
+        await conversationToCompareAssertion.assertElementState(
+          compareConversation,
+          'visible',
+        );
+        await chatHeaderAssertion.assertElementState(
+          leftChatHeader.deleteConversationFromComparison,
+          'hidden',
+          ExpectedMessages.closeChatIconIsNotVisible,
+        );
         await compareConversation.checkShowAllConversations();
         const overflowProp = await compareConversation
           .compareConversationRowName(secondConversation.name)
@@ -1400,9 +1408,11 @@ dialTest(
       'Switch to comparing conversation and verify Compare mode is closed',
       async () => {
         await conversations.selectConversation(firstConversation.name);
-        await expect
-          .soft(compare.getElementLocator(), ExpectedMessages.compareModeClosed)
-          .toBeHidden();
+        await conversationToCompareAssertion.assertElementState(
+          compare,
+          'hidden',
+          ExpectedMessages.compareModeClosed,
+        );
       },
     );
   },
@@ -1583,8 +1593,15 @@ dialTest(
         await compareConversation.selectCompareConversation(
           secondConversation.name,
         );
+        await compare.waitForComparedConversationsLoaded();
         await chatMessages.openDeleteCompareRowMessageDialog(Side.left, 1);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
+        await baseAssertion.assertElementState(
+          chatMessages.compareChatMessageRows.getNthElement(
+            firstConversationRequests.length + 2,
+          ),
+          'hidden',
+        );
 
         await baseAssertion.assertElementsCount(
           chatMessages.compareChatMessages,
