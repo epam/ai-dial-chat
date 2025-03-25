@@ -111,6 +111,7 @@ dialTest(
       firstConversation.name = 'Renamed chat';
       await renameConversationModal.editConversationNameWithSaveButton(
         firstConversation.name,
+        { isHttpMethodTriggered: true },
       );
       await conversationAssertion.assertEntityState(
         { name: firstConversation.name },

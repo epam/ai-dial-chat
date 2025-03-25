@@ -22,6 +22,7 @@ dialTest(
     uploadFromDeviceModal,
     localStorageManager,
     allFilesFolderAssertion,
+    manageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-3295', 'EPMRTC-3048');
 
@@ -32,6 +33,10 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
+        await manageAttachmentsAssertion.assertElementState(
+          attachFilesModal,
+          'visible',
+        );
         await attachFilesModal.newFolderButton.click();
         const folderEditInput = attachedAllFiles.getEditFolderInput().editInput;
         await allFilesFolderAssertion.assertElementState(

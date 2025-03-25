@@ -31,6 +31,7 @@ dialTest(
     attachFilesModal,
     localStorageManager,
     uploadFromDeviceModal,
+    manageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-1888', 'EPMRTC-3197', 'EPMRTC-3233');
     const attachments = [Attachment.sunImageName, Attachment.cloudImageName];
@@ -48,6 +49,10 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
+        await manageAttachmentsAssertion.assertElementState(
+          attachFilesModal,
+          'visible',
+        );
 
         const uploadFromDeviceBackgroundColor =
           await attachFilesModal.uploadFromDeviceButton.getComputedStyleProperty(
@@ -76,7 +81,7 @@ dialTest(
     await dialTest.step(
       'Click "Upload from device" button and verify "Upload" button is disabled by default, possibility to upload file through "Add more files..." link',
       async () => {
-        await attachFilesModal.uploadFromDeviceButton.click();
+        await attachFilesModal.uploadFromDevice();
         await expect
           .soft(
             uploadFromDeviceModal.uploadButton.getElementLocator(),
@@ -141,6 +146,7 @@ dialTest(
     uploadFromDeviceModal,
     page,
     localStorageManager,
+    manageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-3203', 'EPMRTC-3195', 'EPMRTC-3236');
     let deleteUploadedFileIcon: BaseElement;
@@ -156,7 +162,11 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
-        await attachFilesModal.uploadFromDeviceButton.click();
+        await manageAttachmentsAssertion.assertElementState(
+          attachFilesModal,
+          'visible',
+        );
+        await attachFilesModal.uploadFromDevice();
         await uploadFromDeviceModal.addMoreFilesToUpload(...attachments);
 
         uploadedFileInput = uploadFromDeviceModal.getUploadedFilenameInput(
@@ -404,6 +414,10 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
+        await manageAttachmentsAssertion.assertElementState(
+          attachFilesModal,
+          'visible',
+        );
         await attachFilesModal.uploadFromDevice();
         await uploadFromDeviceModal.addMoreFilesToUpload(...attachments);
         for (const attachment of attachments) {
@@ -564,6 +578,10 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(conversation.name);
         await chatBar.openManageAttachmentsModal();
+        await manageAttachmentsAssertion.assertElementState(
+          attachFilesModal,
+          'visible',
+        );
         manageAttachmentsAssertion.assertValue(
           await attachFilesModal.getModalHeader().getSupportedTypes(),
           Attachment.allTypesLabel,
