@@ -118,11 +118,17 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
           </div>
           <Logo />
           <div className="h-full border-l border-tertiary"></div>
-          <span className="hidden items-center text-primary md:flex">
+          <span
+            className="hidden items-center text-primary md:flex"
+            data-qa="action-application-type-title"
+          >
             {isEditApplication && !add ? t('Edit') : t('Add')}{' '}
             {applicationTypeDisplayName}
           </span>
-          <div className="hidden items-center space-x-2 md:flex">
+          <div
+            className="hidden items-center space-x-2 md:flex"
+            data-qa="steps-container"
+          >
             {tabs.map((tab, index) => {
               const isDisabled = tab.key === TabKeys.SETTINGS && !id;
               return (
@@ -130,6 +136,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
                   <Link
                     href={tab.href}
                     className={isDisabled ? 'pointer-events-none' : ''}
+                    data-qa="single-step-link"
                     aria-disabled={isDisabled}
                     tabIndex={isDisabled ? -1 : undefined}
                     passHref
@@ -157,7 +164,12 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
                           height={24}
                         />
                       )}
-                      <span className="grow truncate">{tab.label}</span>
+                      <span
+                        className="grow truncate"
+                        data-qa="single-step-title"
+                      >
+                        {tab.label}
+                      </span>
                     </div>
                   </Link>
                   {index < tabs.length - 1 && (
@@ -185,6 +197,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
           ) : (
             <Link
               className="hidden items-center space-x-1 px-3 text-accent-primary md:flex"
+              data-qa="exit-link"
               href={{
                 pathname: Routes.Marketplace,
                 query: { tab: MarketplaceTabs.MY_WORKSPACE },

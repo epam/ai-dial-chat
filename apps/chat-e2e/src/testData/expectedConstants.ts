@@ -288,6 +288,25 @@ export enum AddAppMenuOptions {
   quickApp = 'Quick app',
 }
 
+export enum AppEditorGeneralFormFields {
+  name = 'Name',
+  version = 'Version',
+  icon = 'Icon',
+  description = 'Description',
+  topics = 'Topics',
+}
+
+export enum AppEditorViewFormFields {
+  featuresData = 'Features data',
+  attachmentTypes = 'Attachment types',
+  maxAttachmentsNumber = 'Max. attachments number',
+  chatCompletionUrl = 'Chat completion URL',
+}
+
+export enum AppMenuActions {
+  add = 'Add',
+}
+
 export const Chronology = {
   today: 'Today',
   yesterday: 'Yesterday',

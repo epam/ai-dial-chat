@@ -1,8 +1,9 @@
 import { AddApplicationFormSelector } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
+import { AppEditorForm } from '@/src/ui/webElements/appEditor/appEditorForm';
 import { Locator, Page } from '@playwright/test';
 
-export class AppEditorViewForm extends BaseElement {
+export class AppEditorViewForm extends AppEditorForm {
   constructor(page: Page, parentLocator: Locator) {
     super(page, AddApplicationFormSelector.appViewFormContainer, parentLocator);
   }

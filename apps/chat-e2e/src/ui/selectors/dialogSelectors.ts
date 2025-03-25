@@ -230,6 +230,11 @@ export const ReportAnIssueModalSelectors = {
 export const ApplicationEditorHeader = {
   header: '[data-qa="app-editor-header"]',
   saveAndExitButton: '[data-qa="save-and-exit"]',
+  exitLink: '[data-qa="exit-link"]',
+  actionAndApplicationTypeTitle: '[data-qa="action-application-type-title"]',
+  stepsContainer: '[data-qa="steps-container"]',
+  singleStepLink: '[data-qa="single-step-link"]',
+  singleStepTitle: '[data-qa="single-step-title"]',
 };
 
 export const ApplicationPreviewSelector = {
