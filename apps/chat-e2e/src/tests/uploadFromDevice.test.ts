@@ -406,6 +406,12 @@ dialTest(
         await chatBar.openManageAttachmentsModal();
         await attachFilesModal.uploadFromDevice();
         await uploadFromDeviceModal.addMoreFilesToUpload(...attachments);
+        for (const attachment of attachments) {
+          await manageAttachmentsAssertion.assertElementState(
+            uploadFromDeviceModal.getUploadedFullFilename(attachment),
+            'visible',
+          );
+        }
         await uploadFromDeviceModal.uploadFiles();
         for (const attachment of attachments) {
           await manageAttachmentsAssertion.assertEntityState(
