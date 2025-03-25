@@ -10,7 +10,7 @@ concurrency:
 
 jobs:
   run_tests:
-    uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@29a9c6a58a4dcd31b94183c462bb0d26a812eca4
+    uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@f1de85147fd3b03ea34b10596b3e116b4d9a40ed
     secrets: inherit
     with:
       node_version: 22
