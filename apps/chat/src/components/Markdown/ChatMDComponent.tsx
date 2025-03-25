@@ -22,7 +22,7 @@ import { MemoizedReactMarkdown } from './MemoizedReactMarkdown';
 
 import remarkGfm from 'remark-gfm';
 
-export const replaceCursor = (cursorSign: string) =>
+const replaceCursor = (cursorSign: string) =>
   cursorSign.replace(modelCursorSignWithBackquote, modelCursorSign);
 
 interface ChatMDComponentProps {
@@ -35,7 +35,7 @@ const transformUri = (src: string): string => {
   return getMappedAttachmentUrl(src) ?? '';
 };
 
-export const getMDComponents = (
+const getMDComponents = (
   isShowResponseLoader: boolean,
   isInner: boolean,
 ): Components => {
