@@ -32,7 +32,7 @@ dialTest(
       adminApplicationApiHelper,
       adminPublicationApiHelper,
       publishRequestBuilder,
-      context,
+      accountSettings,
       providerLogin,
     },
     testInfo,
@@ -175,13 +175,14 @@ dialTest(
           agentDetailsModal.agentVersion,
           appFirstVersion,
         );
+        await agentDetailsModal.closeButton.click();
       },
     );
 
     await dialTest.step(
       'Logout, open copied link and verify the agent details modal is opened',
       async () => {
-        await context.clearCookies();
+        await accountSettings.logout();
         await providerLogin.login(
           testInfo,
           process.env.E2E_USERNAME!.split(',')[+testInfo.parallelIndex],

@@ -29,7 +29,7 @@ dialTest(
       chatBar,
       header,
       marketplaceUrlBuilder,
-      context,
+      accountSettings,
     },
     testInfo,
   ) => {
@@ -90,7 +90,7 @@ dialTest(
     await dialTest.step(
       'Logout, re-login again and verify filters and search term are reset on the "My Workspace" tab',
       async () => {
-        await context.clearCookies();
+        await accountSettings.logout();
         await providerLogin.login(
           testInfo,
           process.env.E2E_USERNAME!.split(',')[+testInfo.parallelIndex],

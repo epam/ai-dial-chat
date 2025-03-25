@@ -356,7 +356,7 @@ dialAdminTest(
       organizationConversations,
       sharedWithMeConversations,
       providerLogin,
-      context,
+      accountSettings,
       organizationConversationAssertion,
       sharedWithMeConversationAssertion,
     },
@@ -400,7 +400,7 @@ dialAdminTest(
         await organizationConversationAssertion.assertSelectedConversation(
           adminConversation.name,
         );
-        await context.clearCookies();
+        await accountSettings.logout();
         await providerLogin.login(
           testInfo,
           process.env.E2E_USERNAME!.split(',')[+testInfo.parallelIndex],
@@ -420,7 +420,7 @@ dialAdminTest(
         await sharedWithMeConversations.selectConversation(
           adminConversation.name,
         );
-        await context.clearCookies();
+        await accountSettings.logout();
         await providerLogin.login(
           testInfo,
           process.env.E2E_USERNAME!.split(',')[+testInfo.parallelIndex],

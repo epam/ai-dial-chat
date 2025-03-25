@@ -18,10 +18,10 @@ dialTest(
       banner,
       header,
       appContainer,
-      context,
       providerLogin,
       setTestIds,
       localStorageManager,
+      accountSettings,
     },
     testInfo,
   ) => {
@@ -144,7 +144,7 @@ dialTest(
     await dialTest.step(
       'Re-login to app and verify banner is not shown',
       async () => {
-        await context.clearCookies();
+        await accountSettings.logout();
         await providerLogin.login(
           testInfo,
           process.env.E2E_USERNAME!.split(',')[+testInfo.parallelIndex],
