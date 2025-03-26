@@ -583,7 +583,7 @@ const ChatView = memo(() => {
 
   useEffect(() => {
     if (
-      enabledFeatures.has(Feature.FocusChatInputOnLoad) &&
+      !enabledFeatures.has(Feature.SkipFocusChatInputOnLoad) &&
       textareaRef.current
     ) {
       textareaRef.current.focus();

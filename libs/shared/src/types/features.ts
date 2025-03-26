@@ -24,7 +24,7 @@ export enum Feature {
   MessageTemplates = 'message-templates', // message templates
 
   // Chat input
-  FocusChatInputOnLoad = 'focus-chat-input-onload', // Focus chat input when on screen onload or after navigation
+  SkipFocusChatInputOnLoad = 'skip-focus-chat-input-onload', // Skip default focusing chat input when on screen onload or after navigation
 
   // Conversation First Screen
   EmptyChatSettings = 'empty-chat-settings', // Display settings for empty chat
