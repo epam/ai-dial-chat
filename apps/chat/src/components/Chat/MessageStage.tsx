@@ -66,7 +66,7 @@ const StageTitle = ({ isOpened, stage }: StageTitleProps) => {
   );
 };
 
-export interface Props {
+interface Props {
   stage: Stage;
 }
 
