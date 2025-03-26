@@ -59,6 +59,7 @@ import {
 } from '@/src/assertions';
 import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
 import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
+import { AppEditorHeaderAssertion } from '@/src/assertions/appEditorHeaderAssertion';
 import { LocalStorageAssertion } from '@/src/assertions/localStorageAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
 import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateModalAssertion';
@@ -161,6 +162,7 @@ const dialTest = test.extend<{
   marketplaceHeader: MarketplaceHeader;
   addAppDropdownMenu: DropdownMenu;
   appEditorHeader: AppEditorHeader;
+  appEditorHeaderAssertion: AppEditorHeaderAssertion;
   appEditorGeneralForm: AppEditorGeneralForm;
   appEditorPreview: AppEditorPreview;
   appEditorViewForm: AppEditorViewForm;
@@ -329,6 +331,12 @@ const dialTest = test.extend<{
     },
     { scope: 'test', auto: true },
   ],
+  appEditorHeaderAssertion: async ({ appEditorHeader }, use) => {
+    const appEditorHeaderAssertion = new AppEditorHeaderAssertion(
+      appEditorHeader,
+    );
+    await use(appEditorHeaderAssertion);
+  },
   sendMessageInputAttachmentsAssertions: async (
     { sendMessageInputAttachments },
     use,

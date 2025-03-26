@@ -122,6 +122,19 @@ export class BaseAssertion {
       .toHaveText(expectedText);
   }
 
+  public async assertInputValue(
+    element: BaseElement | Locator,
+    expectedValue: string,
+    expectedMessage?: string,
+  ) {
+    const elementLocator = this.getElementLocator(element);
+    // Use Playwright's recommended matcher for input values
+    await expect(
+      elementLocator,
+      expectedMessage ?? ExpectedMessages.fieldValueIsValid,
+    ).toHaveValue(expectedValue);
+  }
+
   public async assertElementAttribute(
     element: BaseElement | Locator,
     attribute: string,

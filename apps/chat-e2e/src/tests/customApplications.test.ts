@@ -11,6 +11,7 @@ import {
   MenuOptions,
 } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
+import { AppEditSteps } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 
 dialTest(
@@ -141,27 +142,28 @@ dialTest.only(
     setTestIds,
     baseAssertion,
     customApplicationBuilder,
-    applicationApiHelper, // Use API helper for setup
+    applicationApiHelper,
+    appEditorHeaderAssertion,
   }) => {
     setTestIds('EPMRTC-5131');
-    const initialAppName = GeneratorUtil.randomApplicationName();
-    const initialAppVersion = GeneratorUtil.randomApplicationVersion();
-    const initialDescription = GeneratorUtil.randomString(20);
     const initialCompletionUrl = `http://initial-${GeneratorUtil.randomString(5)}.com`;
 
     const updatedDescription = GeneratorUtil.randomString(25);
     const updatedCompletionUrl = `http://updated-${GeneratorUtil.randomString(6)}.com`;
+    const appCreds = {
+      name: GeneratorUtil.randomApplicationName(),
+      version: GeneratorUtil.randomApplicationVersion(),
+      description: GeneratorUtil.randomString(20),
+    } as DialAIEntityModel;
 
     await dialTest.step(
       'Precondition: Create custom application via API',
       async () => {
         const applicationModel = customApplicationBuilder
-          .withDisplayName(initialAppName)
-          .withDisplayVersion(initialAppName)
-          .withDescriptionKeywords(initialDescription) // Using keywords field for description as per builder structure
+          .withDisplayName(appCreds.name)
+          .withDisplayVersion(appCreds.version!)
+          .withDescriptionKeywords(appCreds.description!)
           .build();
-        // Assuming AppEditorViewForm fields like completionUrl are set by default or not strictly needed for API creation
-        // If specific API fields are needed, update the builder or API helper call
         const backendEntity =
           await applicationApiHelper.createApplication(applicationModel);
       },
@@ -170,15 +172,15 @@ dialTest.only(
     await dialTest.step('Open My workspace page', async () => {
       await marketplacePage.openMyWorkspacePage({
         isInstalledDeploymentsUpdated: false,
-      }); // Don't need PUT on initial load
+      });
     });
 
     await dialTest.step(
       'Hover over custom app card, click 3 dots and select Edit option',
       async () => {
         const agentElement = await marketplaceAgentsSection.findAgentElement({
-          name: initialAppName,
-          version: initialAppName,
+          name: appCreds.name,
+          version: appCreds.version,
         } as DialAIEntityModel);
         await baseAssertion.assertElementState(agentElement, 'visible');
         await agentElement.hoverOver();
@@ -186,9 +188,13 @@ dialTest.only(
         await marketplaceAgents
           .getAgentDropdownMenu()
           .selectMenuOption(MenuOptions.edit);
-        await appEditorViewForm.waitForState();
+      },
+    );
 
-        // Verify Edit Page state
+    await dialTest.step(
+      'App Editor page was opened, title "Edit custom app", two available steps are displayed in the header:',
+      async () => {
+        await appEditorViewForm.waitForState();
         await baseAssertion.assertElementText(
           appEditorHeader.actionAndApplicationTypeTitle,
           `${AppMenuActions.edit} custom app`, // Assuming title format
@@ -201,16 +207,13 @@ dialTest.only(
         await baseAssertion.assertElementState(generalInfoStep, 'visible');
         await baseAssertion.assertElementState(appSettingsStep, 'visible');
 
-        // Assuming the editor opens on the General Info step by default when editing
-        await baseAssertion.assertElementAttribute(
-          generalInfoStep,
-          Attributes.ariaSelected,
-          'true',
+        await appEditorHeaderAssertion.assertStepIsSelected(
+          AppEditSteps.generalInfo,
+          true,
         );
-        await baseAssertion.assertElementAttribute(
-          appSettingsStep,
-          Attributes.ariaSelected,
-          'false',
+        await appEditorHeaderAssertion.assertStepIsSelected(
+          AppEditSteps.appSettings,
+          false,
         );
       },
     );
@@ -218,18 +221,17 @@ dialTest.only(
     await dialTest.step(
       'Update any field on step "Application settings" with a valid value',
       async () => {
-        const appSettingsStep =
-          await appEditorHeader.getApplicationSettingsStep();
-        await appSettingsStep.click(); // Navigate to Application Settings
-        await baseAssertion.assertElementAttribute(
-          appSettingsStep,
-          Attributes.ariaSelected,
-          'true',
-        );
+        // const appSettingsStep =
+        //   await appEditorHeader.getAppSettingsStep();
+        // await appSettingsStep.click();
+        await appEditorHeaderAssertion.assertStepIsSelected(
+          AppEditSteps.appSettings,
+          true,
+        ); //step is not selected, it is completed
         await appEditorViewForm.waitForState();
-        await appEditorViewForm.chatCompletionUrl.fillInInput(
-          updatedCompletionUrl,
-        );
+        await appEditorViewForm.fillInAppFields({
+          chatCompletionUrl: updatedCompletionUrl,
+        });
       },
     );
 
@@ -237,86 +239,72 @@ dialTest.only(
       'Update any field on step "General info" and click Save and exit link',
       async () => {
         const generalInfoStep = await appEditorHeader.getGeneralInfoStep();
-        await generalInfoStep.click(); // Navigate back to General Info
-        await baseAssertion.assertElementAttribute(
-          generalInfoStep,
-          Attributes.ariaSelected,
-          'true',
-        );
+        await generalInfoStep.click();
         await appEditorGeneralForm.waitForState();
-        // Assuming description field exists in AppEditorGeneralForm
-        if (appEditorGeneralForm.description) {
-          // Check if description element exists
-          await appEditorGeneralForm.description.fillInInput(
-            updatedDescription,
-          );
-        } else {
-          console.warn(
-            'Description field not found in AppEditorGeneralForm, skipping update.',
-          );
-        }
-
+        await appEditorHeaderAssertion.assertStepIsSelected(
+          AppEditSteps.generalInfo,
+          true,
+        );
+        await appEditorGeneralForm.fillInAppFields({
+          description: updatedDescription,
+        });
         await appEditorHeader.saveAppAndExit();
         await baseAssertion.assertElementState(appEditorGeneralForm, 'hidden'); // Verify editor closed
-        await marketplacePage.waitForPageLoaded(); // Wait for marketplace to load
+        await marketplacePage.waitForPageLoaded();
       },
     );
 
     await dialTest.step(
       'Hover over custom app card, click 3 dots and select Edit option again',
       async () => {
-        const agentElement =
-          await marketplaceAgentsSection.findAgentElement(createdApp); // Find again in case DOM refreshed
+        const agentElement = await marketplaceAgentsSection.findAgentElement({
+          name: appCreds.name,
+          version: appCreds.version,
+        } as DialAIEntityModel);
+        await baseAssertion.assertElementState(agentElement, 'visible');
         await agentElement.hoverOver();
         await marketplaceAgents.getAgentElementDotsMenu(agentElement).click();
         await marketplaceAgents
           .getAgentDropdownMenu()
           .selectMenuOption(MenuOptions.edit);
-        await appEditorPage.waitForPageLoaded();
       },
     );
 
     await dialTest.step(
       'Check that updated field values from steps 4, 5 are still displayed',
       async () => {
-        // Check Application Settings
-        const appSettingsStep =
-          await appEditorHeader.getApplicationSettingsStep();
-        await appSettingsStep.click();
-        await baseAssertion.assertElementAttribute(
-          appSettingsStep,
-          Attributes.ariaSelected,
-          'true',
-        );
+        // await appEditorViewForm.waitForState();
+        // const appSettingsStep =
+        //   await appEditorHeader.getAppSettingsStep();
+        // await appSettingsStep.click();
         await appEditorViewForm.waitForState();
+        await baseAssertion.assertInputValue(
+          // Changed from assertElementAttribute/assertElementText
+          appEditorViewForm.chatCompletionUrl,
+          updatedCompletionUrl,
+          'Chat Completion URL should retain updated value',
+        );
         await baseAssertion.assertElementAttribute(
           appEditorViewForm.chatCompletionUrl,
           Attributes.value,
           updatedCompletionUrl,
           'Chat Completion URL should retain updated value',
         );
+        await baseAssertion.assertElementText(
+          appEditorViewForm.chatCompletionUrl,
+          updatedCompletionUrl,
+          'Description should retain updated value',
+        );
 
         // Check General Info
         const generalInfoStep = await appEditorHeader.getGeneralInfoStep();
         await generalInfoStep.click();
-        await baseAssertion.assertElementAttribute(
-          generalInfoStep,
-          Attributes.ariaSelected,
-          'true',
-        );
         await appEditorGeneralForm.waitForState();
-        if (appEditorGeneralForm.description) {
-          // Check if description element exists
-          await baseAssertion.assertElementText(
-            appEditorGeneralForm.description,
-            updatedDescription,
-            'Description should retain updated value',
-          );
-        } else {
-          console.warn(
-            'Description field not found in AppEditorGeneralForm, skipping verification.',
-          );
-        }
+        await baseAssertion.assertElementText(
+          appEditorGeneralForm.description,
+          updatedDescription,
+          'Description should retain updated value',
+        );
       },
     );
   },

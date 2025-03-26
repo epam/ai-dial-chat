@@ -243,11 +243,17 @@ export const ApplicationPreviewSelector = {
   container: '[data-qa="app-preview"]',
 };
 
-export const AddApplicationFormSelector = {
+export const AddApplicationGeneralInfoFormSelector = {
   appGeneralFormContainer: '[data-qa="app-general-form"]',
   name: '#name',
   version: '#version',
+  icon: '#icon',
+  description: '#description',
+  topics: '#topics',
   nextButton: '[data-qa="save-application-general-info"]',
+};
+
+export const AddApplicationAppSettingsFormSelector = {
   chatCompletionUrl: '#completionUrl',
   addButton: '[data-qa="add-application"]',
   appViewFormContainer: '[data-qa="app-view-form"]',

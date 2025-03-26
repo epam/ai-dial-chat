@@ -32,6 +32,12 @@ export class AppEditorHeader extends BaseElement {
   public singleStepTitle = this.getChildElementBySelector(
     ApplicationEditorHeader.singleStepTitle,
   );
+  public selectedIconLocator = this.getChildElementBySelector(
+    ApplicationEditorHeader.selectedStepIcon,
+  );
+  public notSelectedIconLocator = this.getChildElementBySelector(
+    ApplicationEditorHeader.notSelectedStepIcon,
+  );
 
   public async getActionAndApplicationTypeTitle() {
     return this.actionAndApplicationTypeTitle.getElementLocator().textContent();

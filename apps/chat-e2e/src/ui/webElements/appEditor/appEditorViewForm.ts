@@ -1,15 +1,19 @@
 import { ExampleURLs } from '@/src/testData';
-import { AddApplicationFormSelector } from '@/src/ui/selectors';
+import { AddApplicationAppSettingsFormSelector } from '@/src/ui/selectors';
 import { AppEditorForm } from '@/src/ui/webElements/appEditor/appEditorForm';
 import { Locator, Page } from '@playwright/test';
 
 export class AppEditorViewForm extends AppEditorForm {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, AddApplicationFormSelector.appViewFormContainer, parentLocator);
+    super(
+      page,
+      AddApplicationAppSettingsFormSelector.appViewFormContainer,
+      parentLocator,
+    );
   }
 
   public chatCompletionUrl = this.getChildElementBySelector(
-    AddApplicationFormSelector.chatCompletionUrl,
+    AddApplicationAppSettingsFormSelector.chatCompletionUrl,
   );
 
   public async fillInAppFields(options?: { chatCompletionUrl?: string }) {
