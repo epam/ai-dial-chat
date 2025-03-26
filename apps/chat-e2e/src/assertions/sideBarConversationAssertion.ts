@@ -1,7 +1,8 @@
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import { ElementState, ExpectedMessages, TreeEntity } from '@/src/testData';
-import { Colors, Cursors } from '@/src/ui/domData';
+import { Cursors, ThemeColorAttributes } from '@/src/ui/domData';
 import { BaseSideBarConversationTree } from '@/src/ui/webElements/entityTree';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 export class SideBarConversationAssertion<
@@ -21,7 +22,7 @@ export class SideBarConversationAssertion<
     await this.assertElementState(selectedEntity, 'visible');
     await this.assertEntityBackgroundColor(
       { name: conversationName },
-      Colors.backgroundAccentSecondary,
+      ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgAccentSecondaryAlpha),
     );
   }
 
@@ -34,12 +35,6 @@ export class SideBarConversationAssertion<
       this.sideBarEntitiesTree.getEntityName(conversationName),
       expectedCursor,
     );
-    // const style = await this.sideBarEntitiesTree
-    //   .getEntityName(conversationName)
-    //   .getComputedStyleProperty(Styles.cursor);
-    // expect
-    //   .soft(style[0], `Conversation cursor is ${expectedCursor}`)
-    //   .toBe(expectedCursor);
   }
 
   public async assertReplayIconState(

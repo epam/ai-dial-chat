@@ -150,7 +150,7 @@ dialTest(
     attachFilesModal,
     selectFolderModal,
     selectFolders,
-    sendMessage,
+    selectFoldersAssertion,
     page,
     localStorageManager,
   }) => {
@@ -163,12 +163,10 @@ dialTest(
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await sendMessage.fillRequestData(nameWithRestrictedChars);
-        await page.keyboard.press(keys.ctrlPlusA);
-        await page.keyboard.press(keys.ctrlPlusC);
+        await dialHomePage.copyToClipboard(nameWithRestrictedChars);
 
         await chatBar.openManageAttachmentsModal();
-        await attachFilesModal.uploadFromDeviceButton.click();
+        await attachFilesModal.uploadFromDevice();
         await uploadFromDeviceModal.changeUploadToLocation();
       },
     );
@@ -180,12 +178,7 @@ dialTest(
         await selectFolders.editFolderName(
           ExpectedConstants.restrictedNameChars,
         );
-        expect
-          .soft(
-            await selectFolders.getEditFolderInput().getEditInputValue(),
-            ExpectedMessages.elementAttributeValueIsValid,
-          )
-          .toBe('');
+        await selectFoldersAssertion.assertFolderEditInputValue('');
       },
     );
 
@@ -195,17 +188,15 @@ dialTest(
         await page.keyboard.press(keys.ctrlPlusA);
         await page.keyboard.press(keys.ctrlPlusV);
         await selectFolders.getEditFolderInputActions().clickTickButton();
-        await expect
-          .soft(
-            selectFolders.getFolderByName(
-              nameWithRestrictedChars.replace(
-                ExpectedConstants.restrictedNameChars,
-                '',
-              ),
+        await selectFoldersAssertion.assertFolderState(
+          {
+            name: nameWithRestrictedChars.replace(
+              ExpectedConstants.restrictedNameChars,
+              '',
             ),
-            ExpectedMessages.elementAttributeValueIsValid,
-          )
-          .toBeVisible();
+          },
+          'visible',
+        );
       },
     );
   },

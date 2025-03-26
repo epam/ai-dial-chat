@@ -50,4 +50,8 @@ export enum ThemeColorAttributes {
   textError = 'text-error',
   controlsBgDisable = 'controls-bg-disable',
   bgAccentSecondaryAlpha = 'bg-accent-secondary-alpha',
+  bgAccentTertiaryAlpha = 'bg-accent-tertiary-alpha',
+  bgAccentSecondary = 'bg-accent-secondary',
+  controlsTextDisable = 'controls-text-disable',
+  textAccentSecondary = 'text-accent-secondary',
 }

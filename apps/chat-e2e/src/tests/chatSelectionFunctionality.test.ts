@@ -5,7 +5,8 @@ import {
   ExpectedMessages,
   MenuOptions,
 } from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 
 dialTest(
   '[UI] Check highlight of chat1 when chat2 is opened.\n' +
@@ -53,6 +54,9 @@ dialTest(
     let replayConversation: string;
     let playbackConversation: string;
     let clonedConversation: string;
+    const expectedBgColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.bgAccentSecondaryAlpha,
+    );
 
     await dialTest.step('Create chat1 and chat2', async () => {
       firstConversation = conversationData.prepareDefaultConversation();
@@ -78,7 +82,7 @@ dialTest(
       await conversations.getEntityByName(firstConversation.name).hover();
       await conversationAssertion.assertEntityBackgroundColor(
         { name: firstConversation.name },
-        Colors.backgroundAccentSecondary,
+        expectedBgColor,
       );
       await conversationAssertion.assertEntityDotsMenuState(
         { name: firstConversation.name },
@@ -96,11 +100,11 @@ dialTest(
           .hover();
         await conversationAssertion.assertEntityBackgroundColor(
           { name: firstConversation.name },
-          Colors.backgroundAccentSecondary,
+          expectedBgColor,
         );
         await conversationAssertion.assertEntityBackgroundColor(
           { name: secondConversation.name },
-          Colors.backgroundAccentSecondary,
+          expectedBgColor,
         );
         await conversationAssertion.assertEntityDotsMenuState(
           { name: secondConversation.name },
