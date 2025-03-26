@@ -6,7 +6,7 @@ import {
 
 import { CustomApplicationModel } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import { ApiKeys, FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { PublishRequestDialAIEntityModel } from '@/src/types/models';
@@ -27,7 +27,9 @@ import {
 import {
   ApiUtils,
   addVersionToId,
+  getIdWithoutVersionFromApiKey,
   getPublicItemIdWithoutVersion,
+  getVersionFromId,
   parseConversationApiKey,
   parsePromptApiKey,
 } from '../server/api';
@@ -344,4 +346,20 @@ export const getPublishFolderResources = (
       (!isReplayConversation(item) &&
         (item.messages?.length || !item.messages)),
   );
+};
+
+export const getVersionGroupFromId = (id: string) => {
+  const featureType = EnumMapper.getFeatureTypeByApiKey(
+    id.split('/')[0] as ApiKeys,
+  );
+
+  const parseMethod =
+    featureType === FeatureType.Chat
+      ? parseConversationApiKey
+      : parsePromptApiKey;
+
+  return {
+    versionGroupId: getIdWithoutVersionFromApiKey(id, parseMethod),
+    currentVersion: getVersionFromId(id),
+  };
 };

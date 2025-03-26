@@ -5,10 +5,9 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { getPromptRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
-import { regeneratePromptId } from '@/src/utils/app/prompts';
 
 import { FeatureType } from '@/src/types/common';
-import { Prompt, PromptInfo } from '@/src/types/prompt';
+import { PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
@@ -34,36 +33,9 @@ import PlusIcon from '@/public/images/icons/plus-large.svg';
 const PromptActionsBlock = () => {
   const { t } = useTranslation(Translation.PromptBar);
 
+  const showModal = useAppSelector(PromptsSelectors.selectIsEditModalOpen);
+
   const dispatch = useAppDispatch();
-
-  const { showModal, isModalPreviewMode } = useAppSelector(
-    PromptsSelectors.selectIsEditModalOpen,
-  );
-
-  const handleCreate = useCallback(
-    (prompt: Prompt) => {
-      dispatch(PromptsActions.createNewPrompt(regeneratePromptId(prompt)));
-    },
-    [dispatch],
-  );
-
-  const handleUpdate = useCallback(
-    (oldPrompt: Prompt, newPrompt: Prompt) => {
-      dispatch(
-        PromptsActions.updatePrompt({
-          id: oldPrompt.id,
-          values: newPrompt,
-        }),
-      );
-      dispatch(PromptsActions.resetSearch());
-    },
-    [dispatch],
-  );
-
-  const handleClose = useCallback(() => {
-    dispatch(PromptsActions.setIsEditModalOpen({ isOpen: false }));
-    dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
-  }, [dispatch]);
 
   return (
     <div className="flex px-2 py-1">
@@ -82,14 +54,7 @@ const PromptActionsBlock = () => {
         </Tooltip>
         {t('New prompt')}
       </button>
-      {showModal && !isModalPreviewMode && (
-        <PromptModal
-          isOpen
-          onClose={handleClose}
-          onUpdatePrompt={handleUpdate}
-          onCreatePrompt={handleCreate}
-        />
-      )}
+      {showModal && <PromptModal />}
     </div>
   );
 };

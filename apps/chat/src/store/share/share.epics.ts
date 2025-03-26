@@ -839,16 +839,9 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 }),
               );
               actions.push(
-                PromptsActions.uploadPrompt({
-                  promptId: acceptedId,
-                }),
+                PromptsActions.uploadPrompt({ promptId: acceptedId }),
               );
-              actions.push(
-                PromptsActions.setIsEditModalOpen({
-                  isOpen: true,
-                  isPreview: true,
-                }),
-              );
+              actions.push(PromptsActions.setIsEditModalOpen({ isOpen: true }));
             }
 
             if (!selectedConv) {

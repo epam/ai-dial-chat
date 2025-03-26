@@ -34,7 +34,6 @@ const initialState: PromptsState = {
   selectedPromptId: undefined,
   isSelectedPromptApproveRequiredResource: false,
   isEditModalOpen: false,
-  isModalPreviewMode: false,
   newAddedFolderId: undefined,
   promptsLoaded: false,
   isPromptLoading: false,
@@ -321,12 +320,9 @@ export const promptsSlice = createSlice({
     },
     setIsEditModalOpen: (
       state,
-      {
-        payload: { isOpen, isPreview = false },
-      }: PayloadAction<{ isOpen: boolean; isPreview?: boolean }>,
+      { payload: { isOpen } }: PayloadAction<{ isOpen: boolean }>,
     ) => {
       state.isEditModalOpen = isOpen;
-      state.isModalPreviewMode = isPreview;
       if (!isOpen) {
         state.isNewPromptCreating = false;
       }
@@ -461,6 +457,13 @@ export const promptsSlice = createSlice({
     },
     getPromptMetadata: (state, _action: PayloadAction<{ promptId: string }>) =>
       state,
+    selectPrompt: (
+      state,
+      _action: PayloadAction<{
+        promptId: string;
+        isApproveRequiredResource?: boolean;
+      }>,
+    ) => state,
   },
 });
 

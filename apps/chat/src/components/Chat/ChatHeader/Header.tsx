@@ -28,7 +28,6 @@ import {
 import { Conversation } from '@/src/types/chat';
 import { EntityType, ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
-import { PublicVersionOption } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
@@ -38,7 +37,6 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
@@ -152,16 +150,10 @@ export const ChatHeader = Inversify.register(
     }, [dispatch]);
 
     const handleChangeSelectedVersion = useCallback(
-      (versionGroupId: string, newVersion: PublicVersionOption) => {
-        dispatch(
-          PublicationActions.setSelectedVersionForPublicVersionGroup({
-            versionGroupId,
-            newVersion,
-          }),
-        );
+      (newVersionId: string) => {
         dispatch(
           ConversationsActions.selectConversations({
-            conversationIds: [newVersion.id],
+            conversationIds: [newVersionId],
           }),
         );
       },

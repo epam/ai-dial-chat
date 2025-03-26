@@ -144,7 +144,7 @@ export default function ItemContextMenu({
         onClick: onSelect,
       },
       {
-        name: t(featureType === FeatureType.Chat ? 'Rename' : 'Edit'),
+        name: t('Rename'),
         display: !isExternal && !!onRename,
         dataQa: 'rename',
         Icon: IconPencilMinus,
@@ -169,7 +169,7 @@ export default function ItemContextMenu({
       },
       {
         name: t('View'),
-        display: !!onView && isExternal,
+        display: !!onView,
         dataQa: 'view',
         Icon: IconEye,
         onClick: onView,

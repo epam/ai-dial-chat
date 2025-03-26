@@ -38,6 +38,7 @@ import {
   regeneratePromptId,
 } from '@/src/utils/app/prompts';
 import {
+  getVersionGroupFromId,
   isEntityIdPublic,
   mapPublishedItems,
 } from '@/src/utils/app/publications';
@@ -598,12 +599,7 @@ const uploadPromptsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
 
             actions.push(
               concat(
-                of(
-                  PromptsActions.setIsEditModalOpen({
-                    isOpen: true,
-                    isPreview: true,
-                  }),
-                ),
+                of(PromptsActions.setIsEditModalOpen({ isOpen: true })),
                 of(
                   PromptsActions.uploadPrompt({ promptId: topLevelPrompt.id }),
                 ),
@@ -948,6 +944,44 @@ const getPromptMetadataEpic: AppEpic = (action$) =>
     ),
   );
 
+const selectPromptEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.selectPrompt.match),
+    switchMap(({ payload }) => {
+      const actions: Observable<AnyAction>[] = [];
+
+      if (isEntityIdPublic({ id: payload.promptId })) {
+        const { versionGroupId, currentVersion } = getVersionGroupFromId(
+          payload.promptId,
+        );
+
+        actions.push(
+          of(
+            PublicationActions.setSelectedVersionForPublicVersionGroup({
+              versionGroupId,
+              newVersion: { version: currentVersion, id: payload.promptId },
+            }),
+          ),
+        );
+      }
+
+      return concat(
+        ...actions,
+        of(
+          PromptsActions.uploadPrompt({
+            promptId: payload.promptId,
+          }),
+        ),
+        of(
+          PromptsActions.setSelectedPrompt({
+            promptId: payload.promptId,
+            isApproveRequiredResource: payload.isApproveRequiredResource,
+          }),
+        ),
+      );
+    }),
+  );
+
 export const PromptsEpics = combineEpics(
   initEpic,
   uploadPromptsFromMultipleFoldersEpic,
@@ -973,4 +1007,5 @@ export const PromptsEpics = combineEpics(
   deleteChosenPromptsEpic,
   applyPromptEpic,
   getPromptMetadataEpic,
+  selectPromptEpic,
 );

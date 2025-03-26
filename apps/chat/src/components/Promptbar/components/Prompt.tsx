@@ -73,7 +73,6 @@ import { ReviewDot } from '../../Chat/Publish/ReviewDot';
 import { ConfirmDialog } from '../../Common/ConfirmDialog';
 import ShareIcon from '../../Common/ShareIcon';
 import Tooltip from '../../Common/Tooltip';
-import { PreviewPromptModal } from './PreviewPromptModal';
 
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -111,9 +110,7 @@ export const PromptComponent = ({
     ModelsSelectors.selectInstalledModelIds,
   );
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
-  const { showModal, isModalPreviewMode } = useAppSelector(
-    PromptsSelectors.selectIsEditModalOpen,
-  );
+  const showModal = useAppSelector(PromptsSelectors.selectIsEditModalOpen);
   const resourceToReview = useAppSelector((state) =>
     PublicationSelectors.selectResourceToReviewByReviewAndPublicationUrls(
       state,
@@ -247,12 +244,12 @@ export const PromptComponent = ({
   );
 
   const handleOpenEditModal = useCallback(
-    (e: MouseEvent<unknown, globalThis.MouseEvent>, isPreview = false) => {
+    (e: MouseEvent<unknown, globalThis.MouseEvent>) => {
       e.stopPropagation();
       e.preventDefault();
       setIsOpened(true);
       dispatch(
-        PromptsActions.setSelectedPrompt({
+        PromptsActions.selectPrompt({
           promptId: prompt.id,
           isApproveRequiredResource,
         }),
@@ -264,8 +261,7 @@ export const PromptComponent = ({
           ),
         );
       }
-      dispatch(PromptsActions.uploadPrompt({ promptId: prompt.id }));
-      dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true, isPreview }));
+      dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true }));
     },
     [
       additionalItemData?.publicationUrl,
@@ -352,11 +348,6 @@ export const PromptComponent = ({
     },
     [allPrompts, collapsedSections, dispatch, folders, prompt, t],
   );
-
-  const handleClose = useCallback(() => {
-    dispatch(PromptsActions.setIsEditModalOpen({ isOpen: false }));
-    dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
-  }, [dispatch]);
 
   const handleContextMenuOpen = (e: MouseEvent) => {
     if (hasParentWithFloatingOverlay(e.target as Element)) {
@@ -558,7 +549,6 @@ export const PromptComponent = ({
               folders={folders}
               onMoveToFolder={handleMoveToFolder}
               onDelete={handleOpenDeleteModal}
-              onRename={handleOpenEditModal}
               onExport={handleExportPrompt}
               onOpenMoveToModal={() => {
                 setIsShowMoveToModal(true);
@@ -573,7 +563,7 @@ export const PromptComponent = ({
               }
               onOpenChange={setIsContextMenu}
               onDuplicate={handleDuplicate}
-              onView={(e) => handleOpenEditModal(e, true)}
+              onView={handleOpenEditModal}
               isOpen={isContextMenu}
               onSelect={handleSelect}
               disableUse={disableUsePrompt}
@@ -593,22 +583,6 @@ export const PromptComponent = ({
             />
           )}
         </div>
-        {showModal && isSelected && isModalPreviewMode && (
-          <PreviewPromptModal
-            prompt={prompt}
-            isOpen
-            onClose={handleClose}
-            onDuplicate={
-              !resourceToReview
-                ? (e) => {
-                    handleDuplicate(e);
-                    handleClose();
-                  }
-                : undefined
-            }
-            onDelete={!resourceToReview ? () => setIsDeleting(true) : undefined}
-          />
-        )}
       </button>
 
       {(isPublishing || isUnpublishing) && isPublishingEnabled && (

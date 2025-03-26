@@ -3,7 +3,6 @@ import React, { useCallback } from 'react';
 import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
-import { PublicVersionOption } from '@/src/types/publication';
 
 import { ConversationRow } from '../Common/ReplaceConfirmationModal/Components';
 import { PublicVersionSelector } from './Publish/PublicVersionSelector';
@@ -36,9 +35,9 @@ export function ConversationCompareItem({
   }, [comparableConversations, conv.id, onConversationSelect]);
 
   const handleVersionChange = useCallback(
-    (_: string, newVersion: PublicVersionOption) => {
+    (newVersionId: string) => {
       const selectedConversation = conversations.find(
-        (conv) => conv.id === newVersion.id,
+        (conv) => conv.id === newVersionId,
       );
 
       if (selectedConversation) {
