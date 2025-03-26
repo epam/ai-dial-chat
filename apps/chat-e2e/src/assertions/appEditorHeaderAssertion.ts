@@ -50,7 +50,9 @@ export class AppEditorHeaderAssertion extends BaseAssertion {
    * @param isSelected Expected selection state (true for selected, false for not selected).
    */
   public async assertStepIsSelected(stepTitle: string, isSelected: boolean) {
-    const stepLocator = await this.appEditorHeader.getStepByTitle(stepTitle);
+    const stepLocator = this.appEditorHeader
+      .getStepByTitle(stepTitle)
+      .getElementLocator();
     const selectedIconLocator = stepLocator.locator(
       ApplicationEditorHeader.selectedStepIcon,
     );

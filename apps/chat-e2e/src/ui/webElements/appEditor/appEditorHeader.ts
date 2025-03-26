@@ -43,45 +43,49 @@ export class AppEditorHeader extends BaseElement {
     return this.actionAndApplicationTypeTitle.getElementLocator().textContent();
   }
 
-  public async getAllStepTitlesTexts() {
-    const stepTitles = await this.getAllStepTitles();
-    let stepTitleTexts = [];
-    for (let i = 0; i < stepTitles.length; i++) {
-      stepTitleTexts.push(await stepTitles[i].textContent());
+  public async getAllStepTitlesTexts(): Promise<(string | null)[]> {
+    const stepTitleElements = await this.getAllStepTitles(); // Gets BaseElement[]
+    const stepTitleTexts: (string | null)[] = [];
+    for (const titleElement of stepTitleElements) {
+      stepTitleTexts.push(await titleElement.getElementLocator().textContent());
     }
     return stepTitleTexts;
   }
 
-  public async getAllSteps() {
-    return this.singleStep.getElementLocator().all();
+  public async getAllSteps(): Promise<BaseElement[]> {
+    const locators = await this.singleStep.getElementLocator().all();
+    return locators.map((locator) => this.createElementFromLocator(locator));
   }
 
-  public async getAllStepTitles() {
-    return this.singleStepTitle.getElementLocator().all();
+  public async getAllStepTitles(): Promise<BaseElement[]> {
+    const locators = await this.singleStepTitle.getElementLocator().all();
+    return locators.map((locator) => this.createElementFromLocator(locator));
   }
 
-  public async getStepByTitle(title: string, index = 0) {
-    return this.stepsContainer
+  public getStepByTitle(title: string, index = 0): BaseElement {
+    const locator = this.stepsContainer
       .getElementLocator()
       .locator(ApplicationEditorHeader.singleStepLink)
       .filter({
+        // Use :text-is for exact match, safer than :text
         has: this.page.locator(
-          `${ApplicationEditorHeader.singleStepTitle}:text("${title}")`,
+          `${ApplicationEditorHeader.singleStepTitle}:text-is("${title}")`,
         ),
       })
-      .nth(index);
+      .nth(index); // nth is 0-based in Playwright
+    return this.createElementFromLocator(locator);
   }
 
   public async getStepLinkByTitle(title: string): Promise<string | null> {
-    const stepLocator = await this.getStepByTitle(title);
-    return stepLocator.getAttribute('href');
+    const stepElement = this.getStepByTitle(title);
+    return stepElement.getElementLocator().getAttribute('href');
   }
 
-  public getGeneralInfoStep() {
+  public getGeneralInfoStep(): BaseElement {
     return this.getStepByTitle(AppEditSteps.generalInfo);
   }
 
-  public getAppSettingsStep() {
+  public getAppSettingsStep(): BaseElement {
     return this.getStepByTitle(AppEditSteps.appSettings);
   }
 

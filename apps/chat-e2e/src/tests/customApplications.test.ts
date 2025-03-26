@@ -1,5 +1,3 @@
-import { ApiApplicationModelRegular } from '@/chat/types/applications';
-import { BackendEntity } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -135,7 +133,6 @@ dialTest.only(
     marketplacePage,
     marketplaceAgentsSection,
     marketplaceAgents,
-    appEditorPage,
     appEditorGeneralForm,
     appEditorViewForm,
     appEditorHeader,
@@ -146,8 +143,6 @@ dialTest.only(
     appEditorHeaderAssertion,
   }) => {
     setTestIds('EPMRTC-5131');
-    const initialCompletionUrl = `http://initial-${GeneratorUtil.randomString(5)}.com`;
-
     const updatedDescription = GeneratorUtil.randomString(25);
     const updatedCompletionUrl = `http://updated-${GeneratorUtil.randomString(6)}.com`;
     const appCreds = {
@@ -201,8 +196,8 @@ dialTest.only(
           ExpectedMessages.headerTitleIsValid,
         );
 
-        const generalInfoStep = await appEditorHeader.getGeneralInfoStep();
-        const appSettingsStep = await appEditorHeader.getAppSettingsStep();
+        const generalInfoStep = appEditorHeader.getGeneralInfoStep();
+        const appSettingsStep = appEditorHeader.getAppSettingsStep();
 
         await baseAssertion.assertElementState(generalInfoStep, 'visible');
         await baseAssertion.assertElementState(appSettingsStep, 'visible');
@@ -221,9 +216,6 @@ dialTest.only(
     await dialTest.step(
       'Update any field on step "Application settings" with a valid value',
       async () => {
-        // const appSettingsStep =
-        //   await appEditorHeader.getAppSettingsStep();
-        // await appSettingsStep.click();
         await appEditorHeaderAssertion.assertStepIsSelected(
           AppEditSteps.appSettings,
           true,
@@ -238,7 +230,7 @@ dialTest.only(
     await dialTest.step(
       'Update any field on step "General info" and click Save and exit link',
       async () => {
-        const generalInfoStep = await appEditorHeader.getGeneralInfoStep();
+        const generalInfoStep = appEditorHeader.getGeneralInfoStep();
         await generalInfoStep.click();
         await appEditorGeneralForm.waitForState();
         await appEditorHeaderAssertion.assertStepIsSelected(
@@ -273,13 +265,8 @@ dialTest.only(
     await dialTest.step(
       'Check that updated field values from steps 4, 5 are still displayed',
       async () => {
-        // await appEditorViewForm.waitForState();
-        // const appSettingsStep =
-        //   await appEditorHeader.getAppSettingsStep();
-        // await appSettingsStep.click();
         await appEditorViewForm.waitForState();
         await baseAssertion.assertInputValue(
-          // Changed from assertElementAttribute/assertElementText
           appEditorViewForm.chatCompletionUrl,
           updatedCompletionUrl,
           'Chat Completion URL should retain updated value',
@@ -296,8 +283,7 @@ dialTest.only(
           'Description should retain updated value',
         );
 
-        // Check General Info
-        const generalInfoStep = await appEditorHeader.getGeneralInfoStep();
+        const generalInfoStep = appEditorHeader.getGeneralInfoStep();
         await generalInfoStep.click();
         await appEditorGeneralForm.waitForState();
         await baseAssertion.assertElementText(
