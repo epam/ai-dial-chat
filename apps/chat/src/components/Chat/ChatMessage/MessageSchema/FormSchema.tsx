@@ -202,7 +202,7 @@ interface ButtonsPropertyProps {
   buttonClassName?: string;
 }
 
-export const ButtonsProperty = ({
+const ButtonsProperty = ({
   options = [],
   onClick,
   formValue,

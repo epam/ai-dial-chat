@@ -5,11 +5,9 @@ import { userEvent } from '@testing-library/user-event';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
-import {
-  FooterMessage,
-  reportAnIssueHash,
-  requestApiKeyHash,
-} from '@/src/components/Common/FooterMessage';
+import { reportAnIssueHash, requestApiKeyHash } from '@/src/constants/footer';
+
+import { FooterMessage } from '@/src/components/Common/FooterMessage';
 
 import { Feature } from '@epam/ai-dial-shared';
 

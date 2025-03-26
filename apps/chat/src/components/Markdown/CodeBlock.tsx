@@ -37,7 +37,7 @@ const codeBlockTheme: Record<string, Record<string, CSSProperties>> = {
   light: oneLight,
 };
 
-export function currentDate() {
+function currentDate() {
   return new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-');
 }
 
