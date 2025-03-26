@@ -397,8 +397,7 @@ export const PromptComponent = ({
   );
 
   const handleOpenInfoModal = useCallback(() => {
-    const { id, updatedAt, createdAt, author, sharedWithMe, publicationInfo } =
-      prompt;
+    const { id, updatedAt, createdAt, author } = prompt;
     dispatch(
       ChatActions.getEntityInfo({
         entityInfo: {
@@ -406,8 +405,6 @@ export const PromptComponent = ({
           updatedAt,
           createdAt,
           author,
-          sharedWithMe,
-          isPublic: !!publicationInfo?.action,
         },
       }),
     );

@@ -14,6 +14,7 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
+import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
@@ -25,9 +26,10 @@ import {
 } from '@/src/utils/app/conversation';
 import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
 import { isEntityIdExternal } from '@/src/utils/app/id';
-import { isSmallScreen } from '@/src/utils/app/mobile';
+import { is4XLScreen, isSmallScreen } from '@/src/utils/app/mobile';
 import { doesModelHaveConfiguration } from '@/src/utils/app/models';
 
+import { ApplicationStatus } from '@/src/types/applications';
 import {
   Conversation,
   ConversationsTemporarySettings,
@@ -83,6 +85,11 @@ import {
 import throttle from 'lodash/throttle';
 
 const scrollThrottlingTimeout = 250;
+
+const isWideScreen = () => !is4XLScreen();
+
+const checkIsWideLayout = (messagesLength: number, isCompareMode: boolean) =>
+  isWideScreen() && !messagesLength && !isCompareMode;
 
 const ChatView = memo(() => {
   const dispatch = useAppDispatch();
@@ -146,6 +153,9 @@ const ChatView = memo(() => {
   const [isLastMessageError, setIsLastMessageError] = useState(false);
   const [prevSelectedIds, setPrevSelectedIds] = useState<string[]>([]);
   const [inputHeight, setInputHeight] = useState<number>(142);
+  const [isWideLayout, setIsWideLayout] = useState(
+    checkIsWideLayout(mergedMessages.length, isCompareMode),
+  );
 
   const handleTalkToConversationId = useCallback(
     (conversationId: string | null) => {
@@ -196,9 +206,15 @@ const ChatView = memo(() => {
           }
 
           const model = modelsMap[conv.model.id];
+          const isNotDeployedCustomApp =
+            model &&
+            model.type === EntityType.Application &&
+            model.functionStatus &&
+            model?.functionStatus !== ApplicationStatus.DEPLOYED;
 
           return (
             !model ||
+            isNotDeployedCustomApp ||
             (model.type === EntityType.Assistant &&
               conv.assistantModelId &&
               !modelsMap[conv.assistantModelId])
@@ -294,6 +310,24 @@ const ChatView = memo(() => {
     }
   }, []);
 
+  const handleChatMessagesResize = useCallback(() => {
+    if (
+      chatMessagesRef.current &&
+      !messageIsStreaming &&
+      mergedMessages.length
+    ) {
+      handleScroll();
+    }
+  }, [handleScroll, mergedMessages.length, messageIsStreaming]);
+
+  const handleChatResize = useCallback(() => {
+    setIsWideLayout(checkIsWideLayout(mergedMessages.length, isCompareMode));
+  }, [isCompareMode, mergedMessages.length]);
+
+  useResizeObserver(chatMessagesRef.current, handleChatMessagesResize);
+
+  useResizeObserver(document.body, handleChatResize);
+
   useEffect(() => {
     const lastMergedMessages = mergedMessages.length
       ? mergedMessages[mergedMessages.length - 1]
@@ -305,28 +339,6 @@ const ChatView = memo(() => {
     );
     setIsLastMessageError(isErrorInSomeLastMessage);
   }, [mergedMessages]);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (
-        chatMessagesRef.current &&
-        !messageIsStreaming &&
-        mergedMessages.length
-      ) {
-        handleScroll();
-      }
-    };
-
-    const resizeObserver = new ResizeObserver(handleResize);
-
-    if (chatMessagesRef.current) {
-      resizeObserver.observe(chatMessagesRef.current);
-    }
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [handleScroll, mergedMessages.length, messageIsStreaming]);
 
   useLayoutEffect(() => {
     if (selectedConversations.length > 0) {
@@ -686,8 +698,9 @@ const ChatView = memo(() => {
                       }
                     }}
                     ref={setChatContainerRef}
-                    className={classNames('h-full overflow-x-hidden', {
+                    className={classNames('overflow-x-hidden', {
                       'content-center': areSelectedConversationsEmpty,
+                      'h-full': !isWideLayout,
                     })}
                     data-qa="scrollable-area"
                   >
@@ -823,10 +836,11 @@ const ChatView = memo(() => {
                         />
                       )}
 
-                      <ChatStarters />
+                      {!isWideLayout && <ChatStarters />}
 
                       {!isPlayback && (
                         <ChatInput
+                          isWideLayout={isWideLayout}
                           showReplayControls={showReplayControls}
                           textareaRef={textareaRef}
                           showScrollDownButton={showScrollDownButton}
@@ -841,6 +855,7 @@ const ChatView = memo(() => {
                           isShowInput={isInputVisible}
                         >
                           <ChatInputControls
+                            isWideLayout={isWideLayout}
                             isNotEmptyConversations={isNotEmptyConversations}
                             showReplayControls={showReplayControls}
                             isModelsInstalled={
@@ -861,6 +876,8 @@ const ChatView = memo(() => {
                           onResize={onChatInputResize}
                         />
                       )}
+
+                      {isWideLayout && <ChatStarters />}
                     </>
                   )}
                 </div>
@@ -984,9 +1001,6 @@ const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
                   {` ${customViewer.title}`}
                 </span>
               </button>
-              <div className="p-5 max-md:hidden">
-                <ChatInputFooter />
-              </div>
             </div>
           </div>
         ))}
@@ -1100,5 +1114,10 @@ export function Chat() {
     );
   }
 
-  return <ChatView />;
+  return (
+    <>
+      <ChatView />
+      <ChatInputFooter />
+    </>
+  );
 }

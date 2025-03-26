@@ -40,6 +40,21 @@ export class AgentDetailsModal extends BaseElement {
   public removeBookmarkIcon = this.getChildElementBySelector(
     MarketplaceAgentSelectors.removeBookmarkIcon,
   );
+  public copyLink = this.getChildElementBySelector(
+    MarketplaceAgentSelectors.copyLink,
+  );
+  public copyLinkText = this.copyLink.getChildElementBySelector(
+    MarketplaceAgentSelectors.copyLinkText,
+  );
+  public copyLinkIcon = this.copyLink.getChildElementBySelector(
+    MarketplaceAgentSelectors.copyIcon,
+  );
+  public copiedLink = this.getChildElementBySelector(
+    MarketplaceAgentSelectors.copiedLink,
+  );
+  public copiedLinkIcon = this.copiedLink.getChildElementBySelector(
+    MarketplaceAgentSelectors.copiedIcon,
+  );
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
 
   public async clickUseButton({

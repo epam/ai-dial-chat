@@ -52,7 +52,7 @@ type Validators = {
   [K in keyof QuickAppFormData]?: Options<K>;
 };
 
-export const validators: Validators = {
+const validators: Validators = {
   toolset: {
     required: 'Toolset config is required',
     validate: (v) => {
@@ -108,6 +108,10 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
   const exitAfterSave = useAppSelector(
     ApplicationSelectors.selectExitAfterSave,
   );
+
+  const confirmDocumentUrlValues = oldApplication?.isShared
+    ? CONFIRM_DOCUMENT_VALUES
+    : undefined;
 
   const handleSubmit = useCallback(
     (data: QuickAppFormData) => {
@@ -207,12 +211,8 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
               disabled={isSharedWithMe}
               tooltip={isSharedWithMe ? getSharedTooltip('file') : ''}
               sourceFilters={myFilesFilter}
-              warning={
-                oldApplication?.isShared
-                  ? CONFIRM_DOCUMENT_VALUES.description
-                  : ''
-              }
-              confirmDialogValues={CONFIRM_DOCUMENT_VALUES}
+              warning={confirmDocumentUrlValues?.description}
+              confirmDialogValues={confirmDocumentUrlValues}
             />
           )}
         />

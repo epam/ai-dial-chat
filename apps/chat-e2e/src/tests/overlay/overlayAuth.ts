@@ -29,7 +29,10 @@ for (let i = 0; i < overlayUsernames.length; i++) {
 
     const loginPage = new LoginPage(newPage);
     await newPage.waitForLoadState();
-    await loginPage.auth0SignInButton.click();
+    const signInButton = loginPage.auth0SignInButton;
+    if (await signInButton.isVisible()) {
+      await signInButton.click();
+    }
 
     const auth0Page = new Auth0Page(newPage);
     await newPage.waitForLoadState();

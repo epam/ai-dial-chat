@@ -148,7 +148,6 @@ export const shareSlice = createSlice({
       state.shareModalState = ModalState.CLOSED;
       state.sharePermissions = undefined;
     },
-
     revokeAccess: (
       state,
       _action: PayloadAction<{

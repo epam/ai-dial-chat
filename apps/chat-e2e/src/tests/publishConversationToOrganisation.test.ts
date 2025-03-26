@@ -108,7 +108,7 @@ dialAdminTest(
         await publishingRequestModal
           .getChangePublishToPath()
           .changeButton.click();
-        await selectFoldersAssertion.assertStringsSorting(
+        selectFoldersAssertion.assertStringsSorting(
           await selectFolders.getFolderNames(),
           'asc',
         );
@@ -206,7 +206,7 @@ dialAdminTest(
     await dialTest.step(
       'Verify folders sorting in "Organization" section',
       async () => {
-        await selectFoldersAssertion.assertStringsSorting(
+        selectFoldersAssertion.assertStringsSorting(
           await adminOrganizationFolderConversations.getFolderNames(),
           'asc',
         );
@@ -317,9 +317,7 @@ dialAdminTest(
 
     await dialTest.step('Verify folder renaming and max length', async () => {
       await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-      await selectFolders.renameEmptyFolderWithTick(newFolderName, {
-        isHttpMethodTriggered: false,
-      });
+      await selectFolders.renameEmptyFolderWithTick(newFolderName);
       await selectFoldersAssertion.assertFolderState(
         { name: cutNewFolderName },
         'visible',
@@ -415,9 +413,6 @@ dialAdminTest(
         //TODO: remove next line when fixed https://github.com/epam/ai-dial-chat/issues/2294
         await selectFolders.renameEmptyFolderWithTick(
           GeneratorUtil.randomString(5),
-          {
-            isHttpMethodTriggered: false,
-          },
         );
         await selectFolders
           .getNestedFolder(defaultFolderName, defaultFolderName)

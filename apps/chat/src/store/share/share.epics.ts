@@ -918,28 +918,26 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
             state$.value,
           );
 
-          payload.resources.entities.length &&
-            actions.push(
-              FilesActions.addSharedFiles({
-                files: payload.resources.entities
-                  // do not override selected files
-                  .filter((res) => !selectedFilesIds.includes(res.id))
-                  .map((res) => ({
-                    ...res,
-                    sharedWithMe: true,
-                  })) as DialFile[],
-              }),
-            );
-
-          payload.resources.folders.length &&
-            actions.push(
-              FilesActions.addFolders({
-                folders: payload.resources.folders.map((res) => ({
+          actions.push(
+            FilesActions.addSharedFiles({
+              files: payload.resources.entities
+                // do not override selected files
+                .filter((res) => !selectedFilesIds.includes(res.id))
+                .map((res) => ({
                   ...res,
                   sharedWithMe: true,
-                })) as FolderInterface[],
-              }),
-            );
+                })) as DialFile[],
+            }),
+          );
+
+          actions.push(
+            FilesActions.addFolders({
+              folders: payload.resources.folders.map((res) => ({
+                ...res,
+                sharedWithMe: true,
+              })) as FolderInterface[],
+            }),
+          );
         }
       }
 
@@ -1306,7 +1304,7 @@ const discardSharedWithMeFailEpic: AppEpic = (action$) =>
     }),
   );
 
-const deleteOrRenameSharedFolderEpic: AppEpic = (action$, state$) =>
+const revokeFolderAccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(
       (action) =>
@@ -1315,23 +1313,38 @@ const deleteOrRenameSharedFolderEpic: AppEpic = (action$, state$) =>
         ConversationsActions.updateFolder.match(action) ||
         PromptsActions.updateFolder.match(action),
     ),
+    filter(
+      ({ payload }) =>
+        !('values' in payload) ||
+        payload.values.name !== undefined ||
+        payload.values.folderId !== undefined,
+    ),
     switchMap(({ payload }) => {
-      const folders = ConversationsSelectors.selectFolders(state$.value);
-      const isSharedFolder = folders.find(
-        (folder) => folder.id === payload.folderId,
-      )?.isShared;
-      const requireRevoke =
-        'values' in payload && payload.values ? payload.values.name : true;
+      const { Selector, featureType } = isConversationId(payload.folderId)
+        ? { Selector: ConversationsSelectors, featureType: FeatureType.Chat }
+        : { Selector: PromptsSelectors, featureType: FeatureType.Prompt };
+      const folders = Selector.selectFolders(state$.value);
+      const foldersToRevoke = folders.filter(
+        (folder) =>
+          folder.id.startsWith(`${payload.folderId}/`) ||
+          folder.id === payload.folderId,
+      );
 
-      return payload.folderId && isSharedFolder && requireRevoke
-        ? of(
+      if (!foldersToRevoke.length) {
+        return EMPTY;
+      }
+
+      return concat(
+        ...foldersToRevoke.map((folder) =>
+          of(
             ShareActions.revokeAccess({
-              resourceId: payload.folderId,
-              featureType: FeatureType.Chat,
               isFolder: true,
+              resourceId: folder.id,
+              featureType,
             }),
-          )
-        : EMPTY;
+          ),
+        ),
+      );
     }),
   );
 
@@ -1366,5 +1379,5 @@ export const ShareEpics = combineEpics(
   triggerGettingSharedListingsAttachmentsEpic,
   triggerGettingSharedListingsApplicationsEpic,
 
-  deleteOrRenameSharedFolderEpic,
+  revokeFolderAccessEpic,
 );

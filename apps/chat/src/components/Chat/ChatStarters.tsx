@@ -53,9 +53,10 @@ const ChatStartersView = ({ schema }: ChatStartersViewProps) => {
       formValue={formValue}
       showSelected
       onChange={handleChange}
-      buttonsWrapperClassName="md:justify-center flex-nowrap overflow-x-auto overflow-y-hidden px-2"
+      buttonsWrapperClassName="overflow-y-hidden md:px-4 px-2 lg:px-0"
       buttonClassName="shrink-0"
-      propertyWrapperClassName="items-center"
+      wrapperClassName="lg:items-center"
+      propertyWrapperClassName="lg:w-[768px]"
     />
   );
 };
@@ -78,8 +79,9 @@ export const ChatStarters = memo(function ChatStarters() {
     isSchemaLoading ||
     !schema ||
     isReplay
-  )
+  ) {
     return null;
+  }
 
   return <ChatStartersView schema={schema} />;
 });

@@ -11,6 +11,7 @@ import {
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
+  MockedChatApiResponseBodies,
 } from '@/src/testData';
 import { FileModalSection } from '@/src/ui/webElements';
 import { FileUtil, GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
@@ -398,7 +399,8 @@ dialAdminTest(
 );
 
 dialAdminTest(
-  'Publish chat with plotly',
+  'Publish chat with plotly.\n' +
+    'Error message appears if to Share the conversation with an attachment from Organization',
   async ({
     conversationData,
     fileApiHelper,
@@ -416,6 +418,9 @@ dialAdminTest(
     adminConversationDropdownMenu,
     adminChat,
     adminChatMessages,
+    adminToast,
+    adminShareModal,
+    adminConversations,
     adminConversationAssertion,
     publishFileAssertion,
     adminApproveRequiredConversationsAssertion,
@@ -428,7 +433,7 @@ dialAdminTest(
     adminLocalStorageManager,
   }) => {
     dialAdminTest.slow();
-    setTestIds('EPMRTC-3625');
+    setTestIds('EPMRTC-3625', 'EPMRTC-4125');
     let plotlyConversation: Conversation;
     let plotlyImageUrl: string;
     const requestName = GeneratorUtil.randomPublicationRequestName();
@@ -603,6 +608,23 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
+      'Verify error toast is shown on attempt to share conversation with published file',
+      async () => {
+        await adminConversations.openEntityDropdownMenu(
+          plotlyConversation.name,
+        );
+        await adminConversationDropdownMenu.selectMenuOption(MenuOptions.share);
+        await baseAssertion.assertElementState(adminToast, 'visible');
+        await baseAssertion.assertElementText(
+          adminToast,
+          ExpectedConstants.sharingWithAttachmentNotFromAllFilesErrorMessage,
+        );
+        await baseAssertion.assertElementState(adminShareModal, 'hidden');
+        await adminToast.closeToast();
+      },
+    );
+
+    await dialAdminTest.step(
       'Create playback of published conversation and verify plotly graph is shown on expand attachment',
       async () => {
         const playbackName = ExpectedConstants.playbackConversation.concat(
@@ -656,6 +678,9 @@ dialAdminTest(
           'visible',
         );
         await adminConversationAssertion.assertSelectedConversation(replayName);
+        await adminDialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         const replayRequest = await adminChat.startReplay();
         apiAssertion.assertRequestMessage(
           replayRequest.messages[0],

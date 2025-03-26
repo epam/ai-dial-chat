@@ -9,7 +9,7 @@ import { Feature } from '@epam/ai-dial-shared';
 
 const overlayOptions = {
   ...commonOverlayProps,
-  enabledFeatures: [Feature.HideEmptyChatChangeAgent],
+  enabledFeatures: [Feature.HideEmptyChatChangeAgent, Feature.Header],
 };
 
 export default function Index() {

@@ -11,7 +11,6 @@ import { useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ScrollDownButton } from '../Common/ScrollDownButton';
-import { ChatInputFooter } from './ChatInput/ChatInputFooter';
 
 interface Props {
   type?: EntityType;
@@ -50,7 +49,6 @@ export const NotAllowedModel: React.FC<Props> = ({
           />
         )}
       </div>
-      <ChatInputFooter />
     </div>
   );
 };

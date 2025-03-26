@@ -6,6 +6,7 @@ import GoogleProvider from 'next-auth/providers/google';
 import KeycloakProvider from 'next-auth/providers/keycloak';
 import OktaProvider from 'next-auth/providers/okta';
 
+import { parseCommaSeparatedList } from '../app/common';
 import { tokenConfig } from './auth-callbacks';
 import { GitLab } from './custom-gitlab';
 import PingId from './ping-identity';
@@ -166,7 +167,9 @@ export const authProviders = allProviders.filter(Boolean) as Provider[];
  * By ensuring the provider supports federated logout, we maintain
  * proper session management and user experience during logout operations.
  */
-const FEDERATED_LOGOUT_PROVIDERS: OAuthProviderType[] = ['auth0', 'keycloak'];
+const FEDERATED_LOGOUT_PROVIDERS = parseCommaSeparatedList(
+  process.env.FEDERATED_LOGOUT_PROVIDERS,
+);
 
 export const DEFAULT_PROVIDER: OAuthProviderType | null =
   authProviders.length === 1 &&

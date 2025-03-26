@@ -1,9 +1,10 @@
 import { MutableRefObject, ReactNode, useEffect, useRef } from 'react';
 
+import classNames from 'classnames';
+
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
-import { ChatInputFooter } from './ChatInputFooter';
 import { ChatInputMessage } from './ChatInputMessage';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
@@ -13,6 +14,7 @@ interface Props {
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
   showScrollDownButton: boolean;
   isShowInput: boolean;
+  isWideLayout: boolean;
   isLastMessageError: boolean;
   showReplayControls: boolean;
   children?: ReactNode;
@@ -30,6 +32,7 @@ export const ChatInput = Inversify.register(
     textareaRef,
     showScrollDownButton,
     isShowInput,
+    isWideLayout,
     showReplayControls,
     children,
     onSend,
@@ -61,7 +64,12 @@ export const ChatInput = Inversify.register(
     }, [inputRef, onResize]);
 
     return (
-      <div ref={inputRef} className="w-full pt-3 md:pt-5">
+      <div
+        ref={inputRef}
+        className={classNames('w-full pt-3 md:pt-5', {
+          '!pt-10': isWideLayout,
+        })}
+      >
         <div className="relative">{!messageIsStreaming && children}</div>
         {isShowInput && (
           <ChatInputMessage
@@ -75,7 +83,6 @@ export const ChatInput = Inversify.register(
             showReplayControls={showReplayControls}
           />
         )}
-        <ChatInputFooter />
       </div>
     );
   },

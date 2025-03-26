@@ -18,6 +18,7 @@ const overlayOptions = {
     Feature.Marketplace,
     Feature.CodeApps,
     Feature.QuickApps,
+    Feature.CustomApplications,
   ],
 };
 
