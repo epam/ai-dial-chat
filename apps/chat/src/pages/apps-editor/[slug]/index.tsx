@@ -7,7 +7,9 @@ import { useRouter } from 'next/router';
 import { isApplicationType } from '@/src/utils/app/application';
 import { decode } from '@/src/utils/app/application-type-schema';
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
+import { canUserUseFeature } from '@/src/utils/session';
 
+import { ApplicationTypeSchemaProperties } from '@/src/types/application-type-schema';
 import { ApplicationType } from '@/src/types/applications';
 
 import {
@@ -25,7 +27,7 @@ import { Spinner } from '@/src/components/Common/Spinner';
 
 import { getLayout } from '../../_app';
 
-import { UploadStatus } from '@epam/ai-dial-shared';
+import { Feature, UploadStatus } from '@epam/ai-dial-shared';
 
 export default function AppsEditor() {
   const {
@@ -72,10 +74,13 @@ export default function AppsEditor() {
           <AppsEditorHeader
             applicationTypeDisplayName={
               isSchemaApplicationType
-                ? (schema?.['dial:applicationTypeDisplayName'] ?? '')
+                ? (schema?.[
+                    ApplicationTypeSchemaProperties.applicationTypeDisplayName
+                  ] ?? '')
                 : decode(slug.toString())
             }
             isEditApplication={!!id}
+            hasCustomEditor={!!schema?.['dial:applicationTypeEditorUrl']}
           />
           <div className="flex size-full">
             <GeneralInfoView
@@ -93,7 +98,7 @@ AppsEditor.getLayout = getLayout;
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const session = await getSession(context);
-  const canCreateCodeApps = !!session?.user?.canCreateCodeApps;
+  const canCreateCodeApps = canUserUseFeature(session, Feature.CodeApps);
 
   const { slug, id } = context.query;
 

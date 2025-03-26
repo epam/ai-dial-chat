@@ -57,6 +57,7 @@ import {
   TooltipAssertion,
   VariableModalAssertion,
 } from '@/src/assertions';
+import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
 import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
 import { LocalStorageAssertion } from '@/src/assertions/localStorageAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
@@ -64,7 +65,7 @@ import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateM
 import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
 import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
-import { SharedWithMeConversationAssertion } from '@/src/assertions/sharedWithMeConversationAssertion';
+import { SideBarConversationAssertion } from '@/src/assertions/sideBarConversationAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import test from '@/src/core/baseFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
@@ -110,6 +111,7 @@ import {
 import { OrganizationPromptsTree } from '@/src/ui/webElements/entityTree/sidebar/organizationPromptsTree';
 import { ErrorPopup } from '@/src/ui/webElements/errorPopup';
 import { Filter } from '@/src/ui/webElements/filter';
+import { Footer } from '@/src/ui/webElements/footer';
 import { Header } from '@/src/ui/webElements/header';
 import { ImportExportLoader } from '@/src/ui/webElements/importExportLoader';
 import { InputAttachments } from '@/src/ui/webElements/inputAttachments';
@@ -171,11 +173,13 @@ const dialTest = test.extend<{
   banner: Banner;
   promptBar: PromptBar;
   chat: Chat;
+  footer: Footer;
   chatMessages: ChatMessages;
   editMessageInputAttachments: InputAttachments;
   sendMessage: SendMessage;
   attachmentDropdownMenu: DropdownMenu;
   sendMessageInputAttachments: InputAttachments;
+  sendMessageInputAttachmentsAssertions: InputAttachmentsAssertions;
   conversations: ConversationsTree;
   prompts: PromptsTree;
   folderConversations: FolderConversations;
@@ -232,6 +236,7 @@ const dialTest = test.extend<{
   additionalSecondShareUserRequestContext: APIRequestContext;
   adminUserRequestContext: APIRequestContext;
   adminUserItemApiHelper: ItemApiHelper;
+  adminShareApiHelper: ShareApiHelper;
   adminApplicationApiHelper: ApplicationApiHelper;
   mainUserShareApiHelper: ShareApiHelper;
   sharedWithMeConversations: SharedWithMeConversationsTree;
@@ -240,6 +245,9 @@ const dialTest = test.extend<{
   sharedWithMeFolderDropdownMenu: DropdownMenu;
   additionalUserShareApiHelper: ShareApiHelper;
   additionalUserItemApiHelper: ItemApiHelper;
+  additionalUserFileApiHelper: FileApiHelper;
+  additionalUserApplicationApiHelper: ApplicationApiHelper;
+  additionalUserModelApiHelper: ModelApiHelper;
   additionalSecondUserShareApiHelper: ShareApiHelper;
   additionalSecondUserItemApiHelper: ItemApiHelper;
   chatNotFound: ChatNotFound;
@@ -261,7 +269,7 @@ const dialTest = test.extend<{
   publishingRules: PublishingRules;
   conversationAssertion: ConversationAssertion;
   chatBarFolderAssertion: FolderAssertion<FolderConversations>;
-  organizationConversationAssertion: SideBarEntityAssertion<OrganizationConversationsTree>;
+  organizationConversationAssertion: SideBarConversationAssertion<OrganizationConversationsTree>;
   organizationPromptAssertion: SideBarEntityAssertion<OrganizationPromptsTree>;
   toastAssertion: ToastAssertion;
   downloadAssertion: DownloadAssertion;
@@ -276,6 +284,7 @@ const dialTest = test.extend<{
   accountSettingsAssertion: AccountSettingsAssertion;
   accountDropdownMenuAssertion: MenuAssertion;
   conversationDropdownMenuAssertion: MenuAssertion;
+  promptDropdownMenuAssertion: MenuAssertion;
   folderDropdownMenuAssertion: MenuAssertion;
   settingsModalAssertion: SettingsModalAssertion;
   sendMessageAssertion: SendMessageAssertion;
@@ -309,7 +318,7 @@ const dialTest = test.extend<{
   organizationFolderConversationAssertions: FolderAssertion<Folders>;
   messageTemplateModalAssertion: MessageTemplateModalAssertion;
   agentVersionsDropdownMenuAssertion: MenuAssertion;
-  sharedWithMeConversationAssertion: SharedWithMeConversationAssertion;
+  sharedWithMeConversationAssertion: SideBarConversationAssertion<SharedWithMeConversationsTree>;
   localStorageAssertion: LocalStorageAssertion;
 }>({
   beforeTestCleanup: [
@@ -320,6 +329,14 @@ const dialTest = test.extend<{
     },
     { scope: 'test', auto: true },
   ],
+  sendMessageInputAttachmentsAssertions: async (
+    { sendMessageInputAttachments },
+    use,
+  ) => {
+    const sendMessageInputAttachmentsAssertions =
+      new InputAttachmentsAssertions(sendMessageInputAttachments);
+    await use(sendMessageInputAttachmentsAssertions);
+  },
   localStorageAssertion: async ({ localStorageManager }, use) => {
     const localStorageAssertion = new LocalStorageAssertion(
       localStorageManager,
@@ -331,7 +348,9 @@ const dialTest = test.extend<{
     use,
   ) => {
     const sharedWithMeConversationAssertion =
-      new SharedWithMeConversationAssertion(sharedWithMeConversations);
+      new SideBarConversationAssertion<SharedWithMeConversationsTree>(
+        sharedWithMeConversations,
+      );
     await use(sharedWithMeConversationAssertion);
   },
   sharedWithMeFolderDropdownMenu: async (
@@ -474,6 +493,10 @@ const dialTest = test.extend<{
   chat: async ({ appContainer }, use) => {
     const chat = appContainer.getChat();
     await use(chat);
+  },
+  footer: async ({ appContainer }, use) => {
+    const footer = appContainer.getFooter();
+    await use(footer);
   },
   chatMessages: async ({ chat }, use) => {
     const chatMessages = chat.getChatMessages();
@@ -733,6 +756,13 @@ const dialTest = test.extend<{
     );
     await use(adminApplicationApiHelper);
   },
+  adminShareApiHelper: async ({ adminUserRequestContext }, use) => {
+    const adminShareApiHelper = new ShareApiHelper(
+      adminUserRequestContext,
+      BucketUtil.getAdminUserBucket(),
+    );
+    await use(adminShareApiHelper);
+  },
   additionalShareUserRequestContext: async ({ playwright }, use) => {
     const additionalShareUserRequestContext =
       await playwright.request.newContext({
@@ -786,6 +816,36 @@ const dialTest = test.extend<{
       BucketUtil.getAdditionalShareUserBucket(),
     ); // Use User2's bucket
     await use(additionalUserItemApiHelper);
+  },
+  additionalUserFileApiHelper: async (
+    { additionalShareUserRequestContext },
+    use,
+  ) => {
+    const additionalUserFileApiHelper = new FileApiHelper(
+      additionalShareUserRequestContext,
+      BucketUtil.getAdditionalShareUserBucket(),
+    ); // Use User2's bucket
+    await use(additionalUserFileApiHelper);
+  },
+  additionalUserApplicationApiHelper: async (
+    { additionalShareUserRequestContext },
+    use,
+  ) => {
+    const additionalUserApplicationApiHelper = new ApplicationApiHelper(
+      additionalShareUserRequestContext,
+      BucketUtil.getAdditionalShareUserBucket(),
+    ); // Use User2's bucket
+    await use(additionalUserApplicationApiHelper);
+  },
+  additionalUserModelApiHelper: async (
+    { additionalShareUserRequestContext },
+    use,
+  ) => {
+    const additionalUserModelApiHelper = new ModelApiHelper(
+      additionalShareUserRequestContext,
+      BucketUtil.getAdditionalShareUserBucket(),
+    ); // Use User2's bucket
+    await use(additionalUserModelApiHelper);
   },
   chatNotFound: async ({ page }, use) => {
     const chatNotFound = new ChatNotFound(page);
@@ -882,7 +942,7 @@ const dialTest = test.extend<{
     use,
   ) => {
     const organizationConversationAssertion =
-      new SideBarEntityAssertion<OrganizationConversationsTree>(
+      new SideBarConversationAssertion<OrganizationConversationsTree>(
         organizationConversations,
       );
     await use(organizationConversationAssertion);
@@ -966,6 +1026,10 @@ const dialTest = test.extend<{
     );
     await use(conversationDropdownMenuAssertion);
   },
+  promptDropdownMenuAssertion: async ({ promptDropdownMenu }, use) => {
+    const promptDropdownMenuAssertion = new MenuAssertion(promptDropdownMenu);
+    await use(promptDropdownMenuAssertion);
+  },
   folderDropdownMenuAssertion: async ({ folderDropdownMenu }, use) => {
     const folderDropdownMenuAssertion = new MenuAssertion(folderDropdownMenu);
     await use(folderDropdownMenuAssertion);
@@ -994,8 +1058,8 @@ const dialTest = test.extend<{
     const chatMessagesAssertion = new ChatMessagesAssertion(chatMessages);
     await use(chatMessagesAssertion);
   },
-  footerAssertion: async ({ chat }, use) => {
-    const footerAssertion = new FooterAssertion(chat.getFooter());
+  footerAssertion: async ({ footer }, use) => {
+    const footerAssertion = new FooterAssertion(footer);
     await use(footerAssertion);
   },
   sendMessagePromptListAssertion: async ({ sendMessage }, use) => {

@@ -1,27 +1,28 @@
-import {
-  DragEvent,
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useSectionToggle } from '@/src/hooks/useSectionToggle';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
-import { sortByName } from '@/src/utils/app/folders';
-import { getPromptRootId, isEntityIdExternal } from '@/src/utils/app/id';
-import { MoveType } from '@/src/utils/app/move';
+import { getFoldersDepth, sortByName } from '@/src/utils/app/folders';
+import {
+  getIdWithoutRootPathSegments,
+  getPromptRootId,
+  isEntityIdExternal,
+  isRootId,
+} from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilters,
 } from '@/src/utils/app/search';
 
 import { FeatureType } from '@/src/types/common';
-import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
-import { PromptInfo } from '@/src/types/prompt';
+import {
+  DraggedInterface,
+  FolderInterface,
+  FolderSectionProps,
+} from '@/src/types/folder';
+import { PublicationFolderPayload } from '@/src/types/modal';
 import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
@@ -43,12 +44,15 @@ import {
   SHARED_WITH_ME_SECTION_NAME,
 } from '@/src/constants/sections';
 
+import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import Folder from '@/src/components/Folder/Folder';
 
 import { ApproveRequiredSection } from '../../Chat/Publish/ApproveRequiredSection';
 import CollapsibleSection from '../../Common/CollapsibleSection';
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
 import { PromptComponent } from './Prompt';
+
+import { PublishActions } from '@epam/ai-dial-shared';
 
 interface promptFolderProps {
   folder: FolderInterface;
@@ -70,6 +74,8 @@ const PromptFolderTemplate = ({
   const { t } = useTranslation(Translation.SideBar);
 
   const dispatch = useAppDispatch();
+
+  const [publication, setPublication] = useState<PublicationFolderPayload>();
 
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const highlightedFolders = useAppSelector(
@@ -124,33 +130,27 @@ const PromptFolderTemplate = ({
   );
 
   const handleDrop = useCallback(
-    (e: DragEvent, folder: FolderInterface) => {
-      if (e.dataTransfer) {
-        const promptData = e.dataTransfer.getData(MoveType.Prompt);
-        const folderData = e.dataTransfer.getData(MoveType.PromptFolder);
-
-        if (promptData) {
-          const prompt: PromptInfo = JSON.parse(promptData);
+    (currentFolder: FolderInterface, draggedData: DraggedInterface) => {
+      const { entity, isFolder } = draggedData;
+      if (isFolder) {
+        if (
+          entity.id !== currentFolder.id &&
+          entity.folderId !== currentFolder.id
+        ) {
           dispatch(
-            PromptsActions.updatePrompt({
-              id: prompt.id,
-              values: { folderId: folder.id },
+            PromptsActions.updateFolder({
+              folderId: entity.id,
+              values: { folderId: currentFolder.id, isShared: false },
             }),
           );
-        } else if (folderData) {
-          const movedFolder: FolderInterface = JSON.parse(folderData);
-          if (
-            movedFolder.id !== folder.id &&
-            movedFolder.folderId !== folder.id
-          ) {
-            dispatch(
-              PromptsActions.updateFolder({
-                folderId: movedFolder.id,
-                values: { folderId: folder.id },
-              }),
-            );
-          }
         }
+      } else if (entity) {
+        dispatch(
+          PromptsActions.updatePrompt({
+            id: entity.id,
+            values: { folderId: currentFolder.id },
+          }),
+        );
       }
     },
     [dispatch],
@@ -222,11 +222,17 @@ const PromptFolderTemplate = ({
             featureType: FeatureType.Prompt,
           }),
         );
+      } else if (folder.isShared) {
+        dispatch(
+          PromptsActions.deleteFolder({
+            folderId,
+          }),
+        );
       } else {
         dispatch(PromptsActions.deleteFolder({ folderId }));
       }
     },
-    [dispatch, folder.id, folder.sharedWithMe],
+    [dispatch, folder.id, folder.isShared, folder.sharedWithMe],
   );
 
   const handleFolderSelect = useCallback(
@@ -266,6 +272,10 @@ const PromptFolderTemplate = ({
     ],
   );
 
+  const handlePublicationClose = useCallback(() => {
+    setPublication(undefined);
+  }, []);
+
   const isExternal = isEntityIdExternal(folder);
 
   return (
@@ -277,6 +287,8 @@ const PromptFolderTemplate = ({
         denyDrop={isExternal || isSelectMode}
       />
       <Folder
+        isUnpublishing={publication?.action === PublishActions.DELETE}
+        onPublication={setPublication}
         maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
         searchTerm={searchTerm}
         currentFolder={folder}
@@ -303,6 +315,23 @@ const PromptFolderTemplate = ({
           onDrop={onDropBetweenFolders}
           featureType={FeatureType.Prompt}
           denyDrop={isExternal || isSelectMode}
+        />
+      )}
+      {!!publication && (
+        <PublishModal
+          entity={publication.entity}
+          entities={publication.entities}
+          type={publication.type}
+          isOpen={!!publication}
+          onClose={handlePublicationClose}
+          publishAction={publication.action}
+          depth={getFoldersDepth(publication.entity, allFolders)}
+          defaultPath={
+            publication.action === PublishActions.DELETE &&
+            !isRootId(publication.entity.folderId)
+              ? getIdWithoutRootPathSegments(publication.entity.folderId)
+              : undefined
+          }
         />
       )}
     </>

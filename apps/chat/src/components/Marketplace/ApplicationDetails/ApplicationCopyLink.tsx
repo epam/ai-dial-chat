@@ -56,8 +56,11 @@ export function ApplicationCopyLink({
       tooltip={hasTooltip ? t(urlCopied ? 'Copied!' : 'Copy link') : undefined}
     >
       {urlCopied ? (
-        <div className={classNames(TRIGGER_CLASS, className)}>
-          <IconCheck size={size} />
+        <div
+          className={classNames(TRIGGER_CLASS, className)}
+          data-qa="copied-link"
+        >
+          <IconCheck size={size} data-qa="copied-icon" />
           {withText && <span>{t('Copied!')}</span>}
         </div>
       ) : (
@@ -67,8 +70,8 @@ export function ApplicationCopyLink({
           data-qa="copy-link"
           href={link}
         >
-          <IconLink size={size} />
-          {withText && <span>{t('Copy link')}</span>}
+          <IconLink size={size} data-qa="copy-icon" />
+          {withText && <span data-qa="copy-link-text">{t('Copy link')}</span>}
         </a>
       )}
     </Tooltip>

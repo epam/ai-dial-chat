@@ -232,7 +232,7 @@ const ConversationView = ({
   );
 };
 
-export interface ConversationRowProps extends ConversationViewProps {
+interface ConversationRowProps extends ConversationViewProps {
   level?: number;
   onEvent?: (eventId: ReplaceOptions, data: string) => void;
   additionalItemData?: AdditionalItemData;
@@ -323,7 +323,7 @@ const PromptView = ({
   );
 };
 
-export interface PromptRowProps extends PromptViewProps {
+interface PromptRowProps extends PromptViewProps {
   level?: number;
   onEvent?: (eventId: ReplaceOptions, data: string) => void;
   additionalItemData?: AdditionalItemData;
@@ -409,7 +409,7 @@ const FileView = ({
   );
 };
 
-export interface FileRowProps extends FileViewProps {
+interface FileRowProps extends FileViewProps {
   level?: number;
   onEvent?: (eventId: ReplaceOptions, data: string) => void;
   additionalItemData?: AdditionalItemData;
@@ -447,21 +447,23 @@ export const FilesRow = ({
 
 interface ApplicationViewProps {
   item: ShareEntity;
-  onSelect?: (ids: string[]) => void;
   isChosen?: boolean;
+  featureContainerClassNames?: string;
+  onSelect?: (ids: string[]) => void;
 }
 
-export interface ApplicationRowProps extends ApplicationViewProps {
+interface ApplicationRowProps extends ApplicationViewProps {
   level?: number;
-  onEvent?: (eventId: ReplaceOptions, data: string) => void;
   additionalItemData?: Record<string, unknown>;
   itemComponentClassNames?: string;
+  onEvent?: (eventId: ReplaceOptions, data: string) => void;
 }
 
 const ApplicationView = ({
   item: application,
-  onSelect,
   isChosen,
+  featureContainerClassNames,
+  onSelect,
 }: ApplicationViewProps) => {
   const entity = {
     ...application,
@@ -470,7 +472,7 @@ const ApplicationView = ({
   };
 
   return (
-    <FeatureContainer>
+    <FeatureContainer containerClassNames={featureContainerClassNames}>
       {onSelect && (
         <div
           className="relative flex size-[18px] shrink-0"
@@ -515,9 +517,10 @@ export const ApplicationRow = ({
   level,
   item: application,
   additionalItemData,
-  onEvent,
   itemComponentClassNames,
   isChosen,
+  featureContainerClassNames,
+  onEvent,
   onSelect,
 }: ApplicationRowProps) => {
   return (
@@ -531,6 +534,7 @@ export const ApplicationRow = ({
     >
       <ApplicationView
         isChosen={isChosen}
+        featureContainerClassNames={featureContainerClassNames}
         onSelect={onSelect}
         item={application}
       />

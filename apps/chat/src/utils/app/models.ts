@@ -2,6 +2,7 @@ import { EntityType } from '@/src/types/common';
 import { DialAIEntity, DialAIEntityModel } from '@/src/types/models';
 
 import { getModelIdWithoutVersion } from '../server/api';
+import { constructPath } from './file';
 
 import groupBy from 'lodash-es/groupBy';
 import uniqBy from 'lodash-es/uniqBy';
@@ -37,10 +38,15 @@ interface ModelGroup {
   entities: DialAIEntityModel[];
 }
 
-export const getGroupModelKey = (model: DialAIEntityModel) =>
-  model.id === model.reference
-    ? model.name
-    : getModelIdWithoutVersion(model.id);
+export const getGroupModelKey = (model: DialAIEntityModel) => {
+  if (model.id === model.reference) {
+    return model.name;
+  }
+  const pathParts = getModelIdWithoutVersion(model.id).split('/');
+  const bucket = pathParts.slice(0, 2); // type and bucket
+  const name = pathParts.slice(-1); // name
+  return constructPath(...bucket, ...name); // ignore public folder as result
+};
 
 export const groupModelsAndSaveOrder = (
   models: DialAIEntityModel[],

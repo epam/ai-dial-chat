@@ -66,11 +66,11 @@ export class BasePage {
     const responses = [];
     const responseBodies = new Map<string, string>();
     const hostsArray = options?.setEntitiesEnvVars
-      ? [API.modelsHost, API.addonsHost, API.sessionHost, API.bucketHost]
+      ? [API.modelsHost, API.addonsHost, API.bucketHost, API.themesListingHost]
       : [
           API.bucketHost,
           API.installedDeploymentsHost(),
-          API.multipleListingHost(),
+          API.publishedApplicationsHost,
         ];
     for (const host of hostsArray) {
       const resp = this.page.waitForResponse(
@@ -287,6 +287,10 @@ export class BasePage {
       (text) => navigator.clipboard.writeText(text),
       text,
     );
+  }
+
+  public async readFromClipboard() {
+    return this.page.evaluate(() => navigator.clipboard.readText());
   }
 
   public async mockChatImageResponse(

@@ -5,7 +5,7 @@ import {
   ExpectedMessages,
   MockedChatApiResponseBodies,
   Rate,
-  Theme,
+  ThemeId,
 } from '@/src/testData';
 import { OverlaySandboxUrls } from '@/src/testData/overlay/overlaySandboxUrls';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
@@ -95,7 +95,7 @@ dialOverlayTest(
         );
         const request =
           await overlayChat.sendRequestWithButton(randomAgentRequest);
-        await overlayApiAssertion.assertRequestModelId(request, randomModel);
+        overlayApiAssertion.assertRequestModelId(request, randomModel);
       },
     );
 
@@ -169,7 +169,7 @@ dialOverlayTest(
       async () => {
         const request =
           await overlayChat.sendRequestWithButton('second request');
-        await overlayApiAssertion.assertRequestModelId(request, expectedModel);
+        overlayApiAssertion.assertRequestModelId(request, expectedModel);
       },
     );
 
@@ -209,7 +209,7 @@ dialOverlayTest(
     );
 
     await dialTest.step('Verify Dark theme is set', async () => {
-      await overlayAssertion.assertOverlayTheme(overlayHomePage, Theme.dark);
+      await overlayAssertion.assertOverlayTheme(overlayHomePage, ThemeId.dark);
     });
   },
 );

@@ -36,6 +36,7 @@ dialTest(
     marketplaceAgentsSection,
     toast,
   }) => {
+    dialTest.slow();
     setTestIds('EPMRTC-4878', 'EPMRTC-4880', 'EPMRTC-4356', 'EPMRTC-5168');
     const models = GeneratorUtil.randomArrayElements(
       ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
@@ -58,6 +59,7 @@ dialTest(
       'Prepare models and set recent models in local storage',
       async () => {
         await localStorageManager.setRecentModelsIdsOnce(...models);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -118,6 +120,7 @@ dialTest(
       async () => {
         await chat.changeAgentButton.click();
         await talkToAgentDialog.goToMyWorkspace();
+        await marketplacePage.waitForPageLoaded();
       },
     );
 
@@ -125,6 +128,7 @@ dialTest(
       'Click "Use model" for the second model and verify recentModelsIds is updated',
       async () => {
         await marketplaceAgentsSection.findAndUseAgent(initialModel2);
+        await dialHomePage.waitForPageLoaded();
         await localStorageAssertion.assertRecentModels([
           initialModel2.id,
           initialModel1.id,
@@ -154,9 +158,11 @@ dialTest(
       'Click on "DIAL Marketplace", select a new model, and click "Use model"',
       async () => {
         await chatBar.dialMarketplaceLink.click();
+        await marketplacePage.waitForPageLoaded();
         await marketplaceAgentsSection.findAndUseAgent(addedModel, {
           isInstalledDeploymentsUpdated: true,
         });
+        await dialHomePage.waitForPageLoaded();
         await localStorageAssertion.assertRecentModels([
           addedModel.id,
           initialModel2.id,
@@ -169,6 +175,7 @@ dialTest(
       'Click "Change agent" and "Go to My workspace", remove the third model, and go back to chat',
       async () => {
         await chatBar.dialMarketplaceLink.click();
+        await marketplacePage.waitForPageLoaded();
         const addedModelElement =
           await marketplaceAgentsSection.findAgentElement(addedModel);
         await addedModelElement.click();
@@ -209,7 +216,7 @@ dialTest(
     await dialTest.step(
       'Click "Add the agent to My workspace to continue" and verify recentModelsIds is updated',
       async () => {
-        await chat.addModelButton.click();
+        await chat.addModelToWorkspace();
         await toast.closeToast();
         await localStorageAssertion.assertRecentModels([
           addedModel.id,
@@ -278,6 +285,7 @@ dialAdminTest(
           await adminPublicationApiHelper.approveRequest(publication);
           // delete the original conversation to prevent name duplicates
           await itemApiHelper.deleteEntity(conversation);
+          await localStorageManager.setShowSideBarPanels();
         }
       },
     );
@@ -422,6 +430,7 @@ dialTest(
     );
     const addedModel = GeneratorUtil.randomArrayElement(availableModels);
     await localStorageManager.setRecentModelsIdsOnce(...models);
+    await localStorageManager.setShowSideBarPanels();
 
     // Create conversations
     const conversation2Name = GeneratorUtil.randomString(10);
@@ -596,6 +605,7 @@ dialTest(
     );
     const [firstModel, secondModel] = models;
     await localStorageManager.setRecentModelsIdsOnce(...models);
+    await localStorageManager.setShowSideBarPanels();
 
     await dialTest.step('Open Dial', async () => {
       await dialHomePage.openHomePage({
@@ -678,6 +688,7 @@ dialSharedWithMeTest(
       ]);
     await mainUserShareApiHelper.acceptInvite(shareByLinkResponse);
     await localStorageManager.setRecentModelsIdsOnce(...models);
+    await localStorageManager.setShowSideBarPanels();
 
     await dialSharedWithMeTest.step('Open Dial by the main user', async () => {
       await dialHomePage.openHomePage({

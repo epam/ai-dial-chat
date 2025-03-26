@@ -7,6 +7,7 @@ import {
   PublishRequestBuilder,
 } from '@/src/testData';
 import { CustomApplicationBuilder } from '@/src/testData/customApplications/customApplicationBuilder';
+import { MarketplaceUrlBuilder } from '@/src/testData/marketplace/marketplaceUrlBuilder';
 import { Auth0Login } from '@/src/ui/actions/auth0Login';
 import { AzureADLogin } from '@/src/ui/actions/azureADLogin';
 import { KeycloakLogin } from '@/src/ui/actions/keycloakLogin';
@@ -15,7 +16,7 @@ import { KeycloakPage, LoginPage } from '@/src/ui/pages';
 import { Auth0Page } from '@/src/ui/pages/auth0Page';
 import { AzureADPage } from '@/src/ui/pages/azureADPage';
 import { Page, test as base } from '@playwright/test';
-import { allure } from 'allure-playwright';
+import * as allure from 'allure-js-commons';
 import * as process from 'node:process';
 
 export const skipReason = 'Execute test on CI env only';
@@ -54,6 +55,7 @@ const test = base.extend<
     promptData: PromptData;
     publishRequestBuilder: PublishRequestBuilder;
     customApplicationBuilder: CustomApplicationBuilder;
+    marketplaceUrlBuilder: MarketplaceUrlBuilder;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -216,6 +218,11 @@ const test = base.extend<
   customApplicationBuilder: async ({}, use) => {
     const customApplicationBuilder = new CustomApplicationBuilder();
     await use(customApplicationBuilder);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  marketplaceUrlBuilder: async ({}, use) => {
+    const marketplaceUrlBuilder = new MarketplaceUrlBuilder();
+    await use(marketplaceUrlBuilder);
   },
 });
 

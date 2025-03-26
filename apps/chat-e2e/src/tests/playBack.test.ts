@@ -6,7 +6,7 @@ import {
   ExpectedMessages,
   MenuOptions,
   MockedChatApiResponseBodies,
-  Theme,
+  ThemeId,
 } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
@@ -66,8 +66,9 @@ dialTest(
 
         await dataInjector.createConversations([conversation]);
 
-        theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
+        theme = GeneratorUtil.randomArrayElement(Object.keys(ThemeId));
         await localStorageManager.setSettings(theme);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -399,6 +400,7 @@ dialTest(
     chatHeader,
     agentInfo,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1420', 'EPMRTC-1421');
     let conversation: Conversation;
@@ -430,6 +432,7 @@ dialTest(
           conversation,
           playbackConversation,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -662,6 +665,7 @@ dialTest(
     playbackControl,
     setTestIds,
     conversations,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1425');
     let conversation: Conversation;
@@ -684,6 +688,7 @@ dialTest(
           conversation,
           playbackConversation,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -739,7 +744,9 @@ dialTest(
     chatMessages,
     sendMessage,
     playbackControl,
+    baseAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1427', 'EPMRTC-1470', 'EPMRTC-1473', 'EPMRTC-1428');
     let conversation: Conversation;
@@ -759,6 +766,7 @@ dialTest(
           conversation,
           playbackConversation,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -766,7 +774,6 @@ dialTest(
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await conversations.selectConversation(playbackConversation.name);
-      await conversations.getEntityByName(playbackConversation.name).waitFor();
       await chat.playNextChatMessage();
       const isPlaybackNextMessageScrollable = await playbackControl
         .getPlaybackMessage()
@@ -782,16 +789,18 @@ dialTest(
       async () => {
         await dialHomePage.throttleAPIResponse('**/*');
         await chat.playNextChatMessage(false);
-        await expect(
-          chatMessages.loadingCursor.getElementLocator(),
-          ExpectedMessages.playbackNextMessageIsScrollable,
-        ).toBeVisible();
-        await expect(
-          playbackControl.playbackNextButton.getElementLocator(),
-          ExpectedMessages.playbackNextMessageIsScrollable,
-        ).toBeDisabled();
-
-        await sendMessage.waitForMessageInputLoaded();
+        await baseAssertion.assertElementState(
+          chatMessages.loadingCursor,
+          'visible',
+        );
+        await baseAssertion.assertElementActionabilityState(
+          playbackControl.playbackNextButton,
+          'disabled',
+        );
+        await baseAssertion.assertElementState(
+          sendMessage.messageInputSpinner,
+          'hidden',
+        );
         await chatMessages.waitForResponseReceived();
 
         const playedBackResponse = chatMessages.getChatMessage(

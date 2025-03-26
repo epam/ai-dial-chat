@@ -51,7 +51,11 @@ dialAdminTest(
     adminTooltipAssertion,
     baseAssertion,
     setTestIds,
+    setIssueIds,
+    localStorageManager,
+    adminLocalStorageManager,
   }) => {
+    setIssueIds('3350');
     setTestIds(
       'EPMRTC-3372',
       'EPMRTC-3275',
@@ -111,6 +115,7 @@ dialAdminTest(
           [...allConversations, conversationToReplay],
           ...nestedFolders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -151,6 +156,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Login as admin and verify publishing request is displayed under "Approve required" section',
       async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversationsAssertion.assertFolderState(
@@ -418,6 +424,8 @@ dialAdminTest(
     adminOrganizationFolderConversations,
     adminOrganizationFolderConversationAssertions,
     setTestIds,
+    localStorageManager,
+    adminLocalStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-3613',
@@ -463,6 +471,7 @@ dialAdminTest(
           await publicationApiHelper.createPublishRequest(publishRequest);
         publicationsToUnpublish.push(publication);
         await adminPublicationApiHelper.approveRequest(publication);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -548,9 +557,7 @@ dialAdminTest(
       'Create new folder, select it and verify publish path changed',
       async () => {
         await selectFolderModal.newFolderButton.click();
-        await selectFolders.renameEmptyFolderWithTick(orgFolder, {
-          isHttpMethodTriggered: false,
-        });
+        await selectFolders.renameEmptyFolderWithTick(orgFolder);
         await selectFolderModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });
@@ -617,6 +624,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Login as admin and verify publishing request is displayed under "Approve required" section',
       async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversationsAssertion.assertFolderState(

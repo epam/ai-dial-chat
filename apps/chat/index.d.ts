@@ -8,22 +8,20 @@ declare module '*.svg' {
   export default content;
 }
 
+type UserData = {
+  isAdmin: boolean;
+} & Record<Feature, boolean>;
+
 declare module 'next-auth' {
   interface Session {
-    user: {
-      isAdmin: boolean;
-      canCreateCodeApps: boolean;
-    } & DefaultSession['user'];
+    user: UserData & DefaultSession['user'];
     providerId: string;
   }
 }
 
 declare module 'next-auth/jwt' {
   interface JWT extends DefaultJWT {
-    user?: Partial<{
-      isAdmin: boolean;
-      canCreateCodeApps: boolean;
-    }>;
+    user?: Partial<UserData>;
     access_token?: string;
   }
 }

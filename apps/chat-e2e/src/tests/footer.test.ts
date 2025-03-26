@@ -4,12 +4,19 @@ import { expect } from '@playwright/test';
 
 dialTest(
   'EPAM AI Dial leads to kb',
-  async ({ dialHomePage, chat, footerAssertion, setTestIds }) => {
+  async ({
+    dialHomePage,
+    footerAssertion,
+    setTestIds,
+    footer,
+    localStorageManager,
+  }) => {
     setTestIds('EPMRTC-361');
 
     await dialTest.step(
       'Open app and verify footer with configured content is displayed',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await footerAssertion.assertFooterState('visible');
@@ -21,7 +28,7 @@ dialTest(
       'Click on any footer link and verify it is opened in a new tab',
       async () => {
         const newPage = await dialHomePage.getNewPage(() =>
-          chat.getFooter().openFooterLink(),
+          footer.openFooterLink(),
         );
         expect.soft(newPage, ExpectedMessages.newPageIsOpened).toBeDefined();
       },

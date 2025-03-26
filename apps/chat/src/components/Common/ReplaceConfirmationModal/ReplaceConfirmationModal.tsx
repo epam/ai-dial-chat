@@ -32,8 +32,6 @@ import { ConversationsList } from './ConversationsList';
 import { FilesList } from './FilesList';
 import { PromptsList } from './PromptsList';
 
-export type OnItemEvent = (actionOption: string, entityId: unknown) => void;
-
 export function ReplaceConfirmationModalView() {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();

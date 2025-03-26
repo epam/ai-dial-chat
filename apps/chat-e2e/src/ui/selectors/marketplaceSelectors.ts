@@ -19,6 +19,12 @@ export const MarketplaceAgentSelectors = {
   description: '.text-sm',
   addBookmarkIcon: '[data-qa="add-bookmark"]',
   removeBookmarkIcon: '[data-qa="remove-bookmark"]',
+  topics: '[data-qa="app-topics"]',
+  copyLink: '[data-qa="copy-link"]',
+  copyLinkText: '[data-qa="copy-link-text"]',
+  copyIcon: '[data-qa="copy-icon"]',
+  copiedLink: '[data-qa="copied-link"]',
+  copiedIcon: '[data-qa="copied-icon"]',
 };
 
 export const MarketplaceDetailsModal = {
@@ -38,4 +44,5 @@ export const MarketplaceSideBarSelectors = {
   filterProperty: '[data-qa="filter-property"]',
   filterPropertyOptions: '[data-qa="filter-property-options"]',
   filterPropertyOption: '[data-qa="filter-option"]',
+  optionLabel: '[data-qa="option-label"]',
 };

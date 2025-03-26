@@ -2,7 +2,7 @@ import { Conversation, CopyTableType } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { noSimpleModelSkipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedConstants, ExpectedMessages, Theme } from '@/src/testData';
+import { ExpectedConstants, ExpectedMessages, ThemeId } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { Locator, expect } from '@playwright/test';
@@ -58,8 +58,9 @@ dialTest(
     ];
 
     await dialTest.step('Set random application theme', async () => {
-      theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
+      theme = GeneratorUtil.randomArrayElement(Object.keys(ThemeId));
       await localStorageManager.setSettings(theme);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -136,7 +137,7 @@ dialTest(
             ExpectedMessages.tableEntityBackgroundColorIsValid,
           )
           .toBe(
-            theme === Theme.dark
+            theme === ThemeId.dark
               ? Colors.backgroundLayer4Dark
               : Colors.backgroundLayer4Light,
           );
@@ -151,7 +152,7 @@ dialTest(
             ExpectedMessages.tableEntityBackgroundColorIsValid,
           )
           .toBe(
-            theme === Theme.dark
+            theme === ThemeId.dark
               ? Colors.backgroundLayer3Dark
               : Colors.backgroundLayer3Light,
           );
@@ -203,6 +204,7 @@ dialTest.fixme(
     conversations,
     conversationData,
     dataInjector,
+    localStorageManager,
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
     setTestIds('EPMRTC-3123');
@@ -213,6 +215,7 @@ dialTest.fixme(
         simpleRequestModel!,
       );
       await dataInjector.createConversations([tableConversation]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(

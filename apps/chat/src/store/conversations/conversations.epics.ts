@@ -98,17 +98,30 @@ import { FolderType } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
 import { AppEpic } from '@/src/types/store';
 
+import { AddonsActions } from '@/src/store/addons/addons.reducers';
+import { AddonsSelectors } from '@/src/store/addons/addons.selectors';
+import { ChatActions } from '@/src/store/chat/chat.reducer';
+import { FilesActions } from '@/src/store/files/files.reducers';
 import {
   MarketplaceActions,
   MarketplaceSelectors,
 } from '@/src/store/marketplace/marketplace.reducers';
+import {
+  ModelsActions,
+  ModelsSelectors,
+} from '@/src/store/models/models.reducers';
+import { OverlaySelectors } from '@/src/store/overlay/overlay.reducers';
+import { OverlayState } from '@/src/store/overlay/overlay.types';
+import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
+import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { LOCAL_BUCKET, resetShareEntity } from '@/src/constants/chat';
 import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_TEMPERATURE,
+  FALLBACK_ASSISTANT_SUBMODEL_ID,
   FALLBACK_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
@@ -117,13 +130,6 @@ import { defaultReplay } from '@/src/constants/replay';
 import { CONVERSATIONS_DATE_SECTIONS } from '@/src/constants/sections';
 import { SHARE_QUERY_PARAM } from '@/src/constants/share';
 
-import { AddonsActions, AddonsSelectors } from '../addons/addons.reducers';
-import { ChatActions } from '../chat/chat.reducer';
-import { FilesActions } from '../files/files.reducers';
-import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
-import { OverlaySelectors, OverlayState } from '../overlay/overlay.reducers';
-import { PublicationActions } from '../publication/publication.reducers';
-import { UIActions, UISelectors } from '../ui/ui.reducers';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -473,6 +479,10 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 updatedAt: Date.now(),
                 status: UploadStatus.LOADED,
                 folderId: defaultFolderId,
+                assistantModelId: DefaultsService.get(
+                  'assistantSubmodelId',
+                  FALLBACK_ASSISTANT_SUBMODEL_ID,
+                ),
               }),
             );
             const selectedConversationsIds =
@@ -771,26 +781,17 @@ const saveNewConversationEpic: AppEpic = (action$) =>
 const deleteFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.deleteFolder.match),
-    switchMap(({ payload }) =>
-      forkJoin({
-        folderId: of(payload.folderId),
-        conversations: ConversationService.getConversations(
-          payload.folderId,
-          true,
-        ).pipe(
-          catchError((err) => {
-            console.error('Error during delete folder:', err);
-            return of([]);
-          }),
-        ),
-        folders: of(ConversationsSelectors.selectFolders(state$.value)),
-      }),
-    ),
-    switchMap(({ folderId, conversations, folders }) => {
+    switchMap(({ payload: { folderId } }) => {
       const actions: Observable<AnyAction>[] = [];
+      const conversations =
+        ConversationsSelectors.selectConversationsByFolderId(
+          state$.value,
+          folderId,
+        );
+      const folders = ConversationsSelectors.selectFolders(state$.value);
 
       const localConversations =
-        ConversationsSelectors.selectLocalConversations(state$.value); // TODO: remove in https://github.com/epam/ai-dial-chat/issues/2651
+        ConversationsSelectors.selectLocalConversations(state$.value);
 
       const conversationIds = [...conversations, ...localConversations].map(
         (conv) => conv.id,
@@ -834,94 +835,98 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
         return EMPTY;
       }
 
-      return ConversationService.getConversations(payload.folderId, true).pipe(
-        switchMap((conversations) => {
-          const updateFolderId = updateMovedFolderId.bind(
-            null,
-            payload.folderId,
-            newFolder.id,
-          );
-          const updateEntityId = updateMovedEntityId.bind(
-            null,
-            payload.folderId,
-            newFolder.id,
-          );
+      const conversations =
+        ConversationsSelectors.selectConversationsByFolderId(
+          state$.value,
+          payload.folderId,
+        );
 
-          const folders = ConversationsSelectors.selectFolders(state$.value);
-          const allConversations = ConversationsSelectors.selectConversations(
-            state$.value,
-          );
-          const openedFoldersIds = UISelectors.selectOpenedFoldersIds(
-            FeatureType.Chat,
-          )(state$.value);
-          const selectedConversationsIds =
-            ConversationsSelectors.selectSelectedConversationsIds(state$.value);
+      const updateFolderId = updateMovedFolderId.bind(
+        null,
+        payload.folderId,
+        newFolder.id,
+      );
+      const updateEntityId = updateMovedEntityId.bind(
+        null,
+        payload.folderId,
+        newFolder.id,
+      );
 
-          const { updatedFolders, updatedOpenedFoldersIds } =
-            updateEntitiesFoldersAndIds(
-              conversations,
-              folders,
-              updateFolderId,
-              openedFoldersIds,
-            );
+      const folders = ConversationsSelectors.selectFolders(state$.value);
+      const allConversations = ConversationsSelectors.selectConversations(
+        state$.value,
+      );
+      const openedFoldersIds = UISelectors.selectOpenedFoldersIds(
+        FeatureType.Chat,
+      )(state$.value);
+      const selectedConversationsIds =
+        ConversationsSelectors.selectSelectedConversationsIds(state$.value);
 
-          const updatedConversations = combineEntities(
-            allConversations.map((conv) =>
-              regenerateConversationId({
-                ...conv,
-                folderId: updateFolderId(conv.folderId),
-              }),
-            ),
-            conversations.map((conv) =>
-              regenerateConversationId({
-                ...conv,
-                folderId: updateFolderId(conv.folderId),
-              }),
-            ),
-          );
+      const { updatedFolders, updatedOpenedFoldersIds } =
+        updateEntitiesFoldersAndIds(
+          conversations,
+          folders,
+          updateFolderId,
+          openedFoldersIds,
+        );
 
-          const updatedSelectedConversationsIds = selectedConversationsIds.map(
-            (id) => updateEntityId(id),
-          );
+      const updatedConversations = combineEntities(
+        allConversations.map((conv) =>
+          regenerateConversationId({
+            ...conv,
+            folderId: updateFolderId(conv.folderId),
+          }),
+        ),
+        conversations.map((conv) =>
+          regenerateConversationId({
+            ...conv,
+            folderId: updateFolderId(conv.folderId),
+          }),
+        ),
+      );
 
-          const actions: Observable<AnyAction>[] = [];
-          if (conversations.length) {
-            conversations.forEach((conversation) => {
-              actions.push(
-                of(
-                  ConversationsActions.updateConversation({
-                    id: conversation.id,
-                    values: {
-                      folderId: updateFolderId(conversation.folderId),
-                    },
-                  }),
-                ),
-              );
-            });
-          }
+      const updatedSelectedConversationsIds = selectedConversationsIds.map(
+        (id) => updateEntityId(id),
+      );
+
+      const actions: Observable<AnyAction>[] = [];
+
+      if (conversations.length) {
+        conversations.forEach((conversation) => {
           actions.push(
             of(
-              ConversationsActions.updateFolderSuccess({
-                folders: updatedFolders,
-                conversations: updatedConversations,
-                selectedConversationsIds: updatedSelectedConversationsIds,
-              }),
-            ),
-            of(
-              UIActions.setOpenedFoldersIds({
-                openedFolderIds: updatedOpenedFoldersIds,
-                featureType: FeatureType.Chat,
+              ConversationsActions.updateConversation({
+                id: conversation.id,
+                values: {
+                  folderId: updateFolderId(conversation.folderId),
+                },
               }),
             ),
           );
+        });
+      }
 
-          return concat(...actions);
-        }),
-        catchError((err) => {
-          console.error('Error during upload conversations and folders', err);
-          return of(ConversationsActions.uploadConversationsFail());
-        }),
+      actions.push(
+        of(
+          ConversationsActions.updateFolderSuccess({
+            folders: updatedFolders,
+            conversations: updatedConversations,
+            selectedConversationsIds: updatedSelectedConversationsIds,
+          }),
+        ),
+        of(
+          UIActions.setOpenedFoldersIds({
+            openedFolderIds: updatedOpenedFoldersIds,
+            featureType: FeatureType.Chat,
+          }),
+        ),
       );
+
+      return concat(...actions);
+    }),
+    catchError((err) => {
+      console.error('Error during upload conversations and folders', err);
+      return of(ConversationsActions.uploadConversationsFail());
     }),
   );
 
@@ -930,8 +935,12 @@ const clearConversationsEpic: AppEpic = (action$) =>
     filter(ConversationsActions.clearConversations.match),
     switchMap(() => {
       return concat(
+        of(
+          ConversationsActions.deleteFolder({
+            folderId: getConversationRootId(),
+          }),
+        ),
         of(ConversationsActions.clearConversationsSuccess()),
-        of(ConversationsActions.deleteFolder({})),
       );
     }),
   );
@@ -1594,9 +1603,14 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
           state$.value,
         );
 
+      const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+
       const errorMessage = responseJSON?.message || payload.message;
 
       const messages = [...payload.conversation.messages];
+      const modelId = messages[messages.length - 1].model?.id;
+      const modelReference = modelId && modelsMap[modelId]?.reference;
+
       messages[messages.length - 1] = {
         ...messages[messages.length - 1],
         errorMessage,
@@ -1622,6 +1636,9 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
           }),
         ),
         isReplay ? of(ConversationsActions.stopReplayConversation()) : EMPTY,
+        payload.response?.status === 404 && modelReference
+          ? of(ModelsActions.deleteModels({ references: [modelReference] }))
+          : EMPTY,
         of(UIActions.showErrorToast(translate(errorMessage))),
         of(
           ConversationsActions.updateMessage({
@@ -2406,7 +2423,6 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
     mergeMap(({ payload }) => getOrUploadConversation(payload, state$.value)),
     mergeMap(({ payload, conversation }) => {
       const { id, values } = payload;
-
       if (!conversation) {
         return of(
           UIActions.showErrorToast(

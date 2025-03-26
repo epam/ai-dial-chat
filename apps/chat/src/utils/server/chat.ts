@@ -1,4 +1,4 @@
-import { NextApiResponse } from 'next';
+import { NextApiRequest, NextApiResponse } from 'next';
 
 import { DialAIError } from '@/src/types/error';
 import { DialAIEntityModel } from '@/src/types/models';
@@ -24,12 +24,14 @@ export function limitMessagesByTokens({
   limits,
   features,
   tokenizer,
+  request,
 }: {
   promptToSend: string | undefined;
   messages: Message[];
   limits: DialAIEntityModel['limits'];
   features: DialAIEntityModel['features'];
   tokenizer: DialAIEntityModel['tokenizer'];
+  request: NextApiRequest;
 }): Message[] {
   if (!limits || !limits.maxRequestTokens || features?.truncatePrompt) {
     return messages;
@@ -75,9 +77,8 @@ export function limitMessagesByTokens({
   if (messagesToSend.length === 0) {
     throw new DialAIError(
       'User sended messages cannot be empty after limit messages by tokens process',
-      '',
-      '',
-      '400',
+      400,
+      request,
     );
   }
 
@@ -159,6 +160,7 @@ export const chatErrorHandler = ({
   const postfix = isStreamingError ? '\0' : '';
   const fieldName = isStreamingError ? 'errorMessage' : 'message';
   let fallbackErrorMessage = errorsMessages.generalServer;
+  let statusCode = 500;
 
   logger.error(error, msg);
 
@@ -168,6 +170,9 @@ export const chatErrorHandler = ({
       fallbackErrorMessage = errorsMessages[429];
     } else if (error.code === 'content_filter') {
       fallbackErrorMessage = errorsMessages.contentFiltering;
+    } else if (['404'].includes(error.code)) {
+      statusCode = 404;
+      fallbackErrorMessage = errorsMessages[404];
     }
   }
 
@@ -177,5 +182,5 @@ export const chatErrorHandler = ({
     fallbackErrorMessage,
   );
 
-  return res.status(500).send(JSON.stringify(responseBody) + postfix);
+  return res.status(statusCode).send(JSON.stringify(responseBody) + postfix);
 };

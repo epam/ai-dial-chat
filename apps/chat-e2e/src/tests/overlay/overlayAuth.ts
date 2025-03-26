@@ -29,11 +29,14 @@ for (let i = 0; i < overlayUsernames.length; i++) {
 
     const loginPage = new LoginPage(newPage);
     await newPage.waitForLoadState();
-    await loginPage.auth0SignInButton.click();
+    const signInButton = loginPage.auth0SignInButton;
+    if (await signInButton.isVisible()) {
+      await signInButton.click();
+    }
 
     const auth0Page = new Auth0Page(newPage);
     await newPage.waitForLoadState();
-    const auth0Form = auth0Page.getAuth0();
+    const auth0Form = auth0Page.getLoginForm();
     await auth0Form.setCredentials(
       overlayUsernames[i],
       process.env.E2E_PASSWORD!,

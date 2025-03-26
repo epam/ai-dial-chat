@@ -43,6 +43,7 @@ dialTest(
       CollapsedSections.Organization,
       CollapsedSections.SharedWithMe,
     );
+    await localStorageManager.setShowSideBarPanels();
     await dialHomePage.openHomePage({
       iconsToBeLoaded: [gpt35Model.iconUrl],
     });
@@ -122,6 +123,7 @@ dialTest(
           CollapsedSections.Organization,
           CollapsedSections.SharedWithMe,
         );
+        await localStorageManager.setShowSideBarPanels();
 
         await dataInjector.createConversations([
           conversationToDrop,
@@ -222,6 +224,7 @@ dialTest(
           CollapsedSections.Organization,
           CollapsedSections.SharedWithMe,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -236,6 +239,7 @@ dialTest(
           folderConversation.folders.name,
           folderConversation.conversations[1].name,
           conversationToDrop.name,
+          { isHttpMethodTriggered: true },
         );
 
         const folderConversationsCount =
@@ -279,6 +283,7 @@ dialTest(
       CollapsedSections.Organization,
       CollapsedSections.SharedWithMe,
     );
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -331,6 +336,7 @@ dialTest(
           CollapsedSections.Organization,
           CollapsedSections.SharedWithMe,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -413,6 +419,7 @@ dialTest(
           CollapsedSections.Organization,
           CollapsedSections.SharedWithMe,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -426,6 +433,7 @@ dialTest(
           promptInFolder.folders.name,
           promptInFolder.prompts[0].name,
           prompt.name,
+          { isHttpMethodTriggered: true },
         );
         await expect
           .soft(

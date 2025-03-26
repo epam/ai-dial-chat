@@ -1,11 +1,11 @@
-import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
+import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import {
   PostMessageEventParams,
   PostMessageRequestParams,
 } from '@/src/utils/app/overlay';
 
-import { RootState } from '../index';
+import { OverlayState } from './overlay.types';
 
 import {
   ChatOverlayOptions,
@@ -17,17 +17,9 @@ import {
   SetSystemPromptRequest,
 } from '@epam/ai-dial-shared';
 
+export { OverlaySelectors } from './overlay.selectors';
+
 type WithRequestId<T> = T & { requestId: string };
-
-export interface OverlayState {
-  hostDomain: string;
-
-  systemPrompt: string | null;
-  newConversationsFolder: string | null;
-
-  readyToInteractSent: boolean;
-  optionsReceived?: boolean;
-}
 
 const initialState: OverlayState = {
   hostDomain: '*',
@@ -107,30 +99,5 @@ export const overlaySlice = createSlice({
     },
   },
 });
-
-const rootSelector = (state: RootState): OverlayState => state.overlay;
-
-const selectHostDomain = createSelector([rootSelector], (state) => {
-  return state.hostDomain;
-});
-
-const selectOverlaySystemPrompt = createSelector([rootSelector], (state) => {
-  return state.systemPrompt;
-});
-
-const selectOptionsReceived = createSelector([rootSelector], (state) => {
-  return state.optionsReceived;
-});
-
-const selectReadyToInteractSent = createSelector([rootSelector], (state) => {
-  return state.readyToInteractSent;
-});
-
-export const OverlaySelectors = {
-  selectHostDomain,
-  selectOverlaySystemPrompt,
-  selectOptionsReceived,
-  selectReadyToInteractSent,
-};
 
 export const OverlayActions = overlaySlice.actions;

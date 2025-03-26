@@ -20,6 +20,7 @@ import {
 
 import { combineEpics } from 'redux-observable';
 
+import { parseCommaSeparatedList } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
 import { getConversationRootId } from '@/src/utils/app/id';
@@ -33,7 +34,7 @@ import { AppEpic } from '@/src/types/store';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
-import { AuthSelectors } from '../auth/auth.reducers';
+import { AuthSelectors } from '../auth/auth.selectors';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -393,9 +394,7 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
           let features: string[] = [];
 
           if (typeof enabledFeatures === 'string') {
-            features = enabledFeatures
-              .split(',')
-              .map((feature) => feature.trim());
+            features = parseCommaSeparatedList(enabledFeatures);
           }
 
           if (Array.isArray(enabledFeatures)) {
@@ -403,10 +402,18 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
           }
 
           if (features.every(validateFeature)) {
+            const isLoginRequired = AuthSelectors.selectIsShouldLogin(
+              state$.value,
+            );
+
             actions.push(
               of(SettingsActions.setEnabledFeatures(features as Feature[])),
             );
-            if (features.includes(Feature.ConversationsSharing)) {
+
+            if (
+              !isLoginRequired &&
+              features.includes(Feature.ConversationsSharing)
+            ) {
               actions.push(
                 of(ShareActions.triggerGettingSharedConversationListings()),
               );
@@ -507,12 +514,13 @@ const checkReadyToInteract: AppEpic = (action$, state$) =>
     filter(OverlayActions.checkReadyToInteract.match),
     switchMap(() =>
       state$.pipe(
-        filter(
-          (state) =>
-            ConversationsSelectors.selectAreSelectedConversationsLoaded(
-              state,
-            ) && !AuthSelectors.selectIsShouldLogin(state),
-        ),
+        filter((state) => {
+          const areConvLoaded =
+            ConversationsSelectors.selectAreSelectedConversationsLoaded(state);
+          const isShouldLogin = AuthSelectors.selectIsShouldLogin(state);
+
+          return areConvLoaded && !isShouldLogin;
+        }),
         switchMap(() =>
           !OverlaySelectors.selectReadyToInteractSent(state$.value)
             ? of(OverlayActions.sendReadyToInteract())

@@ -40,6 +40,8 @@ dialAdminTest(
     adminApproveRequiredConversationsAssertion,
     adminPublishingApprovalModalAssertion,
     setTestIds,
+    localStorageManager,
+    adminLocalStorageManager,
   }) => {
     dialAdminTest.slow();
     setTestIds('EPMRTC-3198', 'EPMRTC-3515', 'EPMRTC-4061');
@@ -92,6 +94,7 @@ dialAdminTest(
     await dialTest.step('Prepare a new conversation to publish', async () => {
       conversationToPublish = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversationToPublish]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -105,7 +108,7 @@ dialAdminTest(
         await publishingRequestModal
           .getChangePublishToPath()
           .changeButton.click();
-        await selectFoldersAssertion.assertStringsSorting(
+        selectFoldersAssertion.assertStringsSorting(
           await selectFolders.getFolderNames(),
           'asc',
         );
@@ -145,6 +148,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Login as admin and verify conversation publishing request is displayed under "Approve required" section',
       async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversationsAssertion.assertFolderState(
@@ -202,7 +206,7 @@ dialAdminTest(
     await dialTest.step(
       'Verify folders sorting in "Organization" section',
       async () => {
-        await selectFoldersAssertion.assertStringsSorting(
+        selectFoldersAssertion.assertStringsSorting(
           await adminOrganizationFolderConversations.getFolderNames(),
           'asc',
         );
@@ -243,6 +247,8 @@ dialAdminTest(
     adminApproveRequiredConversationsAssertion,
     adminPublishingApprovalModalAssertion,
     setTestIds,
+    localStorageManager,
+    adminLocalStorageManager,
   }) => {
     dialAdminTest.slow();
     setTestIds(
@@ -270,6 +276,7 @@ dialAdminTest(
     await dialTest.step('Prepare a new conversation to publish', async () => {
       conversationToPublish = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversationToPublish]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -310,9 +317,7 @@ dialAdminTest(
 
     await dialTest.step('Verify folder renaming and max length', async () => {
       await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-      await selectFolders.renameEmptyFolderWithTick(newFolderName, {
-        isHttpMethodTriggered: false,
-      });
+      await selectFolders.renameEmptyFolderWithTick(newFolderName);
       await selectFoldersAssertion.assertFolderState(
         { name: cutNewFolderName },
         'visible',
@@ -408,9 +413,6 @@ dialAdminTest(
         //TODO: remove next line when fixed https://github.com/epam/ai-dial-chat/issues/2294
         await selectFolders.renameEmptyFolderWithTick(
           GeneratorUtil.randomString(5),
-          {
-            isHttpMethodTriggered: false,
-          },
         );
         await selectFolders
           .getNestedFolder(defaultFolderName, defaultFolderName)
@@ -444,6 +446,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Login as admin and verify conversation publishing request is displayed under "Approve required" section',
       async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversationsAssertion.assertFolderState(

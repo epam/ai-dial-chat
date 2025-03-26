@@ -2,7 +2,6 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import {
   isSearchFilterMatched,
-  isSearchTermMatched,
   isSectionFilterMatched,
   isVersionFilterMatched,
 } from '@/src/utils/app/common';
@@ -16,17 +15,19 @@ import {
   sortByName,
   splitEntityId,
 } from '@/src/utils/app/folders';
-import { getPromptRootId, isRootId } from '@/src/utils/app/id';
+import { getPromptRootId, isEntityIdLocal, isRootId } from '@/src/utils/app/id';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
 import {
   PublishedWithMeFilter,
   doesEntityContainSearchTerm,
   getMyItemsFilters,
+  isSearchTermMatched,
 } from '@/src/utils/app/search';
 import { translate } from '@/src/utils/app/translation';
 
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
+import { RootState } from '@/src/types/store';
 
 import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 
@@ -35,7 +36,6 @@ import {
   DEFAULT_PROMPT_NAME,
 } from '@/src/constants/default-ui-settings';
 
-import { RootState } from '../index';
 import { PromptsState } from './prompts.types';
 
 import { ShareEntity } from '@epam/ai-dial-shared';
@@ -144,6 +144,18 @@ export const selectParentFoldersIds = createSelector(
   [selectParentFolders],
   (folders) => {
     return folders.map((folder) => folder.id);
+  },
+);
+
+export const selectLocalPrompts = createSelector([selectPrompts], (prompts) =>
+  prompts.filter((prompts) => isEntityIdLocal(prompts)),
+);
+
+export const selectPromptsByFolderId = createSelector(
+  [selectPrompts, (_state, folderId: string) => folderId],
+  (prompts, folderId) => {
+    const folderPath = `${folderId}/`;
+    return prompts.filter((prompt) => prompt.id.startsWith(folderPath));
   },
 );
 

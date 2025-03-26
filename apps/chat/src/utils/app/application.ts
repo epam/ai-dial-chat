@@ -13,11 +13,12 @@ import {
   CustomApplicationModel,
   SimpleApplicationStatus,
 } from '@/src/types/applications';
-import { ApiKeys, EntityType, PartialBy } from '@/src/types/common';
+import { EntityType, PartialBy } from '@/src/types/common';
 import { DialAIEntityFeatures, DialAIEntityModel } from '@/src/types/models';
 import { QuickAppConfig } from '@/src/types/quick-apps';
 import { Translation } from '@/src/types/translation';
 
+import { DRAFT_APPLICATION_ID } from '@/src/constants/applications';
 import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 import { ApplicationTypeToSourceType } from '@/src/constants/marketplace';
@@ -319,7 +320,8 @@ export const getPlayerCaption = (entity: DialAIEntityModel) => {
 
 export const getApplicationEntityFields = (
   data: ApplicationGeneralInfoFormData,
-) => {
+  applicationData?: DialAIEntityModel,
+): Omit<CustomApplicationModel, 'folderId'> => {
   return {
     name: data.name ?? '',
     version: data.version ?? '',
@@ -328,9 +330,11 @@ export const getApplicationEntityFields = (
     topics: data.topics ?? [],
     reference: '',
     features: undefined,
-    id: `${ApiKeys.Applications}/draft`,
+    id: applicationData?.id ?? DRAFT_APPLICATION_ID,
     completionUrl: '',
     type: EntityType.Application,
     isDefault: true,
+    owner: applicationData?.owner,
+    createdAt: applicationData?.createdAt,
   };
 };

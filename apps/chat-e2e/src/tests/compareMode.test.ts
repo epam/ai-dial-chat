@@ -46,12 +46,14 @@ dialTest(
     compare,
     chat,
     conversationAssertion,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-537');
     await dialTest.step(
       'Click on compare button on bottom of chat bar and verify compare mode is opened for new two chats',
       async () => {
         const request = 'test';
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openCompareMode();
@@ -91,6 +93,7 @@ dialTest(
     iconApiHelper,
     conversationToCompareAssertion,
     folderConversations,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-546', 'EPMRTC-383');
     let firstModelConversation: Conversation;
@@ -136,6 +139,7 @@ dialTest(
         ],
         modelConversationInFolder.folders,
       );
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -227,6 +231,7 @@ dialTest(
     dataInjector,
     compare,
     baseAssertion,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1133', 'EPMRTC-541');
     let modelConversation: Conversation;
@@ -254,6 +259,7 @@ dialTest(
           replayConversation,
           playbackConversation,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -316,6 +322,7 @@ dialTest(
     conversations,
     conversationDropdownMenu,
     compareConversation,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-544', 'EPMRTC-545');
     let firstConversation: Conversation;
@@ -331,6 +338,7 @@ dialTest(
           firstConversation,
           secondConversation,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -386,6 +394,7 @@ dialTest(
     conversations,
     conversationDropdownMenu,
     compareConversation,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-540');
     const firstRequest = 'What is EPAM official name?';
@@ -442,6 +451,7 @@ dialTest(
           forthConversation,
           fifthConversation,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -486,6 +496,7 @@ dialTest(
     conversationDropdownMenu,
     compareConversation,
     conversationAssertion,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-552', 'EPMRTC-558');
 
@@ -515,6 +526,7 @@ dialTest(
         firstConversation,
         secondConversation,
       ]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -639,6 +651,7 @@ dialTest(
     conversationDropdownMenu,
     conversations,
     compareConversation,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-555');
     const request = ['beautiful', 'second message'];
@@ -665,6 +678,7 @@ dialTest(
         firstConversation,
         secondConversation,
       ]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -785,6 +799,7 @@ dialTest(
           firstUpdatedRandomModel,
           secondUpdatedRandomModel,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -946,6 +961,7 @@ dialTest(
     conversations,
     conversationDropdownMenu,
     compareConversation,
+    localStorageManager,
   }) => {
     dialTest.slow();
     setTestIds('EPMRTC-556', 'EPMRTC-1134');
@@ -963,6 +979,7 @@ dialTest(
         firstConversation,
         secondConversation,
       ]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -1039,6 +1056,7 @@ dialTest(
     rightChatHeader,
     compareConversation,
     baseAssertion,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-536', 'EPMRTC-1168');
     const request = 'What is epam official name';
@@ -1091,6 +1109,7 @@ dialTest(
           thirdConversation,
           fourthConversation,
         ]);
+        await localStorageManager.setShowSideBarPanels();
         matchedConversations.push(
           thirdConversation.name,
           secondConversation.name,
@@ -1289,6 +1308,7 @@ dialTest(
     compareConversation,
     conversationDropdownMenu,
     leftChatHeader,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-542', 'EPMRTC-543', 'EPMRTC-548', 'EPMRTC-828');
     let firstConversation: Conversation;
@@ -1316,6 +1336,7 @@ dialTest(
           firstConversation,
           secondConversation,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -1399,6 +1420,7 @@ dialTest(
     compare,
     compareConversation,
     chat,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-557');
     let firstFolderConversation: FolderConversation;
@@ -1428,6 +1450,7 @@ dialTest(
         firstFolderConversation.folders,
         secondFolderConversation.folders,
       );
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -1505,6 +1528,7 @@ dialTest(
     compare,
     compareConversation,
     renameConversationModal,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-560',
@@ -1538,6 +1562,7 @@ dialTest(
           firstConversation,
           secondConversation,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 

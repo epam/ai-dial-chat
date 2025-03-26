@@ -18,7 +18,8 @@ dialTest(
     `Search in My workspace: 'No results found' and no suggested results.\n` +
     'Search in My workspace when nothing to suggest from DIAL Marketplace. No suggested options.\n' +
     'Search in My workspace. Search by version. No suggested options.\n' +
-    'Search by not used version to find models in My workspace',
+    'Search by not used version to find models in My workspace.\n' +
+    'Copy link is not available for manually created and not published applications',
   async ({
     marketplacePage,
     marketplaceHeader,
@@ -42,6 +43,7 @@ dialTest(
       'EPMRTC-4616',
       'EPMRTC-4502',
       'EPMRTC-4659',
+      'EPMRTC-5275',
     );
     let installedAppVersion: string;
     let installedAppName: string;
@@ -254,7 +256,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open found agent and verify no versions menu is available',
+      'Open found agent and verify no versions menu and Copy link are available',
       async () => {
         const foundAgent =
           await marketplaceAgentsSection.findAgentElement(installedAppName);
@@ -266,6 +268,10 @@ dialTest(
         await baseAssertion.assertElementText(
           agentDetailsModal.agentVersion,
           installedAppVersion,
+        );
+        await baseAssertion.assertElementState(
+          agentDetailsModal.copyLink,
+          'hidden',
         );
         await agentDetailsModal.closeButton.click();
       },
@@ -516,9 +522,10 @@ dialTest(
           await appEditorGeneralForm.goNext();
           await appEditorViewForm.fillInAppFields();
           await appEditorHeader.saveAppAndExit();
+          await marketplacePage.waitForPageLoaded();
         }
 
-        //TODO: need to clarify whether search field and filters are reset after adding a new app
+        //TODO: remove search input filling when fixed https://github.com/epam/ai-dial-chat/issues/3221
         await marketplaceHeader.searchInput.fillInInput(installedAppName);
         const allAgents = await marketplaceAgentsSection.getAllAgents();
         const filteredAgents = allAgents.filter(

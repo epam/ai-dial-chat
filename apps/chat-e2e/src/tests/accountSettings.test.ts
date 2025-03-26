@@ -2,7 +2,7 @@ import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
 import {
   AccountMenuOptions,
-  Theme,
+  ThemeId,
   ToggleState,
   toTitleCase,
 } from '@/src/testData';
@@ -18,12 +18,14 @@ dialTest(
     setTestIds,
     chatBar,
     accountSettingsAssertion,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-812');
 
     await dialTest.step(
       'Open account menu and verify icon is changed to expanded',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await accountSettings.openAccountDropdownMenu();
@@ -57,17 +59,19 @@ dialTest(
     settingsModalAssertion,
     setTestIds,
     settingsModal,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-360');
 
     await dialTest.step(
       'Open account settings and verify "Theme" field has "Dark" value, "Save" button is available',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await accountSettings.openAccountDropdownMenu();
         await accountDropdownMenu.selectMenuOption(AccountMenuOptions.settings);
-        await settingsModalAssertion.assertThemeValue(Theme.dark);
+        await settingsModalAssertion.assertThemeValue(ThemeId.dark);
         await settingsModalAssertion.assertSaveButtonState('visible');
       },
     );
@@ -76,7 +80,9 @@ dialTest(
       'Expand "Theme" dropdown and verify available options',
       async () => {
         await settingsModal.theme.click();
-        const expectedThemes = Object.values(Theme).map((t) => toTitleCase(t));
+        const expectedThemes = Object.values(ThemeId).map((t) =>
+          toTitleCase(t),
+        );
         await settingsModalAssertion.assertThemeMenuOptions(...expectedThemes);
       },
     );
@@ -101,6 +107,7 @@ dialTest(
     conversationData,
     dataInjector,
     conversations,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1704', 'EPMRTC-1705', 'EPMRTC-1708');
     let sendMessageInputInitWidth: number;
@@ -117,6 +124,7 @@ dialTest(
           name,
         );
         await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 

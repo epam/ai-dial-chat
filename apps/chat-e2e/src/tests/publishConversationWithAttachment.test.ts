@@ -11,6 +11,7 @@ import {
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
+  MockedChatApiResponseBodies,
 } from '@/src/testData';
 import { FileModalSection } from '@/src/ui/webElements';
 import { FileUtil, GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
@@ -68,7 +69,10 @@ dialAdminTest(
     baseAssertion,
     fileApiHelper,
     setTestIds,
+    localStorageManager,
+    adminLocalStorageManager,
   }) => {
+    dialAdminTest.slow();
     setTestIds(
       'EPMRTC-3463',
       'EPMRTC-3213',
@@ -105,6 +109,7 @@ dialAdminTest(
           );
         conversationData.resetData();
         await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -188,6 +193,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Login as admin and verify publishing request is displayed under "Approve required" section',
       async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversationsAssertion.assertFolderState(
@@ -393,7 +399,8 @@ dialAdminTest(
 );
 
 dialAdminTest(
-  'Publish chat with plotly',
+  'Publish chat with plotly.\n' +
+    'Error message appears if to Share the conversation with an attachment from Organization',
   async ({
     conversationData,
     fileApiHelper,
@@ -411,6 +418,9 @@ dialAdminTest(
     adminConversationDropdownMenu,
     adminChat,
     adminChatMessages,
+    adminToast,
+    adminShareModal,
+    adminConversations,
     adminConversationAssertion,
     publishFileAssertion,
     adminApproveRequiredConversationsAssertion,
@@ -419,9 +429,11 @@ dialAdminTest(
     adminApproveRequiredConversations,
     adminFilesToApproveAssertion,
     setTestIds,
+    localStorageManager,
+    adminLocalStorageManager,
   }) => {
     dialAdminTest.slow();
-    setTestIds('EPMRTC-3625');
+    setTestIds('EPMRTC-3625', 'EPMRTC-4125');
     let plotlyConversation: Conversation;
     let plotlyImageUrl: string;
     const requestName = GeneratorUtil.randomPublicationRequestName();
@@ -444,6 +456,7 @@ dialAdminTest(
             modelWithInputAttachments,
           );
         await dataInjector.createConversations([plotlyConversation]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -483,6 +496,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Login as admin and verify publishing request is displayed under "Approve required" section',
       async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversationsAssertion.assertFolderState(
@@ -594,6 +608,23 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
+      'Verify error toast is shown on attempt to share conversation with published file',
+      async () => {
+        await adminConversations.openEntityDropdownMenu(
+          plotlyConversation.name,
+        );
+        await adminConversationDropdownMenu.selectMenuOption(MenuOptions.share);
+        await baseAssertion.assertElementState(adminToast, 'visible');
+        await baseAssertion.assertElementText(
+          adminToast,
+          ExpectedConstants.sharingWithAttachmentNotFromAllFilesErrorMessage,
+        );
+        await baseAssertion.assertElementState(adminShareModal, 'hidden');
+        await adminToast.closeToast();
+      },
+    );
+
+    await dialAdminTest.step(
       'Create playback of published conversation and verify plotly graph is shown on expand attachment',
       async () => {
         const playbackName = ExpectedConstants.playbackConversation.concat(
@@ -647,8 +678,11 @@ dialAdminTest(
           'visible',
         );
         await adminConversationAssertion.assertSelectedConversation(replayName);
+        await adminDialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         const replayRequest = await adminChat.startReplay();
-        await apiAssertion.assertRequestMessage(
+        apiAssertion.assertRequestMessage(
           replayRequest.messages[0],
           plotlyConversation.messages[0].content,
         );

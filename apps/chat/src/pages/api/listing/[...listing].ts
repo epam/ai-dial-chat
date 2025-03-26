@@ -20,6 +20,7 @@ import { errorsMessages } from '@/src/constants/errors';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
+import { sanitizeUri } from 'micromark-util-sanitize-uri';
 import fetch from 'node-fetch';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
@@ -32,12 +33,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     const {
       filter,
-      recursive = false,
-      limit = 1000,
+      recursive = 'false',
+      limit = '1000',
     } = req.query as {
       filter?: BackendDataNodeType;
       recursive?: string;
-      limit?: number;
+      limit?: string;
     };
     const token = await getToken({ req });
     const slugs = Array.isArray(req.query.listing)
@@ -45,14 +46,19 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       : [req.query.listing];
 
     if (!slugs || slugs.length === 0) {
-      throw new DialAIError(`No path provided`, '', '', '400');
+      throw new DialAIError(`No path provided`, 400, req);
     }
 
-    const url = `${constructPath(
+    const path = constructPath(
       process.env.DIAL_API_HOST,
       'v1/metadata',
       ServerUtils.encodeSlugs(slugs),
-    )}/?limit=${limit}&recursive=${recursive}`;
+    );
+    const searchParams = new URLSearchParams();
+    searchParams.set('limit', limit);
+    searchParams.set('recursive', recursive);
+
+    const url = `${sanitizeUri(path)}/?${searchParams}`;
 
     const response = await fetch(url, {
       headers: getApiHeaders({ jwt: token?.access_token as string }),
@@ -62,7 +68,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       return res.status(200).send([]);
     } else if (!response.ok) {
       const serverErrorMessage = await response.text();
-      throw new DialAIError(serverErrorMessage, '', '', response.status + '');
+      throw new DialAIError(serverErrorMessage, response.status, req);
     }
 
     const json = (await response.json()) as

@@ -17,6 +17,7 @@ export enum EntityType {
   Conversation,
   Prompt,
 }
+
 export enum CollapsedSections {
   Organization = 'Organization',
   SharedWithMe = 'Shared with me',
@@ -62,4 +63,23 @@ export interface AssistantPlusAddonsRequest {
   assistantModelId: string;
   request: string;
   response: string;
+}
+
+export enum MarketplaceFilterTypes {
+  type = 'Type',
+  topics = 'Topics',
+  sources = 'Sources',
+}
+
+export enum SourcesFilterOptions {
+  public = 'Public',
+  sharedWithMe = 'Shared with me',
+  myCustomApps = 'My Custom apps',
+  myQuickApps = 'My Quick apps',
+  myCodeApps = 'My Code apps',
+}
+
+export enum ApplicationTypes {
+  CUSTOM_APP = 'custom app',
+  CODE_APP = 'code app',
 }

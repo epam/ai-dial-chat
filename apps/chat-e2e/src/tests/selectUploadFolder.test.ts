@@ -5,9 +5,15 @@ import {
   ExpectedMessages,
   MenuOptions,
 } from '@/src/testData';
-import { Colors, Overflow, Styles } from '@/src/ui/domData';
+import {
+  Colors,
+  Overflow,
+  Styles,
+  ThemeColorAttributes,
+} from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
-import { GeneratorUtil } from '@/src/utils';
+import { GeneratorUtil, RegexUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 dialTest(
@@ -25,6 +31,9 @@ dialTest(
     attachFilesModal,
     selectFolderModal,
     selectFolders,
+    localStorageManager,
+    baseAssertion,
+    selectFoldersAssertion,
   }) => {
     setTestIds(
       'EPMRTC-3253',
@@ -35,10 +44,17 @@ dialTest(
       'EPMRTC-3238',
     );
     const updatedFolderName = `New folder 1    ${ExpectedConstants.allowedSpecialChars}`;
+    const expectedColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.bgAccentPrimaryAlpha,
+    );
+    const expectedBorderColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.textAccentPrimary,
+    );
 
     await dialTest.step(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
@@ -51,42 +67,25 @@ dialTest(
       'Click "Create new folder" icon and verify new folder is created in the root in edit mode, folder background is blue',
       async () => {
         await selectFolderModal.newFolderButton.click();
-        await expect
-          .soft(
-            selectFolders.getEditFolderInput().getElementLocator(),
-            ExpectedMessages.folderEditModeIsActive,
-          )
-          .toBeVisible();
-        const folderBackgroundColor = await selectFolders
-          .getFolderInEditMode(ExpectedConstants.newFolderWithIndexTitle(1))
-          .getComputedStyleProperty(Styles.backgroundColor);
-        expect
-          .soft(
-            folderBackgroundColor[0],
-            ExpectedMessages.folderBackgroundColorIsValid,
-          )
-          .toBe(Colors.backgroundAccentPrimaryAlpha);
+        await selectFoldersAssertion.assertFolderEditInputState('visible');
+        await selectFoldersAssertion.assertElementBackgroundColors(
+          selectFolders.getFolderInEditMode(
+            ExpectedConstants.newFolderWithIndexTitle(1),
+          ),
+          expectedColor,
+        );
       },
     );
 
     await dialTest.step(
       'Set new name, hit Enter and verify name is updated, edit mode is closed',
       async () => {
-        await selectFolders.renameEmptyFolderWithEnter(updatedFolderName, {
-          isHttpMethodTriggered: false,
-        });
-        await expect
-          .soft(
-            selectFolders.getEditFolderInput().getElementLocator(),
-            ExpectedMessages.folderEditModeIsClosed,
-          )
-          .toBeHidden();
-        await expect
-          .soft(
-            selectFolders.getFolderByName(updatedFolderName),
-            ExpectedMessages.folderIsVisible,
-          )
-          .toBeVisible();
+        await selectFolders.renameEmptyFolderWithEnter(updatedFolderName);
+        await selectFoldersAssertion.assertFolderEditInputState('hidden');
+        await selectFoldersAssertion.assertFolderState(
+          { name: updatedFolderName },
+          'visible',
+        );
       },
     );
 
@@ -97,29 +96,25 @@ dialTest(
           triggeredApiHost: API.listingHost,
         });
         await selectFolderModal.selectFolderButton.click();
-
-        const uploadToBordersColor = await uploadFromDeviceModal
-          .getChangeUploadToPath()
-          .getAllBorderColors();
-        Object.values(uploadToBordersColor).forEach((borders) => {
-          borders.forEach((borderColor) => {
-            expect
-              .soft(borderColor, ExpectedMessages.borderColorsAreValid)
-              .toBe(Colors.controlsBackgroundAccent);
-          });
-        });
-        expect
-          .soft(
-            await uploadFromDeviceModal
-              .getChangeUploadToPath()
-              .path.getElementContent(),
-            ExpectedMessages.uploadToPathIsValid,
-          )
-          .toBe(`${ExpectedConstants.allFilesRoot}/${updatedFolderName}`);
-
-        const uploadPathOverflow = await uploadFromDeviceModal
-          .getChangeUploadToPath()
-          .path.getComputedStyleProperty(Styles.text_overflow);
+        const uploadToPathElement =
+          uploadFromDeviceModal.getChangeUploadToPath();
+        await baseAssertion.assertElementBorderColors(
+          uploadToPathElement,
+          expectedBorderColor,
+        );
+        await baseAssertion.assertElementText(
+          uploadToPathElement.path,
+          new RegExp(
+            RegexUtil.escapeRegexChars(
+              `${ExpectedConstants.allFilesRoot}/${updatedFolderName}`,
+            ),
+          ),
+          ExpectedMessages.uploadToPathIsValid,
+        );
+        const uploadPathOverflow =
+          await uploadToPathElement.path.getComputedStyleProperty(
+            Styles.text_overflow,
+          );
         expect
           .soft(uploadPathOverflow[0], ExpectedMessages.uploadToPathIsTruncated)
           .toBe(Overflow.ellipsis);
@@ -134,14 +129,11 @@ dialTest(
           triggeredApiHost: API.listingHost,
         });
         await selectFolderModal.selectFolderButton.click();
-        expect
-          .soft(
-            await uploadFromDeviceModal
-              .getChangeUploadToPath()
-              .path.getElementContent(),
-            ExpectedMessages.uploadToPathIsValid,
-          )
-          .toBe(ExpectedConstants.allFilesRoot);
+        await baseAssertion.assertElementText(
+          uploadFromDeviceModal.getChangeUploadToPath().path,
+          ExpectedConstants.allFilesRoot,
+          ExpectedMessages.uploadToPathIsValid,
+        );
       },
     );
   },
@@ -160,6 +152,7 @@ dialTest(
     selectFolders,
     sendMessage,
     page,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3248', 'EPMRTC-3249');
     const nameWithRestrictedChars = `Folder${ExpectedConstants.restrictedNameChars}name`;
@@ -167,6 +160,7 @@ dialTest(
     await dialTest.step(
       'Copy restricted symbols into buffer, open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await sendMessage.fillRequestData(nameWithRestrictedChars);
@@ -232,6 +226,7 @@ dialTest(
     selectFolderModal,
     selectFolders,
     folderDropdownMenu,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-3271',
@@ -245,6 +240,7 @@ dialTest(
     await dialTest.step(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
@@ -257,9 +253,7 @@ dialTest(
       'Click "Create new folder" icon, set long folder name and verify it is truncated with dots',
       async () => {
         await selectFolderModal.newFolderButton.click();
-        await selectFolders.renameEmptyFolderWithTick(longFolderName, {
-          isHttpMethodTriggered: false,
-        });
+        await selectFolders.renameEmptyFolderWithTick(longFolderName);
         const folderNameOverflowProp = await selectFolders
           .getFolderName(longFolderName)
           .getComputedStyleProperty(Styles.text_overflow);
@@ -298,9 +292,7 @@ dialTest(
       async () => {
         await selectFolders.openFolderDropdownMenu(longFolderName);
         await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
-        await selectFolders.renameEmptyFolderWithTick(longFolderName, {
-          isHttpMethodTriggered: false,
-        });
+        await selectFolders.renameEmptyFolderWithTick(longFolderName);
         const childFolderNameOverflowProp = await selectFolders
           .getFolderName(longFolderName, 2)
           .getComputedStyleProperty(Styles.text_overflow);
@@ -345,6 +337,7 @@ dialTest(
     attachFilesModal,
     selectFolderModal,
     selectFolders,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3244');
     const updateFoldeNameIndex = 999;
@@ -352,6 +345,7 @@ dialTest(
     await dialTest.step(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
@@ -380,7 +374,6 @@ dialTest(
         await selectFolderModal.newFolderButton.click();
         await selectFolders.renameEmptyFolderWithTick(
           ExpectedConstants.newFolderWithIndexTitle(updateFoldeNameIndex),
-          { isHttpMethodTriggered: false },
         );
       },
     );
@@ -415,12 +408,14 @@ dialTest(
     attachFilesModal,
     selectFolderModal,
     page,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3269');
 
     await dialTest.step(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
@@ -469,6 +464,7 @@ dialTest(
     selectFolderModal,
     selectFolders,
     folderDropdownMenu,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3256', 'EPMRTC-3258', 'EPMRTC-3257');
     const newChildFolderName = GeneratorUtil.randomString(10);
@@ -477,6 +473,7 @@ dialTest(
     await dialTest.step(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
@@ -523,9 +520,7 @@ dialTest(
           2,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await selectFolders.renameEmptyFolderWithTick(newChildFolderName, {
-          isHttpMethodTriggered: false,
-        });
+        await selectFolders.renameEmptyFolderWithTick(newChildFolderName);
         await expect
           .soft(
             selectFolders.getNestedFolder(
@@ -545,13 +540,7 @@ dialTest(
           ExpectedConstants.newFolderWithIndexTitle(1),
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await selectFolders.renameEmptyFolderWithTick(newParentFolderName, {
-          isHttpMethodTriggered: false,
-        });
-        //TODO: remove next line when fixed https://github.com/epam/ai-dial-chat/issues/1551
-        await selectFolders.expandCollapseFolder(newParentFolderName, {
-          isHttpMethodTriggered: true,
-        });
+        await selectFolders.renameEmptyFolderWithTick(newParentFolderName);
         await expect
           .soft(
             selectFolders.getNestedFolder(
@@ -578,12 +567,14 @@ dialTest(
     selectFolderModal,
     baseAssertion,
     selectFolders,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3017', 'EPMRTC-3246');
 
     await dialTest.step(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
@@ -606,7 +597,6 @@ dialTest(
         await selectFolderModal.newFolderButton.click();
         await selectFolders.renameEmptyFolderWithTick(
           `${GeneratorUtil.randomString(10)}.`,
-          { isHttpMethodTriggered: false },
         );
         const error = selectFolderModal.getModalError();
         await baseAssertion.assertElementState(error, 'visible');
@@ -624,7 +614,6 @@ dialTest(
         await selectFolderModal.newFolderButton.click();
         await selectFolders.renameEmptyFolderWithTick(
           ExpectedConstants.newFolderWithIndexTitle(1),
-          { isHttpMethodTriggered: false },
         );
         const error = selectFolderModal.getModalError();
         await baseAssertion.assertElementState(error, 'visible');
@@ -656,12 +645,14 @@ dialTest(
     attachFilesModal,
     selectFolderModal,
     selectFolders,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3251');
 
     await dialTest.step(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
@@ -675,9 +666,7 @@ dialTest(
       async () => {
         const nameWithSpaces = GeneratorUtil.randomArrayElement(['', '  ']);
         await selectFolderModal.newFolderButton.click();
-        await selectFolders.renameEmptyFolderWithTick(nameWithSpaces, {
-          isHttpMethodTriggered: false,
-        });
+        await selectFolders.renameEmptyFolderWithTick(nameWithSpaces);
         await expect
           .soft(
             selectFolders.getFolderByName(

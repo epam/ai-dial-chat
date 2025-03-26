@@ -3,6 +3,7 @@ import { API } from '@/src/testData';
 import { LoginInterface } from '@/src/ui/actions/loginInterface';
 import { BasePage } from '@/src/ui/pages/basePage';
 import { LoginPage } from '@/src/ui/pages/loginPage';
+import { BaseElement } from '@/src/ui/webElements';
 import { TestInfo } from '@playwright/test';
 
 export abstract class ProviderLogin<T extends BasePage & LoginInterface> {
@@ -20,8 +21,18 @@ export abstract class ProviderLogin<T extends BasePage & LoginInterface> {
     this.localStorageManager = localStorageManager;
   }
 
-  abstract navigateToCredentialsPage(): Promise<void>;
+  getAuthProviderPage(): T {
+    return this.authProviderPage;
+  }
 
+  abstract getSignInButton(): BaseElement;
+
+  async navigateToCredentialsPage(): Promise<void> {
+    const signInButton = this.getSignInButton();
+    if (await signInButton.isVisible()) {
+      await signInButton.click();
+    }
+  }
   public async login(
     testInfo: TestInfo,
     username: string,
@@ -63,6 +74,7 @@ export abstract class ProviderLogin<T extends BasePage & LoginInterface> {
     if (options?.setEntitiesEnvVars) {
       process.env.MODELS = retrievedResponses.get(API.modelsHost);
       process.env.ADDONS = retrievedResponses.get(API.addonsHost);
+      process.env.THEMES = retrievedResponses.get(API.themesListingHost);
       process.env.RECENT_ADDONS =
         await this.localStorageManager.getRecentAddons();
       process.env.RECENT_MODELS =

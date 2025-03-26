@@ -13,6 +13,7 @@ dialTest(
     conversations,
     confirmationDialog,
     chatBarFolderAssertion,
+    localStorageManager,
   }) => {
     const conversationInFolder =
       conversationData.prepareDefaultConversationInFolder();
@@ -20,6 +21,7 @@ dialTest(
       conversationInFolder.conversations,
       conversationInFolder.folders,
     );
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();

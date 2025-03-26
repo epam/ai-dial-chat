@@ -4,8 +4,14 @@ import {
   ExpectedConstants,
   ExpectedMessages,
 } from '@/src/testData';
-import { Attributes, Colors, Styles } from '@/src/ui/domData';
+import {
+  Attributes,
+  Colors,
+  Styles,
+  ThemeColorAttributes,
+} from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 dialTest(
@@ -19,12 +25,14 @@ dialTest(
     chatBar,
     uploadFromDeviceModal,
     baseAssertion,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1777', 'EPMRTC-1778');
     const expectedErrorTextClassAttribute = 'truncate whitespace-pre-wrap';
 
     await dialTest.step('Upload file with long name to app', async () => {
       await fileApiHelper.putFile(Attachment.longImageName);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -53,7 +61,7 @@ dialTest(
         );
         await baseAssertion.assertElementColor(
           error.errorMessage,
-          Colors.textPrimary,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textPrimary),
         );
         await baseAssertion.assertElementAttribute(
           error.errorMessage,
@@ -75,6 +83,7 @@ dialTest(
     chatBar,
     uploadFromDeviceModal,
     baseAssertion,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1780', 'EPMRTC-1802');
     const restrictedChar = GeneratorUtil.randomArrayElement(
@@ -83,6 +92,7 @@ dialTest(
     const notAllowedFilename = `${restrictedChar}${Attachment.sunImageName}`;
 
     await dialTest.step('Upload file through chat bar dots menu', async () => {
+      await localStorageManager.setShowSideBarPanels();
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await chatBar.openManageAttachmentsModal();
@@ -153,11 +163,13 @@ dialTest(
     uploadFromDeviceModal,
     fileApiHelper,
     baseAssertion,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3217', 'EPMRTC-3194', 'EPMRTC-1779');
 
     await dialTest.step('Upload file with valid name to app', async () => {
       await fileApiHelper.putFile(Attachment.sunImageName);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -211,6 +223,7 @@ dialTest(
     chatBar,
     uploadFromDeviceModal,
     baseAssertion,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3216', 'EPMRTC-3113');
     const dot = '.';
@@ -218,6 +231,7 @@ dialTest(
     await dialTest.step(
       'Upload file without extension through chat bar dots menu',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();

@@ -1,5 +1,6 @@
 import { DialAIEntityModel } from '@/chat/types/models';
 import { Attributes } from '@/src/ui/domData';
+import { keys } from '@/src/ui/keyboard';
 import { MarketplaceSelectors } from '@/src/ui/selectors';
 import {
   BaseElement,
@@ -140,9 +141,17 @@ export class MarketplaceAgentsSection extends BaseElement {
 
   public async getAllAgents() {
     const allAgents: MarketplaceAgentProperties[] = [];
-    let scrollPosition: { scrollTop: number; clientHeight: number };
+    let scrollPosition: { scrollTop: number; clientHeight: number } = {
+      scrollTop: 0,
+      clientHeight: 0,
+    };
     const scrollHeight = await this.rootLocator.evaluate((p) => p.scrollHeight);
-    do {
+    let iteration = 1;
+    let shouldProceed = true;
+    while (shouldProceed) {
+      if (iteration !== 1) {
+        scrollPosition = await this.getPositionAndScrollInto();
+      }
       const visibleAgents = this.getAgents();
       const visibleAgentNames = await visibleAgents.getAgentNames();
       const visibleAgentsCount = visibleAgentNames.length;
@@ -150,11 +159,18 @@ export class MarketplaceAgentsSection extends BaseElement {
         const agentName = visibleAgentNames[i];
         //iterate through visible agents to define filtered/suggested type
         if (!allAgents.map((a) => a.name).includes(agentName)) {
-          const agentType = await visibleAgents
-            .getAgent(agentName)
-            .getAttribute(Attributes.ariaDetails);
+          const visibleAgent = visibleAgents.getAgent(agentName);
+          const agentType = await visibleAgent.getAttribute(
+            Attributes.ariaDetails,
+          );
+          const versionElement = visibleAgents.getAgentVersion(visibleAgent);
+          let agentVersion;
+          if (await versionElement.isVisible()) {
+            agentVersion = await versionElement.getElementInnerContent();
+          }
           allAgents.push({
             name: agentName,
+            version: agentVersion ?? undefined,
             isSuggested:
               agentType ===
               FoundMarketplaceAgents[FoundMarketplaceAgents.suggested],
@@ -164,12 +180,20 @@ export class MarketplaceAgentsSection extends BaseElement {
           });
         }
       }
-      scrollPosition = await this.getPositionAndScrollInto();
-    } while (
-      scrollPosition.clientHeight <
-      Math.round(scrollHeight - scrollPosition.scrollTop)
-    );
+      shouldProceed =
+        scrollPosition.clientHeight <
+        Math.ceil(scrollHeight - scrollPosition.scrollTop);
+      iteration++;
+    }
     return allAgents;
+  }
+
+  public async goTop() {
+    const bounding = await this.getElementBoundingBox();
+    await this.page.mouse.click(bounding!.x, bounding!.y);
+    await this.page.keyboard.press(keys.home);
+    // eslint-disable-next-line playwright/no-wait-for-timeout
+    await this.page.waitForTimeout(1500);
   }
 
   private async getPositionAndScrollInto() {
@@ -177,6 +201,9 @@ export class MarketplaceAgentsSection extends BaseElement {
     const clientHeight = await this.rootLocator.evaluate((p) => p.clientHeight);
     const rowsCount = await this.agentsRow.getElementsCount();
     await this.agentsRow.getNthElement(rowsCount).scrollIntoViewIfNeeded();
-    return { scrollTop: scrollTop, clientHeight: clientHeight };
+    return {
+      scrollTop: Math.ceil(scrollTop),
+      clientHeight: Math.ceil(clientHeight),
+    };
   }
 }

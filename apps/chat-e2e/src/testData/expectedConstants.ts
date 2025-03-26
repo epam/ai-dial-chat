@@ -224,6 +224,10 @@ export const ExpectedConstants = {
   noMarketplaceAgentsFoundMessage: `Sorry, we couldn't find any results for your search.`,
   versionPrefix: 'Version: ',
   agentAddedToWorkspaceMessage: 'The agent added to my workspace',
+  agentNotFoundError: 'Agent by this link not found',
+  copiedLinkText: 'Copied!',
+  copyLinkText: 'Copy link',
+  copiedToastMessage: 'Link copied!',
 };
 
 export enum Types {
@@ -260,6 +264,7 @@ export enum MenuOptions {
   view = 'View',
   use = 'Use',
   info = 'Info',
+  copyLink = 'Copy link',
 }
 
 export enum FilterMenuOptions {
@@ -302,6 +307,7 @@ export const API = {
   defaultAddonIconHost: () => `${API.themeUrl}/default-addon`,
   bucketHost: '/api/bucket',
   listingHost: '/api/listing',
+  themesListingHost: '/api/themes/listing',
   conversationsHost: () => `${API.listingHost}/conversations`,
   promptsHost: () => `${API.listingHost}/prompts`,
   appsHost: () => `${API.listingHost}/applications`,
@@ -315,7 +321,7 @@ export const API = {
   importFilePath: (bucket: string, modelId: string) =>
     `${API.importFileRootPath(bucket)}/${API.modelFilePath(modelId)}`,
   shareInviteAcceptanceHost: '/api/share/accept',
-  shareConversationHost: '/api/share/create',
+  shareEntityHost: '/api/share/create',
   shareListing: '/api/share/listing',
   discardShareWithMeItem: '/api/share/discard',
   installedDeploymentsFolder: 'clientdata',
@@ -393,7 +399,7 @@ export enum Rate {
   dislike = 'dislike',
 }
 
-export enum Theme {
+export enum ThemeId {
   dark = 'dark',
   light = 'light',
 }

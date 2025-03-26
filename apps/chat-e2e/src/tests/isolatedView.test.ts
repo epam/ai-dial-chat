@@ -270,37 +270,28 @@ dialTest(
       'EPMRTC-4889',
     );
     let nonWorkspaceModel: DialAIEntityModel;
-    let installedDeployments: { id: string }[];
     let models: DialAIEntityModel[];
     let chatName: string;
 
     await dialTest.step(
-      'prepare a model that is not added to the users workspace',
+      'Prepare a model that is not added to the users workspace',
       async () => {
         models = ModelsUtil.getModels();
 
         const randomModels = GeneratorUtil.randomArrayElements(models, 5);
-        installedDeployments = randomModels.map((model) => ({
-          id: model.id,
-        }));
-        const installedDeploymentsJson = JSON.stringify(installedDeployments);
-        await fileApiHelper.putStringAsFile(
-          API.installedDeploymentsFile,
-          installedDeploymentsJson,
-          API.installedDeploymentsFolder,
-        );
+        await fileApiHelper.updateInstalledDeployments(randomModels);
 
         nonWorkspaceModel = GeneratorUtil.randomArrayElement(
           models.filter((model) => {
-            const isNotInstalled = !installedDeployments.some(
-              (deployment) => deployment.id === model.id,
+            const isNotInstalled = !randomModels.some(
+              (deployment) => deployment.name === model.name,
             );
             const hasNoColon = !model.id.includes(':');
             return isNotInstalled && hasNoColon;
           }),
         );
 
-        const recentModelsToAdd = installedDeployments
+        const recentModelsToAdd = randomModels
           .map((deployment) =>
             models.find((model) => model.id === deployment.id),
           )
@@ -501,6 +492,7 @@ dialTest(
     await dialTest.step(
       'Reload into regular Dial and verify conversation exists',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversationAssertion.assertEntityState(

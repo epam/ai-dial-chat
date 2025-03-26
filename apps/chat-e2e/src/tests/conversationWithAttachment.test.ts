@@ -60,6 +60,7 @@ dialTest(
         await fileApiHelper.putFile(file);
       }
       await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -139,6 +140,9 @@ dialTest(
     await dialTest.step(
       'Send request and verify conversation is named by the 1st attachment in the textarea',
       async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await sendMessage.send();
         await expect
           .soft(
@@ -164,12 +168,12 @@ dialTest(
     setTestIds,
     attachFilesModal,
     sendMessage,
-    conversations,
-    chatHeader,
     fileApiHelper,
     attachmentDropdownMenu,
     chat,
     localStorageManager,
+    conversationAssertion,
+    chatHeaderAssertion,
   }) => {
     setTestIds('EPMRTC-1640');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -180,6 +184,7 @@ dialTest(
     await dialTest.step('Upload file to app', async () => {
       await fileApiHelper.putFile(Attachment.sunImageName);
       await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -202,19 +207,15 @@ dialTest(
     await dialTest.step(
       'Set request in textarea and verify conversation is named with request text',
       async () => {
-        await chat.sendRequestWithKeyboard(request, false);
-        await expect
-          .soft(
-            conversations.getEntityByName(request),
-            ExpectedMessages.conversationIsVisible,
-          )
-          .toBeVisible();
-        expect
-          .soft(
-            await chatHeader.chatTitle.getElementInnerContent(),
-            ExpectedMessages.headerTitleIsValid,
-          )
-          .toBe(request);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chat.sendRequestWithKeyboard(request);
+        await conversationAssertion.assertEntityState(
+          { name: request },
+          'visible',
+        );
+        await chatHeaderAssertion.assertHeaderTitle(request);
       },
     );
   },
@@ -242,6 +243,7 @@ dialTest(
       'Create new conversation based on model with input attachments and upload attachment from device',
       async () => {
         await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await sendMessage.attachmentMenuTrigger.click();
@@ -322,6 +324,7 @@ dialTest(
     await dialTest.step('Upload file to app', async () => {
       await fileApiHelper.putFile(Attachment.longImageName);
       await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -481,6 +484,7 @@ dialTest(
       'Create new conversation based on model with input attachments and upload attachment from device in offline mode',
       async () => {
         await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await sendMessage.attachmentMenuTrigger.click();
@@ -595,6 +599,7 @@ dialTest(
         await localStorageManager.setRecentModelsIds(
           randomModelWithImageAttachment,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -681,6 +686,7 @@ dialTest(
         await localStorageManager.setRecentModelsIds(
           randomModelWithoutFolderLinkAttachments,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 

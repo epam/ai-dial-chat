@@ -1,5 +1,6 @@
 import { Conversation } from '@/chat/types/chat';
 import { BackendEntity } from '@/chat/types/common';
+import { Prompt } from '@/chat/types/prompt';
 import {
   PublicationRequestModel,
   PublicationRule,
@@ -26,6 +27,7 @@ export class PublishRequestBuilder {
 
   private reset(): PublicationRequestModel {
     this.publishRequest = {
+      displayAuthor: '',
       name: '',
       targetFolder: ExpectedConstants.rootPublicationFolder,
       resources: [],
@@ -65,6 +67,27 @@ export class PublishRequestBuilder {
       resource = {
         ...resource,
         sourceUrl: conversation.id,
+      };
+    }
+    this.publishRequest.resources.push(resource);
+    return this;
+  }
+
+  withPromptResource(
+    prompt: Prompt,
+    action: PublishActions,
+    version?: string,
+  ): PublishRequestBuilder {
+    const targetResource = prompt.id.substring(prompt.folderId.length + 1);
+    const targetUrl = `prompts/${this.getPublishRequest().targetFolder}${targetResource}__${version ?? ExpectedConstants.defaultAppVersion}`;
+    let resource: PublicationResource = {
+      action: action,
+      targetUrl: targetUrl,
+    };
+    if (action === 'ADD' || action === 'ADD_IF_ABSENT') {
+      resource = {
+        ...resource,
+        sourceUrl: prompt.id,
       };
     }
     this.publishRequest.resources.push(resource);
