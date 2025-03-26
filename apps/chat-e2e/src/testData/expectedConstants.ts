@@ -309,6 +309,7 @@ export enum AppEditorViewFormFields {
 
 export enum AppMenuActions {
   add = 'Add',
+  edit = 'Edit',
 }
 
 export const Chronology = {

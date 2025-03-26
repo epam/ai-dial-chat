@@ -235,6 +235,8 @@ export const ApplicationEditorHeader = {
   stepsContainer: '[data-qa="steps-container"]',
   singleStepLink: '[data-qa="single-step-link"]',
   singleStepTitle: '[data-qa="single-step-title"]',
+  selectedStepIcon: '[data-qa="selected-step-icon"]',
+  notSelectedStepIcon: '[data-qa="not-selected-step-icon"]',
 };
 
 export const ApplicationPreviewSelector = {

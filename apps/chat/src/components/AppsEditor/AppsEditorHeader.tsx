@@ -150,6 +150,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
                       {tab.key === TabKeys.GENERAL && id ? (
                         <IconCircleCheck
                           className="text-accent-primary"
+                          data-qa="selected-step-icon"
                           width={24}
                           height={24}
                         />
@@ -160,6 +161,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
                               ? 'text-secondary'
                               : 'text-accent-primary'
                           }
+                          data-qa="not-selected-step-icon"
                           width={24}
                           height={24}
                         />
