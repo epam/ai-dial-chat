@@ -39,7 +39,7 @@ interface TooltipContainerOptions {
   onOpenChange?: (open: boolean) => void;
 }
 
-export function useTooltip({
+function useTooltip({
   initialOpen = false,
   placement = 'bottom',
   isTriggerClickable = false,
@@ -109,7 +109,7 @@ type ContextType = ReturnType<typeof useTooltip> | null;
 
 const TooltipContext = createContext<ContextType>(null);
 
-export const useTooltipContext = () => {
+const useTooltipContext = () => {
   const context = useContext(TooltipContext);
 
   if (context == null) {

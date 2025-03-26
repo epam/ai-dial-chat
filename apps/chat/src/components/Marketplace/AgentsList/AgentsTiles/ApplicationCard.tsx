@@ -86,7 +86,7 @@ const CardFooter = ({ entity }: CardFooterProps) => {
   );
 };
 
-export interface ApplicationCardProps {
+interface ApplicationCardProps {
   entity: DialAIEntityModel;
   onClick: (entity: DialAIEntityModel) => void;
   onPublish?: (entity: DialAIEntityModel, action: PublishActions) => void;
