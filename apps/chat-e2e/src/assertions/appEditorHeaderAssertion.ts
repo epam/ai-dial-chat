@@ -1,4 +1,3 @@
-// src/assertions/appEditorHeaderAssertion.ts
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import {
   ElementActionabilityState,
@@ -6,10 +5,7 @@ import {
   ExpectedMessages,
 } from '@/src/testData';
 import { ApplicationEditorHeader } from '@/src/ui/selectors';
-// Assuming selectors are here
-import { AppEditorHeader } from '@/src/ui/webElements';
-
-// Import the web element
+import { AppEditorHeader, BaseElement } from '@/src/ui/webElements';
 
 export class AppEditorHeaderAssertion extends BaseAssertion {
   readonly appEditorHeader: AppEditorHeader;
@@ -46,13 +42,18 @@ export class AppEditorHeaderAssertion extends BaseAssertion {
 
   /**
    * Asserts whether a specific step is currently selected based on its icon.
-   * @param stepTitle The title of the step (e.g., "General info").
-   * @param isSelected Expected selection state (true for selected, false for not selected).
+   *   * @param step The title of the step (string) or the BaseElement representing the step link.
+   *   * @param isCompleted Expected selection state (true for selected, false for not selected).
    */
-  public async assertStepIsSelected(stepTitle: string, isSelected: boolean) {
-    const stepLocator = this.appEditorHeader
-      .getStepByTitle(stepTitle)
-      .getElementLocator();
+  public async assertStepIsCompleted(
+    step: string | BaseElement,
+    isCompleted: boolean,
+  ) {
+    const stepLocator =
+      typeof step === 'string'
+        ? this.appEditorHeader.getStepByTitle(step).getElementLocator()
+        : step.getElementLocator();
+
     const selectedIconLocator = stepLocator.locator(
       ApplicationEditorHeader.selectedStepIcon,
     );
@@ -60,27 +61,27 @@ export class AppEditorHeaderAssertion extends BaseAssertion {
       ApplicationEditorHeader.notSelectedStepIcon,
     );
 
-    if (isSelected) {
+    if (isCompleted) {
       await this.assertElementState(
         selectedIconLocator,
         'visible',
-        `Step "${stepTitle}" should have selected icon`,
+        `Step "${step}" should have selected icon`,
       );
       await this.assertElementState(
         notSelectedIconLocator,
         'hidden',
-        `Step "${stepTitle}" should NOT have not-selected icon`,
+        `Step "${step}" should NOT have not-selected icon`,
       );
     } else {
       await this.assertElementState(
         selectedIconLocator,
         'hidden',
-        `Step "${stepTitle}" should NOT have selected icon`,
+        `Step "${step}" should NOT have selected icon`,
       );
       await this.assertElementState(
         notSelectedIconLocator,
         'visible',
-        `Step "${stepTitle}" should have not-selected icon`,
+        `Step "${step}" should have not-selected icon`,
       );
     }
   }

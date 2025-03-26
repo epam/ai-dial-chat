@@ -8,7 +8,6 @@ import {
   ExpectedMessages,
   MenuOptions,
 } from '@/src/testData';
-import { Attributes } from '@/src/ui/domData';
 import { AppEditSteps } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 
@@ -25,6 +24,7 @@ dialTest(
     marketplaceAgentsSection,
     setTestIds,
     baseAssertion,
+    appEditorHeaderAssertion,
   }) => {
     setTestIds('EPMRTC-5130');
     const appName = GeneratorUtil.randomApplicationName();
@@ -44,17 +44,44 @@ dialTest(
         await baseAssertion.assertElementText(
           appEditorPage.getAppEditorContainer().getHeader()
             .actionAndApplicationTypeTitle,
-          // `${AppMenuActions.add} ${AddAppMenuOptions.customApp}`,
+          // `${AppMenuActions.add} ${AddAppMenuOptions.customApp}`, //custom app != Custom app
           `${AppMenuActions.add} custom app`,
         );
-        const generalInfoStep = await appEditorHeader.getGeneralInfoStep();
-        await baseAssertion.assertElementState(generalInfoStep, 'visible');
+      },
+    );
+
+    await dialTest.step(
+      'App editor General Info step is opened, header features are valid, step titles in the header marked as not completed',
+      async () => {
+        await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');
+
+        const generalInfoStep = appEditorHeader.getGeneralInfoStep();
+        const appSettingsStep = appEditorHeader.getAppSettingsStep();
+        await generalInfoStep.waitForState();
+        await appSettingsStep.waitForState();
         await baseAssertion.assertElementActionabilityState(
           generalInfoStep,
           'enabled',
         );
-        await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');
+        await baseAssertion.assertElementActionabilityState(
+          appSettingsStep,
+          'disabled',
+        );
 
+        await appEditorHeaderAssertion.assertStepIsCompleted(
+          generalInfoStep,
+          false,
+        );
+        await appEditorHeaderAssertion.assertStepIsCompleted(
+          appSettingsStep,
+          false,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Check that the required fields of General Info step form are marked with asterisks',
+      async () => {
         const nameRequiredIndicator = appEditorGeneralForm.getRequiredIndicator(
           AppEditorGeneralFormFields.name,
         );
@@ -88,10 +115,37 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open view form and verify chat completion url is required',
+      'Wait for app settings step form to load and check the header changes',
       async () => {
         await appEditorViewForm.waitForState();
         await baseAssertion.assertElementState(appEditorViewForm, 'visible');
+
+        const generalInfoStep = appEditorHeader.getGeneralInfoStep();
+        const appSettingsStep = appEditorHeader.getAppSettingsStep();
+
+        await baseAssertion.assertElementActionabilityState(
+          generalInfoStep,
+          'enabled',
+        );
+        await baseAssertion.assertElementActionabilityState(
+          appSettingsStep,
+          'enabled',
+        );
+
+        await appEditorHeaderAssertion.assertStepIsCompleted(
+          generalInfoStep,
+          true,
+        );
+        await appEditorHeaderAssertion.assertStepIsCompleted(
+          appSettingsStep,
+          false,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify app settings required fields are marked with asterisk',
+      async () => {
         const chatCompletionUrlRequiredIndicator =
           appEditorViewForm.getRequiredIndicator(
             AppEditorViewFormFields.chatCompletionUrl,
@@ -127,7 +181,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'Edit custom application',
   async ({
     marketplacePage,
@@ -141,7 +195,9 @@ dialTest.only(
     customApplicationBuilder,
     applicationApiHelper,
     appEditorHeaderAssertion,
+    setIssueIds,
   }) => {
+    setIssueIds('3486');
     setTestIds('EPMRTC-5131');
     const updatedDescription = GeneratorUtil.randomString(25);
     const updatedCompletionUrl = `http://updated-${GeneratorUtil.randomString(6)}.com`;
@@ -201,25 +257,12 @@ dialTest.only(
 
         await baseAssertion.assertElementState(generalInfoStep, 'visible');
         await baseAssertion.assertElementState(appSettingsStep, 'visible');
-
-        await appEditorHeaderAssertion.assertStepIsSelected(
-          AppEditSteps.generalInfo,
-          true,
-        );
-        await appEditorHeaderAssertion.assertStepIsSelected(
-          AppEditSteps.appSettings,
-          false,
-        );
       },
     );
 
     await dialTest.step(
       'Update any field on step "Application settings" with a valid value',
       async () => {
-        await appEditorHeaderAssertion.assertStepIsSelected(
-          AppEditSteps.appSettings,
-          true,
-        ); //step is not selected, it is completed
         await appEditorViewForm.waitForState();
         await appEditorViewForm.fillInAppFields({
           chatCompletionUrl: updatedCompletionUrl,
@@ -233,7 +276,7 @@ dialTest.only(
         const generalInfoStep = appEditorHeader.getGeneralInfoStep();
         await generalInfoStep.click();
         await appEditorGeneralForm.waitForState();
-        await appEditorHeaderAssertion.assertStepIsSelected(
+        await appEditorHeaderAssertion.assertStepIsCompleted(
           AppEditSteps.generalInfo,
           true,
         );
@@ -266,28 +309,24 @@ dialTest.only(
       'Check that updated field values from steps 4, 5 are still displayed',
       async () => {
         await appEditorViewForm.waitForState();
-        await baseAssertion.assertInputValue(
-          appEditorViewForm.chatCompletionUrl,
+
+        const chatCompletionUrlValue = await appEditorViewForm.chatCompletionUrl
+          .getElementLocator()
+          .inputValue();
+        baseAssertion.assertValue(
+          chatCompletionUrlValue,
           updatedCompletionUrl,
           'Chat Completion URL should retain updated value',
-        );
-        await baseAssertion.assertElementAttribute(
-          appEditorViewForm.chatCompletionUrl,
-          Attributes.value,
-          updatedCompletionUrl,
-          'Chat Completion URL should retain updated value',
-        );
-        await baseAssertion.assertElementText(
-          appEditorViewForm.chatCompletionUrl,
-          updatedCompletionUrl,
-          'Description should retain updated value',
         );
 
         const generalInfoStep = appEditorHeader.getGeneralInfoStep();
         await generalInfoStep.click();
         await appEditorGeneralForm.waitForState();
-        await baseAssertion.assertElementText(
-          appEditorGeneralForm.description,
+        const descriptionValue = await appEditorGeneralForm.description
+          .getElementLocator()
+          .inputValue();
+        baseAssertion.assertValue(
+          descriptionValue,
           updatedDescription,
           'Description should retain updated value',
         );
