@@ -81,10 +81,10 @@ function ShareAccessSection({
           className="flex gap-2 text-sm text-accent-primary"
         >
           <IconUserUnshare height={18} width={18} />
-          <p>{unshareLabel}</p>
+          <p data-qa="shared-access-message">{unshareLabel}</p>
         </button>
       ) : (
-        <p>{notSharedMessage}</p>
+        <p data-qa="shared-access-message">{notSharedMessage}</p>
       )}
     </div>
   );
@@ -224,10 +224,10 @@ export function ShareModalView() {
 
         <div className="flex flex-col justify-between gap-2">
           {entity?.version && <span>Version: {entity.version}</span>}
-          <p className="text-sm text-secondary">
+          <p className="text-sm text-secondary" data-qa="share-message">
             {t('share.modal.link.description')}
           </p>
-          <p className="text-sm text-secondary">
+          <p className="text-sm text-secondary" data-qa="share-message">
             {t('share.modal.link', { context: sharingType })}
           </p>
           {shareFeatureType === FeatureType.Application && (
