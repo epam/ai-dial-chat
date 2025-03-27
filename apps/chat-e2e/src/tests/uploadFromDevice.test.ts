@@ -293,6 +293,7 @@ dialTest(
     sendMessage,
     dataInjector,
     conversations,
+    conversationAssertion,
     attachmentDropdownMenu,
     uploadFromDeviceModal,
     localStorageManager,
@@ -338,6 +339,9 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(conversation.name);
+        await conversationAssertion.assertSelectedConversation(
+          conversation.name,
+        );
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(randomMenuItem);
         if (randomMenuItem === UploadMenuOptions.attachUploadedFiles) {
