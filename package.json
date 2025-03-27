@@ -95,7 +95,6 @@
   "devDependencies": {
     "@mozilla/readability": "^0.4.4",
     "@nx/devkit": "20.5.0",
-    "@nx/esbuild": "20.5.0",
     "@nx/eslint": "20.5.0",
     "@nx/eslint-plugin": "20.5.0",
     "@nx/jest": "20.5.0",
