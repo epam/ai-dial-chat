@@ -35,15 +35,11 @@ export class Header extends BaseElement {
 
   public logo = this.getChildElementBySelector(HeaderSelectors.logo);
 
-  public async createNewConversation(options?: {
-    isHttpMethodTriggered: boolean;
-  }) {
-    if (options?.isHttpMethodTriggered) {
+  public async createNewConversation(options?: { triggeredHttpHost?: string }) {
+    if (options?.triggeredHttpHost) {
       const respPromise = this.page.waitForResponse(
         (r) =>
-          r.url().includes(API.configurationHost) &&
-          r.request().method() === 'GET' &&
-          r.status() === 200,
+          r.url().includes(options.triggeredHttpHost!) && r.status() === 200,
       );
       await this.newEntityButton.click();
       await respPromise;
