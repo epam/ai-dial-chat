@@ -22,6 +22,7 @@ enum OverlayCases {
   newConversationsFolderIdSetOverlay = '/cases/overlay/new-conversations-folder-id-set-sandbox',
   enabledHideUserSettingsSandboxOverlay = '/cases/overlay/enabled-hide-user-settings-sandbox',
   loaderHideEventSetSandbox = '/cases/overlay/loader-hide-event-set-sandbox',
+  skipFocusSetSandbox = '/cases/overlay/skip-focus-set-sandbox',
 }
 
 export default async function Index() {
