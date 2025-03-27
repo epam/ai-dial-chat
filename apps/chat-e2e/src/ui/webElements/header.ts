@@ -1,4 +1,3 @@
-import { API } from '@/src/testData';
 import { HeaderSelectors } from '@/src/ui/selectors';
 import { AccountSettings } from '@/src/ui/webElements/accountSettings';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
