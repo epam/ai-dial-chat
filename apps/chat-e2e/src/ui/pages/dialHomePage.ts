@@ -52,7 +52,6 @@ export class DialHomePage extends BasePage {
     await chat.waitForState({ state: 'attached' });
     await chat.waitForChatLoaded();
     await chat.getSendMessage().waitForMessageInputLoaded();
-    //if (!options?.skipSidebars) {
 
     if (
       options?.selectedSharedConversationName &&

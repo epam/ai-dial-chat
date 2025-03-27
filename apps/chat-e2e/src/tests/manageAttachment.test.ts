@@ -246,11 +246,11 @@ dialTest(
 
     await dialTest.step('Start upload attachment from device', async () => {
       await baseAssertion.assertElementState(attachFilesModal, 'visible');
+      await dialHomePage.emulateSlowNetworkConditions();
       await dialHomePage.uploadData(
         { path: Attachment.sunImageName, dataType: 'upload' },
         () => attachFilesModal.uploadFromDevice(),
       );
-      await dialHomePage.emulateSlowNetworkConditions();
       await baseAssertion.assertElementState(
         uploadFromDeviceModal.getUploadedFile(Attachment.sunImageName),
         'visible',
@@ -334,6 +334,10 @@ dialTest(
           { path: Attachment.sunImageName, dataType: 'upload' },
           () => attachFilesModal.uploadFromDevice(),
         );
+        await baseAssertion.assertElementState(
+          uploadFromDeviceModal.getUploadedFile(Attachment.sunImageName),
+          'visible',
+        );
         client = await dialHomePage.emulateSlowNetworkConditions({
           offline: true,
         });
@@ -387,6 +391,7 @@ dialTest(
     chatBar,
     localStorageManager,
     manageAttachmentsAssertion,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-3303');
     let client: CDPSession;
@@ -407,6 +412,10 @@ dialTest(
         await dialHomePage.uploadData(
           { path: Attachment.sunImageName, dataType: 'upload' },
           () => attachFilesModal.uploadFromDevice(),
+        );
+        await baseAssertion.assertElementState(
+          uploadFromDeviceModal.getUploadedFile(Attachment.sunImageName),
+          'visible',
         );
         client = await dialHomePage.emulateSlowNetworkConditions({
           offline: true,
@@ -463,6 +472,10 @@ dialTest(
         await dialHomePage.uploadData(
           { path: Attachment.sunImageName, dataType: 'upload' },
           () => attachFilesModal.uploadFromDevice(),
+        );
+        await baseAssertion.assertElementState(
+          uploadFromDeviceModal.getUploadedFile(Attachment.sunImageName),
+          'visible',
         );
         await uploadFromDeviceModal.setUploadedFilename(
           Attachment.sunImageName,

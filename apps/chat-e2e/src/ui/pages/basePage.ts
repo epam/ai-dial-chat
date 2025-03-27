@@ -138,7 +138,7 @@ export class BasePage {
     await client.send('Network.enable');
     await client.send('Network.emulateNetworkConditions', {
       offline: conditions?.offline ?? false,
-      latency: conditions?.latency ?? 100, // keep latency low (100ms) to not affect UI responsiveness
+      latency: conditions?.latency ?? 500, // slow down UI responsiveness
       downloadThroughput:
         conditions?.downloadThroughput ?? (5 * 1024 * 1024) / 8, // 5 Mbps download - reasonably fast
       uploadThroughput: conditions?.uploadThroughput ?? (50 * 1024) / 8, // 50 Kbps upload - very slow,

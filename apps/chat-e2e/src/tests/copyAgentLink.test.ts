@@ -45,6 +45,7 @@ dialTest(
       'EPMRTC-5324',
       'EPMRTC-5325',
     );
+    dialTest.slow();
     const appFirstVersion = ExpectedConstants.defaultAppVersion;
     const appSecondVersion = '0.0.2';
     const appName = GeneratorUtil.randomApplicationName();

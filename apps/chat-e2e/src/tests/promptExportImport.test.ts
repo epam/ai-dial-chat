@@ -898,6 +898,21 @@ dialTest(
           nestedFolders[0].name,
           { isHttpMethodTriggered: true },
         );
+        await promptBarFolderAssertion.assertElementState(
+          folderPrompts.getNestedFolder(
+            nestedFolders[levelsCount - 2].name,
+            nestedFolders[levelsCount - 1].name,
+          ),
+          'hidden',
+        );
+        await promptBarFolderAssertion.assertElementState(
+          folderPrompts.getNestedFolder(
+            nestedFolders[0].name,
+            nestedFolders[levelsCount - 1].name,
+          ),
+          'visible',
+        );
+
         await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
         );

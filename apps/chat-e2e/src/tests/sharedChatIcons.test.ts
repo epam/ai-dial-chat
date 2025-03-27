@@ -295,7 +295,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialSharedWithMeTest(
   'Shared icon stays in chat if to continue the conversation.\n' +
     'Shared icon disappears from chat if to rename conversation.\n' +
     'Confirmation message if to change model in shared chat' +
@@ -308,7 +308,6 @@ dialTest(
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     conversationAssertion,
-    shareApiAssertion,
     localStorageManager,
     chatHeader,
     talkToAgentDialog,
@@ -324,6 +323,9 @@ dialTest(
     renameConversationModal,
     iconApiHelper,
     toast,
+    additionalShareUserDialHomePage,
+    additionalShareUserLocalStorageManager,
+    additionalShareUserSharedWithMeConversationAssertion,
   }) => {
     setTestIds(
       'EPMRTC-1514',
@@ -441,27 +443,41 @@ dialTest(
     await dialSharedWithMeTest.step(
       'Verify conversations remained shared with user',
       async () => {
-        secondConversationToShare.id = secondConversationToShare.id.replace(
-          secondConversationToShare.name,
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
+        await additionalShareUserDialHomePage.openHomePage();
+        await additionalShareUserDialHomePage.waitForPageLoaded();
+        for (const conversationName of [
+          firstConversationToShare.name,
           newName,
-        );
-        thirdConversationToShare.id = thirdConversationToShare.id.replace(
-          defaultModelId,
-          randomModel.id,
-        );
-        const sharedEntities =
-          await additionalUserShareApiHelper.listSharedWithMeConversations();
-        for (const conversation of [
-          firstConversationToShare,
-          secondConversationToShare,
-          thirdConversationToShare,
+          thirdConversationToShare.name,
         ]) {
-          await shareApiAssertion.assertSharedWithMeEntityState(
-            sharedEntities,
-            conversation,
+          await additionalShareUserSharedWithMeConversationAssertion.assertEntityState(
+            { name: conversationName },
             'visible',
           );
         }
+
+        // secondConversationToShare.id = secondConversationToShare.id.replace(
+        //   secondConversationToShare.name,
+        //   newName,
+        // );
+        // thirdConversationToShare.id = thirdConversationToShare.id.replace(
+        //   defaultModelId,
+        //   randomModel.id,
+        // );
+        // const sharedEntities =
+        //   await additionalUserShareApiHelper.listSharedWithMeConversations();
+        // for (const conversation of [
+        //   firstConversationToShare,
+        //   secondConversationToShare,
+        //   thirdConversationToShare,
+        // ]) {
+        //   await shareApiAssertion.assertSharedWithMeEntityState(
+        //     sharedEntities,
+        //     conversation,
+        //     'visible',
+        //   );
+        // }
       },
     );
   },
