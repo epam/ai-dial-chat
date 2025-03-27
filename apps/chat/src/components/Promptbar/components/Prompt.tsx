@@ -65,14 +65,13 @@ import { stopBubbling } from '@/src/constants/chat';
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import { PINNED_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
+import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
+import { ReviewDot } from '@/src/components/Chat/Publish/ReviewDot';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderModal } from '@/src/components/Common/MoveToFolderModal';
-
-import { PublishModal } from '../../Chat/Publish/PublishWizard';
-import { ReviewDot } from '../../Chat/Publish/ReviewDot';
-import { ConfirmDialog } from '../../Common/ConfirmDialog';
-import ShareIcon from '../../Common/ShareIcon';
-import Tooltip from '../../Common/Tooltip';
+import ShareIcon from '@/src/components/Common/ShareIcon';
+import Tooltip from '@/src/components/Common/Tooltip';
 
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -110,7 +109,7 @@ export const PromptComponent = ({
     ModelsSelectors.selectInstalledModelIds,
   );
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
-  const showModal = useAppSelector(PromptsSelectors.selectIsEditModalOpen);
+  const showModal = useAppSelector(PromptsSelectors.selectIsPromptModalOpen);
   const resourceToReview = useAppSelector((state) =>
     PublicationSelectors.selectResourceToReviewByReviewAndPublicationUrls(
       state,

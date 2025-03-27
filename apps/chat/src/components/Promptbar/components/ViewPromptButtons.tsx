@@ -48,10 +48,9 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import { PINNED_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { MoveToFolderModal } from '@/src/components/Common/MoveToFolderModal';
 import Tooltip from '@/src/components/Common/Tooltip';
-
-import { ConfirmDialog } from '../../Common/ConfirmDialog';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import { PublishActions } from '@epam/ai-dial-shared';
