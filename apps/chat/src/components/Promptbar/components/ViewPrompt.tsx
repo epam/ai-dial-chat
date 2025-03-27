@@ -116,7 +116,10 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
                   onChangeSelectedVersion={handleChangeSelectedVersion}
                 />
               )}
-              <button className="button button-primary flex items-center gap-2">
+              <button
+                onClick={() => dispatch(PromptsActions.applyPrompt(prompt))}
+                className="button button-primary flex items-center gap-2"
+              >
                 <InsertPromptIcon className="size-[18px]" />
                 {t('Use prompt')}
               </button>

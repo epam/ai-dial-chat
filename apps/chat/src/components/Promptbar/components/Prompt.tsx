@@ -66,7 +66,7 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import { PINNED_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
-import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
+import { MoveToFolderModal } from '@/src/components/Common/MoveToFolderModal';
 
 import { PublishModal } from '../../Chat/Publish/PublishWizard';
 import { ReviewDot } from '../../Chat/Publish/ReviewDot';
@@ -243,7 +243,7 @@ export const PromptComponent = ({
     [isExternal, isSelectMode],
   );
 
-  const handleOpenEditModal = useCallback(
+  const handleOpenViewModal = useCallback(
     (e: MouseEvent<unknown, globalThis.MouseEvent>) => {
       e.stopPropagation();
       e.preventDefault();
@@ -437,6 +437,10 @@ export const PromptComponent = ({
           additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
         )}
         onClick={() => {
+          if (!isSelectMode) {
+            dispatch(PromptsActions.selectPrompt({ promptId: prompt.id }));
+          }
+
           if (isSelectMode && !isExternal) {
             setIsDeleting(false);
             setIsOpened(false);
@@ -563,7 +567,7 @@ export const PromptComponent = ({
               }
               onOpenChange={setIsContextMenu}
               onDuplicate={handleDuplicate}
-              onView={handleOpenEditModal}
+              onView={handleOpenViewModal}
               isOpen={isContextMenu}
               onSelect={handleSelect}
               disableUse={disableUsePrompt}
@@ -574,12 +578,13 @@ export const PromptComponent = ({
         )}
         <div className="md:hidden" onClick={stopBubbling}>
           {isShowMoveToModal && (
-            <MoveToFolderMobileModal
+            <MoveToFolderModal
               folders={folders}
               onMoveToFolder={handleMoveToFolder}
               onClose={() => {
                 setIsShowMoveToModal(false);
               }}
+              featureType={FeatureType.Prompt}
             />
           )}
         </div>

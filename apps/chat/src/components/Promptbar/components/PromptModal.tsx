@@ -48,22 +48,38 @@ const PromptModalView: React.FC<PromptModalViewProps> = ({
         dispatch(PromptsActions.createNewPrompt(regeneratePrompt));
         onClose();
       } else {
-        dispatch(
-          PromptsActions.updatePrompt({
-            id: prompt.id,
-            values: editedPrompt,
-          }),
-        );
-        dispatch(
-          PromptsActions.setSelectedPrompt({
-            promptId: regeneratePrompt.id,
-          }),
-        );
-        dispatch(PromptsActions.uploadPromptSuccess({ prompt: null }));
+        if (
+          editedPrompt.name !== prompt.name ||
+          editedPrompt.content !== prompt.content ||
+          editedPrompt.description !== prompt.description
+        ) {
+          dispatch(
+            PromptsActions.updatePrompt({
+              id: prompt.id,
+              values: editedPrompt,
+            }),
+          );
+          dispatch(
+            PromptsActions.setSelectedPrompt({
+              promptId: regeneratePrompt.id,
+            }),
+          );
+          dispatch(PromptsActions.uploadPromptSuccess({ prompt: null }));
+        }
+
         onToggleEditMode(true);
       }
     },
-    [dispatch, isNewPromptCreating, onClose, onToggleEditMode, prompt.id],
+    [
+      dispatch,
+      isNewPromptCreating,
+      onClose,
+      onToggleEditMode,
+      prompt.content,
+      prompt.description,
+      prompt.id,
+      prompt.name,
+    ],
   );
 
   const handleGoToEditMode = useCallback(() => {

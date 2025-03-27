@@ -19,7 +19,9 @@ import { getNextDefaultName } from '@/src/utils/app/folders';
 import {
   getIdWithoutRootPathSegments,
   getPromptRootId,
+  isMyEntity,
 } from '@/src/utils/app/id';
+import { regeneratePromptId } from '@/src/utils/app/prompts';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { constructPath, isRootId } from '@/src/utils/app/shared-utils';
@@ -37,6 +39,7 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 import { UISelectors } from '@/src/store/ui/ui.selectors';
@@ -45,8 +48,10 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import { PINNED_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
-import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
+import { MoveToFolderModal } from '@/src/components/Common/MoveToFolderModal';
 import Tooltip from '@/src/components/Common/Tooltip';
+
+import { ConfirmDialog } from '../../Common/ConfirmDialog';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import { PublishActions } from '@epam/ai-dial-shared';
@@ -92,6 +97,8 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
   const [publishPromptAction, setPublishPromptAction] =
     useState<PublishActions>();
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
 
   const filteredFoldersSelector = useMemo(
     () =>
@@ -106,6 +113,12 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
   const folders = useAppSelector(filteredFoldersSelector);
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
   const collapsedSections = useAppSelector(collapsedSectionsSelector);
+  const isPublishingEnabled = useAppSelector((state) =>
+    SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Prompt),
+  );
+  const isSharingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isSharingEnabled(state, FeatureType.Prompt),
+  );
 
   const handleClosePublishModal = useCallback(() => {
     setPublishPromptAction(undefined);
@@ -159,27 +172,51 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
           ),
         }),
       );
+      const newFolderId = isNewFolder
+        ? constructPath(getPromptRootId(), folderPath)
+        : folderPath;
+
       dispatch(
         PromptsActions.updatePrompt({
           id: prompt.id,
           values: {
-            folderId: isNewFolder
-              ? constructPath(getPromptRootId(), folderPath)
-              : folderPath,
+            folderId: newFolderId,
           },
         }),
       );
+      dispatch(
+        PromptsActions.setSelectedPrompt({
+          promptId: regeneratePromptId({ ...prompt, folderId: newFolderId }).id,
+        }),
+      );
+      dispatch(PromptsActions.uploadPromptSuccess({ prompt: null }));
     },
     [allPrompts, collapsedSections, dispatch, folders, prompt, t],
   );
 
+  const handleDelete = useCallback(() => {
+    if (prompt.sharedWithMe) {
+      dispatch(
+        ShareActions.discardSharedWithMe({
+          resourceIds: [prompt.id],
+          featureType: FeatureType.Prompt,
+        }),
+      );
+    } else {
+      dispatch(PromptsActions.deletePrompt({ prompt }));
+    }
+
+    dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
+  }, [dispatch, prompt]);
+
   const isPublic = isEntityIdPublic(prompt);
+  const isMyPrompt = isMyEntity(prompt, FeatureType.Prompt);
 
   const promptItems = useMemo(
     () => [
       {
         tooltip: 'Edit prompt',
-        display: true,
+        display: isMyPrompt,
         dataQa: 'edit-prompt',
         Icon: IconEdit,
         onClick: onEditMode,
@@ -208,7 +245,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
       },
       {
         tooltip: 'Move prompt',
-        display: true,
+        display: isMyPrompt,
         dataQa: 'move-prompt',
         Icon: IconFolderShare,
         onClick: () => {
@@ -217,21 +254,16 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
       },
       {
         tooltip: 'Share prompt',
-        display: !prompt.isShared,
+        display: isMyPrompt && isSharingEnabled,
         dataQa: 'share-prompt',
         Icon: IconUserShare,
         onClick: () => {
-          dispatch(
-            ShareActions.share({
-              featureType: FeatureType.Prompt,
-              resourceId: prompt.id,
-            }),
-          );
+          setIsUnshareConfirmOpened(true);
         },
       },
       {
         tooltip: 'Unshare prompt',
-        display: !!prompt.isShared,
+        display: !!prompt.isShared && isSharingEnabled,
         dataQa: 'unshare-prompt',
         Icon: IconUserX,
         onClick: () => {
@@ -245,7 +277,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
       },
       {
         tooltip: 'Publish prompt',
-        display: !isPublic,
+        display: !isPublic && isPublishingEnabled,
         dataQa: 'publish-prompt',
         Icon: IconWorldShare,
         onClick: () => {
@@ -254,7 +286,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
       },
       {
         tooltip: 'Unpublish prompt',
-        display: isPublic,
+        display: isPublic && isPublishingEnabled,
         dataQa: 'publish-prompt',
         Icon: (props) => (
           <UnpublishIcon {...props} style={{ strokeWidth: 1.1 }} />
@@ -265,11 +297,11 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
       },
       {
         tooltip: 'Delete prompt',
-        display: true,
+        display: isMyEntity || !!prompt.sharedWithMe,
         dataQa: 'delete-prompt',
         Icon: IconTrashX,
         onClick: () => {
-          dispatch(PromptsActions.deletePrompt({ prompt }));
+          setIsDeleting(true);
         },
       },
       {
@@ -282,7 +314,15 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
         },
       },
     ],
-    [dispatch, isPublic, onEditMode, prompt],
+    [
+      dispatch,
+      isMyPrompt,
+      isPublic,
+      isPublishingEnabled,
+      isSharingEnabled,
+      onEditMode,
+      prompt,
+    ],
   );
 
   return (
@@ -291,12 +331,13 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
         display ? <PromptIconBtn key={props.tooltip} {...props} /> : null,
       )}
       {isShowMoveToModal && (
-        <MoveToFolderMobileModal
+        <MoveToFolderModal
           folders={folders}
           onMoveToFolder={handleMoveToFolder}
           onClose={() => {
             setIsShowMoveToModal(false);
           }}
+          featureType={FeatureType.Prompt}
         />
       )}
       {publishPromptAction && (
@@ -312,6 +353,47 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
               ? getIdWithoutRootPathSegments(prompt.folderId)
               : undefined
           }
+        />
+      )}
+      {isDeleting && (
+        <ConfirmDialog
+          isOpen
+          heading={t('Confirm deleting prompt')}
+          description={`${t('Are you sure that you want to delete a prompt?')}${t(
+            prompt.isShared
+              ? '\nDeleting will stop sharing and other users will no longer see this prompt.'
+              : '',
+          )}`}
+          confirmLabel={t('Delete')}
+          cancelLabel={t('Cancel')}
+          onClose={(result) => {
+            if (result) handleDelete();
+            setIsDeleting(false);
+          }}
+        />
+      )}
+      {isUnshareConfirmOpened && (
+        <ConfirmDialog
+          isOpen
+          heading={t('Confirm unsharing: {{promptName}}', {
+            promptName: prompt.name,
+          })}
+          description={
+            t('Are you sure that you want to unshare this prompt?') ?? ''
+          }
+          confirmLabel={t('Unshare')}
+          cancelLabel={t('Cancel')}
+          onClose={(result) => {
+            setIsUnshareConfirmOpened(false);
+            if (result) {
+              dispatch(
+                ShareActions.revokeAccess({
+                  resourceId: prompt.id,
+                  featureType: FeatureType.Prompt,
+                }),
+              );
+            }
+          }}
         />
       )}
     </>
