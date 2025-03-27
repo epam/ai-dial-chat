@@ -48,9 +48,10 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import { PINNED_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
-import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { MoveToFolderModal } from '@/src/components/Common/MoveToFolderModal';
 import Tooltip from '@/src/components/Common/Tooltip';
+
+import { PromptConfirmDialogs } from './PromptConfirmDialogs';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import { PublishActions } from '@epam/ai-dial-shared';
@@ -97,7 +98,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
   const [publishPromptAction, setPublishPromptAction] =
     useState<PublishActions>();
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
+  const [isUnsharing, setIsUnsharing] = useState(false);
 
   const filteredFoldersSelector = useMemo(
     () =>
@@ -193,20 +194,10 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
     [allPrompts, collapsedSections, dispatch, folders, prompt, t],
   );
 
-  const handleDelete = useCallback(() => {
-    if (prompt.sharedWithMe) {
-      dispatch(
-        ShareActions.discardSharedWithMe({
-          resourceIds: [prompt.id],
-          featureType: FeatureType.Prompt,
-        }),
-      );
-    } else {
-      dispatch(PromptsActions.deletePrompt({ prompt }));
-    }
-
-    dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
-  }, [dispatch, prompt]);
+  const handleCloseConfirmDialogs = useCallback(() => {
+    setIsDeleting(false);
+    setIsUnsharing(false);
+  }, []);
 
   const isPublic = isEntityIdPublic(prompt);
   const isMyPrompt = isMyEntity(prompt, FeatureType.Prompt);
@@ -257,7 +248,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
         dataQa: 'share-prompt',
         Icon: IconUserShare,
         onClick: () => {
-          setIsUnshareConfirmOpened(true);
+          setIsUnsharing(true);
         },
       },
       {
@@ -354,47 +345,12 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
           }
         />
       )}
-      {isDeleting && (
-        <ConfirmDialog
-          isOpen
-          heading={t('Confirm deleting prompt')}
-          description={`${t('Are you sure that you want to delete a prompt?')}${t(
-            prompt.isShared
-              ? '\nDeleting will stop sharing and other users will no longer see this prompt.'
-              : '',
-          )}`}
-          confirmLabel={t('Delete')}
-          cancelLabel={t('Cancel')}
-          onClose={(result) => {
-            if (result) handleDelete();
-            setIsDeleting(false);
-          }}
-        />
-      )}
-      {isUnshareConfirmOpened && (
-        <ConfirmDialog
-          isOpen
-          heading={t('Confirm unsharing: {{promptName}}', {
-            promptName: prompt.name,
-          })}
-          description={
-            t('Are you sure that you want to unshare this prompt?') ?? ''
-          }
-          confirmLabel={t('Unshare')}
-          cancelLabel={t('Cancel')}
-          onClose={(result) => {
-            setIsUnshareConfirmOpened(false);
-            if (result) {
-              dispatch(
-                ShareActions.revokeAccess({
-                  resourceId: prompt.id,
-                  featureType: FeatureType.Prompt,
-                }),
-              );
-            }
-          }}
-        />
-      )}
+      <PromptConfirmDialogs
+        prompt={prompt}
+        isDeleteDialog={isDeleting}
+        isUnshareDialog={isUnsharing}
+        onResolve={handleCloseConfirmDialogs}
+      />
     </>
   );
 };

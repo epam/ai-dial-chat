@@ -67,11 +67,12 @@ import { PINNED_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import { ReviewDot } from '@/src/components/Chat/Publish/ReviewDot';
-import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderModal } from '@/src/components/Common/MoveToFolderModal';
 import ShareIcon from '@/src/components/Common/ShareIcon';
 import Tooltip from '@/src/components/Common/Tooltip';
+
+import { PromptConfirmDialogs } from './PromptConfirmDialogs';
 
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -153,7 +154,7 @@ export const PromptComponent = ({
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
-  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
+  const [isUnsharing, setIsUnsharing] = useState(false);
 
   const screenState = useScreenState();
 
@@ -179,50 +180,30 @@ export const PromptComponent = ({
     }
   }, [showModal]);
 
-  const handleOpenSharing: MouseEventHandler<HTMLButtonElement> =
-    useCallback(() => {
-      dispatch(
-        ShareActions.share({
-          featureType: FeatureType.Prompt,
-          resourceId: prompt.id,
-        }),
-      );
-    }, [dispatch, prompt.id]);
-  const handleOpenUnsharing: MouseEventHandler<HTMLButtonElement> =
-    useCallback(() => {
-      setIsUnshareConfirmOpened(true);
-    }, []);
+  const handleOpenSharing = useCallback(() => {
+    dispatch(
+      ShareActions.share({
+        featureType: FeatureType.Prompt,
+        resourceId: prompt.id,
+      }),
+    );
+  }, [dispatch, prompt.id]);
+  const handleOpenUnsharing = useCallback(() => {
+    setIsUnsharing(true);
+  }, []);
 
-  const handleOpenPublishing: MouseEventHandler<HTMLButtonElement> =
-    useCallback(() => {
-      setIsPublishing(true);
-    }, []);
+  const handleOpenPublishing = useCallback(() => {
+    setIsPublishing(true);
+  }, []);
 
   const handleClosePublishModal = useCallback(() => {
     setIsPublishing(false);
     setIsUnpublishing(false);
   }, []);
 
-  const handleOpenUnpublishing: MouseEventHandler<HTMLButtonElement> =
-    useCallback(() => {
-      setIsUnpublishing(true);
-    }, []);
-
-  const handleDelete = useCallback(() => {
-    if (prompt.sharedWithMe) {
-      dispatch(
-        ShareActions.discardSharedWithMe({
-          resourceIds: [prompt.id],
-          featureType: FeatureType.Prompt,
-        }),
-      );
-    } else {
-      dispatch(PromptsActions.deletePrompt({ prompt }));
-    }
-    dispatch(PromptsActions.resetSearch());
-
-    dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
-  }, [dispatch, prompt]);
+  const handleOpenUnpublishing = useCallback(() => {
+    setIsUnpublishing(true);
+  }, []);
 
   const handleOpenDeleteModal: MouseEventHandler = useCallback((e) => {
     e.stopPropagation();
@@ -402,6 +383,11 @@ export const PromptComponent = ({
       }),
     );
   }, [dispatch, prompt]);
+
+  const handleCloseConfirmDialogs = useCallback(() => {
+    setIsDeleting(false);
+    setIsUnsharing(false);
+  }, []);
 
   useEffect(() => {
     if (isSelectMode) {
@@ -605,45 +591,12 @@ export const PromptComponent = ({
           }
         />
       )}
-      {isDeleting && (
-        <ConfirmDialog
-          isOpen
-          heading={t('Confirm deleting prompt')}
-          description={`${t('Are you sure that you want to delete a prompt?')}${t(
-            prompt.isShared
-              ? '\nDeleting will stop sharing and other users will no longer see this prompt.'
-              : '',
-          )}`}
-          confirmLabel={t('Delete')}
-          cancelLabel={t('Cancel')}
-          onClose={(result) => {
-            if (result) handleDelete();
-            setIsDeleting(false);
-          }}
-        />
-      )}
-      {isUnshareConfirmOpened && (
-        <ConfirmDialog
-          isOpen
-          heading={t('Confirm unsharing: {{promptName}}', {
-            promptName: prompt.name,
-          })}
-          description={t('Are you sure that you want to unshare this prompt?')}
-          confirmLabel={t('Unshare')}
-          cancelLabel={t('Cancel')}
-          onClose={(result) => {
-            setIsUnshareConfirmOpened(false);
-            if (result) {
-              dispatch(
-                ShareActions.revokeAccess({
-                  resourceId: prompt.id,
-                  featureType: FeatureType.Prompt,
-                }),
-              );
-            }
-          }}
-        />
-      )}
+      <PromptConfirmDialogs
+        prompt={prompt}
+        isDeleteDialog={isDeleting}
+        isUnshareDialog={isUnsharing}
+        onResolve={handleCloseConfirmDialogs}
+      />
     </>
   );
 };
