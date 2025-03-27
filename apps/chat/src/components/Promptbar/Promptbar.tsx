@@ -33,7 +33,7 @@ import PlusIcon from '@/public/images/icons/plus-large.svg';
 const PromptActionsBlock = () => {
   const { t } = useTranslation(Translation.PromptBar);
 
-  const showModal = useAppSelector(PromptsSelectors.selectIsEditModalOpen);
+  const showModal = useAppSelector(PromptsSelectors.selectIsPromptModalOpen);
 
   const dispatch = useAppDispatch();
 
