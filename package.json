@@ -93,7 +93,7 @@
     "tslib": "^2.6.0"
   },
   "devDependencies": {
-    "@mozilla/readability": "^0.4.4",
+    "@mozilla/readability": "^0.6.0",
     "@nx/devkit": "20.5.0",
     "@nx/eslint": "20.5.0",
     "@nx/eslint-plugin": "20.5.0",
