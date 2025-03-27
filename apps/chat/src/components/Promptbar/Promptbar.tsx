@@ -44,7 +44,7 @@ const PromptActionsBlock = () => {
         onClick={() => {
           dispatch(PromptsActions.setIsNewPromptCreating(true));
           dispatch(PromptsActions.resetSearch());
-          dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true }));
+          dispatch(PromptsActions.setIsPromptModalOpen({ isOpen: true }));
           dispatch(PromptsActions.resetChosenPrompts());
         }}
         data-qa="new-entity"

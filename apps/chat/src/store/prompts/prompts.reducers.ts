@@ -33,7 +33,7 @@ const initialState: PromptsState = {
   searchFilters: SearchFilters.None,
   selectedPromptId: undefined,
   isSelectedPromptApproveRequiredResource: false,
-  isEditModalOpen: false,
+  isPromptModalOpen: false,
   newAddedFolderId: undefined,
   promptsLoaded: false,
   isPromptLoading: false,
@@ -318,11 +318,12 @@ export const promptsSlice = createSlice({
       state.searchTerm = '';
       state.searchFilters = SearchFilters.None;
     },
-    setIsEditModalOpen: (
+    setIsPromptModalOpen: (
       state,
       { payload: { isOpen } }: PayloadAction<{ isOpen: boolean }>,
     ) => {
-      state.isEditModalOpen = isOpen;
+      state.isPromptModalOpen = isOpen;
+
       if (!isOpen) {
         state.isNewPromptCreating = false;
       }

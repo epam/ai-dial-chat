@@ -261,7 +261,7 @@ export const PromptComponent = ({
           ),
         );
       }
-      dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true }));
+      dispatch(PromptsActions.setIsPromptModalOpen({ isOpen: true }));
     },
     [
       additionalItemData?.publicationUrl,

@@ -112,7 +112,7 @@ export const PromptModal = () => {
   }, []);
 
   const handleClose = useCallback(() => {
-    dispatch(PromptsActions.setIsEditModalOpen({ isOpen: false }));
+    dispatch(PromptsActions.setIsPromptModalOpen({ isOpen: false }));
     dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
   }, [dispatch]);
 

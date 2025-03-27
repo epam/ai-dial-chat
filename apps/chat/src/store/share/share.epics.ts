@@ -841,7 +841,9 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               actions.push(
                 PromptsActions.uploadPrompt({ promptId: acceptedId }),
               );
-              actions.push(PromptsActions.setIsEditModalOpen({ isOpen: true }));
+              actions.push(
+                PromptsActions.setIsPromptModalOpen({ isOpen: true }),
+              );
             }
 
             if (!selectedConv) {

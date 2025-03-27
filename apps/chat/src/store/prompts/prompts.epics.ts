@@ -599,7 +599,7 @@ const uploadPromptsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
 
             actions.push(
               concat(
-                of(PromptsActions.setIsEditModalOpen({ isOpen: true })),
+                of(PromptsActions.setIsPromptModalOpen({ isOpen: true })),
                 of(
                   PromptsActions.uploadPrompt({ promptId: topLevelPrompt.id }),
                 ),
@@ -978,7 +978,7 @@ const selectPromptEpic: AppEpic = (action$) =>
             isApproveRequiredResource: payload.isApproveRequiredResource,
           }),
         ),
-        of(PromptsActions.setIsEditModalOpen({ isOpen: true })),
+        of(PromptsActions.setIsPromptModalOpen({ isOpen: true })),
       );
     }),
   );
