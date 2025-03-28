@@ -121,6 +121,7 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
               <button
                 onClick={handleUse}
                 className="button button-primary flex items-center gap-2"
+                data-qa="use-prompt"
               >
                 <InsertPromptIcon className="size-[18px]" />
                 {t('Use prompt')}

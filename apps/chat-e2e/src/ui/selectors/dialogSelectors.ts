@@ -31,6 +31,13 @@ export const PromptPreviewModal = {
   promptExportButton: '[data-qa="export-prompt"]',
   promptDeleteButton: '[data-qa="delete-prompt"]',
   promptDuplicateButton: '[data-qa="duplicate-prompt"]',
+  editPromptButton: '[data-qa="edit-prompt"]',
+  movePromptButton: '[data-qa="move-prompt"]',
+  sharePromptButton: '[data-qa="share-prompt"]',
+  publishPromptButton: '[data-qa="publish-prompt"]',
+  deletePromptButton: '[data-qa="delete-prompt"]',
+  promptInfoButton: '[data-qa="info-prompt"]',
+  usePromptButton: '[data-qa="use-prompt"]',
 };
 
 export const VariableModal = {

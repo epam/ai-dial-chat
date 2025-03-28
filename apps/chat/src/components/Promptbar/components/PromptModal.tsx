@@ -120,7 +120,11 @@ export const PromptModal = () => {
     <Modal
       portalId="theme-main"
       containerClassName="flex flex-col gap-4 inline-block w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
-      dataQa={isViewMode ? 'preview-prompt-modal' : 'prompt-modal'}
+      dataQa={
+        prompt?.content === '' || !isViewMode
+          ? 'prompt-modal'
+          : 'preview-prompt-modal'
+      }
       headingClassName={classNames(
         prompt &&
           prompt.publicationInfo?.action === PublishActions.DELETE &&
