@@ -25,9 +25,9 @@ import { constructPath } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
   getNextDefaultName,
-  splitEntityId,
 } from '@/src/utils/app/folders';
 import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
