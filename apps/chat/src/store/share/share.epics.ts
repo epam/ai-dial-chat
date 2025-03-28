@@ -27,7 +27,6 @@ import {
   isAttachmentLink,
   isConversationHasExternalAttachments,
 } from '@/src/utils/app/file';
-import { splitEntityId } from '@/src/utils/app/folders';
 import {
   isApplicationId,
   isConversationId,
@@ -38,6 +37,7 @@ import {
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { hasWritePermission } from '@/src/utils/app/share';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils, parseConversationApiKey } from '@/src/utils/server/api';
 
@@ -1323,12 +1323,10 @@ const revokeFolderAccessEpic: AppEpic = (action$, state$) =>
       const { Selector, featureType } = isConversationId(payload.folderId)
         ? { Selector: ConversationsSelectors, featureType: FeatureType.Chat }
         : { Selector: PromptsSelectors, featureType: FeatureType.Prompt };
-      const folders = Selector.selectFolders(state$.value);
-      const foldersToRevoke = folders.filter(
-        (folder) =>
-          folder.id.startsWith(`${payload.folderId}/`) ||
-          folder.id === payload.folderId,
-      );
+      const foldersToRevoke = [
+        ...Selector.selectFoldersByFolderId(state$.value, payload.folderId),
+        Selector.selectFolderById(state$.value, payload.folderId),
+      ].filter((folder) => folder && folder.isShared) as FolderInterface[];
 
       if (!foldersToRevoke.length) {
         return EMPTY;

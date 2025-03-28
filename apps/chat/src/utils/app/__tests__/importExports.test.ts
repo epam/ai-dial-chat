@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import { getAssistantModelId } from '@/src/utils/app/conversation';
 import {
   cleanData,
   isExportFormatV1,
@@ -12,7 +11,6 @@ import {
 } from '@/src/utils/app/import-export';
 
 import { Conversation } from '@/src/types/chat';
-import { EntityType } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import {
   ExportFormatV1,
@@ -24,7 +22,6 @@ import {
 import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-server-settings';
 import {
   DEFAULT_TEMPERATURE,
-  FALLBACK_ASSISTANT_SUBMODEL_ID,
   FALLBACK_MODEL_ID,
 } from '@/src/constants/default-ui-settings';
 
@@ -258,40 +255,5 @@ describe('Export helpers functions', () => {
       ],
     };
     expect(isPromptsFormat(testData)).toBeTruthy();
-  });
-  describe('getAssitantModelId', () => {
-    it('should return default assistant model id', () => {
-      expect(
-        getAssistantModelId(
-          EntityType.Assistant,
-          FALLBACK_ASSISTANT_SUBMODEL_ID,
-        ),
-      ).toEqual(FALLBACK_ASSISTANT_SUBMODEL_ID);
-    });
-  });
-  it('should return assistant model id', () => {
-    expect(
-      getAssistantModelId(
-        EntityType.Assistant,
-        FALLBACK_ASSISTANT_SUBMODEL_ID,
-        FALLBACK_MODEL_ID,
-      ),
-    ).toEqual(FALLBACK_MODEL_ID);
-  });
-  it('should return undefined', () => {
-    expect(
-      getAssistantModelId(
-        EntityType.Model,
-        FALLBACK_ASSISTANT_SUBMODEL_ID,
-        FALLBACK_MODEL_ID,
-      ),
-    ).toBeUndefined();
-    expect(
-      getAssistantModelId(
-        EntityType.Application,
-        FALLBACK_ASSISTANT_SUBMODEL_ID,
-        FALLBACK_MODEL_ID,
-      ),
-    ).toBeUndefined();
   });
 });

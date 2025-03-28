@@ -1,7 +1,7 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { splitEntityId } from '@/src/utils/app/folders';
 import { hasWritePermission } from '@/src/utils/app/share';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 import {
   parseApplicationApiKey,
   parseConversationApiKey,
