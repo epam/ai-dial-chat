@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import classNames from 'classnames';
 
+import { usePromptActions } from '@/src/hooks/usePromptActions';
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -66,6 +67,7 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
 
   const { publicVersionGroupId, isReviewEntity } =
     usePublicVersionGroupId(prompt);
+  const { handleUse } = usePromptActions(prompt);
 
   const handleChangeSelectedVersion = useCallback(
     (newVersionId: string) => {
@@ -117,7 +119,7 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
                 />
               )}
               <button
-                onClick={() => dispatch(PromptsActions.applyPrompt(prompt))}
+                onClick={handleUse}
                 className="button button-primary flex items-center gap-2"
               >
                 <InsertPromptIcon className="size-[18px]" />

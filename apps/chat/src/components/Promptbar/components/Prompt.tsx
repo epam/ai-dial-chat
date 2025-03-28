@@ -12,42 +12,30 @@ import {
 
 import classNames from 'classnames';
 
+import { usePromptActions } from '@/src/hooks/usePromptActions';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   hasInvalidNameInPath,
   isEntityNameInvalid,
-  isEntityNameOnSameLevelUnique,
 } from '@/src/utils/app/common';
 import { getEntityNameError } from '@/src/utils/app/errors';
-import { constructPath } from '@/src/utils/app/file';
-import { getNextDefaultName } from '@/src/utils/app/folders';
-import {
-  getIdWithoutRootPathSegments,
-  getPromptRootId,
-  isEntityIdExternal,
-  isRootId,
-} from '@/src/utils/app/id';
+import { isEntityIdExternal } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
-import { translate } from '@/src/utils/app/translation';
 
 import {
   AdditionalItemData,
   FeatureType,
   ScreenState,
 } from '@/src/types/common';
-import { MoveToFolderProps } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
-import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import { ChatActions } from '@/src/store/chat/chat.reducer';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import {
   PromptsActions,
@@ -57,22 +45,15 @@ import {
   PublicationActions,
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { ShareActions } from '@/src/store/share/share.reducers';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { stopBubbling } from '@/src/constants/chat';
-import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
-import { PINNED_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
-import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import { ReviewDot } from '@/src/components/Chat/Publish/ReviewDot';
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
-import { MoveToFolderModal } from '@/src/components/Common/MoveToFolderModal';
 import ShareIcon from '@/src/components/Common/ShareIcon';
 import Tooltip from '@/src/components/Common/Tooltip';
 
-import { PromptConfirmDialogs } from './PromptConfirmDialogs';
+import { PromptDialogs } from './PromptDialogs';
 
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -109,7 +90,6 @@ export const PromptComponent = ({
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
-  const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
   const showModal = useAppSelector(PromptsSelectors.selectIsPromptModalOpen);
   const resourceToReview = useAppSelector((state) =>
     PublicationSelectors.selectResourceToReviewByReviewAndPublicationUrls(
@@ -120,19 +100,9 @@ export const PromptComponent = ({
   );
   const chosenPromptIds = useAppSelector(PromptsSelectors.selectSelectedItems);
   const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
-  const isPublishingEnabled = useAppSelector((state) =>
-    SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Prompt),
-  );
   const isConversationBlocksInput = useAppSelector(
     ConversationsSelectors.selectIsSelectedConversationBlocksInput,
   );
-
-  const collapsedSectionsSelector = useMemo(
-    () => UISelectors.selectCollapsedSections(FeatureType.Chat),
-    [],
-  );
-
-  const collapsedSections = useAppSelector(collapsedSectionsSelector);
 
   const isExternal = isEntityIdExternal(prompt);
   const isApproveRequiredResource = !!additionalItemData?.publicationUrl;
@@ -150,13 +120,22 @@ export const PromptComponent = ({
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [isOpened, setIsOpened] = useState(false);
-  const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
-  const [isPublishing, setIsPublishing] = useState(false);
-  const [isUnpublishing, setIsUnpublishing] = useState(false);
+  const [isMoveTo, setIsMoveTo] = useState(false);
+  const [publishPromptAction, setPublishPromptAction] =
+    useState<PublishActions>();
   const [isContextMenu, setIsContextMenu] = useState(false);
   const [isUnsharing, setIsUnsharing] = useState(false);
 
   const screenState = useScreenState();
+
+  const {
+    handleExport,
+    handleMoveToFolder,
+    handleDuplicate,
+    handleInfo,
+    handleShare,
+    handleUse,
+  } = usePromptActions(prompt);
 
   const isChosen = useMemo(
     () => chosenPromptIds.includes(prompt.id),
@@ -180,29 +159,16 @@ export const PromptComponent = ({
     }
   }, [showModal]);
 
-  const handleOpenSharing = useCallback(() => {
-    dispatch(
-      ShareActions.share({
-        featureType: FeatureType.Prompt,
-        resourceId: prompt.id,
-      }),
-    );
-  }, [dispatch, prompt.id]);
   const handleOpenUnsharing = useCallback(() => {
     setIsUnsharing(true);
   }, []);
 
   const handleOpenPublishing = useCallback(() => {
-    setIsPublishing(true);
-  }, []);
-
-  const handleClosePublishModal = useCallback(() => {
-    setIsPublishing(false);
-    setIsUnpublishing(false);
+    setPublishPromptAction(PublishActions.ADD);
   }, []);
 
   const handleOpenUnpublishing = useCallback(() => {
-    setIsUnpublishing(true);
+    setPublishPromptAction(PublishActions.DELETE);
   }, []);
 
   const handleOpenDeleteModal: MouseEventHandler = useCallback((e) => {
@@ -251,84 +217,6 @@ export const PromptComponent = ({
     ],
   );
 
-  const handleExportPrompt = useCallback(
-    (e?: unknown) => {
-      const typedEvent = e as MouseEvent;
-      typedEvent.preventDefault();
-      typedEvent.stopPropagation();
-
-      dispatch(
-        ImportExportActions.exportPrompt({
-          id: prompt.id,
-        }),
-      );
-    },
-    [dispatch, prompt.id],
-  );
-
-  const handleMoveToFolder = useCallback(
-    ({ folderId, isNewFolder }: MoveToFolderProps) => {
-      const promptRootId = getPromptRootId();
-      const folderPath = (
-        isNewFolder
-          ? getNextDefaultName(
-              translate(DEFAULT_FOLDER_NAME),
-              folders.filter((f) => f.folderId === promptRootId), // only my root prompt folders
-            )
-          : folderId
-      ) as string;
-
-      if (
-        !isEntityNameOnSameLevelUnique(
-          prompt.name,
-          { ...prompt, folderId: folderPath },
-          allPrompts,
-        )
-      ) {
-        dispatch(
-          UIActions.showErrorToast(
-            t('Prompt with name "{{name}}" already exists in this folder.', {
-              ns: Translation.PromptBar,
-              name: prompt.name,
-            }),
-          ),
-        );
-
-        return;
-      }
-
-      if (isNewFolder) {
-        dispatch(
-          PromptsActions.createFolder({
-            name: folderPath,
-            parentId: getPromptRootId(),
-          }),
-        );
-      }
-
-      dispatch(
-        UIActions.setCollapsedSections({
-          featureType: FeatureType.Prompt,
-          collapsedSections: collapsedSections.filter(
-            (section) => section !== PINNED_PROMPTS_SECTION_NAME,
-          ),
-        }),
-      );
-      dispatch(
-        PromptsActions.updatePrompt({
-          id: prompt.id,
-          values: {
-            folderId: isNewFolder
-              ? constructPath(getPromptRootId(), folderPath)
-              : folderPath,
-          },
-        }),
-      );
-      setIsContextMenu(false);
-    },
-    [allPrompts, collapsedSections, dispatch, folders, prompt, t],
-  );
-
   const handleContextMenuOpen = (e: MouseEvent) => {
     if (hasParentWithFloatingOverlay(e.target as Element)) {
       return;
@@ -341,15 +229,6 @@ export const PromptComponent = ({
     ? isDeleting || isOpened || (showModal && isSelected) || isContextMenu
     : isChosen;
 
-  const handleDuplicate: MouseEventHandler<HTMLButtonElement> = useCallback(
-    (e) => {
-      e.stopPropagation();
-      setIsContextMenu(false);
-      dispatch(PromptsActions.duplicatePrompt(prompt));
-    },
-    [dispatch, prompt],
-  );
-
   const handleSelect: MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
       e.stopPropagation();
@@ -360,29 +239,6 @@ export const PromptComponent = ({
   );
 
   const disableUsePrompt = isConversationBlocksInput || !isModelsInstalled;
-
-  const handleUse: MouseEventHandler<HTMLButtonElement> = useCallback(
-    (e) => {
-      e.stopPropagation();
-      setIsContextMenu(false);
-      dispatch(PromptsActions.applyPrompt(prompt));
-    },
-    [dispatch, prompt],
-  );
-
-  const handleOpenInfoModal = useCallback(() => {
-    const { id, updatedAt, createdAt, author } = prompt;
-    dispatch(
-      ChatActions.getEntityInfo({
-        entityInfo: {
-          id,
-          updatedAt,
-          createdAt,
-          author,
-        },
-      }),
-    );
-  }, [dispatch, prompt]);
 
   const handleCloseConfirmDialogs = useCallback(() => {
     setIsDeleting(false);
@@ -398,13 +254,21 @@ export const PromptComponent = ({
 
   useEffect(() => {
     if (screenState !== ScreenState.SM) {
-      setIsShowMoveToModal(false);
+      setIsMoveTo(false);
     }
   }, [screenState]);
 
   const handleToggle = useCallback(() => {
     PromptsActions.setChosenPrompts({ ids: [prompt.id] });
   }, [prompt.id]);
+
+  const moveToModalModel = useMemo(
+    () => ({
+      isOpen: isMoveTo,
+      isMobileOnly: true,
+    }),
+    [isMoveTo],
+  );
 
   const iconSize = additionalItemData?.isSidePanelItem ? 24 : 18;
   const strokeWidth = additionalItemData?.isSidePanelItem ? 1.5 : 2;
@@ -538,11 +402,11 @@ export const PromptComponent = ({
               folders={folders}
               onMoveToFolder={handleMoveToFolder}
               onDelete={handleOpenDeleteModal}
-              onExport={handleExportPrompt}
+              onExport={handleExport}
               onOpenMoveToModal={() => {
-                setIsShowMoveToModal(true);
+                setIsMoveTo(true);
               }}
-              onShare={handleOpenSharing}
+              onShare={handleShare}
               onUnshare={handleOpenUnsharing}
               onPublish={handleOpenPublishing}
               onUnpublish={
@@ -557,45 +421,18 @@ export const PromptComponent = ({
               onSelect={handleSelect}
               disableUse={disableUsePrompt}
               onUse={handleUse}
-              onShowInfo={handleOpenInfoModal}
+              onShowInfo={handleInfo}
             />
           </div>
         )}
-        <div className="md:hidden" onClick={stopBubbling}>
-          {isShowMoveToModal && (
-            <MoveToFolderModal
-              folders={folders}
-              onMoveToFolder={handleMoveToFolder}
-              onClose={() => {
-                setIsShowMoveToModal(false);
-              }}
-              featureType={FeatureType.Prompt}
-            />
-          )}
-        </div>
       </button>
-
-      {(isPublishing || isUnpublishing) && isPublishingEnabled && (
-        <PublishModal
-          entity={prompt}
-          type={SharingType.Prompt}
-          isOpen
-          onClose={handleClosePublishModal}
-          publishAction={
-            isPublishing ? PublishActions.ADD : PublishActions.DELETE
-          }
-          defaultPath={
-            isUnpublishing && !isRootId(prompt.folderId)
-              ? getIdWithoutRootPathSegments(prompt.folderId)
-              : undefined
-          }
-        />
-      )}
-      <PromptConfirmDialogs
+      <PromptDialogs
+        moveTo={moveToModalModel}
         prompt={prompt}
         isDeleteDialog={isDeleting}
         isUnshareDialog={isUnsharing}
-        onResolve={handleCloseConfirmDialogs}
+        publishPromptAction={publishPromptAction}
+        onCloseModals={handleCloseConfirmDialogs}
       />
     </>
   );
