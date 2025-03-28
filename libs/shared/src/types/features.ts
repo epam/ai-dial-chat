@@ -23,6 +23,9 @@ export enum Feature {
   InputLinks = 'input-links', // Allow attach links to conversation
   MessageTemplates = 'message-templates', // message templates
 
+  // Chat input
+  SkipFocusChatInputOnLoad = 'skip-focus-chat-input-onload', // Skip default focusing chat input when on screen onload or after navigation
+
   // Conversation First Screen
   EmptyChatSettings = 'empty-chat-settings', // Display settings for empty chat
   HideEmptyChatChangeAgent = 'hide-empty-chat-change-agent', // Hide empty chat "Change agent" button
