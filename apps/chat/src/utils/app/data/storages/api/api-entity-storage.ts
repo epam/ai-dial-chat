@@ -1,5 +1,6 @@
 import { Observable, map, throwError } from 'rxjs';
 
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
@@ -14,7 +15,6 @@ import { HTTPMethod } from '@/src/types/http';
 import { EntityStorage } from '@/src/types/storage';
 
 import { constructPath } from '../../../file';
-import { splitEntityId } from '../../../folders';
 import { getRootId } from '../../../id';
 import { EnumMapper } from '../../../mappers';
 
