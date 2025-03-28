@@ -164,7 +164,7 @@ const getDeleteConfirmationText = (
     [DeleteType.REMOVE]: {
       heading: translate('Confirm removing agent'),
       description: translate(
-        'Are you sure you want to remove the {{modelName}}{{modelVersion}} from My workspace?',
+        'Are you sure you want to remove {{modelName}} from My workspace?',
         translationVariables,
       ),
       confirmLabel: translate('Remove'),
