@@ -17,8 +17,8 @@ import { combineEpics } from 'redux-observable';
 
 import { FileService } from '@/src/utils/app/data/file-service';
 import { TextFileService } from '@/src/utils/app/data/text-file-service';
-import { splitEntityId } from '@/src/utils/app/folders';
 import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 
 import { AppEpic } from '@/src/types/store';

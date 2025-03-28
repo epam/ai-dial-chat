@@ -35,12 +35,12 @@ export class PromptApiStorage extends ApiEntityStorage<PromptInfo, Prompt> {
   }
 }
 
-export const getOrUploadPrompt = (
-  payload: { id: string },
+export const getOrUploadPrompt = <T extends { id: string }>(
+  payload: T,
   state: RootState,
 ): Observable<{
   prompt: Prompt | null;
-  payload: { id: string };
+  payload: T;
   wasUploaded: boolean;
 }> => {
   const prompt = PromptsSelectors.selectPrompt(state, payload.id);

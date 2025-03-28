@@ -3,6 +3,7 @@ import {
   isPlaybackConversation,
   isReplayConversation,
 } from '@/src/utils/app/conversation';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { CustomApplicationModel } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
@@ -33,7 +34,7 @@ import {
 } from '../server/api';
 import { isVersionValid } from './common';
 import { constructPath } from './file';
-import { getFolderIdFromEntityId, sortByName, splitEntityId } from './folders';
+import { getFolderIdFromEntityId, sortByName } from './folders';
 import {
   getEntityBucket,
   getRootId,
