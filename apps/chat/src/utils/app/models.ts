@@ -1,5 +1,9 @@
 import { EntityType } from '@/src/types/common';
-import { DialAIEntity, DialAIEntityModel } from '@/src/types/models';
+import {
+  DialAIEntity,
+  DialAIEntityModel,
+  ModelsGroup,
+} from '@/src/types/models';
 
 import { getModelIdWithoutVersion } from '../server/api';
 import { constructPath } from './file';
@@ -33,11 +37,6 @@ export const doesModelHaveConfiguration = (model?: DialAIEntity): boolean => {
   return !!model?.features?.configuration;
 };
 
-interface ModelGroup {
-  groupName: string;
-  entities: DialAIEntityModel[];
-}
-
 export const getGroupModelKey = (model: DialAIEntityModel) => {
   if (model.id === model.reference) {
     return model.name;
@@ -50,11 +49,11 @@ export const getGroupModelKey = (model: DialAIEntityModel) => {
 
 export const groupModelsAndSaveOrder = (
   models: DialAIEntityModel[],
-): ModelGroup[] => {
+): ModelsGroup[] => {
   const uniqModels = uniqBy(models, 'reference');
   const groupedModels = groupBy(uniqModels, getGroupModelKey);
   const insertedSet = new Set();
-  const result: ModelGroup[] = [];
+  const result: ModelsGroup[] = [];
 
   uniqModels.forEach((model) => {
     const key = getGroupModelKey(model);

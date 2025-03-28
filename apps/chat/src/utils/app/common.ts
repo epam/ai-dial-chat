@@ -1,8 +1,7 @@
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
-import { getFoldersFromIds, splitEntityId } from '@/src/utils/app/folders';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { PrepareNameOptions } from '@/src/types/chat';
-import { FolderInterface, FolderType } from '@/src/types/folder';
 import {
   PublicVersionGroups,
   PublicVersionOption,
@@ -19,7 +18,6 @@ import groupBy from 'lodash-es/groupBy';
 import keyBy from 'lodash-es/keyBy';
 import merge from 'lodash-es/merge';
 import trimEnd from 'lodash-es/trimEnd';
-import uniq from 'lodash-es/uniq';
 import values from 'lodash-es/values';
 import { substring } from 'stringz';
 
@@ -96,34 +94,6 @@ export const filterMigratedEntities = <T extends Entity>(
       ? !migratedEntityIds.includes(entity.id)
       : migratedEntityIds.includes(entity.id),
   );
-
-export const updateEntitiesFoldersAndIds = (
-  entities: Entity[],
-  folders: FolderInterface[],
-  updateFolderId: (folderId: string) => string,
-  openedFoldersIds: string[],
-) => {
-  const allFolderIds = entities.map((prompt) => prompt.folderId as string);
-
-  const updatedExistedFolders = folders.map((f: FolderInterface) => ({
-    ...f,
-    id: updateFolderId(f.id)!,
-    folderId: updateFolderId(f.folderId),
-  }));
-
-  const newUniqueFolderIds = uniq(allFolderIds).map((id) => updateFolderId(id));
-
-  const updatedFolders = combineEntities(
-    getFoldersFromIds(newUniqueFolderIds, FolderType.Chat),
-    updatedExistedFolders,
-  );
-
-  const updatedOpenedFoldersIds = openedFoldersIds.map(
-    (id) => updateFolderId(id)!,
-  );
-
-  return { updatedFolders, updatedOpenedFoldersIds };
-};
 
 export const trimEndDots = (str: string) => trimEnd(str, '. \t\r\n');
 
