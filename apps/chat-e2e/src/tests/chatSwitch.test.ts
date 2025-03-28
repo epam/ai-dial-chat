@@ -73,6 +73,10 @@ dialTest(
         await conversationToCompareAssertion.assertConversationToCompareState(
           'visible',
         );
+        await conversationToCompareAssertion.assertElementState(
+          compareConversation.showAllConversationsCheckbox,
+          'visible',
+        );
         await compareConversation.checkShowAllConversations();
         await compareConversation.selectCompareConversation(
           comparedConversation.name,
@@ -82,7 +86,9 @@ dialTest(
           firstConversation.name,
           Cursors.pointer,
         );
-        await conversations.selectConversation(firstConversation.name);
+        await conversations.selectConversation(firstConversation.name, {
+          isHttpMethodTriggered: true,
+        });
         await conversationAssertion.assertSelectedConversation(
           firstConversation.name,
         );
@@ -135,7 +141,7 @@ dialTest(
         );
         await sendMessage.stopGenerating.click();
         await conversations.selectConversation(replayConversation.name);
-        await chat.startReplay();
+        await chat.replay.click();
       },
     );
 
