@@ -122,6 +122,9 @@ export const getCommonPageProps: GetServerSideProps = async ({
         isIsolatedView ? !disabledFeaturesForIsolatedView.has(feature) : true,
       )
       .concat(isIsolatedView ? hiddenFeaturesForIsolatedView : []),
+    widgetsSchemaIds: parseCommaSeparatedList(
+      (process.env.WIDGETS_SCHEMA_IDS as string) ?? [],
+    ),
     publicationFilters: parseCommaSeparatedList(
       process.env.PUBLICATION_FILTERS,
       ['title', 'role', 'dial_roles'],

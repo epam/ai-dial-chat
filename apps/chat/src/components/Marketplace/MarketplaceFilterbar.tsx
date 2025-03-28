@@ -1,11 +1,5 @@
-import {
-  IconCheck,
-  IconChevronUp,
-  IconHome2,
-  IconLayoutGrid,
-  TablerIconsProps,
-} from '@tabler/icons-react';
-import { JSX, memo, useCallback, useState } from 'react';
+import { IconCheck, IconChevronUp } from '@tabler/icons-react';
+import { memo, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -22,13 +16,7 @@ import {
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import {
-  ENTITY_TYPES,
-  FilterTypes,
-  MarketplaceTabs,
-} from '@/src/constants/marketplace';
-
-import Tooltip from '../Common/Tooltip';
+import { ENTITY_TYPES, FilterTypes } from '@/src/constants/marketplace';
 
 import { capitalize } from 'lodash';
 
@@ -131,48 +119,6 @@ const FilterSection = ({
   );
 };
 
-interface ActionButtonProps {
-  isOpen: boolean;
-  onClick: () => void;
-  caption: string;
-  Icon: (props: TablerIconsProps) => JSX.Element;
-  selected?: boolean;
-  dataQa?: string;
-}
-
-const ActionButton = ({
-  isOpen,
-  onClick,
-  caption,
-  Icon,
-  selected,
-  dataQa,
-}: ActionButtonProps) => {
-  return (
-    <div className="flex px-2 py-1">
-      <button
-        onClick={onClick}
-        className={classNames(
-          'flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded border-l-2 py-[5px] pl-3 transition-colors duration-200 hover:bg-accent-primary-alpha hover:disabled:bg-transparent',
-          selected
-            ? 'border-l-accent-primary bg-accent-primary-alpha'
-            : 'border-l-transparent',
-        )}
-        data-qa={dataQa}
-      >
-        <Tooltip tooltip={caption} isTriggerClickable>
-          <Icon
-            className={selected ? 'text-accent-primary' : 'text-secondary'}
-            width={24}
-            height={24}
-          />
-        </Tooltip>
-        {isOpen ? caption : ''}
-      </button>
-    </div>
-  );
-};
-
 const getTypeLabel = (value: string) => `${capitalize(value)}s`;
 
 export const MarketplaceFilterbar = memo(() => {
@@ -186,7 +132,6 @@ export const MarketplaceFilterbar = memo(() => {
   const selectedFilters = useAppSelector(
     MarketplaceSelectors.selectSelectedFilters,
   );
-  const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
 
   const topics = useAppSelector(ModelsSelectors.selectModelTopics);
   const sourceTypes = useAppSelector(MarketplaceSelectors.selectSourceTypes);
@@ -205,23 +150,6 @@ export const MarketplaceFilterbar = memo(() => {
     );
   };
 
-  const handleChangeTab = useCallback(
-    (tab: MarketplaceTabs) => {
-      dispatch(MarketplaceActions.setSelectedTab(tab));
-    },
-    [dispatch],
-  );
-
-  const handleHomeClick = useCallback(
-    () => handleChangeTab(MarketplaceTabs.HOME),
-    [handleChangeTab],
-  );
-
-  const handleMyAppsClick = useCallback(
-    () => handleChangeTab(MarketplaceTabs.MY_WORKSPACE),
-    [handleChangeTab],
-  );
-
   const handleToggleFilterSection = (filterType: FilterTypes) => {
     setOpenedSections((state) => ({
       ...openedSections,
@@ -231,31 +159,11 @@ export const MarketplaceFilterbar = memo(() => {
   return (
     <nav
       className={classNames(
-        showFilterbar
-          ? 'w-[320px] lg:w-[260px]'
-          : 'invisible lg:visible lg:w-[64px]',
+        showFilterbar ? 'w-[320px] lg:w-[260px]' : 'invisible',
         'group/sidebar absolute left-0 top-0 z-40 flex h-full shrink-0 flex-col gap-px divide-y divide-tertiary bg-layer-3 lg:sticky lg:z-0',
       )}
       data-qa="marketplace-sidebar"
     >
-      <div className="py-1">
-        <ActionButton
-          isOpen={showFilterbar}
-          onClick={handleHomeClick}
-          caption={t('DIAL Marketplace')}
-          Icon={IconLayoutGrid}
-          selected={selectedTab === MarketplaceTabs.HOME}
-          dataQa="home-page"
-        />
-        <ActionButton
-          isOpen={showFilterbar}
-          onClick={handleMyAppsClick}
-          caption={t('My workspace')}
-          Icon={IconHome2}
-          selected={selectedTab === MarketplaceTabs.MY_WORKSPACE}
-          dataQa="my-workspace"
-        />
-      </div>
       {showFilterbar && (
         <div className="h-full overflow-y-auto">
           <FilterSection

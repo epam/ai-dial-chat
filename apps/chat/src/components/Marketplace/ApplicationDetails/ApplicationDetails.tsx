@@ -1,15 +1,18 @@
 import { useCallback, useMemo } from 'react';
 
 import { useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/router';
 
 import { getGroupModelKey } from '@/src/utils/app/models';
 
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 
+import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 
@@ -46,11 +49,15 @@ export const ApplicationDetails = ({
   onBookmarkClick,
 }: Props) => {
   const dispatch = useAppDispatch();
+  const router = useRouter();
 
   const searchParams = useSearchParams();
 
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
+  );
+  const widgetsSchemaIds = useAppSelector(
+    SettingsSelectors.selectWidgetsSchemaIds,
   );
 
   const filteredEntities = useMemo(() => {
@@ -62,6 +69,17 @@ export const ApplicationDetails = ({
   }, [allEntities, entity, installedModelIds, isMyAppsTab, isSuggested]);
 
   const handleUseEntity = useCallback(() => {
+    if (widgetsSchemaIds.has(entity.applicationTypeSchemaId as string)) {
+      return router.push('/').then(() => {
+        dispatch(ApplicationActions.selectWidget(entity.reference));
+        dispatch(
+          ConversationsActions.selectConversations({
+            conversationIds: [],
+          }),
+        );
+      });
+    }
+
     dispatch(
       ConversationsActions.applyMarketplaceModel({
         targetConversationId:
@@ -71,7 +89,14 @@ export const ApplicationDetails = ({
       }),
     );
     dispatch(ConversationsActions.setIsStartedCustomViewerConversation(true));
-  }, [dispatch, entity.reference, searchParams]);
+  }, [
+    dispatch,
+    entity.applicationTypeSchemaId,
+    entity.reference,
+    router,
+    searchParams,
+    widgetsSchemaIds,
+  ]);
 
   return (
     <Modal

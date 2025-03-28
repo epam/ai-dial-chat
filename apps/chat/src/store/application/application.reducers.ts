@@ -210,6 +210,9 @@ export const applicationSlice = createSlice({
 
       state.publicFolders = uniqBy(folders, 'id');
     },
+    selectWidget: (state, { payload }: PayloadAction<string | undefined>) => {
+      state.selectedWidget = payload;
+    },
   },
 });
 

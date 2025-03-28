@@ -22,7 +22,6 @@ import { Logo } from '@/src/components/Header/Logo';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
 import Tooltip from '../Common/Tooltip';
-import { BackToChat } from '../Header/BackToChat';
 import { User } from '../Header/User/User';
 
 import MoveLeftIcon from '@/public/images/icons/move-left.svg';
@@ -93,7 +92,7 @@ export const MarketplaceHeader = () => {
           )}
         </div>
       </Tooltip>
-      <BackToChat />
+      {/*<BackToChat />*/}
       <div className="flex grow justify-between">
         <Logo />
         <div className="w-[48px] max-md:border-l max-md:border-tertiary md:w-auto">

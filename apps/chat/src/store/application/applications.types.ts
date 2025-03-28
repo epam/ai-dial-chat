@@ -14,4 +14,6 @@ export interface ApplicationState {
   shouldSaveApplication?: boolean;
   exitAfterSave?: boolean;
   publicFolders: FolderInterface[];
+
+  selectedWidget?: string;
 }

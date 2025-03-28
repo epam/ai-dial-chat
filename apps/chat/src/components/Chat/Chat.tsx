@@ -39,6 +39,7 @@ import { EntityType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
+import { ApplicationSelectors } from '@/src/store/application/application.reducers';
 import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { ChatActions } from '@/src/store/chat/chat.reducer';
 import { ChatSelectors } from '@/src/store/chat/chat.selectors';
@@ -55,6 +56,7 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 import { Routes } from '@/src/constants/routes';
 
 import { ChatStarters } from '@/src/components/Chat/ChatStarters';
+import { WidgetView } from '@/src/components/Chat/WidgetView';
 
 import { CustomChatViewer } from '../AppsEditor/Settings/Previews/CustomChatViewer';
 import Loader from '../Common/Loader';
@@ -1048,6 +1050,9 @@ export function Chat() {
   const isConfigurationSchemaLoading = useAppSelector(
     ChatSelectors.selectIsConfigurationSchemaLoading,
   );
+  const selectedWidget = useAppSelector(
+    ApplicationSelectors.selectSelectedWidget,
+  );
 
   const configurationAppReference = selectedConversations.find((conv) =>
     doesModelHaveConfiguration(modelsMap[conv.model.id]),
@@ -1079,6 +1084,10 @@ export function Chat() {
         <ChatInputFooter />
       </>
     );
+  }
+
+  if (selectedWidget && !selectedConversationsIds.length) {
+    return <WidgetView id={selectedWidget} />;
   }
 
   if (isolatedModelId && modelIsLoaded && !activeModel) {

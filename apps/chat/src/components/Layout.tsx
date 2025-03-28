@@ -24,6 +24,8 @@ import {
 import { SettingsState } from '@/src/store/settings/settings.types';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
+import { NavigationWrapper } from '@/src/components/NavigationWrapper';
+
 import Loader from './Common/Loader';
 
 const removeQueryString = (url: string) => url.split('?')[0];
@@ -168,7 +170,7 @@ export default function Layout({
           className="h-screen w-screen flex-col bg-layer-1 text-sm text-primary"
           id="theme-main"
         >
-          {children}
+          <NavigationWrapper>{children}</NavigationWrapper>
         </main>
       )}
       {loading && (

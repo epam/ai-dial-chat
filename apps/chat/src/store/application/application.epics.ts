@@ -43,6 +43,7 @@ import {
 } from '@/src/types/applications';
 import { AppEpic } from '@/src/types/store';
 
+import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { errorsMessages } from '../../constants/errors';
@@ -627,6 +628,23 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
     }),
   );
 
+const resetSelectedWidgetEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(
+      (action) =>
+        ConversationsActions.selectConversations.match(action) ||
+        PublicationActions.selectPublication.match(action),
+    ),
+    switchMap(({ payload }) => {
+      if (
+        'conversationIds' in payload ? !!payload.conversationIds?.length : true
+      ) {
+        return of(ApplicationActions.selectWidget(undefined));
+      }
+      return EMPTY;
+    }),
+  );
+
 export const ApplicationEpics = combineEpics(
   createApplicationEpic,
   createFailEpic,
@@ -640,4 +658,5 @@ export const ApplicationEpics = combineEpics(
   updateApplicationStatusFailEpic,
   getApplicationLogsEpic,
   enterEditModeEpic,
+  resetSelectedWidgetEpic,
 );
