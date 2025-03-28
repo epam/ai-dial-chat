@@ -17,8 +17,7 @@ import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
-
-import { MoveToFolderModal } from '../../Common/MoveToFolderModal';
+import { MoveToFolderModal } from '@/src/components/Common/MoveToFolderModal';
 
 import { PublishActions } from '@epam/ai-dial-shared';
 

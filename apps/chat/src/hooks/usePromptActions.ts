@@ -2,31 +2,31 @@ import { useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { isEntityNameOnSameLevelUnique } from '../utils/app/common';
-import { getNextDefaultName } from '../utils/app/folders';
-import { getPromptRootId } from '../utils/app/id';
-import { regeneratePromptId } from '../utils/app/prompts';
-import { defaultMyItemsFilters } from '../utils/app/search';
-import { constructPath } from '../utils/app/shared-utils';
+import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
+import { getNextDefaultName } from '@/src/utils/app/folders';
+import { getPromptRootId } from '@/src/utils/app/id';
+import { regeneratePromptId } from '@/src/utils/app/prompts';
+import { defaultMyItemsFilters } from '@/src/utils/app/search';
+import { constructPath } from '@/src/utils/app/shared-utils';
 
-import { FeatureType } from '../types/common';
-import { MoveToFolderProps } from '../types/folder';
-import { Prompt } from '../types/prompt';
-import { Translation } from '../types/translation';
+import { FeatureType } from '@/src/types/common';
+import { MoveToFolderProps } from '@/src/types/folder';
+import { Prompt } from '@/src/types/prompt';
+import { Translation } from '@/src/types/translation';
 
-import { ChatActions } from '../store/chat/chat.reducer';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { ImportExportActions } from '../store/import-export/importExport.reducers';
+import { ChatActions } from '@/src/store/chat/chat.reducer';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import {
   PromptsActions,
   PromptsSelectors,
-} from '../store/prompts/prompts.reducers';
-import { ShareActions } from '../store/share/share.reducers';
-import { UIActions } from '../store/ui/ui.reducers';
-import { UISelectors } from '../store/ui/ui.selectors';
+} from '@/src/store/prompts/prompts.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
-import { DEFAULT_FOLDER_NAME } from '../constants/default-ui-settings';
-import { PINNED_PROMPTS_SECTION_NAME } from '../constants/sections';
+import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
+import { PINNED_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
 export const usePromptActions = (prompt: Prompt) => {
   const { t } = useTranslation(Translation.PromptBar);
