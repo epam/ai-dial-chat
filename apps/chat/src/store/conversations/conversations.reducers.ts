@@ -436,37 +436,28 @@ export const conversationsSlice = createSlice({
     },
     updateFolder: (
       state,
-      {
-        payload,
-      }: PayloadAction<{
+      _action: PayloadAction<{
         folderId: string;
         values: Partial<FolderInterface>;
       }>,
-    ) => {
-      state.folders = state.folders.map((folder) => {
-        if (folder.id === payload.folderId) {
-          return {
-            ...folder,
-            ...payload.values,
-          };
-        }
-
-        return folder;
-      });
-    },
-    updateFolderSuccess: (
+    ) => state,
+    updateFoldersSuccess: (
       state,
       {
         payload,
       }: PayloadAction<{
-        folders: FolderInterface[];
-        conversations: ConversationInfo[];
-        selectedConversationsIds: string[];
+        folders: { oldId: string; newFolder: FolderInterface }[];
       }>,
     ) => {
-      state.folders = payload.folders;
-      state.conversations = payload.conversations;
-      state.selectedConversationsIds = payload.selectedConversationsIds;
+      payload.folders.forEach(({ oldId, newFolder }) => {
+        const folderIndex = state.folders.findIndex(
+          (folder) => folder.id === oldId,
+        );
+
+        if (folderIndex !== -1) {
+          state.folders[folderIndex] = newFolder;
+        }
+      });
     },
     setFolders: (
       state,

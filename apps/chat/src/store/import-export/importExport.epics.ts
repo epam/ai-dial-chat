@@ -231,7 +231,6 @@ const exportPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ImportExportActions.exportPrompt.match),
     switchMap(({ payload }) => getOrUploadPrompt(payload, state$.value)),
-
     switchMap((promptAndPayload) => {
       const { prompt, wasUploaded } = promptAndPayload;
       if (!prompt) {
