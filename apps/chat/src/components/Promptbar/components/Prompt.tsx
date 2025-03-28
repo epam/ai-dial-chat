@@ -240,9 +240,11 @@ export const PromptComponent = ({
 
   const disableUsePrompt = isConversationBlocksInput || !isModelsInstalled;
 
-  const handleCloseConfirmDialogs = useCallback(() => {
+  const handleCloseDialogs = useCallback(() => {
     setIsDeleting(false);
     setIsUnsharing(false);
+    setPublishPromptAction(undefined);
+    setIsMoveTo(false);
   }, []);
 
   useEffect(() => {
@@ -432,7 +434,7 @@ export const PromptComponent = ({
         isDeleteDialog={isDeleting}
         isUnshareDialog={isUnsharing}
         publishPromptAction={publishPromptAction}
-        onCloseModals={handleCloseConfirmDialogs}
+        onCloseModals={handleCloseDialogs}
       />
     </>
   );
