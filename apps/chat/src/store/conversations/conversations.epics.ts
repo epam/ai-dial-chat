@@ -265,6 +265,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
                 const previousRoute = UISelectors.selectPreviousRoute(
                   state$.value,
                 );
+
                 const shouldCreateNewConv = !previousRoute?.includes(
                   `?${MarketplaceQueryParams.fromConversation}=`,
                 );
