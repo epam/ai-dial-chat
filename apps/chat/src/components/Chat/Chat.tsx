@@ -580,11 +580,15 @@ const ChatView = memo(() => {
       }
     }
   }, [modelsMap, applicationTypeSchemas, selectedConversations]);
+
   useEffect(() => {
-    if (textareaRef.current) {
+    if (
+      !enabledFeatures.has(Feature.SkipFocusChatInputOnLoad) &&
+      textareaRef.current
+    ) {
       textareaRef.current.focus();
     }
-  }, []);
+  }, [enabledFeatures]);
 
   return (
     <div
