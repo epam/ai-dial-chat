@@ -7,9 +7,9 @@ import classNames from 'classnames';
 
 import { findLatestVersion, isVersionValid } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
-import { splitEntityId } from '@/src/utils/app/folders';
 import { getIdWithoutRootPathSegments, getRootId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 import {
   getVersionFromId,
   parseApplicationApiKey,

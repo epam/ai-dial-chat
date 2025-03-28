@@ -2,6 +2,8 @@ import { EMPTY, Observable, map, of } from 'rxjs';
 
 import { AnyAction } from '@reduxjs/toolkit';
 
+import { splitEntityId } from '@/src/utils/app/shared-utils';
+
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
@@ -34,7 +36,6 @@ import { cleanConversationHistory } from './clean';
 import { isImportEntityNameOnSameLevelUnique } from './common';
 import { ConversationService } from './data/conversation-service';
 import { constructPath, triggerDownload } from './file';
-import { splitEntityId } from './folders';
 import { getConversationRootId, getFileRootId } from './id';
 import { translate } from './translation';
 
