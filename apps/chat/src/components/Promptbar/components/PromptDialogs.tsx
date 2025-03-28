@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -52,6 +52,28 @@ export const PromptDialogs: React.FC<Props> = ({
   const { handleMoveToFolder, handleDelete, handleUnshare } =
     usePromptActions(prompt);
 
+  const handleConfirmDelete = useCallback(
+    (isConfirmed: boolean) => {
+      if (isConfirmed) {
+        handleDelete();
+      }
+
+      onCloseModals();
+    },
+    [handleDelete, onCloseModals],
+  );
+
+  const handleConfirmUnshare = useCallback(
+    (isConfirmed: boolean) => {
+      if (isConfirmed) {
+        handleUnshare();
+      }
+
+      onCloseModals();
+    },
+    [handleUnshare, onCloseModals],
+  );
+
   return (
     <>
       {moveTo && moveTo.isOpen && (
@@ -90,7 +112,7 @@ export const PromptDialogs: React.FC<Props> = ({
           )}`}
           confirmLabel={t('Delete')}
           cancelLabel={t('Cancel')}
-          onClose={handleDelete}
+          onClose={handleConfirmDelete}
         />
       )}
       {isUnshareDialog && (
@@ -104,7 +126,7 @@ export const PromptDialogs: React.FC<Props> = ({
           }
           confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
-          onClose={handleUnshare}
+          onClose={handleConfirmUnshare}
         />
       )}
     </>
