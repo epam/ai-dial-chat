@@ -140,6 +140,7 @@ dialTest(
     prompts,
     promptData,
     promptDropdownMenu,
+    shareModal,
     confirmationDialog,
     dataInjector,
     mainUserShareApiHelper,
@@ -169,7 +170,8 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await prompts.openEntityDropdownMenu(prompt.name);
-        await promptDropdownMenu.selectMenuOption(MenuOptions.unshare);
+        await promptDropdownMenu.selectMenuOption(MenuOptions.share);
+        await shareModal.sharedAccessMessage.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
         await promptAssertion.assertEntityArrowIconState(
           { name: prompt.name },

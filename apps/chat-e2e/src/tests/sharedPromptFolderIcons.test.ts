@@ -22,6 +22,7 @@ dialTest(
     dialHomePage,
     folderDropdownMenu,
     promptBar,
+    shareModal,
     shareModalAssertion,
     folderPrompts,
     folderDropdownMenuAssertion,
@@ -100,6 +101,10 @@ dialTest(
         await shareModalAssertion.assertModalState('visible');
         await shareModalAssertion.assertMessageContent(
           ExpectedConstants.sharePromptFolderText,
+        );
+        await shareModalAssertion.assertElementText(
+          shareModal.sharedAccessMessage,
+          ExpectedConstants.notSharedFolderText,
         );
       },
     );
@@ -385,6 +390,7 @@ dialTest(
     dataInjector,
     folderPrompts,
     folderDropdownMenu,
+    shareModal,
     confirmationDialog,
     confirmationDialogAssertion,
     mainUserShareApiHelper,
@@ -419,15 +425,18 @@ dialTest(
     );
 
     await dialTest.step(
-      'Select "Unshare" option for shared folder and verify confirmation modal is shown',
+      'Select "Share" option for shared folder and verify confirmation modal is shown',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await folderPrompts.expandFolder(folderPrompt.folders.name);
         await folderPrompts.openFolderDropdownMenu(folderPrompt.folders.name);
-        await folderDropdownMenu.selectMenuOption(MenuOptions.unshare);
+        await folderDropdownMenu.selectMenuOption(MenuOptions.share);
+        await shareModal.sharedAccessMessage.click();
         await confirmationDialogAssertion.assertConfirmationMessage(
-          ExpectedConstants.unshareFolderMessage,
+          ExpectedConstants.removeFolderAccessMessage(
+            folderPrompt.folders.name,
+          ),
         );
       },
     );
@@ -436,7 +445,9 @@ dialTest(
       'Close confirmation modal and verify arrow icon is still displayed',
       async () => {
         await confirmationDialogAssertion.assertConfirmationMessage(
-          ExpectedConstants.unshareFolderMessage,
+          ExpectedConstants.removeFolderAccessMessage(
+            folderPrompt.folders.name,
+          ),
         );
         await confirmationDialog.cancelDialog();
         await promptBarFolderAssertion.assertFolderArrowIconState(
@@ -450,7 +461,8 @@ dialTest(
       'Confirm unsharing and verify no arrow icon is displayed on folder',
       async () => {
         await folderPrompts.openFolderDropdownMenu(folderPrompt.folders.name);
-        await folderDropdownMenu.selectMenuOption(MenuOptions.unshare);
+        await folderDropdownMenu.selectMenuOption(MenuOptions.share);
+        await shareModal.sharedAccessMessage.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
         await promptBarFolderAssertion.assertFolderArrowIconState(
           { name: folderPrompt.folders.name },

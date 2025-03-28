@@ -1,11 +1,13 @@
+import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ElementState, ExpectedMessages } from '@/src/testData';
 import { ShareModal } from '@/src/ui/webElements/shareModal';
 import { expect } from '@playwright/test';
 
-export class ShareModalAssertion {
+export class ShareModalAssertion extends BaseAssertion {
   readonly shareModal: ShareModal;
 
   constructor(shareModal: ShareModal) {
+    super();
     this.shareModal = shareModal;
   }
 
