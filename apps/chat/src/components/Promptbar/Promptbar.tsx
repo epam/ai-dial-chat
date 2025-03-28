@@ -21,7 +21,6 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 import { RECENT_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
 import { PromptFolders } from './components/PromptFolders';
-import { PromptModal } from './components/PromptModal';
 import { PromptbarSettings } from './components/PromptbarSettings';
 import { Prompts } from './components/Prompts';
 
@@ -54,7 +53,6 @@ const PromptActionsBlock = () => {
         </Tooltip>
         {t('New prompt')}
       </button>
-      {showModal && <PromptModal />}
     </div>
   );
 };

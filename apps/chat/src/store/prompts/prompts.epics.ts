@@ -949,7 +949,12 @@ const selectPromptEpic: AppEpic = (action$) =>
             isApproveRequiredResource: payload.isApproveRequiredResource,
           }),
         ),
-        of(PromptsActions.setIsPromptModalOpen({ isOpen: true })),
+        of(
+          PromptsActions.setIsPromptModalOpen({
+            isOpen: true,
+            isInitModeEdit: !!payload.selectInEditMode,
+          }),
+        ),
       );
     }),
   );

@@ -1,3 +1,5 @@
+import { PromptModal } from '@/src/components/Promptbar/components/PromptModal';
+
 import { InfoModal } from '../Common/InfoModal';
 import { ReplaceConfirmationModal } from '../Common/ReplaceConfirmationModal/ReplaceConfirmationModal';
 import { UnshareDialog } from '../Common/UnshareDialog';
@@ -16,6 +18,7 @@ export function ChatModalsManager() {
       <ReplaceConfirmationModal />
       <RenameConversationModal />
       <PromptVariablesForApplyDialog />
+      <PromptModal />
     </>
   );
 }

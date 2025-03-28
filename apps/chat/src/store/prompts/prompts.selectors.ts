@@ -194,6 +194,9 @@ export const selectSearchedPrompts = createSelector(
 export const selectIsPromptModalOpen = (state: RootState) =>
   rootSelector(state).isPromptModalOpen;
 
+export const selectIsPromptModalInitModelEdit = (state: RootState) =>
+  rootSelector(state).isPromptModalInitModeEdit;
+
 export const selectSelectedPromptId = createSelector(
   [rootSelector],
   (state) => {

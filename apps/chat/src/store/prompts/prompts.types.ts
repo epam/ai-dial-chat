@@ -12,6 +12,7 @@ export interface PromptsState {
   selectedPromptId: string | undefined;
   isSelectedPromptApproveRequiredResource: boolean;
   isPromptModalOpen: boolean;
+  isPromptModalInitModeEdit: boolean;
   newAddedFolderId?: string;
   promptsLoaded: boolean;
   isPromptLoading: boolean;

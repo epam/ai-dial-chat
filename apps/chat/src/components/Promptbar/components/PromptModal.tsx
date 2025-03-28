@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -16,6 +16,7 @@ import {
 import { Modal } from '@/src/components/Common/Modal';
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 
+import { withRenderWhen } from '../../Common/RenderWhen';
 import { EditPrompt } from './EditPrompt';
 import { ViewPrompt } from './ViewPrompt';
 
@@ -28,7 +29,7 @@ interface PromptModalViewProps {
   onClose: () => void;
 }
 
-const PromptModalView: React.FC<PromptModalViewProps> = ({
+const PromptModalContent: React.FC<PromptModalViewProps> = ({
   prompt,
   isViewMode,
   onToggleEditMode,
@@ -99,9 +100,12 @@ const PromptModalView: React.FC<PromptModalViewProps> = ({
   return <EditPrompt onEdit={handleEdit} prompt={prompt} />;
 };
 
-export const PromptModal = () => {
+const PromptModalView = () => {
   const prompt = useAppSelector(PromptsSelectors.selectSelectedOrNewPrompt);
   const isLoading = useAppSelector(PromptsSelectors.isPromptLoading);
+  const isPromptInitModeEdit = useAppSelector(
+    PromptsSelectors.selectIsPromptModalInitModelEdit,
+  );
 
   const [isViewMode, setIsViewMode] = useState(true);
 
@@ -110,6 +114,12 @@ export const PromptModal = () => {
   const handleToggleEditMode = useCallback((isOpen: boolean) => {
     setIsViewMode(isOpen);
   }, []);
+
+  useEffect(() => {
+    if (isPromptInitModeEdit) {
+      setIsViewMode(false);
+    }
+  }, [isPromptInitModeEdit]);
 
   const handleClose = useCallback(() => {
     dispatch(PromptsActions.setIsPromptModalOpen({ isOpen: false }));
@@ -135,7 +145,7 @@ export const PromptModal = () => {
       onClose={handleClose}
     >
       {prompt ? (
-        <PromptModalView
+        <PromptModalContent
           prompt={prompt}
           isViewMode={isViewMode}
           onToggleEditMode={handleToggleEditMode}
@@ -147,3 +157,7 @@ export const PromptModal = () => {
     </Modal>
   );
 };
+
+export const PromptModal = withRenderWhen(
+  PromptsSelectors.selectIsPromptModalOpen,
+)(PromptModalView);

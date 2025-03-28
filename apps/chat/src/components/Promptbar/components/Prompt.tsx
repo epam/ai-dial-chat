@@ -190,16 +190,19 @@ export const PromptComponent = ({
   );
 
   const handleOpenViewModal = useCallback(
-    (e: MouseEvent<unknown, globalThis.MouseEvent>) => {
+    (e: MouseEvent<unknown, globalThis.MouseEvent>, isEdit?: boolean) => {
       e.stopPropagation();
       e.preventDefault();
       setIsOpened(true);
+
       dispatch(
         PromptsActions.selectPrompt({
           promptId: prompt.id,
+          selectInEditMode: isEdit,
           isApproveRequiredResource,
         }),
       );
+
       if (additionalItemData?.publicationUrl) {
         dispatch(
           PublicationActions.selectPublication(
@@ -207,7 +210,6 @@ export const PromptComponent = ({
           ),
         );
       }
-      dispatch(PromptsActions.setIsPromptModalOpen({ isOpen: true }));
     },
     [
       additionalItemData?.publicationUrl,
@@ -216,6 +218,17 @@ export const PromptComponent = ({
       prompt.id,
     ],
   );
+
+  const handleOpenEditModal = useCallback(
+    (e: MouseEvent<unknown, globalThis.MouseEvent>) => {
+      handleOpenViewModal(e, true);
+    },
+    [handleOpenViewModal],
+  );
+
+  const handleOpenMoveToModal = useCallback(() => {
+    setIsMoveTo(true);
+  }, []);
 
   const handleContextMenuOpen = (e: MouseEvent) => {
     if (hasParentWithFloatingOverlay(e.target as Element)) {
@@ -404,10 +417,9 @@ export const PromptComponent = ({
               folders={folders}
               onMoveToFolder={handleMoveToFolder}
               onDelete={handleOpenDeleteModal}
+              onRename={handleOpenEditModal}
               onExport={handleExport}
-              onOpenMoveToModal={() => {
-                setIsMoveTo(true);
-              }}
+              onOpenMoveToModal={handleOpenMoveToModal}
               onShare={handleShare}
               onUnshare={handleOpenUnsharing}
               onPublish={handleOpenPublishing}
