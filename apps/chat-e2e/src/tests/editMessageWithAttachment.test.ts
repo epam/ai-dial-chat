@@ -228,6 +228,9 @@ dialTest(
       async () => {
         const updatedRequestText = 'test';
         await chatMessages.fillEditData(1, updatedRequestText);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         const request = await chat.saveAndSubmitRequest();
         expect
           .soft(
@@ -336,6 +339,9 @@ dialTest(
     await dialTest.step(
       'Save&Submit request and verify updated files are sent in the request',
       async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         const request = await chat.saveAndSubmitRequest();
         expect
           .soft(

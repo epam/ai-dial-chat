@@ -1431,8 +1431,10 @@ dialTest(
     compareConversation,
     chat,
     localStorageManager,
+    setIssueIds,
   }) => {
     setTestIds('EPMRTC-557');
+    setIssueIds('3436');
     let firstFolderConversation: FolderConversation;
     let secondFolderConversation: FolderConversation;
     const conversationName = GeneratorUtil.randomString(7);

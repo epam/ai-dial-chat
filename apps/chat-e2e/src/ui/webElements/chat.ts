@@ -114,8 +114,12 @@ export class Chat extends BaseElement {
   public async startReplay(userRequest?: string, waitForAnswer = false) {
     await this.replay.waitForState();
     const requestPromise = this.waitForRequestSent(userRequest);
+    const moveResponsePromise = this.page.waitForResponse((resp) =>
+      resp.url().includes(API.moveHost),
+    );
     await this.replay.click();
     const request = await requestPromise;
+    await moveResponsePromise;
     await this.waitForResponse(waitForAnswer);
     return request.postDataJSON();
   }
@@ -255,11 +259,16 @@ export class Chat extends BaseElement {
   }
 
   public async saveAndSubmitRequest(waitForAnswer = false) {
-    return this.sendRequest(
+    const moveResponsePromise = this.page.waitForResponse((resp) =>
+      resp.url().includes(API.moveHost),
+    );
+    const request = this.sendRequest(
       undefined,
       () => this.getChatMessages().saveAndSubmit.click(),
       waitForAnswer,
     );
+    await moveResponsePromise;
+    return request;
   }
 
   public async playNextChatMessage(waitForResponse = true) {

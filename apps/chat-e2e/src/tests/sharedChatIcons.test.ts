@@ -809,7 +809,7 @@ dialTest(
             ExpectedMessages.confirmationMessageIsValid,
           )
           .toBe(ExpectedConstants.renameSharedFolderMessage);
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
         await expect
           .soft(
             folderConversations.getFolderArrowIcon(newFolderName),
