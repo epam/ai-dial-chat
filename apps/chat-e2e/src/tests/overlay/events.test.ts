@@ -46,6 +46,7 @@ dialOverlayTest(
     overlayDialog,
     overlayItemApiHelper,
     localStorageManager,
+    page,
     setTestIds,
   }) => {
     setTestIds(
@@ -85,12 +86,18 @@ dialOverlayTest(
       `Click on "Set system prompt', send one more message and verify system prompt is set in the request`,
       async () => {
         await overlayActions.setSysPromptButton.click();
+        const respPromise = page.waitForResponse(
+          (resp) =>
+            resp.request().method() === 'PUT' &&
+            resp.url().includes(firstRequestContent),
+        );
         secondRequest = (await overlayChat.sendRequestWithButton(
           secondRequestContent,
         )) as Conversation;
         const systemMessage = secondRequest.messages.find(
           (m) => m.role === 'system',
         );
+        await respPromise;
         expect.soft(systemMessage).toBeDefined();
         overlayBaseAssertion.assertValue(systemMessage?.content, systemPrompt);
       },
