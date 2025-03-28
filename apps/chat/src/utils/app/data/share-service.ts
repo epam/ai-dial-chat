@@ -1,5 +1,7 @@
 import { Observable, map } from 'rxjs';
 
+import { splitEntityId } from '@/src/utils/app/shared-utils';
+
 import { ApplicationInfo } from '@/src/types/applications';
 import {
   ApiKeys,
@@ -29,7 +31,6 @@ import {
   parseConversationApiKey,
 } from '../../server/api';
 import { constructPath } from '../file';
-import { splitEntityId } from '../folders';
 import { EnumMapper } from '../mappers';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';

@@ -118,3 +118,8 @@ export interface PublishRequestDialAIEntityModel extends DialAIEntityModel {
   folderId: string;
   publicationInfo: EntityPublicationInfo;
 }
+
+export interface ModelsGroup {
+  groupName: string;
+  entities: DialAIEntityModel[];
+}

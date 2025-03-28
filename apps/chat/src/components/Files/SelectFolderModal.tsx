@@ -4,9 +4,9 @@ import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
 
 import {
   getParentFolderIdsFromFolderId,
-  splitEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
