@@ -99,34 +99,27 @@ const shareEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.share.match),
     switchMap(({ payload }) => {
+      const resourceId = payload.entity.id;
       if (payload.featureType === FeatureType.Chat) {
         if (!payload.isFolder) {
-          return of(
-            ShareActions.shareConversation({ resourceId: payload.resourceId }),
-          );
+          return of(ShareActions.shareConversation({ resourceId }));
         } else {
           return of(
             ShareActions.shareConversationFolder({
-              resourceId: payload.resourceId,
+              resourceId,
             }),
           );
         }
       } else if (payload.featureType === FeatureType.Prompt) {
         if (!payload.isFolder) {
-          return of(
-            ShareActions.sharePrompt({ resourceId: payload.resourceId }),
-          );
+          return of(ShareActions.sharePrompt({ resourceId }));
         } else {
-          return of(
-            ShareActions.sharePromptFolder({
-              resourceId: payload.resourceId,
-            }),
-          );
+          return of(ShareActions.sharePromptFolder({ resourceId }));
         }
       } else {
         return of(
           ShareActions.shareApplication({
-            resourceId: payload.resourceId,
+            resourceId,
             permissions: payload.permissions,
           }),
         );

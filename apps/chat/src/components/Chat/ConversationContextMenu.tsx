@@ -314,8 +314,7 @@ export const ConversationContextMenu = ({
       dispatch(
         ShareActions.share({
           featureType: FeatureType.Chat,
-          resourceId: conversation.id,
-          isShared: conversation.isShared,
+          entity: conversation,
         }),
       );
       setIsOpen(false);

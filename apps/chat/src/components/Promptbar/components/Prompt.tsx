@@ -187,8 +187,7 @@ export const PromptComponent = ({
       dispatch(
         ShareActions.share({
           featureType: FeatureType.Prompt,
-          resourceId: prompt.id,
-          isShared: prompt.isShared,
+          entity: prompt,
         }),
       );
       setIsOpened(false);

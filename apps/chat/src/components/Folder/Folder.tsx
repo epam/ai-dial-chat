@@ -290,14 +290,13 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       e.stopPropagation();
       dispatch(
         ShareActions.share({
-          resourceId: currentFolder.id,
+          entity: currentFolder,
           featureType,
           isFolder: true,
-          isFolderShared: currentFolder.isShared,
         }),
       );
     },
-    [currentFolder.id, currentFolder.isShared, dispatch, featureType],
+    [currentFolder, dispatch, featureType],
   );
 
   const allChildItems = useMemo(

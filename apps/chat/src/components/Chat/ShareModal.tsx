@@ -115,8 +115,6 @@ export function ShareModalView() {
     ShareSelectors.selectIsResourceShared,
   );
 
-  const isFolderShared = useAppSelector(ShareSelectors.selectIsFolderShared);
-
   const shareFeatureType = useAppSelector(
     ShareSelectors.selectShareFeatureType,
   );
@@ -284,7 +282,7 @@ export function ShareModalView() {
       )}
       {isFolder ? (
         <ShareAccessSection
-          isShared={!!isFolderShared}
+          isShared={!!isResourceShared}
           onUnshare={handleOpenUnshareResource}
           notSharedMessage={t(
             'This folder has not been shared with anyone yet.',
