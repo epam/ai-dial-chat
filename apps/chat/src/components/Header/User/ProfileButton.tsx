@@ -29,6 +29,7 @@ export const ProfileButton = () => {
       dispatch(UIActions.setShowPromptbar(false));
       dispatch(UIActions.setShowChatbar(false));
       dispatch(UIActions.setShowMarketplaceFilterbar(false));
+      dispatch(UIActions.setShowWidgetbar(false));
     }
     dispatch(UIActions.setIsProfileOpen(!isProfileOpen));
   }, [dispatch, isProfileOpen]);

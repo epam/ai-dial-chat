@@ -1,4 +1,5 @@
 import {
+  IconCube,
   IconHome2,
   IconLayoutGrid,
   IconMessage2,
@@ -26,12 +27,19 @@ import {
 } from '@/src/store/marketplace/marketplace.reducers';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
+import { Chatbar } from '@/src/components/Chatbar/Chatbar';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import Tooltip from '@/src/components/Common/Tooltip';
+import { MarketplaceFilterbar } from '@/src/components/Marketplace/MarketplaceFilterbar';
+import Promptbar from '@/src/components/Promptbar';
+import { Widgetbar } from '@/src/components/Widgetbar';
+
+import { Feature } from '@epam/ai-dial-shared';
 
 interface NavigationButtonProps {
   onClick: () => void;
@@ -40,6 +48,7 @@ interface NavigationButtonProps {
   selected?: boolean;
   tooltip?: string;
   dataQa?: string;
+  caption?: string;
   rounded?: boolean;
 }
 
@@ -49,6 +58,7 @@ const NavigationButton = ({
   selected,
   tooltip,
   dataQa,
+  caption,
   rounded = false,
 }: NavigationButtonProps) => {
   return (
@@ -56,7 +66,7 @@ const NavigationButton = ({
       data-qa={dataQa}
       onClick={onClick}
       className={classNames(
-        'flex shrink-0 cursor-pointer select-none items-center justify-center gap-3 rounded border border-transparent p-[10px] transition-colors duration-200 hover:bg-accent-primary-alpha hover:disabled:bg-transparent',
+        'flex min-w-[72px] shrink-0 cursor-pointer select-none flex-col items-center justify-center gap-[2px] rounded border border-transparent p-[10px] transition-colors duration-200 hover:bg-accent-primary-alpha hover:disabled:bg-transparent md:min-w-min',
         {
           'rounded-full': rounded,
           '!border-accent-primary': rounded && selected,
@@ -72,6 +82,15 @@ const NavigationButton = ({
           />
         </Tooltip>
       )}
+
+      <span
+        className={classNames(
+          'text-xs md:hidden',
+          selected ? 'text-accent-primary' : 'text-secondary',
+        )}
+      >
+        {caption}
+      </span>
     </button>
   );
 };
@@ -124,10 +143,11 @@ const Navigation = () => {
     <>
       <NavigationButton
         onClick={handleChatClick}
-        tooltip={t(isMarketplace ? 'Back to Chat' : 'Chat')}
+        tooltip={t('Chat')}
         Icon={IconMessage2}
         selected={router.route === Routes.Chat}
         dataQa="marketplace-home-page"
+        caption={t('Chat')}
       />
       <NavigationButton
         onClick={handleHomeClick}
@@ -137,6 +157,7 @@ const Navigation = () => {
           isMarketplace && selectedMarketplaceTab === MarketplaceTabs.HOME
         }
         dataQa="marketplace-home-page"
+        caption={t('Apps')}
       />
       <NavigationButton
         onClick={handleMyAppsClick}
@@ -147,12 +168,15 @@ const Navigation = () => {
           selectedMarketplaceTab === MarketplaceTabs.MY_WORKSPACE
         }
         dataQa="my-workspace"
+        caption={t('Home')}
       />
     </>
   );
 };
 
 const UsedWidgets = () => {
+  const { t } = useTranslation(Translation.SideBar);
+
   const router = useRouter();
   const dispatch = useAppDispatch();
 
@@ -193,25 +217,41 @@ const UsedWidgets = () => {
     [handleSelectWidget, router],
   );
 
+  const handleOpenWidgetsClick = useCallback(() => {
+    dispatch(UIActions.setShowWidgetbar(true));
+  }, [dispatch]);
+
   return (
     <>
-      {widgetModels.map((model) => (
+      <div className="hidden w-full flex-col items-center md:flex">
+        {widgetModels.map((model) => (
+          <NavigationButton
+            key={model.reference}
+            rounded
+            onClick={() => handleClick(model.reference)}
+            selected={
+              model.reference === selectedWidget && router.route === Routes.Chat
+            }
+            Icon={({ height }) => (
+              <ModelIcon
+                entity={model}
+                entityId={model.id}
+                size={height as number}
+              />
+            )}
+          />
+        ))}
+      </div>
+
+      <div className="md:hidden">
         <NavigationButton
-          key={model.reference}
-          rounded
-          onClick={() => handleClick(model.reference)}
-          selected={
-            model.reference === selectedWidget && router.route === Routes.Chat
-          }
-          Icon={({ height }) => (
-            <ModelIcon
-              entity={model}
-              entityId={model.id}
-              size={height as number}
-            />
-          )}
+          onClick={handleOpenWidgetsClick}
+          Icon={IconCube}
+          selected={false}
+          dataQa="widgets-sidebar-trigger"
+          caption={t('Widgets')}
         />
-      ))}
+      </div>
     </>
   );
 };
@@ -221,15 +261,31 @@ interface NavigationWrapperProps {
 }
 
 export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
-  return (
-    <div className="flex size-full min-h-screen flex-row">
-      <div className="flex h-full w-[60px] shrink-0 flex-col justify-start gap-2 border-r border-tertiary bg-layer-3 p-2">
-        <Navigation />
+  const router = useRouter();
 
-        <UsedWidgets />
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
+
+  return (
+    <div className="size-full min-h-screen">
+      {router.route === Routes.Chat &&
+        enabledFeatures.has(Feature.ConversationsSection) && <Chatbar />}
+      {router.route === Routes.Marketplace && <MarketplaceFilterbar />}
+      <Widgetbar />
+
+      <div className="flex size-full flex-col md:flex-row">
+        <div className="order-last flex h-[60px] w-full shrink-0 flex-row items-center justify-between gap-2 border-r border-tertiary bg-layer-3 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start">
+          <Navigation />
+
+          <UsedWidgets />
+        </div>
+
+        <div className="grow overflow-hidden">{children}</div>
       </div>
 
-      <div className="grow overflow-hidden">{children}</div>
+      {router.route === Routes.Chat &&
+        enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
     </div>
   );
 };
