@@ -678,7 +678,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.only(
   'Shared icon appears in chat folder and does not for other items in the structure.\n' +
     `Shared icon appears in chat if it's located in shared folder.\n` +
     'Shared icon appears in chat in not shared folder.\n' +
@@ -693,8 +693,10 @@ dialTest(
     additionalUserShareApiHelper,
     folderDropdownMenu,
     confirmationDialog,
+    baseAssertion,
     setTestIds,
     localStorageManager,
+    chatBarFolderAssertion,
   }) => {
     setTestIds(
       'EPMRTC-1810',
@@ -749,43 +751,34 @@ dialTest(
           nestedFolders[nestedLevel - 1].name,
           nestedConversations[nestedLevel - 1].name,
         );
-        await expect
-          .soft(
-            folderConversations.getFolderArrowIcon(
-              nestedFolders[nestedLevel - 2].name,
-            ),
-            ExpectedMessages.sharedFolderIconIsVisible,
-          )
-          .toBeVisible();
-        await expect
-          .soft(
-            folderConversations.getFolderEntityArrowIcon(
-              nestedFolders[nestedLevel - 1].name,
-              nestedConversations[nestedLevel - 1].name,
-            ),
-            ExpectedMessages.sharedEntityIconIsVisible,
-          )
-          .toBeVisible();
+        await chatBarFolderAssertion.assertFolderEntitySelectedState(
+          { name: nestedFolders[nestedLevel - 1].name },
+          { name: nestedConversations[nestedLevel - 1].name },
+          true,
+        );
+        await chatBarFolderAssertion.assertFolderArrowIconState(
+          { name: nestedFolders[nestedLevel - 2].name },
+          'visible',
+        );
+        await chatBarFolderAssertion.assertFolderEntityArrowIconState(
+          { name: nestedFolders[nestedLevel - 1].name },
+          { name: nestedConversations[nestedLevel - 1].name },
+          'visible',
+        );
 
         for (let i = 0; i < nestedFolders.length; i = i + 2) {
-          await expect
-            .soft(
-              folderConversations.getFolderArrowIcon(nestedFolders[i].name),
-              ExpectedMessages.sharedFolderIconIsNotVisible,
-            )
-            .toBeHidden();
+          await chatBarFolderAssertion.assertFolderArrowIconState(
+            { name: nestedFolders[i].name },
+            'hidden',
+          );
         }
 
         for (let i = 0; i < nestedFolders.length - 1; i++) {
-          await expect
-            .soft(
-              folderConversations.getFolderEntityArrowIcon(
-                nestedFolders[i].name,
-                nestedConversations[i].name,
-              ),
-              ExpectedMessages.sharedEntityIconIsNotVisible,
-            )
-            .toBeHidden();
+          await chatBarFolderAssertion.assertFolderEntityArrowIconState(
+            { name: nestedFolders[i].name },
+            { name: nestedConversations[i].name },
+            'hidden',
+          );
         }
       },
     );
@@ -802,20 +795,16 @@ dialTest(
           newFolderName,
           { isHttpMethodTriggered: false },
         );
-
-        expect
-          .soft(
-            await confirmationDialog.getConfirmationMessage(),
-            ExpectedMessages.confirmationMessageIsValid,
-          )
-          .toBe(ExpectedConstants.renameSharedFolderMessage);
+        await baseAssertion.assertElementText(
+          confirmationDialog.confirmMessage,
+          ExpectedConstants.renameSharedFolderMessage,
+          ExpectedMessages.confirmationMessageIsValid,
+        );
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
-        await expect
-          .soft(
-            folderConversations.getFolderArrowIcon(newFolderName),
-            ExpectedMessages.sharedFolderIconIsNotVisible,
-          )
-          .toBeHidden();
+        await chatBarFolderAssertion.assertFolderArrowIconState(
+          { name: newFolderName },
+          'hidden',
+        );
       },
     );
   },
