@@ -1,3 +1,5 @@
+import { splitEntityId } from '@/src/utils/app/shared-utils';
+
 import { PartialBy } from '@/src/types/common';
 import { Prompt, PromptInfo, TemplateParameter } from '@/src/types/prompt';
 
@@ -5,7 +7,6 @@ import { PROMPT_VARIABLE_REGEX_GLOBAL } from '@/src/constants/folders';
 
 import { getPromptApiKey, parsePromptApiKey } from '../server/api';
 import { constructPath } from './file';
-import { splitEntityId } from './folders';
 
 import { TemplateMapping } from '@epam/ai-dial-shared';
 import escapeRegExp from 'lodash-es/escapeRegExp';
