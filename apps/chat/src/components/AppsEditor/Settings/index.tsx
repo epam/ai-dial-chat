@@ -8,6 +8,8 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
+import { useRouter } from 'next/router';
+
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -16,6 +18,7 @@ import {
   isApplicationDeployed,
   isApplicationDeploymentInProgress,
 } from '@/src/utils/app/application';
+import { decode } from '@/src/utils/app/application-type-schema';
 
 import {
   ApiDetailedApplicationTypeSchema,
@@ -42,6 +45,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_QUICK_APPS_SCHEMA_ID } from '@/src/constants/quick-apps';
+import { Routes } from '@/src/constants/routes';
 
 import Tooltip from '../../Common/Tooltip';
 import { ApplicationView } from './ApplicationView';
@@ -77,6 +81,7 @@ export const ApplicationSettings: React.FC<Props> = ({
   schema,
   type,
 }) => {
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const pythonVersions = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
@@ -212,6 +217,19 @@ export const ApplicationSettings: React.FC<Props> = ({
   }, [debouncedSave]);
 
   const formViewElement = getFormView(type);
+
+  useEffect(() => {
+    const redirectHandler = (url: string) => {
+      const pathname = new URL(url, window.location.origin).pathname;
+      const targetRoute = Routes.AppsEditorGeneralInfo.replace('[slug]', type);
+
+      if (decode(pathname ?? '') === targetRoute) saveForm();
+    };
+
+    router.events.on('routeChangeStart', redirectHandler);
+
+    return () => router.events.off('routeChangeStart', redirectHandler);
+  }, [saveForm, router.events, type]);
 
   useEffect(() => {
     if (

@@ -22,13 +22,13 @@ import { combineEpics } from 'redux-observable';
 
 import { parseCommaSeparatedList } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
-import { splitEntityId } from '@/src/utils/app/folders';
 import { getConversationRootId } from '@/src/utils/app/id';
 import {
   isPostMessageOverlayRequest,
   sendPMEvent,
   sendPMResponse,
 } from '@/src/utils/app/overlay';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { AppEpic } from '@/src/types/store';
 

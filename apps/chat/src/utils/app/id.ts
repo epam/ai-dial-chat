@@ -1,3 +1,5 @@
+import { splitEntityId } from '@/src/utils/app/shared-utils';
+
 import { ApiKeys, FeatureType } from '@/src/types/common';
 
 import { DRAFT_APPLICATION_ID } from '@/src/constants/applications';
@@ -5,7 +7,6 @@ import { LOCAL_BUCKET } from '@/src/constants/chat';
 
 import { BucketService } from './data/bucket-service';
 import { constructPath } from './file';
-import { splitEntityId } from './folders';
 import { EnumMapper } from './mappers';
 
 export const getRootId = ({

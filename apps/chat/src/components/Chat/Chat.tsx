@@ -580,11 +580,15 @@ const ChatView = memo(() => {
       }
     }
   }, [modelsMap, applicationTypeSchemas, selectedConversations]);
+
   useEffect(() => {
-    if (textareaRef.current) {
+    if (
+      !enabledFeatures.has(Feature.SkipFocusChatInputOnLoad) &&
+      textareaRef.current
+    ) {
       textareaRef.current.focus();
     }
-  }, []);
+  }, [enabledFeatures]);
 
   return (
     <div
@@ -1020,7 +1024,11 @@ const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
 
 ChatView.displayName = 'ChatView';
 
-export function Chat() {
+interface ChatProps {
+  isPreview?: boolean;
+}
+
+export function Chat({ isPreview }: ChatProps) {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
@@ -1117,7 +1125,7 @@ export function Chat() {
   return (
     <>
       <ChatView />
-      <ChatInputFooter />
+      {!isPreview && <ChatInputFooter />}
     </>
   );
 }
