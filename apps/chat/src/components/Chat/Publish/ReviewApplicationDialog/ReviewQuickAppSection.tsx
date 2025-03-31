@@ -8,7 +8,7 @@ import {
   isQuickApp,
 } from '@/src/utils/app/application';
 import { constructPath } from '@/src/utils/app/file';
-import { splitEntityId } from '@/src/utils/app/folders';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';

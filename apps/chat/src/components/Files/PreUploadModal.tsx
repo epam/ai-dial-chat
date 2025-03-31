@@ -22,11 +22,9 @@ import {
   notAllowedSymbols,
   prepareFileName,
 } from '@/src/utils/app/file';
-import {
-  getParentAndCurrentFoldersById,
-  splitEntityId,
-} from '@/src/utils/app/folders';
+import { getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
 import { getFileRootId, isMyBucket } from '@/src/utils/app/id';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';

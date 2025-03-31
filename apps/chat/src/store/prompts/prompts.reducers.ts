@@ -261,35 +261,28 @@ export const promptsSlice = createSlice({
     },
     updateFolder: (
       state,
-      {
-        payload,
-      }: PayloadAction<{
+      _action: PayloadAction<{
         folderId: string;
         values: Partial<FolderInterface>;
       }>,
-    ) => {
-      state.folders = state.folders.map((folder) => {
-        if (folder.id === payload.folderId) {
-          return {
-            ...folder,
-            ...payload.values,
-          };
-        }
-
-        return folder;
-      });
-    },
-    updateFolderSuccess: (
+    ) => state,
+    updateFoldersSuccess: (
       state,
       {
         payload,
       }: PayloadAction<{
-        folders: FolderInterface[];
-        prompts: PromptInfo[];
+        folders: { oldId: string; newFolder: FolderInterface }[];
       }>,
     ) => {
-      state.folders = payload.folders;
-      state.prompts = payload.prompts;
+      payload.folders.forEach(({ oldId, newFolder }) => {
+        const folderIndex = state.folders.findIndex(
+          (folder) => folder.id === oldId,
+        );
+
+        if (folderIndex !== -1) {
+          state.folders[folderIndex] = newFolder;
+        }
+      });
     },
     setFolders: (
       state,
