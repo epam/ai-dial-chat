@@ -637,7 +637,9 @@ const resetSelectedWidgetEpic: AppEpic = (action$) =>
     ),
     switchMap(({ payload }) => {
       if (
-        'conversationIds' in payload ? !!payload.conversationIds?.length : true
+        typeof payload !== 'string' && payload
+          ? !!payload.conversationIds?.length
+          : true
       ) {
         return of(ApplicationActions.selectWidget(undefined));
       }
