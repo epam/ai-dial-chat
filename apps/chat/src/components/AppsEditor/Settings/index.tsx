@@ -219,6 +219,11 @@ export const ApplicationSettings: React.FC<Props> = ({
     defaultValues: getDefaultValues(type) ?? {},
   });
 
+  const saveForm = useCallback(() => {
+    methods.formState.isValid &&
+      dispatch(ApplicationActions.setShouldSaveApplication(true));
+  }, [dispatch, methods.formState.isValid]);
+
   const formViewElement = getFormView(type);
 
   useEffect(() => {
