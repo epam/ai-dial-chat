@@ -25,7 +25,6 @@ import {
   getParentFolderIdsFromEntityId,
   isFolderEmpty,
   sortByName,
-  splitEntityId,
 } from '@/src/utils/app/folders';
 import {
   isConversationWithFormSchema,
@@ -44,6 +43,7 @@ import {
   getMyItemsFilters,
   isSearchTermMatched,
 } from '@/src/utils/app/search';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 
 import { Conversation } from '@/src/types/chat';
@@ -141,6 +141,22 @@ export const selectFilteredConversations = (
 
 export const selectFolders = (state: RootState) =>
   rootSelector(state).folders || [];
+
+export const selectFolderById = createSelector(
+  [selectFolders, (_state, id: string) => id],
+  (folders, id) => {
+    return folders.find((folder) => folder.id === id);
+  },
+);
+
+export const selectFoldersByFolderId = createSelector(
+  [selectFolders, (_state, folderId: string) => folderId],
+  (folders, folderId) => {
+    const folderPath = `${folderId}/`;
+
+    return folders.filter((folder) => folder.id.startsWith(folderPath));
+  },
+);
 
 export const selectPublicationFolders = createSelector(
   [rootSelector],

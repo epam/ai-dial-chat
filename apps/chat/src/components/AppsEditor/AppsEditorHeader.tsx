@@ -1,6 +1,7 @@
 import {
   IconCircleCheck,
   IconCircleDot,
+  IconLogout,
   IconMenu2,
   IconX,
 } from '@tabler/icons-react';
@@ -32,8 +33,6 @@ import { User } from '@/src/components/Header/User/User';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
 import { Logo } from '../Header/Logo';
-
-import LogOutIcon from '@/public/images/icons/log-out.svg';
 
 enum TabKeys {
   GENERAL = 'general',
@@ -204,7 +203,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
               onClick={handleSaveAndRedirect}
               data-qa="save-and-exit"
             >
-              <LogOutIcon width={14} height={14} />
+              <IconLogout size={14} />
               <span>{t('Save and exit')}</span>
             </button>
           ) : (
@@ -215,7 +214,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
                 query: { tab: MarketplaceTabs.MY_WORKSPACE },
               }}
             >
-              <LogOutIcon width={14} height={14} />
+              <IconLogout size={14} />
               <span>{t('Exit')}</span>
             </Link>
           )}
@@ -255,7 +254,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
               query: { tab: MarketplaceTabs.MY_WORKSPACE },
             }}
           >
-            <LogOutIcon width={14} height={14} />
+            <IconLogout size={14} />
             <span>{t('Go to marketplace')}</span>
           </Link>
         </div>

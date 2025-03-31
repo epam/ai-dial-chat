@@ -113,7 +113,7 @@ export const ApplicationPreviewChat: React.FC<Props> = ({
       ) : isExiting ? (
         <div className="size-full" />
       ) : (
-        <Chat />
+        <Chat isPreview />
       )}
     </div>
   );

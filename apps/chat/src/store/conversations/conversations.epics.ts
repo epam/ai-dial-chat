@@ -34,10 +34,6 @@ import { combineEpics } from 'redux-observable';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import {
-  combineEntities,
-  updateEntitiesFoldersAndIds,
-} from '@/src/utils/app/common';
-import {
   addPausedError,
   excludeSystemMessages,
   getConversationInfoFromId,
@@ -62,9 +58,8 @@ import {
   getNextDefaultName,
   getParentFolderIdsFromEntityId,
   getParentFolderIdsFromFolderId,
-  splitEntityId,
-  updateMovedEntityId,
-  updateMovedFolderId,
+  updateChildAndCurrentFoldersIds,
+  updateChildFoldersIds,
 } from '@/src/utils/app/folders';
 import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
 import {
@@ -88,6 +83,7 @@ import {
   isEntityIdPublic,
   mapPublishedItems,
 } from '@/src/utils/app/publications';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
 import { parseConversationApiKey } from '@/src/utils/server/api';
@@ -790,12 +786,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
         );
       const folders = ConversationsSelectors.selectFolders(state$.value);
 
-      const localConversations =
-        ConversationsSelectors.selectLocalConversations(state$.value);
-
-      const conversationIds = [...conversations, ...localConversations].map(
-        (conv) => conv.id,
-      );
+      const conversationIds = conversations.map((conv) => conv.id);
 
       if (conversationIds.length) {
         actions.push(
@@ -828,105 +819,72 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.updateFolder.match),
     switchMap(({ payload }) => {
-      const folder = getFolderFromId(payload.folderId, FolderType.Chat);
-      const newFolder = addGeneratedFolderId({ ...folder, ...payload.values });
+      const state = state$.value;
+      const folder = ConversationsSelectors.selectFolderById(
+        state,
+        payload.folderId,
+      );
 
-      if (payload.folderId === newFolder.id) {
+      if (!folder) {
         return EMPTY;
       }
 
-      const conversations =
-        ConversationsSelectors.selectConversationsByFolderId(
-          state$.value,
-          payload.folderId,
-        );
+      const newFolder = addGeneratedFolderId({ ...folder, ...payload.values });
 
-      const updateFolderId = updateMovedFolderId.bind(
-        null,
-        payload.folderId,
-        newFolder.id,
-      );
-      const updateEntityId = updateMovedEntityId.bind(
-        null,
-        payload.folderId,
-        newFolder.id,
-      );
-
-      const folders = ConversationsSelectors.selectFolders(state$.value);
-      const allConversations = ConversationsSelectors.selectConversations(
-        state$.value,
-      );
-      const openedFoldersIds = UISelectors.selectOpenedFoldersIds(
-        FeatureType.Chat,
-      )(state$.value);
-      const selectedConversationsIds =
-        ConversationsSelectors.selectSelectedConversationsIds(state$.value);
-
-      const { updatedFolders, updatedOpenedFoldersIds } =
-        updateEntitiesFoldersAndIds(
-          conversations,
-          folders,
-          updateFolderId,
-          openedFoldersIds,
-        );
-
-      const updatedConversations = combineEntities(
-        allConversations.map((conv) =>
-          regenerateConversationId({
-            ...conv,
-            folderId: updateFolderId(conv.folderId),
+      if (payload.folderId === newFolder.id) {
+        return of(
+          ConversationsActions.updateFoldersSuccess({
+            folders: [{ oldId: payload.folderId, newFolder }],
           }),
-        ),
-        conversations.map((conv) =>
-          regenerateConversationId({
-            ...conv,
-            folderId: updateFolderId(conv.folderId),
-          }),
-        ),
-      );
-
-      const updatedSelectedConversationsIds = selectedConversationsIds.map(
-        (id) => updateEntityId(id),
-      );
-
-      const actions: Observable<AnyAction>[] = [];
-
-      if (conversations.length) {
-        conversations.forEach((conversation) => {
-          actions.push(
-            of(
-              ConversationsActions.updateConversation({
-                id: conversation.id,
-                values: {
-                  folderId: updateFolderId(conversation.folderId),
-                },
-              }),
-            ),
-          );
-        });
+        );
       }
 
-      actions.push(
-        of(
-          ConversationsActions.updateFolderSuccess({
-            folders: updatedFolders,
-            conversations: updatedConversations,
-            selectedConversationsIds: updatedSelectedConversationsIds,
-          }),
-        ),
+      const openedFolderIds = UISelectors.selectOpenedFoldersIds(
+        FeatureType.Chat,
+      )(state);
+      const updatedOpenedFolderIds = updateChildAndCurrentFoldersIds(
+        openedFolderIds,
+        payload.folderId,
+        newFolder.id,
+      );
+
+      const folders = ConversationsSelectors.selectFoldersByFolderId(
+        state,
+        payload.folderId,
+      );
+      const updatedFolders = [
+        ...updateChildFoldersIds(folders, payload.folderId, newFolder.id),
+        { oldId: payload.folderId, newFolder },
+      ];
+
+      const conversations =
+        ConversationsSelectors.selectConversationsByFolderId(
+          state,
+          payload.folderId,
+        );
+      return concat(
+        ...conversations.map((conv) => {
+          return of(
+            ConversationsActions.updateConversation({
+              id: conv.id,
+              values: {
+                folderId: conv.folderId.replace(payload.folderId, newFolder.id),
+              },
+            }),
+          );
+        }),
         of(
           UIActions.setOpenedFoldersIds({
-            openedFolderIds: updatedOpenedFoldersIds,
+            openedFolderIds: updatedOpenedFolderIds,
             featureType: FeatureType.Chat,
           }),
         ),
+        of(
+          ConversationsActions.updateFoldersSuccess({
+            folders: updatedFolders,
+          }),
+        ),
       );
-
-      return concat(...actions);
-    }),
-    catchError((err) => {
-      console.error('Error during upload conversations and folders', err);
-      return of(ConversationsActions.uploadConversationsFail());
     }),
   );
 
@@ -1055,14 +1013,12 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
 const rateMessageEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.rateMessage.match),
-    map(({ payload }) => ({
-      payload,
-      conversations: ConversationsSelectors.selectConversations(state$.value),
-    })),
-    switchMap(({ conversations, payload }) => {
-      const conversation = conversations.find(
-        (conv) => conv.id === payload.conversationId,
+    switchMap(({ payload }) => {
+      const conversation = ConversationsSelectors.selectConversation(
+        state$.value,
+        payload.conversationId,
       );
+
       if (!conversation) {
         return of(
           ConversationsActions.rateMessageFail({
@@ -1072,6 +1028,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
           }),
         );
       }
+
       const message = (conversation as Conversation).messages[
         payload.messageIndex
       ];
@@ -1121,19 +1078,17 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
 const updateMessageEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.updateMessage.match),
-    map(({ payload }) => ({
-      payload,
-      conversations: ConversationsSelectors.selectConversations(state$.value),
-    })),
-    switchMap(({ conversations, payload }) => {
-      const conversation = conversations.find(
-        (conv) => conv.id === payload.conversationId,
+    switchMap(({ payload }) => {
+      const conversation = ConversationsSelectors.selectConversation(
+        state$.value,
+        payload.conversationId,
       ) as Conversation;
+
       if (!conversation || !conversation.messages[payload.messageIndex]) {
         return EMPTY;
       }
 
-      const actions = [];
+      const actions: Observable<AnyAction>[] = [];
       const messages = [...conversation.messages];
       messages[payload.messageIndex] = {
         ...messages[payload.messageIndex],
@@ -1367,11 +1322,8 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
 const streamMessageEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.streamMessage.match),
-    map(({ payload }) => ({
-      payload,
-      modelsMap: ModelsSelectors.selectModelsMap(state$.value),
-    })),
-    map(({ payload, modelsMap }) => {
+    map(({ payload }) => {
+      const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
       const lastModel = modelsMap[payload.conversation.model.id];
       const selectedAddons = uniq([
         ...payload.conversation.selectedAddons,
@@ -1603,9 +1555,8 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
           state$.value,
         );
 
-      const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
-
       const errorMessage = responseJSON?.message || payload.message;
+      const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
 
       const messages = [...payload.conversation.messages];
       const modelId = messages[messages.length - 1].model?.id;
@@ -1639,6 +1590,7 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
         payload.response?.status === 404 && modelReference
           ? of(ModelsActions.deleteModels({ references: [modelReference] }))
           : EMPTY,
+
         of(UIActions.showErrorToast(translate(errorMessage))),
         of(
           ConversationsActions.updateMessage({
@@ -1709,13 +1661,10 @@ const cleanMessagesEpic: AppEpic = (action$, state$) =>
 const deleteMessageEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.deleteMessage.match),
-    map(({ payload }) => ({
-      payload,
-      selectedConversations: ConversationsSelectors.selectSelectedConversations(
-        state$.value,
-      ),
-    })),
-    switchMap(({ payload, selectedConversations }) => {
+    switchMap(({ payload }) => {
+      const selectedConversations =
+        ConversationsSelectors.selectSelectedConversations(state$.value);
+
       return concat(
         ...selectedConversations.map((conv) => {
           const { messages } = conv;
@@ -1937,7 +1886,7 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
       (action) =>
         ConversationsActions.createFolder.match(action) ||
         ConversationsActions.deleteFolder.match(action) ||
-        ConversationsActions.updateFolderSuccess.match(action) ||
+        ConversationsActions.updateFoldersSuccess.match(action) ||
         ConversationsActions.clearConversations.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
         ConversationsActions.addFolders.match(action) ||
@@ -1992,7 +1941,7 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(
       (action) =>
-        ConversationsActions.updateFolderSuccess.match(action) ||
+        ConversationsActions.updateFoldersSuccess.match(action) ||
         ConversationsActions.selectConversations.match(action) ||
         ConversationsActions.unselectConversations.match(action) ||
         ConversationsActions.updateConversationSuccess.match(action) ||
@@ -2170,15 +2119,12 @@ const playbackNextMessageEndEpic: AppEpic = (action$, state$) =>
       ) as Conversation,
     })),
     switchMap(({ selectedConversation }) => {
-      if (!selectedConversation) {
-        return EMPTY;
-      }
-      if (!selectedConversation.playback) {
+      if (!selectedConversation || !selectedConversation.playback) {
         return EMPTY;
       }
       const activeIndex = selectedConversation.playback.activePlaybackIndex;
 
-      const assistantMessage: Message =
+      const assistantMessage =
         selectedConversation.playback.messagesStack[activeIndex];
 
       const messagesDeletedLastMessage = selectedConversation.messages.slice(
@@ -2457,7 +2403,7 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         of(
           ConversationsActions.updateConversationSuccess({
             id,
-            conversation: { ...newConversation },
+            conversation: newConversation,
           }),
         ),
       );
@@ -3150,7 +3096,7 @@ const updateLastConversationSettingsEpic: AppEpic = (action$, state$) =>
       (action) =>
         ConversationsActions.initFoldersAndConversationsSuccess.match(action) ||
         ConversationsActions.deleteConversationsComplete.match(action) ||
-        ConversationsActions.updateFolderSuccess.match(action) ||
+        ConversationsActions.updateFoldersSuccess.match(action) ||
         ConversationsActions.setConversations.match(action) ||
         ConversationsActions.uploadConversationsWithFoldersRecursiveSuccess.match(
           action,
