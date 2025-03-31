@@ -25,6 +25,7 @@ interface CreateNewEntityButtonProps {
   tooltip: string;
   isDisabled?: boolean;
   showSpinner?: boolean;
+  colorsClass?: string;
   onClick: () => void;
 }
 
@@ -33,6 +34,7 @@ const CreateNewEntityButton: React.FC<CreateNewEntityButtonProps> = ({
   tooltip,
   isDisabled,
   showSpinner,
+  colorsClass = 'bg-accent-primary-alpha text-accent-primary hover:border-accent-primary',
   onClick,
 }) => {
   const { t } = useTranslation(Translation.Header);
@@ -54,17 +56,13 @@ const CreateNewEntityButton: React.FC<CreateNewEntityButtonProps> = ({
         ) : (
           <div
             className={classNames(
-              'flex items-center justify-center rounded-full border border-transparent bg-accent-primary-alpha p-[3px] ',
-              isDisabled
-                ? 'cursor-not-allowed'
-                : 'cursor-pointer hover:border-accent-primary',
+              'flex items-center justify-center rounded-full border border-transparent p-[3px]',
+              isDisabled ? 'cursor-not-allowed' : 'cursor-pointer',
+              colorsClass,
             )}
           >
             <IconPlus
-              className={classNames(
-                'text-accent-primary',
-                isDisabled ? 'cursor-not-allowed' : 'cursor-pointer',
-              )}
+              className={isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}
               size={iconSize}
             />
           </div>
@@ -107,6 +105,10 @@ export const CreateNewConversation: React.FC<Props> = ({ iconSize }) => {
       onClick={handleCreate}
       iconSize={iconSize}
       showSpinner={!areConversationsLoaded}
+      colorsClass={classNames(
+        'bg-accent-secondary-alpha text-accent-secondary',
+        !messageIsStreaming && 'hover:border-accent-secondary',
+      )}
     />
   );
 };
@@ -126,6 +128,7 @@ export const CreateNewPrompt: React.FC<Props> = ({ iconSize }) => {
       tooltip="New prompt"
       onClick={handleCreate}
       iconSize={iconSize}
+      colorsClass="bg-accent-tertiary-alpha text-accent-tertiary hover:border-accent-tertiary"
     />
   );
 };
