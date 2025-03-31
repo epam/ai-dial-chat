@@ -43,7 +43,23 @@ export const marketplaceSlice = createSlice({
   name: 'marketplace',
   initialState,
   reducers: {
-    init: () => initialState,
+    init: (state) => state,
+    initSuccess: (
+      state,
+      { payload }: PayloadAction<{ saveFilters: boolean }>,
+    ) => {
+      if (!payload.saveFilters) {
+        return initialState;
+      }
+
+      return {
+        ...initialState,
+        searchTerm: state.searchTerm,
+        selectedFilters: state.selectedFilters,
+        selectedView: state.selectedView,
+        tableSort: state.tableSort,
+      };
+    },
     initQueryParams: (state) => state,
     setState: (
       state,
