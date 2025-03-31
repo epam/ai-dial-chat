@@ -16,4 +16,5 @@ export interface ApplicationState {
   publicFolders: FolderInterface[];
 
   selectedWidget?: string;
+  returnConversationIds?: string[];
 }

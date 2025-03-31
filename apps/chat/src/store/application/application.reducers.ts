@@ -213,6 +213,12 @@ export const applicationSlice = createSlice({
     selectWidget: (state, { payload }: PayloadAction<string | undefined>) => {
       state.selectedWidget = payload;
     },
+    setReturnConversationIds(
+      state,
+      { payload }: PayloadAction<string[] | undefined>,
+    ) {
+      state.returnConversationIds = payload;
+    },
   },
 });
 

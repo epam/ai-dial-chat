@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
@@ -38,6 +38,8 @@ export default function AppsSettings() {
         : decode(slug?.toString() ?? ''),
     [slug],
   );
+
+  const [isExiting, setIsExiting] = useState(false);
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
@@ -79,6 +81,10 @@ export default function AppsSettings() {
     ],
   );
 
+  const handleOnExit = useCallback(() => {
+    setIsExiting(true);
+  }, []);
+
   return (
     <div className="flex size-full flex-col">
       {isLoading ? (
@@ -97,10 +103,12 @@ export default function AppsSettings() {
                 : decode(slug.toString())
             }
             hasCustomEditor={!!schema?.['dial:applicationTypeEditorUrl']}
+            onExit={handleOnExit}
           />
           <div className="flex size-full grow overflow-hidden">
             {applicationData && (
               <ApplicationSettings
+                isExiting={isExiting}
                 applicationData={applicationData}
                 schema={isSchemaApplicationType ? schema : null}
                 type={type ?? ''}

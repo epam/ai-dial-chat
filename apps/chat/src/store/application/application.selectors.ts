@@ -50,6 +50,9 @@ const selectPublicFolders = (state: RootState) =>
 const selectSelectedWidget = (state: RootState) =>
   rootSelector(state).selectedWidget;
 
+const selectReturnConversationIds = (state: RootState) =>
+  rootSelector(state).returnConversationIds;
+
 export const ApplicationSelectors = {
   selectAppLoading,
   selectIsApplicationLoading,
@@ -60,4 +63,5 @@ export const ApplicationSelectors = {
   selectApplicationLogs,
   selectPublicFolders,
   selectSelectedWidget,
+  selectReturnConversationIds,
 };

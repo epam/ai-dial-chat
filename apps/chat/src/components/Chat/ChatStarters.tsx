@@ -6,6 +6,7 @@ import { ChatActions } from '@/src/store/chat/chat.reducer';
 import { ChatSelectors } from '@/src/store/chat/chat.selectors';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { FormSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/FormSchema';
 
@@ -22,6 +23,7 @@ interface ChatStartersViewProps {
 const ChatStartersView = ({ schema }: ChatStartersViewProps) => {
   const dispatch = useAppDispatch();
 
+  const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
   const formValue = useAppSelector(ChatSelectors.selectChatFormValue);
 
   const handleChange = useCallback(
@@ -53,10 +55,12 @@ const ChatStartersView = ({ schema }: ChatStartersViewProps) => {
       formValue={formValue}
       showSelected
       onChange={handleChange}
-      buttonsWrapperClassName="overflow-y-hidden md:px-4 px-2 lg:px-0"
+      buttonsWrapperClassName="overflow-y-hidden md:px-4 px-2 lg:px-0 justify-center"
       buttonClassName="shrink-0"
       wrapperClassName="lg:items-center"
-      propertyWrapperClassName="lg:w-[768px]"
+      propertyWrapperClassName={
+        isChatFullWidth ? 'px-4 md:px-20' : 'max-w-screen-md'
+      }
     />
   );
 };

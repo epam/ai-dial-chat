@@ -33,7 +33,7 @@ import {
 import { encode } from '@/src/utils/app/application-type-schema';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
-import { isEntityIdExternal } from '@/src/utils/app/id';
+import { isEntityIdExternal, isEntityIdLocal } from '@/src/utils/app/id';
 import { translate } from '@/src/utils/app/translation';
 import { parseApplicationApiKey } from '@/src/utils/server/api';
 
@@ -53,7 +53,10 @@ import { Routes } from '@/src/constants/routes';
 import { ApplicationActions } from '../application/application.reducers';
 import { ApplicationTypesSchemasActions } from '../applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { AuthSelectors } from '../auth/auth.reducers';
-import { ConversationsActions } from '../conversations/conversations.reducers';
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '../conversations/conversations.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { ShareActions, ShareSelectors } from '../share/share.reducers';
 
@@ -556,9 +559,15 @@ const enterEditModeEpic: AppEpic = (action$, _state$, { router }) =>
       const { entity, applicationType, detailedApplicationTypeSchemaId } =
         payload;
 
+      const selectedConversationIds =
+        ConversationsSelectors.selectSelectedConversationsIds(state$.value);
+
       const initialActions$ = of(
         ApplicationActions.setShouldSaveApplication(false),
         ApplicationActions.setExitAfterSave(false),
+        ApplicationActions.setReturnConversationIds(
+          selectedConversationIds.filter((id) => !isEntityIdLocal({ id })),
+        ),
       );
 
       const actions: AnyAction[] = [
