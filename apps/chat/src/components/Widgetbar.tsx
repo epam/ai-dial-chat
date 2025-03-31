@@ -1,21 +1,18 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
 import { useScreenState } from '../hooks/useScreenState';
+import { useWidgets } from '../hooks/useWidgets';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { ScreenState } from '../types/common';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { ApplicationSelectors } from '@/src/store/application/application.selectors';
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { Routes } from '@/src/constants/routes';
@@ -34,31 +31,12 @@ export const Widgetbar = () => {
   const screenState = useScreenState();
 
   const showWidgetbar = useAppSelector(UISelectors.selectShowWidgetbar);
-  const widgetsSchemaIds = useAppSelector(
-    SettingsSelectors.selectWidgetsSchemaIds,
-  );
-  const models = useAppSelector(ModelsSelectors.selectModels);
+
   const selectedWidget = useAppSelector(
     ApplicationSelectors.selectSelectedWidget,
   );
 
-  const widgetModels = useMemo(() => {
-    return models.filter((m) =>
-      widgetsSchemaIds.has(m.applicationTypeSchemaId ?? ''),
-    );
-  }, [models, widgetsSchemaIds]);
-
-  const handleSelectWidget = useCallback(
-    (id: string) => {
-      dispatch(ApplicationActions.selectWidget(id));
-      dispatch(
-        ConversationsActions.selectConversations({
-          conversationIds: [],
-        }),
-      );
-    },
-    [dispatch],
-  );
+  const { widgetModels, handleSelectWidget } = useWidgets();
 
   const handleClick = useCallback(
     (id: string) => {

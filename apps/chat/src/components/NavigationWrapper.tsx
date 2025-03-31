@@ -5,12 +5,13 @@ import {
   IconMessage2,
   TablerIconsProps,
 } from '@tabler/icons-react';
-import { JSX, ReactNode, useCallback, useMemo } from 'react';
+import { JSX, ReactNode, useCallback } from 'react';
 
 import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
+import { useWidgets } from '../hooks/useWidgets';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
@@ -25,7 +26,6 @@ import {
   MarketplaceActions,
   MarketplaceSelectors,
 } from '@/src/store/marketplace/marketplace.reducers';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
@@ -185,33 +185,14 @@ const UsedWidgets = () => {
   const { t } = useTranslation(Translation.SideBar);
 
   const router = useRouter();
+
   const dispatch = useAppDispatch();
 
-  const widgetsSchemaIds = useAppSelector(
-    SettingsSelectors.selectWidgetsSchemaIds,
-  );
-  const models = useAppSelector(ModelsSelectors.selectModels);
   const selectedWidget = useAppSelector(
     ApplicationSelectors.selectSelectedWidget,
   );
 
-  const widgetModels = useMemo(() => {
-    return models.filter((m) =>
-      widgetsSchemaIds.has(m.applicationTypeSchemaId ?? ''),
-    );
-  }, [models, widgetsSchemaIds]);
-
-  const handleSelectWidget = useCallback(
-    (id: string) => {
-      dispatch(ApplicationActions.selectWidget(id));
-      dispatch(
-        ConversationsActions.selectConversations({
-          conversationIds: [],
-        }),
-      );
-    },
-    [dispatch],
-  );
+  const { widgetModels, handleSelectWidget } = useWidgets();
 
   const handleClick = useCallback(
     (id: string) => {
