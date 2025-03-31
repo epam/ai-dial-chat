@@ -18,8 +18,6 @@ import { Spinner } from '@/src/components/Common/Spinner';
 import { UploadStatus } from '@epam/ai-dial-shared';
 
 interface Props {
-  handlePreviewMouseLeave: () => void;
-  handlePreviewMouseEnter: () => void;
   isAppDeploymentInProgress: boolean;
   isApplicationValid: boolean;
   applicationId: string;
@@ -29,8 +27,6 @@ interface Props {
 }
 
 export const ApplicationPreviewChat: React.FC<Props> = ({
-  handlePreviewMouseLeave,
-  handlePreviewMouseEnter,
   isAppDeploymentInProgress,
   isApplicationValid,
   applicationId,
@@ -62,11 +58,7 @@ export const ApplicationPreviewChat: React.FC<Props> = ({
   }
 
   return (
-    <div
-      className="relative flex size-full min-w-0 grow flex-col"
-      onMouseEnter={handlePreviewMouseEnter}
-      onMouseLeave={handlePreviewMouseLeave}
-    >
+    <div className="relative flex size-full min-w-0 grow flex-col">
       {appLoading === UploadStatus.LOADING && (
         <div className="absolute flex size-full items-center justify-center bg-layer-2">
           <Spinner size={30} />

@@ -192,14 +192,6 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           }),
         );
         lastSubmittedValuesRef.current = data;
-
-        if (isAppDeployed) {
-          dispatch(
-            UIActions.showWarningToast(
-              t('Saved changes will be applied during next deployment'),
-            ),
-          );
-        }
       } else {
         dispatch(ApplicationActions.setShouldSaveApplication(false));
         dispatch(ApplicationActions.setExitAfterSave(false));
@@ -208,8 +200,6 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     [
       oldApplication,
       dispatch,
-      isAppDeployed,
-      t,
       isShared,
       shouldSaveApplication,
       applicationStatus,
@@ -245,6 +235,13 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
         label: t('Save'),
         dataQa: 'save-option',
         onClick: () => {
+          if (isAppDeployed) {
+            dispatch(
+              UIActions.showWarningToast(
+                t('Saved changes will be applied during next deployment'),
+              ),
+            );
+          }
           dispatch(CodeEditorActions.saveAllModifiedFiles());
           if (editorConfirmation) {
             handleEdit(editorConfirmation);
@@ -253,7 +250,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
         },
       },
     ],
-    [t, editorConfirmation, handleEdit, dispatch],
+    [t, editorConfirmation, handleEdit, isAppDeployed, dispatch],
   );
 
   register('sourceFiles', validators['sourceFiles']);
