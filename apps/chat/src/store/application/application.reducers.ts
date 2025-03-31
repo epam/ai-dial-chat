@@ -210,6 +210,12 @@ export const applicationSlice = createSlice({
 
       state.publicFolders = uniqBy(folders, 'id');
     },
+    setReturnConversationIds(
+      state,
+      { payload }: PayloadAction<string[] | undefined>,
+    ) {
+      state.returnConversationIds = payload;
+    },
   },
 });
 

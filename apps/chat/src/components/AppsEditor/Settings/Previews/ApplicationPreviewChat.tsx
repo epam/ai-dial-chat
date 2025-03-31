@@ -25,6 +25,7 @@ interface Props {
   applicationId: string;
   type: string;
   isAppDeployed: boolean;
+  isExiting?: boolean;
 }
 
 export const ApplicationPreviewChat: React.FC<Props> = ({
@@ -35,11 +36,13 @@ export const ApplicationPreviewChat: React.FC<Props> = ({
   applicationId,
   type,
   isAppDeployed,
+  isExiting,
 }) => {
   const { t } = useTranslation(Translation.Chat);
-  const appLoading = useAppSelector(ApplicationSelectors.selectAppLoading);
+
   const dispatch = useAppDispatch();
 
+  const appLoading = useAppSelector(ApplicationSelectors.selectAppLoading);
   const isConversationInitialized = useAppSelector(
     ConversationsSelectors.selectInitialized,
   );
@@ -107,6 +110,8 @@ export const ApplicationPreviewChat: React.FC<Props> = ({
             </button>
           </div>
         )
+      ) : isExiting ? (
+        <div className="size-full" />
       ) : (
         <Chat isPreview />
       )}
