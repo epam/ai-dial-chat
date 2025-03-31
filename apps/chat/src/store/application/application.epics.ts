@@ -549,7 +549,7 @@ const getApplicationLogsEpic: AppEpic = (action$) =>
     ),
   );
 
-const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
+const enterEditModeEpic: AppEpic = (action$, _state$, { router }) =>
   action$.pipe(
     filter(ApplicationActions.enterEditMode.match),
     switchMap(({ payload }) => {
