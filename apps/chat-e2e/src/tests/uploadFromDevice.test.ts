@@ -12,6 +12,7 @@ import { keys } from '@/src/ui/keyboard';
 import { BaseElement, FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
+import { CDPSession } from 'playwright-chromium';
 
 let modelsWithAttachments: DialAIEntityModel[];
 let modelsWithoutAttachments: DialAIEntityModel[];
@@ -319,6 +320,7 @@ for (let i = 1; i <= 5; i++) {
         attachments.push(Attachment.incrementedImageName(i));
       }
       let conversation: Conversation;
+      let cdpSession: CDPSession;
 
       await dialTest.step(
         'Create empty conversation that allow input attachments',
@@ -359,7 +361,7 @@ for (let i = 1; i <= 5; i++) {
       await dialTest.step(
         'Upload 15 files at once and verify scroll appears on modal window',
         async () => {
-          await dialHomePage.emulateSlowNetworkConditions();
+          cdpSession = await dialHomePage.emulateSlowNetworkConditions();
           await uploadFromDeviceModal.addMoreFilesToUpload(...attachments);
           for (const attachment of attachments) {
             await baseAssertion.assertElementState(
@@ -380,6 +382,7 @@ for (let i = 1; i <= 5; i++) {
       await dialTest.step(
         'Click on "Upload" -> "Attach" buttons and verify files are attached to request',
         async () => {
+          await dialHomePage.stopNetworkConditionsEmulating(cdpSession);
           await uploadFromDeviceModal.uploadFiles();
           if (randomMenuItem === UploadMenuOptions.attachUploadedFiles) {
             await attachFilesModal.attachFiles();
