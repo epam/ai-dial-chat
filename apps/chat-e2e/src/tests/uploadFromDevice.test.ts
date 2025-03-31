@@ -12,7 +12,6 @@ import { keys } from '@/src/ui/keyboard';
 import { BaseElement, FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
-import { CDPSession } from 'playwright-chromium';
 
 let modelsWithAttachments: DialAIEntityModel[];
 let modelsWithoutAttachments: DialAIEntityModel[];
@@ -282,122 +281,121 @@ dialTest(
   },
 );
 
-for (let i = 1; i <= 5; i++) {
-  dialTest.only(
-    `${i}[Upload from device] opened from message box. Select 15 files at the same time.\n` +
-      '[Upload from device] opened from Attach files. Select 15 files at the same time.\n' +
-      '[Upload from device] Images are allowed to be selected if images are allowed only',
-    async ({
-      dialHomePage,
-      setTestIds,
-      attachFilesModal,
-      conversationData,
-      sendMessage,
-      dataInjector,
-      conversations,
-      conversationAssertion,
-      attachmentDropdownMenu,
-      uploadFromDeviceModal,
-      localStorageManager,
-      baseAssertion,
-      sendMessageInputAttachmentsAssertions,
-    }) => {
-      setTestIds('EPMRTC-2043', 'EPMRTC-2044', 'EPMRTC-3284');
-      const menuItems = Object.values(UploadMenuOptions);
-      const randomMenuItem =
-        menuItems[GeneratorUtil.randomNumberInRange(menuItems.length)];
-      const randomModelWithImageAttachment = GeneratorUtil.randomArrayElement(
-        modelsWithAttachments.filter(
-          (m) =>
-            m.inputAttachmentTypes?.length == 1 &&
-            m.inputAttachmentTypes[0] === Attachment.imageTypesExtension &&
-            !m.maxInputAttachments,
-        ),
-      );
-      const attachmentsCount = 15;
-      const attachments: string[] = [];
-      for (let i = 1; i <= attachmentsCount; i++) {
-        attachments.push(Attachment.incrementedImageName(i));
-      }
-      let conversation: Conversation;
-      let cdpSession: CDPSession;
+dialTest(
+  '[Upload from device] opened from message box. Select 15 files at the same time.\n' +
+    '[Upload from device] opened from Attach files. Select 15 files at the same time.\n' +
+    '[Upload from device] Images are allowed to be selected if images are allowed only',
+  async ({
+    dialHomePage,
+    setTestIds,
+    attachFilesModal,
+    conversationData,
+    sendMessage,
+    dataInjector,
+    conversations,
+    conversationAssertion,
+    attachmentDropdownMenu,
+    uploadFromDeviceModal,
+    localStorageManager,
+    baseAssertion,
+    sendMessageInputAttachmentsAssertions,
+  }) => {
+    setTestIds('EPMRTC-2043', 'EPMRTC-2044', 'EPMRTC-3284');
+    const menuItems = Object.values(UploadMenuOptions);
+    const randomMenuItem =
+      menuItems[GeneratorUtil.randomNumberInRange(menuItems.length)];
+    const randomModelWithImageAttachment = GeneratorUtil.randomArrayElement(
+      modelsWithAttachments.filter(
+        (m) =>
+          m.inputAttachmentTypes?.length == 1 &&
+          m.inputAttachmentTypes[0] === Attachment.imageTypesExtension &&
+          !m.maxInputAttachments,
+      ),
+    );
+    const attachmentsCount = 15;
+    const attachments: string[] = [];
+    for (let i = 1; i <= attachmentsCount; i++) {
+      attachments.push(Attachment.incrementedImageName(i));
+    }
+    let conversation: Conversation;
 
-      await dialTest.step(
-        'Create empty conversation that allow input attachments',
-        async () => {
-          conversation = conversationData.prepareEmptyConversation(
-            randomModelWithImageAttachment,
-          );
-          await dataInjector.createConversations([conversation]);
-          await localStorageManager.setRecentModelsIds(
-            randomModelWithImageAttachment,
-          );
-          await localStorageManager.setShowSideBarPanels();
-        },
-      );
+    await dialTest.step(
+      'Create empty conversation that allow input attachments',
+      async () => {
+        conversation = conversationData.prepareEmptyConversation(
+          randomModelWithImageAttachment,
+        );
+        await dataInjector.createConversations([conversation]);
+        await localStorageManager.setRecentModelsIds(
+          randomModelWithImageAttachment,
+        );
+        await localStorageManager.setShowSideBarPanels();
+      },
+    );
 
-      await dialTest.step(
-        'Open "Upload from device" modal for created conversation and verify supported types label is "images"',
-        async () => {
-          await dialHomePage.openHomePage();
-          await dialHomePage.waitForPageLoaded();
-          await conversations.selectConversation(conversation.name);
-          await conversationAssertion.assertSelectedConversation(
-            conversation.name,
-          );
-          await sendMessage.attachmentMenuTrigger.click();
-          await attachmentDropdownMenu.selectMenuOption(randomMenuItem);
-          if (randomMenuItem === UploadMenuOptions.attachUploadedFiles) {
-            await attachFilesModal.uploadFromDevice();
-          }
-          baseAssertion.assertValue(
-            await uploadFromDeviceModal.getModalHeader().getSupportedTypes(),
-            Attachment.imagesTypesLabel,
-            ExpectedMessages.supportedTypesLabelIsCorrect,
-          );
-        },
-      );
+    await dialTest.step(
+      'Open "Upload from device" modal for created conversation and verify supported types label is "images"',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
+        await conversationAssertion.assertSelectedConversation(
+          conversation.name,
+        );
+        await sendMessage.attachmentMenuTrigger.click();
+        await attachmentDropdownMenu.selectMenuOption(randomMenuItem);
+        if (randomMenuItem === UploadMenuOptions.attachUploadedFiles) {
+          await attachFilesModal.uploadFromDevice();
+        }
+        baseAssertion.assertValue(
+          await uploadFromDeviceModal.getModalHeader().getSupportedTypes(),
+          Attachment.imagesTypesLabel,
+          ExpectedMessages.supportedTypesLabelIsCorrect,
+        );
+      },
+    );
 
-      await dialTest.step(
-        'Upload 15 files at once and verify scroll appears on modal window',
-        async () => {
-          cdpSession = await dialHomePage.emulateSlowNetworkConditions();
-          await uploadFromDeviceModal.addMoreFilesToUpload(...attachments);
-          for (const attachment of attachments) {
-            await baseAssertion.assertElementState(
-              uploadFromDeviceModal.getUploadedFile(attachment),
-              'visible',
-              ExpectedMessages.fileIsUploaded,
-            );
-          }
-          expect
-            .soft(
-              await uploadFromDeviceModal.uploadedFiles.isElementScrollableVertically(),
-              ExpectedMessages.uploadedFilesAreaIsScrollable,
-            )
-            .toBeTruthy();
-        },
-      );
+    await dialTest.step(
+      'Upload 15 files at once and verify scroll appears on modal window',
+      async () => {
+        await dialHomePage.emulateSlowNetworkConditions({
+          downloadThroughput: -1,
+          uploadThroughput: -1,
+        });
+        await uploadFromDeviceModal.addMoreFilesToUpload(...attachments);
+        for (const attachment of attachments) {
+          await baseAssertion.assertElementState(
+            uploadFromDeviceModal.getUploadedFile(attachment),
+            'visible',
+            ExpectedMessages.fileIsUploaded,
+          );
+        }
+        expect
+          .soft(
+            await uploadFromDeviceModal.uploadedFiles.isElementScrollableVertically(),
+            ExpectedMessages.uploadedFilesAreaIsScrollable,
+          )
+          .toBeTruthy();
+      },
+    );
 
-      await dialTest.step(
-        'Click on "Upload" -> "Attach" buttons and verify files are attached to request',
-        async () => {
-          await dialHomePage.stopNetworkConditionsEmulating(cdpSession);
-          await uploadFromDeviceModal.uploadFiles();
-          if (randomMenuItem === UploadMenuOptions.attachUploadedFiles) {
-            await attachFilesModal.attachFiles();
-          }
-          for (const attachment of attachments) {
-            await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
-              attachment,
-              'visible',
-            );
-          }
-        },
-      );
-    },
-  );
-}
+    await dialTest.step(
+      'Click on "Upload" -> "Attach" buttons and verify files are attached to request',
+      async () => {
+        await uploadFromDeviceModal.uploadFiles();
+        if (randomMenuItem === UploadMenuOptions.attachUploadedFiles) {
+          await attachFilesModal.attachFiles();
+        }
+        for (const attachment of attachments) {
+          await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
+            attachment,
+            'visible',
+          );
+        }
+      },
+    );
+  },
+);
 
 dialTest(
   '[Upload from device] No error appears if to load two files with equal names but different extensions.\n' +
