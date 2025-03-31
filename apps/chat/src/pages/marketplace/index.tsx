@@ -35,7 +35,7 @@ function Marketplace() {
   return (
     <div className="flex size-full flex-col sm:pt-0">
       <MarketplaceHeader />
-      <div className="relative flex size-full grow overflow-hidden">
+      <div className="flex size-full grow overflow-hidden">
         <MarketplaceView />
 
         <ChatModalsManager />
