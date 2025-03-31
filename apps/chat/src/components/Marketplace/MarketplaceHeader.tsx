@@ -58,7 +58,7 @@ export const MarketplaceHeader = () => {
   return (
     <div
       className={classNames(
-        'z-40 flex w-full border-b border-tertiary bg-layer-3',
+        'z-40 flex w-full border-b border-tertiary bg-layer-1',
         isOverlay ? 'min-h-[36px]' : 'min-h-[48px]',
       )}
       data-qa="header"
@@ -93,11 +93,11 @@ export const MarketplaceHeader = () => {
         </div>
       </Tooltip>
       {/*<BackToChat />*/}
-      <div className="flex grow justify-between">
+      <div className="flex grow justify-center">
         <Logo />
-        <div className="w-[48px] max-md:border-l max-md:border-tertiary md:w-auto">
-          <User />
-        </div>
+      </div>
+      <div className="w-[48px] max-md:border-l max-md:border-tertiary md:w-auto">
+        <User />
       </div>
 
       <SettingDialog open={isUserSettingsOpen} onClose={onClose} />

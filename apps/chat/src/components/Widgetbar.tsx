@@ -1,12 +1,13 @@
-import { IconX } from '@tabler/icons-react';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
+import { useScreenState } from '../hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { ScreenState } from '../types/common';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
@@ -21,11 +22,16 @@ import { Routes } from '@/src/constants/routes';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 
+import { CloseSidebarButton } from './Buttons/CloseSidebarButton';
+
 export const Widgetbar = () => {
   const { t } = useTranslation(Translation.SideBar);
 
   const router = useRouter();
+
   const dispatch = useAppDispatch();
+
+  const screenState = useScreenState();
 
   const showWidgetbar = useAppSelector(UISelectors.selectShowWidgetbar);
   const widgetsSchemaIds = useAppSelector(
@@ -70,6 +76,12 @@ export const Widgetbar = () => {
     dispatch(UIActions.setShowWidgetbar(false));
   }, [dispatch]);
 
+  useEffect(() => {
+    if (screenState !== ScreenState.SM) {
+      dispatch(UIActions.setShowWidgetbar(false));
+    }
+  }, [dispatch, screenState]);
+
   return (
     <div
       className={classNames(
@@ -77,7 +89,7 @@ export const Widgetbar = () => {
         showWidgetbar ? 'grid' : 'hidden',
       )}
     >
-      <div className="flex h-full flex-col bg-layer-3">
+      <div className="relative flex h-full flex-col bg-layer-3">
         <div className="border-b border-tertiary px-5 py-[14px] text-base font-semibold text-primary">
           {t('Widgets')}
         </div>
@@ -101,15 +113,7 @@ export const Widgetbar = () => {
             </button>
           ))}
         </div>
-      </div>
-
-      <div className="p-[6px]">
-        <button
-          onClick={handleCloseClick}
-          className="cursor-pointer rounded-full bg-layer-3 p-[6px]"
-        >
-          <IconX size={24} className="text-primary" />
-        </button>
+        <CloseSidebarButton onClose={handleCloseClick} isLeftSide />
       </div>
     </div>
   );

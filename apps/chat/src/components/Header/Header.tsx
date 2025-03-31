@@ -10,6 +10,7 @@ import { centralChatWidth, getNewSidebarWidth } from '@/src/utils/app/sidebar';
 
 import { Translation } from '@/src/types/translation';
 
+import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
@@ -47,6 +48,9 @@ const Header = Inversify.register('Header', () => {
 
   const chatbarWidth = useAppSelector(UISelectors.selectChatbarWidth);
   const promptbarWidth = useAppSelector(UISelectors.selectPromptbarWidth);
+  const selectedWidget = useAppSelector(
+    ApplicationSelectors.selectSelectedWidget,
+  );
 
   const dispatch = useAppDispatch();
 
@@ -132,15 +136,15 @@ const Header = Inversify.register('Header', () => {
   return (
     <div
       className={classNames(
-        'z-40 flex w-full border-b border-tertiary bg-layer-3',
-        isOverlay ? 'min-h-[36px]' : 'min-h-[48px]',
+        'z-40 flex w-full border-b border-secondary bg-layer-1',
+        isOverlay ? 'min-h-[36px]' : 'min-h-[49px]',
       )}
       data-qa="header"
     >
       {enabledFeatures.has(Feature.ConversationsSection) && (
         <Tooltip isTriggerClickable tooltip={t('Conversation list')}>
           <div
-            className="flex h-full cursor-pointer items-center justify-center border-r border-tertiary px-3 md:px-5"
+            className="flex h-full cursor-pointer items-center justify-center px-3 md:px-5"
             onClick={handleToggleChatbar}
             data-qa="left-panel-toggle"
           >
@@ -168,20 +172,19 @@ const Header = Inversify.register('Header', () => {
           </div>
         </Tooltip>
       )}
-      {!enabledFeatures.has(Feature.HideNewConversation) && (
+      {!enabledFeatures.has(Feature.HideNewConversation) && !showChatbar && (
         <CreateNewConversation iconSize={headerIconSize} />
       )}
-      <div className="flex grow justify-between">
+      <div className="flex grow justify-center">
         <Logo />
-        <div className="w-[48px] max-md:border-l max-md:border-tertiary md:w-auto">
-          <User />
-        </div>
       </div>
-
-      {enabledFeatures.has(Feature.PromptsSection) && (
+      <div className="flex w-[48px] items-center justify-center max-md:border-l max-md:border-tertiary md:w-auto">
+        <User />
+      </div>
+      {enabledFeatures.has(Feature.PromptsSection) && !selectedWidget && (
         <Tooltip isTriggerClickable tooltip={t('Prompt list')}>
           <div
-            className="flex h-full cursor-pointer items-center justify-center border-l border-tertiary px-3 md:px-5"
+            className="flex h-full cursor-pointer items-center justify-center px-3 md:px-5"
             onClick={handleTogglePromtbar}
             data-qa="right-panel-toggle"
           >

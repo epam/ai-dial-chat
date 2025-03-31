@@ -1,5 +1,5 @@
 import { IconCheck, IconChevronUp } from '@tabler/icons-react';
-import { memo, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -14,9 +14,11 @@ import {
   MarketplaceSelectors,
 } from '@/src/store/marketplace/marketplace.reducers';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ENTITY_TYPES, FilterTypes } from '@/src/constants/marketplace';
+
+import { CloseSidebarButton } from '../Buttons/CloseSidebarButton';
 
 import { capitalize } from 'lodash';
 
@@ -144,26 +146,38 @@ export const MarketplaceFilterbar = memo(() => {
     [FilterTypes.SOURCES]: true,
   });
 
-  const handleApplyFilter = (type: FilterTypes, value: string) => {
-    dispatch(
-      MarketplaceActions.setSelectedFilters({ filterType: type, value }),
-    );
-  };
+  const handleApplyFilter = useCallback(
+    (type: FilterTypes, value: string) => {
+      dispatch(
+        MarketplaceActions.setSelectedFilters({ filterType: type, value }),
+      );
+    },
+    [dispatch],
+  );
 
-  const handleToggleFilterSection = (filterType: FilterTypes) => {
-    setOpenedSections((state) => ({
-      ...openedSections,
-      [filterType]: !state[filterType],
-    }));
-  };
+  const handleToggleFilterSection = useCallback(
+    (filterType: FilterTypes) => {
+      setOpenedSections((state) => ({
+        ...openedSections,
+        [filterType]: !state[filterType],
+      }));
+    },
+    [openedSections],
+  );
+
+  const handleClose = useCallback(() => {
+    dispatch(UIActions.setShowMarketplaceFilterbar(false));
+  }, [dispatch]);
+
   return (
     <nav
       className={classNames(
         showFilterbar ? 'w-[320px] lg:w-[260px]' : 'invisible',
-        'group/sidebar absolute left-0 top-0 z-40 flex h-full shrink-0 flex-col gap-px divide-y divide-tertiary bg-layer-3 lg:sticky lg:z-0',
+        'group/sidebar absolute left-0 top-0 z-50 flex h-full shrink-0 flex-col gap-px divide-y divide-tertiary bg-layer-3 lg:sticky lg:z-0',
       )}
       data-qa="marketplace-sidebar"
     >
+      <CloseSidebarButton isLeftSide onClose={handleClose} />
       {showFilterbar && (
         <div className="h-full overflow-y-auto">
           <FilterSection

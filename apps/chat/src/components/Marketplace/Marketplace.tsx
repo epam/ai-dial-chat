@@ -62,7 +62,7 @@ export const Marketplace = () => {
       ) : (
         <>
           <TabRenderer />
-          {showOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
+          {showOverlay && <FloatingOverlay className="z-40 bg-blackout" />}
         </>
       )}
     </div>

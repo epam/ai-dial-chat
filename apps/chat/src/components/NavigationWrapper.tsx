@@ -29,6 +29,7 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
+import { DEFAULT_CONVERSATION_NAME } from '../constants/default-ui-settings';
 import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
@@ -66,7 +67,7 @@ const NavigationButton = ({
       data-qa={dataQa}
       onClick={onClick}
       className={classNames(
-        'flex min-w-[72px] shrink-0 cursor-pointer select-none flex-col items-center justify-center gap-[2px] rounded border border-transparent p-[10px] transition-colors duration-200 hover:bg-accent-primary-alpha hover:disabled:bg-transparent md:min-w-min',
+        'flex max-h-[60px] min-w-[72px] shrink-0 cursor-pointer select-none flex-col items-center justify-center gap-[2px] rounded border border-transparent p-[10px] transition-colors duration-200 hover:bg-accent-primary-alpha hover:disabled:bg-transparent md:min-w-min',
         {
           'rounded-full': rounded,
           '!border-accent-primary': rounded && selected,
@@ -112,6 +113,12 @@ const Navigation = () => {
           ConversationsActions.setIsStartedCustomViewerConversation(false),
         );
       });
+    } else {
+      dispatch(
+        ConversationsActions.createNewConversations({
+          names: [DEFAULT_CONVERSATION_NAME],
+        }),
+      );
     }
   }, [dispatch, router]);
 
@@ -269,23 +276,21 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
 
   return (
     <div className="size-full min-h-screen">
-      {router.route === Routes.Chat &&
-        enabledFeatures.has(Feature.ConversationsSection) && <Chatbar />}
-      {router.route === Routes.Marketplace && <MarketplaceFilterbar />}
       <Widgetbar />
 
       <div className="flex size-full flex-col md:flex-row">
-        <div className="order-last flex h-[60px] w-full shrink-0 flex-row items-center justify-between gap-2 border-r border-tertiary bg-layer-3 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start">
+        <div className="order-last flex h-[60px] w-full shrink-0 flex-row items-center justify-between gap-2 border-tertiary bg-layer-3 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start md:border-r">
           <Navigation />
 
           <UsedWidgets />
         </div>
-
+        {router.route === Routes.Chat &&
+          enabledFeatures.has(Feature.ConversationsSection) && <Chatbar />}
+        {router.route === Routes.Marketplace && <MarketplaceFilterbar />}
         <div className="grow overflow-hidden">{children}</div>
+        {router.route === Routes.Chat &&
+          enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
       </div>
-
-      {router.route === Routes.Chat &&
-        enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
     </div>
   );
 };
