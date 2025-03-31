@@ -311,6 +311,7 @@ dialTest(
         MenuOptions.select,
         MenuOptions.edit,
         MenuOptions.duplicate,
+        MenuOptions.view,
         MenuOptions.export,
         MenuOptions.moveTo,
         MenuOptions.share,
@@ -373,6 +374,9 @@ dialTest(
     promptModalDialog,
     setTestIds,
     localStorageManager,
+    promptPreviewModal,
+    promptPreviewModalAssertion,
+    promptAssertion,
   }) => {
     setTestIds('EPMRTC-954');
     const prompt = promptData.prepareDefaultPrompt();
@@ -388,38 +392,26 @@ dialTest(
       newDescr,
       newValue,
     );
-
-    await expect
-      .soft(
-        promptModalDialog.getElementLocator(),
-        ExpectedMessages.promptModalClosed,
-      )
-      .toBeHidden();
-
-    await expect
-      .soft(prompts.getEntityByName(newName), ExpectedMessages.promptNotUpdated)
-      .toBeVisible();
-
-    await prompts.openEntityDropdownMenu(newName);
-    await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-    expect
-      .soft(
-        await promptModalDialog.getName(),
-        ExpectedMessages.promptNameUpdated,
-      )
-      .toBe(newName);
-    expect
-      .soft(
-        await promptModalDialog.getDescription(),
-        ExpectedMessages.promptDescriptionUpdated,
-      )
-      .toBe(newDescr);
-    expect
-      .soft(
-        await promptModalDialog.getPrompt(),
-        ExpectedMessages.promptValueUpdated,
-      )
-      .toBe(newValue);
+    await promptPreviewModalAssertion.assertElementState(
+      promptPreviewModal,
+      'visible',
+    );
+    await promptAssertion.assertEntityState({ name: newName }, 'visible');
+    await promptPreviewModalAssertion.assertElementText(
+      promptPreviewModal.promptName,
+      newName,
+      ExpectedMessages.promptNameUpdated,
+    );
+    await promptPreviewModalAssertion.assertElementText(
+      promptPreviewModal.promptDescription,
+      newDescr,
+      ExpectedMessages.promptDescriptionUpdated,
+    );
+    await promptPreviewModalAssertion.assertElementText(
+      promptPreviewModal.promptContent,
+      newValue,
+      ExpectedMessages.promptValueUpdated,
+    );
   },
 );
 
@@ -434,6 +426,9 @@ dialTest(
     promptModalDialog,
     setTestIds,
     localStorageManager,
+    promptPreviewModal,
+    promptPreviewModalAssertion,
+    promptAssertion,
   }) => {
     setTestIds('EPMRTC-955', 'EPMRTC-1278');
     const prompt = promptData.prepareDefaultPrompt();
@@ -449,41 +444,29 @@ dialTest(
       newDescr,
       newValue,
     );
-
-    await expect
-      .soft(
-        promptModalDialog.getElementLocator(),
-        ExpectedMessages.promptModalClosed,
-      )
-      .toBeHidden();
-
-    await expect
-      .soft(
-        prompts.getEntityByName(ExpectedConstants.allowedSpecialChars),
-        ExpectedMessages.promptNotUpdated,
-      )
-      .toBeVisible();
-
-    await prompts.openEntityDropdownMenu(ExpectedConstants.allowedSpecialChars);
-    await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-    expect
-      .soft(
-        await promptModalDialog.getName(),
-        ExpectedMessages.promptNameUpdated,
-      )
-      .toBe(ExpectedConstants.allowedSpecialChars);
-    expect
-      .soft(
-        await promptModalDialog.getDescription(),
-        ExpectedMessages.promptDescriptionUpdated,
-      )
-      .toBe(newDescr);
-    expect
-      .soft(
-        await promptModalDialog.getPrompt(),
-        ExpectedMessages.promptValueUpdated,
-      )
-      .toBe(newValue);
+    await promptPreviewModalAssertion.assertElementState(
+      promptPreviewModal,
+      'visible',
+    );
+    await promptPreviewModalAssertion.assertElementText(
+      promptPreviewModal.promptName,
+      ExpectedConstants.allowedSpecialChars,
+      ExpectedMessages.promptNameUpdated,
+    );
+    await promptPreviewModalAssertion.assertElementText(
+      promptPreviewModal.promptDescription,
+      newDescr,
+      ExpectedMessages.promptDescriptionUpdated,
+    );
+    await promptPreviewModalAssertion.assertElementText(
+      promptPreviewModal.promptContent,
+      newValue,
+      ExpectedMessages.promptValueUpdated,
+    );
+    await promptAssertion.assertEntityState(
+      { name: ExpectedConstants.allowedSpecialChars },
+      'visible',
+    );
   },
 );
 

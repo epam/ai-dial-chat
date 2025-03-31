@@ -23,6 +23,7 @@ dialTest(
     toast,
     setTestIds,
     localStorageManager,
+    promptPreviewModal,
   }) => {
     setTestIds(
       'EPMRTC-1619',
@@ -70,6 +71,7 @@ dialTest(
           renamedPrompt + 1,
         );
         await promptModalDialog.saveButton.click();
+        await promptPreviewModal.closeButton.click();
         await expect
           .soft(
             prompts.getEntityByName(renamedPrompt + 1),
@@ -96,6 +98,7 @@ dialTest(
           renamedPrompt + 4,
         );
         await promptModalDialog.saveButton.click();
+        await promptPreviewModal.closeButton.click();
         await expect
           .soft(
             prompts.getEntityByName(renamedPrompt + 4),
@@ -150,6 +153,7 @@ dialTest(
           ExpectedConstants.newPromptTitle(999),
         );
         await promptModalDialog.saveButton.click();
+        await promptPreviewModal.closeButton.click();
 
         for (let i = 1000; i <= 1001; i++) {
           await promptBar.createNewPrompt();

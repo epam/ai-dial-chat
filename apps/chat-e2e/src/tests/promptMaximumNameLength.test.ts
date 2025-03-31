@@ -26,6 +26,7 @@ dialTest(
     promptBar,
     folderPrompts,
     localStorageManager,
+    promptPreviewModal,
   }) => {
     setTestIds('EPMRTC-3171', 'EPMRTC-958', 'EPMRTC-3168');
     const prompt = promptData.prepareDefaultPrompt();
@@ -92,6 +93,7 @@ dialTest(
       expect
         .soft(promptNameOverflow[0], ExpectedMessages.entityNameIsTruncated)
         .toBe(Overflow.ellipsis);
+      await promptPreviewModal.closeButton.click();
     });
 
     await dialTest.step(
