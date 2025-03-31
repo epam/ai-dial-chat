@@ -1,5 +1,5 @@
 /*eslint-disable @next/next/no-img-element*/
-import { IconSettings } from '@tabler/icons-react';
+import { IconLogout, IconSettings } from '@tabler/icons-react';
 import { useSession } from 'next-auth/react';
 import { useCallback, useState } from 'react';
 
@@ -18,7 +18,6 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { FooterMessage } from '@/src/components/Common/FooterMessage';
 
-import LogOutIcon from '../../../../public/images/icons/log-out.svg';
 import UserIcon from '../../../../public/images/icons/user.svg';
 import { withRenderWhen } from '../../Common/RenderWhen';
 import { withRenderForScreen } from '../../Common/ScreenRender';
@@ -93,7 +92,7 @@ const Logout = () => {
           setIsLogoutConfirmationOpened(true);
         }}
       >
-        <LogOutIcon className="text-secondary" width={18} height={18} />
+        <IconLogout className="text-secondary" size={18} />
         <span>{session ? t('Log out') : t('Login')}</span>
       </div>
       <ConfirmDialog
