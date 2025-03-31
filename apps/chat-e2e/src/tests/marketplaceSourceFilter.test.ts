@@ -217,8 +217,6 @@ dialTest(
     await dialTest.step(
       'Verify newly added app is displayed immediately',
       async () => {
-        //TODO: remove filter check when fixed https://github.com/epam/ai-dial-chat/issues/3221
-        await myCustomAppsSourceFilterElement.click();
         const actualAgents = await marketplaceAgentsSection.getAllAgents();
         baseAssertion.assertArrayIncludesAll(
           actualAgents.map((agent) => agent.name),

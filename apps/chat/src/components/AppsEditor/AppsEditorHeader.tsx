@@ -1,6 +1,7 @@
 import {
   IconCircleCheck,
   IconCircleDot,
+  IconLogout,
   IconMenu2,
   IconX,
 } from '@tabler/icons-react';
@@ -15,11 +16,16 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
+import {
+  ApplicationActions,
+  ApplicationSelectors,
+} from '@/src/store/application/application.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
@@ -27,8 +33,6 @@ import { User } from '@/src/components/Header/User/User';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
 import { Logo } from '../Header/Logo';
-
-import LogOutIcon from '@/public/images/icons/log-out.svg';
 
 enum TabKeys {
   GENERAL = 'general',
@@ -38,12 +42,14 @@ interface AppsEditorHeaderProps {
   applicationTypeDisplayName: string;
   isEditApplication?: boolean;
   hasCustomEditor?: boolean;
+  onExit?: () => void;
 }
 
 export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
   applicationTypeDisplayName,
   isEditApplication,
   hasCustomEditor,
+  onExit,
 }) => {
   const dispatch = useAppDispatch();
   const {
@@ -56,14 +62,32 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
     UISelectors.selectIsUserSettingsOpen,
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+  const returnConversationIds = useAppSelector(
+    ApplicationSelectors.selectReturnConversationIds,
+  );
 
   const handleCloseUserSettings = () => {
     dispatch(UIActions.setIsUserSettingsOpen(false));
   };
 
   const handleSaveAndRedirect = () => {
+    onExit?.();
     dispatch(ApplicationActions.setExitAfterSave(true));
     dispatch(ApplicationActions.setShouldSaveApplication(true));
+    if (returnConversationIds?.length) {
+      dispatch(
+        ConversationsActions.selectConversations({
+          conversationIds: returnConversationIds,
+        }),
+      );
+      dispatch(ApplicationActions.setReturnConversationIds(undefined));
+    } else {
+      dispatch(
+        ConversationsActions.createNewConversations({
+          names: [DEFAULT_CONVERSATION_NAME],
+        }),
+      );
+    }
   };
 
   const tabs = useMemo(
@@ -193,7 +217,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
               onClick={handleSaveAndRedirect}
               data-qa="save-and-exit"
             >
-              <LogOutIcon width={14} height={14} />
+              <IconLogout size={14} />
               <span>{t('Save and exit')}</span>
             </button>
           ) : (
@@ -205,7 +229,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
                 query: { tab: MarketplaceTabs.MY_WORKSPACE },
               }}
             >
-              <LogOutIcon width={14} height={14} />
+              <IconLogout size={14} />
               <span>{t('Exit')}</span>
             </Link>
           )}
@@ -245,7 +269,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
               query: { tab: MarketplaceTabs.MY_WORKSPACE },
             }}
           >
-            <LogOutIcon width={14} height={14} />
+            <IconLogout size={14} />
             <span>{t('Go to marketplace')}</span>
           </Link>
         </div>

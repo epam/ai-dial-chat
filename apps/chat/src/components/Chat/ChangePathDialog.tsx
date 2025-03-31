@@ -2,7 +2,6 @@ import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { updateEntitiesFoldersAndIds } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
@@ -10,7 +9,7 @@ import {
   getNextDefaultName,
   getPathToFolderById,
   sortByName,
-  updateMovedFolderId,
+  updateChildAndCurrentFoldersIds,
   validateFolderRenaming,
 } from '@/src/utils/app/folders';
 
@@ -181,15 +180,15 @@ export const ChangePathDialog = ({
         setErrorMessage(t(error));
         return;
       }
-      const { updatedOpenedFoldersIds } = updateEntitiesFoldersAndIds(
-        [],
-        [],
-        (id) => updateMovedFolderId(folderId, newFolderId, id),
-        openedFoldersIds,
-      );
 
       dispatch(actions.renameTemporaryFolder({ folderId, name: newName }));
-      setOpenedFoldersIds(updatedOpenedFoldersIds);
+      setOpenedFoldersIds(
+        updateChildAndCurrentFoldersIds(
+          openedFoldersIds,
+          folderId,
+          newFolderId,
+        ),
+      );
     },
     [actions, dispatch, folders, t, openedFoldersIds, setOpenedFoldersIds],
   );

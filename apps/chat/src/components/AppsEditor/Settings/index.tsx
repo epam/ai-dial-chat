@@ -8,6 +8,8 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
+import { useRouter } from 'next/router';
+
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -16,6 +18,7 @@ import {
   isApplicationDeployed,
   isApplicationDeploymentInProgress,
 } from '@/src/utils/app/application';
+import { decode } from '@/src/utils/app/application-type-schema';
 
 import {
   ApiDetailedApplicationTypeSchema,
@@ -29,6 +32,7 @@ import {
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { CodeEditorSelectors } from '@/src/store/codeEditor/codeEditor.selectors';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -39,9 +43,10 @@ import {
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_QUICK_APPS_SCHEMA_ID } from '@/src/constants/quick-apps';
+import { Routes } from '@/src/constants/routes';
 
 import Tooltip from '../../Common/Tooltip';
 import { ApplicationView } from './ApplicationView';
@@ -58,8 +63,6 @@ import {
   getQuickAppDefaultValues,
 } from './form';
 
-import debounce from 'lodash-es/debounce';
-
 enum PreviewMode {
   half,
   full,
@@ -70,13 +73,16 @@ interface Props {
   schema: ApiDetailedApplicationTypeSchema | null;
   applicationData: CustomApplicationModel;
   type: string;
+  isExiting?: boolean;
 }
 
 export const ApplicationSettings: React.FC<Props> = ({
   applicationData,
   schema,
   type,
+  isExiting,
 }) => {
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const pythonVersions = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
@@ -106,6 +112,8 @@ export const ApplicationSettings: React.FC<Props> = ({
   const areSelectedConversationsLoaded = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsLoaded,
   );
+  const isCodeEditorDirty = useAppSelector(CodeEditorSelectors.selectIsDirty);
+
   const theme = useAppSelector(UISelectors.selectThemeState);
   const { t } = useTranslation(Translation.Chat);
 
@@ -114,6 +122,22 @@ export const ApplicationSettings: React.FC<Props> = ({
       ? PreviewMode.closed
       : PreviewMode.half,
   );
+
+  const handleRedeploy = () => {
+    if (isCodeEditorDirty) {
+      dispatch(
+        UIActions.showWarningToast(
+          t('Save the files to apply changes in the next deployment.'),
+        ),
+      );
+    }
+    dispatch(
+      ApplicationActions.startUpdatingFunctionStatus({
+        id: applicationData.id,
+        status: ApplicationStatus.REDEPLOYING,
+      }),
+    );
+  };
 
   const getDefaultValues = useCallback(
     (type: string) => {
@@ -202,16 +226,20 @@ export const ApplicationSettings: React.FC<Props> = ({
       dispatch(ApplicationActions.setShouldSaveApplication(true));
   }, [dispatch, methods.formState.isValid]);
 
-  const debouncedSave = useMemo(() => debounce(saveForm, 750), [saveForm]);
-
-  const handlePreviewMouseEnter = useCallback(() => {
-    debouncedSave();
-  }, [debouncedSave]);
-  const handlePreviewMouseLeave = useCallback(() => {
-    debouncedSave.cancel();
-  }, [debouncedSave]);
-
   const formViewElement = getFormView(type);
+
+  useEffect(() => {
+    const redirectHandler = (url: string) => {
+      const pathname = new URL(url, window.location.origin).pathname;
+      const targetRoute = Routes.AppsEditorGeneralInfo.replace('[slug]', type);
+
+      if (decode(pathname ?? '') === targetRoute) saveForm();
+    };
+
+    router.events.on('routeChangeStart', redirectHandler);
+
+    return () => router.events.off('routeChangeStart', redirectHandler);
+  }, [saveForm, router.events, type]);
 
   useEffect(() => {
     if (
@@ -288,14 +316,7 @@ export const ApplicationSettings: React.FC<Props> = ({
                 className="button button-accent-secondary mb-2 flex items-center gap-2 text-accent-secondary md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
                 data-qa="redeploy-code-app"
                 disabled={!methods.formState.isValid}
-                onClick={() => {
-                  dispatch(
-                    ApplicationActions.startUpdatingFunctionStatus({
-                      id: applicationData.id,
-                      status: ApplicationStatus.REDEPLOYING,
-                    }),
-                  );
-                }}
+                onClick={handleRedeploy}
               >
                 <IconRefresh size={18} />
                 <span>{t('Redeploy')}</span>
@@ -334,13 +355,12 @@ export const ApplicationSettings: React.FC<Props> = ({
         {previewMode !== PreviewMode.closed && (
           <div className="flex-1 overflow-auto">
             <ApplicationPreviewChat
-              handlePreviewMouseEnter={handlePreviewMouseEnter}
-              handlePreviewMouseLeave={handlePreviewMouseLeave}
               isAppDeploymentInProgress={isAppDeploymentInProgress}
               isApplicationValid={methods.formState.isValid}
               applicationId={applicationData.id}
               type={type}
               isAppDeployed={isAppDeployed}
+              isExiting={isExiting}
             />
           </div>
         )}

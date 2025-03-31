@@ -20,7 +20,7 @@ import {
 } from '@/src/constants/marketplace';
 
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
-import { UIActions } from '../ui/ui.reducers';
+import { UIActions, UISelectors } from '../ui/ui.reducers';
 import {
   MarketplaceActions,
   MarketplaceSelectors,
@@ -41,7 +41,7 @@ const addToQuery = (
   }
 };
 
-const initEpic: AppEpic = (action$, _state$) =>
+const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(MarketplaceActions.init.match),
     switchMap(() => {
@@ -49,9 +49,20 @@ const initEpic: AppEpic = (action$, _state$) =>
       const workSpaceTab =
         query[MarketplaceQueryParams.fromConversation] ||
         query[MarketplaceQueryParams.tab] === MarketplaceTabs.MY_WORKSPACE;
-      return of(
-        MarketplaceActions.setSelectedTab(
-          workSpaceTab ? MarketplaceTabs.MY_WORKSPACE : MarketplaceTabs.HOME,
+
+      const previousRoute = UISelectors.selectPreviousRoute(state$.value);
+      const firstRoutePart = previousRoute?.split('/')[1];
+
+      return concat(
+        of(
+          MarketplaceActions.initSuccess({
+            saveFilters: firstRoutePart === 'apps-editor',
+          }),
+        ),
+        of(
+          MarketplaceActions.setSelectedTab(
+            workSpaceTab ? MarketplaceTabs.MY_WORKSPACE : MarketplaceTabs.HOME,
+          ),
         ),
       );
     }),

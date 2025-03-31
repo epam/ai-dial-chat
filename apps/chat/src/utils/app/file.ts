@@ -1,4 +1,5 @@
 import { BucketService } from '@/src/utils/app/data/bucket-service';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { Conversation } from '@/src/types/chat';
 import { DialFile, DialLink, FileFolderAttachment } from '@/src/types/files';
@@ -11,7 +12,6 @@ import {
 
 import { ApiUtils } from '../server/api';
 import { doesHaveDotsInTheEnd } from './common';
-import { getPathToFolderById, splitEntityId } from './folders';
 import { isFolderId } from './shared-utils';
 
 import { Attachment, UploadStatus } from '@epam/ai-dial-shared';
@@ -129,13 +129,6 @@ export const getDialFilesWithInvalidFileType = (
     : files.filter(
         (file) => !isAllowedMimeType(allowedFileTypes, file.contentType),
       );
-};
-
-export const getDialFilesWithInvalidFileSize = (
-  files: DialFile[],
-  sizeLimit: number,
-): DialFile[] => {
-  return files.filter((file) => file.contentLength > sizeLimit);
 };
 
 export const getFilesWithInvalidFileType = (
@@ -280,13 +273,6 @@ export const getExtensionsListForMimeType = (mimeType: string) => {
   }
 };
 
-export const getExtensionsListForMimeTypes = (mimeTypes: string[]) => {
-  return mimeTypes
-    .map((mimeType) => getExtensionsListForMimeType(mimeType))
-    .flat()
-    .map((type) => `.${type}`);
-};
-
 export const getShortExtensionsListFromMimeType = (
   mimeTypes: string[],
   t: (key: string) => string,
@@ -315,58 +301,6 @@ export const getFileNameExtension = (filename: string) =>
   filename.lastIndexOf('.') > 0
     ? filename.slice(filename.lastIndexOf('.')).toLowerCase()
     : '';
-
-export const validatePublishingFileRenaming = (
-  files: DialFile[],
-  newName: string,
-  renamingFile: DialFile,
-) => {
-  const fileWithSameName = files.find(
-    (file) =>
-      file.name === newName.trim() &&
-      file !== renamingFile &&
-      file.relativePath === renamingFile.relativePath,
-  );
-
-  if (fileWithSameName) {
-    return 'Not allowed to have files with same names in one folder';
-  }
-
-  if (newName.match(notAllowedSymbolsRegex)) {
-    return `The symbols ${notAllowedSymbols} are not allowed in file name`;
-  }
-};
-
-export const renameAttachments = (
-  conversation: Conversation,
-  folderId: string | undefined,
-  folders: FolderInterface[],
-  filenameMapping: Map<string, string>,
-): Conversation => {
-  if (!filenameMapping.size) {
-    return conversation;
-  }
-
-  const { path } = getPathToFolderById(folders, folderId);
-
-  return {
-    ...conversation,
-    messages: conversation.messages.map((message) => ({
-      ...message,
-      custom_content: message.custom_content && {
-        ...message.custom_content,
-        attachments: message.custom_content.attachments?.map(
-          ({ title, ...attachment }) => ({
-            ...attachment,
-            title:
-              getFileName(filenameMapping.get(constructPath(path, title))) ??
-              title,
-          }),
-        ),
-      },
-    })),
-  };
-};
 
 export const getNextFileName = (
   defaultName: string,

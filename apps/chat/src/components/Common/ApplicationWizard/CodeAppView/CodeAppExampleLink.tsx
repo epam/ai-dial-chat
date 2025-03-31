@@ -6,8 +6,8 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { constructPath } from '@/src/utils/app/file';
-import { splitEntityId } from '@/src/utils/app/folders';
 import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { Translation } from '@/src/types/translation';
 
