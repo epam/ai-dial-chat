@@ -100,7 +100,7 @@ export const ApplicationPreviewChat: React.FC<Props> = ({
           </div>
         )
       ) : (
-        <Chat />
+        <Chat isPreview />
       )}
     </div>
   );
