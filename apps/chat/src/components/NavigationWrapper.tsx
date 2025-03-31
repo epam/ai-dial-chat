@@ -192,18 +192,7 @@ const UsedWidgets = () => {
     ApplicationSelectors.selectSelectedWidget,
   );
 
-  const { widgetModels, handleSelectWidget } = useWidgets();
-
-  const handleClick = useCallback(
-    (id: string) => {
-      if (router.route !== Routes.Chat) {
-        router.push(Routes.Chat).then(() => handleSelectWidget(id));
-      } else {
-        handleSelectWidget(id);
-      }
-    },
-    [handleSelectWidget, router],
-  );
+  const { widgetModels, handleWidgetClick } = useWidgets();
 
   const handleOpenWidgetsClick = useCallback(() => {
     dispatch(UIActions.setShowWidgetbar(true));
@@ -216,7 +205,7 @@ const UsedWidgets = () => {
           <NavigationButton
             key={model.reference}
             rounded
-            onClick={() => handleClick(model.reference)}
+            onClick={() => handleWidgetClick(model.reference)}
             selected={
               model.reference === selectedWidget && router.route === Routes.Chat
             }

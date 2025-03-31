@@ -1,12 +1,19 @@
 import { useCallback, useMemo } from 'react';
 
+import { useRouter } from 'next/router';
+
 import { ApplicationActions } from '../store/application/application.reducers';
 import { ConversationsActions } from '../store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { ModelsSelectors } from '../store/models/models.reducers';
 import { SettingsSelectors } from '../store/settings/settings.selectors';
+import { UIActions } from '../store/ui/ui.reducers';
+
+import { Routes } from '../constants/routes';
 
 export const useWidgets = () => {
+  const router = useRouter();
+
   const dispatch = useAppDispatch();
 
   const widgetsSchemaIds = useAppSelector(
@@ -32,5 +39,17 @@ export const useWidgets = () => {
     [dispatch],
   );
 
-  return { widgetModels, handleSelectWidget };
+  const handleWidgetClick = useCallback(
+    (id: string) => {
+      if (router.route !== Routes.Chat) {
+        router.push(Routes.Chat).then(() => handleSelectWidget(id));
+      } else {
+        handleSelectWidget(id);
+      }
+      dispatch(UIActions.setShowWidgetbar(false));
+    },
+    [dispatch, handleSelectWidget, router],
+  );
+
+  return { widgetModels, handleWidgetClick };
 };

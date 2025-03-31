@@ -36,19 +36,7 @@ export const Widgetbar = () => {
     ApplicationSelectors.selectSelectedWidget,
   );
 
-  const { widgetModels, handleSelectWidget } = useWidgets();
-
-  const handleClick = useCallback(
-    (id: string) => {
-      if (router.route !== Routes.Chat) {
-        router.push(Routes.Chat).then(() => handleSelectWidget(id));
-      } else {
-        handleSelectWidget(id);
-      }
-      dispatch(UIActions.setShowWidgetbar(false));
-    },
-    [dispatch, handleSelectWidget, router],
-  );
+  const { widgetModels, handleWidgetClick } = useWidgets();
 
   const handleCloseClick = useCallback(() => {
     dispatch(UIActions.setShowWidgetbar(false));
@@ -76,7 +64,7 @@ export const Widgetbar = () => {
           {widgetModels.map((model) => (
             <button
               key={model.reference}
-              onClick={() => handleClick(model.reference)}
+              onClick={() => handleWidgetClick(model.reference)}
               className={classNames(
                 'flex w-full items-center gap-2 truncate rounded border-l border-transparent px-[10px] py-[5px] hover:bg-accent-primary-alpha',
                 {
