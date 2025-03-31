@@ -1,5 +1,5 @@
 /*eslint-disable @next/next/no-img-element*/
-import { IconSettings } from '@tabler/icons-react';
+import { IconLogout, IconSettings } from '@tabler/icons-react';
 import { useState } from 'react';
 
 import { useLogout } from '@/src/hooks/useLogout';
@@ -15,7 +15,6 @@ import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
 import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
-import LogOutIcon from '@/public/images/icons/log-out.svg';
 import UserIcon from '@/public/images/icons/user.svg';
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature } from '@epam/ai-dial-shared';
@@ -88,7 +87,7 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
           className="hover:bg-accent-primary-alpha"
           item={
             <div className="flex gap-3">
-              <LogOutIcon width={18} height={18} className="text-secondary" />
+              <IconLogout width={18} height={18} className="text-secondary" />
               <span>{session ? t('Log out') : t('Login')}</span>
             </div>
           }
