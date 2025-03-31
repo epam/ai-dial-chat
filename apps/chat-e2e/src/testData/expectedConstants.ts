@@ -307,10 +307,10 @@ export enum AppEditorViewFormFields {
   chatCompletionUrl = 'Chat completion URL',
 }
 
-export enum AppMenuActions {
-  add = 'Add',
-  edit = 'Edit',
-}
+export const AppMenuActions = {
+  add: (app: AddAppMenuOptions) => `Add ${app.toLowerCase()}`,
+  edit: (app: AddAppMenuOptions) => `Edit ${app.toLowerCase()}`,
+};
 
 export const Chronology = {
   today: 'Today',

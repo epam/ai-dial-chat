@@ -42,10 +42,9 @@ dialTest(
         await appEditorPage.waitForPageLoaded();
 
         await baseAssertion.assertElementText(
-          appEditorPage.getAppEditorContainer().getHeader()
-            .actionAndApplicationTypeTitle,
+          appEditorHeader.actionAndApplicationTypeTitle,
           // `${AppMenuActions.add} ${AddAppMenuOptions.customApp}`, //custom app != Custom app
-          `${AppMenuActions.add} custom app`,
+          `${AppMenuActions.add(AddAppMenuOptions.customApp)}`,
         );
       },
     );
@@ -57,8 +56,8 @@ dialTest(
 
         const generalInfoStep = appEditorHeader.getGeneralInfoStep();
         const appSettingsStep = appEditorHeader.getAppSettingsStep();
-        await generalInfoStep.waitForState();
-        await appSettingsStep.waitForState();
+        await baseAssertion.assertElementState(generalInfoStep);
+        await baseAssertion.assertElementState(appSettingsStep);
         await baseAssertion.assertElementActionabilityState(
           generalInfoStep,
           'enabled',
@@ -82,9 +81,10 @@ dialTest(
     await dialTest.step(
       'Check that the required fields of General Info step form are marked with asterisks',
       async () => {
-        const nameRequiredIndicator = appEditorGeneralForm.getRequiredIndicator(
-          AppEditorGeneralFormFields.name,
-        );
+        const nameRequiredIndicator =
+          await appEditorGeneralForm.getRequiredIndicator(
+            AppEditorGeneralFormFields.name,
+          );
         await baseAssertion.assertElementState(
           nameRequiredIndicator,
           'visible',
@@ -92,7 +92,7 @@ dialTest(
         );
 
         const versionRequiredIndicator =
-          appEditorGeneralForm.getRequiredIndicator(
+          await appEditorGeneralForm.getRequiredIndicator(
             AppEditorGeneralFormFields.version,
           );
         await baseAssertion.assertElementState(
@@ -117,7 +117,6 @@ dialTest(
     await dialTest.step(
       'Wait for app settings step form to load and check the header changes',
       async () => {
-        await appEditorViewForm.waitForState();
         await baseAssertion.assertElementState(appEditorViewForm, 'visible');
 
         const generalInfoStep = appEditorHeader.getGeneralInfoStep();
@@ -147,7 +146,7 @@ dialTest(
       'Verify app settings required fields are marked with asterisk',
       async () => {
         const chatCompletionUrlRequiredIndicator =
-          appEditorViewForm.getRequiredIndicator(
+          await appEditorViewForm.getRequiredIndicator(
             AppEditorViewFormFields.chatCompletionUrl,
           );
         await baseAssertion.assertElementState(
@@ -245,7 +244,7 @@ dialTest(
     await dialTest.step(
       'App Editor page was opened, title "Edit custom app", two available steps are displayed in the header:',
       async () => {
-        await appEditorViewForm.waitForState();
+        await baseAssertion.assertElementState(appEditorViewForm);
         await baseAssertion.assertElementText(
           appEditorHeader.actionAndApplicationTypeTitle,
           `${AppMenuActions.edit} custom app`, // Assuming title format
@@ -263,7 +262,7 @@ dialTest(
     await dialTest.step(
       'Update any field on step "Application settings" with a valid value',
       async () => {
-        await appEditorViewForm.waitForState();
+        await baseAssertion.assertElementState(appEditorViewForm);
         await appEditorViewForm.fillInAppFields({
           chatCompletionUrl: updatedCompletionUrl,
         });
@@ -275,7 +274,7 @@ dialTest(
       async () => {
         const generalInfoStep = appEditorHeader.getGeneralInfoStep();
         await generalInfoStep.click();
-        await appEditorGeneralForm.waitForState();
+        await baseAssertion.assertElementState(appEditorGeneralForm);
         await appEditorHeaderAssertion.assertStepIsCompleted(
           AppEditSteps.generalInfo,
           true,
@@ -308,7 +307,7 @@ dialTest(
     await dialTest.step(
       'Check that updated field values from steps 4, 5 are still displayed',
       async () => {
-        await appEditorViewForm.waitForState();
+        await baseAssertion.assertElementState(appEditorViewForm);
 
         const chatCompletionUrlValue = await appEditorViewForm.chatCompletionUrl
           .getElementLocator()
@@ -321,7 +320,7 @@ dialTest(
 
         const generalInfoStep = appEditorHeader.getGeneralInfoStep();
         await generalInfoStep.click();
-        await appEditorGeneralForm.waitForState();
+        await baseAssertion.assertElementState(appEditorGeneralForm);
         const descriptionValue = await appEditorGeneralForm.description
           .getElementLocator()
           .inputValue();

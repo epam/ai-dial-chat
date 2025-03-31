@@ -55,22 +55,20 @@ dialTest(
       'Click "New prompt" button and verify Name and Prompt fields have asterisk',
       async () => {
         await promptBar.createNewPrompt();
-        expect
-          .soft(
-            await promptModalDialog.isFieldHasAsterisk(
-              ExpectedConstants.promptNameLabel,
-            ),
-            ExpectedMessages.fieldIsRequired,
-          )
-          .toBeTruthy();
-        expect
-          .soft(
-            await promptModalDialog.isFieldHasAsterisk(
-              ExpectedConstants.promptContentLabel,
-            ),
-            ExpectedMessages.fieldIsRequired,
-          )
-          .toBeTruthy();
+        await baseAssertion.assertElementState(
+          await promptModalDialog.getFieldAsterisk(
+            ExpectedConstants.promptNameLabel,
+          ),
+          'visible',
+          ExpectedMessages.fieldIsRequired,
+        );
+        await baseAssertion.assertElementState(
+          await promptModalDialog.getFieldAsterisk(
+            ExpectedConstants.promptContentLabel,
+          ),
+          'visible',
+          ExpectedMessages.fieldIsRequired,
+        );
       },
     );
 

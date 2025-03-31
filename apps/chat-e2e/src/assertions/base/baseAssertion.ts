@@ -89,7 +89,7 @@ export class BaseAssertion {
 
   public async assertElementState(
     element: BaseElement | Locator,
-    expectedState: ElementState,
+    expectedState: ElementState = 'visible',
     expectedMessage?: string,
   ) {
     const elementLocator = this.getElementLocator(element);

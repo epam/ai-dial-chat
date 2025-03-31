@@ -1,21 +1,16 @@
-import { Tags } from '@/src/ui/domData';
 import { BaseElement } from '@/src/ui/webElements';
-import { RegexUtil } from '@/src/utils';
+import { FieldLabel } from '@/src/ui/webElements/appEditor/fieldLabel';
+import { Locator, Page } from '@playwright/test';
 
 export abstract class AppEditorForm extends BaseElement {
-  public getFieldLabel(labelText: string): BaseElement {
-    const allLabels = this.getChildElementBySelector(Tags.label);
-    const labelLocator = allLabels.getElementLocatorByText(
-      new RegExp(`^${RegexUtil.escapeRegexChars(labelText)}\\b`),
-    );
-    return this.createElementFromLocator(labelLocator);
+  protected fieldLabelHelper: FieldLabel;
+
+  public getRequiredIndicator(fieldName: string) {
+    return this.fieldLabelHelper.getFieldRequiredIndicator(fieldName);
   }
 
-  public getRequiredIndicator(fieldName: string): BaseElement {
-    const labelElement = this.getFieldLabel(fieldName);
-    const asteriskLocator = labelElement
-      .getElementLocator()
-      .locator(`${Tags.span}:has-text("*")`);
-    return this.createElementFromLocator(asteriskLocator);
+  protected constructor(page: Page, selector: string, parentLocator: Locator) {
+    super(page, selector, parentLocator);
+    this.fieldLabelHelper = new FieldLabel(page, this.rootLocator);
   }
 }

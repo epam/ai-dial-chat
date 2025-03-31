@@ -5,12 +5,15 @@ import { keys } from '@/src/ui/keyboard';
 import { ErrorLabelSelectors } from '@/src/ui/selectors';
 import { PromptModal } from '@/src/ui/selectors/dialogSelectors';
 import { IconSelectors } from '@/src/ui/selectors/iconSelectors';
+import { FieldLabel } from '@/src/ui/webElements/appEditor/fieldLabel';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Page } from '@playwright/test';
 
 export class PromptModalDialog extends BaseElement {
+  protected fieldLabelHelper: FieldLabel;
   constructor(page: Page) {
     super(page, PromptModal.promptModalDialog);
+    this.fieldLabelHelper = new FieldLabel(page, this.rootLocator);
   }
 
   public name = this.getChildElementBySelector(PromptModal.promptName);
@@ -106,7 +109,7 @@ export class PromptModalDialog extends BaseElement {
     return this.prompt.getElementContent();
   }
 
-  public async isFieldHasAsterisk(label: string) {
-    return this.fieldLabel(label).getElementLocatorByText('*').isVisible();
+  public async getFieldAsterisk(fieldName: string) {
+    return this.fieldLabelHelper.getFieldRequiredIndicator(fieldName);
   }
 }

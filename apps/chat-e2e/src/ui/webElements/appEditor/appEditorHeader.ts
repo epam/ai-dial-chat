@@ -3,12 +3,14 @@ import { BackendEntity } from '@/chat/types/common';
 import { API } from '@/src/testData';
 import { ApplicationEditorHeader } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
+import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
 export enum AppEditSteps {
   generalInfo = 'General info',
   appSettings = 'App settings',
 }
+
 export class AppEditorHeader extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
     super(page, ApplicationEditorHeader.header, parentLocator);
@@ -32,12 +34,18 @@ export class AppEditorHeader extends BaseElement {
   public singleStepTitle = this.getChildElementBySelector(
     ApplicationEditorHeader.singleStepTitle,
   );
-  public selectedIconLocator = this.getChildElementBySelector(
-    ApplicationEditorHeader.selectedStepIcon,
-  );
-  public notSelectedIconLocator = this.getChildElementBySelector(
-    ApplicationEditorHeader.notSelectedStepIcon,
-  );
+
+  public selectedIcon(step: BaseElement) {
+    return step.getChildElementBySelector(
+      ApplicationEditorHeader.selectedStepIcon,
+    );
+  }
+
+  public notSelectedIcon(step: BaseElement) {
+    return step.getChildElementBySelector(
+      ApplicationEditorHeader.notSelectedStepIcon,
+    );
+  }
 
   public async getActionAndApplicationTypeTitle() {
     return this.actionAndApplicationTypeTitle.getElementLocator().textContent();
@@ -62,17 +70,13 @@ export class AppEditorHeader extends BaseElement {
     return locators.map((locator) => this.createElementFromLocator(locator));
   }
 
-  public getStepByTitle(title: string, index = 0): BaseElement {
+  public getStepByTitle(title: string, index?: number): BaseElement {
     const locator = this.stepsContainer
-      .getElementLocator()
-      .locator(ApplicationEditorHeader.singleStepLink)
-      .filter({
-        // Use :text-is for exact match, safer than :text
-        has: this.page.locator(
-          `${ApplicationEditorHeader.singleStepTitle}:text-is("${title}")`,
-        ),
-      })
-      .nth(index); // nth is 0-based in Playwright
+      .getChildElementBySelector(ApplicationEditorHeader.singleStepLink)
+      .getElementLocatorByText(
+        new RegExp(`^${RegexUtil.escapeRegexChars(title)}$`),
+        index,
+      );
     return this.createElementFromLocator(locator);
   }
 

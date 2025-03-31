@@ -234,6 +234,7 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
               getItemValue={getItemLabel}
               onChangeSelectedItems={field.onChange}
               placeholder={t('Enter one or more attachment types')}
+              id="attachmentTypes"
               className="input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full"
               hasDeleteAll
               hideSuggestions
