@@ -2,6 +2,8 @@ import { useCallback, useMemo } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
+import { sortItemsVersions } from '@/src/utils/app/common';
+import { isMyApplication } from '@/src/utils/app/id';
 import { getGroupModelKey } from '@/src/utils/app/models';
 
 import { ModalState } from '@/src/types/modal';
@@ -54,11 +56,13 @@ export const ApplicationDetails = ({
   );
 
   const filteredEntities = useMemo(() => {
-    return allEntities.filter(
+    const filtered = allEntities.filter(
       (e) =>
         getGroupModelKey(entity) === getGroupModelKey(e) &&
         (!isMyAppsTab || installedModelIds.has(e.reference) || isSuggested),
     );
+
+    return isMyApplication(entity) ? sortItemsVersions(filtered) : filtered;
   }, [allEntities, entity, installedModelIds, isMyAppsTab, isSuggested]);
 
   const handleUseEntity = useCallback(() => {
