@@ -298,6 +298,8 @@ export class BasePage {
     await method();
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles(path.join(directory, uploadData.path));
+    // eslint-disable-next-line playwright/no-wait-for-timeout
+    await this.page.waitForTimeout(500);
   }
 
   public async copyWithKeyboard() {

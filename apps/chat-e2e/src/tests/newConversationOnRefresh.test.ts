@@ -5,11 +5,12 @@ import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import {
   CollapsedSections,
+  ExpectedConstants,
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
 import { loadingTimeout } from '@/src/ui/pages';
-import { ModelsUtil } from '@/src/utils';
+import { ItemUtil, ModelsUtil } from '@/src/utils';
 import { GeneratorUtil } from '@/src/utils/generatorUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -200,6 +201,12 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.waitForState();
         await chat.configureSettingsButton.waitForState();
+        const updatedConversationIds =
+          await localStorageManager.getSelectedConversationIds();
+        baseAssertion.assertValue(
+          updatedConversationIds[0],
+          `conversations/local/${models[0].id}${ItemUtil.entityIdSeparator}${ExpectedConstants.newConversationWithIndexTitle(1)}`,
+        );
         await conversationAssertion.assertNoConversationIsSelected();
       },
     );

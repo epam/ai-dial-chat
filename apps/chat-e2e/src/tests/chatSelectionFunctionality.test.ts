@@ -36,6 +36,7 @@ dialTest(
     downloadAssertion,
     renameConversationModal,
     localStorageManager,
+    compare,
   }) => {
     setTestIds(
       'EPMRTC-934',
@@ -132,6 +133,11 @@ dialTest(
     await dialTest.step('Click on Compare', async () => {
       await conversations.openEntityDropdownMenu(firstConversation.name);
       await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
+      await baseAssertion.assertElementState(compare, 'visible');
+      await baseAssertion.assertElementState(
+        compareConversation.loader,
+        'hidden',
+      );
       await baseAssertion.assertElementState(
         compareConversation,
         'visible',
