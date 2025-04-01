@@ -598,7 +598,7 @@ const ChatView = memo(() => {
       data-qa="chat"
       id="chat"
     >
-      {showFloatingOverlay && <FloatingOverlay className="z-40 bg-blackout" />}
+      {showFloatingOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
       {modelError ? (
         <ErrorMessageDiv error={modelError} />
       ) : customViewer ? (

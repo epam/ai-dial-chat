@@ -136,7 +136,7 @@ const Header = Inversify.register('Header', () => {
   return (
     <div
       className={classNames(
-        'z-40 flex w-full border-b border-secondary bg-layer-1',
+        'z-30 flex w-full border-b border-secondary bg-layer-1',
         isOverlay ? 'min-h-[36px]' : 'min-h-[49px]',
       )}
       data-qa="header"

@@ -56,7 +56,7 @@ const CreateNewEntityButton: React.FC<CreateNewEntityButtonProps> = ({
         ) : (
           <div
             className={classNames(
-              'flex items-center justify-center rounded-full border border-transparent p-[3px]',
+              'flex items-center justify-center rounded-full border border-transparent p-[2px]',
               isDisabled ? 'cursor-not-allowed' : 'cursor-pointer',
               colorsClass,
             )}

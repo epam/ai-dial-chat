@@ -244,7 +244,7 @@ const Navigation = () => {
 
   return (
     <div
-      className="order-last flex h-[52px] w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start md:border-r"
+      className="order-last flex h-[52px] w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start md:border-r md:py-2"
       data-qa="navigation-panel"
     >
       <NavigationButton
@@ -276,7 +276,7 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
     <div className="size-full min-h-screen">
       <Widgetbar />
 
-      <div className="flex size-full flex-col md:flex-row">
+      <div className="flex size-full flex-col md:flex-row ">
         <Navigation />
         {router.route === Routes.Chat &&
           enabledFeatures.has(Feature.ConversationsSection) && <Chatbar />}
