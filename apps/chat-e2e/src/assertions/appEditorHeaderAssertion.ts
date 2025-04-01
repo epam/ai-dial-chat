@@ -21,20 +21,24 @@ export class AppEditorHeaderAssertion extends BaseAssertion {
    * @param expectedActionability The expected actionability state ('enabled' or 'disabled').
    */
   public async assertStepState(
-    stepTitle: string,
+    step: BaseElement | string,
     expectedState: ElementState,
     expectedActionability: ElementActionabilityState = 'enabled', // Default to enabled
   ) {
-    const stepLocator = this.appEditorHeader.getStepByTitle(stepTitle);
+    const stepLocator =
+      typeof step === 'string'
+        ? this.appEditorHeader.getStepByTitle(step)
+        : step;
     await this.assertElementState(
       stepLocator,
       expectedState,
-      `Step "${stepTitle}" should be ${expectedState}`,
+      `Step "${stepLocator}" should be ${expectedState}`,
     );
     if (expectedState === 'visible') {
       await this.assertElementActionabilityState(
         stepLocator,
         expectedActionability,
+        `Step "${stepLocator}" should be ${expectedActionability}`,
       );
     }
   }

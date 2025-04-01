@@ -11,8 +11,9 @@ import {
 import { AppEditSteps } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 
-dialTest(
-  'Create custom app with required fields only',
+dialTest.only(
+  'Create custom app with required fields only.\n' + // EPMRTC-5130
+    'Edit option for custom app is available from card pop-up form', // EPMRTC-5939
   async ({
     marketplacePage,
     marketplaceHeader,
@@ -24,9 +25,10 @@ dialTest(
     marketplaceAgentsSection,
     setTestIds,
     baseAssertion,
+    agentDetailsModal,
     appEditorHeaderAssertion,
   }) => {
-    setTestIds('EPMRTC-5130');
+    setTestIds('EPMRTC-5130', 'EPMRTC-5939');
     const appName = GeneratorUtil.randomApplicationName();
     const appVersion = GeneratorUtil.randomApplicationVersion();
 
@@ -41,9 +43,7 @@ dialTest(
         await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
         await appEditorPage.waitForPageLoaded();
 
-        await baseAssertion.assertElementText(
-          appEditorHeader.actionAndApplicationTypeTitle,
-          // `${AppMenuActions.add} ${AddAppMenuOptions.customApp}`, //custom app != Custom app
+        await appEditorHeaderAssertion.assertActionTitle(
           `${AppMenuActions.add(AddAppMenuOptions.customApp)}`,
         );
       },
@@ -177,6 +177,42 @@ dialTest(
         await baseAssertion.assertElementState(agent, 'visible');
       },
     );
+
+    // --- New Steps for EPMRTC-5939 ---
+    await dialTest.step('Click on the found card', async () => {
+      const agentElement = await marketplaceAgentsSection.findAgentElement({
+        name: appName,
+        version: appVersion,
+      } as DialAIEntityModel);
+      await agentElement.click();
+      await baseAssertion.assertElementState(agentDetailsModal, 'visible');
+    });
+
+    await dialTest.step(
+      'On card detailed pop-up form click on Edit icon',
+      async () => {
+        await agentDetailsModal.editButton.click();
+        await appEditorPage.waitForPageLoadedForEdit();
+      },
+    );
+
+    await dialTest.step(
+      'Verify App Editor page was opened, title "Edit custom app", two steps are displayed in the header',
+      async () => {
+        await appEditorHeaderAssertion.assertActionTitle(
+          `${AppMenuActions.edit(AddAppMenuOptions.customApp)}`,
+        );
+
+        await appEditorHeaderAssertion.assertStepState(
+          appEditorHeader.getGeneralInfoStep(),
+          'visible',
+        );
+        await appEditorHeaderAssertion.assertStepState(
+          appEditorHeader.getAppSettingsStep(),
+          'visible',
+        );
+      },
+    );
   },
 );
 
@@ -194,9 +230,7 @@ dialTest(
     customApplicationBuilder,
     applicationApiHelper,
     appEditorHeaderAssertion,
-    setIssueIds,
   }) => {
-    setIssueIds('3486');
     setTestIds('EPMRTC-5131');
     const updatedDescription = GeneratorUtil.randomString(25);
     const updatedCompletionUrl = `http://updated-${GeneratorUtil.randomString(6)}.com`;

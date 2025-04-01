@@ -3,9 +3,10 @@ import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
   CollapsedSections,
+  EditPromptFormFields,
   ExpectedConstants,
   ExpectedMessages,
-  MenuOptions, EditPromptFormFields,
+  MenuOptions,
 } from '@/src/testData';
 import { Colors, Cursors } from '@/src/ui/domData';
 import { expect } from '@playwright/test';
@@ -56,9 +57,7 @@ dialTest(
       async () => {
         await promptBar.createNewPrompt();
         await baseAssertion.assertElementState(
-          await promptModalDialog.getFieldAsterisk(
-            EditPromptFormFields.name,
-          ),
+          await promptModalDialog.getFieldAsterisk(EditPromptFormFields.name),
           'visible',
           ExpectedMessages.fieldIsRequired,
         );

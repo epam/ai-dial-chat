@@ -241,6 +241,8 @@ export const ApplicationEditorHeader = {
 
 export const ApplicationPreviewSelector = {
   container: '[data-qa="app-preview"]',
+  //TODO
+  containerEditMode: '[data-qa="chat-mode"]',
 };
 
 export const AddApplicationGeneralInfoFormSelector = {

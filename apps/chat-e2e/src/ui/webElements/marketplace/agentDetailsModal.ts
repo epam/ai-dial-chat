@@ -31,6 +31,9 @@ export class AgentDetailsModal extends BaseElement {
   public useButton = this.getChildElementBySelector(
     MarketplaceDetailsModal.useButton,
   );
+  public editButton = this.getChildElementBySelector(
+    MarketplaceDetailsModal.editButton,
+  );
   public versionMenuTrigger = this.getChildElementBySelector(
     MarketplaceDetailsModal.versionMenuTrigger,
   );
