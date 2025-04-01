@@ -1482,10 +1482,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(conversation.name);
         await chatMessages.openEditMessageMode(1);
-        await chatMessages.editMessage(
-          conversation.messages[0].content,
-          updatedRequest,
-        );
+        await chatMessages.editFirstMessage(updatedRequest);
         await expect
           .soft(
             chatMessages.getChatMessage(1),

@@ -395,7 +395,7 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        await chatMessages.editMessage(request, updatedRequest);
+        await chatMessages.editFirstMessage(updatedRequest);
       },
     );
 
