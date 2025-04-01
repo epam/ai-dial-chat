@@ -96,31 +96,18 @@ const NavigationButton = ({
   );
 };
 
-const Navigation = () => {
+const MarketplaceNavigation = () => {
   const { t } = useTranslation(Translation.SideBar);
+
   const dispatch = useAppDispatch();
+
   const router = useRouter();
 
   const selectedMarketplaceTab = useAppSelector(
     MarketplaceSelectors.selectSelectedTab,
   );
-  const isMarketplace = router.route === Routes.Marketplace;
 
-  const handleChatClick = useCallback(() => {
-    if (router.route !== Routes.Chat) {
-      return router.push(Routes.Chat).then(() => {
-        dispatch(
-          ConversationsActions.setIsStartedCustomViewerConversation(false),
-        );
-      });
-    } else {
-      dispatch(
-        ConversationsActions.createNewConversations({
-          names: [DEFAULT_CONVERSATION_NAME],
-        }),
-      );
-    }
-  }, [dispatch, router]);
+  const isMarketplace = router.route === Routes.Marketplace;
 
   const handleChangeTab = useCallback(
     (tab: MarketplaceTabs) => {
@@ -149,14 +136,6 @@ const Navigation = () => {
   return (
     <>
       <NavigationButton
-        onClick={handleChatClick}
-        tooltip={t('Chat')}
-        Icon={IconMessage2}
-        selected={router.route === Routes.Chat}
-        dataQa="marketplace-home-page"
-        caption={t('Chat')}
-      />
-      <NavigationButton
         onClick={handleHomeClick}
         tooltip={t('DIAL Marketplace')}
         Icon={IconLayoutGrid}
@@ -177,6 +156,48 @@ const Navigation = () => {
         dataQa="my-workspace"
         caption={t('Home')}
       />
+    </>
+  );
+};
+
+const Navigation = () => {
+  const { t } = useTranslation(Translation.SideBar);
+
+  const dispatch = useAppDispatch();
+
+  const router = useRouter();
+
+  const isMarketplaceEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
+  );
+
+  const handleChatClick = useCallback(() => {
+    if (router.route !== Routes.Chat) {
+      return router.push(Routes.Chat).then(() => {
+        dispatch(
+          ConversationsActions.setIsStartedCustomViewerConversation(false),
+        );
+      });
+    } else {
+      dispatch(
+        ConversationsActions.createNewConversations({
+          names: [DEFAULT_CONVERSATION_NAME],
+        }),
+      );
+    }
+  }, [dispatch, router]);
+
+  return (
+    <>
+      <NavigationButton
+        onClick={handleChatClick}
+        tooltip={t('Chat')}
+        Icon={IconMessage2}
+        selected={router.route === Routes.Chat}
+        dataQa="marketplace-home-page"
+        caption={t('Chat')}
+      />
+      {isMarketplaceEnabled && <MarketplaceNavigation />}
     </>
   );
 };
