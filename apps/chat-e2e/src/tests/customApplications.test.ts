@@ -5,15 +5,18 @@ import {
   AppEditorGeneralFormFields,
   AppEditorViewFormFields,
   AppMenuActions,
+  ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
+  MockedChatApiResponseBodies,
 } from '@/src/testData';
-import { AppEditSteps } from '@/src/ui/webElements';
+import { AppEditSteps, BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 
 dialTest.only(
   'Create custom app with required fields only.\n' + // EPMRTC-5130
-    'Edit option for custom app is available from card pop-up form', // EPMRTC-5939
+    'Edit option for custom app is available from card pop-up form.\n' + // EPMRTC-5939
+    'Custom app with permitted spec symbols in Name', // EPMRTC-4838
   async ({
     marketplacePage,
     marketplaceHeader,
@@ -27,13 +30,22 @@ dialTest.only(
     baseAssertion,
     agentDetailsModal,
     appEditorHeaderAssertion,
+    dialHomePage,
+    localStorageManager,
+    chat,
+    chatMessagesAssertion,
   }) => {
-    setTestIds('EPMRTC-5130', 'EPMRTC-5939');
-    const appName = GeneratorUtil.randomApplicationName();
-    const appVersion = GeneratorUtil.randomApplicationVersion();
+    setTestIds('EPMRTC-5130', 'EPMRTC-5939', 'EPMRTC-4838');
+    let appEntity = {
+      name: `${GeneratorUtil.randomApplicationName()}${ExpectedConstants.allowedSpecialChars}`,
+      version: GeneratorUtil.randomApplicationVersion(),
+    } as DialAIEntityModel;
+    let agentElement: BaseElement;
+    await localStorageManager.setShowSideBarPanels();
 
     await dialTest.step('Open My workspace directly', async () => {
       await marketplacePage.openMyWorkspacePage();
+      await marketplacePage.waitForPageLoaded();
     });
 
     await dialTest.step(
@@ -107,8 +119,8 @@ dialTest.only(
       'Fill in inputs of Name, Version and click Next',
       async () => {
         await appEditorGeneralForm.fillInAppFields({
-          name: appName,
-          version: appVersion,
+          name: appEntity.name,
+          version: appEntity.version,
         });
         await appEditorGeneralForm.goNext();
       },
@@ -170,23 +182,46 @@ dialTest.only(
     await dialTest.step(
       'Find card of created custom app on My workspace page',
       async () => {
-        const agent = await marketplaceAgentsSection.findAgentElement({
-          name: appName,
-          version: appVersion,
-        } as DialAIEntityModel);
-        await baseAssertion.assertElementState(agent, 'visible');
+        agentElement =
+          await marketplaceAgentsSection.findAgentElement(appEntity);
+        await baseAssertion.assertElementState(agentElement, 'visible');
       },
     );
 
-    // --- New Steps for EPMRTC-5939 ---
-    await dialTest.step('Click on the found card', async () => {
-      const agentElement = await marketplaceAgentsSection.findAgentElement({
-        name: appName,
-        version: appVersion,
-      } as DialAIEntityModel);
-      await agentElement.click();
-      await baseAssertion.assertElementState(agentDetailsModal, 'visible');
-    });
+    await dialTest.step(
+      'Click on the found card again to open details',
+      async () => {
+        await agentElement.click();
+        await baseAssertion.assertElementState(agentDetailsModal, 'visible');
+      },
+    );
+
+    await dialTest.step(
+      'Click "Use application" button, Input a request message, send it and verify response was successfully generated',
+      async () => {
+        await agentDetailsModal.useButton.click();
+        await dialHomePage.waitForPageLoaded();
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chat.sendRequestWithButton(GeneratorUtil.randomString(10));
+        await chatMessagesAssertion.assertLastMessageContent('response'); // Check for the mocked response
+      },
+    );
+
+    await dialTest.step(
+      'Go back to the marketplace and click on the found card',
+      async () => {
+        await marketplacePage.openMyWorkspacePage({
+          isInstalledDeploymentsUpdated: false,
+        });
+        await marketplacePage.waitForPageLoaded();
+        agentElement =
+          await marketplaceAgentsSection.findAgentElement(appEntity);
+        await agentElement.click();
+        await baseAssertion.assertElementState(agentDetailsModal, 'visible');
+      },
+    );
 
     await dialTest.step(
       'On card detailed pop-up form click on Edit icon',
