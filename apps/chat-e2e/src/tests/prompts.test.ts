@@ -5,7 +5,7 @@ import {
   CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
-  MenuOptions,
+  MenuOptions, EditPromptFormFields,
 } from '@/src/testData';
 import { Colors, Cursors } from '@/src/ui/domData';
 import { expect } from '@playwright/test';
@@ -57,14 +57,14 @@ dialTest(
         await promptBar.createNewPrompt();
         await baseAssertion.assertElementState(
           await promptModalDialog.getFieldAsterisk(
-            ExpectedConstants.promptNameLabel,
+            EditPromptFormFields.name,
           ),
           'visible',
           ExpectedMessages.fieldIsRequired,
         );
         await baseAssertion.assertElementState(
           await promptModalDialog.getFieldAsterisk(
-            ExpectedConstants.promptContentLabel,
+            EditPromptFormFields.promptContent,
           ),
           'visible',
           ExpectedMessages.fieldIsRequired,
