@@ -5,6 +5,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { dispatchMouseLeaveEvent } from '@/src/utils/app/common';
 import { isSmallScreen, isTabletScreen } from '@/src/utils/app/mobile';
 import { centralChatWidth, getNewSidebarWidth } from '@/src/utils/app/sidebar';
 
@@ -59,63 +60,73 @@ const Header = Inversify.register('Header', () => {
     SettingsSelectors.selectEnabledFeatures,
   );
 
-  const handleToggleChatbar = useCallback(() => {
-    if (!showChatbar && isTabletScreen()) {
-      dispatch(UIActions.setShowPromptbar(false));
-    }
+  const handleToggleChatbar = useCallback(
+    (e: React.MouseEvent) => {
+      dispatchMouseLeaveEvent(e);
 
-    if (!showChatbar && isSmallScreen()) {
-      dispatch(UIActions.setIsProfileOpen(false));
-    }
-
-    if (!showChatbar && !isTabletScreen()) {
-      if (!windowWidth) return;
-      const calculatedChatWidth = centralChatWidth({
-        oppositeSidebarWidth: promptbarWidth,
-        windowWidth,
-        currentSidebarWidth: chatbarWidth,
-      });
-
-      if (calculatedChatWidth < CENTRAL_CHAT_MIN_WIDTH) {
-        const newPromptbarWidth = getNewSidebarWidth({
-          windowWidth,
-          oppositeSidebarWidth: chatbarWidth,
-        });
-        dispatch(UIActions.setPromptbarWidth(newPromptbarWidth));
+      if (!showChatbar && isTabletScreen()) {
+        dispatch(UIActions.setShowPromptbar(false));
       }
-    }
 
-    dispatch(UIActions.setShowChatbar(!showChatbar));
-  }, [chatbarWidth, dispatch, promptbarWidth, showChatbar, windowWidth]);
+      if (!showChatbar && isSmallScreen()) {
+        dispatch(UIActions.setIsProfileOpen(false));
+      }
 
-  const handleTogglePromtbar = useCallback(() => {
-    if (!showPromptbar && isTabletScreen()) {
-      dispatch(UIActions.setShowChatbar(false));
-    }
-
-    if (!showPromptbar && isSmallScreen()) {
-      dispatch(UIActions.setIsProfileOpen(false));
-    }
-
-    if (!showPromptbar && !isTabletScreen()) {
-      if (!windowWidth) return;
-      const calculatedChatWidth = centralChatWidth({
-        oppositeSidebarWidth: chatbarWidth,
-        windowWidth,
-        currentSidebarWidth: promptbarWidth,
-      });
-
-      if (calculatedChatWidth < CENTRAL_CHAT_MIN_WIDTH) {
-        const newChatbarWidth = getNewSidebarWidth({
-          windowWidth,
+      if (!showChatbar && !isTabletScreen()) {
+        if (!windowWidth) return;
+        const calculatedChatWidth = centralChatWidth({
           oppositeSidebarWidth: promptbarWidth,
+          windowWidth,
+          currentSidebarWidth: chatbarWidth,
         });
-        dispatch(UIActions.setChatbarWidth(newChatbarWidth));
-      }
-    }
 
-    dispatch(UIActions.setShowPromptbar(!showPromptbar));
-  }, [chatbarWidth, dispatch, promptbarWidth, showPromptbar, windowWidth]);
+        if (calculatedChatWidth < CENTRAL_CHAT_MIN_WIDTH) {
+          const newPromptbarWidth = getNewSidebarWidth({
+            windowWidth,
+            oppositeSidebarWidth: chatbarWidth,
+          });
+          dispatch(UIActions.setPromptbarWidth(newPromptbarWidth));
+        }
+      }
+
+      dispatch(UIActions.setShowChatbar(!showChatbar));
+    },
+    [chatbarWidth, dispatch, promptbarWidth, showChatbar, windowWidth],
+  );
+
+  const handleTogglePromtbar = useCallback(
+    (e: React.MouseEvent) => {
+      dispatchMouseLeaveEvent(e);
+
+      if (!showPromptbar && isTabletScreen()) {
+        dispatch(UIActions.setShowChatbar(false));
+      }
+
+      if (!showPromptbar && isSmallScreen()) {
+        dispatch(UIActions.setIsProfileOpen(false));
+      }
+
+      if (!showPromptbar && !isTabletScreen()) {
+        if (!windowWidth) return;
+        const calculatedChatWidth = centralChatWidth({
+          oppositeSidebarWidth: chatbarWidth,
+          windowWidth,
+          currentSidebarWidth: promptbarWidth,
+        });
+
+        if (calculatedChatWidth < CENTRAL_CHAT_MIN_WIDTH) {
+          const newChatbarWidth = getNewSidebarWidth({
+            windowWidth,
+            oppositeSidebarWidth: promptbarWidth,
+          });
+          dispatch(UIActions.setChatbarWidth(newChatbarWidth));
+        }
+      }
+
+      dispatch(UIActions.setShowPromptbar(!showPromptbar));
+    },
+    [chatbarWidth, dispatch, promptbarWidth, showPromptbar, windowWidth],
+  );
 
   const onClose = () => {
     dispatch(UIActions.setIsUserSettingsOpen(false));
