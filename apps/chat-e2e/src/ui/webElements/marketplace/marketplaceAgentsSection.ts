@@ -146,7 +146,9 @@ export class MarketplaceAgentsSection extends BaseElement {
       clientHeight: 0,
     };
     if (!(await this.rootLocator.isVisible())) {
-      console.warn("MarketplaceAgentsSection root locator is not visible. Returning 0 agents.");
+      console.warn(
+        'MarketplaceAgentsSection root locator is not visible. Returning 0 agents.',
+      );
       return allAgents;
     }
     const scrollHeight = await this.rootLocator.evaluate((p) => p.scrollHeight);
