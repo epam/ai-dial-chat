@@ -16,7 +16,8 @@ import { GeneratorUtil } from '@/src/utils';
 dialTest.only(
   'Create custom app with required fields only.\n' + // EPMRTC-5130
     'Edit option for custom app is available from card pop-up form.\n' + // EPMRTC-5939
-    'Custom app with permitted spec symbols in Name', // EPMRTC-4838
+    'Custom app with permitted spec symbols in Name.\n' + // EPMRTC-4838
+    'Delete custom app from context menu', // EPMRTC-4094
   async ({
     marketplacePage,
     marketplaceHeader,
@@ -26,16 +27,19 @@ dialTest.only(
     appEditorViewForm,
     appEditorHeader,
     marketplaceAgentsSection,
-    setTestIds,
-    baseAssertion,
-    agentDetailsModal,
-    appEditorHeaderAssertion,
-    dialHomePage,
-    localStorageManager,
-    chat,
-    chatMessagesAssertion,
+           marketplaceAgents, // Added fixture
+           agentDetailsModal, // Added fixture
+           setTestIds,
+           baseAssertion,
+           appEditorHeaderAssertion, // Keep instance creation inside test
+           dialHomePage, // Add dialHomePage
+           chat, // Add chat
+           chatMessagesAssertion, // Add chatMessagesAssertion
+           confirmationDialog, // Add confirmationDialog
+           marketplaceSidebar, // Add marketplaceSidebar
+           localStorageManager, // Keep localStorageManager
   }) => {
-    setTestIds('EPMRTC-5130', 'EPMRTC-5939', 'EPMRTC-4838');
+    setTestIds('EPMRTC-5130', 'EPMRTC-5939', 'EPMRTC-4838', 'EPMRTC-4094');
     let appEntity = {
       name: `${GeneratorUtil.randomApplicationName()}${ExpectedConstants.allowedSpecialChars}`,
       version: GeneratorUtil.randomApplicationVersion(),
@@ -248,6 +252,34 @@ dialTest.only(
         );
       },
     );
+
+    await dialTest.step('Close the application edit mode', async () => {
+      await appEditorHeader.saveAppAndExit();
+    });
+
+    await dialTest.step('Delete an app, confirm and verify custom app card was deleted from My workspace', async () => {
+      agentElement = await marketplaceAgentsSection.findAgentElement(appEntity); // Re-find element
+      await agentElement.hoverOver();
+      await marketplaceAgents.getAgentElementDotsMenu(agentElement).click();
+      await marketplaceAgents.getAgentDropdownMenu().selectMenuOption(MenuOptions.delete);
+      await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+      await baseAssertion.assertElementState(agentElement, 'hidden', `App "${appEntity.name}" should be deleted from My Workspace`);
+    });
+
+    await dialTest.step('Navigate to DIAL Marketplace and verify custom app card was deleted', async () => {
+      await marketplaceSidebar.marketplaceHomePageButton.click();
+      await marketplaceHeader.searchInput.fillInInput(
+        appEntity.name,
+      );
+      const actualAgents = await marketplaceAgentsSection.getAllAgents();
+      baseAssertion.assertValue(
+        actualAgents.length,
+        0,
+        ExpectedMessages.elementsCountIsValid,
+      );
+      await marketplacePage.waitForPageLoaded();
+      await baseAssertion.assertElementState(agentElement, 'hidden', `App "${appEntity.name}" should be deleted from Marketplace`);
+    });
   },
 );
 
