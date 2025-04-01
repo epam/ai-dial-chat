@@ -67,7 +67,7 @@ const NavigationButton = ({
       data-qa={dataQa}
       onClick={onClick}
       className={classNames(
-        'flex max-h-[60px] min-w-[72px] shrink-0 cursor-pointer select-none flex-col items-center justify-center gap-[2px] rounded border border-transparent p-[10px] transition-colors duration-200 hover:bg-accent-primary-alpha hover:disabled:bg-transparent md:min-w-min',
+        'flex max-h-[52px] min-w-[72px] shrink-0 cursor-pointer select-none flex-col items-center justify-center gap-[2px] rounded border border-transparent transition-colors duration-200 hover:bg-accent-primary-alpha hover:disabled:bg-transparent md:min-w-min md:p-[10px]',
         {
           'rounded-full': rounded,
           '!border-accent-primary': rounded && selected,
@@ -86,7 +86,7 @@ const NavigationButton = ({
 
       <span
         className={classNames(
-          'text-xs md:hidden',
+          'text-xs leading-[15px] md:hidden',
           selected ? 'text-accent-primary' : 'text-secondary',
         )}
       >
@@ -243,7 +243,7 @@ const Navigation = () => {
   }, [dispatch, router]);
 
   return (
-    <div className="order-last flex h-[60px] w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start md:border-r">
+    <div className="order-last flex h-[52px] w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start md:border-r">
       <NavigationButton
         onClick={handleChatClick}
         tooltip={t('Chat')}
