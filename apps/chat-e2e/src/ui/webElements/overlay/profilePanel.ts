@@ -1,4 +1,4 @@
-import { HeaderSelectors } from '@/src/ui/selectors';
+import { HeaderSelectors, SideBarSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
 import { Footer } from '@/src/ui/webElements/footer';
 import { Locator, Page } from '@playwright/test';
@@ -12,6 +12,9 @@ export class ProfilePanel extends BaseElement {
   public logout = this.getChildElementBySelector(HeaderSelectors.overlayLogout);
   public username = this.getChildElementBySelector(HeaderSelectors.username);
   public avatar = this.getChildElementBySelector(HeaderSelectors.avatar);
+  public closeButton = this.getChildElementBySelector(
+    SideBarSelectors.closeSidebar,
+  );
 
   private footer!: Footer;
 

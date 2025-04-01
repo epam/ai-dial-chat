@@ -61,6 +61,14 @@ export class SideBar extends BaseElement {
     SideBarSelectors.pinnedEntities,
   ).getChildElementBySelector(SideBarSelectors.folderSeparator);
 
+  public newEntityButton = this.getChildElementBySelector(
+    SideBarSelectors.newEntity,
+  );
+
+  public async createNewEntity() {
+    await this.newEntityButton.click();
+  }
+
   public async createNewFolder() {
     await this.newFolderButton.click();
   }
@@ -213,5 +221,9 @@ export class SideBar extends BaseElement {
 
   public noDataPlaceholder = this.getChildElementBySelector(
     SideBarSelectors.noData,
+  );
+
+  public closeButton = this.getChildElementBySelector(
+    SideBarSelectors.closeSidebar,
   );
 }

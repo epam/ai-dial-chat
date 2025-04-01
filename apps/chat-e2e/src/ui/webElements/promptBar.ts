@@ -1,6 +1,5 @@
-import { PromptBarSelectors, SideBarSelectors } from '../selectors';
+import { SideBarSelectors } from '../selectors';
 
-import { Styles, removeAlpha } from '@/src/ui/domData';
 import {
   ApproveRequiredPrompts,
   FolderPrompts,
@@ -62,31 +61,6 @@ export class PromptBar extends SideBar {
       );
     }
     return this.sharedWithMePromptsTree;
-  }
-
-  public newEntityButton = this.getChildElementBySelector(
-    PromptBarSelectors.newEntity,
-  );
-
-  public async createNewPrompt() {
-    await this.newEntityButton.waitForState();
-    await this.newEntityButton.click();
-  }
-
-  public async hoverOverNewEntity() {
-    await this.newEntityButton.waitForState();
-    await this.newEntityButton.hoverOver();
-  }
-
-  public async getNewEntityBackgroundColor() {
-    const backgroundColor = await this.newEntityButton.getComputedStyleProperty(
-      Styles.backgroundColor,
-    );
-    return removeAlpha(backgroundColor[0]);
-  }
-
-  public async getNewEntityCursor() {
-    return this.newEntityButton.getComputedStyleProperty(Styles.cursor);
   }
 
   getSharedFolderPrompts(): FolderPrompts {

@@ -21,6 +21,7 @@ export const CloseSidebarButton: React.FC<Props> = ({
       <button
         onClick={onClose}
         className="cursor-pointer rounded-full bg-layer-3 p-[6px]"
+        data-qa="close-sidebar"
       >
         <IconX size={24} className="text-primary" />
       </button>

@@ -37,8 +37,6 @@ export const MarketplaceDetailsModal = {
 
 export const MarketplaceSideBarSelectors = {
   sidebar: '[data-qa="marketplace-sidebar"]',
-  marketplaceHomePageButton: '[data-qa="home-page"]',
-  myWorkspaceButton: '[data-qa="my-workspace"]',
   searchInput: '[name="titleInput"]',
   marketplaceFilter: '[data-qa="marketplace-filter"]',
   filterProperty: '[data-qa="filter-property"]',
