@@ -243,13 +243,16 @@ const Navigation = () => {
   }, [dispatch, router]);
 
   return (
-    <div className="order-last flex h-[52px] w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start md:border-r">
+    <div
+      className="order-last flex h-[52px] w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start md:border-r"
+      data-qa="navigation-panel"
+    >
       <NavigationButton
         onClick={handleChatClick}
         tooltip={t('Chat')}
         Icon={IconMessage2}
         selected={router.route === Routes.Chat}
-        dataQa="marketplace-home-page"
+        dataQa="back-to-chat"
         caption={t('Chat')}
       />
       {isMarketplaceEnabled && <MarketplaceNavigation />}
