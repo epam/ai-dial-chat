@@ -160,48 +160,6 @@ const MarketplaceNavigation = () => {
   );
 };
 
-const Navigation = () => {
-  const { t } = useTranslation(Translation.SideBar);
-
-  const dispatch = useAppDispatch();
-
-  const router = useRouter();
-
-  const isMarketplaceEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
-  );
-
-  const handleChatClick = useCallback(() => {
-    if (router.route !== Routes.Chat) {
-      return router.push(Routes.Chat).then(() => {
-        dispatch(
-          ConversationsActions.setIsStartedCustomViewerConversation(false),
-        );
-      });
-    } else {
-      dispatch(
-        ConversationsActions.createNewConversations({
-          names: [DEFAULT_CONVERSATION_NAME],
-        }),
-      );
-    }
-  }, [dispatch, router]);
-
-  return (
-    <>
-      <NavigationButton
-        onClick={handleChatClick}
-        tooltip={t('Chat')}
-        Icon={IconMessage2}
-        selected={router.route === Routes.Chat}
-        dataQa="marketplace-home-page"
-        caption={t('Chat')}
-      />
-      {isMarketplaceEnabled && <MarketplaceNavigation />}
-    </>
-  );
-};
-
 const UsedWidgets = () => {
   const { t } = useTranslation(Translation.SideBar);
 
@@ -254,6 +212,52 @@ const UsedWidgets = () => {
   );
 };
 
+const Navigation = () => {
+  const { t } = useTranslation(Translation.SideBar);
+
+  const dispatch = useAppDispatch();
+
+  const router = useRouter();
+
+  const isMarketplaceEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
+  );
+  const widgetsSchemaIds = useAppSelector(
+    SettingsSelectors.selectWidgetsSchemaIds,
+  );
+
+  const handleChatClick = useCallback(() => {
+    if (router.route !== Routes.Chat) {
+      return router.push(Routes.Chat).then(() => {
+        dispatch(
+          ConversationsActions.setIsStartedCustomViewerConversation(false),
+        );
+      });
+    } else {
+      dispatch(
+        ConversationsActions.createNewConversations({
+          names: [DEFAULT_CONVERSATION_NAME],
+        }),
+      );
+    }
+  }, [dispatch, router]);
+
+  return (
+    <div className="order-last flex h-[60px] w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start md:border-r">
+      <NavigationButton
+        onClick={handleChatClick}
+        tooltip={t('Chat')}
+        Icon={IconMessage2}
+        selected={router.route === Routes.Chat}
+        dataQa="marketplace-home-page"
+        caption={t('Chat')}
+      />
+      {isMarketplaceEnabled && <MarketplaceNavigation />}
+      {!!widgetsSchemaIds.size && <UsedWidgets />}
+    </div>
+  );
+};
+
 interface NavigationWrapperProps {
   children: ReactNode;
 }
@@ -264,20 +268,13 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
-  const widgetsSchemaIds = useAppSelector(
-    SettingsSelectors.selectWidgetsSchemaIds,
-  );
 
   return (
     <div className="size-full min-h-screen">
       <Widgetbar />
 
       <div className="flex size-full flex-col md:flex-row">
-        <div className="order-last flex h-[60px] w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start md:border-r">
-          <Navigation />
-
-          {!!widgetsSchemaIds.size && <UsedWidgets />}
-        </div>
+        <Navigation />
         {router.route === Routes.Chat &&
           enabledFeatures.has(Feature.ConversationsSection) && <Chatbar />}
         {router.route === Routes.Marketplace && <MarketplaceFilterbar />}
