@@ -123,7 +123,8 @@ export const getCommonPageProps: GetServerSideProps = async ({
       )
       .concat(isIsolatedView ? hiddenFeaturesForIsolatedView : []),
     widgetsSchemaIds: parseCommaSeparatedList(
-      (process.env.WIDGETS_SCHEMA_IDS as string) ?? [],
+      process.env.WIDGETS_SCHEMA_IDS,
+      [],
     ),
     publicationFilters: parseCommaSeparatedList(
       process.env.PUBLICATION_FILTERS,

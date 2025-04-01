@@ -243,16 +243,19 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
+  const widgetsSchemaIds = useAppSelector(
+    SettingsSelectors.selectWidgetsSchemaIds,
+  );
 
   return (
     <div className="size-full min-h-screen">
       <Widgetbar />
 
       <div className="flex size-full flex-col md:flex-row">
-        <div className="order-last flex h-[60px] w-full shrink-0 flex-row items-center justify-between gap-2 border-tertiary bg-layer-3 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start md:border-r">
+        <div className="order-last flex h-[60px] w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start md:border-r">
           <Navigation />
 
-          <UsedWidgets />
+          {!!widgetsSchemaIds.size && <UsedWidgets />}
         </div>
         {router.route === Routes.Chat &&
           enabledFeatures.has(Feature.ConversationsSection) && <Chatbar />}
