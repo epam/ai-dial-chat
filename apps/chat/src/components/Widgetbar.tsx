@@ -56,7 +56,7 @@ export const Widgetbar = () => {
       )}
     >
       <div className="relative flex h-full flex-col bg-layer-3">
-        <div className="border-b border-tertiary px-5 py-[14px] text-base font-semibold text-primary">
+        <div className="border-b border-tertiary px-5 py-[12px] text-base font-semibold text-primary">
           {t('Widgets')}
         </div>
 
