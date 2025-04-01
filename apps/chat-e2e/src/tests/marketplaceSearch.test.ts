@@ -173,7 +173,7 @@ dialTest(
       async () => {
         const endSpaces = ' '.repeat(3);
         leadingEndingSpacesSearchTerm = leadingSpacesSearchTerm + endSpaces;
-        await navigationPanel.marketplaceHomePageButton.click();
+        await navigationPanel.marketplaceHomeButton.click();
         await marketplaceHeader.searchInput.click();
         await page.keyboard.press(keys.end);
         await marketplaceHeader.searchInput.typeInInput(endSpaces);
