@@ -42,7 +42,7 @@ const CreateNewEntityButton: React.FC<CreateNewEntityButtonProps> = ({
   return (
     <Tooltip isTriggerClickable tooltip={t(tooltip)}>
       <button
-        className="flex h-full items-center justify-center pl-4 disabled:cursor-not-allowed"
+        className="flex h-full items-center justify-center disabled:cursor-not-allowed"
         aria-label={t(tooltip)}
         onClick={onClick}
         disabled={isDisabled}

@@ -41,7 +41,7 @@ import { NoResultsFound } from '../Common/NoResultsFound';
 import {
   CreateNewConversation,
   CreateNewPrompt,
-} from '../Header/CreateNewConversation';
+} from '../Header/CreateNewEntity';
 import Search from '../Search';
 import { LeftSideResizeIcon, RightSideResizeIcon } from './ResizeIcons';
 

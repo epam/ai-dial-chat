@@ -23,7 +23,7 @@ import {
 
 import Tooltip from '../Common/Tooltip';
 import { SettingDialog } from '../Settings/SettingDialog';
-import { CreateNewConversation } from './CreateNewConversation';
+import { CreateNewConversation } from './CreateNewEntity';
 import { Logo } from './Logo';
 import { User } from './User/User';
 
@@ -172,9 +172,11 @@ const Header = Inversify.register('Header', () => {
           </div>
         </Tooltip>
       )}
-      {!enabledFeatures.has(Feature.HideNewConversation) && !showChatbar && (
-        <CreateNewConversation iconSize={headerIconSize} />
-      )}
+      <div className="ml-4">
+        {!enabledFeatures.has(Feature.HideNewConversation) && !showChatbar && (
+          <CreateNewConversation iconSize={headerIconSize} />
+        )}
+      </div>
       <div className="flex grow justify-center">
         <Logo />
       </div>
