@@ -92,7 +92,6 @@ export const MarketplaceHeader = () => {
           )}
         </div>
       </Tooltip>
-      {/*<BackToChat />*/}
       <div className="flex grow justify-center">
         <Logo />
       </div>
