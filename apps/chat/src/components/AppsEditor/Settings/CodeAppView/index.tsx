@@ -209,13 +209,20 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
 
   const handleSave = useCallback(
     (data: CodeAppFormData) => {
-      if (isCodeEditorDirty) {
+      if (isCodeEditorDirty && exitAfterSave) {
         setEditorConfirmation(data);
       } else {
+        if (isAppDeployed && exitAfterSave) {
+          dispatch(
+            UIActions.showWarningToast(
+              t('Saved changes will be applied during next deployment'),
+            ),
+          );
+        }
         handleEdit(data);
       }
     },
-    [handleEdit, isCodeEditorDirty],
+    [dispatch, exitAfterSave, handleEdit, isAppDeployed, isCodeEditorDirty, t],
   );
 
   const modalOptions = useMemo(
@@ -363,7 +370,6 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
         <OptionsDialog
           isOpen={!!editorConfirmation}
           heading={t('Do you want to save changes in the code editor?')}
-          onClose={() => setEditorConfirmation(undefined)}
           options={modalOptions}
         />
       </div>
