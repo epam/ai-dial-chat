@@ -179,7 +179,7 @@ const UsedWidgets = () => {
 
   return (
     <>
-      <div className="hidden w-full flex-col items-center md:flex">
+      <div className="hidden w-full flex-col items-center gap-2 overflow-y-auto md:flex">
         {widgetModels.map((model) => (
           <NavigationButton
             key={model.reference}
