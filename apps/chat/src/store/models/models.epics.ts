@@ -56,6 +56,7 @@ import { UIActions } from '../ui/ui.reducers';
 import { ModelsActions, ModelsSelectors } from './models.reducers';
 
 import { Feature } from '@epam/ai-dial-shared';
+import sortBy from 'lodash-es/sortBy';
 import uniqBy from 'lodash-es/uniqBy';
 
 const initEpic: AppEpic = (action$, state$) =>
@@ -132,7 +133,10 @@ const getModelsEpic: AppEpic = (action$, state$) =>
           return from(resp.json());
         }),
         switchMap((response: DialAIEntityModel[]) => {
-          const sortedAgents = groupModelsAndSaveOrder(response).flatMap(
+          const sortedResponse = sortBy(response, (model) =>
+            model.name.toLowerCase(),
+          );
+          const sortedAgents = groupModelsAndSaveOrder(sortedResponse).flatMap(
             ({ entities }) => {
               if (
                 entities.length > 0 &&
