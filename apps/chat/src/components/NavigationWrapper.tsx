@@ -37,7 +37,7 @@ import { Chatbar } from '@/src/components/Chatbar/Chatbar';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import Tooltip from '@/src/components/Common/Tooltip';
 import { MarketplaceFilterbar } from '@/src/components/Marketplace/MarketplaceFilterbar';
-import Promptbar from '@/src/components/Promptbar';
+import { Promptbar } from '@/src/components/Promptbar';
 import { Widgetbar } from '@/src/components/Widgetbar';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -203,7 +203,7 @@ const UsedWidgets = () => {
         <NavigationButton
           onClick={handleOpenWidgetsClick}
           Icon={IconCube}
-          selected={false}
+          selected={!!selectedWidget && router.route === Routes.Chat}
           dataQa="widgets-sidebar-trigger"
           caption={t('Widgets')}
         />
@@ -224,6 +224,9 @@ const Navigation = () => {
   );
   const widgetsSchemaIds = useAppSelector(
     SettingsSelectors.selectWidgetsSchemaIds,
+  );
+  const selectedWidget = useAppSelector(
+    ApplicationSelectors.selectSelectedWidget,
   );
 
   const handleChatClick = useCallback(() => {
@@ -251,7 +254,7 @@ const Navigation = () => {
         onClick={handleChatClick}
         tooltip={t('Chat')}
         Icon={IconMessage2}
-        selected={router.route === Routes.Chat}
+        selected={router.route === Routes.Chat && !selectedWidget}
         dataQa="back-to-chat"
         caption={t('Chat')}
       />

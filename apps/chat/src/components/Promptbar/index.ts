@@ -1,1 +1,1 @@
-export { default } from './Promptbar';
+export { Promptbar } from './Promptbar';

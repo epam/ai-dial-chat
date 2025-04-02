@@ -75,7 +75,9 @@ export const Widgetbar = () => {
               )}
             >
               <ModelIcon entityId={model.id} entity={model} size={24} />
-              <span className="text-sm text-primary">{model.name}</span>
+              <span className="truncate text-sm text-primary">
+                {model.name}
+              </span>
             </button>
           ))}
         </div>

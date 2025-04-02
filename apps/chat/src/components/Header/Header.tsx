@@ -152,7 +152,7 @@ const Header = Inversify.register('Header', () => {
       )}
       data-qa="header"
     >
-      {enabledFeatures.has(Feature.ConversationsSection) && (
+      {enabledFeatures.has(Feature.ConversationsSection) && !selectedWidget && (
         <Tooltip isTriggerClickable tooltip={t('Conversation list')}>
           <div
             className="flex h-full cursor-pointer items-center justify-center px-3 md:px-5"
@@ -184,9 +184,11 @@ const Header = Inversify.register('Header', () => {
         </Tooltip>
       )}
       <div className="ml-4">
-        {!enabledFeatures.has(Feature.HideNewConversation) && !showChatbar && (
-          <CreateNewConversation iconSize={headerIconSize} />
-        )}
+        {!enabledFeatures.has(Feature.HideNewConversation) &&
+          !showChatbar &&
+          !selectedWidget && (
+            <CreateNewConversation iconSize={headerIconSize} />
+          )}
       </div>
       <div className="flex grow justify-center">
         <Logo />
