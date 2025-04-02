@@ -32,7 +32,9 @@ export const selectModelsError = (state: RootState) =>
 export const selectIsRecentModelsLoaded = (state: RootState) =>
   rootSelector(state).recentModelsStatus === UploadStatus.LOADED;
 
-export const selectModels = (state: RootState) => rootSelector(state).models;
+export const selectModels = createSelector([rootSelector], (state) => {
+  return sortBy(state.models, (model) => model.name.toLowerCase());
+});
 
 export const selectModelTopics = createSelector([rootSelector], (state) => {
   return sortBy(
