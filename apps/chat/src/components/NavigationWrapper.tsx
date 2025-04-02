@@ -37,7 +37,7 @@ import { Chatbar } from '@/src/components/Chatbar/Chatbar';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import Tooltip from '@/src/components/Common/Tooltip';
 import { MarketplaceFilterbar } from '@/src/components/Marketplace/MarketplaceFilterbar';
-import Promptbar from '@/src/components/Promptbar';
+import { Promptbar } from '@/src/components/Promptbar';
 import { Widgetbar } from '@/src/components/Widgetbar';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -179,7 +179,7 @@ const UsedWidgets = () => {
 
   return (
     <>
-      <div className="hidden w-full flex-col items-center md:flex">
+      <div className="hidden w-full flex-col items-center gap-2 overflow-y-auto md:flex">
         {widgetModels.map((model) => (
           <NavigationButton
             key={model.reference}
@@ -203,7 +203,7 @@ const UsedWidgets = () => {
         <NavigationButton
           onClick={handleOpenWidgetsClick}
           Icon={IconCube}
-          selected={false}
+          selected={!!selectedWidget && router.route === Routes.Chat}
           dataQa="widgets-sidebar-trigger"
           caption={t('Widgets')}
         />
@@ -225,6 +225,9 @@ const Navigation = () => {
   const widgetsSchemaIds = useAppSelector(
     SettingsSelectors.selectWidgetsSchemaIds,
   );
+  const selectedWidget = useAppSelector(
+    ApplicationSelectors.selectSelectedWidget,
+  );
 
   const handleChatClick = useCallback(() => {
     if (router.route !== Routes.Chat) {
@@ -244,14 +247,17 @@ const Navigation = () => {
 
   return (
     <div
-      className="order-last flex h-[52px] w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:z-40 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start md:border-r md:py-2"
+      className={classNames(
+        'order-last h-[52px] w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:z-40 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start md:border-r md:py-2',
+        !isMarketplaceEnabled && !widgetsSchemaIds.size ? 'hidden' : 'flex',
+      )}
       data-qa="navigation-panel"
     >
       <NavigationButton
         onClick={handleChatClick}
         tooltip={t('Chat')}
         Icon={IconMessage2}
-        selected={router.route === Routes.Chat}
+        selected={router.route === Routes.Chat && !selectedWidget}
         dataQa="back-to-chat"
         caption={t('Chat')}
       />
