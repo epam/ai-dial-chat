@@ -41,9 +41,6 @@ export class ChatBar extends SideBar {
   public bottomDotsMenuIcon = this.bottomPanel.getChildElementBySelector(
     MenuSelectors.dotsMenu,
   );
-  public dialMarketplaceLink = this.getChildElementBySelector(
-    ChatBarSelectors.dialMarketplaceLink,
-  );
 
   getConversationsTree(): ConversationsTree {
     if (!this.conversationsTree) {

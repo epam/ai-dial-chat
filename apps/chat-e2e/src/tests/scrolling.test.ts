@@ -195,7 +195,7 @@ dialTest(
     conversations,
     conversationDropdownMenu,
     conversationAssertion,
-    header,
+    chatBar,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-493', 'EPMRTC-3072', 'EPMRTC-1783', 'EPMRTC-1754');
@@ -243,7 +243,7 @@ dialTest(
       'Back to the first conversation, create new conversation and verify no "Scroll down" button is visible',
       async () => {
         await conversations.selectConversation(firstConversation.name);
-        await header.createNewConversation();
+        await chatBar.createNewEntity();
         await expect
           .soft(
             sendMessage.scrollDownButton.getElementLocator(),

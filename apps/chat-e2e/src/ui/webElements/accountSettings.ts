@@ -35,10 +35,6 @@ export class AccountSettings extends BaseElement {
 
   public avatarIcon = this.getChildElementBySelector(HeaderSelectors.avatar);
 
-  public closeButton = this.getChildElementBySelector(
-    HeaderSelectors.closeButton,
-  );
-
   public async openAccountDropdownMenu() {
     await this.click();
     await this.getDropdownMenu().waitForState();

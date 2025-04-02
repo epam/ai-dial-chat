@@ -6,6 +6,7 @@ import { useCallback, useState } from 'react';
 import classNames from 'classnames';
 
 import { useLogout } from '@/src/hooks/useLogout';
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { ScreenState } from '@/src/types/common';
@@ -19,6 +20,7 @@ import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { FooterMessage } from '@/src/components/Common/FooterMessage';
 
 import UserIcon from '../../../../public/images/icons/user.svg';
+import { CloseSidebarButton } from '../../Buttons/CloseSidebarButton';
 import { withRenderWhen } from '../../Common/RenderWhen';
 import { withRenderForScreen } from '../../Common/ScreenRender';
 
@@ -126,14 +128,29 @@ const UserMenu = () => {
 const UserMobileView = Inversify.register('UserMobile', () => {
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
+  const dispatch = useAppDispatch();
+
+  const screenState = useScreenState();
+
+  const handleClose = useCallback(() => {
+    dispatch(UIActions.setIsProfileOpen(false));
+  }, [dispatch]);
+
   return (
     <div
       className={classNames(
-        'fixed right-0 z-40 flex w-[260px] flex-col overflow-y-auto border-tertiary bg-layer-3 md:hidden',
-        isOverlay ? 'top-9 h-[calc(100%-36px)]' : 'top-12 h-[calc(100%-48px)]',
+        'absolute right-0 z-40 flex w-[260px] flex-col border-tertiary bg-layer-3 md:hidden',
+        (screenState === ScreenState.SM || screenState === ScreenState.MD) &&
+          'top-0 !h-full',
+        screenState !== ScreenState.SM &&
+          screenState !== ScreenState.MD &&
+          (isOverlay
+            ? 'top-9 !h-[calc(100%-36px)]'
+            : 'top-12 !h-[calc(100%-48px)]'),
       )}
       data-qa="profile-panel"
     >
+      <CloseSidebarButton onClose={handleClose} isLeftSide={false} />
       <UserInfo />
       <UserMenu />
       <div className="grow"></div>

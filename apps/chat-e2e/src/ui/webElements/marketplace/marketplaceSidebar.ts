@@ -19,11 +19,4 @@ export class MarketplaceSidebar extends BaseElement {
     }
     return this.marketplaceFilter;
   }
-
-  public marketplaceHomePageButton = this.getChildElementBySelector(
-    MarketplaceSideBarSelectors.marketplaceHomePageButton,
-  );
-  public myWorkspaceButton = this.getChildElementBySelector(
-    MarketplaceSideBarSelectors.myWorkspaceButton,
-  );
 }

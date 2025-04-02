@@ -6,6 +6,8 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { dispatchMouseLeaveEvent } from '@/src/utils/app/common';
+
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -75,13 +77,7 @@ export const MonacoEditor = memo(function MonacoEditor(
               className="p-2 text-secondary hover:text-accent-primary"
               onClick={(e) => {
                 setIsFullScreen(!isFullScreen);
-                const mouseLeaveEvent = new MouseEvent('mouseleave', {
-                  bubbles: true,
-                  cancelable: true,
-                  view: window,
-                });
-
-                e.currentTarget.dispatchEvent(mouseLeaveEvent);
+                dispatchMouseLeaveEvent(e);
               }}
             >
               <FullScreenIcon size={18} />

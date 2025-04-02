@@ -1455,7 +1455,6 @@ dialTest(
     conversations,
     folderConversations,
     chatBar,
-    header,
     chatFilter,
     chatFilterDropdownMenu,
     dataInjector,
@@ -1549,7 +1548,7 @@ dialTest(
       async () => {
         await conversations.openEntityDropdownMenu(singleConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.select);
-        await header.createNewConversation();
+        await chatBar.createNewEntity();
         await chatBarAssertion.assertUnselectAllButtonState('hidden');
       },
     );

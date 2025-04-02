@@ -15,19 +15,20 @@ export const SideBarSelectors = {
   search: '[data-qa="search"]',
   searchInput: '[data-qa="search-input"]',
   folderSeparator: '.h-1',
+  newEntity: '[data-qa="new-entity"]',
   pinnedEntities: '[data-qa^="pinned"]',
   sharedWithMeContainer: '[data-qa="shared-with-me-container"]',
   approveRequiredContainer: '[data-qa="approve-required-container"]',
   organizationContainer: '[data-qa="published-with-me-container"]',
   noData: '[data-qa="no-data-placeholder"]',
   noDataIcon: '[data-qa="no-data-icon"]',
+  closeSidebar: '[data-qa="close-sidebar"]',
 };
 
 export const ChatBarSelectors = {
   deleteConversations: '[data-qa="delete-conversations"]',
   compare: '[data-qa="compare"]',
   attachments: '[data-qa="attachments"]',
-  dialMarketplaceLink: '[data-qa="link-to-marketplace"]',
   conversations: '[data-qa="conversations"]',
   selectedEntity: '[data-qa="selected"]',
   chatFolders: '[data-qa="chat-folders"]',
@@ -59,7 +60,6 @@ export const PromptBarSelectors = {
   organizationPrompts: () =>
     `${PromptBarSelectors.promptFolders} > ${SideBarSelectors.organizationContainer}`,
   leftResizeIcon: '[data-qa="left-resize-icon"]',
-  newEntity: '[data-qa="new-entity"]',
 };
 
 export const EntitySelectors = {
@@ -73,4 +73,11 @@ export const EntitySelectors = {
 
 export const PublishEntitySelectors = {
   version: '[data-qa="version"]',
+};
+
+export const NavigationPanelSelectors = {
+  container: '[data-qa="navigation-panel"]',
+  backToChatButton: '[data-qa="back-to-chat"]',
+  marketplaceHomeButton: '[data-qa="marketplace-home-page"]',
+  myWorkspaceButton: '[data-qa="my-workspace"]',
 };

@@ -15,6 +15,7 @@ import { useRouter } from 'next/router';
 import classNames from 'classnames';
 
 import { useResizeObserver } from '@/src/hooks/useResizeObserver';
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
@@ -26,7 +27,7 @@ import {
 } from '@/src/utils/app/conversation';
 import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
 import { isEntityIdExternal } from '@/src/utils/app/id';
-import { is4XLScreen, isSmallScreen } from '@/src/utils/app/mobile';
+import { is4XLScreen } from '@/src/utils/app/mobile';
 import { doesModelHaveConfiguration } from '@/src/utils/app/models';
 
 import { ApplicationStatus } from '@/src/types/applications';
@@ -35,10 +36,11 @@ import {
   ConversationsTemporarySettings,
   MergedMessages,
 } from '@/src/types/chat';
-import { EntityType } from '@/src/types/common';
+import { EntityType, ScreenState } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
+import { ApplicationSelectors } from '@/src/store/application/application.reducers';
 import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
 import { ChatActions } from '@/src/store/chat/chat.reducer';
 import { ChatSelectors } from '@/src/store/chat/chat.selectors';
@@ -55,6 +57,7 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 import { Routes } from '@/src/constants/routes';
 
 import { ChatStarters } from '@/src/components/Chat/ChatStarters';
+import { WidgetView } from '@/src/components/Chat/WidgetView';
 
 import { CustomChatViewer } from '../AppsEditor/Settings/Previews/CustomChatViewer';
 import Loader from '../Common/Loader';
@@ -156,6 +159,8 @@ const ChatView = memo(() => {
   const [isWideLayout, setIsWideLayout] = useState(
     checkIsWideLayout(mergedMessages.length, isCompareMode),
   );
+
+  const screenState = useScreenState();
 
   const handleTalkToConversationId = useCallback(
     (conversationId: string | null) => {
@@ -528,7 +533,9 @@ const ChatView = memo(() => {
     !isLastMessageError &&
     !notAvailableEntityType;
   const showFloatingOverlay =
-    isSmallScreen() && isAnyMenuOpen && !isIsolatedView;
+    (screenState === ScreenState.SM || screenState === ScreenState.MD) &&
+    isAnyMenuOpen &&
+    !isIsolatedView;
   const isModelsInstalled = selectedConversations.every((conv) =>
     installedModelIds.has(conv.model.id),
   );
@@ -1056,6 +1063,9 @@ export function Chat({ isPreview }: ChatProps) {
   const isConfigurationSchemaLoading = useAppSelector(
     ChatSelectors.selectIsConfigurationSchemaLoading,
   );
+  const selectedWidget = useAppSelector(
+    ApplicationSelectors.selectSelectedWidget,
+  );
 
   const configurationAppReference = selectedConversations.find((conv) =>
     doesModelHaveConfiguration(modelsMap[conv.model.id]),
@@ -1087,6 +1097,10 @@ export function Chat({ isPreview }: ChatProps) {
         <ChatInputFooter />
       </>
     );
+  }
+
+  if (selectedWidget && !selectedConversationsIds.length) {
+    return <WidgetView id={selectedWidget} />;
   }
 
   if (isolatedModelId && modelIsLoaded && !activeModel) {
