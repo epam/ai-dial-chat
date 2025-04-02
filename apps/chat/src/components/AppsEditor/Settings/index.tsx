@@ -32,6 +32,7 @@ import {
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { CodeEditorActions } from '@/src/store/codeEditor/codeEditor.reducer';
 import { CodeEditorSelectors } from '@/src/store/codeEditor/codeEditor.selectors';
 import {
   ConversationsActions,
@@ -43,11 +44,12 @@ import {
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_QUICK_APPS_SCHEMA_ID } from '@/src/constants/quick-apps';
 import { Routes } from '@/src/constants/routes';
 
+import { OptionsDialog } from '../../Common/OptionsDialog';
 import Tooltip from '../../Common/Tooltip';
 import { ApplicationView } from './ApplicationView';
 import { CodeAppView } from './CodeAppView';
@@ -62,6 +64,8 @@ import {
   getCustomApplicationDefaultValues,
   getQuickAppDefaultValues,
 } from './form';
+
+import debounce from 'lodash-es/debounce';
 
 enum PreviewMode {
   half,
@@ -123,21 +127,8 @@ export const ApplicationSettings: React.FC<Props> = ({
       : PreviewMode.half,
   );
 
-  const handleRedeploy = () => {
-    if (isCodeEditorDirty) {
-      dispatch(
-        UIActions.showWarningToast(
-          t('Save the files to apply changes in the next deployment.'),
-        ),
-      );
-    }
-    dispatch(
-      ApplicationActions.startUpdatingFunctionStatus({
-        id: applicationData.id,
-        status: ApplicationStatus.REDEPLOYING,
-      }),
-    );
-  };
+  const [isSaveBeforeConfirmationOpen, setIsSaveBeforeConfirmationOpen] =
+    useState(false);
 
   const getDefaultValues = useCallback(
     (type: string) => {
@@ -226,7 +217,58 @@ export const ApplicationSettings: React.FC<Props> = ({
       dispatch(ApplicationActions.setShouldSaveApplication(true));
   }, [dispatch, methods.formState.isValid]);
 
+  const debouncedSave = useMemo(() => debounce(saveForm, 750), [saveForm]);
+
+  const handlePreviewMouseEnter = useCallback(() => {
+    debouncedSave();
+  }, [debouncedSave]);
+
+  const handlePreviewMouseLeave = useCallback(() => {
+    debouncedSave.cancel();
+  }, [debouncedSave]);
+
   const formViewElement = getFormView(type);
+
+  const startRedeploy = useCallback(() => {
+    dispatch(
+      ApplicationActions.startUpdatingFunctionStatus({
+        id: applicationData.id,
+        status: ApplicationStatus.REDEPLOYING,
+      }),
+    );
+  }, [applicationData.id, dispatch]);
+
+  const handleRedeploy = () => {
+    if (isCodeEditorDirty) {
+      setIsSaveBeforeConfirmationOpen(true);
+      return;
+    }
+    startRedeploy();
+  };
+
+  const modalOptions = useMemo(
+    () => [
+      {
+        label: t("Don't save"),
+        dataQa: 'not-save-option',
+        className: 'button-secondary',
+        onClick: () => {
+          startRedeploy();
+          setIsSaveBeforeConfirmationOpen(false);
+        },
+      },
+      {
+        label: t('Save'),
+        dataQa: 'save-option',
+        onClick: () => {
+          dispatch(CodeEditorActions.saveAllModifiedFiles());
+          startRedeploy();
+          setIsSaveBeforeConfirmationOpen(false);
+        },
+      },
+    ],
+    [t, startRedeploy, dispatch],
+  );
 
   useEffect(() => {
     const redirectHandler = (url: string) => {
@@ -355,6 +397,8 @@ export const ApplicationSettings: React.FC<Props> = ({
         {previewMode !== PreviewMode.closed && (
           <div className="flex-1 overflow-auto">
             <ApplicationPreviewChat
+              onPreviewMouseEnter={handlePreviewMouseEnter}
+              onPreviewMouseLeave={handlePreviewMouseLeave}
               isAppDeploymentInProgress={isAppDeploymentInProgress}
               isApplicationValid={methods.formState.isValid}
               applicationId={applicationData.id}
@@ -400,6 +444,14 @@ export const ApplicationSettings: React.FC<Props> = ({
           </span>
         </div>
       )}
+      <OptionsDialog
+        isOpen={!!isSaveBeforeConfirmationOpen}
+        heading={t(
+          'Do you want to save changes in the code editor before redeploy?',
+        )}
+        onClose={() => setIsSaveBeforeConfirmationOpen(false)}
+        options={modalOptions}
+      />
     </div>
   );
 };

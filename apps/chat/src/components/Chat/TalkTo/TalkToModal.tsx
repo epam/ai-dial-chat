@@ -75,6 +75,9 @@ const TalkToModalView = ({
     ModelsSelectors.selectInstalledModelIds,
   );
   const recentModelIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
+  const widgetsSchemaIds = useAppSelector(
+    SettingsSelectors.selectWidgetsSchemaIds,
+  );
 
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteModel, setDeleteModel] = useState<DialAIEntityModel>();
@@ -105,7 +108,8 @@ const TalkToModalView = ({
     ];
     const filteredModels = sortedModels.filter(
       (entity) =>
-        doesEntityContainSearchTerm(entity, searchTerm) ||
+        (!widgetsSchemaIds.has(entity.applicationTypeSchemaId as string) &&
+          doesEntityContainSearchTerm(entity, searchTerm)) ||
         (entity.version &&
           doesEntityContainSearchTerm({ name: entity.version }, searchTerm)),
     );
@@ -165,6 +169,7 @@ const TalkToModalView = ({
     recentModelIds,
     searchTerm,
     t,
+    widgetsSchemaIds,
   ]);
 
   const handleCloseApplicationLogs = useCallback(() => {

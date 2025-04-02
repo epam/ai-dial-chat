@@ -10,6 +10,7 @@ import {
 
 import classNames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { EnumMapper } from '@/src/utils/app/mappers';
@@ -18,7 +19,7 @@ import { hasDragEventEntityData } from '@/src/utils/app/move';
 import { centralChatWidth, getNewSidebarWidth } from '@/src/utils/app/sidebar';
 
 import { SidebarSide } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, ScreenState } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
@@ -33,9 +34,14 @@ import {
   SIDEBAR_MIN_WIDTH,
 } from '@/src/constants/default-ui-settings';
 
+import { CloseSidebarButton } from '../Buttons/CloseSidebarButton';
 import Loader from '../Common/Loader';
 import { NoData } from '../Common/NoData';
 import { NoResultsFound } from '../Common/NoResultsFound';
+import {
+  CreateNewConversation,
+  CreateNewPrompt,
+} from '../Header/CreateNewEntity';
 import Search from '../Search';
 import { LeftSideResizeIcon, RightSideResizeIcon } from './ResizeIcons';
 
@@ -49,7 +55,6 @@ interface Props<T> {
   filteredFolders: FolderInterface[];
   itemComponent: ReactNode;
   folderComponent: ReactNode;
-  actionButtons: ReactNode;
   footerComponent?: ReactNode;
   searchTerm: string;
   searchFilters: SearchFilters;
@@ -63,7 +68,6 @@ interface Props<T> {
 
 const Sidebar = <T,>({
   isOpen,
-  actionButtons,
   side,
   filteredItems,
   filteredFolders,
@@ -102,9 +106,12 @@ const Sidebar = <T,>({
     }
   });
 
-  const sidebarMinWidth = isSmallScreen()
-    ? MOBILE_SIDEBAR_MIN_WIDTH
-    : SIDEBAR_MIN_WIDTH;
+  const screenState = useScreenState();
+
+  const sidebarMinWidth =
+    screenState === ScreenState.SM
+      ? MOBILE_SIDEBAR_MIN_WIDTH
+      : SIDEBAR_MIN_WIDTH;
 
   const isLeftSidebar = side === SidebarSide.Left;
   const isRightSidebar = side === SidebarSide.Right;
@@ -308,6 +315,14 @@ const Sidebar = <T,>({
     onResize,
   ]);
 
+  const handleClose = () => {
+    if (isLeftSidebar) {
+      dispatch(UIActions.setShowChatbar(false));
+    } else {
+      dispatch(UIActions.setShowPromptbar(false));
+    }
+  };
+
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
 
@@ -317,11 +332,17 @@ const Sidebar = <T,>({
   }, []);
 
   const resizableWrapperClassName = classNames(
-    '!fixed z-40 flex max-w-[95%] border-tertiary md:max-w-[45%] xl:!relative xl:top-0 xl:!h-full',
+    '!fixed z-40 flex max-w-[95%] border-tertiary md:left-[60px] md:max-w-[45%] xl:!relative xl:left-0 xl:top-0 xl:!h-full',
     isLeftSidebar
       ? 'sidebar-left left-0 border-r'
       : 'sidebar-right right-0 border-l',
-    isOverlay ? 'top-9 !h-[calc(100%-36px)]' : 'top-12 !h-[calc(100%-48px)]',
+    (screenState === ScreenState.SM || screenState === ScreenState.MD) &&
+      '!h-full',
+    screenState !== ScreenState.SM &&
+      screenState !== ScreenState.MD &&
+      (isOverlay
+        ? 'top-9 !h-[calc(100%-36px)]'
+        : 'top-12 !h-[calc(100%-48px)]'),
   );
 
   if (!isOpen) {
@@ -335,9 +356,20 @@ const Sidebar = <T,>({
       className={resizableWrapperClassName}
       data-qa={dataQa}
     >
+      <CloseSidebarButton isLeftSide={isLeftSidebar} onClose={handleClose} />
       <div className="group/sidebar flex size-full flex-none shrink-0 flex-col divide-y divide-tertiary bg-layer-3 transition-all">
         {areEntitiesUploaded ? (
           <>
+            <div className="flex min-h-12 items-center justify-between px-5">
+              <p className="text-base font-semibold">
+                {t(isLeftSidebar ? 'Conversations' : 'Prompts')}
+              </p>
+              {isLeftSidebar ? (
+                <CreateNewConversation iconSize={24} />
+              ) : (
+                <CreateNewPrompt iconSize={24} />
+              )}
+            </div>
             <Search
               placeholder={t('Search {{name}}...', {
                 name: trimEnd(
@@ -351,8 +383,6 @@ const Sidebar = <T,>({
               onSearchFiltersChanged={onSearchFilters}
               featureType={featureType}
             />
-
-            {actionButtons}
 
             <div className="flex grow flex-col gap-px divide-y divide-tertiary overflow-y-auto">
               {folderComponent}

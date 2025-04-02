@@ -31,7 +31,7 @@ dialTest(
     localStorageManager,
     marketplacePage,
     marketplaceFilter,
-    marketplaceSidebar,
+    navigationPanel,
     marketplaceAgentsSection,
     baseAssertion,
   }) => {
@@ -182,7 +182,7 @@ dialTest(
     await dialTest.step(
       'Switch to "My Workspace" tab and verify only first and second apps are displayed, third app stay under "Suggested results"',
       async () => {
-        await marketplaceSidebar.myWorkspaceButton.click();
+        await navigationPanel.myWorkspaceButton.click();
         const actualAgents = await marketplaceAgentsSection.getAllAgents();
         const filteredAgents = actualAgents.filter(
           (agent) => agent.isWorkspaceAgent,
@@ -501,7 +501,7 @@ dialTest(
     publishRequestBuilder,
     adminPublicationApiHelper,
     marketplacePage,
-    marketplaceSidebar,
+    navigationPanel,
     marketplaceFilter,
     marketplaceAgentsSection,
     agentDetailsModal,
@@ -661,7 +661,7 @@ dialTest(
     await dialTest.step(
       'Switch to "My Workspace" tab, check app first topic option in the filter and verify the app with v1 and first topic is suggested',
       async () => {
-        await marketplaceSidebar.myWorkspaceButton.click();
+        await navigationPanel.myWorkspaceButton.click();
         await topicFilter.click();
         const allAgents = await marketplaceAgentsSection.getAllAgents();
         baseAssertion.assertValue(

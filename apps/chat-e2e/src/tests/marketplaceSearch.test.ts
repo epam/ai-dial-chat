@@ -18,11 +18,11 @@ dialTest(
     'Search_phrase is applied to another user via URL. Search phrase consists of restricted and allowed special chars.',
   async ({
     marketplacePage,
-    marketplaceSidebar,
     page,
     marketplaceHeader,
     marketplace,
     marketplaceAgentsSection,
+    navigationPanel,
     localStorageManager,
     setTestIds,
     baseAssertion,
@@ -128,7 +128,7 @@ dialTest(
     await dialTest.step(
       'Switch to "My Workspace" tab, and verify search term is preserved, search results are updated',
       async () => {
-        await marketplaceSidebar.myWorkspaceButton.click();
+        await navigationPanel.myWorkspaceButton.click();
         await baseAssertion.assertElementAttribute(
           marketplaceHeader.searchInput,
           Attributes.value,
@@ -173,7 +173,7 @@ dialTest(
       async () => {
         const endSpaces = ' '.repeat(3);
         leadingEndingSpacesSearchTerm = leadingSpacesSearchTerm + endSpaces;
-        await marketplaceSidebar.marketplaceHomePageButton.click();
+        await navigationPanel.marketplaceHomeButton.click();
         await marketplaceHeader.searchInput.click();
         await page.keyboard.press(keys.end);
         await marketplaceHeader.searchInput.typeInInput(endSpaces);

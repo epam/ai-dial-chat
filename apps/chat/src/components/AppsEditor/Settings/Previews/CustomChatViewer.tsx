@@ -18,7 +18,7 @@ import { VisualizerConnectorRequest } from '@epam/ai-dial-shared';
 
 interface Props {
   id: string;
-  conversation: Conversation;
+  conversation?: Conversation;
   customViewerUrl: string;
   title: string;
 }
@@ -41,12 +41,12 @@ export const CustomChatViewer: React.FC<Props> = ({
 
   const generateTargetUrl = useCallback(() => {
     try {
-      const iframeUrl = `${customViewerUrl}?authProvider=${providerId}&conversationId=${encodeURIComponent(conversation.id)}&id=${encodeURIComponent(id)}&theme=${theme}`;
+      const iframeUrl = `${customViewerUrl}?authProvider=${providerId}&conversationId=${encodeURIComponent(conversation?.id ?? '')}&id=${encodeURIComponent(id)}&theme=${theme}`;
       return new URL(iframeUrl);
     } catch (error) {
       console.error('Error generating target URL', error);
     }
-  }, [customViewerUrl, id, providerId, theme, conversation.id]);
+  }, [customViewerUrl, id, providerId, theme, conversation?.id]);
 
   const onMessage = useCallback(
     (event: MessageEvent<VisualizerConnectorRequest>) => {
@@ -112,7 +112,7 @@ export const CustomChatViewer: React.FC<Props> = ({
           width="100%"
           height="100%"
           containerClassName="w-full h-full border-none"
-          conversationId={conversation.id}
+          conversationId={conversation?.id}
           onMessage={onMessage}
         />
       )}
