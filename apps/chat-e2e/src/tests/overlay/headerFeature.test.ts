@@ -406,7 +406,6 @@ dialOverlayTest(
     overlayProfilePanel,
     overlayConfirmationDialog,
     overlaySettingsModal,
-    page,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-3766', 'EPMRTC-3767', 'EPMRTC-3778');
@@ -441,11 +440,7 @@ dialOverlayTest(
           { isOverlay: true },
         );
         const requestContent = GeneratorUtil.randomString(5);
-        const respPromise = page.waitForResponse(
-          (r) => r.request().method() === 'PUT',
-        );
         await overlayChat.sendRequestWithButton(requestContent);
-        await respPromise;
         await overlayHeader.createNewConversation();
         await overlayBaseAssertion.assertElementState(
           overlayAgentInfo,
