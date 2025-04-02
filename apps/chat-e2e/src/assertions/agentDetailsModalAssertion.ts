@@ -2,8 +2,6 @@ import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ExpectedMessages } from '@/src/testData';
 import { AgentDetailsModal } from '@/src/ui/webElements';
 
-// Import the web element
-
 export class AgentDetailsModalAssertion extends BaseAssertion {
   readonly agentDetailsModal: AgentDetailsModal;
 
@@ -18,7 +16,7 @@ export class AgentDetailsModalAssertion extends BaseAssertion {
    * @param text The input string.
    * @returns The normalized string.
    */
-  private normalizeDescriptionWhitespace(
+  private normalizeDescriptionWhitespaces(
     text: string | null | undefined,
   ): string {
     if (!text) {
@@ -33,18 +31,14 @@ export class AgentDetailsModalAssertion extends BaseAssertion {
       .trim(); // Trim entire string
   }
 
-  /**
-   * Asserts the description text within the agent details modal, normalizing whitespace.
-   * @param expectedDescription The expected description text.
-   */
   public async assertDescription(expectedDescription: string) {
     const actualDescriptionRaw =
       await this.agentDetailsModal.applicationDescription.getElementContent();
 
     const actualNormalized =
-      this.normalizeDescriptionWhitespace(actualDescriptionRaw);
+      this.normalizeDescriptionWhitespaces(actualDescriptionRaw);
     const expectedNormalized =
-      this.normalizeDescriptionWhitespace(expectedDescription);
+      this.normalizeDescriptionWhitespaces(expectedDescription);
 
     this.assertValue(
       actualNormalized,
@@ -53,10 +47,6 @@ export class AgentDetailsModalAssertion extends BaseAssertion {
     );
   }
 
-  /**
-   * Asserts the agent name displayed in the modal.
-   * @param expectedName The expected agent name.
-   */
   public async assertApplicationName(expectedName: string) {
     await this.assertElementText(
       this.agentDetailsModal.agentName,
@@ -65,10 +55,6 @@ export class AgentDetailsModalAssertion extends BaseAssertion {
     );
   }
 
-  /**
-   * Asserts the agent version displayed in the modal.
-   * @param expectedVersion The expected agent version.
-   */
   public async assertApplicationVersion(expectedVersion: string) {
     await this.assertElementText(
       this.agentDetailsModal.agentVersion,

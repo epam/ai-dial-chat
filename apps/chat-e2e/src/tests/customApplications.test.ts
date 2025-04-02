@@ -12,7 +12,6 @@ import {
 } from '@/src/testData';
 import { AppEditSteps, BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
-import {marketplaceContainer} from "@/src/ui/selectors";
 
 dialTest(
   'Create custom app with required fields only.\n' + // EPMRTC-5130
@@ -38,11 +37,10 @@ dialTest(
     chat,
     chatMessagesAssertion,
     confirmationDialog,
-    marketplaceSidebar,
     localStorageManager,
     agentInfoAssertion,
     agentDetailsModalAssertion,
-           marketplaceContainer,
+    marketplaceContainer,
   }) => {
     setTestIds(
       'EPMRTC-5130',
@@ -312,7 +310,9 @@ dialTest(
     await dialTest.step(
       'Navigate to DIAL Marketplace and verify custom app card was deleted',
       async () => {
-        await marketplaceContainer.getNavigationPanel().marketplaceHomeButton.click();
+        await marketplaceContainer
+          .getNavigationPanel()
+          .marketplaceHomeButton.click();
         await marketplaceHeader.searchInput.fillInInput(appEntity.name);
         const actualAgents = await marketplaceAgentsSection.getAllAgents();
         baseAssertion.assertValue(
@@ -498,10 +498,9 @@ dialTest(
     baseAssertion,
     customApplicationBuilder,
     applicationApiHelper,
-    marketplaceSidebar,
     localStorageManager,
     marketplaceHeader,
-           marketplaceContainer,
+    marketplaceContainer,
   }) => {
     setTestIds('EPMRTC-4105', 'EPMRTC-4103');
     let agentElementInDialog: BaseElement;
@@ -600,7 +599,9 @@ dialTest(
     await dialTest.step(
       'Navigate to DIAL Marketplace and verify custom app card was deleted',
       async () => {
-        await marketplaceContainer.getNavigationPanel().marketplaceHomeButton.click();
+        await marketplaceContainer
+          .getNavigationPanel()
+          .marketplaceHomeButton.click();
         await marketplaceHeader.searchInput.fillInInput(appEntity1.name);
         const actualAgents = await marketplaceAgentsSection.getAllAgents();
         baseAssertion.assertValue(
@@ -620,7 +621,9 @@ dialTest(
     await dialTest.step(
       'Open "My workspace", find App 2 and click on the second app card',
       async () => {
-        await marketplaceContainer.getNavigationPanel().myWorkspaceButton.click();
+        await marketplaceContainer
+          .getNavigationPanel()
+          .myWorkspaceButton.click();
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appEntity2.name);
         agentElement2 =
@@ -655,7 +658,9 @@ dialTest(
     await dialTest.step(
       'Navigate to DIAL Marketplace and verify second custom app card was deleted',
       async () => {
-        await marketplaceContainer.getNavigationPanel().marketplaceHomeButton.click();
+        await marketplaceContainer
+          .getNavigationPanel()
+          .marketplaceHomeButton.click();
         await marketplacePage.waitForPageLoaded();
         await baseAssertion.assertElementState(
           agentElement2,
