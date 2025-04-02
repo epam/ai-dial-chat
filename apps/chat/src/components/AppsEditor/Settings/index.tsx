@@ -65,7 +65,7 @@ import {
   getQuickAppDefaultValues,
 } from './form';
 
-import { debounce } from 'lodash-es';
+import debounce from 'lodash-es/debounce';
 
 enum PreviewMode {
   half,
@@ -397,8 +397,8 @@ export const ApplicationSettings: React.FC<Props> = ({
         {previewMode !== PreviewMode.closed && (
           <div className="flex-1 overflow-auto">
             <ApplicationPreviewChat
-              handlePreviewMouseEnter={handlePreviewMouseEnter}
-              handlePreviewMouseLeave={handlePreviewMouseLeave}
+              onPreviewMouseEnter={handlePreviewMouseEnter}
+              onPreviewMouseLeave={handlePreviewMouseLeave}
               isAppDeploymentInProgress={isAppDeploymentInProgress}
               isApplicationValid={methods.formState.isValid}
               applicationId={applicationData.id}
