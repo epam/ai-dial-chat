@@ -24,7 +24,7 @@ dialTest(
     marketplaceFilter,
     marketplace,
     marketplaceAgentsSection,
-    marketplaceSidebar,
+    navigationPanel,
     baseAssertion,
   }) => {
     setTestIds('EPMRTC-4435', 'EPMRTC-4620', 'EPMRTC-4439', 'EPMRTC-5363');
@@ -78,7 +78,7 @@ dialTest(
       async () => {
         //remove next line when fixed https://github.com/epam/ai-dial-chat/issues/3303
         await marketplaceAgentsSection.goTop();
-        await marketplaceSidebar.myWorkspaceButton.click();
+        await navigationPanel.myWorkspaceButton.click();
         const allAgents = await marketplaceAgentsSection.getAllAgents();
         const actualWorkspaceModels = allAgents
           .filter((agent) => agent.isWorkspaceAgent)
@@ -171,7 +171,7 @@ dialTest(
     modelApiHelper,
     marketplacePage,
     marketplaceHeader,
-    marketplaceSidebar,
+    navigationPanel,
     marketplaceFilter,
     marketplaceAgents,
     marketplaceAgentsSection,
@@ -231,7 +231,7 @@ dialTest(
     await dialTest.step(
       'Switch to "My Workspace", create new custom app and verify it is immediately displayed',
       async () => {
-        await marketplaceSidebar.myWorkspaceButton.click();
+        await navigationPanel.myWorkspaceButton.click();
         await marketplaceHeader.addAppButton.click();
         await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
         await appEditorPage.waitForPageLoaded();

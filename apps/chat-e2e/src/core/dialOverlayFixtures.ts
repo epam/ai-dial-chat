@@ -53,6 +53,7 @@ import {
 import { ReportAnIssueModal } from '@/src/ui/webElements/footer/reportAnIssueModal';
 import { RequestApiKeyModal } from '@/src/ui/webElements/footer/requestApiKeyModal';
 import { Header } from '@/src/ui/webElements/header';
+import { NavigationPanel } from '@/src/ui/webElements/navigationPanel';
 import { Actions } from '@/src/ui/webElements/overlay/actions';
 import { Configuration } from '@/src/ui/webElements/overlay/configuration';
 import { Dialog } from '@/src/ui/webElements/overlay/dialog';
@@ -77,6 +78,7 @@ const dialOverlayTest = test.extend<{
   overlayAgentInfo: AgentInfo;
   overlayHeader: Header;
   overlayChatBar: ChatBar;
+  overlayNavigationPanel: NavigationPanel;
   overlaySendMessage: SendMessage;
   overlayConversations: ConversationsTree;
   overlayChatHeader: ChatHeader;
@@ -165,6 +167,12 @@ const dialOverlayTest = test.extend<{
   overlayChatBar: async ({ overlayHomePage }, use) => {
     const overlayChatBar = overlayHomePage.getOverlayContainer().getChatBar();
     await use(overlayChatBar);
+  },
+  overlayNavigationPanel: async ({ overlayHomePage }, use) => {
+    const overlayNavigationPanel = overlayHomePage
+      .getOverlayContainer()
+      .getNavigationPanel();
+    await use(overlayNavigationPanel);
   },
   overlaySendMessage: async ({ overlayChat }, use) => {
     const overlaySendMessage = overlayChat.getSendMessage();

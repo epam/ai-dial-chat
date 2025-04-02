@@ -140,7 +140,7 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
         )}
         <div
           ref={containerRef}
-          className={`${containerClassName}`}
+          className={containerClassName}
           style={{ ...containerStyle, width, height, position: 'relative' }}
         ></div>
       </div>

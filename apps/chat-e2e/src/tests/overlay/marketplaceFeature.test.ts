@@ -19,7 +19,7 @@ dialOverlayTest(
     overlayBaseAssertion,
     overlayTalkToAgentDialogAssertion,
     overlayDataInjector,
-    overlayChatBar,
+    overlayNavigationPanel,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-4447', 'EPMRTC-4712', 'EPMRTC-5782');
@@ -32,15 +32,18 @@ dialOverlayTest(
     });
 
     await dialTest.step(
-      'Verify "Dial Marketplace" button is available on the left side panel',
+      'Verify "Dial Marketplace" buttons are available at the bottom panel',
       async () => {
         await overlayHomePage.navigateToUrl(
           OverlaySandboxUrls.enableMarketplaceUrl,
         );
         await overlayHomePage.waitForPageLoaded();
-        await overlayHeader.leftPanelToggle.click();
         await overlayBaseAssertion.assertElementState(
-          overlayChatBar.dialMarketplaceLink,
+          overlayNavigationPanel.marketplaceHomeButton,
+          'visible',
+        );
+        await overlayBaseAssertion.assertElementState(
+          overlayNavigationPanel.myWorkspaceButton,
           'visible',
         );
       },
@@ -49,7 +52,6 @@ dialOverlayTest(
     await dialTest.step(
       'Click on "Change agent" and verify there is "Search" field available',
       async () => {
-        await overlayHeader.leftPanelToggle.click();
         await overlayChat.changeAgentButton.click();
         await overlayTalkToAgentDialogAssertion.assertElementState(
           overlayTalkToAgentDialog.searchAgentInput,
@@ -99,10 +101,10 @@ dialOverlayTest(
     overlayHeader,
     overlayConversations,
     conversationData,
-    overlayBaseAssertion,
     overlayTalkToAgentDialogAssertion,
     overlayDataInjector,
-    overlayChatBar,
+    overlayNavigationPanel,
+    overlayBaseAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-4867');
@@ -121,9 +123,12 @@ dialOverlayTest(
           OverlaySandboxUrls.disableMarketplaceUrl,
         );
         await overlayHomePage.waitForPageLoaded();
-        await overlayHeader.leftPanelToggle.click();
         await overlayBaseAssertion.assertElementState(
-          overlayChatBar.dialMarketplaceLink,
+          overlayNavigationPanel.marketplaceHomeButton,
+          'hidden',
+        );
+        await overlayBaseAssertion.assertElementState(
+          overlayNavigationPanel.myWorkspaceButton,
           'hidden',
         );
       },
@@ -132,7 +137,6 @@ dialOverlayTest(
     await dialTest.step(
       'Click on "Change agent" and verify there is no "Go to My workspace" button',
       async () => {
-        await overlayHeader.leftPanelToggle.click();
         await overlayChat.changeAgentButton.click();
         await overlayTalkToAgentDialogAssertion.assertElementState(
           overlayTalkToAgentDialog.goToMyWorkspaceButton,

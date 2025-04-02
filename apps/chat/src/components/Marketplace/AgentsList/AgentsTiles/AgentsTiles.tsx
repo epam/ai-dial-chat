@@ -15,8 +15,8 @@ import { ApplicationCard } from './ApplicationCard';
 import isString from 'lodash-es/isString';
 import range from 'lodash-es/range';
 
-const MIN_CARD_WIDTH = 356;
-const MIN_CARD_WIDTH_XL = 450;
+const MIN_CARD_WIDTH = 341;
+const MIN_CARD_WIDTH_XL5 = 450;
 const DEFAULT_GAP = 20;
 const DEFAULT_WIDTH = 184;
 
@@ -31,8 +31,8 @@ const ROWS_INFO: Record<ScreenState, RowInfo> = {
   [ScreenState.MD]: { height: 178, gap: 16 },
   [ScreenState.XL]: { height: DEFAULT_WIDTH },
   [ScreenState.XL3]: { height: DEFAULT_WIDTH },
-  [ScreenState.XL4]: { height: DEFAULT_WIDTH, minWidth: MIN_CARD_WIDTH_XL },
-  [ScreenState.XL5]: { height: DEFAULT_WIDTH, minWidth: MIN_CARD_WIDTH_XL },
+  [ScreenState.XL4]: { height: DEFAULT_WIDTH },
+  [ScreenState.XL5]: { height: DEFAULT_WIDTH, minWidth: MIN_CARD_WIDTH_XL5 },
 };
 
 export const AgentsTiles: React.FC<AgentsListProps> = ({

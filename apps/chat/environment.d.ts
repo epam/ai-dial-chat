@@ -48,6 +48,7 @@ declare global {
       MAX_PROMPT_TOKENS_DEFAULT_VALUE?: string;
       TOPICS?: string;
       CODE_EDITOR_PYTHON_VERSIONS?: string;
+      WIDGETS_SCHEMA_IDS?: string;
 
       NEXTAUTH_URL?: string;
       NEXTAUTH_SECRET?: string;

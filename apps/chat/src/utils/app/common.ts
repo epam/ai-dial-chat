@@ -1,3 +1,5 @@
+import type { MouseEvent } from 'react';
+
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
@@ -250,3 +252,13 @@ export const parseCommaSeparatedList = (
   str: string | undefined,
   defaultValue: string[] = [],
 ): string[] => str?.split(',').map((str) => str.trim()) ?? defaultValue;
+
+export const dispatchMouseLeaveEvent = (e: MouseEvent) => {
+  const mouseLeaveEvent = new MouseEvent('mouseleave', {
+    bubbles: true,
+    cancelable: true,
+    view: window,
+  });
+
+  e.currentTarget.dispatchEvent(mouseLeaveEvent);
+};

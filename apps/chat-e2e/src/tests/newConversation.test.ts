@@ -14,7 +14,7 @@ dialTest(
     'Click on + resets all settings on new conversation. When temperature was changed in previous chat.',
   async ({
     dialHomePage,
-    header,
+    chatBar,
     chat,
     agentSettings,
     temperatureSlider,
@@ -78,7 +78,7 @@ dialTest(
           MockedChatApiResponseBodies.simpleTextBody,
         );
         await chat.sendRequestWithButton('test request');
-        await header.createNewConversation();
+        await chatBar.createNewEntity();
       },
     );
 
@@ -374,7 +374,7 @@ dialTest(
     dialHomePage,
     header,
     talkToAgentDialog,
-    chatBar,
+    navigationPanel,
     setTestIds,
     conversationData,
     dataInjector,
@@ -404,7 +404,7 @@ dialTest(
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await conversations.selectConversation(conversation.name);
-      await chatBar.dialMarketplaceLink.click();
+      await navigationPanel.marketplaceHomeButton.click();
       await marketplacePage.waitForPageLoaded();
     });
 
@@ -450,6 +450,7 @@ dialTest(
     temperatureSlider,
     addons,
     talkToAgentDialog,
+    chatBar,
     agentInfoAssertion,
     setTestIds,
     localStorageManager,
@@ -494,7 +495,7 @@ dialTest(
           shouldNotOccur: true,
           timeout: 20000,
         });
-        await header.createNewConversation();
+        await chatBar.createNewEntity();
         await talkToAgentDialog.waitForState();
         await talkToAgentDialog.cancelButton.click();
         await requestPromise;
