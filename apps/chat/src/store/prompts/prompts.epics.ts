@@ -16,7 +16,7 @@ import {
 
 import { AnyAction } from '@reduxjs/toolkit';
 
-import { combineEpics } from 'redux-observable';
+import { combineEpics, ofType } from 'redux-observable';
 
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { getOrUploadPrompt } from '@/src/utils/app/data/storages/api/prompt-api-storage';
@@ -149,20 +149,30 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
 
 const saveNewPromptEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PromptsActions.saveNewPrompt.match),
-    switchMap(({ payload }) =>
-      PromptService.createPrompt(payload.newPrompt).pipe(
-        switchMap(() => of(PromptsActions.createNewPromptSuccess(payload))),
-        catchError((err) => {
-          console.error(err);
-          return of(
-            UIActions.showErrorToast(
-              translate(
-                'An error occurred while saving the prompt. Most likely the prompt already exists. Please refresh the page.',
+    ofType(PromptsActions.saveNewPrompt),
+    mergeMap(({ payload }) =>
+      concat(
+        of(PromptsActions.createNewPromptSuccess(payload)),
+        PromptService.createPrompt(payload.newPrompt).pipe(
+          switchMap(() => EMPTY),
+          catchError((err) => {
+            console.error(err);
+            return concat(
+              of(
+                UIActions.showErrorToast(
+                  translate(
+                    'An error occurred while saving the prompt. Most likely the prompt already exists. Please refresh the page.',
+                  ),
+                ),
               ),
-            ),
-          );
-        }),
+              of(
+                PromptsActions.deletePromptsComplete({
+                  promptIds: new Set(payload.newPrompt.id),
+                }),
+              ),
+            );
+          }),
+        ),
       ),
     ),
   );
@@ -516,6 +526,9 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
       }
 
       const prompts = PromptsSelectors.selectPrompts(state$.value);
+      const { selectedPromptId } = PromptsSelectors.selectSelectedPromptId(
+        state$.value,
+      );
       const promptFolderId = isEntityIdExternal(prompt)
         ? getPromptRootId() // duplicate external entities in the root only
         : prompt.folderId;
@@ -533,6 +546,14 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
 
       return concat(
         of(PromptsActions.saveNewPrompt({ newPrompt })),
+        iif(
+          () => selectedPromptId === prompt.id,
+          concat(
+            of(PromptsActions.setSelectedPrompt({ promptId: newPrompt.id })),
+            of(PromptsActions.uploadPromptSuccess({ prompt: null })),
+          ),
+          EMPTY,
+        ),
         iif(
           () => wasUploaded,
           of(PromptsActions.updatePromptSuccess({ id: prompt.id, prompt })),
