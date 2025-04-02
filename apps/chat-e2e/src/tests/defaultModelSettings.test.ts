@@ -213,7 +213,7 @@ dialTest(
     `It's impossible to send a message with spaces only`,
   async ({
     dialHomePage,
-    header,
+    chatBar,
     agentInfo,
     agentInfoAssertion,
     chat,
@@ -318,7 +318,7 @@ dialTest(
     await dialTest.step(
       'Create new conversation and verify previous model is preselected and highlighted',
       async () => {
-        await header.createNewConversation();
+        await chatBar.createNewEntity();
         await agentInfoAssertion.assertElementText(
           agentInfo.agentName,
           nonDefaultModel.name,
@@ -406,7 +406,7 @@ dialTest(
     applicationApiHelper,
     modelApiHelper,
     dialHomePage,
-    header,
+    chatBar,
     chat,
     talkToAgentDialog,
     talkToAgents,
@@ -451,7 +451,7 @@ dialTest(
     await dialTest.step(
       'Create new conversation, change the agent and verify custom app stays at the first place',
       async () => {
-        await header.createNewConversation();
+        await chatBar.createNewEntity();
         await agentInfoAssertion.assertElementText(
           agentInfo.agentName,
           appName,

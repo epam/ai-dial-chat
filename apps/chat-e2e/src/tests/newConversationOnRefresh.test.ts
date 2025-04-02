@@ -24,9 +24,9 @@ dialTest(
     'New conversation is created on browser refresh if conversation with history from Pinned or Today is focused',
   async ({
     dialHomePage,
-    header,
     chat,
     talkToAgentDialog,
+    navigationPanel,
     setTestIds,
     localStorageManager,
     conversationAssertion,
@@ -85,7 +85,7 @@ dialTest(
     });
 
     await dialTest.step('Click "Back to Chat"', async () => {
-      await header.backToChatButton.click();
+      await navigationPanel.backToChatButton.click();
     });
 
     await dialTest.step(
@@ -111,7 +111,7 @@ dialTest(
     });
 
     await dialTest.step('Click "Back to Chat"', async () => {
-      await header.backToChatButton.click();
+      await navigationPanel.backToChatButton.click();
     });
 
     await dialTest.step('Verify chat stays selected', async () => {

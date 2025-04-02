@@ -22,7 +22,6 @@ import { Logo } from '@/src/components/Header/Logo';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
 import Tooltip from '../Common/Tooltip';
-import { BackToChat } from '../Header/BackToChat';
 import { User } from '../Header/User/User';
 
 import MoveLeftIcon from '@/public/images/icons/move-left.svg';
@@ -59,8 +58,8 @@ export const MarketplaceHeader = () => {
   return (
     <div
       className={classNames(
-        'z-40 flex w-full border-b border-tertiary bg-layer-3',
-        isOverlay ? 'min-h-[36px]' : 'min-h-[48px]',
+        'z-30 flex w-full border-b border-secondary bg-layer-1',
+        isOverlay ? 'min-h-[36px]' : 'min-h-[49px]',
       )}
       data-qa="header"
     >
@@ -93,12 +92,11 @@ export const MarketplaceHeader = () => {
           )}
         </div>
       </Tooltip>
-      <BackToChat />
-      <div className="flex grow justify-between">
+      <div className="flex grow justify-center">
         <Logo />
-        <div className="w-[48px] max-md:border-l max-md:border-tertiary md:w-auto">
-          <User />
-        </div>
+      </div>
+      <div className="w-[48px] max-md:border-l max-md:border-tertiary md:w-auto">
+        <User />
       </div>
 
       <SettingDialog open={isUserSettingsOpen} onClose={onClose} />

@@ -47,6 +47,9 @@ const selectExitAfterSave = (state: RootState) =>
 const selectPublicFolders = (state: RootState) =>
   rootSelector(state).publicFolders;
 
+const selectSelectedWidget = (state: RootState) =>
+  rootSelector(state).selectedWidget;
+
 const selectReturnConversationIds = (state: RootState) =>
   rootSelector(state).returnConversationIds;
 
@@ -59,5 +62,6 @@ export const ApplicationSelectors = {
   selectExitAfterSave,
   selectApplicationLogs,
   selectPublicFolders,
+  selectSelectedWidget,
   selectReturnConversationIds,
 };

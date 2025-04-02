@@ -1430,7 +1430,7 @@ dialTest(
       async () => {
         await prompts.openEntityDropdownMenu(singlePrompt.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.select);
-        await promptBar.createNewPrompt();
+        await promptBar.createNewEntity();
         await promptBarAssertion.assertUnselectAllButtonState('hidden');
         await promptModalDialog.closeButton.click();
       },

@@ -22,12 +22,15 @@ dialTest(
       providerLogin,
       setTestIds,
       localStorageManager,
+      navigationPanel,
+      baseAssertion,
     },
     testInfo,
   ) => {
     setTestIds('EPMRTC-1576', 'EPMRTC-1580', 'EPMRTC-1577');
     let conversation: Conversation;
     let chatBarBounding;
+    let navigationPanelBounding;
     let promptBarBounding;
 
     await dialTest.step('Prepare any conversation', async () => {
@@ -41,33 +44,33 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        const bannerMessage =
-          await banner.bannerMessage.getElementInnerContent();
-        expect
-          .soft(bannerMessage, ExpectedMessages.bannerMessageIsValid)
-          .toBe(
+        await baseAssertion.assertElementInnerText(
+          banner.bannerMessage,
+          [
             'Welcome to AI Dial! Unified AI Access for Enterprises. Secure, scalable and customizable enterprise-grade AI ecosystem that seamlessly integrates with your data and workflows, tailored to achieve your unique business objectives.',
-          );
-        const bannerIcon = banner.bannerIcon;
-        expect
-          .soft(bannerIcon.isVisible(), ExpectedMessages.entityIconIsValid)
-          .toBeTruthy();
+          ],
+          ExpectedMessages.bannerMessageIsValid,
+        );
+        await baseAssertion.assertElementState(
+          banner.bannerIcon,
+          'visible',
+          ExpectedMessages.entityIconIsValid,
+        );
 
+        navigationPanelBounding = await navigationPanel.getElementBoundingBox();
         chatBarBounding = await chatBar.getElementBoundingBox();
         const bannerBounding = await banner.getElementBoundingBox();
         promptBarBounding = await promptBar.getElementBoundingBox();
-        expect
-          .soft(
-            bannerBounding!.x === chatBarBounding!.width,
-            ExpectedMessages.bannerWidthIsValid,
-          )
-          .toBeTruthy();
-        expect
-          .soft(
-            bannerBounding!.x + bannerBounding!.width === promptBarBounding!.x,
-            ExpectedMessages.bannerWidthIsValid,
-          )
-          .toBeTruthy();
+        baseAssertion.assertValue(
+          bannerBounding!.x,
+          chatBarBounding!.width + navigationPanelBounding!.width,
+          ExpectedMessages.bannerWidthIsValid,
+        );
+        baseAssertion.assertValue(
+          bannerBounding!.x + bannerBounding!.width,
+          promptBarBounding!.x,
+          ExpectedMessages.bannerWidthIsValid,
+        );
       },
     );
 
@@ -76,18 +79,16 @@ dialTest(
       async () => {
         await conversations.selectConversation(conversation.name);
         const bannerBounding = await banner.getElementBoundingBox();
-        expect
-          .soft(
-            bannerBounding!.x === chatBarBounding!.width,
-            ExpectedMessages.bannerWidthIsValid,
-          )
-          .toBeTruthy();
-        expect
-          .soft(
-            bannerBounding!.x + bannerBounding!.width === promptBarBounding!.x,
-            ExpectedMessages.bannerWidthIsValid,
-          )
-          .toBeTruthy();
+        baseAssertion.assertValue(
+          bannerBounding!.x,
+          chatBarBounding!.width + navigationPanelBounding!.width,
+          ExpectedMessages.bannerWidthIsValid,
+        );
+        baseAssertion.assertValue(
+          bannerBounding!.x + bannerBounding!.width,
+          promptBarBounding!.x,
+          ExpectedMessages.bannerWidthIsValid,
+        );
       },
     );
 
@@ -98,12 +99,11 @@ dialTest(
         await header.rightPanelToggle.click();
         const appBounding = await appContainer.getElementBoundingBox();
         const bannerBounding = await banner.getElementBoundingBox();
-        expect
-          .soft(
-            bannerBounding!.width === appBounding!.width,
-            ExpectedMessages.bannerWidthIsValid,
-          )
-          .toBeTruthy();
+        baseAssertion.assertValue(
+          bannerBounding!.width,
+          appBounding!.width - navigationPanelBounding!.width,
+          ExpectedMessages.bannerWidthIsValid,
+        );
       },
     );
 
@@ -124,9 +124,11 @@ dialTest(
       async () => {
         await dialHomePage.bringPageToFront();
         await banner.closeButton.click();
-        await expect
-          .soft(banner.getElementLocator(), ExpectedMessages.bannerIsClosed)
-          .toBeHidden();
+        await baseAssertion.assertElementState(
+          banner,
+          'hidden',
+          ExpectedMessages.bannerIsClosed,
+        );
       },
     );
 
@@ -135,9 +137,11 @@ dialTest(
       async () => {
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded({ skipSidebars: true });
-        await expect
-          .soft(banner.getElementLocator(), ExpectedMessages.bannerIsClosed)
-          .toBeHidden();
+        await baseAssertion.assertElementState(
+          banner,
+          'hidden',
+          ExpectedMessages.bannerIsClosed,
+        );
       },
     );
 
@@ -152,9 +156,11 @@ dialTest(
           false,
         );
         await dialHomePage.waitForPageLoaded({ skipSidebars: true });
-        await expect
-          .soft(banner.getElementLocator(), ExpectedMessages.bannerIsClosed)
-          .toBeHidden();
+        await baseAssertion.assertElementState(
+          banner,
+          'hidden',
+          ExpectedMessages.bannerIsClosed,
+        );
       },
     );
   },
