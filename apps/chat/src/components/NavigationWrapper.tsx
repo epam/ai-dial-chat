@@ -247,7 +247,10 @@ const Navigation = () => {
 
   return (
     <div
-      className="order-last flex h-[52px] w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:z-40 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start md:border-r md:py-2"
+      className={classNames(
+        'order-last h-[52px] w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:z-40 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start md:border-r md:py-2',
+        !isMarketplaceEnabled && !widgetsSchemaIds.size ? 'hidden' : 'flex',
+      )}
       data-qa="navigation-panel"
     >
       <NavigationButton
