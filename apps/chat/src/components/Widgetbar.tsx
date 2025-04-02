@@ -48,7 +48,7 @@ export const WidgetbarView = () => {
   }, [dispatch, screenState]);
 
   return (
-    <div className="fixed left-0 z-40 flex h-full max-w-[260px]">
+    <div className="fixed left-0 z-40 flex h-full w-[260px] max-w-[260px]">
       <div className="flex w-full flex-col divide-y divide-tertiary bg-layer-3 transition-all">
         <div className="px-5 py-[12px] text-base font-semibold text-primary">
           {t('Widgets')}
