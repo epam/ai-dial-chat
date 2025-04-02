@@ -451,7 +451,8 @@ dialTest(
 );
 
 dialTest.only(
-  "Delete custom app from 'Select an agent for conversation' form",
+  'Delete custom app from "Select an agent for conversation" form\n' + // EPMRTC-4105
+    'Delete custom app from application card pop-up', // EPMRTC-4103
   async ({
     marketplacePage,
     marketplaceAgentsSection,
@@ -470,12 +471,19 @@ dialTest.only(
     localStorageManager,
     marketplaceHeader,
   }) => {
-    setTestIds('EPMRTC-4105');
+    setTestIds('EPMRTC-4105', 'EPMRTC-4103');
     let agentElementInDialog: BaseElement;
-    let agentElement: BaseElement;
+    let agentElement1: BaseElement;
+    let agentElement2: BaseElement;
 
-    const appEntity = {
+    const appEntity1 = {
       name: GeneratorUtil.randomApplicationName(),
+      version: GeneratorUtil.randomApplicationVersion(),
+      description: GeneratorUtil.randomString(20),
+    } as DialAIEntityModel;
+
+    const appEntity2 = {
+      name: GeneratorUtil.randomApplicationName() + '_App2', // Ensure unique names
       version: GeneratorUtil.randomApplicationVersion(),
       description: GeneratorUtil.randomString(20),
     } as DialAIEntityModel;
@@ -484,13 +492,20 @@ dialTest.only(
       'Precondition: Create custom application via API',
       async () => {
         const applicationModel = customApplicationBuilder
-          .withDisplayName(appEntity.name)
-          .withDisplayVersion(appEntity.version!)
-          .withDescriptionKeywords(appEntity.description!)
+          .withDisplayName(appEntity1.name)
+          .withDisplayVersion(appEntity1.version!)
+          .withDescriptionKeywords(appEntity1.description!)
           .build();
-        const backendEntity =
-          await applicationApiHelper.createApplication(applicationModel);
-        await localStorageManager.setRecentModelsIdsOnce(appEntity);
+        await applicationApiHelper.createApplication(applicationModel);
+
+        const applicationModel2 = customApplicationBuilder
+          .withDisplayName(appEntity2.name)
+          .withDisplayVersion(appEntity2.version!)
+          .withDescriptionKeywords(appEntity2.description!)
+          .build();
+        await applicationApiHelper.createApplication(applicationModel2);
+
+        await localStorageManager.setRecentModelsIdsOnce(appEntity1);
         await localStorageManager.setShowSideBarPanels();
       },
     );
@@ -500,14 +515,14 @@ dialTest.only(
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
-        agentElement =
-          await marketplaceAgentsSection.findAgentElement(appEntity);
-        await baseAssertion.assertElementState(agentElement, 'visible');
+        agentElement1 =
+          await marketplaceAgentsSection.findAgentElement(appEntity1);
+        await baseAssertion.assertElementState(agentElement1, 'visible');
       },
     );
 
     await dialTest.step('Click "Use application"', async () => {
-      await agentElement.click();
+      await agentElement1.click();
       await baseAssertion.assertElementState(agentDetailsModal, 'visible');
       await agentDetailsModal.useButton.click();
       await dialHomePage.waitForPageLoaded();
@@ -521,7 +536,7 @@ dialTest.only(
     await dialTest.step(
       'Hover over app card, click on 3 dots, select Delete option and confirm',
       async () => {
-        agentElementInDialog = talkToAgents.getAgent(appEntity);
+        agentElementInDialog = talkToAgents.getAgent(appEntity1);
         await agentElementInDialog.hoverOver();
         await talkToAgents
           .getAgentElementDotsMenu(agentElementInDialog)
@@ -545,7 +560,7 @@ dialTest.only(
         await baseAssertion.assertElementState(
           agentElementInDialog,
           'hidden',
-          `App "${appEntity.name}" should be deleted from My Workspace`,
+          `App "${appEntity1.name}" should be deleted from My Workspace`,
         );
       },
     );
@@ -554,7 +569,7 @@ dialTest.only(
       'Navigate to DIAL Marketplace and verify custom app card was deleted',
       async () => {
         await marketplaceSidebar.marketplaceHomePageButton.click();
-        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        await marketplaceHeader.searchInput.fillInInput(appEntity1.name);
         const actualAgents = await marketplaceAgentsSection.getAllAgents();
         baseAssertion.assertValue(
           actualAgents.length,
@@ -563,9 +578,57 @@ dialTest.only(
         );
         await marketplacePage.waitForPageLoaded();
         await baseAssertion.assertElementState(
-          agentElement,
+          agentElement1,
           'hidden',
-          `App "${appEntity.name}" should be deleted from Marketplace`,
+          `App "${appEntity1.name}" should be deleted from Marketplace`,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Open "My workspace", find App 2 and click on the second app card',
+      async () => {
+        await marketplaceSidebar.myWorkspaceButton.click();
+        await marketplacePage.waitForPageLoaded();
+        await marketplaceHeader.searchInput.fillInInput(appEntity2.name);
+        agentElement2 =
+          await marketplaceAgentsSection.findAgentElement(appEntity2);
+        await baseAssertion.assertElementState(agentElement2, 'visible');
+        await agentElement2.click();
+        await baseAssertion.assertElementState(agentDetailsModal, 'visible');
+      },
+    );
+
+    await dialTest.step(
+      'Click on Delete icon in the modal and confirm deletion',
+      async () => {
+        await agentDetailsModal.deleteButton.click();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await agentDetailsModal.waitForState({ state: 'hidden' });
+      },
+    );
+
+    await dialTest.step(
+      'Verify second custom app card was deleted from My workspace',
+      async () => {
+        await marketplacePage.waitForPageLoaded(); // Wait for potential refresh after delete
+        await baseAssertion.assertElementState(
+          agentElement2,
+          'hidden',
+          `App "${appEntity2.name}" should be deleted from My Workspace`,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Navigate to DIAL Marketplace and verify second custom app card was deleted',
+      async () => {
+        await marketplaceSidebar.marketplaceHomePageButton.click();
+        await marketplacePage.waitForPageLoaded();
+        await baseAssertion.assertElementState(
+          agentElement2,
+          'hidden',
+          `App "${appEntity2.name}" should be deleted from Marketplace`,
         );
       },
     );

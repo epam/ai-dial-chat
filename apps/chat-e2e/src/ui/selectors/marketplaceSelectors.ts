@@ -34,6 +34,7 @@ export const MarketplaceDetailsModal = {
   versionMenuTrigger: '[data-qa="agent-version-select-trigger"]',
   useButton: '[data-qa="use-button"]',
   editButton: '[data-qa="application-edit"]',
+  deleteButton: '[data-qa="application-delete"]',
 };
 
 export const MarketplaceSideBarSelectors = {
