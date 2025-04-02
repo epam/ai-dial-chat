@@ -339,6 +339,7 @@ dialOverlayTest(
           'visible',
         );
         await overlayPublishingRequestModal.cancelButton.click();
+        await overlayPromptBar.closeButton.click();
       },
     );
 
@@ -498,10 +499,6 @@ dialOverlayTest(
           overlayAccountSettings.avatarIcon,
           'hidden',
         );
-        await overlayBaseAssertion.assertElementState(
-          overlayAccountSettings.closeButton,
-          'visible',
-        );
       },
     );
 
@@ -539,7 +536,7 @@ dialOverlayTest(
     await dialTest.step(
       'Click on "X" and verify profile panel is closed',
       async () => {
-        await overlayAccountSettings.closeButton.click();
+        await overlayProfilePanel.closeButton.click();
         await overlayBaseAssertion.assertElementState(
           overlayProfilePanel,
           'hidden',

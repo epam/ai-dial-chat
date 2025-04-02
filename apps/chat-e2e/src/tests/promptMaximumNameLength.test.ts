@@ -50,7 +50,7 @@ dialTest(
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await promptBar.createNewPrompt();
+        await promptBar.createNewEntity();
         await promptModalDialog.setField(promptModalDialog.name, longName);
         await promptModalDialog.setField(
           promptModalDialog.prompt,

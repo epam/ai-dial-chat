@@ -43,7 +43,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         for (let i = 1; i <= 3; i++) {
-          await promptBar.createNewPrompt();
+          await promptBar.createNewEntity();
           await promptModalDialog.setField(
             promptModalDialog.prompt,
             promptValue,
@@ -79,7 +79,7 @@ dialTest(
           )
           .toBeVisible();
 
-        await promptBar.createNewPrompt();
+        await promptBar.createNewEntity();
         await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
         await promptModalDialog.saveButton.click();
         await expect
@@ -106,7 +106,7 @@ dialTest(
           )
           .toBeVisible();
 
-        await promptBar.createNewPrompt();
+        await promptBar.createNewEntity();
         await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
         await promptModalDialog.saveButton.click();
         await expect
@@ -131,7 +131,7 @@ dialTest(
           });
         }
 
-        await promptBar.createNewPrompt();
+        await promptBar.createNewEntity();
         await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
         await promptModalDialog.saveButton.click();
         await expect
@@ -156,7 +156,7 @@ dialTest(
         await promptPreviewModal.closeButton.click();
 
         for (let i = 1000; i <= 1001; i++) {
-          await promptBar.createNewPrompt();
+          await promptBar.createNewEntity();
           await promptModalDialog.setField(
             promptModalDialog.prompt,
             promptValue,
@@ -261,7 +261,7 @@ dialTest(
         for (const nestedFolder of nestedFolders) {
           await folderPrompts.expandFolder(nestedFolder.name);
         }
-        await promptBar.createNewPrompt();
+        await promptBar.createNewEntity();
         await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
         await promptModalDialog.saveButton.click();
 
@@ -283,7 +283,7 @@ dialTest(
           )
           .toBeVisible();
 
-        await promptBar.createNewPrompt();
+        await promptBar.createNewEntity();
         await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
         await promptModalDialog.saveButton.click();
         await expect

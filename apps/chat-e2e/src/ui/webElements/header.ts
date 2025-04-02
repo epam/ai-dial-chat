@@ -28,10 +28,6 @@ export class Header extends BaseElement {
     HeaderSelectors.newEntity,
   );
 
-  public backToChatButton = this.getChildElementBySelector(
-    HeaderSelectors.backToChatButton,
-  );
-
   public logo = this.getChildElementBySelector(HeaderSelectors.logo);
 
   public async createNewConversation() {

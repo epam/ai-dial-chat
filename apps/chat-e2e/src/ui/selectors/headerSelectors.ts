@@ -5,12 +5,10 @@ export const HeaderSelectors = {
   banner: '[data-qa="banner"]',
   accountSettings: '[data-qa="account-settings"]:visible',
   newEntity: '[data-qa="new-entity"]',
-  backToChatButton: '[data-qa="back-to-chat"]',
   profilePanel: '[data-qa="profile-panel"]',
   settings: '#user-settings-menu-item',
   overlayLogout: '#logout-menu-item',
   logo: '[data-qa="logo"]',
   username: '[data-qa="username"]:visible',
   avatar: '[alt="User avatar"]',
-  closeButton: '#close-icon',
 };

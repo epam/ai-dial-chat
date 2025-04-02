@@ -217,6 +217,11 @@ const selectInitialDataStatus = (state: RootState) =>
 
 const selectProviderId = (state: RootState) => rootSelector(state).providerId;
 
+const selectWidgetsSchemaIds = createSelector(
+  [rootSelector],
+  (state) => new Set(state.widgetsSchemaIds),
+);
+
 export const SettingsSelectors = {
   selectAppName,
   selectIsOverlay,
@@ -247,4 +252,5 @@ export const SettingsSelectors = {
   selectDefaults,
   selectInitialDataStatus,
   selectProviderId,
+  selectWidgetsSchemaIds,
 };

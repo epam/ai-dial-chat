@@ -560,8 +560,8 @@ dialTest(
     marketplacePage,
     marketplaceHeader,
     marketplaceAgentsSection,
+    navigationPanel,
     marketplace,
-    marketplaceSidebar,
     agentDetailsModal,
     localStorageManager,
     setTestIds,
@@ -664,7 +664,7 @@ dialTest(
     await dialTest.step(
       'Verify agent with major version is displayed on "My Workspace" tab',
       async () => {
-        await marketplaceSidebar.myWorkspaceButton.click();
+        await navigationPanel.myWorkspaceButton.click();
         const foundAgentElement =
           await marketplaceAgentsSection.findAgentElement(appName);
         await baseAssertion.assertElementState(foundAgentElement, 'visible');
@@ -720,7 +720,7 @@ dialTest(
     await dialTest.step.skip(
       'Back to the "Marketplace" tab and add latest version to "My Workspace"',
       async () => {
-        await marketplaceSidebar.marketplaceHomePageButton.click();
+        await navigationPanel.marketplaceHomePageButton.click();
         const actualAppElement =
           await marketplaceAgentsSection.findAgentElement(appName);
         await actualAppElement.click();
@@ -749,7 +749,7 @@ dialTest(
     await dialTest.step.skip(
       'Verify agent with latest version is displayed on "My Workspace" tab',
       async () => {
-        await marketplaceSidebar.myWorkspaceButton.click();
+        await navigationPanel.myWorkspaceButton.click();
         const actualAgents = await marketplaceAgentsSection.getAllAgents();
         baseAssertion.assertArrayIncludesAll(
           actualAgents.map((agent) => agent.name),
@@ -767,7 +767,7 @@ dialTest(
     await dialTest.step.skip(
       'Back to "My Workspace" and verify agent is found, no other agents are suggested',
       async () => {
-        await marketplaceSidebar.myWorkspaceButton.click();
+        await navigationPanel.myWorkspaceButton.click();
         const actualAgents = await marketplaceAgentsSection.getAllAgents();
         const filteredAgents = actualAgents.filter(
           (agent) => agent.isWorkspaceAgent,

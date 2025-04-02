@@ -36,4 +36,5 @@ export interface SettingsState {
   providerId: string | null;
   initialDataStatus?: UploadStatus;
   defaultAuthProvider?: OAuthProviderType | null;
+  widgetsSchemaIds?: string[];
 }

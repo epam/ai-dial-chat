@@ -432,7 +432,7 @@ dialTest(
     chatAssertion,
     localStorageManager,
     talkToAgentDialog,
-    header,
+    navigationPanel,
     agentDetailsModal,
     confirmationDialog,
     chatHeader,
@@ -518,7 +518,7 @@ dialTest(
         await agentElement.click();
         await agentDetailsModal.removeBookmarkIcon.click();
         await confirmationDialog.confirm();
-        await header.backToChatButton.click();
+        await navigationPanel.backToChatButton.click();
       },
     );
 
@@ -567,7 +567,7 @@ dialSharedWithMeTest(
     dataInjector,
     sendMessage,
     sendMessageAssertion,
-    header,
+    chatBar,
     promptDropdownMenu,
   }) => {
     setTestIds('EPMRTC-5498', 'EPMRTC-5488');
@@ -610,7 +610,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Type message and use prompt from Shared with me',
       async () => {
-        await header.createNewConversation();
+        await chatBar.createNewEntity();
         await sendMessage.messageInput.fillInInput(initialMessage);
         await prompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.use, {

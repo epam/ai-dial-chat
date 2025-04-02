@@ -21,6 +21,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { dispatchMouseLeaveEvent } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
@@ -661,13 +662,7 @@ export const CodeEditor = ({
                 className="border-l border-tertiary px-3 py-2 text-secondary hover:text-accent-primary"
                 onClick={(e) => {
                   setIsFullScreen(!isFullScreen);
-                  const mouseLeaveEvent = new MouseEvent('mouseleave', {
-                    bubbles: true,
-                    cancelable: true,
-                    view: window,
-                  });
-
-                  e.currentTarget.dispatchEvent(mouseLeaveEvent);
+                  dispatchMouseLeaveEvent(e);
                 }}
               >
                 <FullScreenIcon size={18} />
