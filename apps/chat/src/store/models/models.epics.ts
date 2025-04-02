@@ -25,14 +25,10 @@ import { AnyAction } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
-import { sortItemsVersions } from '@/src/utils/app/common';
 import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { isMyApplication } from '@/src/utils/app/id';
-import {
-  getGroupModelKey,
-  groupModelsAndSaveOrder,
-} from '@/src/utils/app/models';
+import { getGroupModelKey } from '@/src/utils/app/models';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { translate } from '@/src/utils/app/translation';
 
@@ -56,7 +52,6 @@ import { UIActions } from '../ui/ui.reducers';
 import { ModelsActions, ModelsSelectors } from './models.reducers';
 
 import { Feature } from '@epam/ai-dial-shared';
-import sortBy from 'lodash-es/sortBy';
 import uniqBy from 'lodash-es/uniqBy';
 
 const initEpic: AppEpic = (action$, state$) =>
@@ -133,22 +128,6 @@ const getModelsEpic: AppEpic = (action$, state$) =>
           return from(resp.json());
         }),
         switchMap((response: DialAIEntityModel[]) => {
-          const sortedResponse = sortBy(response, (model) =>
-            model.name.toLowerCase(),
-          );
-          const sortedAgents = groupModelsAndSaveOrder(sortedResponse).flatMap(
-            ({ entities }) => {
-              if (
-                entities.length > 0 &&
-                entities[0].id !== entities[0].reference
-              ) {
-                sortItemsVersions(entities);
-              }
-
-              return entities;
-            },
-          );
-
           const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
           const userName = AuthSelectors.selectUserName(state$.value);
           const isHeaderFeatureEnabled = SettingsSelectors.isFeatureEnabled(
@@ -156,15 +135,11 @@ const getModelsEpic: AppEpic = (action$, state$) =>
             Feature.Header,
           );
 
-          if (
-            sortedAgents.length === 0 &&
-            isOverlay &&
-            !isHeaderFeatureEnabled
-          ) {
+          if (response.length === 0 && isOverlay && !isHeaderFeatureEnabled) {
             signOut();
           }
 
-          const updatingModels = sortedAgents.filter(
+          const updatingModels = response.filter(
             (model) =>
               model.functionStatus &&
               (model.functionStatus === ApplicationStatus.DEPLOYING ||
@@ -179,14 +154,14 @@ const getModelsEpic: AppEpic = (action$, state$) =>
                 }),
               ),
             );
-          const publicApplicationIds = sortedAgents
+          const publicApplicationIds = response
             .filter((model) => isEntityIdPublic(model))
             .map(({ id }) => id);
 
           return concat(
             of(
               ModelsActions.getModelsSuccess({
-                models: sortedAgents.map((model) =>
+                models: response.map((model) =>
                   isMyApplication(model)
                     ? { ...model, owner: userName }
                     : model,
