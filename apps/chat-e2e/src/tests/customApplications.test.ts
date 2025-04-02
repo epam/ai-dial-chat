@@ -449,3 +449,125 @@ dialTest(
     );
   },
 );
+
+dialTest.only(
+  "Delete custom app from 'Select an agent for conversation' form",
+  async ({
+    marketplacePage,
+    marketplaceAgentsSection,
+    marketplaceAgents,
+    agentDetailsModal,
+    dialHomePage,
+    chat,
+    talkToAgentDialog,
+    talkToAgents, // Agent list within the dialog
+    confirmationDialog,
+    setTestIds,
+    baseAssertion,
+    customApplicationBuilder,
+    applicationApiHelper,
+    marketplaceSidebar,
+    localStorageManager,
+    marketplaceHeader,
+  }) => {
+    setTestIds('EPMRTC-4105');
+    let agentElementInDialog: BaseElement;
+    let agentElement: BaseElement;
+
+    const appEntity = {
+      name: GeneratorUtil.randomApplicationName(),
+      version: GeneratorUtil.randomApplicationVersion(),
+      description: GeneratorUtil.randomString(20),
+    } as DialAIEntityModel;
+
+    await dialTest.step(
+      'Precondition: Create custom application via API',
+      async () => {
+        const applicationModel = customApplicationBuilder
+          .withDisplayName(appEntity.name)
+          .withDisplayVersion(appEntity.version!)
+          .withDescriptionKeywords(appEntity.description!)
+          .build();
+        const backendEntity =
+          await applicationApiHelper.createApplication(applicationModel);
+        await localStorageManager.setRecentModelsIdsOnce(appEntity);
+        await localStorageManager.setShowSideBarPanels();
+      },
+    );
+
+    await dialTest.step(
+      'Open DIAL Marketplace and find this custom app',
+      async () => {
+        await marketplacePage.openMarketplacePage();
+        await marketplacePage.waitForPageLoaded();
+        agentElement =
+          await marketplaceAgentsSection.findAgentElement(appEntity);
+        await baseAssertion.assertElementState(agentElement, 'visible');
+      },
+    );
+
+    await dialTest.step('Click "Use application"', async () => {
+      await agentElement.click();
+      await baseAssertion.assertElementState(agentDetailsModal, 'visible');
+      await agentDetailsModal.useButton.click();
+      await dialHomePage.waitForPageLoaded();
+    });
+
+    await dialTest.step('Click on "Change agent" link', async () => {
+      await chat.changeAgentButton.click();
+      await talkToAgentDialog.waitForState();
+    });
+
+    await dialTest.step(
+      'Hover over app card, click on 3 dots, select Delete option and confirm',
+      async () => {
+        agentElementInDialog = talkToAgents.getAgent(appEntity);
+        await agentElementInDialog.hoverOver();
+        await talkToAgents
+          .getAgentElementDotsMenu(agentElementInDialog)
+          .click();
+        await talkToAgents
+          .getAgentDropdownMenu()
+          .selectMenuOption(MenuOptions.delete);
+        // await talkToAgentDialog.searchAgentInput.fillInInput(appEntity.name);
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        // await talkToAgentDialog.waitForState({ state: 'hidden' });
+      },
+    );
+
+    await dialTest.step(
+      'Navigate to My workspace and verify custom app card was deleted',
+      async () => {
+        // await chat.changeAgentButton.click(); // Reopen to navigate
+        await talkToAgentDialog.goToMyWorkspace();
+        await marketplacePage.waitForPageLoaded();
+
+        await baseAssertion.assertElementState(
+          agentElementInDialog,
+          'hidden',
+          `App "${appEntity.name}" should be deleted from My Workspace`,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Navigate to DIAL Marketplace and verify custom app card was deleted',
+      async () => {
+        await marketplaceSidebar.marketplaceHomePageButton.click();
+        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        baseAssertion.assertValue(
+          actualAgents.length,
+          0,
+          ExpectedMessages.elementsCountIsValid,
+        );
+        await marketplacePage.waitForPageLoaded();
+        await baseAssertion.assertElementState(
+          agentElement,
+          'hidden',
+          `App "${appEntity.name}" should be deleted from Marketplace`,
+        );
+      },
+    );
+  },
+);
