@@ -1536,6 +1536,7 @@ dialTest(
     page,
     conversations,
     leftChatHeader,
+    rightChatHeader,
     conversationDropdownMenu,
     baseAssertion,
     compare,
@@ -1644,6 +1645,15 @@ dialTest(
     await dialTest.step(
       'Verify both first requests updated, messages below are deleted',
       async () => {
+        const copiedValue = await dialHomePage.readFromClipboard();
+        await baseAssertion.assertElementText(
+          leftChatHeader.chatTitle,
+          copiedValue,
+        );
+        await baseAssertion.assertElementText(
+          rightChatHeader.chatTitle,
+          copiedValue + ' 1',
+        );
         await baseAssertion.assertElementsCount(
           chatMessages.compareChatMessages,
           4,
