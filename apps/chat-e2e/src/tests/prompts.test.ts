@@ -7,7 +7,8 @@ import {
   ExpectedMessages,
   MenuOptions,
 } from '@/src/testData';
-import { Colors, Cursors } from '@/src/ui/domData';
+import { Colors, Cursors, ThemeColorAttributes } from '@/src/ui/domData';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 const newName = 'test prompt';
@@ -35,26 +36,29 @@ dialTest(
         await dialHomePage.waitForPageLoaded({ skipSidebars: true });
         await header.rightPanelToggle.click();
         await baseAssertion.assertElementState(promptBar, 'visible');
-        await promptBar.hoverOverNewEntity();
-        const newPromptCursor = await promptBar.getNewEntityCursor();
-        expect
-          .soft(
-            newPromptCursor[0],
-            ExpectedMessages.newPromptButtonCursorIsPointer,
-          )
-          .toBe(Cursors.pointer);
-
-        const newPromptColor = await promptBar.getNewEntityBackgroundColor();
-        expect
-          .soft(newPromptColor, ExpectedMessages.newPromptButtonIsHighlighted)
-          .toBe(Colors.backgroundAccentTertiary);
+        await promptBar.newEntityButton.hoverOver();
+        await baseAssertion.assertElementCursor(
+          promptBar.newEntityButton,
+          Cursors.pointer,
+        );
+        const expectedColor = ThemesUtil.getRgbColorByKey(
+          ThemeColorAttributes.textPrimary,
+        );
+        await baseAssertion.assertElementColor(
+          promptBar.newEntityButton,
+          expectedColor,
+        );
+        await baseAssertion.assertElementBorderColors(
+          promptBar.newEntityButton,
+          expectedColor,
+        );
       },
     );
 
     await dialTest.step(
       'Click "New prompt" button and verify Name and Prompt fields have asterisk',
       async () => {
-        await promptBar.createNewPrompt();
+        await promptBar.createNewEntity();
         expect
           .soft(
             await promptModalDialog.isFieldHasAsterisk(

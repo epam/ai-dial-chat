@@ -29,6 +29,7 @@ export const ProfileButton = () => {
       dispatch(UIActions.setShowPromptbar(false));
       dispatch(UIActions.setShowChatbar(false));
       dispatch(UIActions.setShowMarketplaceFilterbar(false));
+      dispatch(UIActions.setShowWidgetbar(false));
     }
     dispatch(UIActions.setIsProfileOpen(!isProfileOpen));
   }, [dispatch, isProfileOpen]);
@@ -37,7 +38,7 @@ export const ProfileButton = () => {
 
   return (
     <button
-      className="flex size-full items-center justify-center text-secondary md:text-primary"
+      className="flex items-center justify-center text-secondary md:text-primary"
       onClick={onClick}
       data-qa="account-settings"
       aria-label={t('Account settings')}

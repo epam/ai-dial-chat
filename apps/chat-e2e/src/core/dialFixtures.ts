@@ -123,6 +123,7 @@ import { MarketplaceFilter } from '@/src/ui/webElements/marketplace/marketplaceF
 import { MarketplaceHeader } from '@/src/ui/webElements/marketplace/marketplaceHeader';
 import { MarketplaceSidebar } from '@/src/ui/webElements/marketplace/marketplaceSidebar';
 import { ModelInfoTooltip } from '@/src/ui/webElements/modelInfoTooltip';
+import { NavigationPanel } from '@/src/ui/webElements/navigationPanel';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { PromptModalDialog } from '@/src/ui/webElements/promptModalDialog';
 import { PublishingRequestModal } from '@/src/ui/webElements/publishingRequestModal';
@@ -165,6 +166,7 @@ const dialTest = test.extend<{
   appEditorPreview: AppEditorPreview;
   appEditorViewForm: AppEditorViewForm;
   chatBar: ChatBar;
+  navigationPanel: NavigationPanel;
   chatLoader: ChatLoader;
   importExportLoader: ImportExportLoader;
   header: Header;
@@ -457,6 +459,10 @@ const dialTest = test.extend<{
   chatBar: async ({ appContainer }, use) => {
     const chatBar = appContainer.getChatBar();
     await use(chatBar);
+  },
+  navigationPanel: async ({ appContainer }, use) => {
+    const navigationPanel = appContainer.getNavigationPanel();
+    await use(navigationPanel);
   },
   chatLoader: async ({ appContainer }, use) => {
     const chatLoader = appContainer.getChatLoader();

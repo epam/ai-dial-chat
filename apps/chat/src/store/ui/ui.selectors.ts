@@ -21,6 +21,9 @@ const selectShowChatbar = (state: RootState) => rootSelector(state).showChatbar;
 const selectShowPromptbar = (state: RootState) =>
   rootSelector(state).showPromptbar;
 
+const selectShowWidgetbar = (state: RootState) =>
+  rootSelector(state).showWidgetbar;
+
 const selectShowMarketplaceFilterbar = (state: RootState) =>
   rootSelector(state).showMarketplaceFilterbar;
 
@@ -101,4 +104,5 @@ export const UISelectors = {
   selectCollapsedSections,
   selectPreviousRoute,
   selectInitialized,
+  selectShowWidgetbar,
 };
