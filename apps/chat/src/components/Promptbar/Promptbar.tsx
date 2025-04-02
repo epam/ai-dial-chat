@@ -128,7 +128,6 @@ const PromptbarView = () => {
 
   return (
     <>
-      <PromptModalComponent />
       <Sidebar<PromptInfo>
         featureType={FeatureType.Prompt}
         side="right"
