@@ -17,7 +17,8 @@ dialTest(
   'Create custom app with required fields only.\n' + // EPMRTC-5130
     'Edit option for custom app is available from card pop-up form.\n' + // EPMRTC-5939
     'Custom app with permitted spec symbols in Name.\n' + // EPMRTC-4838
-    'Delete custom app from context menu', // EPMRTC-4094
+    'Delete custom app from context menu\n' + // EPMRTC-4094
+    'Custom app: Description field displayed in New conversation , card view, app view', //EPMRTC-4099
   async ({
     marketplacePage,
     marketplaceHeader,
@@ -27,22 +28,33 @@ dialTest(
     appEditorViewForm,
     appEditorHeader,
     marketplaceAgentsSection,
-    marketplaceAgents, // Added fixture
-    agentDetailsModal, // Added fixture
+    marketplaceAgents,
+    agentDetailsModal,
     setTestIds,
     baseAssertion,
-    appEditorHeaderAssertion, // Keep instance creation inside test
-    dialHomePage, // Add dialHomePage
-    chat, // Add chat
-    chatMessagesAssertion, // Add chatMessagesAssertion
-    confirmationDialog, // Add confirmationDialog
-    marketplaceSidebar, // Add marketplaceSidebar
-    localStorageManager, // Keep localStorageManager
+    appEditorHeaderAssertion,
+    dialHomePage,
+    chat,
+    chatMessagesAssertion,
+    confirmationDialog,
+    marketplaceSidebar,
+    localStorageManager,
+    agentInfoAssertion,
+    agentDetailsModalAssertion,
   }) => {
-    setTestIds('EPMRTC-5130', 'EPMRTC-5939', 'EPMRTC-4838', 'EPMRTC-4094');
+    setTestIds(
+      'EPMRTC-5130',
+      'EPMRTC-5939',
+      'EPMRTC-4838',
+      'EPMRTC-4094',
+      'EPMRTC-4099',
+    );
+    const shortDescription = GeneratorUtil.randomShortDescription();
+    const longDescription = GeneratorUtil.randomLongDescription();
     const appEntity = {
       name: `${GeneratorUtil.randomApplicationName()}${ExpectedConstants.allowedSpecialChars}`,
       version: GeneratorUtil.randomApplicationVersion(),
+      description: `${shortDescription}\n\n${longDescription}`,
     } as DialAIEntityModel;
     let agentElement: BaseElement;
     await localStorageManager.setShowSideBarPanels();
@@ -125,6 +137,7 @@ dialTest(
         await appEditorGeneralForm.fillInAppFields({
           name: appEntity.name,
           version: appEntity.version,
+          description: appEntity.description,
         });
         await appEditorGeneralForm.goNext();
       },
@@ -197,19 +210,29 @@ dialTest(
       async () => {
         await agentElement.click();
         await baseAssertion.assertElementState(agentDetailsModal, 'visible');
+        await agentDetailsModalAssertion.assertDescription(
+          appEntity.description!,
+        );
       },
     );
 
     await dialTest.step(
-      'Click "Use application" button, Input a request message, send it and verify response was successfully generated',
+      'Click "Use application" button and perform assertions',
       async () => {
         await agentDetailsModal.useButton.click();
         await dialHomePage.waitForPageLoaded();
+        await agentInfoAssertion.assertShortDescription(appEntity);
+      },
+    );
+
+    await dialTest.step(
+      'Input a request message, send it and verify response was successfully generated',
+      async () => {
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
         await chat.sendRequestWithButton(GeneratorUtil.randomString(10));
-        await chatMessagesAssertion.assertLastMessageContent('response'); // Check for the mocked response
+        await chatMessagesAssertion.assertLastMessageContent('response');
       },
     );
 
@@ -222,6 +245,14 @@ dialTest(
         await marketplacePage.waitForPageLoaded();
         agentElement =
           await marketplaceAgentsSection.findAgentElement(appEntity);
+
+        const actualDescription =
+          marketplaceAgents.getAgentDescription(agentElement);
+        await baseAssertion.assertElementText(
+          actualDescription,
+          shortDescription,
+          `Short description on card for "${appEntity.name}" should be correct`,
+        );
         await agentElement.click();
         await baseAssertion.assertElementState(agentDetailsModal, 'visible');
       },
@@ -330,8 +361,7 @@ dialTest(
           .withDisplayVersion(appCreds.version!)
           .withDescriptionKeywords(appCreds.description!)
           .build();
-        const backendEntity =
-          await applicationApiHelper.createApplication(applicationModel);
+        await applicationApiHelper.createApplication(applicationModel);
       },
     );
 
@@ -450,13 +480,12 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'Delete custom app from "Select an agent for conversation" form\n' + // EPMRTC-4105
     'Delete custom app from application card pop-up', // EPMRTC-4103
   async ({
     marketplacePage,
     marketplaceAgentsSection,
-    marketplaceAgents,
     agentDetailsModal,
     dialHomePage,
     chat,

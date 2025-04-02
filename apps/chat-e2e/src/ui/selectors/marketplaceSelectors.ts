@@ -29,6 +29,9 @@ export const MarketplaceAgentSelectors = {
 
 export const MarketplaceDetailsModal = {
   modalContainer: '[data-qa="marketplace-agent-details"]',
+  applicationContentContainer: '[data-qa="application-content"]',
+  applicationDescription: '[data-qa="application-description"]',
+  applicationInformation: '[data-qa="application-information"]',
   agentName: '[data-qa="agent-name"]',
   agentVersion: '[data-qa="version"]',
   versionMenuTrigger: '[data-qa="agent-version-select-trigger"]',

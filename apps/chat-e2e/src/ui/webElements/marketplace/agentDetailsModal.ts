@@ -62,6 +62,17 @@ export class AgentDetailsModal extends BaseElement {
     MarketplaceAgentSelectors.copiedIcon,
   );
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
+  public applicationContent = this.getChildElementBySelector(
+    MarketplaceDetailsModal.applicationContentContainer,
+  );
+  public applicationDescription =
+    this.applicationContent.getChildElementBySelector(
+      MarketplaceDetailsModal.applicationDescription,
+    );
+  public applicationInformation =
+    this.applicationContent.getChildElementBySelector(
+      MarketplaceDetailsModal.applicationInformation,
+    );
 
   public async clickUseButton({
     isInstalledDeploymentsUpdated = false,
