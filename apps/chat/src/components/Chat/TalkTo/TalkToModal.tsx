@@ -108,10 +108,10 @@ const TalkToModalView = ({
     ];
     const filteredModels = sortedModels.filter(
       (entity) =>
-        (!widgetsSchemaIds.has(entity.applicationTypeSchemaId as string) &&
-          doesEntityContainSearchTerm(entity, searchTerm)) ||
-        (entity.version &&
-          doesEntityContainSearchTerm({ name: entity.version }, searchTerm)),
+        !widgetsSchemaIds.has(entity.applicationTypeSchemaId as string) &&
+        (doesEntityContainSearchTerm(entity, searchTerm) ||
+          (entity.version &&
+            doesEntityContainSearchTerm({ name: entity.version }, searchTerm))),
     );
     const groupedModels = groupModelsAndSaveOrder(filteredModels);
     const orderedModels = groupedModels.map(({ entities }) => {

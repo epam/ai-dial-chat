@@ -20,8 +20,9 @@ import { Routes } from '@/src/constants/routes';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 
 import { CloseSidebarButton } from './Buttons/CloseSidebarButton';
+import { withRenderWhen } from './Common/RenderWhen';
 
-export const Widgetbar = () => {
+export const WidgetbarView = () => {
   const { t } = useTranslation(Translation.SideBar);
 
   const router = useRouter();
@@ -29,8 +30,6 @@ export const Widgetbar = () => {
   const dispatch = useAppDispatch();
 
   const screenState = useScreenState();
-
-  const showWidgetbar = useAppSelector(UISelectors.selectShowWidgetbar);
 
   const selectedWidget = useAppSelector(
     ApplicationSelectors.selectSelectedWidget,
@@ -49,24 +48,19 @@ export const Widgetbar = () => {
   }, [dispatch, screenState]);
 
   return (
-    <div
-      className={classNames(
-        'absolute left-0 top-0 z-[1111] h-screen w-full grid-cols-[260px_1fr] bg-blackout',
-        showWidgetbar ? 'grid' : 'hidden',
-      )}
-    >
-      <div className="relative flex h-full flex-col bg-layer-3">
-        <div className="border-b border-tertiary px-5 py-[12px] text-base font-semibold text-primary">
+    <div className="fixed left-0 z-40 flex h-full w-[260px] max-w-[260px]">
+      <div className="flex w-full flex-col divide-y divide-tertiary bg-layer-3 transition-all">
+        <div className="px-5 py-[12px] text-base font-semibold text-primary">
           {t('Widgets')}
         </div>
 
-        <div className="flex flex-col gap-2 p-2">
+        <div className="flex grow flex-col gap-px overflow-y-auto">
           {widgetModels.map((model) => (
             <button
               key={model.reference}
               onClick={() => handleWidgetClick(model.reference)}
               className={classNames(
-                'flex w-full items-center gap-2 truncate rounded border-l border-transparent px-[10px] py-[5px] hover:bg-accent-primary-alpha',
+                'flex w-full shrink-0 items-center gap-2 truncate rounded border-l border-transparent px-[10px] py-[5px] hover:bg-accent-primary-alpha',
                 {
                   '!border-accent-primary bg-accent-primary-alpha':
                     model.reference === selectedWidget &&
@@ -75,7 +69,9 @@ export const Widgetbar = () => {
               )}
             >
               <ModelIcon entityId={model.id} entity={model} size={24} />
-              <span className="text-sm text-primary">{model.name}</span>
+              <span className="truncate text-sm text-primary">
+                {model.name}
+              </span>
             </button>
           ))}
         </div>
@@ -84,3 +80,7 @@ export const Widgetbar = () => {
     </div>
   );
 };
+
+export const Widgetbar = withRenderWhen(UISelectors.selectShowWidgetbar)(
+  WidgetbarView,
+);
