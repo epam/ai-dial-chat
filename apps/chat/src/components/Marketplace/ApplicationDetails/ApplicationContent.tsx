@@ -79,11 +79,12 @@ export const ApplicationDetailsContent = ({ entity }: Props) => {
   // );
 
   return (
-    <div className="divide-y divide-tertiary overflow-auto"
-         data-qa="application-content">
+    <div
+      className="divide-y divide-tertiary overflow-auto"
+      data-qa="application-content"
+    >
       {!!getModelDescription(entity) && (
-        <section className="px-3 py-4 md:p-6"
-                 data-qa="application-description">
+        <section className="px-3 py-4 md:p-6" data-qa="application-description">
           <div className="flex flex-col gap-4">
             {/* <div className="relative overflow-hidden">
             <div
@@ -232,8 +233,10 @@ export const ApplicationDetailsContent = ({ entity }: Props) => {
           </div>
         )}
       </section> */}
-      <section className="flex flex-col gap-3 overflow-auto px-3 py-4 md:px-6"
-               data-qa="application-information">
+      <section
+        className="flex flex-col gap-3 overflow-auto px-3 py-4 md:px-6"
+        data-qa="application-information"
+      >
         <ApplicationInfo
           entityInfo={{
             author: isMyApplication(entity) ? userName : entity?.owner,

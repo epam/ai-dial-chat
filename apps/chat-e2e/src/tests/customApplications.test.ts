@@ -332,7 +332,8 @@ dialTest(
 );
 
 dialTest(
-  'Edit custom application',
+  'Edit custom application\n' + //EPMRTC-5131
+    'Edit version for custom app', //EPMRTC-4305
   async ({
     marketplacePage,
     marketplaceAgentsSection,
@@ -346,12 +347,12 @@ dialTest(
     applicationApiHelper,
     appEditorHeaderAssertion,
   }) => {
-    setTestIds('EPMRTC-5131');
+    setTestIds('EPMRTC-5131', 'EPMRTC-4305');
     const updatedDescription = GeneratorUtil.randomString(25);
     const updatedCompletionUrl = `http://updated-${GeneratorUtil.randomString(6)}.com`;
-    const appCreds = {
+    const appEntity = {
       name: GeneratorUtil.randomApplicationName(),
-      version: GeneratorUtil.randomApplicationVersion(),
+      version: '1.1.1',
       description: GeneratorUtil.randomString(20),
     } as DialAIEntityModel;
 
@@ -359,9 +360,9 @@ dialTest(
       'Precondition: Create custom application via API',
       async () => {
         const applicationModel = customApplicationBuilder
-          .withDisplayName(appCreds.name)
-          .withDisplayVersion(appCreds.version!)
-          .withDescriptionKeywords(appCreds.description!)
+          .withDisplayName(appEntity.name)
+          .withDisplayVersion(appEntity.version!)
+          .withDescriptionKeywords(appEntity.description!)
           .build();
         await applicationApiHelper.createApplication(applicationModel);
       },
@@ -377,8 +378,8 @@ dialTest(
       'Hover over custom app card, click 3 dots and select Edit option',
       async () => {
         const agentElement = await marketplaceAgentsSection.findAgentElement({
-          name: appCreds.name,
-          version: appCreds.version,
+          name: appEntity.name,
+          version: appEntity.version,
         } as DialAIEntityModel);
         await baseAssertion.assertElementState(agentElement, 'visible');
         await agentElement.hoverOver();
@@ -395,7 +396,7 @@ dialTest(
         await baseAssertion.assertElementState(appEditorViewForm);
         await baseAssertion.assertElementText(
           appEditorHeader.actionAndApplicationTypeTitle,
-          `${AppMenuActions.edit} custom app`, // Assuming title format
+          `${AppMenuActions.edit(AddAppMenuOptions.customApp)}`,
           ExpectedMessages.headerTitleIsValid,
         );
 
@@ -427,11 +428,14 @@ dialTest(
           AppEditSteps.generalInfo,
           true,
         );
+        appEntity.version = '2.2.2';
+        appEntity.description = updatedDescription;
         await appEditorGeneralForm.fillInAppFields({
-          description: updatedDescription,
+          version: appEntity.version,
+          description: appEntity.description,
         });
         await appEditorHeader.saveAppAndExit();
-        await baseAssertion.assertElementState(appEditorGeneralForm, 'hidden'); // Verify editor closed
+        await baseAssertion.assertElementState(appEditorGeneralForm, 'hidden');
         await marketplacePage.waitForPageLoaded();
       },
     );
@@ -440,10 +444,14 @@ dialTest(
       'Hover over custom app card, click 3 dots and select Edit option again',
       async () => {
         const agentElement = await marketplaceAgentsSection.findAgentElement({
-          name: appCreds.name,
-          version: appCreds.version,
+          name: appEntity.name,
+          version: appEntity.version,
         } as DialAIEntityModel);
         await baseAssertion.assertElementState(agentElement, 'visible');
+        await baseAssertion.assertElementText(
+          marketplaceAgents.getAgentVersion(agentElement),
+          appEntity.version!,
+        );
         await agentElement.hoverOver();
         await marketplaceAgents.getAgentElementDotsMenu(agentElement).click();
         await marketplaceAgents
@@ -463,7 +471,7 @@ dialTest(
         baseAssertion.assertValue(
           chatCompletionUrlValue,
           updatedCompletionUrl,
-          'Chat Completion URL should retain updated value',
+          ExpectedMessages.FormFieldShouldRetainUpdatedValue,
         );
 
         const generalInfoStep = appEditorHeader.getGeneralInfoStep();
@@ -475,7 +483,7 @@ dialTest(
         baseAssertion.assertValue(
           descriptionValue,
           updatedDescription,
-          'Description should retain updated value',
+          ExpectedMessages.FormFieldShouldRetainUpdatedValue,
         );
       },
     );
@@ -484,7 +492,8 @@ dialTest(
 
 dialTest(
   'Delete custom app from "Select an agent for conversation" form\n' + // EPMRTC-4105
-    'Delete custom app from application card pop-up', // EPMRTC-4103
+    'Delete custom app from application card pop-up\n' + // EPMRTC-4103
+    '[Custom app]: Delete specific not published version', // EPMRTC-4285
   async ({
     marketplacePage,
     marketplaceAgentsSection,
@@ -501,8 +510,10 @@ dialTest(
     localStorageManager,
     marketplaceHeader,
     marketplaceContainer,
+    agentDetailsModalAssertion,
+    marketplaceAgents,
   }) => {
-    setTestIds('EPMRTC-4105', 'EPMRTC-4103');
+    setTestIds('EPMRTC-4105', 'EPMRTC-4103', 'EPMRTC-4285');
     let agentElementInDialog: BaseElement;
     let agentElement1: BaseElement;
     let agentElement2: BaseElement;
@@ -513,9 +524,15 @@ dialTest(
       description: GeneratorUtil.randomString(20),
     } as DialAIEntityModel;
 
-    const appEntity2 = {
-      name: GeneratorUtil.randomApplicationName() + '_App2', // Ensure unique names
-      version: GeneratorUtil.randomApplicationVersion(),
+    const appEntity2_v1 = {
+      name: GeneratorUtil.randomApplicationName(),
+      version: '0.0.1',
+      description: GeneratorUtil.randomString(20),
+    } as DialAIEntityModel;
+
+    const appEntity2_v2 = {
+      name: appEntity2_v1.name,
+      version: '0.0.2',
       description: GeneratorUtil.randomString(20),
     } as DialAIEntityModel;
 
@@ -529,14 +546,24 @@ dialTest(
           .build();
         await applicationApiHelper.createApplication(applicationModel);
 
-        const applicationModel2 = customApplicationBuilder
-          .withDisplayName(appEntity2.name)
-          .withDisplayVersion(appEntity2.version!)
-          .withDescriptionKeywords(appEntity2.description!)
+        const applicationModel2_v1 = customApplicationBuilder
+          .withDisplayName(appEntity2_v1.name)
+          .withDisplayVersion(appEntity2_v1.version!)
+          .withDescriptionKeywords(appEntity2_v1.description!)
           .build();
-        await applicationApiHelper.createApplication(applicationModel2);
+        await applicationApiHelper.createApplication(applicationModel2_v1);
 
-        await localStorageManager.setRecentModelsIdsOnce(appEntity1);
+        const applicationModel2_v2 = customApplicationBuilder
+          .withDisplayName(appEntity2_v2.name)
+          .withDisplayVersion(appEntity2_v2.version!)
+          .withDescriptionKeywords(appEntity2_v2.description!)
+          .build();
+        await applicationApiHelper.createApplication(applicationModel2_v2);
+
+        await localStorageManager.setRecentModelsIdsOnce(
+          appEntity1,
+          appEntity2_v2,
+        );
         await localStorageManager.setShowSideBarPanels();
       },
     );
@@ -625,12 +652,32 @@ dialTest(
           .getNavigationPanel()
           .myWorkspaceButton.click();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appEntity2.name);
+        await marketplaceHeader.searchInput.fillInInput(appEntity2_v2.name);
         agentElement2 =
-          await marketplaceAgentsSection.findAgentElement(appEntity2);
+          await marketplaceAgentsSection.findAgentElement(appEntity2_v2);
         await baseAssertion.assertElementState(agentElement2, 'visible');
+        await baseAssertion.assertElementText(
+          marketplaceAgents.getAgentVersion(agentElement2),
+          appEntity2_v2.version!,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on App 2 card, verify versions, select older version',
+      async () => {
         await agentElement2.click();
         await baseAssertion.assertElementState(agentDetailsModal, 'visible');
+        await agentDetailsModalAssertion.assertApplicationVersion(
+          appEntity2_v2.version!,
+        );
+        await agentDetailsModal.versionMenuTrigger.click();
+        await agentDetailsModal
+          .getVersionDropdownMenu()
+          .selectMenuOption(appEntity2_v1.version!);
+        await agentDetailsModalAssertion.assertApplicationVersion(
+          appEntity2_v1.version!,
+        );
       },
     );
 
@@ -644,14 +691,9 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify second custom app card was deleted from My workspace',
+      'Verify second custom app version is 0.0.2',
       async () => {
-        await marketplacePage.waitForPageLoaded(); // Wait for potential refresh after delete
-        await baseAssertion.assertElementState(
-          agentElement2,
-          'hidden',
-          `App "${appEntity2.name}" should be deleted from My Workspace`,
-        );
+        await baseAssertion.assertElementState(agentElement2, 'visible');
       },
     );
 
@@ -662,10 +704,15 @@ dialTest(
           .getNavigationPanel()
           .marketplaceHomeButton.click();
         await marketplacePage.waitForPageLoaded();
-        await baseAssertion.assertElementState(
-          agentElement2,
-          'hidden',
-          `App "${appEntity2.name}" should be deleted from Marketplace`,
+        await baseAssertion.assertElementState(agentElement2, 'visible');
+        await baseAssertion.assertElementText(
+          marketplaceAgents.getAgentVersion(agentElement2),
+          appEntity2_v2.version!,
+        );
+        await agentElement2.click();
+        await baseAssertion.assertElementState(agentDetailsModal, 'visible');
+        await agentDetailsModalAssertion.assertApplicationVersion(
+          appEntity2_v2.version!,
         );
       },
     );

@@ -47,19 +47,6 @@ export class AppEditorHeader extends BaseElement {
     );
   }
 
-  public async getActionAndApplicationTypeTitle() {
-    return this.actionAndApplicationTypeTitle.getElementLocator().textContent();
-  }
-
-  public async getAllStepTitlesTexts(): Promise<(string | null)[]> {
-    const stepTitleElements = await this.getAllStepTitles(); // Gets BaseElement[]
-    const stepTitleTexts: (string | null)[] = [];
-    for (const titleElement of stepTitleElements) {
-      stepTitleTexts.push(await titleElement.getElementLocator().textContent());
-    }
-    return stepTitleTexts;
-  }
-
   public async getAllSteps(): Promise<BaseElement[]> {
     const locators = await this.singleStep.getElementLocator().all();
     return locators.map((locator) => this.createElementFromLocator(locator));
