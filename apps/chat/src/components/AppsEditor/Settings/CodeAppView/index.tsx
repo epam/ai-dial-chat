@@ -212,7 +212,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
       if (isCodeEditorDirty && exitAfterSave) {
         setEditorConfirmation(data);
       } else {
-        if (isAppDeployed) {
+        if (isAppDeployed && exitAfterSave) {
           dispatch(
             UIActions.showWarningToast(
               t('Saved changes will be applied during next deployment'),
