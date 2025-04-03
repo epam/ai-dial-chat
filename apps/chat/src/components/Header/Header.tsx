@@ -61,7 +61,7 @@ const Header = Inversify.register('Header', () => {
   );
 
   const handleToggleChatbar = useCallback(
-    (e: React.MouseEvent) => {
+    (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
       dispatchMouseLeaveEvent(e);
 
       if (!showChatbar && isTabletScreen()) {
@@ -95,7 +95,7 @@ const Header = Inversify.register('Header', () => {
   );
 
   const handleTogglePromtbar = useCallback(
-    (e: React.MouseEvent) => {
+    (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
       dispatchMouseLeaveEvent(e);
 
       if (!showPromptbar && isTabletScreen()) {
@@ -154,8 +154,8 @@ const Header = Inversify.register('Header', () => {
     >
       {enabledFeatures.has(Feature.ConversationsSection) && !selectedWidget && (
         <Tooltip isTriggerClickable tooltip={t('Conversation list')}>
-          <div
-            className="flex h-full cursor-pointer items-center justify-center px-3 md:px-5"
+          <button
+            className="flex h-full items-center justify-center px-3 md:px-5"
             onClick={handleToggleChatbar}
             data-qa="left-panel-toggle"
           >
@@ -180,7 +180,7 @@ const Header = Inversify.register('Header', () => {
                 height={headerIconSize}
               />
             )}
-          </div>
+          </button>
         </Tooltip>
       )}
       <div className="ml-4">
@@ -198,8 +198,8 @@ const Header = Inversify.register('Header', () => {
       </div>
       {enabledFeatures.has(Feature.PromptsSection) && !selectedWidget && (
         <Tooltip isTriggerClickable tooltip={t('Prompt list')}>
-          <div
-            className="flex h-full cursor-pointer items-center justify-center px-3 md:px-5"
+          <button
+            className="flex h-full items-center justify-center px-3 md:px-5"
             onClick={handleTogglePromtbar}
             data-qa="right-panel-toggle"
           >
@@ -224,7 +224,7 @@ const Header = Inversify.register('Header', () => {
                 height={headerIconSize}
               />
             )}
-          </div>
+          </button>
         </Tooltip>
       )}
       <SettingDialog open={isUserSettingsOpen} onClose={onClose} />

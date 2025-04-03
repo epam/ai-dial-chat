@@ -14,7 +14,6 @@ import { useRouter } from 'next/router';
 import classNames from 'classnames';
 
 import { useResizeObserver } from '@/src/hooks/useResizeObserver';
-import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';

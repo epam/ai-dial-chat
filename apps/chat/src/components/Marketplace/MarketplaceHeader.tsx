@@ -5,6 +5,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { dispatchMouseLeaveEvent } from '@/src/utils/app/common';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Translation } from '@/src/types/translation';
@@ -40,12 +41,17 @@ export const MarketplaceHeader = () => {
 
   const dispatch = useAppDispatch();
 
-  const handleToggleFilterbar = useCallback(() => {
-    if (!showFilterbar && isSmallScreen()) {
-      dispatch(UIActions.setIsProfileOpen(false));
-    }
-    dispatch(UIActions.setShowMarketplaceFilterbar(!showFilterbar));
-  }, [dispatch, showFilterbar]);
+  const handleToggleFilterbar = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+      dispatchMouseLeaveEvent(e);
+
+      if (!showFilterbar && isSmallScreen()) {
+        dispatch(UIActions.setIsProfileOpen(false));
+      }
+      dispatch(UIActions.setShowMarketplaceFilterbar(!showFilterbar));
+    },
+    [dispatch, showFilterbar],
+  );
 
   const onClose = () => {
     dispatch(UIActions.setIsUserSettingsOpen(false));
@@ -64,8 +70,8 @@ export const MarketplaceHeader = () => {
       data-qa="header"
     >
       <Tooltip isTriggerClickable tooltip={t('Control panel')}>
-        <div
-          className="flex h-full cursor-pointer items-center justify-center border-r border-tertiary px-3 md:px-5"
+        <button
+          className="flex h-full items-center justify-center border-r border-tertiary px-3 md:px-5"
           data-qa="left-panel-toggle"
           onClick={handleToggleFilterbar}
         >
@@ -90,7 +96,7 @@ export const MarketplaceHeader = () => {
               height={headerIconSize}
             />
           )}
-        </div>
+        </button>
       </Tooltip>
       <div className="flex grow justify-center">
         <Logo />
