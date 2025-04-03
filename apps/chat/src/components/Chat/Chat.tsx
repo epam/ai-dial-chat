@@ -1081,6 +1081,10 @@ export function Chat({ isPreview }: ChatProps) {
     }
   }, [dispatch, configurationAppId, isNoMessages]);
 
+  if (selectedWidget && !selectedConversationsIds.length) {
+    return <WidgetView id={selectedWidget} />;
+  }
+
   if (selectedPublication?.resources && !selectedConversationsIds.length) {
     return (
       <>
@@ -1088,10 +1092,6 @@ export function Chat({ isPreview }: ChatProps) {
         <ChatInputFooter />
       </>
     );
-  }
-
-  if (selectedWidget && !selectedConversationsIds.length) {
-    return <WidgetView id={selectedWidget} />;
   }
 
   if (isolatedModelId && modelIsLoaded && !activeModel) {
