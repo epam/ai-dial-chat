@@ -1,6 +1,10 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import { getGroupModelKey } from '@/src/utils/app/models';
+import { sortItemsVersions } from '@/src/utils/app/common';
+import {
+  getGroupModelKey,
+  groupModelsAndSaveOrder,
+} from '@/src/utils/app/models';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
 import { EntityType } from '@/src/types/common';
@@ -32,7 +36,21 @@ export const selectModelsError = (state: RootState) =>
 export const selectIsRecentModelsLoaded = (state: RootState) =>
   rootSelector(state).recentModelsStatus === UploadStatus.LOADED;
 
-export const selectModels = (state: RootState) => rootSelector(state).models;
+export const selectModels = createSelector([rootSelector], (state) => {
+  const sortedResponse = sortBy(state.models, (model) =>
+    model.name.toLowerCase(),
+  );
+  const sortedAgents = groupModelsAndSaveOrder(sortedResponse).flatMap(
+    ({ entities }) => {
+      if (entities.length > 0 && entities[0].id !== entities[0].reference) {
+        sortItemsVersions(entities);
+      }
+
+      return entities;
+    },
+  );
+  return sortedAgents;
+});
 
 export const selectModelTopics = createSelector([rootSelector], (state) => {
   return sortBy(
