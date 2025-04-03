@@ -11,11 +11,9 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
-import { useScreenState } from '../hooks/useScreenState';
 import { useWidgets } from '../hooks/useWidgets';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { ScreenState } from '../types/common';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -235,8 +233,6 @@ export const Navigation: React.FC<Props> = ({ isLeft }) => {
     ApplicationSelectors.selectSelectedWidget,
   );
 
-  const screenState = useScreenState();
-
   const handleChatClick = useCallback(() => {
     if (router.route !== Routes.Chat) {
       return router.push(Routes.Chat).then(() => {
@@ -258,8 +254,8 @@ export const Navigation: React.FC<Props> = ({ isLeft }) => {
       className={classNames(
         'order-last h-[52px] w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:z-40 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start md:border-r md:py-2',
         !isMarketplaceEnabled && !widgetsSchemaIds.size ? 'hidden' : 'flex',
-        isLeft && screenState === ScreenState.SM && 'hidden',
-        !isLeft && screenState !== ScreenState.SM && 'hidden',
+        isLeft && 'hidden md:flex',
+        !isLeft && 'md:hidden',
       )}
       data-qa="navigation-panel"
     >
