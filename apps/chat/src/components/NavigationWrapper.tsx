@@ -38,8 +38,8 @@ import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import Tooltip from '@/src/components/Common/Tooltip';
 import { MarketplaceFilterbar } from '@/src/components/Marketplace/MarketplaceFilterbar';
 import { Promptbar } from '@/src/components/Promptbar';
-import { Widgetbar } from '@/src/components/Widgetbar';
 
+// import { Widgetbar } from '@/src/components/Widgetbar';
 import { Feature } from '@epam/ai-dial-shared';
 
 interface NavigationButtonProps {
@@ -285,18 +285,20 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
   );
 
   return (
-    <div className="size-full min-h-screen">
-      <Widgetbar />
+    <>
+      {/* <div className="size-full min-h-screen">
+        <Widgetbar />
 
-      <div className="flex size-full flex-col md:flex-row">
-        <Navigation isLeft />
-        {router.route === Routes.Chat &&
-          enabledFeatures.has(Feature.ConversationsSection) && <Chatbar />}
-        {router.route === Routes.Marketplace && <MarketplaceFilterbar />}
-        <div className="grow overflow-hidden">{children}</div>
-        {router.route === Routes.Chat &&
-          enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
-      </div>
-    </div>
+        <div className="flex size-full flex-col md:flex-row">
+          <Navigation isLeft /> */}
+      {router.route === Routes.Chat &&
+        enabledFeatures.has(Feature.ConversationsSection) && <Chatbar />}
+      {router.route === Routes.Marketplace && <MarketplaceFilterbar />}
+      {children}
+      {router.route === Routes.Chat &&
+        enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
+      {/* </div>
+      </div> */}
+    </>
   );
 };
