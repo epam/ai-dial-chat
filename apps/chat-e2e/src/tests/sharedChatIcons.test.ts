@@ -456,28 +456,6 @@ dialSharedWithMeTest(
             'visible',
           );
         }
-
-        // secondConversationToShare.id = secondConversationToShare.id.replace(
-        //   secondConversationToShare.name,
-        //   newName,
-        // );
-        // thirdConversationToShare.id = thirdConversationToShare.id.replace(
-        //   defaultModelId,
-        //   randomModel.id,
-        // );
-        // const sharedEntities =
-        //   await additionalUserShareApiHelper.listSharedWithMeConversations();
-        // for (const conversation of [
-        //   firstConversationToShare,
-        //   secondConversationToShare,
-        //   thirdConversationToShare,
-        // ]) {
-        //   await shareApiAssertion.assertSharedWithMeEntityState(
-        //     sharedEntities,
-        //     conversation,
-        //     'visible',
-        //   );
-        // }
       },
     );
   },

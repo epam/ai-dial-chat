@@ -1292,22 +1292,12 @@ dialTest(
           sharedWithMeConversationsTree.getEntityByName(conversation.name),
           'visible',
         );
-        // const conversationBackgroundColor =
-        //   await sharedWithMeConversationsTree.getEntityBackgroundColor(
-        //     conversation.name,
-        //   );
         await baseAssertion.assertElementBackgroundColors(
           sharedWithMeConversationsTree.getEntityByName(conversation.name),
           ThemesUtil.getRgbColorByKey(
             ThemeColorAttributes.bgAccentSecondaryAlpha,
           ),
         );
-        // expect
-        //   .soft(
-        //     conversationBackgroundColor,
-        //     ExpectedMessages.conversationIsSelected,
-        //   )
-        //   .toBe(Colors.backgroundAccentSecondary);
       },
     );
   },

@@ -88,7 +88,6 @@ export class DialHomePage extends BasePage {
         state: 'attached',
       });
     }
-    //
   }
 
   async reloadPage() {

@@ -469,7 +469,6 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
         await baseAssertion.assertElementState(attachFilesModal, 'visible');
-        await dialHomePage.emulateSlowNetworkConditions();
         await dialHomePage.uploadData(
           { path: Attachment.sunImageName, dataType: 'upload' },
           () => attachFilesModal.uploadFromDevice(),
