@@ -395,9 +395,9 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               SettingsSelectors.selectIsIsolatedView(state);
             const isolatedModelId =
               SettingsSelectors.selectIsolatedModelId(state);
+            const models = ModelsSelectors.selectModels(state);
 
             if (isIsolatedView && isolatedModelId) {
-              const models = ModelsSelectors.selectModels(state);
               return models.filter(
                 (model) => model.reference === isolatedModelId,
               )[0]?.reference;
@@ -410,9 +410,18 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             const modelReferences = ModelsSelectors.selectModels(state).map(
               (m) => m.reference,
             );
+            const widgetsSchemaIds =
+              SettingsSelectors.selectWidgetsSchemaIds(state);
+            const widgetModelsRefs = models
+              .filter((model) =>
+                widgetsSchemaIds.has(model.applicationTypeSchemaId ?? ''),
+              )
+              .map((model) => model.reference);
             const recentModelReferences =
               ModelsSelectors.selectRecentWithInstalledModelsIds(state).filter(
-                (reference) => modelReferences.includes(reference),
+                (reference) =>
+                  modelReferences.includes(reference) &&
+                  !widgetModelsRefs.includes(reference),
               );
 
             const overlayDefaultModel =

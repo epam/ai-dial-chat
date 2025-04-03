@@ -148,8 +148,6 @@ const PromptbarView = () => {
   );
 };
 
-const Promptbar = withRenderWhenNot(ApplicationSelectors.selectSelectedWidget)(
-  PromptbarView,
-);
-
-export default Promptbar;
+export const Promptbar = withRenderWhenNot(
+  ApplicationSelectors.selectSelectedWidget,
+)(PromptbarView);
