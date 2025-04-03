@@ -248,7 +248,7 @@ const Navigation = () => {
   return (
     <div
       className={classNames(
-        'h-[52px] w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:z-40 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start md:border-r md:py-2',
+        'order-last h-[52px] w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:z-40 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start md:border-r md:py-2',
         !isMarketplaceEnabled && !widgetsSchemaIds.size ? 'hidden' : 'flex',
       )}
       data-qa="navigation-panel"
@@ -283,15 +283,15 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
       <Widgetbar />
 
       <div className="flex size-full flex-col md:flex-row">
-        {router.route === Routes.Chat &&
-          enabledFeatures.has(Feature.ConversationsSection) && <Chatbar />}
-        {router.route === Routes.Marketplace && <MarketplaceFilterbar />}
-        <div className="grow overflow-hidden">
-          {children}
+        <div className="flex h-full grow flex-col overflow-hidden md:flex-row">
           <Navigation />
+          {router.route === Routes.Chat &&
+            enabledFeatures.has(Feature.ConversationsSection) && <Chatbar />}
+          {router.route === Routes.Marketplace && <MarketplaceFilterbar />}
+          <div className="flex-1 overflow-auto">{children}</div>
+          {router.route === Routes.Chat &&
+            enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
         </div>
-        {router.route === Routes.Chat &&
-          enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
       </div>
     </div>
   );
