@@ -197,6 +197,10 @@ dialTest(
         await localStorageManager.removeFromLocalStorage(
           'selectedConversationIds',
         );
+        baseAssertion.assertValue(
+          await localStorageManager.getSelectedConversationIds(),
+          '',
+        );
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.waitForState();
