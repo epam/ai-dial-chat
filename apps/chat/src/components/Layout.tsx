@@ -41,22 +41,22 @@ export default function Layout({
   const session: SessionContextValue<boolean> = useSession();
 
   const { t } = useTranslation(Translation.Chat);
-  const isApplyingModel = useAppSelector(
-    MarketplaceSelectors.selectIsApplyingModel,
-  );
-  const [loading, setLoading] = useState(isApplyingModel);
+
+  const { previousRoute } = useRouteHistory();
 
   const dispatch = useAppDispatch();
 
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
-
   const shouldLogin = useAppSelector(AuthSelectors.selectIsShouldLogin);
   const authStatus = useAppSelector(AuthSelectors.selectStatus);
-  const { previousRoute } = useRouteHistory();
-
   const isSignInInSameWindow = useAppSelector(
     SettingsSelectors.selectIsSignInInSameWindow,
   );
+  const isApplyingModel = useAppSelector(
+    MarketplaceSelectors.selectIsApplyingModel,
+  );
+
+  const [loading, setLoading] = useState(isApplyingModel);
 
   const shouldOverlayLogin = isOverlay && shouldLogin;
 
