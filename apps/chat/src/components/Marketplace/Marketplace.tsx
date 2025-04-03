@@ -39,7 +39,8 @@ export const Marketplace = () => {
   const screenState = useScreenState();
 
   const showOverlay =
-    (isFilterbarOpen || isProfileOpen) && screenState === ScreenState.SM;
+    (isFilterbarOpen || isProfileOpen) &&
+    screenState === (ScreenState.SM || screenState === ScreenState.MD);
 
   useEffect(() => {
     if (applyModelStatus === UploadStatus.LOADED) {

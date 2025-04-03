@@ -22,9 +22,11 @@ export const useWidgets = () => {
   const models = useAppSelector(ModelsSelectors.selectModels);
 
   const widgetModels = useMemo(() => {
-    return models.filter((m) =>
-      widgetsSchemaIds.has(m.applicationTypeSchemaId ?? ''),
-    );
+    return models
+      .filter((m) => widgetsSchemaIds.has(m.applicationTypeSchemaId ?? ''))
+      .toSorted((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+      );
   }, [models, widgetsSchemaIds]);
 
   const handleSelectWidget = useCallback(
