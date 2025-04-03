@@ -32,6 +32,7 @@ dialTest(
     localStorageManager,
     conversationAssertion,
     chatHeader,
+    chatLoader,
     confirmationDialog,
     chatMessagesAssertion,
     chatHeaderAssertion,
@@ -83,6 +84,7 @@ dialTest(
     await dialTest.step('Navigate to Marketplace', async () => {
       await chat.changeAgentButton.click();
       await talkToAgentDialog.goToMyWorkspace();
+      await marketplacePage.waitForPageLoaded();
     });
 
     await dialTest.step('Click "Back to Chat"', async () => {
@@ -109,6 +111,7 @@ dialTest(
     await dialTest.step('Navigate to Marketplace', async () => {
       await chatHeader.chatAgent.click();
       await talkToAgentDialog.goToMyWorkspace();
+      await marketplacePage.waitForPageLoaded();
     });
 
     await dialTest.step('Click "Back to Chat"', async () => {
@@ -188,6 +191,7 @@ dialTest(
           initialConversationName,
         );
         await conversationAssertion.assertEntitiesCount(1);
+        await chatLoader.waitForState({ state: 'detached' });
       },
     );
 
