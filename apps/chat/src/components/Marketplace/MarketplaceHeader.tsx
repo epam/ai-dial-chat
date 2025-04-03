@@ -1,14 +1,8 @@
-import { IconX } from '@tabler/icons-react';
 import { useCallback } from 'react';
 
 import classNames from 'classnames';
 
-import { useTranslation } from '@/src/hooks/useTranslation';
-
-import { dispatchMouseLeaveEvent } from '@/src/utils/app/common';
 import { isSmallScreen } from '@/src/utils/app/mobile';
-
-import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -22,15 +16,10 @@ import {
 import { Logo } from '@/src/components/Header/Logo';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
-import Tooltip from '../Common/Tooltip';
+import { ToggleSidebarButton } from '../Common/Buttons/ToggleSidebarButtor';
 import { User } from '../Header/User/User';
 
-import MoveLeftIcon from '@/public/images/icons/move-left.svg';
-import MoveRightIcon from '@/public/images/icons/move-right.svg';
-
 export const MarketplaceHeader = () => {
-  const { t } = useTranslation(Translation.Header);
-
   const showFilterbar = useAppSelector(
     UISelectors.selectShowMarketplaceFilterbar,
   );
@@ -41,17 +30,12 @@ export const MarketplaceHeader = () => {
 
   const dispatch = useAppDispatch();
 
-  const handleToggleFilterbar = useCallback(
-    (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-      dispatchMouseLeaveEvent(e);
-
-      if (!showFilterbar && isSmallScreen()) {
-        dispatch(UIActions.setIsProfileOpen(false));
-      }
-      dispatch(UIActions.setShowMarketplaceFilterbar(!showFilterbar));
-    },
-    [dispatch, showFilterbar],
-  );
+  const handleToggleFilterbar = useCallback(() => {
+    if (!showFilterbar && isSmallScreen()) {
+      dispatch(UIActions.setIsProfileOpen(false));
+    }
+    dispatch(UIActions.setShowMarketplaceFilterbar(!showFilterbar));
+  }, [dispatch, showFilterbar]);
 
   const onClose = () => {
     dispatch(UIActions.setIsUserSettingsOpen(false));
@@ -69,35 +53,12 @@ export const MarketplaceHeader = () => {
       )}
       data-qa="header"
     >
-      <Tooltip isTriggerClickable tooltip={t('Control panel')}>
-        <button
-          className="flex h-full items-center justify-center border-r border-tertiary px-3 md:px-5"
-          data-qa="left-panel-toggle"
-          onClick={handleToggleFilterbar}
-        >
-          {showFilterbar ? (
-            <>
-              <IconX
-                className="text-secondary md:hidden"
-                width={headerIconSize}
-                height={headerIconSize}
-              />
-
-              <MoveLeftIcon
-                className="text-secondary hover:text-accent-primary max-md:hidden"
-                width={headerIconSize}
-                height={headerIconSize}
-              />
-            </>
-          ) : (
-            <MoveRightIcon
-              className="text-secondary hover:text-accent-primary"
-              width={headerIconSize}
-              height={headerIconSize}
-            />
-          )}
-        </button>
-      </Tooltip>
+      <ToggleSidebarButton
+        iconSize={headerIconSize}
+        tooltip="Control panel"
+        isOpened={showFilterbar}
+        onToggle={handleToggleFilterbar}
+      />
       <div className="flex grow justify-center">
         <Logo />
       </div>
