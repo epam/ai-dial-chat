@@ -16,6 +16,7 @@ interface Props {
   tooltip: string;
   isOpened: boolean;
   onToggle: () => void;
+  dataQa: string;
 }
 
 export const ToggleSidebarButton: React.FC<Props> = ({
@@ -23,6 +24,7 @@ export const ToggleSidebarButton: React.FC<Props> = ({
   tooltip,
   isOpened,
   onToggle,
+  dataQa,
 }) => {
   const { t } = useTranslation(Translation.Header);
 
@@ -35,7 +37,7 @@ export const ToggleSidebarButton: React.FC<Props> = ({
     <Tooltip isTriggerClickable tooltip={t(tooltip)}>
       <button
         className="flex h-full items-center justify-center border-r border-tertiary px-3 md:px-5"
-        data-qa="left-panel-toggle"
+        data-qa={dataQa}
         onClick={handleToggle}
       >
         {isOpened ? (

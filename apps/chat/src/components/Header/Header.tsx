@@ -139,6 +139,7 @@ const Header = Inversify.register('Header', () => {
           tooltip="Conversation list"
           isOpened={showChatbar}
           onToggle={handleToggleChatbar}
+          dataQa="left-panel-toggle"
         />
       )}
       <div className="ml-4">
@@ -160,6 +161,7 @@ const Header = Inversify.register('Header', () => {
           tooltip="Prompt list"
           isOpened={showPromptbar}
           onToggle={handleTogglePromtbar}
+          dataQa="right-panel-toggle"
         />
       )}
       <SettingDialog open={isUserSettingsOpen} onClose={onClose} />

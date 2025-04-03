@@ -58,6 +58,7 @@ export const MarketplaceHeader = () => {
         tooltip="Control panel"
         isOpened={showFilterbar}
         onToggle={handleToggleFilterbar}
+        dataQa="left-panel-toggle"
       />
       <div className="flex grow justify-center">
         <Logo />
