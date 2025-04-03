@@ -13,7 +13,7 @@ import {
 } from '@/src/testData';
 import { Overflow, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
-import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 let allModels: DialAIEntityModel[];
@@ -1557,6 +1557,7 @@ dialTest(
     const firstConversationRequests = ['1+2', '2+3', '3+4'];
     const secondConversationRequests = ['1+2', '4+5', '5+6'];
     let updatedRequestContent: string;
+    let copiedValue: string;
 
     await dialTest.step(
       'Prepare two conversations for compare mode',
@@ -1637,7 +1638,22 @@ dialTest(
           MockedChatApiResponseBodies.simpleTextBody,
         );
         await page.keyboard.press(keys.ctrlPlusV);
+        copiedValue = await dialHomePage.readFromClipboard();
+        const responsePromises = [];
+        for (const modelId of [defaultModel.id, aModel.id]) {
+          const expectedChatId = `${ItemUtil.getEncodedItemId(modelId)}${ItemUtil.entityIdSeparator}${ItemUtil.getEncodedItemId(copiedValue)}`;
+          responsePromises.push(
+            page.waitForResponse(
+              (r) =>
+                r.url().includes(expectedChatId) &&
+                r.request().method() === 'PUT',
+            ),
+          );
+        }
         await chatMessages.saveAndSubmit.click();
+        for (const responsePromise of responsePromises) {
+          await responsePromise;
+        }
         await chatMessages.waitForResponseReceived();
       },
     );
@@ -1645,7 +1661,6 @@ dialTest(
     await dialTest.step(
       'Verify both first requests updated, messages below are deleted',
       async () => {
-        const copiedValue = await dialHomePage.readFromClipboard();
         await baseAssertion.assertElementText(
           leftChatHeader.chatTitle,
           copiedValue,
