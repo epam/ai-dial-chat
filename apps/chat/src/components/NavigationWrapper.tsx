@@ -279,7 +279,7 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
   );
 
   return (
-    <div className="size-full min-h-screen">
+    <div className="size-full">
       <Widgetbar />
 
       <div className="flex size-full flex-col md:flex-row ">
