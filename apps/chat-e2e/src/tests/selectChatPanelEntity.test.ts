@@ -1462,6 +1462,7 @@ dialTest(
     setTestIds,
     localStorageManager,
     chatBarFolderAssertion,
+    chatHeaderAssertion,
   }) => {
     setTestIds('EPMRTC-3650');
     let nestedFolders: FolderInterface[];
@@ -1503,6 +1504,9 @@ dialTest(
           { name: nestedFolders[twoNestedLevels - 1].name },
           { name: nestedConversations[twoNestedLevels - 1].name },
           true,
+        );
+        await chatHeaderAssertion.assertHeaderTitle(
+          nestedConversations[twoNestedLevels - 1].name,
         );
         await conversations.openEntityDropdownMenu(singleConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.select);
