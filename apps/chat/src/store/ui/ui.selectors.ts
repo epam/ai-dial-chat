@@ -69,7 +69,7 @@ export const selectIsAnyMenuOpen = createSelector(
   (state, enabledFeatures) =>
     (state.showPromptbar && enabledFeatures.has(Feature.PromptsSection)) ||
     (state.showChatbar && enabledFeatures.has(Feature.ConversationsSection)) ||
-    state.isProfileOpen,
+    state.showWidgetbar,
 );
 
 export const selectCollapsedSections = //TODO: review later how it is used
