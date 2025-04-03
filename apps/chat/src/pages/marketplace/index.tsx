@@ -15,6 +15,7 @@ import { ChatModalsManager } from '@/src/components/Chat/ChatModalsManager';
 import Loader from '@/src/components/Common/Loader';
 import { Marketplace as MarketplaceView } from '@/src/components/Marketplace/Marketplace';
 import { MarketplaceHeader } from '@/src/components/Marketplace/MarketplaceHeader';
+import { Navigation } from '@/src/components/NavigationWrapper';
 
 import { Feature } from '@epam/ai-dial-shared';
 
@@ -35,9 +36,9 @@ function Marketplace() {
   return (
     <div className="flex size-full flex-col sm:pt-0">
       <MarketplaceHeader />
-      <div className="flex size-full grow overflow-hidden">
+      <div className="flex size-full grow flex-col overflow-hidden">
         <MarketplaceView />
-
+        <Navigation />
         <ChatModalsManager />
       </div>
     </div>

@@ -20,6 +20,8 @@ import { Routes } from '@/src/constants/routes';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { TabRenderer } from '@/src/components/Marketplace/TabRenderer';
 
+import { Navigation } from '../NavigationWrapper';
+
 import { UploadStatus } from '@epam/ai-dial-shared';
 
 export const Marketplace = () => {
