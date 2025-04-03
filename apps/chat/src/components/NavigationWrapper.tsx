@@ -284,11 +284,13 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
 
       <div className="flex size-full flex-col md:flex-row">
         <div className="flex h-full grow flex-col overflow-hidden md:flex-row">
-          <Navigation />
           {router.route === Routes.Chat &&
             enabledFeatures.has(Feature.ConversationsSection) && <Chatbar />}
           {router.route === Routes.Marketplace && <MarketplaceFilterbar />}
-          <div className="flex-1 overflow-auto">{children}</div>
+          <div className="flex flex-1 flex-col overflow-auto md:flex-row">
+            <Navigation />
+            {children}
+          </div>
           {router.route === Routes.Chat &&
             enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
         </div>
