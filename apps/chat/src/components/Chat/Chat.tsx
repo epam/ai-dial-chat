@@ -62,6 +62,7 @@ import { WidgetView } from '@/src/components/Chat/WidgetView';
 import { CustomChatViewer } from '../AppsEditor/Settings/Previews/CustomChatViewer';
 import Loader from '../Common/Loader';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
+import { Navigation } from '../NavigationWrapper';
 import { ChatCompareRotate } from './ChatCompareRotate';
 import { ChatCompareSelect } from './ChatCompareSelect';
 import { ChatHeader } from './ChatHeader/Header';
@@ -891,6 +892,7 @@ const ChatView = memo(() => {
                       {isWideLayout && <ChatStarters />}
                     </>
                   )}
+                  <Navigation />
                 </div>
               </div>
               {isShowChatSettings && (

@@ -11,9 +11,11 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
+import { useScreenState } from '../hooks/useScreenState';
 import { useWidgets } from '../hooks/useWidgets';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { ScreenState } from '../types/common';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -212,7 +214,11 @@ const UsedWidgets = () => {
   );
 };
 
-const Navigation = () => {
+interface Props {
+  isLeft?: boolean;
+}
+
+export const Navigation: React.FC<Props> = ({ isLeft }) => {
   const { t } = useTranslation(Translation.SideBar);
 
   const dispatch = useAppDispatch();
@@ -228,6 +234,8 @@ const Navigation = () => {
   const selectedWidget = useAppSelector(
     ApplicationSelectors.selectSelectedWidget,
   );
+
+  const screenState = useScreenState();
 
   const handleChatClick = useCallback(() => {
     if (router.route !== Routes.Chat) {
@@ -250,6 +258,8 @@ const Navigation = () => {
       className={classNames(
         'order-last h-[52px] w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:z-40 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start md:border-r md:py-2',
         !isMarketplaceEnabled && !widgetsSchemaIds.size ? 'hidden' : 'flex',
+        isLeft && screenState === ScreenState.SM && 'hidden',
+        !isLeft && screenState !== ScreenState.SM && 'hidden',
       )}
       data-qa="navigation-panel"
     >
@@ -282,8 +292,8 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
     <div className="size-full min-h-screen">
       <Widgetbar />
 
-      <div className="flex size-full flex-col md:flex-row ">
-        <Navigation />
+      <div className="flex size-full flex-col md:flex-row">
+        <Navigation isLeft />
         {router.route === Routes.Chat &&
           enabledFeatures.has(Feature.ConversationsSection) && <Chatbar />}
         {router.route === Routes.Marketplace && <MarketplaceFilterbar />}
