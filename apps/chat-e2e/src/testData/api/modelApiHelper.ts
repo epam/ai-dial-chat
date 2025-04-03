@@ -22,8 +22,9 @@ export class ModelApiHelper extends BaseApiHelper {
     return allAgents.find(
       (a) =>
         a.name === agentProps.name &&
-        (a.version === agentProps.version ??
-          ExpectedConstants.defaultAppVersion),
+        ((a.version === agentProps.version) !== undefined
+          ? agentProps.version
+          : ExpectedConstants.defaultAppVersion),
     );
   }
 }
