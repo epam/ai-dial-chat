@@ -1,4 +1,3 @@
-import { FloatingOverlay } from '@floating-ui/react';
 import { IconPlayerPlay } from '@tabler/icons-react';
 import {
   memo,
@@ -15,7 +14,6 @@ import { useRouter } from 'next/router';
 import classNames from 'classnames';
 
 import { useResizeObserver } from '@/src/hooks/useResizeObserver';
-import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
@@ -36,7 +34,7 @@ import {
   ConversationsTemporarySettings,
   MergedMessages,
 } from '@/src/types/chat';
-import { EntityType, ScreenState } from '@/src/types/common';
+import { EntityType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
@@ -136,7 +134,6 @@ const ChatView = memo(() => {
   const talkToConversationId = useAppSelector(
     ConversationsSelectors.selectTalkToConversationId,
   );
-  const isAnyMenuOpen = useAppSelector(UISelectors.selectIsAnyMenuOpen);
   const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
@@ -159,8 +156,6 @@ const ChatView = memo(() => {
   const [isWideLayout, setIsWideLayout] = useState(
     checkIsWideLayout(mergedMessages.length, isCompareMode),
   );
-
-  const screenState = useScreenState();
 
   const handleTalkToConversationId = useCallback(
     (conversationId: string | null) => {
@@ -532,10 +527,6 @@ const ChatView = memo(() => {
     !messageIsStreaming &&
     !isLastMessageError &&
     !notAvailableEntityType;
-  const showFloatingOverlay =
-    (screenState === ScreenState.SM || screenState === ScreenState.MD) &&
-    isAnyMenuOpen &&
-    !isIsolatedView;
   const isModelsInstalled = selectedConversations.every((conv) =>
     installedModelIds.has(conv.model.id),
   );
@@ -603,7 +594,6 @@ const ChatView = memo(() => {
       data-qa="chat"
       id="chat"
     >
-      {showFloatingOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
       {modelError ? (
         <ErrorMessageDiv error={modelError} />
       ) : customViewer ? (
