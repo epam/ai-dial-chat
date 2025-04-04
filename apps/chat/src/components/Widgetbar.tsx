@@ -54,7 +54,7 @@ export const WidgetbarView = () => {
           {t('Widgets')}
         </div>
 
-        <div className="flex grow flex-col gap-px overflow-y-auto">
+        <div className="flex grow flex-col gap-px overflow-y-auto p-2">
           {widgetModels.map((model) => (
             <button
               key={model.reference}
@@ -75,8 +75,8 @@ export const WidgetbarView = () => {
             </button>
           ))}
         </div>
-        <CloseSidebarButton onClose={handleCloseClick} isLeftSide />
       </div>
+      <CloseSidebarButton onClose={handleCloseClick} isLeftSide />
     </div>
   );
 };

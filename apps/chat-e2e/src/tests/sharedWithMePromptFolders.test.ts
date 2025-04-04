@@ -205,7 +205,7 @@ dialSharedWithMeTest(
           nestedFolders[sharedFolderIndex].name,
         );
         await additionalShareUserSharedWithMeFolderDropdownMenu.selectMenuOption(
-          MenuOptions.delete,
+          MenuOptions.unshare,
         );
         await additionalShareUserConfirmationDialog.confirm({
           triggeredHttpMethod: 'POST',
@@ -351,7 +351,7 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Verify dropdown menu with "Delete" option is available only for root level folder',
+      'Verify dropdown menu with "Unshare" option is available only for root level folder',
       async () => {
         for (let i = 0; i < nestedLevels; i++) {
           if (i === sharedFolderIndex) {
@@ -359,7 +359,7 @@ dialSharedWithMeTest(
               nestedFolders[i].name,
             );
             await additionalShareUserFolderDropdownMenuAssertion.assertMenuIncludesOptions(
-              MenuOptions.delete,
+              MenuOptions.unshare,
             );
           } else {
             await additionalShareUserSharedFolderPromptsAssertions.assertFolderDotsMenuState(
@@ -372,7 +372,7 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Verify no "Delete" option is available in prompts dropdown menu',
+      'Verify no "Unshare" option is available in prompts dropdown menu',
       async () => {
         for (let i = 0; i < nestedLevels; i++) {
           await additionalShareUserSharedFolderPrompts.openFolderEntityDropdownMenu(
@@ -380,7 +380,7 @@ dialSharedWithMeTest(
             nestedPrompts[i].name,
           );
           await additionalShareUserPromptsDropdownMenuAssertion.assertMenuExcludesOptions(
-            MenuOptions.delete,
+            MenuOptions.unshare,
           );
         }
       },

@@ -960,7 +960,7 @@ dialSharedWithMeTest(
         );
         await additionalShareUserAttachFilesModal
           .getFileDropdownMenu()
-          .selectMenuOption(MenuOptions.delete);
+          .selectMenuOption(MenuOptions.unshare);
         await additionalShareUserConfirmationDialog.cancelDialog();
         await additionalShareUserManageAttachmentsAssertion.assertEntityState(
           { name: user1ImageInRequest1 },
@@ -974,7 +974,7 @@ dialSharedWithMeTest(
         );
         await additionalShareUserAttachFilesModal
           .getFileDropdownMenu()
-          .selectMenuOption(MenuOptions.delete);
+          .selectMenuOption(MenuOptions.unshare);
         await additionalShareUserConfirmationDialog.confirm({
           triggeredHttpMethod: 'POST',
         });

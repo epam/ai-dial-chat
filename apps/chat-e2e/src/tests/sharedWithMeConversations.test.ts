@@ -353,7 +353,7 @@ dialSharedWithMeTest(
           nestedFolders[0].name,
         );
         await additionalShareUserSharedWithMeFolderDropdownMenu.selectMenuOption(
-          MenuOptions.delete,
+          MenuOptions.unshare,
         );
         await additionalShareUserConfirmationDialog.cancelDialog();
       },
@@ -366,7 +366,7 @@ dialSharedWithMeTest(
           nestedFolders[0].name,
         );
         await additionalShareUserSharedWithMeFolderDropdownMenu.selectMenuOption(
-          MenuOptions.delete,
+          MenuOptions.unshare,
         );
         await additionalShareUserConfirmationDialog.confirm({
           triggeredHttpMethod: 'POST',

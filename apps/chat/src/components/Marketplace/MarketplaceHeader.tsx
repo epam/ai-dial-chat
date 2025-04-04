@@ -1,13 +1,8 @@
-import { IconX } from '@tabler/icons-react';
 import { useCallback } from 'react';
 
 import classNames from 'classnames';
 
-import { useTranslation } from '@/src/hooks/useTranslation';
-
 import { isSmallScreen } from '@/src/utils/app/mobile';
-
-import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -21,15 +16,10 @@ import {
 import { Logo } from '@/src/components/Header/Logo';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
-import Tooltip from '../Common/Tooltip';
+import { ToggleSidebarButton } from '../Common/Buttons/ToggleSidebarButtor';
 import { User } from '../Header/User/User';
 
-import MoveLeftIcon from '@/public/images/icons/move-left.svg';
-import MoveRightIcon from '@/public/images/icons/move-right.svg';
-
 export const MarketplaceHeader = () => {
-  const { t } = useTranslation(Translation.Header);
-
   const showFilterbar = useAppSelector(
     UISelectors.selectShowMarketplaceFilterbar,
   );
@@ -63,35 +53,13 @@ export const MarketplaceHeader = () => {
       )}
       data-qa="header"
     >
-      <Tooltip isTriggerClickable tooltip={t('Control panel')}>
-        <div
-          className="flex h-full cursor-pointer items-center justify-center border-r border-tertiary px-3 md:px-5"
-          data-qa="left-panel-toggle"
-          onClick={handleToggleFilterbar}
-        >
-          {showFilterbar ? (
-            <>
-              <IconX
-                className="text-secondary md:hidden"
-                width={headerIconSize}
-                height={headerIconSize}
-              />
-
-              <MoveLeftIcon
-                className="text-secondary hover:text-accent-primary max-md:hidden"
-                width={headerIconSize}
-                height={headerIconSize}
-              />
-            </>
-          ) : (
-            <MoveRightIcon
-              className="text-secondary hover:text-accent-primary"
-              width={headerIconSize}
-              height={headerIconSize}
-            />
-          )}
-        </div>
-      </Tooltip>
+      <ToggleSidebarButton
+        iconSize={headerIconSize}
+        tooltip="Control panel"
+        isOpened={showFilterbar}
+        onToggle={handleToggleFilterbar}
+        dataQa="left-panel-toggle"
+      />
       <div className="flex grow justify-center">
         <Logo />
       </div>

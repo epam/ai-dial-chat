@@ -29,6 +29,10 @@ export class ShareModal extends BaseElement {
     ShareModalSelectors.shareText,
   );
 
+  public sharedAccessMessage = this.getChildElementBySelector(
+    ShareModalSelectors.shareAccessMessage,
+  );
+
   public async getShareTextContent() {
     const allContent = await this.shareText.getElementsInnerContent();
     return allContent.join(' ').replaceAll(/\u00a0/g, ' ');
