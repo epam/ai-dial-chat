@@ -115,7 +115,7 @@ dialTest(
     });
 
     await dialTest.step('Click "Back to Chat"', async () => {
-      await navigationPanel.backToChat();
+      await navigationPanel.backToChat({ isHttpMethodTriggered: false });
     });
 
     await dialTest.step('Verify chat stays selected', async () => {
