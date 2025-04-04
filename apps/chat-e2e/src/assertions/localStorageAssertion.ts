@@ -22,6 +22,6 @@ export class LocalStorageAssertion extends BaseAssertion {
     const recentModels = await this.localStorageManager.getRecentModels();
     expect
       .soft(recentModels, ExpectedMessages.recentEntitiesIsValid)
-      .not.toContain(expectedModelId);
+      .not.toContainEqual(expectedModelId);
   }
 }
