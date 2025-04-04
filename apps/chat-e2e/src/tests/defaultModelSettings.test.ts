@@ -32,7 +32,6 @@ dialTest.beforeAll(async () => {
 dialTest(
   'Create new conversation.\n' +
     'Default settings in new chat with cleared site data.\n' +
-    '"Talk to" icon is set in recent list on default screen for new chat.\n' +
     'Addon icon is set in recent and selected list on default screen for new chat.\n' +
     'Addon icon is set in recent and selected list on default screen for new chat',
   async ({
@@ -53,13 +52,7 @@ dialTest(
     localStorageManager,
     setTestIds,
   }) => {
-    setTestIds(
-      'EPMRTC-933',
-      'EPMRTC-398',
-      'EPMRTC-376',
-      'EPMRTC-1030',
-      'EPMRTC-1890',
-    );
+    setTestIds('EPMRTC-933', 'EPMRTC-398', 'EPMRTC-1030', 'EPMRTC-1890');
     const expectedAddons = ModelsUtil.getAddons();
 
     await dialTest.step(
