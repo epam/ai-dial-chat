@@ -303,6 +303,7 @@ const PromptFolderTemplate = ({
         handleDrop={handleDrop}
         onRenameFolder={handleFolderRename}
         onDeleteFolder={handleFolderDelete}
+        onUnshareFolder={handleFolderDelete}
         onClickFolder={handleFolderClick}
         featureType={FeatureType.Prompt}
         canSelectFolders={isSelectMode}

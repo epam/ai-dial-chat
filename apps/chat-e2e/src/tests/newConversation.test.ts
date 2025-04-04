@@ -354,7 +354,7 @@ dialSharedWithMeTest(
           sharedFolderConversation.folders.name,
         );
         await sharedWithMeFolderDropdownMenu.selectMenuOption(
-          MenuOptions.delete,
+          MenuOptions.unshare,
         );
         await confirmationDialog.confirm({
           triggeredHttpMethod: 'POST',
