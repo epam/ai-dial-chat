@@ -13,7 +13,7 @@ import {
 import { AppEditSteps, BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 
-dialTest.only(
+dialTest(
   'Create custom app with required fields only.\n' + // EPMRTC-5130
     'Edit option for custom app is available from card pop-up form.\n' + // EPMRTC-5939
     'Custom app with permitted spec symbols in Name.\n' + // EPMRTC-4838
@@ -264,7 +264,7 @@ dialTest.only(
     await dialTest.step(
       'On card detailed pop-up form click on Edit icon',
       async () => {
-        await agentDetailsModal.clickEditButton( {triggeredHttpMethod : 'GET'})
+        await agentDetailsModal.clickEditButton({ triggeredHttpMethod: 'GET' });
         await appEditorPage.waitForPageLoadedForEdit();
       },
     );
