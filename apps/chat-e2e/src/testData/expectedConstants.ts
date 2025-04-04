@@ -65,7 +65,8 @@ export const ExpectedConstants = {
   deletePromptConfirmationModalTitle: 'Confirm deleting prompt',
   deletePromptConfirmationModalMessage:
     'Are you sure that you want to delete a prompt?',
-  unshareFolderMessage: 'Are you sure that you want to unshare this folder?',
+  removeFolderAccessMessage: (name: string) =>
+    `Are you sure you want to remove access for all users to ${name}?`,
   backgroundColorPattern: /(rgba\(\d+,\s*\d+,\s*\d+),\s*\d+\.*\d+\)/,
   sendMessageTooltip: 'Please type a message',
   sendMessageAttachmentLoadingTooltip: 'Please wait for the attachment to load',
@@ -100,7 +101,7 @@ export const ExpectedConstants = {
   shareInviteDoesNotExist:
     'We are sorry, but the link you are trying to access has expired or does not exist.',
   copyUrlTooltip: 'Copy URL',
-  revokeAccessTo: (name: string) => `Confirm unsharing: ${name}`,
+  removeAccessTitle: 'Confirm removing access',
   attachments: 'Attachments',
   responseContentPattern: /(?<="content":")[^"^$]+/g,
   responseFileUrlPattern: /(?<="url":")[^"$]+/g,
@@ -114,6 +115,9 @@ export const ExpectedConstants = {
     'This application and its updates will be visible to users with the link. Renaming or changing the version will stop sharing.',
   shareConversationFolderText:
     'This link is temporary and will be active for 3 days. This conversation folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
+  notSharedFolderText: 'This folder has not been shared with anyone yet.',
+  notSharedChatText: 'This chat has not been shared with anyone yet.',
+  notSharedPromptText: 'This prompt has not been shared with anyone yet.',
   sharePromptFolderText:
     'This link is temporary and will be active for 3 days. This prompt folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
   chatNotFoundMessage:
@@ -265,6 +269,7 @@ export enum MenuOptions {
   use = 'Use',
   info = 'Info',
   copyLink = 'Copy link',
+  removeAccess = 'Remove access',
 }
 
 export enum FilterMenuOptions {

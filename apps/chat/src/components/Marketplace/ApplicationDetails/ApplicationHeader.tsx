@@ -47,10 +47,10 @@ export const ApplicationDetailsHeader = ({ entity, isPreview }: Props) => {
       dispatch(
         ShareActions.share({
           featureType: FeatureType.Application,
-          resourceId: entity.id,
+          entity: entity,
         }),
       );
-    }, [dispatch, entity.id]);
+    }, [dispatch, entity]);
 
   const isApplicationsSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),

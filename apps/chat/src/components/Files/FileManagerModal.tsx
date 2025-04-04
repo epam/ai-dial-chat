@@ -149,6 +149,7 @@ export const FileManagerModal = ({
   const descriptionId = useId();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [isUnshare, setIsUnshare] = useState(false);
 
   const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
   const loadingFolderIds = useAppSelector(
@@ -535,6 +536,10 @@ export const FileManagerModal = ({
         case FileItemEventIds.Delete:
           setDeletingFileIds([data]);
           break;
+        case FileItemEventIds.Unshare:
+          setDeletingFileIds([data]);
+          setIsUnshare(true);
+          break;
         default:
           break;
       }
@@ -859,7 +864,7 @@ export const FileManagerModal = ({
                         canSelectFolders={canAttachFolders}
                         showTooltip={showTooltip}
                         onSelectFolder={handleFolderToggle}
-                        onDeleteFolder={handleDiscardSharedWithMeFolder}
+                        onUnshareFolder={handleDiscardSharedWithMeFolder}
                         onShowError={setErrorMessage}
                       />
                     );
@@ -1035,7 +1040,8 @@ export const FileManagerModal = ({
         isOpen={!!deletingFileIds.length || !!deletingFolderIds.length}
         heading={t(
           [
-            'Confirm deleting ',
+            'Confirm ',
+            isUnshare ? 'unsharing ' : 'deleting ',
             deletingFolderIds.length > 0
               ? `folder${deletingFolderIds.length > 1 ? 's' : ''}`
               : '',
@@ -1049,7 +1055,8 @@ export const FileManagerModal = ({
         )}
         description={t(
           [
-            'Are you sure that you want to delete ',
+            'Are you sure that you want to ',
+            isUnshare ? 'unshare ' : 'delete ',
             deletingFileIds.length + deletingFolderIds.length > 1
               ? 'these '
               : 'this ',
@@ -1065,7 +1072,7 @@ export const FileManagerModal = ({
             '?',
           ].join(''),
         )}
-        confirmLabel={t('Delete')}
+        confirmLabel={t(isUnshare ? 'Unshare' : 'Delete')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {
           if (result) {
@@ -1073,6 +1080,7 @@ export const FileManagerModal = ({
           }
           setDeletingFileIds([]);
           setDeletingFolderIds([]);
+          setIsUnshare(false);
         }}
       />
     </Modal>

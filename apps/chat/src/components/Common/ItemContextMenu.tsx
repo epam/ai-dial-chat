@@ -13,7 +13,6 @@ import {
   IconSquareCheck,
   IconTrashX,
   IconUserShare,
-  IconUserX,
   IconWorldShare,
 } from '@tabler/icons-react';
 import { MouseEventHandler, useMemo } from 'react';
@@ -63,7 +62,6 @@ interface ItemContextMenuProps {
   onCompare?: MouseEventHandler<unknown>;
   onPlayback?: MouseEventHandler<unknown>;
   onShare?: MouseEventHandler<unknown>;
-  onUnshare?: MouseEventHandler<unknown>;
   onPublish?: MouseEventHandler<unknown>;
   onUnpublish?: MouseEventHandler<unknown>;
   onOpenChange?: (isOpen: boolean) => void;
@@ -95,7 +93,6 @@ export default function ItemContextMenu({
   onMoveToFolder,
   onOpenMoveToModal,
   onShare,
-  onUnshare,
   onPublish,
   onUnpublish,
   onOpenChange,
@@ -278,18 +275,6 @@ export default function ItemContextMenu({
         disabled: disableAll,
       },
       {
-        name: t('Unshare'),
-        dataQa: 'unshare',
-        display:
-          !isEmptyConversation &&
-          isSharingEnabled &&
-          !!onUnshare &&
-          !!entity.isShared,
-        Icon: IconUserX,
-        onClick: onUnshare,
-        disabled: disableAll,
-      },
-      {
         name: t('Publish'),
         dataQa: 'publish',
         display:
@@ -353,7 +338,6 @@ export default function ItemContextMenu({
       onShare,
       onShowInfo,
       onUnpublish,
-      onUnshare,
       onUse,
       onView,
       t,

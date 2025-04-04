@@ -713,7 +713,7 @@ dialSharedWithMeTest(
         );
         await attachFilesModal
           .getFileDropdownMenu()
-          .selectMenuOption(MenuOptions.unshare);
+          .selectMenuOption(MenuOptions.removeAccess);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
         await manageAttachmentsAssertion.assertSharedFileArrowIconState(
           { name: Attachment.cloudImageName },
@@ -799,7 +799,7 @@ dialSharedWithMeTest(
         );
         await attachFilesModal
           .getFileDropdownMenu()
-          .selectMenuOption(MenuOptions.unshare);
+          .selectMenuOption(MenuOptions.removeAccess);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
         await manageAttachmentsAssertion.assertSharedFileArrowIconState(
           { name: Attachment.sunImageName },

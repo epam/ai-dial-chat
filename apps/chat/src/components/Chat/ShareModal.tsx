@@ -62,6 +62,34 @@ function ShareAccessOption({
   );
 }
 
+function ShareAccessSection({
+  isShared,
+  onUnshare,
+  notSharedMessage,
+  unshareLabel,
+}: {
+  isShared: boolean;
+  onUnshare: () => void;
+  notSharedMessage: string;
+  unshareLabel: string;
+}) {
+  return (
+    <div className="divide-y-0 border-t border-tertiary px-3 py-4 text-sm text-secondary md:p-6">
+      {isShared ? (
+        <button
+          onClick={onUnshare}
+          className="flex gap-2 text-sm text-accent-primary"
+        >
+          <IconUserUnshare height={18} width={18} />
+          <p data-qa="shared-access-message">{unshareLabel}</p>
+        </button>
+      ) : (
+        <p data-qa="shared-access-message">{notSharedMessage}</p>
+      )}
+    </div>
+  );
+}
+
 export function ShareModalView() {
   const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
@@ -82,6 +110,11 @@ export function ShareModalView() {
   const shareResourceName = useAppSelector(
     ShareSelectors.selectShareResourceName,
   );
+
+  const isResourceShared = useAppSelector(
+    ShareSelectors.selectIsResourceShared,
+  );
+
   const shareFeatureType = useAppSelector(
     ShareSelectors.selectShareFeatureType,
   );
@@ -156,6 +189,11 @@ export function ShareModalView() {
     dispatch(ShareActions.setUnshareEntity(entity));
   }, [dispatch, entity, handleClose]);
 
+  const handleOpenUnshareResource = useCallback(() => {
+    handleClose();
+    dispatch(ShareActions.setUnshareResourceId(shareResourceId));
+  }, [dispatch, handleClose, shareResourceId]);
+
   useEffect(() => () => clearTimeout(timeoutRef.current), []);
 
   return (
@@ -184,10 +222,10 @@ export function ShareModalView() {
 
         <div className="flex flex-col justify-between gap-2">
           {entity?.version && <span>Version: {entity.version}</span>}
-          <p className="text-sm text-secondary">
+          <p className="text-sm text-secondary" data-qa="share-message">
             {t('share.modal.link.description')}
           </p>
-          <p className="text-sm text-secondary">
+          <p className="text-sm text-secondary" data-qa="share-message">
             {t('share.modal.link', { context: sharingType })}
           </p>
           {shareFeatureType === FeatureType.Application && (
@@ -235,19 +273,34 @@ export function ShareModalView() {
         </div>
       </div>
       {shareFeatureType === FeatureType.Application && (
-        <div className="divide-y-0 border-t border-tertiary px-3 py-4 text-sm text-secondary md:p-6">
-          {entity?.isShared ? (
-            <button
-              onClick={handleOpenUnshare}
-              className="flex gap-2 text-sm text-accent-primary"
-            >
-              <IconUserUnshare height={18} width={18} />
-              <p>{t('Remove access for all users')}</p>
-            </button>
-          ) : (
-            <p>{t('This app has not been shared with anyone yet.')}</p>
+        <ShareAccessSection
+          isShared={!!entity?.isShared}
+          onUnshare={handleOpenUnshare}
+          notSharedMessage={t('This app has not been shared with anyone yet.')}
+          unshareLabel={t('Remove access for all users')}
+        />
+      )}
+      {isFolder ? (
+        <ShareAccessSection
+          isShared={!!isResourceShared}
+          onUnshare={handleOpenUnshareResource}
+          notSharedMessage={t(
+            'This folder has not been shared with anyone yet.',
           )}
-        </div>
+          unshareLabel={t('Remove access for all users')}
+        />
+      ) : (
+        (shareFeatureType === FeatureType.Chat ||
+          shareFeatureType === FeatureType.Prompt) && (
+          <ShareAccessSection
+            isShared={!!isResourceShared}
+            onUnshare={handleOpenUnshareResource}
+            notSharedMessage={t(
+              `This ${shareFeatureType} has not been shared with anyone yet.`,
+            )}
+            unshareLabel={t('Remove access for all users')}
+          />
+        )
       )}
     </Modal>
   );

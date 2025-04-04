@@ -34,6 +34,7 @@ dialTest(
     conversationData,
     dataInjector,
     shareModal,
+    shareModalAssertion,
     tooltip,
     page,
     sendMessage,
@@ -82,12 +83,13 @@ dialTest(
           await conversationDropdownMenu.selectShareMenuOption();
         firstShareLinkResponse = firstShareRequestResponse!.response;
         await shareModal.linkInputLoader.waitForState({ state: 'hidden' });
-        expect
-          .soft(
-            await shareModal.getShareTextContent(),
-            ExpectedMessages.sharedModalTextIsValid,
-          )
-          .toBe(ExpectedConstants.shareConversationText);
+        await shareModalAssertion.assertMessageContent(
+          ExpectedConstants.shareConversationText,
+        );
+        await shareModalAssertion.assertElementText(
+          shareModal.sharedAccessMessage,
+          ExpectedConstants.notSharedChatText,
+        );
       },
     );
 
@@ -810,6 +812,7 @@ dialTest(
     folderDropdownMenu,
     confirmationDialog,
     shareModal,
+    shareModalAssertion,
     tooltip,
     setTestIds,
     page,
@@ -854,12 +857,14 @@ dialTest(
         shareLinkResponse = (await folderConversations.selectShareMenuOption())
           .response;
         await shareModal.linkInputLoader.waitForState({ state: 'hidden' });
-        expect
-          .soft(
-            await shareModal.getShareTextContent(),
-            ExpectedMessages.sharedModalTextIsValid,
-          )
-          .toBe(ExpectedConstants.shareConversationFolderText);
+        shareModalAssertion.assertValue(
+          await shareModal.getShareTextContent(),
+          ExpectedConstants.shareConversationFolderText,
+        );
+        await shareModalAssertion.assertElementText(
+          shareModal.sharedAccessMessage,
+          ExpectedConstants.notSharedFolderText,
+        );
       },
     );
 
@@ -887,12 +892,13 @@ dialTest(
     );
 
     await dialTest.step(
-      'Select Unshare option from menu for shared folder and verify folder name is truncated with dots, full name is shown on hover',
+      'Select Share option from menu for shared folder and verify folder name is truncated with dots, full name is shown on hover',
       async () => {
         await folderConversations.openFolderDropdownMenu(
           folderConversation.folders.name,
         );
-        await folderDropdownMenu.selectMenuOption(MenuOptions.unshare);
+        await folderDropdownMenu.selectMenuOption(MenuOptions.share);
+        await shareModal.sharedAccessMessage.click();
 
         const chatNameOverflowProp =
           await confirmationDialog.entityName.getComputedStyleProperty(
@@ -906,16 +912,7 @@ dialTest(
         const tooltipChatName = await tooltip.getContent();
         expect
           .soft(tooltipChatName, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.revokeAccessTo(folderName));
-
-        const isTooltipChatNameTruncated =
-          await tooltip.isElementWidthTruncated();
-        expect
-          .soft(
-            isTooltipChatNameTruncated,
-            ExpectedMessages.entityNameIsFullyVisible,
-          )
-          .toBeFalsy();
+          .toBe(ExpectedConstants.removeAccessTitle);
       },
     );
 
@@ -937,12 +934,13 @@ dialTest(
     );
 
     await dialTest.step(
-      'Select Unshare option from menu for shared folder, click Unshare and verify arrow icon disappears',
+      'Select Share option from menu for shared folder, click Unshare and verify arrow icon disappears',
       async () => {
         await folderConversations.openFolderDropdownMenu(
           folderConversation.folders.name,
         );
-        await folderDropdownMenu.selectMenuOption(MenuOptions.unshare);
+        await folderDropdownMenu.selectMenuOption(MenuOptions.share);
+        await shareModal.sharedAccessMessage.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
         await expect
           .soft(
@@ -988,11 +986,13 @@ dialTest(
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     conversationDropdownMenu,
+    shareModal,
     confirmationDialog,
     chat,
     conversationAssertion,
     setTestIds,
     localStorageManager,
+    baseAssertion,
   }) => {
     setTestIds(
       'EPMRTC-2748',
@@ -1016,7 +1016,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'Verify Share and Unshare options are displayed in dropdown menu for shared conversation',
+      'Verify Share option is displayed in dropdown menu for shared conversation',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
@@ -1024,18 +1024,24 @@ dialTest(
         await conversations.openEntityDropdownMenu(conversation.name);
         const actualMenuOptions =
           await conversationDropdownMenu.getAllMenuOptions();
-        expect
-          .soft(actualMenuOptions, ExpectedMessages.contextMenuOptionsValid)
-          .toEqual(
-            expect.arrayContaining([MenuOptions.share, MenuOptions.unshare]),
-          );
+        baseAssertion.assertArrayIncludesAll(
+          actualMenuOptions,
+          [MenuOptions.share],
+          ExpectedMessages.contextMenuOptionsValid,
+        );
+        baseAssertion.assertArrayExcludesAll(
+          actualMenuOptions,
+          [MenuOptions.unshare],
+          ExpectedMessages.contextMenuOptionsValid,
+        );
       },
     );
 
     await dialTest.step(
-      'Select Unshare option for shared conversation, click cancel and verify arrow icon is still displayed',
+      'Select Share option for shared conversation, click cancel and verify arrow icon is still displayed',
       async () => {
-        await conversationDropdownMenu.selectMenuOption(MenuOptions.unshare);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.share);
+        await shareModal.sharedAccessMessage.click();
         await confirmationDialog.cancelDialog();
         await conversationAssertion.assertEntityArrowIconState(
           { name: conversation.name },
@@ -1045,10 +1051,11 @@ dialTest(
     );
 
     await dialTest.step(
-      'Select Unshare option for shared conversation, click Revoke and verify arrow icon disappears',
+      'Select Share option for shared conversation, click Revoke and verify arrow icon disappears',
       async () => {
         await conversations.openEntityDropdownMenu(conversation.name);
-        await conversationDropdownMenu.selectMenuOption(MenuOptions.unshare);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.share);
+        await shareModal.sharedAccessMessage.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
         await conversationAssertion.assertEntityArrowIconState(
           { name: conversation.name },
