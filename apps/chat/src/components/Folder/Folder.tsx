@@ -110,6 +110,7 @@ export interface FolderProps<T, P = unknown> {
   ) => void;
   onRenameFolder?: (newName: string, folderId: string) => void;
   onDeleteFolder?: (folderId: string) => void;
+  onUnshareFolder?: (folderId: string) => void;
   onSelectFolder?: (folderId: string, isSelected: boolean) => void;
   onAddFolder?: (parentFolderId: string) => void;
   onClickFolder?: (folderId: string) => void;
@@ -157,6 +158,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   handleDrop,
   onRenameFolder,
   onDeleteFolder,
+  onUnshareFolder,
   onSelectFolder,
   onClickFolder,
   onAddFolder,
@@ -185,6 +187,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const renameInputRef = useRef<HTMLInputElement>(null);
 
   const [isDeletingConfirmDialog, setIsDeletingConfirmDialog] = useState(false);
+  const [isUnshareConfirmDialog, setIsUnshareConfirmDialog] = useState(false);
   const [search, setSearch] = useState(searchTerm);
   const [isRenaming, setIsRenaming] = useState(
     isInitialRenameEnabled &&
@@ -200,7 +203,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     draggedData: FolderInterface;
   }>();
   const dragDropElement = useRef<HTMLDivElement>(null);
-  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
   const [isPartialSelected, setIsPartialSelected] = useState(false);
 
@@ -288,18 +290,14 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       e.stopPropagation();
       dispatch(
         ShareActions.share({
-          resourceId: currentFolder.id,
+          entity: currentFolder,
           featureType,
           isFolder: true,
         }),
       );
     },
-    [currentFolder.id, dispatch, featureType],
+    [currentFolder, dispatch, featureType],
   );
-  const handleUnshare: MouseEventHandler = useCallback((e) => {
-    e.stopPropagation();
-    setIsUnshareConfirmOpened(true);
-  }, []);
 
   const allChildItems = useMemo(
     () =>
@@ -763,6 +761,19 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     },
     [onDeleteFolder],
   );
+
+  const handleUnshare: MouseEventHandler = useCallback(
+    (e) => {
+      if (!onUnshareFolder) {
+        return;
+      }
+
+      e.stopPropagation();
+      setIsUnshareConfirmDialog(true);
+    },
+    [onUnshareFolder],
+  );
+
   const onSelect: MouseEventHandler = useCallback(
     (e) => {
       if (!onSelectFolder) {
@@ -1164,7 +1175,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             {(onDeleteFolder ||
               onRenameFolder ||
               onAddFolder ||
-              onSelectFolder) &&
+              onSelectFolder ||
+              onUnshareFolder) &&
               !hideContextMenu && (
                 <div
                   ref={refs.setFloating}
@@ -1315,26 +1327,19 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           }}
         />
       )}
-      {isUnshareConfirmOpened && (
+      {onUnshareFolder && (
         <ConfirmDialog
-          isOpen={isUnshareConfirmOpened}
+          isOpen={isUnshareConfirmDialog}
           heading={t('Confirm unsharing: {{folderName}}', {
             folderName: currentFolder.name,
           })}
-          description={t('Are you sure that you want to unshare this folder?')}
+          description={`${t('Are you sure that you want to unshare this folder?')}`}
           confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {
-            setIsUnshareConfirmOpened(false);
-
+            setIsUnshareConfirmDialog(false);
             if (result) {
-              dispatch(
-                ShareActions.revokeAccess({
-                  resourceId: currentFolder.id,
-                  isFolder: true,
-                  featureType,
-                }),
-              );
+              onUnshareFolder(currentFolder.id);
             }
           }}
         />

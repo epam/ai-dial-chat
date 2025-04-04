@@ -87,7 +87,8 @@ export const ShareModalSelectors = {
   shareLink: '[data-qa="share-link"]',
   copyLink: '[data-qa="copy-link"]',
   entityName: '[data-qa="modal-entity-name"]',
-  shareText: ' .text-sm',
+  shareText: '[data-qa="share-message"]',
+  shareAccessMessage: '[data-qa="shared-access-message"]',
 };
 
 export const UploadFromDeviceModalSelectors = {
