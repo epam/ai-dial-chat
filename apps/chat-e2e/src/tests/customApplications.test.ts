@@ -295,7 +295,7 @@ dialTest(
       'Delete an app, confirm and verify custom app card was deleted from My workspace',
       async () => {
         agentElement =
-          await marketplaceAgentsSection.findAgentElement(appEntity); // Re-find element
+          await marketplaceAgentsSection.findAgentElement(appEntity);
         await agentElement.hoverOver();
         await marketplaceAgents.getAgentElementDotsMenu(agentElement).click();
         await marketplaceAgents
@@ -503,7 +503,7 @@ dialTest(
     dialHomePage,
     chat,
     talkToAgentDialog,
-    talkToAgents, // Agent list within the dialog
+    talkToAgents,
     confirmationDialog,
     setTestIds,
     baseAssertion,
@@ -575,6 +575,7 @@ dialTest(
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
+        await marketplaceHeader.searchInput.fillInInput(appEntity1.name);
         agentElement1 =
           await marketplaceAgentsSection.findAgentElement(appEntity1);
         await baseAssertion.assertElementState(agentElement1, 'visible');
@@ -611,7 +612,6 @@ dialTest(
     await dialTest.step(
       'Navigate to My workspace and verify custom app card was deleted',
       async () => {
-        // await chat.changeAgentButton.click(); // Reopen to navigate
         await talkToAgentDialog.goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
 
