@@ -98,7 +98,7 @@ dialTest(
         );
         await dialHomePage.waitForPageLoaded({ skipSidebars: true });
         await header.leftPanelToggle.click();
-        await navigationPanel.marketplaceHomeButton.click();
+        await navigationPanel.goToMarketplaceFromDialHome();
         await marketplacePage.waitForPageLoaded();
         await navigationPanel.myWorkspaceButton.click();
         await baseAssertion.assertCheckboxState(
@@ -192,16 +192,14 @@ dialTest(
               await incognitoMarketplaceHeader.searchInput.fillInInput(
                 GeneratorUtil.randomString(5),
               );
-              await incognitoAppContainer
-                .getNavigationPanel()
-                .backToChatButton.click();
+              await incognitoAppContainer.getNavigationPanel().backToChat();
               await incognitoDialHomePage.waitForPageLoaded({
                 skipSidebars: true,
               });
               await incognitoAppContainer.getHeader().leftPanelToggle.click();
               await incognitoAppContainer
                 .getNavigationPanel()
-                .marketplaceHomeButton.click();
+                .goToMarketplaceFromDialHome();
               break;
           }
           await incognitoMarketplacePage.waitForPageLoaded();

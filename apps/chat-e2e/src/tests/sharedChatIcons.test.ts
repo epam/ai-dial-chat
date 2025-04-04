@@ -675,6 +675,9 @@ dialTest(
     setTestIds,
     localStorageManager,
     chatBarFolderAssertion,
+    chatHeader,
+    chatHeaderAssertion,
+    sendMessageAssertion,
   }) => {
     setTestIds(
       'EPMRTC-1810',
@@ -743,6 +746,8 @@ dialTest(
           { name: nestedConversations[nestedLevel - 1].name },
           'visible',
         );
+        await chatHeaderAssertion.assertElementState(chatHeader, 'visible');
+        await sendMessageAssertion.assertInputFieldState('visible', 'enabled');
 
         for (let i = 0; i < nestedFolders.length; i = i + 2) {
           await chatBarFolderAssertion.assertFolderArrowIconState(

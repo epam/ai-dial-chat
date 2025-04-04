@@ -88,7 +88,7 @@ dialTest(
     });
 
     await dialTest.step('Click "Back to Chat"', async () => {
-      await navigationPanel.backToChatButton.click();
+      await navigationPanel.backToChat();
     });
 
     await dialTest.step(
@@ -115,7 +115,7 @@ dialTest(
     });
 
     await dialTest.step('Click "Back to Chat"', async () => {
-      await navigationPanel.backToChatButton.click();
+      await navigationPanel.backToChat();
     });
 
     await dialTest.step('Verify chat stays selected', async () => {

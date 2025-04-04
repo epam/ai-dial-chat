@@ -20,6 +20,7 @@ dialTest(
     talkToAgentDialog,
     chatBar,
     marketplacePage,
+    marketplaceHeader,
     agentInfoAssertion,
     setTestIds,
     localStorageManager,
@@ -157,8 +158,9 @@ dialTest(
     await dialTest.step(
       'Click on "DIAL Marketplace", select a new model, and click "Use model"',
       async () => {
-        await navigationPanel.marketplaceHomeButton.click();
+        await navigationPanel.goToMarketplaceFromDialHome();
         await marketplacePage.waitForPageLoaded();
+        await marketplaceHeader.searchInput.fillInInput(addedModel.name);
         await marketplaceAgentsSection.findAndUseAgent(addedModel, {
           isInstalledDeploymentsUpdated: true,
         });
@@ -174,14 +176,15 @@ dialTest(
     await dialTest.step(
       'Click "Change agent" and "Go to My workspace", remove the third model, and go back to chat',
       async () => {
-        await navigationPanel.marketplaceHomeButton.click();
+        await navigationPanel.goToMarketplaceFromDialHome();
         await marketplacePage.waitForPageLoaded();
+        await marketplaceHeader.searchInput.fillInInput(addedModel.name);
         const addedModelElement =
           await marketplaceAgentsSection.findAgentElement(addedModel);
         await addedModelElement.click();
         await agentDetailsModal.removeBookmarkIcon.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
-        await navigationPanel.backToChatButton.click();
+        await navigationPanel.backToChat();
       },
     );
 
@@ -630,7 +633,7 @@ dialTest(
         await firstModelElement.click();
         await agentDetailsModal.removeBookmarkIcon.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
-        await navigationPanel.backToChatButton.click();
+        await navigationPanel.backToChat();
       },
     );
 
