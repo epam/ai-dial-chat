@@ -374,6 +374,9 @@ export enum ExpectedMessages {
   noConversationIsSelected = 'No conversation is selected',
   noData = 'No data in the conversation section',
   agentNameIsValid = 'Agent name is valid',
+  agentIsVisible = 'Agent is visible',
+  applicationFormFieldShouldHaveAsterisk = 'Application form field should be marked as required',
+  FormFieldShouldRetainUpdatedValue = 'Chat Completion URL should retain updated value',
 }
 
 export enum PublishingExpectedMessages {

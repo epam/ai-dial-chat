@@ -122,8 +122,6 @@ export const ExpectedConstants = {
     'This link is temporary and will be active for 3 days. This prompt folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
   chatNotFoundMessage:
     'Conversation not found.Please select another conversation.',
-  promptNameLabel: 'promptName',
-  promptContentLabel: 'content',
   requiredFieldErrorMessage: 'Please fill in all required fields',
   isolatedUrl: (modelId: string) => `${config.use!.baseURL}/models/${modelId}`,
   modelNotFountErrorMessage:
@@ -287,11 +285,41 @@ export enum UploadMenuOptions {
   uploadFromDevice = 'Upload from device',
 }
 
+export enum ExampleURLs {
+  chatCompletionURL = 'http://test.example.com',
+}
+
 export enum AddAppMenuOptions {
   codeApp = 'Code app',
   customApp = 'Custom app',
   quickApp = 'Quick app',
 }
+
+export enum AppEditorGeneralFormFields {
+  name = 'Name',
+  version = 'Version',
+  icon = 'Icon',
+  description = 'Description',
+  topics = 'Topics',
+}
+
+export enum AppEditorViewFormFields {
+  featuresData = 'Features data',
+  attachmentTypes = 'Attachment types',
+  maxAttachmentsNumber = 'Max. attachments number',
+  chatCompletionUrl = 'Chat completion URL',
+}
+
+export enum EditPromptFormFields {
+  name = 'Name',
+  description = 'Description',
+  promptContent = 'Prompt',
+}
+
+export const AppMenuActions = {
+  add: (app: AddAppMenuOptions) => `Add ${app.toLowerCase()}`,
+  edit: (app: AddAppMenuOptions) => `Edit ${app.toLowerCase()}`,
+};
 
 export const Chronology = {
   today: 'Today',

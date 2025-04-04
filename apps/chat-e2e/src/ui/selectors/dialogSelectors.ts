@@ -231,17 +231,31 @@ export const ReportAnIssueModalSelectors = {
 export const ApplicationEditorHeader = {
   header: '[data-qa="app-editor-header"]',
   saveAndExitButton: '[data-qa="save-and-exit"]',
+  exitLink: '[data-qa="exit-link"]',
+  actionAndApplicationTypeTitle: '[data-qa="action-application-type-title"]',
+  stepsContainer: '[data-qa="steps-container"]',
+  singleStepLink: '[data-qa="single-step-link"]',
+  singleStepTitle: '[data-qa="single-step-title"]',
+  selectedStepIcon: '[data-qa="selected-step-icon"]',
+  notSelectedStepIcon: '[data-qa="not-selected-step-icon"]',
 };
 
 export const ApplicationPreviewSelector = {
-  container: '[data-qa="app-preview"]',
+  containerGeneralInfo: '[data-qa="app-preview-general-info"]',
+  containerAppSettings: '[data-qa="app-settings-chat-mode"]',
 };
 
-export const AddApplicationFormSelector = {
+export const AddApplicationGeneralInfoFormSelector = {
   appGeneralFormContainer: '[data-qa="app-general-form"]',
   name: '#name',
   version: '#version',
+  icon: '#icon',
+  description: '#description',
+  topics: '#topics',
   nextButton: '[data-qa="save-application-general-info"]',
+};
+
+export const AddApplicationAppSettingsFormSelector = {
   chatCompletionUrl: '#completionUrl',
   addButton: '[data-qa="add-application"]',
   appViewFormContainer: '[data-qa="app-view-form"]',

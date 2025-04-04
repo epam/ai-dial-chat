@@ -76,20 +76,27 @@ export class BaseAssertion {
   public async assertElementActionabilityState(
     element: BaseElement | Locator,
     expectedState: ElementActionabilityState,
+    expectedMessage?: string,
   ) {
     const elementLocator = this.getElementLocator(element);
     expectedState == 'enabled'
       ? await expect
-          .soft(elementLocator, ExpectedMessages.elementIsEnabled)
+          .soft(
+            elementLocator,
+            expectedMessage ?? ExpectedMessages.elementIsEnabled,
+          )
           .toBeEnabled()
       : await expect
-          .soft(elementLocator, ExpectedMessages.elementIsDisabled)
+          .soft(
+            elementLocator,
+            expectedMessage ?? ExpectedMessages.elementIsDisabled,
+          )
           .toBeDisabled();
   }
 
   public async assertElementState(
     element: BaseElement | Locator,
-    expectedState: ElementState,
+    expectedState: ElementState = 'visible',
     expectedMessage?: string,
   ) {
     const elementLocator = this.getElementLocator(element);
@@ -120,6 +127,19 @@ export class BaseAssertion {
         expectedMessage ?? ExpectedMessages.fieldValueIsValid,
       )
       .toHaveText(expectedText);
+  }
+
+  public async assertInputValue(
+    element: BaseElement | Locator,
+    expectedValue: string,
+    expectedMessage?: string,
+  ) {
+    const elementLocator = this.getElementLocator(element);
+    // Use Playwright's recommended matcher for input values
+    await expect(
+      elementLocator,
+      expectedMessage ?? ExpectedMessages.fieldValueIsValid,
+    ).toHaveValue(expectedValue);
   }
 
   public async assertElementAttribute(
