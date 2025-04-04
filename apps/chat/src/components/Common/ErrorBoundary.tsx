@@ -1,4 +1,8 @@
-import { Component, ComponentType, ReactNode } from 'react';
+import { Component, ComponentType, ReactNode, useCallback } from 'react';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
+
+import { Translation } from '@/src/types/translation';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -12,6 +16,30 @@ interface ErrorBoundaryState {
   hasError: boolean;
 }
 
+interface DefaultFallbackComponentProps {
+  onClick: () => void;
+}
+
+function DefaultFallbackComponent({ onClick }: DefaultFallbackComponentProps) {
+  const { t } = useTranslation(Translation.Chat);
+  const handleBack = useCallback(() => {
+    onClick();
+  }, [onClick]);
+
+  return (
+    <div className="w-fit p-6">
+      <h2 className="text-lg">{t('Oops, something went wrong...')}</h2>
+      <button
+        className="button button-secondary"
+        type="button"
+        onClick={handleBack}
+      >
+        {t('Back')}
+      </button>
+    </div>
+  );
+}
+
 export class ErrorBoundary extends Component<
   ErrorBoundaryProps,
   ErrorBoundaryState
@@ -19,6 +47,7 @@ export class ErrorBoundary extends Component<
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
+    this.resetErrorState = this.resetErrorState.bind(this);
   }
 
   static getDerivedStateFromError(): ErrorBoundaryState {
@@ -31,9 +60,15 @@ export class ErrorBoundary extends Component<
     }
   }
 
+  resetErrorState = () => this.setState({ hasError: false });
+
   render() {
     if (this.state.hasError) {
-      return this.props.fallback ?? this.props.children;
+      return (
+        this.props.fallback ?? (
+          <DefaultFallbackComponent onClick={this.resetErrorState} />
+        )
+      );
     }
     return this.props.children;
   }
