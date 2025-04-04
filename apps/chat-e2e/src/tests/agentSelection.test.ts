@@ -184,7 +184,7 @@ dialTest(
         await addedModelElement.click();
         await agentDetailsModal.removeBookmarkIcon.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
-        await navigationPanel.backToChat();
+        await navigationPanel.backToChat({ isHttpMethodTriggered: false });
       },
     );
 
@@ -633,7 +633,7 @@ dialTest(
         await firstModelElement.click();
         await agentDetailsModal.removeBookmarkIcon.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
-        await navigationPanel.backToChat();
+        await navigationPanel.backToChat({ isHttpMethodTriggered: false });
       },
     );
 

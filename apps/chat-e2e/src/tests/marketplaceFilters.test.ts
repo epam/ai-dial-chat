@@ -192,7 +192,9 @@ dialTest(
               await incognitoMarketplaceHeader.searchInput.fillInInput(
                 GeneratorUtil.randomString(5),
               );
-              await incognitoAppContainer.getNavigationPanel().backToChat();
+              await incognitoAppContainer
+                .getNavigationPanel()
+                .backToChat({ isHttpMethodTriggered: false });
               await incognitoDialHomePage.waitForPageLoaded({
                 skipSidebars: true,
               });

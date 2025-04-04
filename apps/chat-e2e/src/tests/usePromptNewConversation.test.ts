@@ -518,7 +518,7 @@ dialTest(
         await agentElement.click();
         await agentDetailsModal.removeBookmarkIcon.click();
         await confirmationDialog.confirm();
-        await navigationPanel.backToChat();
+        await navigationPanel.backToChat({ isHttpMethodTriggered: false });
       },
     );
 

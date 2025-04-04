@@ -27,12 +27,20 @@ export class NavigationPanel extends BaseElement {
     await this.goToMarketplacePage(() => this.myWorkspaceButton.click());
   }
 
-  public async backToChat() {
-    const responsePromise = this.page.waitForResponse((resp) =>
-      resp.url().includes(API.pagePropsHost),
-    );
-    await this.backToChatButton.click();
-    await responsePromise;
+  public async backToChat(
+    options: { isHttpMethodTriggered?: boolean } = {
+      isHttpMethodTriggered: true,
+    },
+  ) {
+    if (options.isHttpMethodTriggered) {
+      const responsePromise = this.page.waitForResponse((resp) =>
+        resp.url().includes(API.pagePropsHost),
+      );
+      await this.backToChatButton.click();
+      await responsePromise;
+    } else {
+      await this.backToChatButton.click();
+    }
   }
 
   private async goToMarketplacePage(method: () => Promise<void>) {
