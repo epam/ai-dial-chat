@@ -6,6 +6,7 @@ import {
   MenuOptions,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
+import { ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 
 dialTest(
@@ -37,6 +38,7 @@ dialTest(
     renameConversationModal,
     localStorageManager,
     compare,
+    chatLoader,
   }) => {
     setTestIds(
       'EPMRTC-934',
@@ -71,12 +73,15 @@ dialTest(
     });
 
     await dialTest.step('Open start page', async () => {
-      await dialHomePage.openHomePage();
+      await dialHomePage.openHomePage({
+        iconsToBeLoaded: [ModelsUtil.getDefaultModel()!.iconUrl!],
+      });
       await dialHomePage.waitForPageLoaded();
       await conversations.selectConversation(secondConversation.name);
       await conversationAssertion.assertSelectedConversation(
         secondConversation.name,
       );
+      await chatLoader.waitForState({ state: 'detached' });
     });
 
     await dialTest.step('Hover over chat1', async () => {
