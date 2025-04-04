@@ -172,8 +172,8 @@ export const MarketplaceFilterbar = memo(() => {
   return (
     <nav
       className={classNames(
-        showFilterbar ? 'w-[320px] lg:w-[260px]' : 'invisible',
-        'group/sidebar absolute left-0 top-0 z-40 flex h-full shrink-0 flex-col gap-px border-r border-tertiary bg-layer-3 md:left-[60px] lg:sticky lg:z-0 xl:left-0',
+        showFilterbar ? 'w-[320px] xl:w-[260px]' : 'invisible',
+        'group/sidebar absolute left-0 top-0 z-40 flex h-full shrink-0 flex-col gap-px border-r border-tertiary bg-layer-3 md:left-[60px] xl:sticky xl:left-0 xl:z-0',
       )}
       data-qa="marketplace-sidebar"
     >
