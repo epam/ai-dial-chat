@@ -160,11 +160,11 @@ export const TalkToCard = ({
       dispatch(
         ShareActions.share({
           featureType: FeatureType.Application,
-          resourceId: entity.id,
+          entity,
         }),
       );
     },
-    [dispatch, entity.id],
+    [dispatch, entity],
   );
 
   const handleOpenUnshare = useCallback(

@@ -14,6 +14,7 @@ import { ConversationsSelectors } from '@/src/store/conversations/conversations.
 import { useAppSelector } from '@/src/store/hooks';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { withErrorBoundary } from '@/src/components/Common/ErrorBoundary';
 
 import { ButtonsSchemaModal } from './ButtonsSchemaModal';
 import { SchemaButton } from './SchemaButton';
@@ -287,7 +288,7 @@ const ButtonsProperty = ({
         )}
       </div>
 
-      {!selectedConversations[0].messages.length && (
+      {!selectedConversations[0]?.messages.length && (
         <HiddenButtonsProperty
           options={options}
           className={className}
@@ -407,7 +408,7 @@ interface FormSchemaProps {
   buttonClassName?: string;
 }
 
-export const FormSchema = memo(function FormSchema({
+export const FormSchemaMemo = memo(function FormSchema({
   schema,
   formValue,
   onChange,
@@ -437,3 +438,5 @@ export const FormSchema = memo(function FormSchema({
     </div>
   );
 });
+
+export const FormSchema = withErrorBoundary(FormSchemaMemo);

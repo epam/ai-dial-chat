@@ -1,11 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { hasWritePermission } from '@/src/utils/app/share';
-import { splitEntityId } from '@/src/utils/app/shared-utils';
-import {
-  parseApplicationApiKey,
-  parseConversationApiKey,
-} from '@/src/utils/server/api';
 
 import { ApplicationInfo } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
@@ -34,16 +29,19 @@ const initialState: ShareState = {
   error: undefined,
   invitationId: undefined,
   writeInvitationId: undefined,
+  acceptedId: undefined,
+  isFolderAccepted: undefined,
+  isConversation: undefined,
+  isPrompt: undefined,
+  unshareResourceId: undefined,
+  unshareEntity: undefined,
+
   shareResourceName: undefined,
   shareResourceId: undefined,
   shareModalState: ModalState.CLOSED,
-  unshareEntity: undefined,
-  acceptedId: undefined,
-  isFolderAccepted: undefined,
   shareFeatureType: undefined,
   shareIsFolder: undefined,
-  isConversation: undefined,
-  isPrompt: undefined,
+  isShared: false,
 };
 
 export const shareSlice = createSlice({
@@ -60,7 +58,7 @@ export const shareSlice = createSlice({
         payload,
       }: PayloadAction<{
         featureType: FeatureType;
-        resourceId: string;
+        entity: Omit<ShareEntity, 'folderId'>;
         isFolder?: boolean;
         permissions?: SharePermission[];
       }>,
@@ -70,16 +68,10 @@ export const shareSlice = createSlice({
       state.shareModalState = ModalState.LOADING;
       state.shareFeatureType = payload.featureType;
       state.shareIsFolder = payload.isFolder;
-      state.shareResourceId = payload.resourceId;
+      state.shareResourceName = payload.entity.name;
+      state.shareResourceId = payload.entity.id;
       state.sharePermissions = payload.permissions;
-
-      const name = splitEntityId(payload.resourceId).name;
-      state.shareResourceName =
-        payload.featureType === FeatureType.Chat
-          ? parseConversationApiKey(splitEntityId(payload.resourceId).name).name
-          : payload.featureType === FeatureType.Application
-            ? parseApplicationApiKey(name).name
-            : name;
+      state.isShared = payload.entity.isShared;
     },
     sharePrompt: (
       state,
@@ -191,6 +183,12 @@ export const shareSlice = createSlice({
       { payload }: PayloadAction<Omit<ShareEntity, 'folderId'> | undefined>,
     ) => {
       state.unshareEntity = payload;
+    },
+    setUnshareResourceId: (
+      state,
+      { payload }: PayloadAction<string | undefined>,
+    ) => {
+      state.unshareResourceId = payload;
     },
     acceptShareInvitation: (
       state,

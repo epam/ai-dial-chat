@@ -332,6 +332,7 @@ const ChatFolderTemplate = ({
         openedFoldersIds={openedFoldersIds}
         handleDrop={!shouldDenyDrop ? handleDrop : undefined}
         onRenameFolder={handleFolderRename}
+        onUnshareFolder={handleFolderDelete}
         onDeleteFolder={handleFolderDelete}
         onClickFolder={handleFolderClick}
         featureType={FeatureType.Chat}

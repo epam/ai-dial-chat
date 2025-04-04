@@ -73,10 +73,12 @@ export class GeneratorUtil {
     const minor = GeneratorUtil.randomIntegerNumber();
     const patch = GeneratorUtil.randomIntegerNumber();
     let version = `${major}.${minor}.${patch}`;
-    if (stringsToExclude) {
-      while (stringsToExclude.some((s) => s.includes(version))) {
-        version = GeneratorUtil.randomApplicationVersion(stringsToExclude);
-      }
+    stringsToExclude = stringsToExclude ?? [];
+    if (!stringsToExclude.includes(ExpectedConstants.defaultAppVersion)) {
+      stringsToExclude.push();
+    }
+    while (stringsToExclude.some((s) => s.includes(version))) {
+      version = GeneratorUtil.randomApplicationVersion(stringsToExclude);
     }
     return version;
   }
