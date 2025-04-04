@@ -33,7 +33,6 @@ dialTest(
     confirmationDialog,
     confirmationDialogAssertion,
     localStorageManager,
-    shareModal,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1816', 'EPMRTC-2731', 'EPMRTC-1817', 'EPMRTC-2817');
