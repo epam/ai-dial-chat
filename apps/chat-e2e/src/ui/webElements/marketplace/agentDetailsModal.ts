@@ -1,3 +1,4 @@
+import { isApiStorageType } from '@/src/hooks/global-setup';
 import { API } from '@/src/testData';
 import { IconSelectors, MarketplaceAgentSelectors } from '@/src/ui/selectors';
 import { MarketplaceDetailsModal } from '@/src/ui/selectors/marketplaceSelectors';
@@ -97,5 +98,21 @@ export class AgentDetailsModal extends BaseElement {
     );
     await this.addBookmarkIcon.click();
     await respPromise;
+  }
+
+  public async clickEditButton({
+    triggeredHttpMethod,
+  }: {
+    triggeredHttpMethod?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  } = {}): Promise<void> {
+    if (isApiStorageType && triggeredHttpMethod) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === triggeredHttpMethod,
+      );
+      await this.editButton.click();
+      await respPromise;
+    } else {
+      await this.editButton.click();
+    }
   }
 }

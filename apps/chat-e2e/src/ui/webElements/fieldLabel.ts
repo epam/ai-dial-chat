@@ -1,5 +1,5 @@
 import { Tags } from '@/src/ui/domData';
-import { BaseElement } from '@/src/ui/webElements';
+import { BaseElement } from '@/src/ui/webElements/index';
 import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
@@ -16,7 +16,7 @@ export class FieldLabel extends BaseElement {
     return this.createElementFromLocator(labelLocator);
   }
 
-  public async getFieldRequiredIndicator(fieldName: string) {
+  public getFieldRequiredIndicator(fieldName: string) {
     const asteriskLocator =
       this.getFieldLabel(fieldName).getElementLocatorByText('*');
     return this.createElementFromLocator(asteriskLocator);

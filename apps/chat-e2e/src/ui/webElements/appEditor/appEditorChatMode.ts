@@ -4,6 +4,6 @@ import { Locator, Page } from '@playwright/test';
 
 export class AppEditorChatMode extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, ApplicationPreviewSelector.containerEditMode, parentLocator);
+    super(page, ApplicationPreviewSelector.containerAppSettings, parentLocator);
   }
 }

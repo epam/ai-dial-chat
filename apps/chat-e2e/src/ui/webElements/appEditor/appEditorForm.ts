@@ -1,5 +1,5 @@
 import { BaseElement } from '@/src/ui/webElements';
-import { FieldLabel } from '@/src/ui/webElements/appEditor/fieldLabel';
+import { FieldLabel } from '@/src/ui/webElements/fieldLabel';
 import { Locator, Page } from '@playwright/test';
 
 export abstract class AppEditorForm extends BaseElement {

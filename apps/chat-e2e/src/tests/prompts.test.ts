@@ -61,12 +61,12 @@ dialTest(
       async () => {
         await promptBar.createNewEntity();
         await baseAssertion.assertElementState(
-          await promptModalDialog.getFieldAsterisk(EditPromptFormFields.name),
+          promptModalDialog.getFieldAsterisk(EditPromptFormFields.name),
           'visible',
           ExpectedMessages.fieldIsRequired,
         );
         await baseAssertion.assertElementState(
-          await promptModalDialog.getFieldAsterisk(
+          promptModalDialog.getFieldAsterisk(
             EditPromptFormFields.promptContent,
           ),
           'visible',

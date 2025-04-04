@@ -13,7 +13,7 @@ import {
 import { AppEditSteps, BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 
-dialTest(
+dialTest.only(
   'Create custom app with required fields only.\n' + // EPMRTC-5130
     'Edit option for custom app is available from card pop-up form.\n' + // EPMRTC-5939
     'Custom app with permitted spec symbols in Name.\n' + // EPMRTC-4838
@@ -109,10 +109,9 @@ dialTest(
     await dialTest.step(
       'Check that the required fields of General Info step form are marked with asterisks',
       async () => {
-        const nameRequiredIndicator =
-          await appEditorGeneralForm.getRequiredIndicator(
-            AppEditorGeneralFormFields.name,
-          );
+        const nameRequiredIndicator = appEditorGeneralForm.getRequiredIndicator(
+          AppEditorGeneralFormFields.name,
+        );
         await baseAssertion.assertElementState(
           nameRequiredIndicator,
           'visible',
@@ -120,7 +119,7 @@ dialTest(
         );
 
         const versionRequiredIndicator =
-          await appEditorGeneralForm.getRequiredIndicator(
+          appEditorGeneralForm.getRequiredIndicator(
             AppEditorGeneralFormFields.version,
           );
         await baseAssertion.assertElementState(
@@ -175,7 +174,7 @@ dialTest(
       'Verify app settings required fields are marked with asterisk',
       async () => {
         const chatCompletionUrlRequiredIndicator =
-          await appEditorViewForm.getRequiredIndicator(
+          appEditorViewForm.getRequiredIndicator(
             AppEditorViewFormFields.chatCompletionUrl,
           );
         await baseAssertion.assertElementState(
@@ -199,6 +198,7 @@ dialTest(
     await dialTest.step(
       'Find card of created custom app on My workspace page',
       async () => {
+        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
         agentElement =
           await marketplaceAgentsSection.findAgentElement(appEntity);
         await baseAssertion.assertElementState(agentElement, 'visible');
@@ -219,7 +219,9 @@ dialTest(
     await dialTest.step(
       'Click "Use application" button and perform assertions',
       async () => {
-        await agentDetailsModal.useButton.click();
+        await agentDetailsModal.clickUseButton({
+          isInstalledDeploymentsUpdated: false,
+        });
         await dialHomePage.waitForPageLoaded();
         await agentInfoAssertion.assertShortDescription(appEntity);
       },
@@ -240,9 +242,10 @@ dialTest(
       'Go back to the marketplace and click on the found card',
       async () => {
         await marketplacePage.openMyWorkspacePage({
-          isInstalledDeploymentsUpdated: false,
+          updateInstalledDeployments: false,
         });
         await marketplacePage.waitForPageLoaded();
+        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
         agentElement =
           await marketplaceAgentsSection.findAgentElement(appEntity);
 
@@ -261,7 +264,7 @@ dialTest(
     await dialTest.step(
       'On card detailed pop-up form click on Edit icon',
       async () => {
-        await agentDetailsModal.editButton.click();
+        await agentDetailsModal.clickEditButton( {triggeredHttpMethod : 'GET'})
         await appEditorPage.waitForPageLoadedForEdit();
       },
     );
@@ -320,7 +323,6 @@ dialTest(
           0,
           ExpectedMessages.elementsCountIsValid,
         );
-        await marketplacePage.waitForPageLoaded();
         await baseAssertion.assertElementState(
           agentElement,
           'hidden',
@@ -370,7 +372,7 @@ dialTest(
 
     await dialTest.step('Open My workspace page', async () => {
       await marketplacePage.openMyWorkspacePage({
-        isInstalledDeploymentsUpdated: false,
+        updateInstalledDeployments: false,
       });
     });
 
@@ -602,9 +604,7 @@ dialTest(
         await talkToAgents
           .getAgentDropdownMenu()
           .selectMenuOption(MenuOptions.delete);
-        // await talkToAgentDialog.searchAgentInput.fillInInput(appEntity.name);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-        // await talkToAgentDialog.waitForState({ state: 'hidden' });
       },
     );
 

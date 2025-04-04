@@ -635,7 +635,7 @@ const ChatView = memo(() => {
                     ? 'w-1/2'
                     : 'w-full',
                 )}
-                data-qa={isCompareMode ? 'compare-mode' : 'chat-mode'}
+                data-qa={isCompareMode ? 'compare-mode' : 'app-settings-chat-mode'}
               >
                 <div
                   className={classNames(

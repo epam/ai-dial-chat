@@ -240,9 +240,8 @@ export const ApplicationEditorHeader = {
 };
 
 export const ApplicationPreviewSelector = {
-  container: '[data-qa="app-preview"]',
-  //TODO
-  containerEditMode: '[data-qa="chat-mode"]',
+  containerGeneralInfo: '[data-qa="app-preview-general-info"]',
+  containerAppSettings: '[data-qa="app-settings-chat-mode"]',
 };
 
 export const AddApplicationGeneralInfoFormSelector = {

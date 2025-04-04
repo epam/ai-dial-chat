@@ -47,16 +47,6 @@ export class AppEditorHeader extends BaseElement {
     );
   }
 
-  public async getAllSteps(): Promise<BaseElement[]> {
-    const locators = await this.singleStep.getElementLocator().all();
-    return locators.map((locator) => this.createElementFromLocator(locator));
-  }
-
-  public async getAllStepTitles(): Promise<BaseElement[]> {
-    const locators = await this.singleStepTitle.getElementLocator().all();
-    return locators.map((locator) => this.createElementFromLocator(locator));
-  }
-
   public getStepByTitle(title: string, index?: number): BaseElement {
     const locator = this.stepsContainer
       .getChildElementBySelector(ApplicationEditorHeader.singleStepLink)
@@ -65,11 +55,6 @@ export class AppEditorHeader extends BaseElement {
         index,
       );
     return this.createElementFromLocator(locator);
-  }
-
-  public async getStepLinkByTitle(title: string): Promise<string | null> {
-    const stepElement = this.getStepByTitle(title);
-    return stepElement.getElementLocator().getAttribute('href');
   }
 
   public getGeneralInfoStep(): BaseElement {
