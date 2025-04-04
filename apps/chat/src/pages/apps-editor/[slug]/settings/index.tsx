@@ -103,7 +103,6 @@ export default function AppsSettings() {
                 : decode(slug.toString())
             }
             hasCustomEditor={!!schema?.['dial:applicationTypeEditorUrl']}
-            onExit={handleOnExit}
           />
           <div className="flex size-full grow overflow-hidden">
             {applicationData && (
@@ -112,6 +111,7 @@ export default function AppsSettings() {
                 applicationData={applicationData}
                 schema={isSchemaApplicationType ? schema : null}
                 type={type ?? ''}
+                onExit={handleOnExit}
               />
             )}
           </div>
