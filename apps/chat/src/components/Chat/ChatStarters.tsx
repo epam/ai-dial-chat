@@ -59,7 +59,7 @@ const ChatStartersView = ({ schema }: ChatStartersViewProps) => {
       buttonClassName="shrink-0"
       wrapperClassName="lg:items-center"
       propertyWrapperClassName={
-        isChatFullWidth ? 'mx-4 md:mx-20 lg:mx-auto' : 'max-w-screen-md'
+        isChatFullWidth ? 'mx-4 md:mx-20' : 'max-w-screen-md'
       }
     />
   );
