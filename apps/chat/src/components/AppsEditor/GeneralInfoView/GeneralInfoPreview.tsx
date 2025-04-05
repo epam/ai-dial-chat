@@ -34,7 +34,7 @@ export const GeneralInfoPreview = ({ entity }: GeneralInfoPreviewProps) => {
       <div className="flex flex-1 items-center justify-center">
         <div
           className="w-full max-w-[700px] xl:max-w-[720px]"
-          data-qa="app-preview"
+          data-qa="app-preview-general-info"
         >
           {isDetailed ? (
             <div className="flex w-full flex-col divide-y divide-tertiary rounded bg-layer-3">

@@ -3,6 +3,7 @@ import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
   CollapsedSections,
+  EditPromptFormFields,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
@@ -59,22 +60,18 @@ dialTest(
       'Click "New prompt" button and verify Name and Prompt fields have asterisk',
       async () => {
         await promptBar.createNewEntity();
-        expect
-          .soft(
-            await promptModalDialog.isFieldHasAsterisk(
-              ExpectedConstants.promptNameLabel,
-            ),
-            ExpectedMessages.fieldIsRequired,
-          )
-          .toBeTruthy();
-        expect
-          .soft(
-            await promptModalDialog.isFieldHasAsterisk(
-              ExpectedConstants.promptContentLabel,
-            ),
-            ExpectedMessages.fieldIsRequired,
-          )
-          .toBeTruthy();
+        await baseAssertion.assertElementState(
+          promptModalDialog.getFieldAsterisk(EditPromptFormFields.name),
+          'visible',
+          ExpectedMessages.fieldIsRequired,
+        );
+        await baseAssertion.assertElementState(
+          promptModalDialog.getFieldAsterisk(
+            EditPromptFormFields.promptContent,
+          ),
+          'visible',
+          ExpectedMessages.fieldIsRequired,
+        );
       },
     );
 

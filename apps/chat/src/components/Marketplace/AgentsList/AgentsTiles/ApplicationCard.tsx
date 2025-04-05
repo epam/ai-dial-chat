@@ -162,11 +162,11 @@ export const ApplicationCard = memo(
         dispatch(
           ShareActions.share({
             featureType: FeatureType.Application,
-            resourceId: entity.id,
+            entity: entity,
           }),
         );
       },
-      [dispatch, entity.id],
+      [dispatch, entity],
     );
 
     const handleOpenUnshare = useCallback(

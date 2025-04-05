@@ -63,7 +63,7 @@ export class MarketplaceAgentsSection extends BaseElement {
                 .getVersionDropdownMenu()
                 .selectMenuOption(agent.version);
               await agentDetailsModal.clickUseButton({
-                isInstalledDeploymentsUpdated,
+                isInstalledDeploymentsUpdated: isInstalledDeploymentsUpdated,
               });
               isAgentUsed = true;
             } else {
@@ -74,13 +74,13 @@ export class MarketplaceAgentsSection extends BaseElement {
           }
         } else {
           await agentDetailsModal.clickUseButton({
-            isInstalledDeploymentsUpdated,
+            isInstalledDeploymentsUpdated: isInstalledDeploymentsUpdated,
           });
           isAgentUsed = true;
         }
       } else {
         await agentDetailsModal.clickUseButton({
-          isInstalledDeploymentsUpdated,
+          isInstalledDeploymentsUpdated: isInstalledDeploymentsUpdated,
         });
         isAgentUsed = true;
       }
@@ -145,6 +145,9 @@ export class MarketplaceAgentsSection extends BaseElement {
       scrollTop: 0,
       clientHeight: 0,
     };
+    if (!(await this.rootLocator.isVisible())) {
+      return allAgents;
+    }
     const scrollHeight = await this.rootLocator.evaluate((p) => p.scrollHeight);
     let iteration = 1;
     let shouldProceed = true;

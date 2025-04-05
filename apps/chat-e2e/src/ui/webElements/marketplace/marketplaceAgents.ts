@@ -93,8 +93,10 @@ export class MarketplaceAgents extends BaseElement {
     return this.createElementFromLocator(agent);
   };
 
-  public getAgentDescription(entity: DialAIEntityModel | string) {
-    return this.getAgent(entity)
+  public getAgentDescription(entity: DialAIEntityModel | string | BaseElement) {
+    const element =
+      entity instanceof BaseElement ? entity : this.getAgent(entity);
+    return element
       .getChildElementBySelector(MarketplaceAgentSelectors.description)
       .getChildElementBySelector(`${Attributes.visible}=true`);
   }

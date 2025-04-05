@@ -1,31 +1,46 @@
 import { API } from '@/src/testData';
-import { AddApplicationFormSelector } from '@/src/ui/selectors';
-import { BaseElement } from '@/src/ui/webElements';
+import { AddApplicationGeneralInfoFormSelector } from '@/src/ui/selectors';
+import { AppEditorForm } from '@/src/ui/webElements/appEditor/appEditorForm';
 import { Locator, Page } from '@playwright/test';
 
-export class AppEditorGeneralForm extends BaseElement {
+export class AppEditorGeneralForm extends AppEditorForm {
   constructor(page: Page, parentLocator: Locator) {
     super(
       page,
-      AddApplicationFormSelector.appGeneralFormContainer,
+      AddApplicationGeneralInfoFormSelector.appGeneralFormContainer,
       parentLocator,
     );
   }
 
-  public name = this.getChildElementBySelector(AddApplicationFormSelector.name);
+  public name = this.getChildElementBySelector(
+    AddApplicationGeneralInfoFormSelector.name,
+  );
   public version = this.getChildElementBySelector(
-    AddApplicationFormSelector.version,
+    AddApplicationGeneralInfoFormSelector.version,
+  );
+  public description = this.getChildElementBySelector(
+    AddApplicationGeneralInfoFormSelector.description,
+  );
+  public topics = this.getChildElementBySelector(
+    AddApplicationGeneralInfoFormSelector.topics,
   );
   public nextButton = this.getChildElementBySelector(
-    AddApplicationFormSelector.nextButton,
+    AddApplicationGeneralInfoFormSelector.nextButton,
   );
 
-  public async fillInAppFields(options: { name?: string; version?: string }) {
+  public async fillInAppFields(options: {
+    name?: string;
+    version?: string;
+    description?: string;
+  }) {
     if (options.name) {
       await this.name.fillInInput(options.name);
     }
     if (options.version) {
       await this.version.fillInInput(options.version);
+    }
+    if (options.description) {
+      await this.description.fillInInput(options.description);
     }
   }
 

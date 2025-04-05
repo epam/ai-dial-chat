@@ -22,4 +22,16 @@ export class AppEditorPage extends BasePage {
     await applicationGeneralForm.waitForState();
     await applicationPreview.waitForState();
   }
+
+  async waitForPageLoadedForEdit() {
+    const appEditorContainer = this.getAppEditorContainer();
+    const applicationViewForm = appEditorContainer.getAppEditorViewForm();
+    const applicationPreview = appEditorContainer.getAppEditorChatMode();
+    await this.appEditorContainer
+      .getChatLoader()
+      .waitForState({ state: 'hidden' });
+    await appEditorContainer.getAppEditorHeader().waitForState();
+    await applicationViewForm.waitForState();
+    await applicationPreview.waitForState();
+  }
 }
