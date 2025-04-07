@@ -23,7 +23,10 @@ import {
   isReplayAsIsConversation,
   isReplayConversation,
 } from '@/src/utils/app/conversation';
-import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
+import {
+  isConversationWithFormSchema,
+  isFormSchemaValid,
+} from '@/src/utils/app/form-schema';
 import { isEntityIdExternal } from '@/src/utils/app/id';
 import { is4XLScreen } from '@/src/utils/app/mobile';
 import { doesModelHaveConfiguration } from '@/src/utils/app/models';
@@ -143,6 +146,12 @@ const ChatView = memo(() => {
   );
   const notAvailableEntityType = useAppSelector(
     ChatSelectors.selectNotAvailableEntityType,
+  );
+  const isConfigurationSchemaLoading = useAppSelector(
+    ChatSelectors.selectIsConfigurationSchemaLoading,
+  );
+  const configurationSchema = useAppSelector(
+    ChatSelectors.selectConfigurationSchema,
   );
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
@@ -537,7 +546,9 @@ const ChatView = memo(() => {
 
   const isConversationWithSchema = selectedConversations.some(
     (conv) =>
-      doesModelHaveConfiguration(modelsMap[conv.model.id]) ||
+      (!isConfigurationSchemaLoading &&
+        configurationSchema &&
+        isFormSchemaValid(configurationSchema)) ||
       isConversationWithFormSchema(conv),
   );
 

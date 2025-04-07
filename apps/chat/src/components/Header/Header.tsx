@@ -147,6 +147,7 @@ const Header = Inversify.register('Header', () => {
               isOpened={showPromptbar}
               onToggle={handleTogglePromtbar}
               dataQa="right-panel-toggle"
+              rightSide
             />
           )}
         </>
