@@ -14,6 +14,7 @@ import { getLayout } from '@/src/pages/_app';
 
 import { BaseHeader } from '@/src/components/Header/BaseHeader';
 import { ProfileSections } from '@/src/components/Profile/Profile';
+import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
 function Profile() {
   const router = useRouter();
@@ -30,6 +31,7 @@ function Profile() {
     <div className="flex size-full flex-col sm:pt-0">
       <BaseHeader />
       <ProfileSections />
+      <SettingDialog />
     </div>
   );
 }
