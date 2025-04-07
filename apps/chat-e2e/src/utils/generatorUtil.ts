@@ -82,4 +82,16 @@ export class GeneratorUtil {
     }
     return version;
   }
+
+  static randomShortAndLongDescription(): string {
+    return `${this.randomShortDescription()}\n\n${this.randomLongDescription()}`;
+  }
+
+  static randomShortDescription() {
+    return `short description: ${GeneratorUtil.randomString(20)}`;
+  }
+
+  static randomLongDescription() {
+    return `long description: ${GeneratorUtil.randomString(150)}`;
+  }
 }

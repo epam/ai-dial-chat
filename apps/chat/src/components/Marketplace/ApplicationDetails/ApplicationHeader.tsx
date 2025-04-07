@@ -57,7 +57,10 @@ export const ApplicationDetailsHeader = ({ entity, isPreview }: Props) => {
   );
 
   return (
-    <header className="flex items-start justify-between px-3 py-4 md:p-6">
+    <header
+      className="flex items-start justify-between px-3 py-4 md:p-6"
+      data-qa="application-header"
+    >
       <div className="flex w-full items-center gap-2 overflow-hidden md:gap-4">
         <ShareIcon
           {...entity}
