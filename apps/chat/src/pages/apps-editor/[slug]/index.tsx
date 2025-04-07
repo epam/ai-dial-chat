@@ -23,6 +23,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { AppsEditorHeader } from '@/src/components/AppsEditor/AppsEditorHeader';
 import { GeneralInfoView } from '@/src/components/AppsEditor/GeneralInfoView/GeneralInfoView';
+import { ChatModalsManager } from '@/src/components/Chat/ChatModalsManager';
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import { getLayout } from '../../_app';
@@ -88,6 +89,7 @@ export default function AppsEditor() {
               schema={isSchemaApplicationType ? schema : null}
             />
           </div>
+          <ChatModalsManager />
         </>
       )}
     </div>
