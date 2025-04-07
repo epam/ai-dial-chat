@@ -57,9 +57,9 @@ const ChatStartersView = ({ schema }: ChatStartersViewProps) => {
       onChange={handleChange}
       buttonsWrapperClassName="overflow-y-hidden justify-center"
       buttonClassName="shrink-0"
-      wrapperClassName="lg:items-center"
+      wrapperClassName="items-center"
       propertyWrapperClassName={
-        isChatFullWidth ? 'mx-4 md:mx-20' : 'max-w-screen-md'
+        isChatFullWidth ? 'mx-4 md:mx-20' : 'mx-4 lg:mx-0 max-w-screen-md'
       }
     />
   );
