@@ -1,5 +1,3 @@
-import { Tags } from '@/src/ui/domData';
-
 export const marketplaceContainer = '[data-qa="marketplace"]';
 
 export const MarketplaceSelectors = {
