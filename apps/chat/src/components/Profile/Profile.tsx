@@ -15,6 +15,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { ConfirmDialog } from '../Common/ConfirmDialog';
+import { FooterMessage } from '../Common/FooterMessage';
 import { UserAvatar } from './User/UserAvatar';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -125,9 +126,14 @@ const ProfileActionsSection = () => {
 
 export const ProfileSections = () => {
   return (
-    <div className="divide-y divide-secondary">
-      <ProfileUserSection />
-      <ProfileActionsSection />
-    </div>
+    <>
+      <section className="divide-y divide-secondary">
+        <ProfileUserSection />
+        <ProfileActionsSection />
+      </section>
+      <section className="flex flex-1 items-end p-4">
+        <FooterMessage />
+      </section>
+    </>
   );
 };
