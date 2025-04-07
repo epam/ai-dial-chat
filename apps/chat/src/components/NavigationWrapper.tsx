@@ -255,7 +255,7 @@ const Navigation = () => {
       className="order-last flex h-[52px] w-full shrink-0 flex-row items-center justify-between gap-2 border-tertiary bg-layer-3 md:z-40 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start md:border-r md:py-2"
       data-qa="navigation-panel"
     >
-      <div className="flex size-full flex-row items-center justify-around gap-2 md:flex-col md:justify-start">
+      <div className="flex grow flex-row items-center justify-around gap-2 overflow-y-auto md:flex-col md:justify-start">
         <NavigationButton
           onClick={handleChatClick}
           tooltip={t('Chat')}

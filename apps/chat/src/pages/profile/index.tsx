@@ -13,7 +13,7 @@ import { Routes } from '@/src/constants/routes';
 import { getLayout } from '@/src/pages/_app';
 
 import { BaseHeader } from '@/src/components/Header/BaseHeader';
-import { ProfileSections } from '@/src/components/Profile/ProfileSections';
+import { ProfileSections } from '@/src/components/Profile/Profile';
 
 function Profile() {
   const router = useRouter();
