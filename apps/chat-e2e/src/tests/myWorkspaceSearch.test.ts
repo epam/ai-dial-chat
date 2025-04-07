@@ -4,11 +4,10 @@ import {
   AddAppMenuOptions,
   ExpectedConstants,
   ExpectedMessages,
-  MarketplaceExpectedMessages,
 } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
 import { BaseElement, MarketplaceAgentProperties } from '@/src/ui/webElements';
-import { GeneratorUtil, ModelsUtil, SortingUtil } from '@/src/utils';
+import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
@@ -552,17 +551,14 @@ dialTest(
 );
 
 dialTest(
-  'Search in My Workspace + Bookmark: search not latest version of model (only one version in My workspace added).\n' +
-    'Search in My Workspace + Bookmark: search by name. Not latest version of application' +
-    "Search by name when model has versions. Suggested results on My W. doesn't include the model if at least one version is used. Latest v.\n" +
-    'Search in My Workspace + Bookmark: search latest version of model (latest and other versions added to My workspace)',
+  'Bookmark an agent from Suggested results results',
   async ({
     marketplacePage,
     marketplaceHeader,
     marketplaceAgentsSection,
+    marketplaceAgents,
     navigationPanel,
     marketplace,
-    agentDetailsModal,
     localStorageManager,
     setTestIds,
     baseAssertion,
@@ -571,49 +567,51 @@ dialTest(
     adminApplicationApiHelper,
     adminPublicationApiHelper,
     publishRequestBuilder,
-    agentVersionsDropdownMenuAssertion,
   }) => {
-    setTestIds('EPMRTC-4709', 'EPMRTC-4710', 'EPMRTC-4626', 'EPMRTC-4711');
-    let firstAppVersion: string;
-    let secondAppVersion: string;
-    let sortedVersions: string[];
-    let appName: string;
+    setTestIds('EPMRTC-5906');
+    let appVersion: string;
+    let firstAppName: string;
+    let secondAppName: string;
+    let thirdAppName: string;
+    const commonAppNamePart = GeneratorUtil.randomApplicationName();
 
     await dialTest.step(
-      'Prepare application with two versions available in the "Marketplace"',
+      'Prepare two applications with equal versions and app with common name part available in the "Marketplace"',
       async () => {
         const recentModelIds = await localStorageManager.getRecentModelsIds();
         const recentNames = ModelsUtil.getRecentAgentsNames(recentModelIds);
         const recentVersions =
           ModelsUtil.getRecentAgentsVersions(recentModelIds);
 
-        firstAppVersion = GeneratorUtil.randomApplicationVersion([
+        appVersion = GeneratorUtil.randomApplicationVersion([
           ...recentNames,
           ...recentVersions,
         ]);
-        secondAppVersion = GeneratorUtil.randomApplicationVersion([
-          ...recentNames,
-          ...recentVersions,
-          firstAppVersion,
-        ]);
-        appName = GeneratorUtil.randomApplicationName();
-        sortedVersions = SortingUtil.sortVersionsArray([
-          firstAppVersion,
-          secondAppVersion,
-        ]);
+        firstAppName =
+          commonAppNamePart + GeneratorUtil.randomApplicationName();
+        secondAppName =
+          GeneratorUtil.randomApplicationName() + commonAppNamePart;
+        thirdAppName =
+          GeneratorUtil.randomApplicationName() +
+          commonAppNamePart +
+          GeneratorUtil.randomApplicationName();
 
-        const firstVersionCustomApplicationModel = customApplicationBuilder
-          .withDisplayName(appName)
-          .withDisplayVersion(firstAppVersion)
+        const firstApplicationModel = customApplicationBuilder
+          .withDisplayName(firstAppName)
+          .withDisplayVersion(appVersion)
           .build();
-        const secondVersionCustomApplicationModel = customApplicationBuilder
-          .withDisplayName(appName)
-          .withDisplayVersion(secondAppVersion)
+        const secondApplicationModel = customApplicationBuilder
+          .withDisplayName(secondAppName)
+          .withDisplayVersion(appVersion)
+          .build();
+        const thirdApplicationModel = customApplicationBuilder
+          .withDisplayName(thirdAppName)
           .build();
 
         for (const appModel of [
-          firstVersionCustomApplicationModel,
-          secondVersionCustomApplicationModel,
+          firstApplicationModel,
+          secondApplicationModel,
+          thirdApplicationModel,
         ]) {
           const adminApp =
             await adminApplicationApiHelper.createApplication(appModel);
@@ -632,168 +630,64 @@ dialTest(
     );
 
     await dialTest.step(
-      'On the "Marketplace" tab open created app and add not latest version to "My Workspace"',
+      'On the "Marketplace" tab search agents by the version and verify two cards are found',
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
-        const agentElement =
-          await marketplaceAgentsSection.findAgentElement(appName);
-        await agentElement.click();
-        await agentDetailsModal.versionMenuTrigger.click();
-        await agentDetailsModal
-          .getVersionDropdownMenu()
-          .selectMenuOption(sortedVersions[1]);
-        await baseAssertion.assertElementState(
-          agentDetailsModal.addBookmarkIcon,
-          'visible',
+        await marketplaceHeader.searchInput.fillInInput(appVersion);
+        const allAgents = await marketplaceAgentsSection.getAllAgents();
+        const expectedAgents = allAgents.filter(
+          (a) =>
+            (a.name === firstAppName || a.name === secondAppName) &&
+            a.version === appVersion,
         );
-        await agentDetailsModal.addAgentToWorkspace();
-        await baseAssertion.assertElementState(
-          agentDetailsModal.removeBookmarkIcon,
-          'visible',
+        baseAssertion.assertValue(
+          expectedAgents.length,
+          2,
+          ExpectedMessages.elementsCountIsValid,
         );
-        await baseAssertion.assertElementText(
-          toast,
-          ExpectedConstants.agentAddedToWorkspaceMessage,
-        );
-        await toast.closeToast();
-        await agentDetailsModal.closeButton.click();
       },
     );
 
     await dialTest.step(
-      'Verify agent with major version is displayed on "My Workspace" tab',
+      'Bookmark the 1st app from "Marketplace" tab and the 2nd one from "My Workspace" tab',
       async () => {
+        const firstAppElement =
+          await marketplaceAgentsSection.findAgentElement(firstAppName);
+        await marketplaceAgents.addAgentToWorkspace(firstAppElement);
+        await toast.closeToast();
         await navigationPanel.myWorkspaceButton.click();
-        const foundAgentElement =
-          await marketplaceAgentsSection.findAgentElement(appName);
-        await baseAssertion.assertElementState(foundAgentElement, 'visible');
-        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/3138
-        // await baseAssertion.assertElementText(
-        //   marketplaceAgents.getAgentVersion(foundAgentElement),
-        //   sortedVersions[0],
-        // );
+        const secondAppElement =
+          await marketplaceAgentsSection.findAgentElement(secondAppName);
+        await marketplaceAgents.addAgentToWorkspace(secondAppElement);
+        await toast.closeToast();
       },
     );
 
     await dialTest.step(
-      'Search by installed agent version/name and verify agent is found, no other agents are suggested',
+      'Verify both apps are displayed as a search result, no other agents are suggested',
       async () => {
-        for (const searchTerm of [sortedVersions[1], appName]) {
-          await marketplaceHeader.searchInput.fillInInput(searchTerm);
-          const allAgents = await marketplaceAgentsSection.getAllAgents();
-          const filteredAgents = allAgents.filter(
-            (agent) => agent.isWorkspaceAgent,
-          );
-          baseAssertion.assertValue(
-            filteredAgents.length,
-            1,
-            ExpectedMessages.elementsCountIsValid,
-          );
-          baseAssertion.assertArrayIncludesAll(
-            filteredAgents.map((agent) => agent.name),
-            [appName],
-            ExpectedMessages.searchResultsAreCorrect,
-          );
-
-          //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/3138
-          // const actualAppElement =
-          //   await marketplaceAgentsSection.findAgentElement(appName);
-          // await baseAssertion.assertElementText(
-          //   marketplaceAgents.getAgentVersion(actualAppElement),
-          //   sortedVersions[0],
-          // );
-
-          await baseAssertion.assertElementState(
-            marketplace.marketplaceSuggestionsLabel,
-            'hidden',
-          );
-          baseAssertion.assertValue(
-            allAgents.filter((agent) => agent.isSuggested).length,
-            0,
-            ExpectedMessages.elementsCountIsValid,
-          );
-        }
-      },
-    );
-
-    await dialTest.step.skip(
-      'Back to the "Marketplace" tab and add latest version to "My Workspace"',
-      async () => {
-        await navigationPanel.marketplaceHomePageButton.click();
-        const actualAppElement =
-          await marketplaceAgentsSection.findAgentElement(appName);
-        await actualAppElement.click();
-        await agentDetailsModal.versionMenuTrigger.click();
-        await agentDetailsModal
-          .getVersionDropdownMenu()
-          .selectMenuOption(sortedVersions[0]);
-        await baseAssertion.assertElementState(
-          agentDetailsModal.addBookmarkIcon,
-          'visible',
-        );
-        await agentDetailsModal.addAgentToWorkspace();
-        await baseAssertion.assertElementState(
-          agentDetailsModal.removeBookmarkIcon,
-          'visible',
-        );
-        await baseAssertion.assertElementText(
-          toast,
-          ExpectedConstants.agentAddedToWorkspaceMessage,
-        );
-        await toast.closeToast();
-        await agentDetailsModal.closeButton.click();
-      },
-    );
-
-    await dialTest.step.skip(
-      'Verify agent with latest version is displayed on "My Workspace" tab',
-      async () => {
-        await navigationPanel.myWorkspaceButton.click();
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
-        baseAssertion.assertArrayIncludesAll(
-          actualAgents.map((agent) => agent.name),
-          [appName],
-          MarketplaceExpectedMessages.agentIsVisible,
-        );
-        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/3138
-        // await baseAssertion.assertElementText(
-        //   marketplaceAgents.getAgentVersion(appName),
-        //   sortedVersions[0],
-        // );
-      },
-    );
-
-    await dialTest.step.skip(
-      'Back to "My Workspace" and verify agent is found, no other agents are suggested',
-      async () => {
-        await navigationPanel.myWorkspaceButton.click();
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
-        const filteredAgents = actualAgents.filter(
+        const allAgents = await marketplaceAgentsSection.getAllAgents();
+        const filteredAgents = allAgents.filter(
           (agent) => agent.isWorkspaceAgent,
         );
         baseAssertion.assertValue(
           filteredAgents.length,
-          1,
+          2,
           ExpectedMessages.elementsCountIsValid,
         );
         baseAssertion.assertArrayIncludesAll(
           filteredAgents.map((agent) => agent.name),
-          [appName],
+          [firstAppName, secondAppName],
           ExpectedMessages.searchResultsAreCorrect,
         );
-        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/3138
-        // await baseAssertion.assertElementText(
-        //   filteredAgents.getAgentVersion(appName),
-        //   sortedVersions[0],
-        // );
 
         await baseAssertion.assertElementState(
           marketplace.marketplaceSuggestionsLabel,
           'hidden',
         );
         baseAssertion.assertValue(
-          actualAgents.filter((agent) => agent.isSuggested).length,
+          allAgents.filter((agent) => agent.isSuggested).length,
           0,
           ExpectedMessages.elementsCountIsValid,
         );
@@ -801,23 +695,36 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open found agent and verify set version and available in dropdown menu versions',
+      'Search by common part of app names and verify two apps are found, one app is suggested',
       async () => {
-        const actualAgentElement =
-          await marketplaceAgentsSection.findAgentElement(appName);
-        await actualAgentElement.click();
-        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/3138
-        // await baseAssertion.assertElementText(
-        //   agentDetailsModal.agentVersion,
-        //   sortedVersions[0],
-        // );
-        await agentDetailsModal.versionMenuTrigger.click();
-        //TODO: replace with commented assertion when fixed https://github.com/epam/ai-dial-chat/issues/3138
-        // await agentVersionsDropdownMenuAssertion.assertMenuOptions(
-        //   sortedVersions,
-        // );
-        await agentVersionsDropdownMenuAssertion.assertMenuIncludesOptions(
-          ...sortedVersions,
+        await marketplaceHeader.searchInput.fillInInput(commonAppNamePart);
+        const allAgents = await marketplaceAgentsSection.getAllAgents();
+        const filteredWorkspaceAgents = allAgents.filter(
+          (agent) => agent.isWorkspaceAgent,
+        );
+        baseAssertion.assertValue(
+          filteredWorkspaceAgents.length,
+          2,
+          ExpectedMessages.elementsCountIsValid,
+        );
+        baseAssertion.assertArrayIncludesAll(
+          filteredWorkspaceAgents.map((agent) => agent.name),
+          [firstAppName, secondAppName],
+          ExpectedMessages.searchResultsAreCorrect,
+        );
+
+        const filteredSuggestedAgents = allAgents.filter(
+          (agent) => agent.isSuggested,
+        );
+        baseAssertion.assertValue(
+          filteredSuggestedAgents.length,
+          1,
+          ExpectedMessages.elementsCountIsValid,
+        );
+        baseAssertion.assertArrayIncludesAll(
+          filteredSuggestedAgents.map((agent) => agent.name),
+          [thirdAppName],
+          ExpectedMessages.searchResultsAreCorrect,
         );
       },
     );

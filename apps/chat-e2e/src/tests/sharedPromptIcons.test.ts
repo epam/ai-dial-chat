@@ -58,6 +58,10 @@ dialTest(
         await shareModalAssertion.assertMessageContent(
           ExpectedConstants.sharePromptText,
         );
+        await shareModalAssertion.assertElementText(
+          shareModal.sharedAccessMessage,
+          ExpectedConstants.notSharedPromptText,
+        );
       },
     );
 

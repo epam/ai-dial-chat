@@ -124,7 +124,6 @@ export const PromptComponent = ({
   const [publishPromptAction, setPublishPromptAction] =
     useState<PublishActions>();
   const [isContextMenu, setIsContextMenu] = useState(false);
-  const [isUnsharing, setIsUnsharing] = useState(false);
 
   const screenState = useScreenState();
 
@@ -159,8 +158,25 @@ export const PromptComponent = ({
     }
   }, [showModal]);
 
-  const handleOpenUnsharing = useCallback(() => {
-    setIsUnsharing(true);
+  const handleOpenSharing: MouseEventHandler<HTMLButtonElement> =
+    useCallback(() => {
+      dispatch(
+        ShareActions.share({
+          featureType: FeatureType.Prompt,
+          entity: prompt,
+        }),
+      );
+      setIsOpened(false);
+    }, [dispatch, prompt]);
+
+  const handleOpenPublishing: MouseEventHandler<HTMLButtonElement> =
+    useCallback(() => {
+      setIsPublishing(true);
+    }, []);
+
+  const handleClosePublishModal = useCallback(() => {
+    setIsPublishing(false);
+    setIsUnpublishing(false);
   }, []);
 
   const handleOpenPublishing = useCallback(() => {

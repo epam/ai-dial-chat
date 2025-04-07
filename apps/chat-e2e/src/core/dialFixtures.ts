@@ -59,6 +59,8 @@ import {
 } from '@/src/assertions';
 import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
 import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
+import { AgentDetailsModalAssertion } from '@/src/assertions/agentDetailsModalAssertion';
+import { AppEditorHeaderAssertion } from '@/src/assertions/appEditorHeaderAssertion';
 import { LocalStorageAssertion } from '@/src/assertions/localStorageAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
 import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateModalAssertion';
@@ -164,6 +166,7 @@ const dialTest = test.extend<{
   marketplaceHeader: MarketplaceHeader;
   addAppDropdownMenu: DropdownMenu;
   appEditorHeader: AppEditorHeader;
+  appEditorHeaderAssertion: AppEditorHeaderAssertion;
   appEditorGeneralForm: AppEditorGeneralForm;
   appEditorPreview: AppEditorPreview;
   appEditorViewForm: AppEditorViewForm;
@@ -326,6 +329,7 @@ const dialTest = test.extend<{
   localStorageAssertion: LocalStorageAssertion;
   promptPreviewModal: PromptPreviewModalWindow;
   promptPreviewModalAssertion: PromptPreviewModalAssertion;
+  agentDetailsModalAssertion: AgentDetailsModalAssertion;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper }, use) => {
@@ -335,6 +339,18 @@ const dialTest = test.extend<{
     },
     { scope: 'test', auto: true },
   ],
+  agentDetailsModalAssertion: async ({ agentDetailsModal }, use) => {
+    const agentDetailsModalAssertion = new AgentDetailsModalAssertion(
+      agentDetailsModal,
+    );
+    await use(agentDetailsModalAssertion);
+  },
+  appEditorHeaderAssertion: async ({ appEditorHeader }, use) => {
+    const appEditorHeaderAssertion = new AppEditorHeaderAssertion(
+      appEditorHeader,
+    );
+    await use(appEditorHeaderAssertion);
+  },
   sendMessageInputAttachmentsAssertions: async (
     { sendMessageInputAttachments },
     use,
