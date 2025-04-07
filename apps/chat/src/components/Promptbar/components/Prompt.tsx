@@ -158,27 +158,6 @@ export const PromptComponent = ({
     }
   }, [showModal]);
 
-  const handleOpenSharing: MouseEventHandler<HTMLButtonElement> =
-    useCallback(() => {
-      dispatch(
-        ShareActions.share({
-          featureType: FeatureType.Prompt,
-          entity: prompt,
-        }),
-      );
-      setIsOpened(false);
-    }, [dispatch, prompt]);
-
-  const handleOpenPublishing: MouseEventHandler<HTMLButtonElement> =
-    useCallback(() => {
-      setIsPublishing(true);
-    }, []);
-
-  const handleClosePublishModal = useCallback(() => {
-    setIsPublishing(false);
-    setIsUnpublishing(false);
-  }, []);
-
   const handleOpenPublishing = useCallback(() => {
     setPublishPromptAction(PublishActions.ADD);
   }, []);
@@ -271,7 +250,6 @@ export const PromptComponent = ({
 
   const handleCloseDialogs = useCallback(() => {
     setIsDeleting(false);
-    setIsUnsharing(false);
     setPublishPromptAction(undefined);
     setIsMoveTo(false);
   }, []);
@@ -437,7 +415,6 @@ export const PromptComponent = ({
               onExport={handleExport}
               onOpenMoveToModal={handleOpenMoveToModal}
               onShare={handleShare}
-              onUnshare={handleOpenUnsharing}
               onPublish={handleOpenPublishing}
               onUnpublish={
                 additionalItemData?.publicationUrl
@@ -460,7 +437,6 @@ export const PromptComponent = ({
         moveTo={moveToModalModel}
         prompt={prompt}
         isDeleteDialog={isDeleting}
-        isUnshareDialog={isUnsharing}
         publishPromptAction={publishPromptAction}
         onCloseModals={handleCloseDialogs}
       />

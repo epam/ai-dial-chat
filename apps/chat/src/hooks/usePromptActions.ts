@@ -147,19 +147,10 @@ export const usePromptActions = (prompt: Prompt) => {
     dispatch(
       ShareActions.share({
         featureType: FeatureType.Prompt,
-        resourceId: prompt.id,
+        entity: prompt,
       }),
     );
-  }, [dispatch, prompt.id]);
-
-  const handleUnshare = useCallback(() => {
-    dispatch(
-      ShareActions.revokeAccess({
-        resourceId: prompt.id,
-        featureType: FeatureType.Prompt,
-      }),
-    );
-  }, [dispatch, prompt.id]);
+  }, [dispatch, prompt]);
 
   const handleDelete = useCallback(() => {
     if (prompt.sharedWithMe) {
@@ -189,7 +180,6 @@ export const usePromptActions = (prompt: Prompt) => {
     handleDuplicate,
     handleMoveToFolder,
     handleShare,
-    handleUnshare,
     handleDelete,
     handleInfo,
     handleUse,

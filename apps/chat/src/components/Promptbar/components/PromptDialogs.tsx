@@ -24,7 +24,6 @@ import { PublishActions } from '@epam/ai-dial-shared';
 interface Props {
   prompt: Prompt;
   isDeleteDialog?: boolean;
-  isUnshareDialog?: boolean;
   publishPromptAction?: PublishActions;
   moveTo?: { isOpen: boolean; isMobileOnly: boolean };
   onCloseModals: () => void;
@@ -33,7 +32,6 @@ interface Props {
 export const PromptDialogs: React.FC<Props> = ({
   prompt,
   isDeleteDialog,
-  isUnshareDialog,
   publishPromptAction,
   moveTo,
   onCloseModals,
@@ -48,8 +46,7 @@ export const PromptDialogs: React.FC<Props> = ({
 
   const folders = useAppSelector(filteredFoldersSelector);
 
-  const { handleMoveToFolder, handleDelete, handleUnshare } =
-    usePromptActions(prompt);
+  const { handleMoveToFolder, handleDelete } = usePromptActions(prompt);
 
   const handleConfirmDelete = useCallback(
     (isConfirmed: boolean) => {
@@ -60,17 +57,6 @@ export const PromptDialogs: React.FC<Props> = ({
       onCloseModals();
     },
     [handleDelete, onCloseModals],
-  );
-
-  const handleConfirmUnshare = useCallback(
-    (isConfirmed: boolean) => {
-      if (isConfirmed) {
-        handleUnshare();
-      }
-
-      onCloseModals();
-    },
-    [handleUnshare, onCloseModals],
   );
 
   return (
@@ -112,20 +98,6 @@ export const PromptDialogs: React.FC<Props> = ({
           confirmLabel={t('Delete')}
           cancelLabel={t('Cancel')}
           onClose={handleConfirmDelete}
-        />
-      )}
-      {isUnshareDialog && (
-        <ConfirmDialog
-          isOpen
-          heading={t('Confirm unsharing: {{promptName}}', {
-            promptName: prompt.name,
-          })}
-          description={
-            t('Are you sure that you want to unshare this prompt?') ?? ''
-          }
-          confirmLabel={t('Unshare')}
-          cancelLabel={t('Cancel')}
-          onClose={handleConfirmUnshare}
         />
       )}
     </>

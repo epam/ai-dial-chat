@@ -6,7 +6,6 @@ import {
   IconInfoCircle,
   IconTrashX,
   IconUserShare,
-  IconUserX,
   IconWorldShare,
   TablerIconsProps,
 } from '@tabler/icons-react';
@@ -71,7 +70,6 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
   const [publishPromptAction, setPublishPromptAction] =
     useState<PublishActions>();
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isUnsharing, setIsUnsharing] = useState(false);
 
   const { handleDuplicate, handleExport, handleInfo, handleShare } =
     usePromptActions(prompt);
@@ -85,7 +83,6 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
 
   const handleCloseDialogs = useCallback(() => {
     setIsDeleting(false);
-    setIsUnsharing(false);
     setPublishPromptAction(undefined);
     setIsMoveTo(false);
   }, []);
@@ -96,28 +93,28 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
   const promptItems = useMemo(
     () => [
       {
-        tooltip: 'Edit prompt',
+        tooltip: 'Edit',
         display: isMyPrompt,
         dataQa: 'edit-prompt',
         Icon: IconEdit,
         onClick: onEditMode,
       },
       {
-        tooltip: 'Export prompt',
+        tooltip: 'Export',
         display: true,
         dataQa: 'export-prompt',
         Icon: IconFileArrowRight,
         onClick: handleExport,
       },
       {
-        tooltip: 'Duplicate prompt',
+        tooltip: 'Duplicate',
         display: true,
         dataQa: 'duplicate-prompt',
         Icon: IconCopy,
         onClick: handleDuplicate,
       },
       {
-        tooltip: 'Move prompt',
+        tooltip: 'Move',
         display: isMyPrompt,
         dataQa: 'move-prompt',
         Icon: IconFolderShare,
@@ -126,23 +123,14 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
         },
       },
       {
-        tooltip: 'Share prompt',
+        tooltip: 'Share',
         display: isMyPrompt && isSharingEnabled,
         dataQa: 'share-prompt',
         Icon: IconUserShare,
         onClick: handleShare,
       },
       {
-        tooltip: 'Unshare prompt',
-        display: !!prompt.isShared && isSharingEnabled,
-        dataQa: 'unshare-prompt',
-        Icon: IconUserX,
-        onClick: () => {
-          setIsUnsharing(true);
-        },
-      },
-      {
-        tooltip: 'Publish prompt',
+        tooltip: 'Publish',
         display: !isPublic && isPublishingEnabled,
         dataQa: 'publish-prompt',
         Icon: IconWorldShare,
@@ -151,7 +139,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
         },
       },
       {
-        tooltip: 'Unpublish prompt',
+        tooltip: 'Unpublish',
         display: isPublic && isPublishingEnabled,
         dataQa: 'publish-prompt',
         Icon: (props) => (
@@ -162,7 +150,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
         },
       },
       {
-        tooltip: 'Delete prompt',
+        tooltip: 'Delete',
         display: isMyEntity || !!prompt.sharedWithMe,
         dataQa: 'delete-prompt',
         Icon: IconTrashX,
@@ -171,7 +159,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
         },
       },
       {
-        tooltip: 'Prompt info',
+        tooltip: 'Info',
         display: true,
         dataQa: 'info-prompt',
         Icon: IconInfoCircle,
@@ -188,7 +176,6 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
       isPublishingEnabled,
       isSharingEnabled,
       onEditMode,
-      prompt.isShared,
       prompt.sharedWithMe,
     ],
   );
@@ -209,7 +196,6 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
       <PromptDialogs
         prompt={prompt}
         isDeleteDialog={isDeleting}
-        isUnshareDialog={isUnsharing}
         publishPromptAction={publishPromptAction}
         onCloseModals={handleCloseDialogs}
         moveTo={moveToModel}
