@@ -61,8 +61,8 @@ const ChatStartersView = ({ schema }: ChatStartersViewProps) => {
       buttonClassName="shrink-0"
       wrapperClassName="items-center"
       propertyWrapperClassName={classNames(
-        'max-w-full px-4 lg:px-0',
-        isChatFullWidth ? 'md:mx-20' : 'lg:w-[768px]',
+        'max-w-full px-4',
+        isChatFullWidth ? 'lg:px-20' : 'lg:w-[768px]',
       )}
     />
   );
