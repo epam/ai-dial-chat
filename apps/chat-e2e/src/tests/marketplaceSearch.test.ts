@@ -413,6 +413,7 @@ dialTest(
             (a) =>
               a.name === firstAppName &&
               a.isEditable &&
+              a.isWorkspaceAgent &&
               a.version === appCommonVersion,
           ).length,
           1,
@@ -423,6 +424,7 @@ dialTest(
             (a) =>
               a.name === secondAppName &&
               a.isEditable &&
+              a.isWorkspaceAgent &&
               a.version === appCommonVersion,
           ).length,
           1,
@@ -434,10 +436,22 @@ dialTest(
               a.name === secondAppName &&
               !a.isEditable &&
               a.version === appCommonVersion &&
-              a.isBookmarked,
+              a.isWorkspaceAgent,
           ).length,
           1,
           ExpectedMessages.elementsCountIsValid,
+        );
+
+        const bookmarkedSecondAgent =
+          await marketplaceAgentsSection.findAgentElement(secondAppName, {
+            isWorkspaceAgent: true,
+            isEditable: false,
+          });
+        await baseAssertion.assertElementState(
+          marketplaceAgents.getAgentElementRemoveBookmarkIcon(
+            bookmarkedSecondAgent,
+          ),
+          'visible',
         );
       },
     );

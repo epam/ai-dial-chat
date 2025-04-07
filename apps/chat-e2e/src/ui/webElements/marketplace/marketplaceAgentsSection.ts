@@ -229,9 +229,6 @@ export class MarketplaceAgentsSection extends BaseElement {
             if (await versionElement.isVisible()) {
               agentVersion = await versionElement.getElementInnerContent();
             }
-            const hasRemoveBookmarkIcon = await visibleAgents
-              .getAgentElementRemoveBookmarkIcon(agentBaseElement)
-              .isVisible();
             allAgents.push({
               name: agentName,
               version: agentVersion ?? undefined,
@@ -242,7 +239,6 @@ export class MarketplaceAgentsSection extends BaseElement {
                 agentType ===
                 FoundMarketplaceAgents[FoundMarketplaceAgents.filtered],
               isEditable: hasPencilIcon,
-              isBookmarked: hasRemoveBookmarkIcon,
             });
           }
         }

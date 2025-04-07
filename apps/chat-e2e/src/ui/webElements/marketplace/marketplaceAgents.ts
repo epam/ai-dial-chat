@@ -19,7 +19,6 @@ export interface MarketplaceAgentProperties {
   isSuggested: boolean;
   isWorkspaceAgent: boolean;
   isEditable: boolean;
-  isBookmarked: boolean;
 }
 
 export class MarketplaceAgents extends BaseElement {
