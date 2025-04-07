@@ -1,6 +1,8 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 
 import { useTranslation } from 'next-i18next';
+
+import classNames from 'classnames';
 
 import { dispatchMouseLeaveEvent } from '@/src/utils/app/common';
 
@@ -35,26 +37,7 @@ export const ToggleSidebarButton: React.FC<Props> = ({
     onToggle();
   };
 
-  const ToggleIcon = useCallback(() => {
-    const iconProps = {
-      className: 'text-secondary hover:text-accent-primary',
-      width: iconSize,
-      height: iconSize,
-    };
-
-    if (isOpened)
-      return rightSide ? (
-        <MoveRightIcon {...iconProps} />
-      ) : (
-        <MoveLeftIcon {...iconProps} />
-      );
-
-    return rightSide ? (
-      <MoveLeftIcon {...iconProps} />
-    ) : (
-      <MoveRightIcon {...iconProps} />
-    );
-  }, [iconSize, isOpened, rightSide]);
+  const Icon = isOpened ? MoveLeftIcon : MoveRightIcon;
 
   return (
     <Tooltip isTriggerClickable tooltip={t(tooltip)}>
@@ -63,7 +46,14 @@ export const ToggleSidebarButton: React.FC<Props> = ({
         data-qa={dataQa}
         onClick={handleToggle}
       >
-        <ToggleIcon />
+        <Icon
+          className={classNames(
+            'text-secondary hover:text-accent-primary',
+            rightSide && 'rotate-180',
+          )}
+          width={iconSize}
+          height={iconSize}
+        />
       </button>
     </Tooltip>
   );
