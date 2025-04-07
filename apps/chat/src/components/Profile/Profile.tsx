@@ -14,7 +14,7 @@ import { useAppDispatch } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { ConfirmDialog } from '../Common/ConfirmDialog';
-import { UserAvatar } from './UserAvatar';
+import { UserAvatar } from './User/UserAvatar';
 
 interface ProfileSectionProps {
   children: React.ReactNode;

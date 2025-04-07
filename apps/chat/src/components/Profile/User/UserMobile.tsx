@@ -22,7 +22,7 @@ import { FooterMessage } from '@/src/components/Common/FooterMessage';
 import { CloseSidebarButton } from '../../Buttons/CloseSidebarButton';
 import { withRenderWhen } from '../../Common/RenderWhen';
 import { withRenderForScreen } from '../../Common/ScreenRender';
-import { UserAvatar } from '../UserAvatar';
+import { UserAvatar } from './UserAvatar';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature } from '@epam/ai-dial-shared';

@@ -14,7 +14,7 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
-import { UserAvatar } from '../UserAvatar';
+import { UserAvatar } from './UserAvatar';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature } from '@epam/ai-dial-shared';
