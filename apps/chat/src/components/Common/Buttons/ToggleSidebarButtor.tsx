@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -17,6 +17,7 @@ interface Props {
   isOpened: boolean;
   onToggle: () => void;
   dataQa: string;
+  rightSide?: boolean;
 }
 
 export const ToggleSidebarButton: React.FC<Props> = ({
@@ -25,6 +26,7 @@ export const ToggleSidebarButton: React.FC<Props> = ({
   isOpened,
   onToggle,
   dataQa,
+  rightSide = false,
 }) => {
   const { t } = useTranslation(Translation.Header);
 
@@ -33,6 +35,27 @@ export const ToggleSidebarButton: React.FC<Props> = ({
     onToggle();
   };
 
+  const ToggleIcon = useCallback(() => {
+    const iconProps = {
+      className: 'text-secondary hover:text-accent-primary',
+      width: iconSize,
+      height: iconSize,
+    };
+
+    if (isOpened)
+      return rightSide ? (
+        <MoveRightIcon {...iconProps} />
+      ) : (
+        <MoveLeftIcon {...iconProps} />
+      );
+
+    return rightSide ? (
+      <MoveLeftIcon {...iconProps} />
+    ) : (
+      <MoveRightIcon {...iconProps} />
+    );
+  }, [iconSize, isOpened, rightSide]);
+
   return (
     <Tooltip isTriggerClickable tooltip={t(tooltip)}>
       <button
@@ -40,19 +63,7 @@ export const ToggleSidebarButton: React.FC<Props> = ({
         data-qa={dataQa}
         onClick={handleToggle}
       >
-        {isOpened ? (
-          <MoveLeftIcon
-            className="text-secondary hover:text-accent-primary"
-            width={iconSize}
-            height={iconSize}
-          />
-        ) : (
-          <MoveRightIcon
-            className="text-secondary hover:text-accent-primary"
-            width={iconSize}
-            height={iconSize}
-          />
-        )}
+        <ToggleIcon />
       </button>
     </Tooltip>
   );
