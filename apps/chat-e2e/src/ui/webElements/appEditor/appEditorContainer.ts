@@ -1,5 +1,6 @@
 import { ChatSelectors } from '@/src/ui/selectors';
 import { AppEditorGeneralForm, BaseElement } from '@/src/ui/webElements';
+import { AppEditorChatMode } from '@/src/ui/webElements/appEditor/appEditorChatMode';
 import { AppEditorHeader } from '@/src/ui/webElements/appEditor/appEditorHeader';
 import { AppEditorPreview } from '@/src/ui/webElements/appEditor/appEditorPreview';
 import { AppEditorViewForm } from '@/src/ui/webElements/appEditor/appEditorViewForm';
@@ -10,6 +11,7 @@ export class AppEditorContainer extends BaseLayoutContainer<AppEditorHeader> {
   private appEditorGeneralForm!: AppEditorGeneralForm;
   private appEditorViewForm!: AppEditorViewForm;
   private appEditorPreview!: AppEditorPreview;
+  private appEditorChatMode!: AppEditorChatMode;
 
   getHeader(): AppEditorHeader {
     if (!this.header) {
@@ -50,6 +52,16 @@ export class AppEditorContainer extends BaseLayoutContainer<AppEditorHeader> {
       this.appEditorPreview = new AppEditorPreview(this.page, this.rootLocator);
     }
     return this.appEditorPreview;
+  }
+
+  getAppEditorChatMode(): AppEditorChatMode {
+    if (!this.appEditorChatMode) {
+      this.appEditorChatMode = new AppEditorChatMode(
+        this.page,
+        this.rootLocator,
+      );
+    }
+    return this.appEditorChatMode;
   }
 
   getChatLoader(): BaseElement {
