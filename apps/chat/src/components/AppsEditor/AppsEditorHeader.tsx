@@ -125,7 +125,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
   return (
     <div
       className={classNames(
-        'z-40 flex w-full border-b border-tertiary bg-layer-3',
+        'z-40 flex w-full border-b border-secondary bg-layer-1',
         isOverlay ? 'min-h-[36px]' : 'min-h-[48px]',
       )}
       data-qa="app-editor-header"
@@ -141,7 +141,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
             </button>
           </div>
           <Logo />
-          <div className="h-full border-l border-tertiary"></div>
+          <div className="h-full border-l border-secondary"></div>
           <span
             className="hidden items-center text-primary md:flex"
             data-qa="action-application-type-title"
@@ -234,14 +234,14 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
             </Link>
           )}
 
-          <div className="h-full border-l border-tertiary max-md:border-tertiary md:pl-2">
+          <div className="h-full max-md:pr-2 md:border-l md:border-secondary md:pl-2">
             <User />
           </div>
         </div>
       </div>
 
       {menuOpen && (
-        <div className="absolute left-0 top-[48px] w-full border-b border-tertiary bg-layer-3 md:hidden">
+        <div className="absolute left-0 top-[48px] w-full border-b border-secondary bg-layer-3 md:hidden">
           {tabs.map((tab) => {
             const isDisabled = tab.key === TabKeys.SETTINGS && !id;
             const isActive = pathname === tab.href.pathname;
@@ -249,7 +249,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
               <Link key={tab.key} href={tab.href} passHref>
                 <div
                   className={classNames(
-                    'cursor-pointer border-b border-tertiary px-4 py-2',
+                    'cursor-pointer border-b border-secondary px-4 py-2',
                     isDisabled ? 'text-secondary' : 'text-primary',
                     isActive && !isDisabled
                       ? 'font-semibold text-accent-primary'
