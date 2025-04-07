@@ -10,11 +10,14 @@ import { useLogout } from '@/src/hooks/useLogout';
 
 import { Translation } from '@/src/types/translation';
 
-import { useAppDispatch } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { UserAvatar } from './User/UserAvatar';
+
+import { Feature } from '@epam/ai-dial-shared';
 
 interface ProfileSectionProps {
   children: React.ReactNode;
@@ -64,6 +67,10 @@ const ProfileActionsSection = () => {
 
   const dispatch = useAppDispatch();
 
+  const isHideUserSettingsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.HideUserSettings),
+  );
+
   const [isLogoutConfirmationOpened, setIsLogoutConfirmationOpened] =
     useState(false);
 
@@ -90,10 +97,12 @@ const ProfileActionsSection = () => {
   return (
     <>
       <ProfileSection>
-        <ProfileSectionItem onClick={handleSettingsOpen}>
-          <IconSettings size={18} className="text-secondary" />
-          <span data-qa="settings">{t('Settings')}</span>
-        </ProfileSectionItem>
+        {!isHideUserSettingsEnabled && (
+          <ProfileSectionItem onClick={handleSettingsOpen}>
+            <IconSettings size={18} className="text-secondary" />
+            <span data-qa="settings">{t('Settings')}</span>
+          </ProfileSectionItem>
+        )}
         <ProfileSectionItem onClick={handleOpenLogoutConfirmation}>
           <IconLogout size={18} className="text-secondary" />
           <span data-qa="logout">{t('Log out')}</span>
