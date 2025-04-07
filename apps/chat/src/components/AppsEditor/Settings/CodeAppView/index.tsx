@@ -117,6 +117,7 @@ interface CodeAppViewProps {
   oldApplication: CustomApplicationModel;
   isShared: boolean;
   applicationStatus?: ApplicationStatus;
+  onExit?: () => void;
 }
 
 export const CodeAppView: React.FC<CodeAppViewProps> = ({
@@ -125,6 +126,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
   oldApplication,
   isShared,
   applicationStatus,
+  onExit,
 }) => {
   const { t } = useTranslation(Translation.Chat);
   const [editorConfirmation, setEditorConfirmation] =
@@ -218,11 +220,20 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
               t('Saved changes will be applied during next deployment'),
             ),
           );
+          onExit?.();
         }
         handleEdit(data);
       }
     },
-    [dispatch, exitAfterSave, handleEdit, isAppDeployed, isCodeEditorDirty, t],
+    [
+      dispatch,
+      exitAfterSave,
+      handleEdit,
+      isAppDeployed,
+      isCodeEditorDirty,
+      onExit,
+      t,
+    ],
   );
 
   const modalOptions = useMemo(
@@ -254,10 +265,11 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
             handleEdit(editorConfirmation);
           }
           setEditorConfirmation(undefined);
+          onExit?.();
         },
       },
     ],
-    [t, editorConfirmation, handleEdit, isAppDeployed, dispatch],
+    [t, editorConfirmation, handleEdit, isAppDeployed, dispatch, onExit],
   );
 
   register('sourceFiles', validators['sourceFiles']);
