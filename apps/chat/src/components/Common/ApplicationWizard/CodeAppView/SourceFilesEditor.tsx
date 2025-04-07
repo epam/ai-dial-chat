@@ -44,6 +44,7 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingFolder, setPendingFolder] = useState<string | undefined>();
+  const [pendingDelete, setPendingDelete] = useState(false);
 
   const handleToggleFileManager = useCallback(() => {
     setIsFolderModalOpen((p) => !p);
@@ -67,12 +68,28 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
     setIsFolderModalOpen(false);
   }, []);
 
-  const handleConfirmDialogClose = (result: boolean) => {
-    if (result && pendingFolder) {
-      handleCloseFileManager(pendingFolder);
+  const handleDelete = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    if (confirmDialogValues) {
+      setPendingDelete(true);
+      setConfirmDialogOpen(true);
+    } else {
+      onChange?.('');
     }
+  };
+
+  const handleConfirmDialogClose = (result: boolean) => {
+    if (result) {
+      if (pendingDelete) {
+        onChange?.('');
+      } else if (pendingFolder) {
+        handleCloseFileManager(pendingFolder);
+      }
+    }
+
     setConfirmDialogOpen(false);
     setPendingFolder(undefined);
+    setPendingDelete(false);
   };
 
   useEffect(() => {
@@ -114,8 +131,8 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
               </button>
               {value && (
                 <button
-                  onClick={() => onChange?.('')}
                   type="button"
+                  onClick={handleDelete}
                   disabled={disabled}
                   className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
                 >
