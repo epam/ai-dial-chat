@@ -19,33 +19,21 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { FooterMessage } from '@/src/components/Common/FooterMessage';
 
-import UserIcon from '../../../../public/images/icons/user.svg';
 import { CloseSidebarButton } from '../../Buttons/CloseSidebarButton';
 import { withRenderWhen } from '../../Common/RenderWhen';
 import { withRenderForScreen } from '../../Common/ScreenRender';
+import { UserAvatar } from '../UserAvatar';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature } from '@epam/ai-dial-shared';
 
 const UserInfo = () => {
-  const { t } = useTranslation(Translation.Header);
-
   const { data: session } = useSession();
 
   return (
     <div className="w-full border-b border-tertiary p-2 text-primary">
       <div className="flex h-[42px] items-center">
-        {session?.user?.image ? (
-          <img
-            className="mx-2 rounded"
-            src={session?.user?.image}
-            width={18}
-            height={18}
-            alt={t('User avatar')}
-          />
-        ) : (
-          <UserIcon className="mx-2 text-secondary" width={18} height={18} />
-        )}
+        <UserAvatar iconSize={18} />
 
         <span className="grow" data-qa="username">
           {session?.user?.name ?? ''}

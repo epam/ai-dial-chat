@@ -23,14 +23,10 @@ import {
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
-
-import { User } from '@/src/components/Header/User/User';
-import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
 import { Logo } from '../Header/Logo';
 
@@ -58,17 +54,10 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
   } = useRouter();
   const { t } = useTranslation(Translation.Chat);
 
-  const isUserSettingsOpen = useAppSelector(
-    UISelectors.selectIsUserSettingsOpen,
-  );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const returnConversationIds = useAppSelector(
     ApplicationSelectors.selectReturnConversationIds,
   );
-
-  const handleCloseUserSettings = () => {
-    dispatch(UIActions.setIsUserSettingsOpen(false));
-  };
 
   const handleSaveAndRedirect = () => {
     onExit?.();
@@ -233,10 +222,6 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
               <span>{t('Exit')}</span>
             </Link>
           )}
-
-          <div className="h-full border-l border-tertiary max-md:border-tertiary md:pl-2">
-            <User />
-          </div>
         </div>
       </div>
 
@@ -274,11 +259,6 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
           </Link>
         </div>
       )}
-
-      <SettingDialog
-        open={isUserSettingsOpen}
-        onClose={handleCloseUserSettings}
-      />
     </div>
   );
 };

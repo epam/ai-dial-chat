@@ -3,4 +3,5 @@ export enum Routes {
   AppsEditorSettings = '/apps-editor/[slug]/settings',
   AppsEditorGeneralInfo = '/apps-editor/[slug]',
   Chat = '/',
+  Profile = '/profile',
 }

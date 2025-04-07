@@ -11,8 +11,8 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
-import { useWidgets } from '../hooks/useWidgets';
 import { useTranslation } from '@/src/hooks/useTranslation';
+import { useWidgets } from '@/src/hooks/useWidgets';
 
 import { Translation } from '@/src/types/translation';
 
@@ -29,7 +29,7 @@ import {
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
-import { DEFAULT_CONVERSATION_NAME } from '../constants/default-ui-settings';
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
@@ -39,6 +39,9 @@ import Tooltip from '@/src/components/Common/Tooltip';
 import { MarketplaceFilterbar } from '@/src/components/Marketplace/MarketplaceFilterbar';
 import { Promptbar } from '@/src/components/Promptbar';
 import { Widgetbar } from '@/src/components/Widgetbar';
+
+import { ProfileButton } from './Profile/User/ProfileButton';
+import { UserDesktop } from './Profile/User/UserDesktop';
 
 import { Feature } from '@epam/ai-dial-shared';
 
@@ -243,24 +246,40 @@ const Navigation = () => {
     }
   }, [dispatch, router]);
 
+  const handleUserMobileClick = useCallback(() => {
+    return router.push(Routes.Profile);
+  }, [router]);
+
   return (
     <div
-      className={classNames(
-        'order-last h-[52px] w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:z-40 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start md:border-r md:py-2',
-        !isMarketplaceEnabled && !widgetsSchemaIds.size ? 'hidden' : 'flex',
-      )}
+      className="order-last flex h-[52px] w-full shrink-0 flex-row items-center justify-between gap-2 border-tertiary bg-layer-3 md:z-40 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start md:border-r md:py-2"
       data-qa="navigation-panel"
     >
-      <NavigationButton
-        onClick={handleChatClick}
-        tooltip={t('Chat')}
-        Icon={IconMessage2}
-        selected={router.route === Routes.Chat && !selectedWidget}
-        dataQa="back-to-chat"
-        caption={t('Chat')}
-      />
-      {isMarketplaceEnabled && <MarketplaceNavigation />}
-      {!!widgetsSchemaIds.size && <UsedWidgets />}
+      <div className="flex size-full flex-row items-center justify-around gap-2 md:flex-col md:justify-start">
+        <NavigationButton
+          onClick={handleChatClick}
+          tooltip={t('Chat')}
+          Icon={IconMessage2}
+          selected={router.route === Routes.Chat && !selectedWidget}
+          dataQa="back-to-chat"
+          caption={t('Chat')}
+        />
+        {isMarketplaceEnabled && <MarketplaceNavigation />}
+        {!!widgetsSchemaIds.size && <UsedWidgets />}
+        <div className="flex items-center justify-center md:hidden">
+          <NavigationButton
+            onClick={handleUserMobileClick}
+            tooltip={t('User')}
+            Icon={ProfileButton}
+            selected={router.route === Routes.Profile}
+            dataQa="user-settings"
+            caption={t('User')}
+          />
+        </div>
+      </div>
+      <div className="hidden items-center justify-center p-[10px] md:flex">
+        <UserDesktop />
+      </div>
     </div>
   );
 };

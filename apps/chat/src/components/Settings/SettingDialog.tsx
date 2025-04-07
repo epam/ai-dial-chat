@@ -1,4 +1,4 @@
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -18,21 +18,17 @@ import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
 import { Modal } from '@/src/components/Common/Modal';
 
+import { withRenderWhen } from '../Common/RenderWhen';
 import { ToggleSwitchLabeled } from '../Common/ToggleSwitch/ToggleSwitchLabeled';
 import { CustomLogoSelect } from './CustomLogoSelect';
 import { ThemeSelect } from './ThemeSelect';
 
 import { Feature } from '@epam/ai-dial-shared';
 
-interface Props {
-  open: boolean;
-  onClose: () => void;
-}
-
 const getCustomLogoLocalStoreName = (customLogoId: string | undefined) =>
   customLogoId && splitEntityId(customLogoId).name;
 
-export const SettingDialog: FC<Props> = ({ open, onClose }) => {
+const SettingDialogView = () => {
   const theme = useAppSelector(UISelectors.selectThemeState);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
   const files = useAppSelector(FilesSelectors.selectFiles);
@@ -64,12 +60,8 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   const { t } = useTranslation(Translation.Settings);
 
   const handleClose = useCallback(() => {
-    setLocalTheme(theme);
-    setIsChatFullWidthLocal(isChatFullWidth);
-    setLocalLogoFile(undefined);
-    setDeleteLogo(false);
-    onClose();
-  }, [onClose, isChatFullWidth, theme]);
+    dispatch(UIActions.setIsUserSettingsOpen(false));
+  }, [dispatch]);
 
   useEffect(() => {
     setLocalTheme(theme);
@@ -79,24 +71,28 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     setIsChatFullWidthLocal(isChatFullWidth);
   }, [isChatFullWidth]);
 
-  const onThemeChangeHandler = useCallback((theme: string) => {
+  const handleChangeTheme = useCallback((theme: string) => {
     setLocalTheme(theme);
   }, []);
 
-  const onChangeHandlerFullWidth = useCallback(() => {
+  const handleChangeFullWidth = useCallback(() => {
     setIsChatFullWidthLocal((prev) => !prev);
   }, []);
 
-  const onLogoSelect = (filesIds: string[]) => {
-    setDeleteLogo(false);
-    const selectedFileId = filesIds[0];
-    const newFile = files.find((file) => file.id === selectedFileId);
-    setLocalLogoFile(newFile);
-  };
-  const onDeleteLocalLogoHandler = () => {
+  const handleLogoSelect = useCallback(
+    (filesIds: string[]) => {
+      setDeleteLogo(false);
+      const selectedFileId = filesIds[0];
+      const newFile = files.find((file) => file.id === selectedFileId);
+      setLocalLogoFile(newFile);
+    },
+    [files],
+  );
+
+  const handleDeleteLocalLogo = useCallback(() => {
     setLocalLogoFile(undefined);
     setDeleteLogo(true);
-  };
+  }, []);
 
   const handleSave = useCallback(() => {
     dispatch(UIActions.setTheme(localTheme));
@@ -109,26 +105,22 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     }
 
     setLocalLogoFile(undefined);
-    onClose();
+    handleClose();
   }, [
     dispatch,
     localTheme,
-    onClose,
+    handleClose,
     isChatFullWidthLocal,
     localLogoFile,
     deleteLogo,
   ]);
-
-  if (!open) {
-    return <></>;
-  }
 
   return (
     <Modal
       portalId="theme-main"
       containerClassName="inline-block w-[500px] overflow-y-auto px-3 py-4 align-bottom transition-all md:max-h-[400px] md:p-6"
       dataQa="settings-modal"
-      state={open ? ModalState.OPENED : ModalState.CLOSED}
+      state={ModalState.OPENED}
       onClose={handleClose}
       initialFocus={saveBtnRef}
       dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
@@ -137,12 +129,12 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
       <div className="mb-4 flex flex-col gap-5">
         <ThemeSelect
           localTheme={localTheme}
-          onThemeChangeHandler={onThemeChangeHandler}
+          onThemeChangeHandler={handleChangeTheme}
         />
         {isCustomLogoFeatureEnabled && (
           <CustomLogoSelect
-            onLogoSelect={onLogoSelect}
-            onDeleteLocalLogoHandler={onDeleteLocalLogoHandler}
+            onLogoSelect={handleLogoSelect}
+            onDeleteLocalLogoHandler={handleDeleteLocalLogo}
             localLogo={
               deleteLogo
                 ? undefined
@@ -157,7 +149,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
             isOn={isChatFullWidthLocal}
             labelText={t('Full width chat')}
             labelClassName="basis-1/3 md:basis-1/4"
-            handleSwitch={onChangeHandlerFullWidth}
+            handleSwitch={handleChangeFullWidth}
             switchOnText={t('ON')}
             switchOFFText={t('OFF')}
           />
@@ -178,3 +170,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     </Modal>
   );
 };
+
+export const SettingDialog = withRenderWhen(
+  UISelectors.selectIsUserSettingsOpen,
+)(SettingDialogView);
