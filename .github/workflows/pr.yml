@@ -10,8 +10,9 @@ concurrency:
 
 jobs:
   run_tests:
-    uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@4b609e81dd721f4d5153a9cae5946a5880b64345
+    uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@2f8f5e7c4f65c223ff255a5250cc3e36deca825b
     secrets: inherit
     with:
       node_version: 22
-      limit_severities_for_sarif_trivy: false
+      severity_for_sarif_trivy: "CRITICAL,HIGH,MEDIUM"
+      limit_severities_for_sarif_trivy: true
