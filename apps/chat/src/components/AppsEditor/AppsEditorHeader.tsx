@@ -42,14 +42,12 @@ interface AppsEditorHeaderProps {
   applicationTypeDisplayName: string;
   isEditApplication?: boolean;
   hasCustomEditor?: boolean;
-  onExit?: () => void;
 }
 
 export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
   applicationTypeDisplayName,
   isEditApplication,
   hasCustomEditor,
-  onExit,
 }) => {
   const dispatch = useAppDispatch();
   const {
@@ -71,7 +69,6 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
   };
 
   const handleSaveAndRedirect = () => {
-    onExit?.();
     dispatch(ApplicationActions.setExitAfterSave(true));
     dispatch(ApplicationActions.setShouldSaveApplication(true));
     if (returnConversationIds?.length) {
