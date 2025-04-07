@@ -234,7 +234,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
             </Link>
           )}
 
-          <div className="h-full border-l border-secondary max-md:border-secondary md:pl-2">
+          <div className="h-full max-md:pr-2 md:border-l md:border-secondary md:pl-2">
             <User />
           </div>
         </div>
