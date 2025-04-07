@@ -1,5 +1,7 @@
 import { memo, useCallback, useMemo } from 'react';
 
+import classNames from 'classnames';
+
 import { removeDescriptionsFromSchema } from '@/src/utils/app/form-schema';
 
 import { ChatActions } from '@/src/store/chat/chat.reducer';
@@ -58,9 +60,10 @@ const ChatStartersView = ({ schema }: ChatStartersViewProps) => {
       buttonsWrapperClassName="overflow-y-hidden justify-center"
       buttonClassName="shrink-0"
       wrapperClassName="items-center"
-      propertyWrapperClassName={
-        isChatFullWidth ? 'mx-4 md:mx-20' : 'mx-4 lg:mx-0 max-w-screen-md'
-      }
+      propertyWrapperClassName={classNames(
+        'max-w-full px-4',
+        isChatFullWidth ? 'lg:px-20' : 'lg:w-[768px]',
+      )}
     />
   );
 };
