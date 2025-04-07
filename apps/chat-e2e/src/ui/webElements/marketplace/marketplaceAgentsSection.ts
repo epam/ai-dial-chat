@@ -112,8 +112,14 @@ export class MarketplaceAgentsSection extends BaseElement {
     return isAgentFoundAndUsed;
   }
 
-  public async findAgentElement(agent: DialAIEntityModel | string) {
-    let scrollPosition: { scrollTop: number; clientHeight: number };
+  public async findAgentElement(
+    agent: DialAIEntityModel | string,
+    options?: { isWorkspaceAgent?: boolean; isEditable?: boolean },
+  ) {
+    let scrollPosition: { scrollTop: number; clientHeight: number } = {
+      scrollTop: 0,
+      clientHeight: await this.rootLocator.evaluate((p) => p.clientHeight),
+    };
     const scrollHeight = await this.rootLocator.evaluate((p) => p.scrollHeight);
     let agentElement;
     do {
@@ -125,8 +131,37 @@ export class MarketplaceAgentsSection extends BaseElement {
           typeof agent === 'string' ? agent : agent.name,
         )
       ) {
-        agentElement = visibleAgents.getAgent(agent);
-        break;
+        const agentElements = visibleAgents.getAgent(agent, {
+          isUnique: false,
+        });
+        const agentsCount = await agentElements.getElementsCount();
+        //if need to find an agent from a specific section
+        if (options?.isWorkspaceAgent !== undefined) {
+          for (let j = 1; j <= agentsCount; j++) {
+            const nthAgentElement = agentElements.getNthElement(j);
+            const agentType = await nthAgentElement.getAttribute(
+              Attributes.ariaDetails,
+            );
+            const isWorkspaceAgent =
+              agentType ===
+              FoundMarketplaceAgents[FoundMarketplaceAgents.filtered];
+            agentElement = this.createElementFromLocator(nthAgentElement);
+            const hasPencilIcon = await visibleAgents
+              .getAgentPencilIcon(agentElement)
+              .isVisible();
+            if (
+              options?.isWorkspaceAgent === isWorkspaceAgent &&
+              options?.isEditable === hasPencilIcon
+            ) {
+              break;
+            }
+          }
+        } else {
+          agentElement = this.createElementFromLocator(
+            agentElements.getNthElement(1),
+          );
+          break;
+        }
       }
       scrollPosition = await this.getPositionAndScrollInto();
     } while (
@@ -143,7 +178,7 @@ export class MarketplaceAgentsSection extends BaseElement {
     const allAgents: MarketplaceAgentProperties[] = [];
     let scrollPosition: { scrollTop: number; clientHeight: number } = {
       scrollTop: 0,
-      clientHeight: 0,
+      clientHeight: await this.rootLocator.evaluate((p) => p.clientHeight),
     };
     if (!(await this.rootLocator.isVisible())) {
       return allAgents;
@@ -160,27 +195,56 @@ export class MarketplaceAgentsSection extends BaseElement {
       const visibleAgentsCount = visibleAgentNames.length;
       for (let i = 0; i < visibleAgentsCount; i++) {
         const agentName = visibleAgentNames[i];
-        //iterate through visible agents to define filtered/suggested type
-        if (!allAgents.map((a) => a.name).includes(agentName)) {
-          const visibleAgent = visibleAgents.getAgent(agentName);
-          const agentType = await visibleAgent.getAttribute(
+        //agent's name may be duplicated on "My Workspace" tab in the filtered and suggested results
+        const visibleAgent = visibleAgents.getAgent(agentName, {
+          isUnique: false,
+        });
+        const agentsCount = await visibleAgent.getElementsCount();
+        //iterate through agents with duplicated name
+        for (let j = 1; j <= agentsCount; j++) {
+          const agentElement = visibleAgent.getNthElement(j);
+          const agentType = await agentElement.getAttribute(
             Attributes.ariaDetails,
           );
-          const versionElement = visibleAgents.getAgentVersion(visibleAgent);
-          let agentVersion;
-          if (await versionElement.isVisible()) {
-            agentVersion = await versionElement.getElementInnerContent();
+          const isWorkspaceAgent =
+            agentType ===
+            FoundMarketplaceAgents[FoundMarketplaceAgents.filtered];
+
+          const agentBaseElement = this.createElementFromLocator(agentElement);
+          const hasPencilIcon = await visibleAgents
+            .getAgentPencilIcon(agentBaseElement)
+            .isVisible();
+          //check whether agent's name+editable+section exists in the allAgents array
+          if (
+            !allAgents.some(
+              (a) =>
+                a.name === agentName &&
+                a.isWorkspaceAgent === isWorkspaceAgent &&
+                a.isEditable === hasPencilIcon,
+            )
+          ) {
+            const versionElement =
+              visibleAgents.getAgentVersion(agentBaseElement);
+            let agentVersion;
+            if (await versionElement.isVisible()) {
+              agentVersion = await versionElement.getElementInnerContent();
+            }
+            const hasRemoveBookmarkIcon = await visibleAgents
+              .getAgentElementRemoveBookmarkIcon(agentBaseElement)
+              .isVisible();
+            allAgents.push({
+              name: agentName,
+              version: agentVersion ?? undefined,
+              isSuggested:
+                agentType ===
+                FoundMarketplaceAgents[FoundMarketplaceAgents.suggested],
+              isWorkspaceAgent:
+                agentType ===
+                FoundMarketplaceAgents[FoundMarketplaceAgents.filtered],
+              isEditable: hasPencilIcon,
+              isBookmarked: hasRemoveBookmarkIcon,
+            });
           }
-          allAgents.push({
-            name: agentName,
-            version: agentVersion ?? undefined,
-            isSuggested:
-              agentType ===
-              FoundMarketplaceAgents[FoundMarketplaceAgents.suggested],
-            isWorkspaceAgent:
-              agentType ===
-              FoundMarketplaceAgents[FoundMarketplaceAgents.filtered],
-          });
         }
       }
       shouldProceed =

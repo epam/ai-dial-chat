@@ -7,7 +7,7 @@ import {
 } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
 import { BaseElement, MarketplaceAgentProperties } from '@/src/ui/webElements';
-import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { GeneratorUtil, ModelsUtil, SortingUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
@@ -340,16 +340,11 @@ dialTest(
           nonInstalledAppSecondVersion,
         );
         await agentDetailsModal.versionMenuTrigger.click();
-        //TODO: replace with commented assertion when fixed https://github.com/epam/ai-dial-chat/issues/3138
-        // await agentVersionsDropdownMenuAssertion.assertMenuOptions(
-        //   SortingUtil.sortVersionsArray([
-        //     nonInstalledAppFirstVersion,
-        //     nonInstalledAppSecondVersion,
-        //   ]),
-        // );
-        await agentVersionsDropdownMenuAssertion.assertMenuIncludesOptions(
-          nonInstalledAppFirstVersion,
-          nonInstalledAppSecondVersion,
+        await agentVersionsDropdownMenuAssertion.assertMenuOptions(
+          SortingUtil.sortVersionsArray([
+            nonInstalledAppFirstVersion,
+            nonInstalledAppSecondVersion,
+          ]),
         );
       },
     );
@@ -462,16 +457,11 @@ dialTest(
           await marketplaceAgentsSection.findAgentElement(installedAppName);
         await agentElement.click();
         await agentDetailsModal.versionMenuTrigger.click();
-        //TODO: replace with commented assertion when fixed https://github.com/epam/ai-dial-chat/issues/3138
-        // await agentVersionsDropdownMenuAssertion.assertMenuOptions(
-        //   SortingUtil.sortVersionsArray([
-        //     installedAppFirstVersion,
-        //     installedAppSecondVersion,
-        //   ]),
-        // );
-        await agentVersionsDropdownMenuAssertion.assertMenuIncludesOptions(
-          installedAppFirstVersion,
-          installedAppSecondVersion,
+        await agentVersionsDropdownMenuAssertion.assertMenuOptions(
+          SortingUtil.sortVersionsArray([
+            installedAppFirstVersion,
+            installedAppSecondVersion,
+          ]),
         );
         await agentDetailsModal.closeButton.click();
       },

@@ -83,7 +83,11 @@ export default function ShareIcon({
           iconWrapperClassName,
         )}
         data-qa={
-          isPublished && isPublishingEnabled ? 'world-icon' : 'arrow-icon'
+          isPublished && isPublishingEnabled
+            ? 'world-icon'
+            : isMyEntityIcon
+              ? 'pencil-icon'
+              : 'arrow-icon'
         }
       >
         <Tooltip

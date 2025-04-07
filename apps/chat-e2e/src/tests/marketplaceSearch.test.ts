@@ -2,9 +2,11 @@ import { Publication } from '@/chat/types/publication';
 import config from '@/config/chat.playwright.config';
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedConstants, ExpectedMessages } from '@/src/testData';
-import { Attributes } from '@/src/ui/domData';
+import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
-import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { MarketplaceAgentProperties } from '@/src/ui/webElements';
+import { GeneratorUtil, ModelsUtil, SortingUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
@@ -270,6 +272,226 @@ dialTest(
           marketplaceHeader.searchInput,
           Attributes.value,
           searchTerm,
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Search by version. My custom application, published applications. Sorting. Suggested options.',
+  async ({
+    marketplacePage,
+    marketplaceHeader,
+    marketplaceAgentsSection,
+    marketplaceAgents,
+    agentDetailsModal,
+    marketplace,
+    localStorageManager,
+    setTestIds,
+    baseAssertion,
+    customApplicationBuilder,
+    toast,
+    applicationApiHelper,
+    publicationApiHelper,
+    adminPublicationApiHelper,
+    publishRequestBuilder,
+    agentDetailsModalAssertion,
+    agentVersionsDropdownMenuAssertion,
+  }) => {
+    setTestIds('EPMRTC-4510');
+    let appCommonVersion: string;
+    let secondAppFirstVersion: string;
+    let secondAppThirdVersion: string;
+    let firstAppName: string;
+    let secondAppName: string;
+    let expectedAgents: MarketplaceAgentProperties[];
+
+    await dialTest.step(
+      'Prepare one application with v2, another app with v1, v2, v3 available in the "Marketplace". Second app is added to the "My Workspace"',
+      async () => {
+        const recentModelIds = await localStorageManager.getRecentModelsIds();
+        const recentNames = ModelsUtil.getRecentAgentsNames(recentModelIds);
+        const recentVersions =
+          ModelsUtil.getRecentAgentsVersions(recentModelIds);
+
+        appCommonVersion = GeneratorUtil.randomApplicationVersion([
+          ...recentNames,
+          ...recentVersions,
+        ]);
+        secondAppFirstVersion = GeneratorUtil.randomApplicationVersion([
+          ...recentNames,
+          ...recentVersions,
+          appCommonVersion,
+        ]);
+        secondAppThirdVersion = GeneratorUtil.randomApplicationVersion([
+          ...recentNames,
+          ...recentVersions,
+          appCommonVersion,
+          secondAppFirstVersion,
+        ]);
+
+        firstAppName = GeneratorUtil.randomApplicationName();
+        secondAppName = GeneratorUtil.randomApplicationName();
+
+        const firstApplicationModel = customApplicationBuilder
+          .withDisplayName(firstAppName)
+          .withDisplayVersion(appCommonVersion)
+          .build();
+        const secondApplicationFirstVersionModel = customApplicationBuilder
+          .withDisplayName(secondAppName)
+          .withDisplayVersion(secondAppFirstVersion)
+          .build();
+        const secondApplicationSecondVersionModel = customApplicationBuilder
+          .withDisplayName(secondAppName)
+          .withDisplayVersion(appCommonVersion)
+          .build();
+        const secondApplicationThirdVersionModel = customApplicationBuilder
+          .withDisplayName(secondAppName)
+          .withDisplayVersion(secondAppThirdVersion)
+          .build();
+
+        for (const appModel of [
+          firstApplicationModel,
+          secondApplicationFirstVersionModel,
+          secondApplicationSecondVersionModel,
+          secondApplicationThirdVersionModel,
+        ]) {
+          const app = await applicationApiHelper.createApplication(appModel);
+          const publishRequest = publishRequestBuilder
+            .withName(GeneratorUtil.randomPublicationRequestName())
+            .withApplicationResource(app, PublishActions.ADD)
+            .build();
+          const appPublication =
+            await publicationApiHelper.createPublishRequest(publishRequest);
+          publicationsToUnpublish.push(appPublication);
+          await adminPublicationApiHelper.approveRequest(appPublication);
+        }
+      },
+    );
+
+    await dialTest.step(
+      'On the "My Workspace" tab search the second agent and bookmark it',
+      async () => {
+        await marketplacePage.openMyWorkspacePage();
+        await marketplacePage.waitForPageLoaded();
+        await marketplaceHeader.searchInput.fillInInput(secondAppFirstVersion);
+        const secondAgentElement =
+          await marketplaceAgentsSection.findAgentElement(secondAppName, {
+            isWorkspaceAgent: false,
+          });
+        await marketplaceAgents.addAgentToWorkspace(secondAgentElement);
+        await toast.closeToast();
+      },
+    );
+
+    await dialTest.step(
+      'Search agents by the common version and verify 4 cards are found. Editable first agent card, editable and bookmarked second agent cards are found',
+      async () => {
+        await marketplaceHeader.searchInput.fillInInput(appCommonVersion);
+        const allAgents = await marketplaceAgentsSection.getAllAgents();
+        expectedAgents = allAgents.filter(
+          (a) =>
+            (a.name === firstAppName || a.name === secondAppName) &&
+            a.version === appCommonVersion,
+        );
+        baseAssertion.assertValue(
+          expectedAgents.length,
+          4,
+          ExpectedMessages.elementsCountIsValid,
+        );
+
+        baseAssertion.assertValue(
+          expectedAgents.filter(
+            (a) =>
+              a.name === firstAppName &&
+              a.isEditable &&
+              a.version === appCommonVersion,
+          ).length,
+          1,
+          ExpectedMessages.elementsCountIsValid,
+        );
+        baseAssertion.assertValue(
+          expectedAgents.filter(
+            (a) =>
+              a.name === secondAppName &&
+              a.isEditable &&
+              a.version === appCommonVersion,
+          ).length,
+          1,
+          ExpectedMessages.elementsCountIsValid,
+        );
+        baseAssertion.assertValue(
+          expectedAgents.filter(
+            (a) =>
+              a.name === secondAppName &&
+              !a.isEditable &&
+              a.version === appCommonVersion &&
+              a.isBookmarked,
+          ).length,
+          1,
+          ExpectedMessages.elementsCountIsValid,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Not editable first agent card is suggested',
+      async () => {
+        await baseAssertion.assertElementState(
+          marketplace.marketplaceSuggestionsLabel,
+          'visible',
+        );
+        const suggestedAgent = expectedAgents.filter(
+          (agent) => agent.isSuggested,
+        );
+        baseAssertion.assertValue(
+          suggestedAgent.length,
+          1,
+          ExpectedMessages.elementsCountIsValid,
+        );
+        baseAssertion.assertValue(
+          expectedAgents.filter(
+            (a) =>
+              a.name === firstAppName &&
+              a.isSuggested &&
+              a.version === appCommonVersion &&
+              !a.isEditable,
+          ).length,
+          1,
+          ExpectedMessages.elementsCountIsValid,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Open bookmarked second agent card and verify versions available in the menu',
+      async () => {
+        const bookmarkedSecondAgentElement =
+          await marketplaceAgentsSection.findAgentElement(secondAppName, {
+            isWorkspaceAgent: true,
+            isEditable: false,
+          });
+        await bookmarkedSecondAgentElement.click();
+        await agentDetailsModalAssertion.assertApplicationVersion(
+          appCommonVersion,
+        );
+        await agentDetailsModal.versionMenuTrigger.click();
+        await agentVersionsDropdownMenuAssertion.assertMenuOptions(
+          SortingUtil.sortVersionsArray([
+            secondAppFirstVersion,
+            appCommonVersion,
+            secondAppThirdVersion,
+          ]),
+        );
+
+        await baseAssertion.assertElementBackgroundColors(
+          agentDetailsModal
+            .getVersionDropdownMenu()
+            .menuOption(appCommonVersion),
+          ThemesUtil.getRgbColorByKey(
+            ThemeColorAttributes.bgAccentPrimaryAlpha,
+          ),
         );
       },
     );

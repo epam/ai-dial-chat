@@ -1,6 +1,6 @@
 import { DialAIEntityModel } from '@/chat/types/models';
 import { API, ExpectedConstants } from '@/src/testData';
-import { Attributes } from '@/src/ui/domData';
+import { Attributes, Tags } from '@/src/ui/domData';
 import { MenuSelectors } from '@/src/ui/selectors';
 import { MarketplaceAgentSelectors } from '@/src/ui/selectors/marketplaceSelectors';
 import { BaseElement, DropdownMenu } from '@/src/ui/webElements';
@@ -18,6 +18,8 @@ export interface MarketplaceAgentProperties {
   version?: string;
   isSuggested: boolean;
   isWorkspaceAgent: boolean;
+  isEditable: boolean;
+  isBookmarked: boolean;
 }
 
 export class MarketplaceAgents extends BaseElement {
@@ -64,10 +66,13 @@ export class MarketplaceAgents extends BaseElement {
       `${MarketplaceAgentSelectors.version}:text-is('${ExpectedConstants.versionPrefix}${version}')`,
     ).getElementLocator();
 
-  public getAgent = (entity: DialAIEntityModel | string) => {
+  public getAgent = (
+    entity: DialAIEntityModel | string,
+    options: { isUnique: boolean } = { isUnique: true },
+  ) => {
     let agent;
     if (typeof entity === 'string') {
-      agent = this.rootLocator.filter({ has: this.agentName(entity) }).first();
+      agent = this.rootLocator.filter({ has: this.agentName(entity) });
     } else {
       //if agent has version in the config
       if (entity.version) {
@@ -79,18 +84,17 @@ export class MarketplaceAgents extends BaseElement {
             has: this.agentVersion(entity.version).or(
               this.agentVersionWithPrefix(entity.version),
             ),
-          })
-          .first();
+          });
       } else {
         //init agent locator if no version is available in the config
-        agent = this.rootLocator
-          .filter({
-            has: this.agentName(entity.name),
-          })
-          .first();
+        agent = this.rootLocator.filter({
+          has: this.agentName(entity.name),
+        });
       }
     }
-    return this.createElementFromLocator(agent);
+    return this.createElementFromLocator(
+      options.isUnique ? agent.first() : agent,
+    );
   };
 
   public getAgentDescription(entity: DialAIEntityModel | string | BaseElement) {
@@ -155,6 +159,12 @@ export class MarketplaceAgents extends BaseElement {
         return agentNameLocator;
       }
     }
+  }
+
+  public getAgentPencilIcon(agentElement: BaseElement) {
+    return agentElement
+      .getChildElementBySelector(MarketplaceAgentSelectors.pencilIcon)
+      .getChildElementBySelector(Tags.svg);
   }
 
   public async getAgentNames() {
