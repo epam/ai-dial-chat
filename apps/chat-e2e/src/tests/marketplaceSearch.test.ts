@@ -1,7 +1,14 @@
+import { EntityType } from '@/chat/types/common';
 import { Publication } from '@/chat/types/publication';
 import config from '@/config/chat.playwright.config';
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedConstants, ExpectedMessages } from '@/src/testData';
+import {
+  ExpectedConstants,
+  ExpectedMessages,
+  MarketplaceExpectedMessages,
+  MarketplaceFilterTypes,
+  SourcesFilterOptions,
+} from '@/src/testData';
 import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { MarketplaceAgentProperties } from '@/src/ui/webElements';
@@ -492,6 +499,114 @@ dialTest(
           ThemesUtil.getRgbColorByKey(
             ThemeColorAttributes.bgAccentPrimaryAlpha,
           ),
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Search in DIAL Marketplace: Search word and other filters work together type and topics',
+  async ({
+    customApplicationBuilder,
+    applicationApiHelper,
+    marketplacePage,
+    marketplaceFilter,
+    marketplaceHeader,
+    marketplaceAgentsSection,
+    setTestIds,
+    baseAssertion,
+  }) => {
+    setTestIds('EPMRTC-4425');
+    const firstAppName = GeneratorUtil.randomApplicationName();
+    const secondAppName = GeneratorUtil.randomApplicationName();
+    const thirdAppName = GeneratorUtil.randomApplicationName();
+    const appTopic = GeneratorUtil.randomString(5);
+
+    await dialTest.step(
+      'Prepare three custom applications, two of them have a common topic',
+      async () => {
+        const firstApplicationModel = customApplicationBuilder
+          .withDisplayName(firstAppName)
+          .withDescriptionKeywords(appTopic)
+          .build();
+        const secondApplicationModel = customApplicationBuilder
+          .withDisplayName(secondAppName)
+          .withDescriptionKeywords(appTopic)
+          .build();
+        const thirdApplicationModel = customApplicationBuilder
+          .withDisplayName(thirdAppName)
+          .build();
+        for (const app of [
+          firstApplicationModel,
+          secondApplicationModel,
+          thirdApplicationModel,
+        ]) {
+          await applicationApiHelper.createApplication(app);
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Open "Dial Marketplace", check Type="Applications", Source="My Custom app" filter options and verify three apps are filtered',
+      async () => {
+        await marketplacePage.openMarketplacePage();
+        await marketplacePage.waitForPageLoaded();
+        await marketplaceFilter
+          .filterByPropertyOptionInput(
+            MarketplaceFilterTypes.type,
+            EntityType.Application,
+          )
+          .click();
+        await marketplaceFilter
+          .filterByPropertyOptionInput(
+            MarketplaceFilterTypes.sources,
+            SourcesFilterOptions.myCustomApps,
+          )
+          .click();
+        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        baseAssertion.assertArrayIncludesAll(
+          actualAgents.map((agent) => agent.name),
+          [firstAppName, secondAppName, thirdAppName],
+          MarketplaceExpectedMessages.filteredAgentsAreValid,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Check apps common topic filter option and verify two apps are filtered',
+      async () => {
+        await marketplaceFilter
+          .filterByPropertyOptionInput(MarketplaceFilterTypes.topics, appTopic)
+          .click();
+        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        baseAssertion.assertValue(
+          actualAgents.length,
+          2,
+          ExpectedMessages.elementsCountIsValid,
+        );
+        baseAssertion.assertArrayIncludesAll(
+          actualAgents.map((agent) => agent.name),
+          [firstAppName, secondAppName],
+          MarketplaceExpectedMessages.filteredAgentsAreValid,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Set first app name in the search field and verify only one app is filtered',
+      async () => {
+        await marketplaceHeader.searchInput.fillInInput(firstAppName);
+        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        baseAssertion.assertValue(
+          actualAgents.length,
+          1,
+          ExpectedMessages.elementsCountIsValid,
+        );
+        baseAssertion.assertArrayIncludesAll(
+          actualAgents.map((agent) => agent.name),
+          [firstAppName],
+          MarketplaceExpectedMessages.filteredAgentsAreValid,
         );
       },
     );
