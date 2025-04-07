@@ -176,13 +176,13 @@ export class MarketplaceAgentsSection extends BaseElement {
 
   public async getAllAgents() {
     const allAgents: MarketplaceAgentProperties[] = [];
+    if (!(await this.rootLocator.isVisible())) {
+      return allAgents;
+    }
     let scrollPosition: { scrollTop: number; clientHeight: number } = {
       scrollTop: 0,
       clientHeight: await this.rootLocator.evaluate((p) => p.clientHeight),
     };
-    if (!(await this.rootLocator.isVisible())) {
-      return allAgents;
-    }
     const scrollHeight = await this.rootLocator.evaluate((p) => p.scrollHeight);
     let iteration = 1;
     let shouldProceed = true;
