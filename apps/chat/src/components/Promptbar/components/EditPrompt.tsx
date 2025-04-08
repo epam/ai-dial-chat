@@ -1,3 +1,4 @@
+import { IconX } from '@tabler/icons-react';
 import {
   ChangeEvent,
   FC,
@@ -5,7 +6,6 @@ import {
   MouseEvent,
   useCallback,
   useEffect,
-  useRef,
   useState,
 } from 'react';
 
@@ -20,6 +20,7 @@ import {
   trimEndDots,
 } from '@/src/utils/app/common';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import { arePromptsFieldsTheSame } from '@/src/utils/app/prompts';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { Prompt } from '@/src/types/prompt';
@@ -32,12 +33,15 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import EmptyRequiredInputMessage from '@/src/components/Common/EmptyRequiredInputMessage';
 import Tooltip from '@/src/components/Common/Tooltip';
 
+import { ConfirmDialog } from '../../Common/ConfirmDialog';
+
 interface Props {
   prompt: Prompt;
   onEdit: (editedPrompt: Prompt) => void;
+  onClose: () => void;
 }
 
-export const EditPrompt: FC<Props> = ({ prompt, onEdit }) => {
+export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
   const { t } = useTranslation(Translation.PromptBar);
 
   const dispatch = useAppDispatch();
@@ -49,10 +53,7 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit }) => {
   const [content, setContent] = useState(prompt?.content ?? '');
   const [submitted, setSubmitted] = useState(false);
   const [isDotError, setIsDotError] = useState(false);
-
-  const nameInputRef = useRef<HTMLInputElement>(null);
-  const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
-  const contentInputRef = useRef<HTMLTextAreaElement>(null);
+  const [confirmClose, setConfirmClose] = useState(false);
 
   const nameOnChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
     const newName = e.target.value.replaceAll(notAllowedSymbolsRegex, '');
@@ -78,7 +79,7 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit }) => {
     onBlur(e);
   };
 
-  const handleRename = useCallback(
+  const handleEdit = useCallback(
     (selectedPrompt: Prompt) => {
       setSubmitted(true);
 
@@ -125,14 +126,10 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit }) => {
       e.preventDefault();
       e.stopPropagation();
 
-      handleRename(selectedPrompt);
+      handleEdit(selectedPrompt);
     },
-    [handleRename],
+    [handleEdit],
   );
-
-  useEffect(() => {
-    nameInputRef.current?.focus();
-  }, []);
 
   const inputClassName = classNames('input-form peer mx-0', {
     'input-invalid': submitted,
@@ -146,11 +143,32 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit }) => {
       if (e.key === 'Enter' && !e.shiftKey && !saveDisabled) {
         e.preventDefault();
         e.stopPropagation();
-        handleRename(prompt);
+        handleEdit(prompt);
       }
     },
-    [handleRename, prompt, saveDisabled],
+    [handleEdit, prompt, saveDisabled],
   );
+
+  const handleConfirmClose = useCallback(
+    (isConfirmed: boolean) => {
+      if (isConfirmed) {
+        handleEdit(prompt);
+      } else {
+        onClose();
+      }
+
+      setConfirmClose(false);
+    },
+    [handleEdit, onClose, prompt],
+  );
+
+  const handleEditClose = useCallback(() => {
+    if (arePromptsFieldsTheSame(prompt, { name, description, content })) {
+      setConfirmClose(true);
+    } else {
+      onClose();
+    }
+  }, [content, description, name, onClose, prompt]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleEnter);
@@ -162,6 +180,14 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit }) => {
 
   return (
     <>
+      <button
+        type="button"
+        role="button"
+        className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
+        onClick={handleEditClose}
+      >
+        <IconX height={24} width={24} />
+      </button>
       <div className="flex flex-col gap-4 overflow-y-auto">
         <div>
           <label
@@ -172,7 +198,7 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit }) => {
             <span className="ml-1 inline text-accent-primary">*</span>
           </label>
           <input
-            ref={nameInputRef}
+            autoFocus
             name="promptName"
             className={classNames(
               isDotError &&
@@ -205,7 +231,6 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit }) => {
             {t('Description')}
           </label>
           <textarea
-            ref={descriptionInputRef}
             name="description"
             className={inputClassName}
             style={{ resize: 'none' }}
@@ -222,7 +247,6 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit }) => {
             <span className="ml-1 inline text-accent-primary">*</span>
           </label>
           <textarea
-            ref={contentInputRef}
             name="content"
             className={inputClassName}
             style={{ resize: 'none' }}
@@ -256,6 +280,18 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit }) => {
           </button>
         </Tooltip>
       </div>
+      {confirmClose && (
+        <ConfirmDialog
+          isOpen
+          heading={t('Unsaved changes')}
+          description={t(
+            'There are unsaved changes. Do you want to save them before closing?',
+          )}
+          confirmLabel={t('Save')}
+          cancelLabel={t("Don't save")}
+          onClose={handleConfirmClose}
+        />
+      )}
     </>
   );
 };

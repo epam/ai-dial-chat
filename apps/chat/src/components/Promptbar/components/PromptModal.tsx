@@ -2,7 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 
 import classNames from 'classnames';
 
-import { regeneratePromptId } from '@/src/utils/app/prompts';
+import {
+  arePromptsFieldsTheSame,
+  regeneratePromptId,
+} from '@/src/utils/app/prompts';
 
 import { ModalState } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
@@ -47,40 +50,27 @@ const PromptModalContent: React.FC<PromptModalViewProps> = ({
 
       if (isNewPromptCreating) {
         dispatch(PromptsActions.createNewPrompt(regeneratePrompt));
-        onClose();
       } else {
-        if (
-          editedPrompt.name !== prompt.name ||
-          editedPrompt.content !== prompt.content ||
-          editedPrompt.description !== prompt.description
-        ) {
+        if (arePromptsFieldsTheSame(editedPrompt, prompt)) {
           dispatch(
             PromptsActions.updatePrompt({
               id: prompt.id,
               values: editedPrompt,
             }),
           );
-          dispatch(
-            PromptsActions.setSelectedPrompt({
-              promptId: regeneratePrompt.id,
-            }),
-          );
-          dispatch(PromptsActions.uploadPromptSuccess({ prompt: null }));
         }
-
-        onToggleEditMode(true);
       }
+
+      dispatch(
+        PromptsActions.setSelectedPrompt({
+          promptId: regeneratePrompt.id,
+        }),
+      );
+      dispatch(PromptsActions.uploadPromptSuccess({ prompt: null }));
+
+      onToggleEditMode(true);
     },
-    [
-      dispatch,
-      isNewPromptCreating,
-      onClose,
-      onToggleEditMode,
-      prompt.content,
-      prompt.description,
-      prompt.id,
-      prompt.name,
-    ],
+    [dispatch, isNewPromptCreating, onToggleEditMode, prompt],
   );
 
   const handleGoToEditMode = useCallback(() => {
@@ -97,7 +87,7 @@ const PromptModalContent: React.FC<PromptModalViewProps> = ({
     );
   }
 
-  return <EditPrompt onEdit={handleEdit} prompt={prompt} />;
+  return <EditPrompt onEdit={handleEdit} onClose={onClose} prompt={prompt} />;
 };
 
 const PromptModalView = () => {
@@ -142,6 +132,7 @@ const PromptModalView = () => {
       )}
       state={isLoading ? ModalState.LOADING : ModalState.OPENED}
       heading={prompt?.name}
+      hideClose={!isViewMode}
       onClose={handleClose}
     >
       {prompt ? (

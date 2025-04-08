@@ -97,7 +97,7 @@ const initEpic: AppEpic = (action$, state$) =>
 
 const createNewPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PromptsActions.createNewPrompt.match),
+    ofType(PromptsActions.createNewPrompt),
     switchMap(({ payload: newPrompt }) => {
       return PromptService.createPrompt(newPrompt).pipe(
         switchMap((apiPrompt) => {
