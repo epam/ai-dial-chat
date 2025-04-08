@@ -22,13 +22,17 @@ export const validators: Validators = {
   publishRequestName: {
     required: formErrors.required,
     validate: (v) => {
-      return getNameReg().test(v) || formErrors.notValidString('Request name');
+      return (
+        getNameReg().test(v.trim()) || formErrors.notValidString('Request name')
+      );
     },
   },
   publicationAuthor: {
     required: formErrors.required,
     validate: (v) => {
-      return getNameReg(50).test(v) || formErrors.notValidString('Author', 50);
+      return (
+        getNameReg(50).test(v.trim()) || formErrors.notValidString('Author', 50)
+      );
     },
   },
 };
