@@ -302,14 +302,17 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
     SettingsSelectors.selectEnabledFeatures,
   );
 
-  const appsEditorRoute = `/${Routes.AppsEditorGeneralInfo.split('/')[1]}`;
+  const isAppsEditorRoute = [
+    Routes.AppsEditorGeneralInfo,
+    Routes.AppsEditorSettings,
+  ].some((route) => route === router.route);
 
   return (
     <div className="size-full">
       <Widgetbar />
 
       <div className="flex size-full flex-col md:flex-row ">
-        {!router.route.startsWith(appsEditorRoute) && <Navigation />}
+        {!isAppsEditorRoute && <Navigation />}
         {router.route === Routes.Chat &&
           enabledFeatures.has(Feature.ConversationsSection) && <Chatbar />}
         {router.route === Routes.Marketplace && <MarketplaceFilterbar />}
