@@ -1,11 +1,8 @@
 import { IconFolderPlus } from '@tabler/icons-react';
 import { useCallback } from 'react';
 
-import classNames from 'classnames';
-
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { FeatureType } from '@/src/types/common';
 import { FolderInterface, MoveToFolderProps } from '@/src/types/folder';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
