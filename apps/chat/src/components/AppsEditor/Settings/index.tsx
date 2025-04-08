@@ -78,6 +78,7 @@ interface Props {
   applicationData: CustomApplicationModel;
   type: string;
   isExiting?: boolean;
+  onExit?: () => void;
 }
 
 export const ApplicationSettings: React.FC<Props> = ({
@@ -85,6 +86,7 @@ export const ApplicationSettings: React.FC<Props> = ({
   schema,
   type,
   isExiting,
+  onExit,
 }) => {
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -178,6 +180,7 @@ export const ApplicationSettings: React.FC<Props> = ({
             oldApplication={applicationData}
             isShared={modelFromState?.isShared ?? false}
             applicationStatus={modelFromState?.functionStatus}
+            onExit={onExit}
           />
         );
       default:
@@ -449,7 +452,6 @@ export const ApplicationSettings: React.FC<Props> = ({
         heading={t(
           'Do you want to save changes in the code editor before redeploy?',
         )}
-        onClose={() => setIsSaveBeforeConfirmationOpen(false)}
         options={modalOptions}
       />
     </div>
