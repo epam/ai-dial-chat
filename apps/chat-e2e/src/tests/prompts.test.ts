@@ -26,7 +26,7 @@ dialTest(
     setTestIds,
     header,
     baseAssertion,
-           promptPreviewModal,
+    promptPreviewModal,
   }) => {
     setTestIds('EPMRTC-945', 'EPMRTC-956', 'EPMRTC-1452');
     await dialTest.step(
