@@ -172,7 +172,7 @@ const HiddenButtonsProperty = ({
     <div
       ref={hiddenContainerRef}
       className={classNames(
-        'invisible absolute w-full',
+        'invisible max-h-0',
         buttonsWrapperClassName,
         className,
       )}
@@ -364,10 +364,7 @@ const PropertyRenderer = ({
 
   return (
     <div
-      className={classNames(
-        'relative flex flex-col gap-3 overflow-hidden',
-        className,
-      )}
+      className={classNames('flex flex-col gap-3 overflow-hidden', className)}
     >
       {property.description && (
         <p className="whitespace-pre-line text-base text-primary">
