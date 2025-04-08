@@ -66,6 +66,8 @@ interface Props {
   onEditMode: () => void;
 }
 
+const editBtnName = 'Edit';
+
 export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
   const [isMoveTo, setIsMoveTo] = useState(false);
   const [publishPromptAction, setPublishPromptAction] =
@@ -94,7 +96,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
   const promptItems = useMemo(
     () => [
       {
-        name: 'Edit',
+        name: editBtnName,
         display: isMyPrompt,
         dataQa: 'edit-prompt',
         Icon: IconEdit,
@@ -189,6 +191,8 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
     [isMoveTo],
   );
 
+  const editBtn = promptItems.find((item) => item.name === editBtnName);
+
   return (
     <>
       <div className="hidden h-[34px] gap-2 md:flex">
@@ -196,14 +200,17 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
           display ? <PromptIconBtn key={props.name} {...props} /> : null,
         )}
       </div>
-      <button className="icon-button size-[34px]">
-        <ContextMenu
-          menuItems={promptItems}
-          featureType={FeatureType.Application}
-          triggerIconHighlight
-          className="m-0 xl:invisible group-hover:xl:visible"
-        />
-      </button>
+      <div className="flex h-[34px] gap-2 md:hidden">
+        <button className="icon-button size-[34px]">
+          <ContextMenu
+            menuItems={promptItems.filter((item) => item.name !== editBtnName)}
+            featureType={FeatureType.Application}
+            triggerIconHighlight
+            className="m-0 xl:invisible group-hover:xl:visible"
+          />
+        </button>
+        {editBtn && <PromptIconBtn {...editBtn} />}
+      </div>
       <PromptDialogs
         prompt={prompt}
         isDeleteDialog={isDeleting}
