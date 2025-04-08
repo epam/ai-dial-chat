@@ -35,13 +35,6 @@ export const MoveToFolderModal = ({
     [onMoveToFolder, onClose],
   );
 
-  const highlightColor =
-    featureType === FeatureType.Prompt
-      ? 'hover:bg-accent-tertiary-alpha'
-      : featureType === FeatureType.Chat
-        ? 'hover:bg-accent-secondary-alpha'
-        : 'hover:bg-accent-primary-alpha';
-
   return (
     <Modal
       portalId="theme-main"
@@ -56,10 +49,7 @@ export const MoveToFolderModal = ({
         </div>
         <div className="px-3 py-1  md:px-6">
           <button
-            className={classNames(
-              'flex h-[34px] w-full items-center gap-3 rounded px-3',
-              highlightColor,
-            )}
+            className="flex h-[34px] w-full items-center gap-3 rounded px-3 hover:bg-accent-primary-alpha"
             onClick={() => {
               handleMoveToFolder({ isNewFolder: true });
             }}
@@ -72,10 +62,7 @@ export const MoveToFolderModal = ({
           {folders.map((folder) => (
             <div
               key={folder.id}
-              className={classNames(
-                'flex h-[34px] cursor-pointer items-center rounded px-3',
-                highlightColor,
-              )}
+              className="flex h-[34px] cursor-pointer items-center rounded px-3 hover:bg-accent-primary-alpha"
               onClick={() => {
                 handleMoveToFolder({ folderId: folder.id });
               }}
