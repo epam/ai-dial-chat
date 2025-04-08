@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -96,20 +96,19 @@ const PromptModalView = () => {
   const isPromptInitModeEdit = useAppSelector(
     PromptsSelectors.selectIsPromptModalInitModelEdit,
   );
+  const isNewPromptCreating = useAppSelector(
+    PromptsSelectors.selectIsNewPromptCreating,
+  );
 
-  const [isViewMode, setIsViewMode] = useState(true);
+  const [isViewMode, setIsViewMode] = useState(
+    !isNewPromptCreating && !isPromptInitModeEdit,
+  );
 
   const dispatch = useAppDispatch();
 
   const handleToggleEditMode = useCallback((isOpen: boolean) => {
     setIsViewMode(isOpen);
   }, []);
-
-  useEffect(() => {
-    if (isPromptInitModeEdit) {
-      setIsViewMode(false);
-    }
-  }, [isPromptInitModeEdit]);
 
   const handleClose = useCallback(() => {
     dispatch(PromptsActions.setIsPromptModalOpen({ isOpen: false }));

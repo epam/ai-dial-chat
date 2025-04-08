@@ -122,7 +122,7 @@ export const CreateNewPrompt: React.FC<Props> = ({ iconSize }) => {
     dispatch(
       PromptsActions.setIsPromptModalOpen({
         isOpen: true,
-        isInitModeEdit: false,
+        isInitModeEdit: true,
       }),
     );
     dispatch(PromptsActions.resetChosenPrompts());
