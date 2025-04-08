@@ -18,6 +18,7 @@ import {
   TableColumnSortKeys,
   ViewTypes,
 } from '@/src/constants/marketplace';
+import { Routes } from '@/src/constants/routes';
 
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
@@ -51,12 +52,15 @@ const initEpic: AppEpic = (action$, state$) =>
         query[MarketplaceQueryParams.tab] === MarketplaceTabs.MY_WORKSPACE;
 
       const previousRoute = UISelectors.selectPreviousRoute(state$.value);
-      const firstRoutePart = previousRoute?.split('/')[1];
+      const appsEditorPage = `/${Routes.AppsEditorGeneralInfo.split('/')[1]}`;
+      const pagesToSaveFilters = [appsEditorPage, Routes.Profile];
 
       return concat(
         of(
           MarketplaceActions.initSuccess({
-            saveFilters: firstRoutePart === 'apps-editor',
+            saveFilters:
+              !!previousRoute &&
+              pagesToSaveFilters.some((page) => previousRoute.startsWith(page)),
           }),
         ),
         of(

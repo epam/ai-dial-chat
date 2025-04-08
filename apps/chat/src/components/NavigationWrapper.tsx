@@ -247,7 +247,7 @@ const Navigation = () => {
   }, [dispatch, router]);
 
   const handleUserMobileClick = useCallback(() => {
-    return router.push(Routes.Profile);
+    return router.push(Routes.Profile, undefined, { shallow: true });
   }, [router]);
 
   return (
