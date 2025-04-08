@@ -14,11 +14,12 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { usePromptActions } from '@/src/hooks/usePromptActions';
+import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { isMyEntity } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, ScreenState } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
@@ -83,6 +84,8 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, FeatureType.Prompt),
   );
+
+  const screenState = useScreenState();
 
   const handleCloseDialogs = useCallback(() => {
     setIsDeleting(false);
@@ -195,21 +198,28 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
 
   return (
     <>
-      <div className="hidden h-[34px] gap-2 md:flex">
-        {promptItems.map(({ display, ...props }) =>
-          display ? <PromptIconBtn key={props.name} {...props} /> : null,
+      <div className="flex h-[34px] gap-2">
+        {screenState !== ScreenState.SM ? (
+          <>
+            {promptItems.map(({ display, ...props }) =>
+              display ? <PromptIconBtn key={props.name} {...props} /> : null,
+            )}
+          </>
+        ) : (
+          <>
+            <button className="icon-button size-[34px]">
+              <ContextMenu
+                menuItems={promptItems.filter(
+                  (item) => item.name !== editBtnName,
+                )}
+                featureType={FeatureType.Application}
+                triggerIconHighlight
+                className="m-0 xl:invisible group-hover:xl:visible"
+              />
+            </button>
+            {editBtn && <PromptIconBtn {...editBtn} />}
+          </>
         )}
-      </div>
-      <div className="flex h-[34px] gap-2 md:hidden">
-        <button className="icon-button size-[34px]">
-          <ContextMenu
-            menuItems={promptItems.filter((item) => item.name !== editBtnName)}
-            featureType={FeatureType.Application}
-            triggerIconHighlight
-            className="m-0 xl:invisible group-hover:xl:visible"
-          />
-        </button>
-        {editBtn && <PromptIconBtn {...editBtn} />}
       </div>
       <PromptDialogs
         prompt={prompt}
