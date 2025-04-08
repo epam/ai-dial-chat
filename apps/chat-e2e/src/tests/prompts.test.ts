@@ -26,6 +26,7 @@ dialTest(
     setTestIds,
     header,
     baseAssertion,
+           promptPreviewModal,
   }) => {
     setTestIds('EPMRTC-945', 'EPMRTC-956', 'EPMRTC-1452');
     await dialTest.step(
@@ -278,6 +279,7 @@ dialTest(
           newDescr,
         );
         await promptModalDialog.saveButton.click();
+        await promptPreviewModal.closeButton.click();
         await prompts.getEntityByName(newName).waitFor();
       },
     );
@@ -334,6 +336,7 @@ dialTest(
     promptModalDialog,
     setTestIds,
     localStorageManager,
+    confirmationDialog,
   }) => {
     setTestIds('EPMRTC-953');
     const prompt = promptData.prepareDefaultPrompt();
@@ -347,7 +350,7 @@ dialTest(
     await promptModalDialog.fillPromptDetails(newName, newDescr, newValue);
 
     await promptModalDialog.closeButton.click();
-
+    await confirmationDialog.cancelButton.click();
     await expect
       .soft(
         promptModalDialog.getElementLocator(),
