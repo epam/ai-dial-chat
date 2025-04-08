@@ -474,7 +474,7 @@ export function PublishModal<
       !getValues('publicationAuthor').length ||
       (!isValid && !!errors.publicationAuthor?.message)
     ) {
-      return t("Enter valid publication's author name");
+      return t("Enter a valid publication's author name");
     }
 
     if (isRuleSetterOpened) {
