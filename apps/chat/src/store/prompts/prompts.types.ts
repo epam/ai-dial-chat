@@ -11,8 +11,8 @@ export interface PromptsState {
   searchFilters: SearchFilters;
   selectedPromptId: string | undefined;
   isSelectedPromptApproveRequiredResource: boolean;
-  isEditModalOpen: boolean;
-  isModalPreviewMode: boolean;
+  isPromptModalOpen: boolean;
+  isPromptModalInitModeEdit: boolean;
   newAddedFolderId?: string;
   promptsLoaded: boolean;
   isPromptLoading: boolean;

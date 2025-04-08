@@ -25,6 +25,8 @@ dialTest(
     setTestIds,
     promptModalAssertion,
     localStorageManager,
+    promptPreviewModal,
+    promptPreviewModalAssertion,
   }) => {
     setTestIds(
       'EPMRTC-2991',
@@ -79,7 +81,7 @@ dialTest(
         ExpectedConstants.nameWithDotErrorMessage,
         ExpectedMessages.notAllowedNameErrorShown,
       );
-      // Wating for (Closing) the toast to move forward
+      // Waiting for (Closing) the toast to move forward
       await toast.waitForState({ state: 'hidden' });
     });
 
@@ -119,8 +121,7 @@ dialTest(
     await dialTest.step(
       'Add special characters to the prompt name',
       async () => {
-        await prompts.openEntityDropdownMenu(prompt.name);
-        await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
+        await promptPreviewModal.editPromptButton.click();
         await promptModalDialog.setField(
           promptModalDialog.name,
           ExpectedConstants.allowedSpecialSymbolsInName(),
@@ -142,14 +143,17 @@ dialTest(
           'visible',
         );
         await toastAssertion.assertToastIsHidden();
+        await promptPreviewModalAssertion.assertElementState(
+          promptPreviewModal,
+          'visible',
+        );
       },
     );
 
     await dialTest.step(
       'Update the prompt name to a long name with emojis',
       async () => {
-        await prompts.openEntityDropdownMenu(prompt.name);
-        await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
+        await promptPreviewModal.editPromptButton.click();
         await promptModalDialog.setField(
           promptModalDialog.name,
           longNameWithEmojis,
@@ -171,14 +175,17 @@ dialTest(
           'visible',
         );
         await toastAssertion.assertToastIsHidden();
+        await promptPreviewModalAssertion.assertElementState(
+          promptPreviewModal,
+          'visible',
+        );
       },
     );
 
     await dialTest.step(
       'Update the prompt name to " Prompt 1 " (spaces before, after, and in the middle)',
       async () => {
-        await prompts.openEntityDropdownMenu(prompt.name);
-        await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
+        await promptPreviewModal.editPromptButton.click();
         await promptModalDialog.setField(
           promptModalDialog.name,
           nameWithSpaces,
@@ -191,6 +198,10 @@ dialTest(
     await dialTest.step('Verify the prompt name is "Prompt 1"', async () => {
       await promptAssertion.assertEntityState({ name: prompt.name }, 'visible');
       await toastAssertion.assertToastIsHidden();
+      await promptPreviewModalAssertion.assertElementState(
+        promptPreviewModal,
+        'visible',
+      );
     });
   },
 );

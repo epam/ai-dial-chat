@@ -166,7 +166,7 @@ export default function ItemContextMenu({
       },
       {
         name: t('View'),
-        display: !!onView && isExternal,
+        display: !!onView,
         dataQa: 'view',
         Icon: IconEye,
         onClick: onView,
@@ -231,7 +231,7 @@ export default function ItemContextMenu({
       {
         name: t('Move to'),
         display: !isExternal,
-        dataQa: 'move-to-mobile',
+        dataQa: 'move-to-modal',
         Icon: IconFolderShare,
         onClick: onOpenMoveToModal,
         className: 'md:hidden',
