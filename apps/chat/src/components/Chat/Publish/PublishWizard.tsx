@@ -1,21 +1,19 @@
 import { IconPlus, IconX } from '@tabler/icons-react';
 import {
-  ChangeEvent,
-  ClipboardEvent,
   Fragment,
-  MouseEvent,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
+import { useForm } from 'react-hook-form';
 
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { isVersionValid, prepareEntityName } from '@/src/utils/app/common';
+import { isVersionValid } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import {
@@ -63,11 +61,13 @@ import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
 import { Modal } from '@/src/components/Common/Modal';
 import Tooltip from '@/src/components/Common/Tooltip';
 
+import { Field } from '../../Common/Forms/Field';
 import { Spinner } from '../../Common/Spinner';
 import { PublicationItemsList } from './PublicationItemsList';
 import { PublicationInfoSection } from './PublishWizardComponents';
 import { RuleListItem } from './RuleListItem';
 import { TargetAudienceFilterComponent } from './TargetAudienceFilterComponent';
+import { PublicationRequestFormData, validators } from './form';
 
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 import compact from 'lodash-es/compact';
@@ -105,9 +105,6 @@ export function PublishModal<
 
   const dispatch = useAppDispatch();
 
-  const nameInputRef = useRef<HTMLInputElement>(null);
-
-  const [publishRequestName, setPublishRequestName] = useState('');
   const [path, setPath] = useState(defaultPath ?? '');
   const [isRuleSetterOpened, setIsRuleSetterOpened] = useState(false);
   const [isSomeVersionInvalid, setIsSomeVersionInvalid] = useState(false);
@@ -117,9 +114,6 @@ export function PublishModal<
     TargetAudienceFilter[]
   >([]);
   const userName = useAppSelector(AuthSelectors.selectUserName);
-  const [publicationAuthor, setPublicationAuthor] = useState<string>(
-    () => userName ?? '',
-  );
 
   const versionsRef = useRef<Record<string, string | undefined>>({});
 
@@ -182,6 +176,20 @@ export function PublishModal<
     [type],
   );
 
+  const {
+    register,
+    handleSubmit: submitWrapper,
+    formState: { errors, isValid },
+    getValues,
+    setFocus,
+  } = useForm<PublicationRequestFormData>({
+    defaultValues: {
+      publishRequestName: '',
+      publicationAuthor: userName ?? '',
+    },
+    mode: 'onTouched',
+  });
+
   useEffect(() => {
     if (path) {
       dispatch(PublicationActions.uploadRules({ path }));
@@ -223,6 +231,10 @@ export function PublishModal<
     t,
   ]);
 
+  useEffect(() => {
+    setFocus('publishRequestName');
+  }, [setFocus]);
+
   const handleFolderChange = useCallback(() => {
     setIsChangeFolderModalOpened(true);
   }, []);
@@ -237,36 +249,15 @@ export function PublishModal<
     [],
   );
 
-  const onChangePublicationRequestName = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      if (e.target.value.length > 160) return;
-      setPublishRequestName(e.target.value);
-    },
-    [],
-  );
-
-  const onChangePublicationAuthor = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      if (e.target.value.length > 50) return;
-      setPublicationAuthor(e.target.value);
-    },
-    [],
-  );
-
   const handlePublish = useCallback(
-    (e: MouseEvent<HTMLButtonElement> | ClipboardEvent<HTMLInputElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-
+    (data: PublicationRequestFormData) => {
       const folderOldPathPartsRegExp = new RegExp(
         getIdWithoutRootPathSegments(entity.folderId),
       );
 
       const trimmedPath = path.trim();
-      const cleanPublishRequestName = prepareEntityName(publishRequestName);
-      const cleanPublicationAuthor = prepareEntityName(publicationAuthor, {
-        maxNameLength: 50,
-      });
+      const trimmedPublishRequestName = data.publishRequestName.trim();
+      const trimmedPublicationAuthor = data.publicationAuthor.trim();
       const notEmptyFilters = otherTargetAudienceFilters.filter(
         (filter) =>
           // TODO: uncomment when it will be supported on core
@@ -322,8 +313,8 @@ export function PublishModal<
 
       dispatch(
         PublicationActions.publish({
-          name: cleanPublishRequestName,
-          displayAuthor: cleanPublicationAuthor,
+          name: trimmedPublishRequestName,
+          displayAuthor: trimmedPublicationAuthor,
           targetFolder: constructPath(PUBLIC_URL_PREFIX, trimmedPath),
           resources: [
             ...(publishAction === PublishActions.DELETE
@@ -411,8 +402,6 @@ export function PublishModal<
     [
       entity,
       path,
-      publishRequestName,
-      publicationAuthor,
       otherTargetAudienceFilters,
       currentFolderRules,
       entitiesArray,
@@ -461,22 +450,31 @@ export function PublishModal<
       !path ||
       (!otherTargetAudienceFilters.length && !currentFolderRules));
   const isSendBtnDisabled =
-    !publishRequestName.trim().length ||
-    !publicationAuthor.trim().length ||
+    !isValid ||
     isRuleSetterOpened ||
     isNothingSelectedAndNoRuleChanges ||
     isSomeVersionInvalid ||
     areConversationsWithContentUploading ||
     isApplicationLoading;
   const isSendBtnTooltipHidden =
-    !!publishRequestName.trim().length &&
+    isValid &&
     !isRuleSetterOpened &&
     !isNothingSelectedAndNoRuleChanges &&
     !isSomeVersionInvalid;
 
-  const getTooltipText = () => {
-    if (!publishRequestName.trim().length) {
-      return t('Enter a name for the publish request');
+  const tooltipText = useMemo(() => {
+    if (
+      !getValues('publishRequestName').length ||
+      (!isValid && !!errors.publishRequestName?.message)
+    ) {
+      return t('Enter a valid name for the publish request');
+    }
+
+    if (
+      !getValues('publicationAuthor').length ||
+      (!isValid && !!errors.publicationAuthor?.message)
+    ) {
+      return t("Enter valid publication's author name");
     }
 
     if (isRuleSetterOpened) {
@@ -488,7 +486,15 @@ export function PublishModal<
     }
 
     return t('Nothing is selected and rules have not changed');
-  };
+  }, [
+    getValues,
+    isValid,
+    errors.publishRequestName?.message,
+    errors.publicationAuthor?.message,
+    isRuleSetterOpened,
+    isSomeVersionInvalid,
+    t,
+  ]);
 
   return (
     <Modal
@@ -500,21 +506,23 @@ export function PublishModal<
       dataQa="publish-modal"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={onClose}
-      initialFocus={nameInputRef}
+      initialFocus={1}
     >
-      <div className="flex w-full flex-col divide-y divide-tertiary overflow-y-auto">
+      <form
+        onSubmit={submitWrapper(handlePublish)}
+        className="flex w-full flex-col divide-y divide-tertiary overflow-y-auto"
+      >
         <div className="px-3 py-4 md:pl-4 md:pr-10">
-          <input
-            autoFocus
-            onChange={onChangePublicationRequestName}
-            value={publishRequestName}
+          <Field
+            {...register('publishRequestName', validators.publishRequestName)}
             placeholder={
               publishAction === PublishActions.ADD
                 ? t('Type publication request name...')
                 : t('Type unpublish request name...')
             }
-            className="w-full bg-transparent text-base font-semibold outline-none"
-            data-qa="request-name"
+            id="publishRequestName"
+            error={errors.publishRequestName?.message}
+            dataQa="request-name"
           />
         </div>
         <div className="flex min-h-0 grow flex-col divide-y divide-tertiary overflow-y-auto md:flex-row md:divide-x md:divide-y-0">
@@ -565,21 +573,17 @@ export function PublishModal<
 
               {publishAction !== PublishActions.DELETE && (
                 <section>
-                  <h3
-                    className="mb-1 flex text-xs text-secondary"
-                    data-qa="public-author-label"
-                  >
-                    {t('Author')}
-                  </h3>
-                  <div className="input-form mx-0 flex grow cursor-default items-center border-primary px-3 py-2">
-                    <input
-                      onChange={onChangePublicationAuthor}
-                      value={publicationAuthor}
-                      placeholder={t(`Type publication's author name...`)}
-                      className="flex w-full justify-between truncate whitespace-pre break-all bg-transparent outline-none"
-                      data-qa="public-author-input"
-                    />
-                  </div>
+                  <Field
+                    {...register(
+                      'publicationAuthor',
+                      validators.publicationAuthor,
+                    )}
+                    placeholder={t(`Type publication's author name...`)}
+                    label={t('Author')}
+                    id="publicationAuthor"
+                    error={errors.publicationAuthor?.message}
+                    dataQa="public-author-input"
+                  />
                 </section>
               )}
             </div>
@@ -705,13 +709,10 @@ export function PublishModal<
         </div>
 
         <div className="flex justify-end gap-3 px-3 py-4 md:px-6">
-          <Tooltip
-            hideTooltip={isSendBtnTooltipHidden}
-            tooltip={getTooltipText()}
-          >
+          <Tooltip hideTooltip={isSendBtnTooltipHidden} tooltip={tooltipText}>
             <button
               className="button button-primary py-2"
-              onClick={handlePublish}
+              type="submit"
               data-qa="publish"
               disabled={isSendBtnDisabled}
             >
@@ -719,7 +720,7 @@ export function PublishModal<
             </button>
           </Tooltip>
         </div>
-      </div>
+      </form>
       <ChangePathDialog
         initiallySelectedFolderId={entity.id}
         isOpen={isChangeFolderModalOpened}

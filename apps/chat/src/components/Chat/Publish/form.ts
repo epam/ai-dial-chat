@@ -1,0 +1,34 @@
+import { Path, RegisterOptions } from 'react-hook-form';
+
+import { getNameReg } from '@/src/utils/app/forms';
+
+import { formErrors } from '@/src/constants/form-errors';
+
+export interface PublicationRequestFormData {
+  publishRequestName: string;
+  publicationAuthor: string;
+}
+
+type Options<T extends Path<PublicationRequestFormData>> = Omit<
+  RegisterOptions<PublicationRequestFormData, T>,
+  'disabled' | 'valueAsNumber' | 'valueAsDate'
+>;
+
+export type Validators = {
+  [K in keyof PublicationRequestFormData]?: Options<K>;
+};
+
+export const validators: Validators = {
+  publishRequestName: {
+    required: formErrors.required,
+    validate: (v) => {
+      return getNameReg().test(v) || formErrors.notValidString('Request name');
+    },
+  },
+  publicationAuthor: {
+    required: formErrors.required,
+    validate: (v) => {
+      return getNameReg(50).test(v) || formErrors.notValidString('Author', 50);
+    },
+  },
+};
