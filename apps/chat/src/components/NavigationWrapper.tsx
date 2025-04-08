@@ -11,9 +11,11 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
+import { useScreenState } from '../hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 import { useWidgets } from '@/src/hooks/useWidgets';
 
+import { ScreenState } from '../types/common';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -229,6 +231,7 @@ const Navigation = () => {
   const selectedWidget = useAppSelector(
     ApplicationSelectors.selectSelectedWidget,
   );
+  const screenState = useScreenState();
 
   const handleChatClick = useCallback(() => {
     if (router.route !== Routes.Chat) {
@@ -266,20 +269,24 @@ const Navigation = () => {
         />
         {isMarketplaceEnabled && <MarketplaceNavigation />}
         {!!widgetsSchemaIds.size && <UsedWidgets />}
-        <div className="flex items-center justify-center md:hidden">
-          <NavigationButton
-            onClick={handleUserMobileClick}
-            tooltip={t('User')}
-            Icon={ProfileButton}
-            selected={router.route === Routes.Profile}
-            dataQa="user-settings"
-            caption={t('User')}
-          />
+        {screenState === ScreenState.SM && (
+          <div className="flex items-center justify-center">
+            <NavigationButton
+              onClick={handleUserMobileClick}
+              tooltip={t('User')}
+              Icon={ProfileButton}
+              selected={router.route === Routes.Profile}
+              dataQa="user-settings"
+              caption={t('User')}
+            />
+          </div>
+        )}
+      </div>
+      {screenState !== ScreenState.SM && (
+        <div className="flex items-center justify-center p-[10px]">
+          <UserDesktop />
         </div>
-      </div>
-      <div className="hidden items-center justify-center p-[10px] md:flex">
-        <UserDesktop />
-      </div>
+      )}
     </div>
   );
 };
@@ -295,12 +302,14 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
     SettingsSelectors.selectEnabledFeatures,
   );
 
+  const appsEditorRoute = `/${Routes.AppsEditorGeneralInfo.split('/')[1]}`;
+
   return (
     <div className="size-full">
       <Widgetbar />
 
       <div className="flex size-full flex-col md:flex-row ">
-        <Navigation />
+        {!router.route.startsWith(appsEditorRoute) && <Navigation />}
         {router.route === Routes.Chat &&
           enabledFeatures.has(Feature.ConversationsSection) && <Chatbar />}
         {router.route === Routes.Marketplace && <MarketplaceFilterbar />}

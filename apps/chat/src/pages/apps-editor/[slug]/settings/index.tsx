@@ -18,12 +18,11 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
+import { getLayout } from '@/src/pages/_app';
+
 import { AppsEditorHeader } from '@/src/components/AppsEditor/AppsEditorHeader';
 import { ApplicationSettings } from '@/src/components/AppsEditor/Settings';
-import { ChatModalsManager } from '@/src/components/Chat/ChatModalsManager';
 import { Spinner } from '@/src/components/Common/Spinner';
-
-import { getLayout } from '../../../_app';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 
@@ -116,7 +115,6 @@ export default function AppsSettings() {
               />
             )}
           </div>
-          <ChatModalsManager />
         </>
       )}
     </div>
