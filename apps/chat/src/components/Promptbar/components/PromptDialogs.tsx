@@ -67,7 +67,6 @@ export const PromptDialogs: React.FC<Props> = ({
             folders={folders}
             onMoveToFolder={handleMoveToFolder}
             onClose={onCloseModals}
-            featureType={FeatureType.Prompt}
           />
         </div>
       )}

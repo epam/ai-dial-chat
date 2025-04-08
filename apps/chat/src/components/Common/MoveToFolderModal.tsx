@@ -14,14 +14,12 @@ import { Modal } from './Modal';
 
 interface Props {
   folders: FolderInterface[];
-  featureType?: FeatureType;
   onClose: () => void;
   onMoveToFolder: (args: { folderId?: string; isNewFolder?: boolean }) => void;
 }
 
 export const MoveToFolderModal = ({
   folders,
-  featureType,
   onMoveToFolder,
   onClose,
 }: Props) => {
