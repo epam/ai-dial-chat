@@ -181,7 +181,7 @@ export const SearchHeader = () => {
 
   return (
     <div className="flex w-full gap-4 sm:justify-end md:w-auto">
-      <div className="relative flex h-[38px] shrink-0 grow sm:w-[315px] md:w-[500px]">
+      <div className="relative flex h-[38px] shrink-0 grow sm:w-[315px] md:w-[445px] lg:w-[500px]">
         <IconSearch
           className="absolute left-3 top-1/2 -translate-y-1/2"
           size={18}
