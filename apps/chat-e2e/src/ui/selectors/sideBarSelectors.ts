@@ -80,4 +80,5 @@ export const NavigationPanelSelectors = {
   backToChatButton: '[data-qa="back-to-chat"]',
   marketplaceHomeButton: '[data-qa="marketplace-home-page"]',
   myWorkspaceButton: '[data-qa="my-workspace"]',
+  accountSettings: '[data-qa="account-settings"]',
 };

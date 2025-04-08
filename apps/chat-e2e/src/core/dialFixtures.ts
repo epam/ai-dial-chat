@@ -492,8 +492,8 @@ const dialTest = test.extend<{
     const header = appContainer.getHeader();
     await use(header);
   },
-  accountSettings: async ({ header }, use) => {
-    const accountSettings = header.getAccountSettings();
+  accountSettings: async ({ navigationPanel }, use) => {
+    const accountSettings = navigationPanel.getAccountSettings();
     await use(accountSettings);
   },
   accountDropdownMenu: async ({ accountSettings }, use) => {

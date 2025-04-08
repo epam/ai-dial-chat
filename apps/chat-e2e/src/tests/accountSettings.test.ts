@@ -17,7 +17,6 @@ dialTest(
     accountDropdownMenuAssertion,
     setTestIds,
     chatBar,
-    accountSettingsAssertion,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-812');
@@ -29,7 +28,6 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await accountSettings.openAccountDropdownMenu();
-        await accountSettingsAssertion.assertCaretState('expanded');
       },
     );
 
@@ -43,7 +41,6 @@ dialTest(
       'Click out of account menu and verify it is closed',
       async () => {
         await chatBar.click();
-        await accountSettingsAssertion.assertCaretState('collapsed');
         await accountDropdownMenuAssertion.assertMenuState('hidden');
       },
     );
