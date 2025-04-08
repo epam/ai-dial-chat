@@ -94,9 +94,7 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
         )}
       </ul>
       <div className="flex items-center justify-between">
-        <div className="flex h-[34px] gap-2">
-          <ViewPromptButtons prompt={prompt} onEditMode={onEditMode} />
-        </div>
+        <ViewPromptButtons prompt={prompt} onEditMode={onEditMode} />
         <div className="flex items-center gap-4">
           {isReviewEntity ? (
             <>
@@ -124,7 +122,8 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
                 data-qa="use-prompt"
               >
                 <InsertPromptIcon className="size-[18px]" />
-                {t('Use prompt')}
+                <span className="hidden md:block">{t('Use prompt')}</span>
+                <span className="block md:hidden">{t('Use')}</span>
               </button>
             </>
           )}

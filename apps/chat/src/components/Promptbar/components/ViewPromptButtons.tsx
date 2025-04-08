@@ -25,6 +25,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
+import ContextMenu from '@/src/components/Common/ContextMenu';
 import Tooltip from '@/src/components/Common/Tooltip';
 
 import { PromptDialogs } from './PromptDialogs';
@@ -33,14 +34,14 @@ import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import { PublishActions } from '@epam/ai-dial-shared';
 
 interface PromptIconBtnProps {
-  tooltip: string;
+  name: string;
   dataQa: string;
   Icon: (props: TablerIconsProps) => JSX.Element;
   onClick: () => void;
 }
 
 const PromptIconBtn: React.FC<PromptIconBtnProps> = ({
-  tooltip,
+  name,
   dataQa,
   Icon,
   onClick,
@@ -48,7 +49,7 @@ const PromptIconBtn: React.FC<PromptIconBtnProps> = ({
   const { t } = useTranslation(Translation.PromptBar);
 
   return (
-    <Tooltip placement="top" isTriggerClickable tooltip={t(tooltip)}>
+    <Tooltip placement="top" isTriggerClickable tooltip={t(name)}>
       <button
         onClick={onClick}
         className="flex cursor-pointer items-center justify-center rounded p-[5px] text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
@@ -93,28 +94,28 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
   const promptItems = useMemo(
     () => [
       {
-        tooltip: 'Edit',
+        name: 'Edit',
         display: isMyPrompt,
         dataQa: 'edit-prompt',
         Icon: IconEdit,
         onClick: onEditMode,
       },
       {
-        tooltip: 'Export',
+        name: 'Export',
         display: true,
         dataQa: 'export-prompt',
         Icon: IconFileArrowRight,
         onClick: handleExport,
       },
       {
-        tooltip: 'Duplicate',
+        name: 'Duplicate',
         display: true,
         dataQa: 'duplicate-prompt',
         Icon: IconCopy,
         onClick: handleDuplicate,
       },
       {
-        tooltip: 'Move',
+        name: 'Move',
         display: isMyPrompt,
         dataQa: 'move-prompt',
         Icon: IconFolderShare,
@@ -123,14 +124,14 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
         },
       },
       {
-        tooltip: 'Share',
+        name: 'Share',
         display: isMyPrompt && isSharingEnabled,
         dataQa: 'share-prompt',
         Icon: IconUserShare,
         onClick: handleShare,
       },
       {
-        tooltip: 'Publish',
+        name: 'Publish',
         display: !isPublic && isPublishingEnabled,
         dataQa: 'publish-prompt',
         Icon: IconWorldShare,
@@ -139,7 +140,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
         },
       },
       {
-        tooltip: 'Unpublish',
+        name: 'Unpublish',
         display: isPublic && isPublishingEnabled,
         dataQa: 'publish-prompt',
         Icon: (props) => (
@@ -150,8 +151,8 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
         },
       },
       {
-        tooltip: 'Delete',
-        display: isMyEntity || !!prompt.sharedWithMe,
+        name: 'Delete',
+        display: isMyPrompt || !!prompt.sharedWithMe,
         dataQa: 'delete-prompt',
         Icon: IconTrashX,
         onClick: () => {
@@ -159,7 +160,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
         },
       },
       {
-        tooltip: 'Info',
+        name: 'Info',
         display: true,
         dataQa: 'info-prompt',
         Icon: IconInfoCircle,
@@ -190,9 +191,19 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
 
   return (
     <>
-      {promptItems.map(({ display, ...props }) =>
-        display ? <PromptIconBtn key={props.tooltip} {...props} /> : null,
-      )}
+      <div className="hidden h-[34px] gap-2 md:flex">
+        {promptItems.map(({ display, ...props }) =>
+          display ? <PromptIconBtn key={props.name} {...props} /> : null,
+        )}
+      </div>
+      <button className="icon-button size-[34px]">
+        <ContextMenu
+          menuItems={promptItems}
+          featureType={FeatureType.Application}
+          triggerIconHighlight
+          className="m-0 xl:invisible group-hover:xl:visible"
+        />
+      </button>
       <PromptDialogs
         prompt={prompt}
         isDeleteDialog={isDeleting}

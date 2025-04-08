@@ -42,16 +42,11 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit }) => {
 
   const dispatch = useAppDispatch();
 
-  const selectedPrompt = useAppSelector(
-    PromptsSelectors.selectSelectedOrNewPrompt,
-  );
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
 
-  const [name, setName] = useState<string>('');
-  const [description, setDescription] = useState(
-    selectedPrompt?.description || '',
-  );
-  const [content, setContent] = useState(selectedPrompt?.content || '');
+  const [name, setName] = useState<string>(prompt.name ?? '');
+  const [description, setDescription] = useState(prompt?.description ?? '');
+  const [content, setContent] = useState(prompt?.content ?? '');
   const [submitted, setSubmitted] = useState(false);
   const [isDotError, setIsDotError] = useState(false);
 
@@ -138,15 +133,6 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit }) => {
   useEffect(() => {
     nameInputRef.current?.focus();
   }, []);
-
-  useEffect(() => {
-    setDescription(selectedPrompt?.description || '');
-    setContent(selectedPrompt?.content || '');
-  }, [selectedPrompt]);
-
-  useEffect(() => {
-    setName(selectedPrompt?.name || '');
-  }, [selectedPrompt?.name]);
 
   const inputClassName = classNames('input-form peer mx-0', {
     'input-invalid': submitted,
