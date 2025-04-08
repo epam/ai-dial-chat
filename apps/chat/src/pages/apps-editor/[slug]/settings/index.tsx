@@ -20,6 +20,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { AppsEditorHeader } from '@/src/components/AppsEditor/AppsEditorHeader';
 import { ApplicationSettings } from '@/src/components/AppsEditor/Settings';
+import { ChatModalsManager } from '@/src/components/Chat/ChatModalsManager';
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import { getLayout } from '../../../_app';
@@ -103,7 +104,6 @@ export default function AppsSettings() {
                 : decode(slug.toString())
             }
             hasCustomEditor={!!schema?.['dial:applicationTypeEditorUrl']}
-            onExit={handleOnExit}
           />
           <div className="flex size-full grow overflow-hidden">
             {applicationData && (
@@ -112,9 +112,11 @@ export default function AppsSettings() {
                 applicationData={applicationData}
                 schema={isSchemaApplicationType ? schema : null}
                 type={type ?? ''}
+                onExit={handleOnExit}
               />
             )}
           </div>
+          <ChatModalsManager />
         </>
       )}
     </div>
