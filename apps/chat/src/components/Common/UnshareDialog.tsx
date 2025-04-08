@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -48,37 +49,42 @@ function UnshareDialogView() {
         );
         return;
       }
+
       if (shareFeatureType) {
+        const revokePayload = {
+          featureType: shareFeatureType,
+          isFolder,
+        };
+
         if (unshareResourceId) {
           dispatch(
             ShareActions.revokeAccess({
+              ...revokePayload,
               resourceId: unshareResourceId,
-              isFolder: isFolder,
-              featureType: shareFeatureType,
             }),
           );
           dispatch(ShareActions.setUnshareResourceId(undefined));
-        } else {
-          if (unshareEntity?.isShared) {
-            dispatch(
-              ShareActions.revokeAccess({
-                resourceId: unshareEntity.id,
-                featureType: shareFeatureType,
-              }),
-            );
-          }
+        }
 
-          if (unshareEntity?.sharedWithMe) {
-            dispatch(
-              ShareActions.discardSharedWithMe({
-                resourceIds: [unshareEntity.id],
-                featureType: shareFeatureType,
-              }),
-            );
-          }
-
+        if (unshareEntity?.isShared) {
+          dispatch(
+            ShareActions.revokeAccess({
+              ...revokePayload,
+              resourceId: unshareEntity.id,
+            }),
+          );
           dispatch(ShareActions.setUnshareEntity(undefined));
         }
+      }
+
+      if (unshareEntity?.sharedWithMe) {
+        dispatch(
+          ShareActions.discardSharedWithMe({
+            resourceIds: [unshareEntity.id],
+            featureType: FeatureType.Application,
+          }),
+        );
+        dispatch(ShareActions.setUnshareEntity(undefined));
       }
     },
     [dispatch, shareFeatureType, isFolder, unshareEntity, unshareResourceId],
