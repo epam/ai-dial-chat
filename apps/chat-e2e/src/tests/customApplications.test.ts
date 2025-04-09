@@ -648,6 +648,7 @@ dialTest(
     await dialTest.step(
       'Open "My workspace", find App 2 and click on the second app card',
       async () => {
+        await marketplaceHeader.searchInput.hoverOver(); //A workaround to avoid the presence of the tooltip
         await marketplaceContainer
           .getNavigationPanel()
           .myWorkspaceButton.click();
