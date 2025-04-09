@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   Controller,
   Path,
@@ -22,10 +22,7 @@ import {
   ApplicationActions,
   ApplicationSelectors,
 } from '@/src/store/application/application.reducers';
-import {
-  CodeEditorActions,
-  CodeEditorSelectors,
-} from '@/src/store/codeEditor/codeEditor.reducer';
+import { CodeEditorActions } from '@/src/store/codeEditor/codeEditor.reducer';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -47,7 +44,6 @@ import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessag
 import { withWarningMessage } from '@/src/components/Common/Forms/FieldWarningMessage';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
-import { OptionsDialog } from '@/src/components/Common/OptionsDialog';
 
 import {
   CodeAppFormData,
@@ -113,26 +109,21 @@ const MappingsForm = withLabel(
 
 interface CodeAppViewProps {
   isSharedWithMe: boolean;
-  isAppDeployed: boolean;
   oldApplication: CustomApplicationModel;
   isShared: boolean;
   applicationStatus?: ApplicationStatus;
-  onExit?: () => void;
 }
 
 export const CodeAppView: React.FC<CodeAppViewProps> = ({
   isSharedWithMe,
-  isAppDeployed,
   oldApplication,
   isShared,
   applicationStatus,
-  onExit,
 }) => {
   const { t } = useTranslation(Translation.Chat);
-  const [editorConfirmation, setEditorConfirmation] =
-    useState<CodeAppFormData>();
+
   const dispatch = useAppDispatch();
-  const isCodeEditorDirty = useAppSelector(CodeEditorSelectors.selectIsDirty);
+
   const {
     control,
     handleSubmit: submitWrapper,
@@ -209,69 +200,6 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     ],
   );
 
-  const handleSave = useCallback(
-    (data: CodeAppFormData) => {
-      if (isCodeEditorDirty && exitAfterSave) {
-        setEditorConfirmation(data);
-      } else {
-        if (isAppDeployed && exitAfterSave) {
-          dispatch(
-            UIActions.showWarningToast(
-              t('Saved changes will be applied during next deployment'),
-            ),
-          );
-          onExit?.();
-        }
-        handleEdit(data);
-      }
-    },
-    [
-      dispatch,
-      exitAfterSave,
-      handleEdit,
-      isAppDeployed,
-      isCodeEditorDirty,
-      onExit,
-      t,
-    ],
-  );
-
-  const modalOptions = useMemo(
-    () => [
-      {
-        label: t("Don't save"),
-        dataQa: 'not-save-option',
-        className: 'button-secondary',
-        onClick: () => {
-          if (editorConfirmation) {
-            handleEdit(editorConfirmation);
-          }
-          setEditorConfirmation(undefined);
-        },
-      },
-      {
-        label: t('Save'),
-        dataQa: 'save-option',
-        onClick: () => {
-          if (isAppDeployed) {
-            dispatch(
-              UIActions.showWarningToast(
-                t('Saved changes will be applied during next deployment'),
-              ),
-            );
-          }
-          dispatch(CodeEditorActions.saveAllModifiedFiles());
-          if (editorConfirmation) {
-            handleEdit(editorConfirmation);
-          }
-          setEditorConfirmation(undefined);
-          onExit?.();
-        },
-      },
-    ],
-    [t, editorConfirmation, handleEdit, isAppDeployed, dispatch, onExit],
-  );
-
   register('sourceFiles', validators['sourceFiles']);
   const sources = watch('sources');
 
@@ -292,13 +220,13 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
         return;
       }
 
-      submitWrapper(handleSave)();
+      submitWrapper(handleEdit)();
     }
-  }, [submitWrapper, shouldSaveApplication, handleSave, isValid, dispatch, t]);
+  }, [submitWrapper, shouldSaveApplication, handleEdit, isValid, dispatch, t]);
 
   return (
     <form
-      onSubmit={submitWrapper(handleSave)}
+      onSubmit={submitWrapper(handleEdit)}
       className="flex size-full flex-col bg-layer-2"
     >
       <div className="grow space-y-4 divide-tertiary overflow-y-auto p-5">
@@ -377,12 +305,6 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           keyOptions={envKeysValidator}
           valueOptions={envValueValidator}
           errors={errors.env}
-        />
-
-        <OptionsDialog
-          isOpen={!!editorConfirmation}
-          heading={t('Do you want to save changes in the code editor?')}
-          options={modalOptions}
         />
       </div>
     </form>
