@@ -59,7 +59,6 @@ const NavigationButton = ({
   selected,
   tooltip,
   dataQa,
-  caption,
   rounded = false,
 }: NavigationButtonProps) => {
   return (
@@ -81,15 +80,6 @@ const NavigationButton = ({
           />
         </Tooltip>
       )}
-
-      <span
-        className={classNames(
-          'text-xs leading-[15px] md:hidden',
-          selected ? 'text-accent-primary' : 'text-secondary',
-        )}
-      >
-        {caption}
-      </span>
     </button>
   );
 };
