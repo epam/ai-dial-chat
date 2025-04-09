@@ -1,12 +1,5 @@
 import { IconCheck } from '@tabler/icons-react';
-import {
-  DragEvent,
-  MouseEvent,
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { DragEvent, MouseEvent, useCallback, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -226,8 +219,6 @@ export const ConversationComponent = ({
     ConversationsSelectors.selectSelectedItems,
   );
 
-  const buttonRef = useRef<HTMLButtonElement>(null);
-
   const [isContextMenu, setIsContextMenu] = useState(false);
 
   const isSelected = selectedConversationIds.includes(conversation.id);
@@ -329,7 +320,6 @@ export const ConversationComponent = ({
           !isConversationsStreaming
         }
         onDragStart={(e) => handleDragStart(e, conversation)}
-        ref={buttonRef}
         data-qa={isSelected ? 'selected' : null}
       >
         <ConversationView
