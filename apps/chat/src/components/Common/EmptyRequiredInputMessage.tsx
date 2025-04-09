@@ -26,7 +26,7 @@ const EmptyRequiredInputMessage = ({
         useDisplay && 'hidden peer-invalid:peer-[.submitted]:block',
         !useDisplay &&
           !isShown &&
-          'invisible peer-invalid:peer-[.submitted]:visible',
+          'hidden peer-invalid:peer-[.submitted]:block',
         className,
       )}
     >

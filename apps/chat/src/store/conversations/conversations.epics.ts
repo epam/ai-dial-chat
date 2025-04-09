@@ -80,6 +80,7 @@ import {
 import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import {
+  getVersionGroupFromId,
   isEntityIdPublic,
   mapPublishedItems,
 } from '@/src/utils/app/publications';
@@ -1982,14 +1983,34 @@ const uploadSelectedConversationsEpic: AppEpic = (action$, state$) =>
     map(() =>
       ConversationsSelectors.selectSelectedConversationsIds(state$.value),
     ),
-    switchMap((selectedConversationsIds) =>
-      of(
-        ConversationsActions.uploadConversationsByIds({
-          conversationIds: selectedConversationsIds,
-          showLoader: true,
-        }),
-      ),
-    ),
+    switchMap((selectedConversationsIds) => {
+      const actions: Observable<AnyAction>[] = [];
+
+      selectedConversationsIds.forEach((id) => {
+        if (isEntityIdPublic({ id })) {
+          const { versionGroupId, currentVersion } = getVersionGroupFromId(id);
+
+          actions.push(
+            of(
+              PublicationActions.setSelectedVersionForPublicVersionGroup({
+                versionGroupId,
+                newVersion: { version: currentVersion, id },
+              }),
+            ),
+          );
+        }
+      });
+
+      return concat(
+        ...actions,
+        of(
+          ConversationsActions.uploadConversationsByIds({
+            conversationIds: selectedConversationsIds,
+            showLoader: true,
+          }),
+        ),
+      );
+    }),
   );
 
 const compareConversationsEpic: AppEpic = (action$, state$) =>

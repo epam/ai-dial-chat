@@ -45,7 +45,7 @@ const PromptListItem: FC<ListItemProps> = ({
             prompt.publicationInfo.version,
             prompt.id,
           )}
-          onChangeSelectedVersion={(_, newVersion) => onSelect(newVersion.id)}
+          onChangeSelectedVersion={onSelect}
         />
       )}
     </li>

@@ -33,8 +33,8 @@ const initialState: PromptsState = {
   searchFilters: SearchFilters.None,
   selectedPromptId: undefined,
   isSelectedPromptApproveRequiredResource: false,
-  isEditModalOpen: false,
-  isModalPreviewMode: false,
+  isPromptModalOpen: false,
+  isPromptModalInitModeEdit: false,
   newAddedFolderId: undefined,
   promptsLoaded: false,
   isPromptLoading: false,
@@ -312,15 +312,14 @@ export const promptsSlice = createSlice({
       state.searchTerm = '';
       state.searchFilters = SearchFilters.None;
     },
-    setIsEditModalOpen: (
+    setIsPromptModalOpen: (
       state,
-      {
-        payload: { isOpen, isPreview = false },
-      }: PayloadAction<{ isOpen: boolean; isPreview?: boolean }>,
+      { payload }: PayloadAction<{ isOpen: boolean; isInitModeEdit?: boolean }>,
     ) => {
-      state.isEditModalOpen = isOpen;
-      state.isModalPreviewMode = isPreview;
-      if (!isOpen) {
+      state.isPromptModalOpen = payload.isOpen;
+      state.isPromptModalInitModeEdit = !!payload.isInitModeEdit;
+
+      if (!payload.isOpen) {
         state.isNewPromptCreating = false;
       }
     },
@@ -454,6 +453,14 @@ export const promptsSlice = createSlice({
     },
     getPromptMetadata: (state, _action: PayloadAction<{ promptId: string }>) =>
       state,
+    selectPrompt: (
+      state,
+      _action: PayloadAction<{
+        promptId: string;
+        selectInEditMode?: boolean;
+        isApproveRequiredResource?: boolean;
+      }>,
+    ) => state,
   },
 });
 

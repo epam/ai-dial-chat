@@ -179,6 +179,7 @@ dialTest(
     shareApiAssertion,
     setTestIds,
     localStorageManager,
+    promptPreviewModal,
   }) => {
     setTestIds('EPMRTC-1524', 'EPMRTC-3157', 'EPMRTC-3180');
     let prompt: Prompt;
@@ -217,8 +218,7 @@ dialTest(
     await dialTest.step(
       'Edit prompt name and verify shared icon is displayed on the prompt',
       async () => {
-        await prompts.openEntityDropdownMenu(prompt.name);
-        await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
+        await promptPreviewModal.editPromptButton.click();
         await promptModalDialog.updatePromptDetailsWithButton(newName);
         await promptAssertion.assertElementState(
           prompts.getEntityByName(newName),
