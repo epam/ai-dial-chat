@@ -429,6 +429,7 @@ export const PromptComponent = ({
               disableUse={disableUsePrompt}
               onUse={handleUse}
               onShowInfo={handleInfo}
+              className="p-2"
             />
           </div>
         )}
