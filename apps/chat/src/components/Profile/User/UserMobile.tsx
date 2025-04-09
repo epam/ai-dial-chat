@@ -10,7 +10,7 @@ export const UserMobile = () => {
   return (
     <div
       className="flex items-center justify-center text-secondary md:text-primary"
-      data-qa="account-settings-mobile"
+      data-qa="account-settings"
       aria-label={t('Account settings')}
     >
       <UserAvatar />

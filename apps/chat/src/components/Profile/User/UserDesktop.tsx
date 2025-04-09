@@ -41,7 +41,7 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
         trigger={
           <div
             className="flex w-full cursor-pointer items-center"
-            data-qa="account-settings-desktop"
+            data-qa="account-settings"
           >
             <div className="flex items-center gap-3">
               <UserAvatar />
