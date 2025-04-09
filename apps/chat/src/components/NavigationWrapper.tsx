@@ -1,6 +1,6 @@
 import {
   IconCube,
-  IconHome2,
+  IconHomeRibbon,
   IconLayoutGrid,
   IconMessage2,
   TablerIconsProps,
@@ -141,18 +141,18 @@ const MarketplaceNavigation = () => {
           isMarketplace && selectedMarketplaceTab === MarketplaceTabs.HOME
         }
         dataQa="marketplace-home-page"
-        caption={t('Apps')}
+        caption={t('Agents')}
       />
       <NavigationButton
         onClick={handleMyAppsClick}
         tooltip={t('My workspace')}
-        Icon={IconHome2}
+        Icon={IconHomeRibbon}
         selected={
           isMarketplace &&
           selectedMarketplaceTab === MarketplaceTabs.MY_WORKSPACE
         }
         dataQa="my-workspace"
-        caption={t('Home')}
+        caption={t('Workspace')}
       />
     </>
   );
