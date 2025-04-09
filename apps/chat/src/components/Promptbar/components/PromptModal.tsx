@@ -119,7 +119,6 @@ const PromptModalView = () => {
     dispatch(PromptsActions.setIsPromptModalOpen({ isOpen: false }));
     dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
   }, [dispatch]);
-  // containerClassName="flex flex-col gap-4 sm:w-[525px] w-full"
 
   return (
     <Modal
