@@ -294,8 +294,8 @@ const dialOverlayTest = test.extend<{
     );
     await use(publishingModal);
   },
-  overlayAccountSettings: async ({ overlayHeader }, use) => {
-    const overlayAccountSettings = overlayHeader.getAccountSettings();
+  overlayAccountSettings: async ({ overlayNavigationPanel }, use) => {
+    const overlayAccountSettings = overlayNavigationPanel.getAccountSettings();
     await use(overlayAccountSettings);
   },
   overlayProfilePanel: async ({ page, overlayHomePage }, use) => {
