@@ -27,7 +27,6 @@ import {
   MarketplaceSelectors,
 } from '@/src/store/marketplace/marketplace.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_CONVERSATION_NAME } from '../constants/default-ui-settings';
 import { MarketplaceTabs } from '@/src/constants/marketplace';
@@ -38,7 +37,6 @@ import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import Tooltip from '@/src/components/Common/Tooltip';
 import { MarketplaceFilterbar } from '@/src/components/Marketplace/MarketplaceFilterbar';
 import { Promptbar } from '@/src/components/Promptbar';
-import { Widgetbar } from '@/src/components/Widgetbar';
 
 import { Feature } from '@epam/ai-dial-shared';
 
@@ -163,8 +161,6 @@ const UsedWidgets = () => {
 
   const router = useRouter();
 
-  const dispatch = useAppDispatch();
-
   const selectedWidget = useAppSelector(
     ApplicationSelectors.selectSelectedWidget,
   );
@@ -172,8 +168,8 @@ const UsedWidgets = () => {
   const { widgetModels, handleWidgetClick } = useWidgets();
 
   const handleOpenWidgetsClick = useCallback(() => {
-    dispatch(UIActions.setShowWidgetbar(true));
-  }, [dispatch]);
+    router.push(Routes.Widgets);
+  }, [router]);
 
   return (
     <>
@@ -200,8 +196,21 @@ const UsedWidgets = () => {
       <div className="md:hidden">
         <NavigationButton
           onClick={handleOpenWidgetsClick}
-          Icon={IconCube}
-          selected={!!selectedWidget && router.route === Routes.Chat}
+          Icon={
+            selectedWidget
+              ? ({ height }) => (
+                  <ModelIcon
+                    entity={undefined}
+                    entityId={selectedWidget}
+                    size={height as number}
+                  />
+                )
+              : IconCube
+          }
+          selected={
+            (!!selectedWidget && router.route === Routes.Chat) ||
+            router.route === Routes.Widgets
+          }
           dataQa="widgets-sidebar-trigger"
           caption={t('Widgets')}
         />
@@ -278,8 +287,6 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
 
   return (
     <div className="size-full">
-      <Widgetbar />
-
       <div className="flex size-full flex-col md:flex-row ">
         <Navigation />
         {router.route === Routes.Chat &&

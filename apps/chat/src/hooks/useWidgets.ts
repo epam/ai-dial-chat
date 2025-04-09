@@ -7,7 +7,6 @@ import { ConversationsActions } from '../store/conversations/conversations.reduc
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { ModelsSelectors } from '../store/models/models.reducers';
 import { SettingsSelectors } from '../store/settings/settings.selectors';
-import { UIActions } from '../store/ui/ui.reducers';
 
 import { Routes } from '../constants/routes';
 
@@ -48,9 +47,8 @@ export const useWidgets = () => {
       } else {
         handleSelectWidget(id);
       }
-      dispatch(UIActions.setShowWidgetbar(false));
     },
-    [dispatch, handleSelectWidget, router],
+    [handleSelectWidget, router],
   );
 
   return { widgetModels, handleWidgetClick };

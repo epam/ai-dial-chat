@@ -22,7 +22,6 @@ const initialState: UIState = {
   availableThemes: [],
   showChatbar: false,
   showPromptbar: false,
-  showWidgetbar: false,
   showMarketplaceFilterbar: false,
   isUserSettingsOpen: false,
   isProfileOpen: false,
@@ -66,17 +65,6 @@ export const uiSlice = createSlice({
       { payload }: PayloadAction<UIState['showChatbar']>,
     ) => {
       state.showChatbar = payload;
-    },
-    setShowWidgetbar: (
-      state,
-      { payload }: PayloadAction<UIState['showWidgetbar']>,
-    ) => {
-      if (payload) {
-        state.showChatbar = false;
-        state.showMarketplaceFilterbar = false;
-        state.showPromptbar = false;
-      }
-      state.showWidgetbar = payload;
     },
     setShowPromptbar: (
       state,
