@@ -181,13 +181,12 @@ export function PublishModal<
     handleSubmit: submitWrapper,
     formState: { errors, isValid },
     getValues,
-    setFocus,
   } = useForm<PublicationRequestFormData>({
     defaultValues: {
-      publishRequestName: '',
+      publishRequestName: `New request by ${userName}`,
       publicationAuthor: userName ?? '',
     },
-    mode: 'onTouched',
+    mode: 'onChange',
   });
 
   useEffect(() => {
@@ -230,10 +229,6 @@ export function PublishModal<
     onClose,
     t,
   ]);
-
-  useEffect(() => {
-    setFocus('publishRequestName');
-  }, [setFocus]);
 
   const handleFolderChange = useCallback(() => {
     setIsChangeFolderModalOpened(true);
@@ -512,8 +507,9 @@ export function PublishModal<
         onSubmit={submitWrapper(handlePublish)}
         className="flex w-full flex-col divide-y divide-tertiary overflow-y-auto"
       >
-        <div className="px-3 py-4 md:pl-4 md:pr-10">
+        <div className="px-3 pb-4 pt-8 md:pl-4 md:pr-10 md:pt-4">
           <Field
+            className="border-none p-0 text-base font-semibold"
             {...register('publishRequestName', validators.publishRequestName)}
             placeholder={
               publishAction === PublishActions.ADD
