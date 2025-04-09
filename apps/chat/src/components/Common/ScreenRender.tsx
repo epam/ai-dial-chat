@@ -20,18 +20,3 @@ export function withRenderForScreen(screenStates: ScreenState[]) {
     return ComponentWithRenderForScreen;
   };
 }
-
-export function withNotRenderForScreen(screenStates: ScreenState[]) {
-  return function <T extends object>(WrappedComponent: ComponentType<T>) {
-    const ComponentWithRenderForScreen = (props: T) => {
-      const screenState = useScreenState();
-      return !screenStates.includes(screenState) ? (
-        <WrappedComponent {...props} />
-      ) : null;
-    };
-
-    ComponentWithRenderForScreen.displayName = `withRenderForScreen(${getComponentDisplayName(WrappedComponent)})`;
-
-    return ComponentWithRenderForScreen;
-  };
-}
