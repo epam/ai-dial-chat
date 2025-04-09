@@ -20,8 +20,9 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { CONVERSATIONS_DATE_SECTIONS } from '@/src/constants/sections';
 
-import { withRenderWhenNot } from '../Common/RenderWhen';
-import Sidebar from '../Sidebar';
+import { withRenderWhenNot } from '@/src/components/Common/RenderWhen';
+import Sidebar from '@/src/components/Sidebar';
+
 import { ChatFolders } from './ChatFolders';
 import { ChatbarSettings } from './ChatbarSettings';
 import { Conversations } from './Conversations';
