@@ -65,20 +65,30 @@ const NavigationButton = ({
   caption,
   rounded = false,
 }: NavigationButtonProps) => {
+  const disabled = useAppSelector(
+    ConversationsSelectors.selectIsConversationsStreaming,
+  );
   return (
     <Tooltip
       tooltip={tooltip}
       isTriggerClickable
       triggerClassName={classNames(
-        'flex max-h-[52px] min-w-[72px] shrink-0 cursor-pointer select-none rounded transition-colors duration-200 hover:bg-accent-primary-alpha active:bg-accent-primary-alpha hover:disabled:bg-transparent md:min-w-min',
-        rounded && 'rounded-full',
+        'flex max-h-[52px] min-w-[72px] shrink-0 select-none rounded transition-colors duration-200 md:min-w-min',
+        rounded && 'rounded-full border border-transparent',
         rounded && selected && '!border-accent-primary',
+        disabled
+          ? 'cursor-not-allowed'
+          : 'cursor-pointer hover:bg-accent-primary-alpha active:bg-accent-primary-alpha',
       )}
     >
       <button
         data-qa={dataQa}
-        onClick={!selected ? onClick : undefined}
-        className="flex size-full flex-col items-center justify-center gap-[2px] md:p-[10px]"
+        onClick={!selected && !disabled ? onClick : undefined}
+        className={classNames(
+          'flex size-full flex-col items-center justify-center gap-[2px]',
+          disabled ? 'cursor-not-allowed' : 'cursor-pointer',
+          rounded ? 'md:p-[9px]' : 'md:p-[10px]',
+        )}
       >
         {Icon && (
           <Icon
