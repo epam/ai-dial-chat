@@ -73,7 +73,7 @@ const NavigationButton = ({
       )}>
     <button
       data-qa={dataQa}
-      onClick={onClick}
+      onClick={!selected ? onClick : undefined}
       className='flex size-full flex-col items-center justify-center gap-[2px] md:p-[10px]'
     >
       {Icon && (
