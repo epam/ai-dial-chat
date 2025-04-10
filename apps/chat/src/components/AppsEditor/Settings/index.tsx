@@ -213,16 +213,18 @@ export const ApplicationSettings: React.FC<Props> = ({
     if (isFormChanged && methods.formState.isValid) {
       dispatch(ApplicationActions.setShouldSaveApplication(true));
       dispatch(CodeEditorActions.saveAllModifiedFiles());
-      dispatch(
-        UIActions.showWarningToast(
-          t('Saved changes will be applied during next deployment'),
-        ),
-      );
+      if (isAppDeployed) {
+        dispatch(
+          UIActions.showWarningToast(
+            t('Saved changes will be applied during next deployment'),
+          ),
+        );
+      }
       const currentValues = methods.getValues();
 
       methods.reset(currentValues);
     }
-  }, [dispatch, isCodeEditorDirty, methods, t]);
+  }, [dispatch, isAppDeployed, isCodeEditorDirty, methods, t]);
 
   const formViewElement = getFormView(type);
 
