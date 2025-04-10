@@ -23,6 +23,7 @@ dialTest(
     toast,
     setTestIds,
     localStorageManager,
+    promptPreviewModal,
   }) => {
     setTestIds(
       'EPMRTC-1619',
@@ -48,6 +49,7 @@ dialTest(
             promptValue,
           );
           await promptModalDialog.saveButton.click();
+          await promptPreviewModal.closeButton.click();
           await expect
             .soft(
               prompts.getEntityByName(ExpectedConstants.newPromptTitle(i)),
@@ -70,6 +72,7 @@ dialTest(
           renamedPrompt + 1,
         );
         await promptModalDialog.saveButton.click();
+        await promptPreviewModal.closeButton.click();
         await expect
           .soft(
             prompts.getEntityByName(renamedPrompt + 1),
@@ -80,6 +83,7 @@ dialTest(
         await promptBar.createNewEntity();
         await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
         await promptModalDialog.saveButton.click();
+        await promptPreviewModal.closeButton.click();
         await expect
           .soft(
             prompts.getEntityByName(ExpectedConstants.newPromptTitle(4)),
@@ -96,6 +100,7 @@ dialTest(
           renamedPrompt + 4,
         );
         await promptModalDialog.saveButton.click();
+        await promptPreviewModal.closeButton.click();
         await expect
           .soft(
             prompts.getEntityByName(renamedPrompt + 4),
@@ -106,6 +111,7 @@ dialTest(
         await promptBar.createNewEntity();
         await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
         await promptModalDialog.saveButton.click();
+        await promptPreviewModal.closeButton.click();
         await expect
           .soft(
             prompts.getEntityByName(ExpectedConstants.newPromptTitle(4)),
@@ -131,6 +137,7 @@ dialTest(
         await promptBar.createNewEntity();
         await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
         await promptModalDialog.saveButton.click();
+        await promptPreviewModal.closeButton.click();
         await expect
           .soft(
             prompts.getEntityByName(ExpectedConstants.newPromptTitle(5)),
@@ -150,6 +157,7 @@ dialTest(
           ExpectedConstants.newPromptTitle(999),
         );
         await promptModalDialog.saveButton.click();
+        await promptPreviewModal.closeButton.click();
 
         for (let i = 1000; i <= 1001; i++) {
           await promptBar.createNewEntity();
@@ -158,6 +166,7 @@ dialTest(
             promptValue,
           );
           await promptModalDialog.saveButton.click();
+          await promptPreviewModal.closeButton.click();
           await expect
             .soft(
               prompts.getEntityByName(ExpectedConstants.newPromptTitle(i)),
@@ -215,6 +224,8 @@ dialTest(
     toast,
     setTestIds,
     localStorageManager,
+    promptPreviewModal,
+    confirmationDialog,
   }) => {
     setTestIds(
       'EPMRTC-2984',
@@ -260,6 +271,7 @@ dialTest(
         await promptBar.createNewEntity();
         await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
         await promptModalDialog.saveButton.click();
+        await promptPreviewModal.closeButton.click();
 
         await promptBar.dragAndDropEntityToFolder(
           prompts.getEntityByName(duplicatedPromptName),
@@ -282,6 +294,8 @@ dialTest(
         await promptBar.createNewEntity();
         await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
         await promptModalDialog.saveButton.click();
+        await promptPreviewModal.closeButton.click();
+
         await expect
           .soft(
             prompts.getEntityByName(duplicatedPromptName),
@@ -319,6 +333,7 @@ dialTest(
             ),
           );
         await promptModalDialog.closeButton.click();
+        await confirmationDialog.cancelButton.click();
         await toast.closeToast();
       },
     );

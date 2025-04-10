@@ -188,6 +188,8 @@ dialTest(
     promptModalDialog,
     confirmationDialog,
     localStorageManager,
+    promptPreviewModalAssertion,
+    promptPreviewModal,
   }) => {
     setTestIds('EPMRTC-884', 'EPMRTC-885', 'EPMRTC-896');
     let promptInsideFolder: FolderPrompt;
@@ -282,21 +284,26 @@ dialTest(
           newDescr,
           newValue,
         );
-        await prompts.getEntityByName(newName).waitFor();
-        await prompts.openEntityDropdownMenu(newName);
-        await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-        expect
-          .soft(
-            await promptModalDialog.getDescription(),
-            ExpectedMessages.promptDescriptionUpdated,
-          )
-          .toBe(newDescr);
-        expect
-          .soft(
-            await promptModalDialog.getPrompt(),
-            ExpectedMessages.promptValueUpdated,
-          )
-          .toBe(newValue);
+        await promptPreviewModalAssertion.assertElementState(
+          promptPreviewModal,
+          'visible',
+        );
+
+        await promptPreviewModalAssertion.assertElementText(
+          promptPreviewModal.promptName,
+          newName,
+          ExpectedMessages.promptNameValid,
+        );
+        await promptPreviewModalAssertion.assertElementText(
+          promptPreviewModal.promptDescription,
+          newDescr,
+          ExpectedMessages.promptDescriptionUpdated,
+        );
+        await promptPreviewModalAssertion.assertElementText(
+          promptPreviewModal.promptContent,
+          newValue,
+          ExpectedMessages.promptContentValid,
+        );
       },
     );
   },
@@ -514,6 +521,7 @@ dialTest(
     variableModalAssertion,
     sendMessageAssertion,
     localStorageManager,
+    promptPreviewModal,
   }) => {
     setTestIds('EPMRTC-1135');
     const aVariable = 'A';
@@ -549,9 +557,7 @@ dialTest(
         newDescr,
         newValue,
       );
-      await folderPrompts
-        .getFolderEntity(Import.oldVersionAppFolderName, newName)
-        .waitFor();
+      await promptPreviewModal.closeButton.click();
     });
 
     await dialTest.step(

@@ -191,12 +191,11 @@ export const selectSearchedPrompts = createSelector(
   },
 );
 
-export const selectIsEditModalOpen = createSelector([rootSelector], (state) => {
-  return {
-    showModal: state.isEditModalOpen,
-    isModalPreviewMode: state.isModalPreviewMode,
-  };
-});
+export const selectIsPromptModalOpen = (state: RootState) =>
+  rootSelector(state).isPromptModalOpen;
+
+export const selectIsPromptModalInitModelEdit = (state: RootState) =>
+  rootSelector(state).isPromptModalInitModeEdit;
 
 export const selectSelectedPromptId = createSelector(
   [rootSelector],
