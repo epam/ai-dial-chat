@@ -94,7 +94,10 @@ export class MarketplaceAgentsSection extends BaseElement {
       isInstalledDeploymentsUpdated = false,
     }: { isInstalledDeploymentsUpdated?: boolean } = {},
   ) {
-    let scrollPosition: { scrollTop: number; clientHeight: number };
+    const scrollPosition: { scrollTop: number; clientHeight: number } = {
+      scrollTop: 0,
+      clientHeight: await this.rootLocator.evaluate((p) => p.clientHeight),
+    };
     const scrollHeight = await this.rootLocator.evaluate((p) => p.scrollHeight);
     let isAgentFoundAndUsed = false;
     do {
@@ -104,7 +107,7 @@ export class MarketplaceAgentsSection extends BaseElement {
       if (isAgentFoundAndUsed) {
         break;
       }
-      scrollPosition = await this.getPositionAndScrollInto();
+      await this.scrollIntoLastRow();
     } while (
       scrollPosition.clientHeight <
       Math.round(scrollHeight - scrollPosition.scrollTop)
@@ -116,7 +119,7 @@ export class MarketplaceAgentsSection extends BaseElement {
     agent: DialAIEntityModel | string,
     options?: { isWorkspaceAgent?: boolean; isEditable?: boolean },
   ) {
-    let scrollPosition: { scrollTop: number; clientHeight: number } = {
+    const scrollPosition: { scrollTop: number; clientHeight: number } = {
       scrollTop: 0,
       clientHeight: await this.rootLocator.evaluate((p) => p.clientHeight),
     };
@@ -164,7 +167,7 @@ export class MarketplaceAgentsSection extends BaseElement {
           return agentElement;
         }
       }
-      scrollPosition = await this.getPositionAndScrollInto();
+      await this.scrollIntoLastRow();
     } while (
       scrollPosition.clientHeight <
       Math.round(scrollHeight - scrollPosition.scrollTop)
@@ -188,13 +191,22 @@ export class MarketplaceAgentsSection extends BaseElement {
     let iteration = 1;
     let shouldProceed = true;
     while (shouldProceed) {
+      let startAgentIndex = 0;
       if (iteration !== 1) {
-        scrollPosition = await this.getPositionAndScrollInto();
+        await this.scrollIntoLastRow();
+        const rowsCount = await this.agentsRow.getElementsCount();
+        //by default 2 agent rows are out of view but available in DOM
+        if (rowsCount >= 2) {
+          const columnsCount = await this.agentsRow
+            .getNthElement(1)
+            .getAttribute(Attributes.ariaColcount);
+          startAgentIndex = 2 * +columnsCount!;
+        }
       }
       const visibleAgents = this.getAgents();
       const visibleAgentNames = await visibleAgents.getAgentNames();
       const visibleAgentsCount = visibleAgentNames.length;
-      for (let i = 0; i < visibleAgentsCount; i++) {
+      for (let i = startAgentIndex; i < visibleAgentsCount; i++) {
         const agentName = visibleAgentNames[i];
         //agent's name may be duplicated on "My Workspace" tab in the filtered and suggested results
         const visibleAgent = visibleAgents.getAgent(agentName, {
@@ -245,6 +257,7 @@ export class MarketplaceAgentsSection extends BaseElement {
           }
         }
       }
+      scrollPosition = await this.getScrollPosition();
       shouldProceed =
         scrollPosition.clientHeight <
         Math.ceil(scrollHeight - scrollPosition.scrollTop);
@@ -261,14 +274,17 @@ export class MarketplaceAgentsSection extends BaseElement {
     await this.page.waitForTimeout(1500);
   }
 
-  private async getPositionAndScrollInto() {
+  private async getScrollPosition() {
     const scrollTop = await this.rootLocator.evaluate((p) => p.scrollTop);
     const clientHeight = await this.rootLocator.evaluate((p) => p.clientHeight);
-    const rowsCount = await this.agentsRow.getElementsCount();
-    await this.agentsRow.getNthElement(rowsCount).scrollIntoViewIfNeeded();
     return {
       scrollTop: Math.ceil(scrollTop),
       clientHeight: Math.ceil(clientHeight),
     };
+  }
+
+  private async scrollIntoLastRow() {
+    const rowsCount = await this.agentsRow.getElementsCount();
+    await this.agentsRow.getNthElement(rowsCount).scrollIntoViewIfNeeded();
   }
 }
