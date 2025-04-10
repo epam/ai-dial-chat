@@ -220,6 +220,12 @@ export const Navigation = () => {
   const isMarketplaceEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
   );
+  const isProfileEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.ShowProfile),
+  );
+  const isHeaderEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.Header),
+  );
   const widgetsSchemaIds = useAppSelector(
     SettingsSelectors.selectWidgetsSchemaIds,
   );
@@ -248,6 +254,9 @@ export const Navigation = () => {
     return router.push(Routes.Profile, undefined, { shallow: true });
   }, [router]);
 
+  // TODO: remove isHeaderEnabled it one of the next releases
+  const showProfile = isHeaderEnabled || isProfileEnabled;
+
   return (
     <div
       className="order-last flex h-[52px] w-full shrink-0 flex-row items-center justify-between gap-2 border-tertiary bg-layer-3 md:z-40 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start md:border-r md:py-2"
@@ -264,7 +273,7 @@ export const Navigation = () => {
         />
         {isMarketplaceEnabled && <MarketplaceNavigation />}
         {!!widgetsSchemaIds.size && <UsedWidgets />}
-        {screenState === ScreenState.SM && (
+        {screenState === ScreenState.SM && showProfile && (
           <div className="flex items-center justify-center">
             <NavigationButton
               onClick={handleUserMobileClick}
@@ -277,7 +286,7 @@ export const Navigation = () => {
           </div>
         )}
       </div>
-      {screenState !== ScreenState.SM && (
+      {screenState !== ScreenState.SM && showProfile && (
         <div className="flex items-center justify-center p-[10px]">
           <UserDesktop />
         </div>
