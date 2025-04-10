@@ -273,7 +273,7 @@ export const ConversationComponent = ({
   return (
     <div
       className={classNames(
-        'group relative flex cursor-pointer  items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha',
+        'group relative flex items-center rounded border-l-2 hover:bg-accent-primary-alpha',
         !isSelectMode && isHighlighted
           ? 'border-l-accent-primary'
           : 'border-l-transparent',
@@ -281,37 +281,17 @@ export const ConversationComponent = ({
         isNameOrPathInvalid && 'text-secondary',
         additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
       )}
-      style={{
-        paddingLeft: (level && `${level * 30 + 16}px`) || '0.875rem',
-      }}
       onContextMenu={handleContextMenuOpen}
-      onClick={() => {
-        if (!isSelectMode || !isExternal) {
-          dispatch(
-            !isSelectMode
-              ? ConversationsActions.selectConversations({
-                  conversationIds: [conversation.id],
-                })
-              : ConversationsActions.setChosenConversations({
-                  ids: [conversation.id],
-                }),
-          );
-          if (!isSelectMode) {
-            dispatch(
-              PublicationActions.selectPublication(
-                additionalItemData?.publicationUrl ?? null,
-              ),
-            );
-          }
-        }
-      }}
       data-qa="conversation"
     >
       <button
         className={classNames(
-          'group flex size-full items-center gap-2 disabled:cursor-not-allowed',
-          isSelectMode ? 'pr-0' : '[&:not(:disabled)]:group-hover:pr-6',
+          'group flex size-full items-center gap-2 pr-3 disabled:cursor-not-allowed',
+          !isSelectMode && '[&:not(:disabled)]:group-hover:pr-6',
         )}
+        style={{
+          paddingLeft: (level && `${level * 30 + 16}px`) || '0.875rem',
+        }}
         disabled={messageIsStreaming || (isSelectMode && isExternal)}
         draggable={
           !isExternal &&
@@ -319,6 +299,26 @@ export const ConversationComponent = ({
           !isSelectMode &&
           !isConversationsStreaming
         }
+        onClick={() => {
+          if (!isSelectMode || !isExternal) {
+            dispatch(
+              !isSelectMode
+                ? ConversationsActions.selectConversations({
+                    conversationIds: [conversation.id],
+                  })
+                : ConversationsActions.setChosenConversations({
+                    ids: [conversation.id],
+                  }),
+            );
+            if (!isSelectMode) {
+              dispatch(
+                PublicationActions.selectPublication(
+                  additionalItemData?.publicationUrl ?? null,
+                ),
+              );
+            }
+          }
+        }}
         onDragStart={(e) => handleDragStart(e, conversation)}
         data-qa={isSelected ? 'selected' : null}
       >
