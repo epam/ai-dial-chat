@@ -20,7 +20,10 @@ import {
   ApplicationActions,
   ApplicationSelectors,
 } from '@/src/store/application/application.reducers';
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MarketplaceActions,
@@ -110,13 +113,14 @@ const MarketplaceNavigation = () => {
   const handleChangeTab = useCallback(
     (tab: MarketplaceTabs) => {
       if (!isMarketplace) {
-        router
-          .push(Routes.Marketplace)
-          .then(() => dispatch(MarketplaceActions.setSelectedTab(tab)));
+        router.push(Routes.Marketplace).then(() => {
+          dispatch(MarketplaceActions.setSelectedTab(tab));
+          dispatch(ApplicationActions.selectWidget(undefined));
+        });
       } else {
         dispatch(MarketplaceActions.setSelectedTab(tab));
+        dispatch(ApplicationActions.selectWidget(undefined));
       }
-      dispatch(ApplicationActions.selectWidget(undefined));
     },
     [dispatch, isMarketplace, router],
   );
@@ -226,6 +230,9 @@ const Navigation = () => {
   const selectedWidget = useAppSelector(
     ApplicationSelectors.selectSelectedWidget,
   );
+  const selectedConversationIds = useAppSelector(
+    ConversationsSelectors.selectSelectedConversationsIds,
+  );
 
   const handleChatClick = useCallback(() => {
     if (router.route !== Routes.Chat) {
@@ -233,6 +240,13 @@ const Navigation = () => {
         dispatch(
           ConversationsActions.setIsStartedCustomViewerConversation(false),
         );
+        if (!selectedConversationIds.length) {
+          dispatch(
+            ConversationsActions.createNewConversations({
+              names: [DEFAULT_CONVERSATION_NAME],
+            }),
+          );
+        }
       });
     } else {
       dispatch(
@@ -241,7 +255,7 @@ const Navigation = () => {
         }),
       );
     }
-  }, [dispatch, router]);
+  }, [dispatch, router, selectedConversationIds.length]);
 
   return (
     <div
