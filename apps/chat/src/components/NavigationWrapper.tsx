@@ -222,6 +222,7 @@ const UsedWidgets = () => {
           selected={!!selectedWidget && router.route === Routes.Chat}
           dataQa="widgets-sidebar-trigger"
           caption={t('Widgets')}
+          tooltip={t('Widgets')}
         />
       </div>
     </>
@@ -253,6 +254,7 @@ const Navigation = () => {
       dispatch(
         ConversationsActions.setIsStartedCustomViewerConversation(false),
       );
+      dispatch(ApplicationActions.selectWidget(undefined));
       if (!selectedConversationIds.length) {
         dispatch(
           ConversationsActions.createNewConversations({
