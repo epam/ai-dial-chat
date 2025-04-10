@@ -102,9 +102,9 @@ export const GeneralInfoEditor: React.FC<Props> = ({
       const { slug } = router.query;
       if (slug) {
         const preparedData = getApplicationData(data, slug.toString(), schema);
-
-        if (slug === ApplicationType.CODE_APP) {
-          preparedData.functionStatus = data?.functionStatus;
+        if (slug.toString() === ApplicationType.CODE_APP) {
+          preparedData.functionStatus =
+            data?.functionStatus ?? oldApplication?.functionStatus;
         }
 
         if (oldApplication) {
