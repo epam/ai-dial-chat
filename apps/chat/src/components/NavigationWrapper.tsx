@@ -66,34 +66,37 @@ const NavigationButton = ({
   rounded = false,
 }: NavigationButtonProps) => {
   return (
-    <Tooltip tooltip={tooltip} isTriggerClickable triggerClassName={classNames(
+    <Tooltip
+      tooltip={tooltip}
+      isTriggerClickable
+      triggerClassName={classNames(
         'flex max-h-[52px] min-w-[72px] shrink-0 cursor-pointer select-none rounded transition-colors duration-200 hover:bg-accent-primary-alpha active:bg-accent-primary-alpha hover:disabled:bg-transparent md:min-w-min',
         rounded && 'rounded-full',
         rounded && selected && '!border-accent-primary',
-      )}>
-    <button
-      data-qa={dataQa}
-      onClick={!selected ? onClick : undefined}
-      className='flex size-full flex-col items-center justify-center gap-[2px] md:p-[10px]'
+      )}
     >
-      {Icon && (
-
+      <button
+        data-qa={dataQa}
+        onClick={!selected ? onClick : undefined}
+        className="flex size-full flex-col items-center justify-center gap-[2px] md:p-[10px]"
+      >
+        {Icon && (
           <Icon
             className={selected ? 'text-accent-primary' : 'text-secondary'}
             width={24}
             height={24}
           />
-      )}
-
-      <span
-        className={classNames(
-          'text-xs leading-[15px] md:hidden',
-          selected ? 'text-accent-primary' : 'text-secondary',
         )}
-      >
-        {caption}
-      </span>
-    </button>
+
+        <span
+          className={classNames(
+            'text-xs leading-[15px] md:hidden',
+            selected ? 'text-accent-primary' : 'text-secondary',
+          )}
+        >
+          {caption}
+        </span>
+      </button>
     </Tooltip>
   );
 };
