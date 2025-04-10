@@ -1,6 +1,6 @@
 import {
   IconCube,
-  IconHome2,
+  IconHomeRibbon,
   IconLayoutGrid,
   IconMessage2,
   TablerIconsProps,
@@ -67,7 +67,7 @@ const NavigationButton = ({
       data-qa={dataQa}
       onClick={onClick}
       className={classNames(
-        'flex max-h-[52px] min-w-[72px] shrink-0 cursor-pointer select-none flex-col items-center justify-center gap-[2px] rounded border border-transparent transition-colors duration-200 active:bg-accent-primary-alpha active:disabled:bg-transparent md:min-w-min md:p-[9px] md:hover:bg-accent-primary-alpha md:active:bg-transparent md:hover:disabled:bg-transparent md:active:disabled:bg-transparent',
+        'flex max-h-[52px] min-w-[72px] shrink-0 cursor-pointer select-none flex-col items-center justify-center gap-[2px] rounded border border-transparent transition-colors duration-200 hover:bg-accent-primary-alpha active:bg-accent-primary-alpha hover:disabled:bg-transparent md:min-w-min md:p-[9px]',
         rounded && 'rounded-full',
         rounded && selected && '!border-accent-primary',
       )}
@@ -141,18 +141,18 @@ const MarketplaceNavigation = () => {
           isMarketplace && selectedMarketplaceTab === MarketplaceTabs.HOME
         }
         dataQa="marketplace-home-page"
-        caption={t('Apps')}
+        caption={t('Agents')}
       />
       <NavigationButton
         onClick={handleMyAppsClick}
         tooltip={t('My workspace')}
-        Icon={IconHome2}
+        Icon={IconHomeRibbon}
         selected={
           isMarketplace &&
           selectedMarketplaceTab === MarketplaceTabs.MY_WORKSPACE
         }
         dataQa="my-workspace"
-        caption={t('Home')}
+        caption={t('Workspace')}
       />
     </>
   );

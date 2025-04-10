@@ -5,10 +5,9 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { getPromptRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
-import { regeneratePromptId } from '@/src/utils/app/prompts';
 
 import { FeatureType } from '@/src/types/common';
-import { Prompt, PromptInfo } from '@/src/types/prompt';
+import { PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
@@ -23,56 +22,11 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 import { RECENT_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
 import { PromptFolders } from './components/PromptFolders';
-import { PromptModal } from './components/PromptModal';
 import { PromptbarSettings } from './components/PromptbarSettings';
 import { Prompts } from './components/Prompts';
 
 import { withRenderWhenNot } from '../Common/RenderWhen';
 import Sidebar from '../Sidebar';
-
-const PromptModalComponent = () => {
-  const dispatch = useAppDispatch();
-
-  const { showModal, isModalPreviewMode } = useAppSelector(
-    PromptsSelectors.selectIsEditModalOpen,
-  );
-
-  const handleCreate = useCallback(
-    (prompt: Prompt) => {
-      dispatch(PromptsActions.createNewPrompt(regeneratePromptId(prompt)));
-    },
-    [dispatch],
-  );
-
-  const handleUpdate = useCallback(
-    (oldPrompt: Prompt, newPrompt: Prompt) => {
-      dispatch(
-        PromptsActions.updatePrompt({
-          id: oldPrompt.id,
-          values: newPrompt,
-        }),
-      );
-      dispatch(PromptsActions.resetSearch());
-    },
-    [dispatch],
-  );
-
-  const handleClose = useCallback(() => {
-    dispatch(PromptsActions.setIsEditModalOpen({ isOpen: false }));
-    dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
-  }, [dispatch]);
-
-  if (!showModal || isModalPreviewMode) return null;
-
-  return (
-    <PromptModal
-      isOpen
-      onClose={handleClose}
-      onUpdatePrompt={handleUpdate}
-      onCreatePrompt={handleCreate}
-    />
-  );
-};
 
 const PromptbarView = () => {
   const { t } = useTranslation(Translation.PromptBar);
@@ -174,7 +128,6 @@ const PromptbarView = () => {
 
   return (
     <>
-      <PromptModalComponent />
       <Sidebar<PromptInfo>
         featureType={FeatureType.Prompt}
         side="right"

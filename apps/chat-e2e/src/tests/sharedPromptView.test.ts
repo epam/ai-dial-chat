@@ -1,7 +1,11 @@
 import { Prompt } from '@/chat/types/prompt';
 import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
-import { ExpectedConstants, MenuOptions } from '@/src/testData';
+import {
+  ExpectedConstants,
+  ExpectedMessages,
+  MenuOptions,
+} from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
 
@@ -147,12 +151,11 @@ dialSharedWithMeTest(
     promptData,
     dataInjector,
     mainUserShareApiHelper,
-    additionalShareUserPrompts,
-    additionalShareUserPromptDropdownMenu,
     additionalShareUserPromptPreviewModal,
     additionalShareUserPromptAssertion,
     additionalShareUserPromptModalAssertion,
     additionalShareUserPromptModalDialog,
+    additionalShareUserSharedPromptPreviewModalAssertion,
     apiAssertion,
     setTestIds,
   }) => {
@@ -197,11 +200,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Select "Edit" dropdown menu option for duplicated prompt and verify prompt params are valid',
       async () => {
-        await additionalShareUserPrompts.openEntityDropdownMenu(prompt.name);
-        await additionalShareUserPromptDropdownMenu.selectMenuOption(
-          MenuOptions.edit,
-          { triggeredHttpMethod: 'GET' },
-        );
+        await additionalShareUserPromptPreviewModal.editPromptButton.click();
         await additionalShareUserPromptModalAssertion.assertPromptName(
           prompt.name,
         );
@@ -232,21 +231,22 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Open duplicated prompt and verify params are updated',
+      'Verify prompt params are updated',
       async () => {
-        await additionalShareUserPrompts.openEntityDropdownMenu(updatedName);
-        await additionalShareUserPromptDropdownMenu.selectMenuOption(
-          MenuOptions.edit,
-          { triggeredHttpMethod: 'GET' },
-        );
-        await additionalShareUserPromptModalAssertion.assertPromptName(
+        await additionalShareUserSharedPromptPreviewModalAssertion.assertElementText(
+          additionalShareUserPromptPreviewModal.promptName,
           updatedName,
+          ExpectedMessages.promptNameUpdated,
         );
-        await additionalShareUserPromptModalAssertion.assertPromptDescription(
+        await additionalShareUserSharedPromptPreviewModalAssertion.assertElementText(
+          additionalShareUserPromptPreviewModal.promptDescription,
           updatedDescription,
+          ExpectedMessages.promptDescriptionUpdated,
         );
-        await additionalShareUserPromptModalAssertion.assertPromptContent(
+        await additionalShareUserSharedPromptPreviewModalAssertion.assertElementText(
+          additionalShareUserPromptPreviewModal.promptContent,
           updatedContent,
+          ExpectedMessages.promptValueUpdated,
         );
       },
     );

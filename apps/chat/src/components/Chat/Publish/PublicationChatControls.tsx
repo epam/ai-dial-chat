@@ -63,12 +63,7 @@ export function PublicationControlsView<
         promptId: undefined,
       }),
     );
-    dispatch(
-      PromptsActions.setIsEditModalOpen({
-        isOpen: false,
-        isPreview: false,
-      }),
-    );
+    dispatch(PromptsActions.setIsPromptModalOpen({ isOpen: false }));
     dispatch(
       ConversationsActions.selectConversations({
         conversationIds: [],
@@ -123,12 +118,7 @@ export function PublicationControlsView<
             isApproveRequiredResource: true,
           }),
         );
-        dispatch(
-          PromptsActions.setIsEditModalOpen({
-            isOpen: true,
-            isPreview: true,
-          }),
-        );
+        dispatch(PromptsActions.setIsPromptModalOpen({ isOpen: true }));
       } else {
         unselectConversation();
         unselectPrompt();

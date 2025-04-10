@@ -92,7 +92,7 @@ export default function SidebarMenu({
           let enoughPlaceForEllipsis = false;
           if (
             displayedItems.length > count + 1 ||
-            itemsContainerWidth >= ITEM_WIDTH * count + 20
+            itemsContainerWidth >= ITEM_WIDTH * count + 25
           ) {
             count++;
             enoughPlaceForEllipsis = true;
@@ -145,11 +145,12 @@ export default function SidebarMenu({
       })}
 
       <ContextMenu
-        triggerIconClassName="flex min-w-[34px] cursor-pointer items-center"
+        triggerIconClassName="flex min-w-[34px] cursor-pointer items-center hover:bg-accent-primary-alpha rounded"
         menuItems={hiddenItems}
         isOpen={isOpen}
         featureType={featureType}
         onOpenChange={onOpenChange}
+        triggerIconHighlight
       />
     </div>
   );
