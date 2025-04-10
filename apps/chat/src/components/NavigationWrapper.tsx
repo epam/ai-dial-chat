@@ -65,35 +65,49 @@ const NavigationButton = ({
   caption,
   rounded = false,
 }: NavigationButtonProps) => {
+  const disabled = useAppSelector(
+    ConversationsSelectors.selectIsConversationsStreaming,
+  );
   return (
-    <button
-      data-qa={dataQa}
-      onClick={onClick}
-      className={classNames(
-        'flex max-h-[52px] min-w-[72px] shrink-0 cursor-pointer select-none flex-col items-center justify-center gap-[2px] rounded border border-transparent transition-colors duration-200 hover:bg-accent-primary-alpha active:bg-accent-primary-alpha hover:disabled:bg-transparent md:min-w-min md:p-[9px]',
-        rounded && 'rounded-full',
+    <Tooltip
+      tooltip={tooltip}
+      isTriggerClickable
+      triggerClassName={classNames(
+        'flex max-h-[52px] min-w-[72px] shrink-0 select-none rounded transition-colors duration-200 md:min-w-min',
+        rounded && 'rounded-full border border-transparent',
         rounded && selected && '!border-accent-primary',
+        disabled
+          ? 'cursor-not-allowed'
+          : 'cursor-pointer hover:bg-accent-primary-alpha active:bg-accent-primary-alpha',
       )}
     >
-      {Icon && (
-        <Tooltip tooltip={tooltip} isTriggerClickable>
+      <button
+        data-qa={dataQa}
+        onClick={!selected && !disabled ? onClick : undefined}
+        className={classNames(
+          'flex size-full flex-col items-center justify-center gap-[2px]',
+          disabled ? 'cursor-not-allowed' : 'cursor-pointer',
+          rounded ? 'md:p-[9px]' : 'md:p-[10px]',
+        )}
+      >
+        {Icon && (
           <Icon
             className={selected ? 'text-accent-primary' : 'text-secondary'}
             width={24}
             height={24}
           />
-        </Tooltip>
-      )}
-
-      <span
-        className={classNames(
-          'text-xs leading-[15px] md:hidden',
-          selected ? 'text-accent-primary' : 'text-secondary',
         )}
-      >
-        {caption}
-      </span>
-    </button>
+
+        <span
+          className={classNames(
+            'text-xs leading-[15px] md:hidden',
+            selected ? 'text-accent-primary' : 'text-secondary',
+          )}
+        >
+          {caption}
+        </span>
+      </button>
+    </Tooltip>
   );
 };
 
@@ -235,26 +249,18 @@ const Navigation = () => {
   );
 
   const handleChatClick = useCallback(() => {
-    if (router.route !== Routes.Chat) {
-      return router.push(Routes.Chat).then(() => {
-        dispatch(
-          ConversationsActions.setIsStartedCustomViewerConversation(false),
-        );
-        if (!selectedConversationIds.length) {
-          dispatch(
-            ConversationsActions.createNewConversations({
-              names: [DEFAULT_CONVERSATION_NAME],
-            }),
-          );
-        }
-      });
-    } else {
+    return router.push(Routes.Chat).then(() => {
       dispatch(
-        ConversationsActions.createNewConversations({
-          names: [DEFAULT_CONVERSATION_NAME],
-        }),
+        ConversationsActions.setIsStartedCustomViewerConversation(false),
       );
-    }
+      if (!selectedConversationIds.length) {
+        dispatch(
+          ConversationsActions.createNewConversations({
+            names: [DEFAULT_CONVERSATION_NAME],
+          }),
+        );
+      }
+    });
   }, [dispatch, router, selectedConversationIds.length]);
 
   return (

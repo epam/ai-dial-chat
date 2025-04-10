@@ -174,6 +174,8 @@ export const usePromptActions = (prompt: Prompt) => {
 
   const handleUse = useCallback(() => {
     dispatch(PromptsActions.applyPrompt(prompt));
+    dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
+    dispatch(PromptsActions.setIsPromptModalOpen({ isOpen: false }));
   }, [dispatch, prompt]);
 
   return {
