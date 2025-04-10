@@ -172,7 +172,7 @@ dialSharedWithMeTest(
           'visible',
         );
         await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
-          nestedPrompts[sharedFolderIndex].name,
+          ExpectedConstants.promptViewModalTitle,
         );
         await additionalShareUserPromptPreviewModal.closeButton.click();
       },
@@ -243,7 +243,7 @@ dialSharedWithMeTest(
           'visible',
         );
         await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
-          nestedPrompts[sharedFolderIndex].name,
+          ExpectedConstants.promptViewModalTitle,
         );
         await additionalShareUserPromptPreviewModal.closeButton.click();
         for (let i = sharedFolderIndex; i <= sharedFolderIndex + 1; i++) {
@@ -322,7 +322,7 @@ dialSharedWithMeTest(
           'visible',
         );
         await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
-          nestedPrompts[sharedFolderIndex].name,
+          ExpectedConstants.promptViewModalTitle,
         );
         await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptName(
           nestedPrompts[sharedFolderIndex].name,

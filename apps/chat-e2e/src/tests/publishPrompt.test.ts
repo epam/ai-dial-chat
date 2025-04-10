@@ -266,7 +266,7 @@ dialAdminTest(
           'visible',
         );
         await adminPublishedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
-          prompt1.name,
+          ExpectedConstants.promptViewModalTitle,
         );
         await adminPublishedPromptPreviewModalAssertion.assertPromptName(
           prompt1.name,
@@ -421,7 +421,7 @@ dialAdminTest(
           'visible',
         );
         await adminPublishedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
-          prompt2.name,
+          ExpectedConstants.promptViewModalTitle,
         );
         await adminPublishedPromptPreviewModalAssertion.assertPromptName(
           prompt2.name,
@@ -667,7 +667,7 @@ dialAdminTest(
           'visible',
         );
         await adminPublishedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
-          prompt1.name,
+          ExpectedConstants.promptViewModalTitle,
         );
         await adminPublishedPromptPreviewModalAssertion.assertPromptName(
           prompt1.name,
