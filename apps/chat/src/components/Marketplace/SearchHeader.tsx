@@ -72,10 +72,11 @@ const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
       featureType={FeatureType.Application}
       isOpen={isOpen}
       onOpenChange={setIsOpen}
+      triggerIconClassName="hidden sm:flex"
       placement="bottom"
       TriggerCustomRenderer={
         <button
-          className="button button-primary hidden items-center gap-2 py-2 sm:flex"
+          className="button button-primary flex items-center gap-2 py-2"
           data-qa="add-app"
         >
           <span>{t('Add app')}</span>

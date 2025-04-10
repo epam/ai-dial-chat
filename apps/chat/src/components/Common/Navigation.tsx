@@ -210,7 +210,7 @@ const UsedWidgets = () => {
   );
 };
 
-export const Navigation = () => {
+const NavigationView = () => {
   const { t } = useTranslation(Translation.SideBar);
 
   const dispatch = useAppDispatch();
@@ -293,4 +293,30 @@ export const Navigation = () => {
       )}
     </div>
   );
+};
+
+export const Navigation = () => {
+  const isMarketplaceEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
+  );
+  const isProfileEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.ShowProfile),
+  );
+  const isHeaderEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.Header),
+  );
+  const widgetsSchemaIds = useAppSelector(
+    SettingsSelectors.selectWidgetsSchemaIds,
+  );
+
+  if (
+    !isMarketplaceEnabled &&
+    !isProfileEnabled &&
+    !isHeaderEnabled &&
+    !widgetsSchemaIds.size
+  ) {
+    return null;
+  }
+
+  return <NavigationView />;
 };

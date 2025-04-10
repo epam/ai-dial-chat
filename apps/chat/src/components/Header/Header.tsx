@@ -129,7 +129,7 @@ const Header = Inversify.register('Header', () => {
                 dataQa="left-panel-toggle"
               />
             )}
-          <div className="ml-4">
+          <div className="ml-2 md:ml-4">
             {!enabledFeatures.has(Feature.HideNewConversation) &&
               !showChatbar &&
               !selectedWidget && (
