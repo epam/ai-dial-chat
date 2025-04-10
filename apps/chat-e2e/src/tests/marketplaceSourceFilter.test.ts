@@ -200,7 +200,7 @@ dialTest(
     await dialTest.step(
       'Create one more custom application in the "My Workspace"',
       async () => {
-        await navigationPanel.myWorkspaceButton.click();
+        await navigationPanel.goToMyWorkspace();
         await marketplaceHeader.addAppButton.click();
         await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
         await appEditorPage.waitForPageLoaded();
@@ -429,7 +429,7 @@ dialSharedWithMeTest(
             actualAgents =
               await additionalShareUserMarketplaceAgentsSection.getAllAgents();
           } else {
-            await additionalShareUserNavigationPanel.myWorkspaceButton.click();
+            await additionalShareUserNavigationPanel.goToMyWorkspace();
             await additionalShareUserMarketplacePage.waitForPageLoaded();
             //remove next line when fixed https://github.com/epam/ai-dial-chat/issues/3303
             await additionalShareUserMarketplaceAgentsSection.goTop();

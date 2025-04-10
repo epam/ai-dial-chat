@@ -313,9 +313,7 @@ dialTest(
     await dialTest.step(
       'Navigate to DIAL Marketplace and verify custom app card was deleted',
       async () => {
-        await marketplaceContainer
-          .getNavigationPanel()
-          .marketplaceHomeButton.click();
+        await marketplaceContainer.getNavigationPanel().goToMarketplaceHome();
         await marketplaceHeader.searchInput.fillInInput(appEntity.name);
         const actualAgents = await marketplaceAgentsSection.getAllAgents();
         baseAssertion.assertValue(
@@ -626,9 +624,7 @@ dialTest(
     await dialTest.step(
       'Navigate to DIAL Marketplace and verify custom app card was deleted',
       async () => {
-        await marketplaceContainer
-          .getNavigationPanel()
-          .marketplaceHomeButton.click();
+        await marketplaceContainer.getNavigationPanel().goToMarketplaceHome();
         await marketplaceHeader.searchInput.fillInInput(appEntity1.name);
         const actualAgents = await marketplaceAgentsSection.getAllAgents();
         baseAssertion.assertValue(
@@ -648,9 +644,7 @@ dialTest(
     await dialTest.step(
       'Open "My workspace", find App 2 and click on the second app card',
       async () => {
-        await marketplaceContainer
-          .getNavigationPanel()
-          .myWorkspaceButton.click();
+        await marketplaceContainer.getNavigationPanel().goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appEntity2_v2.name);
         agentElement2 =
@@ -700,9 +694,7 @@ dialTest(
     await dialTest.step(
       'Navigate to DIAL Marketplace and verify second custom app card was deleted',
       async () => {
-        await marketplaceContainer
-          .getNavigationPanel()
-          .marketplaceHomeButton.click();
+        await marketplaceContainer.getNavigationPanel().goToMarketplaceHome();
         await marketplacePage.waitForPageLoaded();
         await baseAssertion.assertElementState(agentElement2, 'visible');
         await baseAssertion.assertElementText(

@@ -646,7 +646,7 @@ dialTest(
           await marketplaceAgentsSection.findAgentElement(firstAppName);
         await marketplaceAgents.addAgentToWorkspace(firstAppElement);
         await toast.closeToast();
-        await navigationPanel.myWorkspaceButton.click();
+        await navigationPanel.goToMyWorkspace();
         const secondAppElement =
           await marketplaceAgentsSection.findAgentElement(secondAppName);
         await marketplaceAgents.addAgentToWorkspace(secondAppElement);
