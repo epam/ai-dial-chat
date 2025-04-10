@@ -1,4 +1,13 @@
-import { EMPTY, catchError, concat, filter, map, of, switchMap } from 'rxjs';
+import {
+  EMPTY,
+  catchError,
+  concat,
+  filter,
+  map,
+  of,
+  switchMap,
+  takeUntil,
+} from 'rxjs';
 
 import { combineEpics } from 'redux-observable';
 
@@ -103,6 +112,9 @@ const getConfigurationSchemaEpic: AppEpic = (action$, state$) =>
         catchError(() => {
           return of(ChatActions.getConfigurationSchemaFailed());
         }),
+        takeUntil(
+          action$.pipe(filter(ConversationsActions.selectConversations.match)),
+        ),
       );
     }),
   );

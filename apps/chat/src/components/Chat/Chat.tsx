@@ -1085,11 +1085,12 @@ export function Chat({ isPreview }: ChatProps) {
   }, [dispatch, selectedConversationsIds]);
 
   useEffect(() => {
-    dispatch(ChatActions.resetConfigurationSchema());
     if (configurationAppId && isNoMessages) {
       dispatch(
         ChatActions.getConfigurationSchema({ modelId: configurationAppId }),
       );
+    } else {
+      dispatch(ChatActions.resetConfigurationSchema());
     }
   }, [dispatch, configurationAppId, isNoMessages]);
 
