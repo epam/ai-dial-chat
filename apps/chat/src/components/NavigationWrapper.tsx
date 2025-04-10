@@ -249,26 +249,18 @@ const Navigation = () => {
   );
 
   const handleChatClick = useCallback(() => {
-    if (router.route !== Routes.Chat) {
-      return router.push(Routes.Chat).then(() => {
-        dispatch(
-          ConversationsActions.setIsStartedCustomViewerConversation(false),
-        );
-        if (!selectedConversationIds.length) {
-          dispatch(
-            ConversationsActions.createNewConversations({
-              names: [DEFAULT_CONVERSATION_NAME],
-            }),
-          );
-        }
-      });
-    } else {
+    return router.push(Routes.Chat).then(() => {
       dispatch(
-        ConversationsActions.createNewConversations({
-          names: [DEFAULT_CONVERSATION_NAME],
-        }),
+        ConversationsActions.setIsStartedCustomViewerConversation(false),
       );
-    }
+      if (!selectedConversationIds.length) {
+        dispatch(
+          ConversationsActions.createNewConversations({
+            names: [DEFAULT_CONVERSATION_NAME],
+          }),
+        );
+      }
+    });
   }, [dispatch, router, selectedConversationIds.length]);
 
   return (
