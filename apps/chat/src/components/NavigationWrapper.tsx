@@ -37,7 +37,7 @@ import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
 import { Chatbar } from '@/src/components/Chatbar/Chatbar';
-import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
+import { ModelIcon, ModelTooltip } from '@/src/components/Chatbar/ModelIcon';
 import Tooltip from '@/src/components/Common/Tooltip';
 import { MarketplaceFilterbar } from '@/src/components/Marketplace/MarketplaceFilterbar';
 import { Promptbar } from '@/src/components/Promptbar';
@@ -50,7 +50,7 @@ interface NavigationButtonProps {
   Icon?: (props: TablerIconsProps) => JSX.Element;
   ModelIcon?: () => JSX.Element;
   selected?: boolean;
-  tooltip?: string;
+  tooltip?: ReactNode;
   dataQa?: string;
   caption?: string;
   rounded?: boolean;
@@ -209,8 +209,10 @@ const UsedWidgets = () => {
                 entity={model}
                 entityId={model.id}
                 size={height as number}
+                isCustomTooltip
               />
             )}
+            tooltip={<ModelTooltip entity={model} entityId={model.id} />}
           />
         ))}
       </div>
