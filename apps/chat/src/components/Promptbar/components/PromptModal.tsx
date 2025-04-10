@@ -1,5 +1,7 @@
 import { useCallback, useState } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import classNames from 'classnames';
 
 import {
@@ -9,6 +11,7 @@ import {
 
 import { ModalState } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
+import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -91,6 +94,8 @@ const PromptModalContent: React.FC<PromptModalViewProps> = ({
 };
 
 const PromptModalView = () => {
+  const { t } = useTranslation(Translation.PromptBar);
+
   const prompt = useAppSelector(PromptsSelectors.selectSelectedOrNewPrompt);
   const isLoading = useAppSelector(PromptsSelectors.isPromptLoading);
   const isPromptInitModeEdit = useAppSelector(
@@ -118,19 +123,20 @@ const PromptModalView = () => {
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="flex flex-col gap-4 inline-block w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
+      containerClassName="flex flex-col gap-4 w-full py-4 md:py-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
       dataQa={
         prompt?.content === '' || !isViewMode
           ? 'prompt-modal'
           : 'preview-prompt-modal'
       }
       headingClassName={classNames(
+        'px-3 md:px-6',
         prompt &&
           prompt.publicationInfo?.action === PublishActions.DELETE &&
           'text-error',
       )}
       state={isLoading ? ModalState.LOADING : ModalState.OPENED}
-      heading={prompt?.name}
+      heading={t(isViewMode ? 'View Prompt' : 'Edit Prompt')}
       hideClose={!isViewMode}
       onClose={handleClose}
     >

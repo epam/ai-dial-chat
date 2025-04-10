@@ -134,6 +134,13 @@ export default function ItemContextMenu({
         onClick: onUse,
       },
       {
+        name: t('View'),
+        display: !!onView,
+        dataQa: 'view',
+        Icon: IconEye,
+        onClick: onView,
+      },
+      {
         name: t('Select'),
         display: !isExternal && !!onSelect,
         dataQa: 'select',
@@ -163,13 +170,6 @@ export default function ItemContextMenu({
         Icon: IconCopy,
         onClick: onDuplicate,
         disabled: disableAll,
-      },
-      {
-        name: t('View'),
-        display: !!onView,
-        dataQa: 'view',
-        Icon: IconEye,
-        onClick: onView,
       },
       {
         name: t('Replay'),
