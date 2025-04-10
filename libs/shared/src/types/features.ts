@@ -57,5 +57,5 @@ export enum Feature {
   MarketplaceTableView = 'marketplace-table-view', // Enable table view in Marketplace
 
   // Profile
-  ShowProfile = 'show-profile', // Show profile page
+  ShowProfile = 'show-profile', // Enable profile button
 }
