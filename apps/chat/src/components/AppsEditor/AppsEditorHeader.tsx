@@ -70,6 +70,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
 
   const handleSaveAndRedirect = () => {
     dispatch(ApplicationActions.setExitAfterSave(true));
+    dispatch(ApplicationActions.setShouldSaveApplication(true));
     if (returnConversationIds?.length) {
       dispatch(
         ConversationsActions.selectConversations({

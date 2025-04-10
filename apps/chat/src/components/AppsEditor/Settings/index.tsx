@@ -211,7 +211,6 @@ export const ApplicationSettings: React.FC<Props> = ({
       isCodeEditorDirty;
 
     if (isFormChanged && methods.formState.isValid) {
-      dispatch(ApplicationActions.setShouldSaveApplication(true));
       dispatch(CodeEditorActions.saveAllModifiedFiles());
       if (isAppDeployed) {
         dispatch(
