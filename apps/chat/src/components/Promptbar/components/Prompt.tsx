@@ -103,6 +103,9 @@ export const PromptComponent = ({
   const isConversationBlocksInput = useAppSelector(
     ConversationsSelectors.selectIsSelectedConversationBlocksInput,
   );
+  const selectedPublication = useAppSelector(
+    PublicationSelectors.selectSelectedPublication,
+  );
 
   const isExternal = isEntityIdExternal(prompt);
   const isApproveRequiredResource = !!additionalItemData?.publicationUrl;
@@ -246,7 +249,8 @@ export const PromptComponent = ({
     [dispatch, prompt.id],
   );
 
-  const disableUsePrompt = isConversationBlocksInput || !isModelsInstalled;
+  const disableUsePrompt =
+    isConversationBlocksInput || !isModelsInstalled || !!selectedPublication;
 
   const handleCloseDialogs = useCallback(() => {
     setIsDeleting(false);
