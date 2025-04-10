@@ -9,6 +9,7 @@ import {
   MarketplaceFilterTypes,
   MenuOptions,
 } from '@/src/testData';
+import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 
 dialTest(
@@ -187,6 +188,7 @@ dialTest(
     setTestIds('EPMRTC-4441', 'EPMRTC-5353');
     const appName = GeneratorUtil.randomApplicationName();
     const addedAppName = GeneratorUtil.randomApplicationName();
+    let addedAppElement: BaseElement;
 
     await dialTest.step('Create a custom application', async () => {
       const applicationModel = customApplicationBuilder
@@ -243,22 +245,17 @@ dialTest(
         await appEditorHeader.saveAppAndExit();
         await marketplacePage.waitForPageLoaded();
 
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
-        baseAssertion.assertArrayIncludesAll(
-          actualAgents
-            .filter((agent) => agent.isWorkspaceAgent)
-            .map((agent) => agent.name),
-          [addedAppName],
-          MarketplaceExpectedMessages.filteredAgentsAreValid,
+        addedAppElement = await marketplaceAgentsSection.findAgentElement(
+          addedAppName,
+          { isWorkspaceAgent: true, isEditable: true },
         );
+        await baseAssertion.assertElementState(addedAppElement, 'visible');
       },
     );
 
     await dialTest.step(
       'Delete added custom app and verify it disappears immediately',
       async () => {
-        const addedAppElement =
-          await marketplaceAgentsSection.findAgentElement(addedAppName);
         await addedAppElement.hoverOver();
         await marketplaceAgents
           .getAgentElementDotsMenu(addedAppElement)
