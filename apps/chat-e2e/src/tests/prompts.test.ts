@@ -311,10 +311,10 @@ dialTest(
       .soft(menuOptions, ExpectedMessages.contextMenuOptionsValid)
       .toEqual([
         MenuOptions.use,
+        MenuOptions.view,
         MenuOptions.select,
         MenuOptions.edit,
         MenuOptions.duplicate,
-        MenuOptions.view,
         MenuOptions.export,
         MenuOptions.moveTo,
         MenuOptions.share,

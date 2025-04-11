@@ -334,8 +334,9 @@ const Sidebar = <T,>({
   const resizableWrapperClassName = classNames(
     '!fixed z-40 flex max-w-[95%] border-tertiary md:max-w-[45%] xl:!relative xl:top-0 xl:!h-full',
     isLeftSidebar
-      ? 'sidebar-left left-0 border-r md:left-[60px] xl:left-0'
+      ? 'sidebar-left left-0 border-r xl:left-0'
       : 'sidebar-right right-0 border-l',
+    isLeftSidebar && (isOverlay ? 'md:left-[36px]' : 'md:left-[60px]'),
     (screenState === ScreenState.SM || screenState === ScreenState.MD) &&
       '!h-full',
     screenState !== ScreenState.SM &&
