@@ -3,7 +3,6 @@ import { useCallback, useMemo } from 'react';
 import { useRouter } from 'next/router';
 
 import { ApplicationActions } from '../store/application/application.reducers';
-import { ConversationsActions } from '../store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { ModelsSelectors } from '../store/models/models.reducers';
 import { SettingsSelectors } from '../store/settings/settings.selectors';
@@ -32,11 +31,6 @@ export const useWidgets = () => {
   const handleSelectWidget = useCallback(
     (id: string) => {
       dispatch(ApplicationActions.selectWidget(id));
-      dispatch(
-        ConversationsActions.selectConversations({
-          conversationIds: [],
-        }),
-      );
     },
     [dispatch],
   );

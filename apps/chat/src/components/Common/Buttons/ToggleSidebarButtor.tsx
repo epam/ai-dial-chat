@@ -20,6 +20,7 @@ interface Props {
   onToggle: () => void;
   dataQa: string;
   rightSide?: boolean;
+  isOverlay?: boolean;
 }
 
 export const ToggleSidebarButton: React.FC<Props> = ({
@@ -29,6 +30,7 @@ export const ToggleSidebarButton: React.FC<Props> = ({
   onToggle,
   dataQa,
   rightSide = false,
+  isOverlay = false,
 }) => {
   const { t } = useTranslation(Translation.Header);
 
@@ -42,7 +44,10 @@ export const ToggleSidebarButton: React.FC<Props> = ({
   return (
     <Tooltip isTriggerClickable tooltip={t(tooltip)}>
       <button
-        className="flex h-full items-center justify-center px-3 md:px-5"
+        className={classNames(
+          'flex h-full items-center justify-center px-3',
+          isOverlay ? 'md:px-3' : 'md:px-5',
+        )}
         data-qa={dataQa}
         onClick={handleToggle}
       >

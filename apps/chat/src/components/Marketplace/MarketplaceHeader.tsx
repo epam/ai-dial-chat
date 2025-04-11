@@ -59,6 +59,7 @@ export const MarketplaceHeader = () => {
         isOpened={showFilterbar}
         onToggle={handleToggleFilterbar}
         dataQa="left-panel-toggle"
+        isOverlay={isOverlay}
       />
       <div className="flex grow justify-center">
         <Logo />
