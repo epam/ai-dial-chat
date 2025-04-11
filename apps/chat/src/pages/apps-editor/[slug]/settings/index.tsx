@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
@@ -40,8 +40,6 @@ export default function AppsSettings() {
     [slug],
   );
 
-  const [isExiting, setIsExiting] = useState(false);
-
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   const schema = useAppSelector(
@@ -82,10 +80,6 @@ export default function AppsSettings() {
     ],
   );
 
-  const handleOnExit = useCallback(() => {
-    setIsExiting(true);
-  }, []);
-
   return (
     <div className="flex size-full flex-col">
       {isLoading ? (
@@ -108,11 +102,9 @@ export default function AppsSettings() {
           <div className="flex size-full grow overflow-hidden">
             {applicationData && (
               <ApplicationSettings
-                isExiting={isExiting}
                 applicationData={applicationData}
                 schema={isSchemaApplicationType ? schema : null}
                 type={type ?? ''}
-                onExit={handleOnExit}
               />
             )}
           </div>

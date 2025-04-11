@@ -32,8 +32,10 @@ import {
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { CodeEditorActions } from '@/src/store/codeEditor/codeEditor.reducer';
-import { CodeEditorSelectors } from '@/src/store/codeEditor/codeEditor.selectors';
+import {
+  CodeEditorActions,
+  CodeEditorSelectors,
+} from '@/src/store/codeEditor/codeEditor.reducer';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -44,12 +46,11 @@ import {
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_QUICK_APPS_SCHEMA_ID } from '@/src/constants/quick-apps';
 import { Routes } from '@/src/constants/routes';
 
-import { OptionsDialog } from '../../Common/OptionsDialog';
 import Tooltip from '../../Common/Tooltip';
 import { ApplicationView } from './ApplicationView';
 import { CodeAppView } from './CodeAppView';
@@ -65,8 +66,6 @@ import {
   getQuickAppDefaultValues,
 } from './form';
 
-import debounce from 'lodash-es/debounce';
-
 enum PreviewMode {
   half,
   full,
@@ -77,16 +76,12 @@ interface Props {
   schema: ApiDetailedApplicationTypeSchema | null;
   applicationData: CustomApplicationModel;
   type: string;
-  isExiting?: boolean;
-  onExit?: () => void;
 }
 
 export const ApplicationSettings: React.FC<Props> = ({
   applicationData,
   schema,
   type,
-  isExiting,
-  onExit,
 }) => {
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -128,9 +123,6 @@ export const ApplicationSettings: React.FC<Props> = ({
       ? PreviewMode.closed
       : PreviewMode.half,
   );
-
-  const [isSaveBeforeConfirmationOpen, setIsSaveBeforeConfirmationOpen] =
-    useState(false);
 
   const getDefaultValues = useCallback(
     (type: string) => {
@@ -176,11 +168,9 @@ export const ApplicationSettings: React.FC<Props> = ({
         return (
           <CodeAppView
             isSharedWithMe={modelFromState?.sharedWithMe ?? false}
-            isAppDeployed={isAppDeployed}
             oldApplication={applicationData}
             isShared={modelFromState?.isShared ?? false}
             applicationStatus={modelFromState?.functionStatus}
-            onExit={onExit}
           />
         );
       default:
@@ -216,62 +206,36 @@ export const ApplicationSettings: React.FC<Props> = ({
   });
 
   const saveForm = useCallback(() => {
-    methods.formState.isValid &&
+    const isFormChanged =
+      Object.keys(methods.formState.dirtyFields).length > 0 ||
+      isCodeEditorDirty;
+
+    if (isFormChanged && methods.formState.isValid) {
       dispatch(ApplicationActions.setShouldSaveApplication(true));
-  }, [dispatch, methods.formState.isValid]);
+      dispatch(CodeEditorActions.saveAllModifiedFiles());
+      if (isAppDeployed) {
+        dispatch(
+          UIActions.showWarningToast(
+            t('Saved changes will be applied during next deployment'),
+          ),
+        );
+      }
+      const currentValues = methods.getValues();
 
-  const debouncedSave = useMemo(() => debounce(saveForm, 750), [saveForm]);
-
-  const handlePreviewMouseEnter = useCallback(() => {
-    debouncedSave();
-  }, [debouncedSave]);
-
-  const handlePreviewMouseLeave = useCallback(() => {
-    debouncedSave.cancel();
-  }, [debouncedSave]);
+      methods.reset(currentValues);
+    }
+  }, [dispatch, isAppDeployed, isCodeEditorDirty, methods, t]);
 
   const formViewElement = getFormView(type);
 
-  const startRedeploy = useCallback(() => {
+  const handleRedeploy = () => {
     dispatch(
       ApplicationActions.startUpdatingFunctionStatus({
         id: applicationData.id,
         status: ApplicationStatus.REDEPLOYING,
       }),
     );
-  }, [applicationData.id, dispatch]);
-
-  const handleRedeploy = () => {
-    if (isCodeEditorDirty) {
-      setIsSaveBeforeConfirmationOpen(true);
-      return;
-    }
-    startRedeploy();
   };
-
-  const modalOptions = useMemo(
-    () => [
-      {
-        label: t("Don't save"),
-        dataQa: 'not-save-option',
-        className: 'button-secondary',
-        onClick: () => {
-          startRedeploy();
-          setIsSaveBeforeConfirmationOpen(false);
-        },
-      },
-      {
-        label: t('Save'),
-        dataQa: 'save-option',
-        onClick: () => {
-          dispatch(CodeEditorActions.saveAllModifiedFiles());
-          startRedeploy();
-          setIsSaveBeforeConfirmationOpen(false);
-        },
-      },
-    ],
-    [t, startRedeploy, dispatch],
-  );
 
   useEffect(() => {
     const redirectHandler = (url: string) => {
@@ -324,6 +288,7 @@ export const ApplicationSettings: React.FC<Props> = ({
   return (
     <div className="flex w-full flex-nowrap overflow-hidden">
       <div
+        onMouseLeave={saveForm}
         className={classNames('transition-all duration-300 ease-in-out', {
           'w-[calc(100%-40px)] opacity-100': previewMode === PreviewMode.closed,
           'w-1/2 opacity-100': previewMode === PreviewMode.half,
@@ -400,14 +365,11 @@ export const ApplicationSettings: React.FC<Props> = ({
         {previewMode !== PreviewMode.closed && (
           <div className="flex-1 overflow-auto">
             <ApplicationPreviewChat
-              onPreviewMouseEnter={handlePreviewMouseEnter}
-              onPreviewMouseLeave={handlePreviewMouseLeave}
               isAppDeploymentInProgress={isAppDeploymentInProgress}
               isApplicationValid={methods.formState.isValid}
               applicationId={applicationData.id}
               type={type}
               isAppDeployed={isAppDeployed}
-              isExiting={isExiting}
             />
           </div>
         )}
@@ -447,13 +409,6 @@ export const ApplicationSettings: React.FC<Props> = ({
           </span>
         </div>
       )}
-      <OptionsDialog
-        isOpen={!!isSaveBeforeConfirmationOpen}
-        heading={t(
-          'Do you want to save changes in the code editor before redeploy?',
-        )}
-        options={modalOptions}
-      />
     </div>
   );
 };

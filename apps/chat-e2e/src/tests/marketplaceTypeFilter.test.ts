@@ -78,7 +78,7 @@ dialTest(
       async () => {
         //remove next line when fixed https://github.com/epam/ai-dial-chat/issues/3303
         await marketplaceAgentsSection.goTop();
-        await navigationPanel.myWorkspaceButton.click();
+        await navigationPanel.goToMyWorkspace();
         const allAgents = await marketplaceAgentsSection.getAllAgents();
         const actualWorkspaceModels = allAgents
           .filter((agent) => agent.isWorkspaceAgent)
@@ -231,7 +231,7 @@ dialTest(
     await dialTest.step(
       'Switch to "My Workspace", create new custom app and verify it is immediately displayed',
       async () => {
-        await navigationPanel.myWorkspaceButton.click();
+        await navigationPanel.goToMyWorkspace();
         await marketplaceHeader.addAppButton.click();
         await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
         await appEditorPage.waitForPageLoaded();
@@ -240,7 +240,8 @@ dialTest(
         });
         await appEditorGeneralForm.goNext();
         await appEditorViewForm.fillInAppFields();
-        await appEditorHeader.saveAppAndExit();
+        await appEditorHeader.focusOn();
+        await appEditorHeader.saveAndExitButton.click();
         await marketplacePage.waitForPageLoaded();
 
         const actualAgents = await marketplaceAgentsSection.getAllAgents();
