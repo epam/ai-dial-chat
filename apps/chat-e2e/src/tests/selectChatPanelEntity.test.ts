@@ -325,7 +325,9 @@ dialTest(
           await chatBarFolderAssertion.assertFolderEntityBackgroundColor(
             { name: nestedFolders[i].name },
             { name: nestedConversations[i].name },
-            Colors.defaultBackground,
+            i === 3
+              ? Colors.backgroundAccentSecondary
+              : Colors.defaultBackground,
           );
         }
       },
