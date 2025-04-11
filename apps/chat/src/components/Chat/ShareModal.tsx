@@ -239,7 +239,9 @@ export function ShareModalView() {
             </div>
           )}
           <div className="my-2 flex justify-center gap-2">
-            <QRCodeSVG value={url} title="AI DIAL" />
+            <div className="flex w-fit rounded bg-[#FCFCFC] p-3">
+              <QRCodeSVG value={url} size={250} />
+            </div>
           </div>
           <div className="relative mt-2">
             <Tooltip tooltip={url}>
