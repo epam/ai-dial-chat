@@ -68,14 +68,17 @@ const NavigationButton = ({
   const disabled = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   return (
     <Tooltip
       tooltip={tooltip}
       isTriggerClickable
       triggerClassName={classNames(
-        'flex max-h-[52px] min-w-[72px] shrink-0 select-none rounded transition-colors duration-200 md:min-w-min',
+        'flex   shrink-0 select-none rounded transition-colors duration-200 md:min-w-min',
         rounded && 'rounded-full border border-transparent',
         rounded && selected && '!border-accent-primary',
+        isOverlay ? 'max-h-[36px] min-w-[36px]' : 'max-h-[52px] min-w-[72px]',
+        isOverlay && rounded && 'md:my-0',
         disabled
           ? 'cursor-not-allowed'
           : 'cursor-pointer hover:bg-accent-primary-alpha active:bg-accent-primary-alpha',
@@ -87,25 +90,31 @@ const NavigationButton = ({
         className={classNames(
           'flex size-full flex-col items-center justify-center gap-[2px]',
           disabled ? 'cursor-not-allowed' : 'cursor-pointer',
-          rounded ? 'md:p-[9px]' : 'md:p-[10px]',
+          !isOverlay ? (rounded ? 'md:p-[9px]' : 'md:p-[10px]') : 'md:p-1',
         )}
       >
         {Icon && (
           <Icon
-            className={selected ? 'text-accent-primary' : 'text-secondary'}
+            className={classNames(
+              'min-h-[24px] min-w-[24px]',
+              selected ? 'text-accent-primary' : 'text-secondary',
+            )}
             width={24}
             height={24}
+            size={24}
           />
         )}
 
-        <span
-          className={classNames(
-            'text-xs leading-[15px] md:hidden',
-            selected ? 'text-accent-primary' : 'text-secondary',
-          )}
-        >
-          {caption}
-        </span>
+        {!isOverlay && (
+          <span
+            className={classNames(
+              'text-xs leading-[15px] md:hidden',
+              selected ? 'text-accent-primary' : 'text-secondary',
+            )}
+          >
+            {caption}
+          </span>
+        )}
       </button>
     </Tooltip>
   );
@@ -247,6 +256,7 @@ const Navigation = () => {
   const selectedConversationIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
   );
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const handleChatClick = useCallback(() => {
     return router.push(Routes.Chat).then(() => {
@@ -266,8 +276,9 @@ const Navigation = () => {
   return (
     <div
       className={classNames(
-        'order-last h-[52px] w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:z-40 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start md:border-r md:py-2',
+        'order-last w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:z-40 md:order-none md:h-full md:flex-col md:justify-start md:border-r md:py-2',
         !isMarketplaceEnabled && !widgetsSchemaIds.size ? 'hidden' : 'flex',
+        isOverlay ? 'h-[36px] md:w-[36px]' : 'h-[52px] md:w-[60px]',
       )}
       data-qa="navigation-panel"
     >
