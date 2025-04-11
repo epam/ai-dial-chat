@@ -244,6 +244,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
               className="m-0.5 w-full overflow-hidden rounded border border-primary"
               language="json"
               onChange={(v) => field.onChange(v ?? '')}
+              allowFullScreen
             />
           )}
         />
