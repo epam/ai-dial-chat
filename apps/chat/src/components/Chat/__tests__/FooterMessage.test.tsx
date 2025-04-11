@@ -94,9 +94,15 @@ describe('FooterMessage', () => {
   });
 
   it('renders nothing when footer feature is disabled', async () => {
+    const footerFeatures = new Set([
+      Feature.RequestApiKey,
+      Feature.ReportAnIssue,
+    ]);
+    vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(
+      footerFeatures,
+    );
     vi.mocked(SettingsSelectors.isFeatureEnabled).mockImplementation(
-      (_, feature) =>
-        new Set([Feature.RequestApiKey, Feature.ReportAnIssue]).has(feature),
+      (_, feature) => footerFeatures.has(feature),
     );
     const { container } = await render(<FooterWithSystemDialogs />);
 
