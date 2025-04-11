@@ -6,6 +6,8 @@ import {
   useFormContext,
 } from 'react-hook-form';
 
+import { useRouter } from 'next/router';
+
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip } from '@/src/utils/app/application';
@@ -33,6 +35,7 @@ import {
 } from '@/src/constants/applications';
 import { CODE_APPS_ENDPOINTS } from '@/src/constants/code-apps';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
+import { Routes } from '@/src/constants/routes';
 
 import { FormCodeEditor } from '@/src/components/Common/ApplicationWizard/CodeAppView/FormCodeEditor';
 import { RuntimeVersionSelector } from '@/src/components/Common/ApplicationWizard/CodeAppView/RuntimeVersionSelector';
@@ -150,12 +153,14 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     ? CONFIRM_SOURCE_FOLDER_VALUES
     : undefined;
 
+  const router = useRouter();
+
   const handleEdit = useCallback(
     (data: CodeAppFormData) => {
       if (
         oldApplication.reference &&
         shouldSaveApplication &&
-        (!isEqual(data, lastSubmittedValuesRef.current) || exitAfterSave)
+        !isEqual(data, lastSubmittedValuesRef.current)
       ) {
         const preparedData = getCodeAppData(data);
 
@@ -196,7 +201,6 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
       isShared,
       shouldSaveApplication,
       applicationStatus,
-      exitAfterSave,
     ],
   );
 
@@ -210,19 +214,35 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
   }, [dispatch]);
 
   useEffect(() => {
-    if (shouldSaveApplication) {
-      if (!isValid) {
-        dispatch(ApplicationActions.setShouldSaveApplication(false));
-        dispatch(ApplicationActions.setExitAfterSave(false));
-        dispatch(
-          UIActions.showErrorToast(t('Please fill in all mandatory fields')),
-        );
-        return;
-      }
+    const isTriggered = shouldSaveApplication || exitAfterSave;
+    if (!isTriggered) return;
 
+    if (!isValid) {
+      dispatch(ApplicationActions.setShouldSaveApplication(false));
+      dispatch(ApplicationActions.setExitAfterSave(false));
+      dispatch(
+        UIActions.showErrorToast(t('Please fill in all mandatory fields')),
+      );
+      return;
+    }
+
+    if (shouldSaveApplication) {
       submitWrapper(handleEdit)();
     }
-  }, [submitWrapper, shouldSaveApplication, handleEdit, isValid, dispatch, t]);
+
+    if (exitAfterSave) {
+      router.push(Routes.Marketplace);
+    }
+  }, [
+    exitAfterSave,
+    router,
+    submitWrapper,
+    shouldSaveApplication,
+    handleEdit,
+    isValid,
+    dispatch,
+    t,
+  ]);
 
   return (
     <form
