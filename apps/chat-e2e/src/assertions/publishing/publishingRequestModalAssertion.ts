@@ -1,5 +1,9 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
-import { ExpectedMessages, PublishingExpectedMessages } from '@/src/testData';
+import {
+  ElementActionabilityState,
+  ExpectedMessages,
+  PublishingExpectedMessages,
+} from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
 import { PublishingRequestModal } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
@@ -21,17 +25,34 @@ export class PublishingRequestModalAssertion extends BaseAssertion {
     );
   }
 
-  public async assertSendRequestButtonIsDisabled() {
+  public async assertSendRequestButtonActionabilityState(
+    expectedState: ElementActionabilityState,
+  ) {
     await this.assertElementActionabilityState(
       this.publishingRequestModal.sendRequestButton,
-      'disabled',
+      expectedState,
     );
-    const buttonColor =
-      await this.publishingRequestModal.sendRequestButton.getComputedStyleProperty(
-        Styles.color,
-      );
-    expect
-      .soft(buttonColor[0], ExpectedMessages.elementColorIsValid)
-      .toBe(Colors.controlsTextDisable);
+
+    if (expectedState === 'disabled') {
+      const textColor =
+        await this.publishingRequestModal.sendRequestButton.getComputedStyleProperty(
+          Styles.color,
+        );
+      expect
+        .soft(textColor[0], ExpectedMessages.elementColorIsValid)
+        .toBe(Colors.controlsTextDisable);
+    } else {
+      const backgroundColor =
+        await this.publishingRequestModal.sendRequestButton.getComputedStyleProperty(
+          Styles.backgroundColor,
+        );
+      expect
+        .soft(backgroundColor[0], ExpectedMessages.buttonBackgroundColorIsValid)
+        .toBe(Colors.textPermanent);
+    }
+  }
+
+  public async assertSendRequestButtonIsDisabled() {
+    await this.assertSendRequestButtonActionabilityState('disabled');
   }
 }
