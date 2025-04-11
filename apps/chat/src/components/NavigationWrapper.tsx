@@ -20,7 +20,10 @@ import {
   ApplicationActions,
   ApplicationSelectors,
 } from '@/src/store/application/application.reducers';
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MarketplaceActions,
@@ -60,35 +63,58 @@ const NavigationButton = ({
   caption,
   rounded = false,
 }: NavigationButtonProps) => {
+  const disabled = useAppSelector(
+    ConversationsSelectors.selectIsConversationsStreaming,
+  );
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   return (
-    <button
-      data-qa={dataQa}
-      onClick={onClick}
-      className={classNames(
-        'flex max-h-[52px] min-w-[72px] shrink-0 cursor-pointer select-none flex-col items-center justify-center gap-[2px] rounded border border-transparent transition-colors duration-200 hover:bg-accent-primary-alpha active:bg-accent-primary-alpha hover:disabled:bg-transparent md:min-w-min md:p-[9px]',
-        rounded && 'rounded-full',
+    <Tooltip
+      tooltip={tooltip}
+      isTriggerClickable
+      triggerClassName={classNames(
+        'flex   shrink-0 select-none rounded transition-colors duration-200 md:min-w-min',
+        rounded && 'rounded-full border border-transparent',
         rounded && selected && '!border-accent-primary',
+        isOverlay ? 'max-h-[36px] min-w-[36px]' : 'max-h-[52px] min-w-[72px]',
+        isOverlay && rounded && 'md:my-0',
+        disabled
+          ? 'cursor-not-allowed'
+          : 'cursor-pointer hover:bg-accent-primary-alpha active:bg-accent-primary-alpha',
       )}
     >
-      {Icon && (
-        <Tooltip tooltip={tooltip} isTriggerClickable>
-          <Icon
-            className={selected ? 'text-accent-primary' : 'text-secondary'}
-            width={24}
-            height={24}
-          />
-        </Tooltip>
-      )}
-
-      <span
+      <button
+        data-qa={dataQa}
+        onClick={!selected && !disabled ? onClick : undefined}
         className={classNames(
-          'text-xs leading-[15px] md:hidden',
-          selected ? 'text-accent-primary' : 'text-secondary',
+          'flex size-full flex-col items-center justify-center gap-[2px]',
+          disabled ? 'cursor-not-allowed' : 'cursor-pointer',
+          !isOverlay ? (rounded ? 'md:p-[9px]' : 'md:p-[10px]') : 'md:p-1',
         )}
       >
-        {caption}
-      </span>
-    </button>
+        {Icon && (
+          <Icon
+            className={classNames(
+              'min-h-[24px] min-w-[24px]',
+              selected ? 'text-accent-primary' : 'text-secondary',
+            )}
+            width={24}
+            height={24}
+            size={24}
+          />
+        )}
+
+        {!isOverlay && (
+          <span
+            className={classNames(
+              'text-xs leading-[15px] md:hidden',
+              selected ? 'text-accent-primary' : 'text-secondary',
+            )}
+          >
+            {caption}
+          </span>
+        )}
+      </button>
+    </Tooltip>
   );
 };
 
@@ -108,13 +134,14 @@ const MarketplaceNavigation = () => {
   const handleChangeTab = useCallback(
     (tab: MarketplaceTabs) => {
       if (!isMarketplace) {
-        router
-          .push(Routes.Marketplace)
-          .then(() => dispatch(MarketplaceActions.setSelectedTab(tab)));
+        router.push(Routes.Marketplace).then(() => {
+          dispatch(MarketplaceActions.setSelectedTab(tab));
+          dispatch(ApplicationActions.selectWidget(undefined));
+        });
       } else {
         dispatch(MarketplaceActions.setSelectedTab(tab));
+        dispatch(ApplicationActions.selectWidget(undefined));
       }
-      dispatch(ApplicationActions.selectWidget(undefined));
     },
     [dispatch, isMarketplace, router],
   );
@@ -235,28 +262,32 @@ const Navigation = () => {
   const selectedWidget = useAppSelector(
     ApplicationSelectors.selectSelectedWidget,
   );
+  const selectedConversationIds = useAppSelector(
+    ConversationsSelectors.selectSelectedConversationsIds,
+  );
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const handleChatClick = useCallback(() => {
-    if (router.route !== Routes.Chat) {
-      return router.push(Routes.Chat).then(() => {
-        dispatch(
-          ConversationsActions.setIsStartedCustomViewerConversation(false),
-        );
-      });
-    } else {
+    return router.push(Routes.Chat).then(() => {
       dispatch(
-        ConversationsActions.createNewConversations({
-          names: [DEFAULT_CONVERSATION_NAME],
-        }),
+        ConversationsActions.setIsStartedCustomViewerConversation(false),
       );
-    }
-  }, [dispatch, router]);
+      if (!selectedConversationIds.length) {
+        dispatch(
+          ConversationsActions.createNewConversations({
+            names: [DEFAULT_CONVERSATION_NAME],
+          }),
+        );
+      }
+    });
+  }, [dispatch, router, selectedConversationIds.length]);
 
   return (
     <div
       className={classNames(
-        'order-last h-[52px] w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:z-40 md:order-none md:h-full md:w-[60px] md:flex-col md:justify-start md:border-r md:py-2',
+        'order-last w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:z-40 md:order-none md:h-full md:flex-col md:justify-start md:border-r md:py-2',
         !isMarketplaceEnabled && !widgetsSchemaIds.size ? 'hidden' : 'flex',
+        isOverlay ? 'h-[36px] md:w-[36px]' : 'h-[52px] md:w-[60px]',
       )}
       data-qa="navigation-panel"
     >
