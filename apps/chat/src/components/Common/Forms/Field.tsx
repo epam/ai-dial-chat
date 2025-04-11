@@ -10,10 +10,11 @@ import Tooltip from '../Tooltip';
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: boolean | string;
   tooltip?: string;
+  dataQa?: string;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ error, className, tooltip, ...rest }, ref) => {
+  ({ error, className, tooltip, dataQa, ...rest }, ref) => {
     return (
       <Tooltip tooltip={tooltip}>
         <input
@@ -24,6 +25,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             error && 'border-error hover:border-error focus:border-error',
             className,
           )}
+          data-qa={dataQa}
         />
       </Tooltip>
     );
