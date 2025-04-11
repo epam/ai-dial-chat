@@ -28,6 +28,7 @@ dialTest(
     navigationPanel,
     baseAssertion,
   }) => {
+    dialTest.slow();
     setTestIds('EPMRTC-4435', 'EPMRTC-4620', 'EPMRTC-4439', 'EPMRTC-5363');
     let allModels: DialAIEntityModel[];
     let groupedModelNames: string[];
