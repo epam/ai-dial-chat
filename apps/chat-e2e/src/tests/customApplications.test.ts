@@ -428,6 +428,8 @@ dialTest(
           AppEditSteps.generalInfo,
           true,
         );
+        //need to explicitly click on the form to trigger autosave after fields update
+        await appEditorGeneralForm.version.click();
         appEntity.version = '2.2.2';
         appEntity.description = updatedDescription;
         await appEditorGeneralForm.fillInAppFields({
