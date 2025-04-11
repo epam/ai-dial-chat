@@ -53,7 +53,7 @@ import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import { ExportModal } from '@/src/components/Chatbar/ExportModal';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
-import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
+import { MoveToFolderModal } from '@/src/components/Common/MoveToFolderModal';
 
 import {
   ConversationInfo,
@@ -428,7 +428,7 @@ export const ConversationContextMenu = ({
       </button>
 
       {isShowMoveToModal && (
-        <MoveToFolderMobileModal
+        <MoveToFolderModal
           onClose={() => {
             setIsShowMoveToModal(false);
           }}

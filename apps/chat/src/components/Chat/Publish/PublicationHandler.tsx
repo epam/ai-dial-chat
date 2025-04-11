@@ -314,12 +314,7 @@ export function PublicationHandler({ publication }: Props) {
           isApproveRequiredResource: true,
         }),
       );
-      dispatch(
-        PromptsActions.setIsEditModalOpen({
-          isOpen: true,
-          isPreview: true,
-        }),
-      );
+      dispatch(PromptsActions.setIsPromptModalOpen({ isOpen: true }));
     };
 
     if (conversationsToReviewIds.length) {

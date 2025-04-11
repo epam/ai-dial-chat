@@ -7,7 +7,6 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { groupAllVersions } from '@/src/utils/app/common';
 
-import { PublicVersionGroups } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -25,11 +24,7 @@ interface Props {
   textBeforeSelector?: string | null;
   selectedEntityId?: string;
   excludeEntityId?: string;
-  onChangeSelectedVersion?: (
-    versionGroupId: string,
-    newVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
-    oldVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
-  ) => void;
+  onChangeSelectedVersion?: (newVersionId: string) => void;
 }
 
 export function PublicVersionSelector({
@@ -155,11 +150,7 @@ export function PublicVersionSelector({
                 stopBubbling(e);
                 setIsVersionSelectOpen(false);
 
-                return onChangeSelectedVersion(
-                  publicVersionGroupId,
-                  { version, id },
-                  currentVersionGroup.selectedVersion,
-                );
+                return onChangeSelectedVersion(id);
               }}
               className={classNames(
                 'hover:bg-accent-primary-alpha',
