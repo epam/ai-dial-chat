@@ -29,6 +29,7 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { CONFIRM_ICON_FILE_VALUES } from '@/src/constants/applications';
 import { IMAGE_TYPES } from '@/src/constants/chat';
+import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { DEFAULT_VERSION } from '@/src/constants/public';
 import { Routes } from '@/src/constants/routes';
 
@@ -187,7 +188,10 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     }
 
     if (exitAfterSave) {
-      router.push(Routes.Marketplace);
+      router.push({
+        pathname: Routes.Marketplace,
+        query: { tab: MarketplaceTabs.MY_WORKSPACE },
+      });
     }
   }, [
     shouldSaveApplication,

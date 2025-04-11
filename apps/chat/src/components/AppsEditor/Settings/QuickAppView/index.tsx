@@ -31,6 +31,7 @@ import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { CONFIRM_DOCUMENT_VALUES } from '@/src/constants/applications';
+import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
 import { TemperatureSlider } from '@/src/components/Chat/ChatSettings/Temperature';
@@ -182,7 +183,10 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
     }
 
     if (exitAfterSave) {
-      router.push(Routes.Marketplace);
+      router.push({
+        pathname: Routes.Marketplace,
+        query: { tab: MarketplaceTabs.MY_WORKSPACE },
+      });
     }
   }, [
     shouldSaveApplication,
