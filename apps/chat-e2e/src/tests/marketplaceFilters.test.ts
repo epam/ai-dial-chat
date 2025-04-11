@@ -100,6 +100,7 @@ dialTest(
         await header.leftPanelToggle.click();
         await navigationPanel.marketplaceHomeButton.click();
         await marketplacePage.waitForPageLoaded();
+        await header.logo.hoverOver();
         await navigationPanel.myWorkspaceButton.click();
         await baseAssertion.assertCheckboxState(
           marketplaceFilter.filterByPropertyOptionInput(
