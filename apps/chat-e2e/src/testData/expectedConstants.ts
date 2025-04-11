@@ -20,7 +20,7 @@ export const ExpectedConstants = {
     `${ExpectedConstants.newFolderTitle} ${index}`,
   newPromptFolderWithIndexTitle: (index: number) =>
     `${ExpectedConstants.newFolderTitle} ${index}`,
-  promptViewModalTitle: 'View Prompt',
+  promptViewModalTitle: 'View prompt',
   renameConversationModalTitle: 'Rename conversation',
   emptyString: '',
   defaultTemperature: '1',
