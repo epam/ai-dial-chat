@@ -140,6 +140,7 @@ const Header = Inversify.register('Header', () => {
           isOpened={showChatbar}
           onToggle={handleToggleChatbar}
           dataQa="left-panel-toggle"
+          isOverlay={isOverlay}
         />
       )}
       <div className="ml-4">
@@ -163,6 +164,7 @@ const Header = Inversify.register('Header', () => {
           onToggle={handleTogglePromtbar}
           dataQa="right-panel-toggle"
           rightSide
+          isOverlay={isOverlay}
         />
       )}
       <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
