@@ -1094,7 +1094,7 @@ export function Chat({ isPreview }: ChatProps) {
     }
   }, [dispatch, configurationAppId, isNoMessages]);
 
-  if (selectedWidget && !selectedConversationsIds.length) {
+  if (selectedWidget) {
     return <WidgetView id={selectedWidget} />;
   }
 
