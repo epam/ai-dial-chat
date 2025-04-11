@@ -322,10 +322,10 @@ export const ApplicationSettings: React.FC<Props> = ({
   ]);
 
   return (
-    <div className="flex w-full overflow-hidden">
+    <div className="flex w-full flex-nowrap overflow-hidden">
       <div
         className={classNames('transition-all duration-300 ease-in-out', {
-          'w-full opacity-100': previewMode === PreviewMode.closed,
+          'w-[calc(100%-40px)] opacity-100': previewMode === PreviewMode.closed,
           'w-1/2 opacity-100': previewMode === PreviewMode.half,
           'w-0 opacity-0': previewMode === PreviewMode.full,
         })}
