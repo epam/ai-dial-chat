@@ -98,9 +98,8 @@ dialTest(
         );
         await dialHomePage.waitForPageLoaded({ skipSidebars: true });
         await header.leftPanelToggle.click();
-        await navigationPanel.goToMarketplaceFromDialHome();
+        await navigationPanel.goToMyWorkspaceFromDialHome();
         await marketplacePage.waitForPageLoaded();
-        await navigationPanel.goToMyWorkspace();
         await baseAssertion.assertCheckboxState(
           marketplaceFilter.filterByPropertyOptionInput(
             MarketplaceFilterTypes.type,
