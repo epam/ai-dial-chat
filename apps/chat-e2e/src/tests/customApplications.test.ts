@@ -189,7 +189,8 @@ dialTest(
       'Input Chat completion URL, click Save and Exit link',
       async () => {
         await appEditorViewForm.fillInAppFields();
-        await appEditorHeader.saveAppAndExit();
+        await appEditorHeader.focusOn();
+        await appEditorHeader.saveAndExitButton.click();
         await baseAssertion.assertElementState(appEditorViewForm, 'hidden');
         await marketplacePage.waitForPageLoaded();
       },
@@ -288,7 +289,7 @@ dialTest(
     );
 
     await dialTest.step('Close the application edit mode', async () => {
-      await appEditorHeader.saveAppAndExit();
+      await appEditorHeader.saveAndExitButton.click();
     });
 
     await dialTest.step(
@@ -421,20 +422,22 @@ dialTest(
     await dialTest.step(
       'Update any field on step "General info" and click Save and exit link',
       async () => {
-        const generalInfoStep = appEditorHeader.getGeneralInfoStep();
-        await generalInfoStep.click();
+        await appEditorHeader.goOnGeneralInfoStep();
         await baseAssertion.assertElementState(appEditorGeneralForm);
         await appEditorHeaderAssertion.assertStepIsCompleted(
           AppEditSteps.generalInfo,
           true,
         );
+        //need to explicitly click on the form to trigger autosave after fields update
+        await appEditorGeneralForm.version.click();
         appEntity.version = '2.2.2';
         appEntity.description = updatedDescription;
         await appEditorGeneralForm.fillInAppFields({
           version: appEntity.version,
           description: appEntity.description,
         });
-        await appEditorHeader.saveAppAndExit();
+        await appEditorHeader.focusOn();
+        await appEditorHeader.saveAndExitButton.click();
         await baseAssertion.assertElementState(appEditorGeneralForm, 'hidden');
         await marketplacePage.waitForPageLoaded();
       },
@@ -474,8 +477,9 @@ dialTest(
           ExpectedMessages.FormFieldShouldRetainUpdatedValue,
         );
 
-        const generalInfoStep = appEditorHeader.getGeneralInfoStep();
-        await generalInfoStep.click();
+        await appEditorHeader.goOnGeneralInfoStep({
+          isHttpMethodTriggered: false,
+        });
         await baseAssertion.assertElementState(appEditorGeneralForm);
         const descriptionValue = await appEditorGeneralForm.description
           .getElementLocator()

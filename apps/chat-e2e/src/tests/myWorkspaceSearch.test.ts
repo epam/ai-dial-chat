@@ -510,7 +510,8 @@ dialTest(
           });
           await appEditorGeneralForm.goNext();
           await appEditorViewForm.fillInAppFields();
-          await appEditorHeader.saveAppAndExit();
+          await appEditorHeader.focusOn();
+          await appEditorHeader.saveAndExitButton.click();
           await marketplacePage.waitForPageLoaded();
         }
 
