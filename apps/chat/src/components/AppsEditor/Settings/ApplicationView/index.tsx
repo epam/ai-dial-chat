@@ -6,6 +6,8 @@ import {
   useFormContext,
 } from 'react-hook-form';
 
+import { useRouter } from 'next/router';
+
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { CustomApplicationModel } from '@/src/types/applications';
@@ -19,6 +21,8 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
+import { MarketplaceTabs } from '@/src/constants/marketplace';
+import { Routes } from '@/src/constants/routes';
 
 import { withController } from '@/src/components/Common/Forms/ControlledFormField';
 import { Field } from '@/src/components/Common/Forms/Field';
@@ -149,10 +153,12 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
     ApplicationSelectors.selectExitAfterSave,
   );
 
+  const router = useRouter();
+
   const handleSubmit = useCallback(
     (data: CustomApplicationFormData) => {
       if (
-        (!isEqual(data, lastSubmittedValuesRef.current) || exitAfterSave) &&
+        !isEqual(data, lastSubmittedValuesRef.current) &&
         shouldSaveApplication
       ) {
         const applicationData = getCustomApplicationData(data);
@@ -171,34 +177,39 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
         dispatch(ApplicationActions.setExitAfterSave(false));
       }
     },
-    [
-      lastSubmittedValuesRef,
-      oldApplication,
-      dispatch,
-      shouldSaveApplication,
-      exitAfterSave,
-    ],
+    [lastSubmittedValuesRef, oldApplication, dispatch, shouldSaveApplication],
   );
 
   useEffect(() => {
-    if (shouldSaveApplication) {
-      if (!isValid) {
-        dispatch(ApplicationActions.setShouldSaveApplication(false));
-        dispatch(ApplicationActions.setExitAfterSave(false));
-        dispatch(
-          UIActions.showErrorToast(t('Please fill in all mandatory fields')),
-        );
-        return;
-      }
+    if (!shouldSaveApplication && !exitAfterSave) return;
 
+    if (!isValid) {
+      dispatch(ApplicationActions.setShouldSaveApplication(false));
+      dispatch(ApplicationActions.setExitAfterSave(false));
+      dispatch(
+        UIActions.showErrorToast(t('Please fill in all mandatory fields')),
+      );
+      return;
+    }
+
+    if (shouldSaveApplication) {
       submitWrapper(handleSubmit)();
     }
+
+    if (exitAfterSave) {
+      router.push({
+        pathname: Routes.Marketplace,
+        query: { tab: MarketplaceTabs.MY_WORKSPACE },
+      });
+    }
   }, [
-    submitWrapper,
     shouldSaveApplication,
-    handleSubmit,
+    exitAfterSave,
     isValid,
+    submitWrapper,
+    handleSubmit,
     dispatch,
+    router,
     t,
   ]);
 

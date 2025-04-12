@@ -19,12 +19,22 @@ export class NavigationPanel extends BaseElement {
     NavigationPanelSelectors.myWorkspaceButton,
   );
 
+  public async goToMarketplaceHome() {
+    // eslint-disable-next-line playwright/no-force-option
+    await this.marketplaceHomeButton.click({ force: true });
+  }
+
+  public async goToMyWorkspace() {
+    // eslint-disable-next-line playwright/no-force-option
+    await this.myWorkspaceButton.click({ force: true });
+  }
+
   public async goToMarketplaceFromDialHome() {
-    await this.goToMarketplacePage(() => this.marketplaceHomeButton.click());
+    await this.goToMarketplacePage(() => this.goToMarketplaceHome());
   }
 
   public async goToMyWorkspaceFromDialHome() {
-    await this.goToMarketplacePage(() => this.myWorkspaceButton.click());
+    await this.goToMarketplacePage(() => this.goToMyWorkspace());
   }
 
   public async backToChat(

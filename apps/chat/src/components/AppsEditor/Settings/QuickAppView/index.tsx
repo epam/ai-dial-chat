@@ -6,6 +6,8 @@ import {
   useFormContext,
 } from 'react-hook-form';
 
+import { useRouter } from 'next/router';
+
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -29,6 +31,8 @@ import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { CONFIRM_DOCUMENT_VALUES } from '@/src/constants/applications';
+import { MarketplaceTabs } from '@/src/constants/marketplace';
+import { Routes } from '@/src/constants/routes';
 
 import { TemperatureSlider } from '@/src/components/Chat/ChatSettings/Temperature';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
@@ -113,10 +117,12 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
     ? CONFIRM_DOCUMENT_VALUES
     : undefined;
 
+  const router = useRouter();
+
   const handleSubmit = useCallback(
     (data: QuickAppFormData) => {
       if (
-        (!isEqual(data, lastSubmittedValuesRef.current) || exitAfterSave) &&
+        !isEqual(data, lastSubmittedValuesRef.current) &&
         shouldSaveApplication
       ) {
         const applicationData = getQuickAppData(data);
@@ -153,14 +159,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
         dispatch(ApplicationActions.setExitAfterSave(false));
       }
     },
-    [
-      exitAfterSave,
-      shouldSaveApplication,
-      isShared,
-      oldApplication,
-      dispatch,
-      schema,
-    ],
+    [shouldSaveApplication, isShared, oldApplication, dispatch, schema],
   );
 
   const autoSaveHandler = useCallback(() => {
@@ -168,19 +167,36 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
   }, [submitWrapper, handleSubmit]);
 
   useEffect(() => {
-    if (shouldSaveApplication) {
-      if (!isValid) {
-        dispatch(ApplicationActions.setShouldSaveApplication(false));
-        dispatch(ApplicationActions.setExitAfterSave(false));
-        dispatch(
-          UIActions.showErrorToast(t('Please fill in all mandatory fields')),
-        );
-        return;
-      }
+    if (!shouldSaveApplication && !exitAfterSave) return;
 
+    if (!isValid) {
+      dispatch(ApplicationActions.setShouldSaveApplication(false));
+      dispatch(ApplicationActions.setExitAfterSave(false));
+      dispatch(
+        UIActions.showErrorToast(t('Please fill in all mandatory fields')),
+      );
+      return;
+    }
+
+    if (shouldSaveApplication) {
       autoSaveHandler();
     }
-  }, [autoSaveHandler, shouldSaveApplication, isValid, dispatch, t]);
+
+    if (exitAfterSave) {
+      router.push({
+        pathname: Routes.Marketplace,
+        query: { tab: MarketplaceTabs.MY_WORKSPACE },
+      });
+    }
+  }, [
+    shouldSaveApplication,
+    exitAfterSave,
+    isValid,
+    autoSaveHandler,
+    dispatch,
+    router,
+    t,
+  ]);
 
   const files = useAppSelector(FilesSelectors.selectFiles);
   const getLogoId = useCallback(
