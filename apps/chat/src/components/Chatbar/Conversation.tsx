@@ -1,8 +1,16 @@
 import { IconCheck } from '@tabler/icons-react';
-import { DragEvent, MouseEvent, useCallback, useMemo, useState } from 'react';
+import {
+  DragEvent,
+  MouseEvent,
+  TouchEvent,
+  useCallback,
+  useMemo,
+  useState,
+} from 'react';
 
 import classNames from 'classnames';
 
+import { useContextMenuTrigger } from '@/src/hooks/useContextMenuTrigger';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -252,14 +260,14 @@ export const ConversationComponent = ({
     [isConversationsStreaming, isExternal, isSelectMode],
   );
 
-  const handleContextMenuOpen = (e: MouseEvent) => {
+  const handleContextMenuOpen = (e: MouseEvent | TouchEvent) => {
     if (hasParentWithFloatingOverlay(e.target as Element)) {
       return;
     }
-    e.preventDefault();
-    e.stopPropagation();
     setIsContextMenu(true);
   };
+
+  const contextMenuHandlers = useContextMenuTrigger(handleContextMenuOpen);
 
   const isPublishedItemSelected = !!additionalItemData?.publicationUrl;
   const isPublicationUrlEqual =
@@ -273,7 +281,7 @@ export const ConversationComponent = ({
   return (
     <div
       className={classNames(
-        'group relative flex select-none items-center rounded border-l-2 hover:bg-accent-primary-alpha',
+        'group relative flex items-center rounded border-l-2 hover:bg-accent-primary-alpha',
         !isSelectMode && isHighlighted
           ? 'border-l-accent-primary'
           : 'border-l-transparent',
@@ -281,7 +289,7 @@ export const ConversationComponent = ({
         isNameOrPathInvalid && 'text-secondary',
         additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
       )}
-      onContextMenu={handleContextMenuOpen}
+      {...contextMenuHandlers}
       data-qa="conversation"
     >
       <button
