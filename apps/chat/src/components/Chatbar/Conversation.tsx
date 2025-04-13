@@ -273,7 +273,7 @@ export const ConversationComponent = ({
   return (
     <div
       className={classNames(
-        'group relative flex items-center rounded border-l-2 hover:bg-accent-primary-alpha',
+        'group relative flex select-none items-center rounded border-l-2 hover:bg-accent-primary-alpha',
         !isSelectMode && isHighlighted
           ? 'border-l-accent-primary'
           : 'border-l-transparent',
