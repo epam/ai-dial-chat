@@ -182,7 +182,7 @@ dialTest(
     await dialTest.step(
       'Switch to "My Workspace" tab and verify only first and second apps are displayed, third app stay under "Suggested results"',
       async () => {
-        await navigationPanel.myWorkspaceButton.click();
+        await navigationPanel.goToMyWorkspace();
         const actualAgents = await marketplaceAgentsSection.getAllAgents();
         const filteredAgents = actualAgents.filter(
           (agent) => agent.isWorkspaceAgent,
@@ -661,7 +661,7 @@ dialTest(
     await dialTest.step(
       'Switch to "My Workspace" tab, check app first topic option in the filter and verify the app with v1 and first topic is suggested',
       async () => {
-        await navigationPanel.myWorkspaceButton.click();
+        await navigationPanel.goToMyWorkspace();
         await topicFilter.click();
         const allAgents = await marketplaceAgentsSection.getAllAgents();
         baseAssertion.assertValue(

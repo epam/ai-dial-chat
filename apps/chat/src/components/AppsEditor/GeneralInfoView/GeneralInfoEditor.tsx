@@ -29,6 +29,7 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { CONFIRM_ICON_FILE_VALUES } from '@/src/constants/applications';
 import { IMAGE_TYPES } from '@/src/constants/chat';
+import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { DEFAULT_VERSION } from '@/src/constants/public';
 import { Routes } from '@/src/constants/routes';
 
@@ -79,7 +80,8 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     register,
     control,
     handleSubmit: submitWrapper,
-    formState: { errors, isValid },
+    formState: { errors, isValid, dirtyFields },
+    reset,
   } = useFormContext<ApplicationGeneralInfoFormData>();
 
   const getLogoId = useCallback(
@@ -88,6 +90,12 @@ export const GeneralInfoEditor: React.FC<Props> = ({
   );
 
   const topicOptions = useMemo(() => topics.map(topicToOption), [topics]);
+
+  const exitAfterSave = useAppSelector(
+    ApplicationSelectors.selectExitAfterSave,
+  );
+
+  const isFormChanged = Object.keys(dirtyFields).length > 0;
 
   const shouldSaveApplication = useAppSelector(
     ApplicationSelectors.selectShouldSaveApplication,
@@ -98,89 +106,109 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     : undefined;
 
   const handleSubmit = useCallback(
-    (data: ApplicationGeneralInfoFormData) => {
+    (data: ApplicationGeneralInfoFormData, isAutoSave = false) => {
       const { slug } = router.query;
-      if (slug) {
-        const preparedData = getApplicationData(data, slug.toString(), schema);
-        if (slug.toString() === ApplicationType.CODE_APP) {
-          preparedData.functionStatus =
-            data?.functionStatus ?? oldApplication?.functionStatus;
-        }
+      if (!slug) return;
 
-        if (oldApplication) {
+      const slugStr = slug.toString();
+      const preparedData = getApplicationData(data, slugStr, schema);
+
+      if (slugStr === ApplicationType.CODE_APP) {
+        preparedData.functionStatus =
+          data?.functionStatus ?? oldApplication?.functionStatus;
+      }
+
+      if (oldApplication) {
+        if (isFormChanged) {
           dispatch(
             ApplicationActions.update({
               applicationData: {
                 ...preparedData,
-                isShared: oldApplication.isShared,
+                isShared: oldApplication?.isShared,
                 sharedWithMe: isSharedWithMe,
                 reference: data.reference,
-                id: oldApplication.id,
+                id: oldApplication?.id,
               },
               oldApplication: oldApplication,
-              redirectUrl: getRouteForSlug(
-                Routes.AppsEditorSettings,
-                encode(slug.toString()),
-              ),
-              schema: schema ?? undefined,
-            }),
-          );
-
-          if (isAppDeployed) {
-            dispatch(
-              UIActions.showWarningToast(
-                t('Saved changes will be applied during next deployment'),
-              ),
-            );
-          }
-        } else {
-          dispatch(
-            ApplicationActions.create({
-              applicationData: preparedData,
-              slug: slug.toString(),
-              schema: schema ?? undefined,
+              redirectUrl: isAutoSave
+                ? undefined
+                : getRouteForSlug(Routes.AppsEditorSettings, encode(slugStr)),
+              schema: isAutoSave ? undefined : (schema ?? undefined),
             }),
           );
         }
+
+        if (!isAutoSave && isAppDeployed) {
+          dispatch(
+            UIActions.showWarningToast(
+              t('Saved changes will be applied during next deployment'),
+            ),
+          );
+        }
+      } else if (!isAutoSave) {
+        dispatch(
+          ApplicationActions.create({
+            applicationData: preparedData,
+            slug: slugStr,
+            schema: schema ?? undefined,
+          }),
+        );
       }
+
+      reset(data);
     },
     [
       router.query,
       schema,
       oldApplication,
+      reset,
+      isFormChanged,
+      isAppDeployed,
       dispatch,
       isSharedWithMe,
-      isAppDeployed,
       t,
     ],
   );
 
   useEffect(() => {
-    if (shouldSaveApplication) {
-      if (!isValid) {
-        dispatch(ApplicationActions.setShouldSaveApplication(false));
-        dispatch(ApplicationActions.setExitAfterSave(false));
-        dispatch(
-          UIActions.showErrorToast(t('Please fill in all mandatory fields')),
-        );
-        return;
-      }
+    const isTriggered = shouldSaveApplication || exitAfterSave;
+    if (!isTriggered) return;
 
-      submitWrapper(handleSubmit)();
+    if (!isValid) {
+      dispatch(ApplicationActions.setShouldSaveApplication(false));
+      dispatch(ApplicationActions.setExitAfterSave(false));
+      dispatch(
+        UIActions.showErrorToast(t('Please fill in all mandatory fields')),
+      );
+      return;
+    }
+
+    if (shouldSaveApplication) {
+      submitWrapper((data) => handleSubmit(data, false))();
+    }
+
+    if (exitAfterSave) {
+      router.push({
+        pathname: Routes.Marketplace,
+        query: { tab: MarketplaceTabs.MY_WORKSPACE },
+      });
     }
   }, [
     shouldSaveApplication,
-    submitWrapper,
-    handleSubmit,
+    exitAfterSave,
     isValid,
     dispatch,
     t,
+    submitWrapper,
+    handleSubmit,
+    router,
   ]);
 
   return (
     <div className="size-full overflow-hidden bg-layer-2">
       <form
-        onSubmit={submitWrapper(handleSubmit)}
+        onSubmit={submitWrapper((data) => handleSubmit(data, false))}
+        onMouseLeave={submitWrapper((data) => handleSubmit(data, true))}
         className="flex size-full flex-col"
         data-qa="app-general-form"
       >

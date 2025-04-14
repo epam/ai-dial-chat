@@ -519,6 +519,7 @@ dialAdminTest(
       await prompts.openEntityDropdownMenu(prompt1.name);
       await promptDropdownMenu.selectMenuOption(MenuOptions.publish);
       await baseAssertion.assertElementState(publishingRequestModal, 'visible');
+      await publishingRequestModal.requestName.fillInInput('');
     });
 
     await dialTest.step(

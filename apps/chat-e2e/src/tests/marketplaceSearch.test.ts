@@ -128,7 +128,7 @@ dialTest(
     await dialTest.step(
       'Switch to "My Workspace" tab, and verify search term is preserved, search results are updated',
       async () => {
-        await navigationPanel.myWorkspaceButton.click();
+        await navigationPanel.goToMyWorkspace();
         await baseAssertion.assertElementAttribute(
           marketplaceHeader.searchInput,
           Attributes.value,
@@ -173,7 +173,7 @@ dialTest(
       async () => {
         const endSpaces = ' '.repeat(3);
         leadingEndingSpacesSearchTerm = leadingSpacesSearchTerm + endSpaces;
-        await navigationPanel.marketplaceHomeButton.click();
+        await navigationPanel.goToMarketplaceHome();
         await marketplaceHeader.searchInput.click();
         await page.keyboard.press(keys.end);
         await marketplaceHeader.searchInput.typeInInput(endSpaces);
