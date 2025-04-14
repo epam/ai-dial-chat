@@ -170,7 +170,7 @@ const MarketplaceNavigation = () => {
           isMarketplace && selectedMarketplaceTab === MarketplaceTabs.HOME
         }
         dataQa="marketplace-home-page"
-        caption={t('Agents')}
+        caption={t('Apps')}
       />
       <NavigationButton
         onClick={handleMyAppsClick}
