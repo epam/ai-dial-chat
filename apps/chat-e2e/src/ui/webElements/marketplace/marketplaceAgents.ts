@@ -70,7 +70,7 @@ export class MarketplaceAgents extends BaseElement {
       agent = this.rootLocator.filter({ has: this.agentName(entity) }).first();
     } else {
       //if agent has version in the config
-      if (entity.version !== undefined) {
+      if (entity.version) {
         agent = this.rootLocator
           .filter({
             has: this.agentName(entity.name),
