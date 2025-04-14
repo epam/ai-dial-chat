@@ -206,7 +206,7 @@ export function ShareModalView() {
       onClose={handleClose}
       dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
     >
-      <div className="px-3 py-4 pt-6 md:p-6">
+      <div className="px-3 py-4 md:p-6">
         <h4 className="mb-2 max-h-[50px] whitespace-pre-wrap text-left text-base font-semibold">
           <Tooltip
             contentClassName="max-w-[400px] break-words"
