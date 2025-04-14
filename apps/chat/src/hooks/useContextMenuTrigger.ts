@@ -1,6 +1,6 @@
 import { MouseEvent, TouchEvent, useCallback, useRef } from 'react';
 
-const PRESS_THRESHOLD = 1000;
+const PRESS_THRESHOLD = 500;
 
 export const useContextMenuTrigger = (
   cb: (e: MouseEvent | TouchEvent) => void,
