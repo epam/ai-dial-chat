@@ -98,9 +98,9 @@ dialTest(
         );
         await dialHomePage.waitForPageLoaded({ skipSidebars: true });
         await header.leftPanelToggle.click();
-        await navigationPanel.marketplaceHomeButton.click();
+        await navigationPanel.goToMarketplaceHome();
         await marketplacePage.waitForPageLoaded();
-        await navigationPanel.myWorkspaceButton.click();
+        await navigationPanel.goToMyWorkspace();
         await baseAssertion.assertCheckboxState(
           marketplaceFilter.filterByPropertyOptionInput(
             MarketplaceFilterTypes.type,
@@ -201,7 +201,7 @@ dialTest(
               await incognitoAppContainer.getHeader().leftPanelToggle.click();
               await incognitoAppContainer
                 .getNavigationPanel()
-                .marketplaceHomeButton.click();
+                .goToMarketplaceHome();
               break;
           }
           await incognitoMarketplacePage.waitForPageLoaded();
