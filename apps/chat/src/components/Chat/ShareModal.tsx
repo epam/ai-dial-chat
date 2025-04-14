@@ -206,7 +206,7 @@ export function ShareModalView() {
       onClose={handleClose}
       dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
     >
-      <div className="px-3 py-4 md:p-6">
+      <div className="px-3 py-4 pt-6 md:p-6">
         <h4 className="mb-2 max-h-[50px] whitespace-pre-wrap text-left text-base font-semibold">
           <Tooltip
             contentClassName="max-w-[400px] break-words"
@@ -238,9 +238,9 @@ export function ShareModalView() {
               />
             </div>
           )}
-          <div className="my-2 flex justify-center gap-2">
+          <div className="flex justify-center gap-2">
             <div className="flex w-fit rounded bg-[#FCFCFC] p-3">
-              <QRCodeSVG value={url} size={250} />
+              <QRCodeSVG value={url} size={226} />
             </div>
           </div>
           <div className="relative mt-2">
