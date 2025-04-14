@@ -120,7 +120,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
         onClick: handleExport,
       },
       {
-        name: 'Move',
+        name: 'Move to',
         display: isMyPrompt,
         dataQa: 'move-prompt',
         Icon: IconFolderShare,

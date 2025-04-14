@@ -13,6 +13,7 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
+import { PublicationActions } from '@/src/store/publication/publication.reducers';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
@@ -96,6 +97,7 @@ export const CreateNewConversation: React.FC<Props> = ({ iconSize }) => {
     );
     dispatch(ConversationsActions.resetSearch());
     dispatch(ConversationsActions.setIsStartedCustomViewerConversation(false));
+    dispatch(PublicationActions.selectPublication(null));
   }, [areConversationsLoaded, dispatch]);
 
   return (
