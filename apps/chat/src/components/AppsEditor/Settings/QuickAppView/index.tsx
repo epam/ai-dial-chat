@@ -35,6 +35,7 @@ import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
 import { TemperatureSlider } from '@/src/components/Chat/ChatSettings/Temperature';
+import { FilesSelector } from '@/src/components/Common/FilesSelector/FilesSelector';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withWarningMessage } from '@/src/components/Common/Forms/FieldWarningMessage';
@@ -43,7 +44,6 @@ import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
 import { MonacoEditor } from '@/src/components/Common/MonacoEditor';
 
 import { QuickAppFormData, getQuickAppData } from '../form';
-import { FilesSelector } from './Documents/FilesSelector';
 
 import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
