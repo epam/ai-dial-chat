@@ -69,7 +69,7 @@ dialSharedWithMeTest(
           'visible',
         );
         await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
-          prompt.name,
+          ExpectedConstants.promptViewModalTitle,
         );
         await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptName(
           prompt.name,

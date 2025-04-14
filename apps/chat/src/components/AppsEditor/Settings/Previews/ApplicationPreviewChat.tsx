@@ -18,25 +18,19 @@ import { Spinner } from '@/src/components/Common/Spinner';
 import { UploadStatus } from '@epam/ai-dial-shared';
 
 interface Props {
-  onPreviewMouseLeave: () => void;
-  onPreviewMouseEnter: () => void;
   isAppDeploymentInProgress: boolean;
   isApplicationValid: boolean;
   applicationId: string;
   type: string;
   isAppDeployed: boolean;
-  isExiting?: boolean;
 }
 
 export const ApplicationPreviewChat: React.FC<Props> = ({
-  onPreviewMouseLeave,
-  onPreviewMouseEnter,
   isAppDeploymentInProgress,
   isApplicationValid,
   applicationId,
   type,
   isAppDeployed,
-  isExiting,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -62,11 +56,7 @@ export const ApplicationPreviewChat: React.FC<Props> = ({
   }
 
   return (
-    <div
-      onMouseEnter={onPreviewMouseEnter}
-      onMouseLeave={onPreviewMouseLeave}
-      className="relative flex size-full min-w-0 grow flex-col"
-    >
+    <div className="relative flex size-full min-w-0 grow flex-col">
       {appLoading === UploadStatus.LOADING && (
         <div className="absolute flex size-full items-center justify-center bg-layer-2">
           <Spinner size={30} />
@@ -110,8 +100,6 @@ export const ApplicationPreviewChat: React.FC<Props> = ({
             </button>
           </div>
         )
-      ) : isExiting ? (
-        <div className="size-full" />
       ) : (
         <Chat isPreview />
       )}

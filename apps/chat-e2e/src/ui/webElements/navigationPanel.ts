@@ -16,4 +16,14 @@ export class NavigationPanel extends BaseElement {
   public myWorkspaceButton = this.getChildElementBySelector(
     NavigationPanelSelectors.myWorkspaceButton,
   );
+
+  public async goToMarketplaceHome() {
+    // eslint-disable-next-line playwright/no-force-option
+    await this.marketplaceHomeButton.click({ force: true });
+  }
+
+  public async goToMyWorkspace() {
+    // eslint-disable-next-line playwright/no-force-option
+    await this.myWorkspaceButton.click({ force: true });
+  }
 }

@@ -2,14 +2,15 @@ import { IconCheck } from '@tabler/icons-react';
 import {
   DragEvent,
   MouseEvent,
+  TouchEvent,
   useCallback,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 
 import classNames from 'classnames';
 
+import { useContextMenuTrigger } from '@/src/hooks/useContextMenuTrigger';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -175,7 +176,7 @@ export function ConversationView({
           />
         )}
       </ShareIcon>
-      <div className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left">
+      <div className="relative max-h-5 flex-1 select-none truncate whitespace-pre break-all text-left">
         <Tooltip
           tooltip={t(
             getEntityNameError(isNameInvalid, isInvalidPath, isExternal),
@@ -225,8 +226,9 @@ export const ConversationComponent = ({
   const chosenConversationIds = useAppSelector(
     ConversationsSelectors.selectSelectedItems,
   );
-
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
+  );
 
   const [isContextMenu, setIsContextMenu] = useState(false);
 
@@ -235,10 +237,6 @@ export const ConversationComponent = ({
   const isChosen = useMemo(
     () => chosenConversationIds.includes(conversation.id),
     [chosenConversationIds, conversation.id],
-  );
-
-  const selectedPublicationUrl = useAppSelector(
-    PublicationSelectors.selectSelectedPublicationUrl,
   );
 
   const isExternal = isEntityIdExternal(conversation);
@@ -261,14 +259,14 @@ export const ConversationComponent = ({
     [isConversationsStreaming, isExternal, isSelectMode],
   );
 
-  const handleContextMenuOpen = (e: MouseEvent) => {
+  const handleContextMenuOpen = (e: MouseEvent | TouchEvent) => {
     if (hasParentWithFloatingOverlay(e.target as Element)) {
       return;
     }
-    e.preventDefault();
-    e.stopPropagation();
     setIsContextMenu(true);
   };
+
+  const contextMenuHandlers = useContextMenuTrigger(handleContextMenuOpen);
 
   const isPublishedItemSelected = !!additionalItemData?.publicationUrl;
   const isPublicationUrlEqual =
@@ -282,7 +280,7 @@ export const ConversationComponent = ({
   return (
     <div
       className={classNames(
-        'group relative flex items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha',
+        'group relative flex items-center rounded border-l-2 hover:bg-accent-primary-alpha',
         !isSelectMode && isHighlighted
           ? 'border-l-accent-primary'
           : 'border-l-transparent',
@@ -290,17 +288,24 @@ export const ConversationComponent = ({
         isNameOrPathInvalid && 'text-secondary',
         additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
       )}
-      style={{
-        paddingLeft: (level && `${level * 30 + 16}px`) || '0.875rem',
-      }}
-      onContextMenu={handleContextMenuOpen}
+      {...contextMenuHandlers}
       data-qa="conversation"
     >
       <button
         className={classNames(
-          'group flex size-full cursor-pointer items-center gap-2 disabled:cursor-not-allowed',
-          isSelectMode ? 'pr-0' : '[&:not(:disabled)]:group-hover:pr-6',
+          'group flex size-full items-center gap-2 pr-3 disabled:cursor-not-allowed',
+          !isSelectMode && '[&:not(:disabled)]:group-hover:pr-6',
         )}
+        style={{
+          paddingLeft: (level && `${level * 30 + 16}px`) || '0.875rem',
+        }}
+        disabled={messageIsStreaming || (isSelectMode && isExternal)}
+        draggable={
+          !isExternal &&
+          !isNameOrPathInvalid &&
+          !isSelectMode &&
+          !isConversationsStreaming
+        }
         onClick={() => {
           if (!isSelectMode || !isExternal) {
             dispatch(
@@ -321,15 +326,7 @@ export const ConversationComponent = ({
             }
           }
         }}
-        disabled={messageIsStreaming || (isSelectMode && isExternal)}
-        draggable={
-          !isExternal &&
-          !isNameOrPathInvalid &&
-          !isSelectMode &&
-          !isConversationsStreaming
-        }
         onDragStart={(e) => handleDragStart(e, conversation)}
-        ref={buttonRef}
         data-qa={isSelected ? 'selected' : null}
       >
         <ConversationView
@@ -355,6 +352,7 @@ export const ConversationComponent = ({
             isOpen={isContextMenu}
             setIsOpen={setIsContextMenu}
             publicationUrl={additionalItemData?.publicationUrl}
+            className="p-2"
           />
         </div>
       )}

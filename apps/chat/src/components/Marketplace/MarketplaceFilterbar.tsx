@@ -14,6 +14,7 @@ import {
   MarketplaceSelectors,
 } from '@/src/store/marketplace/marketplace.reducers';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ENTITY_TYPES, FilterTypes } from '@/src/constants/marketplace';
@@ -169,11 +170,14 @@ export const MarketplaceFilterbar = memo(() => {
     dispatch(UIActions.setShowMarketplaceFilterbar(false));
   }, [dispatch]);
 
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+
   return (
     <nav
       className={classNames(
         showFilterbar ? 'w-[320px] xl:w-[260px]' : 'invisible',
-        'group/sidebar absolute left-0 top-0 z-40 flex h-full shrink-0 flex-col gap-px border-r border-tertiary bg-layer-3 md:left-[60px] xl:sticky xl:left-0 xl:z-0',
+        'group/sidebar absolute left-0 top-0 z-40 flex h-full shrink-0 flex-col gap-px border-r border-tertiary bg-layer-3  xl:sticky xl:left-0 xl:z-0',
+        isOverlay ? 'md:left-[36px]' : 'md:left-[60px]',
       )}
       data-qa="marketplace-sidebar"
     >

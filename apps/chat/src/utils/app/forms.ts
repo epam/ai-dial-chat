@@ -3,7 +3,9 @@ import { FieldErrors, FieldValues } from 'react-hook-form';
 
 import classNames from 'classnames';
 
-import { formErrors } from '@/src/constants/forms';
+import { formErrors } from '@/src/constants/form-errors';
+
+import { notAllowedSymbols } from './file';
 
 export type InputElement = HTMLInputElement | HTMLTextAreaElement;
 export const checkValidity = (
@@ -69,3 +71,6 @@ export const FormValidations = {
     return !!v && v.length ? true : formErrors.required;
   },
 };
+
+export const getNameReg = (maxLength = 160, minLength = 2) =>
+  new RegExp(`^[^${notAllowedSymbols}]{${minLength},${maxLength}}$`);

@@ -154,7 +154,7 @@ const UserMobileView = Inversify.register('UserMobile', () => {
       <UserInfo />
       <UserMenu />
       <div className="grow"></div>
-      <div className="border-t border-tertiary p-4">
+      <div className="border-t border-tertiary p-4 empty:hidden">
         <FooterMessage />
       </div>
     </div>
