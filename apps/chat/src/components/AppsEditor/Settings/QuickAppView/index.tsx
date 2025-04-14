@@ -9,7 +9,8 @@ import {
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
-  getQuickAppDocumentUrl, // getSharedTooltip,
+  getQuickAppDocumentUrl,
+  getSharedTooltip,
 } from '@/src/utils/app/application';
 import { arraysHaveSameElements } from '@/src/utils/app/common';
 
@@ -213,6 +214,9 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
               filesFilter={myFilesFilter}
               warning={confirmDocumentUrlValues?.description}
               documents={field.value ?? []}
+              addBtnTooltip={
+                isSharedWithMe ? getSharedTooltip(t('documents')) : undefined
+              }
             />
           )}
         />

@@ -8,6 +8,7 @@ import classNames from 'classnames';
 import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
+import Tooltip from '@/src/components/Common/Tooltip';
 import { FileManagerModal } from '@/src/components/Files/FileManagerModal';
 
 import { NoFiles } from './NoFiles';
@@ -19,6 +20,7 @@ interface Props {
   fileManagerTitle?: string;
   allowedTypes?: string[];
   readonly?: boolean;
+  addBtnTooltip?: string;
   onRemoveDocument?: (document: string) => void;
   onAddDocuments?: (documents: string[]) => void;
 }
@@ -29,6 +31,7 @@ export const FilesSelector: React.FC<Props> = ({
   fileManagerTitle,
   allowedTypes = ['*/*'],
   readonly,
+  addBtnTooltip,
   onAddDocuments,
   onRemoveDocument,
 }) => {
@@ -58,17 +61,19 @@ export const FilesSelector: React.FC<Props> = ({
     <div className="relative grow space-y-4 divide-tertiary">
       <div className="flex flex-col">
         <div className="absolute right-0 top-[-22px]">
-          <button
-            disabled={readonly}
-            className={classNames(
-              'flex items-center text-accent-primary',
-              readonly && 'cursor-not-allowed',
-            )}
-            onClick={onAddFiles}
-          >
-            <IconPlus size={18} />
-            <p className="ml-2">{t('Add')}</p>
-          </button>
+          <Tooltip tooltip={addBtnTooltip}>
+            <button
+              disabled={readonly}
+              className={classNames(
+                'flex items-center text-accent-primary',
+                readonly && 'cursor-not-allowed',
+              )}
+              onClick={onAddFiles}
+            >
+              <IconPlus size={18} />
+              <p className="ml-2">{t('Add')}</p>
+            </button>
+          </Tooltip>
         </div>
         {!documents.length ? (
           <NoFiles />
