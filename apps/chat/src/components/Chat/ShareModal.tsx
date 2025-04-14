@@ -238,9 +238,9 @@ export function ShareModalView() {
               />
             </div>
           )}
-          <div className="my-2 flex justify-center gap-2">
+          <div className="flex justify-center gap-2">
             <div className="flex w-fit rounded bg-[#FCFCFC] p-3">
-              <QRCodeSVG value={url} size={250} />
+              <QRCodeSVG value={url} size={226} />
             </div>
           </div>
           <div className="relative mt-2">
