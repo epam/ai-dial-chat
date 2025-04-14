@@ -255,6 +255,11 @@ export const groupAllVersions = (versions: PublicVersionOption[]) =>
       : [];
   });
 
+export const parseCommaSeparatedList = (
+  str: string | undefined,
+  defaultValue: string[] = [],
+): string[] => str?.split(',').map((str) => str.trim()) ?? defaultValue;
+
 export const fakeCallback = () => null;
 
 export const castToString = (value: unknown): string => value as string;
