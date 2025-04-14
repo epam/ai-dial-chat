@@ -31,7 +31,7 @@ export const SystemDialogs = () => {
     }
   }, [hash]);
 
-  return enabledFeatures.has(Feature.Footer) ? (
+  return (
     <>
       {enabledFeatures.has(Feature.RequestApiKey) && isRequestAPIDialogOpen && (
         <RequestAPIKeyDialog
@@ -53,5 +53,5 @@ export const SystemDialogs = () => {
           />
         )}
     </>
-  ) : null;
+  );
 };
