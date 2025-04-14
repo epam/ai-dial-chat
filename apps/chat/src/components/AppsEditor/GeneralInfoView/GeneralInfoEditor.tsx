@@ -119,7 +119,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
       }
 
       if (oldApplication) {
-        if (isFormChanged) {
+        if (isFormChanged || !isAutoSave) {
           dispatch(
             ApplicationActions.update({
               applicationData: {
@@ -130,10 +130,10 @@ export const GeneralInfoEditor: React.FC<Props> = ({
                 id: oldApplication?.id,
               },
               oldApplication: oldApplication,
-              redirectUrl: isAutoSave
-                ? undefined
-                : getRouteForSlug(Routes.AppsEditorSettings, encode(slugStr)),
-              schema: isAutoSave ? undefined : (schema ?? undefined),
+              redirectUrl: !isAutoSave
+                ? getRouteForSlug(Routes.AppsEditorSettings, encode(slugStr))
+                : undefined,
+              schema: schema ?? undefined,
             }),
           );
         }
