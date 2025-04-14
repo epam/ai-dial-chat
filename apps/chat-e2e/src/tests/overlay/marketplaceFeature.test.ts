@@ -32,20 +32,23 @@ dialOverlayTest(
     });
 
     await dialTest.step(
-      'Verify "Dial Marketplace" buttons are available at the bottom panel',
+      'Verify "Dial Marketplace" buttons are available at the bottom panel, buttons do not have titles',
       async () => {
         await overlayHomePage.navigateToUrl(
           OverlaySandboxUrls.enableMarketplaceUrl,
         );
         await overlayHomePage.waitForPageLoaded();
-        await overlayBaseAssertion.assertElementState(
+        for (const button of [
           overlayNavigationPanel.marketplaceHomeButton,
-          'visible',
-        );
-        await overlayBaseAssertion.assertElementState(
           overlayNavigationPanel.myWorkspaceButton,
-          'visible',
-        );
+          overlayNavigationPanel.backToChatButton,
+        ]) {
+          await overlayBaseAssertion.assertElementState(button, 'visible');
+          await overlayBaseAssertion.assertElementState(
+            overlayNavigationPanel.buttonLabel(button),
+            'hidden',
+          );
+        }
       },
     );
 
