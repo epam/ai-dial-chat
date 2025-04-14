@@ -9,8 +9,11 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import { useAppDispatch } from '@/src/store/hooks';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 
 import { TemplateRenderer } from '@/src/components/Chat/ChatMessage/ChatMessageTemplatesModal/TemplateRenderer';
 import { PublicVersionSelector } from '@/src/components/Chat/Publish/PublicVersionSelector';
@@ -65,6 +68,19 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
 
   const dispatch = useAppDispatch();
 
+  const isConversationBlocksInput = useAppSelector(
+    ConversationsSelectors.selectIsSelectedConversationBlocksInput,
+  );
+  const selectedConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedConversations,
+  );
+  const installedModelIds = useAppSelector(
+    ModelsSelectors.selectInstalledModelIds,
+  );
+  const selectedPublication = useAppSelector(
+    PublicationSelectors.selectSelectedPublication,
+  );
+
   const { publicVersionGroupId, isReviewEntity } =
     usePublicVersionGroupId(prompt);
   const { handleUse } = usePromptActions(prompt);
@@ -76,9 +92,15 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
     [dispatch],
   );
 
+  const isModelsInstalled = selectedConversations.every((conv) =>
+    installedModelIds.has(conv.model.id),
+  );
+  const disableUsePrompt =
+    isConversationBlocksInput || !isModelsInstalled || !!selectedPublication;
+
   return (
     <>
-      <ul className="mb-4 flex max-h-[435px] flex-col gap-4 overflow-auto">
+      <ul className="flex max-h-[435px] flex-col gap-4 overflow-y-auto px-3 pb-4 md:px-6">
         <PromptField valueClassName="line-clamp-2" label="Name" dataQa="name">
           {prompt.name}
         </PromptField>
@@ -93,7 +115,7 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
           </PromptField>
         )}
       </ul>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between border-t border-t-tertiary px-3 pt-4 md:px-6">
         <ViewPromptButtons prompt={prompt} onEditMode={onEditMode} />
         <div className="flex items-center gap-4">
           {isReviewEntity ? (
@@ -118,7 +140,11 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
               )}
               <button
                 onClick={handleUse}
-                className="button button-primary flex items-center gap-2"
+                disabled={disableUsePrompt}
+                className={classNames(
+                  'button button-primary flex items-center gap-2',
+                  disableUsePrompt && 'cursor-not-allowed',
+                )}
                 data-qa="use-prompt"
               >
                 <InsertPromptIcon className="size-[18px]" />

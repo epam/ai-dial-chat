@@ -1,5 +1,6 @@
 import { ApiApplicationModelRegular } from '@/chat/types/applications';
 import { BackendEntity } from '@/chat/types/common';
+import config from '@/config/chat.playwright.config';
 import { API } from '@/src/testData';
 import { ApplicationEditorHeader } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
@@ -65,19 +66,53 @@ export class AppEditorHeader extends BaseElement {
     return this.getStepByTitle(AppEditSteps.appSettings);
   }
 
-  public async saveAppAndExit() {
-    const respPromise = this.page.waitForResponse(
-      (resp) =>
-        resp.url().includes(API.applicationCreateHost) &&
-        resp.request().method() === 'PUT',
-    );
-    await this.saveAndExitButton.click();
-    const resolvedResp = await respPromise;
-    const requestBody = resolvedResp.request().postDataJSON();
-    const responseBody = await resolvedResp.json();
-    return {
-      request: requestBody as ApiApplicationModelRegular,
-      response: responseBody as BackendEntity,
-    };
+  public async goOnGeneralInfoStep(
+    options: { isHttpMethodTriggered: boolean } = {
+      isHttpMethodTriggered: true,
+    },
+  ) {
+    if (options.isHttpMethodTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (resp) =>
+          resp.url().includes(API.applicationCreateHost) &&
+          resp.request().method() === 'PUT',
+      );
+      await this.getGeneralInfoStep().click();
+      await respPromise;
+    } else {
+      await this.getGeneralInfoStep().click();
+    }
+  }
+
+  public async focusOn(
+    options: { isHttpMethodTriggered: boolean } = {
+      isHttpMethodTriggered: true,
+    },
+  ) {
+    const headerBounding = await this.getElementBoundingBox();
+    if (options.isHttpMethodTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (resp) =>
+          resp.url().includes(API.applicationCreateHost) &&
+          resp.request().method() === 'PUT',
+        { timeout: config.use!.actionTimeout! * 2 },
+      );
+      await this.page.mouse.move(
+        headerBounding!.x + headerBounding!.width / 2,
+        headerBounding!.y + headerBounding!.height / 2,
+      );
+      const resolvedResp = await respPromise;
+      const requestBody = resolvedResp.request().postDataJSON();
+      const responseBody = await resolvedResp.json();
+      return {
+        request: requestBody as ApiApplicationModelRegular,
+        response: responseBody as BackendEntity,
+      };
+    } else {
+      await this.page.mouse.move(
+        headerBounding!.x + headerBounding!.width / 2,
+        headerBounding!.y + headerBounding!.height / 2,
+      );
+    }
   }
 }

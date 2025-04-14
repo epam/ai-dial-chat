@@ -5,7 +5,7 @@ import { withRenderForScreen } from '../../Common/ScreenRender';
 
 function ChatInputFooterView() {
   return (
-    <div className="p-5 max-md:hidden">
+    <div className="p-5 empty:hidden max-md:hidden">
       <FooterMessage />
     </div>
   );

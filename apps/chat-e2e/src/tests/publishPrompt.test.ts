@@ -266,7 +266,7 @@ dialAdminTest(
           'visible',
         );
         await adminPublishedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
-          prompt1.name,
+          ExpectedConstants.promptViewModalTitle,
         );
         await adminPublishedPromptPreviewModalAssertion.assertPromptName(
           prompt1.name,
@@ -421,7 +421,7 @@ dialAdminTest(
           'visible',
         );
         await adminPublishedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
-          prompt2.name,
+          ExpectedConstants.promptViewModalTitle,
         );
         await adminPublishedPromptPreviewModalAssertion.assertPromptName(
           prompt2.name,
@@ -519,6 +519,7 @@ dialAdminTest(
       await prompts.openEntityDropdownMenu(prompt1.name);
       await promptDropdownMenu.selectMenuOption(MenuOptions.publish);
       await baseAssertion.assertElementState(publishingRequestModal, 'visible');
+      await publishingRequestModal.requestName.fillInInput('');
     });
 
     await dialTest.step(
@@ -667,7 +668,7 @@ dialAdminTest(
           'visible',
         );
         await adminPublishedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
-          prompt1.name,
+          ExpectedConstants.promptViewModalTitle,
         );
         await adminPublishedPromptPreviewModalAssertion.assertPromptName(
           prompt1.name,

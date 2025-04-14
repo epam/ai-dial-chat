@@ -1,9 +1,9 @@
 import {
   IconCopy,
-  IconEdit,
   IconFileArrowRight,
   IconFolderShare,
   IconInfoCircle,
+  IconPencilMinus,
   IconTrashX,
   IconUserShare,
   IconWorldShare,
@@ -102,15 +102,8 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
         name: editBtnName,
         display: isMyPrompt,
         dataQa: 'edit-prompt',
-        Icon: IconEdit,
+        Icon: IconPencilMinus,
         onClick: onEditMode,
-      },
-      {
-        name: 'Export',
-        display: true,
-        dataQa: 'export-prompt',
-        Icon: IconFileArrowRight,
-        onClick: handleExport,
       },
       {
         name: 'Duplicate',
@@ -120,7 +113,14 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
         onClick: handleDuplicate,
       },
       {
-        name: 'Move',
+        name: 'Export',
+        display: true,
+        dataQa: 'export-prompt',
+        Icon: IconFileArrowRight,
+        onClick: handleExport,
+      },
+      {
+        name: 'Move to',
         display: isMyPrompt,
         dataQa: 'move-prompt',
         Icon: IconFolderShare,
@@ -156,6 +156,13 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
         },
       },
       {
+        name: 'Info',
+        display: true,
+        dataQa: 'info-prompt',
+        Icon: IconInfoCircle,
+        onClick: handleInfo,
+      },
+      {
         name: 'Delete',
         display: isMyPrompt || !!prompt.sharedWithMe,
         dataQa: 'delete-prompt',
@@ -163,13 +170,6 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
         onClick: () => {
           setIsDeleting(true);
         },
-      },
-      {
-        name: 'Info',
-        display: true,
-        dataQa: 'info-prompt',
-        Icon: IconInfoCircle,
-        onClick: handleInfo,
       },
     ],
     [

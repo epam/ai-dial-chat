@@ -188,7 +188,7 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
       >
         <IconX height={24} width={24} />
       </button>
-      <div className="flex flex-col gap-4 overflow-y-auto">
+      <div className="flex flex-col gap-4 overflow-y-auto px-3 md:px-6">
         <div>
           <label
             className="mb-1 flex text-xs text-secondary"
@@ -263,7 +263,7 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
           <EmptyRequiredInputMessage />
         </div>
       </div>
-      <div className="flex justify-end">
+      <div className="flex justify-end px-3 md:px-6">
         <Tooltip
           isTriggerClickable
           tooltip={t('Please fill in all required fields')}
