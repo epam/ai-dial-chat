@@ -363,7 +363,12 @@ const Sidebar = <T,>({
       <div className="group/sidebar flex size-full flex-none shrink-0 flex-col divide-y divide-tertiary bg-layer-3 transition-all">
         {areEntitiesUploaded ? (
           <>
-            <div className={classNames("flex  items-center justify-between px-5", isOverlay ? 'min-h-9' : 'min-h-12')}>
+            <div
+              className={classNames(
+                'flex  items-center justify-between px-5',
+                isOverlay ? 'min-h-9' : 'min-h-12',
+              )}
+            >
               <p className="text-base font-semibold">
                 {t(isLeftSidebar ? 'Conversations' : 'Prompts')}
               </p>

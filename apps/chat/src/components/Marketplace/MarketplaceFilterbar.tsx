@@ -184,7 +184,12 @@ export const MarketplaceFilterbar = memo(() => {
       <CloseSidebarButton isLeftSide onClose={handleClose} />
       {showFilterbar && (
         <div className="h-full divide-y divide-tertiary overflow-y-auto">
-          <div className={classNames("flex items-center justify-between px-5", isOverlay ? 'min-h-9' : 'min-h-12')}>
+          <div
+            className={classNames(
+              'flex items-center justify-between px-5',
+              isOverlay ? 'min-h-9' : 'min-h-12',
+            )}
+          >
             <p className="text-base font-semibold">{t('Filters')}</p>
           </div>
           <FilterSection

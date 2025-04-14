@@ -1,39 +1,40 @@
-import { IconCube, IconHomeRibbon, IconLayoutGrid, IconMessage2, TablerIconsProps } from '@tabler/icons-react';
+import {
+  IconBrowser,
+  IconHomeRibbon,
+  IconLayoutGrid,
+  IconMessage2,
+  TablerIconsProps,
+} from '@tabler/icons-react';
 import { JSX, ReactNode, useCallback } from 'react';
-
-
 
 import { useRouter } from 'next/router';
 
-
-
 import classNames from 'classnames';
-
-
 
 import { useWidgets } from '../hooks/useWidgets';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-
-
 import { Translation } from '@/src/types/translation';
 
-
-
-import { ApplicationActions, ApplicationSelectors } from '@/src/store/application/application.reducers';
-import { ConversationsActions, ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import {
+  ApplicationActions,
+  ApplicationSelectors,
+} from '@/src/store/application/application.reducers';
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceActions, MarketplaceSelectors } from '@/src/store/marketplace/marketplace.reducers';
+import {
+  MarketplaceActions,
+  MarketplaceSelectors,
+} from '@/src/store/marketplace/marketplace.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
-
-
 
 import { DEFAULT_CONVERSATION_NAME } from '../constants/default-ui-settings';
 import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
-
-
 
 import { Chatbar } from '@/src/components/Chatbar/Chatbar';
 import { ModelIcon, ModelTooltip } from '@/src/components/Chatbar/ModelIcon';
@@ -42,10 +43,7 @@ import { MarketplaceFilterbar } from '@/src/components/Marketplace/MarketplaceFi
 import { Promptbar } from '@/src/components/Promptbar';
 import { Widgetbar } from '@/src/components/Widgetbar';
 
-
-
 import { Feature } from '@epam/ai-dial-shared';
-
 
 interface NavigationButtonProps {
   onClick: () => void;
@@ -231,7 +229,7 @@ const UsedWidgets = () => {
       <div className="md:hidden">
         <NavigationButton
           onClick={handleOpenWidgetsClick}
-          Icon={IconCube}
+          Icon={IconBrowser}
           selected={!!selectedWidget && router.route === Routes.Chat}
           dataQa="widgets-sidebar-trigger"
           caption={t('Widgets')}
