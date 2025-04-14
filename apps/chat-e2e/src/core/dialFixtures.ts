@@ -64,6 +64,7 @@ import { AppEditorHeaderAssertion } from '@/src/assertions/appEditorHeaderAssert
 import { LocalStorageAssertion } from '@/src/assertions/localStorageAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
 import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateModalAssertion';
+import { PromptPreviewModalAssertion } from '@/src/assertions/promptPreviewModalAssertion';
 import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
 import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
@@ -128,6 +129,7 @@ import { ModelInfoTooltip } from '@/src/ui/webElements/modelInfoTooltip';
 import { NavigationPanel } from '@/src/ui/webElements/navigationPanel';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { PromptModalDialog } from '@/src/ui/webElements/promptModalDialog';
+import { PromptPreviewModalWindow } from '@/src/ui/webElements/promptPreviewModalWindow';
 import { PublishingRequestModal } from '@/src/ui/webElements/publishingRequestModal';
 import { RenameConversationModal } from '@/src/ui/webElements/renameConversationModal';
 import { Search } from '@/src/ui/webElements/search';
@@ -325,6 +327,8 @@ const dialTest = test.extend<{
   agentVersionsDropdownMenuAssertion: MenuAssertion;
   sharedWithMeConversationAssertion: SideBarConversationAssertion<SharedWithMeConversationsTree>;
   localStorageAssertion: LocalStorageAssertion;
+  promptPreviewModal: PromptPreviewModalWindow;
+  promptPreviewModalAssertion: PromptPreviewModalAssertion;
   agentDetailsModalAssertion: AgentDetailsModalAssertion;
 }>({
   beforeTestCleanup: [
@@ -1226,6 +1230,16 @@ const dialTest = test.extend<{
       agentDetailsModal.getVersionDropdownMenu(),
     );
     await use(agentVersionsDropdownMenuAssertion);
+  },
+  promptPreviewModal: async ({ page }, use) => {
+    const promptPreviewModalWindow = new PromptPreviewModalWindow(page);
+    await use(promptPreviewModalWindow);
+  },
+  promptPreviewModalAssertion: async ({ promptPreviewModal }, use) => {
+    const promptPreviewModalAssertion = new PromptPreviewModalAssertion(
+      promptPreviewModal,
+    );
+    await use(promptPreviewModalAssertion);
   },
 });
 

@@ -119,7 +119,12 @@ export const CreateNewPrompt: React.FC<Props> = ({ iconSize }) => {
   const handleCreate = useCallback(() => {
     dispatch(PromptsActions.setIsNewPromptCreating(true));
     dispatch(PromptsActions.resetSearch());
-    dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true }));
+    dispatch(
+      PromptsActions.setIsPromptModalOpen({
+        isOpen: true,
+        isInitModeEdit: true,
+      }),
+    );
     dispatch(PromptsActions.resetChosenPrompts());
   }, [dispatch]);
 

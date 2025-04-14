@@ -110,8 +110,11 @@ dialAdminTest(
           publishingRequestModal,
           'visible',
         );
+        await publishingRequestModal.requestName.fillInInput('');
         await publishingRequestModalAssertion.assertNoFilesRequestedToPublish();
-        await publishingRequestModalAssertion.assertSendRequestButtonIsDisabled();
+        await publishingRequestModalAssertion.assertSendRequestButtonActionabilityState(
+          'disabled',
+        );
       },
     );
 

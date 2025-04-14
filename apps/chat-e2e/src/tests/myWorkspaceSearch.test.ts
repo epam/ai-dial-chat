@@ -520,7 +520,8 @@ dialTest(
           });
           await appEditorGeneralForm.goNext();
           await appEditorViewForm.fillInAppFields();
-          await appEditorHeader.saveAppAndExit();
+          await appEditorHeader.focusOn();
+          await appEditorHeader.saveAndExitButton.click();
           await marketplacePage.waitForPageLoaded();
         }
 
@@ -656,7 +657,7 @@ dialTest(
           await marketplaceAgentsSection.findAgentElement(firstAppName);
         await marketplaceAgents.addAgentToWorkspace(firstAppElement);
         await toast.closeToast();
-        await navigationPanel.myWorkspaceButton.click();
+        await navigationPanel.goToMyWorkspace();
         const secondAppElement =
           await marketplaceAgentsSection.findAgentElement(secondAppName);
         await marketplaceAgents.addAgentToWorkspace(secondAppElement);

@@ -124,3 +124,14 @@ export const replaceTemplates = (
     .map((part) => replaceTemplates(rest, part))
     .join(value.trim());
 };
+
+export const arePromptsFieldsTheSame = (
+  firstPrompt: Pick<Prompt, 'name' | 'content' | 'description'>,
+  secondPrompt: Pick<Prompt, 'name' | 'content' | 'description'>,
+) => {
+  return (
+    firstPrompt.name !== secondPrompt.name ||
+    firstPrompt.content !== secondPrompt.content ||
+    firstPrompt.description !== secondPrompt.description
+  );
+};

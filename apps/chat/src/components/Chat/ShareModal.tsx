@@ -1,4 +1,5 @@
 import { IconCheck, IconCopy } from '@tabler/icons-react';
+import { QRCodeSVG } from 'qrcode.react';
 import {
   ClipboardEvent,
   MouseEvent,
@@ -229,14 +230,19 @@ export function ShareModalView() {
             {t('share.modal.link', { context: sharingType })}
           </p>
           {shareFeatureType === FeatureType.Application && (
-            <div className="my-2 flex flex-col gap-2">
+            <div className="my-2 flex gap-2">
               <ShareAccessOption
-                filterValue="Allow editing by other users"
+                filterValue={t('Allow editing by other users')}
                 selected={editAccess}
                 onSelect={onChangeSharePermissionHandler}
               />
             </div>
           )}
+          <div className="my-2 flex justify-center gap-2">
+            <div className="flex w-fit rounded bg-[#FCFCFC] p-3">
+              <QRCodeSVG value={url} size={250} />
+            </div>
+          </div>
           <div className="relative mt-2">
             <Tooltip tooltip={url}>
               <input

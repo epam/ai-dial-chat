@@ -134,6 +134,13 @@ export default function ItemContextMenu({
         onClick: onUse,
       },
       {
+        name: t('View'),
+        display: !!onView,
+        dataQa: 'view',
+        Icon: IconEye,
+        onClick: onView,
+      },
+      {
         name: t('Select'),
         display: !isExternal && !!onSelect,
         dataQa: 'select',
@@ -163,13 +170,6 @@ export default function ItemContextMenu({
         Icon: IconCopy,
         onClick: onDuplicate,
         disabled: disableAll,
-      },
-      {
-        name: t('View'),
-        display: !!onView && isExternal,
-        dataQa: 'view',
-        Icon: IconEye,
-        onClick: onView,
       },
       {
         name: t('Replay'),
@@ -231,7 +231,7 @@ export default function ItemContextMenu({
       {
         name: t('Move to'),
         display: !isExternal,
-        dataQa: 'move-to-mobile',
+        dataQa: 'move-to-modal',
         Icon: IconFolderShare,
         onClick: onOpenMoveToModal,
         className: 'md:hidden',
