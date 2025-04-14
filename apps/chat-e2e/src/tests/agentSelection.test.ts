@@ -20,6 +20,7 @@ dialTest(
     talkToAgentDialog,
     chatBar,
     marketplacePage,
+    marketplaceHeader,
     agentInfoAssertion,
     setTestIds,
     localStorageManager,
@@ -159,6 +160,7 @@ dialTest(
       async () => {
         await navigationPanel.goToMarketplaceHome();
         await marketplacePage.waitForPageLoaded();
+        await marketplaceHeader.searchInput.fillInInput(addedModel.name);
         await marketplaceAgentsSection.findAndUseAgent(addedModel, {
           isInstalledDeploymentsUpdated: true,
         });
@@ -176,6 +178,7 @@ dialTest(
       async () => {
         await navigationPanel.goToMarketplaceHome();
         await marketplacePage.waitForPageLoaded();
+        await marketplaceHeader.searchInput.fillInInput(addedModel.name);
         const addedModelElement =
           await marketplaceAgentsSection.findAgentElement(addedModel);
         await addedModelElement.click();
