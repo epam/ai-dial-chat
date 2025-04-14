@@ -1,5 +1,5 @@
 import {
-  IconCube,
+  IconBrowser,
   IconHomeRibbon,
   IconLayoutGrid,
   IconMessage2,
@@ -77,7 +77,7 @@ const NavigationButton = ({
         'flex   shrink-0 select-none rounded transition-colors duration-200 md:min-w-min',
         rounded && 'rounded-full border border-transparent',
         rounded && selected && '!border-accent-primary',
-        isOverlay ? 'max-h-[36px] min-w-[36px]' : 'max-h-[52px] min-w-[72px]',
+        isOverlay ? 'max-h-[36px] min-w-[44px]' : 'max-h-[52px] min-w-[72px]',
         isOverlay && rounded && 'md:my-0',
         disabled
           ? 'cursor-not-allowed'
@@ -168,7 +168,7 @@ const MarketplaceNavigation = () => {
           isMarketplace && selectedMarketplaceTab === MarketplaceTabs.HOME
         }
         dataQa="marketplace-home-page"
-        caption={t('Agents')}
+        caption={t('Apps')}
       />
       <NavigationButton
         onClick={handleMyAppsClick}
@@ -204,7 +204,7 @@ const UsedWidgets = () => {
 
   return (
     <>
-      <div className="no-scrollbar hidden w-full flex-col items-center gap-2 overflow-y-auto md:flex">
+      <div className="no-scrollbar hidden w-full flex-col items-center gap-2 overflow-y-auto border-t border-tertiary pt-2 empty:border-transparent md:flex">
         {widgetModels.map((model) => (
           <NavigationButton
             key={model.reference}
@@ -229,7 +229,7 @@ const UsedWidgets = () => {
       <div className="md:hidden">
         <NavigationButton
           onClick={handleOpenWidgetsClick}
-          Icon={IconCube}
+          Icon={IconBrowser}
           selected={!!selectedWidget && router.route === Routes.Chat}
           dataQa="widgets-sidebar-trigger"
           caption={t('Widgets')}
@@ -282,7 +282,7 @@ const Navigation = () => {
       className={classNames(
         'order-last w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:z-40 md:order-none md:h-full md:flex-col md:justify-start md:border-r md:py-2',
         !isMarketplaceEnabled && !widgetsSchemaIds.size ? 'hidden' : 'flex',
-        isOverlay ? 'h-[36px] md:w-[36px]' : 'h-[52px] md:w-[60px]',
+        isOverlay ? 'h-[36px] md:w-[44px]' : 'h-[52px] md:w-[60px]',
       )}
       data-qa="navigation-panel"
     >
