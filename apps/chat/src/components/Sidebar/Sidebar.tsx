@@ -336,7 +336,7 @@ const Sidebar = <T,>({
     isLeftSidebar
       ? 'sidebar-left left-0 border-r xl:left-0'
       : 'sidebar-right right-0 border-l',
-    isLeftSidebar && (isOverlay ? 'md:left-[36px]' : 'md:left-[60px]'),
+    isLeftSidebar && (isOverlay ? 'md:left-[44px]' : 'md:left-[60px]'),
     (screenState === ScreenState.SM || screenState === ScreenState.MD) &&
       '!h-full',
     screenState !== ScreenState.SM &&
@@ -350,6 +350,8 @@ const Sidebar = <T,>({
     return null;
   }
 
+  const createIconSize = isOverlay ? 18 : 24;
+
   return (
     <Resizable
       ref={sideBarElementRef}
@@ -361,14 +363,19 @@ const Sidebar = <T,>({
       <div className="group/sidebar flex size-full flex-none shrink-0 flex-col divide-y divide-tertiary bg-layer-3 transition-all">
         {areEntitiesUploaded ? (
           <>
-            <div className="flex min-h-12 items-center justify-between px-5">
+            <div
+              className={classNames(
+                'flex  items-center justify-between px-5',
+                isOverlay ? 'min-h-9' : 'min-h-12',
+              )}
+            >
               <p className="text-base font-semibold">
                 {t(isLeftSidebar ? 'Conversations' : 'Prompts')}
               </p>
               {isLeftSidebar ? (
-                <CreateNewConversation iconSize={24} />
+                <CreateNewConversation iconSize={createIconSize} />
               ) : (
-                <CreateNewPrompt iconSize={24} />
+                <CreateNewPrompt iconSize={createIconSize} />
               )}
             </div>
             <Search
