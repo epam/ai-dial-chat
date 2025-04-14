@@ -1,8 +1,16 @@
 import { IconCheck } from '@tabler/icons-react';
-import { DragEvent, MouseEvent, useCallback, useMemo, useState } from 'react';
+import {
+  DragEvent,
+  MouseEvent,
+  TouchEvent,
+  useCallback,
+  useMemo,
+  useState,
+} from 'react';
 
 import classNames from 'classnames';
 
+import { useContextMenuTrigger } from '@/src/hooks/useContextMenuTrigger';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -168,7 +176,7 @@ export function ConversationView({
           />
         )}
       </ShareIcon>
-      <div className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left">
+      <div className="relative max-h-5 flex-1 select-none truncate whitespace-pre break-all text-left">
         <Tooltip
           tooltip={t(
             getEntityNameError(isNameInvalid, isInvalidPath, isExternal),
@@ -251,14 +259,14 @@ export const ConversationComponent = ({
     [isConversationsStreaming, isExternal, isSelectMode],
   );
 
-  const handleContextMenuOpen = (e: MouseEvent) => {
+  const handleContextMenuOpen = (e: MouseEvent | TouchEvent) => {
     if (hasParentWithFloatingOverlay(e.target as Element)) {
       return;
     }
-    e.preventDefault();
-    e.stopPropagation();
     setIsContextMenu(true);
   };
+
+  const contextMenuHandlers = useContextMenuTrigger(handleContextMenuOpen);
 
   const isPublishedItemSelected = !!additionalItemData?.publicationUrl;
   const isPublicationUrlEqual =
@@ -280,7 +288,7 @@ export const ConversationComponent = ({
         isNameOrPathInvalid && 'text-secondary',
         additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
       )}
-      onContextMenu={handleContextMenuOpen}
+      {...contextMenuHandlers}
       data-qa="conversation"
     >
       <button
