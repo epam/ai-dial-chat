@@ -1184,7 +1184,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   ref={refs.setFloating}
                   {...getFloatingProps()}
                   className={classNames(
-                    'invisible absolute right-3 z-50 flex justify-end group-hover/button:visible',
+                    'invisible absolute right-0 z-50 flex justify-end group-hover/button:visible',
                     isContextMenu && 'max-md:visible',
                   )}
                 >
