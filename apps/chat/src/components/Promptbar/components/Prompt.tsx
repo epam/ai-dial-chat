@@ -4,6 +4,7 @@ import {
   DragEvent,
   MouseEvent,
   MouseEventHandler,
+  TouchEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -12,6 +13,7 @@ import {
 
 import classNames from 'classnames';
 
+import { useContextMenuTrigger } from '@/src/hooks/useContextMenuTrigger';
 import { usePromptActions } from '@/src/hooks/usePromptActions';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -228,14 +230,15 @@ export const PromptComponent = ({
     setIsMoveTo(true);
   }, []);
 
-  const handleContextMenuOpen = (e: MouseEvent) => {
+  const handleContextMenuOpen = (e: MouseEvent | TouchEvent) => {
     if (hasParentWithFloatingOverlay(e.target as Element)) {
       return;
     }
-    e.preventDefault();
-    e.stopPropagation();
     setIsContextMenu(true);
   };
+
+  const contextMenuHandlers = useContextMenuTrigger(handleContextMenuOpen);
+
   const isHighlighted = !isSelectMode
     ? isDeleting || isOpened || (showModal && isSelected) || isContextMenu
     : isChosen;
@@ -312,7 +315,7 @@ export const PromptComponent = ({
         style={{
           paddingLeft: (level && `${level * 30 + 16}px`) || '0.875rem',
         }}
-        onContextMenu={handleContextMenuOpen}
+        {...contextMenuHandlers}
         data-qa="prompt"
         disabled={isSelectMode && isExternal}
       >
@@ -378,7 +381,7 @@ export const PromptComponent = ({
           </ShareIcon>
 
           <div
-            className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left"
+            className="relative max-h-5 flex-1 select-none truncate whitespace-pre break-all text-left"
             data-qa="entity-name"
           >
             <Tooltip
