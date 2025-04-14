@@ -294,7 +294,7 @@ export const ConversationComponent = ({
       <button
         className={classNames(
           'group flex size-full items-center gap-2 pr-3 disabled:cursor-not-allowed',
-          !isSelectMode && '[&:not(:disabled)]:group-hover:pr-6',
+          !isSelectMode && '[&:not(:disabled)]:group-hover:pr-9',
         )}
         style={{
           paddingLeft: (level && `${level * 30 + 16}px`) || '0.875rem',
@@ -342,7 +342,7 @@ export const ConversationComponent = ({
       {!isSelectMode && !messageIsStreaming && (
         <div
           className={classNames(
-            'absolute right-3 z-50 flex cursor-pointer justify-end group-hover:visible',
+            'absolute right-0 z-50 flex cursor-pointer justify-end group-hover:visible',
             (conversation.status === UploadStatus.LOADED || !isContextMenu) &&
               'invisible',
           )}
