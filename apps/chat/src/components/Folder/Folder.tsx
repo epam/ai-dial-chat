@@ -8,6 +8,7 @@ import {
   KeyboardEvent,
   MouseEvent,
   MouseEventHandler,
+  TouchEvent,
   createElement,
   useCallback,
   useEffect,
@@ -18,6 +19,7 @@ import {
 
 import classNames from 'classnames';
 
+import { useContextMenuTrigger } from '@/src/hooks/useContextMenuTrigger';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -837,14 +839,14 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     [currentFolder, dispatch, featureType, isExternal],
   );
 
-  const handleContextMenuOpen = (e: MouseEvent) => {
+  const handleContextMenuOpen = (e: MouseEvent | TouchEvent) => {
     if (hasParentWithFloatingOverlay(e.target as Element)) {
       return;
     }
-    e.preventDefault();
-    e.stopPropagation();
     setIsContextMenu(true);
   };
+
+  const contextMenuHandlers = useContextMenuTrigger(handleContextMenuOpen);
 
   useEffect(() => {
     if (isRenaming) {
@@ -898,7 +900,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       onDragOver={allowDrop}
       onDragEnter={highlightDrop}
       onDragLeave={deleteHighlight}
-      onContextMenu={handleContextMenuOpen}
+      {...contextMenuHandlers}
       ref={dragDropElement}
     >
       <div
@@ -1133,7 +1135,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             )}
             <div
               className={classNames(
-                'relative max-h-5 flex-1 truncate text-left',
+                'relative max-h-5 flex-1 select-none truncate text-left',
                 isNameOrPathInvalid && 'text-secondary',
                 !hideContextMenu && 'group-hover/button:pr-5',
               )}
