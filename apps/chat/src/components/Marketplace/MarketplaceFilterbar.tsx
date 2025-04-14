@@ -177,14 +177,19 @@ export const MarketplaceFilterbar = memo(() => {
       className={classNames(
         showFilterbar ? 'w-[320px] xl:w-[260px]' : 'invisible',
         'group/sidebar absolute left-0 top-0 z-40 flex h-full shrink-0 flex-col gap-px border-r border-tertiary bg-layer-3  xl:sticky xl:left-0 xl:z-0',
-        isOverlay ? 'md:left-[36px]' : 'md:left-[60px]',
+        isOverlay ? 'md:left-[44px]' : 'md:left-[60px]',
       )}
       data-qa="marketplace-sidebar"
     >
       <CloseSidebarButton isLeftSide onClose={handleClose} />
       {showFilterbar && (
         <div className="h-full divide-y divide-tertiary overflow-y-auto">
-          <div className="flex min-h-12 items-center justify-between px-5">
+          <div
+            className={classNames(
+              'flex items-center justify-between px-5',
+              isOverlay ? 'min-h-9' : 'min-h-12',
+            )}
+          >
             <p className="text-base font-semibold">{t('Filters')}</p>
           </div>
           <FilterSection
