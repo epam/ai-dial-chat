@@ -218,6 +218,9 @@ export const ConversationComponent = ({
   const chosenConversationIds = useAppSelector(
     ConversationsSelectors.selectSelectedItems,
   );
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
+  );
 
   const [isContextMenu, setIsContextMenu] = useState(false);
 
@@ -226,10 +229,6 @@ export const ConversationComponent = ({
   const isChosen = useMemo(
     () => chosenConversationIds.includes(conversation.id),
     [chosenConversationIds, conversation.id],
-  );
-
-  const selectedPublicationUrl = useAppSelector(
-    PublicationSelectors.selectSelectedPublicationUrl,
   );
 
   const isExternal = isEntityIdExternal(conversation);
