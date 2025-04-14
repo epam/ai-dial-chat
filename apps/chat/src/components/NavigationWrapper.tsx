@@ -204,7 +204,7 @@ const UsedWidgets = () => {
 
   return (
     <>
-      <div className="no-scrollbar hidden w-full flex-col items-center gap-2 overflow-y-auto md:flex">
+      <div className="no-scrollbar hidden w-full flex-col items-center gap-2 overflow-y-auto border-t border-tertiary pt-2 empty:border-transparent md:flex">
         {widgetModels.map((model) => (
           <NavigationButton
             key={model.reference}
