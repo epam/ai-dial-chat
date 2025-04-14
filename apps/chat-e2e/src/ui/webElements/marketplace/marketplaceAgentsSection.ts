@@ -142,7 +142,6 @@ export class MarketplaceAgentsSection extends BaseElement {
         if (options?.isWorkspaceAgent !== undefined) {
           for (let j = 1; j <= agentsCount; j++) {
             const nthAgentElement = agentElements.getNthElement(j);
-            await nthAgentElement.scrollIntoViewIfNeeded();
             const agentType = await nthAgentElement.getAttribute(
               Attributes.ariaDetails,
             );
@@ -216,7 +215,6 @@ export class MarketplaceAgentsSection extends BaseElement {
         //iterate through agents with duplicated name
         for (let j = 1; j <= agentsCount; j++) {
           const agentElement = visibleAgent.getNthElement(j);
-          await agentElement.scrollIntoViewIfNeeded();
           const agentType = await agentElement.getAttribute(
             Attributes.ariaDetails,
           );
