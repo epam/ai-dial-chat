@@ -172,7 +172,6 @@ const dialTest = test.extend<{
   appEditorViewForm: AppEditorViewForm;
   chatBar: ChatBar;
   navigationPanel: NavigationPanel;
-  chatLoader: ChatLoader;
   importExportLoader: ImportExportLoader;
   header: Header;
   accountSettings: AccountSettings;
@@ -483,10 +482,6 @@ const dialTest = test.extend<{
   navigationPanel: async ({ appContainer }, use) => {
     const navigationPanel = appContainer.getNavigationPanel();
     await use(navigationPanel);
-  },
-  chatLoader: async ({ appContainer }, use) => {
-    const chatLoader = appContainer.getChatLoader();
-    await use(chatLoader);
   },
   importExportLoader: async ({ appContainer }, use) => {
     const importExportLoader = appContainer.getImportExportLoader();
