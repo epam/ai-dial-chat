@@ -87,7 +87,7 @@ dialTest(
           ExpectedConstants.shareConversationText,
         );
         await shareModalAssertion.assertElementText(
-          shareModal.sharedAccessMessage,
+          shareModal.notSharedEntityLabel,
           ExpectedConstants.notSharedChatText,
         );
       },
@@ -829,6 +829,9 @@ dialTest(
     setTestIds,
     page,
     localStorageManager,
+    confirmationDialogAssertion,
+    tooltipAssertion,
+    chatBarFolderAssertion,
   }) => {
     setTestIds(
       'EPMRTC-2729',
@@ -874,7 +877,7 @@ dialTest(
           ExpectedConstants.shareConversationFolderText,
         );
         await shareModalAssertion.assertElementText(
-          shareModal.sharedAccessMessage,
+          shareModal.notSharedEntityLabel,
           ExpectedConstants.notSharedFolderText,
         );
       },
@@ -892,13 +895,9 @@ dialTest(
           folderConversation.folders.name,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
-        expect
-          .soft(
-            await confirmationDialog.getConfirmationMessage(),
-            ExpectedMessages.confirmationMessageIsValid,
-          )
-          .toBe(ExpectedConstants.deleteSharedFolderMessage);
-
+        await confirmationDialogAssertion.assertConfirmationMessage(
+          ExpectedConstants.deleteSharedFolderMessage,
+        );
         await confirmationDialog.cancelDialog();
       },
     );
@@ -910,7 +909,7 @@ dialTest(
           folderConversation.folders.name,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.share);
-        await shareModal.sharedAccessMessage.click();
+        await shareModal.removeAccessBtn.click();
 
         const chatNameOverflowProp =
           await confirmationDialog.entityName.getComputedStyleProperty(
@@ -921,10 +920,9 @@ dialTest(
           .toBe(Overflow.breakWord);
 
         await confirmationDialog.entityName.hoverOver();
-        const tooltipChatName = await tooltip.getContent();
-        expect
-          .soft(tooltipChatName, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.removeAccessTitle);
+        await tooltipAssertion.assertTooltipContent(
+          ExpectedConstants.removeAccessTitle,
+        );
       },
     );
 
@@ -934,14 +932,10 @@ dialTest(
         await page.mouse.move(0, 0);
         await tooltip.waitForState({ state: 'hidden' });
         await confirmationDialog.cancelDialog();
-        await expect
-          .soft(
-            folderConversations.getFolderArrowIcon(
-              folderConversation.folders.name,
-            ),
-            ExpectedMessages.sharedFolderIconIsVisible,
-          )
-          .toBeVisible();
+        await chatBarFolderAssertion.assertFolderArrowIconState(
+          { name: folderConversation.folders.name },
+          'visible',
+        );
       },
     );
 
@@ -952,16 +946,12 @@ dialTest(
           folderConversation.folders.name,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.share);
-        await shareModal.sharedAccessMessage.click();
+        await shareModal.removeAccessBtn.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
-        await expect
-          .soft(
-            folderConversations.getFolderArrowIcon(
-              folderConversation.folders.name,
-            ),
-            ExpectedMessages.sharedFolderIconIsNotVisible,
-          )
-          .toBeHidden();
+        await chatBarFolderAssertion.assertFolderArrowIconState(
+          { name: folderConversation.folders.name },
+          'hidden',
+        );
       },
     );
 
@@ -984,11 +974,11 @@ dialTest(
 );
 
 dialTest(
-  'Shared icon in chat header and response does not appear.\n' +
-    'Shared icon stays in chat if to cancel unshare.\n' +
-    'Unshare item appears for shared chats only.\n' +
+  'Shared icon stays in chat if to cancel unshare.\n' +
     'Shared icon disappears in chat if to unshare.\n' +
+    '"Remove access for all users" link appears for shared chats only on sharing form.\n' +
     'Error appears if chat was unshared, but user clicks on shared link.\n' +
+    'Shared icon in chat header and response does not appear.\n' +
     'Shared chat disappears from Shared with me if the original was unshared',
   async ({
     dialHomePage,
@@ -998,6 +988,7 @@ dialTest(
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     conversationDropdownMenu,
+    shareModalAssertion,
     shareModal,
     confirmationDialog,
     chat,
@@ -1008,9 +999,10 @@ dialTest(
   }) => {
     setTestIds(
       'EPMRTC-2748',
-      'EPMRTC-2746',
       'EPMRTC-2749',
+      'EPMRTC-2746',
       'EPMRTC-2765',
+      'EPMRTC-1601',
       'EPMRTC-2762',
     );
     let conversation: Conversation;
@@ -1050,10 +1042,14 @@ dialTest(
     );
 
     await dialTest.step(
-      'Select Share option for shared conversation, click cancel and verify arrow icon is still displayed',
+      'Select Share option for shared conversation, click on "Remove access for all users" btn, click cancel and verify arrow icon is still displayed',
       async () => {
         await conversationDropdownMenu.selectMenuOption(MenuOptions.share);
-        await shareModal.sharedAccessMessage.click();
+        await shareModalAssertion.assertElementText(
+          shareModal.removeAccessBtn,
+          ExpectedConstants.removeAccessText,
+        );
+        await shareModal.removeAccessBtn.click();
         await confirmationDialog.cancelDialog();
         await conversationAssertion.assertEntityArrowIconState(
           { name: conversation.name },
@@ -1067,7 +1063,7 @@ dialTest(
       async () => {
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.share);
-        await shareModal.sharedAccessMessage.click();
+        await shareModal.removeAccessBtn.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
         await conversationAssertion.assertEntityArrowIconState(
           { name: conversation.name },
@@ -1088,6 +1084,22 @@ dialTest(
         expect
           .soft(actualMenuOptions, ExpectedMessages.contextMenuOptionsValid)
           .not.toEqual(expect.arrayContaining([MenuOptions.unshare]));
+      },
+    );
+
+    await dialTest.step(
+      'Select Share option for the conversation and verify "This chat has not been shared with anyone yet." label is displayed instead of button',
+      async () => {
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.share);
+        await shareModalAssertion.assertElementState(
+          shareModal.notSharedEntityLabel,
+          'visible',
+        );
+        await shareModalAssertion.assertElementText(
+          shareModal.notSharedEntityLabel,
+          ExpectedConstants.notSharedChatText,
+        );
+        await shareModal.closeButton.click();
       },
     );
 
@@ -1131,6 +1143,11 @@ dialTest(
         expect
           .soft(actualMenuOptions, ExpectedMessages.contextMenuOptionsValid)
           .not.toEqual(expect.arrayContaining([MenuOptions.unshare]));
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.share);
+        await shareModalAssertion.assertElementState(
+          shareModal.notSharedEntityLabel,
+          'visible',
+        );
       },
     );
   },

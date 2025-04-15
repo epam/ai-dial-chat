@@ -59,7 +59,7 @@ dialTest(
           ExpectedConstants.sharePromptText,
         );
         await shareModalAssertion.assertElementText(
-          shareModal.sharedAccessMessage,
+          shareModal.notSharedEntityLabel,
           ExpectedConstants.notSharedPromptText,
         );
       },

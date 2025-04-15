@@ -103,7 +103,7 @@ dialTest(
           ExpectedConstants.sharePromptFolderText,
         );
         await shareModalAssertion.assertElementText(
-          shareModal.sharedAccessMessage,
+          shareModal.notSharedEntityLabel,
           ExpectedConstants.notSharedFolderText,
         );
       },
@@ -432,7 +432,7 @@ dialTest(
         await folderPrompts.expandFolder(folderPrompt.folders.name);
         await folderPrompts.openFolderDropdownMenu(folderPrompt.folders.name);
         await folderDropdownMenu.selectMenuOption(MenuOptions.share);
-        await shareModal.sharedAccessMessage.click();
+        await shareModal.removeAccessBtn.click();
         await confirmationDialogAssertion.assertConfirmationMessage(
           ExpectedConstants.removeFolderAccessMessage(
             folderPrompt.folders.name,
@@ -462,7 +462,7 @@ dialTest(
       async () => {
         await folderPrompts.openFolderDropdownMenu(folderPrompt.folders.name);
         await folderDropdownMenu.selectMenuOption(MenuOptions.share);
-        await shareModal.sharedAccessMessage.click();
+        await shareModal.removeAccessBtn.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
         await promptBarFolderAssertion.assertFolderArrowIconState(
           { name: folderPrompt.folders.name },
