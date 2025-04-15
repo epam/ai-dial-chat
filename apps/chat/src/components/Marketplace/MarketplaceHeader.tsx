@@ -1,5 +1,7 @@
 import { useCallback } from 'react';
 
+
+
 import classNames from 'classnames';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
@@ -45,11 +47,13 @@ export const MarketplaceHeader = () => {
     ? OVERLAY_HEADER_ICON_SIZE
     : DEFAULT_HEADER_ICON_SIZE;
 
+  const heightClass = isOverlay ? 'min-h-[36px]' : 'min-h-[49px]';
+
   return (
     <div
       className={classNames(
-        'z-30 flex w-full border-b border-secondary bg-layer-1',
-        isOverlay ? 'min-h-[36px]' : 'min-h-[49px]',
+        'relative z-30 flex w-full border-b border-secondary bg-layer-1 pr-16',
+        heightClass,
       )}
       data-qa="header"
     >
@@ -64,7 +68,12 @@ export const MarketplaceHeader = () => {
       <div className="flex grow justify-center">
         <Logo />
       </div>
-      <div className="w-[48px] max-md:border-l max-md:border-tertiary md:w-auto">
+      <div
+        className={classNames(
+          'absolute right-0 flex w-[48px] items-center justify-center md:w-auto',
+          heightClass,
+        )}
+      >
         <User />
       </div>
 
