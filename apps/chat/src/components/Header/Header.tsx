@@ -125,11 +125,13 @@ const Header = Inversify.register('Header', () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const heightClass = isOverlay ? 'min-h-[36px]' : 'min-h-[49px]';
+
   return (
     <div
       className={classNames(
-        'z-30 flex w-full border-b border-secondary bg-layer-1',
-        isOverlay ? 'min-h-[36px]' : 'min-h-[49px]',
+        'relative z-30 flex w-full border-b border-secondary bg-layer-1',
+        heightClass,
       )}
       data-qa="header"
     >
@@ -143,7 +145,13 @@ const Header = Inversify.register('Header', () => {
           isOverlay={isOverlay}
         />
       )}
-      <div className="ml-4">
+      <div
+        className={classNames(
+          'absolute flex items-center',
+          isOverlay ? 'left-14' : 'left-16',
+          heightClass,
+        )}
+      >
         {!enabledFeatures.has(Feature.HideNewConversation) &&
           !showChatbar &&
           !selectedWidget && (
@@ -153,7 +161,13 @@ const Header = Inversify.register('Header', () => {
       <div className="flex grow justify-center">
         <Logo />
       </div>
-      <div className="flex w-[48px] items-center justify-center max-md:border-l max-md:border-tertiary md:w-auto">
+      <div
+        className={classNames(
+          'absolute flex w-[48px] items-center justify-center md:w-auto',
+          heightClass,
+          !selectedWidget ? (isOverlay ? 'right-10' : 'right-12') : 'right-0',
+        )}
+      >
         <User />
       </div>
       {enabledFeatures.has(Feature.PromptsSection) && !selectedWidget && (
