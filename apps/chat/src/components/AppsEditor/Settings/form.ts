@@ -66,7 +66,7 @@ export interface QuickAppFormData extends ApplicationGeneralInfo {
   instructions: string;
   temperature: number;
   toolset: string;
-  documentRelativeUrl?: string;
+  documentRelativeUrl?: string[];
   model: string;
 }
 
@@ -233,7 +233,7 @@ export const getQuickAppDefaultValues = ({
   return {
     ...getApplicationGeneralDefaultValues(app),
     completionUrl: app.completionUrl ?? '',
-    documentRelativeUrl: getQuickAppDocumentUrl(app) ?? '',
+    documentRelativeUrl: getQuickAppDocumentUrl(app) ?? [],
     model:
       typeof app.applicationProperties?.model === 'string'
         ? app.applicationProperties?.model

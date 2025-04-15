@@ -41,13 +41,7 @@ export class DialHomePage extends BasePage {
 
     //workaround for the issue https://github.com/epam/ai-dial-chat/issues/1596
     try {
-      const loaders = appContainer.getChatLoader();
-      const loadersCount = await loaders.getElementsCount();
-      for (let i = 1; i <= loadersCount; i++) {
-        await loaders
-          .getNthElement(i)
-          .waitFor({ state: 'hidden', timeout: loadingTimeout });
-      }
+      await appContainer.waitForAppLoaded(loadingTimeout);
     } catch (error) {
       await this.reloadPage();
       await this.waitForPageLoaded(options);
@@ -119,9 +113,7 @@ export class DialHomePage extends BasePage {
     await this.getAppContainer()
       .getImportExportLoader()
       .waitForState({ state: 'hidden' });
-    await this.getAppContainer()
-      .getChatLoader()
-      .waitForState({ state: 'hidden', timeout: loadingTimeout });
+    await this.getAppContainer().waitForAppLoaded(loadingTimeout);
     await this.page.waitForLoadState('domcontentloaded');
   }
 

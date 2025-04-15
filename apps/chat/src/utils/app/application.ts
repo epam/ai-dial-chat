@@ -77,13 +77,14 @@ export const regenerateApplicationId = <T extends ApplicationInfo>(
 export const mapApplicationPropertiesToApi = (
   properties: CustomApplicationModel['applicationProperties'],
 ) => {
-  if (typeof properties?.document_relative_url === 'string')
+  const docUrls = properties?.document_relative_url as string[] | undefined;
+  if (docUrls?.length) {
     return {
       ...properties,
-      document_relative_url: properties.document_relative_url
-        ? ApiUtils.encodeApiUrl(properties.document_relative_url as string)
-        : undefined,
+      document_relative_url: docUrls.map((url) => ApiUtils.encodeApiUrl(url)),
     };
+  }
+
   return properties;
 };
 
@@ -134,22 +135,33 @@ export const convertApplicationToApi = (
   if (commonData.applicationTypeSchemaId) {
     return commonData as ApiApplicationModelSchema;
   }
+
   return {
     ...commonData,
     endpoint: applicationData.completionUrl,
   };
 };
 
+// migrate document_relative_url: string to document_relative_url: string[]
+type DocumentRelativeUrlApiType = string[] | string | undefined;
 export const mapApplicationPropertiesFromApi = (
   properties: CustomApplicationModel['applicationProperties'],
 ) => {
-  if (properties?.document_relative_url)
+  const documentsRelativeUrls =
+    properties?.document_relative_url as DocumentRelativeUrlApiType;
+
+  if (documentsRelativeUrls) {
+    const documentsRelativeUrlArr = Array.isArray(documentsRelativeUrls)
+      ? documentsRelativeUrls
+      : [documentsRelativeUrls];
+
     return {
       ...properties,
-      document_relative_url: ApiUtils.decodeApiUrl(
-        properties.document_relative_url as string,
+      document_relative_url: documentsRelativeUrlArr.map((url) =>
+        ApiUtils.decodeApiUrl(url),
       ),
     };
+  }
   return properties;
 };
 
