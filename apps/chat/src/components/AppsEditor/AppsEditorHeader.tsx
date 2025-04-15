@@ -64,12 +64,19 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
     ApplicationSelectors.selectReturnConversationIds,
   );
 
+  const shouldSaveApplication = useAppSelector(
+    ApplicationSelectors.selectShouldSaveApplication,
+  );
+
   const handleCloseUserSettings = () => {
     dispatch(UIActions.setIsUserSettingsOpen(false));
   };
 
   const handleSaveAndRedirect = () => {
-    dispatch(ApplicationActions.setExitAfterSave(true));
+    if (!shouldSaveApplication) {
+      dispatch(ApplicationActions.setShouldSaveApplication(true));
+      dispatch(ApplicationActions.setExitAfterSave(true));
+    }
     if (returnConversationIds?.length) {
       dispatch(
         ConversationsActions.selectConversations({
