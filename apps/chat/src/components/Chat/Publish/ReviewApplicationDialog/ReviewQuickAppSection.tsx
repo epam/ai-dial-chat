@@ -101,7 +101,13 @@ const ReviewQuickAppSectionView = ({
         </span>
       </div>
 
-      <DocumentField url={config.document_relative_url} />
+      {!!config.document_relative_url?.length && (
+        <>
+          {config.document_relative_url.map((url) => (
+            <DocumentField key={url} url={url} />
+          ))}
+        </>
+      )}
 
       {config.instructions && (
         <div className="flex gap-4">
