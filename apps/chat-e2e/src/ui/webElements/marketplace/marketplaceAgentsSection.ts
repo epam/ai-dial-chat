@@ -109,8 +109,8 @@ export class MarketplaceAgentsSection extends BaseElement {
       }
       await this.scrollIntoLastRow();
     } while (
-      scrollPosition.clientHeight <
-      Math.round(scrollHeight - scrollPosition.scrollTop)
+      Math.ceil(scrollHeight - scrollPosition.scrollTop) >
+      2 * scrollPosition.clientHeight
     );
     return isAgentFoundAndUsed;
   }
@@ -168,8 +168,8 @@ export class MarketplaceAgentsSection extends BaseElement {
       }
       await this.scrollIntoLastRow();
     } while (
-      scrollPosition.clientHeight <
-      Math.round(scrollHeight - scrollPosition.scrollTop)
+      Math.ceil(scrollHeight - scrollPosition.scrollTop) >
+      2 * scrollPosition.clientHeight
     );
     if (agentElement === undefined) {
       throw new Error(`Agent : ${JSON.stringify(agent)} is not found!`);
