@@ -1071,12 +1071,6 @@ export function Chat({ isPreview }: ChatProps) {
     ApplicationSelectors.selectSelectedWidget,
   );
 
-  const configurationAppReference = selectedConversations.find((conv) =>
-    doesModelHaveConfiguration(modelsMap[conv.model.id]),
-  )?.model?.id;
-  const configurationAppId = configurationAppReference
-    ? modelsMap[configurationAppReference]?.id
-    : undefined;
   const isNoMessages = selectedConversations.every(
     ({ messages }) => !messages?.length,
   );
@@ -1086,6 +1080,13 @@ export function Chat({ isPreview }: ChatProps) {
   }, [dispatch, selectedConversationsIds]);
 
   useEffect(() => {
+    const configurationAppReference = selectedConversations.find((conv) =>
+      doesModelHaveConfiguration(modelsMap[conv.model.id]),
+    )?.model?.id;
+    const configurationAppId = configurationAppReference
+      ? modelsMap[configurationAppReference]?.id
+      : undefined;
+
     if (configurationAppId && isNoMessages) {
       dispatch(
         ChatActions.getConfigurationSchema({ modelId: configurationAppId }),
@@ -1093,7 +1094,7 @@ export function Chat({ isPreview }: ChatProps) {
     } else {
       dispatch(ChatActions.resetConfigurationSchema());
     }
-  }, [dispatch, configurationAppId, isNoMessages]);
+  }, [dispatch, isNoMessages, modelsMap, selectedConversations]);
 
   if (selectedWidget) {
     return <WidgetView id={selectedWidget} />;
