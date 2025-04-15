@@ -323,9 +323,7 @@ dialTest(
       'Select playback conversation, refresh the page and verify new conversation is created after the playback mode',
       async () => {
         await conversations.selectConversation(playbackConversation.name);
-        await appContainer
-          .getChatLoader()
-          .waitForState({ state: 'hidden', timeout: loadingTimeout });
+        await appContainer.waitForAppLoaded(loadingTimeout);
         await chat.changeAgentButton.hoverOver();
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
@@ -339,9 +337,7 @@ dialTest(
       'Select replay conversation, refresh the page and verify new conversation is created after the playback mode',
       async () => {
         await conversations.selectConversation(replayConversation.name);
-        await appContainer
-          .getChatLoader()
-          .waitForState({ state: 'hidden', timeout: loadingTimeout });
+        await appContainer.waitForAppLoaded(loadingTimeout);
         await chat.changeAgentButton.hoverOver();
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
