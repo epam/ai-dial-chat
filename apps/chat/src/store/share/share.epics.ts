@@ -356,12 +356,13 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
         }
       }
 
-      if (getQuickAppDocumentUrl(applicationDetails)) {
-        resources.push({
-          url: ApiUtils.encodeApiUrl(
-            getQuickAppDocumentUrl(applicationDetails) as string,
-          ),
-        });
+      const docUrl = getQuickAppDocumentUrl(applicationDetails);
+      if (docUrl?.length) {
+        docUrl.forEach((url) =>
+          resources.push({
+            url: ApiUtils.encodeApiUrl(url),
+          }),
+        );
       }
 
       if (

@@ -65,7 +65,7 @@ export interface FormData extends CodeData {
   temperature: number;
   toolset: string;
   model: string;
-  documentRelativeUrl: string;
+  documentRelativeUrl: string[];
 }
 
 type Options<T extends Path<FormData>> = Omit<
@@ -356,7 +356,7 @@ export const getDefaultValues = ({
     model:
       quickAppConfig?.model ??
       DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
-    documentRelativeUrl: getQuickAppDocumentUrl(app) ?? '',
+    documentRelativeUrl: getQuickAppDocumentUrl(app) ?? [],
   };
 };
 
