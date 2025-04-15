@@ -149,7 +149,7 @@ const Header = Inversify.register('Header', () => {
       }
       RightItems={
         <>
-          <div className="flex w-[48px] items-center justify-center max-md:border-l max-md:border-tertiary md:w-auto">
+          <div className="flex w-[48px] items-center justify-center md:w-auto">
             <User />
           </div>
           {enabledFeatures.has(Feature.PromptsSection) && !selectedWidget && (

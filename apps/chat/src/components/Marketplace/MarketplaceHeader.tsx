@@ -57,7 +57,7 @@ export const MarketplaceHeader = () => {
       }
       RightItems={
         <>
-          <div className="w-[48px] max-md:border-l max-md:border-tertiary md:w-auto">
+          <div className="w-[48px] md:w-auto">
             <User />
           </div>
 
