@@ -100,6 +100,7 @@ export class MarketplaceAgentsSection extends BaseElement {
     };
     const scrollHeight = await this.rootLocator.evaluate((p) => p.scrollHeight);
     let isAgentFoundAndUsed = false;
+    await this.moveToAgentsSection();
     do {
       isAgentFoundAndUsed = await this.useAgent(agent, {
         isInstalledDeploymentsUpdated: isInstalledDeploymentsUpdated,
@@ -124,6 +125,7 @@ export class MarketplaceAgentsSection extends BaseElement {
       clientHeight: await this.rootLocator.evaluate((p) => p.clientHeight),
     };
     const scrollHeight = await this.rootLocator.evaluate((p) => p.scrollHeight);
+    await this.moveToAgentsSection();
     let agentElement;
     do {
       const visibleAgents = this.getAgents();
@@ -178,15 +180,11 @@ export class MarketplaceAgentsSection extends BaseElement {
   }
 
   public async getAllAgents() {
-    const agentsSectionBounding = await this.getElementBoundingBox();
-    await this.page.mouse.move(
-      agentsSectionBounding!.x + agentsSectionBounding!.width / 2,
-      agentsSectionBounding!.y + agentsSectionBounding!.height / 2,
-    );
     const allAgents: MarketplaceAgentProperties[] = [];
     if (!(await this.rootLocator.isVisible())) {
       return allAgents;
     }
+    await this.moveToAgentsSection();
     let scrollPosition: { scrollTop: number; clientHeight: number } = {
       scrollTop: 0,
       clientHeight: await this.rootLocator.evaluate((p) => p.clientHeight),
@@ -286,6 +284,14 @@ export class MarketplaceAgentsSection extends BaseElement {
     await this.page.mouse.wheel(
       lastRowBounding!.x + lastRowBounding!.width,
       lastRowBounding!.y + lastRowBounding!.height,
+    );
+  }
+
+  private async moveToAgentsSection() {
+    const agentsSectionBounding = await this.getElementBoundingBox();
+    await this.page.mouse.move(
+      agentsSectionBounding!.x + agentsSectionBounding!.width / 2,
+      agentsSectionBounding!.y + agentsSectionBounding!.height / 2,
     );
   }
 }
