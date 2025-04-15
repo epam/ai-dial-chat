@@ -1,5 +1,6 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
+import { parseCommaSeparatedList } from '@/src/utils/app/common';
 import { Defaults } from '@/src/utils/app/data/defaults-service';
 
 import { FeatureType, PageType } from '@/src/types/common';
@@ -284,22 +285,17 @@ const selectMappedVisualizers = createSelector(
   (customVisualizers) => {
     return customVisualizers?.reduce(
       (visualizers: MappedVisualizers, currentVisualizerConfig) => {
-        const contentTypes = currentVisualizerConfig.contentType.split(',');
-
-        visualizers = contentTypes.reduce(
-          (visualizers: MappedVisualizers, contentType) => {
-            visualizers[contentType] = !visualizers[contentType]
-              ? [currentVisualizerConfig]
-              : visualizers[currentVisualizerConfig.contentType].concat(
-                  currentVisualizerConfig,
-                );
-
-            return visualizers;
-          },
-          {} as MappedVisualizers,
+        const contentTypes = parseCommaSeparatedList(
+          currentVisualizerConfig.contentType,
         );
 
-        return visualizers;
+        return contentTypes.reduce((vis: MappedVisualizers, contentType) => {
+          vis[contentType] = !vis[contentType]
+            ? [currentVisualizerConfig]
+            : vis[contentType].concat(currentVisualizerConfig);
+
+          return vis;
+        }, visualizers);
       },
       {} as MappedVisualizers,
     );
