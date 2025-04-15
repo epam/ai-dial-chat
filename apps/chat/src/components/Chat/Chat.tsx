@@ -1040,6 +1040,7 @@ interface ChatProps {
 
 export function Chat({ isPreview }: ChatProps) {
   const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
 
   const areSelectedConversationsLoaded = useAppSelector(

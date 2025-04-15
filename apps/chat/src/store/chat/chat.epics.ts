@@ -4,6 +4,7 @@ import {
   concat,
   filter,
   map,
+  merge,
   of,
   switchMap,
   takeUntil,
@@ -105,17 +106,23 @@ const getConfigurationSchemaEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      return ApplicationService.getConfigurationSchema(payload.modelId).pipe(
+      const fetchSchema$ = ApplicationService.getConfigurationSchema(
+        payload.modelId,
+      ).pipe(
         switchMap((schema) => {
           return of(ChatActions.getConfigurationSchemaSuccess(schema));
         }),
         catchError(() => {
           return of(ChatActions.getConfigurationSchemaFailed());
         }),
-        takeUntil(
-          action$.pipe(filter(ConversationsActions.selectConversations.match)),
-        ),
       );
+
+      const cancel$ = action$.pipe(
+        filter(ConversationsActions.selectConversations.match),
+        map(() => ChatActions.resetConfigurationSchema()),
+      );
+
+      return merge(fetchSchema$.pipe(takeUntil(cancel$)), cancel$);
     }),
   );
 
