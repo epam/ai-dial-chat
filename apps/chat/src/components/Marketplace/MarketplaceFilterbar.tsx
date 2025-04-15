@@ -187,7 +187,7 @@ export const MarketplaceFilterbar = memo(() => {
           <div
             className={classNames(
               'flex items-center justify-between px-5',
-              isOverlay ? 'min-h-9' : 'min-h-12',
+              isOverlay ? 'min-h-[35px]' : 'min-h-12',
             )}
           >
             <p className="text-base font-semibold">{t('Filters')}</p>
