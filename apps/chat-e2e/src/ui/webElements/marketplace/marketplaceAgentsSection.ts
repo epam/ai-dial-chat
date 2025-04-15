@@ -178,6 +178,11 @@ export class MarketplaceAgentsSection extends BaseElement {
   }
 
   public async getAllAgents() {
+    const agentsSectionBounding = await this.getElementBoundingBox();
+    await this.page.mouse.move(
+      agentsSectionBounding!.x + agentsSectionBounding!.width / 2,
+      agentsSectionBounding!.y + agentsSectionBounding!.height / 2,
+    );
     const allAgents: MarketplaceAgentProperties[] = [];
     if (!(await this.rootLocator.isVisible())) {
       return allAgents;
@@ -190,22 +195,13 @@ export class MarketplaceAgentsSection extends BaseElement {
     let iteration = 1;
     let shouldProceed = true;
     while (shouldProceed) {
-      let startAgentIndex = 0;
       if (iteration !== 1) {
         await this.scrollIntoLastRow();
-        const rowsCount = await this.agentsRow.getElementsCount();
-        //by default 2 agent rows are out of view but available in DOM
-        if (rowsCount >= 2) {
-          const columnsCount = await this.agentsRow
-            .getNthElement(1)
-            .getAttribute(Attributes.ariaColcount);
-          startAgentIndex = 2 * +columnsCount!;
-        }
       }
       const visibleAgents = this.getAgents();
       const visibleAgentNames = await visibleAgents.getAgentNames();
       const visibleAgentsCount = visibleAgentNames.length;
-      for (let i = startAgentIndex; i < visibleAgentsCount; i++) {
+      for (let i = 0; i < visibleAgentsCount; i++) {
         const agentName = visibleAgentNames[i];
         //agent's name may be duplicated on "My Workspace" tab in the filtered and suggested results
         const visibleAgent = visibleAgents.getAgent(agentName, {
@@ -256,9 +252,10 @@ export class MarketplaceAgentsSection extends BaseElement {
         }
       }
       scrollPosition = await this.getScrollPosition();
+      //by default 2 agent rows are out of view but available in DOM
       shouldProceed =
-        scrollPosition.clientHeight <
-        Math.ceil(scrollHeight - scrollPosition.scrollTop);
+        Math.ceil(scrollHeight - scrollPosition.scrollTop) >
+        2 * scrollPosition.clientHeight;
       iteration++;
     }
     return allAgents;
@@ -283,6 +280,12 @@ export class MarketplaceAgentsSection extends BaseElement {
 
   private async scrollIntoLastRow() {
     const rowsCount = await this.agentsRow.getElementsCount();
-    await this.agentsRow.getNthElement(rowsCount).scrollIntoViewIfNeeded();
+    const lastRowBounding = await this.agentsRow
+      .getNthElement(rowsCount)
+      .boundingBox();
+    await this.page.mouse.wheel(
+      lastRowBounding!.x + lastRowBounding!.width,
+      lastRowBounding!.y + lastRowBounding!.height,
+    );
   }
 }
