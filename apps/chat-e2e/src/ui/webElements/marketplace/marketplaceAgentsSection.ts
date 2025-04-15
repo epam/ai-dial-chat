@@ -285,6 +285,8 @@ export class MarketplaceAgentsSection extends BaseElement {
       lastRowBounding!.x + lastRowBounding!.width,
       lastRowBounding!.y + lastRowBounding!.height,
     );
+    //need to wait the scrolling is finished
+    await this.page.waitForTimeout(200);
   }
 
   private async moveToAgentsSection() {
