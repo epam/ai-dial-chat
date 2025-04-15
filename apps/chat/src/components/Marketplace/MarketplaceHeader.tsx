@@ -1,7 +1,5 @@
 import { useCallback } from 'react';
 
-
-
 import classNames from 'classnames';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';

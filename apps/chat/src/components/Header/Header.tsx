@@ -145,7 +145,12 @@ const Header = Inversify.register('Header', () => {
           isOverlay={isOverlay}
         />
       )}
-      <div className={classNames("absolute left-14 ml-4 flex items-center",heightClass)}>
+      <div
+        className={classNames(
+          'absolute left-14 ml-4 flex items-center',
+          heightClass,
+        )}
+      >
         {!enabledFeatures.has(Feature.HideNewConversation) &&
           !showChatbar &&
           !selectedWidget && (
