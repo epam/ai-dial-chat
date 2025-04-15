@@ -14,6 +14,7 @@ import {
   getQuickAppDocumentUrl,
   getSharedTooltip,
 } from '@/src/utils/app/application';
+import { arraysHaveSameElements } from '@/src/utils/app/common';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { CustomApplicationModel } from '@/src/types/applications';
@@ -25,7 +26,6 @@ import {
   ApplicationActions,
   ApplicationSelectors,
 } from '@/src/store/application/application.reducers';
-import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -35,17 +35,18 @@ import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
 import { TemperatureSlider } from '@/src/components/Chat/ChatSettings/Temperature';
+import { FilesSelector } from '@/src/components/Common/FilesSelector/FilesSelector';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withWarningMessage } from '@/src/components/Common/Forms/FieldWarningMessage';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
 import { MonacoEditor } from '@/src/components/Common/MonacoEditor';
-import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
 import { QuickAppFormData, getQuickAppData } from '../form';
 
 import isEqual from 'lodash-es/isEqual';
+import uniq from 'lodash-es/uniq';
 
 type Options<T extends Path<QuickAppFormData>> = Omit<
   RegisterOptions<QuickAppFormData, T>,
@@ -70,8 +71,8 @@ const validators: Validators = {
   },
 };
 
-const LogoSelector = withErrorMessage(
-  withWarningMessage(withLabel(CustomLogoSelect)),
+const FilesSelectorField = withErrorMessage(
+  withWarningMessage(withLabel(FilesSelector)),
 );
 const ToolsetEditor = withErrorMessage(withLabel(MonacoEditor));
 const Slider = withLabel(TemperatureSlider, true);
@@ -93,7 +94,9 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
   isShared,
 }) => {
   const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
+
   const {
     register,
     control,
@@ -108,7 +111,6 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
   const shouldSaveApplication = useAppSelector(
     ApplicationSelectors.selectShouldSaveApplication,
   );
-
   const exitAfterSave = useAppSelector(
     ApplicationSelectors.selectExitAfterSave,
   );
@@ -129,8 +131,10 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
 
         if (
           isShared &&
-          getQuickAppDocumentUrl(applicationData as CustomApplicationModel) !==
-            getQuickAppDocumentUrl(oldApplication)
+          !arraysHaveSameElements(
+            getQuickAppDocumentUrl(applicationData as CustomApplicationModel),
+            getQuickAppDocumentUrl(oldApplication),
+          )
         ) {
           dispatch(
             ShareActions.revokeAccess({
@@ -198,12 +202,6 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
     t,
   ]);
 
-  const files = useAppSelector(FilesSelectors.selectFiles);
-  const getLogoId = useCallback(
-    (filesIds: string[]) => files.find((f) => f.id === filesIds[0])?.id,
-    [files],
-  );
-
   return (
     <form
       onSubmit={submitWrapper(handleSubmit)}
@@ -214,21 +212,27 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
           name="documentRelativeUrl"
           control={control}
           render={({ field }) => (
-            <LogoSelector
+            <FilesSelectorField
               label={t('Document relative url')}
-              localLogo={field.value?.split('/')?.pop()}
-              onLogoSelect={(v) => field.onChange(getLogoId(v))}
-              onDeleteLocalLogoHandler={() => field.onChange('')}
-              customPlaceholder={t('No document relative url')}
-              className="max-w-full"
-              fileManagerModalTitle="Select document"
+              onAddDocuments={(documents) => {
+                field.onChange(
+                  uniq([...(field.value ? field.value : []), ...documents]),
+                );
+              }}
+              onRemoveDocument={(document) => {
+                field.onChange(
+                  field.value?.filter((field) => field !== document),
+                );
+              }}
+              readonly={isSharedWithMe}
               error={errors.documentRelativeUrl?.message}
-              allowedTypes={['*/*']}
-              disabled={isSharedWithMe}
-              tooltip={isSharedWithMe ? getSharedTooltip('file') : ''}
-              sourceFilters={myFilesFilter}
+              fileManagerTitle={t('Select documents')}
+              filesFilter={myFilesFilter}
               warning={confirmDocumentUrlValues?.description}
-              confirmDialogValues={confirmDocumentUrlValues}
+              documents={field.value ?? []}
+              addBtnTooltip={
+                isSharedWithMe ? getSharedTooltip(t('documents')) : undefined
+              }
             />
           )}
         />
