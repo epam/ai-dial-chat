@@ -1,7 +1,5 @@
 import { useCallback } from 'react';
 
-import classNames from 'classnames';
-
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -13,10 +11,10 @@ import {
   OVERLAY_HEADER_ICON_SIZE,
 } from '@/src/constants/default-ui-settings';
 
-import { Logo } from '@/src/components/Header/Logo';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
 import { ToggleSidebarButton } from '../Common/Buttons/ToggleSidebarButtor';
+import { BaseHeader } from '../Header/BaseHeader';
 import { User } from '../Header/User/User';
 
 export const MarketplaceHeader = () => {
@@ -46,29 +44,26 @@ export const MarketplaceHeader = () => {
     : DEFAULT_HEADER_ICON_SIZE;
 
   return (
-    <div
-      className={classNames(
-        'z-30 flex w-full border-b border-secondary bg-layer-1',
-        isOverlay ? 'min-h-[36px]' : 'min-h-[49px]',
-      )}
-      data-qa="header"
-    >
-      <ToggleSidebarButton
-        iconSize={headerIconSize}
-        tooltip="Control panel"
-        isOpened={showFilterbar}
-        onToggle={handleToggleFilterbar}
-        dataQa="left-panel-toggle"
-        isOverlay={isOverlay}
-      />
-      <div className="flex grow justify-center">
-        <Logo />
-      </div>
-      <div className="w-[48px] max-md:border-l max-md:border-tertiary md:w-auto">
-        <User />
-      </div>
+    <BaseHeader
+      LeftItems={
+        <ToggleSidebarButton
+          iconSize={headerIconSize}
+          tooltip="Control panel"
+          isOpened={showFilterbar}
+          onToggle={handleToggleFilterbar}
+          dataQa="left-panel-toggle"
+          isOverlay={isOverlay}
+        />
+      }
+      RightItems={
+        <>
+          <div className="w-[48px] max-md:border-l max-md:border-tertiary md:w-auto">
+            <User />
+          </div>
 
-      <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
-    </div>
+          <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
+        </>
+      }
+    />
   );
 };
