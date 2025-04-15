@@ -286,6 +286,7 @@ export class MarketplaceAgentsSection extends BaseElement {
       lastRowBounding!.y + lastRowBounding!.height,
     );
     //need to wait the scrolling is finished
+    // eslint-disable-next-line playwright/no-wait-for-timeout
     await this.page.waitForTimeout(200);
   }
 
