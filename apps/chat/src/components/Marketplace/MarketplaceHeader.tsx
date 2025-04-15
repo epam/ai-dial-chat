@@ -50,7 +50,8 @@ export const MarketplaceHeader = () => {
   return (
     <div
       className={classNames(
-        'relative z-30 flex w-full border-b border-secondary bg-layer-1 pr-16',
+        'relative z-30 flex w-full border-b border-secondary bg-layer-1',
+        isOverlay ? 'pr-12' : 'pr-16',
         heightClass,
       )}
       data-qa="header"

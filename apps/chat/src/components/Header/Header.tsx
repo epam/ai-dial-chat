@@ -147,7 +147,8 @@ const Header = Inversify.register('Header', () => {
       )}
       <div
         className={classNames(
-          'absolute left-14 ml-4 flex items-center',
+          'absolute flex items-center',
+          isOverlay ? 'left-14' : 'left-16',
           heightClass,
         )}
       >
@@ -164,7 +165,7 @@ const Header = Inversify.register('Header', () => {
         className={classNames(
           'absolute flex w-[48px] items-center justify-center md:w-auto',
           heightClass,
-          !selectedWidget ? 'right-12 md:right-14' : 'right-0',
+          !selectedWidget ? (isOverlay ? 'right-10' : 'right-12') : 'right-0',
         )}
       >
         <User />
