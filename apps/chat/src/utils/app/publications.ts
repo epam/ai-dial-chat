@@ -246,7 +246,7 @@ export const getApplicationPublishResources = ({
 
   const resources = [
     iconUrl && !isEntityIdExternal({ id: iconUrl }) ? iconUrl : undefined,
-    documentUrl,
+    ...(documentUrl ? documentUrl : []),
   ];
 
   return resources.reduce(

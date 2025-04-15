@@ -91,7 +91,6 @@ import { AddonsDialog } from '@/src/ui/webElements/addonsDialog';
 import { AgentSettings } from '@/src/ui/webElements/agentSettings';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { Banner } from '@/src/ui/webElements/banner';
-import { ChatLoader } from '@/src/ui/webElements/chatLoader';
 import { Compare } from '@/src/ui/webElements/compare';
 import { ConfirmationDialog } from '@/src/ui/webElements/confirmationDialog';
 import { DropdownCheckboxMenu } from '@/src/ui/webElements/dropdownCheckboxMenu';
@@ -172,7 +171,6 @@ const dialTest = test.extend<{
   appEditorViewForm: AppEditorViewForm;
   chatBar: ChatBar;
   navigationPanel: NavigationPanel;
-  chatLoader: ChatLoader;
   importExportLoader: ImportExportLoader;
   header: Header;
   accountSettings: AccountSettings;
@@ -483,10 +481,6 @@ const dialTest = test.extend<{
   navigationPanel: async ({ appContainer }, use) => {
     const navigationPanel = appContainer.getNavigationPanel();
     await use(navigationPanel);
-  },
-  chatLoader: async ({ appContainer }, use) => {
-    const chatLoader = appContainer.getChatLoader();
-    await use(chatLoader);
   },
   importExportLoader: async ({ appContainer }, use) => {
     const importExportLoader = appContainer.getImportExportLoader();
