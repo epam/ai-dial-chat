@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   Controller,
   Path,
   RegisterOptions,
   useFormContext,
 } from 'react-hook-form';
+
+import { useRouter } from 'next/router';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -22,10 +24,7 @@ import {
   ApplicationActions,
   ApplicationSelectors,
 } from '@/src/store/application/application.reducers';
-import {
-  CodeEditorActions,
-  CodeEditorSelectors,
-} from '@/src/store/codeEditor/codeEditor.reducer';
+import { CodeEditorActions } from '@/src/store/codeEditor/codeEditor.reducer';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -36,6 +35,8 @@ import {
 } from '@/src/constants/applications';
 import { CODE_APPS_ENDPOINTS } from '@/src/constants/code-apps';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
+import { MarketplaceTabs } from '@/src/constants/marketplace';
+import { Routes } from '@/src/constants/routes';
 
 import { FormCodeEditor } from '@/src/components/Common/ApplicationWizard/CodeAppView/FormCodeEditor';
 import { RuntimeVersionSelector } from '@/src/components/Common/ApplicationWizard/CodeAppView/RuntimeVersionSelector';
@@ -47,7 +48,6 @@ import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessag
 import { withWarningMessage } from '@/src/components/Common/Forms/FieldWarningMessage';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
-import { OptionsDialog } from '@/src/components/Common/OptionsDialog';
 
 import {
   CodeAppFormData,
@@ -113,26 +113,21 @@ const MappingsForm = withLabel(
 
 interface CodeAppViewProps {
   isSharedWithMe: boolean;
-  isAppDeployed: boolean;
   oldApplication: CustomApplicationModel;
   isShared: boolean;
   applicationStatus?: ApplicationStatus;
-  onExit?: () => void;
 }
 
 export const CodeAppView: React.FC<CodeAppViewProps> = ({
   isSharedWithMe,
-  isAppDeployed,
   oldApplication,
   isShared,
   applicationStatus,
-  onExit,
 }) => {
   const { t } = useTranslation(Translation.Chat);
-  const [editorConfirmation, setEditorConfirmation] =
-    useState<CodeAppFormData>();
+
   const dispatch = useAppDispatch();
-  const isCodeEditorDirty = useAppSelector(CodeEditorSelectors.selectIsDirty);
+
   const {
     control,
     handleSubmit: submitWrapper,
@@ -159,12 +154,14 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     ? CONFIRM_SOURCE_FOLDER_VALUES
     : undefined;
 
+  const router = useRouter();
+
   const handleEdit = useCallback(
     (data: CodeAppFormData) => {
       if (
         oldApplication.reference &&
         shouldSaveApplication &&
-        (!isEqual(data, lastSubmittedValuesRef.current) || exitAfterSave)
+        !isEqual(data, lastSubmittedValuesRef.current)
       ) {
         const preparedData = getCodeAppData(data);
 
@@ -205,71 +202,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
       isShared,
       shouldSaveApplication,
       applicationStatus,
-      exitAfterSave,
     ],
-  );
-
-  const handleSave = useCallback(
-    (data: CodeAppFormData) => {
-      if (isCodeEditorDirty && exitAfterSave) {
-        setEditorConfirmation(data);
-      } else {
-        if (isAppDeployed && exitAfterSave) {
-          dispatch(
-            UIActions.showWarningToast(
-              t('Saved changes will be applied during next deployment'),
-            ),
-          );
-          onExit?.();
-        }
-        handleEdit(data);
-      }
-    },
-    [
-      dispatch,
-      exitAfterSave,
-      handleEdit,
-      isAppDeployed,
-      isCodeEditorDirty,
-      onExit,
-      t,
-    ],
-  );
-
-  const modalOptions = useMemo(
-    () => [
-      {
-        label: t("Don't save"),
-        dataQa: 'not-save-option',
-        className: 'button-secondary',
-        onClick: () => {
-          if (editorConfirmation) {
-            handleEdit(editorConfirmation);
-          }
-          setEditorConfirmation(undefined);
-        },
-      },
-      {
-        label: t('Save'),
-        dataQa: 'save-option',
-        onClick: () => {
-          if (isAppDeployed) {
-            dispatch(
-              UIActions.showWarningToast(
-                t('Saved changes will be applied during next deployment'),
-              ),
-            );
-          }
-          dispatch(CodeEditorActions.saveAllModifiedFiles());
-          if (editorConfirmation) {
-            handleEdit(editorConfirmation);
-          }
-          setEditorConfirmation(undefined);
-          onExit?.();
-        },
-      },
-    ],
-    [t, editorConfirmation, handleEdit, isAppDeployed, dispatch, onExit],
   );
 
   register('sourceFiles', validators['sourceFiles']);
@@ -282,23 +215,42 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
   }, [dispatch]);
 
   useEffect(() => {
-    if (shouldSaveApplication) {
-      if (!isValid) {
-        dispatch(ApplicationActions.setShouldSaveApplication(false));
-        dispatch(ApplicationActions.setExitAfterSave(false));
-        dispatch(
-          UIActions.showErrorToast(t('Please fill in all mandatory fields')),
-        );
-        return;
-      }
+    const isTriggered = shouldSaveApplication || exitAfterSave;
+    if (!isTriggered) return;
 
-      submitWrapper(handleSave)();
+    if (!isValid) {
+      dispatch(ApplicationActions.setShouldSaveApplication(false));
+      dispatch(ApplicationActions.setExitAfterSave(false));
+      dispatch(
+        UIActions.showErrorToast(t('Please fill in all mandatory fields')),
+      );
+      return;
     }
-  }, [submitWrapper, shouldSaveApplication, handleSave, isValid, dispatch, t]);
+
+    if (shouldSaveApplication) {
+      submitWrapper(handleEdit)();
+    }
+
+    if (exitAfterSave) {
+      router.push({
+        pathname: Routes.Marketplace,
+        query: { tab: MarketplaceTabs.MY_WORKSPACE },
+      });
+    }
+  }, [
+    exitAfterSave,
+    router,
+    submitWrapper,
+    shouldSaveApplication,
+    handleEdit,
+    isValid,
+    dispatch,
+    t,
+  ]);
 
   return (
     <form
-      onSubmit={submitWrapper(handleSave)}
+      onSubmit={submitWrapper(handleEdit)}
       className="flex size-full flex-col bg-layer-2"
     >
       <div className="grow space-y-4 divide-tertiary overflow-y-auto p-5">
@@ -377,12 +329,6 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           keyOptions={envKeysValidator}
           valueOptions={envValueValidator}
           errors={errors.env}
-        />
-
-        <OptionsDialog
-          isOpen={!!editorConfirmation}
-          heading={t('Do you want to save changes in the code editor?')}
-          options={modalOptions}
         />
       </div>
     </form>

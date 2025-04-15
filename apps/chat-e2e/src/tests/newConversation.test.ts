@@ -404,7 +404,7 @@ dialTest(
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await conversations.selectConversation(conversation.name);
-      await navigationPanel.marketplaceHomeButton.click();
+      await navigationPanel.goToMarketplaceHome();
       await marketplacePage.waitForPageLoaded();
     });
 

@@ -1,3 +1,4 @@
+import { SystemDialogs } from '@/src/components/Common/SystemDialogs';
 import { PromptModal } from '@/src/components/Promptbar/components/PromptModal';
 
 import { InfoModal } from '../Common/InfoModal';
@@ -19,6 +20,7 @@ export function ChatModalsManager() {
       <RenameConversationModal />
       <PromptVariablesForApplyDialog />
       <PromptModal />
+      <SystemDialogs />
     </>
   );
 }

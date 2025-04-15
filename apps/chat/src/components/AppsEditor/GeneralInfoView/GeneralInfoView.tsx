@@ -43,7 +43,7 @@ export const GeneralInfoView: React.FC<Props> = ({
   }));
 
   const isAppDeployed =
-    applicationData?.function?.status === ApplicationStatus.DEPLOYED;
+    applicationData?.functionStatus === ApplicationStatus.DEPLOYED;
 
   const methods = useForm<ApplicationGeneralInfoFormData>({
     mode: 'onChange',

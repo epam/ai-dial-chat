@@ -1,8 +1,16 @@
 import { IconCheck } from '@tabler/icons-react';
-import { DragEvent, MouseEvent, useCallback, useMemo, useState } from 'react';
+import {
+  DragEvent,
+  MouseEvent,
+  TouchEvent,
+  useCallback,
+  useMemo,
+  useState,
+} from 'react';
 
 import classNames from 'classnames';
 
+import { useContextMenuTrigger } from '@/src/hooks/useContextMenuTrigger';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -168,7 +176,7 @@ export function ConversationView({
           />
         )}
       </ShareIcon>
-      <div className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left">
+      <div className="relative max-h-5 flex-1 select-none truncate whitespace-pre break-all text-left">
         <Tooltip
           tooltip={t(
             getEntityNameError(isNameInvalid, isInvalidPath, isExternal),
@@ -218,6 +226,9 @@ export const ConversationComponent = ({
   const chosenConversationIds = useAppSelector(
     ConversationsSelectors.selectSelectedItems,
   );
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
+  );
 
   const [isContextMenu, setIsContextMenu] = useState(false);
 
@@ -226,10 +237,6 @@ export const ConversationComponent = ({
   const isChosen = useMemo(
     () => chosenConversationIds.includes(conversation.id),
     [chosenConversationIds, conversation.id],
-  );
-
-  const selectedPublicationUrl = useAppSelector(
-    PublicationSelectors.selectSelectedPublicationUrl,
   );
 
   const isExternal = isEntityIdExternal(conversation);
@@ -252,14 +259,14 @@ export const ConversationComponent = ({
     [isConversationsStreaming, isExternal, isSelectMode],
   );
 
-  const handleContextMenuOpen = (e: MouseEvent) => {
+  const handleContextMenuOpen = (e: MouseEvent | TouchEvent) => {
     if (hasParentWithFloatingOverlay(e.target as Element)) {
       return;
     }
-    e.preventDefault();
-    e.stopPropagation();
     setIsContextMenu(true);
   };
+
+  const contextMenuHandlers = useContextMenuTrigger(handleContextMenuOpen);
 
   const isPublishedItemSelected = !!additionalItemData?.publicationUrl;
   const isPublicationUrlEqual =
@@ -281,13 +288,13 @@ export const ConversationComponent = ({
         isNameOrPathInvalid && 'text-secondary',
         additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
       )}
-      onContextMenu={handleContextMenuOpen}
+      {...contextMenuHandlers}
       data-qa="conversation"
     >
       <button
         className={classNames(
           'group flex size-full items-center gap-2 pr-3 disabled:cursor-not-allowed',
-          !isSelectMode && '[&:not(:disabled)]:group-hover:pr-6',
+          !isSelectMode && '[&:not(:disabled)]:group-hover:pr-9',
         )}
         style={{
           paddingLeft: (level && `${level * 30 + 16}px`) || '0.875rem',
@@ -335,7 +342,7 @@ export const ConversationComponent = ({
       {!isSelectMode && !messageIsStreaming && (
         <div
           className={classNames(
-            'absolute right-3 z-50 flex cursor-pointer justify-end group-hover:visible',
+            'absolute right-0 z-50 flex cursor-pointer justify-end group-hover:visible',
             (conversation.status === UploadStatus.LOADED || !isContextMenu) &&
               'invisible',
           )}

@@ -3,6 +3,7 @@ import {
   Observable,
   catchError,
   concat,
+  concatMap,
   filter,
   iif,
   map,
@@ -355,12 +356,13 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
         }
       }
 
-      if (getQuickAppDocumentUrl(applicationDetails)) {
-        resources.push({
-          url: ApiUtils.encodeApiUrl(
-            getQuickAppDocumentUrl(applicationDetails) as string,
-          ),
-        });
+      const docUrl = getQuickAppDocumentUrl(applicationDetails);
+      if (docUrl?.length) {
+        docUrl.forEach((url) =>
+          resources.push({
+            url: ApiUtils.encodeApiUrl(url),
+          }),
+        );
       }
 
       if (
@@ -1013,7 +1015,25 @@ const revokeAccessEpic: AppEpic = (action$) =>
         : ApiUtils.encodeApiUrl(payload.resourceId);
 
       return ShareService.shareRevoke([resourceUrl]).pipe(
-        map(() => ShareActions.revokeAccessSuccess(payload)),
+        concatMap(() =>
+          concat(
+            of(ShareActions.revokeAccessSuccess(payload)),
+            iif(
+              () => payload.featureType === FeatureType.Application,
+              of(
+                ModelsActions.updateLocalModels({
+                  modelsToUpdate: [
+                    {
+                      reference: payload.resourceId,
+                      updatedValues: { isShared: false },
+                    },
+                  ],
+                }),
+              ),
+              EMPTY,
+            ),
+          ),
+        ),
         catchError(() => of(ShareActions.revokeAccessFail())),
       );
     }),
