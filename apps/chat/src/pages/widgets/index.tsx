@@ -2,8 +2,6 @@ import { useEffect } from 'react';
 
 import { useRouter } from 'next/router';
 
-import classNames from 'classnames';
-
 import { useTranslation } from '@/src/hooks/useTranslation';
 import { useWidgets } from '@/src/hooks/useWidgets';
 
@@ -11,9 +9,6 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
 import { Translation } from '@/src/types/translation';
-
-import { ApplicationSelectors } from '@/src/store/application/application.selectors';
-import { useAppSelector } from '@/src/store/hooks';
 
 import { Routes } from '@/src/constants/routes';
 
@@ -26,10 +21,6 @@ function WidgetsPage() {
   const { t } = useTranslation(Translation.SideBar);
 
   const router = useRouter();
-
-  const selectedWidget = useAppSelector(
-    ApplicationSelectors.selectSelectedWidget,
-  );
 
   const { widgetModels, handleWidgetClick } = useWidgets();
 
@@ -48,10 +39,7 @@ function WidgetsPage() {
           <button
             key={model.reference}
             onClick={() => handleWidgetClick(model.reference)}
-            className={classNames(
-              'flex w-full shrink-0 items-center gap-2 truncate rounded bg-layer-2 p-3 hover:bg-accent-primary-alpha',
-              selectedWidget === model.reference && '!bg-accent-primary-alpha',
-            )}
+            className="flex w-full shrink-0 items-center gap-2 truncate rounded bg-layer-2 p-3 hover:bg-accent-primary-alpha"
           >
             <ModelIcon entityId={model.id} entity={model} size={40} />
 

@@ -5,7 +5,7 @@ import {
   IconMessage2,
   TablerIconsProps,
 } from '@tabler/icons-react';
-import { JSX, ReactNode, useCallback } from 'react';
+import { JSX, ReactNode, useCallback, useMemo } from 'react';
 
 import { useRouter } from 'next/router';
 
@@ -16,10 +16,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import {
-  ApplicationActions,
-  ApplicationSelectors,
-} from '@/src/store/application/application.reducers';
+import { ApplicationActions } from '@/src/store/application/application.reducers';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -188,9 +185,13 @@ const UsedWidgets = () => {
 
   const router = useRouter();
 
-  const selectedWidget = useAppSelector(
-    ApplicationSelectors.selectSelectedWidget,
-  );
+  const selectedWidget = useMemo(() => {
+    if (router.route === Routes.SelectedWidget) {
+      return (router.query.slug as string) ?? null;
+    }
+
+    return null;
+  }, [router]);
 
   const { widgetModels, handleWidgetClick } = useWidgets();
 
@@ -206,9 +207,7 @@ const UsedWidgets = () => {
             key={model.reference}
             rounded
             onClick={() => handleWidgetClick(model.reference)}
-            selected={
-              model.reference === selectedWidget && router.route === Routes.Chat
-            }
+            selected={model.reference === selectedWidget}
             Icon={({ height }) => (
               <ModelIcon
                 entity={model}
@@ -237,8 +236,8 @@ const UsedWidgets = () => {
               : IconBrowser
           }
           selected={
-            (!!selectedWidget && router.route === Routes.Chat) ||
-            router.route === Routes.Widgets
+            router.route === Routes.Widgets ||
+            router.route === Routes.SelectedWidget
           }
           dataQa="widgets-sidebar-trigger"
           caption={t('Widgets')}
@@ -261,9 +260,6 @@ const Navigation = () => {
   );
   const widgetsSchemaIds = useAppSelector(
     SettingsSelectors.selectWidgetsSchemaIds,
-  );
-  const selectedWidget = useAppSelector(
-    ApplicationSelectors.selectSelectedWidget,
   );
   const selectedConversationIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
@@ -299,7 +295,7 @@ const Navigation = () => {
         onClick={handleChatClick}
         tooltip={t('Chat')}
         Icon={IconMessage2}
-        selected={router.route === Routes.Chat && !selectedWidget}
+        selected={router.route === Routes.Chat}
         dataQa="back-to-chat"
         caption={t('Chat')}
       />
