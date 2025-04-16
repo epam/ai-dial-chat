@@ -25,7 +25,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const { responseId, modelId, value, id } = req.body as RateBody;
+    const { responseId, modelId, value, id, reference } = req.body as RateBody;
 
     if (!id || !responseId || !modelId) {
       return res.status(400).send(errorsMessages[400]);
@@ -42,7 +42,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     await fetch(url, {
       headers: getApiHeaders({
-        chatId: id,
+        chatReference: reference ?? id,
         jwt: token?.access_token as string,
         jobTitle: token?.jobTitle as string,
       }),

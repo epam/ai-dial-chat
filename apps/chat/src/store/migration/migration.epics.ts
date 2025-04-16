@@ -91,7 +91,7 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) =>
           conversations,
           [...failedMigratedConversationIds, ...migratedConversationIds],
           true,
-        );
+        ) as (Conversation & { lastActivityDate?: number })[];
 
         if (
           !isMigrationInitialized &&
