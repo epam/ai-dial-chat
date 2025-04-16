@@ -26,18 +26,12 @@ interface DocumentFieldProps {
 }
 
 const DocumentField = ({ url }: DocumentFieldProps) => {
-  const { t } = useTranslation(Translation.Chat);
-
   const urlParts = url ? splitEntityId(url) : null;
 
   if (!url || !urlParts) return null;
 
   return (
     <div className="flex items-center gap-4">
-      <span className="w-[122px] shrink-0 text-secondary">
-        {t('Document URL: ')}
-      </span>
-
       <div className="flex grow items-center gap-2 overflow-hidden">
         <div className="flex grow items-center gap-2 truncate">
           <span className="flex shrink-0">
@@ -46,7 +40,7 @@ const DocumentField = ({ url }: DocumentFieldProps) => {
 
           <Tooltip
             tooltip={urlParts.name}
-            contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+            contentClassName="sm:max-w-[400px] max-w-[250px] break-all z-[100]"
             triggerClassName="truncate whitespace-pre"
             dataQa="entity-name"
           >
@@ -102,11 +96,16 @@ const ReviewQuickAppSectionView = ({
       </div>
 
       {!!config.document_relative_url?.length && (
-        <>
-          {config.document_relative_url.map((url) => (
-            <DocumentField key={url} url={url} />
-          ))}
-        </>
+        <div className="flex items-center gap-4">
+          <span className="w-[122px] shrink-0 self-start text-secondary">
+            {t('Document URLs: ')}
+          </span>
+          <span className="flex min-w-0 flex-col gap-2">
+            {config.document_relative_url.map((url) => (
+              <DocumentField key={url} url={url} />
+            ))}
+          </span>
+        </div>
       )}
 
       {config.instructions && (
