@@ -20,6 +20,7 @@ import {
   Message,
   Stage,
 } from '@epam/ai-dial-shared';
+import { nanoid } from 'nanoid';
 
 const migrateAttachmentUrls = (attachment: Attachment): Attachment => {
   const getNewAttachmentUrl = (url: string | undefined): string | undefined =>
@@ -57,7 +58,7 @@ const migrateMessageAttachmentUrls = (message: Message): Message => {
 };
 
 export const cleanConversation = (
-  conversation: Partial<Conversation>,
+  conversation: Partial<Conversation> & { lastActivityDate?: number },
 ): Conversation => {
   // added model for each conversation (3/20/23)
   // added system prompt for each conversation (3/21/23)
@@ -84,6 +85,7 @@ export const cleanConversation = (
         conversation.folderId || getConversationRootId(),
         conversation.name || DEFAULT_CONVERSATION_NAME,
       ),
+    reference: conversation.reference ?? nanoid(),
     name: conversation.name || DEFAULT_CONVERSATION_NAME,
     model: model,
     prompt:

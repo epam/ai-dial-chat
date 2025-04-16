@@ -11,6 +11,7 @@ export enum CopyTableType {
 export interface ChatBody {
   messages: Message[];
   id: string;
+  reference: string;
   prompt?: string;
   temperature?: number;
   selectedAddons?: string[];
@@ -29,6 +30,7 @@ export interface Conversation extends ShareEntity, ConversationInfo {
   messages: Message[];
   prompt: string;
   temperature: number;
+  reference: string;
   replay?: Replay;
   playback?: Playback;
 

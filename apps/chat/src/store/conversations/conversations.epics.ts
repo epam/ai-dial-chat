@@ -143,6 +143,7 @@ import {
 } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
+import { nanoid } from 'nanoid';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -464,6 +465,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
 
             const newConversations: Conversation[] = names.map((name, index) =>
               regenerateConversationId({
+                reference: nanoid(),
                 name:
                   name !== DEFAULT_CONVERSATION_NAME
                     ? name
@@ -605,6 +607,7 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
       const newConversation: Conversation = regenerateConversationId({
         ...conversation,
         ...resetShareEntity,
+        reference: nanoid(),
         folderId,
         name: newConversationName,
         messages: [],
@@ -665,6 +668,7 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
       const newConversation: Conversation = regenerateConversationId({
         ...conversation,
         ...resetShareEntity,
+        reference: nanoid(),
         folderId,
         name: newConversationName,
         messages: [],
@@ -718,6 +722,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
       const newConversation: Conversation = regenerateConversationId({
         ...omit(conversation, ['publicationInfo']),
         ...resetShareEntity,
+        reference: nanoid(),
         folderId: conversationFolderId,
         name: generateNextName(
           DEFAULT_CONVERSATION_NAME,

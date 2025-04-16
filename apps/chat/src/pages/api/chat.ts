@@ -33,6 +33,7 @@ import { errorsMessages } from '@/src/constants/errors';
 import { authOptions } from './auth/[...nextauth]';
 
 import { Message, Role } from '@epam/ai-dial-shared';
+import { nanoid } from 'nanoid';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
@@ -43,6 +44,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   const {
     id,
+    reference,
     messages,
     prompt,
     temperature,
@@ -145,7 +147,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           : undefined,
       assistantModelId: assistantModel?.id,
       userJWT: token?.access_token as string,
-      chatId: id,
+      chatId: reference ?? nanoid(),
       jobTitle: token?.jobTitle as string,
       maxRequestTokens: features?.truncatePrompt
         ? limits?.maxRequestTokens
