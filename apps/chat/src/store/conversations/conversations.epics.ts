@@ -1060,6 +1060,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
         responseId: message.responseId,
         modelId: conversation.model.id,
         id: conversation.id,
+        reference: (conversation as Conversation).reference,
         value: payload.rate > 0 ? true : false,
       };
 

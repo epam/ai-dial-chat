@@ -23,6 +23,7 @@ export interface RateBody {
   modelId: string;
   responseId: string;
   id: string;
+  reference: string;
   value: boolean;
 }
 

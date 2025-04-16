@@ -147,7 +147,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           : undefined,
       assistantModelId: assistantModel?.id,
       userJWT: token?.access_token as string,
-      chatId: reference ?? nanoid(),
+      chatReference: reference ?? nanoid(),
       jobTitle: token?.jobTitle as string,
       maxRequestTokens: features?.truncatePrompt
         ? limits?.maxRequestTokens

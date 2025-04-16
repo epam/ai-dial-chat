@@ -1,21 +1,21 @@
 import { isAuthDisabled } from '../auth/auth-providers';
 
 export const getApiHeaders = ({
-  chatId,
+  chatReference,
   jwt,
   jobTitle,
   ifNoneMatch,
 }: {
   jwt?: string;
-  chatId?: string;
+  chatReference?: string;
   jobTitle?: string;
   ifNoneMatch?: string;
 }): Record<string, string> => {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
-  if (chatId) {
-    headers['X-CONVERSATION-ID'] = chatId;
+  if (chatReference) {
+    headers['X-CONVERSATION-ID'] = chatReference;
   }
 
   if (jwt) {
