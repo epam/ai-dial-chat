@@ -1032,7 +1032,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
       const conversation = ConversationsSelectors.selectConversation(
         state$.value,
         payload.conversationId,
-      );
+      ) as Conversation;
 
       if (!conversation) {
         return of(
@@ -1044,9 +1044,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      const message = (conversation as Conversation).messages[
-        payload.messageIndex
-      ];
+      const message = conversation.messages[payload.messageIndex];
 
       if (!message || !message.responseId) {
         return of(
@@ -1060,7 +1058,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
         responseId: message.responseId,
         modelId: conversation.model.id,
         id: conversation.id,
-        reference: (conversation as Conversation).reference,
+        reference: conversation.reference,
         value: payload.rate > 0 ? true : false,
       };
 
