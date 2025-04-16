@@ -15,7 +15,6 @@ import { errorsMessages } from '@/src/constants/errors';
 
 import { authOptions } from './auth/[...nextauth]';
 
-import { nanoid } from 'nanoid';
 import fetch from 'node-fetch';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
@@ -43,7 +42,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     await fetch(url, {
       headers: getApiHeaders({
-        chatReference: reference ?? nanoid(),
+        chatReference: reference ?? id,
         jwt: token?.access_token as string,
         jobTitle: token?.jobTitle as string,
       }),

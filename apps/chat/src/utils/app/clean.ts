@@ -69,24 +69,22 @@ export const cleanConversation = (
   // added selectedAddons and refactored to not miss any new fields (7/6/2023)
   // added reference to make chatId (x-conversation-id header) a constant value (16/4/2025)
 
-  const model: ConversationEntityModel = conversation.model
-    ? {
-        id: conversation.model.id,
-      }
-    : { id: FALLBACK_MODEL_ID };
-
+  const model: ConversationEntityModel = {
+    id: conversation.model ? conversation.model.id : FALLBACK_MODEL_ID,
+  };
   const assistantModelId =
     conversation.assistantModelId ??
     DefaultsService.get('assistantSubmodelId', FALLBACK_ASSISTANT_SUBMODEL_ID);
+  const conversationId =
+    conversation.id ||
+    constructPath(
+      conversation.folderId || getConversationRootId(),
+      conversation.name || DEFAULT_CONVERSATION_NAME,
+    );
 
   const cleanConversation: Conversation = {
-    id:
-      conversation.id ||
-      constructPath(
-        conversation.folderId || getConversationRootId(),
-        conversation.name || DEFAULT_CONVERSATION_NAME,
-      ),
-    reference: conversation.reference ?? nanoid(),
+    id: conversationId,
+    reference: conversation.reference ?? conversationId,
     name: conversation.name || DEFAULT_CONVERSATION_NAME,
     model: model,
     prompt:
