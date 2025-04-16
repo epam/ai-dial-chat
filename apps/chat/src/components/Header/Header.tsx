@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import classNames from 'classnames';
-
 import { isSmallScreen, isTabletScreen } from '@/src/utils/app/mobile';
 import { centralChatWidth, getNewSidebarWidth } from '@/src/utils/app/sidebar';
 
@@ -18,8 +16,8 @@ import {
 
 import { ToggleSidebarButton } from '../Common/Buttons/ToggleSidebarButtor';
 import { SettingDialog } from '../Settings/SettingDialog';
+import { BaseHeader } from './BaseHeader';
 import { CreateNewConversation } from './CreateNewEntity';
-import { Logo } from './Logo';
 import { User } from './User/User';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
@@ -126,49 +124,49 @@ const Header = Inversify.register('Header', () => {
   }, []);
 
   return (
-    <div
-      className={classNames(
-        'z-30 flex w-full border-b border-secondary bg-layer-1',
-        isOverlay ? 'min-h-[36px]' : 'min-h-[49px]',
-      )}
-      data-qa="header"
-    >
-      {enabledFeatures.has(Feature.ConversationsSection) && !selectedWidget && (
-        <ToggleSidebarButton
-          iconSize={headerIconSize}
-          tooltip="Conversation list"
-          isOpened={showChatbar}
-          onToggle={handleToggleChatbar}
-          dataQa="left-panel-toggle"
-          isOverlay={isOverlay}
-        />
-      )}
-      <div className="ml-4">
-        {!enabledFeatures.has(Feature.HideNewConversation) &&
-          !showChatbar &&
-          !selectedWidget && (
-            <CreateNewConversation iconSize={headerIconSize} />
+    <BaseHeader
+      LeftItems={
+        <>
+          {enabledFeatures.has(Feature.ConversationsSection) &&
+            !selectedWidget && (
+              <ToggleSidebarButton
+                iconSize={headerIconSize}
+                tooltip="Conversation list"
+                isOpened={showChatbar}
+                onToggle={handleToggleChatbar}
+                dataQa="left-panel-toggle"
+                isOverlay={isOverlay}
+              />
+            )}
+          <div className="w-12 md:w-16">
+            {!enabledFeatures.has(Feature.HideNewConversation) &&
+              !showChatbar &&
+              !selectedWidget && (
+                <CreateNewConversation iconSize={headerIconSize} />
+              )}
+          </div>
+        </>
+      }
+      RightItems={
+        <>
+          <div className="flex w-[48px] items-center justify-center md:w-auto">
+            <User />
+          </div>
+          {enabledFeatures.has(Feature.PromptsSection) && !selectedWidget && (
+            <ToggleSidebarButton
+              iconSize={headerIconSize}
+              tooltip="Prompt list"
+              isOpened={showPromptbar}
+              onToggle={handleTogglePromtbar}
+              dataQa="right-panel-toggle"
+              rightSide
+              isOverlay={isOverlay}
+            />
           )}
-      </div>
-      <div className="flex grow justify-center">
-        <Logo />
-      </div>
-      <div className="flex w-[48px] items-center justify-center max-md:border-l max-md:border-tertiary md:w-auto">
-        <User />
-      </div>
-      {enabledFeatures.has(Feature.PromptsSection) && !selectedWidget && (
-        <ToggleSidebarButton
-          iconSize={headerIconSize}
-          tooltip="Prompt list"
-          isOpened={showPromptbar}
-          onToggle={handleTogglePromtbar}
-          dataQa="right-panel-toggle"
-          rightSide
-          isOverlay={isOverlay}
-        />
-      )}
-      <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
-    </div>
+          <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
+        </>
+      }
+    />
   );
 });
 export default Header;

@@ -85,4 +85,14 @@ export class AppContainer extends BaseLayoutContainer<Header> {
     }
     return this.footer;
   }
+
+  public async waitForAppLoaded(timeout?: number) {
+    const loaders = this.getChatLoader();
+    const loadersCount = await loaders.getElementsCount();
+    for (let i = 1; i <= loadersCount; i++) {
+      await loaders
+        .getNthElement(i)
+        .waitFor({ state: 'hidden', timeout: timeout });
+    }
+  }
 }
