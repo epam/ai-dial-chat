@@ -20,7 +20,7 @@ export const SelectedFile: FC<Props> = ({ document, readonly, onRemove }) => {
       <div className="ml-2 flex min-w-0 flex-1 flex-col">
         <Tooltip
           tooltip={name}
-          triggerClassName="items-center"
+          triggerClassName="items-center flex"
           contentClassName="text-primary"
         >
           <span className="mb-1.5 w-full truncate text-sm leading-4 text-primary">
