@@ -211,7 +211,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
           control={control}
           render={({ field }) => (
             <FilesSelectorField
-              label={t('Document relative url')}
+              label={t('Document relative URLs')}
               onAddFiles={(documents) => {
                 field.onChange(
                   uniq([...(field.value ? field.value : []), ...documents]),
