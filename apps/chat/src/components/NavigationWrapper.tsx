@@ -16,7 +16,6 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -133,11 +132,9 @@ const MarketplaceNavigation = () => {
       if (!isMarketplace) {
         router.push(Routes.Marketplace).then(() => {
           dispatch(MarketplaceActions.setSelectedTab(tab));
-          dispatch(ApplicationActions.selectWidget(undefined));
         });
       } else {
         dispatch(MarketplaceActions.setSelectedTab(tab));
-        dispatch(ApplicationActions.selectWidget(undefined));
       }
     },
     [dispatch, isMarketplace, router],
@@ -271,7 +268,6 @@ const Navigation = () => {
       dispatch(
         ConversationsActions.setIsStartedCustomViewerConversation(false),
       );
-      dispatch(ApplicationActions.selectWidget(undefined));
       if (!selectedConversationIds.length) {
         dispatch(
           ConversationsActions.createNewConversations({
@@ -320,7 +316,9 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
     <div className="size-full">
       <div className="flex size-full flex-col md:flex-row ">
         {(router.route === Routes.Chat ||
-          router.route === Routes.Marketplace) && <Navigation />}
+          router.route === Routes.Marketplace ||
+          router.route === Routes.Widgets ||
+          router.route === Routes.SelectedWidget) && <Navigation />}
         {router.route === Routes.Chat &&
           enabledFeatures.has(Feature.ConversationsSection) && <Chatbar />}
         {router.route === Routes.Marketplace && <MarketplaceFilterbar />}

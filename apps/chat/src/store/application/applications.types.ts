@@ -15,6 +15,5 @@ export interface ApplicationState {
   exitAfterSave?: boolean;
   publicFolders: FolderInterface[];
 
-  selectedWidget?: string;
   returnConversationIds?: string[];
 }

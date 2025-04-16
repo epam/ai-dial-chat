@@ -15,7 +15,7 @@ import { Routes } from '@/src/constants/routes';
 import { getLayout } from '@/src/pages/_app';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
-import { BaseHeader } from '@/src/components/Header/BaseHeader';
+import { WidgetsHeader } from '@/src/components/WidgetsHeader';
 
 function WidgetsPage() {
   const { t } = useTranslation(Translation.SideBar);
@@ -32,7 +32,7 @@ function WidgetsPage() {
 
   return (
     <div className="flex size-full flex-col divide-y divide-tertiary bg-layer-1">
-      <BaseHeader />
+      <WidgetsHeader />
 
       <div className="flex grow flex-col gap-px overflow-y-auto p-3">
         {widgetModels.map((model) => (

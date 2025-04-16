@@ -13,7 +13,7 @@ import { getLayout } from '@/src/pages/_app';
 
 import { WidgetView } from '@/src/components/Chat/WidgetView';
 import Loader from '@/src/components/Common/Loader';
-import { BaseHeader } from '@/src/components/Header/BaseHeader';
+import { WidgetsHeader } from '@/src/components/WidgetsHeader';
 
 function SelectedWidgetPage() {
   const router = useRouter();
@@ -33,7 +33,7 @@ function SelectedWidgetPage() {
 
   return (
     <div className="flex size-full flex-col divide-y divide-tertiary bg-layer-1">
-      <BaseHeader />
+      <WidgetsHeader />
 
       {isModelsLoading && (
         <div className="flex grow items-center justify-center">
