@@ -67,6 +67,7 @@ export const cleanConversation = (
   // added messages (4/16/23)
   // added replay (6/22/2023)
   // added selectedAddons and refactored to not miss any new fields (7/6/2023)
+  // added reference to make chatId a constant value (16/4/2025)
 
   const model: ConversationEntityModel = conversation.model
     ? {
