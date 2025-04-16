@@ -497,7 +497,9 @@ dialTest(
       async () => {
         await chat.playNextChatMessage(false);
         await playbackAssertion.assertPlaybackMessageContent(
-          historyConversation.messages[2].content,
+          historyConversation.messages[2].content.concat(
+            Attachment.heartImageName,
+          ),
         );
         await playbackAssertion.assertPlaybackMessageAttachmentState(
           Attachment.heartImageName,
