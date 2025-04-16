@@ -16,13 +16,13 @@ dialTest(
     setTestIds,
     chat,
     conversationAssertion,
+    baseAssertion,
     sendMessage,
     conversationDropdownMenu,
     compareConversation,
     conversationToCompareAssertion,
     localStorageManager,
     sendMessageAssertion,
-    chatLoader,
   }) => {
     setTestIds(
       'EPMRTC-598',
@@ -96,7 +96,14 @@ dialTest(
         await conversationAssertion.assertSelectedConversation(
           firstConversation.name,
         );
-        await chatLoader.waitForState({ state: 'detached' });
+        await baseAssertion.assertElementState(
+          chat.changeAgentButton,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          chat.configureSettingsButton,
+          'visible',
+        );
         await sendMessageAssertion.assertElementState(
           sendMessage.messageInput,
           'visible',

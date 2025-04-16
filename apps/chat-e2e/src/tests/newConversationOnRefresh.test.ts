@@ -32,7 +32,6 @@ dialTest(
     localStorageManager,
     conversationAssertion,
     chatHeader,
-    chatLoader,
     confirmationDialog,
     chatMessagesAssertion,
     chatHeaderAssertion,
@@ -191,7 +190,6 @@ dialTest(
           initialConversationName,
         );
         await conversationAssertion.assertEntitiesCount(1);
-        await chatLoader.waitForState({ state: 'detached' });
       },
     );
 

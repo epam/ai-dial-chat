@@ -25,6 +25,8 @@ dialTest(
     conversationData,
     dataInjector,
     conversations,
+    chatHeader,
+    chatMessages,
     conversationAssertion,
     setTestIds,
     compareConversation,
@@ -38,7 +40,6 @@ dialTest(
     renameConversationModal,
     localStorageManager,
     compare,
-    chatLoader,
   }) => {
     setTestIds(
       'EPMRTC-934',
@@ -81,7 +82,11 @@ dialTest(
       await conversationAssertion.assertSelectedConversation(
         secondConversation.name,
       );
-      await chatLoader.waitForState({ state: 'detached' });
+      await baseAssertion.assertElementState(chatHeader, 'visible');
+      await baseAssertion.assertElementState(
+        chatMessages.getChatMessage(1),
+        'visible',
+      );
     });
 
     await dialTest.step('Hover over chat1', async () => {
