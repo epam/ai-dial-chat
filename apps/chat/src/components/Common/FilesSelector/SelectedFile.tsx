@@ -17,7 +17,7 @@ export const SelectedFile: FC<Props> = ({ document, readonly, onRemove }) => {
   return (
     <div className="flex cursor-pointer flex-row items-center justify-between rounded p-2 hover:bg-accent-primary-alpha">
       <IconFile size={18} className="text-secondary" />
-      <div className="ml-2 flex min-w-0 flex-1 flex-col">
+      <div className="ml-2 flex min-w-0 flex-1 flex-col pr-2">
         <Tooltip
           tooltip={name}
           triggerClassName="items-center flex"
