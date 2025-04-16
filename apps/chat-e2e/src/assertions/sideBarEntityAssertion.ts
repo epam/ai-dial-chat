@@ -15,7 +15,7 @@ export class SideBarEntityAssertion<
 
   public async assertEntityAndCheckboxHasSelectedColors(
     entity: TreeEntity,
-    expectedColors: { checkboxColor: string; backgroundColor: string },
+    expectedColors: { checkboxColor: string; entityBackgroundColor: string },
   ) {
     await this.assertEntityCheckboxColor(entity, expectedColors.checkboxColor);
     await this.assertEntityCheckboxBorderColors(
@@ -24,7 +24,7 @@ export class SideBarEntityAssertion<
     );
     await this.assertEntityBackgroundColor(
       entity,
-      expectedColors.backgroundColor,
+      expectedColors.entityBackgroundColor,
     );
   }
 
