@@ -13,7 +13,7 @@ interface Props {
   confirmLabel: string;
   cancelLabel?: string | null;
   headingClassName?: string;
-  onClose: (result: boolean) => void;
+  onClose: (isConfirmed: boolean) => void;
 }
 
 export const ConfirmDialog = ({

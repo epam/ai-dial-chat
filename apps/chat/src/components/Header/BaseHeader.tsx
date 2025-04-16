@@ -16,13 +16,14 @@ export const BaseHeader: React.FC<Props> = ({ LeftItems, RightItems }) => {
   return (
     <div
       className={classNames(
-        'z-30 flex w-full border-b border-secondary bg-layer-1',
+        'relative z-30 flex w-full border-b border-secondary bg-layer-1',
         isOverlay ? 'min-h-[36px]' : 'min-h-[49px]',
       )}
       data-qa="header"
     >
       {LeftItems && LeftItems}
-      <div className="flex grow justify-center">
+      <div className="grow"></div>
+      <div className="absolute left-1/2 top-0 flex h-full -translate-x-1/2 justify-center">
         <Logo />
       </div>
       {RightItems && RightItems}
