@@ -1,7 +1,5 @@
 import { useCallback } from 'react';
 
-import classNames from 'classnames';
-
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -13,10 +11,10 @@ import {
   OVERLAY_HEADER_ICON_SIZE,
 } from '@/src/constants/default-ui-settings';
 
-import { Logo } from '@/src/components/Header/Logo';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
 import { ToggleSidebarButton } from '../Common/Buttons/ToggleSidebarButtor';
+import { BaseHeader } from '../Header/BaseHeader';
 import { User } from '../Header/User/User';
 
 export const MarketplaceHeader = () => {
@@ -45,38 +43,27 @@ export const MarketplaceHeader = () => {
     ? OVERLAY_HEADER_ICON_SIZE
     : DEFAULT_HEADER_ICON_SIZE;
 
-  const heightClass = isOverlay ? 'min-h-[36px]' : 'min-h-[49px]';
-
   return (
-    <div
-      className={classNames(
-        'relative z-30 flex w-full border-b border-secondary bg-layer-1',
-        isOverlay ? 'pr-12' : 'pr-16',
-        heightClass,
-      )}
-      data-qa="header"
-    >
-      <ToggleSidebarButton
-        iconSize={headerIconSize}
-        tooltip="Control panel"
-        isOpened={showFilterbar}
-        onToggle={handleToggleFilterbar}
-        dataQa="left-panel-toggle"
-        isOverlay={isOverlay}
-      />
-      <div className="flex grow justify-center">
-        <Logo />
-      </div>
-      <div
-        className={classNames(
-          'absolute right-0 flex w-[48px] items-center justify-center md:w-auto',
-          heightClass,
-        )}
-      >
-        <User />
-      </div>
+    <BaseHeader
+      LeftItems={
+        <ToggleSidebarButton
+          iconSize={headerIconSize}
+          tooltip="Control panel"
+          isOpened={showFilterbar}
+          onToggle={handleToggleFilterbar}
+          dataQa="left-panel-toggle"
+          isOverlay={isOverlay}
+        />
+      }
+      RightItems={
+        <>
+          <div className="w-[48px] md:w-auto">
+            <User />
+          </div>
 
-      <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
-    </div>
+          <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
+        </>
+      }
+    />
   );
 };
