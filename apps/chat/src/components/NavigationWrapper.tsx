@@ -316,7 +316,8 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
       <Widgetbar />
 
       <div className="flex size-full flex-col md:flex-row ">
-        <Navigation />
+        {(router.route === Routes.Chat ||
+          router.route === Routes.Marketplace) && <Navigation />}
         {router.route === Routes.Chat &&
           enabledFeatures.has(Feature.ConversationsSection) && <Chatbar />}
         {router.route === Routes.Marketplace && <MarketplaceFilterbar />}
