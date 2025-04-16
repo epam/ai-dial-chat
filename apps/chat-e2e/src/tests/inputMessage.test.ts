@@ -3,6 +3,7 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import { Publication } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
+import { ExpectedConstants } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -17,7 +18,8 @@ dialAdminTest(
     'The text in input message is stored when user switches between chat and chat in Replay mode with stopped generating response.\n' +
     'The text in input message is stored when user switches between chat and chat when no input is available.\n' +
     'The text in input message is stored when user switches between chat and chat from Shared with me.\n' +
-    'The text in input message is stored when user switches between chat and chat from Organization',
+    'The text in input message is stored when user switches between chat and chat from Organization.\n' +
+    'The text in input message is stored when user switches between chat and chat in Playback mode',
   async ({
     dialHomePage,
     conversations,
@@ -32,9 +34,12 @@ dialAdminTest(
     chatBar,
     talkToAgentDialog,
     sendMessageAssertion,
+    playbackAssertion,
     localStorageManager,
     chatAssertion,
     chatMessages,
+    playbackControl,
+    chatHeader,
     header,
     navigationPanel,
     marketplacePage,
@@ -54,6 +59,7 @@ dialAdminTest(
       'EPMRTC-5419',
       'EPMRTC-5376',
       'EPMRTC-5377',
+      'EPMRTC-6048',
     );
     const inputMessage = GeneratorUtil.randomString(5);
     let firstConversation: Conversation;
@@ -63,6 +69,7 @@ dialAdminTest(
     let notAvailableAgentConversation: Conversation;
     let sharedConversation: Conversation;
     let publishedConversation: Conversation;
+    let playbackConversation: Conversation;
     let randomAgentId: string;
     let notWorkspaceAgent: DialAIEntityModel;
 
@@ -98,6 +105,11 @@ dialAdminTest(
         sharedConversation = conversationData.prepareDefaultConversation();
         conversationData.resetData();
         publishedConversation = conversationData.prepareDefaultConversation();
+        conversationData.resetData();
+        playbackConversation =
+          conversationData.prepareDefaultPlaybackConversation(
+            firstConversation,
+          );
 
         await dataInjector.createConversations([
           firstConversation,
@@ -106,6 +118,7 @@ dialAdminTest(
           notWorkspaceAgentConversation,
           notAvailableAgentConversation,
           publishedConversation,
+          playbackConversation,
         ]);
         await adminDataInjector.createConversations([sharedConversation]);
 
@@ -262,6 +275,37 @@ dialAdminTest(
         );
         await chatMessages.getChatMessage(1).waitFor();
         await conversations.selectConversation(secondConversation.name);
+        await sendMessageAssertion.assertMessageValue(inputMessage);
+      },
+    );
+
+    await dialTest.step(
+      'Select playback conversation and verify input message field is empty',
+      async () => {
+        await conversations.selectConversation(playbackConversation.name);
+        await playbackControl.waitForState();
+        await playbackAssertion.assertPlaybackMessageContent(
+          ExpectedConstants.emptyPlaybackMessage,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Play back the first request and verify input message field is empty',
+      async () => {
+        for (let i = 1; i <= 2; i++) {
+          await chat.playNextChatMessage();
+        }
+        await playbackAssertion.assertPlaybackMessageContent(
+          ExpectedConstants.emptyPlaybackMessage,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Stop playback and verify input message is restored',
+      async () => {
+        await chatHeader.leavePlaybackMode.click();
         await sendMessageAssertion.assertMessageValue(inputMessage);
       },
     );
