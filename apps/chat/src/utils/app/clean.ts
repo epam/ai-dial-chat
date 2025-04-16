@@ -20,7 +20,6 @@ import {
   Message,
   Stage,
 } from '@epam/ai-dial-shared';
-import { nanoid } from 'nanoid';
 
 const migrateAttachmentUrls = (attachment: Attachment): Attachment => {
   const getNewAttachmentUrl = (url: string | undefined): string | undefined =>
