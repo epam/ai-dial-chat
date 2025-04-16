@@ -444,7 +444,7 @@ dialSharedWithMeTest(
         const sharedEntities =
           await additionalUserShareApiHelper.listSharedWithMePrompts();
         folder.id = prompt.folderId + ItemUtil.urlSeparator;
-        await shareApiAssertion.assertSharedWithMeEntitiesCount(
+        shareApiAssertion.assertSharedWithMeEntitiesCount(
           sharedEntities,
           folder,
         );
@@ -497,12 +497,12 @@ dialSharedWithMeTest(
       async () => {
         const sharedPrompts =
           await additionalUserShareApiHelper.listSharedWithMePrompts();
-        await shareApiAssertion.assertSharedWithMeEntityState(
+        shareApiAssertion.assertSharedWithMeEntityState(
           sharedPrompts,
           prompt,
           'hidden',
         );
-        await shareApiAssertion.assertSharedWithMeEntityState(
+        shareApiAssertion.assertSharedWithMeEntityState(
           sharedPrompts,
           folder,
           'visible',

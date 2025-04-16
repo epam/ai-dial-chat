@@ -351,6 +351,17 @@ dialSharedWithMeTest(
           MenuOptions.unshare,
         );
         await additionalShareUserConfirmationDialog.cancelDialog();
+        await additionalShareUserSharedWithMeFoldersAssertion.assertFolderState(
+          { name: nestedFolders[0].name },
+          'visible',
+        );
+        for (let i = 0; i < nestedLevel; i++) {
+          await additionalShareUserSharedWithMeFoldersAssertion.assertFolderEntityState(
+            { name: nestedFolders[i].name },
+            { name: nestedConversations[i].name },
+            'visible',
+          );
+        }
       },
     );
 
@@ -817,12 +828,13 @@ dialSharedWithMeTest(
 );
 
 dialSharedWithMeTest(
-  'Shared with me. Structure creates again if it was deleted if to open the same link',
+  'Shared with me. Structure creates again if it was unshared if to open the same link',
   async ({
     conversationData,
     dataInjector,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
+    shareApiAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1855');
@@ -856,17 +868,15 @@ dialSharedWithMeTest(
           (r) => r.name === conversationInFolder.folders.name,
         ),
       );
+      conversationInFolder.folders.id =
+        conversationInFolder.conversations[0].folderId + ItemUtil.urlSeparator;
       sharedEntities =
         await additionalUserShareApiHelper.listSharedWithMeConversations();
-
-      expect
-        .soft(
-          sharedEntities.resources.find(
-            (f) => f.name === conversationInFolder.folders.name,
-          ),
-          ExpectedMessages.folderIsNotShared,
-        )
-        .toBeUndefined();
+      shareApiAssertion.assertSharedWithMeEntityState(
+        sharedEntities,
+        conversationInFolder.folders,
+        'hidden',
+      );
     });
 
     await dialSharedWithMeTest.step(
@@ -875,14 +885,11 @@ dialSharedWithMeTest(
         await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
         const sharedEntities =
           await additionalUserShareApiHelper.listSharedWithMeConversations();
-        expect
-          .soft(
-            sharedEntities.resources.find(
-              (f) => f.name === conversationInFolder.folders.name,
-            ),
-            ExpectedMessages.folderIsNotShared,
-          )
-          .toBeDefined();
+        shareApiAssertion.assertSharedWithMeEntityState(
+          sharedEntities,
+          conversationInFolder.folders,
+          'visible',
+        );
       },
     );
   },
@@ -967,17 +974,17 @@ dialSharedWithMeTest(
         conversationInFolder.folders.id =
           conversationInFolder.conversations[0].folderId +
           ItemUtil.urlSeparator;
-        await shareApiAssertion.assertSharedWithMeEntityState(
+        shareApiAssertion.assertSharedWithMeEntityState(
           sharedEntities,
           conversationInFolder.folders,
           'hidden',
         );
-        await shareApiAssertion.assertSharedWithMeEntityState(
+        shareApiAssertion.assertSharedWithMeEntityState(
           sharedEntities,
           conversationInFolder.conversations[0],
           'hidden',
         );
-        await shareApiAssertion.assertSharedWithMeEntityState(
+        shareApiAssertion.assertSharedWithMeEntityState(
           sharedEntities,
           conversation,
           'hidden',

@@ -476,7 +476,7 @@ dialTest(
         folderPrompt.prompts[0].folderId + ItemUtil.urlSeparator;
       const sharedEntities =
         await additionalUserShareApiHelper.listSharedWithMePrompts();
-      await shareApiAssertion.assertSharedWithMeEntityState(
+      shareApiAssertion.assertSharedWithMeEntityState(
         sharedEntities,
         folderPrompt.folders,
         'hidden',

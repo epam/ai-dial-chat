@@ -265,6 +265,12 @@ export class ChatMessages extends BaseElement {
     };
   }
 
+  public async getMessageArrowIcon(index?: number) {
+    const messagesCount = await this.chatMessages.getElementsCount();
+    const messageIcon = this.chatMessages.getNthElement(index ?? messagesCount);
+    return messageIcon.locator(SideBarSelectors.arrowAdditionalIcon);
+  }
+
   public async waitForCompareMessageJumpingIconDisappears(
     comparedMessageSide: Side,
   ) {

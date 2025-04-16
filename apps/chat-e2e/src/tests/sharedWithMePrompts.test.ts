@@ -180,7 +180,7 @@ dialTest(
 
         const sharedEntities =
           await additionalUserShareApiHelper.listSharedWithMePrompts();
-        await shareApiAssertion.assertSharedWithMeEntityState(
+        shareApiAssertion.assertSharedWithMeEntityState(
           sharedEntities,
           prompt,
           'hidden',

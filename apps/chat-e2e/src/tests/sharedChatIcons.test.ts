@@ -13,7 +13,7 @@ import {
 } from '@/src/testData';
 import { Colors, Overflow, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
-import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 dialTest(
@@ -86,9 +86,17 @@ dialTest(
         await shareModalAssertion.assertMessageContent(
           ExpectedConstants.shareConversationText,
         );
+        await shareModalAssertion.assertElementState(
+          shareModal.notSharedEntityLabel,
+          'visible',
+        );
         await shareModalAssertion.assertElementText(
           shareModal.notSharedEntityLabel,
           ExpectedConstants.notSharedChatText,
+        );
+        await shareModalAssertion.assertElementState(
+          shareModal.removeAccessBtn,
+          'hidden',
         );
       },
     );
@@ -458,7 +466,7 @@ dialTest(
           secondConversationToShare,
           thirdConversationToShare,
         ]) {
-          await shareApiAssertion.assertSharedWithMeEntityState(
+          shareApiAssertion.assertSharedWithMeEntityState(
             sharedEntities,
             conversation,
             'visible',
@@ -832,6 +840,7 @@ dialTest(
     confirmationDialogAssertion,
     tooltipAssertion,
     chatBarFolderAssertion,
+    shareApiAssertion,
   }) => {
     setTestIds(
       'EPMRTC-2729',
@@ -960,33 +969,34 @@ dialTest(
       async () => {
         const sharedEntities =
           await additionalUserShareApiHelper.listSharedWithMeConversations();
-        expect
-          .soft(
-            sharedEntities.resources.find(
-              (f) => f.name === folderConversation.folders.name,
-            ),
-            ExpectedMessages.folderIsNotShared,
-          )
-          .toBeUndefined();
+        shareApiAssertion.assertSharedWithMeEntityState(
+          sharedEntities,
+          folderConversation.conversations[0].folderId + ItemUtil.urlSeparator,
+          'hidden',
+        );
       },
     );
   },
 );
 
 dialTest(
-  'Shared icon stays in chat if to cancel unshare.\n' +
+  'Shared icon in chat header and response does not appear.\n' +
+    'Shared icon stays in chat if to cancel unshare.\n' +
     'Shared icon disappears in chat if to unshare.\n' +
     '"Remove access for all users" link appears for shared chats only on sharing form.\n' +
     'Error appears if chat was unshared, but user clicks on shared link.\n' +
-    'Shared icon in chat header and response does not appear.\n' +
     'Shared chat disappears from Shared with me if the original was unshared',
   async ({
     dialHomePage,
+    chatBar,
     conversations,
     conversationData,
     dataInjector,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
+    shareApiAssertion,
+    chatHeader,
+    chatMessages,
     conversationDropdownMenu,
     shareModalAssertion,
     shareModal,
@@ -998,11 +1008,11 @@ dialTest(
     baseAssertion,
   }) => {
     setTestIds(
+      'EPMRTC-1601',
       'EPMRTC-2748',
       'EPMRTC-2749',
       'EPMRTC-2746',
       'EPMRTC-2765',
-      'EPMRTC-1601',
       'EPMRTC-2762',
     );
     let conversation: Conversation;
@@ -1020,23 +1030,18 @@ dialTest(
     });
 
     await dialTest.step(
-      'Verify Share option is displayed in dropdown menu for shared conversation',
+      'Select shared conversation and verify arrow icons are not displayed neither on the header icon nor on the chat messages',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.getEntityArrowIcon(conversation.name).waitFor();
-        await conversations.openEntityDropdownMenu(conversation.name);
-        const actualMenuOptions =
-          await conversationDropdownMenu.getAllMenuOptions();
-        baseAssertion.assertArrayIncludesAll(
-          actualMenuOptions,
-          [MenuOptions.share],
-          ExpectedMessages.contextMenuOptionsValid,
+        await conversations.selectConversation(conversation.name);
+        await baseAssertion.assertElementState(
+          chatHeader.chatModelArrowIcon,
+          'hidden',
         );
-        baseAssertion.assertArrayExcludesAll(
-          actualMenuOptions,
-          [MenuOptions.unshare],
-          ExpectedMessages.contextMenuOptionsValid,
+        await baseAssertion.assertElementState(
+          await chatMessages.getMessageArrowIcon(),
+          'hidden',
         );
       },
     );
@@ -1044,10 +1049,19 @@ dialTest(
     await dialTest.step(
       'Select Share option for shared conversation, click on "Remove access for all users" btn, click cancel and verify arrow icon is still displayed',
       async () => {
+        await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.share);
+        await shareModalAssertion.assertElementState(
+          shareModal.removeAccessBtn,
+          'visible',
+        );
         await shareModalAssertion.assertElementText(
           shareModal.removeAccessBtn,
           ExpectedConstants.removeAccessText,
+        );
+        await shareModalAssertion.assertElementState(
+          shareModal.notSharedEntityLabel,
+          'hidden',
         );
         await shareModal.removeAccessBtn.click();
         await confirmationDialog.cancelDialog();
@@ -1073,23 +1087,9 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open conversation dropdown menu and verify only Share option is available',
+      'Select Share option for the unshared conversation and verify "This chat has not been shared with anyone yet." label is displayed instead of button',
       async () => {
         await conversations.openEntityDropdownMenu(conversation.name);
-        const actualMenuOptions =
-          await conversationDropdownMenu.getAllMenuOptions();
-        expect
-          .soft(actualMenuOptions, ExpectedMessages.contextMenuOptionsValid)
-          .toEqual(expect.arrayContaining([MenuOptions.share]));
-        expect
-          .soft(actualMenuOptions, ExpectedMessages.contextMenuOptionsValid)
-          .not.toEqual(expect.arrayContaining([MenuOptions.unshare]));
-      },
-    );
-
-    await dialTest.step(
-      'Select Share option for the conversation and verify "This chat has not been shared with anyone yet." label is displayed instead of button',
-      async () => {
         await conversationDropdownMenu.selectMenuOption(MenuOptions.share);
         await shareModalAssertion.assertElementState(
           shareModal.notSharedEntityLabel,
@@ -1098,6 +1098,10 @@ dialTest(
         await shareModalAssertion.assertElementText(
           shareModal.notSharedEntityLabel,
           ExpectedConstants.notSharedChatText,
+        );
+        await shareModalAssertion.assertElementState(
+          shareModal.removeAccessBtn,
+          'hidden',
         );
         await shareModal.closeButton.click();
       },
@@ -1108,14 +1112,11 @@ dialTest(
       async () => {
         const sharedWithAnotherUserConversations =
           await additionalUserShareApiHelper.listSharedWithMeConversations();
-        expect
-          .soft(
-            sharedWithAnotherUserConversations.resources.find(
-              (c) => c.name === conversation.name,
-            ),
-            ExpectedMessages.conversationIsNotShared,
-          )
-          .toBeUndefined();
+        shareApiAssertion.assertSharedWithMeEntityState(
+          sharedWithAnotherUserConversations,
+          conversation,
+          'hidden',
+        );
       },
     );
 
@@ -1132,6 +1133,7 @@ dialTest(
     await dialTest.step(
       'Create new conversation, send any request and verify Unshare option is not available in context menu',
       async () => {
+        await chatBar.createNewEntity();
         const newChatRequest = '1+2';
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
@@ -1140,13 +1142,19 @@ dialTest(
         await conversations.openEntityDropdownMenu(newChatRequest);
         const actualMenuOptions =
           await conversationDropdownMenu.getAllMenuOptions();
-        expect
-          .soft(actualMenuOptions, ExpectedMessages.contextMenuOptionsValid)
-          .not.toEqual(expect.arrayContaining([MenuOptions.unshare]));
+        baseAssertion.assertArrayExcludesAll(
+          actualMenuOptions,
+          [MenuOptions.unshare],
+          ExpectedMessages.contextMenuOptionsValid,
+        );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.share);
         await shareModalAssertion.assertElementState(
           shareModal.notSharedEntityLabel,
           'visible',
+        );
+        await shareModalAssertion.assertElementState(
+          shareModal.removeAccessBtn,
+          'hidden',
         );
       },
     );
