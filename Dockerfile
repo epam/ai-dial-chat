@@ -2,6 +2,7 @@
 FROM node:22-alpine AS base
 WORKDIR /app
 COPY /tools ./tools
+COPY /patches ./patches
 COPY package*.json ./
 
 # ---- Dependencies ----
@@ -19,6 +20,7 @@ WORKDIR /app/dist/apps/chat
 COPY /tools /app/dist/apps/chat/tools
 COPY /patches /app/dist/apps/chat/patches
 RUN npm i
+RUN node /app/node_modules/patch-package
 RUN node tools/patch-nextjs.js
 
 # ---- Production ----
