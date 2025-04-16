@@ -37,9 +37,9 @@ export const CONFIRM_ICON_FILE_VALUES: ConfirmDialogValueTypes = {
 };
 
 export const CONFIRM_DOCUMENT_VALUES: ConfirmDialogValueTypes = {
-  heading: 'Confirm changing document relative url',
+  heading: 'Confirm changing document relative URLs',
   description:
-    'Changing of document relative url will stop sharing and other users will no longer see this application.',
+    'Changing of document relative URLs will stop sharing and other users will no longer see this application.',
 };
 
 export const DRAFT_APPLICATION_ID = `${ApiKeys.Applications}/draft`;
