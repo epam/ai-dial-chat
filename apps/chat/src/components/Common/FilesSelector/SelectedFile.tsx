@@ -11,14 +11,18 @@ interface Props {
 
 export const SelectedFile: FC<Props> = ({ document, readonly, onRemove }) => {
   const last = document.lastIndexOf('/');
-  const path = document.substring(0, last);
+  const path = document.substring(0, last).split('/').slice(2).join('/');
   const name = document.substring(last + 1, document.length);
 
   return (
     <div className="flex cursor-pointer flex-row items-center justify-between rounded p-2 hover:bg-accent-primary-alpha">
       <IconFile size={18} className="text-secondary" />
       <div className="ml-2 flex min-w-0 flex-1 flex-col">
-        <Tooltip tooltip={name} contentClassName="text-primary">
+        <Tooltip
+          tooltip={name}
+          triggerClassName="items-center"
+          contentClassName="text-primary"
+        >
           <span className="mb-1.5 w-full truncate text-sm leading-4 text-primary">
             {name}
           </span>
