@@ -66,7 +66,7 @@ export const OpenAIStream = async ({
   messages,
   selectedAddonsIds,
   assistantModelId,
-  chatId,
+  chatReference,
   userJWT,
   jobTitle,
   maxRequestTokens,
@@ -78,7 +78,7 @@ export const OpenAIStream = async ({
   selectedAddonsIds: string[] | undefined;
   assistantModelId: string | undefined;
   userJWT: string;
-  chatId: string;
+  chatReference: string;
   jobTitle: string | undefined;
   maxRequestTokens: number | undefined;
   configurationSchemaValue?: MessageFormValue;
@@ -87,7 +87,7 @@ export const OpenAIStream = async ({
   const url = getUrl(model, selectedAddonsIds);
 
   const requestHeaders = getApiHeaders({
-    chatId,
+    chatReference,
     jwt: userJWT,
     jobTitle,
   });
