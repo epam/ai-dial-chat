@@ -19,7 +19,7 @@ import {
   zip,
 } from 'rxjs';
 
-import { AnyAction } from '@reduxjs/toolkit';
+import { AnyAction, nanoid } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
@@ -111,7 +111,6 @@ import {
 import { Message, UploadStatus } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
-import { nanoid } from 'nanoid';
 
 const exportConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
