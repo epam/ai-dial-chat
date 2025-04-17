@@ -133,7 +133,7 @@ const Header = Inversify.register('Header', () => {
               isOverlay={isOverlay}
             />
           )}
-          <div className="ml-4">
+          <div className="w-12 md:w-16">
             {!enabledFeatures.has(Feature.HideNewConversation) &&
               !showChatbar && (
                 <CreateNewConversation iconSize={headerIconSize} />
