@@ -47,11 +47,19 @@ export const CustomLogoSelect = ({
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<string[]>();
   const [pendingDelete, setPendingDelete] = useState(false);
+  const [confirmHeading, setConfirmHeading] = useState('');
+  const [confirmDescription, setConfirmDescription] = useState('');
 
   const { t } = useTranslation(Translation.Settings);
   const maximumAttachmentsAmount = 1;
 
   const onClickAddHandler = (e: MouseEvent<HTMLButtonElement>) => {
+    if (confirmDialogValues?.heading) {
+      setConfirmHeading(confirmDialogValues?.heading);
+    }
+    if (confirmDialogValues?.changeText && localLogo) {
+      setConfirmDescription(confirmDialogValues?.changeText);
+    }
     e.preventDefault();
     setIsSelectFilesDialogOpened(true);
   };
@@ -69,7 +77,7 @@ export const CustomLogoSelect = ({
   const handleOnClose = useCallback(
     (files: boolean | string[]) => {
       if (Array.isArray(files) && files.length > 0) {
-        if (confirmDialogValues) {
+        if (confirmDialogValues && localLogo) {
           setPendingFiles(files);
           setConfirmDialogOpen(true);
         } else {
@@ -78,11 +86,17 @@ export const CustomLogoSelect = ({
       }
       setIsSelectFilesDialogOpened(false);
     },
-    [confirmDialogValues, handleSelectFiles],
+    [confirmDialogValues, handleSelectFiles, localLogo],
   );
 
   const handleDeleteLogo = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
+    if (confirmDialogValues?.removeText) {
+      setConfirmDescription(confirmDialogValues?.removeText);
+    }
+    if (confirmDialogValues?.removeHeading) {
+      setConfirmHeading(confirmDialogValues?.removeHeading);
+    }
     if (confirmDialogValues) {
       setPendingDelete(true);
       setConfirmDialogOpen(true);
@@ -155,14 +169,15 @@ export const CustomLogoSelect = ({
           customUploadButtonLabel={t('Upload files')}
           forceShowSelectCheckBox
           sourceFilters={sourceFilters}
+          warningMessage={confirmDialogValues?.description}
         />
       )}
 
       {confirmDialogValues && confirmDialogOpen && (
         <ConfirmDialog
           isOpen
-          heading={t(confirmDialogValues.heading)}
-          description={t(confirmDialogValues.description)}
+          heading={t(confirmHeading)}
+          description={t(confirmDescription)}
           confirmLabel={t('Confirm')}
           cancelLabel={t('Cancel')}
           onClose={handleConfirmClose}

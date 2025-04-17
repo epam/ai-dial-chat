@@ -45,7 +45,6 @@ import { withController } from '@/src/components/Common/Forms/ControlledFormFiel
 import { DynamicFormFields } from '@/src/components/Common/Forms/DynamicFormFields';
 import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
-import { withWarningMessage } from '@/src/components/Common/Forms/FieldWarningMessage';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 
@@ -103,9 +102,7 @@ const validators: Validators = {
 
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const ControlledField = withController(Field);
-const FilesEditor = withController(
-  withWarningMessage(withLabel(SourceFilesEditor)),
-);
+const FilesEditor = withController(withLabel(SourceFilesEditor));
 const RuntimeSelector = withController(withLabel(RuntimeVersionSelector));
 const MappingsForm = withLabel(
   DynamicFormFields<CodeAppFormData, 'endpoints' | 'env'>,
@@ -298,7 +295,6 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           tooltip={
             isSharedWithMe ? getSharedTooltip('folder with source files') : ''
           }
-          warning={confirmSourceFolderValues?.description}
           confirmDialogValues={confirmSourceFolderValues}
         />
 

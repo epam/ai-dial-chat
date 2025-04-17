@@ -45,6 +45,9 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingFolder, setPendingFolder] = useState<string | undefined>();
   const [pendingDelete, setPendingDelete] = useState(false);
+  const [localConfirmDialogValues, setLocalConfirmDialogValues] = useState<
+    ConfirmDialogValueTypes | undefined
+  >(confirmDialogValues);
 
   const handleToggleFileManager = useCallback(() => {
     setIsFolderModalOpen((p) => !p);
@@ -70,7 +73,7 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
 
   const handleDelete = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    if (confirmDialogValues) {
+    if (localConfirmDialogValues) {
       setPendingDelete(true);
       setConfirmDialogOpen(true);
     } else {
@@ -90,6 +93,7 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
     setConfirmDialogOpen(false);
     setPendingFolder(undefined);
     setPendingDelete(false);
+    setLocalConfirmDialogValues(undefined);
   };
 
   useEffect(() => {
@@ -150,18 +154,19 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
         isOpen={isFolderModalOpen}
         rootFolderId={getFileRootId()}
         onClose={
-          confirmDialogValues
+          localConfirmDialogValues
             ? handleCloseFileManagerConfirmations
             : handleCloseFileManager
         }
+        warningMessage={localConfirmDialogValues?.description}
         disallowSelectRootFolder
       />
 
-      {confirmDialogValues && confirmDialogOpen && (
+      {localConfirmDialogValues && confirmDialogOpen && (
         <ConfirmDialog
           isOpen
-          heading={t(confirmDialogValues.heading)}
-          description={t(confirmDialogValues.description)}
+          heading={t(localConfirmDialogValues.heading)}
+          description={t(localConfirmDialogValues.description)}
           confirmLabel={t('Confirm')}
           cancelLabel={t('Cancel')}
           onClose={handleConfirmDialogClose}

@@ -41,7 +41,6 @@ import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
-import { withWarningMessage } from '../../Common/Forms/FieldWarningMessage';
 import {
   ApplicationGeneralInfoFormData,
   getApplicationData,
@@ -56,9 +55,7 @@ interface Props {
 }
 
 const ControlledField = withController(Field);
-const LogoSelector = withErrorMessage(
-  withWarningMessage(withLabel(CustomLogoSelect)),
-);
+const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const TopicsSelector = withLabel(DropdownSelector);
 
 export const GeneralInfoEditor: React.FC<Props> = ({
@@ -261,7 +258,6 @@ export const GeneralInfoEditor: React.FC<Props> = ({
                 error={errors.iconUrl?.message}
                 disabled={isSharedWithMe}
                 tooltip={isSharedWithMe ? getSharedTooltip('icon') : ''}
-                warning={confirmIconValues?.description}
                 confirmDialogValues={confirmIconValues}
               />
             )}
