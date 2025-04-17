@@ -49,6 +49,7 @@ export const CustomLogoSelect = ({
   const [pendingDelete, setPendingDelete] = useState(false);
   const [confirmHeading, setConfirmHeading] = useState('');
   const [confirmDescription, setConfirmDescription] = useState('');
+  const [confirmationWasShown, setConfirmationWasShown] = useState(false);
 
   const { t } = useTranslation(Translation.Settings);
   const maximumAttachmentsAmount = 1;
@@ -59,6 +60,9 @@ export const CustomLogoSelect = ({
     }
     if (confirmDialogValues?.changeDescription && localLogo) {
       setConfirmDescription(confirmDialogValues?.changeDescription);
+    }
+    if (!localLogo) {
+      setConfirmationWasShown(true);
     }
     e.preventDefault();
     setIsSelectFilesDialogOpened(true);
@@ -77,7 +81,7 @@ export const CustomLogoSelect = ({
   const handleOnClose = useCallback(
     (files: boolean | string[]) => {
       if (Array.isArray(files) && files.length > 0) {
-        if (confirmDialogValues && localLogo) {
+        if (confirmDialogValues && localLogo && !confirmationWasShown) {
           setPendingFiles(files);
           setConfirmDialogOpen(true);
         } else {
@@ -86,7 +90,7 @@ export const CustomLogoSelect = ({
       }
       setIsSelectFilesDialogOpened(false);
     },
-    [confirmDialogValues, handleSelectFiles, localLogo],
+    [confirmDialogValues, confirmationWasShown, handleSelectFiles, localLogo],
   );
 
   const handleDeleteLogo = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -97,7 +101,7 @@ export const CustomLogoSelect = ({
     if (confirmDialogValues?.removeDescription) {
       setConfirmDescription(confirmDialogValues?.removeDescription);
     }
-    if (confirmDialogValues) {
+    if (confirmDialogValues && !confirmationWasShown) {
       setPendingDelete(true);
       setConfirmDialogOpen(true);
     } else {
@@ -107,6 +111,7 @@ export const CustomLogoSelect = ({
 
   const handleConfirmClose = (result: boolean) => {
     if (result) {
+      setConfirmationWasShown(true);
       if (pendingDelete) {
         onDeleteLocalLogoHandler();
       } else if (pendingFiles) {
