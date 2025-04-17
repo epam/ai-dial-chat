@@ -109,6 +109,7 @@ import { ImportExportSelectors } from './importExport.selectors';
 import { Message, UploadStatus } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
+import { nanoid } from 'nanoid';
 
 const exportConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -360,7 +361,10 @@ const importConversationsEpic: AppEpic = (action$) =>
       }
 
       const preparedConversations = getImportPreparedConversations({
-        conversations: history,
+        conversations: history.map((conv) => ({
+          ...conv,
+          reference: nanoid(),
+        })),
         conversationsFolders: folders,
       }) as Conversation[];
 
