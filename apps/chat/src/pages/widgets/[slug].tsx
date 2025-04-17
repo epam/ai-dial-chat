@@ -27,7 +27,7 @@ function SelectedWidgetPage() {
 
   useEffect(() => {
     if (!widget && !isModelsLoading) {
-      router.push(Routes.Chat);
+      router.push(Routes.NotFound);
     }
   }, [isModelsLoading, router, widget]);
 

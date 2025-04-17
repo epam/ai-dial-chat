@@ -5,4 +5,5 @@ export enum Routes {
   Widgets = '/widgets',
   SelectedWidget = '/widgets/[slug]',
   Chat = '/',
+  NotFound = '/404',
 }
