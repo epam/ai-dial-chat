@@ -19,7 +19,7 @@ import {
   zip,
 } from 'rxjs';
 
-import { AnyAction } from '@reduxjs/toolkit';
+import { AnyAction, nanoid } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
@@ -361,7 +361,10 @@ const importConversationsEpic: AppEpic = (action$) =>
       }
 
       const preparedConversations = getImportPreparedConversations({
-        conversations: history,
+        conversations: history.map((conv) => ({
+          ...conv,
+          reference: nanoid(),
+        })),
         conversationsFolders: folders,
       }) as Conversation[];
 

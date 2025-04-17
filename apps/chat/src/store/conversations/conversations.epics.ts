@@ -28,7 +28,7 @@ import {
 } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
-import { AnyAction } from '@reduxjs/toolkit';
+import { AnyAction, nanoid } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
@@ -458,6 +458,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
 
             const newConversations: Conversation[] = names.map((name, index) =>
               regenerateConversationId({
+                reference: nanoid(),
                 name:
                   name !== DEFAULT_CONVERSATION_NAME
                     ? name
@@ -599,6 +600,7 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
       const newConversation: Conversation = regenerateConversationId({
         ...conversation,
         ...resetShareEntity,
+        reference: nanoid(),
         folderId,
         name: newConversationName,
         messages: [],
@@ -659,6 +661,7 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
       const newConversation: Conversation = regenerateConversationId({
         ...conversation,
         ...resetShareEntity,
+        reference: nanoid(),
         folderId,
         name: newConversationName,
         messages: [],
@@ -712,6 +715,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
       const newConversation: Conversation = regenerateConversationId({
         ...omit(conversation, ['publicationInfo']),
         ...resetShareEntity,
+        reference: nanoid(),
         folderId: conversationFolderId,
         name: generateNextName(
           DEFAULT_CONVERSATION_NAME,
@@ -1056,14 +1060,13 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
 const rateMessageEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.rateMessage.match),
-    map(({ payload }) => ({
-      payload,
-      conversations: ConversationsSelectors.selectConversations(state$.value),
-    })),
-    switchMap(({ conversations, payload }) => {
-      const conversation = conversations.find(
-        (conv) => conv.id === payload.conversationId,
-      );
+
+    switchMap(({ payload }) => {
+      const conversation = ConversationsSelectors.selectConversation(
+        state$.value,
+        payload.conversationId,
+      ) as Conversation;
+
       if (!conversation) {
         return of(
           ConversationsActions.rateMessageFail({
@@ -1073,9 +1076,8 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
           }),
         );
       }
-      const message = (conversation as Conversation).messages[
-        payload.messageIndex
-      ];
+
+      const message = conversation.messages[payload.messageIndex];
 
       if (!message || !message.responseId) {
         return of(
@@ -1089,6 +1091,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
         responseId: message.responseId,
         modelId: conversation.model.id,
         id: conversation.id,
+        reference: conversation.reference,
         value: payload.rate > 0 ? true : false,
       };
 
@@ -1431,6 +1434,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
             }),
           })),
         id: payload.conversation.id,
+        reference: payload.conversation.reference,
         ...modelAdditionalSettings,
       };
 
