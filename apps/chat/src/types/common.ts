@@ -155,6 +155,6 @@ export interface ConfirmDialogValueTypes {
   heading: string;
   removeHeading?: string;
   description: string;
-  removeText?: string;
-  changeText?: string;
+  removeDescription?: string;
+  changeDescription?: string;
 }

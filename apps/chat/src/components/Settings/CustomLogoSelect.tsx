@@ -57,8 +57,8 @@ export const CustomLogoSelect = ({
     if (confirmDialogValues?.heading) {
       setConfirmHeading(confirmDialogValues?.heading);
     }
-    if (confirmDialogValues?.changeText && localLogo) {
-      setConfirmDescription(confirmDialogValues?.changeText);
+    if (confirmDialogValues?.changeDescription && localLogo) {
+      setConfirmDescription(confirmDialogValues?.changeDescription);
     }
     e.preventDefault();
     setIsSelectFilesDialogOpened(true);
@@ -91,11 +91,11 @@ export const CustomLogoSelect = ({
 
   const handleDeleteLogo = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    if (confirmDialogValues?.removeText) {
-      setConfirmDescription(confirmDialogValues?.removeText);
-    }
     if (confirmDialogValues?.removeHeading) {
       setConfirmHeading(confirmDialogValues?.removeHeading);
+    }
+    if (confirmDialogValues?.removeDescription) {
+      setConfirmDescription(confirmDialogValues?.removeDescription);
     }
     if (confirmDialogValues) {
       setPendingDelete(true);

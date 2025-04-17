@@ -48,10 +48,18 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
   const [localConfirmDialogValues, setLocalConfirmDialogValues] = useState<
     ConfirmDialogValueTypes | undefined
   >(confirmDialogValues);
+  const [confirmHeading, setConfirmHeading] = useState('');
+  const [confirmDescription, setConfirmDescription] = useState('');
 
   const handleToggleFileManager = useCallback(() => {
+    if (confirmDialogValues?.heading) {
+      setConfirmHeading(confirmDialogValues?.heading);
+    }
+    if (confirmDialogValues?.description) {
+      setConfirmDescription(confirmDialogValues?.description);
+    }
     setIsFolderModalOpen((p) => !p);
-  }, []);
+  }, [confirmDialogValues?.description, confirmDialogValues?.heading]);
 
   const handleCloseFileManager = useCallback(
     (folder?: string) => {
@@ -73,6 +81,12 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
 
   const handleDelete = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
+    if (confirmDialogValues?.removeHeading) {
+      setConfirmHeading(confirmDialogValues?.removeHeading);
+    }
+    if (confirmDialogValues?.removeDescription) {
+      setConfirmDescription(confirmDialogValues?.removeDescription);
+    }
     if (localConfirmDialogValues) {
       setPendingDelete(true);
       setConfirmDialogOpen(true);
@@ -88,12 +102,12 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
       } else if (pendingFolder) {
         handleCloseFileManager(pendingFolder);
       }
+      setLocalConfirmDialogValues(undefined);
     }
 
     setConfirmDialogOpen(false);
     setPendingFolder(undefined);
     setPendingDelete(false);
-    setLocalConfirmDialogValues(undefined);
   };
 
   useEffect(() => {
@@ -165,8 +179,8 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
       {localConfirmDialogValues && confirmDialogOpen && (
         <ConfirmDialog
           isOpen
-          heading={t(localConfirmDialogValues.heading)}
-          description={t(localConfirmDialogValues.description)}
+          heading={t(confirmHeading)}
+          description={t(confirmDescription)}
           confirmLabel={t('Confirm')}
           cancelLabel={t('Cancel')}
           onClose={handleConfirmDialogClose}
