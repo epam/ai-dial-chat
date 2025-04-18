@@ -127,11 +127,16 @@ const MarketplaceNavigation = () => {
 
   const isMarketplace = router.route === Routes.Marketplace;
 
+  const currentTab = useMemo(() => {
+    return (router.query?.tab as MarketplaceTabs) ?? selectedMarketplaceTab;
+  }, [router.query, selectedMarketplaceTab]);
+
   const handleChangeTab = useCallback(
     (tab: MarketplaceTabs) => {
       if (!isMarketplace) {
-        router.push(Routes.Marketplace).then(() => {
-          dispatch(MarketplaceActions.setSelectedTab(tab));
+        router.push({
+          pathname: Routes.Marketplace,
+          query: { tab },
         });
       } else {
         dispatch(MarketplaceActions.setSelectedTab(tab));
@@ -156,9 +161,7 @@ const MarketplaceNavigation = () => {
         onClick={handleHomeClick}
         tooltip={t('DIAL Marketplace')}
         Icon={IconLayoutGrid}
-        selected={
-          isMarketplace && selectedMarketplaceTab === MarketplaceTabs.HOME
-        }
+        selected={isMarketplace && currentTab === MarketplaceTabs.HOME}
         dataQa="marketplace-home-page"
         caption={t('Apps')}
       />
@@ -166,10 +169,7 @@ const MarketplaceNavigation = () => {
         onClick={handleMyAppsClick}
         tooltip={t('My workspace')}
         Icon={IconHomeRibbon}
-        selected={
-          isMarketplace &&
-          selectedMarketplaceTab === MarketplaceTabs.MY_WORKSPACE
-        }
+        selected={isMarketplace && currentTab === MarketplaceTabs.MY_WORKSPACE}
         dataQa="my-workspace"
         caption={t('Workspace')}
       />
