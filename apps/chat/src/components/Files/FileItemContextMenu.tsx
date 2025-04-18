@@ -2,18 +2,20 @@ import {
   IconDeviceFloppy,
   IconDots,
   IconDownload,
+  IconSquareCheck,
   IconTrashX,
   IconUserX,
 } from '@tabler/icons-react';
 import { MouseEventHandler, useMemo } from 'react';
 
 import { useMenuItemHandler } from '@/src/hooks/useHandler';
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { canEditSharedFolderOrParent } from '@/src/utils/app/folders';
 import { isMyEntity } from '@/src/utils/app/id';
 
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, ScreenState } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
@@ -33,23 +35,27 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 interface ContextMenuProps {
   file: DialFile;
   className: string;
+  isOpen: boolean;
   onDelete: (props?: unknown) => void | MouseEventHandler<unknown>;
   onUnshare: (props?: unknown) => void | MouseEventHandler<unknown>;
   onOpenChange?: (isOpen: boolean) => void;
   onRemoveAccess?: MouseEventHandler<unknown>;
   onUnpublish?: MouseEventHandler<unknown>;
   onSave?: (fileId: string) => void | MouseEventHandler<unknown>;
+  onSelect?: MouseEventHandler<unknown>;
 }
 
 export function FileItemContextMenu({
   file,
   className,
+  isOpen,
   onDelete,
   onUnshare,
   onOpenChange,
   onRemoveAccess,
   onUnpublish,
   onSave,
+  onSelect,
 }: ContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
 
@@ -64,14 +70,24 @@ export function FileItemContextMenu({
     [file.id],
   );
   const isCodeEditorFile = !!useAppSelector(selectFileContentSelector);
-
   const folders = useAppSelector(FilesSelectors.selectFolders);
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+
+  const screenState = useScreenState();
 
   const handleSave = useMenuItemHandler(onSave, file.id);
   const handleDownload = useMenuItemHandler(onOpenChange, false, false);
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
+      {
+        name: t('Select'),
+        dataQa: 'select',
+        display:
+          [ScreenState.SM, ScreenState.MD].includes(screenState) && !isOverlay,
+        Icon: IconSquareCheck,
+        onClick: onSelect,
+      },
       {
         name: t('Save'),
         dataQa: 'save',
@@ -146,11 +162,15 @@ export function FileItemContextMenu({
       onUnpublish,
       folders,
       onDelete,
+      screenState,
+      isOverlay,
+      onSelect,
     ],
   );
 
   return (
     <ContextMenu
+      isOpen={isOpen}
       onOpenChange={onOpenChange}
       menuItems={menuItems}
       TriggerIcon={IconDots}

@@ -6,9 +6,7 @@ import {
   FC,
   Fragment,
   KeyboardEvent,
-  MouseEvent,
   MouseEventHandler,
-  TouchEvent,
   createElement,
   useCallback,
   useEffect,
@@ -224,6 +222,15 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const publicVersionGroups = useAppSelector(
     PublicationSelectors.selectPublicVersionGroups,
   );
+
+  const handleContextMenuOpen = useCallback((e: MouseEvent | TouchEvent) => {
+    if (hasParentWithFloatingOverlay(e.target as Element)) {
+      return;
+    }
+    setIsContextMenu(true);
+  }, []);
+
+  useContextMenuTrigger(handleContextMenuOpen, dragDropElement);
 
   const isNameInvalid = isEntityNameInvalid(currentFolder.name);
   const isInvalidPath = hasInvalidNameInPath(currentFolder.folderId);
@@ -839,15 +846,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     [currentFolder, dispatch, featureType, isExternal],
   );
 
-  const handleContextMenuOpen = (e: MouseEvent | TouchEvent) => {
-    if (hasParentWithFloatingOverlay(e.target as Element)) {
-      return;
-    }
-    setIsContextMenu(true);
-  };
-
-  const contextMenuHandlers = useContextMenuTrigger(handleContextMenuOpen);
-
   useEffect(() => {
     if (isRenaming) {
       setIsDeletingConfirmDialog(false);
@@ -900,7 +898,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       onDragOver={allowDrop}
       onDragEnter={highlightDrop}
       onDragLeave={deleteHighlight}
-      {...contextMenuHandlers}
       ref={dragDropElement}
     >
       <div

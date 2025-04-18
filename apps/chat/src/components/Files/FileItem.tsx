@@ -5,10 +5,17 @@ import {
   IconReload,
   IconX,
 } from '@tabler/icons-react';
-import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
+import {
+  MouseEventHandler,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import classNames from 'classnames';
 
+import { useContextMenuTrigger } from '@/src/hooks/useContextMenuTrigger';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { AdditionalItemData, FeatureType } from '@/src/types/common';
@@ -68,7 +75,15 @@ export const FileItem = ({
   const [isRemoveAccessConfirmOpened, setIsRemoveAccessConfirmOpened] =
     useState(false);
 
+  const fileRef = useRef<HTMLDivElement>(null);
+
   const canAttachFiles = !!additionalItemData?.canAttachFiles;
+
+  const handleContextMenuOpen = useCallback(() => {
+    setIsContextMenu(true);
+  }, []);
+
+  useContextMenuTrigger(handleContextMenuOpen, fileRef);
 
   const handleCancelFile = useCallback(() => {
     onEvent?.(FileItemEventIds.Cancel, item.id);
@@ -131,10 +146,15 @@ export const FileItem = ({
       style={{
         paddingLeft: `${1.005 + level * 1.5}rem`,
       }}
+      ref={fileRef}
       data-qa="file"
     >
       <div className="flex items-center gap-2 overflow-hidden">
-        <div className="text-secondary" data-qa="attached-file-icon">
+        <div
+          onPointerDown={handleToggleFile}
+          className="text-secondary"
+          data-qa="attached-file-icon"
+        >
           {(!canAttachFiles || !isSelected) &&
           item.status !== UploadStatus.FAILED ? (
             <ShareIcon
@@ -183,9 +203,9 @@ export const FileItem = ({
                 <input
                   className="checkbox peer size-[18px] bg-layer-3"
                   type="checkbox"
+                  readOnly
                   checked={isSelected}
                   data-qa={isSelected ? 'checked' : 'unchecked'}
-                  onChange={handleToggleFile}
                 />
                 <IconCheck
                   size={18}
@@ -242,10 +262,12 @@ export const FileItem = ({
             file={item}
             onDelete={handleDelete}
             onUnshare={handleUnshare}
+            isOpen={isContextMenu}
             onOpenChange={setIsContextMenu}
             onRemoveAccess={handleRemoveAccess}
             onUnpublish={handleOpenUnpublishing}
-            className="invisible group-hover/file-item:visible"
+            onSelect={handleToggleFile}
+            className="hidden group-hover/file-item:block"
             onSave={onSave}
           />
         )}
