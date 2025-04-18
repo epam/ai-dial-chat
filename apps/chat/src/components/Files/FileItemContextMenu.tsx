@@ -9,13 +9,12 @@ import {
 import { MouseEventHandler, useMemo } from 'react';
 
 import { useMenuItemHandler } from '@/src/hooks/useHandler';
-import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { canEditSharedFolderOrParent } from '@/src/utils/app/folders';
 import { isMyEntity } from '@/src/utils/app/id';
 
-import { FeatureType, ScreenState } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
@@ -73,8 +72,6 @@ export function FileItemContextMenu({
   const folders = useAppSelector(FilesSelectors.selectFolders);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
-  const screenState = useScreenState();
-
   const handleSave = useMenuItemHandler(onSave, file.id);
   const handleDownload = useMenuItemHandler(onOpenChange, false, false);
 
@@ -83,8 +80,7 @@ export function FileItemContextMenu({
       {
         name: t('Select'),
         dataQa: 'select',
-        display:
-          [ScreenState.SM, ScreenState.MD].includes(screenState) && !isOverlay,
+        display: !!onSelect && !isOverlay,
         Icon: IconSquareCheck,
         onClick: onSelect,
       },
@@ -162,7 +158,6 @@ export function FileItemContextMenu({
       onUnpublish,
       folders,
       onDelete,
-      screenState,
       isOverlay,
       onSelect,
     ],

@@ -90,9 +90,13 @@ export const FileItem = ({
   }, [item.id, onEvent]);
 
   const handleToggleFile = useCallback(() => {
+    if (!canAttachFiles) {
+      return;
+    }
+
     setIsSelected((value) => !value);
     onEvent?.(FileItemEventIds.Toggle, item.id);
-  }, [item.id, onEvent]);
+  }, [canAttachFiles, item.id, onEvent]);
 
   const handleRetry = useCallback(() => {
     onEvent?.(FileItemEventIds.Retry, item.id);
@@ -151,7 +155,7 @@ export const FileItem = ({
     >
       <div className="flex items-center gap-2 overflow-hidden">
         <div
-          onPointerDown={handleToggleFile}
+          onClick={handleToggleFile}
           className="text-secondary"
           data-qa="attached-file-icon"
         >
@@ -216,6 +220,7 @@ export const FileItem = ({
         </div>
         <Tooltip
           tooltip={item.name}
+          isTriggerClickable={isContextMenu}
           triggerClassName="block max-h-5 flex-1 truncate whitespace-pre text-left"
           contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
         >
@@ -266,7 +271,7 @@ export const FileItem = ({
             onOpenChange={setIsContextMenu}
             onRemoveAccess={handleRemoveAccess}
             onUnpublish={handleOpenUnpublishing}
-            onSelect={handleToggleFile}
+            onSelect={canAttachFiles ? handleToggleFile : undefined}
             className="hidden group-hover/file-item:block"
             onSave={onSave}
           />

@@ -202,9 +202,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     currentFolder: FolderInterface;
     draggedData: FolderInterface;
   }>();
-  const dragDropElement = useRef<HTMLDivElement>(null);
   const [isSelected, setIsSelected] = useState(false);
   const [isPartialSelected, setIsPartialSelected] = useState(false);
+
+  const dragDropElement = useRef<HTMLDivElement>(null);
 
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.selectIsPublishingEnabled(state, featureType),
@@ -223,12 +224,18 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     PublicationSelectors.selectPublicVersionGroups,
   );
 
-  const handleContextMenuOpen = useCallback((e: MouseEvent | TouchEvent) => {
-    if (hasParentWithFloatingOverlay(e.target as Element)) {
-      return;
-    }
-    setIsContextMenu(true);
-  }, []);
+  const handleContextMenuOpen = useCallback(
+    (e: MouseEvent | TouchEvent) => {
+      if (
+        hasParentWithFloatingOverlay(e.target as Element) &&
+        featureType !== FeatureType.File
+      ) {
+        return;
+      }
+      setIsContextMenu(true);
+    },
+    [featureType],
+  );
 
   useContextMenuTrigger(handleContextMenuOpen, dragDropElement);
 
@@ -238,7 +245,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const isExternal = isEntityIdExternal(currentFolder);
 
   const handleToggleFolder = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
+    (e: ChangeEvent<HTMLInputElement> | React.MouseEvent) => {
       e.stopPropagation();
 
       onSelectFolder?.(`${currentFolder.id}/`, isSelected);
@@ -1122,6 +1129,11 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         <ReviewDot className="group-hover/folder-item:bg-accent-primary-alpha" />
                       )}
                     <IconFolder
+                      onClick={(e) => {
+                        if (canSelectFolders) {
+                          handleToggleFolder(e);
+                        }
+                      }}
                       strokeWidth={folderIconStrokeWidth}
                       size={iconSize}
                       className="mr-1 text-secondary"
@@ -1213,6 +1225,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     isOpen={isContextMenu}
                     isEmpty={!hasChildItemOnAnyLevel}
                     onSelect={onSelectFolder && onSelect}
+                    canSelectFolders={canSelectFolders}
                     additionalItemData={additionalItemData}
                   />
                 </div>

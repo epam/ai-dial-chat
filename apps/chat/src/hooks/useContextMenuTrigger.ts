@@ -44,7 +44,6 @@ export const useContextMenuTrigger = (
 
   const handleTouchStart = useCallback(
     (e: TouchEvent) => {
-      e.preventDefault();
       e.stopPropagation();
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
