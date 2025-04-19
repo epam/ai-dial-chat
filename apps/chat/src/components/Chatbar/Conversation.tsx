@@ -1,12 +1,5 @@
 import { IconCheck } from '@tabler/icons-react';
-import {
-  DragEvent,
-  MouseEvent,
-  TouchEvent,
-  useCallback,
-  useMemo,
-  useState,
-} from 'react';
+import { DragEvent, useCallback, useMemo, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -232,6 +225,17 @@ export const ConversationComponent = ({
 
   const [isContextMenu, setIsContextMenu] = useState(false);
 
+  const conversationRef = useRef<HTMLDivElement>(null);
+
+  const handleContextMenuOpen = useCallback((e: MouseEvent | TouchEvent) => {
+    if (hasParentWithFloatingOverlay(e.target as Element)) {
+      return;
+    }
+    setIsContextMenu(true);
+  }, []);
+
+  useContextMenuTrigger(handleContextMenuOpen, conversationRef);
+
   const isSelected = selectedConversationIds.includes(conversation.id);
 
   const isChosen = useMemo(
@@ -259,15 +263,6 @@ export const ConversationComponent = ({
     [isConversationsStreaming, isExternal, isSelectMode],
   );
 
-  const handleContextMenuOpen = (e: MouseEvent | TouchEvent) => {
-    if (hasParentWithFloatingOverlay(e.target as Element)) {
-      return;
-    }
-    setIsContextMenu(true);
-  };
-
-  const contextMenuHandlers = useContextMenuTrigger(handleContextMenuOpen);
-
   const isPublishedItemSelected = !!additionalItemData?.publicationUrl;
   const isPublicationUrlEqual =
     selectedPublicationUrl === additionalItemData?.publicationUrl;
@@ -288,7 +283,7 @@ export const ConversationComponent = ({
         isNameOrPathInvalid && 'text-secondary',
         additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
       )}
-      {...contextMenuHandlers}
+      ref={conversationRef}
       data-qa="conversation"
     >
       <button
