@@ -21,8 +21,6 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
-import { MarketplaceTabs } from '@/src/constants/marketplace';
-import { Routes } from '@/src/constants/routes';
 
 import { withController } from '@/src/components/Common/Forms/ControlledFormField';
 import { Field } from '@/src/components/Common/Forms/Field';
@@ -194,13 +192,6 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
 
     if (shouldSaveApplication) {
       submitWrapper(handleSubmit)();
-    }
-
-    if (exitAfterSave) {
-      router.push({
-        pathname: Routes.Marketplace,
-        query: { tab: MarketplaceTabs.MY_WORKSPACE },
-      });
     }
   }, [
     shouldSaveApplication,
