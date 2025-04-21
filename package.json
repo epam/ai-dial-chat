@@ -61,6 +61,7 @@
     "jszip": "^3.10.1",
     "lodash-es": "^4.17.21",
     "mime-types": "^2.1.35",
+    "nanoid": "^5.1.5",
     "next": "14.2.26",
     "next-auth": "4.24.10",
     "next-i18next": "^13.2.2",
@@ -161,11 +162,11 @@
   },
   "optionalDependencies": {
     "@nx/playwright": "^20.6.2",
-    "@playwright/test": "^1.51.0",
+    "@playwright/test": "^1.52.0",
     "@types/tinycolor2": "^1.4.6",
     "allure-playwright": "^3.2.0",
     "eslint-plugin-playwright": "^2.2.0",
-    "playwright-chromium": "^1.51.0"
+    "playwright-chromium": "^1.52.0"
   },
   "engines": {
     "node": ">=22.2.0",

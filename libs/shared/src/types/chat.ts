@@ -126,8 +126,6 @@ export interface ShareEntity extends Entity, ShareInterface {}
 
 export interface ConversationInfo extends ShareEntity {
   model: ConversationEntityModel;
-  //TODO remove lastActivityDate when no need for the migration. See migration.epics.ts
-  lastActivityDate?: number;
   isPlayback?: boolean;
   isReplay?: boolean;
 }

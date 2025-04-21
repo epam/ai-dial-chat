@@ -2,12 +2,11 @@ import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { IconBulb, IconCheck } from '@tabler/icons-react';
 import {
   DragEvent,
-  MouseEvent,
   MouseEventHandler,
-  TouchEvent,
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -130,6 +129,17 @@ export const PromptComponent = ({
     useState<PublishActions>();
   const [isContextMenu, setIsContextMenu] = useState(false);
 
+  const promptRef = useRef<HTMLButtonElement>(null);
+
+  const handleContextMenuOpen = useCallback((e: MouseEvent | TouchEvent) => {
+    if (hasParentWithFloatingOverlay(e.target as Element)) {
+      return;
+    }
+    setIsContextMenu(true);
+  }, []);
+
+  useContextMenuTrigger(handleContextMenuOpen, promptRef);
+
   const screenState = useScreenState();
 
   const {
@@ -190,7 +200,7 @@ export const PromptComponent = ({
   );
 
   const handleOpenViewModal = useCallback(
-    (e: MouseEvent<unknown, globalThis.MouseEvent>, isEdit?: boolean) => {
+    (e: React.MouseEvent<unknown, globalThis.MouseEvent>, isEdit?: boolean) => {
       e.stopPropagation();
       e.preventDefault();
       setIsOpened(true);
@@ -220,7 +230,7 @@ export const PromptComponent = ({
   );
 
   const handleOpenEditModal = useCallback(
-    (e: MouseEvent<unknown, globalThis.MouseEvent>) => {
+    (e: React.MouseEvent<unknown, globalThis.MouseEvent>) => {
       handleOpenViewModal(e, true);
     },
     [handleOpenViewModal],
@@ -229,15 +239,6 @@ export const PromptComponent = ({
   const handleOpenMoveToModal = useCallback(() => {
     setIsMoveTo(true);
   }, []);
-
-  const handleContextMenuOpen = (e: MouseEvent | TouchEvent) => {
-    if (hasParentWithFloatingOverlay(e.target as Element)) {
-      return;
-    }
-    setIsContextMenu(true);
-  };
-
-  const contextMenuHandlers = useContextMenuTrigger(handleContextMenuOpen);
 
   const isHighlighted = !isSelectMode
     ? isDeleting || isOpened || (showModal && isSelected) || isContextMenu
@@ -315,7 +316,7 @@ export const PromptComponent = ({
         style={{
           paddingLeft: (level && `${level * 30 + 16}px`) || '0.875rem',
         }}
-        {...contextMenuHandlers}
+        ref={promptRef}
         data-qa="prompt"
         disabled={isSelectMode && isExternal}
       >
