@@ -229,7 +229,7 @@ export const ApplicationSettings: React.FC<Props> = ({
   }, [dispatch, isAppDeployed, isFormChanged, methods, t]);
 
   useEffect(() => {
-    if (isFormChanged && methods.formState.isValid) {
+    if (methods.formState.isValid) {
       dispatch(ApplicationActions.setHasUnsavedChanges(isFormChanged()));
     }
   }, [dispatch, isFormChanged, methods.formState.isValid]);
