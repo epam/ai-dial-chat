@@ -21,8 +21,6 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
-import { MarketplaceTabs } from '@/src/constants/marketplace';
-import { Routes } from '@/src/constants/routes';
 
 import { withController } from '@/src/components/Common/Forms/ControlledFormField';
 import { Field } from '@/src/components/Common/Forms/Field';
@@ -158,7 +156,7 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
   const handleSubmit = useCallback(
     (data: CustomApplicationFormData) => {
       if (
-        !isEqual(data, lastSubmittedValuesRef.current) &&
+        (!isEqual(data, lastSubmittedValuesRef.current) || exitAfterSave) &&
         shouldSaveApplication
       ) {
         const applicationData = getCustomApplicationData(data);
@@ -177,11 +175,16 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
         dispatch(ApplicationActions.setExitAfterSave(false));
       }
     },
-    [lastSubmittedValuesRef, oldApplication, dispatch, shouldSaveApplication],
+    [exitAfterSave, shouldSaveApplication, dispatch, oldApplication],
   );
 
+  const autoSaveHandler = useCallback(() => {
+    submitWrapper(handleSubmit)();
+  }, [submitWrapper, handleSubmit]);
+
   useEffect(() => {
-    if (!shouldSaveApplication && !exitAfterSave) return;
+    const isTriggered = shouldSaveApplication || exitAfterSave;
+    if (!isTriggered) return;
 
     if (!isValid) {
       dispatch(ApplicationActions.setShouldSaveApplication(false));
@@ -193,14 +196,7 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
     }
 
     if (shouldSaveApplication) {
-      submitWrapper(handleSubmit)();
-    }
-
-    if (exitAfterSave) {
-      router.push({
-        pathname: Routes.Marketplace,
-        query: { tab: MarketplaceTabs.MY_WORKSPACE },
-      });
+      autoSaveHandler();
     }
   }, [
     shouldSaveApplication,
@@ -211,6 +207,7 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
     dispatch,
     router,
     t,
+    autoSaveHandler,
   ]);
 
   return (
