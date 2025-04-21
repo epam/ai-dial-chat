@@ -37,6 +37,7 @@ import {
   sortByName,
 } from '@/src/utils/app/folders';
 import { isEntityIdExternal, isRootId } from '@/src/utils/app/id';
+import { isTabletScreen } from '@/src/utils/app/mobile';
 import {
   hasParentWithAttribute,
   hasParentWithFloatingOverlay,
@@ -894,6 +895,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     (selectedPublicationUrl && additionalItemData?.publicationUrl) ||
     (!selectedPublicationUrl && !additionalItemData?.publicationUrl);
 
+  const isMobileCheckboxVisible =
+    canSelectFolders && isContextMenu && isTabletScreen();
+
   return (
     <div
       id="folder"
@@ -974,6 +978,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       (!isExternal || !additionalItemData?.isSidePanelItem) &&
                         canSelectFolders &&
                         'group-hover:hidden',
+                      isMobileCheckboxVisible && 'hidden',
                     )}
                   >
                     {hasResourcesToReview &&
@@ -989,6 +994,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         (!isExternal || !additionalItemData?.isSidePanelItem) &&
                           canSelectFolders &&
                           'group-hover:hidden',
+                        isMobileCheckboxVisible && 'hidden',
                       )}
                     />
                   </ShareIcon>
@@ -1003,7 +1009,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         additionalItemData?.isSidePanelItem
                           ? 'size-[24px] items-center justify-center'
                           : 'size-[18px]',
-                        isSelected ? 'flex' : 'hidden',
+                        isSelected || isMobileCheckboxVisible
+                          ? 'flex'
+                          : 'hidden',
                       )}
                       data-item-checkbox
                     >
@@ -1073,7 +1081,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         additionalItemData?.isSidePanelItem
                           ? 'size-[24px] items-center justify-center'
                           : 'size-[18px]',
-                        isSelected || isPartialSelected || isSelectAlwaysVisible
+                        isSelected ||
+                          isPartialSelected ||
+                          isSelectAlwaysVisible ||
+                          isMobileCheckboxVisible
                           ? 'flex'
                           : 'hidden',
                       )}
@@ -1116,13 +1127,13 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     {...currentFolder}
                     isHighlighted={isContextMenu}
                     featureType={featureType}
-                    containerClassName={
+                    containerClassName={classNames(
                       (!isExternal || !additionalItemData?.isSidePanelItem) &&
-                      canSelectFolders &&
-                      !isSelectAlwaysVisible
-                        ? 'group-hover/folder-item:hidden'
-                        : ''
-                    }
+                        canSelectFolders &&
+                        !isSelectAlwaysVisible &&
+                        'group-hover/folder-item:hidden',
+                      isMobileCheckboxVisible && 'hidden',
+                    )}
                   >
                     {hasResourcesToReview &&
                       additionalItemData?.isSidePanelItem &&
