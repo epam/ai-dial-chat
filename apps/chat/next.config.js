@@ -73,6 +73,8 @@ const nextConfig = {
   reactStrictMode: true,
   experimental: {
     instrumentationHook: true,
+    nodeMiddleware: true,
+    
   },
   // @ts-ignore
   basePath: process.env.NODE_ENV !== 'development' ? new BasePathResolver() : '',

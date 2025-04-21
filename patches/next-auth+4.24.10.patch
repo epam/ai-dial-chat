@@ -24,15 +24,17 @@ index 52c51eb..d1c6bb4 100644
    if (provider.wellKnown) {
      issuer = await _openidClient.Issuer.discover(provider.wellKnown);
 diff --git a/node_modules/next-auth/providers/azure-ad.js b/node_modules/next-auth/providers/azure-ad.js
-index c47f6b1..bb48458 100644
+index c47f6b1..2077302 100644
 --- a/node_modules/next-auth/providers/azure-ad.js
 +++ b/node_modules/next-auth/providers/azure-ad.js
-@@ -4,10 +4,20 @@ Object.defineProperty(exports, "__esModule", {
+@@ -4,10 +4,22 @@ Object.defineProperty(exports, "__esModule", {
    value: true
  });
  exports.default = AzureAD;
 +
 +const {HttpsProxyAgent} = require('https-proxy-agent');
++const { ProxyAgent } = require('undici');
++
 +
  function AzureAD(options) {
    var _options$tenantId, _options$profilePhoto;
@@ -48,7 +50,7 @@ index c47f6b1..bb48458 100644
    return {
      id: "azure-ad",
      name: "Azure Active Directory",
-@@ -18,13 +28,21 @@ function AzureAD(options) {
+@@ -18,13 +30,21 @@ function AzureAD(options) {
          scope: "openid profile email"
        }
      },
@@ -66,7 +68,7 @@ index c47f6b1..bb48458 100644
 +      };
 +      
 +      if (proxyUrl) {
-+        fetchOptions.dispatcher  = proxyAgent;
++        fetchOptions.dispatcher  = new ProxyAgent(proxyUrl);
 +      }
 +      const response = await fetch(`https://graph.microsoft.com/v1.0/me/photos/${profilePhotoSize}x${profilePhotoSize}/$value`, fetchOptions);
        let image;
