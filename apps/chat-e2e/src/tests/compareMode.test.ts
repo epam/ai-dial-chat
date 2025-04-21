@@ -1639,21 +1639,21 @@ dialTest(
         );
         await page.keyboard.press(keys.ctrlPlusV);
         copiedValue = await dialHomePage.readFromClipboard();
-        const responsePromises = [];
-        for (const modelId of [defaultModel.id, aModel.id]) {
-          const expectedChatId = `${ItemUtil.getEncodedItemId(modelId)}${ItemUtil.entityIdSeparator}${ItemUtil.getEncodedItemId(copiedValue)}`;
-          responsePromises.push(
-            page.waitForResponse(
-              (r) =>
-                r.url().includes(expectedChatId) &&
-                r.request().method() === 'PUT',
-            ),
-          );
-        }
-        await chatMessages.saveAndSubmit.click();
-        for (const responsePromise of responsePromises) {
-          await responsePromise;
-        }
+        const expectedChatId = (modelId: string) =>
+          `${ItemUtil.getEncodedItemId(modelId)}${ItemUtil.entityIdSeparator}${ItemUtil.getEncodedItemId(copiedValue)}`;
+        await dialHomePage.waitForExpectedResponses(
+          () => chatMessages.saveAndSubmit.click(),
+          [
+            {
+              apiMethod: 'PUT',
+              urlPattern: expectedChatId(defaultModel.id),
+            },
+            {
+              apiMethod: 'PUT',
+              urlPattern: expectedChatId(aModel.id),
+            },
+          ],
+        );
         await chatMessages.waitForResponseReceived();
       },
     );

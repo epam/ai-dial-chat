@@ -45,7 +45,7 @@ dialTest(
       checkboxColor: ThemesUtil.getRgbColorByKey(
         ThemeColorAttributes.bgAccentSecondary,
       ),
-      backgroundColor: ThemesUtil.getRgbColorByKey(
+      entityBackgroundColor: ThemesUtil.getRgbColorByKey(
         ThemeColorAttributes.bgAccentSecondaryAlpha,
       ),
     };
@@ -334,7 +334,7 @@ dialTest(
           });
           const expectedBgColor =
             i === fourNestedLevels - 1
-              ? expectedColors.backgroundColor
+              ? expectedColors.entityBackgroundColor
               : undefined;
           await chatBarFolderAssertion.assertFolderEntityBackgroundColor(
             { name: nestedFolders[i].name },

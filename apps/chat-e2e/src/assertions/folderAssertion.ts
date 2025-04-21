@@ -55,7 +55,7 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
 
   public async assertFolderAndCheckboxHasSelectedColors(
     folder: TreeEntity,
-    expectedColors: { checkboxColor: string; backgroundColor: string },
+    expectedColors: { checkboxColor: string; entityBackgroundColor: string },
   ) {
     await this.assertFolderCheckboxBorderColors(
       folder,
@@ -63,7 +63,7 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
     );
     await this.assertFolderBackgroundColor(
       folder,
-      expectedColors.backgroundColor,
+      expectedColors.entityBackgroundColor,
     );
     await this.assertFolderCheckboxColor(folder, expectedColors.checkboxColor);
   }
@@ -71,7 +71,7 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
   public async assertFolderEntityAndCheckboxHasSelectedColors(
     folder: TreeEntity,
     folderEntity: TreeEntity,
-    expectedColors: { checkboxColor: string; backgroundColor: string },
+    expectedColors: { checkboxColor: string; entityBackgroundColor: string },
   ) {
     await this.assertFolderEntityCheckboxColor(
       folder,
@@ -86,7 +86,7 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
     await this.assertFolderEntityBackgroundColor(
       folder,
       folderEntity,
-      expectedColors.backgroundColor,
+      expectedColors.entityBackgroundColor,
     );
   }
 

@@ -49,7 +49,7 @@ dialTest(
       checkboxColor: ThemesUtil.getRgbColorByKey(
         ThemeColorAttributes.textAccentTertiary,
       ),
-      backgroundColor: ThemesUtil.getRgbColorByKey(
+      entityBackgroundColor: ThemesUtil.getRgbColorByKey(
         ThemeColorAttributes.bgAccentTertiaryAlpha,
       ),
     };
