@@ -17,4 +17,5 @@ export interface ApplicationState {
 
   selectedWidget?: string;
   returnConversationIds?: string[];
+  hasUnsavedChanges?: boolean;
 }
