@@ -103,12 +103,14 @@ describe('cleanData Functions', () => {
 
   const conversationV2 = {
     id: '1',
+    reference: '1',
     name: 'conversation 1',
     messages,
   };
 
   const expectedConversation: Conversation = {
     id: '1',
+    reference: '1',
     name: conversationV2.name,
     messages,
     model: expectedModel,
