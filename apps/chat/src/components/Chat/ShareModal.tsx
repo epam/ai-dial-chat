@@ -230,7 +230,7 @@ export function ShareModalView() {
             {t('share.modal.link', { context: sharingType })}
           </p>
           {shareFeatureType === FeatureType.Application && (
-            <div className="my-2 flex gap-2">
+            <div className="mt-2 flex gap-2">
               <ShareAccessOption
                 filterValue={t('Allow editing by other users')}
                 selected={editAccess}
@@ -238,7 +238,7 @@ export function ShareModalView() {
               />
             </div>
           )}
-          <div className="flex justify-center gap-2">
+          <div className="mt-2 flex justify-center gap-2">
             <div className="flex w-fit rounded bg-[#FCFCFC] p-3">
               <QRCodeSVG value={url} size={226} />
             </div>

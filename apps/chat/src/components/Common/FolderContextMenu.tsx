@@ -41,6 +41,7 @@ interface FolderContextMenuProps {
   isOpen?: boolean;
   isEmpty?: boolean;
   additionalItemData?: AdditionalItemData;
+  canSelectFolders?: boolean;
   onDelete?: MouseEventHandler<unknown>;
   onRename?: MouseEventHandler<unknown>;
   onAddFolder?: MouseEventHandler;
@@ -57,6 +58,7 @@ interface FolderContextMenuProps {
 export const FolderContextMenu = ({
   folder,
   featureType,
+  canSelectFolders,
   onDelete,
   onRename,
   onAddFolder,
@@ -102,7 +104,10 @@ export const FolderContextMenu = ({
     () => [
       {
         name: t('Select'),
-        display: !isExternal && !!onSelect && featureType !== FeatureType.File,
+        display:
+          !isExternal &&
+          !!onSelect &&
+          (featureType !== FeatureType.File || !!canSelectFolders),
         dataQa: 'select',
         Icon: IconSquareCheck,
         onClick: onSelect,
@@ -203,6 +208,7 @@ export const FolderContextMenu = ({
       isExternal,
       onSelect,
       featureType,
+      canSelectFolders,
       onUpload,
       isMyOrCanEdit,
       disableAll,
