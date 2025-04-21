@@ -80,7 +80,9 @@ export const AssistantMessage = memo(function AssistantMessage({
         {codeWarning &&
           codeWarning.length !== 0 &&
           codeDetection(message.content) && (
-            <div className="text-xxs text-error">{t(codeWarning)}</div>
+            <div className="select-none text-xxs text-error">
+              {t(codeWarning)}
+            </div>
           )}
         {!(
           conversation.isMessageStreaming &&

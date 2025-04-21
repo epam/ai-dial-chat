@@ -76,7 +76,7 @@ export const MessageUserButtons = ({
   return (
     <div
       className={classNames(
-        'flex h-[18px] w-full items-center justify-end gap-2',
+        'flex h-[18px] w-full select-none items-center justify-end gap-2',
         isOverlay ? 'mt-3' : 'mt-4',
       )}
     >
@@ -144,7 +144,7 @@ export const MessageAssistantButtons = ({
   return (
     <div
       className={classNames(
-        'flex w-full justify-end gap-2',
+        'flex w-full select-none justify-end gap-2',
         isOverlay ? 'mt-3' : 'mt-4',
       )}
     >
