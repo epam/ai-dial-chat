@@ -111,6 +111,7 @@ dialTest(
         await baseAssertion.assertElementActionabilityState(
           chatMessages.saveAndSubmit,
           'enabled',
+          ExpectedMessages.buttonIsEnabled,
         );
       },
     );
