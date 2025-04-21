@@ -18,7 +18,7 @@ export interface ExpectedApiResponse {
   urlPattern?: string | RegExp;
 }
 
-const apiTimeout = 35000;
+export const apiTimeout = 35000;
 export const responseThrottlingTimeout = 2500;
 
 export class BasePage {
@@ -369,6 +369,7 @@ export class BasePage {
     action: () => Promise<void>,
     expectedApiResponses: ExpectedApiResponse[],
     status = 200,
+    timeout = apiTimeout,
   ) {
     const responsePromises = [];
     for (const expectedResponse of expectedApiResponses) {
@@ -388,7 +389,7 @@ export class BasePage {
             : true;
           return methodMatch && statusMatch && urlMatch;
         },
-        { timeout: apiTimeout },
+        { timeout: timeout },
       );
       responsePromises.push(promise);
     }

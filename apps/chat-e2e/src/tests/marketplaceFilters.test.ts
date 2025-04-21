@@ -25,7 +25,6 @@ dialTest(
       marketplaceHeader,
       providerLogin,
       dialHomePage,
-      navigationPanel,
       header,
       marketplaceUrlBuilder,
       accountSettings,
@@ -98,7 +97,7 @@ dialTest(
         );
         await dialHomePage.waitForPageLoaded({ skipSidebars: true });
         await header.leftPanelToggle.click();
-        await navigationPanel.goToMyWorkspaceFromDialHome();
+        await dialHomePage.goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
         await baseAssertion.assertCheckboxState(
           marketplaceFilter.filterByPropertyOptionInput(
@@ -198,9 +197,7 @@ dialTest(
                 skipSidebars: true,
               });
               await incognitoAppContainer.getHeader().leftPanelToggle.click();
-              await incognitoAppContainer
-                .getNavigationPanel()
-                .goToMarketplaceFromDialHome();
+              await incognitoDialHomePage.goToMarketplace();
               break;
           }
           await incognitoMarketplacePage.waitForPageLoaded();

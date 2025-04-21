@@ -158,7 +158,7 @@ dialTest(
     await dialTest.step(
       'Click on "DIAL Marketplace", select a new model, and click "Use model"',
       async () => {
-        await navigationPanel.goToMarketplaceFromDialHome();
+        await dialHomePage.goToMarketplace();
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(addedModel.name);
         await marketplaceAgentsSection.findAndUseAgent(addedModel, {
@@ -176,7 +176,7 @@ dialTest(
     await dialTest.step(
       'Click "Change agent" and "Go to My workspace", remove the third model, and go back to chat',
       async () => {
-        await navigationPanel.goToMarketplaceFromDialHome();
+        await dialHomePage.goToMarketplace();
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(addedModel.name);
         const addedModelElement =

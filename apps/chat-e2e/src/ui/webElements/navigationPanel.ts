@@ -1,4 +1,3 @@
-import config from '@/config/chat.playwright.config';
 import { API } from '@/src/testData';
 import { NavigationPanelSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
@@ -29,14 +28,6 @@ export class NavigationPanel extends BaseElement {
     await this.myWorkspaceButton.click({ force: true });
   }
 
-  public async goToMarketplaceFromDialHome() {
-    await this.goToMarketplacePage(() => this.goToMarketplaceHome());
-  }
-
-  public async goToMyWorkspaceFromDialHome() {
-    await this.goToMarketplacePage(() => this.goToMyWorkspace());
-  }
-
   public async backToChat(
     options: { isHttpMethodTriggered?: boolean } = {
       isHttpMethodTriggered: true,
@@ -51,14 +42,5 @@ export class NavigationPanel extends BaseElement {
     } else {
       await this.backToChatButton.click();
     }
-  }
-
-  private async goToMarketplacePage(method: () => Promise<void>) {
-    const responsePromise = this.page.waitForResponse(
-      (resp) => resp.url().includes(API.marketplaceHost),
-      { timeout: config.use!.actionTimeout! * 3 },
-    );
-    await method();
-    await responsePromise;
   }
 }

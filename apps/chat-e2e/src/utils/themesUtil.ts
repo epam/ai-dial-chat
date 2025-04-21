@@ -8,11 +8,11 @@ export class ThemesUtil {
     return JSON.parse(process.env.THEMES!) as Theme[];
   }
 
-  public static getRgbColorByKey(
-    key: ThemeColorAttributes,
-    themeId = ThemeId.dark,
-  ) {
-    const theme = this.getThemes().find((t) => t.id === themeId);
+  public static getRgbColorByKey(key: ThemeColorAttributes, themeId?: ThemeId) {
+    const allThemes = this.getThemes();
+    const theme = themeId
+      ? allThemes.find((t) => t.id === themeId)
+      : allThemes[0];
     const hex = theme?.colors[key];
     return tinycolor(hex).toRgbString();
   }

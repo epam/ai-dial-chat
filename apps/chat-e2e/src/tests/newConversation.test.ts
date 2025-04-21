@@ -413,7 +413,6 @@ dialTest(
     dialHomePage,
     header,
     talkToAgentDialog,
-    navigationPanel,
     setTestIds,
     conversationData,
     dataInjector,
@@ -443,7 +442,7 @@ dialTest(
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await conversations.selectConversation(conversation.name);
-      await navigationPanel.goToMarketplaceFromDialHome();
+      await dialHomePage.goToMarketplace();
       await marketplacePage.waitForPageLoaded();
     });
 

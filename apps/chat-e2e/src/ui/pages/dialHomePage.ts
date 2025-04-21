@@ -1,6 +1,7 @@
-import { BasePage, UploadDownloadData } from './basePage';
+import { BasePage, UploadDownloadData, apiTimeout } from './basePage';
 
 import config from '@/config/chat.playwright.config';
+import { API } from '@/src/testData';
 import { SharedPromptPreviewModal } from '@/src/ui/webElements';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { Request } from 'playwright-chromium';
@@ -162,5 +163,23 @@ export class DialHomePage extends BasePage {
     } else {
       return this.page.waitForRequest(matchRequest, { timeout });
     }
+  }
+
+  public async goToMarketplace() {
+    await this.waitForExpectedResponses(
+      () => this.getAppContainer().getNavigationPanel().goToMarketplaceHome(),
+      [{ apiMethod: 'GET', urlPattern: API.marketplaceHost }],
+      200,
+      apiTimeout * 2,
+    );
+  }
+
+  public async goToMyWorkspace() {
+    await this.waitForExpectedResponses(
+      () => this.getAppContainer().getNavigationPanel().goToMyWorkspace(),
+      [{ apiMethod: 'GET', urlPattern: API.marketplaceHost }],
+      200,
+      apiTimeout * 2,
+    );
   }
 }
