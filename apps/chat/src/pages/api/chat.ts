@@ -43,6 +43,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   const {
     id,
+    reference,
     messages,
     prompt,
     temperature,
@@ -145,7 +146,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           : undefined,
       assistantModelId: assistantModel?.id,
       userJWT: token?.access_token as string,
-      chatId: id,
+      chatReference: reference ?? id,
       jobTitle: token?.jobTitle as string,
       maxRequestTokens: features?.truncatePrompt
         ? limits?.maxRequestTokens
