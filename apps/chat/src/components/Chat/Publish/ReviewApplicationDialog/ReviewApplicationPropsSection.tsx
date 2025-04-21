@@ -33,7 +33,7 @@ export const ReviewApplicationPropsSection = ({
   return (
     <div className="flex gap-4">
       <span className="w-[122px] shrink-0 text-secondary">{t(label)}:</span>
-      <div className="shrink grow">
+      <div className="flex shrink grow flex-col gap-1">
         {Object.entries(appProps).map(([key, value]) => {
           return (
             <ReviewApplicationPropsItem
