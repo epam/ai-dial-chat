@@ -53,6 +53,9 @@ const selectSelectedWidget = (state: RootState) =>
 const selectReturnConversationIds = (state: RootState) =>
   rootSelector(state).returnConversationIds;
 
+const selectHasUnsavedChanges = (state: RootState) =>
+  rootSelector(state).hasUnsavedChanges;
+
 export const ApplicationSelectors = {
   selectAppLoading,
   selectIsApplicationLoading,
@@ -64,4 +67,5 @@ export const ApplicationSelectors = {
   selectPublicFolders,
   selectSelectedWidget,
   selectReturnConversationIds,
+  selectHasUnsavedChanges,
 };
