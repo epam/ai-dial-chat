@@ -5,10 +5,17 @@ import {
   IconReload,
   IconX,
 } from '@tabler/icons-react';
-import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
+import {
+  MouseEventHandler,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import classNames from 'classnames';
 
+import { useContextMenuTrigger } from '@/src/hooks/useContextMenuTrigger';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { AdditionalItemData, FeatureType } from '@/src/types/common';
@@ -68,16 +75,28 @@ export const FileItem = ({
   const [isRemoveAccessConfirmOpened, setIsRemoveAccessConfirmOpened] =
     useState(false);
 
+  const fileRef = useRef<HTMLDivElement>(null);
+
   const canAttachFiles = !!additionalItemData?.canAttachFiles;
+
+  const handleContextMenuOpen = useCallback(() => {
+    setIsContextMenu(true);
+  }, []);
+
+  useContextMenuTrigger(handleContextMenuOpen, fileRef);
 
   const handleCancelFile = useCallback(() => {
     onEvent?.(FileItemEventIds.Cancel, item.id);
   }, [item.id, onEvent]);
 
   const handleToggleFile = useCallback(() => {
+    if (!canAttachFiles) {
+      return;
+    }
+
     setIsSelected((value) => !value);
     onEvent?.(FileItemEventIds.Toggle, item.id);
-  }, [item.id, onEvent]);
+  }, [canAttachFiles, item.id, onEvent]);
 
   const handleRetry = useCallback(() => {
     onEvent?.(FileItemEventIds.Retry, item.id);
@@ -131,10 +150,15 @@ export const FileItem = ({
       style={{
         paddingLeft: `${1.005 + level * 1.5}rem`,
       }}
+      ref={fileRef}
       data-qa="file"
     >
       <div className="flex items-center gap-2 overflow-hidden">
-        <div className="text-secondary" data-qa="attached-file-icon">
+        <div
+          onClick={handleToggleFile}
+          className="text-secondary"
+          data-qa="attached-file-icon"
+        >
           {(!canAttachFiles || !isSelected) &&
           item.status !== UploadStatus.FAILED ? (
             <ShareIcon
@@ -183,9 +207,9 @@ export const FileItem = ({
                 <input
                   className="checkbox peer size-[18px] bg-layer-3"
                   type="checkbox"
+                  readOnly
                   checked={isSelected}
                   data-qa={isSelected ? 'checked' : 'unchecked'}
-                  onChange={handleToggleFile}
                 />
                 <IconCheck
                   size={18}
@@ -196,6 +220,7 @@ export const FileItem = ({
         </div>
         <Tooltip
           tooltip={item.name}
+          isTriggerClickable={isContextMenu}
           triggerClassName="block max-h-5 flex-1 truncate whitespace-pre text-left"
           contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
         >
@@ -242,10 +267,12 @@ export const FileItem = ({
             file={item}
             onDelete={handleDelete}
             onUnshare={handleUnshare}
+            isOpen={isContextMenu}
             onOpenChange={setIsContextMenu}
             onRemoveAccess={handleRemoveAccess}
             onUnpublish={handleOpenUnpublishing}
-            className="invisible group-hover/file-item:visible"
+            onSelect={canAttachFiles ? handleToggleFile : undefined}
+            className="hidden group-hover/file-item:block"
             onSave={onSave}
           />
         )}
