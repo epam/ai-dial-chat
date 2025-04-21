@@ -558,7 +558,10 @@ export const UserMessage = memo(function UserMessage({
           </div>
         )}
         <MessageAttachments attachments={message.custom_content?.attachments} />
-        <div ref={anchorRef} className="absolute bottom-[-140px]"></div>
+        <div
+          ref={anchorRef}
+          className="absolute bottom-[-140px] select-none"
+        ></div>
       </div>
       {showUserButtons && !isConversationInvalid && (
         <MessageUserButtons
