@@ -898,6 +898,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     <div
       id="folder"
       className={classNames(
+        'select-none',
         isDraggingOver && 'bg-accent-primary-alpha',
         currentFolder.temporary && 'text-primary',
       )}
@@ -1151,6 +1152,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               data-qa="folder-name"
             >
               <Tooltip
+                hideTooltip={isContextMenu}
                 tooltip={
                   showTooltip && !isNameOrPathInvalid
                     ? currentFolder.name
@@ -1194,10 +1196,11 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   {...getFloatingProps()}
                   className={classNames(
                     'invisible absolute right-0 z-50 flex justify-end group-hover/button:visible',
-                    isContextMenu && 'max-md:visible',
+                    isContextMenu && 'md:visible',
                   )}
                 >
                   <FolderContextMenu
+                    isSelected={isSelected}
                     folder={currentFolder}
                     featureType={featureType}
                     onRename={
