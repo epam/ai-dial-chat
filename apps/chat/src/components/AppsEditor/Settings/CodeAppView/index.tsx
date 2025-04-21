@@ -35,8 +35,6 @@ import {
 } from '@/src/constants/applications';
 import { CODE_APPS_ENDPOINTS } from '@/src/constants/code-apps';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
-import { MarketplaceTabs } from '@/src/constants/marketplace';
-import { Routes } from '@/src/constants/routes';
 
 import { FormCodeEditor } from '@/src/components/Common/ApplicationWizard/CodeAppView/FormCodeEditor';
 import { RuntimeVersionSelector } from '@/src/components/Common/ApplicationWizard/CodeAppView/RuntimeVersionSelector';
@@ -229,13 +227,6 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
 
     if (shouldSaveApplication) {
       submitWrapper(handleEdit)();
-    }
-
-    if (exitAfterSave) {
-      router.push({
-        pathname: Routes.Marketplace,
-        query: { tab: MarketplaceTabs.MY_WORKSPACE },
-      });
     }
   }, [
     exitAfterSave,

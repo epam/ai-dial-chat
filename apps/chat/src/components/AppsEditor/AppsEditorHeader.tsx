@@ -64,12 +64,37 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
     ApplicationSelectors.selectReturnConversationIds,
   );
 
+  const shouldSaveApplication = useAppSelector(
+    ApplicationSelectors.selectShouldSaveApplication,
+  );
+
+  const hasUnsavedChanges = useAppSelector(
+    ApplicationSelectors.selectHasUnsavedChanges,
+  );
+
   const handleCloseUserSettings = () => {
     dispatch(UIActions.setIsUserSettingsOpen(false));
   };
 
+  const handleTabClick = (isDisabled: boolean) => {
+    return (e: React.MouseEvent) => {
+      if (isDisabled) {
+        e.preventDefault();
+        return;
+      }
+
+      if (hasUnsavedChanges) {
+        dispatch(ApplicationActions.setShouldSaveApplication(true));
+        dispatch(ApplicationActions.setHasUnsavedChanges(false));
+      }
+    };
+  };
+
   const handleSaveAndRedirect = () => {
-    dispatch(ApplicationActions.setExitAfterSave(true));
+    if (!shouldSaveApplication) {
+      dispatch(ApplicationActions.setShouldSaveApplication(true));
+      dispatch(ApplicationActions.setExitAfterSave(true));
+    }
     if (returnConversationIds?.length) {
       dispatch(
         ConversationsActions.selectConversations({
@@ -166,6 +191,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
                         'flex cursor-pointer items-center gap-2 rounded px-1 py-1.5 hover:bg-accent-primary-alpha',
                         isDisabled ? 'text-secondary' : 'text-primary',
                       )}
+                      onClick={handleTabClick(isDisabled)}
                     >
                       {tab.key === TabKeys.GENERAL && id ? (
                         <IconCircleCheck
