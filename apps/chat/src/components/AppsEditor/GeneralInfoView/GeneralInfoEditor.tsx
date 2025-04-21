@@ -104,6 +104,12 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     ? CONFIRM_ICON_FILE_VALUES
     : undefined;
 
+  useEffect(() => {
+    if (isFormChanged && isValid) {
+      dispatch(ApplicationActions.setHasUnsavedChanges(isFormChanged));
+    }
+  }, [dispatch, isFormChanged, isValid]);
+
   const handleSubmit = useCallback(
     (data: ApplicationGeneralInfoFormData, isAutoSave = false) => {
       const { slug } = router.query;
