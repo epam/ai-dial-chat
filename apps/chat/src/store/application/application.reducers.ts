@@ -27,6 +27,7 @@ const initialState: ApplicationState = {
   shouldSaveApplication: false,
   exitAfterSave: false,
   publicFolders: [],
+  hasUnsavedChanges: false,
 };
 
 export const applicationSlice = createSlice({
@@ -215,6 +216,9 @@ export const applicationSlice = createSlice({
       { payload }: PayloadAction<string[] | undefined>,
     ) {
       state.returnConversationIds = payload;
+    },
+    setHasUnsavedChanges(state, action: PayloadAction<boolean>) {
+      state.hasUnsavedChanges = action.payload;
     },
   },
 });
