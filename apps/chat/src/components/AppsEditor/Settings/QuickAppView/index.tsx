@@ -31,8 +31,6 @@ import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { CONFIRM_DOCUMENT_VALUES } from '@/src/constants/applications';
-import { MarketplaceTabs } from '@/src/constants/marketplace';
-import { Routes } from '@/src/constants/routes';
 
 import { TemperatureSlider } from '@/src/components/Chat/ChatSettings/Temperature';
 import { FilesSelector } from '@/src/components/Common/FilesSelector/FilesSelector';
@@ -128,23 +126,20 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
         shouldSaveApplication
       ) {
         const applicationData = getQuickAppData(data);
-
-        if (
+        const arrAreNotTheSameAndShared =
           isShared &&
           !arraysHaveSameElements(
             getQuickAppDocumentUrl(applicationData as CustomApplicationModel),
             getQuickAppDocumentUrl(oldApplication),
-          )
-        ) {
+          );
+
+        if (arrAreNotTheSameAndShared) {
           dispatch(
             ShareActions.revokeAccess({
               resourceId: oldApplication.id,
               featureType: FeatureType.Application,
             }),
           );
-          dispatch(ApplicationActions.setShouldSaveApplication(false));
-          dispatch(ApplicationActions.setExitAfterSave(false));
-          return;
         }
 
         dispatch(
@@ -153,6 +148,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
             applicationData: {
               ...oldApplication,
               ...applicationData,
+              isShared: arrAreNotTheSameAndShared ? false : isShared,
             },
             schema: schema ?? undefined,
           }),
@@ -185,13 +181,6 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
     if (shouldSaveApplication) {
       autoSaveHandler();
     }
-
-    if (exitAfterSave) {
-      router.push({
-        pathname: Routes.Marketplace,
-        query: { tab: MarketplaceTabs.MY_WORKSPACE },
-      });
-    }
   }, [
     shouldSaveApplication,
     exitAfterSave,
@@ -213,13 +202,13 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
           control={control}
           render={({ field }) => (
             <FilesSelectorField
-              label={t('Document relative url')}
-              onAddDocuments={(documents) => {
+              label={t('Document relative URLs')}
+              onAddFiles={(documents) => {
                 field.onChange(
                   uniq([...(field.value ? field.value : []), ...documents]),
                 );
               }}
-              onRemoveDocument={(document) => {
+              onRemoveFile={(document) => {
                 field.onChange(
                   field.value?.filter((field) => field !== document),
                 );
@@ -229,10 +218,11 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
               fileManagerTitle={t('Select documents')}
               filesFilter={myFilesFilter}
               warning={confirmDocumentUrlValues?.description}
-              documents={field.value ?? []}
+              files={field.value ?? []}
               addBtnTooltip={
                 isSharedWithMe ? getSharedTooltip(t('documents')) : undefined
               }
+              confirmDialogValues={confirmDocumentUrlValues}
             />
           )}
         />

@@ -33,7 +33,10 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_CONVERSATION_NAME } from '../constants/default-ui-settings';
-import { MarketplaceTabs } from '@/src/constants/marketplace';
+import {
+  MarketplaceQueryParams,
+  MarketplaceTabs,
+} from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
 import { Chatbar } from '@/src/components/Chatbar/Chatbar';
@@ -136,7 +139,11 @@ const MarketplaceNavigation = () => {
   const handleChangeTab = useCallback(
     (tab: MarketplaceTabs) => {
       if (!isMarketplace) {
-        router.push(Routes.Marketplace).then(() => {
+        const query =
+          tab === MarketplaceTabs.MY_WORKSPACE
+            ? `?${MarketplaceQueryParams.tab}=${MarketplaceTabs.MY_WORKSPACE}`
+            : '';
+        router.push(`${Routes.Marketplace}${query}`).then(() => {
           dispatch(MarketplaceActions.setSelectedTab(tab));
           dispatch(ApplicationActions.selectWidget(undefined));
         });
@@ -316,7 +323,8 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
       <Widgetbar />
 
       <div className="flex size-full flex-col md:flex-row ">
-        <Navigation />
+        {(router.route === Routes.Chat ||
+          router.route === Routes.Marketplace) && <Navigation />}
         {router.route === Routes.Chat &&
           enabledFeatures.has(Feature.ConversationsSection) && <Chatbar />}
         {router.route === Routes.Marketplace && <MarketplaceFilterbar />}
