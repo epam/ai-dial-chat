@@ -147,6 +147,7 @@ export const AttachButton = ({
           headerLabel={t(label)}
           customButtonLabel={t('Attach')}
           initialSelectedFilesIds={selectedFilesIds}
+          showTooltip
           onClose={(result: unknown) => {
             onSelectAlreadyUploaded(result);
             setIsSelectFilesDialogOpened(false);
