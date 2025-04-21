@@ -29,7 +29,6 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { CONFIRM_ICON_FILE_VALUES } from '@/src/constants/applications';
 import { IMAGE_TYPES } from '@/src/constants/chat';
-import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { DEFAULT_VERSION } from '@/src/constants/public';
 import { Routes } from '@/src/constants/routes';
 
@@ -104,6 +103,12 @@ export const GeneralInfoEditor: React.FC<Props> = ({
   const confirmIconValues = oldApplication?.isShared
     ? CONFIRM_ICON_FILE_VALUES
     : undefined;
+
+  useEffect(() => {
+    if (isFormChanged && isValid) {
+      dispatch(ApplicationActions.setHasUnsavedChanges(isFormChanged));
+    }
+  }, [dispatch, isFormChanged, isValid]);
 
   const handleSubmit = useCallback(
     (data: ApplicationGeneralInfoFormData, isAutoSave = false) => {
@@ -185,13 +190,6 @@ export const GeneralInfoEditor: React.FC<Props> = ({
 
     if (shouldSaveApplication) {
       submitWrapper((data) => handleSubmit(data, false))();
-    }
-
-    if (exitAfterSave) {
-      router.push({
-        pathname: Routes.Marketplace,
-        query: { tab: MarketplaceTabs.MY_WORKSPACE },
-      });
     }
   }, [
     shouldSaveApplication,
