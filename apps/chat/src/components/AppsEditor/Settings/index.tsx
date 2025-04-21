@@ -205,8 +205,11 @@ export const ApplicationSettings: React.FC<Props> = ({
     defaultValues: getDefaultValues(type) ?? {},
   });
 
-  const isFormChanged =
-    Object.keys(methods.formState.dirtyFields).length > 0 || isCodeEditorDirty;
+  const isFormChanged = useMemo(() => {
+    return (
+      Object.keys(methods.formState.dirtyFields).length > 0 || isCodeEditorDirty
+    );
+  }, [methods.formState.dirtyFields, isCodeEditorDirty]);
 
   const saveForm = useCallback(() => {
     if (isFormChanged && methods.formState.isValid) {
