@@ -12,10 +12,11 @@ import {
   FolderConversation,
   MenuOptions,
 } from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { DialHomePage } from '@/src/ui/pages';
 import { GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Role } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 
@@ -1283,7 +1284,6 @@ dialTest(
           skipSidebars: true,
         });
         const appContainer = dialHomePage.getAppContainer();
-        // await appContainer.getHeader().leftPanelToggle.click();
         const chatBar = appContainer.getChatBar();
         await baseAssertion.assertElementState(chatBar, 'visible');
         const sharedWithMeConversationsTree =
@@ -1292,16 +1292,12 @@ dialTest(
           sharedWithMeConversationsTree.getEntityByName(conversation.name),
           'visible',
         );
-        const conversationBackgroundColor =
-          await sharedWithMeConversationsTree.getEntityBackgroundColor(
-            conversation.name,
-          );
-        expect
-          .soft(
-            conversationBackgroundColor,
-            ExpectedMessages.conversationIsSelected,
-          )
-          .toBe(Colors.backgroundAccentSecondary);
+        await baseAssertion.assertElementBackgroundColors(
+          sharedWithMeConversationsTree.getEntityByName(conversation.name),
+          ThemesUtil.getRgbColorByKey(
+            ThemeColorAttributes.bgAccentSecondaryAlpha,
+          ),
+        );
       },
     );
   },

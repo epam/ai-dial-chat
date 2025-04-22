@@ -276,10 +276,10 @@ dialTest(
           },
           Colors.backgroundAccentSecondary,
         );
-        await conversationAssertion.assertEntityBackgroundColor(
-          { name: firstConversation.name, index: 2 },
-          Colors.defaultBackground,
-        );
+        await conversationAssertion.assertEntityBackgroundColor({
+          name: firstConversation.name,
+          index: 2,
+        });
       },
     );
 

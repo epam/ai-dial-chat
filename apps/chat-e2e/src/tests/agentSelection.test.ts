@@ -20,6 +20,7 @@ dialTest(
     talkToAgentDialog,
     chatBar,
     marketplacePage,
+    marketplaceHeader,
     agentInfoAssertion,
     setTestIds,
     localStorageManager,
@@ -157,8 +158,9 @@ dialTest(
     await dialTest.step(
       'Click on "DIAL Marketplace", select a new model, and click "Use model"',
       async () => {
-        await navigationPanel.goToMarketplaceHome();
+        await dialHomePage.goToMarketplace();
         await marketplacePage.waitForPageLoaded();
+        await marketplaceHeader.searchInput.fillInInput(addedModel.name);
         await marketplaceAgentsSection.findAndUseAgent(addedModel, {
           isInstalledDeploymentsUpdated: true,
         });
@@ -174,20 +176,22 @@ dialTest(
     await dialTest.step(
       'Click "Change agent" and "Go to My workspace", remove the third model, and go back to chat',
       async () => {
-        await navigationPanel.goToMarketplaceHome();
+        await dialHomePage.goToMarketplace();
         await marketplacePage.waitForPageLoaded();
+        await marketplaceHeader.searchInput.fillInInput(addedModel.name);
         const addedModelElement =
           await marketplaceAgentsSection.findAgentElement(addedModel);
         await addedModelElement.click();
         await agentDetailsModal.removeBookmarkIcon.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
-        await navigationPanel.backToChatButton.click();
+        await navigationPanel.backToChat({ isHttpMethodTriggered: false });
       },
     );
 
     await dialTest.step(
       'Verify recentModelsIds is updated and the second model is now first',
       async () => {
+        await dialHomePage.waitForPageLoaded();
         await localStorageAssertion.assertRecentModels([
           initialModel2.id,
           initialModel1.id,
@@ -199,6 +203,10 @@ dialTest(
       'Create a new conversation and verify the second model is still selected',
       async () => {
         await chatBar.createNewEntity();
+        await talkToAgentDialogAssertion.assertAgentState(
+          initialModel2,
+          'visible',
+        );
         await talkToAgentDialogAssertion.assertAgentIsSelected(initialModel2);
         await talkToAgentDialog.cancelButton.click();
         await agentInfoAssertion.assertAgentName(initialModel2.name);
@@ -625,7 +633,7 @@ dialTest(
         await firstModelElement.click();
         await agentDetailsModal.removeBookmarkIcon.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
-        await navigationPanel.backToChatButton.click();
+        await navigationPanel.backToChat({ isHttpMethodTriggered: false });
       },
     );
 

@@ -150,7 +150,7 @@ dialTest(
     attachFilesModal,
     selectFolderModal,
     selectFolders,
-    sendMessage,
+    selectFoldersAssertion,
     page,
     localStorageManager,
   }) => {
@@ -163,12 +163,10 @@ dialTest(
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await sendMessage.fillRequestData(nameWithRestrictedChars);
-        await page.keyboard.press(keys.ctrlPlusA);
-        await page.keyboard.press(keys.ctrlPlusC);
+        await dialHomePage.copyToClipboard(nameWithRestrictedChars);
 
         await chatBar.openManageAttachmentsModal();
-        await attachFilesModal.uploadFromDeviceButton.click();
+        await attachFilesModal.uploadFromDevice();
         await uploadFromDeviceModal.changeUploadToLocation();
       },
     );
@@ -180,12 +178,7 @@ dialTest(
         await selectFolders.editFolderName(
           ExpectedConstants.restrictedNameChars,
         );
-        expect
-          .soft(
-            await selectFolders.getEditFolderInput().getEditInputValue(),
-            ExpectedMessages.elementAttributeValueIsValid,
-          )
-          .toBe('');
+        await selectFoldersAssertion.assertFolderEditInputValue('');
       },
     );
 
@@ -195,17 +188,15 @@ dialTest(
         await page.keyboard.press(keys.ctrlPlusA);
         await page.keyboard.press(keys.ctrlPlusV);
         await selectFolders.getEditFolderInputActions().clickTickButton();
-        await expect
-          .soft(
-            selectFolders.getFolderByName(
-              nameWithRestrictedChars.replace(
-                ExpectedConstants.restrictedNameChars,
-                '',
-              ),
+        await selectFoldersAssertion.assertFolderState(
+          {
+            name: nameWithRestrictedChars.replace(
+              ExpectedConstants.restrictedNameChars,
+              '',
             ),
-            ExpectedMessages.elementAttributeValueIsValid,
-          )
-          .toBeVisible();
+          },
+          'visible',
+        );
       },
     );
   },
@@ -338,6 +329,7 @@ dialTest(
     selectFolderModal,
     selectFolders,
     localStorageManager,
+    selectFoldersAssertion,
   }) => {
     setTestIds('EPMRTC-3244');
     const updateFoldeNameIndex = 999;
@@ -349,7 +341,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
-        await attachFilesModal.uploadFromDeviceButton.click();
+        await attachFilesModal.uploadFromDevice();
         await uploadFromDeviceModal.changeUploadToLocation();
       },
     );
@@ -358,13 +350,15 @@ dialTest(
       'Click "Create new folder" and verify "New folder 1" is created in edit mode',
       async () => {
         await selectFolderModal.newFolderButton.click();
-        expect
-          .soft(
-            await selectFolders.getEditFolderInput().getEditInputValue(),
-            ExpectedMessages.elementAttributeValueIsValid,
-          )
-          .toBe(ExpectedConstants.newFolderWithIndexTitle(1));
+        await selectFoldersAssertion.assertFolderEditInputState('visible');
+        await selectFoldersAssertion.assertFolderEditInputValue(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+        );
         await selectFolders.getEditFolderInputActions().clickTickButton();
+        await selectFoldersAssertion.assertFolderState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(1) },
+          'visible',
+        );
       },
     );
 
@@ -375,6 +369,14 @@ dialTest(
         await selectFolders.renameEmptyFolderWithTick(
           ExpectedConstants.newFolderWithIndexTitle(updateFoldeNameIndex),
         );
+        await selectFoldersAssertion.assertFolderState(
+          {
+            name: ExpectedConstants.newFolderWithIndexTitle(
+              updateFoldeNameIndex,
+            ),
+          },
+          'visible',
+        );
       },
     );
 
@@ -383,16 +385,14 @@ dialTest(
       async () => {
         await selectFolderModal.newFolderButton.click();
         await selectFolders.getEditFolderInputActions().clickTickButton();
-        await expect
-          .soft(
-            selectFolders.getFolderByName(
-              ExpectedConstants.newFolderWithIndexTitle(
-                updateFoldeNameIndex + 1,
-              ),
+        await selectFoldersAssertion.assertFolderState(
+          {
+            name: ExpectedConstants.newFolderWithIndexTitle(
+              updateFoldeNameIndex + 1,
             ),
-            ExpectedMessages.folderIsVisible,
-          )
-          .toBeVisible();
+          },
+          'visible',
+        );
       },
     );
   },

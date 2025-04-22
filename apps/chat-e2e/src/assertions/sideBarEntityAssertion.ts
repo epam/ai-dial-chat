@@ -1,12 +1,6 @@
 import { EntityTreeAssertion } from '@/src/assertions/base/entityTreeAssertion';
-import {
-  ElementState,
-  EntityType,
-  ExpectedMessages,
-  TreeEntity,
-} from '@/src/testData';
+import { ElementState, ExpectedMessages, TreeEntity } from '@/src/testData';
 import { SideBarEntitiesTree } from '@/src/ui/webElements/entityTree/sidebar/sideBarEntitiesTree';
-import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 export class SideBarEntityAssertion<
@@ -21,14 +15,17 @@ export class SideBarEntityAssertion<
 
   public async assertEntityAndCheckboxHasSelectedColors(
     entity: TreeEntity,
-    theme: string,
-    entityType: EntityType,
+    expectedColors: { checkboxColor: string; entityBackgroundColor: string },
   ) {
-    const { checkboxColor, backgroundColor } =
-      ThemesUtil.getEntityCheckboxAndBackgroundColor(theme, entityType);
-    await this.assertEntityCheckboxColor(entity, checkboxColor);
-    await this.assertEntityCheckboxBorderColors(entity, checkboxColor);
-    await this.assertEntityBackgroundColor(entity, backgroundColor);
+    await this.assertEntityCheckboxColor(entity, expectedColors.checkboxColor);
+    await this.assertEntityCheckboxBorderColors(
+      entity,
+      expectedColors.checkboxColor,
+    );
+    await this.assertEntityBackgroundColor(
+      entity,
+      expectedColors.entityBackgroundColor,
+    );
   }
 
   public async assertEntityDotsMenuState(

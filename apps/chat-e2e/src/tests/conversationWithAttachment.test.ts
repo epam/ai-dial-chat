@@ -9,9 +9,15 @@ import {
   MockedChatApiResponseBodies,
   UploadMenuOptions,
 } from '@/src/testData';
-import { Colors, Overflow, Styles } from '@/src/ui/domData';
+import {
+  Colors,
+  Overflow,
+  Styles,
+  ThemeColorAttributes,
+} from '@/src/ui/domData';
 import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 let modelsWithAttachments: DialAIEntityModel[];
@@ -233,6 +239,7 @@ dialTest(
     attachmentDropdownMenu,
     sendMessageInputAttachments,
     localStorageManager,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-1767', 'EPMRTC-1904');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -252,9 +259,13 @@ dialTest(
           () =>
             attachmentDropdownMenu.selectMenuOption(
               UploadMenuOptions.uploadFromDevice,
+              {
+                isHttpMethodTriggered: true,
+                triggeredHttpMethod: 'GET',
+              },
             ),
         );
-        await dialHomePage.throttleAPIResponse('**/*');
+        await dialHomePage.emulateSlowNetworkConditions();
         await uploadFromDeviceModal.uploadButton.click();
       },
     );
@@ -262,29 +273,21 @@ dialTest(
     await dialTest.step(
       'Verify loading indicator is shown under the file, send button is disabled and have tooltip on hover',
       async () => {
-        const isSendMessageBtnEnabled =
-          await sendMessage.sendMessageButton.isElementEnabled();
-        expect
-          .soft(
-            isSendMessageBtnEnabled,
-            ExpectedMessages.sendMessageButtonDisabled,
-          )
-          .toBeFalsy();
-
+        await baseAssertion.assertElementState(
+          sendMessageInputAttachments.inputAttachmentLoadingIndicator(
+            Attachment.sunImageName,
+          ),
+          'visible',
+        );
+        await baseAssertion.assertElementActionabilityState(
+          sendMessage.sendMessageButton,
+          'disabled',
+        );
         await sendMessage.sendMessageButton.hoverOver();
-        const tooltipContent = await tooltip.getContent();
-        expect
-          .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.sendMessageAttachmentLoadingTooltip);
-
-        await expect
-          .soft(
-            sendMessageInputAttachments.inputAttachmentLoadingIndicator(
-              Attachment.sunImageName,
-            ),
-            ExpectedMessages.attachmentLoadingIndicatorIsVisible,
-          )
-          .toBeAttached();
+        await baseAssertion.assertElementText(
+          tooltip,
+          ExpectedConstants.sendMessageAttachmentLoadingTooltip,
+        );
       },
     );
   },
@@ -474,6 +477,7 @@ dialTest(
     sendMessageInputAttachments,
     context,
     localStorageManager,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-1905');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -493,6 +497,10 @@ dialTest(
           () =>
             attachmentDropdownMenu.selectMenuOption(
               UploadMenuOptions.uploadFromDevice,
+              {
+                isHttpMethodTriggered: true,
+                triggeredHttpMethod: 'GET',
+              },
             ),
         );
         await context.setOffline(true);
@@ -505,27 +513,22 @@ dialTest(
       async () => {
         for (let retryAttempt = 1; retryAttempt <= 2; retryAttempt++) {
           if (retryAttempt === 2) {
-            await sendMessageInputAttachments
-              .inputAttachmentLoadingRetry(Attachment.sunImageName)
-              .click();
+            await sendMessageInputAttachments.retryLoading(
+              Attachment.sunImageName,
+            );
           }
-          const attachmentNameColor = await sendMessageInputAttachments
-            .inputAttachmentName(Attachment.sunImageName)
-            .getComputedStyleProperty(Styles.color);
-          expect
-            .soft(
-              attachmentNameColor[0],
-              ExpectedMessages.attachmentNameColorIsValid,
-            )
-            .toBe(Colors.textError);
-          await expect
-            .soft(
-              sendMessageInputAttachments.inputAttachmentErrorIcon(
-                Attachment.sunImageName,
-              ),
-              ExpectedMessages.attachmentHasErrorIcon,
-            )
-            .toBeVisible();
+          await baseAssertion.assertElementColor(
+            sendMessageInputAttachments.inputAttachmentName(
+              Attachment.sunImageName,
+            ),
+            ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textError),
+          );
+          await baseAssertion.assertElementState(
+            sendMessageInputAttachments.inputAttachmentErrorIcon(
+              Attachment.sunImageName,
+            ),
+            'visible',
+          );
         }
       },
     );
@@ -534,26 +537,22 @@ dialTest(
       'Click on Retry icon in online mode and verify attachment is uploaded',
       async () => {
         await context.setOffline(false);
-        await sendMessageInputAttachments
-          .inputAttachmentLoadingRetry(Attachment.sunImageName)
-          .click();
-        const attachmentNameColor = await sendMessageInputAttachments
-          .inputAttachmentName(Attachment.sunImageName)
-          .getComputedStyleProperty(Styles.color);
-        expect
-          .soft(
-            attachmentNameColor[0],
-            ExpectedMessages.attachmentNameColorIsValid,
-          )
-          .toBe(Colors.textPrimary);
-        await expect
-          .soft(
-            sendMessageInputAttachments.inputAttachmentErrorIcon(
-              Attachment.sunImageName,
-            ),
-            ExpectedMessages.attachmentHasErrorIcon,
-          )
-          .toBeHidden();
+        await sendMessageInputAttachments.retryLoading(
+          Attachment.sunImageName,
+          { isHttpMethodTriggered: true },
+        );
+        await baseAssertion.assertElementColor(
+          sendMessageInputAttachments.inputAttachmentName(
+            Attachment.sunImageName,
+          ),
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textPrimary),
+        );
+        await baseAssertion.assertElementState(
+          sendMessageInputAttachments.inputAttachmentErrorIcon(
+            Attachment.sunImageName,
+          ),
+          'hidden',
+        );
       },
     );
   },
