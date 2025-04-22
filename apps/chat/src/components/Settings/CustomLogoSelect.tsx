@@ -164,8 +164,8 @@ export const CustomLogoSelect = ({
       {confirmDialogValues && confirmDialogOpen && (
         <ConfirmDialog
           isOpen
-          heading={t(confirmDialogValues?.heading)}
-          description={t(confirmDialogValues?.description)}
+          heading={t(confirmDialogValues.heading)}
+          description={t(confirmDialogValues.description)}
           confirmLabel={t('Confirm')}
           cancelLabel={t('Cancel')}
           onClose={handleConfirmClose}
