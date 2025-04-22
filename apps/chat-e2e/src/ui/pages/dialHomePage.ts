@@ -1,6 +1,7 @@
-import { BasePage, UploadDownloadData } from './basePage';
+import { BasePage, UploadDownloadData, apiTimeout } from './basePage';
 
 import config from '@/config/chat.playwright.config';
+import { API } from '@/src/testData';
 import { SharedPromptPreviewModal } from '@/src/ui/webElements';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { Request } from 'playwright-chromium';
@@ -50,41 +51,41 @@ export class DialHomePage extends BasePage {
     await chat.waitForState({ state: 'attached' });
     await chat.waitForChatLoaded();
     await chat.getSendMessage().waitForMessageInputLoaded();
-    if (!options?.skipSidebars) {
+
+    if (
+      options?.selectedSharedConversationName &&
+      !options.selectedSharedFolderName
+    ) {
       const chatBar = appContainer.getChatBar();
-      if (
-        options?.selectedSharedConversationName &&
-        !options.selectedSharedFolderName
-      ) {
-        const sharedConversation = chatBar
-          .getSharedWithMeConversationsTree()
-          .getEntityByName(options.selectedSharedConversationName);
-        await sharedConversation.waitFor();
-        await sharedConversation.waitFor({ state: 'attached' });
-        await chat.getChatHeader().waitForState();
-      } else if (
-        options?.selectedSharedConversationName &&
-        options.selectedSharedFolderName
-      ) {
-        const sharedFolderConversation = chatBar
-          .getSharedFolderConversations()
-          .getFolderEntity(
-            options.selectedSharedFolderName,
-            options.selectedSharedConversationName,
-          );
-        await sharedFolderConversation.waitFor();
-        await sharedFolderConversation.waitFor({ state: 'attached' });
-        await chat.getChatHeader().waitForState();
-      } else if (options?.isPromptShared) {
-        const promptPreviewModal = new SharedPromptPreviewModal(this.page);
-        await promptPreviewModal.waitForState();
-        await promptPreviewModal.promptName.waitForState();
-      } else {
-        await chat.getAgentInfo().waitForState({ state: 'attached' });
-        await chat.configureSettingsButton.waitForState({
-          state: 'attached',
-        });
-      }
+      const sharedConversation = chatBar
+        .getSharedWithMeConversationsTree()
+        .getEntityByName(options.selectedSharedConversationName);
+      await sharedConversation.waitFor();
+      await sharedConversation.waitFor({ state: 'attached' });
+      await chat.getChatHeader().waitForState();
+    } else if (
+      options?.selectedSharedConversationName &&
+      options.selectedSharedFolderName
+    ) {
+      const chatBar = appContainer.getChatBar();
+      const sharedFolderConversation = chatBar
+        .getSharedFolderConversations()
+        .getFolderEntity(
+          options.selectedSharedFolderName,
+          options.selectedSharedConversationName,
+        );
+      await sharedFolderConversation.waitFor();
+      await sharedFolderConversation.waitFor({ state: 'attached' });
+      await chat.getChatHeader().waitForState();
+    } else if (options?.isPromptShared) {
+      const promptPreviewModal = new SharedPromptPreviewModal(this.page);
+      await promptPreviewModal.waitForState();
+      await promptPreviewModal.promptName.waitForState();
+    } else {
+      await chat.getAgentInfo().waitForState({ state: 'attached' });
+      await chat.configureSettingsButton.waitForState({
+        state: 'attached',
+      });
     }
   }
 
@@ -162,5 +163,23 @@ export class DialHomePage extends BasePage {
     } else {
       return this.page.waitForRequest(matchRequest, { timeout });
     }
+  }
+
+  public async goToMarketplace() {
+    await this.waitForExpectedResponses(
+      () => this.getAppContainer().getNavigationPanel().goToMarketplaceHome(),
+      [{ apiMethod: 'GET', urlPattern: API.marketplaceHost }],
+      200,
+      apiTimeout * 2,
+    );
+  }
+
+  public async goToMyWorkspace() {
+    await this.waitForExpectedResponses(
+      () => this.getAppContainer().getNavigationPanel().goToMyWorkspace(),
+      [{ apiMethod: 'GET', urlPattern: API.marketplaceHost }],
+      200,
+      apiTimeout * 2,
+    );
   }
 }

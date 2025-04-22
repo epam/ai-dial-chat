@@ -93,6 +93,14 @@ export class UploadFromDeviceModal extends BaseElement {
     );
   }
 
+  public getUploadedFullFilename(filename: string) {
+    const extensionElement = new BaseElement(
+      this.page,
+      UploadFromDeviceModalSelectors.fileExtension,
+    ).getElementLocatorByText(filename.substring(filename.lastIndexOf('.')));
+    return this.getUploadedFile(filename).filter({ has: extensionElement });
+  }
+
   public getUploadedFileExtension(filename: string) {
     return this.createElementFromLocator(
       this.getUploadedFile(filename).locator(
@@ -126,7 +134,7 @@ export class UploadFromDeviceModal extends BaseElement {
 
   public async uploadFiles() {
     const respPremise = this.page.waitForResponse(
-      (r) => r.request().method() === 'POST',
+      (r) => r.request().method() === 'POST' && r.status() === 200,
     );
     await this.uploadButton.click();
     await respPremise;
@@ -137,5 +145,7 @@ export class UploadFromDeviceModal extends BaseElement {
       Attachment.attachmentPath,
       ...filenames,
     );
+    // eslint-disable-next-line playwright/no-wait-for-timeout
+    await this.page.waitForTimeout(500);
   }
 }
