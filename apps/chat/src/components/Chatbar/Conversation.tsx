@@ -338,7 +338,7 @@ export const ConversationComponent = ({
       {!isSelectMode && !messageIsStreaming && (
         <div
           className={classNames(
-            'absolute right-2 z-50 flex cursor-pointer justify-end group-hover:visible',
+            'absolute right-0 z-50 flex cursor-pointer justify-end group-hover:visible',
             (conversation.status === UploadStatus.LOADED || !isContextMenu) &&
               'invisible',
             isContextMenu && 'md:visible',
@@ -349,6 +349,7 @@ export const ConversationComponent = ({
             isOpen={isContextMenu}
             setIsOpen={setIsContextMenu}
             publicationUrl={additionalItemData?.publicationUrl}
+            className="p-2"
           />
         </div>
       )}

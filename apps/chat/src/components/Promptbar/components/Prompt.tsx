@@ -408,7 +408,7 @@ export const PromptComponent = ({
             ref={refs.setFloating}
             {...getFloatingProps()}
             className={classNames(
-              'absolute right-2 z-50 flex justify-end group-hover:visible',
+              'absolute right-0 z-50 flex justify-end group-hover:visible',
               isSelected ? 'visible' : 'invisible',
             )}
             onClick={stopBubbling}
@@ -437,6 +437,7 @@ export const PromptComponent = ({
               disableUse={disableUsePrompt}
               onUse={handleUse}
               onShowInfo={handleInfo}
+              className="p-2"
             />
           </div>
         )}
