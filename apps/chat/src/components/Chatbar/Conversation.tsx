@@ -290,6 +290,7 @@ export const ConversationComponent = ({
         className={classNames(
           'group flex size-full items-center gap-2 pr-3 disabled:cursor-not-allowed',
           !isSelectMode && '[&:not(:disabled)]:group-hover:pr-9',
+          isContextMenu && 'pr-9',
         )}
         style={{
           paddingLeft: (level && `${level * 30 + 16}px`) || '0.875rem',
