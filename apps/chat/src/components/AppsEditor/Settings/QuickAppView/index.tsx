@@ -154,12 +154,21 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
           }),
         );
         lastSubmittedValuesRef.current = data;
+      } else if (shouldSaveApplication && exitAfterSave) {
+        dispatch(ApplicationActions.exitEditor({}));
       } else {
         dispatch(ApplicationActions.setShouldSaveApplication(false));
         dispatch(ApplicationActions.setExitAfterSave(false));
       }
     },
-    [shouldSaveApplication, isShared, oldApplication, dispatch, schema],
+    [
+      shouldSaveApplication,
+      exitAfterSave,
+      isShared,
+      oldApplication,
+      dispatch,
+      schema,
+    ],
   );
 
   const autoSaveHandler = useCallback(() => {
