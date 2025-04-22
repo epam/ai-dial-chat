@@ -3,6 +3,7 @@ import {
   IconDots,
   IconDownload,
   IconSquareCheck,
+  IconSquareOff,
   IconTrashX,
   IconUserX,
 } from '@tabler/icons-react';
@@ -42,6 +43,7 @@ interface ContextMenuProps {
   onUnpublish?: MouseEventHandler<unknown>;
   onSave?: (fileId: string) => void | MouseEventHandler<unknown>;
   onSelect?: MouseEventHandler<unknown>;
+  isSelected?: boolean;
 }
 
 export function FileItemContextMenu({
@@ -55,6 +57,7 @@ export function FileItemContextMenu({
   onUnpublish,
   onSave,
   onSelect,
+  isSelected,
 }: ContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
 
@@ -78,10 +81,10 @@ export function FileItemContextMenu({
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: t('Select'),
+        name: t(isSelected ? 'Unselect' : 'Select'),
         dataQa: 'select',
         display: !!onSelect && !isOverlay,
-        Icon: IconSquareCheck,
+        Icon: isSelected ? IconSquareOff : IconSquareCheck,
         onClick: onSelect,
       },
       {
@@ -160,6 +163,7 @@ export function FileItemContextMenu({
       onDelete,
       isOverlay,
       onSelect,
+      isSelected,
     ],
   );
 
