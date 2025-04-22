@@ -159,7 +159,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
         !isEqual(data, lastSubmittedValuesRef.current)
       ) {
         const preparedData = getCodeAppData(data);
-        const arrAreNotTheSameAndShared =
+        const areNotTheSameAndShared =
           isShared &&
           preparedData.function?.sourceFolder !==
             oldApplication.function?.sourceFolder;
@@ -168,10 +168,10 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
         const applicationData: CustomApplicationModel = {
           ...oldApplication,
           ...preparedData,
-          isShared: arrAreNotTheSameAndShared ? false : isShared,
+          isShared: areNotTheSameAndShared ? false : isShared,
         };
 
-        if (arrAreNotTheSameAndShared) {
+        if (areNotTheSameAndShared) {
           dispatch(
             ShareActions.revokeAccess({
               resourceId: oldApplication.id,
