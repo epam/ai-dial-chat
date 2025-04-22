@@ -6,9 +6,7 @@ import {
   FC,
   Fragment,
   KeyboardEvent,
-  MouseEvent,
   MouseEventHandler,
-  TouchEvent,
   createElement,
   useCallback,
   useEffect,
@@ -39,6 +37,7 @@ import {
   sortByName,
 } from '@/src/utils/app/folders';
 import { isEntityIdExternal, isRootId } from '@/src/utils/app/id';
+import { isTabletScreen } from '@/src/utils/app/mobile';
 import {
   hasParentWithAttribute,
   hasParentWithFloatingOverlay,
@@ -204,9 +203,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     currentFolder: FolderInterface;
     draggedData: FolderInterface;
   }>();
-  const dragDropElement = useRef<HTMLDivElement>(null);
   const [isSelected, setIsSelected] = useState(false);
   const [isPartialSelected, setIsPartialSelected] = useState(false);
+
+  const dragDropElement = useRef<HTMLDivElement>(null);
 
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.selectIsPublishingEnabled(state, featureType),
@@ -225,13 +225,28 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     PublicationSelectors.selectPublicVersionGroups,
   );
 
+  const handleContextMenuOpen = useCallback(
+    (e: MouseEvent | TouchEvent) => {
+      if (
+        hasParentWithFloatingOverlay(e.target as Element) &&
+        featureType !== FeatureType.File
+      ) {
+        return;
+      }
+      setIsContextMenu(true);
+    },
+    [featureType],
+  );
+
+  useContextMenuTrigger(handleContextMenuOpen, dragDropElement);
+
   const isNameInvalid = isEntityNameInvalid(currentFolder.name);
   const isInvalidPath = hasInvalidNameInPath(currentFolder.folderId);
   const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
   const isExternal = isEntityIdExternal(currentFolder);
 
   const handleToggleFolder = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
+    (e: ChangeEvent<HTMLInputElement> | React.MouseEvent) => {
       e.stopPropagation();
 
       onSelectFolder?.(`${currentFolder.id}/`, isSelected);
@@ -839,15 +854,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     [currentFolder, dispatch, featureType, isExternal],
   );
 
-  const handleContextMenuOpen = (e: MouseEvent | TouchEvent) => {
-    if (hasParentWithFloatingOverlay(e.target as Element)) {
-      return;
-    }
-    setIsContextMenu(true);
-  };
-
-  const contextMenuHandlers = useContextMenuTrigger(handleContextMenuOpen);
-
   useEffect(() => {
     if (isRenaming) {
       setIsDeletingConfirmDialog(false);
@@ -889,10 +895,14 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     (selectedPublicationUrl && additionalItemData?.publicationUrl) ||
     (!selectedPublicationUrl && !additionalItemData?.publicationUrl);
 
+  const isMobileCheckboxVisible =
+    canSelectFolders && isContextMenu && isTabletScreen();
+
   return (
     <div
       id="folder"
       className={classNames(
+        'select-none',
         isDraggingOver && 'bg-accent-primary-alpha',
         currentFolder.temporary && 'text-primary',
       )}
@@ -900,7 +910,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       onDragOver={allowDrop}
       onDragEnter={highlightDrop}
       onDragLeave={deleteHighlight}
-      {...contextMenuHandlers}
       ref={dragDropElement}
     >
       <div
@@ -969,6 +978,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       (!isExternal || !additionalItemData?.isSidePanelItem) &&
                         canSelectFolders &&
                         'group-hover:hidden',
+                      isMobileCheckboxVisible && 'hidden',
                     )}
                   >
                     {hasResourcesToReview &&
@@ -984,6 +994,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         (!isExternal || !additionalItemData?.isSidePanelItem) &&
                           canSelectFolders &&
                           'group-hover:hidden',
+                        isMobileCheckboxVisible && 'hidden',
                       )}
                     />
                   </ShareIcon>
@@ -998,7 +1009,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         additionalItemData?.isSidePanelItem
                           ? 'size-[24px] items-center justify-center'
                           : 'size-[18px]',
-                        isSelected ? 'flex' : 'hidden',
+                        isSelected || isMobileCheckboxVisible
+                          ? 'flex'
+                          : 'hidden',
                       )}
                       data-item-checkbox
                     >
@@ -1068,7 +1081,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         additionalItemData?.isSidePanelItem
                           ? 'size-[24px] items-center justify-center'
                           : 'size-[18px]',
-                        isSelected || isPartialSelected || isSelectAlwaysVisible
+                        isSelected ||
+                          isPartialSelected ||
+                          isSelectAlwaysVisible ||
+                          isMobileCheckboxVisible
                           ? 'flex'
                           : 'hidden',
                       )}
@@ -1111,13 +1127,13 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     {...currentFolder}
                     isHighlighted={isContextMenu}
                     featureType={featureType}
-                    containerClassName={
+                    containerClassName={classNames(
                       (!isExternal || !additionalItemData?.isSidePanelItem) &&
-                      canSelectFolders &&
-                      !isSelectAlwaysVisible
-                        ? 'group-hover/folder-item:hidden'
-                        : ''
-                    }
+                        canSelectFolders &&
+                        !isSelectAlwaysVisible &&
+                        'group-hover/folder-item:hidden',
+                      isMobileCheckboxVisible && 'hidden',
+                    )}
                   >
                     {hasResourcesToReview &&
                       additionalItemData?.isSidePanelItem &&
@@ -1125,6 +1141,11 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         <ReviewDot className="group-hover/folder-item:bg-accent-primary-alpha" />
                       )}
                     <IconFolder
+                      onClick={(e) => {
+                        if (canSelectFolders) {
+                          handleToggleFolder(e);
+                        }
+                      }}
                       strokeWidth={folderIconStrokeWidth}
                       size={iconSize}
                       className="mr-1 text-secondary"
@@ -1142,6 +1163,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               data-qa="folder-name"
             >
               <Tooltip
+                hideTooltip={isContextMenu}
                 tooltip={
                   showTooltip && !isNameOrPathInvalid
                     ? currentFolder.name
@@ -1185,10 +1207,11 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   {...getFloatingProps()}
                   className={classNames(
                     'invisible absolute right-0 z-50 flex justify-end group-hover/button:visible',
-                    isContextMenu && 'max-md:visible',
+                    isContextMenu && 'md:visible',
                   )}
                 >
                   <FolderContextMenu
+                    isSelected={isSelected}
                     folder={currentFolder}
                     featureType={featureType}
                     onRename={
@@ -1216,6 +1239,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     isOpen={isContextMenu}
                     isEmpty={!hasChildItemOnAnyLevel}
                     onSelect={onSelectFolder && onSelect}
+                    canSelectFolders={canSelectFolders}
                     additionalItemData={additionalItemData}
                   />
                 </div>

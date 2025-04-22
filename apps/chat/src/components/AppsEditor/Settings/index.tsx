@@ -205,12 +205,14 @@ export const ApplicationSettings: React.FC<Props> = ({
     defaultValues: getDefaultValues(type) ?? {},
   });
 
-  const saveForm = useCallback(() => {
-    const isFormChanged =
-      Object.keys(methods.formState.dirtyFields).length > 0 ||
-      isCodeEditorDirty;
+  const isFormChanged = useCallback(() => {
+    return (
+      Object.keys(methods.formState.dirtyFields).length > 0 || isCodeEditorDirty
+    );
+  }, [methods.formState.dirtyFields, isCodeEditorDirty]);
 
-    if (isFormChanged && methods.formState.isValid) {
+  const saveForm = useCallback(() => {
+    if (isFormChanged() && methods.formState.isValid) {
       dispatch(ApplicationActions.setShouldSaveApplication(true));
       dispatch(CodeEditorActions.saveAllModifiedFiles());
       if (isAppDeployed) {
@@ -224,7 +226,13 @@ export const ApplicationSettings: React.FC<Props> = ({
 
       methods.reset(currentValues);
     }
-  }, [dispatch, isAppDeployed, isCodeEditorDirty, methods, t]);
+  }, [dispatch, isAppDeployed, isFormChanged, methods, t]);
+
+  useEffect(() => {
+    if (methods.formState.isValid) {
+      dispatch(ApplicationActions.setHasUnsavedChanges(isFormChanged()));
+    }
+  }, [dispatch, isFormChanged, methods.formState.isValid]);
 
   const formViewElement = getFormView(type);
 
