@@ -4,15 +4,15 @@ import dialTest from '@/src/core/dialFixtures';
 import {
   CheckboxState,
   CollapsedSections,
-  EntityType,
   ExpectedConstants,
   FilterMenuOptions,
   FolderPrompt,
   MenuOptions,
   ThemeId,
 } from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 
 const fourNestedLevels = 4;
 const threeNestedLevels = 3;
@@ -45,6 +45,14 @@ dialTest(
       CollapsedSections.Organization,
     );
     await localStorageManager.setShowSideBarPanels();
+    const expectedColors = {
+      checkboxColor: ThemesUtil.getRgbColorByKey(
+        ThemeColorAttributes.textAccentTertiary,
+      ),
+      entityBackgroundColor: ThemesUtil.getRgbColorByKey(
+        ThemeColorAttributes.bgAccentTertiaryAlpha,
+      ),
+    };
 
     await dialTest.step(
       'Prepare nested folders with prompts inside each one, one more root folder with 2 prompts inside and one single prompt',
@@ -147,41 +155,35 @@ dialTest(
         for (let i = 0; i < nestedFolders.length; i++) {
           await promptBarFolderAssertion.assertFolderAndCheckboxHasSelectedColors(
             { name: nestedFolders[i].name },
-            theme,
-            EntityType.Prompt,
+            expectedColors,
           );
           await promptBarFolderAssertion.assertFolderEntityAndCheckboxHasSelectedColors(
             { name: nestedFolders[i].name },
             { name: nestedPrompts[i].name },
-            theme,
-            EntityType.Prompt,
+            expectedColors,
           );
         }
 
         await promptBarFolderAssertion.assertFolderAndCheckboxHasSelectedColors(
           { name: folderWithPrompts.folders.name },
-          theme,
-          EntityType.Prompt,
+          expectedColors,
         );
         for (const item of folderWithPrompts.prompts) {
           await promptBarFolderAssertion.assertFolderEntityAndCheckboxHasSelectedColors(
             { name: folderWithPrompts.folders.name },
             { name: item.name },
-            theme,
-            EntityType.Prompt,
+            expectedColors,
           );
         }
 
         await promptBarFolderAssertion.assertFolderAndCheckboxHasSelectedColors(
           { name: emptyFolderName },
-          theme,
-          EntityType.Prompt,
+          expectedColors,
         );
 
         await promptAssertion.assertEntityAndCheckboxHasSelectedColors(
           { name: singlePrompt.name },
-          theme,
-          EntityType.Prompt,
+          expectedColors,
         );
       },
     );
@@ -290,31 +292,26 @@ dialTest(
       'Verify neither folders not prompts are highlighted',
       async () => {
         for (let i = 0; i < nestedFolders.length; i++) {
-          await promptBarFolderAssertion.assertFolderBackgroundColor(
-            { name: nestedFolders[i].name },
-            Colors.defaultBackground,
-          );
+          await promptBarFolderAssertion.assertFolderBackgroundColor({
+            name: nestedFolders[i].name,
+          });
           await promptBarFolderAssertion.assertFolderEntityBackgroundColor(
             { name: nestedFolders[i].name },
             { name: nestedPrompts[i].name },
-            Colors.defaultBackground,
           );
         }
 
-        await promptBarFolderAssertion.assertFolderBackgroundColor(
-          { name: folderWithPrompts.folders.name },
-          Colors.defaultBackground,
-        );
+        await promptBarFolderAssertion.assertFolderBackgroundColor({
+          name: folderWithPrompts.folders.name,
+        });
 
-        await promptBarFolderAssertion.assertFolderBackgroundColor(
-          { name: emptyFolderName },
-          Colors.defaultBackground,
-        );
+        await promptBarFolderAssertion.assertFolderBackgroundColor({
+          name: emptyFolderName,
+        });
 
-        await promptAssertion.assertEntityBackgroundColor(
-          { name: singlePrompt.name },
-          Colors.defaultBackground,
-        );
+        await promptAssertion.assertEntityBackgroundColor({
+          name: singlePrompt.name,
+        });
       },
     );
 
@@ -698,6 +695,9 @@ dialTest(
     let nestedFolders: FolderInterface[];
     let nestedPrompts: Prompt[] = [];
     let secondLevelFolder: FolderPrompt;
+    const expectedFolderBgColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.bgAccentTertiaryAlpha,
+    );
 
     await dialTest.step(
       'Prepare nested folders with prompts inside each one and one more folder with prompt on the second level',
@@ -749,7 +749,7 @@ dialTest(
         await promptBarFolderAssertion.assertFolderEntityBackgroundColor(
           { name: nestedFolders[fourNestedLevels - 2].name },
           { name: nestedPrompts[fourNestedLevels - 2].name },
-          Colors.backgroundAccentTertiaryAlphaDark,
+          expectedFolderBgColor,
         );
 
         for (let i = 0; i < nestedFolders.length; i++) {
@@ -764,10 +764,9 @@ dialTest(
               CheckboxState.partiallyChecked,
             );
           }
-          await promptBarFolderAssertion.assertFolderBackgroundColor(
-            { name: nestedFolders[i].name },
-            Colors.defaultBackground,
-          );
+          await promptBarFolderAssertion.assertFolderBackgroundColor({
+            name: nestedFolders[i].name,
+          });
           if (i !== fourNestedLevels - 2) {
             await promptBarFolderAssertion.assertFolderEntityCheckbox(
               { name: nestedFolders[i].name },
@@ -777,7 +776,6 @@ dialTest(
             await promptBarFolderAssertion.assertFolderEntityBackgroundColor(
               { name: nestedFolders[i].name },
               { name: nestedPrompts[i].name },
-              Colors.defaultBackground,
             );
           }
         }
@@ -788,10 +786,9 @@ dialTest(
           },
           'hidden',
         );
-        await promptBarFolderAssertion.assertFolderBackgroundColor(
-          { name: secondLevelFolder.folders.name },
-          Colors.defaultBackground,
-        );
+        await promptBarFolderAssertion.assertFolderBackgroundColor({
+          name: secondLevelFolder.folders.name,
+        });
 
         await promptBarFolderAssertion.assertFolderEntityCheckbox(
           { name: secondLevelFolder.folders.name },
@@ -801,7 +798,6 @@ dialTest(
         await promptBarFolderAssertion.assertFolderEntityBackgroundColor(
           { name: secondLevelFolder.folders.name },
           { name: secondLevelFolder.prompts[0].name },
-          Colors.defaultBackground,
         );
       },
     );
@@ -829,7 +825,7 @@ dialTest(
         );
         await promptBarFolderAssertion.assertFolderBackgroundColor(
           { name: nestedFolders[fourNestedLevels - 1].name },
-          Colors.backgroundAccentTertiaryAlphaDark,
+          expectedFolderBgColor,
         );
 
         for (let i = 0; i < nestedFolders.length - 2; i++) {
@@ -837,10 +833,9 @@ dialTest(
             { name: nestedFolders[i].name },
             CheckboxState.partiallyChecked,
           );
-          await promptBarFolderAssertion.assertFolderBackgroundColor(
-            { name: nestedFolders[i].name },
-            Colors.defaultBackground,
-          );
+          await promptBarFolderAssertion.assertFolderBackgroundColor({
+            name: nestedFolders[i].name,
+          });
 
           await promptBarFolderAssertion.assertFolderEntityCheckbox(
             { name: nestedFolders[i].name },
@@ -850,7 +845,6 @@ dialTest(
           await promptBarFolderAssertion.assertFolderEntityBackgroundColor(
             { name: nestedFolders[i].name },
             { name: nestedPrompts[i].name },
-            Colors.defaultBackground,
           );
         }
 
@@ -860,10 +854,9 @@ dialTest(
           },
           'hidden',
         );
-        await promptBarFolderAssertion.assertFolderBackgroundColor(
-          { name: secondLevelFolder.folders.name },
-          Colors.defaultBackground,
-        );
+        await promptBarFolderAssertion.assertFolderBackgroundColor({
+          name: secondLevelFolder.folders.name,
+        });
 
         await promptBarFolderAssertion.assertFolderEntityCheckbox(
           { name: secondLevelFolder.folders.name },
@@ -873,7 +866,6 @@ dialTest(
         await promptBarFolderAssertion.assertFolderEntityBackgroundColor(
           { name: secondLevelFolder.folders.name },
           { name: secondLevelFolder.prompts[0].name },
-          Colors.defaultBackground,
         );
       },
     );
@@ -899,6 +891,12 @@ dialTest(
     let nestedPrompts: Prompt[] = [];
     let lowLevelFolderPrompt: Prompt;
     let secondLevelFolder: FolderPrompt;
+    const expectedFolderBgColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.bgAccentTertiaryAlpha,
+    );
+    const expectedCheckboxColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.textAccentTertiary,
+    );
 
     await dialTest.step(
       'Prepare nested folders with prompts inside each one, one more folder with prompt on the second level, and one more prompt on the lowest folder level',
@@ -976,7 +974,7 @@ dialTest(
         await promptBarFolderAssertion.assertFolderEntityCheckboxBorderColors(
           { name: nestedFolders[threeNestedLevels - 1].name },
           { name: lowLevelFolderPrompt.name },
-          Colors.textSecondary,
+          expectedCheckboxColor,
         );
       },
     );
@@ -994,10 +992,9 @@ dialTest(
           { name: nestedFolders[0].name },
           CheckboxState.partiallyChecked,
         );
-        await promptBarFolderAssertion.assertFolderBackgroundColor(
-          { name: nestedFolders[0].name },
-          Colors.defaultBackground,
-        );
+        await promptBarFolderAssertion.assertFolderBackgroundColor({
+          name: nestedFolders[0].name,
+        });
 
         await promptBarFolderAssertion.assertFolderEntityCheckbox(
           { name: nestedFolders[0].name },
@@ -1007,7 +1004,6 @@ dialTest(
         await promptBarFolderAssertion.assertFolderEntityBackgroundColor(
           { name: nestedFolders[0].name },
           { name: nestedPrompts[0].name },
-          Colors.defaultBackground,
         );
 
         for (let i = 1; i < nestedFolders.length; i++) {
@@ -1017,7 +1013,7 @@ dialTest(
           );
           await promptBarFolderAssertion.assertFolderBackgroundColor(
             { name: nestedFolders[i].name },
-            Colors.backgroundAccentTertiaryAlphaDark,
+            expectedFolderBgColor,
           );
 
           await promptBarFolderAssertion.assertFolderEntityCheckboxState(
@@ -1028,7 +1024,7 @@ dialTest(
           await promptBarFolderAssertion.assertFolderEntityBackgroundColor(
             { name: nestedFolders[i].name },
             { name: nestedPrompts[i].name },
-            Colors.backgroundAccentTertiaryAlphaDark,
+            expectedFolderBgColor,
           );
         }
 
@@ -1038,10 +1034,9 @@ dialTest(
           },
           'hidden',
         );
-        await promptBarFolderAssertion.assertFolderBackgroundColor(
-          { name: secondLevelFolder.folders.name },
-          Colors.defaultBackground,
-        );
+        await promptBarFolderAssertion.assertFolderBackgroundColor({
+          name: secondLevelFolder.folders.name,
+        });
 
         await promptBarFolderAssertion.assertFolderEntityCheckbox(
           { name: secondLevelFolder.folders.name },
@@ -1051,7 +1046,6 @@ dialTest(
         await promptBarFolderAssertion.assertFolderEntityBackgroundColor(
           { name: secondLevelFolder.folders.name },
           { name: secondLevelFolder.prompts[0].name },
-          Colors.defaultBackground,
         );
       },
     );
@@ -1081,7 +1075,7 @@ dialTest(
         await promptBarFolderAssertion.assertFolderEntityBackgroundColor(
           { name: nestedFolders[1].name },
           { name: nestedPrompts[1].name },
-          Colors.backgroundAccentTertiaryAlphaDark,
+          expectedFolderBgColor,
         );
 
         for (let i = 0; i < 1; i++) {
@@ -1089,10 +1083,9 @@ dialTest(
             { name: nestedFolders[i].name },
             CheckboxState.partiallyChecked,
           );
-          await promptBarFolderAssertion.assertFolderBackgroundColor(
-            { name: nestedFolders[i].name },
-            Colors.defaultBackground,
-          );
+          await promptBarFolderAssertion.assertFolderBackgroundColor({
+            name: nestedFolders[i].name,
+          });
 
           if (i !== 1) {
             await promptBarFolderAssertion.assertFolderEntityCheckbox(
@@ -1103,7 +1096,6 @@ dialTest(
             await promptBarFolderAssertion.assertFolderEntityBackgroundColor(
               { name: nestedFolders[i].name },
               { name: nestedPrompts[i].name },
-              Colors.defaultBackground,
             );
           }
         }
@@ -1114,10 +1106,9 @@ dialTest(
           },
           'hidden',
         );
-        await promptBarFolderAssertion.assertFolderBackgroundColor(
-          { name: nestedFolders[threeNestedLevels - 1].name },
-          Colors.defaultBackground,
-        );
+        await promptBarFolderAssertion.assertFolderBackgroundColor({
+          name: nestedFolders[threeNestedLevels - 1].name,
+        });
 
         for (const folderConversation of [
           nestedPrompts[threeNestedLevels - 1].name,
@@ -1131,7 +1122,6 @@ dialTest(
           await promptBarFolderAssertion.assertFolderEntityBackgroundColor(
             { name: nestedFolders[threeNestedLevels - 1].name },
             { name: folderConversation },
-            Colors.defaultBackground,
           );
         }
       },
@@ -1158,6 +1148,12 @@ dialTest(
     let nestedFolders: FolderInterface[];
     let nestedPrompts: Prompt[] = [];
     let lowLevelFolderPrompt: Prompt;
+    const expectedCheckboxColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.textAccentTertiary,
+    );
+    const expectedBgColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.bgAccentTertiaryAlpha,
+    );
 
     await dialTest.step(
       'Prepare nested folders with prompts inside each one and one more prompt on the lowest folder level',
@@ -1207,7 +1203,7 @@ dialTest(
           .hover();
         await promptBarFolderAssertion.assertFolderCheckboxBorderColors(
           { name: nestedFolders[threeNestedLevels - 1].name },
-          Colors.textSecondary,
+          expectedCheckboxColor,
         );
       },
     );
@@ -1224,7 +1220,7 @@ dialTest(
           );
           await promptBarFolderAssertion.assertFolderBackgroundColor(
             { name: nestedFolders[i].name },
-            Colors.backgroundAccentTertiaryAlphaDark,
+            expectedBgColor,
           );
 
           await promptBarFolderAssertion.assertFolderEntityCheckboxState(
@@ -1235,7 +1231,7 @@ dialTest(
           await promptBarFolderAssertion.assertFolderEntityBackgroundColor(
             { name: nestedFolders[i].name },
             { name: nestedPrompts[i].name },
-            Colors.backgroundAccentTertiaryAlphaDark,
+            expectedBgColor,
           );
         }
 
@@ -1247,17 +1243,16 @@ dialTest(
         await promptBarFolderAssertion.assertFolderEntityBackgroundColor(
           { name: nestedFolders[threeNestedLevels - 1].name },
           { name: lowLevelFolderPrompt.name },
-          Colors.backgroundAccentTertiaryAlphaDark,
+          expectedBgColor,
         );
 
         await promptBarFolderAssertion.assertFolderCheckboxState(
           { name: nestedFolders[0].name },
           CheckboxState.partiallyChecked,
         );
-        await promptBarFolderAssertion.assertFolderBackgroundColor(
-          { name: nestedFolders[0].name },
-          Colors.defaultBackground,
-        );
+        await promptBarFolderAssertion.assertFolderBackgroundColor({
+          name: nestedFolders[0].name,
+        });
 
         await promptBarFolderAssertion.assertFolderEntityCheckbox(
           { name: nestedFolders[0].name },
@@ -1267,7 +1262,6 @@ dialTest(
         await promptBarFolderAssertion.assertFolderEntityBackgroundColor(
           { name: nestedFolders[0].name },
           { name: nestedPrompts[0].name },
-          Colors.defaultBackground,
         );
       },
     );
@@ -1288,7 +1282,7 @@ dialTest(
         await promptBarFolderAssertion.assertFolderEntityBackgroundColor(
           { name: nestedFolders[1].name },
           { name: nestedPrompts[1].name },
-          Colors.backgroundAccentTertiaryAlphaDark,
+          expectedBgColor,
         );
 
         for (let i = 0; i < nestedFolders.length - 1; i++) {
@@ -1296,10 +1290,9 @@ dialTest(
             { name: nestedFolders[i].name },
             CheckboxState.partiallyChecked,
           );
-          await promptBarFolderAssertion.assertFolderBackgroundColor(
-            { name: nestedFolders[i].name },
-            Colors.defaultBackground,
-          );
+          await promptBarFolderAssertion.assertFolderBackgroundColor({
+            name: nestedFolders[i].name,
+          });
         }
 
         await promptBarFolderAssertion.assertFolderCheckbox(
@@ -1308,10 +1301,9 @@ dialTest(
           },
           'hidden',
         );
-        await promptBarFolderAssertion.assertFolderBackgroundColor(
-          { name: nestedFolders[threeNestedLevels - 1].name },
-          Colors.defaultBackground,
-        );
+        await promptBarFolderAssertion.assertFolderBackgroundColor({
+          name: nestedFolders[threeNestedLevels - 1].name,
+        });
 
         await promptBarFolderAssertion.assertFolderEntityCheckbox(
           { name: nestedFolders[threeNestedLevels - 1].name },
@@ -1321,7 +1313,6 @@ dialTest(
         await promptBarFolderAssertion.assertFolderEntityBackgroundColor(
           { name: nestedFolders[threeNestedLevels - 1].name },
           { name: nestedPrompts[threeNestedLevels - 1].name },
-          Colors.defaultBackground,
         );
 
         await promptBarFolderAssertion.assertFolderEntityCheckbox(
@@ -1332,7 +1323,6 @@ dialTest(
         await promptBarFolderAssertion.assertFolderEntityBackgroundColor(
           { name: nestedFolders[threeNestedLevels - 1].name },
           { name: lowLevelFolderPrompt.name },
-          Colors.defaultBackground,
         );
       },
     );

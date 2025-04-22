@@ -25,10 +25,9 @@ dialTest(
       marketplaceHeader,
       providerLogin,
       dialHomePage,
-      navigationPanel,
       header,
       marketplaceUrlBuilder,
-      context,
+      accountSettings,
     },
     testInfo,
   ) => {
@@ -89,7 +88,7 @@ dialTest(
     await dialTest.step(
       'Logout, re-login again and verify filters and search term are reset on the "My Workspace" tab',
       async () => {
-        await context.clearCookies();
+        await accountSettings.logout();
         await providerLogin.login(
           testInfo,
           process.env.E2E_USERNAME!.split(',')[+testInfo.parallelIndex],
@@ -98,9 +97,8 @@ dialTest(
         );
         await dialHomePage.waitForPageLoaded({ skipSidebars: true });
         await header.leftPanelToggle.click();
-        await navigationPanel.goToMarketplaceHome();
+        await dialHomePage.goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
-        await navigationPanel.goToMyWorkspace();
         await baseAssertion.assertCheckboxState(
           marketplaceFilter.filterByPropertyOptionInput(
             MarketplaceFilterTypes.type,
@@ -194,14 +192,12 @@ dialTest(
               );
               await incognitoAppContainer
                 .getNavigationPanel()
-                .backToChatButton.click();
+                .backToChat({ isHttpMethodTriggered: false });
               await incognitoDialHomePage.waitForPageLoaded({
                 skipSidebars: true,
               });
               await incognitoAppContainer.getHeader().leftPanelToggle.click();
-              await incognitoAppContainer
-                .getNavigationPanel()
-                .goToMarketplaceHome();
+              await incognitoDialHomePage.goToMarketplace();
               break;
           }
           await incognitoMarketplacePage.waitForPageLoaded();

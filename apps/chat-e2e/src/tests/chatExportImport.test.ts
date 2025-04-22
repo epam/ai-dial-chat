@@ -485,7 +485,7 @@ dialTest(
       'Edit 1st request in chat and verify 1st response is regenerated',
       async () => {
         const updatedMessage = '6+7';
-        await chatMessages.editMessage(requests[0], updatedMessage);
+        await chatMessages.editFirstMessage(updatedMessage);
         const messagesCount =
           await chatMessages.chatMessages.getElementsCount();
         expect
@@ -921,6 +921,8 @@ dialTest(
     chatBar,
     conversationDropdownMenu,
     localStorageManager,
+    chatBarFolderAssertion,
+    toast,
   }) => {
     setTestIds('EPMRTC-1387', 'EPMRTC-1979');
     let nestedFolders: FolderInterface[];
@@ -959,6 +961,11 @@ dialTest(
         nestedFolders[nestedFolders.length - 1].name,
         thirdLevelFolderConversation.name,
       );
+      await chatBarFolderAssertion.assertFolderEntitySelectedState(
+        { name: nestedFolders[levelsCount - 1].name },
+        { name: thirdLevelFolderConversation.name },
+        true,
+      );
       await folderConversations.openFolderEntityDropdownMenu(
         nestedFolders[levelsCount - 1].name,
         thirdLevelFolderConversation.name,
@@ -980,26 +987,31 @@ dialTest(
           nestedFolders[levelsCount - 1].name,
           { isHttpMethodTriggered: true },
         );
+        await chatBarFolderAssertion.assertElementState(
+          folderConversations.getNestedFolder(
+            nestedFolders[levelsCount - 2].name,
+            nestedFolders[levelsCount - 1].name,
+          ),
+          'hidden',
+        );
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
+        await toast.closeToast();
       },
     );
 
     await dialTest.step(
       'Verify imported conversations is in 3rd level folder, under the 2nd level folder',
       async () => {
-        await folderConversations
-          .getNestedFolder(
+        await chatBarFolderAssertion.assertElementState(
+          folderConversations.getNestedFolder(
             nestedFolders[levelsCount - 2].name,
             nestedFolders[levelsCount - 1].name,
-          )
-          .waitFor();
-
-        const foldersCount = await folderConversations.getFoldersCount();
-        expect
-          .soft(foldersCount, ExpectedMessages.foldersCountIsValid)
-          .toBe(levelsCount + 1);
+          ),
+          'visible',
+        );
+        await chatBarFolderAssertion.assertFoldersCount(levelsCount + 1);
       },
     );
   },

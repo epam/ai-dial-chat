@@ -492,7 +492,7 @@ dialTest(
         );
         const updatedRequest = '1+2=';
         await chatMessages.openEditMessageMode(request);
-        await chatMessages.editMessage(request, updatedRequest);
+        await chatMessages.editFirstMessage(updatedRequest);
         const messagesCount =
           await chatMessages.chatMessages.getElementsCount();
         expect

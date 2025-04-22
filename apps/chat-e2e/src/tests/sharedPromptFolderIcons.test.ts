@@ -99,6 +99,10 @@ dialTest(
           await folderDropdownMenu.selectShareMenuOption();
         shareResponse = shareRequestResponse!.response;
         await shareModalAssertion.assertModalState('visible');
+        await shareModalAssertion.assertElementState(
+          shareModal.linkInputLoader,
+          'hidden',
+        );
         await shareModalAssertion.assertMessageContent(
           ExpectedConstants.sharePromptFolderText,
         );
