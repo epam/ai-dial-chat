@@ -149,7 +149,7 @@ export const FilesSelector: React.FC<Props> = ({
         <ConfirmDialog
           isOpen
           heading={t(confirmDialogValues.heading)}
-          description={t(confirmDialogValues.description) || ''}
+          description={t(confirmDialogValues.description) ?? ''}
           confirmLabel={t('Confirm')}
           cancelLabel={t('Cancel')}
           onClose={handleConfirmClose}
