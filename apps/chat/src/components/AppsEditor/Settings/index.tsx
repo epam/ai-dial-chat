@@ -232,7 +232,7 @@ export const ApplicationSettings: React.FC<Props> = ({
     if (methods.formState.isValid) {
       dispatch(ApplicationActions.setHasUnsavedChanges(isFormChanged()));
     }
-  }, [dispatch, isFormChanged, methods.formState.isValid]);
+  }, [dispatch, isFormChanged, methods.formState]);
 
   const formViewElement = getFormView(type);
 

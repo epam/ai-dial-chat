@@ -189,6 +189,8 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           }),
         );
         lastSubmittedValuesRef.current = data;
+      } else if (shouldSaveApplication && exitAfterSave) {
+        dispatch(ApplicationActions.exitEditor({}));
       } else {
         dispatch(ApplicationActions.setShouldSaveApplication(false));
         dispatch(ApplicationActions.setExitAfterSave(false));
@@ -196,10 +198,11 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     },
     [
       oldApplication,
-      dispatch,
-      isShared,
       shouldSaveApplication,
+      exitAfterSave,
       applicationStatus,
+      isShared,
+      dispatch,
     ],
   );
 
