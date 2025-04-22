@@ -36,7 +36,6 @@ import { TemperatureSlider } from '@/src/components/Chat/ChatSettings/Temperatur
 import { FilesSelector } from '@/src/components/Common/FilesSelector/FilesSelector';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
-import { withWarningMessage } from '@/src/components/Common/Forms/FieldWarningMessage';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
 import { MonacoEditor } from '@/src/components/Common/MonacoEditor';
@@ -69,9 +68,7 @@ const validators: Validators = {
   },
 };
 
-const FilesSelectorField = withErrorMessage(
-  withWarningMessage(withLabel(FilesSelector)),
-);
+const FilesSelectorField = withErrorMessage(withLabel(FilesSelector));
 const ToolsetEditor = withErrorMessage(withLabel(MonacoEditor));
 const Slider = withLabel(TemperatureSlider, true);
 const ModelsSelectorField = withErrorMessage(withLabel(ModelsSelector));
@@ -226,7 +223,6 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
               error={errors.documentRelativeUrl?.message}
               fileManagerTitle={t('Select documents')}
               filesFilter={myFilesFilter}
-              warning={confirmDocumentUrlValues?.description}
               files={field.value ?? []}
               addBtnTooltip={
                 isSharedWithMe ? getSharedTooltip(t('documents')) : undefined
