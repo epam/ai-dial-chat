@@ -26,6 +26,7 @@ interface CustomLogoSelectProps {
   tooltip?: string;
   sourceFilters?: Set<FileSourceType>;
   confirmDialogValues?: ConfirmDialogValueTypes;
+  warningMessage?: string;
 }
 
 export const CustomLogoSelect = ({
@@ -41,6 +42,7 @@ export const CustomLogoSelect = ({
   tooltip,
   sourceFilters,
   confirmDialogValues,
+  warningMessage,
 }: CustomLogoSelectProps) => {
   const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
     useState(false);
@@ -155,9 +157,7 @@ export const CustomLogoSelect = ({
           customUploadButtonLabel={t('Upload files')}
           forceShowSelectCheckBox
           sourceFilters={sourceFilters}
-          warningMessage={t(
-            'After you add or change an icon, other users will see the default one immediately after confirmation. Share the link again so they can see the new icon.',
-          )}
+          warningMessage={warningMessage}
         />
       )}
 

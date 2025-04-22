@@ -101,6 +101,12 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     ? CONFIRM_ICON_FILE_VALUES
     : undefined;
 
+  const iconWarning = oldApplication?.isShared
+    ? t(
+        'After you add or change an icon, other users will see the default one immediately after confirmation. Share the link again so they can see the new icon.',
+      )
+    : '';
+
   useEffect(() => {
     if (isFormChanged && isValid) {
       dispatch(ApplicationActions.setHasUnsavedChanges(isFormChanged));
@@ -257,6 +263,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
                 disabled={isSharedWithMe}
                 tooltip={isSharedWithMe ? getSharedTooltip('icon') : ''}
                 confirmDialogValues={confirmIconValues}
+                warningMessage={iconWarning}
               />
             )}
           />
