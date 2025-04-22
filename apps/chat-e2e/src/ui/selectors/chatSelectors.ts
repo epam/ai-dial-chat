@@ -89,6 +89,7 @@ export const CompareSelectors = {
   conversationRow: '[data-qa="conversation-row"]',
   noConversationsAvailable: '[data-qa="no-conversations-available"]',
   searchCompareConversation: '[data-qa="search-compare-conversation"]',
+  loader: '[compare-loader]',
 };
 
 export const ToastSelectors = {

@@ -848,6 +848,8 @@ dialTest(
     promptData,
     promptDropdownMenu,
     localStorageManager,
+    toast,
+    promptBarFolderAssertion,
   }) => {
     setTestIds('EPMRTC-1388');
     let nestedFolders: FolderInterface[];
@@ -885,7 +887,11 @@ dialTest(
         thirdLevelFolderPrompt.name,
       );
       exportedData = await dialHomePage.downloadData(
-        () => promptDropdownMenu.selectMenuOption(MenuOptions.export),
+        () =>
+          promptDropdownMenu.selectMenuOption(MenuOptions.export, {
+            isHttpMethodTriggered: true,
+            triggeredHttpMethod: 'GET',
+          }),
         GeneratorUtil.exportedWithoutAttachmentsFilename(),
       );
     });
@@ -898,9 +904,25 @@ dialTest(
           nestedFolders[0].name,
           { isHttpMethodTriggered: true },
         );
+        await promptBarFolderAssertion.assertElementState(
+          folderPrompts.getNestedFolder(
+            nestedFolders[levelsCount - 2].name,
+            nestedFolders[levelsCount - 1].name,
+          ),
+          'hidden',
+        );
+        await promptBarFolderAssertion.assertElementState(
+          folderPrompts.getNestedFolder(
+            nestedFolders[0].name,
+            nestedFolders[levelsCount - 1].name,
+          ),
+          'visible',
+        );
+
         await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
         );
+        await toast.closeToast();
       },
     );
 
@@ -912,18 +934,12 @@ dialTest(
           { isHttpMethodTriggered: false },
           2,
         );
-        await folderPrompts
-          .getFolderEntity(
-            nestedFolders[levelsCount - 1].name,
-            thirdLevelFolderPrompt.name,
-            2,
-          )
-          .waitFor();
-
-        const foldersCount = await folderPrompts.getFoldersCount();
-        expect
-          .soft(foldersCount, ExpectedMessages.foldersCountIsValid)
-          .toBe(levelsCount + 1);
+        await promptBarFolderAssertion.assertFolderEntityState(
+          { name: nestedFolders[levelsCount - 1].name, index: 2 },
+          { name: thirdLevelFolderPrompt.name },
+          'visible',
+        );
+        await promptBarFolderAssertion.assertFoldersCount(levelsCount + 1);
       },
     );
   },
