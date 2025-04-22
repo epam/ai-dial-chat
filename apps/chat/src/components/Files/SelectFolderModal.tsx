@@ -24,6 +24,7 @@ interface Props {
   rootFolderId: string;
   onClose: (path: string | undefined) => void;
   disallowSelectRootFolder?: boolean;
+  warningMessage?: string;
 }
 
 export const SelectFolderModal = ({
@@ -32,6 +33,7 @@ export const SelectFolderModal = ({
   rootFolderId,
   onClose,
   disallowSelectRootFolder,
+  warningMessage,
 }: Props) => {
   const dispatch = useAppDispatch();
 
@@ -189,8 +191,9 @@ export const SelectFolderModal = ({
       <SelectFolderHeader
         handleSearch={handleSearch}
         searchQuery={searchQuery}
-        errorMessage={errorMessage}
+        errorMessage={warningMessage || errorMessage}
         showSpinner={showSpinner}
+        type={warningMessage ? 'warning' : 'error'}
       >
         <SelectFolderList
           folderProps={{

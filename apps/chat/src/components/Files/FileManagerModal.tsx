@@ -124,6 +124,7 @@ interface Props {
   forceHideSelectFolders?: boolean;
   showTooltip?: boolean;
   sourceFilters?: Set<FileSourceType>;
+  warningMessage?: string;
 }
 
 export const FileManagerModal = ({
@@ -140,6 +141,7 @@ export const FileManagerModal = ({
   onClose,
   showTooltip,
   sourceFilters,
+  warningMessage,
 }: Props) => {
   const dispatch = useAppDispatch();
 
@@ -727,7 +729,10 @@ export const FileManagerModal = ({
           </p>
         )}
 
-        <ErrorMessage error={errorMessage} />
+        <ErrorMessage
+          error={warningMessage || errorMessage}
+          type={warningMessage ? 'warning' : 'error'}
+        />
 
         {showSpinner ? (
           <div className="flex items-center justify-center py-10">
