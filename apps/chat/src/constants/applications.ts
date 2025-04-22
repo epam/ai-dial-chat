@@ -33,8 +33,6 @@ export const CONFIRM_SOURCE_FOLDER_VALUES: ConfirmDialogValueTypes = {
 export const CONFIRM_ICON_FILE_VALUES: ConfirmDialogValueTypes = {
   heading: 'Confirm changing icon file',
   description:
-    'After you add or change an icon, other users will see the default one immediately after confirmation. Share the link again so they can see the new icon.',
-  changeDescription:
     'Are you sure you want to change the icon? Other users will see the default one immediately after confirmation.',
 };
 

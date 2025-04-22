@@ -155,22 +155,22 @@ export const CustomLogoSelect = ({
           customUploadButtonLabel={t('Upload files')}
           forceShowSelectCheckBox
           sourceFilters={sourceFilters}
-          warningMessage={confirmDialogValues?.description}
+          warningMessage={t(
+            'After you add or change an icon, other users will see the default one immediately after confirmation. Share the link again so they can see the new icon.',
+          )}
         />
       )}
 
-      {confirmDialogValues &&
-        confirmDialogValues?.changeDescription &&
-        confirmDialogOpen && (
-          <ConfirmDialog
-            isOpen
-            heading={t(confirmDialogValues?.heading)}
-            description={t(confirmDialogValues?.changeDescription)}
-            confirmLabel={t('Confirm')}
-            cancelLabel={t('Cancel')}
-            onClose={handleConfirmClose}
-          />
-        )}
+      {confirmDialogValues && confirmDialogOpen && (
+        <ConfirmDialog
+          isOpen
+          heading={t(confirmDialogValues?.heading)}
+          description={t(confirmDialogValues?.description)}
+          confirmLabel={t('Confirm')}
+          cancelLabel={t('Cancel')}
+          onClose={handleConfirmClose}
+        />
+      )}
     </div>
   );
 };

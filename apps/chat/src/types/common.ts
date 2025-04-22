@@ -154,5 +154,4 @@ export type SortOrder = 'asc' | 'desc';
 export interface ConfirmDialogValueTypes {
   heading: string;
   description: string;
-  changeDescription?: string;
 }
