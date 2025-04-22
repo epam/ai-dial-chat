@@ -296,6 +296,7 @@ export const PromptComponent = ({
         className={classNames(
           'group relative flex size-full shrink-0 items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha disabled:cursor-not-allowed',
           !isSelectMode && '[&:not(:disabled)]:hover:pr-9',
+          isContextMenu && 'pr-9',
           !isSelectMode && isHighlighted
             ? 'border-l-accent-primary '
             : 'border-l-transparent',
@@ -409,7 +410,7 @@ export const PromptComponent = ({
             {...getFloatingProps()}
             className={classNames(
               'absolute right-0 z-50 flex justify-end group-hover:visible',
-              isSelected ? 'visible' : 'invisible',
+              isSelected || isContextMenu ? 'visible' : 'invisible',
             )}
             onClick={stopBubbling}
           >
