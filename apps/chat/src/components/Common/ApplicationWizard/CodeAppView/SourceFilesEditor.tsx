@@ -70,6 +70,7 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
 
   const handleDelete = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
+
     if (confirmDialogValues) {
       setPendingDelete(true);
       setConfirmDialogOpen(true);
@@ -154,6 +155,7 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
             ? handleCloseFileManagerConfirmations
             : handleCloseFileManager
         }
+        warningMessage={confirmDialogValues?.description}
         disallowSelectRootFolder
       />
 
