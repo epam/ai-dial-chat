@@ -40,6 +40,7 @@ dialTest(
     iconApiHelper,
     sendMessage,
     baseAssertion,
+    localStorageAssertion,
   }) => {
     setTestIds(
       'EPMRTC-4587',
@@ -199,7 +200,7 @@ dialTest(
         await localStorageManager.removeFromLocalStorage(
           'selectedConversationIds',
         );
-        baseAssertion.assertValue(
+        localStorageAssertion.assertValue(
           await localStorageManager.getSelectedConversationIds(),
           '',
         );
