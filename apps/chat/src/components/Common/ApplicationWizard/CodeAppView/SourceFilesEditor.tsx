@@ -45,21 +45,10 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingFolder, setPendingFolder] = useState<string | undefined>();
   const [pendingDelete, setPendingDelete] = useState(false);
-  const [localConfirmDialogValues, setLocalConfirmDialogValues] = useState<
-    ConfirmDialogValueTypes | undefined
-  >(confirmDialogValues);
-  const [confirmHeading, setConfirmHeading] = useState('');
-  const [confirmDescription, setConfirmDescription] = useState('');
 
   const handleToggleFileManager = useCallback(() => {
-    if (confirmDialogValues?.heading) {
-      setConfirmHeading(confirmDialogValues?.heading);
-    }
-    if (confirmDialogValues?.description) {
-      setConfirmDescription(confirmDialogValues?.description);
-    }
     setIsFolderModalOpen((p) => !p);
-  }, [confirmDialogValues?.description, confirmDialogValues?.heading]);
+  }, []);
 
   const handleCloseFileManager = useCallback(
     (folder?: string) => {
@@ -81,13 +70,8 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
 
   const handleDelete = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    if (confirmDialogValues?.removeHeading) {
-      setConfirmHeading(confirmDialogValues?.removeHeading);
-    }
-    if (confirmDialogValues?.removeDescription) {
-      setConfirmDescription(confirmDialogValues?.removeDescription);
-    }
-    if (localConfirmDialogValues) {
+
+    if (confirmDialogValues) {
       setPendingDelete(true);
       setConfirmDialogOpen(true);
     } else {
@@ -102,7 +86,6 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
       } else if (pendingFolder) {
         handleCloseFileManager(pendingFolder);
       }
-      setLocalConfirmDialogValues(undefined);
     }
 
     setConfirmDialogOpen(false);
@@ -168,19 +151,19 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
         isOpen={isFolderModalOpen}
         rootFolderId={getFileRootId()}
         onClose={
-          localConfirmDialogValues
+          confirmDialogValues
             ? handleCloseFileManagerConfirmations
             : handleCloseFileManager
         }
-        warningMessage={localConfirmDialogValues?.description}
+        warningMessage={confirmDialogValues?.description}
         disallowSelectRootFolder
       />
 
-      {localConfirmDialogValues && confirmDialogOpen && (
+      {confirmDialogValues && confirmDialogOpen && (
         <ConfirmDialog
           isOpen
-          heading={t(confirmHeading)}
-          description={t(confirmDescription)}
+          heading={t(confirmDialogValues.heading)}
+          description={t(confirmDialogValues.description)}
           confirmLabel={t('Confirm')}
           cancelLabel={t('Cancel')}
           onClose={handleConfirmDialogClose}

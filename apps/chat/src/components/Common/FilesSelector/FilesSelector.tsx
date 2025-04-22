@@ -50,27 +50,16 @@ export const FilesSelector: React.FC<Props> = ({
     action: 'add',
     files: [],
   });
-  const [localConfirmDialogValues, setLocalConfirmDialogValues] = useState<
-    ConfirmDialogValueTypes | undefined
-  >(confirmDialogValues);
-  const [confirmHeading, setConfirmHeading] = useState('');
-  const [confirmDescription, setConfirmDescription] = useState('');
 
   const handleOpenFilesModal = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    if (confirmDialogValues?.heading) {
-      setConfirmHeading(confirmDialogValues?.heading);
-    }
-    if (confirmDialogValues?.description) {
-      setConfirmDescription(confirmDialogValues?.description);
-    }
     setIsOpenFileModal(true);
   };
 
   const handleOnCloseFilesModal = useCallback(
     (files: boolean | string[]) => {
       if (Array.isArray(files) && files.length > 0) {
-        if (localConfirmDialogValues) {
+        if (confirmDialogValues) {
           setConfirmDialogOpen(true);
           setPendingFilesModel({ files, action: 'add' });
         } else {
@@ -80,30 +69,19 @@ export const FilesSelector: React.FC<Props> = ({
 
       setIsOpenFileModal(false);
     },
-    [localConfirmDialogValues, onAddFiles],
+    [confirmDialogValues, onAddFiles],
   );
 
   const handleRemoveFile = useCallback(
     (document: string) => {
-      if (localConfirmDialogValues) {
-        if (confirmDialogValues?.removeHeading) {
-          setConfirmHeading(confirmDialogValues?.removeHeading);
-        }
-        if (confirmDialogValues?.removeDescription) {
-          setConfirmDescription(confirmDialogValues?.removeDescription);
-        }
+      if (confirmDialogValues) {
         setConfirmDialogOpen(true);
         setPendingFilesModel({ files: [document], action: 'delete' });
       } else {
         onRemoveFile?.(document);
       }
     },
-    [
-      confirmDialogValues?.removeDescription,
-      confirmDialogValues?.removeHeading,
-      localConfirmDialogValues,
-      onRemoveFile,
-    ],
+    [confirmDialogValues, onRemoveFile],
   );
 
   const handleConfirmClose = useCallback(
@@ -114,17 +92,11 @@ export const FilesSelector: React.FC<Props> = ({
         } else {
           onRemoveFile?.(pendingFilesModel.files[0]);
         }
-        setLocalConfirmDialogValues(undefined);
       }
 
       setConfirmDialogOpen(false);
     },
-    [
-      onAddFiles,
-      onRemoveFile,
-      pendingFilesModel.action,
-      pendingFilesModel.files,
-    ],
+    [onAddFiles, onRemoveFile, pendingFilesModel],
   );
 
   return (
@@ -170,14 +142,14 @@ export const FilesSelector: React.FC<Props> = ({
           customButtonLabel={t('Select files') ?? ''}
           forceShowSelectCheckBox
           sourceFilters={filesFilter}
-          warningMessage={localConfirmDialogValues?.description}
+          warningMessage={confirmDialogValues?.description}
         />
       )}
-      {localConfirmDialogValues && confirmDialogOpen && (
+      {confirmDialogValues && confirmDialogOpen && (
         <ConfirmDialog
           isOpen
-          heading={t(confirmHeading)}
-          description={t(confirmDescription) || ''}
+          heading={t(confirmDialogValues.heading)}
+          description={t(confirmDialogValues.description) || ''}
           confirmLabel={t('Confirm')}
           cancelLabel={t('Cancel')}
           onClose={handleConfirmClose}

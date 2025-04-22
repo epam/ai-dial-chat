@@ -26,31 +26,22 @@ export enum CODEAPPS_REQUIRED_FILES {
 
 export const CONFIRM_SOURCE_FOLDER_VALUES: ConfirmDialogValueTypes = {
   heading: 'Confirm changing source folder',
-  removeHeading: 'Confirm removing source folder',
   description:
     'Changing the source folder will immediately stop sharing, and other users will no longer see this application.',
-  removeDescription:
-    'Removing the source folder will immediately stop sharing, and other users will no longer see this application.',
 };
 
 export const CONFIRM_ICON_FILE_VALUES: ConfirmDialogValueTypes = {
   heading: 'Confirm changing icon file',
-  removeHeading: 'Confirm removing icon file',
   description:
     'After you add or change an icon, other users will see the default one immediately after confirmation. Share the link again so they can see the new icon.',
-  removeDescription:
-    'Are you sure you want to remove the icon? Other users will see the default one immediately after confirmation.',
   changeDescription:
     'Are you sure you want to change the icon? Other users will see the default one immediately after confirmation.',
 };
 
 export const CONFIRM_DOCUMENT_VALUES: ConfirmDialogValueTypes = {
   heading: 'Confirm changing document relative URLs',
-  removeHeading: 'Confirm removing document relative URLs',
   description:
     'Changing document relative URLs will immediately stop sharing, and other users will no longer see this application.',
-  removeDescription:
-    'Removing document relative URLs will immediately stop sharing, and other users will no longer see this application.',
 };
 
 export const DRAFT_APPLICATION_ID = `${ApiKeys.Applications}/draft`;
