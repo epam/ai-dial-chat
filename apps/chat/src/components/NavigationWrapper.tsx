@@ -16,6 +16,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { ModelsSelectors } from '../store/models/models.reducers';
 import {
   ApplicationActions,
   ApplicationSelectors,
@@ -68,9 +69,11 @@ const NavigationButton = ({
   caption,
   rounded = false,
 }: NavigationButtonProps) => {
-  const disabled = useAppSelector(
+  const isLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
+  const streaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
+  const disabled = isLoading || streaming;
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   return (
     <Tooltip
