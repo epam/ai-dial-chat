@@ -985,8 +985,7 @@ const selectPromptEpic: AppEpic = (action$) =>
     action$.pipe(
       filter(
         (action) =>
-          (PromptsActions.selectPrompt.match(action) ||
-          PromptsActions.applyPrompt.match(action))
+          (PromptsActions.applyPrompt.match(action))
       ),
       switchMap(() =>
         isTabletScreen() ? of(UIActions.setShowPromptbar(false)) : EMPTY,
