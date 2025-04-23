@@ -73,7 +73,6 @@ const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       placement="bottom"
-      className=""
       TriggerCustomRenderer={
         <button
           className="button button-primary hidden items-center gap-0 py-0 sm:flex sm:gap-2 sm:py-2"
