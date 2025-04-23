@@ -485,6 +485,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                   lastConversationSettings?.temperature ?? DEFAULT_TEMPERATURE,
                 selectedAddons: [],
                 updatedAt: Date.now(),
+                createdAt: Date.now(),
                 status: UploadStatus.LOADED,
                 folderId: defaultFolderId,
                 assistantModelId: DefaultsService.get(
@@ -612,6 +613,7 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
         name: newConversationName,
         messages: [],
         updatedAt: Date.now(),
+        createdAt: Date.now(),
 
         replay: {
           isReplay: true,
@@ -673,6 +675,7 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
         name: newConversationName,
         messages: [],
         updatedAt: Date.now(),
+        createdAt: Date.now(),
 
         playback: {
           messagesStack: excludeSystemMessages(conversation.messages),
@@ -730,6 +733,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
           conversations.filter((c) => c.folderId === conversationFolderId), // only root conversations for external entities
         ),
         updatedAt: Date.now(),
+        createdAt: Date.now(),
       });
 
       return concat(
