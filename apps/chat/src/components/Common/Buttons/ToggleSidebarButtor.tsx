@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -34,13 +34,10 @@ export const ToggleSidebarButton: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation(Translation.Header);
 
-  const handleToggle = useCallback(
-    (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-      dispatchMouseLeaveEvent(e);
-      onToggle();
-    },
-    [onToggle],
-  );
+  const handleToggle = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    dispatchMouseLeaveEvent(e);
+    onToggle();
+  };
 
   const Icon = isOpened ? MoveLeftIcon : MoveRightIcon;
 
