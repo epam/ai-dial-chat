@@ -58,6 +58,7 @@ import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 import { UploadStatus } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
+import { isTabletScreen } from '@/src/utils/app/mobile';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -980,6 +981,18 @@ const selectPromptEpic: AppEpic = (action$) =>
     }),
   );
 
+  const hidePromptbarEpic: AppEpic = (action$) =>
+    action$.pipe(
+      filter(
+        (action) =>
+          (PromptsActions.selectPrompt.match(action) ||
+          PromptsActions.applyPrompt.match(action))
+      ),
+      switchMap(() =>
+        isTabletScreen() ? of(UIActions.setShowPromptbar(false)) : EMPTY,
+      ),
+    );
+
 export const PromptsEpics = combineEpics(
   initEpic,
   uploadPromptsFromMultipleFoldersEpic,
@@ -1006,4 +1019,5 @@ export const PromptsEpics = combineEpics(
   applyPromptEpic,
   getPromptMetadataEpic,
   selectPromptEpic,
+  hidePromptbarEpic
 );
