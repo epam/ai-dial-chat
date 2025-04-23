@@ -112,7 +112,7 @@ export const getImportPreparedPrompts = ({
 }: {
   prompts: Prompt[];
   folders: FolderInterface[];
-}) =>
+}): Prompt[] =>
   prompts.map((prompt) => {
     const { path } = getPathToFolderById(folders, prompt.folderId, {
       forRenaming: false,

@@ -28,6 +28,7 @@ import { RootState } from '@/src/types/store';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 
 import { ConversationInfo, UploadStatus } from '@epam/ai-dial-shared';
+import { nanoid } from 'nanoid';
 
 export class ConversationApiStorage extends ApiEntityStorage<
   ConversationInfo,
@@ -132,9 +133,9 @@ export const getImportPreparedConversations = ({
   conversations,
   conversationsFolders,
 }: {
-  conversations: Conversation[] | ConversationInfo[];
+  conversations: Conversation[];
   conversationsFolders: FolderInterface[];
-}) =>
+}): Conversation[] =>
   conversations.map((conv) => {
     const { path } = getPathToFolderById(conversationsFolders, conv.folderId, {
       forRenaming: false,
@@ -155,5 +156,6 @@ export const getImportPreparedConversations = ({
       }),
       name: newName,
       folderId: folderId,
+      reference: nanoid(),
     };
   }); // to send conversation with proper parentPath and updatedAt order
