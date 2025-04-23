@@ -19,6 +19,8 @@ import {
   timer,
 } from 'rxjs';
 
+import { AnyAction } from '@reduxjs/toolkit';
+
 import { combineEpics } from 'redux-observable';
 
 import { parseCommaSeparatedList } from '@/src/utils/app/common';
@@ -69,7 +71,6 @@ import {
   validateFeature,
 } from '@epam/ai-dial-shared';
 import isEqual from 'lodash-es/isEqual';
-import { AnyAction } from '@reduxjs/toolkit';
 
 export const postMessageMapperEpic: AppEpic = (_, state$) =>
   typeof window === 'object'
@@ -226,17 +227,22 @@ const createConversationEpic: AppEpic = (action$, state$) =>
         parentPath,
       );
 
-      const isFolderExists = ConversationsSelectors.selectFolderById(state$.value,conversationFolderId);
+      const isFolderExists = ConversationsSelectors.selectFolderById(
+        state$.value,
+        conversationFolderId,
+      );
 
       const actions: Observable<AnyAction>[] = [];
 
-      if(parentPath && !isFolderExists){
+      if (parentPath && !isFolderExists) {
         actions.push(
-          of(ConversationsActions.createFolder({
-            name: parentPath,
-            parentId: getConversationRootId(),
-          }))
-        )
+          of(
+            ConversationsActions.createFolder({
+              name: parentPath,
+              parentId: getConversationRootId(),
+            }),
+          ),
+        );
       }
 
       actions.push(
@@ -246,16 +252,15 @@ const createConversationEpic: AppEpic = (action$, state$) =>
             folderId: conversationFolderId,
           }),
         ),
-          of(OverlayActions.createConversationEffect({
+        of(
+          OverlayActions.createConversationEffect({
             requestId,
             parentPath,
           }),
         ),
-      )
-
-      return concat(
-        ...actions,
       );
+
+      return concat(...actions);
     }),
   );
 
