@@ -115,7 +115,17 @@ export default function ContextMenu({
     />
   );
 
-  if (isLoading && isOpen) return <Spinner size={18} />;
+  if (isLoading && isOpen)
+    return (
+      <div
+        className={classNames(
+          'flex w-full items-center justify-center rounded text-secondary',
+          className,
+        )}
+      >
+        <Spinner size={18} />
+      </div>
+    );
 
   return (
     <Menu

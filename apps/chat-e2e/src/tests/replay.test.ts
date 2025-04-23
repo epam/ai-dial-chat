@@ -310,6 +310,9 @@ dialTest(
         await temperatureSlider.setTemperature(replayTemp);
         await conversationSettingsModal.applyChangesButton.click();
         await dialHomePage.throttleAPIResponse(API.chatHost);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         replayRequest = await chat.startReplay();
       },
     );

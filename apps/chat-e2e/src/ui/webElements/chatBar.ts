@@ -5,7 +5,7 @@ import {
   SideBarSelectors,
 } from '../selectors';
 
-import { MenuOptions } from '@/src/testData';
+import { API, MenuOptions } from '@/src/testData';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import {
   ApproveRequiredConversationsTree,
@@ -133,14 +133,19 @@ export class ChatBar extends SideBar {
   }
 
   public async openManageAttachmentsModal() {
+    const respPromise = this.page.waitForResponse(
+      (r) => r.url().includes(API.filesListingHost()) && r.status() === 200,
+    );
     const isButtonVisible = await this.attachments.isVisible();
     if (!isButtonVisible) {
       await this.bottomDotsMenuIcon.click();
       await this.getBottomDropdownMenu().selectMenuOption(
         MenuOptions.attachments,
       );
+      await respPromise;
     } else {
       await this.attachments.click();
+      await respPromise;
     }
   }
 

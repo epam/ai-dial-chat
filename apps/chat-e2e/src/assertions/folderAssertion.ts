@@ -1,9 +1,8 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { CheckboxState, ElementState, ExpectedMessages } from '@/src/testData';
-import { EntityType, TreeEntity } from '@/src/testData/types';
+import { TreeEntity } from '@/src/testData/types';
 import { Attributes } from '@/src/ui/domData';
 import { Folders } from '@/src/ui/webElements/entityTree';
-import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 export class FolderAssertion<T extends Folders> extends BaseAssertion {
@@ -56,38 +55,38 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
 
   public async assertFolderAndCheckboxHasSelectedColors(
     folder: TreeEntity,
-    theme: string,
-    entityType: EntityType,
+    expectedColors: { checkboxColor: string; entityBackgroundColor: string },
   ) {
-    const { checkboxColor, backgroundColor } =
-      ThemesUtil.getEntityCheckboxAndBackgroundColor(theme, entityType);
-    await this.assertFolderCheckboxBorderColors(folder, checkboxColor);
-    await this.assertFolderBackgroundColor(folder, backgroundColor);
-    await this.assertFolderCheckboxColor(folder, checkboxColor);
+    await this.assertFolderCheckboxBorderColors(
+      folder,
+      expectedColors.checkboxColor,
+    );
+    await this.assertFolderBackgroundColor(
+      folder,
+      expectedColors.entityBackgroundColor,
+    );
+    await this.assertFolderCheckboxColor(folder, expectedColors.checkboxColor);
   }
 
   public async assertFolderEntityAndCheckboxHasSelectedColors(
     folder: TreeEntity,
     folderEntity: TreeEntity,
-    theme: string,
-    entityType: EntityType,
+    expectedColors: { checkboxColor: string; entityBackgroundColor: string },
   ) {
-    const { checkboxColor, backgroundColor } =
-      ThemesUtil.getEntityCheckboxAndBackgroundColor(theme, entityType);
     await this.assertFolderEntityCheckboxColor(
       folder,
       folderEntity,
-      checkboxColor,
+      expectedColors.checkboxColor,
     );
     await this.assertFolderEntityCheckboxBorderColors(
       folder,
       folderEntity,
-      checkboxColor,
+      expectedColors.checkboxColor,
     );
     await this.assertFolderEntityBackgroundColor(
       folder,
       folderEntity,
-      backgroundColor,
+      expectedColors.entityBackgroundColor,
     );
   }
 
@@ -95,47 +94,30 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
     folder: TreeEntity,
     expectedCheckboxColor: string,
   ) {
-    const folderCheckboxColor = await this.folder.getFolderCheckboxColor(
-      folder.name,
-      folder.index,
+    await super.assertElementColor(
+      this.folder.getFolderCheckbox(folder.name, folder.index),
+      expectedCheckboxColor,
     );
-    expect
-      .soft(folderCheckboxColor[0], ExpectedMessages.iconColorIsValid)
-      .toBe(expectedCheckboxColor);
   }
 
   public async assertFolderCheckboxBorderColors(
     folder: TreeEntity,
     expectedCheckboxBorderColor: string,
   ) {
-    const folderCheckboxBorderColors =
-      await this.folder.getFolderCheckboxBorderColors(
-        folder.name,
-        folder.index,
-      );
-    Object.values(folderCheckboxBorderColors).forEach((borders) => {
-      borders.forEach((borderColor) => {
-        expect
-          .soft(borderColor, ExpectedMessages.borderColorsAreValid)
-          .toBe(expectedCheckboxBorderColor);
-      });
-    });
+    await super.assertElementBorderColors(
+      this.folder.getFolderCheckbox(folder.name, folder.index),
+      expectedCheckboxBorderColor,
+    );
   }
 
   public async assertFolderBackgroundColor(
     folder: TreeEntity,
-    expectedColor: string,
+    expectedColor?: string,
   ) {
-    const folderBackgroundColor = await this.folder.getFolderBackgroundColor(
-      folder.name,
-      folder.index,
+    await super.assertElementBackgroundColors(
+      this.folder.getFolderByName(folder.name, folder.index),
+      expectedColor,
     );
-    expect
-      .soft(
-        folderBackgroundColor[0],
-        ExpectedMessages.folderBackgroundColorIsValid,
-      )
-      .toBe(expectedColor);
   }
 
   public async assertFolderDotsMenuState(
@@ -243,14 +225,10 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
     folderEntity: TreeEntity,
     expectedColor: string,
   ) {
-    const folderEntityCheckboxColor =
-      await this.folder.getFolderEntityCheckboxColor(
-        folder.name,
-        folderEntity.name,
-      );
-    expect
-      .soft(folderEntityCheckboxColor[0], ExpectedMessages.iconColorIsValid)
-      .toBe(expectedColor);
+    await super.assertElementColor(
+      this.folder.getFolderEntityCheckbox(folder.name, folderEntity.name),
+      expectedColor,
+    );
   }
 
   public async assertFolderEntityCheckboxBorderColors(
@@ -258,36 +236,21 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
     folderEntity: TreeEntity,
     expectedColor: string,
   ) {
-    const folderEntityCheckboxBorderColors =
-      await this.folder.getFolderEntityCheckboxBorderColors(
-        folder.name,
-        folderEntity.name,
-      );
-    Object.values(folderEntityCheckboxBorderColors).forEach((borders) => {
-      borders.forEach((borderColor) => {
-        expect
-          .soft(borderColor, ExpectedMessages.borderColorsAreValid)
-          .toBe(expectedColor);
-      });
-    });
+    await super.assertElementBorderColors(
+      this.folder.getFolderEntityCheckbox(folder.name, folderEntity.name),
+      expectedColor,
+    );
   }
 
   public async assertFolderEntityBackgroundColor(
     folder: TreeEntity,
     folderEntity: TreeEntity,
-    expectedColor: string,
+    expectedColor?: string,
   ) {
-    const folderEntityBackgroundColor =
-      await this.folder.getFolderEntityBackgroundColor(
-        folder.name,
-        folderEntity.name,
-      );
-    expect
-      .soft(
-        folderEntityBackgroundColor[0],
-        ExpectedMessages.folderEntityBackgroundColorIsValid,
-      )
-      .toBe(expectedColor);
+    await super.assertElementBackgroundColors(
+      this.folder.getFolderEntity(folder.name, folderEntity.name),
+      expectedColor,
+    );
   }
 
   public async assertFolderEntityColor(

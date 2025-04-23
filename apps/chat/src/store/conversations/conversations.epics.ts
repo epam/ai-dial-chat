@@ -465,6 +465,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
 
             const newConversations: Conversation[] = names.map((name, index) =>
               regenerateConversationId({
+                ...resetShareEntity,
                 reference: nanoid(),
                 name:
                   name !== DEFAULT_CONVERSATION_NAME
@@ -484,7 +485,6 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 temperature:
                   lastConversationSettings?.temperature ?? DEFAULT_TEMPERATURE,
                 selectedAddons: [],
-                updatedAt: Date.now(),
                 status: UploadStatus.LOADED,
                 folderId: defaultFolderId,
                 assistantModelId: DefaultsService.get(
@@ -611,7 +611,6 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
         folderId,
         name: newConversationName,
         messages: [],
-        updatedAt: Date.now(),
 
         replay: {
           isReplay: true,
@@ -672,7 +671,6 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
         folderId,
         name: newConversationName,
         messages: [],
-        updatedAt: Date.now(),
 
         playback: {
           messagesStack: excludeSystemMessages(conversation.messages),
@@ -729,7 +727,6 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
           conversation.name,
           conversations.filter((c) => c.folderId === conversationFolderId), // only root conversations for external entities
         ),
-        updatedAt: Date.now(),
       });
 
       return concat(

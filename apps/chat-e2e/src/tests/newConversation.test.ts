@@ -167,7 +167,9 @@ dialSharedWithMeTest(
     conversationDropdownMenu,
     confirmationDialog,
     chat,
+    sendMessage,
     chatBarAssertion,
+    baseAssertion,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     additionalShareUserDataInjector,
@@ -177,6 +179,7 @@ dialSharedWithMeTest(
     sharedFolderConversations,
     sharedWithMeConversationAssertion,
     localStorageManager,
+    chatMessages,
   }) => {
     setTestIds(
       'EPMRTC-4791',
@@ -241,6 +244,12 @@ dialSharedWithMeTest(
         await conversationAssertion.assertSelectedConversation(
           firstConversation.name,
         );
+        await chatMessagesAssertion.assertElementState(
+          chatMessages.chatMessages.getNthElement(
+            firstConversation.messages.length,
+          ),
+          'visible',
+        );
         await chatMessagesAssertion.assertMessagesCount(
           firstConversation.messages.length,
         );
@@ -253,9 +262,15 @@ dialSharedWithMeTest(
       async () => {
         await header.logo.click();
         await dialHomePage.waitForPageLoaded();
-        await chat.getSendMessage().waitForState({ state: 'attached' });
-        await chat.changeAgentButton.waitForState();
-        await chat.configureSettingsButton.waitForState();
+        await baseAssertion.assertElementState(sendMessage, 'visible');
+        await baseAssertion.assertElementState(
+          chat.changeAgentButton,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          chat.configureSettingsButton,
+          'visible',
+        );
         await conversationAssertion.assertEntityState(
           { name: secondConversation.name },
           'visible',
@@ -279,9 +294,15 @@ dialSharedWithMeTest(
       'Verify new conversation is shown and second conversation is not selected and verify only one conversation remains',
       async () => {
         await dialHomePage.waitForPageLoaded();
-        await chat.getSendMessage().waitForState({ state: 'attached' });
-        await chat.changeAgentButton.waitForState();
-        await chat.configureSettingsButton.waitForState();
+        await baseAssertion.assertElementState(sendMessage, 'visible');
+        await baseAssertion.assertElementState(
+          chat.changeAgentButton,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          chat.configureSettingsButton,
+          'visible',
+        );
         await conversationAssertion.assertEntityState(
           { name: secondConversation.name },
           'visible',
@@ -302,9 +323,15 @@ dialSharedWithMeTest(
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await chatBarAssertion.assertNoDataInConversations();
-        await chat.getSendMessage().waitForState({ state: 'attached' });
-        await chat.changeAgentButton.waitForState();
-        await chat.configureSettingsButton.waitForState();
+        await baseAssertion.assertElementState(sendMessage, 'visible');
+        await baseAssertion.assertElementState(
+          chat.changeAgentButton,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          chat.configureSettingsButton,
+          'visible',
+        );
       },
     );
 
@@ -334,9 +361,15 @@ dialSharedWithMeTest(
           'hidden',
         );
         await chatBarAssertion.assertNoDataInConversations();
-        await chat.getSendMessage().waitForState({ state: 'attached' });
-        await chat.changeAgentButton.waitForState();
-        await chat.configureSettingsButton.waitForState();
+        await baseAssertion.assertElementState(sendMessage, 'visible');
+        await baseAssertion.assertElementState(
+          chat.changeAgentButton,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          chat.configureSettingsButton,
+          'visible',
+        );
       },
     );
 
@@ -360,9 +393,15 @@ dialSharedWithMeTest(
           triggeredHttpMethod: 'POST',
         });
         await chatBarAssertion.assertNoDataInConversations();
-        await chat.getSendMessage().waitForState({ state: 'attached' });
-        await chat.changeAgentButton.waitForState();
-        await chat.configureSettingsButton.waitForState();
+        await baseAssertion.assertElementState(sendMessage, 'visible');
+        await baseAssertion.assertElementState(
+          chat.changeAgentButton,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          chat.configureSettingsButton,
+          'visible',
+        );
       },
     );
   },
@@ -374,7 +413,6 @@ dialTest(
     dialHomePage,
     header,
     talkToAgentDialog,
-    navigationPanel,
     setTestIds,
     conversationData,
     dataInjector,
@@ -404,7 +442,7 @@ dialTest(
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await conversations.selectConversation(conversation.name);
-      await navigationPanel.goToMarketplaceHome();
+      await dialHomePage.goToMarketplace();
       await marketplacePage.waitForPageLoaded();
     });
 
