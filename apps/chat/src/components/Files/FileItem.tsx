@@ -280,7 +280,10 @@ export const FileItem = ({
             onRemoveAccess={handleRemoveAccess}
             onUnpublish={handleOpenUnpublishing}
             onSelect={canAttachFiles ? handleToggleFile : undefined}
-            className={classNames("group-hover/file-item:block", isContextMenu ? "block" : "hidden")}
+            className={classNames(
+              'group-hover/file-item:block',
+              isContextMenu ? 'block' : 'hidden',
+            )}
             onSave={onSave}
           />
         )}
