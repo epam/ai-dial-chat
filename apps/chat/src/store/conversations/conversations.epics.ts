@@ -465,6 +465,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
 
             const newConversations: Conversation[] = names.map((name, index) =>
               regenerateConversationId({
+                ...resetShareEntity,
                 reference: nanoid(),
                 name:
                   name !== DEFAULT_CONVERSATION_NAME
@@ -484,8 +485,6 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 temperature:
                   lastConversationSettings?.temperature ?? DEFAULT_TEMPERATURE,
                 selectedAddons: [],
-                updatedAt: Date.now(),
-                createdAt: Date.now(),
                 status: UploadStatus.LOADED,
                 folderId: defaultFolderId,
                 assistantModelId: DefaultsService.get(
