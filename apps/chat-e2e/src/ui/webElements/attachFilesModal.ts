@@ -216,4 +216,12 @@ export class AttachFilesModal extends BaseElement {
     await file.locator(MenuSelectors.dotsMenu).click();
     await this.getFileDropdownMenu().waitForState();
   }
+
+  public async uploadFromDevice() {
+    const respPremise = this.page.waitForResponse(
+      (r) => r.request().method() === 'GET' && r.status() === 200,
+    );
+    await this.uploadFromDeviceButton.click();
+    await respPremise;
+  }
 }

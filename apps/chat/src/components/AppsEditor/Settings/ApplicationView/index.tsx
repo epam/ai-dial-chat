@@ -156,7 +156,7 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
   const handleSubmit = useCallback(
     (data: CustomApplicationFormData) => {
       if (
-        (!isEqual(data, lastSubmittedValuesRef.current) || exitAfterSave) &&
+        !isEqual(data, lastSubmittedValuesRef.current) &&
         shouldSaveApplication
       ) {
         const applicationData = getCustomApplicationData(data);
@@ -170,6 +170,8 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
           }),
         );
         lastSubmittedValuesRef.current = data;
+      } else if (shouldSaveApplication && exitAfterSave) {
+        dispatch(ApplicationActions.exitEditor({}));
       } else {
         dispatch(ApplicationActions.setShouldSaveApplication(false));
         dispatch(ApplicationActions.setExitAfterSave(false));

@@ -16,6 +16,7 @@ import { Compare } from '@/src/ui/webElements/compare';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { PublicationReviewControl } from '@/src/ui/webElements/publicationReviewControl';
 import { Locator, Page } from '@playwright/test';
+import { Request } from 'playwright-core';
 
 export const PROMPT_APPLY_DELAY = 500;
 export const SCROLL_MOVING_DELAY = 100;
@@ -114,8 +115,12 @@ export class Chat extends BaseElement {
   public async startReplay(userRequest?: string, waitForAnswer = false) {
     await this.replay.waitForState();
     const requestPromise = this.waitForRequestSent(userRequest);
+    const moveResponsePromise = this.page.waitForResponse((resp) =>
+      resp.url().includes(API.moveHost),
+    );
     await this.replay.click();
     const request = await requestPromise;
+    await moveResponsePromise;
     await this.waitForResponse(waitForAnswer);
     return request.postDataJSON();
   }
@@ -231,11 +236,25 @@ export class Chat extends BaseElement {
     waitForAnswer = true,
   ) {
     await this.addModelToWorkspace();
+    const apiPromises = [];
     const requestPromise = this.waitForRequestSent(message);
+    apiPromises.push(requestPromise);
+    if (waitForAnswer) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'PUT',
+      );
+      apiPromises.push(respPromise);
+    }
     await sendMethod();
-    const request = await requestPromise;
+    let request;
+    for (let i = 0; i < apiPromises.length; i++) {
+      const resolvedPromise = await apiPromises[i];
+      if (i === 0) {
+        request = resolvedPromise as Request;
+      }
+    }
     await this.waitForResponse(waitForAnswer);
-    return request.postDataJSON();
+    return request?.postDataJSON();
   }
 
   public async sendRequestWithButton(message: string, waitForAnswer = true) {
@@ -255,11 +274,16 @@ export class Chat extends BaseElement {
   }
 
   public async saveAndSubmitRequest(waitForAnswer = false) {
-    return this.sendRequest(
+    const moveResponsePromise = this.page.waitForResponse((resp) =>
+      resp.url().includes(API.moveHost),
+    );
+    const request = this.sendRequest(
       undefined,
       () => this.getChatMessages().saveAndSubmit.click(),
       waitForAnswer,
     );
+    await moveResponsePromise;
+    return request;
   }
 
   public async playNextChatMessage(waitForResponse = true) {

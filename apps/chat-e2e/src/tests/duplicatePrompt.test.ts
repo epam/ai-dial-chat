@@ -22,6 +22,8 @@ dialTest(
     dataInjector,
     setTestIds,
     localStorageManager,
+    promptAssertion,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-2998', 'EPMRTC-3049');
     let prompt: Prompt;
@@ -45,21 +47,21 @@ dialTest(
               triggeredHttpMethod: 'POST',
             },
           );
+          await promptAssertion.assertEntityState(
+            { name: prompt.name, index: i },
+            'visible',
+          );
           const request = await response?.request().postDataJSON();
-          await expect
-            .soft(
-              prompts.getEntityByName(
-                ExpectedConstants.entityWithIndexTitle(prompt.name, i),
-              ),
-              ExpectedMessages.promptIsVisible,
-            )
-            .toBeVisible();
-          expect
-            .soft(request.description, ExpectedMessages.promptDescriptionValid)
-            .toBe(prompt.description);
-          expect
-            .soft(request.content, ExpectedMessages.promptContentValid)
-            .toBe(prompt.content);
+          baseAssertion.assertValue(
+            request.description,
+            prompt.description!,
+            ExpectedMessages.promptDescriptionValid,
+          );
+          baseAssertion.assertValue(
+            request.content,
+            prompt.content!,
+            ExpectedMessages.promptContentValid,
+          );
         }
       },
     );

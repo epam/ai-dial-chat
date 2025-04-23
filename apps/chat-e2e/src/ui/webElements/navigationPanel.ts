@@ -1,3 +1,4 @@
+import { API } from '@/src/testData';
 import { NavigationPanelSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Locator, Page } from '@playwright/test';
@@ -25,5 +26,21 @@ export class NavigationPanel extends BaseElement {
   public async goToMyWorkspace() {
     // eslint-disable-next-line playwright/no-force-option
     await this.myWorkspaceButton.click({ force: true });
+  }
+
+  public async backToChat(
+    options: { isHttpMethodTriggered?: boolean } = {
+      isHttpMethodTriggered: true,
+    },
+  ) {
+    if (options.isHttpMethodTriggered) {
+      const responsePromise = this.page.waitForResponse((resp) =>
+        resp.url().includes(API.pagePropsHost),
+      );
+      await this.backToChatButton.click();
+      await responsePromise;
+    } else {
+      await this.backToChatButton.click();
+    }
   }
 }

@@ -274,6 +274,7 @@ const dialTest = test.extend<{
   publishingRules: PublishingRules;
   conversationAssertion: ConversationAssertion;
   chatBarFolderAssertion: FolderAssertion<FolderConversations>;
+  allFilesFolderAssertion: FolderAssertion<Folders>;
   organizationConversationAssertion: SideBarConversationAssertion<OrganizationConversationsTree>;
   organizationPromptAssertion: SideBarEntityAssertion<OrganizationPromptsTree>;
   toastAssertion: ToastAssertion;
@@ -977,6 +978,12 @@ const dialTest = test.extend<{
       folderConversations,
     );
     await use(chatBarFolderAssertion);
+  },
+  allFilesFolderAssertion: async ({ attachedAllFiles }, use) => {
+    const allFilesFolderAssertion = new FolderAssertion<Folders>(
+      attachedAllFiles,
+    );
+    await use(allFilesFolderAssertion);
   },
   toastAssertion: async ({ toast }, use) => {
     const toastAssertion = new ToastAssertion(toast);

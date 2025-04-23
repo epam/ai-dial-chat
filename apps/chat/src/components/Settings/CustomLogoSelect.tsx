@@ -26,6 +26,7 @@ interface CustomLogoSelectProps {
   tooltip?: string;
   sourceFilters?: Set<FileSourceType>;
   confirmDialogValues?: ConfirmDialogValueTypes;
+  warningMessage?: string;
 }
 
 export const CustomLogoSelect = ({
@@ -41,6 +42,7 @@ export const CustomLogoSelect = ({
   tooltip,
   sourceFilters,
   confirmDialogValues,
+  warningMessage,
 }: CustomLogoSelectProps) => {
   const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
     useState(false);
@@ -69,7 +71,7 @@ export const CustomLogoSelect = ({
   const handleOnClose = useCallback(
     (files: boolean | string[]) => {
       if (Array.isArray(files) && files.length > 0) {
-        if (confirmDialogValues) {
+        if (confirmDialogValues && localLogo) {
           setPendingFiles(files);
           setConfirmDialogOpen(true);
         } else {
@@ -78,7 +80,7 @@ export const CustomLogoSelect = ({
       }
       setIsSelectFilesDialogOpened(false);
     },
-    [confirmDialogValues, handleSelectFiles],
+    [confirmDialogValues, handleSelectFiles, localLogo],
   );
 
   const handleDeleteLogo = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -155,6 +157,7 @@ export const CustomLogoSelect = ({
           customUploadButtonLabel={t('Upload files')}
           forceShowSelectCheckBox
           sourceFilters={sourceFilters}
+          warningMessage={warningMessage}
         />
       )}
 
