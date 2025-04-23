@@ -29,6 +29,7 @@ import {
   updateChildFoldersIds,
 } from '@/src/utils/app/folders';
 import { getPromptRootId, isEntityIdExternal } from '@/src/utils/app/id';
+import { isTabletScreen } from '@/src/utils/app/mobile';
 import {
   getPromptInfoFromId,
   parseVariablesFromContent,
@@ -58,7 +59,6 @@ import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 import { UploadStatus } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
-import { isTabletScreen } from '@/src/utils/app/mobile';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -981,16 +981,13 @@ const selectPromptEpic: AppEpic = (action$) =>
     }),
   );
 
-  const hidePromptbarEpic: AppEpic = (action$) =>
-    action$.pipe(
-      filter(
-        (action) =>
-          (PromptsActions.applyPrompt.match(action))
-      ),
-      switchMap(() =>
-        isTabletScreen() ? of(UIActions.setShowPromptbar(false)) : EMPTY,
-      ),
-    );
+const hidePromptbarEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.applyPrompt.match),
+    switchMap(() =>
+      isTabletScreen() ? of(UIActions.setShowPromptbar(false)) : EMPTY,
+    ),
+  );
 
 export const PromptsEpics = combineEpics(
   initEpic,
@@ -1018,5 +1015,5 @@ export const PromptsEpics = combineEpics(
   applyPromptEpic,
   getPromptMetadataEpic,
   selectPromptEpic,
-  hidePromptbarEpic
+  hidePromptbarEpic,
 );
