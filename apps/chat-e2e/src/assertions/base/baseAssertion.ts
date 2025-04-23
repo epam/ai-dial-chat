@@ -6,7 +6,7 @@ import {
   Sorting,
 } from '@/src/testData';
 import { IconApiHelper } from '@/src/testData/api';
-import { Attributes, Cursors, Styles } from '@/src/ui/domData';
+import { Attributes, Colors, Cursors, Styles } from '@/src/ui/domData';
 import { BaseElement } from '@/src/ui/webElements';
 import { SortingUtil } from '@/src/utils/sortingUtil';
 import { Locator, expect } from '@playwright/test';
@@ -204,13 +204,20 @@ export class BaseAssertion {
 
   public async assertElementBackgroundColors(
     element: BaseElement | Locator,
-    expectedColor: string,
+    expectedColor?: string,
   ) {
     const elementLocator = this.getElementLocator(element);
-    await expect(
-      elementLocator,
-      ExpectedMessages.entityBackgroundColorIsValid,
-    ).toHaveCSS(Styles.backgroundColor, expectedColor);
+    if (expectedColor !== undefined) {
+      await expect(
+        elementLocator,
+        ExpectedMessages.entityBackgroundColorIsValid,
+      ).toHaveCSS(Styles.backgroundColor, expectedColor);
+    } else {
+      await expect(
+        elementLocator,
+        ExpectedMessages.entityBackgroundColorIsValid,
+      ).toHaveCSS(Styles.backgroundColor, Colors.defaultBackground);
+    }
   }
 
   public async assertElementColor(

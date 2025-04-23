@@ -32,7 +32,7 @@ dialTest(
       adminApplicationApiHelper,
       adminPublicationApiHelper,
       publishRequestBuilder,
-      context,
+      accountSettings,
       providerLogin,
     },
     testInfo,
@@ -45,6 +45,7 @@ dialTest(
       'EPMRTC-5324',
       'EPMRTC-5325',
     );
+    dialTest.slow();
     const appFirstVersion = ExpectedConstants.defaultAppVersion;
     const appSecondVersion = '0.0.2';
     const appName = GeneratorUtil.randomApplicationName();
@@ -175,13 +176,14 @@ dialTest(
           agentDetailsModal.agentVersion,
           appFirstVersion,
         );
+        await agentDetailsModal.closeButton.click();
       },
     );
 
     await dialTest.step(
       'Logout, open copied link and verify the agent details modal is opened',
       async () => {
-        await context.clearCookies();
+        await accountSettings.logout();
         await providerLogin.login(
           testInfo,
           process.env.E2E_USERNAME!.split(',')[+testInfo.parallelIndex],

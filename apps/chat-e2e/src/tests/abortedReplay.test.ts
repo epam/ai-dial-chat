@@ -494,7 +494,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(replayConversation.name);
         await context.setOffline(true);
-        await chat.startReplay();
+        await chat.replay.click();
       },
     );
 

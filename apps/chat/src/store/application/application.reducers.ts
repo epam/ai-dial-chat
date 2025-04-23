@@ -199,6 +199,12 @@ export const applicationSlice = createSlice({
     ) => {
       state.appLoading = UploadStatus.LOADING;
     },
+    exitEditor: (
+      state,
+      _action: PayloadAction<{
+        redirectUrl?: string;
+      }>,
+    ) => state,
     enterEditModeComplete: (state) => {
       state.appLoading = UploadStatus.LOADED;
     },

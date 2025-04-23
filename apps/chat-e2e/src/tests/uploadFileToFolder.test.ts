@@ -1,13 +1,14 @@
 import dialTest from '@/src/core/dialFixtures';
 import {
   Attachment,
+  CheckboxState,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
 } from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
+import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
-import { expect } from '@playwright/test';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 
 dialTest(
   '[Manage attachments] Create new folder.\n' +
@@ -20,6 +21,8 @@ dialTest(
     attachedAllFiles,
     uploadFromDeviceModal,
     localStorageManager,
+    allFilesFolderAssertion,
+    manageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-3295', 'EPMRTC-3048');
 
@@ -30,20 +33,22 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
+        await manageAttachmentsAssertion.assertElementState(
+          attachFilesModal,
+          'visible',
+        );
         await attachFilesModal.newFolderButton.click();
-        const folderEditInput = attachedAllFiles.getEditFolderInput();
-        await expect
-          .soft(
-            folderEditInput.getElementLocator(),
-            ExpectedMessages.newFolderCreated,
-          )
-          .toBeVisible();
-        expect
-          .soft(
-            await folderEditInput.getEditInputValue(),
-            ExpectedMessages.elementAttributeValueIsValid,
-          )
-          .toBe(ExpectedConstants.newFolderWithIndexTitle(1));
+        const folderEditInput = attachedAllFiles.getEditFolderInput().editInput;
+        await allFilesFolderAssertion.assertElementState(
+          attachedAllFiles.getEditFolderInput(),
+          'visible',
+        );
+        await allFilesFolderAssertion.assertElementAttribute(
+          folderEditInput,
+          Attributes.value,
+          ExpectedConstants.newFolderWithIndexTitle(1),
+          ExpectedMessages.elementAttributeValueIsValid,
+        );
       },
     );
 
@@ -67,7 +72,10 @@ dialTest(
         await dialHomePage.uploadData(
           { path: Attachment.sunImageName, dataType: 'upload' },
           () =>
-            attachedAllFilesDropdownMenu.selectMenuOption(MenuOptions.upload),
+            attachedAllFilesDropdownMenu.selectMenuOption(MenuOptions.upload, {
+              isHttpMethodTriggered: true,
+              triggeredHttpMethod: 'GET',
+            }),
         );
         await uploadFromDeviceModal.uploadFiles();
       },
@@ -76,34 +84,21 @@ dialTest(
     await dialTest.step(
       'Verify file is uploaded into child folder, it is checked and highlighted',
       async () => {
-        await expect
-          .soft(
-            attachedAllFiles.getFolderEntity(
-              ExpectedConstants.newFolderWithIndexTitle(1),
-              Attachment.sunImageName,
-              2,
-            ),
-            ExpectedMessages.fileIsUploaded,
-          )
-          .toBeVisible();
-
-        const isFileChecked = attachedAllFiles.getFolderEntityCheckbox(
-          ExpectedConstants.newFolderWithIndexTitle(1),
-          Attachment.sunImageName,
-          2,
+        await allFilesFolderAssertion.assertFolderEntityState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(1), index: 2 },
+          { name: Attachment.sunImageName },
+          'visible',
         );
-        await expect
-          .soft(isFileChecked, ExpectedMessages.attachmentFileIsChecked)
-          .toBeChecked();
-
-        const fileNameColor = await attachedAllFiles.getFolderEntityColor(
-          ExpectedConstants.newFolderWithIndexTitle(1),
-          Attachment.sunImageName,
-          2,
+        await allFilesFolderAssertion.assertFolderEntityCheckboxState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(1), index: 2 },
+          { name: Attachment.sunImageName },
+          CheckboxState.checked,
         );
-        expect
-          .soft(fileNameColor, ExpectedMessages.attachmentNameColorIsValid)
-          .toBe(Colors.controlsBackgroundAccent);
+        await allFilesFolderAssertion.assertFolderEntityColor(
+          { name: ExpectedConstants.newFolderWithIndexTitle(1), index: 2 },
+          { name: Attachment.sunImageName },
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+        );
       },
     );
   },
@@ -121,6 +116,9 @@ dialTest(
     tooltip,
     setTestIds,
     localStorageManager,
+    manageAttachmentsAssertion,
+    baseAssertion,
+    allFilesFolderAssertion,
   }) => {
     setTestIds('EPMRTC-3022', 'EPMRTC-1615');
     const folderName = GeneratorUtil.randomString(7);
@@ -136,25 +134,27 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
+        await manageAttachmentsAssertion.assertElementState(
+          attachedAllFiles,
+          'visible',
+        );
         await attachedAllFiles.expandCollapseFolder(folderName, {
           isHttpMethodTriggered: true,
         });
         await attachedAllFiles.getFolderName(folderName).hoverOver();
-        expect
-          .soft(
-            await tooltip.getContent(),
-            ExpectedMessages.tooltipContentIsValid,
-          )
-          .toBe(folderName);
+        await baseAssertion.assertElementText(
+          tooltip,
+          folderName,
+          ExpectedMessages.tooltipContentIsValid,
+        );
         await attachedAllFiles
           .getFolderEntity(folderName, Attachment.longImageName)
           .hover();
-        expect
-          .soft(
-            await tooltip.getContent(),
-            ExpectedMessages.tooltipContentIsValid,
-          )
-          .toBe(Attachment.longImageName);
+        await baseAssertion.assertElementText(
+          tooltip,
+          Attachment.longImageName,
+          ExpectedMessages.tooltipContentIsValid,
+        );
       },
     );
 
@@ -167,40 +167,38 @@ dialTest(
           () =>
             attachedAllFiles
               .getDropdownMenu()
-              .selectMenuOption(MenuOptions.upload),
+              .selectMenuOption(MenuOptions.upload, {
+                isHttpMethodTriggered: true,
+                triggeredHttpMethod: 'GET',
+              }),
+        );
+        await baseAssertion.assertElementState(
+          uploadFromDeviceModal.getUploadedFile(Attachment.cloudImageName),
+          'visible',
         );
         await uploadFromDeviceModal.uploadFiles();
+        await baseAssertion.assertElementState(uploadFromDeviceModal, 'hidden');
       },
     );
 
     await dialTest.step(
       'Verify file is uploaded into existing folder, it is checked and highlighted',
       async () => {
-        await expect
-          .soft(
-            attachedAllFiles.getFolderEntity(
-              folderName,
-              Attachment.cloudImageName,
-            ),
-            ExpectedMessages.fileIsUploaded,
-          )
-          .toBeVisible();
-
-        const isFileChecked = attachedAllFiles.getFolderEntityCheckbox(
-          folderName,
-          Attachment.cloudImageName,
+        await allFilesFolderAssertion.assertFolderEntityState(
+          { name: folderName },
+          { name: Attachment.cloudImageName },
+          'visible',
         );
-        await expect
-          .soft(isFileChecked, ExpectedMessages.attachmentFileIsChecked)
-          .toBeChecked();
-
-        const fileNameColor = await attachedAllFiles.getFolderEntityColor(
-          folderName,
-          Attachment.cloudImageName,
+        await allFilesFolderAssertion.assertFolderEntityCheckboxState(
+          { name: folderName },
+          { name: Attachment.cloudImageName },
+          CheckboxState.checked,
         );
-        expect
-          .soft(fileNameColor, ExpectedMessages.attachmentNameColorIsValid)
-          .toBe(Colors.controlsBackgroundAccent);
+        await allFilesFolderAssertion.assertFolderEntityColor(
+          { name: folderName },
+          { name: Attachment.cloudImageName },
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+        );
       },
     );
   },

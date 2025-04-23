@@ -16,6 +16,7 @@ import {
   catchError,
   endWith,
   filter,
+  ignoreElements,
   map,
   switchMap,
   take,
@@ -636,6 +637,24 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
     }),
   );
 
+const exitEditModeEpic: AppEpic = (action$, _state$, { router }) =>
+  action$.pipe(
+    filter(ApplicationActions.exitEditor.match),
+    tap(({ payload }) => {
+      if (payload.redirectUrl) {
+        router.push({
+          pathname: payload.redirectUrl,
+        });
+      } else {
+        router.push({
+          pathname: Routes.Marketplace,
+          query: { tab: MarketplaceTabs.MY_WORKSPACE },
+        });
+      }
+    }),
+    ignoreElements(),
+  );
+
 export const ApplicationEpics = combineEpics(
   createApplicationEpic,
   createFailEpic,
@@ -649,4 +668,5 @@ export const ApplicationEpics = combineEpics(
   updateApplicationStatusFailEpic,
   getApplicationLogsEpic,
   enterEditModeEpic,
+  exitEditModeEpic,
 );

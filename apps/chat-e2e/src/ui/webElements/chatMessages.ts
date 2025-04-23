@@ -535,7 +535,22 @@ export class ChatMessages extends BaseElement {
     return editIcon;
   }
 
-  public async editMessage(oldMessage: string, newMessage: string) {
+  public async editFirstMessage(newMessage: string) {
+    const responses = [];
+    for (const method of ['POST', 'PUT']) {
+      const resp = this.page.waitForResponse(
+        (response) =>
+          response.request().method() === method && response.status() === 200,
+      );
+      responses.push(resp);
+    }
+    await this.editMessage(1, newMessage);
+    for (const resp of responses) {
+      await resp;
+    }
+  }
+
+  public async editMessage(oldMessage: string | number, newMessage: string) {
     await this.fillEditData(oldMessage, newMessage);
     await this.saveAndSubmit.click();
     await this.waitForResponseReceived();

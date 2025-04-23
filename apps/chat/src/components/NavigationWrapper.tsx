@@ -16,6 +16,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { ModelsSelectors } from '../store/models/models.reducers';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -59,9 +60,11 @@ const NavigationButton = ({
   caption,
   rounded = false,
 }: NavigationButtonProps) => {
-  const disabled = useAppSelector(
+  const isLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
+  const streaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
+  const disabled = isLoading || streaming;
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   return (
     <Tooltip
@@ -77,6 +80,7 @@ const NavigationButton = ({
           ? 'cursor-not-allowed'
           : 'cursor-pointer hover:bg-accent-primary-alpha active:bg-accent-primary-alpha',
       )}
+      contentClassName="max-w-[300px] break-words"
     >
       <button
         data-qa={dataQa}

@@ -1,6 +1,10 @@
 import { MouseEvent } from 'react';
 
-import { ImageMIMEType, ShareInterface } from '@epam/ai-dial-shared';
+import {
+  EntityDates,
+  ImageMIMEType,
+  ShareInterface,
+} from '@epam/ai-dial-shared';
 
 export const modelCursorSign = '▍';
 export const modelCursorSignWithBackquote = '`▍`';
@@ -10,11 +14,13 @@ export const stopBubbling = <T>(e: MouseEvent<T>) => {
   e.stopPropagation();
 };
 
-export const resetShareEntity: ShareInterface = {
+export const resetShareEntity: ShareInterface & EntityDates = {
   isPublished: false,
   isShared: false,
   publishedWithMe: false,
   sharedWithMe: false,
+  updatedAt: Date.now(),
+  createdAt: Date.now(),
 };
 
 export const PLOTLY_CONTENT_TYPE = 'application/vnd.plotly.v1+json';
