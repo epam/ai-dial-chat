@@ -98,6 +98,15 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
   const disableUsePrompt =
     isConversationBlocksInput || !isModelsInstalled || !!selectedPublication;
 
+  const onUse = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handleUse();
+    },
+    [handleUse],
+  );
+
   return (
     <>
       <ul className="flex max-h-[435px] flex-col gap-4 overflow-y-auto px-3 pb-4 md:px-6">
@@ -139,7 +148,7 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
                 />
               )}
               <button
-                onClick={handleUse}
+                onClick={onUse}
                 disabled={disableUsePrompt}
                 className={classNames(
                   'button button-primary flex items-center gap-2',
