@@ -26,7 +26,7 @@ import { Conversations } from './Conversations';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
 
-const ChatbarView = () => {
+export const Chatbar = () => {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -157,5 +157,3 @@ const ChatbarView = () => {
     />
   );
 };
-
-export const Chatbar = ChatbarView;
