@@ -73,9 +73,10 @@ const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       placement="bottom"
+      triggerIconClassName="max-sm:hidden"
       TriggerCustomRenderer={
         <button
-          className="button button-primary hidden items-center gap-2 py-2 sm:flex"
+          className="button button-primary flex items-center gap-2 py-2"
           data-qa="add-app"
         >
           <span>{t('Add app')}</span>
@@ -197,9 +198,7 @@ export const SearchHeader = () => {
       </div>
       {enabledFeatures.has(Feature.MarketplaceTableView) && <ViewToggler />}
       {selectedTab === MarketplaceTabs.MY_WORKSPACE && (
-        <div className="hidden sm:block">
-          <AddAppButton menuItems={menuItems} />
-        </div>
+        <AddAppButton menuItems={menuItems} />
       )}
     </div>
   );
