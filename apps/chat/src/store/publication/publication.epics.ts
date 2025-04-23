@@ -567,7 +567,7 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
 
 const uploadPublicationFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.uploadPublicationsFail.match),
+    ofType(PublicationActions.uploadPublicationsFail.type),
     map(() =>
       UIActions.showErrorToast(
         translate(errorsMessages.publicationUploadFailed),

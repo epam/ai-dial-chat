@@ -315,7 +315,7 @@ export const clearPromptsEpic: AppEpic = (action$) =>
 
 const deletePromptsEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PromptsActions.deletePrompts.match),
+    ofType(PromptsActions.deletePrompts.type),
     switchMap(({ payload }) =>
       zip(
         payload.promptIds.map((id) =>
@@ -969,7 +969,7 @@ const selectPromptEpic: AppEpic = (action$) =>
 
 const hidePromptbarEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PromptsActions.applyPrompt.match),
+    ofType(PromptsActions.applyPrompt.type),
     switchMap(() =>
       isTabletScreen() ? of(UIActions.setShowPromptbar(false)) : EMPTY,
     ),

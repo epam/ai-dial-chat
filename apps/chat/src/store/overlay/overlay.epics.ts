@@ -267,7 +267,7 @@ const createConversationEffectEpic: AppEpic = (action$, state$) =>
     ofType(OverlayActions.createConversationEffect.type),
     switchMap(({ payload: { requestId } }) => {
       return action$.pipe(
-        filter(ConversationsActions.createNotLocalConversationsSuccess.match),
+        ofType(ConversationsActions.createNotLocalConversationsSuccess.type),
         takeUntil(timer(10000)),
         filter(Boolean),
         map(({ payload: conversations }) => {

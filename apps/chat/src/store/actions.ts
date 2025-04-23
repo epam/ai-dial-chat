@@ -1,7 +1,7 @@
 export { CodeEditorActions } from '@/src/store/codeEditor/codeEditor.reducer';
 export { AddonsActions } from '@/src/store/addons/addons.reducers';
 export { ApplicationActions } from '@/src/store/application/application.reducers';
-export { ApplicationTypesSchemasActions } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
+export { ApplicationTypesSchemasActions } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
 export { AuthActions } from '@/src/store/auth/auth.reducers';
 export { ChatActions } from '@/src/store/chat/chat.reducer';
 export { ConversationsActions } from '@/src/store/conversations/conversations.reducers';

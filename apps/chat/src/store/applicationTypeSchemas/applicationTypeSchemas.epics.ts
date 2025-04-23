@@ -12,7 +12,7 @@ import { AppEpic } from '@/src/types/store';
 import {
   ApplicationTypesSchemasActions,
   ApplicationTypesSchemasSelectors,
-} from './applicationTypeSchemas.reducer';
+} from './applicationTypeSchemas.reducers';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 

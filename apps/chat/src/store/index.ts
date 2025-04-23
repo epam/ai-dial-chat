@@ -23,7 +23,7 @@ import { addonsSlice } from './addons/addons.reducers';
 import { ApplicationEpics } from './application/application.epics';
 import { applicationSlice } from './application/application.reducers';
 import { ApplicationTypesSchemasEpics } from './applicationTypeSchemas/applicationTypeSchemas.epic';
-import { applicationTypesSchemasSlice } from './applicationTypeSchemas/applicationTypeSchemas.reducer';
+import { applicationTypesSchemasSlice } from './applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { authSlice } from './auth/auth.reducers';
 import { chatSlice } from './chat/chat.reducer';
 import { CodeEditorEpics } from './codeEditor/codeEditor.epics';

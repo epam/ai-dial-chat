@@ -2349,7 +2349,7 @@ const saveConversationEpic: AppEpic = (action$) =>
 
 const moveConversationFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ConversationsActions.moveConversationFail.match),
+    ofType(ConversationsActions.moveConversationFail.type),
     switchMap(() => {
       return of(
         UIActions.showErrorToast(
