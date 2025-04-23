@@ -99,9 +99,6 @@ const validators: Validators = {
     required: 'Completion URL is required',
     validate: (value) => {
       try {
-        if (value.trim() !== value) {
-          return 'Completion URL cannot start or end with spaces';
-        }
         if (!value.startsWith('http://') && !value.startsWith('https://')) {
           return 'Completion URL must start with http:// or https://';
         }
@@ -271,6 +268,54 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
           id="completionUrl"
           error={errors.completionUrl?.message}
           data-qa="completion-url"
+          onKeyDown={(e) => {
+            if (e.key === ' ') e.preventDefault();
+          }}
+          onBeforeInput={(e: React.FormEvent<HTMLInputElement>) => {
+            const inputEvent = e.nativeEvent as InputEvent;
+            if (inputEvent.data?.includes(' ') || inputEvent.data === '. ') {
+              e.preventDefault();
+            }
+          }}
+          onPaste={(e: React.ClipboardEvent<HTMLInputElement>) => {
+            e.preventDefault();
+            const pasted = e.clipboardData.getData('text');
+            const sanitized = pasted.replace(/\s+/g, '');
+
+            const input = e.currentTarget;
+            const start = input.selectionStart ?? 0;
+            const end = input.selectionEnd ?? 0;
+
+            input.setRangeText(sanitized, start, end, 'end');
+
+            const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+              HTMLInputElement.prototype,
+              'value',
+            )?.set;
+            nativeInputValueSetter?.call(input, input.value);
+
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+          }}
+          onInput={(e) => {
+            const input = e.currentTarget;
+            const cleaned = e.currentTarget.value
+              .replace(/\s+/g, '')
+              .replace(/\.{2,}/g, '.');
+
+            if (input.value !== cleaned) {
+              const cursorPosition = input.selectionStart ?? input.value.length;
+              input.value = cleaned;
+
+              const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+                HTMLInputElement.prototype,
+                'value',
+              )?.set;
+              nativeInputValueSetter?.call(input, cleaned);
+              input.setSelectionRange(cursorPosition, cursorPosition);
+
+              input.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+          }}
         />
       </div>
     </form>
