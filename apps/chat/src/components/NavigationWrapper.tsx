@@ -49,6 +49,7 @@ interface NavigationButtonProps {
   dataQa?: string;
   caption?: string;
   rounded?: boolean;
+  allowClickSelected?: boolean;
 }
 
 const NavigationButton = ({
@@ -59,6 +60,7 @@ const NavigationButton = ({
   dataQa,
   caption,
   rounded = false,
+  allowClickSelected = false,
 }: NavigationButtonProps) => {
   const isLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
   const streaming = useAppSelector(
@@ -84,7 +86,9 @@ const NavigationButton = ({
     >
       <button
         data-qa={dataQa}
-        onClick={!selected && !disabled ? onClick : undefined}
+        onClick={
+          (!selected || allowClickSelected) && !disabled ? onClick : undefined
+        }
         className={classNames(
           'flex size-full flex-col items-center justify-center gap-[2px]',
           disabled ? 'cursor-not-allowed' : 'cursor-pointer',
@@ -243,6 +247,7 @@ const UsedWidgets = () => {
           dataQa="widgets-sidebar-trigger"
           caption={t('Widgets')}
           tooltip={t('Widgets')}
+          allowClickSelected={router.route === Routes.SelectedWidget}
         />
       </div>
     </>
