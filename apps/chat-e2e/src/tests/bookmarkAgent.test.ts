@@ -331,7 +331,7 @@ dialTest(
     marketplaceHeader,
     marketplaceAgentsSection,
     marketplaceAgents,
-    navigationPanel,
+    dialHomePage,
     agentDetailsModal,
     agentDetailsModalAssertion,
     localStorageManager,
@@ -419,7 +419,7 @@ dialTest(
         await agentDetailsModal.clickUseButton({
           isInstalledDeploymentsUpdated: true,
         });
-        await navigationPanel.goToMyWorkspace();
+        await dialHomePage.goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
         addedAgentElement = await marketplaceAgentsSection.findAgentElement(
           appName,
