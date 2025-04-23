@@ -33,6 +33,7 @@ interface Props {
   onClose: () => void;
   onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
   onEdit: (entity: DialAIEntityModel) => void;
+  onDuplicate: (entity: DialAIEntityModel) => void;
   onDelete: (entity: DialAIEntityModel) => void;
   onChangeVersion: (entity: DialAIEntityModel) => void;
   onBookmarkClick: (entity: DialAIEntityModel) => void;
@@ -46,11 +47,13 @@ export const ApplicationDetails = ({
   onClose,
   onPublish,
   onEdit,
+  onDuplicate,
   onDelete,
   onChangeVersion,
   onBookmarkClick,
 }: Props) => {
   const dispatch = useAppDispatch();
+
   const router = useRouter();
 
   const searchParams = useSearchParams();
@@ -120,6 +123,7 @@ export const ApplicationDetails = ({
         entity={entity}
         allVersions={filteredEntities}
         onEdit={onEdit}
+        onDuplicate={onDuplicate}
         onDelete={onDelete}
         onBookmarkClick={onBookmarkClick}
       />

@@ -16,7 +16,7 @@ import {
 
 import { AnyAction } from '@reduxjs/toolkit';
 
-import { combineEpics, ofType } from 'redux-observable';
+import { combineEpics } from 'redux-observable';
 
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { getOrUploadPrompt } from '@/src/utils/app/data/storages/api/prompt-api-storage';
@@ -97,7 +97,7 @@ const initEpic: AppEpic = (action$, state$) =>
 
 const createNewPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    ofType(PromptsActions.createNewPrompt),
+    filter(PromptsActions.createNewPrompt.match),
     switchMap(({ payload: newPrompt }) => {
       return PromptService.createPrompt(newPrompt).pipe(
         switchMap((apiPrompt) => {
@@ -149,7 +149,7 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
 
 const saveNewPromptEpic: AppEpic = (action$) =>
   action$.pipe(
-    ofType(PromptsActions.saveNewPrompt),
+    filter(PromptsActions.saveNewPrompt.match),
     mergeMap(({ payload }) =>
       concat(
         of(PromptsActions.createNewPromptSuccess(payload)),

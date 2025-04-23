@@ -34,7 +34,13 @@ import {
 import { encode } from '@/src/utils/app/application-type-schema';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
-import { isEntityIdExternal, isEntityIdLocal } from '@/src/utils/app/id';
+import { generateNextName } from '@/src/utils/app/folders';
+import {
+  isApplicationId,
+  isEntityIdExternal,
+  isEntityIdLocal,
+  isMyApplication,
+} from '@/src/utils/app/id';
 import { translate } from '@/src/utils/app/translation';
 import { parseApplicationApiKey } from '@/src/utils/server/api';
 
@@ -47,7 +53,8 @@ import { AppEpic } from '@/src/types/store';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
-import { errorsMessages } from '../../constants/errors';
+import { DEFAULT_APPLICATION_NAME } from '@/src/constants/default-ui-settings';
+import { errorsMessages } from '@/src/constants/errors';
 import { DeleteType, MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
@@ -58,6 +65,7 @@ import {
   ConversationsActions,
   ConversationsSelectors,
 } from '../conversations/conversations.reducers';
+import { MarketplaceActions } from '../marketplace/marketplace.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { ShareActions, ShareSelectors } from '../share/share.reducers';
 
@@ -104,7 +112,8 @@ const createApplicationEpic: AppEpic = (action$) =>
         map((action) => {
           if (
             ModelsActions.addModels.match(action) &&
-            action.payload.models?.[0]?.reference
+            action.payload.models?.[0]?.reference &&
+            payload.slug
           ) {
             Router.push({
               pathname: Routes.AppsEditorSettings,
@@ -675,6 +684,70 @@ const resetSelectedWidgetEpic: AppEpic = (action$) =>
     }),
   );
 
+const duplicateApplicationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ApplicationActions.duplicate.match),
+    switchMap(({ payload }) => {
+      const state = state$.value;
+      const agentsMap = ModelsSelectors.selectModelsMap(state);
+      const myCustomAgents = ModelsSelectors.selectCustomModels(state).filter(
+        (application) => isMyApplication(application),
+      );
+      const agent = agentsMap[payload.reference];
+
+      if (!agent) {
+        return of(
+          UIActions.showErrorToast(
+            'Application does not exist. Try to reload the page.',
+          ),
+        );
+      }
+
+      if (!isApplicationId(agent.id)) {
+        return of(
+          UIActions.showErrorToast('You can duplicate only your applications.'),
+        );
+      }
+
+      return ApplicationService.get(agent.id).pipe(
+        switchMap((application) => {
+          if (!application) {
+            return of(
+              UIActions.showErrorToast(
+                'Application does not exist. Try to reload the page.',
+              ),
+            );
+          }
+
+          const applicationData = {
+            ...application,
+            name: generateNextName(
+              DEFAULT_APPLICATION_NAME,
+              application.name,
+              myCustomAgents.map((agent) => ({ ...agent, folderId: '' })),
+            ),
+          };
+
+          return concat(
+            of(
+              ApplicationActions.create({
+                applicationData: applicationData,
+              }),
+            ),
+            of(
+              MarketplaceActions.setDetailsModel({
+                reference: regenerateApplicationId({
+                  ...applicationData,
+                }).id,
+                isSuggested: false,
+              }),
+            ),
+          );
+        }),
+      );
+    }),
+  );
+
 export const ApplicationEpics = combineEpics(
   createApplicationEpic,
   createFailEpic,
@@ -690,4 +763,5 @@ export const ApplicationEpics = combineEpics(
   enterEditModeEpic,
   exitEditModeEpic,
   resetSelectedWidgetEpic,
+  duplicateApplicationEpic,
 );

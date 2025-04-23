@@ -220,15 +220,21 @@ export const applicationSlice = createSlice({
     selectWidget: (state, { payload }: PayloadAction<string | undefined>) => {
       state.selectedWidget = payload;
     },
-    setReturnConversationIds(
+    setReturnConversationIds: (
       state,
       { payload }: PayloadAction<string[] | undefined>,
-    ) {
+    ) => {
       state.returnConversationIds = payload;
     },
-    setHasUnsavedChanges(state, action: PayloadAction<boolean>) {
+    setHasUnsavedChanges: (state, action: PayloadAction<boolean>) => {
       state.hasUnsavedChanges = action.payload;
     },
+    duplicate: (
+      state,
+      _action: PayloadAction<{
+        reference: string;
+      }>,
+    ) => state,
   },
 });
 

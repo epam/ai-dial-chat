@@ -1,4 +1,5 @@
 import {
+  IconCopy,
   IconFileDescription,
   IconLink,
   IconPencilMinus,
@@ -92,6 +93,7 @@ interface ApplicationCardProps {
   onPublish?: (entity: DialAIEntityModel, action: PublishActions) => void;
   onDelete?: (entity: DialAIEntityModel) => void;
   onEdit?: (entity: DialAIEntityModel) => void;
+  onDuplicate?: (entity: DialAIEntityModel) => void;
   onBookmarkClick?: (entity: DialAIEntityModel) => void;
   onLogsClick?: (entity: DialAIEntityModel) => void;
   isPreview?: boolean;
@@ -104,6 +106,7 @@ export const ApplicationCard = memo(
     onClick,
     onDelete,
     onEdit,
+    onDuplicate,
     onBookmarkClick,
     onPublish,
     onLogsClick,
@@ -195,6 +198,7 @@ export const ApplicationCard = memo(
 
     const handleEdit = useMenuItemHandler(onEdit, entity);
     const handleDelete = useMenuItemHandler(onDelete, entity);
+    const handleDuplicate = useMenuItemHandler(onDuplicate, entity);
     const handlePublish = useMenuItemHandlerWithTwoArgs(
       onPublish,
       entity,
@@ -233,6 +237,13 @@ export const ApplicationCard = memo(
           display: ((isMyApp || canWrite) && !!onEdit) || isPreview,
           Icon: IconPencilMinus,
           onClick: handleEdit,
+        },
+        {
+          name: t('Duplicate'),
+          dataQa: 'application-duplicate',
+          display: isMyApplication(entity),
+          Icon: IconCopy,
+          onClick: handleDuplicate,
         },
         {
           name: t('Share'),
@@ -288,12 +299,14 @@ export const ApplicationCard = memo(
         playerStatus,
         isAdmin,
         isMyApp,
+        canWrite,
         isCodeAppsEnabled,
         PlayerContextIcon,
         handleUpdateFunctionStatus,
-        canWrite,
         onEdit,
+        isPreview,
         handleEdit,
+        handleDuplicate,
         isApplicationsSharingEnabled,
         handleOpenSharing,
         handleOpenUnshare,
@@ -305,7 +318,6 @@ export const ApplicationCard = memo(
         onDelete,
         isModifyDisabled,
         handleDelete,
-        isPreview,
       ],
     );
 

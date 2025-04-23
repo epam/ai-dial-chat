@@ -1,4 +1,5 @@
 import {
+  IconCopy,
   IconEdit,
   IconFileDescription,
   IconLink,
@@ -85,6 +86,7 @@ interface Props {
   onUseEntity: () => void;
   onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
   onEdit: (entity: DialAIEntityModel) => void;
+  onDuplicate: (entity: DialAIEntityModel) => void;
   onDelete: (entity: DialAIEntityModel) => void;
   onBookmarkClick: (entity: DialAIEntityModel) => void;
 }
@@ -96,6 +98,7 @@ export const ApplicationDetailsFooter = ({
   onPublish,
   onUseEntity,
   onEdit,
+  onDuplicate,
   onDelete,
   onBookmarkClick,
 }: Props) => {
@@ -195,6 +198,7 @@ export const ApplicationDetailsFooter = ({
     [dispatch, entity, t],
   );
   const handleEdit = useMenuItemHandler(onEdit, entity);
+  const handleDuplicate = useMenuItemHandler(onDuplicate, entity);
   const handleDelete = useMenuItemHandler(onDelete, entity);
   const handlePublish = useMenuItemHandlerWithTwoArgs(
     onPublish,
@@ -226,6 +230,21 @@ export const ApplicationDetailsFooter = ({
         onClick: handleUpdateFunctionStatus,
       },
       {
+        name: t('Edit'),
+        dataQa: 'edit',
+        display: (isMyApp || !!canWrite) && !!onEdit,
+        disabled: isAppInDeployment,
+        Icon: IconEdit,
+        onClick: handleEdit,
+      },
+      {
+        name: t('Duplicate'),
+        dataQa: 'duplicate',
+        display: isMyApp && !!onEdit,
+        Icon: IconCopy,
+        onClick: handleDuplicate,
+      },
+      {
         name: t('Share'),
         dataQa: 'share',
         display: isMyApp && isApplicationsSharingEnabled && isSmallScreen,
@@ -238,14 +257,6 @@ export const ApplicationDetailsFooter = ({
         display: !!entity.sharedWithMe && isApplicationsSharingEnabled,
         Icon: IconUserUnshare,
         onClick: handleOpenUnshare,
-      },
-      {
-        name: t('Delete'),
-        dataQa: 'delete',
-        display: isMyApp,
-        disabled: isModifyDisabled,
-        Icon: IconTrashX,
-        onClick: handleDelete,
       },
       {
         name: t('Publish'),
@@ -262,12 +273,12 @@ export const ApplicationDetailsFooter = ({
         onClick: handleUnpublish,
       },
       {
-        name: t('Edit'),
-        dataQa: 'edit',
-        display: (isMyApp || !!canWrite) && !!onEdit,
-        disabled: isAppInDeployment,
-        Icon: IconEdit,
-        onClick: handleEdit,
+        name: t('Delete'),
+        dataQa: 'delete',
+        display: isMyApp,
+        disabled: isModifyDisabled,
+        Icon: IconTrashX,
+        onClick: handleDelete,
       },
       {
         name: t('Application logs'),
@@ -302,6 +313,7 @@ export const ApplicationDetailsFooter = ({
       onEdit,
       isAppInDeployment,
       handleEdit,
+      handleDuplicate,
       handleLogClick,
     ],
   );
@@ -348,6 +360,29 @@ export const ApplicationDetailsFooter = ({
                   </button>
                 </Tooltip>
               )}
+              {(isMyApp || canWrite) && (
+                <Tooltip tooltip={t('Edit')}>
+                  <button
+                    disabled={isAppInDeployment}
+                    onClick={() => onEdit(entity)}
+                    className="icon-button"
+                    data-qa="application-edit"
+                  >
+                    <IconEdit size={24} />
+                  </button>
+                </Tooltip>
+              )}
+              {isMyApp && (
+                <Tooltip tooltip={t('Duplicate')}>
+                  <button
+                    onClick={() => onDuplicate(entity)}
+                    className="icon-button"
+                    data-qa="application-duplicate"
+                  >
+                    <IconCopy size={24} />
+                  </button>
+                </Tooltip>
+              )}
               {isMyApp && isApplicationsSharingEnabled && isSmallScreen && (
                 <Tooltip tooltip={t('Share')}>
                   <button
@@ -367,18 +402,6 @@ export const ApplicationDetailsFooter = ({
                     data-qa="application-unshare"
                   >
                     <IconUserUnshare height={24} width={24} />
-                  </button>
-                </Tooltip>
-              )}
-              {isMyApp && (
-                <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
-                  <button
-                    disabled={isModifyDisabled}
-                    onClick={() => onDelete(entity)}
-                    className="icon-button"
-                    data-qa="application-delete"
-                  >
-                    <IconTrashX size={24} />
                   </button>
                 </Tooltip>
               )}
@@ -404,15 +427,15 @@ export const ApplicationDetailsFooter = ({
                   </button>
                 </Tooltip>
               )}
-              {(isMyApp || canWrite) && (
-                <Tooltip tooltip={t('Edit')}>
+              {isMyApp && (
+                <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
                   <button
-                    disabled={isAppInDeployment}
-                    onClick={() => onEdit(entity)}
+                    disabled={isModifyDisabled}
+                    onClick={() => onDelete(entity)}
                     className="icon-button"
-                    data-qa="application-edit"
+                    data-qa="application-delete"
                   >
-                    <IconEdit size={24} />
+                    <IconTrashX size={24} />
                   </button>
                 </Tooltip>
               )}
@@ -450,13 +473,11 @@ export const ApplicationDetailsFooter = ({
               !isExecutableApp(entity) ||
               playerStatus === SimpleApplicationStatus.UNDEPLOY
             }
-            tooltip={
+            tooltip={t(
               hasPublicId && !isAdmin
-                ? t(
-                    'Ask your administrator to deploy this application to be able to use it',
-                  )
-                : t('Deploy the application to be able to use it')
-            }
+                ? 'Ask your administrator to deploy this application to be able to use it'
+                : 'Deploy the application to be able to use it',
+            )}
           >
             <button
               onClick={onUseEntity}

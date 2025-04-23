@@ -92,6 +92,7 @@ interface ResultsViewProps {
   onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
   onDelete: (entity: DialAIEntityModel) => void;
   onEdit: (entity: DialAIEntityModel) => void;
+  onDuplicate: (entity: DialAIEntityModel) => void;
   onBookmarkClick: (entity: DialAIEntityModel) => void;
   onLogsClick: (entity: DialAIEntityModel) => void;
 }
@@ -410,6 +411,13 @@ export const TabRenderer = () => {
     setLogsEntity(undefined);
   }, []);
 
+  const handleDuplicate = useCallback(
+    (entity: DialAIEntityModel) => {
+      dispatch(ApplicationActions.duplicate({ reference: entity.reference }));
+    },
+    [dispatch],
+  );
+
   const currentDetailsModel = detailsModel && modelsMap[detailsModel.reference];
 
   return (
@@ -448,6 +456,7 @@ export const TabRenderer = () => {
         onPublish={handleSetPublishEntity}
         onDelete={handleDelete}
         onEdit={handleEditApplication}
+        onDuplicate={handleDuplicate}
         onBookmarkClick={handleBookmarkClick}
         onLogsClick={handleLogsClick}
       />
@@ -470,6 +479,7 @@ export const TabRenderer = () => {
           onDelete={handleDelete}
           onEdit={handleEditApplication}
           onBookmarkClick={handleBookmarkClick}
+          onDuplicate={handleDuplicate}
           allEntities={allModels}
           isMyAppsTab={selectedTab === MarketplaceTabs.MY_WORKSPACE}
           isSuggested={detailsModel.isSuggested}
