@@ -158,7 +158,7 @@ dialOverlayTest(
     await dialOverlayTest.step(
       `Click on "Set light theme and new model" button and verify theme is changed to light, model is added to the recent models`,
       async () => {
-        await overlayConfiguration.setConfigurationButton.click();
+        await overlayConfiguration.setConfiguration();
         await overlayAssertion.assertOverlayTheme(
           overlayHomePage,
           ThemeId.light,
@@ -178,7 +178,12 @@ dialOverlayTest(
       `Click on "Create new conversation" button and verify new model is applied`,
       async () => {
         const expectedModel = ModelsUtil.getModel(configuredModelId)!;
-        await overlayHeader.createNewConversation();
+        const expectedModelIcon = expectedModel.iconUrl;
+        await overlayHeader.createNewConversation({
+          triggeredHttpHost: expectedModelIcon
+            ? API.themeUrl.concat(`/${expectedModelIcon}`)
+            : undefined,
+        });
         await overlayAgentInfoAssertion.assertElementText(
           overlayAgentInfo.agentName,
           expectedModel.name,

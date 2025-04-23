@@ -27,19 +27,19 @@ export enum CODEAPPS_REQUIRED_FILES {
 export const CONFIRM_SOURCE_FOLDER_VALUES: ConfirmDialogValueTypes = {
   heading: 'Confirm changing source folder',
   description:
-    'Changing of source folder will stop sharing and other users will no longer see this application.',
+    'Changing the source folder will immediately stop sharing, and other users will no longer see this application.',
 };
 
 export const CONFIRM_ICON_FILE_VALUES: ConfirmDialogValueTypes = {
   heading: 'Confirm changing icon file',
   description:
-    'Changing of icon file will stop sharing the file and other users will see default icon for this application.',
+    'Are you sure you want to change the icon? Other users will see the default one immediately after confirmation.',
 };
 
 export const CONFIRM_DOCUMENT_VALUES: ConfirmDialogValueTypes = {
   heading: 'Confirm changing document relative URLs',
   description:
-    'Changing of document relative URLs will stop sharing and other users will no longer see this application.',
+    'Changing document relative URLs will immediately stop sharing, and other users will no longer see this application.',
 };
 
 export const DRAFT_APPLICATION_ID = `${ApiKeys.Applications}/draft`;

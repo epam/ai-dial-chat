@@ -5,7 +5,6 @@ import {
   ExpectedMessages,
   TreeEntity,
 } from '@/src/testData';
-import { Styles } from '@/src/ui/domData';
 import { EntitiesTree } from '@/src/ui/webElements/entityTree';
 import { expect } from '@playwright/test';
 
@@ -57,52 +56,32 @@ export class EntityTreeAssertion<T extends EntitiesTree> extends BaseAssertion {
 
   public async assertEntityBackgroundColor(
     entity: TreeEntity,
-    expectedColor: string,
+    expectedColor?: string,
   ) {
-    const entityBackgroundColor =
-      await this.treeEntities.getEntityBackgroundColor(
-        entity.name,
-        entity.index,
-      );
-    expect
-      .soft(
-        entityBackgroundColor,
-        ExpectedMessages.entityBackgroundColorIsValid,
-      )
-      .toBe(expectedColor);
+    await super.assertElementBackgroundColors(
+      this.treeEntities.getEntityByName(entity.name, entity.index),
+      expectedColor,
+    );
   }
 
   public async assertEntityCheckboxColor(
     entity: TreeEntity,
     expectedColor: string,
   ) {
-    const checkboxElement = this.treeEntities.getEntityCheckboxElement(
-      entity.name,
-      entity.index,
+    await super.assertElementColor(
+      this.treeEntities.getEntityCheckbox(entity.name, entity.index),
+      expectedColor,
     );
-    const color = await checkboxElement.getComputedStyleProperty(Styles.color);
-    expect
-      .soft(color[0], ExpectedMessages.iconColorIsValid)
-      .toBe(expectedColor);
   }
 
   public async assertEntityCheckboxBorderColors(
     entity: TreeEntity,
     expectedColor: string,
   ) {
-    const checkboxElement = this.treeEntities.getEntityCheckboxElement(
-      entity.name,
-      entity.index,
+    await super.assertElementBorderColors(
+      this.treeEntities.getEntityCheckbox(entity.name, entity.index),
+      expectedColor,
     );
-    const borderColors = await checkboxElement.getAllBorderColors();
-
-    Object.values(borderColors).forEach((borders) => {
-      borders.forEach((borderColor) => {
-        expect
-          .soft(borderColor, ExpectedMessages.borderColorsAreValid)
-          .toBe(expectedColor);
-      });
-    });
   }
 
   public async assertTreeEntityIcon(entity: TreeEntity, expectedIcon: string) {

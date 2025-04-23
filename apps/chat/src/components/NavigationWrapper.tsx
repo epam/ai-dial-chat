@@ -16,6 +16,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { ModelsSelectors } from '../store/models/models.reducers';
 import {
   ApplicationActions,
   ApplicationSelectors,
@@ -33,7 +34,10 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_CONVERSATION_NAME } from '../constants/default-ui-settings';
-import { MarketplaceTabs } from '@/src/constants/marketplace';
+import {
+  MarketplaceQueryParams,
+  MarketplaceTabs,
+} from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
 import { Chatbar } from '@/src/components/Chatbar/Chatbar';
@@ -65,9 +69,11 @@ const NavigationButton = ({
   caption,
   rounded = false,
 }: NavigationButtonProps) => {
-  const disabled = useAppSelector(
+  const isLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
+  const streaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
+  const disabled = isLoading || streaming;
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   return (
     <Tooltip
@@ -83,6 +89,7 @@ const NavigationButton = ({
           ? 'cursor-not-allowed'
           : 'cursor-pointer hover:bg-accent-primary-alpha active:bg-accent-primary-alpha',
       )}
+      contentClassName="max-w-[300px] break-words"
     >
       <button
         data-qa={dataQa}
@@ -136,7 +143,11 @@ const MarketplaceNavigation = () => {
   const handleChangeTab = useCallback(
     (tab: MarketplaceTabs) => {
       if (!isMarketplace) {
-        router.push(Routes.Marketplace).then(() => {
+        const query =
+          tab === MarketplaceTabs.MY_WORKSPACE
+            ? `?${MarketplaceQueryParams.tab}=${MarketplaceTabs.MY_WORKSPACE}`
+            : '';
+        router.push(`${Routes.Marketplace}${query}`).then(() => {
           dispatch(MarketplaceActions.setSelectedTab(tab));
           dispatch(ApplicationActions.selectWidget(undefined));
         });

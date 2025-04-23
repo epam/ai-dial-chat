@@ -29,7 +29,6 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { CONFIRM_ICON_FILE_VALUES } from '@/src/constants/applications';
 import { IMAGE_TYPES } from '@/src/constants/chat';
-import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { DEFAULT_VERSION } from '@/src/constants/public';
 import { Routes } from '@/src/constants/routes';
 
@@ -41,7 +40,6 @@ import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
-import { withWarningMessage } from '../../Common/Forms/FieldWarningMessage';
 import {
   ApplicationGeneralInfoFormData,
   getApplicationData,
@@ -56,9 +54,7 @@ interface Props {
 }
 
 const ControlledField = withController(Field);
-const LogoSelector = withErrorMessage(
-  withWarningMessage(withLabel(CustomLogoSelect)),
-);
+const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const TopicsSelector = withLabel(DropdownSelector);
 
 export const GeneralInfoEditor: React.FC<Props> = ({
@@ -104,6 +100,18 @@ export const GeneralInfoEditor: React.FC<Props> = ({
   const confirmIconValues = oldApplication?.isShared
     ? CONFIRM_ICON_FILE_VALUES
     : undefined;
+
+  const iconWarning = oldApplication?.isShared
+    ? t(
+        'After you add or change an icon, other users will see the default one immediately after confirmation. Share the link again so they can see the new icon.',
+      )
+    : '';
+
+  useEffect(() => {
+    if (isFormChanged && isValid) {
+      dispatch(ApplicationActions.setHasUnsavedChanges(isFormChanged));
+    }
+  }, [dispatch, isFormChanged, isValid]);
 
   const handleSubmit = useCallback(
     (data: ApplicationGeneralInfoFormData, isAutoSave = false) => {
@@ -186,13 +194,6 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     if (shouldSaveApplication) {
       submitWrapper((data) => handleSubmit(data, false))();
     }
-
-    if (exitAfterSave) {
-      router.push({
-        pathname: Routes.Marketplace,
-        query: { tab: MarketplaceTabs.MY_WORKSPACE },
-      });
-    }
   }, [
     shouldSaveApplication,
     exitAfterSave,
@@ -261,8 +262,8 @@ export const GeneralInfoEditor: React.FC<Props> = ({
                 error={errors.iconUrl?.message}
                 disabled={isSharedWithMe}
                 tooltip={isSharedWithMe ? getSharedTooltip('icon') : ''}
-                warning={confirmIconValues?.description}
                 confirmDialogValues={confirmIconValues}
+                warningMessage={iconWarning}
               />
             )}
           />

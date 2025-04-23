@@ -27,6 +27,7 @@ const initialState: ApplicationState = {
   shouldSaveApplication: false,
   exitAfterSave: false,
   publicFolders: [],
+  hasUnsavedChanges: false,
 };
 
 export const applicationSlice = createSlice({
@@ -198,6 +199,12 @@ export const applicationSlice = createSlice({
     ) => {
       state.appLoading = UploadStatus.LOADING;
     },
+    exitEditor: (
+      state,
+      _action: PayloadAction<{
+        redirectUrl?: string;
+      }>,
+    ) => state,
     enterEditModeComplete: (state) => {
       state.appLoading = UploadStatus.LOADED;
     },
@@ -218,6 +225,9 @@ export const applicationSlice = createSlice({
       { payload }: PayloadAction<string[] | undefined>,
     ) {
       state.returnConversationIds = payload;
+    },
+    setHasUnsavedChanges(state, action: PayloadAction<boolean>) {
+      state.hasUnsavedChanges = action.payload;
     },
   },
 });

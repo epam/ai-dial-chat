@@ -35,8 +35,6 @@ import {
 } from '@/src/constants/applications';
 import { CODE_APPS_ENDPOINTS } from '@/src/constants/code-apps';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
-import { MarketplaceTabs } from '@/src/constants/marketplace';
-import { Routes } from '@/src/constants/routes';
 
 import { FormCodeEditor } from '@/src/components/Common/ApplicationWizard/CodeAppView/FormCodeEditor';
 import { RuntimeVersionSelector } from '@/src/components/Common/ApplicationWizard/CodeAppView/RuntimeVersionSelector';
@@ -45,7 +43,6 @@ import { withController } from '@/src/components/Common/Forms/ControlledFormFiel
 import { DynamicFormFields } from '@/src/components/Common/Forms/DynamicFormFields';
 import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
-import { withWarningMessage } from '@/src/components/Common/Forms/FieldWarningMessage';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 
@@ -103,9 +100,7 @@ const validators: Validators = {
 
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const ControlledField = withController(Field);
-const FilesEditor = withController(
-  withWarningMessage(withLabel(SourceFilesEditor)),
-);
+const FilesEditor = withController(withLabel(SourceFilesEditor));
 const RuntimeSelector = withController(withLabel(RuntimeVersionSelector));
 const MappingsForm = withLabel(
   DynamicFormFields<CodeAppFormData, 'endpoints' | 'env'>,
@@ -164,18 +159,19 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
         !isEqual(data, lastSubmittedValuesRef.current)
       ) {
         const preparedData = getCodeAppData(data);
+        const areNotTheSameAndShared =
+          isShared &&
+          preparedData.function?.sourceFolder !==
+            oldApplication.function?.sourceFolder;
 
         preparedData.functionStatus = applicationStatus;
         const applicationData: CustomApplicationModel = {
           ...oldApplication,
           ...preparedData,
+          isShared: areNotTheSameAndShared ? false : isShared,
         };
 
-        if (
-          isShared &&
-          preparedData.function?.sourceFolder !==
-            oldApplication.function?.sourceFolder
-        ) {
+        if (areNotTheSameAndShared) {
           dispatch(
             ShareActions.revokeAccess({
               resourceId: oldApplication.id,
@@ -191,6 +187,8 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           }),
         );
         lastSubmittedValuesRef.current = data;
+      } else if (shouldSaveApplication && exitAfterSave) {
+        dispatch(ApplicationActions.exitEditor({}));
       } else {
         dispatch(ApplicationActions.setShouldSaveApplication(false));
         dispatch(ApplicationActions.setExitAfterSave(false));
@@ -198,10 +196,11 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     },
     [
       oldApplication,
-      dispatch,
-      isShared,
       shouldSaveApplication,
+      exitAfterSave,
       applicationStatus,
+      isShared,
+      dispatch,
     ],
   );
 
@@ -229,13 +228,6 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
 
     if (shouldSaveApplication) {
       submitWrapper(handleEdit)();
-    }
-
-    if (exitAfterSave) {
-      router.push({
-        pathname: Routes.Marketplace,
-        query: { tab: MarketplaceTabs.MY_WORKSPACE },
-      });
     }
   }, [
     exitAfterSave,
@@ -298,7 +290,6 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           tooltip={
             isSharedWithMe ? getSharedTooltip('folder with source files') : ''
           }
-          warning={confirmSourceFolderValues?.description}
           confirmDialogValues={confirmSourceFolderValues}
         />
 

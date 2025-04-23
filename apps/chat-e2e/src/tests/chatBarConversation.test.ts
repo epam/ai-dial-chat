@@ -1457,12 +1457,14 @@ dialTest(
   async ({
     dialHomePage,
     conversations,
-    chatHeader,
     conversationData,
     dataInjector,
     chatMessages,
     setTestIds,
     localStorageManager,
+    chatMessagesAssertion,
+    conversationAssertion,
+    chatHeaderAssertion,
   }) => {
     setTestIds('EPMRTC-2958');
     const updatedRequest = `Chat${ExpectedConstants.restrictedNameChars}name.....`;
@@ -1480,37 +1482,28 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await conversations.selectConversation(conversation.name);
         await chatMessages.openEditMessageMode(1);
-        await chatMessages.editMessage(
-          conversation.messages[0].content,
+        await chatMessages.editFirstMessage(updatedRequest);
+        await chatMessagesAssertion.assertElementText(
+          chatMessages.getChatMessage(1),
           updatedRequest,
+          ExpectedMessages.messageContentIsValid,
         );
-        await expect
-          .soft(
-            chatMessages.getChatMessage(1),
-            ExpectedMessages.messageContentIsValid,
-          )
-          .toHaveText(updatedRequest);
       },
     );
 
     await dialTest.step(
       'Verify conversation name is updated on side bar, header and restricted symbols are removed from the name',
       async () => {
-        await expect
-          .soft(
-            conversations.getEntityByName(expectedConversationName),
-            ExpectedMessages.conversationNameUpdated,
-          )
-          .toBeVisible();
-
-        expect
-          .soft(
-            await chatHeader.chatTitle.getElementInnerContent(),
-            ExpectedMessages.headerTitleIsValid,
-          )
-          .toBe(expectedConversationName);
+        await conversationAssertion.assertEntityState(
+          { name: expectedConversationName },
+          'visible',
+        );
+        await chatHeaderAssertion.assertHeaderTitle(expectedConversationName);
       },
     );
   },

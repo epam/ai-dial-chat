@@ -53,6 +53,7 @@ dialTest(
     promptDropdownMenu,
     setTestIds,
     localStorageManager,
+    promptBarFolderAssertion,
   }) => {
     setTestIds('EPMRTC-1623');
     let prompt: Prompt;
@@ -68,14 +69,10 @@ dialTest(
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await promptBar.createNewFolder();
-      await expect
-        .soft(
-          folderPrompts.getFolderByName(
-            ExpectedConstants.newPromptFolderWithIndexTitle(folderNumber),
-          ),
-          ExpectedMessages.folderIsVisible,
-        )
-        .toBeVisible();
+      await promptBarFolderAssertion.assertFolderState(
+        { name: ExpectedConstants.newPromptFolderWithIndexTitle(folderNumber) },
+        'visible',
+      );
     });
 
     await dialTest.step('Move the prompt to the new folder', async () => {
@@ -83,25 +80,26 @@ dialTest(
       await promptDropdownMenu.selectMenuOption(MenuOptions.moveTo);
       await promptDropdownMenu.selectMenuOption(
         ExpectedConstants.newFolderTitle,
+        { triggeredHttpMethod: 'PUT' },
       );
-
-      await expect(
-        folderPrompts.getFolderByName(
-          ExpectedConstants.newFolderWithIndexTitle(folderNumber + 1),
-        ),
-        ExpectedMessages.folderIsVisible,
-      ).toBeVisible();
+      await promptBarFolderAssertion.assertFolderState(
+        {
+          name: ExpectedConstants.newFolderWithIndexTitle(folderNumber),
+          index: 1,
+        },
+        'visible',
+      );
 
       await folderPrompts.expandFolder(
         ExpectedConstants.newPromptFolderWithIndexTitle(folderNumber + 1),
       );
-      await expect(
-        folderPrompts.getFolderEntity(
-          ExpectedConstants.newFolderWithIndexTitle(folderNumber + 1),
-          prompt.name,
-        ),
-        ExpectedMessages.newFolderCreated,
-      ).toBeVisible();
+      await promptBarFolderAssertion.assertFolderEntityState(
+        {
+          name: ExpectedConstants.newFolderWithIndexTitle(folderNumber + 1),
+        },
+        { name: prompt.name },
+        'visible',
+      );
     });
   },
 );
