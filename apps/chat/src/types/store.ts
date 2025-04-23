@@ -1,10 +1,10 @@
 import { NextRouter } from 'next/router';
 
-import { Store } from '@reduxjs/toolkit';
-
 import { Epic } from 'redux-observable';
 
 import * as allActions from '@/src/store/actions';
+
+import { rootReducer } from '../store';
 
 type ExtractAction<T> =
   T extends Record<string, (...args: never[]) => infer R> ? R : never;
@@ -15,7 +15,7 @@ export type RootAction = ExtractAction<
   }[keyof typeof allActions]
 >;
 
-export type RootState = ReturnType<Store['getState']>;
+export type RootState = ReturnType<typeof rootReducer>;
 
 export type AppEpic = Epic<
   RootAction,

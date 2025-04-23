@@ -76,7 +76,7 @@ export const rootEpic = combineEpics(
   MarketplaceEpics,
 );
 
-const reducer = combineReducers({
+export const rootReducer = combineReducers({
   models: modelsSlice.reducer,
   addons: addonsSlice.reducer,
   ui: uiSlice.reducer,
@@ -97,6 +97,7 @@ const reducer = combineReducers({
   applicationTypesSchemas: applicationTypesSchemasSlice.reducer,
   chat: chatSlice.reducer,
 });
+
 const getMiddleware = (
   //eslint-disable-next-line @typescript-eslint/no-explicit-any
   epicMiddleware: EpicMiddleware<Action<any>, Action<any>, void, any>,
@@ -121,7 +122,7 @@ export const createStore = (preloadedState: { settings: SettingsState }) => {
 
     const middleware = getMiddleware(epicMiddleware);
     const localStore = configureStore({
-      reducer,
+      reducer: rootReducer,
       preloadedState,
       middleware,
     });
@@ -138,7 +139,7 @@ export const createStore = (preloadedState: { settings: SettingsState }) => {
 
     const middleware = getMiddleware(epicMiddleware);
     store = configureStore({
-      reducer,
+      reducer: rootReducer,
       preloadedState,
       middleware,
     });
