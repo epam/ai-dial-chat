@@ -209,7 +209,7 @@ dialAdminTest(
           { exactMatch: true },
         );
         await chatMessages.getChatMessage(1).waitFor();
-        await navigationPanel.goToMarketplaceHome();
+        await dialHomePage.goToMarketplace();
         await marketplacePage.waitForPageLoaded();
         await navigationPanel.backToChatButton.click();
         await sendMessageAssertion.assertMessageValue(inputMessage);
