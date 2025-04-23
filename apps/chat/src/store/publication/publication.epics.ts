@@ -1253,7 +1253,7 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
         SettingsSelectors.selectIsPublishingEnabled(
           state$.value,
           payload.featureType,
-        ) ||
+        ) &&
         !PublicationSelectors.selectIsAllItemsUploaded(
           state$.value,
           payload.featureType,

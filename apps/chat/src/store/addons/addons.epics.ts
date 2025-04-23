@@ -26,7 +26,7 @@ import { AddonsActions, AddonsSelectors } from './addons.reducers';
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(AddonsActions.init.type),
-    filter(() => AddonsSelectors.selectInitialized(state$.value)),
+    filter(() => !AddonsSelectors.selectInitialized(state$.value)),
     switchMap(() => DataService.getRecentAddonsIds()),
     switchMap((recentAddonsIds) =>
       concat(
@@ -43,9 +43,10 @@ const initEpic: AppEpic = (action$, state$) =>
     ),
   );
 
-const getAddonsEpic: AppEpic = (action$) =>
+const getAddonsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(AddonsActions.getAddons.type),
+    withLatestFrom(state$),
     switchMap(() => {
       return fromFetch('/api/addons', {
         headers: {

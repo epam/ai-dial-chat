@@ -139,7 +139,6 @@ import {
   Role,
   UploadStatus,
 } from '@epam/ai-dial-shared';
-import compact from 'lodash-es/compact';
 import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
 import { nanoid } from 'nanoid';
@@ -1090,15 +1089,15 @@ const updateMessageEpic: AppEpic = (action$, state$) =>
 
       if (attachments) {
         const attachmentParentFolders = uniq(
-          compact(
-            attachments.flatMap((attachment) =>
-              attachment.url
-                ? getParentFolderIdsFromEntityId(
-                    decodeURIComponent(attachment.url),
-                  )
-                : [],
-            ),
-          ),
+          attachments
+            .flatMap(
+              (attachment) =>
+                attachment.url &&
+                getParentFolderIdsFromEntityId(
+                  decodeURIComponent(attachment.url),
+                ),
+            )
+            .filter(Boolean),
         );
 
         if (attachmentParentFolders.length) {
@@ -2270,7 +2269,7 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
       if (!conversationIds.length) {
         return of({
           uploadedConversations: [],
-          setIds: new Set<string>(),
+          setIds: new Set(conversationIds),
           showLoader,
         });
       }
