@@ -377,6 +377,7 @@ dialTest(
     confirmationDialog,
     agentInfo,
     agentInfoAssertion,
+    toast,
     chatMessages,
     chat,
     playbackAssertion,
@@ -384,6 +385,7 @@ dialTest(
     conversationAssertion,
     setTestIds,
     localStorageManager,
+    chatBarAssertion,
   }) => {
     setTestIds('EPMRTC-3521');
     let responseImageConversation: Conversation;
@@ -456,6 +458,7 @@ dialTest(
         await fileApiHelper.deleteAllFiles();
         await chatBar.deleteAllEntities();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await chatBarAssertion.assertNoDataInConversations();
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
@@ -463,7 +466,11 @@ dialTest(
           { name: playbackConversation.name },
           'visible',
         );
+        await conversationAssertion.assertSelectedConversation(
+          playbackConversation.name,
+        );
         await agentInfoAssertion.assertElementState(agentInfo, 'visible');
+        await toast.closeToast();
       },
     );
 
@@ -497,7 +504,9 @@ dialTest(
       async () => {
         await chat.playNextChatMessage(false);
         await playbackAssertion.assertPlaybackMessageContent(
-          historyConversation.messages[2].content,
+          historyConversation.messages[2].content.concat(
+            Attachment.heartImageName,
+          ),
         );
         await playbackAssertion.assertPlaybackMessageAttachmentState(
           Attachment.heartImageName,

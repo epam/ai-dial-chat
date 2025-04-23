@@ -1159,6 +1159,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 'relative max-h-5 flex-1 select-none truncate text-left',
                 isNameOrPathInvalid && 'text-secondary',
                 !hideContextMenu && 'group-hover/button:pr-5',
+                isContextMenu && 'pr-5',
               )}
               data-qa="folder-name"
             >
@@ -1176,6 +1177,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       )
                 }
                 contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+                isTriggerClickable
                 triggerClassName={classNames(
                   'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
                   highlightTemporaryFolders &&

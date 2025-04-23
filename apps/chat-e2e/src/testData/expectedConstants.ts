@@ -367,6 +367,7 @@ export const API = {
   installedDeploymentsFile: 'installed_deployments.json',
   installedDeploymentsHost: () =>
     `${API.installedDeploymentsFolder}/${API.installedDeploymentsFile}`,
+  configurationHost: '/configuration',
   marketplaceHost: 'marketplace.json',
   publicationRequestHost: '/api/publication/create',
   publicationRequestCreate: '/api/publication/create',
@@ -380,6 +381,7 @@ export const API = {
   applicationCreateHost: '/api/applications',
   publishedApplicationsHost:
     'api/publication/applications/public?recursive=true',
+  pagePropsHost: 'development/en.json',
 };
 
 export const Import = {

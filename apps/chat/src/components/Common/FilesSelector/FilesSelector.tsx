@@ -96,12 +96,7 @@ export const FilesSelector: React.FC<Props> = ({
 
       setConfirmDialogOpen(false);
     },
-    [
-      onAddFiles,
-      onRemoveFile,
-      pendingFilesModel.action,
-      pendingFilesModel.files,
-    ],
+    [onAddFiles, onRemoveFile, pendingFilesModel],
   );
 
   return (
@@ -147,6 +142,7 @@ export const FilesSelector: React.FC<Props> = ({
           customButtonLabel={t('Select files') ?? ''}
           forceShowSelectCheckBox
           sourceFilters={filesFilter}
+          warningMessage={confirmDialogValues?.description}
         />
       )}
       {confirmDialogValues && confirmDialogOpen && (
