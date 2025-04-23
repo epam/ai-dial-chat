@@ -2,6 +2,7 @@ import { signIn } from 'next-auth/react';
 
 import {
   EMPTY,
+  Observable,
   concat,
   distinctUntilChanged,
   filter,
@@ -68,6 +69,7 @@ import {
   validateFeature,
 } from '@epam/ai-dial-shared';
 import isEqual from 'lodash-es/isEqual';
+import { AnyAction } from '@reduxjs/toolkit';
 
 export const postMessageMapperEpic: AppEpic = (_, state$) =>
   typeof window === 'object'
@@ -215,7 +217,7 @@ const getConversationsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const createConversationEpic: AppEpic = (action$) =>
+const createConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(OverlayActions.createConversation.match),
     switchMap(({ payload: { requestId, parentPath } }) => {
@@ -224,17 +226,35 @@ const createConversationEpic: AppEpic = (action$) =>
         parentPath,
       );
 
-      return concat(
+      const isFolderExists = ConversationsSelectors.selectFolderById(state$.value,conversationFolderId);
+
+      const actions: Observable<AnyAction>[] = [];
+
+      if(parentPath && !isFolderExists){
+        actions.push(
+          of(ConversationsActions.createFolder({
+            name: parentPath,
+            parentId: getConversationRootId(),
+          }))
+        )
+      }
+
+      actions.push(
         of(
           ConversationsActions.createNewConversations({
             names: [DEFAULT_CONVERSATION_NAME],
             folderId: conversationFolderId,
           }),
-          OverlayActions.createConversationEffect({
+        ),
+          of(OverlayActions.createConversationEffect({
             requestId,
             parentPath,
           }),
         ),
+      )
+
+      return concat(
+        ...actions,
       );
     }),
   );
