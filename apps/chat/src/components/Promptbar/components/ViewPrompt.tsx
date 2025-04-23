@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import classNames from 'classnames';
 
+import { useMenuItemHandler } from '@/src/hooks/useHandler';
 import { usePromptActions } from '@/src/hooks/usePromptActions';
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -98,14 +99,7 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
   const disableUsePrompt =
     isConversationBlocksInput || !isModelsInstalled || !!selectedPublication;
 
-  const onUse = useCallback(
-    (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-      e.preventDefault();
-      e.stopPropagation();
-      handleUse();
-    },
-    [handleUse],
-  );
+  const onUse = useMenuItemHandler(handleUse, undefined);
 
   return (
     <>
