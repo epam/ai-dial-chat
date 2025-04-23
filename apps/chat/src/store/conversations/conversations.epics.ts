@@ -612,8 +612,6 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
         folderId,
         name: newConversationName,
         messages: [],
-        updatedAt: Date.now(),
-        createdAt: Date.now(),
 
         replay: {
           isReplay: true,
@@ -674,8 +672,6 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
         folderId,
         name: newConversationName,
         messages: [],
-        updatedAt: Date.now(),
-        createdAt: Date.now(),
 
         playback: {
           messagesStack: excludeSystemMessages(conversation.messages),
@@ -732,8 +728,6 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
           conversation.name,
           conversations.filter((c) => c.folderId === conversationFolderId), // only root conversations for external entities
         ),
-        updatedAt: Date.now(),
-        createdAt: Date.now(),
       });
 
       return concat(

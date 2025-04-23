@@ -542,8 +542,6 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
           prompt.name,
           prompts.filter((p) => p.folderId === promptFolderId), // only root prompts for external entities
         ),
-        updatedAt: Date.now(),
-        createdAt: Date.now(),
       });
 
       return concat(
