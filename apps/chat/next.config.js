@@ -73,7 +73,6 @@ const nextConfig = {
   reactStrictMode: true,
   experimental: {
     instrumentationHook: true,
-    nodeMiddleware: true,
     
   },
   // @ts-ignore
