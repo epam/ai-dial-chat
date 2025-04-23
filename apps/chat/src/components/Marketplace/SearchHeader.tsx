@@ -75,7 +75,7 @@ const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
       placement="bottom"
       TriggerCustomRenderer={
         <button
-          className="button button-primary hidden items-center gap-0 py-0 sm:flex sm:gap-2 sm:py-2"
+          className="button button-primary hidden items-center gap-2 py-2 sm:flex"
           data-qa="add-app"
         >
           <span>{t('Add app')}</span>
