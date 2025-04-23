@@ -294,7 +294,7 @@ export const PromptComponent = ({
     <>
       <button
         className={classNames(
-          'group relative flex size-full shrink-0 items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha disabled:cursor-not-allowed',
+          'group relative flex size-full shrink-0 select-none items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha disabled:cursor-not-allowed',
           !isSelectMode && '[&:not(:disabled)]:hover:pr-9',
           isContextMenu && 'pr-9',
           !isSelectMode && isHighlighted
