@@ -29,6 +29,8 @@ export class ConversationToCompare extends BaseElement {
     CompareSelectors.searchCompareConversation,
   );
 
+  public loader = this.getChildElementBySelector(CompareSelectors.loader);
+
   public compareConversationRow = (name: string) =>
     this.compareConversationRows.getElementLocatorByText(name);
 

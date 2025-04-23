@@ -6,14 +6,19 @@ import { BucketUtil } from '@/src/utils';
 import { Page } from '@playwright/test';
 import * as fs from 'node:fs';
 import path from 'path';
-import { Download } from 'playwright-chromium';
+import { CDPSession, Download } from 'playwright-chromium';
 
 export interface UploadDownloadData {
   path: string;
   dataType?: 'download' | 'upload';
 }
 
-const apiTimeout = 35000;
+export interface ExpectedApiResponse {
+  apiMethod?: 'PUT' | 'POST' | 'DELETE' | 'GET';
+  urlPattern?: string | RegExp;
+}
+
+export const apiTimeout = 35000;
 export const responseThrottlingTimeout = 2500;
 
 export class BasePage {
@@ -63,57 +68,48 @@ export class BasePage {
     },
   ) {
     await this.page.route('**', async (route) => route.continue());
-    const responses = [];
     const responseBodies = new Map<string, string>();
-    const hostsArray = options?.setEntitiesEnvVars
-      ? [API.modelsHost, API.addonsHost, API.bucketHost, API.themesListingHost]
-      : [
-          API.bucketHost,
-          API.installedDeploymentsHost(),
-          API.publishedApplicationsHost,
-        ];
-    for (const host of hostsArray) {
-      const resp = this.page.waitForResponse(
-        (response) =>
-          response.url().includes(host) && response.status() === 200,
-        { timeout: apiTimeout },
-      );
-      responses.push(resp);
+    let expectedApiResponses: ExpectedApiResponse[];
+    if (options?.setEntitiesEnvVars) {
+      expectedApiResponses = [
+        { apiMethod: 'GET', urlPattern: API.modelsHost },
+        { apiMethod: 'GET', urlPattern: API.addonsHost },
+        { apiMethod: 'GET', urlPattern: API.bucketHost },
+        { apiMethod: 'GET', urlPattern: API.themesListingHost },
+      ];
+    } else {
+      expectedApiResponses = [
+        { apiMethod: 'GET', urlPattern: API.bucketHost },
+        { urlPattern: API.installedDeploymentsHost() },
+        { apiMethod: 'GET', urlPattern: API.publishedApplicationsHost },
+      ];
     }
     if (options?.iconsToBeLoaded) {
       for (const iconHost of options.iconsToBeLoaded) {
-        const resp = this.page.waitForResponse(
-          (response) =>
-            response.url().includes(iconHost!) && response.status() === 200,
-          { timeout: apiTimeout },
-        );
-        responses.push(resp);
+        expectedApiResponses.push({ apiMethod: 'GET', urlPattern: iconHost! });
       }
     }
-    await method();
+    const responses = await this.waitForExpectedResponses(
+      () => method(),
+      expectedApiResponses,
+    );
 
-    for (const resp of responses) {
-      const resolvedResp = await resp;
-      if (hostsArray) {
-        let body;
-        try {
-          body = await resolvedResp.text();
-        } catch (e) {
-          // eslint-disable-next-line no-console
-          console.log(
-            'Response body not available for call: ',
-            resolvedResp.url(),
-          );
-          throw new Error();
-        }
-        const host = resolvedResp.url();
-        const baseURL = config.use?.baseURL;
-        const overlayDomain = process.env.NEXT_PUBLIC_OVERLAY_HOST;
-        const apiHost = host
-          .replaceAll(baseURL!, '')
-          .replaceAll(overlayDomain!, '');
-        responseBodies.set(apiHost, body!);
+    for (const response of responses) {
+      let body;
+      try {
+        body = await response.text();
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.log('Response body not available for call: ', response.url());
+        throw new Error();
       }
+      const host = response.url();
+      const baseURL = config.use?.baseURL;
+      const overlayDomain = process.env.NEXT_PUBLIC_OVERLAY_HOST;
+      const apiHost = host
+        .replaceAll(baseURL!, '')
+        .replaceAll(overlayDomain!, '');
+      responseBodies.set(apiHost, body!);
     }
     await this.unRouteAllResponses();
     return responseBodies;
@@ -125,6 +121,33 @@ export class BasePage {
         setTimeout(f, timeout ?? responseThrottlingTimeout),
       );
       await route.continue();
+    });
+  }
+
+  async emulateSlowNetworkConditions(conditions?: {
+    offline?: boolean;
+    latency?: number;
+    downloadThroughput?: number;
+    uploadThroughput?: number;
+  }) {
+    const client = await this.page.context().newCDPSession(this.page);
+    await client.send('Network.enable');
+    await client.send('Network.emulateNetworkConditions', {
+      offline: conditions?.offline ?? false,
+      latency: conditions?.latency ?? 500, // slow down UI responsiveness
+      downloadThroughput:
+        conditions?.downloadThroughput ?? (5 * 1024 * 1024) / 8, // 5 Mbps download - reasonably fast
+      uploadThroughput: conditions?.uploadThroughput ?? (50 * 1024) / 8, // 50 Kbps upload - very slow,
+    });
+    return client;
+  }
+
+  async stopNetworkConditionsEmulating(client: CDPSession) {
+    await client.send('Network.emulateNetworkConditions', {
+      offline: false,
+      latency: 0,
+      downloadThroughput: -1, // Disable throttling
+      uploadThroughput: -1, // Disable throttling
     });
   }
 
@@ -271,6 +294,8 @@ export class BasePage {
     await method();
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles(path.join(directory, uploadData.path));
+    // eslint-disable-next-line playwright/no-wait-for-timeout
+    await this.page.waitForTimeout(500);
   }
 
   public async copyWithKeyboard() {
@@ -338,5 +363,37 @@ export class BasePage {
         body: responseBody,
       });
     });
+  }
+
+  public async waitForExpectedResponses(
+    action: () => Promise<void>,
+    expectedApiResponses: ExpectedApiResponse[],
+    status = 200,
+    timeout = apiTimeout,
+  ) {
+    const responsePromises = [];
+    for (const expectedResponse of expectedApiResponses) {
+      const promise = this.page.waitForResponse(
+        (response) => {
+          const expectedMethod = expectedResponse.apiMethod;
+          const methodMatch = expectedMethod
+            ? response.request().method() === expectedMethod
+            : true;
+          const statusMatch = response.status() === status;
+          const urlPattern = expectedResponse.urlPattern;
+          const responseUrl = response.url();
+          const urlMatch = urlPattern
+            ? urlPattern instanceof RegExp
+              ? urlPattern.test(responseUrl)
+              : responseUrl.includes(urlPattern)
+            : true;
+          return methodMatch && statusMatch && urlMatch;
+        },
+        { timeout: timeout },
+      );
+      responsePromises.push(promise);
+    }
+    await action();
+    return await Promise.all(responsePromises);
   }
 }

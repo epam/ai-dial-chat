@@ -17,6 +17,8 @@ dialTest(
     promptDropdownMenu,
     promptModalDialog,
     promptAssertion,
+    promptPreviewModal,
+    promptPreviewModalAssertion,
     localStorageManager,
   }) => {
     let prompt: Prompt;
@@ -39,6 +41,26 @@ dialTest(
           newDescr,
           newValue,
         );
+        await promptPreviewModalAssertion.assertElementState(
+          promptPreviewModal,
+          'visible',
+        );
+        await promptPreviewModalAssertion.assertElementText(
+          promptPreviewModal.promptName,
+          newName,
+          ExpectedMessages.promptNameUpdated,
+        );
+        await promptPreviewModalAssertion.assertElementText(
+          promptPreviewModal.promptDescription,
+          newDescr,
+          ExpectedMessages.promptDescriptionUpdated,
+        );
+        await promptPreviewModalAssertion.assertElementText(
+          promptPreviewModal.promptContent,
+          newValue,
+          ExpectedMessages.promptValueUpdated,
+        );
+        await promptPreviewModal.closeButton.click();
         await promptAssertion.assertEntityState({ name: newName }, 'visible');
       },
     );

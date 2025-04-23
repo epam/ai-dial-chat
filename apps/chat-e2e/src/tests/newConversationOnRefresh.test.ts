@@ -5,11 +5,12 @@ import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import {
   CollapsedSections,
+  ExpectedConstants,
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
 import { loadingTimeout } from '@/src/ui/pages';
-import { ModelsUtil } from '@/src/utils';
+import { ItemUtil, ModelsUtil } from '@/src/utils';
 import { GeneratorUtil } from '@/src/utils/generatorUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -39,6 +40,7 @@ dialTest(
     iconApiHelper,
     sendMessage,
     baseAssertion,
+    localStorageAssertion,
   }) => {
     setTestIds(
       'EPMRTC-4587',
@@ -82,10 +84,11 @@ dialTest(
     await dialTest.step('Navigate to Marketplace', async () => {
       await chat.changeAgentButton.click();
       await talkToAgentDialog.goToMyWorkspace();
+      await marketplacePage.waitForPageLoaded();
     });
 
     await dialTest.step('Click "Back to Chat"', async () => {
-      await navigationPanel.backToChatButton.click();
+      await navigationPanel.backToChat({ isHttpMethodTriggered: false });
     });
 
     await dialTest.step(
@@ -108,10 +111,11 @@ dialTest(
     await dialTest.step('Navigate to Marketplace', async () => {
       await chatHeader.chatAgent.click();
       await talkToAgentDialog.goToMyWorkspace();
+      await marketplacePage.waitForPageLoaded();
     });
 
     await dialTest.step('Click "Back to Chat"', async () => {
-      await navigationPanel.backToChatButton.click();
+      await navigationPanel.backToChat({ isHttpMethodTriggered: false });
     });
 
     await dialTest.step('Verify chat stays selected', async () => {
@@ -196,10 +200,20 @@ dialTest(
         await localStorageManager.removeFromLocalStorage(
           'selectedConversationIds',
         );
+        localStorageAssertion.assertValue(
+          await localStorageManager.getSelectedConversationIds(),
+          '',
+        );
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.waitForState();
         await chat.configureSettingsButton.waitForState();
+        const updatedConversationIds =
+          await localStorageManager.getSelectedConversationIds();
+        baseAssertion.assertValue(
+          updatedConversationIds[0],
+          `conversations/local/${models[0].id}${ItemUtil.entityIdSeparator}${ExpectedConstants.newConversationWithIndexTitle(1)}`,
+        );
         await conversationAssertion.assertNoConversationIsSelected();
       },
     );
@@ -352,7 +366,7 @@ dialAdminTest(
       organizationConversations,
       sharedWithMeConversations,
       providerLogin,
-      context,
+      accountSettings,
       organizationConversationAssertion,
       sharedWithMeConversationAssertion,
     },
@@ -393,7 +407,10 @@ dialAdminTest(
         await organizationConversations.selectConversation(
           adminConversation.name,
         );
-        await context.clearCookies();
+        await organizationConversationAssertion.assertSelectedConversation(
+          adminConversation.name,
+        );
+        await accountSettings.logout();
         await providerLogin.login(
           testInfo,
           process.env.E2E_USERNAME!.split(',')[+testInfo.parallelIndex],
@@ -413,7 +430,7 @@ dialAdminTest(
         await sharedWithMeConversations.selectConversation(
           adminConversation.name,
         );
-        await context.clearCookies();
+        await accountSettings.logout();
         await providerLogin.login(
           testInfo,
           process.env.E2E_USERNAME!.split(',')[+testInfo.parallelIndex],

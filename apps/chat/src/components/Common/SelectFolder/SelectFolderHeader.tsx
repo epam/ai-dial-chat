@@ -13,6 +13,7 @@ interface Props {
   children: ReactNode;
   showSpinner?: boolean;
   errorMessage?: string;
+  type?: 'error' | 'warning';
 }
 
 export const SelectFolderHeader = ({
@@ -21,6 +22,7 @@ export const SelectFolderHeader = ({
   children,
   showSpinner,
   errorMessage,
+  type = 'error',
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -34,7 +36,7 @@ export const SelectFolderHeader = ({
 
   return (
     <div className="group/modal flex flex-col gap-2 overflow-auto px-3 pb-4 md:px-6">
-      <ErrorMessage error={errorMessage} />
+      <ErrorMessage error={errorMessage} type={type} />
       <input
         name="titleInput"
         placeholder={t('Search folders')}

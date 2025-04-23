@@ -18,6 +18,8 @@ import classNames from 'classnames';
 import { useContextMenuTrigger } from '@/src/hooks/useContextMenuTrigger';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isTabletScreen } from '@/src/utils/app/mobile';
+
 import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
@@ -140,10 +142,13 @@ export const FileItem = ({
     item.id,
   ]);
 
+  const isMobileCheckboxVisible =
+    canAttachFiles && isContextMenu && isTabletScreen();
+
   return (
     <div
       className={classNames(
-        'group/file-item flex justify-between gap-3 rounded px-3 py-1.5 hover:bg-accent-primary-alpha',
+        'group/file-item flex select-none justify-between gap-3 rounded px-3 py-1.5 hover:bg-accent-primary-alpha',
         (isHighlighted || isContextMenu) && 'bg-accent-primary-alpha',
         wrapperClassNames,
       )}
@@ -167,6 +172,7 @@ export const FileItem = ({
                 item.status !== UploadStatus.LOADING &&
                   canAttachFiles &&
                   'group-hover/file-item:hidden',
+                isMobileCheckboxVisible && 'hidden',
               )}
               featureType={FeatureType.Chat}
               isHighlighted={isSelected}
@@ -200,7 +206,7 @@ export const FileItem = ({
               <div
                 className={classNames(
                   'relative size-[18px] group-hover/file-item:flex',
-                  isSelected ? 'flex' : 'hidden',
+                  isSelected || isMobileCheckboxVisible ? 'flex' : 'hidden',
                 )}
                 data-qa={isSelected ? 'selected' : null}
               >
@@ -219,6 +225,7 @@ export const FileItem = ({
             )}
         </div>
         <Tooltip
+          hideTooltip={isContextMenu}
           tooltip={item.name}
           isTriggerClickable={isContextMenu}
           triggerClassName="block max-h-5 flex-1 truncate whitespace-pre text-left"
@@ -264,6 +271,7 @@ export const FileItem = ({
           </button>
         ) : (
           <FileItemContextMenu
+            isSelected={isSelected}
             file={item}
             onDelete={handleDelete}
             onUnshare={handleUnshare}
