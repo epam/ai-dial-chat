@@ -11,9 +11,7 @@ import {
   tap,
 } from 'rxjs';
 
-import { AnyAction } from '@reduxjs/toolkit';
-
-import { combineEpics } from 'redux-observable';
+import { combineEpics, ofType } from 'redux-observable';
 
 import { DataService } from '@/src/utils/app/data/data-service';
 import {
@@ -23,7 +21,7 @@ import {
 } from '@/src/utils/app/mobile';
 
 import { FeatureType } from '@/src/types/common';
-import { AppEpic } from '@/src/types/store';
+import { AppAction, AppEpic } from '@/src/types/store';
 import { ToastType } from '@/src/types/toasts';
 
 import { errorsMessages } from '@/src/constants/errors';
@@ -37,18 +35,13 @@ import { Feature } from '@epam/ai-dial-shared';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(
-      (action) =>
-        UIActions.init.match(action) &&
-        !UISelectors.selectInitialized(state$.value),
-    ),
+    ofType(UIActions.init.type),
+    filter(() => !UISelectors.selectInitialized(state$.value)),
     switchMap(() => {
-      const isThemesDefined = SettingsSelectors.selectThemeHostDefined(
-        state$.value,
-      );
-      const enabledFeatures = SettingsSelectors.selectEnabledFeatures(
-        state$.value,
-      );
+      const state = state$.value;
+
+      const isThemesDefined = SettingsSelectors.selectThemeHostDefined(state);
+      const enabledFeatures = SettingsSelectors.selectEnabledFeatures(state);
 
       return forkJoin({
         theme: DataService.getTheme(),
@@ -143,7 +136,7 @@ const initEpic: AppEpic = (action$, state$) =>
 
 const saveThemeEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(UIActions.setTheme.match),
+    ofType(UIActions.setTheme.type),
     tap(({ payload }) => {
       // Needed for fast work with theme initial load
       document.documentElement.className =
@@ -155,21 +148,21 @@ const saveThemeEpic: AppEpic = (action$) =>
 
 const saveShowChatbarEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(UIActions.setShowChatbar.match),
+    ofType(UIActions.setShowChatbar.type),
     switchMap(({ payload }) => DataService.setShowChatbar(payload)),
     ignoreElements(),
   );
 
 const saveShowPromptbarEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(UIActions.setShowPromptbar.match),
+    ofType(UIActions.setShowPromptbar.type),
     switchMap(({ payload }) => DataService.setShowPromptbar(payload)),
     ignoreElements(),
   );
 
 const saveShowMarketplaceFilterbarEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(UIActions.setShowMarketplaceFilterbar.match),
+    ofType(UIActions.setShowMarketplaceFilterbar.type),
     switchMap(({ payload }) =>
       DataService.setShowMarketplaceFilterbar(payload),
     ),
@@ -178,7 +171,7 @@ const saveShowMarketplaceFilterbarEpic: AppEpic = (action$) =>
 
 const showErrorToastEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(UIActions.showErrorToast.match),
+    ofType(UIActions.showErrorToast.type),
     switchMap(({ payload }) =>
       of(UIActions.showToast({ message: payload, type: ToastType.Error })),
     ),
@@ -186,7 +179,7 @@ const showErrorToastEpic: AppEpic = (action$) =>
 
 const showWarningToastEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(UIActions.showWarningToast.match),
+    ofType(UIActions.showWarningToast.type),
     switchMap(({ payload }) =>
       of(UIActions.showToast({ message: payload, type: ToastType.Warning })),
     ),
@@ -194,7 +187,7 @@ const showWarningToastEpic: AppEpic = (action$) =>
 
 const showInfoToastEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(UIActions.showInfoToast.match),
+    ofType(UIActions.showInfoToast.type),
     switchMap(({ payload }) =>
       of(UIActions.showToast({ message: payload, type: ToastType.Info })),
     ),
@@ -202,7 +195,7 @@ const showInfoToastEpic: AppEpic = (action$) =>
 
 const showSuccessToastEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(UIActions.showSuccessToast.match),
+    ofType(UIActions.showSuccessToast.type),
     switchMap(({ payload }) =>
       of(UIActions.showToast({ message: payload, type: ToastType.Success })),
     ),
@@ -210,7 +203,7 @@ const showSuccessToastEpic: AppEpic = (action$) =>
 
 const showLoadingToastEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(UIActions.showLoadingToast.match),
+    ofType(UIActions.showLoadingToast.type),
     switchMap(({ payload }) =>
       of(
         UIActions.showToast({
@@ -224,7 +217,7 @@ const showLoadingToastEpic: AppEpic = (action$) =>
 
 const showToastEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(UIActions.showToast.match),
+    ofType(UIActions.showToast.type),
     switchMap(({ payload }) => {
       return forkJoin({
         responseMessage:
@@ -273,7 +266,7 @@ const showToastEpic: AppEpic = (action$) =>
 
 const closeAnnouncementEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(UIActions.closeAnnouncement.match),
+    ofType(UIActions.closeAnnouncement.type),
     switchMap(({ payload }) =>
       DataService.setClosedAnnouncement(payload.announcement),
     ),
@@ -282,36 +275,37 @@ const closeAnnouncementEpic: AppEpic = (action$) =>
 
 const saveChatbarWidthEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(UIActions.setChatbarWidth.match),
+    ofType(UIActions.setChatbarWidth.type),
     switchMap(({ payload }) => DataService.setChatbarWidth(payload)),
     ignoreElements(),
   );
 
 const savePromptbarWidthEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(UIActions.setPromptbarWidth.match),
+    ofType(UIActions.setPromptbarWidth.type),
     switchMap(({ payload }) => DataService.setPromptbarWidth(payload)),
     ignoreElements(),
   );
 
 const saveIsChatFullWidthEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(UIActions.setIsChatFullWidth.match),
+    ofType(UIActions.setIsChatFullWidth.type),
     switchMap(({ payload }) => DataService.setIsChatFullWidth(payload)),
     ignoreElements(),
   );
 
 const resizeEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(UIActions.resize.match),
+    ofType(UIActions.resize.type),
     switchMap(() => {
-      const showChatbar = UISelectors.selectShowChatbar(state$.value);
-      const showPromptbar = UISelectors.selectShowPromptbar(state$.value);
-      const isProfileOpen = UISelectors.selectIsProfileOpen(state$.value);
-      const isUserSettingsOpen = UISelectors.selectIsUserSettingsOpen(
-        state$.value,
-      );
-      const actions: Observable<AnyAction>[] = [];
+      const actions: Observable<AppAction>[] = [];
+      const state = state$.value;
+
+      const showChatbar = UISelectors.selectShowChatbar(state);
+      const showPromptbar = UISelectors.selectShowPromptbar(state);
+      const isProfileOpen = UISelectors.selectIsProfileOpen(state);
+      const isUserSettingsOpen = UISelectors.selectIsUserSettingsOpen(state);
+
       if (isSmallScreen()) {
         if (isUserSettingsOpen) {
           actions.push(of(UIActions.setIsUserSettingsOpen(false))); // hide desktop settings dialog
@@ -344,21 +338,21 @@ const resizeEpic: AppEpic = (action$, state$) =>
 
 const setCustomLogoEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(UIActions.setCustomLogo.match),
+    ofType(UIActions.setCustomLogo.type),
     switchMap(({ payload }) => DataService.setCustomLogo(payload.logo)),
     ignoreElements(),
   );
 
 const deleteCustomLogoEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(UIActions.deleteCustomLogo.match),
+    ofType(UIActions.deleteCustomLogo.type),
     switchMap(() => DataService.setCustomLogo('')),
     ignoreElements(),
   );
 
 const setCollapsedSectionsEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(UIActions.setCollapsedSections.match),
+    ofType(UIActions.setCollapsedSections.type),
     switchMap(({ payload }) => {
       if (payload.featureType === FeatureType.Chat) {
         return DataService.setChatCollapsedSections(payload.collapsedSections);

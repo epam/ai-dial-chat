@@ -15,6 +15,7 @@ import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 import '@/src/types/share';
+import { RootState } from '@/src/types/store';
 
 import * as PromptsSelectors from './prompts.selectors';
 import { PromptsState } from './prompts.types';
@@ -202,7 +203,7 @@ export const promptsSlice = createSlice({
           PromptsSelectors.selectNewFolderName(
             {
               prompts: state,
-            },
+            } as RootState,
             payload.parentId,
           ),
         type: FolderType.Prompt,

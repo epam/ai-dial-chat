@@ -20,7 +20,7 @@ import { ApplicationActions } from '@/src/store/application/application.reducers
 import {
   ApplicationTypesSchemasActions,
   ApplicationTypesSchemasSelectors,
-} from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
+} from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MarketplaceActions,
@@ -73,9 +73,10 @@ const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       placement="bottom"
+      triggerIconClassName="max-sm:hidden"
       TriggerCustomRenderer={
         <button
-          className="button button-primary hidden items-center gap-2 py-2 sm:flex"
+          className="button button-primary flex items-center gap-2 py-2"
           data-qa="add-app"
         >
           <span>{t('Add app')}</span>
