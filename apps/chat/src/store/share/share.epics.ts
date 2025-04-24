@@ -13,9 +13,7 @@ import {
   zip,
 } from 'rxjs';
 
-import { AnyAction } from '@reduxjs/toolkit';
-
-import { combineEpics } from 'redux-observable';
+import { combineEpics, ofType } from 'redux-observable';
 
 import {
   getApplicationType,
@@ -54,7 +52,7 @@ import {
   ShareRequestType,
   ShareResource,
 } from '@/src/types/share';
-import { AppEpic } from '@/src/types/store';
+import { AppAction, AppEpic } from '@/src/types/store';
 
 import { FilesSelectors } from '@/src/store/files/files.selectors';
 
@@ -65,7 +63,7 @@ import { Routes } from '@/src/constants/routes';
 
 import { ApplicationActions } from '../application/application.reducers';
 import { ApplicationSelectors } from '../application/application.selectors';
-import { ApplicationTypesSchemasSelectors } from '../applicationTypeSchemas/applicationTypeSchemas.reducer';
+import { ApplicationTypesSchemasSelectors } from '../applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { CodeEditorActions } from '../codeEditor/codeEditor.reducer';
 import {
   ConversationsActions,
@@ -98,7 +96,7 @@ const getInternalResourcesUrls = (
 
 const shareEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ShareActions.share.match),
+    ofType(ShareActions.share.type),
     switchMap(({ payload }) => {
       const resourceId = payload.entity.id;
       if (payload.featureType === FeatureType.Chat) {
@@ -130,7 +128,7 @@ const shareEpic: AppEpic = (action$) =>
 
 const shareConversationEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ShareActions.shareConversation.match),
+    ofType(ShareActions.shareConversation.type),
     switchMap(({ payload }) => {
       const { apiKey, bucket, parentPath, name } = splitEntityId(
         payload.resourceId,
@@ -187,7 +185,7 @@ const shareConversationEpic: AppEpic = (action$) =>
 
 const shareConversationFolderEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ShareActions.shareConversationFolder.match),
+    ofType(ShareActions.shareConversationFolder.type),
     switchMap(({ payload }) => {
       return ConversationService.getConversations(
         payload.resourceId,
@@ -249,7 +247,7 @@ const shareConversationFolderEpic: AppEpic = (action$) =>
   );
 const sharePromptEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ShareActions.sharePrompt.match),
+    ofType(ShareActions.sharePrompt.type),
     switchMap(({ payload }) => {
       return ShareService.share({
         invitationType: ShareRequestType.link,
@@ -274,7 +272,7 @@ const sharePromptEpic: AppEpic = (action$) =>
 
 const sharePromptFolderEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ShareActions.sharePromptFolder.match),
+    ofType(ShareActions.sharePromptFolder.type),
     switchMap(({ payload }) => {
       return ShareService.share({
         invitationType: ShareRequestType.link,
@@ -299,7 +297,7 @@ const sharePromptFolderEpic: AppEpic = (action$) =>
 
 const shareApplicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ShareActions.shareApplication.match),
+    ofType(ShareActions.shareApplication.type),
     switchMap(({ payload }) => {
       const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
       const application = modelsMap[payload.resourceId];
@@ -337,7 +335,7 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
         },
       ];
 
-      const actions: Observable<AnyAction>[] = [];
+      const actions: Observable<AppAction>[] = [];
 
       if (application?.iconUrl) {
         const iconId = application.iconUrl;
@@ -403,7 +401,7 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
 
 const shareFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ShareActions.shareFail.match),
+    ofType(ShareActions.shareFail.type),
     map(({ payload }) => {
       return UIActions.showErrorToast(
         translate(payload ?? errorsMessages.shareFailed),
@@ -413,7 +411,7 @@ const shareFailEpic: AppEpic = (action$) =>
 
 const acceptInvitationEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ShareActions.acceptShareInvitation.match),
+    ofType(ShareActions.acceptShareInvitation.type),
     switchMap(({ payload }) => {
       return ShareService.shareAccept({
         invitationId: payload.invitationId,
@@ -458,7 +456,7 @@ const acceptInvitationEpic: AppEpic = (action$) =>
 
 const acceptInvitationSuccessEpic: AppEpic = (action$, _state$, { router }) =>
   action$.pipe(
-    filter(ShareActions.acceptShareInvitationSuccess.match),
+    ofType(ShareActions.acceptShareInvitationSuccess.type),
     switchMap(({ payload }) => {
       if (payload.isApplication) {
         router.push(Routes.Marketplace, undefined, { shallow: true });
@@ -479,7 +477,7 @@ const acceptInvitationSuccessEpic: AppEpic = (action$, _state$, { router }) =>
 
 const acceptInvitationFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ShareActions.acceptShareInvitationFail.match),
+    ofType(ShareActions.acceptShareInvitationFail.type),
     switchMap(({ payload }) => {
       history.replaceState({}, '', window.location.origin);
 
@@ -500,11 +498,10 @@ const triggerGettingSharedListingsConversationsEpic: AppEpic = (
   state$,
 ) =>
   action$.pipe(
-    filter(
-      (action) =>
-        ConversationsActions.initFoldersAndConversationsSuccess.match(action) ||
-        ShareActions.acceptShareInvitationSuccess.match(action) ||
-        ShareActions.triggerGettingSharedConversationListings.match(action),
+    ofType(
+      ConversationsActions.initFoldersAndConversationsSuccess.type,
+      ShareActions.acceptShareInvitationSuccess.type,
+      ShareActions.triggerGettingSharedConversationListings.type,
     ),
     filter(() =>
       SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Chat),
@@ -529,11 +526,10 @@ const triggerGettingSharedListingsConversationsEpic: AppEpic = (
 
 const triggerGettingSharedListingsPromptsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(
-      (action) =>
-        PromptsActions.initFoldersAndPromptsSuccess.match(action) ||
-        ShareActions.acceptShareInvitationSuccess.match(action) ||
-        ShareActions.triggerGettingSharedPromptListings.match(action),
+    ofType(
+      PromptsActions.initFoldersAndPromptsSuccess.type,
+      ShareActions.acceptShareInvitationSuccess.type,
+      ShareActions.triggerGettingSharedPromptListings.type,
     ),
     filter(() =>
       SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Prompt),
@@ -561,14 +557,19 @@ const triggerGettingSharedListingsAttachmentsEpic: AppEpic = (
   state$,
 ) =>
   action$.pipe(
-    filter(
-      (action) =>
-        (FilesActions.getFilesWithFolders.match(action) &&
-          !action.payload.id) ||
-        ShareActions.acceptShareInvitationSuccess.match(action) ||
-        ShareActions.triggerGettingSharedFilesListings.match(action) ||
-        CodeEditorActions.initCodeEditor.match(action),
+    ofType(
+      FilesActions.getFilesWithFolders.type,
+      ShareActions.acceptShareInvitationSuccess.type,
+      ShareActions.triggerGettingSharedFilesListings.type,
+      CodeEditorActions.initCodeEditor.type,
     ),
+    filter((action) => {
+      if (FilesActions.getFilesWithFolders.match(action)) {
+        return !action.payload.id;
+      }
+
+      return true;
+    }),
     filter(() => {
       return SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Chat);
     }),
@@ -595,10 +596,9 @@ const triggerGettingSharedListingsApplicationsEpic: AppEpic = (
   state$,
 ) =>
   action$.pipe(
-    filter(
-      (action) =>
-        ModelsActions.getModelsSuccess.match(action) ||
-        ShareActions.triggerGettingSharedApplicationsListings.match(action),
+    ofType(
+      ModelsActions.getModelsSuccess.type,
+      ShareActions.triggerGettingSharedApplicationsListings.type,
     ),
     filter(() => {
       return SettingsSelectors.isSharingEnabled(
@@ -626,7 +626,7 @@ const triggerGettingSharedListingsApplicationsEpic: AppEpic = (
 
 const getSharedListingEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ShareActions.getSharedListing.match),
+    ofType(ShareActions.getSharedListing.type),
     mergeMap(({ payload }) => {
       return ShareService.getSharedListing({
         order: 'popular_asc',
@@ -654,7 +654,7 @@ const getSharedListingEpic: AppEpic = (action$) =>
 
 const getSharedListingFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ShareActions.getSharedListingFail.match),
+    ofType(ShareActions.getSharedListingFail.type),
     switchMap(() => {
       return of(
         UIActions.showErrorToast(
@@ -667,9 +667,10 @@ const getSharedListingFailEpic: AppEpic = (action$) =>
 // TODO: refactor it to something better
 const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ShareActions.getSharedListingSuccess.match),
+    ofType(ShareActions.getSharedListingSuccess.type),
     switchMap(({ payload }) => {
       const actions = [];
+
       const { acceptedId, isFolderAccepted, isConversation, isPrompt } =
         ShareSelectors.selectAcceptedEntityInfo(state$.value);
       const [selectedConv] = ConversationsSelectors.selectSelectedConversations(
@@ -698,7 +699,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 }
                 return undefined;
               })
-              .filter(Boolean) as AnyAction[]),
+              .filter(Boolean) as AppAction[]),
           );
 
           actions.push(
@@ -719,7 +720,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 }
                 return undefined;
               })
-              .filter(Boolean) as AnyAction[]),
+              .filter(Boolean) as AppAction[]),
           );
         } else {
           actions.push(
@@ -795,7 +796,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 }
                 return undefined;
               })
-              .filter(Boolean) as AnyAction[]),
+              .filter(Boolean) as AppAction[]),
           );
           const folders = PromptsSelectors.selectFolders(state$.value);
           payload.resources.folders.length &&
@@ -814,7 +815,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                   }
                   return undefined;
                 })
-                .filter(Boolean) as AnyAction[]),
+                .filter(Boolean) as AppAction[]),
             );
         } else {
           actions.push(
@@ -901,7 +902,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 }
                 return undefined;
               })
-              .filter(Boolean) as AnyAction[]),
+              .filter(Boolean) as AppAction[]),
           );
         } else {
           const selectedFilesIds = FilesSelectors.selectSelectedFilesIds(
@@ -955,7 +956,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           //TODO make request for the shared applications to add them into the state when share invitation is accepted.
           //TODO new action-service needs to be created.
 
-          const updateSharedActions: AnyAction[] = [];
+          const updateSharedActions: AppAction[] = [];
           const modelsToUpdate = payload.resources.entities
             .map((sharedItem) => {
               const sharedModel = modelsMap[sharedItem.id];
@@ -1008,7 +1009,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
 
 const revokeAccessEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ShareActions.revokeAccess.match),
+    ofType(ShareActions.revokeAccess.type),
     switchMap(({ payload }) => {
       const resourceUrl = payload.isFolder
         ? ApiUtils.encodeApiUrl(payload.resourceId) + '/'
@@ -1041,7 +1042,7 @@ const revokeAccessEpic: AppEpic = (action$) =>
 
 const revokeAccessSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ShareActions.revokeAccessSuccess.match),
+    ofType(ShareActions.revokeAccessSuccess.type),
     switchMap(({ payload }) => {
       if (!payload.isFolder && payload.featureType === FeatureType.Chat) {
         return of(
@@ -1123,7 +1124,7 @@ const revokeAccessSuccessEpic: AppEpic = (action$, state$) =>
 
 const revokeAccessFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ShareActions.revokeAccessFail.match),
+    ofType(ShareActions.revokeAccessFail.type),
     switchMap(() => {
       return of(
         UIActions.showErrorToast(translate(errorsMessages.revokeAccessFailed)),
@@ -1133,7 +1134,7 @@ const revokeAccessFailEpic: AppEpic = (action$) =>
 
 const discardSharedWithMeEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ShareActions.discardSharedWithMe.match),
+    ofType(ShareActions.discardSharedWithMe.type),
     switchMap(({ payload }) => {
       const resourceUrls = payload.isFolder
         ? payload.resourceIds.map(
@@ -1148,7 +1149,7 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
           if (!payload.isFolder && payload.featureType === FeatureType.File) {
             return EMPTY;
           }
-          const actions: Observable<AnyAction>[] = payload.resourceIds.map(
+          const actions: Observable<AppAction>[] = payload.resourceIds.map(
             (resourceId) =>
               of(
                 ShareActions.discardSharedWithMeSuccess({
@@ -1167,15 +1168,16 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
 
 const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ShareActions.discardSharedWithMeSuccess.match),
+    ofType(ShareActions.discardSharedWithMeSuccess.type),
     switchMap(({ payload }) => {
+      const state = state$.value;
+
       if (payload.featureType === FeatureType.Chat) {
-        const actions: Observable<AnyAction>[] = [];
-        const conversations = ConversationsSelectors.selectConversations(
-          state$.value,
-        );
+        const actions: Observable<AppAction>[] = [];
+
+        const conversations = ConversationsSelectors.selectConversations(state);
         const selectedConversationsIds =
-          ConversationsSelectors.selectSelectedConversationsIds(state$.value);
+          ConversationsSelectors.selectSelectedConversationsIds(state);
         const newSelectedConversationsIds = payload.isFolder
           ? selectedConversationsIds.filter(
               (id) => !id.startsWith(`${payload.resourceId}/`),
@@ -1208,7 +1210,7 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
           );
         }
 
-        const folders = ConversationsSelectors.selectFolders(state$.value);
+        const folders = ConversationsSelectors.selectFolders(state);
         return concat(
           of(
             ConversationsActions.setFolders({
@@ -1229,7 +1231,7 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
       }
 
       if (payload.featureType === FeatureType.Prompt) {
-        const prompts = PromptsSelectors.selectPrompts(state$.value);
+        const prompts = PromptsSelectors.selectPrompts(state);
 
         if (!payload.isFolder) {
           return of(
@@ -1239,7 +1241,7 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
           );
         }
 
-        const folders = PromptsSelectors.selectFolders(state$.value);
+        const folders = PromptsSelectors.selectFolders(state);
         return concat(
           of(
             PromptsActions.setFolders({
@@ -1261,7 +1263,8 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
       }
 
       if (payload.featureType === FeatureType.File) {
-        const folders = FilesSelectors.selectFolders(state$.value);
+        const folders = FilesSelectors.selectFolders(state);
+
         return concat(
           of(
             FilesActions.setFolders({
@@ -1277,8 +1280,9 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
       }
 
       if (payload.featureType === FeatureType.Application) {
-        const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+        const modelsMap = ModelsSelectors.selectModelsMap(state);
         const applicationReference = modelsMap[payload.resourceId]?.reference;
+
         return concat(
           iif(
             () => !!applicationReference,
@@ -1302,7 +1306,7 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
 
 const discardSharedWithMeFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ShareActions.discardSharedWithMeFail.match),
+    ofType(ShareActions.discardSharedWithMeFail.type),
     switchMap(() => {
       return of(
         UIActions.showErrorToast(
@@ -1314,12 +1318,11 @@ const discardSharedWithMeFailEpic: AppEpic = (action$) =>
 
 const revokeFolderAccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(
-      (action) =>
-        ConversationsActions.deleteFolder.match(action) ||
-        PromptsActions.deleteFolder.match(action) ||
-        ConversationsActions.updateFolder.match(action) ||
-        PromptsActions.updateFolder.match(action),
+    ofType(
+      ConversationsActions.deleteFolder.type,
+      PromptsActions.deleteFolder.type,
+      ConversationsActions.updateFolder.type,
+      PromptsActions.updateFolder.type,
     ),
     filter(
       ({ payload }) =>

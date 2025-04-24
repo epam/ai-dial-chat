@@ -11,7 +11,7 @@ import {
   switchMap,
 } from 'rxjs';
 
-import { combineEpics } from 'redux-observable';
+import { combineEpics, ofType } from 'redux-observable';
 
 import {
   filterMigratedEntities,
@@ -39,11 +39,8 @@ const browserStorage = new BrowserStorage();
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(
-      (action) =>
-        MigrationActions.init.match(action) &&
-        !MigrationSelectors.selectInitialized(state$.value),
-    ),
+    ofType(MigrationActions.init.type),
+    filter(() => !MigrationSelectors.selectInitialized(state$.value)),
     switchMap(() =>
       concat(
         of(MigrationActions.migrateConversationsIfRequired()),
@@ -55,7 +52,7 @@ const initEpic: AppEpic = (action$, state$) =>
 
 const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(MigrationActions.migrateConversationsIfRequired.match),
+    ofType(MigrationActions.migrateConversationsIfRequired.type),
     switchMap(() =>
       forkJoin({
         conversations: browserStorage
@@ -209,7 +206,7 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) =>
 
 export const skipFailedMigratedConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(MigrationActions.skipFailedMigratedConversations.match),
+    ofType(MigrationActions.skipFailedMigratedConversations.type),
     switchMap(({ payload }) =>
       BrowserStorage.getMigratedEntityIds(
         MigrationStorageKeys.MigratedConversationIds,
@@ -237,7 +234,7 @@ export const skipFailedMigratedConversationsEpic: AppEpic = (action$) =>
 
 const migratePromptsIfRequiredEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(MigrationActions.migratePromptsIfRequired.match),
+    ofType(MigrationActions.migratePromptsIfRequired.type),
     switchMap(() =>
       forkJoin({
         prompts: browserStorage.getPrompts().pipe(map(filterOnlyMyEntities)),
@@ -373,7 +370,7 @@ const migratePromptsIfRequiredEpic: AppEpic = (action$, state$) =>
 
 export const skipFailedMigratedPromptsEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(MigrationActions.skipFailedMigratedPrompts.match),
+    ofType(MigrationActions.skipFailedMigratedPrompts.type),
     switchMap(({ payload }) =>
       BrowserStorage.getMigratedEntityIds(
         MigrationStorageKeys.MigratedPromptIds,

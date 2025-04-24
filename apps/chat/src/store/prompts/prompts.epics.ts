@@ -14,10 +14,9 @@ import {
   zip,
 } from 'rxjs';
 
-import { AnyAction } from '@reduxjs/toolkit';
-
 import { combineEpics, ofType } from 'redux-observable';
 
+import { getDefaultEntityProps } from '@/src/utils/app/common';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { getOrUploadPrompt } from '@/src/utils/app/data/storages/api/prompt-api-storage';
 import {
@@ -44,10 +43,9 @@ import { translate } from '@/src/utils/app/translation';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
-import { Prompt, PromptInfo } from '@/src/types/prompt';
-import { AppEpic } from '@/src/types/store';
+import { PromptInfo } from '@/src/types/prompt';
+import { AppAction, AppEpic } from '@/src/types/store';
 
-import { resetShareEntity } from '@/src/constants/chat';
 import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-ui-settings';
 
 import { ChatActions } from '../chat/chat.reducer';
@@ -62,11 +60,8 @@ import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(
-      (action) =>
-        PromptsActions.init.match(action) &&
-        !PromptsSelectors.selectInitialized(state$.value),
-    ),
+    ofType(PromptsActions.init.type),
+    filter(() => !PromptsSelectors.selectInitialized(state$.value)),
     switchMap(() =>
       PromptService.getPrompts(undefined, true).pipe(
         mergeMap((prompts) => {
@@ -98,7 +93,7 @@ const initEpic: AppEpic = (action$, state$) =>
 
 const createNewPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    ofType(PromptsActions.createNewPrompt),
+    ofType(PromptsActions.createNewPrompt.type),
     switchMap(({ payload: newPrompt }) => {
       return PromptService.createPrompt(newPrompt).pipe(
         switchMap((apiPrompt) => {
@@ -150,7 +145,7 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
 
 const saveNewPromptEpic: AppEpic = (action$) =>
   action$.pipe(
-    ofType(PromptsActions.saveNewPrompt),
+    ofType(PromptsActions.saveNewPrompt.type),
     mergeMap(({ payload }) =>
       concat(
         of(PromptsActions.createNewPromptSuccess(payload)),
@@ -180,27 +175,21 @@ const saveNewPromptEpic: AppEpic = (action$) =>
 
 const saveFoldersEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(
-      (action) =>
-        PromptsActions.createFolder.match(action) ||
-        PromptsActions.deleteFolder.match(action) ||
-        PromptsActions.addFolders.match(action) ||
-        PromptsActions.clearPrompts.match(action) ||
-        PromptsActions.importPromptsSuccess.match(action) ||
-        PromptsActions.setFolders.match(action),
+    ofType(
+      PromptsActions.createFolder.type,
+      PromptsActions.deleteFolder.type,
+      PromptsActions.addFolders.type,
+      PromptsActions.clearPrompts.type,
+      PromptsActions.importPromptsSuccess.type,
+      PromptsActions.setFolders.type,
     ),
-    map(() => ({
-      promptsFolders: PromptsSelectors.selectFolders(state$.value),
-    })),
-    switchMap(({ promptsFolders }) => {
+    map(() => PromptsSelectors.selectFolders(state$.value)),
+    switchMap((promptsFolders) => {
       return PromptService.setPromptFolders(promptsFolders).pipe(
         catchError((err) => {
-          console.error('An error occurred during the saving folders', err);
-          return of(
-            UIActions.showErrorToast(
-              translate('An error occurred during the saving folders'),
-            ),
-          );
+          const message = 'An error occurred during the saving folders';
+          console.error(message, err);
+          return of(UIActions.showErrorToast(translate(message)));
         }),
       );
     }),
@@ -209,7 +198,7 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
 
 const savePromptEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PromptsActions.savePrompt.match),
+    ofType(PromptsActions.savePrompt.type),
     concatMap(({ payload: newPrompt }) =>
       PromptService.updatePrompt(newPrompt),
     ),
@@ -228,7 +217,7 @@ const savePromptEpic: AppEpic = (action$) =>
 
 const movePromptFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PromptsActions.movePromptFail.match),
+    ofType(PromptsActions.movePromptFail.type),
     switchMap(() => {
       return of(
         UIActions.showErrorToast(
@@ -242,7 +231,7 @@ const movePromptFailEpic: AppEpic = (action$) =>
 
 const movePromptEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PromptsActions.movePrompt.match),
+    ofType(PromptsActions.movePrompt.type),
     mergeMap(({ payload }) => {
       return PromptService.movePrompt({
         sourceUrl: payload.oldPrompt.id,
@@ -261,7 +250,7 @@ const movePromptEpic: AppEpic = (action$) =>
 
 const updatePromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PromptsActions.updatePrompt.match),
+    ofType(PromptsActions.updatePrompt.type),
     mergeMap(({ payload }) => getOrUploadPrompt(payload, state$.value)),
     mergeMap(({ payload, prompt }) => {
       const { values, id } = payload;
@@ -276,7 +265,7 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      const newPrompt: Prompt = regeneratePromptId({
+      const newPrompt = regeneratePromptId({
         ...prompt,
         ...values,
         updatedAt: Date.now(),
@@ -295,7 +284,7 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
 
 export const deletePromptEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PromptsActions.deletePrompt.match),
+    ofType(PromptsActions.deletePrompt.type),
     switchMap(({ payload }) => {
       return PromptService.deletePrompt(payload.prompt).pipe(
         switchMap(() => EMPTY),
@@ -315,7 +304,7 @@ export const deletePromptEpic: AppEpic = (action$) =>
 
 export const clearPromptsEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PromptsActions.clearPrompts.match),
+    ofType(PromptsActions.clearPrompts.type),
     switchMap(() =>
       concat(
         of(PromptsActions.deleteFolder({ folderId: getPromptRootId() })),
@@ -326,7 +315,7 @@ export const clearPromptsEpic: AppEpic = (action$) =>
 
 const deletePromptsEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PromptsActions.deletePrompts.match),
+    ofType(PromptsActions.deletePrompts.type),
     switchMap(({ payload }) =>
       zip(
         payload.promptIds.map((id) =>
@@ -370,7 +359,7 @@ const deletePromptsEpic: AppEpic = (action$) =>
 
 const updateFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PromptsActions.updateFolder.match),
+    ofType(PromptsActions.updateFolder.type),
     switchMap(({ payload }) => {
       const state = state$.value;
       const folder = PromptsSelectors.selectFolderById(state, payload.folderId);
@@ -443,16 +432,15 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
 
 const deleteFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PromptsActions.deleteFolder.match),
+    ofType(PromptsActions.deleteFolder.type),
     switchMap(({ payload: { folderId } }) => {
-      const actions: Observable<AnyAction>[] = [];
+      const actions: Observable<AppAction>[] = [];
+      const state = state$.value;
 
-      const prompts = PromptsSelectors.selectPromptsByFolderId(
-        state$.value,
+      const promptIds = PromptsSelectors.selectPromptsByFolderId(
+        state,
         folderId,
-      );
-
-      const promptIds = prompts.map((prompt) => prompt.id);
+      ).map((prompt) => prompt.id);
 
       if (promptIds.length) {
         actions.push(of(PromptsActions.deletePrompts({ promptIds })));
@@ -465,7 +453,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
           ),
         );
 
-      const folders = PromptsSelectors.selectFolders(state$.value);
+      const folders = PromptsSelectors.selectFolders(state);
 
       return concat(
         of(
@@ -483,7 +471,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
 
 const toggleFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PromptsActions.toggleFolder.match),
+    ofType(PromptsActions.toggleFolder.type),
     switchMap(({ payload }) => {
       const openedFoldersIds = UISelectors.selectOpenedFoldersIds(
         FeatureType.Prompt,
@@ -501,11 +489,8 @@ const toggleFolderEpic: AppEpic = (action$, state$) =>
 
 const openFolderEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(
-      (action) =>
-        UIActions.openFolder.match(action) &&
-        action.payload.featureType === FeatureType.Prompt,
-    ),
+    ofType(UIActions.openFolder.type),
+    filter(({ payload }) => payload.featureType === FeatureType.Prompt),
     switchMap(({ payload }) =>
       of(PromptsActions.uploadFoldersIfNotLoaded({ ids: [payload.id] })),
     ),
@@ -513,7 +498,7 @@ const openFolderEpic: AppEpic = (action$) =>
 
 const duplicatePromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PromptsActions.duplicatePrompt.match),
+    ofType(PromptsActions.duplicatePrompt.type),
     switchMap(({ payload }) => getOrUploadPrompt(payload, state$.value)),
     switchMap(({ prompt, wasUploaded }) => {
       if (!prompt) {
@@ -526,17 +511,18 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      const prompts = PromptsSelectors.selectPrompts(state$.value);
-      const { selectedPromptId } = PromptsSelectors.selectSelectedPromptId(
-        state$.value,
-      );
+      const state = state$.value;
+
+      const prompts = PromptsSelectors.selectPrompts(state);
+      const { selectedPromptId } =
+        PromptsSelectors.selectSelectedPromptId(state);
       const promptFolderId = isEntityIdExternal(prompt)
         ? getPromptRootId() // duplicate external entities in the root only
         : prompt.folderId;
 
       const newPrompt = regeneratePromptId({
         ...omit(prompt, ['publicationInfo']),
-        ...resetShareEntity,
+        ...getDefaultEntityProps(),
         folderId: promptFolderId,
         name: generateNextName(
           DEFAULT_PROMPT_NAME,
@@ -566,14 +552,15 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
 
 const uploadPromptsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PromptsActions.uploadPromptsFromMultipleFolders.match),
+    ofType(PromptsActions.uploadPromptsFromMultipleFolders.type),
     mergeMap(({ payload }) => {
       return PromptService.getMultipleFoldersPrompts(
         payload.paths,
         payload.recursive,
       ).pipe(
         switchMap((prompts) => {
-          const actions: Observable<AnyAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
+
           const paths = uniq(
             prompts.flatMap((prompt) =>
               getParentFolderIdsFromFolderId(prompt.folderId),
@@ -641,11 +628,12 @@ const uploadPromptsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
 
 const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PromptsActions.uploadPromptsWithFoldersRecursive.match),
+    ofType(PromptsActions.uploadPromptsWithFoldersRecursive.type),
     mergeMap(({ payload }) =>
       PromptService.getPrompts(payload?.path, true).pipe(
         mergeMap((prompts) => {
-          const actions: Observable<AnyAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
+
           const paths = uniq(
             prompts.flatMap((prompt) =>
               getParentFolderIdsFromFolderId(prompt.folderId),
@@ -702,7 +690,7 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$) =>
 
 const uploadFolderIfNotLoadedEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PromptsActions.uploadFoldersIfNotLoaded.match),
+    ofType(PromptsActions.uploadFoldersIfNotLoaded.type),
     mergeMap(({ payload }) => {
       const folders = PromptsSelectors.selectFolders(state$.value);
       const notUploadedPaths = folders
@@ -723,13 +711,14 @@ const uploadFolderIfNotLoadedEpic: AppEpic = (action$, state$) =>
 
 const uploadFoldersEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PromptsActions.uploadFolders.match),
+    ofType(PromptsActions.uploadFolders.type),
     mergeMap(({ payload }) =>
       zip(
         payload.ids.map((path) => PromptService.getPromptsAndFolders(path)),
       ).pipe(
         switchMap((foldersAndEntities) => {
-          const actions: Observable<AnyAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
+
           const folders = foldersAndEntities.flatMap((items) => items.folders);
           const prompts = foldersAndEntities.flatMap((items) => items.entities);
           const publicPrompts = prompts.filter((prompt) =>
@@ -785,7 +774,7 @@ const uploadFoldersEpic: AppEpic = (action$) =>
 
 export const uploadPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PromptsActions.uploadPrompt.match),
+    ofType(PromptsActions.uploadPrompt.type),
     switchMap(({ payload }) => {
       const originalPrompt = PromptsSelectors.selectPrompt(
         state$.value,
@@ -813,23 +802,20 @@ export const uploadPromptEpic: AppEpic = (action$, state$) =>
 
 const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter((action) => PromptsActions.deleteChosenPrompts.match(action)),
+    ofType(PromptsActions.deleteChosenPrompts.type),
     switchMap(() => {
-      const actions: Observable<AnyAction>[] = [];
-      const prompts = PromptsSelectors.selectPrompts(state$.value);
-      const chosenPromptIds = PromptsSelectors.selectSelectedItems(
-        state$.value,
-      );
-      const { fullyChosenFolderIds } = PromptsSelectors.selectChosenFolderIds(
-        prompts,
-      )(state$.value);
-      const promptIds = PromptsSelectors.selectPrompts(state$.value).map(
+      const actions: Observable<AppAction>[] = [];
+      const state = state$.value;
+
+      const prompts = PromptsSelectors.selectPrompts(state);
+      const chosenPromptIds = PromptsSelectors.selectSelectedItems(state);
+      const { fullyChosenFolderIds } =
+        PromptsSelectors.selectChosenFolderIds(prompts)(state);
+      const promptIds = PromptsSelectors.selectPrompts(state).map(
         (prompt) => prompt.id,
       );
-      const folders = PromptsSelectors.selectFolders(state$.value);
-      const emptyFoldersIds = PromptsSelectors.selectEmptyFolderIds(
-        state$.value,
-      );
+      const folders = PromptsSelectors.selectFolders(state);
+      const emptyFoldersIds = PromptsSelectors.selectEmptyFolderIds(state);
       const deletedPromptIds = uniq([
         ...chosenPromptIds,
         ...promptIds.filter((id) =>
@@ -866,7 +852,7 @@ const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
 
 const applyPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PromptsActions.applyPrompt.match),
+    ofType(PromptsActions.applyPrompt.type),
     switchMap(({ payload }) => getOrUploadPrompt(payload, state$.value)),
     switchMap(({ prompt, wasUploaded }) => {
       if (!prompt) {
@@ -895,7 +881,7 @@ const applyPromptEpic: AppEpic = (action$, state$) =>
 
 const getPromptMetadataEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PromptsActions.getPromptMetadata.match),
+    ofType(PromptsActions.getPromptMetadata.type),
     switchMap(({ payload }) =>
       PromptService.getPromptMetadata(payload.promptId).pipe(
         switchMap((promptMetadata) => {
@@ -939,9 +925,9 @@ const getPromptMetadataEpic: AppEpic = (action$) =>
 
 const selectPromptEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PromptsActions.selectPrompt.match),
+    ofType(PromptsActions.selectPrompt.type),
     switchMap(({ payload }) => {
-      const actions: Observable<AnyAction>[] = [];
+      const actions: Observable<AppAction>[] = [];
 
       if (isEntityIdPublic({ id: payload.promptId })) {
         const { versionGroupId, currentVersion } = getVersionGroupFromId(
@@ -983,7 +969,7 @@ const selectPromptEpic: AppEpic = (action$) =>
 
 const hidePromptbarEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PromptsActions.applyPrompt.match),
+    ofType(PromptsActions.applyPrompt.type),
     switchMap(() =>
       isTabletScreen() ? of(UIActions.setShowPromptbar(false)) : EMPTY,
     ),

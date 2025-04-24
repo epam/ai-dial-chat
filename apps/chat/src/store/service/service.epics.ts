@@ -1,6 +1,6 @@
-import { catchError, filter, of, switchMap } from 'rxjs';
+import { catchError, of, switchMap } from 'rxjs';
 
-import { combineEpics } from 'redux-observable';
+import { combineEpics, ofType } from 'redux-observable';
 
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -16,7 +16,7 @@ import { ServiceActions } from './service.reducer';
 
 const reportIssueEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ServiceActions.reportIssue.match),
+    ofType(ServiceActions.reportIssue.type),
     switchMap(({ payload }) => {
       const controller = new AbortController();
 
@@ -36,7 +36,7 @@ const reportIssueEpic: AppEpic = (action$) =>
 
 const reportIssueSuccessEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ServiceActions.reportIssueSuccess.match),
+    ofType(ServiceActions.reportIssueSuccess.type),
     switchMap(() =>
       of(UIActions.showSuccessToast(translate('Issue reported successfully'))),
     ),
@@ -44,7 +44,7 @@ const reportIssueSuccessEpic: AppEpic = (action$) =>
 
 const reportIssueFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ServiceActions.reportIssueFail.match),
+    ofType(ServiceActions.reportIssueFail.type),
     switchMap(() =>
       of(
         UIActions.showErrorToast(
@@ -58,7 +58,7 @@ const reportIssueFailEpic: AppEpic = (action$) =>
 
 const requestApiKeyEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ServiceActions.requestApiKey.match),
+    ofType(ServiceActions.requestApiKey.type),
     switchMap(({ payload }) => {
       const controller = new AbortController();
 
@@ -78,7 +78,7 @@ const requestApiKeyEpic: AppEpic = (action$) =>
 
 const requestApiKeySuccessEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ServiceActions.requestApiKeySuccess.match),
+    ofType(ServiceActions.requestApiKeySuccess.type),
     switchMap(() =>
       of(
         UIActions.showSuccessToast(translate('API Key requested successfully')),
@@ -88,7 +88,7 @@ const requestApiKeySuccessEpic: AppEpic = (action$) =>
 
 const requestApiKeyFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ServiceActions.requestApiKeyFail.match),
+    ofType(ServiceActions.requestApiKeyFail.type),
     switchMap(() =>
       of(
         UIActions.showErrorToast(
