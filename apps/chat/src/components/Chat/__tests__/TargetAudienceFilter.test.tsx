@@ -4,9 +4,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { AnyAction } from '@reduxjs/toolkit';
-
 import { PublicationFunctions } from '@/src/types/publication';
+import { AppAction } from '@/src/types/store';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
@@ -15,7 +14,7 @@ import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/Tar
 vi.mock('@/src/store/hooks', async () => {
   return {
     useAppSelector: (selector: any) => selector({}),
-    useAppDispatch: () => (action: AnyAction) => action,
+    useAppDispatch: () => (action: AppAction) => action,
   };
 });
 
