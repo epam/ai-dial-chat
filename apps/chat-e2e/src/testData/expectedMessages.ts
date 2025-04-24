@@ -377,8 +377,8 @@ export enum ExpectedMessages {
   agentIsVisible = 'Agent is visible',
   applicationFormFieldShouldHaveAsterisk = 'Application form field should be marked as required',
   FormFieldShouldRetainUpdatedValue = 'Chat Completion URL should retain updated value',
-  dropdownMenuIsHidden = '',
-  dropdownMenuIsVisible = '',
+  dropdownMenuIsHidden = 'The dropdown menu is hidden',
+  dropdownMenuIsVisible = 'The dropdown menu is visible',
 }
 
 export enum PublishingExpectedMessages {

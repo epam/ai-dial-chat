@@ -316,6 +316,19 @@ export class BaseAssertion {
       .toBe(expectedCount);
   }
 
+  public assertNumberIsGreaterThan(
+    actualNumber: number,
+    expectedNumber: number,
+    expectedMessage?: string,
+  ) {
+    expect
+      .soft(
+        actualNumber,
+        expectedMessage ?? ExpectedMessages.elementsCountIsValid,
+      )
+      .toBeGreaterThan(expectedNumber);
+  }
+
   public assertValue(
     actualValue: string | number | undefined | null,
     expectedValue: string | number,

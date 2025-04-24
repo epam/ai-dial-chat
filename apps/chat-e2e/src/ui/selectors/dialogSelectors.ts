@@ -258,8 +258,16 @@ export const AddApplicationGeneralInfoFormSelector = {
   version: '#version',
   icon: '#icon',
   description: '#description',
-  topicsDropdown: '#topics-dropdown',
+  topicsDropdownContainer: '#topics-dropdown',
   nextButton: '[data-qa="save-application-general-info"]',
+  topicsDropdownToggle: '[class*="-indicatorContainer"]', // Selector for the dropdown arrow within the container
+  topicsDropdownMenu: '[class*="-menu"]', // Selector for the opened menu container within the container
+  topicsDropdownOption: '[role="option"]', // Selector for individual options within the menu
+  selectedTopicPills: '[class*="-multiValue"]', // Selector for the selected topic pills within the container
+  selectedTopicPillText: 'div:first-child', // Selector for the text part within the pill
+  selectedTopicPillRemoveIcon: (topicName: string) =>
+    `[role="button"][aria-label="Remove ${topicName}"]`, // Selector for the 'x' icon within the pill
+  clearAllTopicsButton: '[data-qa="clear-dropdown-selection"]', // Selector for the main clear button within the container
 };
 
 export const AddApplicationAppSettingsFormSelector = {

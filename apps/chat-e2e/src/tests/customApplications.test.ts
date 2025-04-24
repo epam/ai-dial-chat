@@ -756,11 +756,8 @@ dialTest.only(
           'visible',
           ExpectedMessages.dropdownMenuIsVisible,
         );
-        // Get options using the new direct method
         allTopics = await appEditorGeneralForm.getAllTopicsOptions();
-        expect
-          .soft(allTopics.length, ExpectedMessages.elementsCountIsValid)
-          .toBeGreaterThan(0);
+        baseAssertion.assertNumberIsGreaterThan(allTopics.length, 0);
       },
     );
 
@@ -772,10 +769,9 @@ dialTest.only(
           .slice(0, numberOfTopicsToSelect);
 
         for (const topic of topicsToSelect) {
-          // Select using the menu instance
           await appEditorGeneralForm.selectTopicOption(topic);
         }
-        // Click outside (e.g., on the name field) to close the dropdown
+        // Close the dropdown
         await appEditorGeneralForm.topicsDropdownToggle.click();
         // Assert the menu element is hidden
         await baseAssertion.assertElementState(
@@ -784,9 +780,7 @@ dialTest.only(
           ExpectedMessages.dropdownMenuIsHidden,
         );
 
-        // Get selected topics using the new method
         const selectedTopics = await appEditorGeneralForm.getSelectedTopics();
-        // Assert count using the new element
         await baseAssertion.assertElementsCount(
           appEditorGeneralForm.selectedTopicPills,
           numberOfTopicsToSelect,
@@ -804,8 +798,8 @@ dialTest.only(
     await dialTest.step(
       'Delete any single Topic using the X icon on the pill',
       async () => {
+        // Delete random specific topic
         const topicToDelete = GeneratorUtil.randomArrayElement(topicsToSelect);
-        // Use the new method to delete a specific topic
         await appEditorGeneralForm.deleteSelectedTopic(topicToDelete);
 
         const remainingTopics = topicsToSelect
@@ -815,7 +809,6 @@ dialTest.only(
         const currentSelectedTopics =
           await appEditorGeneralForm.getSelectedTopics();
 
-        // Assert count using the new element
         await baseAssertion.assertElementsCount(
           appEditorGeneralForm.selectedTopicPills,
           numberOfTopicsToSelect - 1,
@@ -839,9 +832,8 @@ dialTest.only(
     await dialTest.step(
       'Click on the main X icon in the Topics row to clear all selections',
       async () => {
-        // Use the new method to clear all topics
         await appEditorGeneralForm.clearAllTopics();
-        // Assert count using the new element
+        // Assert selected topics count using the new element
         await baseAssertion.assertElementsCount(
           appEditorGeneralForm.selectedTopicPills,
           0,

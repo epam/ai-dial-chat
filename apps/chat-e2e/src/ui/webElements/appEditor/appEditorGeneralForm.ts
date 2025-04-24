@@ -1,13 +1,9 @@
 import { API } from '@/src/testData';
-import { Attributes, Tags } from '@/src/ui/domData';
-import {
-  AddApplicationGeneralInfoFormSelector,
-  IconSelectors,
-} from '@/src/ui/selectors';
+import { AddApplicationGeneralInfoFormSelector } from '@/src/ui/selectors';
 import { AppEditorForm } from '@/src/ui/webElements/appEditor/appEditorForm';
-import { BaseElement } from '@/src/ui/webElements/baseElement';
-// Import BaseElement
 import { Locator, Page } from '@playwright/test';
+
+const AppEditorGeneralFormSelectors = {};
 
 export class AppEditorGeneralForm extends AppEditorForm {
   constructor(page: Page, parentLocator: Locator) {
@@ -18,7 +14,6 @@ export class AppEditorGeneralForm extends AppEditorForm {
     );
   }
 
-  // Existing elements
   public name = this.getChildElementBySelector(
     AddApplicationGeneralInfoFormSelector.name,
   );
@@ -31,58 +26,56 @@ export class AppEditorGeneralForm extends AppEditorForm {
   public nextButton = this.getChildElementBySelector(
     AddApplicationGeneralInfoFormSelector.nextButton,
   );
-
-  // Updated/New elements for Topics dropdown
   public topicsDropdownContainer = this.getChildElementBySelector(
-    AddApplicationGeneralInfoFormSelector.topicsDropdown, // Use the ID selector
+    AddApplicationGeneralInfoFormSelector.topicsDropdownContainer,
   );
-
-  // Assuming the container itself or a specific child acts as the toggle
-  public topicsDropdownToggle = this.topicsDropdownContainer; // Or a more specific selector if needed
-
+  public topicsDropdownToggle =
+    this.topicsDropdownContainer.getChildElementBySelector(
+      AddApplicationGeneralInfoFormSelector.topicsDropdownToggle,
+    );
   public topicsDropdownMenuElement =
     this.topicsDropdownContainer.getChildElementBySelector(
-      '[class*="-menu"]', // Selector for the opened menu container
+      AddApplicationGeneralInfoFormSelector.topicsDropdownMenu,
     );
 
   public selectedTopicPills =
     this.topicsDropdownContainer.getChildElementBySelector(
-      '[class*="-multiValue"]', // Selector for the selected topic pills
+      AddApplicationGeneralInfoFormSelector.selectedTopicPills,
     );
-
   public clearAllTopicsButton =
     this.topicsDropdownContainer.getChildElementBySelector(
-      '[data-qa="clear-dropdown-selection"]', // Selector for the main clear button
+      AddApplicationGeneralInfoFormSelector.clearAllTopicsButton,
     );
 
   // Method to get all available topic options from the dropdown
   public async getAllTopicsOptions(): Promise<string[]> {
     const optionsLocator =
       this.topicsDropdownMenuElement.getChildElementBySelector(
-        '[role="option"]',
+        AddApplicationGeneralInfoFormSelector.topicsDropdownOption,
       );
     return optionsLocator.getElementLocator().allInnerTexts();
   }
 
   // Method to select a topic option by its text
   public async selectTopicOption(topicName: string) {
-    const optionLocator = this.topicsDropdownMenuElement
-      .getChildElementBySelector('[role="option"]')
+    const optionElement = this.topicsDropdownMenuElement
+      .getChildElementBySelector(
+        AddApplicationGeneralInfoFormSelector.topicsDropdownOption,
+      )
       .getElementLocator()
       .filter({ hasText: topicName });
-    await optionLocator.click();
+    await optionElement.click();
   }
 
   // Method to get selected topics text
   public async getSelectedTopics(): Promise<string[]> {
-    const pills = await this.selectedTopicPills.getElementsCount();
+    const pillsCount = await this.selectedTopicPills.getElementsCount();
     const topics: string[] = [];
-    if (pills > 0) {
-      for (let i = 1; i <= pills; i++) {
-        // Selector for the text part within the pill
+    if (pillsCount > 0) {
+      for (let i = 1; i <= pillsCount; i++) {
         const topicText = await this.selectedTopicPills
           .getNthElement(i)
-          .locator('div:first-child') // Assuming the text is in the first div
+          .locator(AddApplicationGeneralInfoFormSelector.selectedTopicPillText)
           .textContent();
         if (topicText) {
           topics.push(topicText);
@@ -97,19 +90,20 @@ export class AppEditorGeneralForm extends AppEditorForm {
     const topicPill = this.selectedTopicPills
       .getElementLocator()
       .filter({ hasText: topicName });
-    // Selector for the 'x' icon within the pill, using aria-label
-    const removeIcon = topicPill.locator(
-      `[role="button"][aria-label="Remove ${topicName}"]`,
+    const removeIcon = this.createElementFromLocator(
+      topicPill.locator(
+        AddApplicationGeneralInfoFormSelector.selectedTopicPillRemoveIcon(
+          topicName,
+        ),
+      ),
     );
     await removeIcon.click();
   }
 
-  // Method to clear all selected topics
   public async clearAllTopics() {
     await this.clearAllTopicsButton.click();
   }
 
-  // Existing methods
   public async fillInAppFields(options: {
     name?: string;
     version?: string;
