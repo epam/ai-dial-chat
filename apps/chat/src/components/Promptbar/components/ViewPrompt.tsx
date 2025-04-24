@@ -104,16 +104,24 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
   return (
     <>
       <ul className="flex max-h-[435px] flex-col gap-4 overflow-y-auto px-3 pb-4 md:px-6">
-        <PromptField valueClassName="line-clamp-3" label="Name" dataQa="name">
+        <PromptField label="Name" dataQa="name">
           {prompt.name}
         </PromptField>
         {prompt.description && (
-          <PromptField label="Description" dataQa="description">
+          <PromptField
+            label="Description"
+            dataQa="description"
+            valueClassName="whitespace-pre-wrap"
+          >
             {prompt.description}
           </PromptField>
         )}
         {prompt.content && (
-          <PromptField label="Prompt" dataQa="content">
+          <PromptField
+            label="Prompt"
+            dataQa="content"
+            valueClassName="whitespace-pre-wrap"
+          >
             <TemplateRenderer template={prompt.content} />
           </PromptField>
         )}
