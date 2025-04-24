@@ -765,7 +765,7 @@ dialTest(
       },
     );
 
-    await dialTest.step('Chose "Select" option for both files', async () => {
+    await dialTest.step('Choose "Select" option for both files', async () => {
       await fileDropdownMenu.selectMenuOption(MenuOptions.select);
       await attachFilesModal.openFileDropdownMenu(
         Attachment.flowerImageName,
@@ -831,7 +831,7 @@ dialTest(
       },
     );
 
-    await dialTest.step('Chose "Unselect" option for both files', async () => {
+    await dialTest.step('Choose "Unselect" option for both files', async () => {
       await fileDropdownMenu.selectMenuOption(MenuOptions.unselect);
       await attachFilesModal.openFileDropdownMenu(
         Attachment.flowerImageName,
