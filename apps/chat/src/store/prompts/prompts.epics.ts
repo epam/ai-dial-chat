@@ -18,6 +18,7 @@ import { AnyAction } from '@reduxjs/toolkit';
 
 import { combineEpics, ofType } from 'redux-observable';
 
+import { getDefaultEntityProps } from '@/src/utils/app/common';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { getOrUploadPrompt } from '@/src/utils/app/data/storages/api/prompt-api-storage';
 import {
@@ -46,7 +47,6 @@ import { FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { AppEpic } from '@/src/types/store';
 
-import { resetShareEntity } from '@/src/constants/chat';
 import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-ui-settings';
 
 import { ChatActions } from '../chat/chat.reducer';
@@ -535,7 +535,7 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
 
       const newPrompt = regeneratePromptId({
         ...omit(prompt, ['publicationInfo']),
-        ...resetShareEntity,
+        ...getDefaultEntityProps(),
         folderId: promptFolderId,
         name: generateNextName(
           DEFAULT_PROMPT_NAME,
