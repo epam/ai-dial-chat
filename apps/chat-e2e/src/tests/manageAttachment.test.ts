@@ -731,10 +731,12 @@ dialTest(
     const expectedHighlightingColor = ThemesUtil.getRgbColorByKey(
       ThemeColorAttributes.textAccentPrimary,
     );
+    const attachments = [Attachment.sunImageName, Attachment.flowerImageName];
 
     await dialTest.step('Upload 2 files to app', async () => {
-      await fileApiHelper.putFile(Attachment.sunImageName);
-      await fileApiHelper.putFile(Attachment.flowerImageName);
+      for (const attachment of attachments) {
+        await fileApiHelper.putFile(attachment);
+      }
       await localStorageManager.setShowSideBarPanels();
     });
 
@@ -775,10 +777,7 @@ dialTest(
     await dialTest.step(
       'Verify files are checked and highlighted',
       async () => {
-        for (const attachment of [
-          Attachment.sunImageName,
-          Attachment.flowerImageName,
-        ]) {
+        for (const attachment of attachments) {
           await attachAllFilesTreeAssertion.assertEntityCheckboxState(
             { name: attachment },
             CheckboxState.checked,
@@ -844,10 +843,7 @@ dialTest(
     await dialTest.step(
       'Verify files are not highlighted, checkboxes are transformed into file icons',
       async () => {
-        for (const attachment of [
-          Attachment.sunImageName,
-          Attachment.flowerImageName,
-        ]) {
+        for (const attachment of attachments) {
           await attachAllFilesTreeAssertion.assertEntityCheckbox(
             { name: attachment },
             'hidden',
