@@ -188,7 +188,7 @@ dialTest(
 
 dialTest(
   `Shared icon appears in prompt if it's located in shared folder.\n` +
-    `Shared icon disappears from folder if the folder was deleted from "Shared with me" by others`,
+    `Shared icon disappears from folder if the folder from "Shared with me" was Unshared by others`,
   async ({
     dialHomePage,
     promptData,
@@ -273,7 +273,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Delete shared folder by one of the users and verify folder still has arrow icon',
+      'Unshare folder by one of the users and verify folder still has arrow icon',
       async () => {
         const sharedEntities =
           await additionalSecondUserShareApiHelper.listSharedWithMePrompts();
@@ -294,7 +294,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Delete shared folder by rest user and verify arrow icon disappears for folder',
+      'Unshare folder by rest user and verify arrow icon disappears for folder',
       async () => {
         const sharedEntities =
           await additionalUserShareApiHelper.listSharedWithMePrompts();
