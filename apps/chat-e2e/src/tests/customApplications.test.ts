@@ -12,7 +12,6 @@ import {
 } from '@/src/testData';
 import { AppEditSteps, BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
-import { expect } from '@playwright/test';
 
 dialTest(
   'Create custom app with required fields only.\n' + // EPMRTC-5130
@@ -716,12 +715,10 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'Custom app Topic dropdown select',
   async ({
     marketplacePage,
-    marketplaceHeader,
-    addAppDropdownMenu,
     appEditorPage,
     appEditorGeneralForm,
     setTestIds,
@@ -732,19 +729,10 @@ dialTest.only(
     let allTopics: string[] = [];
     let topicsToSelect: string[] = [];
 
-    await dialTest.step('Open My workspace', async () => {
-      await marketplacePage.openMyWorkspacePage();
-      await marketplacePage.waitForPageLoaded();
+    await dialTest.step('Open create a custom app page', async () => {
+      await marketplacePage.openCreateCustomAppPage();
+      await appEditorPage.waitForPageLoaded();
     });
-
-    await dialTest.step(
-      'Click Add app button and select Custom app',
-      async () => {
-        await marketplaceHeader.addAppButton.click();
-        await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
-        await appEditorPage.waitForPageLoaded();
-      },
-    );
 
     await dialTest.step(
       'Click on Topics drop down and verify the list is expanded',

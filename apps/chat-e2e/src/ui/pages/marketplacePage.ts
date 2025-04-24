@@ -31,22 +31,9 @@ export class MarketplacePage extends BasePage {
     await this.waitForPageLoaded();
   }
 
-  async openCreateCustomAppPage({
-    updateInstalledDeployments = true,
-  }: { updateInstalledDeployments?: boolean } = {}) {
-    if (updateInstalledDeployments) {
-      const resp = this.page.waitForResponse(
-        (resp) =>
-          resp.url().includes(API.installedDeploymentsHost()) &&
-          resp.request().method() === 'PUT' &&
-          resp.status() === 200,
-      );
-      await this.navigateToUrl(ExpectedConstants.createCustomAppPath);
-      await resp;
-    } else {
-      await this.navigateToUrl(ExpectedConstants.createCustomAppPath);
-    }
-    await this.waitForPageLoaded();
+  async openCreateCustomAppPage() {
+    //TODO Do we need to wait for something?
+    await this.navigateToUrl(ExpectedConstants.createCustomAppPath);
   }
 
   async openMarketplacePage() {

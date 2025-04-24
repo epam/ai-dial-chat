@@ -3,8 +3,6 @@ import { AddApplicationGeneralInfoFormSelector } from '@/src/ui/selectors';
 import { AppEditorForm } from '@/src/ui/webElements/appEditor/appEditorForm';
 import { Locator, Page } from '@playwright/test';
 
-const AppEditorGeneralFormSelectors = {};
-
 export class AppEditorGeneralForm extends AppEditorForm {
   constructor(page: Page, parentLocator: Locator) {
     super(
