@@ -20,7 +20,7 @@ import {
   SupportedExportFormats,
 } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
-import { RootAction } from '@/src/types/store';
+import { AppAction } from '@/src/types/store';
 
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { UploadedAttachment } from '@/src/store/import-export/importExport.reducers';
@@ -397,8 +397,8 @@ export const getDuplicatedConversations = (
 export const getConversationActions = (
   conversation: Conversation,
   index: number,
-): Observable<RootAction>[] => {
-  const firstConversationActions: Observable<RootAction>[] = [];
+): Observable<AppAction>[] => {
+  const firstConversationActions: Observable<AppAction>[] = [];
   if (index === 0) {
     firstConversationActions.push(
       of(
@@ -430,8 +430,8 @@ export const getConversationActions = (
 export const getPromptActions = (
   prompt: Prompt,
   index: number,
-): Observable<RootAction>[] => {
-  const firstPromptAction: Observable<RootAction> =
+): Observable<AppAction>[] => {
+  const firstPromptAction: Observable<AppAction> =
     index === 0
       ? of(
           UIActions.setOpenedFoldersIds({
@@ -456,7 +456,7 @@ export const getPromptActions = (
 export const getToastAction = (
   errorList: string[],
   featureType: string,
-): Observable<RootAction> => {
+): Observable<AppAction> => {
   const errorMessage = `It looks like these ${featureType}(s) ${errorList.join(', ')} have been deleted. Please reload the page and try again`;
   const successMessage = `${featureType}(s) ${successMessages.importSuccess}`;
 

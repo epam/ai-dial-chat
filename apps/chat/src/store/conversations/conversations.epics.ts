@@ -31,6 +31,7 @@ import { fromFetch } from 'rxjs/fetch';
 import { combineEpics, ofType } from 'redux-observable';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
+import { getDefaultConversationProps } from '@/src/utils/app/common';
 import {
   addPausedError,
   excludeSystemMessages,
@@ -91,7 +92,7 @@ import { ChatBody, Conversation, RateBody } from '@/src/types/chat';
 import { EntityType, FeatureType } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
-import { AppEpic, RootAction } from '@/src/types/store';
+import { AppAction, AppEpic } from '@/src/types/store';
 
 import { AddonsActions } from '@/src/store/addons/addons.reducers';
 import { AddonsSelectors } from '@/src/store/addons/addons.selectors';
@@ -112,7 +113,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { LOCAL_BUCKET, resetShareEntity } from '@/src/constants/chat';
+import { LOCAL_BUCKET } from '@/src/constants/chat';
 import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_TEMPERATURE,
@@ -141,7 +142,6 @@ import {
 } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
-import { nanoid } from 'nanoid';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -295,7 +295,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
             selectedConversations.some((conv) => conv.id === id),
           );
 
-          const actions: Observable<RootAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
 
           if (selectedConversationsIds) {
             actions.push(
@@ -460,8 +460,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
 
             const newConversations: Conversation[] = names.map((name, index) =>
               regenerateConversationId({
-                ...resetShareEntity,
-                reference: nanoid(),
+                ...getDefaultConversationProps(),
                 name:
                   name !== DEFAULT_CONVERSATION_NAME
                     ? name
@@ -597,8 +596,7 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
       );
       const newConversation: Conversation = regenerateConversationId({
         ...conversation,
-        ...resetShareEntity,
-        reference: nanoid(),
+        ...getDefaultConversationProps(),
         folderId,
         name: newConversationName,
         messages: [],
@@ -653,8 +651,7 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
 
       const newConversation: Conversation = regenerateConversationId({
         ...conversation,
-        ...resetShareEntity,
-        reference: nanoid(),
+        ...getDefaultConversationProps(),
         folderId,
         name: newConversationName,
         messages: [],
@@ -700,8 +697,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
 
       const newConversation: Conversation = regenerateConversationId({
         ...omit(conversation, ['publicationInfo']),
-        ...resetShareEntity,
-        reference: nanoid(),
+        ...getDefaultConversationProps(),
         folderId: conversationFolderId,
         name: generateNextName(
           DEFAULT_CONVERSATION_NAME,
@@ -771,7 +767,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ConversationsActions.deleteFolder.type),
     switchMap(({ payload: { folderId } }) => {
-      const actions: Observable<RootAction>[] = [];
+      const actions: Observable<AppAction>[] = [];
 
       const state = state$.value;
       const conversations =
@@ -912,7 +908,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
         conversationIds,
         suppressErrorMessage,
       }) => {
-        const actions: Observable<RootAction>[] = [];
+        const actions: Observable<AppAction>[] = [];
 
         const otherConversations = conversations.filter(
           (conv) => !conversationIds.has(conv.id),
@@ -1076,7 +1072,7 @@ const updateMessageEpic: AppEpic = (action$, state$) =>
         return EMPTY;
       }
 
-      const actions: Observable<RootAction>[] = [];
+      const actions: Observable<AppAction>[] = [];
 
       const messages = [...conversation.messages];
       messages[payload.messageIndex] = {
@@ -1185,7 +1181,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         overlaySystemPrompt,
         isOverlay,
       }) => {
-        const actions: Observable<RootAction>[] = [];
+        const actions: Observable<AppAction>[] = [];
         const messageModel: Message[EntityType.Model] = {
           id: payload.conversation.model.id,
         };
@@ -1964,7 +1960,7 @@ const uploadSelectedConversationsEpic: AppEpic = (action$, state$) =>
       ConversationsSelectors.selectSelectedConversationsIds(state$.value),
     ),
     switchMap((selectedConversationsIds) => {
-      const actions: Observable<RootAction>[] = [];
+      const actions: Observable<AppAction>[] = [];
 
       selectedConversationsIds.forEach((id) => {
         if (isEntityIdPublic({ id })) {
@@ -2008,7 +2004,7 @@ const compareConversationsEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      const actions: Observable<RootAction>[] = [];
+      const actions: Observable<AppAction>[] = [];
 
       const selectedConversation =
         ConversationsSelectors.selectSelectedConversations(state$.value)[0];
@@ -2269,7 +2265,7 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
       if (!conversationIds.length) {
         return of({
           uploadedConversations: [],
-          setIds: new Set(conversationIds),
+          setIds: new Set<string>(),
           showLoader,
         });
       }
@@ -2552,7 +2548,7 @@ const uploadFoldersEpic: AppEpic = (action$) =>
         ),
       ).pipe(
         switchMap((foldersAndEntities) => {
-          const actions: Observable<RootAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
 
           const folders = foldersAndEntities.flatMap((items) => items.folders);
           const conversations = foldersAndEntities.flatMap(
@@ -2641,7 +2637,7 @@ const uploadConversationsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
         payload.recursive,
       ).pipe(
         switchMap((conversations) => {
-          const actions: Observable<RootAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
 
           const paths = uniq(
             conversations.flatMap((conv) =>
@@ -2720,7 +2716,7 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (action$) =>
     mergeMap(({ payload }) =>
       ConversationService.getConversations(payload?.path, true).pipe(
         mergeMap((conversations) => {
-          const actions: Observable<RootAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
 
           const paths = uniq(
             conversations.flatMap((conv) =>
@@ -2942,7 +2938,7 @@ const deleteChosenConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ConversationsActions.deleteChosenConversations.type),
     switchMap(() => {
-      const actions: Observable<RootAction>[] = [];
+      const actions: Observable<AppAction>[] = [];
 
       const conversations = ConversationsSelectors.selectConversations(
         state$.value,

@@ -31,7 +31,7 @@ import {
 } from '@/src/utils/app/overlay';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
-import { AppEpic, RootAction } from '@/src/types/store';
+import { AppAction, AppEpic } from '@/src/types/store';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
@@ -230,7 +230,7 @@ const createConversationEpic: AppEpic = (action$, state$) =>
         conversationFolderId,
       );
 
-      const actions: Observable<RootAction>[] = [];
+      const actions: Observable<AppAction>[] = [];
 
       if (parentPath && !isFolderExists) {
         actions.push(

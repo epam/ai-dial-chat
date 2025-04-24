@@ -1,7 +1,10 @@
 import { Observable, catchError, forkJoin, of } from 'rxjs';
 
 import { cleanConversation } from '@/src/utils/app/clean';
-import { prepareEntityName } from '@/src/utils/app/common';
+import {
+  getDefaultConversationProps,
+  prepareEntityName,
+} from '@/src/utils/app/common';
 import {
   getGeneratedConversationId,
   regenerateConversationId,
@@ -28,7 +31,6 @@ import { RootState } from '@/src/types/store';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 
 import { ConversationInfo, UploadStatus } from '@epam/ai-dial-shared';
-import { nanoid } from 'nanoid';
 
 export class ConversationApiStorage extends ApiEntityStorage<
   ConversationInfo,
@@ -149,6 +151,7 @@ export const getImportPreparedConversations = ({
 
     return {
       ...conv,
+      ...getDefaultConversationProps(),
       id: getGeneratedConversationId({
         ...conv,
         name: newName,
@@ -156,6 +159,5 @@ export const getImportPreparedConversations = ({
       }),
       name: newName,
       folderId: folderId,
-      reference: nanoid(),
     };
   }); // to send conversation with proper parentPath and updatedAt order

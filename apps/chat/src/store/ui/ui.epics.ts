@@ -21,7 +21,7 @@ import {
 } from '@/src/utils/app/mobile';
 
 import { FeatureType } from '@/src/types/common';
-import { AppEpic, RootAction } from '@/src/types/store';
+import { AppAction, AppEpic } from '@/src/types/store';
 import { ToastType } from '@/src/types/toasts';
 
 import { errorsMessages } from '@/src/constants/errors';
@@ -298,7 +298,7 @@ const resizeEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(UIActions.resize.type),
     switchMap(() => {
-      const actions: Observable<RootAction>[] = [];
+      const actions: Observable<AppAction>[] = [];
       const state = state$.value;
 
       const showChatbar = UISelectors.selectShowChatbar(state);

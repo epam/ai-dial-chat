@@ -56,7 +56,7 @@ import { EntityType, FeatureType } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
 import { PublishedFileItem } from '@/src/types/publication';
-import { AppEpic, RootAction } from '@/src/types/store';
+import { AppAction, AppEpic } from '@/src/types/store';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
@@ -89,7 +89,7 @@ const initEpic: AppEpic = (action$, state$) =>
     ofType(PublicationActions.init.type),
     filter(() => !PublicationSelectors.selectInitialized(state$.value)),
     switchMap(() => {
-      const actions: Observable<RootAction>[] = [];
+      const actions: Observable<AppAction>[] = [];
 
       const isAdmin = AuthSelectors.selectIsAdmin(state$.value);
 
@@ -269,7 +269,7 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
         }),
         switchMap(
           ({ publication, uploadedUnpublishEntities, unpublishResources }) => {
-            const actions: Observable<RootAction>[] = [];
+            const actions: Observable<AppAction>[] = [];
 
             if (unpublishResources.length) {
               const uploadedUnpublishEntitiesIds =
@@ -587,7 +587,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
     mergeMap(({ payload }) =>
       PublicationService.getPublishedWithMeItems('', payload.featureType).pipe(
         mergeMap(({ folders, items }) => {
-          const actions: Observable<RootAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
 
           const selectedIds =
             ConversationsSelectors.selectSelectedConversationsIds(state$.value);
@@ -786,7 +786,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
             return of(PublicationActions.approvePublicationFail());
           }
 
-          const actions: Observable<RootAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
 
           const resourcesToReview =
             PublicationSelectors.selectResourcesToReview(state);
@@ -1160,7 +1160,7 @@ const approvePublicationSuccessEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PublicationActions.approvePublicationSuccess.type),
     switchMap(({ payload }) => {
-      const actions: Observable<RootAction>[] = [];
+      const actions: Observable<AppAction>[] = [];
 
       if (payload.triggerModelsListing) {
         actions.push(of(ModelsActions.getModels()));
@@ -1272,7 +1272,7 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
             return EMPTY;
           }
 
-          const actions: Observable<RootAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
 
           const publicationItems = publications.items.map((item) => ({
             ...item,

@@ -33,7 +33,7 @@ import { translate } from '@/src/utils/app/translation';
 import { ApplicationStatus } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel, InstalledModel } from '@/src/types/models';
-import { AppEpic, RootAction } from '@/src/types/store';
+import { AppAction, AppEpic } from '@/src/types/store';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 
@@ -140,7 +140,7 @@ const getModelsEpic: AppEpic = (action$, state$) =>
               (model.functionStatus === ApplicationStatus.DEPLOYING ||
                 model.functionStatus === ApplicationStatus.UNDEPLOYING),
           );
-          const continueUpdateActions: Observable<RootAction>[] =
+          const continueUpdateActions: Observable<AppAction>[] =
             updatingModels.map((model) =>
               of(
                 ApplicationActions.continueUpdatingFunctionStatus({
@@ -201,7 +201,7 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
             return of(ModelsActions.getInstalledModelIdsFail(myAppIds));
           }
 
-          const actions: Observable<RootAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
 
           const recentModelIds = ModelsSelectors.selectRecentModelsIds(
             state$.value,
@@ -327,7 +327,7 @@ const removeInstalledModelsEpic: AppEpic = (action$, state$) =>
 
           return DataService.setRecentModelsIds(filteredRecentModelIds).pipe(
             switchMap(() => {
-              const actions: Observable<RootAction>[] = [];
+              const actions: Observable<AppAction>[] = [];
 
               if (payload.action === DeleteType.DELETE) {
                 actions.push(
@@ -394,7 +394,7 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
 
           return DataService.setRecentModelsIds(recentModelIds).pipe(
             switchMap(() => {
-              const actions: Observable<RootAction>[] = [];
+              const actions: Observable<AppAction>[] = [];
 
               if (payload.showSuccessToast) {
                 actions.push(

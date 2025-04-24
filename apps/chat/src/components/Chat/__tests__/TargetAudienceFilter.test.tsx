@@ -5,7 +5,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { PublicationFunctions } from '@/src/types/publication';
-import { RootAction } from '@/src/types/store';
+import { AppAction } from '@/src/types/store';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
@@ -14,7 +14,7 @@ import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/Tar
 vi.mock('@/src/store/hooks', async () => {
   return {
     useAppSelector: (selector: any) => selector({}),
-    useAppDispatch: () => (action: RootAction) => action,
+    useAppDispatch: () => (action: AppAction) => action,
   };
 });
 

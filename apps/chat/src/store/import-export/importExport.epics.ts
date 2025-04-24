@@ -77,7 +77,7 @@ import { FolderType } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
 import { LatestExportFormat, ReplaceOptions } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
-import { AppEpic, RootAction } from '@/src/types/store';
+import { AppAction, AppEpic } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -639,7 +639,7 @@ const continueDuplicatedImportEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ImportExportActions.continueDuplicatedImport.type),
     switchMap(({ payload }) => {
-      const actions: Observable<RootAction>[] = [];
+      const actions: Observable<AppAction>[] = [];
 
       const featureType = ImportExportSelectors.selectFeatureType(state$.value);
 
@@ -1266,7 +1266,7 @@ const uploadAllAttachmentsSuccessEpic: AppEpic = (action$, state$) =>
           attachmentsToUpload.length &&
           attachmentsToUpload.length === uploadedAttachments.length
         ) {
-          const actions: Observable<RootAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
 
           const attachmentParentFolders = uniq(
             uploadedAttachments

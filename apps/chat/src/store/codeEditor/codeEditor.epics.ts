@@ -18,7 +18,7 @@ import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 
-import { AppEpic, RootAction } from '@/src/types/store';
+import { AppAction, AppEpic } from '@/src/types/store';
 
 import { FilesSelectors } from '@/src/store/files/files.selectors';
 
@@ -126,7 +126,7 @@ const deleteFileEpic: AppEpic = (action$, state$) =>
 
       return FileService.deleteFile(payload.id).pipe(
         switchMap(() => {
-          const actions: Observable<RootAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
           const filesContent = CodeEditorSelectors.selectFilesContent(
             state$.value,
           ).filter((file) => file.id !== payload.id);

@@ -19,7 +19,7 @@ import { DataService } from '@/src/utils/app/data/data-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 
 import { PageType } from '@/src/types/common';
-import { AppEpic, RootAction } from '@/src/types/store';
+import { AppAction, AppEpic } from '@/src/types/store';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -37,7 +37,7 @@ import { ShareActions } from '../share/share.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import { SettingsActions, SettingsSelectors } from './settings.reducers';
 
-const getInitActions = (page?: PageType): Observable<RootAction>[] => {
+const getInitActions = (page?: PageType): Observable<AppAction>[] => {
   switch (page) {
     case PageType.Marketplace:
       return [

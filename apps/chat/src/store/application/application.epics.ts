@@ -40,7 +40,7 @@ import {
   ApplicationStatus,
   CustomApplicationModel,
 } from '@/src/types/applications';
-import { AppEpic, RootAction } from '@/src/types/store';
+import { AppAction, AppEpic } from '@/src/types/store';
 
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -329,7 +329,7 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
             return of(ApplicationActions.getFail());
           }
 
-          const actions: Observable<RootAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
 
           const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
           const modelFromState = modelsMap[application.reference];
@@ -573,7 +573,7 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
         ),
       );
 
-      const actions: RootAction[] = [
+      const actions: AppAction[] = [
         ApplicationActions.get({ applicationId: entity.id }),
       ];
 

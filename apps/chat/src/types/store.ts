@@ -9,7 +9,7 @@ import { rootReducer } from '../store';
 type ExtractAction<T> =
   T extends Record<string, (...args: never[]) => infer R> ? R : never;
 
-export type RootAction = ExtractAction<
+export type AppAction = ExtractAction<
   {
     [K in keyof typeof allActions]: (typeof allActions)[K];
   }[keyof typeof allActions]
@@ -18,8 +18,8 @@ export type RootAction = ExtractAction<
 export type RootState = ReturnType<typeof rootReducer>;
 
 export type AppEpic = Epic<
-  RootAction,
-  RootAction,
+  AppAction,
+  AppAction,
   RootState,
   { router: NextRouter }
 >;

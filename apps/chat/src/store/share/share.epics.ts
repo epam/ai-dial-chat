@@ -52,7 +52,7 @@ import {
   ShareRequestType,
   ShareResource,
 } from '@/src/types/share';
-import { AppEpic, RootAction } from '@/src/types/store';
+import { AppAction, AppEpic } from '@/src/types/store';
 
 import { FilesSelectors } from '@/src/store/files/files.selectors';
 
@@ -335,7 +335,7 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
         },
       ];
 
-      const actions: Observable<RootAction>[] = [];
+      const actions: Observable<AppAction>[] = [];
 
       if (application?.iconUrl) {
         const iconId = application.iconUrl;
@@ -699,7 +699,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 }
                 return undefined;
               })
-              .filter(Boolean) as RootAction[]),
+              .filter(Boolean) as AppAction[]),
           );
 
           actions.push(
@@ -720,7 +720,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 }
                 return undefined;
               })
-              .filter(Boolean) as RootAction[]),
+              .filter(Boolean) as AppAction[]),
           );
         } else {
           actions.push(
@@ -796,7 +796,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 }
                 return undefined;
               })
-              .filter(Boolean) as RootAction[]),
+              .filter(Boolean) as AppAction[]),
           );
           const folders = PromptsSelectors.selectFolders(state$.value);
           payload.resources.folders.length &&
@@ -815,7 +815,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                   }
                   return undefined;
                 })
-                .filter(Boolean) as RootAction[]),
+                .filter(Boolean) as AppAction[]),
             );
         } else {
           actions.push(
@@ -902,7 +902,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 }
                 return undefined;
               })
-              .filter(Boolean) as RootAction[]),
+              .filter(Boolean) as AppAction[]),
           );
         } else {
           const selectedFilesIds = FilesSelectors.selectSelectedFilesIds(
@@ -956,7 +956,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           //TODO make request for the shared applications to add them into the state when share invitation is accepted.
           //TODO new action-service needs to be created.
 
-          const updateSharedActions: RootAction[] = [];
+          const updateSharedActions: AppAction[] = [];
           const modelsToUpdate = payload.resources.entities
             .map((sharedItem) => {
               const sharedModel = modelsMap[sharedItem.id];
@@ -1149,7 +1149,7 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
           if (!payload.isFolder && payload.featureType === FeatureType.File) {
             return EMPTY;
           }
-          const actions: Observable<RootAction>[] = payload.resourceIds.map(
+          const actions: Observable<AppAction>[] = payload.resourceIds.map(
             (resourceId) =>
               of(
                 ShareActions.discardSharedWithMeSuccess({
@@ -1173,7 +1173,7 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
       const state = state$.value;
 
       if (payload.featureType === FeatureType.Chat) {
-        const actions: Observable<RootAction>[] = [];
+        const actions: Observable<AppAction>[] = [];
 
         const conversations = ConversationsSelectors.selectConversations(state);
         const selectedConversationsIds =

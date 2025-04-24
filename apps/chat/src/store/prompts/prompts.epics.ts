@@ -16,6 +16,7 @@ import {
 
 import { combineEpics, ofType } from 'redux-observable';
 
+import { getDefaultEntityProps } from '@/src/utils/app/common';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { getOrUploadPrompt } from '@/src/utils/app/data/storages/api/prompt-api-storage';
 import {
@@ -43,9 +44,8 @@ import { translate } from '@/src/utils/app/translation';
 import { FeatureType } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
-import { AppEpic, RootAction } from '@/src/types/store';
+import { AppAction, AppEpic } from '@/src/types/store';
 
-import { resetShareEntity } from '@/src/constants/chat';
 import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-ui-settings';
 
 import { ChatActions } from '../chat/chat.reducer';
@@ -434,7 +434,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(PromptsActions.deleteFolder.type),
     switchMap(({ payload: { folderId } }) => {
-      const actions: Observable<RootAction>[] = [];
+      const actions: Observable<AppAction>[] = [];
       const state = state$.value;
 
       const promptIds = PromptsSelectors.selectPromptsByFolderId(
@@ -522,7 +522,7 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
 
       const newPrompt = regeneratePromptId({
         ...omit(prompt, ['publicationInfo']),
-        ...resetShareEntity,
+        ...getDefaultEntityProps(),
         folderId: promptFolderId,
         name: generateNextName(
           DEFAULT_PROMPT_NAME,
@@ -559,7 +559,7 @@ const uploadPromptsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
         payload.recursive,
       ).pipe(
         switchMap((prompts) => {
-          const actions: Observable<RootAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
 
           const paths = uniq(
             prompts.flatMap((prompt) =>
@@ -632,7 +632,7 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$) =>
     mergeMap(({ payload }) =>
       PromptService.getPrompts(payload?.path, true).pipe(
         mergeMap((prompts) => {
-          const actions: Observable<RootAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
 
           const paths = uniq(
             prompts.flatMap((prompt) =>
@@ -717,7 +717,7 @@ const uploadFoldersEpic: AppEpic = (action$) =>
         payload.ids.map((path) => PromptService.getPromptsAndFolders(path)),
       ).pipe(
         switchMap((foldersAndEntities) => {
-          const actions: Observable<RootAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
 
           const folders = foldersAndEntities.flatMap((items) => items.folders);
           const prompts = foldersAndEntities.flatMap((items) => items.entities);
@@ -804,7 +804,7 @@ const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(PromptsActions.deleteChosenPrompts.type),
     switchMap(() => {
-      const actions: Observable<RootAction>[] = [];
+      const actions: Observable<AppAction>[] = [];
       const state = state$.value;
 
       const prompts = PromptsSelectors.selectPrompts(state);
@@ -927,7 +927,7 @@ const selectPromptEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PromptsActions.selectPrompt.type),
     switchMap(({ payload }) => {
-      const actions: Observable<RootAction>[] = [];
+      const actions: Observable<AppAction>[] = [];
 
       if (isEntityIdPublic({ id: payload.promptId })) {
         const { versionGroupId, currentVersion } = getVersionGroupFromId(
