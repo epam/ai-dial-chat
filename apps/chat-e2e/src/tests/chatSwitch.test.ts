@@ -90,9 +90,7 @@ dialTest(
         await conversationAssertion.assertSelectedConversation(
           comparedConversation.name,
         );
-        await conversations.selectConversation(firstConversation.name, {
-          isHttpMethodTriggered: true,
-        });
+        await conversations.selectConversation(firstConversation.name);
         await conversationAssertion.assertSelectedConversation(
           firstConversation.name,
         );
