@@ -29,6 +29,7 @@ import {
   updateChildFoldersIds,
 } from '@/src/utils/app/folders';
 import { getPromptRootId, isEntityIdExternal } from '@/src/utils/app/id';
+import { isTabletScreen } from '@/src/utils/app/mobile';
 import {
   getPromptInfoFromId,
   parseVariablesFromContent,
@@ -980,6 +981,14 @@ const selectPromptEpic: AppEpic = (action$) =>
     }),
   );
 
+const hidePromptbarEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.applyPrompt.match),
+    switchMap(() =>
+      isTabletScreen() ? of(UIActions.setShowPromptbar(false)) : EMPTY,
+    ),
+  );
+
 export const PromptsEpics = combineEpics(
   initEpic,
   uploadPromptsFromMultipleFoldersEpic,
@@ -1006,4 +1015,5 @@ export const PromptsEpics = combineEpics(
   applyPromptEpic,
   getPromptMetadataEpic,
   selectPromptEpic,
+  hidePromptbarEpic,
 );
