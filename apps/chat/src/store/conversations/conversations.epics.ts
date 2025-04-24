@@ -33,6 +33,7 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { combineEpics } from 'redux-observable';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
+import { getDefaultConversationProps } from '@/src/utils/app/common';
 import {
   addPausedError,
   excludeSystemMessages,
@@ -114,7 +115,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { LOCAL_BUCKET, resetShareEntity } from '@/src/constants/chat';
+import { LOCAL_BUCKET } from '@/src/constants/chat';
 import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_TEMPERATURE,
@@ -465,7 +466,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
 
             const newConversations: Conversation[] = names.map((name, index) =>
               regenerateConversationId({
-                ...resetShareEntity,
+                ...getDefaultConversationProps(),
                 reference: nanoid(),
                 name:
                   name !== DEFAULT_CONVERSATION_NAME
@@ -606,7 +607,7 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
       );
       const newConversation: Conversation = regenerateConversationId({
         ...conversation,
-        ...resetShareEntity,
+        ...getDefaultConversationProps(),
         reference: nanoid(),
         folderId,
         name: newConversationName,
@@ -666,7 +667,7 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
 
       const newConversation: Conversation = regenerateConversationId({
         ...conversation,
-        ...resetShareEntity,
+        ...getDefaultConversationProps(),
         reference: nanoid(),
         folderId,
         name: newConversationName,
@@ -719,7 +720,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
 
       const newConversation: Conversation = regenerateConversationId({
         ...omit(conversation, ['publicationInfo']),
-        ...resetShareEntity,
+        ...getDefaultConversationProps(),
         reference: nanoid(),
         folderId: conversationFolderId,
         name: generateNextName(
