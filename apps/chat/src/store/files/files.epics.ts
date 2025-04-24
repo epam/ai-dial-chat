@@ -14,7 +14,7 @@ import {
   tap,
 } from 'rxjs';
 
-import { combineEpics } from 'redux-observable';
+import { combineEpics, ofType } from 'redux-observable';
 
 import { FileService } from '@/src/utils/app/data/file-service';
 import { getDownloadPath, triggerDownload } from '@/src/utils/app/file';
@@ -42,11 +42,8 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(
-      (action) =>
-        FilesActions.init.match(action) &&
-        !FilesSelectors.selectInitialized(state$.value),
-    ),
+    ofType(FilesActions.init.type),
+    filter(() => !FilesSelectors.selectInitialized(state$.value)),
     switchMap(() =>
       concat(
         of(
@@ -61,7 +58,7 @@ const initEpic: AppEpic = (action$, state$) =>
 
 const uploadFileEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(FilesActions.uploadFile.match),
+    ofType(FilesActions.uploadFile.type),
     mergeMap(({ payload }) => {
       const formData = new FormData();
       formData.append('attachment', payload.fileContent, payload.name);
@@ -91,7 +88,7 @@ const uploadFileEpic: AppEpic = (action$) =>
         }),
         takeUntil(
           action$.pipe(
-            filter(FilesActions.uploadFileCancel.match),
+            ofType(FilesActions.uploadFileCancel.type),
             filter((action) => action.payload.id === payload.id),
           ),
         ),
@@ -104,7 +101,7 @@ const uploadFileEpic: AppEpic = (action$) =>
 
 const reuploadFileEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(FilesActions.reuploadFile.match),
+    ofType(FilesActions.reuploadFile.type),
     switchMap(({ payload }) => {
       const file = FilesSelectors.selectFiles(state$.value).find(
         (file) => file.id === payload.fileId,
@@ -126,7 +123,7 @@ const reuploadFileEpic: AppEpic = (action$, state$) =>
 
 const renameFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(FilesActions.renameFolder.match),
+    ofType(FilesActions.renameFolder.type),
     switchMap(({ payload }) => {
       const oldFolder = getFolderFromId(payload.folderId, FolderType.File);
       const targetFolderId = getGeneratedFolderId({
@@ -136,7 +133,7 @@ const renameFolderEpic: AppEpic = (action$, state$) =>
       const files = FilesSelectors.selectFiles(state$.value);
 
       const updatedFileIds = files
-        .filter((file) => file.id?.startsWith(`${targetFolderId}/`))
+        .filter((file) => file.id.startsWith(`${targetFolderId}/`))
         .map(({ id }) => id);
 
       if (!updatedFileIds.length) return EMPTY;
@@ -146,7 +143,7 @@ const renameFolderEpic: AppEpic = (action$, state$) =>
       );
 
       return forkJoin(
-        ...updatedFileIds.map((destinationUrl, i) =>
+        updatedFileIds.map((destinationUrl, i) =>
           FileService.moveFile({
             destinationUrl,
             sourceUrl: sourceFileIds[i],
@@ -176,7 +173,7 @@ const renameFolderEpic: AppEpic = (action$, state$) =>
 
 const renameFolderFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(FilesActions.renameFolderFail.match),
+    ofType(FilesActions.renameFolderFail.type),
     switchMap(({ payload }) => {
       return of(
         UIActions.showErrorToast(
@@ -194,7 +191,7 @@ const renameFolderFailEpic: AppEpic = (action$) =>
 
 const getFilesEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(FilesActions.getFiles.match),
+    ofType(FilesActions.getFiles.type),
     switchMap(({ payload }) =>
       FileService.getFiles(payload.id).pipe(
         map((files) =>
@@ -210,7 +207,7 @@ const getFilesEpic: AppEpic = (action$) =>
 
 const getFileFoldersEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(FilesActions.getFolders.match),
+    ofType(FilesActions.getFolders.type),
     mergeMap(({ payload }) =>
       FileService.getFileFolders(payload?.id).pipe(
         map((folders) =>
@@ -228,7 +225,7 @@ const getFileFoldersEpic: AppEpic = (action$) =>
 
 const getFilesWithFoldersEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(FilesActions.getFilesWithFolders.match),
+    ofType(FilesActions.getFilesWithFolders.type),
     switchMap(({ payload }) => {
       return concat(
         of(FilesActions.getFolders(payload)),
@@ -239,21 +236,23 @@ const getFilesWithFoldersEpic: AppEpic = (action$) =>
 
 const getFoldersListEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(FilesActions.getFoldersList.match),
+    ofType(FilesActions.getFoldersList.type),
     switchMap(({ payload }) => {
-      return concat(
-        ...(payload.paths
-          ? payload.paths.map((path) =>
-              of(FilesActions.getFolders({ id: path })),
-            )
-          : [of(FilesActions.getFolders({}))]),
-      );
+      if (payload.paths) {
+        return concat(
+          ...payload.paths.map((path) =>
+            of(FilesActions.getFolders({ id: path })),
+          ),
+        );
+      }
+
+      return of(FilesActions.getFolders({}));
     }),
   );
 
 const deleteFileEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(FilesActions.deleteFile.match),
+    ofType(FilesActions.deleteFile.type),
     mergeMap(({ payload }) => {
       const file = FilesSelectors.selectFiles(state$.value).find(
         (file) => file.id === payload.fileId,
@@ -304,7 +303,7 @@ const deleteFileEpic: AppEpic = (action$, state$) =>
 
 const deleteFileFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(FilesActions.deleteFileFail.match),
+    ofType(FilesActions.deleteFileFail.type),
     map(({ payload }) => {
       return UIActions.showToast({
         message: translate(
@@ -321,7 +320,7 @@ const deleteFileFailEpic: AppEpic = (action$) =>
 
 const deleteMultipleFilesEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(FilesActions.deleteFilesList.match),
+    ofType(FilesActions.deleteFilesList.type),
     switchMap(({ payload }) => {
       return concat(
         ...payload.fileIds.map((fileId) =>
@@ -333,7 +332,7 @@ const deleteMultipleFilesEpic: AppEpic = (action$) =>
 
 const unselectFilesEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(FilesActions.unselectFiles.match),
+    ofType(FilesActions.unselectFiles.type),
     switchMap(({ payload }) => {
       const files = FilesSelectors.selectFilesByIds(state$.value, payload.ids);
       const cancelFileActions = files
@@ -342,17 +341,17 @@ const unselectFilesEpic: AppEpic = (action$, state$) =>
         )
         .map((file) => of(FilesActions.uploadFileCancel({ id: file.id })));
 
-      return cancelFileActions.length ? concat(...cancelFileActions) : EMPTY;
+      return concat(...cancelFileActions);
     }),
   );
 
 const downloadFilesListEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(FilesActions.downloadFilesList.match),
-    map(({ payload }) => ({
-      files: FilesSelectors.selectFilesByIds(state$.value, payload.fileIds),
-    })),
-    tap(({ files }) => {
+    ofType(FilesActions.downloadFilesList.type),
+    map(({ payload }) =>
+      FilesSelectors.selectFilesByIds(state$.value, payload.fileIds),
+    ),
+    tap((files) => {
       files.forEach((file) => {
         const filePath = getDownloadPath(file);
         return triggerDownload(
