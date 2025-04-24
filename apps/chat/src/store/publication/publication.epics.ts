@@ -14,9 +14,7 @@ import {
   toArray,
 } from 'rxjs';
 
-import { AnyAction } from '@reduxjs/toolkit';
-
-import { combineEpics } from 'redux-observable';
+import { combineEpics, ofType } from 'redux-observable';
 
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
@@ -58,7 +56,7 @@ import { EntityType, FeatureType } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
 import { PublishedFileItem } from '@/src/types/publication';
-import { AppEpic } from '@/src/types/store';
+import { AppAction, AppEpic } from '@/src/types/store';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
@@ -88,13 +86,11 @@ import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(
-      (action) =>
-        PublicationActions.init.match(action) &&
-        !PublicationSelectors.selectInitialized(state$.value),
-    ),
+    ofType(PublicationActions.init.type),
+    filter(() => !PublicationSelectors.selectInitialized(state$.value)),
     switchMap(() => {
-      const actions: Observable<AnyAction>[] = [];
+      const actions: Observable<AppAction>[] = [];
+
       const isAdmin = AuthSelectors.selectIsAdmin(state$.value);
 
       if (isAdmin) {
@@ -120,7 +116,7 @@ const initEpic: AppEpic = (action$, state$) =>
 
 const publishEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.publish.match),
+    ofType(PublicationActions.publish.type),
     switchMap(({ payload }) =>
       forkJoin({
         payload: of(payload),
@@ -184,7 +180,7 @@ const publishEpic: AppEpic = (action$) =>
 
 const publishFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.publishFail.match),
+    ofType(PublicationActions.publishFail.type),
     map(({ payload }) => {
       return UIActions.showErrorToast(
         translate(payload ?? errorsMessages.publicationFailed),
@@ -194,7 +190,7 @@ const publishFailEpic: AppEpic = (action$) =>
 
 const uploadPublicationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PublicationActions.uploadPublications.match),
+    ofType(PublicationActions.uploadPublications.type),
     filter(() => {
       const enabledFeatures = SettingsSelectors.selectEnabledFeatures(
         state$.value,
@@ -222,7 +218,7 @@ const uploadPublicationsEpic: AppEpic = (action$, state$) =>
 
 const uploadPublicationsFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.uploadPublicationsFail.match),
+    ofType(PublicationActions.uploadPublicationsFail.type),
     map(() =>
       UIActions.showErrorToast(
         translate(errorsMessages.publicationsUploadFailed),
@@ -232,7 +228,7 @@ const uploadPublicationsFailEpic: AppEpic = (action$) =>
 
 const uploadPublicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PublicationActions.uploadPublication.match),
+    ofType(PublicationActions.uploadPublication.type),
     switchMap(({ payload }) =>
       PublicationService.getPublication(payload.url).pipe(
         switchMap((publication) => {
@@ -273,7 +269,7 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
         }),
         switchMap(
           ({ publication, uploadedUnpublishEntities, unpublishResources }) => {
-            const actions: Observable<AnyAction>[] = [];
+            const actions: Observable<AppAction>[] = [];
 
             if (unpublishResources.length) {
               const uploadedUnpublishEntitiesIds =
@@ -571,7 +567,7 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
 
 const uploadPublicationFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.uploadPublicationsFail.match),
+    ofType(PublicationActions.uploadPublicationsFail.type),
     map(() =>
       UIActions.showErrorToast(
         translate(errorsMessages.publicationUploadFailed),
@@ -581,7 +577,7 @@ const uploadPublicationFailEpic: AppEpic = (action$) =>
 
 const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PublicationActions.uploadPublishedWithMeItems.match),
+    ofType(PublicationActions.uploadPublishedWithMeItems.type),
     filter(({ payload }) =>
       SettingsSelectors.selectIsPublishingEnabled(
         state$.value,
@@ -591,7 +587,8 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
     mergeMap(({ payload }) =>
       PublicationService.getPublishedWithMeItems('', payload.featureType).pipe(
         mergeMap(({ folders, items }) => {
-          const actions: Observable<AnyAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
+
           const selectedIds =
             ConversationsSelectors.selectSelectedConversationsIds(state$.value);
 
@@ -767,7 +764,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
 
 const uploadPublishedWithMeItemsFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.uploadPublishedWithMeItemsFail.match),
+    ofType(PublicationActions.uploadPublishedWithMeItemsFail.type),
     map(() =>
       UIActions.showErrorToast(
         translate(errorsMessages.publishedItemsUploadFailed),
@@ -777,19 +774,19 @@ const uploadPublishedWithMeItemsFailEpic: AppEpic = (action$) =>
 
 const approvePublicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PublicationActions.approvePublication.match),
+    ofType(PublicationActions.approvePublication.type),
     switchMap(({ payload }) =>
       PublicationService.approvePublication(payload.url).pipe(
         switchMap(() => {
+          const state = state$.value;
           const selectedPublication =
-            PublicationSelectors.selectSelectedPublication(state$.value);
+            PublicationSelectors.selectSelectedPublication(state);
 
           if (!selectedPublication) {
             return of(PublicationActions.approvePublicationFail());
           }
 
-          const actions: Observable<AnyAction>[] = [];
-          const state = state$.value;
+          const actions: Observable<AppAction>[] = [];
 
           const resourcesToReview =
             PublicationSelectors.selectResourcesToReview(state);
@@ -1125,7 +1122,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
 
 const approvePublicationFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.approvePublicationFail.match),
+    ofType(PublicationActions.approvePublicationFail.type),
     map(({ payload }) =>
       UIActions.showErrorToast(
         translate(payload ?? errorsMessages.publicationApproveFailed),
@@ -1135,7 +1132,7 @@ const approvePublicationFailEpic: AppEpic = (action$) =>
 
 const rejectPublicationEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.rejectPublication.match),
+    ofType(PublicationActions.rejectPublication.type),
     switchMap(({ payload }) =>
       PublicationService.rejectPublication(payload.url).pipe(
         switchMap(() =>
@@ -1151,7 +1148,7 @@ const rejectPublicationEpic: AppEpic = (action$) =>
 
 const rejectPublicationFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.rejectPublicationFail.match),
+    ofType(PublicationActions.rejectPublicationFail.type),
     map(() =>
       UIActions.showErrorToast(
         translate(errorsMessages.publicationRejectFailed),
@@ -1161,9 +1158,9 @@ const rejectPublicationFailEpic: AppEpic = (action$) =>
 
 const approvePublicationSuccessEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.approvePublicationSuccess.match),
+    ofType(PublicationActions.approvePublicationSuccess.type),
     switchMap(({ payload }) => {
-      const actions: Observable<AnyAction>[] = [];
+      const actions: Observable<AppAction>[] = [];
 
       if (payload.triggerModelsListing) {
         actions.push(of(ModelsActions.getModels()));
@@ -1185,20 +1182,17 @@ const approvePublicationSuccessEpic: AppEpic = (action$) =>
 
 const resolvePublicationSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(
-      (action) =>
-        PublicationActions.rejectPublicationSuccess.match(action) ||
-        PublicationActions.approvePublicationSuccess.match(action),
+    ofType(
+      PublicationActions.rejectPublicationSuccess.type,
+      PublicationActions.approvePublicationSuccess.type,
     ),
     switchMap(() => {
-      const publications = PublicationSelectors.selectPublications(
-        state$.value,
-      );
+      const state = state$.value;
+
+      const publications = PublicationSelectors.selectPublications(state);
 
       if (!publications.length) {
-        const conversations = ConversationsSelectors.selectConversations(
-          state$.value,
-        );
+        const conversations = ConversationsSelectors.selectConversations(state);
 
         return iif(
           () => !!conversations.length,
@@ -1223,7 +1217,7 @@ const resolvePublicationSuccessEpic: AppEpic = (action$, state$) =>
 
 const uploadRulesEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.uploadRules.match),
+    ofType(PublicationActions.uploadRules.type),
     switchMap(({ payload }) =>
       PublicationService.getRules(payload.path).pipe(
         switchMap((rules) => {
@@ -1243,7 +1237,7 @@ const uploadRulesEpic: AppEpic = (action$) =>
 
 const uploadRulesFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.uploadRulesFail.match),
+    ofType(PublicationActions.uploadRulesFail.type),
     map(({ payload }) =>
       UIActions.showErrorToast(
         translate(payload ?? errorsMessages.rulesUploadingFailed),
@@ -1253,23 +1247,19 @@ const uploadRulesFailEpic: AppEpic = (action$) =>
 
 const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PublicationActions.uploadAllPublishedWithMeItems.match),
-    filter(({ payload }) =>
-      SettingsSelectors.selectIsPublishingEnabled(
-        state$.value,
-        payload.featureType,
-      ),
+    ofType(PublicationActions.uploadAllPublishedWithMeItems.type),
+    filter(
+      ({ payload }) =>
+        SettingsSelectors.selectIsPublishingEnabled(
+          state$.value,
+          payload.featureType,
+        ) &&
+        !PublicationSelectors.selectIsAllItemsUploaded(
+          state$.value,
+          payload.featureType,
+        ),
     ),
     mergeMap(({ payload }) => {
-      const isAllItemsUploaded = PublicationSelectors.selectIsAllItemsUploaded(
-        state$.value,
-        payload.featureType,
-      );
-
-      if (isAllItemsUploaded) {
-        return EMPTY;
-      }
-
       return PublicationService.getPublishedWithMeItems(
         '',
         payload.featureType,
@@ -1282,7 +1272,8 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
             return EMPTY;
           }
 
-          const actions: Observable<AnyAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
+
           const publicationItems = publications.items.map((item) => ({
             ...item,
             id: item.url,
@@ -1369,7 +1360,7 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
 
 const uploadAllPublishedWithMeItemsFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.uploadAllPublishedWithMeItemsFail.match),
+    ofType(PublicationActions.uploadAllPublishedWithMeItemsFail.type),
     map(() =>
       UIActions.showErrorToast(
         translate(errorsMessages.publishedItemsUploadFailed),

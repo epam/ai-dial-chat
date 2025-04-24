@@ -19,9 +19,7 @@ import {
   timer,
 } from 'rxjs';
 
-import { AnyAction } from '@reduxjs/toolkit';
-
-import { combineEpics } from 'redux-observable';
+import { combineEpics, ofType } from 'redux-observable';
 
 import { parseCommaSeparatedList } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
@@ -33,7 +31,7 @@ import {
 } from '@/src/utils/app/overlay';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
-import { AppEpic } from '@/src/types/store';
+import { AppAction, AppEpic } from '@/src/types/store';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
@@ -163,7 +161,7 @@ export const postMessageMapperEpic: AppEpic = (_, state$) =>
 
 const getMessagesEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(OverlayActions.getMessages.match),
+    ofType(OverlayActions.getMessages.type),
     map(({ payload: { requestId } }) => {
       const currentConversation =
         ConversationsSelectors.selectFirstSelectedConversation(state$.value);
@@ -188,7 +186,7 @@ const getMessagesEpic: AppEpic = (action$, state$) =>
 
 const getConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(OverlayActions.getConversations.match),
+    ofType(OverlayActions.getConversations.type),
     map(({ payload: { requestId } }) => {
       const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
 
@@ -220,7 +218,7 @@ const getConversationsEpic: AppEpic = (action$, state$) =>
 
 const createConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(OverlayActions.createConversation.match),
+    ofType(OverlayActions.createConversation.type),
     switchMap(({ payload: { requestId, parentPath } }) => {
       const conversationFolderId = constructPath(
         getConversationRootId(),
@@ -232,7 +230,7 @@ const createConversationEpic: AppEpic = (action$, state$) =>
         conversationFolderId,
       );
 
-      const actions: Observable<AnyAction>[] = [];
+      const actions: Observable<AppAction>[] = [];
 
       if (parentPath && !isFolderExists) {
         actions.push(
@@ -266,10 +264,10 @@ const createConversationEpic: AppEpic = (action$, state$) =>
 
 const createConversationEffectEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(OverlayActions.createConversationEffect.match),
+    ofType(OverlayActions.createConversationEffect.type),
     switchMap(({ payload: { requestId } }) => {
       return action$.pipe(
-        filter(ConversationsActions.createNotLocalConversationsSuccess.match),
+        ofType(ConversationsActions.createNotLocalConversationsSuccess.type),
         takeUntil(timer(10000)),
         filter(Boolean),
         map(({ payload: conversations }) => {
@@ -300,13 +298,14 @@ const createConversationEffectEpic: AppEpic = (action$, state$) =>
 
 const selectConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(OverlayActions.selectConversation.match),
+    ofType(OverlayActions.selectConversation.type),
     switchMap(({ payload: { requestId, id } }) => {
       const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
       const conversation = ConversationsSelectors.selectConversation(
         state$.value,
         id,
       );
+
       if (!conversation) {
         return EMPTY;
       }
@@ -335,7 +334,7 @@ const selectConversationEpic: AppEpic = (action$, state$) =>
 
 const sendMessageEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(OverlayActions.sendMessage.match),
+    ofType(OverlayActions.sendMessage.type),
     switchMap(({ payload: { content, requestId } }) => {
       const selectedConversations =
         ConversationsSelectors.selectSelectedConversations(state$.value);
@@ -367,7 +366,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
 
 const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(OverlayActions.setOverlayOptions.match),
+    ofType(OverlayActions.setOverlayOptions.type),
     map(({ payload: { ...options } }) => {
       const availableThemes = UISelectors.selectAvailableThemes(state$.value);
 
@@ -497,7 +496,7 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
 
 const signInOptionsSet: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(OverlayActions.signInOptionsSet.match),
+    ofType(OverlayActions.signInOptionsSet.type),
     tap(({ payload: { signInOptions } }) => {
       const isShouldLogin = AuthSelectors.selectIsShouldLogin(state$.value);
 
@@ -510,7 +509,7 @@ const signInOptionsSet: AppEpic = (action$, state$) =>
 
 const setOverlayOptionsSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(OverlayActions.setOverlayOptionsSuccess.match),
+    ofType(OverlayActions.setOverlayOptionsSuccess.type),
     filter(() => !!OverlaySelectors.selectOptionsReceived(state$.value)),
     distinctUntilChanged(),
     switchMap(({ payload: { hostDomain, requestId } }) => {
@@ -536,7 +535,7 @@ const setOverlayOptionsSuccessEpic: AppEpic = (action$, state$) =>
 
 const checkReadyToInteract: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(OverlayActions.checkReadyToInteract.match),
+    ofType(OverlayActions.checkReadyToInteract.type),
     switchMap(() =>
       state$.pipe(
         filter((state) => {
@@ -557,7 +556,7 @@ const checkReadyToInteract: AppEpic = (action$, state$) =>
 
 const sendReadyToInteract: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(OverlayActions.sendReadyToInteract.match),
+    ofType(OverlayActions.sendReadyToInteract.type),
     switchMap(() => {
       const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
 
@@ -670,7 +669,7 @@ const initOverlayEpic: AppEpic = (_action$, state$) =>
 
 const sendPMEventEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(OverlayActions.sendPMEvent.match),
+    ofType(OverlayActions.sendPMEvent.type),
     tap(({ payload }) => {
       sendPMEvent(payload.type, payload.eventParams);
     }),
@@ -679,7 +678,7 @@ const sendPMEventEpic: AppEpic = (action$) =>
 
 const sendPMResponseEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(OverlayActions.sendPMResponse.match),
+    ofType(OverlayActions.sendPMResponse.type),
     tap(({ payload }) => {
       sendPMResponse(payload.type, payload.requestParams);
     }),
