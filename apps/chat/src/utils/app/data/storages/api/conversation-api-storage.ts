@@ -1,7 +1,10 @@
 import { Observable, catchError, forkJoin, of } from 'rxjs';
 
 import { cleanConversation } from '@/src/utils/app/clean';
-import { prepareEntityName } from '@/src/utils/app/common';
+import {
+  getDefaultConversationProps,
+  prepareEntityName,
+} from '@/src/utils/app/common';
 import {
   getGeneratedConversationId,
   regenerateConversationId,
@@ -132,9 +135,9 @@ export const getImportPreparedConversations = ({
   conversations,
   conversationsFolders,
 }: {
-  conversations: Conversation[] | ConversationInfo[];
+  conversations: Conversation[];
   conversationsFolders: FolderInterface[];
-}) =>
+}): Conversation[] =>
   conversations.map((conv) => {
     const { path } = getPathToFolderById(conversationsFolders, conv.folderId, {
       forRenaming: false,
@@ -148,6 +151,7 @@ export const getImportPreparedConversations = ({
 
     return {
       ...conv,
+      ...getDefaultConversationProps(),
       id: getGeneratedConversationId({
         ...conv,
         name: newName,

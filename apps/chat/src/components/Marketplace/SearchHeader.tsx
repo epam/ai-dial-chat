@@ -20,7 +20,7 @@ import { ApplicationActions } from '@/src/store/application/application.reducers
 import {
   ApplicationTypesSchemasActions,
   ApplicationTypesSchemasSelectors,
-} from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
+} from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MarketplaceActions,

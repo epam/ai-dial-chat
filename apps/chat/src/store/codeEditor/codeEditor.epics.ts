@@ -3,7 +3,6 @@ import {
   Observable,
   catchError,
   concat,
-  filter,
   iif,
   map,
   mergeMap,
@@ -11,9 +10,7 @@ import {
   switchMap,
 } from 'rxjs';
 
-import { AnyAction } from '@reduxjs/toolkit';
-
-import { combineEpics } from 'redux-observable';
+import { combineEpics, ofType } from 'redux-observable';
 
 import { FileService } from '@/src/utils/app/data/file-service';
 import { TextFileService } from '@/src/utils/app/data/text-file-service';
@@ -21,7 +18,7 @@ import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 
-import { AppEpic } from '@/src/types/store';
+import { AppAction, AppEpic } from '@/src/types/store';
 
 import { FilesSelectors } from '@/src/store/files/files.selectors';
 
@@ -36,7 +33,7 @@ import intersectionWith from 'lodash-es/intersectionWith';
 
 const initCodeEditorEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(CodeEditorActions.initCodeEditor.match),
+    ofType(CodeEditorActions.initCodeEditor.type),
     switchMap(({ payload }) => {
       const sourceFolderId = `${payload.sourcesFolderId}${payload.sourcesFolderId.endsWith('/') ? '' : '/'}`;
 
@@ -65,7 +62,7 @@ const initCodeEditorEpic: AppEpic = (action$, state$) =>
 
 const getFileTextContentEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(CodeEditorActions.getFileTextContent.match),
+    ofType(CodeEditorActions.getFileTextContent.type),
     switchMap(({ payload }) => {
       return TextFileService.getFileContent(payload.id).pipe(
         map((content) => {
@@ -91,7 +88,7 @@ const getFileTextContentEpic: AppEpic = (action$) =>
 
 const setSelectedFileEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(CodeEditorActions.setSelectedFileId.match),
+    ofType(CodeEditorActions.setSelectedFileId.type),
     switchMap(({ payload }) => {
       if (!payload) {
         return EMPTY;
@@ -108,7 +105,7 @@ const setSelectedFileEpic: AppEpic = (action$, state$) =>
 
 const deleteFileEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(CodeEditorActions.deleteFile.match),
+    ofType(CodeEditorActions.deleteFile.type),
     switchMap(({ payload }) => {
       const file = FilesSelectors.selectFileById(state$.value, payload.id);
 
@@ -129,7 +126,7 @@ const deleteFileEpic: AppEpic = (action$, state$) =>
 
       return FileService.deleteFile(payload.id).pipe(
         switchMap(() => {
-          const actions: Observable<AnyAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
           const filesContent = CodeEditorSelectors.selectFilesContent(
             state$.value,
           ).filter((file) => file.id !== payload.id);
@@ -187,7 +184,7 @@ const deleteFileEpic: AppEpic = (action$, state$) =>
 
 const updateFileContentEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(CodeEditorActions.updateFileContent.match),
+    ofType(CodeEditorActions.updateFileContent.type),
     mergeMap(({ payload }) => {
       const file = FilesSelectors.selectFileById(state$.value, payload.id);
 
@@ -204,7 +201,6 @@ const updateFileContentEpic: AppEpic = (action$, state$) =>
         contentType: file.contentType,
         bucket,
       }).pipe(
-        filter(({ success }) => !!success),
         switchMap(({ success }) => {
           if (success) {
             return of(
@@ -229,7 +225,7 @@ const updateFileContentEpic: AppEpic = (action$, state$) =>
 
 const saveAllModifiedFilesEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(CodeEditorActions.saveAllModifiedFiles.match),
+    ofType(CodeEditorActions.saveAllModifiedFiles.type),
     switchMap(() => {
       const modifiedFileIds = CodeEditorSelectors.selectModifiedFileIds(
         state$.value,

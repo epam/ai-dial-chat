@@ -1,7 +1,5 @@
 import { EMPTY, Observable, map, of } from 'rxjs';
 
-import { AnyAction } from '@reduxjs/toolkit';
-
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { Conversation } from '@/src/types/chat';
@@ -22,6 +20,7 @@ import {
   SupportedExportFormats,
 } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
+import { AppAction } from '@/src/types/store';
 
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { UploadedAttachment } from '@/src/store/import-export/importExport.reducers';
@@ -398,8 +397,8 @@ export const getDuplicatedConversations = (
 export const getConversationActions = (
   conversation: Conversation,
   index: number,
-): Observable<AnyAction>[] => {
-  const firstConversationActions: Observable<AnyAction>[] = [];
+): Observable<AppAction>[] => {
+  const firstConversationActions: Observable<AppAction>[] = [];
   if (index === 0) {
     firstConversationActions.push(
       of(
@@ -431,8 +430,8 @@ export const getConversationActions = (
 export const getPromptActions = (
   prompt: Prompt,
   index: number,
-): Observable<AnyAction>[] => {
-  const firstPromptAction: Observable<AnyAction> =
+): Observable<AppAction>[] => {
+  const firstPromptAction: Observable<AppAction> =
     index === 0
       ? of(
           UIActions.setOpenedFoldersIds({
@@ -457,7 +456,7 @@ export const getPromptActions = (
 export const getToastAction = (
   errorList: string[],
   featureType: string,
-): Observable<AnyAction> => {
+): Observable<AppAction> => {
   const errorMessage = `It looks like these ${featureType}(s) ${errorList.join(', ')} have been deleted. Please reload the page and try again`;
   const successMessage = `${featureType}(s) ${successMessages.importSuccess}`;
 
