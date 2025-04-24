@@ -264,6 +264,7 @@ export enum MenuOptions {
   attachFolders = 'Attach folders',
   attachLink = 'Attach link',
   select = 'Select',
+  unselect = 'Unselect',
   view = 'View',
   use = 'Use',
   info = 'Info',
