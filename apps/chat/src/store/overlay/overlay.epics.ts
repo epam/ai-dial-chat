@@ -2,6 +2,7 @@ import { signIn } from 'next-auth/react';
 
 import {
   EMPTY,
+  Observable,
   concat,
   distinctUntilChanged,
   filter,
@@ -17,6 +18,8 @@ import {
   tap,
   timer,
 } from 'rxjs';
+
+import { AnyAction } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
@@ -215,7 +218,7 @@ const getConversationsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const createConversationEpic: AppEpic = (action$) =>
+const createConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(OverlayActions.createConversation.match),
     switchMap(({ payload: { requestId, parentPath } }) => {
@@ -224,18 +227,40 @@ const createConversationEpic: AppEpic = (action$) =>
         parentPath,
       );
 
-      return concat(
+      const isFolderExists = ConversationsSelectors.selectFolderById(
+        state$.value,
+        conversationFolderId,
+      );
+
+      const actions: Observable<AnyAction>[] = [];
+
+      if (parentPath && !isFolderExists) {
+        actions.push(
+          of(
+            ConversationsActions.createFolder({
+              name: parentPath,
+              parentId: getConversationRootId(),
+            }),
+          ),
+        );
+      }
+
+      actions.push(
         of(
           ConversationsActions.createNewConversations({
             names: [DEFAULT_CONVERSATION_NAME],
             folderId: conversationFolderId,
           }),
+        ),
+        of(
           OverlayActions.createConversationEffect({
             requestId,
             parentPath,
           }),
         ),
       );
+
+      return concat(...actions);
     }),
   );
 

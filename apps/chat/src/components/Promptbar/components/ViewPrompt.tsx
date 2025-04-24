@@ -104,7 +104,7 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
   return (
     <>
       <ul className="flex max-h-[435px] flex-col gap-4 overflow-y-auto px-3 pb-4 md:px-6">
-        <PromptField valueClassName="line-clamp-2" label="Name" dataQa="name">
+        <PromptField valueClassName="line-clamp-3" label="Name" dataQa="name">
           {prompt.name}
         </PromptField>
         {prompt.description && (
