@@ -11,6 +11,7 @@ interface Props {
   options: DropdownSelectorOption[];
   placeholder: string;
   onChange: (options: readonly DropdownSelectorOption[]) => void;
+  id?: string;
 }
 
 export function DropdownSelector({
@@ -18,6 +19,7 @@ export function DropdownSelector({
   placeholder,
   onChange,
   values,
+  id,
 }: Props) {
   const { t } = useTranslation(Translation.Common);
 
@@ -30,11 +32,13 @@ export function DropdownSelector({
       name="colors"
       options={options}
       value={values}
+      id={id}
       components={{
         ClearIndicator: (props) => (
           <button type="button" className="group p-2">
             <IconX
               className="shrink-0 text-secondary group-hover:text-accent-primary"
+              data-qa="clear-dropdown-selection"
               onClick={() => props.clearValue()}
               size={18}
             />

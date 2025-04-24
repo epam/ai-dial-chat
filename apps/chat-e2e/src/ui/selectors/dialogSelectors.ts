@@ -258,7 +258,7 @@ export const AddApplicationGeneralInfoFormSelector = {
   version: '#version',
   icon: '#icon',
   description: '#description',
-  topics: '#topics',
+  topicsDropdown: '#topics-dropdown',
   nextButton: '[data-qa="save-application-general-info"]',
 };
 

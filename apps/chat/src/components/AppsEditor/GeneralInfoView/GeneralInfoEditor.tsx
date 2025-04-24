@@ -290,6 +290,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
                 options={topicOptions}
                 placeholder={t('Select one or more topics')}
                 onChange={(v) => field.onChange(v.map((o) => o.value))}
+                id="topics-dropdown"
               />
             )}
           />

@@ -12,6 +12,7 @@ import {
 } from '@/src/testData';
 import { AppEditSteps, BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
+import { expect } from '@playwright/test';
 
 dialTest(
   'Create custom app with required fields only.\n' + // EPMRTC-5130
@@ -709,6 +710,142 @@ dialTest(
         await baseAssertion.assertElementState(agentDetailsModal, 'visible');
         await agentDetailsModalAssertion.assertApplicationVersion(
           appEntity2_v2.version!,
+        );
+      },
+    );
+  },
+);
+
+dialTest.only(
+  'Custom app Topic dropdown select',
+  async ({
+    marketplacePage,
+    marketplaceHeader,
+    addAppDropdownMenu,
+    appEditorPage,
+    appEditorGeneralForm,
+    setTestIds,
+    baseAssertion,
+  }) => {
+    setTestIds('EPMRTC-4374');
+    const numberOfTopicsToSelect = 5;
+    let allTopics: string[] = [];
+    let topicsToSelect: string[] = [];
+
+    await dialTest.step('Open My workspace', async () => {
+      await marketplacePage.openMyWorkspacePage();
+      await marketplacePage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'Click Add app button and select Custom app',
+      async () => {
+        await marketplaceHeader.addAppButton.click();
+        await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
+        await appEditorPage.waitForPageLoaded();
+      },
+    );
+
+    await dialTest.step(
+      'Click on Topics drop down and verify the list is expanded',
+      async () => {
+        await appEditorGeneralForm.topicsDropdownToggle.click();
+        await appEditorGeneralForm.topicsDropdownMenuElement.waitForState();
+        await baseAssertion.assertElementState(
+          appEditorGeneralForm.topicsDropdownMenuElement, // Assert on the menu container
+          'visible',
+          ExpectedMessages.dropdownMenuIsVisible,
+        );
+        // Get options using the new direct method
+        allTopics = await appEditorGeneralForm.getAllTopicsOptions();
+        expect
+          .soft(allTopics.length, ExpectedMessages.elementsCountIsValid)
+          .toBeGreaterThan(0);
+      },
+    );
+
+    await dialTest.step(
+      `Select ${numberOfTopicsToSelect} Topics with the longest names and verify they appear on the form`,
+      async () => {
+        topicsToSelect = allTopics
+          .sort((a, b) => b.length - a.length)
+          .slice(0, numberOfTopicsToSelect);
+
+        for (const topic of topicsToSelect) {
+          // Select using the menu instance
+          await appEditorGeneralForm.selectTopicOption(topic);
+        }
+        // Click outside (e.g., on the name field) to close the dropdown
+        await appEditorGeneralForm.topicsDropdownToggle.click();
+        // Assert the menu element is hidden
+        await baseAssertion.assertElementState(
+          appEditorGeneralForm.topicsDropdownMenuElement, // Assert on the menu container
+          'hidden',
+          ExpectedMessages.dropdownMenuIsHidden,
+        );
+
+        // Get selected topics using the new method
+        const selectedTopics = await appEditorGeneralForm.getSelectedTopics();
+        // Assert count using the new element
+        await baseAssertion.assertElementsCount(
+          appEditorGeneralForm.selectedTopicPills,
+          numberOfTopicsToSelect,
+          ExpectedMessages.elementsCountIsValid,
+        );
+        // Sort both arrays for consistent comparison
+        baseAssertion.assertArrayIncludesAll(
+          selectedTopics.sort(),
+          topicsToSelect.sort(),
+          ExpectedMessages.fieldValueIsValid,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Delete any single Topic using the X icon on the pill',
+      async () => {
+        const topicToDelete = GeneratorUtil.randomArrayElement(topicsToSelect);
+        // Use the new method to delete a specific topic
+        await appEditorGeneralForm.deleteSelectedTopic(topicToDelete);
+
+        const remainingTopics = topicsToSelect
+          .filter((t) => t !== topicToDelete)
+          .sort();
+        // Get current selected topics again
+        const currentSelectedTopics =
+          await appEditorGeneralForm.getSelectedTopics();
+
+        // Assert count using the new element
+        await baseAssertion.assertElementsCount(
+          appEditorGeneralForm.selectedTopicPills,
+          numberOfTopicsToSelect - 1,
+          ExpectedMessages.elementsCountIsValid,
+        );
+        // Verify remaining topics
+        baseAssertion.assertArrayIncludesAll(
+          currentSelectedTopics.sort(),
+          remainingTopics,
+          ExpectedMessages.fieldValueIsValid,
+        );
+        // Verify deleted topic is absent
+        baseAssertion.assertArrayExcludesAll(
+          currentSelectedTopics,
+          [topicToDelete],
+          ExpectedMessages.fieldValueIsValid,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on the main X icon in the Topics row to clear all selections',
+      async () => {
+        // Use the new method to clear all topics
+        await appEditorGeneralForm.clearAllTopics();
+        // Assert count using the new element
+        await baseAssertion.assertElementsCount(
+          appEditorGeneralForm.selectedTopicPills,
+          0,
+          ExpectedMessages.elementsCountIsValid,
         );
       },
     );
