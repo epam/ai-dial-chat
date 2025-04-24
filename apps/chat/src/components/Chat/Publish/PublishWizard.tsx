@@ -514,7 +514,7 @@ export function PublishModal<
         onSubmit={submitWrapper(handlePublish)}
         className="flex w-full flex-col divide-y divide-tertiary overflow-y-auto"
       >
-        <div className="px-3 pb-4 pt-8 md:pl-4 md:pr-10 md:pt-4">
+        <div className="py-4 pl-3 pr-10 md:pl-4">
           <Field
             className="border-none p-0 text-base font-semibold"
             {...register('publishRequestName', validators.publishRequestName)}
