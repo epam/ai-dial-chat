@@ -59,7 +59,7 @@ const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
     return (
       <button
         onClick={visibleActions[0].onClick}
-        className="button button-primary hidden items-center gap-2 py-2 sm:flex"
+        className="button button-primary hidden items-center gap-2 py-2 xl:flex"
       >
         <IconPlus size={18} />
         <span>{t('Add app')}</span>
@@ -73,7 +73,7 @@ const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       placement="bottom"
-      triggerIconClassName="max-sm:hidden"
+      triggerIconClassName="max-xl:hidden"
       TriggerCustomRenderer={
         <button
           className="button button-primary flex items-center gap-2 py-2"
