@@ -171,7 +171,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await prompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.share);
-        await shareModal.sharedAccessMessage.click();
+        await shareModal.removeAccessBtn.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
         await promptAssertion.assertEntityArrowIconState(
           { name: prompt.name },
@@ -180,7 +180,7 @@ dialTest(
 
         const sharedEntities =
           await additionalUserShareApiHelper.listSharedWithMePrompts();
-        await shareApiAssertion.assertSharedWithMeEntityState(
+        shareApiAssertion.assertSharedWithMeEntityState(
           sharedEntities,
           prompt,
           'hidden',
