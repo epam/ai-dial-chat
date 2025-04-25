@@ -184,44 +184,40 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
     }
   };
 
-  const handleUrlInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
+  const handleUrlChange = (e: React.FormEvent<HTMLInputElement>) => {
     const input = e.currentTarget;
     const cleaned = input.value.replace(/\s+/g, '').replace(/\.{2,}/g, '.');
 
     if (input.value !== cleaned) {
-      const cursorPosition = input.selectionStart ?? input.value.length;
       input.value = cleaned;
-
-      const setter = Object.getOwnPropertyDescriptor(
-        HTMLInputElement.prototype,
-        'value',
-      )?.set;
-      setter?.call(input, cleaned);
-      input.setSelectionRange(cursorPosition, cursorPosition);
       input.dispatchEvent(new Event('input', { bubbles: true }));
     }
-  }, []);
-
-  const handleUrlKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === ' ') e.preventDefault();
   };
 
-  const handleUrlPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    const pasted = e.clipboardData.getData('text').replace(/\s+/g, '');
-
-    const input = e.currentTarget;
-    const start = input.selectionStart ?? 0;
-    const end = input.selectionEnd ?? 0;
-
-    input.setRangeText(pasted, start, end, 'end');
-
-    const setter = Object.getOwnPropertyDescriptor(
-      HTMLInputElement.prototype,
-      'value',
-    )?.set;
-    setter?.call(input, input.value);
-    input.dispatchEvent(new Event('input', { bubbles: true }));
+  const handlePreventSpace = (
+    e:
+      | React.KeyboardEvent<HTMLInputElement>
+      | React.ClipboardEvent<HTMLInputElement>,
+  ) => {
+    if (e.type === 'keydown') {
+      const keyEvent = e as React.KeyboardEvent<HTMLInputElement>;
+      if (keyEvent.key === ' ') {
+        e.preventDefault();
+      }
+    } else if (e.type === 'paste') {
+      e.preventDefault();
+      const pasted = (e as React.ClipboardEvent<HTMLInputElement>).clipboardData
+        .getData('text')
+        .replace(/\s+/g, '');
+      const input = e.currentTarget;
+      input.setRangeText(
+        pasted,
+        input.selectionStart ?? 0,
+        input.selectionEnd ?? 0,
+        'end',
+      );
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
   };
 
   const autoSaveHandler = useCallback(() => {
@@ -315,10 +311,10 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
           id="completionUrl"
           error={errors.completionUrl?.message}
           data-qa="completion-url"
-          onKeyDown={handleUrlKeyDown}
           onBeforeInput={handleUrlBeforeInput}
-          onInput={handleUrlInput}
-          onPaste={handleUrlPaste}
+          onKeyDown={handlePreventSpace}
+          onPaste={handlePreventSpace}
+          onInput={handleUrlChange}
         />
       </div>
     </form>
