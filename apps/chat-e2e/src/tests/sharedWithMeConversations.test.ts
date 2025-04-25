@@ -253,7 +253,7 @@ dialSharedWithMeTest(
 
 dialSharedWithMeTest(
   'Shared with me. Share root Folder.\n' +
-    'Shared with me. Folder with folder/chat inside is deleted.\n' +
+    'Shared with me. Folder with folder/chat inside is unshared.\n' +
     'Shared with me. No delete option in context menu for chat/folder in shared folder.\n' +
     'Shared with me. Chat in shared folder is automatically opened if to click on the link',
   async ({
@@ -268,6 +268,8 @@ dialSharedWithMeTest(
     additionalShareUserPage,
     setTestIds,
     additionalShareUserLocalStorageManager,
+    additionalShareUserSharedWithMeFoldersAssertion,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-1828', 'EPMRTC-2767', 'EPMRTC-1833', 'EPMRTC-2869');
     let nestedFolders: FolderInterface[];
@@ -307,48 +309,41 @@ dialSharedWithMeTest(
           selectedSharedConversationName: nestedConversations[0].name,
           selectedSharedFolderName: nestedFolders[0].name,
         });
-        await expect
-          .soft(
-            additionalShareUserSharedFolderConversations.getSelectedFolderEntity(
-              nestedFolders[0].name,
-              nestedConversations[0].name,
-            ),
-            ExpectedMessages.conversationIsSelected,
-          )
-          .toBeVisible();
+        await additionalShareUserSharedWithMeFoldersAssertion.assertFolderEntitySelectedState(
+          { name: nestedFolders[0].name },
+          { name: nestedConversations[0].name },
+          true,
+        );
       },
     );
 
     await dialSharedWithMeTest.step(
       'Verify no context menu available for folders and chats under root',
       async () => {
-        await expect
-          .soft(
-            await additionalShareUserSharedFolderConversations.getFolderDropdownMenu(
-              nestedFolders[1].name,
-            ),
-            ExpectedMessages.contextMenuIsNotAvailable,
-          )
-          .toBeHidden();
+        for (let i = 1; i < nestedLevel; i++) {
+          await additionalShareUserSharedWithMeFoldersAssertion.hoverAndAssertFolderDotsMenuState(
+            { name: nestedFolders[i].name },
+            'hidden',
+          );
 
-        await additionalShareUserSharedFolderConversations.openFolderEntityDropdownMenu(
-          nestedFolders[nestedLevel - 1].name,
-          nestedConversations[nestedLevel - 1].name,
-        );
-        const nestedConversationMenuOptions =
-          await additionalShareUserSharedWithMeConversationDropdownMenu.getAllMenuOptions();
-        expect
-          .soft(
+          await additionalShareUserSharedFolderConversations.openFolderEntityDropdownMenu(
+            nestedFolders[i].name,
+            nestedConversations[i].name,
+          );
+          const nestedConversationMenuOptions =
+            await additionalShareUserSharedWithMeConversationDropdownMenu.getAllMenuOptions();
+          baseAssertion.assertArrayExcludesAll(
             nestedConversationMenuOptions,
-            ExpectedMessages.contextMenuOptionsValid,
-          )
-          .toEqual(expect.not.arrayContaining([MenuOptions.delete]));
-        await additionalShareUserPage.keyboard.press(keys.escape);
+            [MenuOptions.unshare],
+            ExpectedMessages.contextMenuOptionIsNotAvailable,
+          );
+          await additionalShareUserPage.keyboard.press(keys.escape);
+        }
       },
     );
 
     await dialSharedWithMeTest.step(
-      'Try to delete root folder and cancel the process',
+      'Try to unshare root folder and cancel the process',
       async () => {
         await additionalShareUserSharedFolderConversations.openFolderDropdownMenu(
           nestedFolders[0].name,
@@ -357,11 +352,22 @@ dialSharedWithMeTest(
           MenuOptions.unshare,
         );
         await additionalShareUserConfirmationDialog.cancelDialog();
+        await additionalShareUserSharedWithMeFoldersAssertion.assertFolderState(
+          { name: nestedFolders[0].name },
+          'visible',
+        );
+        for (let i = 0; i < nestedLevel; i++) {
+          await additionalShareUserSharedWithMeFoldersAssertion.assertFolderEntityState(
+            { name: nestedFolders[i].name },
+            { name: nestedConversations[i].name },
+            'visible',
+          );
+        }
       },
     );
 
     await dialSharedWithMeTest.step(
-      'Delete root folder and verify all nested structure is deleted',
+      'Unshare the root folder and verify all nested structure is deleted',
       async () => {
         await additionalShareUserSharedFolderConversations.openFolderDropdownMenu(
           nestedFolders[0].name,
@@ -372,16 +378,16 @@ dialSharedWithMeTest(
         await additionalShareUserConfirmationDialog.confirm({
           triggeredHttpMethod: 'POST',
         });
+        await additionalShareUserSharedWithMeFoldersAssertion.assertFolderState(
+          { name: nestedFolders[0].name },
+          'hidden',
+        );
         for (let i = 0; i < nestedLevel; i++) {
-          await expect
-            .soft(
-              additionalShareUserSharedFolderConversations.getFolderEntity(
-                nestedFolders[i].name,
-                nestedConversations[i].name,
-              ),
-              ExpectedMessages.conversationIsNotVisible,
-            )
-            .toBeHidden();
+          await additionalShareUserSharedWithMeFoldersAssertion.assertFolderEntityState(
+            { name: nestedFolders[i].name },
+            { name: nestedConversations[i].name },
+            'hidden',
+          );
         }
       },
     );
@@ -391,16 +397,16 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.reloadPage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserSharedWithMeFoldersAssertion.assertFolderState(
+          { name: nestedFolders[0].name },
+          'hidden',
+        );
         for (let i = 0; i < nestedLevel; i++) {
-          await expect
-            .soft(
-              additionalShareUserSharedFolderConversations.getFolderEntity(
-                nestedFolders[i].name,
-                nestedConversations[i].name,
-              ),
-              ExpectedMessages.conversationIsNotVisible,
-            )
-            .toBeHidden();
+          await additionalShareUserSharedWithMeFoldersAssertion.assertFolderEntityState(
+            { name: nestedFolders[i].name },
+            { name: nestedConversations[i].name },
+            'hidden',
+          );
         }
       },
     );
@@ -823,12 +829,13 @@ dialSharedWithMeTest(
 );
 
 dialSharedWithMeTest(
-  'Shared with me. Structure creates again if it was deleted if to open the same link',
+  'Shared with me. Structure creates again if it was unshared if to open the same link',
   async ({
     conversationData,
     dataInjector,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
+    shareApiAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1855');
@@ -854,29 +861,24 @@ dialSharedWithMeTest(
       },
     );
 
-    await dialSharedWithMeTest.step(
-      'Delete shared folder from "Shared with me" section',
-      async () => {
-        let sharedEntities =
-          await additionalUserShareApiHelper.listSharedWithMeConversations();
-        await additionalUserShareApiHelper.deleteSharedWithMeEntities(
-          sharedEntities.resources.filter(
-            (r) => r.name === conversationInFolder.folders.name,
-          ),
-        );
-        sharedEntities =
-          await additionalUserShareApiHelper.listSharedWithMeConversations();
-
-        expect
-          .soft(
-            sharedEntities.resources.find(
-              (f) => f.name === conversationInFolder.folders.name,
-            ),
-            ExpectedMessages.folderIsNotShared,
-          )
-          .toBeUndefined();
-      },
-    );
+    await dialSharedWithMeTest.step('Unshare the folder', async () => {
+      let sharedEntities =
+        await additionalUserShareApiHelper.listSharedWithMeConversations();
+      await additionalUserShareApiHelper.deleteSharedWithMeEntities(
+        sharedEntities.resources.filter(
+          (r) => r.name === conversationInFolder.folders.name,
+        ),
+      );
+      conversationInFolder.folders.id =
+        conversationInFolder.conversations[0].folderId + ItemUtil.urlSeparator;
+      sharedEntities =
+        await additionalUserShareApiHelper.listSharedWithMeConversations();
+      shareApiAssertion.assertSharedWithMeEntityState(
+        sharedEntities,
+        conversationInFolder.folders,
+        'hidden',
+      );
+    });
 
     await dialSharedWithMeTest.step(
       'Accept the same share invite again and verify folder with chat shown in "Shared with me" section',
@@ -884,14 +886,11 @@ dialSharedWithMeTest(
         await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
         const sharedEntities =
           await additionalUserShareApiHelper.listSharedWithMeConversations();
-        expect
-          .soft(
-            sharedEntities.resources.find(
-              (f) => f.name === conversationInFolder.folders.name,
-            ),
-            ExpectedMessages.folderIsNotShared,
-          )
-          .toBeDefined();
+        shareApiAssertion.assertSharedWithMeEntityState(
+          sharedEntities,
+          conversationInFolder.folders,
+          'visible',
+        );
       },
     );
   },
@@ -976,17 +975,17 @@ dialSharedWithMeTest(
         conversationInFolder.folders.id =
           conversationInFolder.conversations[0].folderId +
           ItemUtil.urlSeparator;
-        await shareApiAssertion.assertSharedWithMeEntityState(
+        shareApiAssertion.assertSharedWithMeEntityState(
           sharedEntities,
           conversationInFolder.folders,
           'hidden',
         );
-        await shareApiAssertion.assertSharedWithMeEntityState(
+        shareApiAssertion.assertSharedWithMeEntityState(
           sharedEntities,
           conversationInFolder.conversations[0],
           'hidden',
         );
-        await shareApiAssertion.assertSharedWithMeEntityState(
+        shareApiAssertion.assertSharedWithMeEntityState(
           sharedEntities,
           conversation,
           'hidden',

@@ -4,7 +4,7 @@ import { ShareEntity } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 
 export class ShareApiAssertion {
-  public async assertSharedWithMeEntityState(
+  public assertSharedWithMeEntityState(
     sharedEntities: {
       resources: BackendChatEntity[];
     },
@@ -27,7 +27,7 @@ export class ShareApiAssertion {
           .toBeUndefined();
   }
 
-  public async assertSharedWithMeEntitiesCount(
+  public assertSharedWithMeEntitiesCount(
     sharedEntities: {
       resources: BackendChatEntity[];
     },
