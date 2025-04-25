@@ -343,7 +343,7 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Try to unshared root folder and cancel the process',
+      'Try to unshare root folder and cancel the process',
       async () => {
         await additionalShareUserSharedFolderConversations.openFolderDropdownMenu(
           nestedFolders[0].name,
