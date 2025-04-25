@@ -20,7 +20,7 @@ import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
+import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MarketplaceActions,

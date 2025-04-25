@@ -2,6 +2,7 @@ import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
 import { API, MenuOptions, MockedChatApiResponseBodies } from '@/src/testData';
 import { Cursors } from '@/src/ui/domData';
+import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 
 dialTest(
   'Another chat is not available while AI is generating a response.\n' +
@@ -41,7 +42,10 @@ dialTest(
     await dialTest.step(
       'Prepare 1 empty conversation, replay conversation and 2 default conversations',
       async () => {
-        firstConversation = conversationData.prepareEmptyConversation();
+        firstConversation = conversationData.prepareEmptyConversation(
+          ModelsUtil.getDefaultModel()!,
+          `z${GeneratorUtil.randomString(10)}`,
+        );
         conversationData.resetData();
         preReplayConversation = conversationData.prepareDefaultConversation();
         conversationData.resetData();
@@ -53,10 +57,10 @@ dialTest(
         conversationData.resetData();
 
         await dataInjector.createConversations([
-          firstConversation,
           preReplayConversation,
           replayConversation,
           comparedConversation,
+          firstConversation,
         ]);
         await localStorageManager.setShowSideBarPanels();
       },
@@ -90,9 +94,7 @@ dialTest(
         await conversationAssertion.assertSelectedConversation(
           comparedConversation.name,
         );
-        await conversations.selectConversation(firstConversation.name, {
-          isHttpMethodTriggered: true,
-        });
+        await conversations.selectConversation(firstConversation.name);
         await conversationAssertion.assertSelectedConversation(
           firstConversation.name,
         );
