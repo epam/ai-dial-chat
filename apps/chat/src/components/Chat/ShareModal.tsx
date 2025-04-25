@@ -213,7 +213,7 @@ export function ShareModalView() {
             tooltip={t(`${t('Share')}: ${shareResourceName?.trim()}`)}
           >
             <div
-              className="line-clamp-2 w-full break-words"
+              className="line-clamp-2 w-full break-words pr-6"
               data-qa="modal-entity-name"
             >
               {t(`${t('Share')}: ${shareResourceName?.trim()}`)}
