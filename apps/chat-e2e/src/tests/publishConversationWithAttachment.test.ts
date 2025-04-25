@@ -34,7 +34,8 @@ dialAdminTest(
     `Link 'Go to a review' change to 'Continue review" when admin started review with click on chat .\n` +
     'Publish request for chat with already published file.\n' +
     'Publish chat with file, file is from Organization section.\n' +
-    'Publish request toooltips',
+    'Publish request toooltips.\n' +
+    `Author's public name displayed in metadata for chats from Organization`,
   async ({
     dialHomePage,
     conversationData,
@@ -59,6 +60,7 @@ dialAdminTest(
     adminPublicationReviewControl,
     adminFilesToApprove,
     adminChatMessages,
+    informationModal,
     organizationConversationAssertion,
     downloadAssertion,
     adminApproveRequiredConversationsAssertion,
@@ -82,6 +84,7 @@ dialAdminTest(
       'EPMRTC-4080',
       'EPMRTC-4704',
       'EPMRTC-3457',
+      'EPMRTC-5652',
     );
     let imageUrl: string;
     const filePath = API.modelFilePath(modelWithInputAttachments.id);
@@ -93,6 +96,7 @@ dialAdminTest(
       response: Publication;
     };
     const updatedConversationName = GeneratorUtil.randomString(5);
+    const author = GeneratorUtil.randomString(10);
 
     await dialSharedWithMeTest.step(
       'Prepare conversation with attachment in the request',
@@ -177,9 +181,10 @@ dialAdminTest(
     );
 
     await dialTest.step(
-      'Set publication request name and submit the request',
+      'Set publication request name, update author and submit the request',
       async () => {
         await publishingRequestModal.requestName.fillInInput(requestName);
+        await publishingRequestModal.author.fillInInput(author);
         publishApiModels =
           await publishingRequestModal.sendPublicationRequest();
         await baseAssertion.assertElementState(
@@ -324,6 +329,24 @@ dialAdminTest(
             Attachment.cloudImageName,
           ),
         );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Open conversation dropdown menu, select "Info" option and verify modal data',
+      async () => {
+        await organizationConversations.openEntityDropdownMenu(
+          conversation.name,
+        );
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.info, {
+          triggeredHttpMethod: 'GET',
+        });
+        await baseAssertion.assertElementState(informationModal, 'visible');
+        await baseAssertion.assertElementText(
+          informationModal.authorValue,
+          author,
+        );
+        await informationModal.cancelButton.click();
       },
     );
 

@@ -41,6 +41,11 @@ export class PublishRequestBuilder {
     return this;
   }
 
+  withDisplayAuthor(displayAuthor: string): PublishRequestBuilder {
+    this.publishRequest.displayAuthor = displayAuthor;
+    return this;
+  }
+
   withTargetFolder(path: string): PublishRequestBuilder {
     //remove leading and ending slashes
     path = path.replace(/^\/+|\/+$/g, '');

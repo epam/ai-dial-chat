@@ -231,6 +231,10 @@ export const ExpectedConstants = {
   copiedLinkText: 'Copied!',
   copyLinkText: 'Copy link',
   copiedToastMessage: 'Link copied!',
+  informationModalTitle: 'Information',
+  informationModalLastUpdatedLabel: 'Last updated:',
+  informationModalCreatedDateLabel: 'Creation date:',
+  informationModalAuthorLabel: 'Author:',
 };
 
 export enum Types {

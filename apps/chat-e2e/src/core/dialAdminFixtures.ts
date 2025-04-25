@@ -5,6 +5,7 @@ import {
   ChatHeader,
   ChatMessages,
   DropdownMenu,
+  InformationModal,
   PromptBar,
   PublicationReviewControl,
   PublishingApprovalModal,
@@ -99,6 +100,7 @@ const dialAdminTest = dialTest.extend<{
   adminOrganizationConversations: OrganizationConversationsTree;
   adminVariableModal: VariableModalDialog;
   adminConversationDropdownMenu: DropdownMenu;
+  adminInformationModal: InformationModal;
   adminChatHeaderAssertion: ChatHeaderAssertion<ChatHeader>;
   adminChatMessagesAssertion: ChatMessagesAssertion;
   adminOrganizationFolderDropdownMenuAssertion: MenuAssertion;
@@ -268,6 +270,10 @@ const dialAdminTest = dialTest.extend<{
   adminConversationDropdownMenu: async ({ adminConversations }, use) => {
     const adminConversationDropdownMenu = adminConversations.getDropdownMenu();
     await use(adminConversationDropdownMenu);
+  },
+  adminInformationModal: async ({ adminPage }, use) => {
+    const adminInformationModal = new InformationModal(adminPage);
+    await use(adminInformationModal);
   },
   adminChatHeaderAssertion: async ({ adminChatHeader }, use) => {
     const adminChatHeaderAssertion = new ChatHeaderAssertion(adminChatHeader);

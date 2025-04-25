@@ -26,10 +26,16 @@ interface infoRowProps {
 function InfoRow({ dataQa, infoLabel, children }: infoRowProps) {
   return (
     <div className="grid grid-cols-3 gap-4" data-qa={dataQa}>
-      <span className="col-span-1 whitespace-pre-wrap break-words text-secondary">
+      <span
+        className="col-span-1 whitespace-pre-wrap break-words text-secondary"
+        data-qa={dataQa.concat('-label')}
+      >
         {infoLabel}:
       </span>
-      <span className="col-span-2 whitespace-pre-wrap break-words">
+      <span
+        className="col-span-2 whitespace-pre-wrap break-words"
+        data-qa={dataQa.concat('-value')}
+      >
         {children}
       </span>
     </div>

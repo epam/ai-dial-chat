@@ -20,4 +20,8 @@ export class DateUtil {
   public static convertUnixTimestampToLocalDate(timestamp: number) {
     return new Date(timestamp).toLocaleDateString();
   }
+
+  public static getCurrentLocalDate() {
+    return new Date().toLocaleDateString();
+  }
 }

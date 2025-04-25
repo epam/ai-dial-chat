@@ -125,6 +125,7 @@ export function PublicVersionSelector({
             btnClassNames,
             readonly && 'text-xs text-secondary',
           )}
+          data-qa="version"
         >
           {textBeforeSelector ? textBeforeSelector : t('v. ')}
           {currentVersionGroup.selectedVersion.version}

@@ -12,6 +12,7 @@ import {
   ConversationSettingsModal,
   ConversationToCompare,
   DropdownMenu,
+  InformationModal,
   Marketplace,
   MarketplaceAgents,
   MarketplaceContainer,
@@ -123,6 +124,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserVariableModalAssertion: VariableModalAssertion;
   additionalShareUserConversationDropdownMenu: DropdownMenu;
   additionalShareUserPublishingRequestModal: PublishingRequestModal;
+  additionalShareUserInformationModal: InformationModal;
   additionalShareUserSharedFolderPromptsAssertions: FolderAssertion<FolderPrompts>;
   additionalShareUserPromptsDropdownMenuAssertion: MenuAssertion;
   additionalShareUserFolderDropdownMenuAssertion: MenuAssertion;
@@ -452,6 +454,15 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserPublishingRequestModal =
       new PublishingRequestModal(additionalShareUserPage);
     await use(additionalShareUserPublishingRequestModal);
+  },
+  additionalShareUserInformationModal: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserInformationModal = new InformationModal(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserInformationModal);
   },
   additionalShareUserSharedWithMePromptDropdownMenu: async (
     { additionalShareUserSharedWithMePrompts },
