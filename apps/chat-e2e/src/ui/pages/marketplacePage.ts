@@ -13,46 +13,87 @@ export class MarketplacePage extends BasePage {
     return this.marketplaceContainer;
   }
 
-  async openMyWorkspacePage({
-    updateInstalledDeployments = true,
-  }: { updateInstalledDeployments?: boolean } = {}) {
-    if (updateInstalledDeployments) {
+  async openMyWorkspacePage(
+    options: { updateInstalledDeployments?: boolean } = {
+      updateInstalledDeployments: true,
+    },
+  ): Promise<void> {
+    await this.openMarketplaceUrl(ExpectedConstants.workspacePath(), {
+      updateInstalledDeployments: options.updateInstalledDeployments,
+      getInstalledDeployments: true,
+      getPublishedApplications: true,
+    });
+    await this.waitForPageLoaded();
+  }
+
+  async openMarketplacePage(
+    options: { updateInstalledDeployments?: boolean } = {
+      updateInstalledDeployments: true,
+    },
+  ): Promise<void> {
+    await this.openMarketplaceUrl(ExpectedConstants.marketplacePath, {
+      updateInstalledDeployments: options.updateInstalledDeployments,
+      getInstalledDeployments: true,
+      getPublishedApplications: true,
+    });
+    await this.waitForPageLoaded();
+  }
+
+  async openCreateCustomAppPage(
+    options: { updateInstalledDeployments?: boolean } = {
+      updateInstalledDeployments: true,
+    },
+  ): Promise<void> {
+    await this.openMarketplaceUrl(ExpectedConstants.createCustomAppPath, {
+      updateInstalledDeployments: options.updateInstalledDeployments,
+      getInstalledDeployments: false,
+      getPublishedApplications: false,
+    });
+  }
+
+  private async openMarketplaceUrl(
+    url: string,
+    options: {
+      updateInstalledDeployments?: boolean;
+      getInstalledDeployments?: boolean;
+      getPublishedApplications?: boolean;
+    } = {},
+  ): Promise<void> {
+    const responsePromises = [];
+    let commonGetHosts: string[] = [];
+
+    if (options.getInstalledDeployments) {
+      commonGetHosts.push(API.installedDeploymentsHost());
+    }
+    if (options.getPublishedApplications) {
+      commonGetHosts.push(API.publishedApplicationsHost);
+    }
+
+    // Wait for the common GET requests
+    for (const host of commonGetHosts) {
       const resp = this.page.waitForResponse(
+        (resp) =>
+          resp.url().includes(host) &&
+          resp.request().method() === 'GET' &&
+          resp.status() === 200,
+      );
+      responsePromises.push(resp);
+    }
+
+    // Wait for the PUT request if needed
+    if (options.updateInstalledDeployments) {
+      const putResp = this.page.waitForResponse(
         (resp) =>
           resp.url().includes(API.installedDeploymentsHost()) &&
           resp.request().method() === 'PUT' &&
           resp.status() === 200,
       );
-      await this.navigateToUrl(ExpectedConstants.workspacePath());
-      await resp;
-    } else {
-      await this.navigateToUrl(ExpectedConstants.workspacePath());
+      responsePromises.push(putResp);
     }
-    await this.waitForPageLoaded();
-  }
 
-  async openCreateCustomAppPage() {
-    //TODO Do we need to wait for something?
-    await this.navigateToUrl(ExpectedConstants.createCustomAppPath);
-  }
-
-  async openMarketplacePage() {
-    const responses = [];
-    const hostsArray = [
-      API.publishedApplicationsHost,
-      API.installedDeploymentsHost(),
-    ];
-    for (const host of hostsArray) {
-      const resp = this.page.waitForResponse(
-        (resp) => resp.url().includes(host) && resp.status() === 200,
-      );
-      responses.push(resp);
-    }
-    await this.navigateToUrl(ExpectedConstants.marketplacePath);
-    for (const resp of responses) {
-      await resp;
-    }
-    await this.waitForPageLoaded();
+    // Perform navigation and wait for all expected responses
+    await this.navigateToUrl(url);
+    await Promise.all(responsePromises);
   }
 
   async waitForPageLoaded() {

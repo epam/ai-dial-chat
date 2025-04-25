@@ -821,7 +821,7 @@ dialTest(
       'Click on the main X icon in the Topics row to clear all selections',
       async () => {
         await appEditorGeneralForm.clearAllTopics();
-        // Assert selected topics count using the new element
+        // Assert selected topics count
         await baseAssertion.assertElementsCount(
           appEditorGeneralForm.selectedTopicPills,
           0,
