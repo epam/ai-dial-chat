@@ -63,6 +63,7 @@ import { ChatNotFound } from '@/src/ui/webElements/chatNotFound';
 import {
   ConversationsTree,
   FolderPrompts,
+  Folders,
   PromptsTree,
 } from '@/src/ui/webElements/entityTree';
 import { SharedFolderConversations } from '@/src/ui/webElements/entityTree/sidebar/sharedFolderConversations';
@@ -132,6 +133,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserPromptAssertion: PromptAssertion;
   additionalShareUserPromptModalAssertion: PromptModalAssertion;
   additionalShareUserPromptBarFolderAssertion: FolderAssertion<FolderPrompts>;
+  additionalShareUserSharedWithMeFoldersAssertion: FolderAssertion<Folders>;
   additionalShareUserSystemPromptListAssertion: PromptListAssertion;
   additionalShareUserAgentSettingAssertion: AgentSettingAssertion;
   additionalShareUserAttachFilesModal: AttachFilesModal;
@@ -668,6 +670,15 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserFolderPrompts,
     );
     await use(additionalShareUserPromptBarFolderAssertion);
+  },
+  additionalShareUserSharedWithMeFoldersAssertion: async (
+    { additionalShareUserSharedFolderConversations },
+    use,
+  ) => {
+    const additionalShareUserSharedWithMeFoldersAssertion = new FolderAssertion(
+      additionalShareUserSharedFolderConversations,
+    );
+    await use(additionalShareUserSharedWithMeFoldersAssertion);
   },
   additionalShareUserSystemPromptListAssertion: async (
     { additionalShareUserAgentSettings },
