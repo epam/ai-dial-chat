@@ -23,9 +23,7 @@ import {
   tap,
 } from 'rxjs/operators';
 
-import { AnyAction } from '@reduxjs/toolkit';
-
-import { combineEpics } from 'redux-observable';
+import { combineEpics, ofType } from 'redux-observable';
 
 import {
   isApplicationType,
@@ -48,7 +46,7 @@ import {
   ApplicationStatus,
   CustomApplicationModel,
 } from '@/src/types/applications';
-import { AppEpic } from '@/src/types/store';
+import { AppAction, AppEpic } from '@/src/types/store';
 
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -59,7 +57,7 @@ import { DeleteType, MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
 import { ApplicationActions } from '../application/application.reducers';
-import { ApplicationTypesSchemasActions } from '../applicationTypeSchemas/applicationTypeSchemas.reducer';
+import { ApplicationTypesSchemasActions } from '../applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { AuthSelectors } from '../auth/auth.reducers';
 import {
   ConversationsActions,
@@ -69,9 +67,11 @@ import { MarketplaceActions } from '../marketplace/marketplace.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { ShareActions, ShareSelectors } from '../share/share.reducers';
 
+import isString from 'lodash-es/isString';
+
 const createApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ApplicationActions.create.match),
+    ofType(ApplicationActions.create.type),
     switchMap(({ payload }) => {
       const { applicationData, slug, schema } = payload;
       if (!applicationData.version) {
@@ -137,7 +137,7 @@ const createApplicationEpic: AppEpic = (action$) =>
 
 const createFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ApplicationActions.createFail.match),
+    ofType(ApplicationActions.createFail.type),
     switchMap(() =>
       of(UIActions.showErrorToast(translate(errorsMessages.createFailed))),
     ),
@@ -145,7 +145,7 @@ const createFailEpic: AppEpic = (action$) =>
 
 const deleteApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ApplicationActions.delete.match),
+    ofType(ApplicationActions.delete.type),
     switchMap(({ payload: { id, reference } }) =>
       ApplicationService.delete(id).pipe(
         switchMap(() => {
@@ -169,7 +169,7 @@ const deleteApplicationEpic: AppEpic = (action$) =>
 
 const updateApplicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ApplicationActions.update.match),
+    ofType(ApplicationActions.update.type),
     switchMap(({ payload }) => {
       const initialActions$ = of(
         ApplicationActions.updateStart(),
@@ -282,7 +282,7 @@ const updateApplicationEpic: AppEpic = (action$, state$) =>
 
 const editApplicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ApplicationActions.edit.match),
+    ofType(ApplicationActions.edit.type),
     switchMap(({ payload }) => {
       if (!payload.updatedApplication.version) {
         return EMPTY;
@@ -330,7 +330,7 @@ const editApplicationEpic: AppEpic = (action$, state$) =>
 
 const getApplicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ApplicationActions.get.match),
+    ofType(ApplicationActions.get.type),
     switchMap(({ payload }) =>
       ApplicationService.get(payload.applicationId).pipe(
         switchMap((application) => {
@@ -338,10 +338,11 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
             return of(ApplicationActions.getFail());
           }
 
+          const actions: Observable<AppAction>[] = [];
+
           const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
           const modelFromState = modelsMap[application.reference];
 
-          const actions: Observable<AnyAction>[] = [];
           actions.push(
             of(
               ApplicationActions.getSuccess({
@@ -379,7 +380,7 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
 
 const updateApplicationStatusEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ApplicationActions.startUpdatingFunctionStatus.match),
+    ofType(ApplicationActions.startUpdatingFunctionStatus.type),
     mergeMap(({ payload }) => {
       let request;
       switch (payload.status) {
@@ -429,7 +430,7 @@ const updateApplicationStatusEpic: AppEpic = (action$) =>
 
 const continueUpdatingApplicationStatusEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ApplicationActions.continueUpdatingFunctionStatus.match),
+    ofType(ApplicationActions.continueUpdatingFunctionStatus.type),
     mergeMap(({ payload }) =>
       interval(5000).pipe(
         concatMap(() =>
@@ -485,9 +486,10 @@ const continueUpdatingApplicationStatusEpic: AppEpic = (action$) =>
               (action) =>
                 (ApplicationActions.updateFunctionStatusFail.match(action) ||
                   (ApplicationActions.updateFunctionStatus.match(action) &&
-                    (action.payload.status === ApplicationStatus.DEPLOYED ||
-                      action.payload.status ===
-                        ApplicationStatus.UNDEPLOYED))) &&
+                    [
+                      ApplicationStatus.DEPLOYED,
+                      ApplicationStatus.UNDEPLOYED,
+                    ].includes(action.payload.status))) &&
                 payload.id === action.payload.id,
             ),
           ),
@@ -498,11 +500,11 @@ const continueUpdatingApplicationStatusEpic: AppEpic = (action$) =>
 
 const updateApplicationStatusSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(
-      (action) =>
-        ApplicationActions.updateFunctionStatus.match(action) &&
-        (action.payload.status === ApplicationStatus.DEPLOYED ||
-          action.payload.status === ApplicationStatus.UNDEPLOYED),
+    ofType(ApplicationActions.updateFunctionStatus.type),
+    filter(({ payload }) =>
+      [ApplicationStatus.DEPLOYED, ApplicationStatus.UNDEPLOYED].includes(
+        payload.status,
+      ),
     ),
     switchMap(({ payload }) => {
       const { name } = parseApplicationApiKey(payload.id);
@@ -520,7 +522,7 @@ const updateApplicationStatusSuccessEpic: AppEpic = (action$, state$) =>
 
 const updateApplicationStatusFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ApplicationActions.updateFunctionStatusFail.match),
+    ofType(ApplicationActions.updateFunctionStatusFail.type),
     mergeMap(({ payload }) => {
       const { name } = parseApplicationApiKey(payload.id);
 
@@ -548,7 +550,7 @@ const updateApplicationStatusFailEpic: AppEpic = (action$) =>
 
 const getApplicationLogsEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ApplicationActions.getLogs.match),
+    ofType(ApplicationActions.getLogs.type),
     switchMap(({ payload }) =>
       ApplicationService.getLogs(payload).pipe(
         map((logs) => {
@@ -564,7 +566,7 @@ const getApplicationLogsEpic: AppEpic = (action$) =>
 
 const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
   action$.pipe(
-    filter(ApplicationActions.enterEditMode.match),
+    ofType(ApplicationActions.enterEditMode.type),
     switchMap(({ payload }) => {
       const { entity, applicationType, detailedApplicationTypeSchemaId } =
         payload;
@@ -580,7 +582,7 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
         ),
       );
 
-      const actions: AnyAction[] = [
+      const actions: AppAction[] = [
         ApplicationActions.get({ applicationId: entity.id }),
       ];
 
@@ -603,15 +605,15 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
       const dispatchActions$ = concat(...actions.map((action) => of(action)));
 
       const waitForAppLoad$ = action$.pipe(
-        filter(ApplicationActions.getSuccess.match),
+        ofType(ApplicationActions.getSuccess.type),
         take(1),
       );
 
       const waitForSchema$ = needSchema
         ? action$.pipe(
-            filter(
+            ofType(
               ApplicationTypesSchemasActions
-                .fetchDetailedApplicationTypeSchemaSuccess.match,
+                .fetchDetailedApplicationTypeSchemaSuccess.type,
             ),
             take(1),
           )
@@ -649,7 +651,7 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
 
 const exitEditModeEpic: AppEpic = (action$, _state$, { router }) =>
   action$.pipe(
-    filter(ApplicationActions.exitEditor.match),
+    ofType(ApplicationActions.exitEditor.type),
     tap(({ payload }) => {
       if (payload.redirectUrl) {
         router.push({
@@ -667,26 +669,24 @@ const exitEditModeEpic: AppEpic = (action$, _state$, { router }) =>
 
 const resetSelectedWidgetEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(
-      (action) =>
-        ConversationsActions.selectConversations.match(action) ||
-        PublicationActions.selectPublication.match(action),
+    ofType(
+      ConversationsActions.selectConversations.type,
+      PublicationActions.selectPublication.type,
     ),
     switchMap(({ payload }) => {
       if (
-        typeof payload !== 'string' && payload
-          ? !!payload.conversationIds?.length
-          : true
+        !isString(payload) && payload ? payload.conversationIds.length : true
       ) {
         return of(ApplicationActions.selectWidget(undefined));
       }
+
       return EMPTY;
     }),
   );
 
 const duplicateApplicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ApplicationActions.duplicate.match),
+    ofType(ApplicationActions.duplicate.type),
     switchMap(({ payload }) => {
       const state = state$.value;
       const agentsMap = ModelsSelectors.selectModelsMap(state);

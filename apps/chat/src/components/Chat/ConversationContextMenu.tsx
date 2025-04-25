@@ -32,7 +32,7 @@ import { ContextMenuProps } from '@/src/types/menu';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
+import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { ChatActions } from '@/src/store/chat/chat.reducer';
 import {
   ConversationsActions,
