@@ -27,6 +27,9 @@ export class ChatHeader extends BaseElement {
   public chatModelIcon = this.getChildElementBySelector(
     `${ChatHeaderSelectors.chatAgent} >> ${Tags.img}`,
   );
+  public chatModelArrowIcon = this.getChildElementBySelector(
+    `${ChatHeaderSelectors.chatAgent} >> ${SideBarSelectors.arrowAdditionalIcon}`,
+  );
   public chatAddonIcons = this.getChildElementBySelector(
     `${ChatHeaderSelectors.chatAddons} > ${Tags.span}`,
   );

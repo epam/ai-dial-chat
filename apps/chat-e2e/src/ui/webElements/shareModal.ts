@@ -29,8 +29,12 @@ export class ShareModal extends BaseElement {
     ShareModalSelectors.shareText,
   );
 
-  public sharedAccessMessage = this.getChildElementBySelector(
-    ShareModalSelectors.shareAccessMessage,
+  public removeAccessBtn = this.getChildElementBySelector(
+    ShareModalSelectors.removeAccessBtn,
+  );
+
+  public notSharedEntityLabel = this.getChildElementBySelector(
+    ShareModalSelectors.notSharedEntityLabel,
   );
 
   public async getShareTextContent() {
