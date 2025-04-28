@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
+import { ApplicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
@@ -29,8 +30,10 @@ export const WidgetsHeader = () => {
   }, [dispatch]);
 
   const handleGoBack = useCallback(() => {
-    router.push(Routes.Widgets);
-  }, [router]);
+    router.push(Routes.Widgets).then(() => {
+      dispatch(ApplicationActions.clearSelectedWidget());
+    });
+  }, [dispatch, router]);
 
   const iconSize = isOverlay ? 18 : 24;
 

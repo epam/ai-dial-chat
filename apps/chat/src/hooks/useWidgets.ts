@@ -2,14 +2,16 @@ import { useCallback, useMemo } from 'react';
 
 import { useRouter } from 'next/router';
 
-import { useAppSelector } from '../store/hooks';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { ModelsSelectors } from '../store/models/models.reducers';
 import { SettingsSelectors } from '../store/settings/settings.selectors';
+import { ApplicationActions } from '@/src/store/actions';
 
 import { Routes } from '../constants/routes';
 
 export const useWidgets = () => {
   const router = useRouter();
+  const dispatch = useAppDispatch();
 
   const widgetsSchemaIds = useAppSelector(
     SettingsSelectors.selectWidgetsSchemaIds,
@@ -26,9 +28,11 @@ export const useWidgets = () => {
 
   const handleWidgetClick = useCallback(
     (id: string) => {
-      router.push(Routes.SelectedWidget.replace('[slug]', id));
+      router.push(Routes.SelectedWidget.replace('[slug]', id)).then(() => {
+        dispatch(ApplicationActions.setSelectedWidget(id));
+      });
     },
-    [router],
+    [dispatch, router],
   );
 
   return { widgetModels, handleWidgetClick };

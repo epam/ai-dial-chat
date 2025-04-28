@@ -17,6 +17,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { Translation } from '@/src/types/translation';
 
 import { ModelsSelectors } from '../store/models/models.reducers';
+import { ApplicationSelectors } from '@/src/store/application/application.reducers';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -34,6 +35,7 @@ import { Routes } from '@/src/constants/routes';
 
 import { Chatbar } from '@/src/components/Chatbar/Chatbar';
 import { ModelIcon, ModelTooltip } from '@/src/components/Chatbar/ModelIcon';
+import Loader from '@/src/components/Common/Loader';
 import Tooltip from '@/src/components/Common/Tooltip';
 import { MarketplaceFilterbar } from '@/src/components/Marketplace/MarketplaceFilterbar';
 import { Promptbar } from '@/src/components/Promptbar';
@@ -190,19 +192,42 @@ const UsedWidgets = () => {
 
   const router = useRouter();
 
-  const selectedWidget = useMemo(() => {
-    if (router.route === Routes.SelectedWidget) {
-      return (router.query.slug as string) ?? null;
-    }
-
-    return null;
-  }, [router]);
+  const selectedWidget = useAppSelector(
+    ApplicationSelectors.selectSelectedWidget,
+  );
+  const isApplicationsInitialised = useAppSelector(
+    ApplicationSelectors.selectInitialized,
+  );
+  const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
 
   const { widgetModels, handleWidgetClick } = useWidgets();
 
   const handleOpenWidgetsClick = useCallback(() => {
-    router.push(Routes.Widgets);
-  }, [router]);
+    if (router.route === Routes.SelectedWidget) return;
+    if (selectedWidget && router.route !== Routes.SelectedWidget) {
+      handleWidgetClick(selectedWidget);
+    } else {
+      router.push(Routes.Widgets);
+    }
+  }, [handleWidgetClick, router, selectedWidget]);
+
+  const WidgetBarIcon = useMemo(() => {
+    if (isModelsLoading || !isApplicationsInitialised)
+      // eslint-disable-next-line react/display-name
+      return ({ height }: TablerIconsProps) => (
+        <Loader size={height as number} />
+      );
+
+    return selectedWidget
+      ? ({ height }: TablerIconsProps) => (
+          <ModelIcon
+            entity={undefined}
+            entityId={selectedWidget}
+            size={height as number}
+          />
+        )
+      : IconBrowser;
+  }, [isApplicationsInitialised, isModelsLoading, selectedWidget]);
 
   return (
     <>
@@ -212,7 +237,10 @@ const UsedWidgets = () => {
             key={model.reference}
             rounded
             onClick={() => handleWidgetClick(model.reference)}
-            selected={model.reference === selectedWidget}
+            selected={
+              model.reference === selectedWidget &&
+              router.route === Routes.SelectedWidget
+            }
             Icon={({ height }) => (
               <ModelIcon
                 entity={model}
@@ -229,17 +257,7 @@ const UsedWidgets = () => {
       <div className="md:hidden">
         <NavigationButton
           onClick={handleOpenWidgetsClick}
-          Icon={
-            selectedWidget
-              ? ({ height }) => (
-                  <ModelIcon
-                    entity={undefined}
-                    entityId={selectedWidget}
-                    size={height as number}
-                  />
-                )
-              : IconBrowser
-          }
+          Icon={WidgetBarIcon}
           selected={
             router.route === Routes.Widgets ||
             router.route === Routes.SelectedWidget
