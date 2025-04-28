@@ -1,9 +1,9 @@
 import { Components } from 'react-markdown';
+import { PluggableList } from 'react-markdown/lib/react-markdown';
 
 import classnames from 'classnames';
 
 import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
-import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -12,15 +12,18 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 import {
   modelCursorSign,
   modelCursorSignWithBackquote,
-} from '../../constants/chat';
+} from '@/src/constants/chat';
 
+import BlinkingCursor from '@/src/components/Chat/BlinkingCursor';
 import { Table } from '@/src/components/Markdown/Table';
 
-import BlinkingCursor from '../Chat/BlinkingCursor';
 import { CodeBlock } from './CodeBlock';
 import { MemoizedReactMarkdown } from './MemoizedReactMarkdown';
 
+import 'katex/dist/katex.min.css';
+import rehypeKatex from 'rehype-katex';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
 
 const replaceCursor = (cursorSign: string) =>
   cursorSign.replace(modelCursorSignWithBackquote, modelCursorSign);
@@ -115,29 +118,23 @@ const ChatMDComponent = ({
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const mdClassNames = classnames(
-    'prose min-w-full dark:prose-invert prose-a:text-primary prose-a:underline',
-    {
-      'max-w-none': isChatFullWidth,
-      'text-sm': isOverlay,
-      'leading-[150%]': isSmallScreen() || isOverlay,
-    },
+    'prose min-w-full leading-[150%] dark:prose-invert prose-a:text-primary prose-a:underline',
+    isChatFullWidth && 'max-w-none',
+    isOverlay ? 'text-sm' : 'md:leading-normal',
   );
 
   return (
-    <>
-      <MemoizedReactMarkdown
-        className={mdClassNames}
-        remarkPlugins={[remarkGfm]}
-        linkTarget="_blank"
-        components={getMDComponents(isShowResponseLoader, isInner)}
-        transformImageUri={transformUri}
-        transformLinkUri={transformUri}
-      >
-        {`${content}${
-          isShowResponseLoader ? modelCursorSignWithBackquote : ''
-        }`}
-      </MemoizedReactMarkdown>
-    </>
+    <MemoizedReactMarkdown
+      className={mdClassNames}
+      remarkPlugins={[remarkGfm, remarkMath]}
+      rehypePlugins={[rehypeKatex] as PluggableList}
+      linkTarget="_blank"
+      components={getMDComponents(isShowResponseLoader, isInner)}
+      transformImageUri={transformUri}
+      transformLinkUri={transformUri}
+    >
+      {`${content}${isShowResponseLoader ? modelCursorSignWithBackquote : ''}`}
+    </MemoizedReactMarkdown>
   );
 };
 
