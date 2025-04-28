@@ -566,7 +566,7 @@ dialAdminTest(
 
 dialTest(
   'Metadata for chat from Organization section.\n' +
-    'Metadata for chat with several versions from Organization section.\n',
+    'Metadata for chat with several versions from Organization section',
   async ({
     conversationData,
     adminUserItemApiHelper,
@@ -662,7 +662,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Select second conversation version, select "Info" option from header dropdown menu and verify modal data',
+      'Select first conversation version, select "Info" option from header dropdown menu and verify modal data',
       async () => {
         await organizationConversations.selectConversation(conversation.name);
         await chatHeader.version.click();
