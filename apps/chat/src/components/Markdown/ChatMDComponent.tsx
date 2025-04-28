@@ -120,7 +120,7 @@ const ChatMDComponent = ({
   const mdClassNames = classnames(
     'prose min-w-full dark:prose-invert prose-a:text-primary prose-a:underline',
     isChatFullWidth && 'max-w-none',
-    isOverlay ? 'text-sm leading-[150%]' : 'leading-[150%] md:leading-normal',
+    isOverlay ? 'text-sm leading-[150%]' : 'leading-normal md:leading-[150%]',
   );
 
   return (
