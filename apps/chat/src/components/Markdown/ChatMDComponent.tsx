@@ -4,6 +4,7 @@ import { PluggableList } from 'react-markdown/lib/react-markdown';
 import classnames from 'classnames';
 
 import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
+import { convertLaTeXToMarkdownMath } from '@/src/utils/converters';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -123,6 +124,8 @@ const ChatMDComponent = ({
     isOverlay ? 'text-sm' : 'md:leading-normal',
   );
 
+  const processedContent = convertLaTeXToMarkdownMath(content);
+
   return (
     <MemoizedReactMarkdown
       className={mdClassNames}
@@ -133,7 +136,7 @@ const ChatMDComponent = ({
       transformImageUri={transformUri}
       transformLinkUri={transformUri}
     >
-      {`${content}${isShowResponseLoader ? modelCursorSignWithBackquote : ''}`}
+      {`${processedContent}${isShowResponseLoader ? modelCursorSignWithBackquote : ''}`}
     </MemoizedReactMarkdown>
   );
 };
