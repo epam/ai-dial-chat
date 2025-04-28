@@ -1,4 +1,4 @@
-export const transformLaTeX = (content: string) => {
+export const convertLaTeXToMarkdownMath = (content: string) => {
   const transformedContent = content.replace(
     /\\\[([\s\S]*?)\\\]/g,
     (_, mathContent) => `$$$$ ${mathContent} $$$$`,
