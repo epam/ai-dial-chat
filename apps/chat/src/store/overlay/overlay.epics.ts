@@ -23,6 +23,10 @@ import { combineEpics, ofType } from 'redux-observable';
 
 import { parseCommaSeparatedList } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
+import {
+  getActionsAddFoldersFromFolderId,
+  getParentFolderIdsFromFolderId,
+} from '@/src/utils/app/folders';
 import { getConversationRootId } from '@/src/utils/app/id';
 import {
   isPostMessageOverlayRequest,
@@ -31,6 +35,7 @@ import {
 } from '@/src/utils/app/overlay';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
+import { FolderType } from '@/src/types/folder';
 import { AppAction, AppEpic } from '@/src/types/store';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
@@ -69,6 +74,7 @@ import {
   validateFeature,
 } from '@epam/ai-dial-shared';
 import isEqual from 'lodash-es/isEqual';
+import uniq from 'lodash-es/uniq';
 
 export const postMessageMapperEpic: AppEpic = (_, state$) =>
   typeof window === 'object'
@@ -216,7 +222,7 @@ const getConversationsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const createConversationEpic: AppEpic = (action$, state$) =>
+const createConversationEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(OverlayActions.createConversation.type),
     switchMap(({ payload: { requestId, parentPath } }) => {
@@ -225,25 +231,20 @@ const createConversationEpic: AppEpic = (action$, state$) =>
         parentPath,
       );
 
-      const isFolderExists = ConversationsSelectors.selectFolderById(
-        state$.value,
-        conversationFolderId,
-      );
-
       const actions: Observable<AppAction>[] = [];
 
-      if (parentPath && !isFolderExists) {
+      if (parentPath) {
         actions.push(
-          of(
-            ConversationsActions.createFolder({
-              name: parentPath,
-              parentId: getConversationRootId(),
-            }),
-          ),
+          ...getActionsAddFoldersFromFolderId({
+            folderId: conversationFolderId,
+            folderType: FolderType.Chat,
+            shouldOpen: true,
+          }),
         );
       }
 
-      actions.push(
+      return concat(
+        ...actions,
         of(
           ConversationsActions.createNewConversations({
             names: [DEFAULT_CONVERSATION_NAME],
@@ -257,8 +258,6 @@ const createConversationEpic: AppEpic = (action$, state$) =>
           }),
         ),
       );
-
-      return concat(...actions);
     }),
   );
 
@@ -310,7 +309,19 @@ const selectConversationEpic: AppEpic = (action$, state$) =>
         return EMPTY;
       }
 
+      const foldersPaths = uniq(
+        getParentFolderIdsFromFolderId(conversation.folderId),
+      );
+
       return concat(
+        foldersPaths
+          ? of(
+              UIActions.setOpenedFoldersIds({
+                openedFolderIds: foldersPaths,
+                folderType: FolderType.Chat,
+              }),
+            )
+          : EMPTY,
         of(
           ConversationsActions.selectConversations({
             conversationIds: [conversation.id],

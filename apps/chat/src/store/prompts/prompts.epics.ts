@@ -418,7 +418,7 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
         of(
           UIActions.setOpenedFoldersIds({
             openedFolderIds: updatedOpenedFolderIds,
-            featureType: FeatureType.Prompt,
+            folderType: FolderType.Prompt,
           }),
         ),
         of(
@@ -533,6 +533,7 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
 
       return concat(
         of(PromptsActions.saveNewPrompt({ newPrompt })),
+        of(UIActions.setScrollToEntityId(newPrompt.id)),
         iif(
           () => selectedPromptId === prompt.id,
           concat(
@@ -590,7 +591,7 @@ const uploadPromptsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
                 ),
                 of(
                   UIActions.setOpenedFoldersIds({
-                    featureType: FeatureType.Prompt,
+                    folderType: FolderType.Prompt,
                     openedFolderIds: [
                       ...openedFolders,
                       ...paths.filter(

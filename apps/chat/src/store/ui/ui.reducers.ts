@@ -1,6 +1,7 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { FeatureType } from '@/src/types/common';
+import { FolderType } from '@/src/types/folder';
 import { ToastType } from '@/src/types/toasts';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
@@ -135,13 +136,13 @@ export const uiSlice = createSlice({
       state,
       {
         payload,
-      }: PayloadAction<{ openedFolderIds: string[]; featureType: FeatureType }>,
+      }: PayloadAction<{ openedFolderIds: string[]; folderType: FolderType }>,
     ) => {
       state.openedFoldersIds = {
         ...state.openedFoldersIds,
-        [payload.featureType]: uniq([
+        [payload.folderType]: uniq([
           ...payload.openedFolderIds,
-          ...state.openedFoldersIds[payload.featureType],
+          ...state.openedFoldersIds[payload.folderType],
         ]),
       };
     },
@@ -216,6 +217,12 @@ export const uiSlice = createSlice({
     },
     setPreviousRoute: (state, { payload }: PayloadAction<string>) => {
       state.previousRoute = payload;
+    },
+    setScrollToEntityId: (
+      state,
+      { payload }: PayloadAction<string | undefined>,
+    ) => {
+      state.scrollToEntityId = payload;
     },
   },
 });

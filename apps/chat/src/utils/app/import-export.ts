@@ -3,7 +3,6 @@ import { EMPTY, Observable, map, of } from 'rxjs';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { Conversation } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import {
@@ -409,7 +408,7 @@ export const getConversationActions = (
       of(
         UIActions.setOpenedFoldersIds({
           openedFolderIds: [conversation.folderId],
-          featureType: FeatureType.Chat,
+          folderType: FolderType.Chat,
         }),
       ),
     );
@@ -436,7 +435,7 @@ export const getPromptActions = (
       ? of(
           UIActions.setOpenedFoldersIds({
             openedFolderIds: [prompt.folderId],
-            featureType: FeatureType.Prompt,
+            folderType: FolderType.Prompt,
           }),
         )
       : EMPTY;

@@ -15,6 +15,7 @@ import classNames from 'classnames';
 import { useContextMenuTrigger } from '@/src/hooks/useContextMenuTrigger';
 import { usePromptActions } from '@/src/hooks/usePromptActions';
 import { useScreenState } from '@/src/hooks/useScreenState';
+import { useScrollToEntity } from '@/src/hooks/useScrollToEntity';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -46,6 +47,7 @@ import {
   PublicationActions,
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { stopBubbling } from '@/src/constants/chat';
 
@@ -108,6 +110,8 @@ export const PromptComponent = ({
     PublicationSelectors.selectSelectedPublication,
   );
 
+  const scrollToPromptId = useAppSelector(UISelectors.selectScrollToEntityId);
+
   const isExternal = isEntityIdExternal(prompt);
   const isApproveRequiredResource = !!additionalItemData?.publicationUrl;
   const isPartOfSelectedPublication =
@@ -137,6 +141,12 @@ export const PromptComponent = ({
     }
     setIsContextMenu(true);
   }, []);
+
+  useScrollToEntity({
+    entityId: prompt.id,
+    scrollToEntityId: scrollToPromptId,
+    elementRef: promptRef,
+  });
 
   useContextMenuTrigger(handleContextMenuOpen, promptRef);
 

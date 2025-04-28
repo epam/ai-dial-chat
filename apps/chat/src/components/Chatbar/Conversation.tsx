@@ -4,6 +4,7 @@ import { DragEvent, useCallback, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
 
 import { useContextMenuTrigger } from '@/src/hooks/useContextMenuTrigger';
+import { useScrollToEntity } from '@/src/hooks/useScrollToEntity';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -33,6 +34,7 @@ import {
   PublicationActions,
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { ConversationContextMenu } from '@/src/components/Chat/ConversationContextMenu';
 import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
@@ -222,6 +224,9 @@ export const ConversationComponent = ({
   const selectedPublicationUrl = useAppSelector(
     PublicationSelectors.selectSelectedPublicationUrl,
   );
+  const scrollToConversationId = useAppSelector(
+    UISelectors.selectScrollToEntityId,
+  );
 
   const [isContextMenu, setIsContextMenu] = useState(false);
 
@@ -233,6 +238,12 @@ export const ConversationComponent = ({
     }
     setIsContextMenu(true);
   }, []);
+
+  useScrollToEntity({
+    entityId: conversation.id,
+    scrollToEntityId: scrollToConversationId,
+    elementRef: conversationRef,
+  });
 
   useContextMenuTrigger(handleContextMenuOpen, conversationRef);
 

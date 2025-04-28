@@ -331,7 +331,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
                 openedFolderIds: selectedConversationsIds.flatMap(
                   getParentFolderIdsFromEntityId,
                 ),
-                featureType: FeatureType.Chat,
+                folderType: FolderType.Chat,
               }),
             ),
             ...actions,
@@ -713,6 +713,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
             conversations: [newConversation],
           }),
         ),
+        of(UIActions.setScrollToEntityId(newConversation.id)),
         of(
           ConversationsActions.saveNewConversation({
             newConversation,
@@ -864,7 +865,7 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
         of(
           UIActions.setOpenedFoldersIds({
             openedFolderIds: updatedOpenedFolderIds,
-            featureType: FeatureType.Chat,
+            folderType: FolderType.Chat,
           }),
         ),
         of(
@@ -2665,7 +2666,7 @@ const uploadConversationsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
                 ),
                 of(
                   UIActions.setOpenedFoldersIds({
-                    featureType: FeatureType.Chat,
+                    folderType: FolderType.Chat,
                     openedFolderIds: [
                       ...openedFolders,
                       ...paths.filter(

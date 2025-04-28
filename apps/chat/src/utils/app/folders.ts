@@ -1,3 +1,5 @@
+import { Observable, of } from 'rxjs';
+
 import {
   constructPath,
   getDialFilesFromAttachments,
@@ -12,6 +14,9 @@ import { DialFile } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
+import { AppAction } from '@/src/types/store';
+
+import { ConversationsActions, UIActions } from '@/src/store/actions';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
@@ -574,4 +579,41 @@ export const updateChildFoldersIds = (
         }),
       };
     });
+};
+
+export const getActionsAddFoldersFromFolderId = ({
+  folderId,
+  folderType,
+  shouldOpen,
+}: {
+  folderId: string;
+  folderType: FolderType;
+  shouldOpen?: boolean;
+}): Observable<AppAction>[] => {
+  const actions: Observable<AppAction>[] = [];
+  const paths = uniq(getParentFolderIdsFromFolderId(folderId));
+
+  actions.push(
+    of(
+      ConversationsActions.addFolders({
+        folders: paths.map((path) => ({
+          ...getFolderFromId(path, folderType),
+          status: UploadStatus.LOADED,
+        })),
+      }),
+    ),
+  );
+
+  if (shouldOpen) {
+    actions.push(
+      of(
+        UIActions.setOpenedFoldersIds({
+          openedFolderIds: paths,
+          folderType: folderType,
+        }),
+      ),
+    );
+  }
+
+  return actions;
 };
