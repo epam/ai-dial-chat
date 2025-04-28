@@ -130,7 +130,7 @@ const ChatMDComponent = ({
     <MemoizedReactMarkdown
       className={mdClassNames}
       remarkPlugins={[remarkGfm, remarkMath]}
-      rehypePlugins={[[rehypeKatex]] as PluggableList}
+      rehypePlugins={[rehypeKatex] as PluggableList}
       linkTarget="_blank"
       components={getMDComponents(isShowResponseLoader, isInner)}
       transformImageUri={transformUri}
