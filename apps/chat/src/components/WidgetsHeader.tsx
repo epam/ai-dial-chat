@@ -1,4 +1,5 @@
 import { IconArrowLeft } from '@tabler/icons-react';
+import { useCallback } from 'react';
 
 import { useRouter } from 'next/router';
 
@@ -23,13 +24,13 @@ export const WidgetsHeader = () => {
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     dispatch(UIActions.setIsUserSettingsOpen(false));
-  };
+  }, [dispatch]);
 
-  const handleGoBack = () => {
+  const handleGoBack = useCallback(() => {
     router.push(Routes.Widgets);
-  };
+  }, [router]);
 
   const iconSize = isOverlay ? 18 : 24;
 

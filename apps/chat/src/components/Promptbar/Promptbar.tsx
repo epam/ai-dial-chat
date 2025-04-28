@@ -26,7 +26,7 @@ import { Prompts } from './components/Prompts';
 
 import Sidebar from '../Sidebar';
 
-const PromptbarView = () => {
+export const Promptbar = () => {
   const { t } = useTranslation(Translation.PromptBar);
 
   const dispatch = useAppDispatch();
@@ -145,5 +145,3 @@ const PromptbarView = () => {
     </>
   );
 };
-
-export const Promptbar = PromptbarView;
