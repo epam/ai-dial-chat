@@ -229,7 +229,17 @@ const UsedWidgets = () => {
       <div className="md:hidden">
         <NavigationButton
           onClick={handleOpenWidgetsClick}
-          Icon={IconBrowser}
+          Icon={
+            selectedWidget
+              ? ({ height }) => (
+                  <ModelIcon
+                    entity={undefined}
+                    entityId={selectedWidget}
+                    size={height as number}
+                  />
+                )
+              : IconBrowser
+          }
           selected={
             router.route === Routes.Widgets ||
             router.route === Routes.SelectedWidget
