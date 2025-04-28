@@ -164,8 +164,7 @@ export const usePromptActions = (prompt: Prompt) => {
       dispatch(PromptsActions.deletePrompt({ prompt }));
     }
 
-    dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
-    dispatch(PromptsActions.setIsPromptModalOpen({ isOpen: false }));
+    dispatch(PromptsActions.selectPrompt({ promptId: undefined }));
   }, [dispatch, prompt]);
 
   const handleInfo = useCallback(() => {
@@ -174,8 +173,7 @@ export const usePromptActions = (prompt: Prompt) => {
 
   const handleUse = useCallback(() => {
     dispatch(PromptsActions.applyPrompt(prompt));
-    dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
-    dispatch(PromptsActions.setIsPromptModalOpen({ isOpen: false }));
+    dispatch(PromptsActions.selectPrompt({ promptId: undefined }));
   }, [dispatch, prompt]);
 
   return {
