@@ -2,7 +2,7 @@ import Router from 'next/router';
 
 import { EMPTY, concat, filter, of, switchMap } from 'rxjs';
 
-import { combineEpics } from 'redux-observable';
+import { combineEpics, ofType } from 'redux-observable';
 
 import { parseCommaSeparatedList } from '@/src/utils/app/common';
 
@@ -43,7 +43,7 @@ const addToQuery = (
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(MarketplaceActions.init.match),
+    ofType(MarketplaceActions.init.type),
     switchMap(() => {
       const query = parse(window.location.search.slice(1));
       const workSpaceTab =
@@ -70,17 +70,16 @@ const initEpic: AppEpic = (action$, state$) =>
 
 const setQueryParamsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(() => ModelsSelectors.selectIsModelsLoaded(state$.value)),
-    filter(
-      (action) =>
-        MarketplaceActions.setSelectedTab.match(action) ||
-        MarketplaceActions.setDetailsModel.match(action) ||
-        MarketplaceActions.setSelectedFilters.match(action) ||
-        MarketplaceActions.setState.match(action) ||
-        MarketplaceActions.setSearchTerm.match(action) ||
-        MarketplaceActions.setSelectedView.match(action) ||
-        MarketplaceActions.setTableSort.match(action),
+    ofType(
+      MarketplaceActions.setSelectedTab.type,
+      MarketplaceActions.setDetailsModel.type,
+      MarketplaceActions.setSelectedFilters.type,
+      MarketplaceActions.setState.type,
+      MarketplaceActions.setSearchTerm.type,
+      MarketplaceActions.setSelectedView.type,
+      MarketplaceActions.setTableSort.type,
     ),
+    filter(() => ModelsSelectors.selectIsModelsLoaded(state$.value)),
     switchMap(() => {
       const state = state$.value;
       const query = parse(window.location.search.slice(1));
@@ -152,7 +151,7 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
 
 const initQueryParamsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(MarketplaceActions.initQueryParams.match),
+    ofType(MarketplaceActions.initQueryParams.type),
     switchMap(() => {
       const query = parse(window.location.search.slice(1));
       const state = state$.value;
@@ -233,11 +232,7 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
 
 const updateFiltersEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(
-      (action) =>
-        ModelsActions.deleteModels.match(action) ||
-        ModelsActions.updateModel.match(action),
-    ),
+    ofType(ModelsActions.deleteModels.type, ModelsActions.updateModel.type),
     switchMap(() => {
       const state = state$.value;
 

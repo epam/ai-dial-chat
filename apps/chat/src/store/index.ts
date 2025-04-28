@@ -22,8 +22,8 @@ import { AddonsEpics } from './addons/addons.epics';
 import { addonsSlice } from './addons/addons.reducers';
 import { ApplicationEpics } from './application/application.epics';
 import { applicationSlice } from './application/application.reducers';
-import { ApplicationTypesSchemasEpics } from './applicationTypeSchemas/applicationTypeSchemas.epic';
-import { applicationTypesSchemasSlice } from './applicationTypeSchemas/applicationTypeSchemas.reducer';
+import { ApplicationTypesSchemasEpics } from './applicationTypeSchemas/applicationTypeSchemas.epics';
+import { applicationTypesSchemasSlice } from './applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { authSlice } from './auth/auth.reducers';
 import { chatSlice } from './chat/chat.reducer';
 import { CodeEditorEpics } from './codeEditor/codeEditor.epics';
@@ -48,7 +48,7 @@ import { PublicationEpics } from './publication/publication.epics';
 import { publicationSlice } from './publication/publication.reducers';
 import { ServiceEpics } from './service/service.epics';
 import { serviceSlice } from './service/service.reducer';
-import { SettingsEpics } from './settings/settings.epic';
+import { SettingsEpics } from './settings/settings.epics';
 import { settingsSlice } from './settings/settings.reducers';
 import { ShareEpics } from './share/share.epics';
 import { shareSlice } from './share/share.reducers';
@@ -76,7 +76,7 @@ export const rootEpic = combineEpics(
   MarketplaceEpics,
 );
 
-const reducer = combineReducers({
+export const rootReducer = combineReducers({
   models: modelsSlice.reducer,
   addons: addonsSlice.reducer,
   ui: uiSlice.reducer,
@@ -97,6 +97,7 @@ const reducer = combineReducers({
   applicationTypesSchemas: applicationTypesSchemasSlice.reducer,
   chat: chatSlice.reducer,
 });
+
 const getMiddleware = (
   //eslint-disable-next-line @typescript-eslint/no-explicit-any
   epicMiddleware: EpicMiddleware<Action<any>, Action<any>, void, any>,
@@ -121,7 +122,7 @@ export const createStore = (preloadedState: { settings: SettingsState }) => {
 
     const middleware = getMiddleware(epicMiddleware);
     const localStore = configureStore({
-      reducer,
+      reducer: rootReducer,
       preloadedState,
       middleware,
     });
@@ -138,7 +139,7 @@ export const createStore = (preloadedState: { settings: SettingsState }) => {
 
     const middleware = getMiddleware(epicMiddleware);
     store = configureStore({
-      reducer,
+      reducer: rootReducer,
       preloadedState,
       middleware,
     });

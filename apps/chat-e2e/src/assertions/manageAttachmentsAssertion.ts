@@ -17,6 +17,17 @@ export class ManageAttachmentsAssertion extends BaseAssertion {
     this.attachFilesModal = attachFilesModal;
   }
 
+  public async assertFileIconState(
+    section: FileModalSection,
+    entity: TreeEntity,
+    expectedState: ElementState,
+  ) {
+    const fileIcon = this.attachFilesModal
+      .getFilesTree(section)
+      .attachedFileIcon(entity.name, entity.index);
+    await this.assertElementState(fileIcon, expectedState);
+  }
+
   public async assertSharedFileArrowIconState(
     entity: TreeEntity,
     expectedState: ElementState,
