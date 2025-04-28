@@ -4,6 +4,7 @@ import { PluggableList } from 'react-markdown/lib/react-markdown';
 import classnames from 'classnames';
 
 import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
+import { transformLaTeX } from '@/src/utils/converters';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -123,17 +124,19 @@ const ChatMDComponent = ({
     isOverlay ? 'text-sm' : 'md:leading-normal',
   );
 
+  const processedContent = transformLaTeX(content);
+
   return (
     <MemoizedReactMarkdown
       className={mdClassNames}
       remarkPlugins={[remarkGfm, remarkMath]}
-      rehypePlugins={[rehypeKatex] as PluggableList}
+      rehypePlugins={[[rehypeKatex]] as PluggableList}
       linkTarget="_blank"
       components={getMDComponents(isShowResponseLoader, isInner)}
       transformImageUri={transformUri}
       transformLinkUri={transformUri}
     >
-      {`${content}${isShowResponseLoader ? modelCursorSignWithBackquote : ''}`}
+      {`${processedContent}${isShowResponseLoader ? modelCursorSignWithBackquote : ''}`}
     </MemoizedReactMarkdown>
   );
 };
