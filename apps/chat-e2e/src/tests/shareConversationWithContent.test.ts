@@ -769,7 +769,7 @@ dialSharedWithMeTest(
       async () => {
         const sharedConversations =
           await additionalUserShareApiHelper.listSharedWithMeConversations();
-        await shareApiAssertion.assertSharedWithMeEntityState(
+        shareApiAssertion.assertSharedWithMeEntityState(
           sharedConversations,
           imageConversation,
           'visible',
@@ -777,12 +777,12 @@ dialSharedWithMeTest(
 
         const sharedFiles =
           await additionalUserShareApiHelper.listSharedWithMeFiles();
-        await shareApiAssertion.assertSharedWithMeEntityState(
+        shareApiAssertion.assertSharedWithMeEntityState(
           sharedFiles,
           firstImageUrl,
           'hidden',
         );
-        await shareApiAssertion.assertSharedWithMeEntityState(
+        shareApiAssertion.assertSharedWithMeEntityState(
           sharedFiles,
           secondImageUrl,
           'visible',
@@ -829,12 +829,12 @@ dialSharedWithMeTest(
       async () => {
         const sharedFiles =
           await additionalUserShareApiHelper.listSharedWithMeFiles();
-        await shareApiAssertion.assertSharedWithMeEntityState(
+        shareApiAssertion.assertSharedWithMeEntityState(
           sharedFiles,
           firstImageUrl,
           'hidden',
         );
-        await shareApiAssertion.assertSharedWithMeEntityState(
+        shareApiAssertion.assertSharedWithMeEntityState(
           sharedFiles,
           secondImageUrl,
           'hidden',

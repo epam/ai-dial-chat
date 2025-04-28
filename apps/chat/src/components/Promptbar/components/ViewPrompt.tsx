@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import classNames from 'classnames';
 
+import { useMenuItemHandler } from '@/src/hooks/useHandler';
 import { usePromptActions } from '@/src/hooks/usePromptActions';
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -98,19 +99,29 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
   const disableUsePrompt =
     isConversationBlocksInput || !isModelsInstalled || !!selectedPublication;
 
+  const onUse = useMenuItemHandler(handleUse, undefined);
+
   return (
     <>
       <ul className="flex max-h-[435px] flex-col gap-4 overflow-y-auto px-3 pb-4 md:px-6">
-        <PromptField valueClassName="line-clamp-2" label="Name" dataQa="name">
+        <PromptField label="Name" dataQa="name">
           {prompt.name}
         </PromptField>
         {prompt.description && (
-          <PromptField label="Description" dataQa="description">
+          <PromptField
+            label="Description"
+            dataQa="description"
+            valueClassName="whitespace-pre-wrap"
+          >
             {prompt.description}
           </PromptField>
         )}
         {prompt.content && (
-          <PromptField label="Prompt" dataQa="content">
+          <PromptField
+            label="Prompt"
+            dataQa="content"
+            valueClassName="whitespace-pre-wrap"
+          >
             <TemplateRenderer template={prompt.content} />
           </PromptField>
         )}
@@ -139,7 +150,7 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
                 />
               )}
               <button
-                onClick={handleUse}
+                onClick={onUse}
                 disabled={disableUsePrompt}
                 className={classNames(
                   'button button-primary flex items-center gap-2',

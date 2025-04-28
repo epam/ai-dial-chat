@@ -113,8 +113,8 @@ dialSharedWithMeTest(
 
 dialSharedWithMeTest(
   'Shared with me. Share prompt Folder in the middle.\n' +
-    'Shared with me. Folder with folder/prompt inside is deleted.\n' +
-    'Shared with me. Prompt structure creates again if it was deleted if to open the same link',
+    'Shared with me. Folder with folder/prompt inside is unshared.\n' +
+    'Shared with me. Prompt structure creates again if it was unshared if to open the same link',
   async ({
     additionalShareUserDialHomePage,
     promptData,
@@ -199,7 +199,26 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Delete folder from "Shared with me" section, refresh page and verify folder is not restored',
+      'Select "Unshare" option for the folder, cancel modal and verify folder remains shared',
+      async () => {
+        await additionalShareUserSharedFolderPrompts.openFolderDropdownMenu(
+          nestedFolders[sharedFolderIndex].name,
+        );
+        await additionalShareUserSharedWithMeFolderDropdownMenu.selectMenuOption(
+          MenuOptions.unshare,
+        );
+        await additionalShareUserConfirmationDialog.cancelDialog();
+        for (let i = sharedFolderIndex; i <= sharedFolderIndex + 1; i++) {
+          await additionalShareUserSharedFolderPromptsAssertions.assertFolderState(
+            { name: nestedFolders[i].name },
+            'visible',
+          );
+        }
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Unshare folder from "Shared with me" section, refresh page and verify folder is not restored',
       async () => {
         await additionalShareUserSharedFolderPrompts.openFolderDropdownMenu(
           nestedFolders[sharedFolderIndex].name,
@@ -261,7 +280,7 @@ dialSharedWithMeTest(
 dialSharedWithMeTest(
   `Shared with me. Share root prompt Folder.\n` +
     `When open link with shared prompt folder from nested structure, dialog about 'root' prompt from the root folder should be shown.\n` +
-    `Shared with me. No delete option in context menu for prompt/folder inside shared folder`,
+    'Shared with me. No unshare option in context menu for prompt/folder inside shared folder',
   async ({
     additionalShareUserDialHomePage,
     promptData,
@@ -444,7 +463,7 @@ dialSharedWithMeTest(
         const sharedEntities =
           await additionalUserShareApiHelper.listSharedWithMePrompts();
         folder.id = prompt.folderId + ItemUtil.urlSeparator;
-        await shareApiAssertion.assertSharedWithMeEntitiesCount(
+        shareApiAssertion.assertSharedWithMeEntitiesCount(
           sharedEntities,
           folder,
         );
@@ -497,12 +516,12 @@ dialSharedWithMeTest(
       async () => {
         const sharedPrompts =
           await additionalUserShareApiHelper.listSharedWithMePrompts();
-        await shareApiAssertion.assertSharedWithMeEntityState(
+        shareApiAssertion.assertSharedWithMeEntityState(
           sharedPrompts,
           prompt,
           'hidden',
         );
-        await shareApiAssertion.assertSharedWithMeEntityState(
+        shareApiAssertion.assertSharedWithMeEntityState(
           sharedPrompts,
           folder,
           'visible',

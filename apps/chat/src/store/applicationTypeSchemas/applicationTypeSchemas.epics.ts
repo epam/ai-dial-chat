@@ -3,7 +3,7 @@ import Router from 'next/router';
 import { of } from 'rxjs';
 import { catchError, filter, switchMap } from 'rxjs/operators';
 
-import { combineEpics } from 'redux-observable';
+import { combineEpics, ofType } from 'redux-observable';
 
 import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application-type-schemas-service';
 
@@ -12,17 +12,17 @@ import { AppEpic } from '@/src/types/store';
 import {
   ApplicationTypesSchemasActions,
   ApplicationTypesSchemasSelectors,
-} from './applicationTypeSchemas.reducer';
+} from './applicationTypeSchemas.reducers';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 
 const fetchSchemasEpic: AppEpic = (action$, state$) =>
   action$.pipe(
+    ofType(ApplicationTypesSchemasActions.init.type),
     filter(
-      (action) =>
-        ApplicationTypesSchemasActions.init.match(action) &&
+      () =>
         ApplicationTypesSchemasSelectors.selectSchemasLoading(state$.value) !==
-          UploadStatus.LOADED,
+        UploadStatus.LOADED,
     ),
     switchMap(() => {
       return ApplicationTypesSchemasService.getApplicationTypesSchemas().pipe(
@@ -39,11 +39,9 @@ const fetchSchemasEpic: AppEpic = (action$, state$) =>
 
 const fetchDetailedApplicationTypeSchemaEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(
-      (action) =>
-        ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema.match(
-          action,
-        ) || ApplicationTypesSchemasActions.initFinish.match(action),
+    ofType(
+      ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema.type,
+      ApplicationTypesSchemasActions.initFinish.type,
     ),
     switchMap(({ payload }) => {
       let id = payload;
@@ -62,10 +60,11 @@ const fetchDetailedApplicationTypeSchemaEpic: AppEpic = (action$, state$) =>
           id = schema?.id;
         }
       }
-      if (!id)
+      if (!id) {
         return of(
           ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchemaFail(),
         );
+      }
 
       return ApplicationTypesSchemasService.getApplicationTypeSchema(id).pipe(
         switchMap((schema) =>

@@ -395,7 +395,7 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        await chatMessages.editMessage(request, updatedRequest);
+        await chatMessages.editFirstMessage(updatedRequest);
       },
     );
 
@@ -1006,10 +1006,7 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        await chat.startReplay(
-          simpleConversationMessage.messages[0].content,
-          true,
-        );
+        await chat.replay.click();
         await variableModalAssertion.assertElementState(
           variableModalDialog,
           'visible',
@@ -1031,10 +1028,7 @@ dialTest(
             exactMatch: true,
           },
         );
-        await chat.startReplay(
-          simpleConversationMessage.messages[0].content,
-          true,
-        );
+        await chat.replay.click();
         await variableModalAssertion.assertElementState(
           variableModalDialog,
           'visible',
@@ -1165,10 +1159,7 @@ dialSharedWithMeTest(
         await additionalShareUserDialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        await additionalShareUserChat.startReplay(
-          simpleConversationMessage.messages[0].content,
-          true,
-        );
+        await additionalShareUserChat.replay.click();
         await additionalShareUserVariableModalAssertion.assertElementState(
           additionalShareUserVariableModalDialog,
           'visible',
@@ -1270,10 +1261,7 @@ dialAdminTest(
         await adminDialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        await adminChat.startReplay(
-          simpleConversationMessage.messages[0].content,
-          true,
-        );
+        await adminChat.replay.click();
         await adminVariableModalAssertion.assertElementState(
           adminVariableModal,
           'visible',
@@ -1301,10 +1289,7 @@ dialAdminTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        await chat.startReplay(
-          simpleConversationMessage.messages[0].content,
-          true,
-        );
+        await chat.replay.click();
         await variableModalAssertion.assertElementState(
           variableModalDialog,
           'visible',

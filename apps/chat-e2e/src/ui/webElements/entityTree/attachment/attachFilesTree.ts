@@ -13,8 +13,8 @@ export class AttachFilesTree extends EntitiesTree {
     super(page, parentLocator, filesSection, EntitySelectors.file);
   }
 
-  public attachedFileIcon = (filename: string) =>
-    this.getEntityByName(filename).locator(
+  public attachedFileIcon = (filename: string, index?: number) =>
+    this.getEntityByName(filename, index).locator(
       AttachFilesModalSelectors.attachedFileIcon,
     );
 

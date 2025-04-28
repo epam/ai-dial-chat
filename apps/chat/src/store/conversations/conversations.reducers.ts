@@ -21,6 +21,7 @@ import { Conversation } from '@/src/types/chat';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 import { LastConversationSettings } from '@/src/types/settings';
+import { RootState } from '@/src/types/store';
 
 import * as ConversationsSelectors from './conversations.selectors';
 import { ConversationsState } from './conversations.types';
@@ -378,7 +379,7 @@ export const conversationsSlice = createSlice({
           payload?.name ??
           // default name with counter
           ConversationsSelectors.selectNewFolderName(
-            { conversations: state },
+            { conversations: state } as RootState,
             payload?.parentId,
           ),
         type: FolderType.Chat,

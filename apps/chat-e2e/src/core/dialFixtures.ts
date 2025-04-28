@@ -96,6 +96,7 @@ import { ConfirmationDialog } from '@/src/ui/webElements/confirmationDialog';
 import { DropdownCheckboxMenu } from '@/src/ui/webElements/dropdownCheckboxMenu';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import {
+  AttachFilesTree,
   ConversationsToPublishTree,
   ConversationsTree,
   FilesToPublishTree,
@@ -274,6 +275,7 @@ const dialTest = test.extend<{
   publishingRules: PublishingRules;
   conversationAssertion: ConversationAssertion;
   chatBarFolderAssertion: FolderAssertion<FolderConversations>;
+  allFilesFolderAssertion: FolderAssertion<Folders>;
   organizationConversationAssertion: SideBarConversationAssertion<OrganizationConversationsTree>;
   organizationPromptAssertion: SideBarEntityAssertion<OrganizationPromptsTree>;
   toastAssertion: ToastAssertion;
@@ -328,6 +330,7 @@ const dialTest = test.extend<{
   promptPreviewModal: PromptPreviewModalWindow;
   promptPreviewModalAssertion: PromptPreviewModalAssertion;
   agentDetailsModalAssertion: AgentDetailsModalAssertion;
+  attachAllFilesTreeAssertion: EntityTreeAssertion<AttachFilesTree>;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper }, use) => {
@@ -978,6 +981,12 @@ const dialTest = test.extend<{
     );
     await use(chatBarFolderAssertion);
   },
+  allFilesFolderAssertion: async ({ attachedAllFiles }, use) => {
+    const allFilesFolderAssertion = new FolderAssertion<Folders>(
+      attachedAllFiles,
+    );
+    await use(allFilesFolderAssertion);
+  },
   toastAssertion: async ({ toast }, use) => {
     const toastAssertion = new ToastAssertion(toast);
     await use(toastAssertion);
@@ -1234,6 +1243,13 @@ const dialTest = test.extend<{
       promptPreviewModal,
     );
     await use(promptPreviewModalAssertion);
+  },
+  attachAllFilesTreeAssertion: async ({ attachFilesModal }, use) => {
+    const attachAllFilesTreeAssertion =
+      new EntityTreeAssertion<AttachFilesTree>(
+        attachFilesModal.getAllFilesTree(),
+      );
+    await use(attachAllFilesTreeAssertion);
   },
 });
 
