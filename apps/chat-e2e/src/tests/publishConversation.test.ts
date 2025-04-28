@@ -401,7 +401,7 @@ dialAdminTest(
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
         await publishingRequestModal.requestName.fillInInput(requestName);
         await conversationsToPublishTree
-          .getEntityVersion(conversation.name)
+          .getEntityVersionInput(conversation.name)
           .fill(ExpectedConstants.defaultAppVersion);
         await publishingRequestModal.sendRequestButton.click();
         await toastAssertion.assertToastIsVisible();
