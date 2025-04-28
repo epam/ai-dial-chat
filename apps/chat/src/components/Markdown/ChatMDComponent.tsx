@@ -118,11 +118,9 @@ const ChatMDComponent = ({
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const mdClassNames = classnames(
-    'prose min-w-full leading-[150%] dark:prose-invert prose-a:text-primary prose-a:underline md:leading-none',
-    {
-      'max-w-none': isChatFullWidth,
-      'text-sm': isOverlay,
-    },
+    'prose min-w-full dark:prose-invert prose-a:text-primary prose-a:underline',
+    isChatFullWidth && 'max-w-none',
+    isOverlay ? 'text-sm leading-[150%]' : 'leading-[150%] md:leading-normal',
   );
 
   return (
