@@ -90,7 +90,7 @@
     "rehype-raw": "^6.1.1",
     "rehype-sanitize": "^5.0.1",
     "remark-gfm": "^3.0.1",
-    "remark-math": "^6.0.0",
+    "remark-math": "^5.0.0",
     "rxjs": "^7.8.1",
     "stringz": "^2.1.0",
     "tiktoken": "^1.0.17",
