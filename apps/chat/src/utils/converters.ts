@@ -17,6 +17,6 @@ export const convertLaTeXToMarkdownMath = (content: string) => {
 
   return transformedContent.replace(
     /\\\((.*?)\\\)/g,
-    (_, inlineMathContent) => `$$${inlineMathContent.trim()}$$`,
+    (_, inlineMathContent) => `$${inlineMathContent.trim()}$`,
   );
 };
