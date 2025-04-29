@@ -46,12 +46,12 @@ export function CompareRulesModal({
     <Modal
       portalId="theme-main"
       state={ModalState.OPENED}
+      hideHeadingTooltip
       dataQa="compare-rules"
       containerClassName="m-auto flex max-h-full w-full flex-col overflow-y-auto py-6 xl:max-w-[1000px]"
       onClose={onClose}
       headingClassName="px-6"
       heading={t('Comparison')}
-      hideHeadingTooltip
     >
       <div className="grid grid-cols-2 gap-x-5">
         <p className="mb-3 pl-6 text-sm">{t('Previous Access Settings')}</p>
