@@ -566,12 +566,14 @@ dialAdminTest(
 
 dialTest(
   'Metadata for chat from Organization section.\n' +
-    'Metadata for chat with several versions from Organization section',
+    'Metadata for chat with several versions from Organization section.\n' +
+    'Metadata for chat duplicated from chat from Organization',
   async ({
     conversationData,
     adminUserItemApiHelper,
     localStorageManager,
     dialHomePage,
+    conversations,
     organizationConversations,
     conversationDropdownMenu,
     chatHeader,
@@ -583,7 +585,7 @@ dialTest(
     adminPublicationApiHelper,
     publishRequestBuilder,
   }) => {
-    setTestIds('EPMRTC-5555', 'EPMRTC-5557');
+    setTestIds('EPMRTC-5555', 'EPMRTC-5557', 'EPMRTC-6100');
     let conversation: Conversation;
     const firstVersion = ExpectedConstants.defaultAppVersion;
     const secondVersion = '0.0.2';
@@ -703,6 +705,45 @@ dialTest(
           author,
         );
         await informationModal.cancelButton.click();
+      },
+    );
+
+    await dialTest.step(
+      'Duplicate published conversation, select "Info" option from dropdown menu and verify modal data',
+      async () => {
+        await organizationConversations.openEntityDropdownMenu(
+          conversation.name,
+        );
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.duplicate, {
+          triggeredHttpMethod: 'POST',
+        });
+        await conversations.openEntityDropdownMenu(conversation.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.info);
+        await baseAssertion.assertElementState(informationModal, 'visible');
+        await baseAssertion.assertElementText(
+          informationModal.lastUpdatedLabel,
+          ExpectedConstants.informationModalLastUpdatedLabel,
+        );
+        await baseAssertion.assertElementText(
+          informationModal.createdDateLabel,
+          ExpectedConstants.informationModalCreatedDateLabel,
+        );
+        await baseAssertion.assertElementState(
+          informationModal.authorLabel,
+          'hidden',
+        );
+        await baseAssertion.assertElementText(
+          informationModal.lastUpdatedValue,
+          currentDate,
+        );
+        await baseAssertion.assertElementText(
+          informationModal.createdDateValue,
+          currentDate,
+        );
+        await baseAssertion.assertElementState(
+          informationModal.authorValue,
+          'hidden',
+        );
       },
     );
   },
