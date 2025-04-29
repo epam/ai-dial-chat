@@ -59,11 +59,10 @@ export function PublicationControlsView<
 
   const unselectPrompt = useCallback(() => {
     dispatch(
-      PromptsActions.setSelectedPrompt({
+      PromptsActions.selectPrompt({
         promptId: undefined,
       }),
     );
-    dispatch(PromptsActions.setIsPromptModalOpen({ isOpen: false }));
     dispatch(
       ConversationsActions.selectConversations({
         conversationIds: [],
@@ -108,12 +107,7 @@ export function PublicationControlsView<
         unselectConversation();
         unselectApplication();
         dispatch(
-          PromptsActions.uploadPrompt({
-            promptId: resourcesToReview[publicationIdx + offset].reviewUrl,
-          }),
-        );
-        dispatch(
-          PromptsActions.setSelectedPrompt({
+          PromptsActions.selectPrompt({
             promptId: resourcesToReview[publicationIdx + offset].reviewUrl,
             isApproveRequiredResource: true,
           }),
