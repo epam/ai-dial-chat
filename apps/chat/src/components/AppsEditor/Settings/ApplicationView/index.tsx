@@ -8,6 +8,7 @@ import {
 
 import { useRouter } from 'next/router';
 
+import { usePreventSpaceHandlers } from '@/src/hooks/usePreventSpaceHandlers';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { CustomApplicationModel } from '@/src/types/applications';
@@ -130,7 +131,6 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
   const {
     register,
     control,
-
     handleSubmit: submitWrapper,
     formState: { errors, defaultValues, isValid },
     setError,
@@ -149,6 +149,9 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
   );
 
   const router = useRouter();
+
+  const { onBeforeInput, onInput, onKeyDownOrPaste } =
+    usePreventSpaceHandlers();
 
   const handleSubmit = useCallback(
     (data: CustomApplicationFormData) => {
@@ -176,49 +179,6 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
     },
     [exitAfterSave, shouldSaveApplication, dispatch, oldApplication],
   );
-
-  const handleUrlBeforeInput = (e: React.FormEvent<HTMLInputElement>) => {
-    const inputEvent = e.nativeEvent as InputEvent;
-    if (inputEvent.data?.includes(' ') || inputEvent.data === '. ') {
-      e.preventDefault();
-    }
-  };
-
-  const handleUrlChange = (e: React.FormEvent<HTMLInputElement>) => {
-    const input = e.currentTarget;
-    const cleaned = input.value.replace(/\s+/g, '').replace(/\.{2,}/g, '.');
-
-    if (input.value !== cleaned) {
-      input.value = cleaned;
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-  };
-
-  const handlePreventSpace = (
-    e:
-      | React.KeyboardEvent<HTMLInputElement>
-      | React.ClipboardEvent<HTMLInputElement>,
-  ) => {
-    if (e.type === 'keydown') {
-      const keyEvent = e as React.KeyboardEvent<HTMLInputElement>;
-      if (keyEvent.key === ' ') {
-        e.preventDefault();
-      }
-    } else if (e.type === 'paste') {
-      e.preventDefault();
-      const pasted = (e as React.ClipboardEvent<HTMLInputElement>).clipboardData
-        .getData('text')
-        .replace(/\s+/g, '');
-      const input = e.currentTarget;
-      input.setRangeText(
-        pasted,
-        input.selectionStart ?? 0,
-        input.selectionEnd ?? 0,
-        'end',
-      );
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-  };
 
   const autoSaveHandler = useCallback(() => {
     submitWrapper(handleSubmit)();
@@ -311,10 +271,10 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
           id="completionUrl"
           error={errors.completionUrl?.message}
           data-qa="completion-url"
-          onBeforeInput={handleUrlBeforeInput}
-          onKeyDown={handlePreventSpace}
-          onPaste={handlePreventSpace}
-          onInput={handleUrlChange}
+          onBeforeInput={onBeforeInput}
+          onInput={onInput}
+          onKeyDown={onKeyDownOrPaste}
+          onPaste={onKeyDownOrPaste}
         />
       </div>
     </form>
