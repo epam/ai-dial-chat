@@ -80,12 +80,13 @@ function ShareAccessSection({
         <button
           onClick={onUnshare}
           className="flex gap-2 text-sm text-accent-primary"
+          data-qa="remove-access-button"
         >
           <IconUserUnshare height={18} width={18} />
-          <p data-qa="shared-access-message">{unshareLabel}</p>
+          <p>{unshareLabel}</p>
         </button>
       ) : (
-        <p data-qa="shared-access-message">{notSharedMessage}</p>
+        <p data-qa="not-shared-entity-label">{notSharedMessage}</p>
       )}
     </div>
   );

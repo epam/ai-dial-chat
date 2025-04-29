@@ -107,7 +107,7 @@ dialTest(
           ExpectedConstants.sharePromptFolderText,
         );
         await shareModalAssertion.assertElementText(
-          shareModal.sharedAccessMessage,
+          shareModal.notSharedEntityLabel,
           ExpectedConstants.notSharedFolderText,
         );
       },
@@ -188,7 +188,7 @@ dialTest(
 
 dialTest(
   `Shared icon appears in prompt if it's located in shared folder.\n` +
-    `Shared icon disappears from folder if the folder was deleted from "Shared with me" by others`,
+    `Shared icon disappears from folder if the folder from "Shared with me" was Unshared by others`,
   async ({
     dialHomePage,
     promptData,
@@ -273,7 +273,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Delete shared folder by one of the users and verify folder still has arrow icon',
+      'Unshare folder by one of the users and verify folder still has arrow icon',
       async () => {
         const sharedEntities =
           await additionalSecondUserShareApiHelper.listSharedWithMePrompts();
@@ -294,7 +294,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Delete shared folder by rest user and verify arrow icon disappears for folder',
+      'Unshare folder by rest user and verify arrow icon disappears for folder',
       async () => {
         const sharedEntities =
           await additionalUserShareApiHelper.listSharedWithMePrompts();
@@ -436,7 +436,7 @@ dialTest(
         await folderPrompts.expandFolder(folderPrompt.folders.name);
         await folderPrompts.openFolderDropdownMenu(folderPrompt.folders.name);
         await folderDropdownMenu.selectMenuOption(MenuOptions.share);
-        await shareModal.sharedAccessMessage.click();
+        await shareModal.removeAccessBtn.click();
         await confirmationDialogAssertion.assertConfirmationMessage(
           ExpectedConstants.removeFolderAccessMessage(
             folderPrompt.folders.name,
@@ -466,7 +466,7 @@ dialTest(
       async () => {
         await folderPrompts.openFolderDropdownMenu(folderPrompt.folders.name);
         await folderDropdownMenu.selectMenuOption(MenuOptions.share);
-        await shareModal.sharedAccessMessage.click();
+        await shareModal.removeAccessBtn.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
         await promptBarFolderAssertion.assertFolderArrowIconState(
           { name: folderPrompt.folders.name },
@@ -480,7 +480,7 @@ dialTest(
         folderPrompt.prompts[0].folderId + ItemUtil.urlSeparator;
       const sharedEntities =
         await additionalUserShareApiHelper.listSharedWithMePrompts();
-      await shareApiAssertion.assertSharedWithMeEntityState(
+      shareApiAssertion.assertSharedWithMeEntityState(
         sharedEntities,
         folderPrompt.folders,
         'hidden',
