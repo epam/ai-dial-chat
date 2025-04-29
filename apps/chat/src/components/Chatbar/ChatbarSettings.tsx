@@ -53,9 +53,6 @@ export const ChatbarSettings = () => {
   );
   const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
     useState(false);
-  const maximumAttachmentsAmount = useAppSelector(
-    ConversationsSelectors.selectMaximumAttachmentsAmount,
-  );
   const isMyItemsExist = useAppSelector(
     ConversationsSelectors.selectDoesAnyMyItemExist,
   );
@@ -226,7 +223,6 @@ export const ChatbarSettings = () => {
         <FileManagerModal
           isOpen
           allowedTypes={['*/*']}
-          maximumAttachmentsAmount={maximumAttachmentsAmount}
           onClose={() => {
             setIsSelectFilesDialogOpened(false);
           }}
