@@ -8,7 +8,7 @@ export const convertLaTeXToMarkdownMath = (content: string) => {
     /\\begin{(equation\*?|align\*?|gather\*?|multline\*?|displaymath)}([\s\S]*?)\\end{\1}/g,
     (_, envName: string, inner: string) => {
       if (/[\^_=+\-*/\\]/.test(inner)) {
-        return `$$${inner.trim()}$$`;
+        return `$$\n${inner.trim()}\n$$`;
       }
 
       return `\\begin{${envName}}${inner}\\end{${envName}}`;
