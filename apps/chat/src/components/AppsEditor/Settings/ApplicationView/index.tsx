@@ -8,6 +8,7 @@ import {
 
 import { useRouter } from 'next/router';
 
+import { usePreventSpaceHandlers } from '@/src/hooks/usePreventSpaceHandlers';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { CustomApplicationModel } from '@/src/types/applications';
@@ -99,9 +100,6 @@ const validators: Validators = {
     required: 'Completion URL is required',
     validate: (value) => {
       try {
-        if (value.trim() !== value) {
-          return 'Completion URL cannot start or end with spaces';
-        }
         if (!value.startsWith('http://') && !value.startsWith('https://')) {
           return 'Completion URL must start with http:// or https://';
         }
@@ -133,7 +131,6 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
   const {
     register,
     control,
-
     handleSubmit: submitWrapper,
     formState: { errors, defaultValues, isValid },
     setError,
@@ -152,6 +149,9 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
   );
 
   const router = useRouter();
+
+  const { onBeforeInput, onInput, onKeyDownOrPaste } =
+    usePreventSpaceHandlers();
 
   const handleSubmit = useCallback(
     (data: CustomApplicationFormData) => {
@@ -271,6 +271,10 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
           id="completionUrl"
           error={errors.completionUrl?.message}
           data-qa="completion-url"
+          onBeforeInput={onBeforeInput}
+          onInput={onInput}
+          onKeyDown={onKeyDownOrPaste}
+          onPaste={onKeyDownOrPaste}
         />
       </div>
     </form>
