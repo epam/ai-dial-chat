@@ -3,8 +3,12 @@ import { PluggableList } from 'react-markdown/lib/react-markdown';
 
 import classnames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
+
 import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
-import { convertLaTeXToMarkdownMath } from '@/src/utils/converters';
+import { convertLaTeXToMarkdownMath } from '@/src/utils/app/converters';
+
+import { ScreenState } from '@/src/types/common';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -118,10 +122,13 @@ const ChatMDComponent = ({
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
+  const screenState = useScreenState();
+
   const mdClassNames = classnames(
-    'prose min-w-full leading-[150%] dark:prose-invert prose-a:text-primary prose-a:underline',
+    'prose min-w-full dark:prose-invert prose-a:text-primary prose-a:underline',
     isChatFullWidth && 'max-w-none',
-    isOverlay ? 'text-sm' : 'md:leading-normal',
+    isOverlay && 'text-sm',
+    (screenState === ScreenState.SM || isOverlay) && 'leading-[150%]',
   );
 
   const processedContent = convertLaTeXToMarkdownMath(content);
