@@ -70,75 +70,89 @@ dialAdminTest(
     let sharedConversation: Conversation;
     let publishedConversation: Conversation;
     let playbackConversation: Conversation;
-    let randomAgentId: string;
     let notWorkspaceAgent: DialAIEntityModel;
 
-    await dialTest.step(
-      'Prepare conversations in different sections',
-      async () => {
-        const recentAgents =
-          (await localStorageManager.getRecentModelsIds()) as string[];
-        randomAgentId = GeneratorUtil.randomArrayElement(
-          recentAgents.filter((a) => a !== ModelsUtil.getDefaultModel()!.id),
-        );
-        notWorkspaceAgent = GeneratorUtil.randomArrayElement(
-          ModelsUtil.getOpenAIEntities().filter(
-            (e) => e.type === 'model' && !recentAgents.includes(e.id),
-          ),
-        );
+    const recentAgents =
+      (await localStorageManager.getRecentModelsIds()) as string[];
+    const randomAgentId = GeneratorUtil.randomArrayElement(
+      recentAgents.filter((a) => a !== ModelsUtil.getDefaultModel()!.id),
+    );
+    await localStorageManager.setShowSideBarPanels();
 
+    await dialTest.step(
+      'Prepare two simple conversations, partially replayed and replay based on the first one',
+      async () => {
         firstConversation = conversationData.prepareDefaultConversation();
-        conversationData.resetData();
-        secondConversation = conversationData.prepareDefaultConversation();
         conversationData.resetData();
         replayConversation =
           conversationData.preparePartiallyReplayedConversation(
             firstConversation,
           );
         conversationData.resetData();
-        notWorkspaceAgentConversation =
-          conversationData.prepareDefaultConversation(notWorkspaceAgent);
-        conversationData.resetData();
-        notAvailableAgentConversation =
-          conversationData.prepareDefaultConversation('invalidAgent');
-        conversationData.resetData();
-        sharedConversation = conversationData.prepareDefaultConversation();
-        conversationData.resetData();
-        publishedConversation = conversationData.prepareDefaultConversation();
-        conversationData.resetData();
         playbackConversation =
           conversationData.prepareDefaultPlaybackConversation(
             firstConversation,
           );
-
+        conversationData.resetData();
+        secondConversation = conversationData.prepareDefaultConversation();
+        conversationData.resetData();
         await dataInjector.createConversations([
           firstConversation,
-          secondConversation,
           replayConversation,
-          notWorkspaceAgentConversation,
-          notAvailableAgentConversation,
-          publishedConversation,
           playbackConversation,
+          secondConversation,
         ]);
-        await adminDataInjector.createConversations([sharedConversation]);
-
-        const shareByLinkResponse = await adminShareApiHelper.shareEntityByLink(
-          [sharedConversation],
-        );
-        await mainUserShareApiHelper.acceptInvite(shareByLinkResponse);
-
-        const publishRequest = publishRequestBuilder
-          .withName(GeneratorUtil.randomPublicationRequestName())
-          .withConversationResource(publishedConversation, PublishActions.ADD)
-          .build();
-        const publication =
-          await publicationApiHelper.createPublishRequest(publishRequest);
-        publicationsToUnpublish.push(publication);
-        await adminPublicationApiHelper.approveRequest(publication);
-
-        await localStorageManager.setShowSideBarPanels();
       },
     );
+
+    await dialTest.step(
+      'Prepare conversation with non workspace agent',
+      async () => {
+        notWorkspaceAgent = GeneratorUtil.randomArrayElement(
+          ModelsUtil.getOpenAIEntities().filter(
+            (e) => e.type === 'model' && !recentAgents.includes(e.id),
+          ),
+        );
+        notWorkspaceAgentConversation =
+          conversationData.prepareDefaultConversation(notWorkspaceAgent);
+        conversationData.resetData();
+        await dataInjector.createConversations([notWorkspaceAgentConversation]);
+      },
+    );
+
+    await dialTest.step(
+      'Prepare conversation with not available agent',
+      async () => {
+        notAvailableAgentConversation =
+          conversationData.prepareDefaultConversation('invalidAgent');
+        conversationData.resetData();
+        await dataInjector.createConversations([notAvailableAgentConversation]);
+      },
+    );
+
+    await dialTest.step('Prepare shared conversation by admin', async () => {
+      sharedConversation = conversationData.prepareDefaultConversation();
+      conversationData.resetData();
+      await adminDataInjector.createConversations([sharedConversation]);
+      const shareByLinkResponse = await adminShareApiHelper.shareEntityByLink([
+        sharedConversation,
+      ]);
+      await mainUserShareApiHelper.acceptInvite(shareByLinkResponse);
+    });
+
+    await dialTest.step('Prepare published conversation', async () => {
+      publishedConversation = conversationData.prepareDefaultConversation();
+      conversationData.resetData();
+      await dataInjector.createConversations([publishedConversation]);
+      const publishRequest = publishRequestBuilder
+        .withName(GeneratorUtil.randomPublicationRequestName())
+        .withConversationResource(publishedConversation, PublishActions.ADD)
+        .build();
+      const publication =
+        await publicationApiHelper.createPublishRequest(publishRequest);
+      publicationsToUnpublish.push(publication);
+      await adminPublicationApiHelper.approveRequest(publication);
+    });
 
     await dialTest.step(
       'Select second conversation and type any input message',
