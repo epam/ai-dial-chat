@@ -13,6 +13,8 @@ export const stopBubbling = <T>(e: MouseEvent<T>) => {
 export const PLOTLY_CONTENT_TYPE = 'application/vnd.plotly.v1+json';
 
 export const ISOLATED_MODEL_QUERY_PARAM = 'isolated-model-id';
+export const CONVERSATION_QUERY_PARAM = 'conversation-id';
+export const ACTION_QUERY_PARAM = 'action';
 
 export const DEFAULT_CUSTOM_ATTACHMENT_WIDTH = 150;
 export const DEFAULT_CUSTOM_ATTACHMENT_HEIGHT = 150;
