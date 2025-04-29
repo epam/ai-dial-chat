@@ -6,7 +6,7 @@ export const convertLaTeXToMarkdownMath = (content: string) => {
 
   transformedContent = transformedContent.replace(
     /\\begin{(equation\*?|align\*?|gather\*?|multline\*?|displaymath)}([\s\S]*?)\\end{\1}/g,
-    (_, envName, inner) => {
+    (_, envName: string, inner: string) => {
       if (/[\^_=+\-*/\\]/.test(inner)) {
         return `$$${inner.trim()}$$`;
       }
@@ -17,6 +17,6 @@ export const convertLaTeXToMarkdownMath = (content: string) => {
 
   return transformedContent.replace(
     /\\\((.*?)\\\)/g,
-    (_, inlineMathContent) => `$${inlineMathContent.trim()}$`,
+    (_, inlineMathContent: string) => `$${inlineMathContent.trim()}$`,
   );
 };

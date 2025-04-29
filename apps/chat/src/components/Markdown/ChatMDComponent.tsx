@@ -6,7 +6,7 @@ import classnames from 'classnames';
 import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
-import { convertLaTeXToMarkdownMath } from '@/src/utils/converters';
+import { convertLaTeXToMarkdownMath } from '@/src/utils/app/converters';
 
 import { ScreenState } from '@/src/types/common';
 
