@@ -316,7 +316,9 @@ const publicationsToUnpublish: Publication[] = [];
 
 dialAdminTest(
   'Use prompt not available for chat from Organization\n' +
-    'Use prompt not available for chat from Approve required',
+    'Use prompt not available for chat from Approve required.\n' +
+    'Use prompt option is not available when publication request is selected.\n' +
+    'Use prompt option is available for new conversation when publication request was previously selected',
   async ({
     dialHomePage,
     organizationConversations,
@@ -332,12 +334,14 @@ dialAdminTest(
     adminPublicationApiHelper,
     adminDialHomePage,
     adminApproveRequiredConversations,
+    adminChatBar,
+    adminChat,
     localStorageManager,
     adminLocalStorageManager,
     adminPrompts,
     adminPromptDropdownMenuAssertion,
   }) => {
-    setTestIds('EPMRTC-5499', 'EPMRTC-5500');
+    setTestIds('EPMRTC-5499', 'EPMRTC-5500', 'EPMRTC-5496', 'EPMRTC-6037');
     const prompt = promptData.prepareDefaultPrompt();
     promptData.resetData();
     const adminPrompt = promptData.prepareDefaultPrompt();
@@ -410,6 +414,37 @@ dialAdminTest(
         await adminPromptDropdownMenuAssertion.assertMenuOptionActionabilityState(
           MenuOptions.use,
           'disabled',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Select publication request, open prompt dropdown menu and verify "Use" option is disabled',
+      async () => {
+        await adminApproveRequiredConversations.selectRequest(
+          notApprovedPublication.name!,
+        );
+        await adminPrompts.openEntityDropdownMenu(adminPrompt.name);
+        await adminPromptDropdownMenuAssertion.assertMenuOptionActionabilityState(
+          MenuOptions.use,
+          'disabled',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Select publication request, create new conversation, open prompt dropdown menu and verify "Use" option is enabled',
+      async () => {
+        await adminApproveRequiredConversations.selectRequest(
+          notApprovedPublication.name!,
+        );
+        await adminChatBar.createNewEntity();
+        await adminChat.configureSettingsButton.waitForState();
+        await adminChat.changeAgentButton.waitForState();
+        await adminPrompts.openEntityDropdownMenu(adminPrompt.name);
+        await adminPromptDropdownMenuAssertion.assertMenuOptionActionabilityState(
+          MenuOptions.use,
+          'enabled',
         );
       },
     );

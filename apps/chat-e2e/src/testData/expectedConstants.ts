@@ -232,6 +232,9 @@ export const ExpectedConstants = {
   copiedLinkText: 'Copied!',
   copyLinkText: 'Copy link',
   copiedToastMessage: 'Link copied!',
+  notFoundHeader: '404',
+  notFoundTitle: 'Page not found',
+  notFoundDescription: `It seems like the page you're looking for doesn't exist.`,
 };
 
 export enum Types {

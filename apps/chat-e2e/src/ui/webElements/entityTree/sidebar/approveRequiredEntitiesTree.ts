@@ -29,4 +29,8 @@ export class ApproveRequiredEntitiesTree extends Folders {
     await this.selectFolderEntity(requestName, entityName);
     await responsePromise;
   }
+
+  public async selectRequest(requestName: string) {
+    await this.getFolderName(requestName).click();
+  }
 }
