@@ -116,8 +116,7 @@ const PromptModalView = () => {
   }, []);
 
   const handleClose = useCallback(() => {
-    dispatch(PromptsActions.setIsPromptModalOpen({ isOpen: false }));
-    dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
+    dispatch(PromptsActions.selectPrompt({ promptId: undefined }));
   }, [dispatch]);
 
   return (

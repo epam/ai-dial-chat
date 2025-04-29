@@ -307,14 +307,13 @@ export function PublicationHandler({ publication }: Props) {
         }),
       );
       dispatch(
-        PromptsActions.setSelectedPrompt({
+        PromptsActions.selectPrompt({
           promptId: promptsToReviewIds.length
             ? promptsToReviewIds[0].reviewUrl
             : reviewedPromptsIds[0].reviewUrl,
           isApproveRequiredResource: true,
         }),
       );
-      dispatch(PromptsActions.setIsPromptModalOpen({ isOpen: true }));
     };
 
     if (conversationsToReviewIds.length) {
