@@ -830,15 +830,9 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           if (acceptedId && isPrompt) {
             if (!isFolderAccepted) {
               actions.push(
-                PromptsActions.setSelectedPrompt({
+                PromptsActions.selectPrompt({
                   promptId: acceptedId,
                 }),
-              );
-              actions.push(
-                PromptsActions.uploadPrompt({ promptId: acceptedId }),
-              );
-              actions.push(
-                PromptsActions.setIsPromptModalOpen({ isOpen: true }),
               );
             }
 
