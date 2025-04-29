@@ -59,7 +59,7 @@ dialTest(
           ExpectedConstants.sharePromptText,
         );
         await shareModalAssertion.assertElementText(
-          shareModal.sharedAccessMessage,
+          shareModal.notSharedEntityLabel,
           ExpectedConstants.notSharedPromptText,
         );
       },
@@ -237,7 +237,7 @@ dialTest(
         const sharedEntities =
           await additionalUserShareApiHelper.listSharedWithMePrompts();
         prompt.id = prompt.id.replace(prompt.name, newName);
-        await shareApiAssertion.assertSharedWithMeEntityState(
+        shareApiAssertion.assertSharedWithMeEntityState(
           sharedEntities,
           prompt,
           'visible',
@@ -348,7 +348,7 @@ dialTest(
       await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
       const sharedWithMePrompts =
         await additionalUserShareApiHelper.listSharedWithMePrompts();
-      await shareApiAssertion.assertSharedWithMeEntityState(
+      shareApiAssertion.assertSharedWithMeEntityState(
         sharedWithMePrompts,
         prompt,
         'visible',
@@ -361,7 +361,7 @@ dialTest(
         await itemApiHelper.deleteEntity(prompt);
         const sharedWithMePrompts =
           await additionalUserShareApiHelper.listSharedWithMePrompts();
-        await shareApiAssertion.assertSharedWithMeEntityState(
+        shareApiAssertion.assertSharedWithMeEntityState(
           sharedWithMePrompts,
           prompt,
           'hidden',

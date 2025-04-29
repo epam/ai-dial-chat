@@ -247,6 +247,20 @@ export const publicationSlice = createSlice({
         versionGroup.selectedVersion = payload.newVersion;
       }
     },
+    resetSelectedVersionForPublicVersionGroup: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        versionGroupId: string;
+      }>,
+    ) => {
+      const versionGroup = state.publicVersionGroups[payload.versionGroupId];
+
+      if (versionGroup) {
+        versionGroup.selectedVersion = versionGroup.allVersions[0];
+      }
+    },
     removePublicVersionGroups: (
       state,
       {
