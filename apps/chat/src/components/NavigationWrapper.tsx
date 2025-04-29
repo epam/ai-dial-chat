@@ -192,24 +192,30 @@ const UsedWidgets = () => {
 
   const router = useRouter();
 
-  const selectedWidget = useAppSelector(
+  const selectedWidgetId = useAppSelector(
     ApplicationSelectors.selectSelectedWidget,
   );
   const isApplicationsInitialised = useAppSelector(
     ApplicationSelectors.selectInitialized,
   );
+
   const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
 
   const { widgetModels, handleWidgetClick } = useWidgets();
 
   const handleOpenWidgetsClick = useCallback(() => {
     if (router.route === Routes.SelectedWidget) return;
-    if (selectedWidget && router.route !== Routes.SelectedWidget) {
-      handleWidgetClick(selectedWidget);
+    if (selectedWidgetId && router.route !== Routes.SelectedWidget) {
+      handleWidgetClick(selectedWidgetId);
     } else {
       router.push(Routes.Widgets);
     }
-  }, [handleWidgetClick, router, selectedWidget]);
+  }, [handleWidgetClick, router, selectedWidgetId]);
+
+  const selectedWidget = useMemo(
+    () => widgetModels.find((model) => model.reference === selectedWidgetId),
+    [widgetModels, selectedWidgetId],
+  );
 
   const WidgetBarIcon = useMemo(() => {
     if (isModelsLoading || !isApplicationsInitialised)
@@ -221,8 +227,8 @@ const UsedWidgets = () => {
     return selectedWidget
       ? ({ height }: TablerIconsProps) => (
           <ModelIcon
-            entity={undefined}
-            entityId={selectedWidget}
+            entity={selectedWidget}
+            entityId={selectedWidget.reference}
             size={height as number}
           />
         )
@@ -238,7 +244,7 @@ const UsedWidgets = () => {
             rounded
             onClick={() => handleWidgetClick(model.reference)}
             selected={
-              model.reference === selectedWidget &&
+              model.reference === selectedWidgetId &&
               router.route === Routes.SelectedWidget
             }
             Icon={({ height }) => (

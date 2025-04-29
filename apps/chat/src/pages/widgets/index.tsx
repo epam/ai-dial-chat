@@ -43,11 +43,11 @@ function WidgetsPage() {
           >
             <ModelIcon entityId={model.id} entity={model} size={40} />
 
-            <div className="flex flex-col justify-center gap-1">
+            <div className="flex flex-col justify-center gap-1 truncate">
               <span className="text-start text-xs text-secondary">
                 {`${t('Version')}: ${model.version}`}
               </span>
-              <span className="truncate text-sm font-semibold text-primary">
+              <span className="truncate text-start text-sm font-semibold text-primary">
                 {model.name}
               </span>
             </div>
