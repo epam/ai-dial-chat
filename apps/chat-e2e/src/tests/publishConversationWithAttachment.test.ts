@@ -122,7 +122,7 @@ dialAdminTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
         await baseAssertion.assertElementState(
@@ -322,7 +322,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Select published conversation and verify it contains attachment',
       async () => {
-        await organizationConversations.selectConversation(conversation.name);
+        await organizationConversations.selectEntity(conversation.name);
         await chatMessagesAssertion.assertMessageDownloadUrl(
           1,
           ExpectedConstants.publishedAttachmentDownloadPath(
@@ -488,7 +488,7 @@ dialAdminTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(plotlyConversation.name);
+        await conversations.selectEntity(plotlyConversation.name);
         await conversations.openEntityDropdownMenu(plotlyConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
         await baseAssertion.assertElementState(
@@ -579,7 +579,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Open published conversation and verify plotly graph is shown on expand attachment',
       async () => {
-        await adminOrganizationConversations.selectConversation(
+        await adminOrganizationConversations.selectEntity(
           plotlyConversation.name,
         );
         await adminChatMessages
@@ -612,7 +612,7 @@ dialAdminTest(
           { name: plotlyConversation.name },
           'visible',
         );
-        await adminConversationAssertion.assertSelectedConversation(
+        await adminConversationAssertion.assertSelectedEntity(
           plotlyConversation.name,
         );
         await adminChatMessages
@@ -663,9 +663,7 @@ dialAdminTest(
           { name: playbackName },
           'visible',
         );
-        await adminConversationAssertion.assertSelectedConversation(
-          playbackName,
-        );
+        await adminConversationAssertion.assertSelectedEntity(playbackName);
         for (let i = 1; i <= chatResponseIndex; i++) {
           await adminChat.playNextChatMessage();
         }
@@ -700,7 +698,7 @@ dialAdminTest(
           { name: replayName },
           'visible',
         );
-        await adminConversationAssertion.assertSelectedConversation(replayName);
+        await adminConversationAssertion.assertSelectedEntity(replayName);
         await adminDialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );

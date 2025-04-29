@@ -52,7 +52,7 @@ dialTest.skip(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         for (let i = 1; i <= 2; i++) {
           await chatBar.createNewEntity();
           await expect
@@ -117,7 +117,7 @@ dialTest.skip(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(secondConversation.name);
+        await conversations.selectEntity(secondConversation.name);
         await chatBar.createNewEntity();
         await expect
           .soft(
@@ -195,7 +195,7 @@ dialTest.skip(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversationsArray[0].name);
+        await conversations.selectEntity(conversationsArray[0].name);
         await conversations.openEntityDropdownMenu(
           ExpectedConstants.newConversationWithIndexTitle(1),
         );
@@ -348,7 +348,7 @@ dialTest(
     await dialTest.step(
       'Send one more request to "test" conversation and verify name is not changed',
       async () => {
-        await conversations.selectConversation(
+        await conversations.selectEntity(
           requestBasedConversationName,
           { isHttpMethodTriggered: false },
           2,

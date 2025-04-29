@@ -302,6 +302,7 @@ export const PromptComponent = ({
             dispatch(PromptsActions.setChosenPrompts({ ids: [prompt.id] }));
           }
         }}
+        name={isSelected ? 'selected-entity' : undefined}
         style={{
           paddingLeft: (level && `${level * 30 + 16}px`) || '0.875rem',
         }}

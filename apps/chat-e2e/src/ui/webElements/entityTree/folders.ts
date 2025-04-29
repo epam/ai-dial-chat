@@ -1,5 +1,4 @@
 import {
-  ChatBarSelectors,
   EntitySelectors,
   MenuSelectors,
   SideBarSelectors,
@@ -410,7 +409,7 @@ export class Folders extends BaseElement {
       entityName,
       folderIndex,
       entityIndex,
-    ).locator(ChatBarSelectors.selectedEntity);
+    ).locator(SideBarSelectors.selectedEntity);
   }
 
   public async selectFolderEntity(

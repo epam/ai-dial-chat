@@ -96,6 +96,7 @@ const dialAdminTest = dialTest.extend<{
   adminChatMessages: ChatMessages;
   adminOrganizationFolderDropdownMenu: DropdownMenu;
   adminApproveRequiredConversationDropdownMenu: DropdownMenu;
+  adminApproveRequiredPromptDropdownMenu: DropdownMenu;
   adminTooltip: Tooltip;
   adminOrganizationConversations: OrganizationConversationsTree;
   adminVariableModal: VariableModalDialog;
@@ -253,6 +254,14 @@ const dialAdminTest = dialTest.extend<{
     const adminApproveRequiredConversationDropdownMenu =
       adminApproveRequiredConversations.getDropdownMenu();
     await use(adminApproveRequiredConversationDropdownMenu);
+  },
+  adminApproveRequiredPromptDropdownMenu: async (
+    { adminApproveRequiredPrompts },
+    use,
+  ) => {
+    const adminApproveRequiredPromptDropdownMenu =
+      adminApproveRequiredPrompts.getDropdownMenu();
+    await use(adminApproveRequiredPromptDropdownMenu);
   },
   adminTooltip: async ({ adminPage }, use) => {
     const adminTooltip = new Tooltip(adminPage);

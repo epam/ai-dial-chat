@@ -131,7 +131,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         const chatNameOverflow = await conversations
           .getEntityName(conversationName)
           .getComputedStyleProperty(Styles.text_overflow);
@@ -301,7 +301,7 @@ dialTest(
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await conversations.selectConversation(conversation.name);
+    await conversations.selectEntity(conversation.name);
     await conversations.openEntityDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
     await renameConversationModal.editConversationNameWithEnter(
@@ -647,7 +647,7 @@ dialTest(
       iconsToBeLoaded: [defaultModel.iconUrl],
     });
     await dialHomePage.waitForPageLoaded();
-    await conversations.selectConversation(conversation.name);
+    await conversations.selectEntity(conversation.name);
     await conversations.openEntityDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
     await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
@@ -707,7 +707,7 @@ dialTest.skip(
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await conversations.selectConversation(yesterdayConversation.name);
+    await conversations.selectEntity(yesterdayConversation.name);
     const yesterdayConversations =
       await conversations.getYesterdayConversations();
     expect
@@ -742,7 +742,7 @@ dialTest.skip(
       .toBe(1);
 
     const messageToEdit = lastWeekConversation.messages[0].content;
-    await conversations.selectConversation(lastWeekConversation.name);
+    await conversations.selectEntity(lastWeekConversation.name);
     await chatMessages.openEditMessageMode(messageToEdit);
     await chatMessages.editMessage(messageToEdit, 'updated message');
     todayConversations = await conversations.getTodayConversations();
@@ -750,7 +750,7 @@ dialTest.skip(
       .soft(todayConversations.length, ExpectedMessages.conversationOfToday)
       .toBe(2);
 
-    await conversations.selectConversation(lastMonthConversation.name);
+    await conversations.selectEntity(lastMonthConversation.name);
     await dialHomePage.mockChatTextResponse(
       MockedChatApiResponseBodies.simpleTextBody,
     );
@@ -784,7 +784,7 @@ dialTest(
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await conversations.selectConversation(conversation.name);
+    await conversations.selectEntity(conversation.name);
     await conversations.openEntityDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.moveTo);
     await conversations.selectMoveToMenuOption(
@@ -848,7 +848,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await chatBar.createNewFolder();
         await folderConversations.openFolderDropdownMenu(
           ExpectedConstants.newFolderWithIndexTitle(1),
@@ -1437,7 +1437,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         await renameConversationModal.editConversationNameWithSaveButton(
@@ -1558,7 +1558,7 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await chatMessages.openEditMessageMode(1);
         await chatMessages.editFirstMessage(updatedRequest);
         await chatMessagesAssertion.assertElementText(

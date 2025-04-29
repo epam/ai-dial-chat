@@ -323,7 +323,7 @@ export const ConversationComponent = ({
           }
         }}
         onDragStart={(e) => handleDragStart(e, conversation)}
-        data-qa={isSelected ? 'selected' : null}
+        name={isSelected ? 'selected-entity' : undefined}
       >
         <ConversationView
           conversation={conversation}

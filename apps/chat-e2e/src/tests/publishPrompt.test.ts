@@ -10,8 +10,9 @@ import {
   PublishPath,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
-import { GeneratorUtil } from '@/src/utils';
+import { DateUtil, GeneratorUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
+import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
 
@@ -21,33 +22,39 @@ dialAdminTest(
     'Publish single prompt: rename folder in Organization\n' +
     'Publish prompt:add, rename and delete options for new folder in Change path\n' +
     'Publication request name: Spaces at the beginning or end of chat name are removed\n' +
-    'Publication request name: spaces in the middle of request name stay',
-  async ({
-    dialHomePage,
-    promptData,
-    dataInjector,
-    prompts,
-    promptDropdownMenu,
-    publishingRequestModal,
-    selectFolderModal,
-    adminDialHomePage,
-    adminApproveRequiredPromptsAssertion,
-    adminApproveRequiredPrompts,
-    adminPublishingApprovalModal,
-    adminPublishingApprovalModalAssertion,
-    setTestIds,
-    baseAssertion,
-    selectFolders,
-    adminPublishedPromptPreviewModal,
-    adminPromptToApproveAssertion,
-    adminPublishedPromptPreviewModalAssertion,
-    promptBarOrganizationFolderAssertion,
-    organizationFolderPrompts,
-    confirmationDialog,
-    folderDropdownMenu,
-    localStorageManager,
-    adminLocalStorageManager,
-  }) => {
+    'Publication request name: spaces in the middle of request name sta.\n' +
+    'Metadata for prompt inside publication request in Approve required section',
+  async (
+    {
+      dialHomePage,
+      promptData,
+      dataInjector,
+      prompts,
+      promptDropdownMenu,
+      publishingRequestModal,
+      selectFolderModal,
+      adminDialHomePage,
+      adminApproveRequiredPromptsAssertion,
+      adminApproveRequiredPrompts,
+      adminApproveRequiredPromptDropdownMenu,
+      adminPublishingApprovalModal,
+      adminInformationModal,
+      adminPublishingApprovalModalAssertion,
+      setTestIds,
+      baseAssertion,
+      selectFolders,
+      adminPublishedPromptPreviewModal,
+      adminPromptToApproveAssertion,
+      adminPublishedPromptPreviewModalAssertion,
+      promptBarOrganizationFolderAssertion,
+      organizationFolderPrompts,
+      confirmationDialog,
+      folderDropdownMenu,
+      localStorageManager,
+      adminLocalStorageManager,
+    },
+    testInfo,
+  ) => {
     dialAdminTest.slow();
     setTestIds(
       'EPMRTC-3305',
@@ -56,6 +63,7 @@ dialAdminTest(
       'EPMRTC-3596',
       'EPMRTC-3604',
       'EPMRTC-3606',
+      'EPMRTC-5571',
     );
     let prompt1: Prompt;
     let prompt2: Prompt;
@@ -70,6 +78,10 @@ dialAdminTest(
     const expectedColor = ThemesUtil.getRgbColorByKey(
       ThemeColorAttributes.textPrimary,
     );
+    const currentDate = DateUtil.getCurrentLocalDate();
+    const username =
+      process.env.E2E_USERNAME!.split(',')[testInfo.parallelIndex];
+    const author = username.substring(0, username.indexOf('@'));
 
     await dialTest.step('Prepare 2 prompts', async () => {
       prompt1 = promptData.prepareDefaultPrompt();
@@ -257,6 +269,53 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
+      'Select "Info" option from request dropdown menu and verify modal data',
+      async () => {
+        await adminApproveRequiredPrompts.openFolderEntityDropdownMenu(
+          requestName1WithoutLeadingAndTrailingSpaces,
+          prompt1.name,
+        );
+        await adminApproveRequiredPromptDropdownMenu.selectMenuOption(
+          MenuOptions.info,
+          { triggeredHttpMethod: 'GET' },
+        );
+        await baseAssertion.assertElementState(
+          adminInformationModal,
+          'visible',
+        );
+        await baseAssertion.assertElementText(
+          adminInformationModal.title,
+          ExpectedConstants.informationModalTitle,
+        );
+        await baseAssertion.assertElementText(
+          adminInformationModal.lastUpdatedLabel,
+          ExpectedConstants.informationModalLastUpdatedLabel,
+        );
+        await baseAssertion.assertElementText(
+          adminInformationModal.createdDateLabel,
+          ExpectedConstants.informationModalCreatedDateLabel,
+        );
+        await baseAssertion.assertElementText(
+          adminInformationModal.authorLabel,
+          ExpectedConstants.informationModalAuthorLabel,
+        );
+        await baseAssertion.assertElementText(
+          adminInformationModal.lastUpdatedValue,
+          currentDate,
+        );
+        await baseAssertion.assertElementText(
+          adminInformationModal.createdDateValue,
+          currentDate,
+        );
+        await baseAssertion.assertElementText(
+          adminInformationModal.authorValue,
+          author,
+        );
+        await adminInformationModal.cancelButton.click();
+      },
+    );
+
+    await dialAdminTest.step(
       'Click on "Go to a review" button and verify conversation details are displayed',
       async () => {
         await adminPublishingApprovalModal.goToEntityReview({
@@ -338,6 +397,7 @@ dialAdminTest(
         publicationsToUnpublish.push(publishApiModels.response);
       },
     );
+
     await dialAdminTest.step(
       'Login as admin and verify conversation publishing request is displayed under "Approve required" section',
       async () => {
@@ -455,7 +515,8 @@ dialAdminTest(
     'Publish request name: tab is changed to space if to use it in chat name\n' +
     'The first 160 symbols from the input text is used as publication request name #1661\n' +
     'Publication request name can not be blank\n' +
-    'Publication request name with hieroglyph, specific letters',
+    'Publication request name with hieroglyph, specific letters.\n' +
+    `Author's public name displayed in metadata for prompt from Organization`,
   async ({
     dialHomePage,
     promptData,
@@ -472,6 +533,7 @@ dialAdminTest(
     setTestIds,
     baseAssertion,
     selectFolders,
+    informationModal,
     adminPublishedPromptPreviewModal,
     adminPromptToApproveAssertion,
     adminPublishedPromptPreviewModalAssertion,
@@ -491,6 +553,7 @@ dialAdminTest(
       'EPMRTC-3602',
       'EPMRTC-3603',
       'EPMRTC-3605',
+      'EPMRTC-5653',
     );
     let prompt1: Prompt;
     const folderNameTemplate = GeneratorUtil.randomString(10);
@@ -506,6 +569,7 @@ dialAdminTest(
     const expectedColor = ThemesUtil.getRgbColorByKey(
       ThemeColorAttributes.textPrimary,
     );
+    const author = GeneratorUtil.randomString(10);
 
     await dialTest.step('Prepare a new prompt', async () => {
       prompt1 = promptData.prepareDefaultPrompt();
@@ -596,11 +660,12 @@ dialAdminTest(
     });
 
     await dialTest.step(
-      'Set publication request name, check prompt to publish and send request',
+      'Set publication request name, update author, check prompt to publish and send request',
       async () => {
         await publishingRequestModal.requestName.fillInInput(
           requestNameWithTabs,
         );
+        await publishingRequestModal.author.fillInInput(author);
         await baseAssertion.assertElementText(
           publishingRequestModal.getChangePublishToPath().path,
           publicationPath,
@@ -702,6 +767,200 @@ dialAdminTest(
           { name: folderName },
           { name: prompt1.name },
           'visible',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Open conversation dropdown menu, select "Info" option and verify modal data',
+      async () => {
+        await organizationFolderPrompts.openFolderEntityDropdownMenu(
+          folderName,
+          prompt1.name,
+        );
+        await promptDropdownMenu.selectMenuOption(MenuOptions.info, {
+          triggeredHttpMethod: 'GET',
+        });
+        await baseAssertion.assertElementState(informationModal, 'visible');
+        await baseAssertion.assertElementText(
+          informationModal.authorValue,
+          author,
+        );
+        await informationModal.cancelButton.click();
+      },
+    );
+  },
+);
+
+dialAdminTest(
+  'Metadata for prompt from Organization section.\n' +
+    'Metadata for prompt with several versions from Organization section.\n' +
+    'Metadata for prompt duplicated from chat from Organization',
+  async ({
+    promptData,
+    adminUserItemApiHelper,
+    localStorageManager,
+    dialHomePage,
+    organizationPrompts,
+    promptPreviewModal,
+    promptPreviewVersionDropdownMenu,
+    adminDialHomePage,
+    adminLocalStorageManager,
+    adminPrompts,
+    adminPromptDropdownMenu,
+    promptDropdownMenu,
+    informationModal,
+    adminInformationModal,
+    setTestIds,
+    baseAssertion,
+    adminPublicationApiHelper,
+    publishRequestBuilder,
+  }) => {
+    setTestIds('EPMRTC-5569', 'EPMRTC-5570', 'EPMRTC-6104');
+    let prompt: Prompt;
+    const firstVersion = ExpectedConstants.defaultAppVersion;
+    const secondVersion = '0.0.2';
+    const currentDate = DateUtil.getCurrentLocalDate();
+    const author = GeneratorUtil.randomString(10);
+
+    await dialTest.step('Publish a prompt with two versions', async () => {
+      prompt = promptData.prepareDefaultPrompt();
+      await adminUserItemApiHelper.createPrompts([prompt]);
+
+      for (const version of [firstVersion, secondVersion]) {
+        const publishRequest = publishRequestBuilder
+          .withName(GeneratorUtil.randomPublicationRequestName())
+          .withDisplayAuthor(author)
+          .withPromptResource(prompt, PublishActions.ADD_IF_ABSENT, version)
+          .build();
+        const publication =
+          await adminPublicationApiHelper.createPublishRequest(publishRequest);
+        publicationsToUnpublish.push(publication);
+        await adminPublicationApiHelper.approveRequest(publication);
+      }
+      await localStorageManager.setShowSideBarPanels();
+    });
+
+    await dialTest.step(
+      'Select "Info" option for published prompt from dropdown menu and verify modal data',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await organizationPrompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenu.selectMenuOption(MenuOptions.info, {
+          triggeredHttpMethod: 'GET',
+        });
+        await baseAssertion.assertElementState(informationModal, 'visible');
+        await baseAssertion.assertElementText(
+          informationModal.title,
+          ExpectedConstants.informationModalTitle,
+        );
+        await baseAssertion.assertElementState(
+          informationModal.lastUpdatedLabel,
+          'hidden',
+        );
+        await baseAssertion.assertElementText(
+          informationModal.createdDateLabel,
+          ExpectedConstants.informationModalCreatedDateLabel,
+        );
+        await baseAssertion.assertElementText(
+          informationModal.authorLabel,
+          ExpectedConstants.informationModalAuthorLabel,
+        );
+        await baseAssertion.assertElementState(
+          informationModal.lastUpdatedValue,
+          'hidden',
+        );
+        await baseAssertion.assertElementText(
+          informationModal.createdDateValue,
+          currentDate,
+        );
+        await baseAssertion.assertElementText(
+          informationModal.authorValue,
+          author,
+        );
+        await informationModal.cancelButton.click();
+      },
+    );
+
+    await dialTest.step(
+      'Select the prompt, switch the version, click on "Info" button and verify modal data',
+      async () => {
+        await organizationPrompts.selectEntity(prompt.name, {
+          isHttpMethodTriggered: true,
+        });
+        await promptPreviewModal.version.click();
+        await promptPreviewVersionDropdownMenu.selectMenuOption(firstVersion, {
+          triggeredHttpMethod: 'GET',
+        });
+        await promptPreviewModal.openPromptInfo();
+        await baseAssertion.assertElementState(informationModal, 'visible');
+        await baseAssertion.assertElementState(
+          informationModal.lastUpdatedLabel,
+          'hidden',
+        );
+        await baseAssertion.assertElementText(
+          informationModal.createdDateLabel,
+          ExpectedConstants.informationModalCreatedDateLabel,
+        );
+        await baseAssertion.assertElementText(
+          informationModal.authorLabel,
+          ExpectedConstants.informationModalAuthorLabel,
+        );
+        await baseAssertion.assertElementState(
+          informationModal.lastUpdatedValue,
+          'hidden',
+        );
+        await baseAssertion.assertElementText(
+          informationModal.createdDateValue,
+          currentDate,
+        );
+        await baseAssertion.assertElementText(
+          informationModal.authorValue,
+          author,
+        );
+        await informationModal.cancelButton.click();
+        await promptPreviewModal.closeButton.click();
+      },
+    );
+
+    await dialAdminTest.step(
+      'Duplicate published prompt, select "Info" option from dropdown menu and verify modal data',
+      async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
+        await adminDialHomePage.openHomePage();
+        await adminDialHomePage.waitForPageLoaded();
+        await adminPrompts.openEntityDropdownMenu(prompt.name);
+        await adminPromptDropdownMenu.selectMenuOption(MenuOptions.info, {
+          triggeredHttpMethod: 'GET',
+        });
+        await baseAssertion.assertElementState(
+          adminInformationModal,
+          'visible',
+        );
+        await baseAssertion.assertElementText(
+          adminInformationModal.lastUpdatedLabel,
+          ExpectedConstants.informationModalLastUpdatedLabel,
+        );
+        await baseAssertion.assertElementText(
+          adminInformationModal.createdDateLabel,
+          ExpectedConstants.informationModalCreatedDateLabel,
+        );
+        await baseAssertion.assertElementState(
+          adminInformationModal.authorLabel,
+          'hidden',
+        );
+        await baseAssertion.assertElementText(
+          adminInformationModal.lastUpdatedValue,
+          currentDate,
+        );
+        await baseAssertion.assertElementText(
+          adminInformationModal.createdDateValue,
+          currentDate,
+        );
+        await baseAssertion.assertElementState(
+          adminInformationModal.authorValue,
+          'hidden',
         );
       },
     );

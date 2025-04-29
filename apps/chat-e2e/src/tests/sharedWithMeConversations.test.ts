@@ -97,7 +97,7 @@ dialSharedWithMeTest(
         });
         await expect
           .soft(
-            additionalShareUserSharedWithMeConversations.selectedConversation(
+            additionalShareUserSharedWithMeConversations.selectedEntity(
               conversation.name,
             ),
             ExpectedMessages.conversationIsVisible,
@@ -128,7 +128,7 @@ dialSharedWithMeTest(
         await dataInjector.updateConversations([conversation]);
 
         await additionalShareUserDialHomePage.reloadPage();
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           conversation.name,
         );
         await additionalShareUserChatMessages.getChatMessage(4).waitFor();
@@ -1147,7 +1147,7 @@ dialSharedWithMeTest(
           iconsToBeLoaded: [defaultModel!.iconUrl],
         });
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           conversation.name,
         );
         await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
