@@ -1,15 +1,18 @@
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
   AddAppMenuOptions,
   AppEditorGeneralFormFields,
   AppEditorViewFormFields,
   AppMenuActions,
+  Attachment,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
+import { Attributes, Tags } from '@/src/ui/domData';
 import { AppEditSteps, BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 
@@ -826,6 +829,149 @@ dialTest(
           appEditorGeneralForm.selectedTopicPills,
           0,
           ExpectedMessages.elementsCountIsValid,
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Edit Custom app: Update icon of custom app',
+  async ({
+    marketplacePage,
+    marketplaceAgentsSection,
+    agentDetailsModal,
+    appEditorPage,
+    attachFilesModal,
+    appEditorHeader,
+    appEditorGeneralForm,
+    appEditorPreview,
+    customApplicationBuilder,
+    applicationApiHelper,
+    uploadFromDeviceModal,
+    baseAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-4109');
+    const appEntity = {
+      name: GeneratorUtil.randomApplicationName(),
+      version: GeneratorUtil.randomApplicationVersion(),
+    } as DialAIEntityModel;
+    const newIconFileName = Attachment.sunImageName;
+    let agentElement: BaseElement;
+    let expectedNewIconUrl: string;
+    let createdAppUrl: string;
+
+    await dialTest.step(
+      'Precondition: Create custom application via API',
+      async () => {
+        const applicationModel = customApplicationBuilder
+          .withDisplayName(appEntity.name)
+          .withDisplayVersion(appEntity.version!)
+          .build();
+        const createdApp =
+          await applicationApiHelper.createApplication(applicationModel);
+
+        // Store the URL path part returned by the backend
+        createdAppUrl = createdApp.url;
+
+        expectedNewIconUrl = `${API.fileHost}/${createdApp.bucket}/${newIconFileName}`;
+      },
+    );
+
+    await dialTest.step('Open My workspace', async () => {
+      await marketplacePage.openMyWorkspacePage();
+      await marketplacePage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'Find the created app, click on its card, then click Edit',
+      async () => {
+        agentElement =
+          await marketplaceAgentsSection.findAgentElement(appEntity);
+        await agentElement.click();
+        await agentDetailsModal.waitForState();
+        await agentDetailsModal.clickEditButton({ triggeredHttpMethod: 'GET' });
+        await appEditorPage.waitForPageLoadedForEdit();
+      },
+    );
+
+    await dialTest.step(
+      'Navigate to "General info" step and upload a new icon file',
+      async () => {
+        await appEditorHeader.goOnGeneralInfoStep({
+          isHttpMethodTriggered: false,
+        }); // Navigate back if needed
+        await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');
+        await appEditorGeneralForm.addIconButton.click();
+        await attachFilesModal.uploadFromDevice();
+        await uploadFromDeviceModal.addMoreFilesToUpload(newIconFileName);
+        await uploadFromDeviceModal.uploadFiles();
+        await attachFilesModal.attachFiles();
+        // // Wait for potential preview update delay
+        // await appEditorPage.page.waitForTimeout(1000);
+      },
+    );
+
+    await dialTest.step(
+      'Verify the updated icon is displayed in the preview on the "General info" step',
+      async () => {
+        const previewIcon = appEditorPreview.previewIcon;
+        await baseAssertion.assertElementAttribute(
+          previewIcon,
+          Attributes.src,
+          expectedNewIconUrl,
+          ExpectedMessages.entityIconIsValid,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Navigate to "App settings" step and verify the updated icon in the preview',
+      async () => {
+        await appEditorGeneralForm.goNext({ waitForResponses: false });
+        const previewIconAppSettings = appEditorPreview.previewIcon;
+        await baseAssertion.assertElementAttribute(
+          previewIconAppSettings,
+          Attributes.src,
+          expectedNewIconUrl,
+          ExpectedMessages.entityIconIsValid,
+        );
+      },
+    );
+
+    await dialTest.step('Click "Save and exit"', async () => {
+      await appEditorHeader.saveAndExitButton.click();
+      await marketplacePage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'Verify the updated icon is displayed on the app card in My workspace',
+      async () => {
+        agentElement =
+          await marketplaceAgentsSection.findAgentElement(appEntity);
+        const cardIconElement = agentElement.getElementIcon(
+          agentElement.getElementLocator(),
+        );
+        await baseAssertion.assertElementAttribute(
+          cardIconElement,
+          Attributes.src,
+          expectedNewIconUrl,
+          ExpectedMessages.entityIconIsValid,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on the app card and verify the updated icon in the opened pop-up',
+      async () => {
+        await agentElement.click();
+        await agentDetailsModal.waitForState();
+        await baseAssertion.assertElementAttribute(
+          agentDetailsModal.icon.getChildElementBySelector(Tags.img),
+          Attributes.src,
+          expectedNewIconUrl,
+          ExpectedMessages.entityIconIsValid,
         );
       },
     );

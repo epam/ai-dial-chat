@@ -250,13 +250,19 @@ export const ApplicationEditorHeader = {
 export const ApplicationPreviewSelector = {
   containerGeneralInfo: '[data-qa="app-preview-general-info"]',
   containerAppSettings: '[data-qa="app-settings-chat-mode"]',
+  previewIconContainer: '[data-qa="entity-icon"]',
+  previewAgentName: '[data-qa="agent-name"]',
+  previewTopicsContainer: '[data-qa="app-topics"]',
+  previewInformationSection: '[data-qa="application-information"]',
+  previewAuthorContainer: '[data-qa="author-container"]',
+  previewAuthorValue: '[data-qa="author"]',
 };
 
 export const AddApplicationGeneralInfoFormSelector = {
   appGeneralFormContainer: '[data-qa="app-general-form"]',
   name: '#name',
   version: '#version',
-  icon: '#icon',
+  iconField: '[data-qa="custom-logo"]',
   description: '#description',
   topicsDropdownContainer: '#topics-dropdown',
   nextButton: '[data-qa="save-application-general-info"]',

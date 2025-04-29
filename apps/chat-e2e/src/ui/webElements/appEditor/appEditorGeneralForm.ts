@@ -1,4 +1,4 @@
-import { API } from '@/src/testData';
+import { API, Attachment } from '@/src/testData';
 import { AddApplicationGeneralInfoFormSelector } from '@/src/ui/selectors';
 import { AppEditorForm } from '@/src/ui/webElements/appEditor/appEditorForm';
 import { Locator, Page } from '@playwright/test';
@@ -44,6 +44,10 @@ export class AppEditorGeneralForm extends AppEditorForm {
     this.topicsDropdownContainer.getChildElementBySelector(
       AddApplicationGeneralInfoFormSelector.clearAllTopicsButton,
     );
+  public iconInputElement = this.getChildElementBySelector(
+    AddApplicationGeneralInfoFormSelector.iconField,
+  );
+  public addIconButton = this.iconInputElement.getChildButtonElement();
 
   // Method to get all available topic options from the dropdown
   public async getAllTopicsOptions(): Promise<string[]> {
@@ -118,25 +122,42 @@ export class AppEditorGeneralForm extends AppEditorForm {
     }
   }
 
-  public async goNext() {
+  public async goNext(
+    options: { waitForResponses?: boolean } = { waitForResponses: true }, // Default to waiting
+  ) {
     const responses = [];
-    const hostsArray = [
-      API.applicationCreateHost,
-      API.installedDeploymentsHost(),
-    ];
-    for (const host of hostsArray) {
-      const resp = this.page.waitForResponse(
-        (response) =>
-          response.url().includes(host) &&
-          (response.request().method() === 'POST' ||
-            response.request().method() === 'PUT') &&
-          response.status() === 200,
-      );
-      responses.push(resp);
+    if (options.waitForResponses) {
+      const hostsArray = [
+        API.applicationCreateHost,
+        API.installedDeploymentsHost(),
+      ];
+      for (const host of hostsArray) {
+        const resp = this.page.waitForResponse(
+          (response) =>
+            response.url().includes(host) &&
+            (response.request().method() === 'POST' ||
+              response.request().method() === 'PUT') &&
+            response.status() === 200,
+        );
+        responses.push(resp);
+      }
     }
-    await this.nextButton.click();
-    for (const resp of responses) {
-      await resp;
+
+    await this.nextButton.click(); // Always click the button
+
+    if (options.waitForResponses) {
+      for (const resp of responses) {
+        await resp; // Wait for responses only if requested
+      }
     }
+  }
+
+  public async uploadIcon(iconFilename: string) {
+    await this.addIconButton.click();
+    // Set the file on the (potentially hidden) input element
+    await this.iconInputElement.setElementInputFiles(
+      Attachment.attachmentPath,
+      iconFilename,
+    );
   }
 }

@@ -20,7 +20,7 @@ export class MarketplacePage extends BasePage {
   ): Promise<void> {
     await this.openMarketplaceUrl(ExpectedConstants.workspacePath(), {
       updateInstalledDeployments: options.updateInstalledDeployments,
-      getInstalledDeployments: true,
+      getInstalledDeployments: false,
       getPublishedApplications: true,
     });
     await this.waitForPageLoaded();
@@ -60,7 +60,7 @@ export class MarketplacePage extends BasePage {
     } = {},
   ): Promise<void> {
     const responsePromises = [];
-    let commonGetHosts: string[] = [];
+    const commonGetHosts: string[] = [];
 
     if (options.getInstalledDeployments) {
       commonGetHosts.push(API.installedDeploymentsHost());

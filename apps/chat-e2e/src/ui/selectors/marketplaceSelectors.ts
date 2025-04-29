@@ -38,6 +38,7 @@ export const MarketplaceDetailsModal = {
   useButton: '[data-qa="use-button"]',
   editButton: '[data-qa="application-edit"]',
   deleteButton: '[data-qa="application-delete"]',
+  icon: '[data-qa="entity-icon"]',
 };
 
 export const MarketplaceSideBarSelectors = {

@@ -251,6 +251,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             control={control}
             render={({ field }) => (
               <LogoSelector
+                id="icon"
                 label={t('Icon')}
                 localLogo={field.value?.split('/')?.pop()}
                 onLogoSelect={(v) => field.onChange(getLogoId(v))}
