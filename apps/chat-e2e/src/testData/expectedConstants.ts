@@ -118,6 +118,7 @@ export const ExpectedConstants = {
     'This link is temporary and will be active for 3 days. This conversation folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
   notSharedFolderText: 'This folder has not been shared with anyone yet.',
   notSharedChatText: 'This chat has not been shared with anyone yet.',
+  removeAccessText: 'Remove access for all users',
   notSharedPromptText: 'This prompt has not been shared with anyone yet.',
   sharePromptFolderText:
     'This link is temporary and will be active for 3 days. This prompt folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',

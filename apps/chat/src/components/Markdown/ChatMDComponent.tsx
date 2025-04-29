@@ -1,9 +1,15 @@
+import { memo } from 'react';
 import { Components } from 'react-markdown';
+import { PluggableList } from 'react-markdown/lib/react-markdown';
 
 import classnames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
+
 import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
-import { isSmallScreen } from '@/src/utils/app/mobile';
+import { preprocessLaTeX } from '@/src/utils/app/latex';
+
+import { ScreenState } from '@/src/types/common';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -12,15 +18,18 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 import {
   modelCursorSign,
   modelCursorSignWithBackquote,
-} from '../../constants/chat';
+} from '@/src/constants/chat';
 
+import BlinkingCursor from '@/src/components/Chat/BlinkingCursor';
 import { Table } from '@/src/components/Markdown/Table';
 
-import BlinkingCursor from '../Chat/BlinkingCursor';
 import { CodeBlock } from './CodeBlock';
 import { MemoizedReactMarkdown } from './MemoizedReactMarkdown';
 
+import 'katex/dist/katex.min.css';
+import rehypeKatex from 'rehype-katex';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
 
 const replaceCursor = (cursorSign: string) =>
   cursorSign.replace(modelCursorSignWithBackquote, modelCursorSign);
@@ -106,39 +115,49 @@ const getMDComponents = (
   };
 };
 
-const ChatMDComponent = ({
-  isShowResponseLoader,
-  content,
-  isInner = false,
-}: ChatMDComponentProps) => {
-  const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
-  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+const remarkPlugins: PluggableList = [
+  remarkGfm,
+  [remarkMath, { singleDollarTextMath: true }],
+];
+const rehypePlugins = [
+  [rehypeKatex, { output: 'mathml', strict: false }],
+] as PluggableList;
 
-  const mdClassNames = classnames(
-    'prose min-w-full dark:prose-invert prose-a:text-primary prose-a:underline',
-    {
-      'max-w-none': isChatFullWidth,
-      'text-sm': isOverlay,
-      'leading-[150%]': isSmallScreen() || isOverlay,
-    },
-  );
+const ChatMDComponent = memo(
+  ({
+    isShowResponseLoader,
+    content,
+    isInner = false,
+  }: ChatMDComponentProps) => {
+    const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
+    const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
-  return (
-    <>
+    const screenState = useScreenState();
+
+    const mdClassNames = classnames(
+      'prose min-w-full dark:prose-invert prose-a:text-primary prose-a:underline',
+      isChatFullWidth && 'max-w-none',
+      isOverlay && 'text-sm',
+      (screenState === ScreenState.SM || isOverlay) && 'leading-[150%]',
+    );
+
+    const processedContent = preprocessLaTeX(content);
+
+    return (
       <MemoizedReactMarkdown
         className={mdClassNames}
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={remarkPlugins}
+        rehypePlugins={rehypePlugins}
         linkTarget="_blank"
         components={getMDComponents(isShowResponseLoader, isInner)}
         transformImageUri={transformUri}
         transformLinkUri={transformUri}
       >
-        {`${content}${
-          isShowResponseLoader ? modelCursorSignWithBackquote : ''
-        }`}
+        {`${processedContent}${isShowResponseLoader ? modelCursorSignWithBackquote : ''}`}
       </MemoizedReactMarkdown>
-    </>
-  );
-};
+    );
+  },
+);
+ChatMDComponent.displayName = 'ChatMDComponent';
 
 export default ChatMDComponent;
