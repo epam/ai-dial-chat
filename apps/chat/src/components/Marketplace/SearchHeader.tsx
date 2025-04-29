@@ -20,7 +20,7 @@ import { ApplicationActions } from '@/src/store/application/application.reducers
 import {
   ApplicationTypesSchemasActions,
   ApplicationTypesSchemasSelectors,
-} from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
+} from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MarketplaceActions,
@@ -59,7 +59,7 @@ const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
     return (
       <button
         onClick={visibleActions[0].onClick}
-        className="button button-primary hidden items-center gap-2 py-2 sm:flex"
+        className="button button-primary hidden items-center gap-2 py-2 xl:flex"
       >
         <IconPlus size={18} />
         <span>{t('Add app')}</span>
@@ -73,9 +73,10 @@ const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       placement="bottom"
+      triggerIconClassName="max-xl:hidden"
       TriggerCustomRenderer={
         <button
-          className="button button-primary hidden items-center gap-2 py-2 sm:flex"
+          className="button button-primary flex items-center gap-2 py-2"
           data-qa="add-app"
         >
           <span>{t('Add app')}</span>
@@ -180,7 +181,7 @@ export const SearchHeader = () => {
   };
 
   return (
-    <div className="flex w-full gap-4 sm:justify-end md:w-auto">
+    <div className="flex w-full gap-2 sm:justify-end md:w-auto">
       <div className="relative flex h-[38px] shrink-0 grow sm:w-[315px] md:w-[440px] lg:w-[500px]">
         <IconSearch
           className="absolute left-3 top-1/2 -translate-y-1/2"

@@ -28,11 +28,10 @@ import {
 } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
-import { AnyAction } from '@reduxjs/toolkit';
-
-import { combineEpics } from 'redux-observable';
+import { combineEpics, ofType } from 'redux-observable';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
+import { getDefaultConversationProps } from '@/src/utils/app/common';
 import {
   addPausedError,
   excludeSystemMessages,
@@ -89,11 +88,11 @@ import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
 import { parseConversationApiKey } from '@/src/utils/server/api';
 
-import { ChatBody, Conversation, Playback, RateBody } from '@/src/types/chat';
+import { ChatBody, Conversation, RateBody } from '@/src/types/chat';
 import { EntityType, FeatureType } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
-import { AppEpic } from '@/src/types/store';
+import { AppAction, AppEpic } from '@/src/types/store';
 
 import { AddonsActions } from '@/src/store/addons/addons.reducers';
 import { AddonsSelectors } from '@/src/store/addons/addons.selectors';
@@ -114,7 +113,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { LOCAL_BUCKET, resetShareEntity } from '@/src/constants/chat';
+import { LOCAL_BUCKET } from '@/src/constants/chat';
 import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_TEMPERATURE,
@@ -143,15 +142,11 @@ import {
 } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
-import { nanoid } from 'nanoid';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(
-      (action) =>
-        ConversationsActions.init.match(action) &&
-        !ConversationsSelectors.selectInitialized(state$.value),
-    ),
+    ofType(ConversationsActions.init.type),
+    filter(() => !ConversationsSelectors.selectInitialized(state$.value)),
     switchMap(() => {
       const searchParams = new URLSearchParams(window.location.search);
 
@@ -174,7 +169,7 @@ const initEpic: AppEpic = (action$, state$) =>
 
 const initShareEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter((action) => ConversationsActions.initShare.match(action)),
+    ofType(ConversationsActions.initShare.type),
     switchMap(() => {
       const searchParams = new URLSearchParams(window.location.search);
 
@@ -192,7 +187,7 @@ const initShareEpic: AppEpic = (action$) =>
 
 const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.initSelectedConversations.match),
+    ofType(ConversationsActions.initSelectedConversations.type),
     switchMap(() => {
       const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
       const isOverlayOptionsReceived = OverlaySelectors.selectOptionsReceived(
@@ -300,7 +295,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
             selectedConversations.some((conv) => conv.id === id),
           );
 
-          const actions: Observable<AnyAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
 
           if (selectedConversationsIds) {
             actions.push(
@@ -348,7 +343,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
 
 const initFoldersAndConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ConversationsActions.initFoldersAndConversations.match),
+    ofType(ConversationsActions.initFoldersAndConversations.type),
     switchMap(() =>
       ConversationService.getConversations(undefined, true).pipe(
         switchMap((conversations) => {
@@ -385,7 +380,7 @@ const initFoldersAndConversationsEpic: AppEpic = (action$) =>
 
 const createNewConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.createNewConversations.match),
+    ofType(ConversationsActions.createNewConversations.type),
     switchMap(
       ({ payload: { names, modelReference, folderId, headerCreateNew } }) => {
         return state$.pipe(
@@ -465,8 +460,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
 
             const newConversations: Conversation[] = names.map((name, index) =>
               regenerateConversationId({
-                ...resetShareEntity,
-                reference: nanoid(),
+                ...getDefaultConversationProps(),
                 name:
                   name !== DEFAULT_CONVERSATION_NAME
                     ? name
@@ -539,7 +533,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
 
 const createNotLocalConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ConversationsActions.createNotLocalConversations.match),
+    ofType(ConversationsActions.createNotLocalConversations.type),
     switchMap(({ payload }) => {
       return forkJoin(
         payload.conversations
@@ -570,18 +564,10 @@ const createNotLocalConversationsEpic: AppEpic = (action$) =>
 
 const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.createNewReplayConversation.match),
-    switchMap(({ payload }) =>
-      forkJoin({
-        conversationAndPayload: getOrUploadConversation(payload, state$.value),
-        conversations: of(
-          ConversationsSelectors.selectConversations(state$.value),
-        ),
-      }),
-    ),
-    switchMap(({ conversationAndPayload, conversations }) => {
-      const { conversation } = conversationAndPayload;
-      if (!conversation)
+    ofType(ConversationsActions.createNewReplayConversation.type),
+    switchMap(({ payload }) => getOrUploadConversation(payload, state$.value)),
+    switchMap(({ conversation }) => {
+      if (!conversation) {
         return of(
           UIActions.showErrorToast(
             translate(
@@ -589,6 +575,10 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
             ),
           ),
         );
+      }
+
+      const state = state$.value;
+      const conversations = ConversationsSelectors.selectConversations(state);
 
       const folderId = isEntityIdExternal(conversation)
         ? getConversationRootId()
@@ -606,8 +596,7 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
       );
       const newConversation: Conversation = regenerateConversationId({
         ...conversation,
-        ...resetShareEntity,
-        reference: nanoid(),
+        ...getDefaultConversationProps(),
         folderId,
         name: newConversationName,
         messages: [],
@@ -633,18 +622,10 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
 
 const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.createNewPlaybackConversation.match),
-    switchMap(({ payload }) =>
-      forkJoin({
-        conversationAndPayload: getOrUploadConversation(payload, state$.value),
-        conversations: of(
-          ConversationsSelectors.selectConversations(state$.value),
-        ),
-      }),
-    ),
-    switchMap(({ conversationAndPayload, conversations }) => {
-      const { conversation } = conversationAndPayload;
-      if (!conversation)
+    ofType(ConversationsActions.createNewPlaybackConversation.type),
+    switchMap(({ payload }) => getOrUploadConversation(payload, state$.value)),
+    switchMap(({ conversation }) => {
+      if (!conversation) {
         return of(
           UIActions.showErrorToast(
             translate(
@@ -652,6 +633,10 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
             ),
           ),
         );
+      }
+
+      const state = state$.value;
+      const conversations = ConversationsSelectors.selectConversations(state);
 
       const folderId = isEntityIdExternal(conversation)
         ? getConversationRootId()
@@ -666,8 +651,7 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
 
       const newConversation: Conversation = regenerateConversationId({
         ...conversation,
-        ...resetShareEntity,
-        reference: nanoid(),
+        ...getDefaultConversationProps(),
         folderId,
         name: newConversationName,
         messages: [],
@@ -691,14 +675,8 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
 
 const duplicateConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.duplicateConversation.match),
-    concatMap(({ payload }) =>
-      forkJoin({
-        conversation: getOrUploadConversation(payload, state$.value).pipe(
-          map((data) => data.conversation),
-        ),
-      }),
-    ),
+    ofType(ConversationsActions.duplicateConversation.type),
+    concatMap(({ payload }) => getOrUploadConversation(payload, state$.value)),
     concatMap(({ conversation }) => {
       if (!conversation) {
         return of(
@@ -719,8 +697,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
 
       const newConversation: Conversation = regenerateConversationId({
         ...omit(conversation, ['publicationInfo']),
-        ...resetShareEntity,
-        reference: nanoid(),
+        ...getDefaultConversationProps(),
         folderId: conversationFolderId,
         name: generateNextName(
           DEFAULT_CONVERSATION_NAME,
@@ -749,13 +726,13 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
 
 const createNewConversationsSuccessEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ConversationsActions.createNewConversations.match),
+    ofType(ConversationsActions.createNewConversations.type),
     switchMap(() => of(ConversationsActions.resetChosenConversations())),
   );
 
 const saveNewConversationEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ConversationsActions.saveNewConversation.match),
+    ofType(ConversationsActions.saveNewConversation.type),
     mergeMap(({ payload }) =>
       ConversationService.createConversation(payload.newConversation).pipe(
         switchMap((conversationInfo) => {
@@ -788,15 +765,14 @@ const saveNewConversationEpic: AppEpic = (action$) =>
 
 const deleteFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.deleteFolder.match),
+    ofType(ConversationsActions.deleteFolder.type),
     switchMap(({ payload: { folderId } }) => {
-      const actions: Observable<AnyAction>[] = [];
+      const actions: Observable<AppAction>[] = [];
+
+      const state = state$.value;
       const conversations =
-        ConversationsSelectors.selectConversationsByFolderId(
-          state$.value,
-          folderId,
-        );
-      const folders = ConversationsSelectors.selectFolders(state$.value);
+        ConversationsSelectors.selectConversationsByFolderId(state, folderId);
+      const folders = ConversationsSelectors.selectFolders(state);
 
       const conversationIds = conversations.map((conv) => conv.id);
 
@@ -829,7 +805,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
 
 const updateFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.updateFolder.match),
+    ofType(ConversationsActions.updateFolder.type),
     switchMap(({ payload }) => {
       const state = state$.value;
       const folder = ConversationsSelectors.selectFolderById(
@@ -902,7 +878,7 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
 
 const clearConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ConversationsActions.clearConversations.match),
+    ofType(ConversationsActions.clearConversations.type),
     switchMap(() => {
       return concat(
         of(
@@ -917,7 +893,7 @@ const clearConversationsEpic: AppEpic = (action$) =>
 
 const deleteConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.deleteConversations.match),
+    ofType(ConversationsActions.deleteConversations.type),
     map(({ payload }) => ({
       conversations: ConversationsSelectors.selectConversations(state$.value),
       selectedConversationsIds:
@@ -932,16 +908,14 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
         conversationIds,
         suppressErrorMessage,
       }) => {
+        const actions: Observable<AppAction>[] = [];
+
         const otherConversations = conversations.filter(
           (conv) => !conversationIds.has(conv.id),
         );
-
         const newSelectedConversationsIds = selectedConversationsIds.filter(
           (id) => !conversationIds.has(id),
         );
-
-        const actions: Observable<AnyAction>[] = [];
-
         const isIsolatedView = SettingsSelectors.selectIsIsolatedView(
           state$.value,
         );
@@ -949,8 +923,8 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
         // No need to recreate conversation for isolated view
         if (!isIsolatedView) {
           if (
-            otherConversations.length === 0 ||
-            newSelectedConversationsIds.length === 0
+            !otherConversations.length ||
+            !newSelectedConversationsIds.length
           ) {
             actions.push(
               of(
@@ -1024,10 +998,11 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
 
 const rateMessageEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.rateMessage.match),
+    ofType(ConversationsActions.rateMessage.type),
     switchMap(({ payload }) => {
+      const state = state$.value;
       const conversation = ConversationsSelectors.selectConversation(
-        state$.value,
+        state,
         payload.conversationId,
       ) as Conversation;
 
@@ -1056,7 +1031,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
         modelId: conversation.model.id,
         id: conversation.id,
         reference: conversation.reference,
-        value: payload.rate > 0 ? true : false,
+        value: payload.rate > 0,
       };
 
       return fromFetch('/api/rate', {
@@ -1072,9 +1047,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
           }
           return from(resp.json());
         }),
-        map(() => {
-          return ConversationsActions.rateMessageSuccess(payload);
-        }),
+        map(() => ConversationsActions.rateMessageSuccess(payload)),
         catchError((e: Response) => {
           return of(
             ConversationsActions.rateMessageFail({
@@ -1088,7 +1061,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
 
 const updateMessageEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.updateMessage.match),
+    ofType(ConversationsActions.updateMessage.type),
     switchMap(({ payload }) => {
       const conversation = ConversationsSelectors.selectConversation(
         state$.value,
@@ -1099,30 +1072,21 @@ const updateMessageEpic: AppEpic = (action$, state$) =>
         return EMPTY;
       }
 
-      const actions: Observable<AnyAction>[] = [];
+      const actions: Observable<AppAction>[] = [];
+
       const messages = [...conversation.messages];
       messages[payload.messageIndex] = {
         ...messages[payload.messageIndex],
         ...payload.values,
       };
 
-      actions.push(
-        of(
-          ConversationsActions.updateConversation({
-            id: payload.conversationId,
-            values: {
-              messages: [...messages],
-            },
-          }),
-        ),
-      );
       const attachments =
         messages[payload.messageIndex].custom_content?.attachments;
 
       if (attachments) {
         const attachmentParentFolders = uniq(
           attachments
-            .map(
+            .flatMap(
               (attachment) =>
                 attachment.url &&
                 getParentFolderIdsFromEntityId(
@@ -1130,7 +1094,7 @@ const updateMessageEpic: AppEpic = (action$, state$) =>
                 ),
             )
             .filter(Boolean),
-        ).flat();
+        );
 
         if (attachmentParentFolders.length) {
           actions.push(
@@ -1144,13 +1108,23 @@ const updateMessageEpic: AppEpic = (action$, state$) =>
         }
       }
 
-      return concat(...actions);
+      return concat(
+        of(
+          ConversationsActions.updateConversation({
+            id: payload.conversationId,
+            values: {
+              messages: [...messages],
+            },
+          }),
+        ),
+        ...actions,
+      );
     }),
   );
 
 const rateMessageSuccessEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ConversationsActions.rateMessageSuccess.match),
+    ofType(ConversationsActions.rateMessageSuccess.type),
     switchMap(({ payload }) => {
       return of(
         ConversationsActions.updateMessage({
@@ -1166,7 +1140,7 @@ const rateMessageSuccessEpic: AppEpic = (action$) =>
 
 const sendMessagesEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ConversationsActions.sendMessages.match),
+    ofType(ConversationsActions.sendMessages.type),
     switchMap(({ payload }) => {
       return concat(
         of(ConversationsActions.createAbortController()),
@@ -1186,7 +1160,7 @@ const sendMessagesEpic: AppEpic = (action$) =>
 
 const sendMessageEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.sendMessage.match),
+    ofType(ConversationsActions.sendMessage.type),
     map(({ payload }) => ({
       payload,
       modelsMap: ModelsSelectors.selectModelsMap(state$.value),
@@ -1207,7 +1181,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         overlaySystemPrompt,
         isOverlay,
       }) => {
-        const actions: Observable<AnyAction>[] = [];
+        const actions: Observable<AppAction>[] = [];
         const messageModel: Message[EntityType.Model] = {
           id: payload.conversation.model.id,
         };
@@ -1233,10 +1207,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
 
         let currentMessages =
           payload.deleteCount > 0
-            ? payload.conversation.messages.slice(
-                0,
-                payload.deleteCount * -1 || undefined,
-              )
+            ? payload.conversation.messages.slice(0, -payload.deleteCount)
             : payload.conversation.messages;
 
         /*
@@ -1293,7 +1264,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         });
 
         if (
-          updatedConversation.selectedAddons.length > 0 &&
+          updatedConversation.selectedAddons.length &&
           modelsMap[updatedConversation.model.id]?.type !==
             EntityType.Application
         ) {
@@ -1332,7 +1303,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
 
 const streamMessageEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.streamMessage.match),
+    ofType(ConversationsActions.streamMessage.type),
     map(({ payload }) => {
       const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
       const lastModel = modelsMap[payload.conversation.model.id];
@@ -1545,7 +1516,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
 
 const streamMessageFailEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.streamMessageFail.match),
+    ofType(ConversationsActions.streamMessageFail.type),
     switchMap(({ payload }) => {
       return (
         payload.response ? from(payload.response.json()) : of(undefined)
@@ -1619,7 +1590,7 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
 
 const stopStreamMessageEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.stopStreamMessage.match),
+    ofType(ConversationsActions.stopStreamMessage.type),
     tap(() => {
       const conversationSignal =
         ConversationsSelectors.selectConversationSignal(state$.value);
@@ -1641,7 +1612,7 @@ const stopStreamMessageEpic: AppEpic = (action$, state$) =>
 
 const cleanMessagesEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.stopStreamMessage.match),
+    ofType(ConversationsActions.stopStreamMessage.type),
     map(() => ({
       selectedConversations: ConversationsSelectors.selectSelectedConversations(
         state$.value,
@@ -1672,7 +1643,7 @@ const cleanMessagesEpic: AppEpic = (action$, state$) =>
 
 const deleteMessageEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.deleteMessage.match),
+    ofType(ConversationsActions.deleteMessage.type),
     switchMap(({ payload }) => {
       const selectedConversations =
         ConversationsSelectors.selectSelectedConversations(state$.value);
@@ -1711,7 +1682,7 @@ const deleteMessageEpic: AppEpic = (action$, state$) =>
 
 const replayConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ConversationsActions.replayConversations.match),
+    ofType(ConversationsActions.replayConversations.type),
     switchMap(({ payload }) => {
       return concat(
         of(ConversationsActions.createAbortController()),
@@ -1730,7 +1701,7 @@ const replayConversationsEpic: AppEpic = (action$) =>
 
 const replayConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.replayConversation.match),
+    ofType(ConversationsActions.replayConversation.type),
     map(({ payload }) => ({
       payload,
       conversation: ConversationsSelectors.selectConversation(
@@ -1828,7 +1799,7 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
           takeWhile(() => {
             return !ConversationsSelectors.selectIsReplayPaused(state$.value);
           }),
-          filter(ConversationsActions.streamMessageSuccess.match),
+          ofType(ConversationsActions.streamMessageSuccess.type),
           filter(() => {
             return !ConversationsSelectors.selectIsConversationsStreaming(
               state$.value,
@@ -1854,7 +1825,7 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
           takeWhile(() => {
             return !ConversationsSelectors.selectIsReplayPaused(state$.value);
           }),
-          filter(ConversationsActions.streamMessageFail.match),
+          ofType(ConversationsActions.streamMessageFail.type),
           switchMap(() => {
             return of(ConversationsActions.stopReplayConversation());
           }),
@@ -1865,7 +1836,7 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
 
 const endReplayConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.endReplayConversation.match),
+    ofType(ConversationsActions.endReplayConversation.type),
     map(() => ({
       selectedConversations: ConversationsSelectors.selectSelectedConversations(
         state$.value,
@@ -1894,23 +1865,19 @@ const endReplayConversationEpic: AppEpic = (action$, state$) =>
 
 const saveFoldersEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(
-      (action) =>
-        ConversationsActions.createFolder.match(action) ||
-        ConversationsActions.deleteFolder.match(action) ||
-        ConversationsActions.updateFoldersSuccess.match(action) ||
-        ConversationsActions.clearConversations.match(action) ||
-        ConversationsActions.importConversationsSuccess.match(action) ||
-        ConversationsActions.addFolders.match(action) ||
-        ConversationsActions.setFolders.match(action),
+    ofType(
+      ConversationsActions.createFolder.type,
+      ConversationsActions.deleteFolder.type,
+      ConversationsActions.updateFoldersSuccess.type,
+      ConversationsActions.clearConversations.type,
+      ConversationsActions.importConversationsSuccess.type,
+      ConversationsActions.addFolders.type,
+      ConversationsActions.setFolders.type,
     ),
-    map(() => ({
-      conversationsFolders: ConversationsSelectors.selectFolders(state$.value),
-    })),
-    switchMap(({ conversationsFolders }) => {
-      return ConversationService.setConversationFolders(
-        conversationsFolders,
-      ).pipe(
+    switchMap(() => {
+      const folders = ConversationsSelectors.selectFolders(state$.value);
+
+      return ConversationService.setConversationFolders(folders).pipe(
         catchError((err) => {
           console.error(
             'An error occurred during the saving conversation folders: ',
@@ -1931,19 +1898,27 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
 
 const hideChatbarEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(
-      (action) =>
-        (ConversationsActions.createNewConversations.match(action) &&
-          !action.payload?.suspendHideSidebar) ||
-        (ConversationsActions.selectConversations.match(action) &&
-          !action.payload?.suspendHideSidebar) ||
-        ConversationsActions.createNewPlaybackConversation.match(action) ||
-        ConversationsActions.createNewReplayConversation.match(action) ||
-        ConversationsActions.saveNewConversationSuccess.match(action) ||
-        (ConversationsActions.addConversations.match(action) &&
-          !action.payload?.suspendHideSidebar),
+    ofType(
+      ConversationsActions.createNewConversations.type,
+      ConversationsActions.selectConversations.type,
+      ConversationsActions.createNewPlaybackConversation.type,
+      ConversationsActions.createNewReplayConversation.type,
+      ConversationsActions.saveNewConversationSuccess.type,
+      ConversationsActions.addConversations.type,
       // will be fixed with https://github.com/epam/ai-dial-chat/issues/792
     ),
+    filter((action) => {
+      const requiresSuspendCheck =
+        ConversationsActions.createNewConversations.match(action) ||
+        ConversationsActions.selectConversations.match(action) ||
+        ConversationsActions.addConversations.match(action);
+
+      if (requiresSuspendCheck) {
+        return !action.payload?.suspendHideSidebar;
+      }
+
+      return true;
+    }),
     switchMap(() =>
       isTabletScreen() ? of(UIActions.setShowChatbar(false)) : EMPTY,
     ),
@@ -1951,15 +1926,14 @@ const hideChatbarEpic: AppEpic = (action$) =>
 
 const selectConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(
-      (action) =>
-        ConversationsActions.updateFoldersSuccess.match(action) ||
-        ConversationsActions.selectConversations.match(action) ||
-        ConversationsActions.unselectConversations.match(action) ||
-        ConversationsActions.updateConversationSuccess.match(action) ||
-        ConversationsActions.saveNewConversationSuccess.match(action) ||
-        ConversationsActions.deleteConversationsComplete.match(action) ||
-        ConversationsActions.addConversations.match(action),
+    ofType(
+      ConversationsActions.updateFoldersSuccess.type,
+      ConversationsActions.selectConversations.type,
+      ConversationsActions.unselectConversations.type,
+      ConversationsActions.updateConversationSuccess.type,
+      ConversationsActions.saveNewConversationSuccess.type,
+      ConversationsActions.deleteConversationsComplete.type,
+      ConversationsActions.addConversations.type,
     ),
     map(() =>
       ConversationsSelectors.selectSelectedConversationsIds(state$.value),
@@ -1981,12 +1955,12 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
 
 const uploadSelectedConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.selectConversations.match),
+    ofType(ConversationsActions.selectConversations.type),
     map(() =>
       ConversationsSelectors.selectSelectedConversationsIds(state$.value),
     ),
     switchMap((selectedConversationsIds) => {
-      const actions: Observable<AnyAction>[] = [];
+      const actions: Observable<AppAction>[] = [];
 
       selectedConversationsIds.forEach((id) => {
         if (isEntityIdPublic({ id })) {
@@ -2017,21 +1991,31 @@ const uploadSelectedConversationsEpic: AppEpic = (action$, state$) =>
 
 const compareConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.selectForCompare.match),
+    ofType(ConversationsActions.selectForCompare.type),
     switchMap(({ payload }) => getOrUploadConversation(payload, state$.value)),
-    switchMap(({ conversation: chosenConversation }) => {
+    switchMap(({ conversation }) => {
+      if (!conversation) {
+        return of(
+          UIActions.showErrorToast(
+            translate(
+              'It looks like this conversation has been deleted. Please reload the page',
+            ),
+          ),
+        );
+      }
+
+      const actions: Observable<AppAction>[] = [];
+
       const selectedConversation =
         ConversationsSelectors.selectSelectedConversations(state$.value)[0];
       const isInvalid =
-        !chosenConversation ||
+        !conversation ||
         !isChosenConversationValidForCompare(
           selectedConversation,
-          chosenConversation as Conversation,
+          conversation,
         );
       const isFormSchemaConversation =
-        !!chosenConversation &&
-        isConversationWithFormSchema(chosenConversation);
-      const actions: Observable<AnyAction>[] = [];
+        !!conversation && isConversationWithFormSchema(conversation);
       if (isFormSchemaConversation) {
         actions.push(
           of(
@@ -2056,37 +2040,30 @@ const compareConversationsEpic: AppEpic = (action$, state$) =>
         actions.push(
           of(
             ConversationsActions.selectConversations({
-              conversationIds: [selectedConversation.id, chosenConversation.id],
+              conversationIds: [selectedConversation.id, conversation.id],
             }),
           ),
         );
       }
-      actions.push(
-        of(
-          ConversationsActions.selectForCompareCompleted(
-            chosenConversation as Conversation,
-          ),
-        ),
-      );
 
-      return concat(...actions);
+      return concat(
+        ...actions,
+        of(ConversationsActions.selectForCompareCompleted(conversation)),
+      );
     }),
   );
 
 const playbackNextMessageStartEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.playbackNextMessageStart.match),
-    map(() => ({
-      selectedConversations: ConversationsSelectors.selectSelectedConversations(
-        state$.value,
-      ),
-    })),
-    switchMap(({ selectedConversations }) => {
+    ofType(ConversationsActions.playbackNextMessageStart.type),
+    map(() => ConversationsSelectors.selectSelectedConversations(state$.value)),
+    switchMap((selectedConversations) => {
       return concat(
         ...selectedConversations.map((conv) => {
           if (!conv.playback) {
             return EMPTY;
           }
+
           const activeIndex = conv.playback.activePlaybackIndex;
           const userMessage: Message = conv.playback.messagesStack[activeIndex];
 
@@ -2143,14 +2120,15 @@ const playbackNextMessageStartEpic: AppEpic = (action$, state$) =>
 
 const playbackNextMessageEndEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.playbackNextMessageEnd.match),
-    map(({ payload }) => ({
-      selectedConversation: ConversationsSelectors.selectConversation(
-        state$.value,
-        payload.conversationId,
-      ) as Conversation,
-    })),
-    switchMap(({ selectedConversation }) => {
+    ofType(ConversationsActions.playbackNextMessageEnd.type),
+    map(
+      ({ payload }) =>
+        ConversationsSelectors.selectConversation(
+          state$.value,
+          payload.conversationId,
+        ) as Conversation,
+    ),
+    switchMap((selectedConversation) => {
       if (!selectedConversation || !selectedConversation.playback) {
         return EMPTY;
       }
@@ -2174,7 +2152,7 @@ const playbackNextMessageEndEpic: AppEpic = (action$, state$) =>
             messages: updatedMessagesWithAssistant,
             isMessageStreaming: false,
             playback: {
-              ...(selectedConversation.playback as Playback),
+              ...selectedConversation.playback,
               activePlaybackIndex: activeIndex + 1,
             },
           },
@@ -2185,7 +2163,7 @@ const playbackNextMessageEndEpic: AppEpic = (action$, state$) =>
 
 const playbackPrevMessageEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.playbackPrevMessage.match),
+    ofType(ConversationsActions.playbackPrevMessage.type),
     map(() => ({
       selectedConversations: ConversationsSelectors.selectSelectedConversations(
         state$.value,
@@ -2201,24 +2179,21 @@ const playbackPrevMessageEpic: AppEpic = (action$, state$) =>
           if (!conv.playback) {
             return EMPTY;
           }
-          const activePlaybackIndex = conv.playback.activePlaybackIndex;
-          const activeIndex = isMessageStreaming
-            ? activePlaybackIndex - 1
-            : activePlaybackIndex - 2;
-          const updatedMessages = conv.messages.slice(0, activeIndex);
 
+          const activePlaybackIndex = conv.playback.activePlaybackIndex;
+          const activeIndex =
+            activePlaybackIndex - (isMessageStreaming ? 1 : 2);
+          const updatedMessages = conv.messages.slice(0, activeIndex);
           const activeAssistantIndex =
             activePlaybackIndex > 2 ? activePlaybackIndex - 3 : 0;
-
           const assistantMessage: Message | undefined =
             conv.messages[activeAssistantIndex];
-
           const model = assistantMessage?.model
             ? { ...conv.model, ...assistantMessage.model }
             : conv.model;
-
           const { prompt, temperature, selectedAddons, assistantModelId } =
             assistantMessage?.settings ? assistantMessage.settings : conv;
+
           return of(
             ConversationsActions.updateConversation({
               id: conv.id,
@@ -2244,7 +2219,7 @@ const playbackPrevMessageEpic: AppEpic = (action$, state$) =>
 
 const playbackCancelEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.playbackCancel.match),
+    ofType(ConversationsActions.playbackCancel.type),
     map(() => ({
       selectedConversations: ConversationsSelectors.selectSelectedConversations(
         state$.value,
@@ -2259,8 +2234,8 @@ const playbackCancelEpic: AppEpic = (action$, state$) =>
           if (!conv.playback) {
             return EMPTY;
           }
-          const activePlaybackIndex = conv.playback.activePlaybackIndex;
 
+          const activePlaybackIndex = conv.playback.activePlaybackIndex;
           const updatedMessages = isMessageStreaming
             ? conv.messages.slice(0, activePlaybackIndex)
             : conv.messages;
@@ -2283,27 +2258,34 @@ const playbackCancelEpic: AppEpic = (action$, state$) =>
 
 const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.uploadConversationsByIds.match),
+    ofType(ConversationsActions.uploadConversationsByIds.type),
     switchMap(({ payload }) => {
+      const { conversationIds, showLoader } = payload;
+
+      if (!conversationIds.length) {
+        return of({
+          uploadedConversations: [],
+          setIds: new Set<string>(),
+          showLoader,
+        });
+      }
+
+      const uploadedConversations$ = zip(
+        conversationIds.map((id) =>
+          getOrUploadConversation({ id }, state$.value).pipe(
+            map((result) => result.conversation),
+            catchError((err) => {
+              console.error('The selected conversation was not found:', err);
+              return of(null);
+            }),
+          ),
+        ),
+      );
+
       return forkJoin({
-        uploadedConversations: payload.conversationIds.length
-          ? zip(
-              payload.conversationIds.map((id) =>
-                getOrUploadConversation({ id }, state$.value).pipe(
-                  map((result) => result.conversation),
-                  catchError((err) => {
-                    console.error(
-                      'The selected conversation was not found:',
-                      err,
-                    );
-                    return of(null);
-                  }),
-                ),
-              ),
-            )
-          : of([]),
-        setIds: of(new Set(payload.conversationIds as string[])),
-        showLoader: of(payload.showLoader),
+        uploadedConversations: uploadedConversations$,
+        setIds: of(new Set(conversationIds)),
+        showLoader: of(showLoader),
       });
     }),
     map(({ uploadedConversations, setIds, showLoader }) =>
@@ -2317,12 +2299,13 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
 
 const saveConversationEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ConversationsActions.saveConversation.match),
+    ofType(ConversationsActions.saveConversation.type),
     filter((action) => !action.payload.isMessageStreaming), // shouldn't save during streaming
     concatMap(({ payload: newConversation }) => {
       if (isEntityIdLocal(newConversation)) {
         return of(ConversationsActions.saveConversationSuccess());
       }
+
       return ConversationService.updateConversation(newConversation).pipe(
         switchMap((conversationInfo) => {
           if (!conversationInfo) {
@@ -2361,7 +2344,7 @@ const saveConversationEpic: AppEpic = (action$) =>
 
 const moveConversationFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ConversationsActions.moveConversationFail.match),
+    ofType(ConversationsActions.moveConversationFail.type),
     switchMap(() => {
       return of(
         UIActions.showErrorToast(
@@ -2375,7 +2358,7 @@ const moveConversationFailEpic: AppEpic = (action$) =>
 
 const moveConversationEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ConversationsActions.moveConversation.match),
+    ofType(ConversationsActions.moveConversation.type),
     mergeMap(({ payload }) => {
       return ConversationService.moveConversation({
         sourceUrl: payload.oldConversation.id,
@@ -2396,11 +2379,10 @@ const moveConversationEpic: AppEpic = (action$) =>
 
 const updateConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.updateConversation.match),
+    ofType(ConversationsActions.updateConversation.type),
     filter(({ payload }) => !isEntityIdLocal(payload)),
     mergeMap(({ payload }) => getOrUploadConversation(payload, state$.value)),
     mergeMap(({ payload, conversation }) => {
-      const { id, values } = payload;
       if (!conversation) {
         return of(
           UIActions.showErrorToast(
@@ -2411,6 +2393,7 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         );
       }
 
+      const { id, values } = payload;
       const newConversation: Conversation = regenerateConversationId({
         ...(conversation as Conversation),
         ...values,
@@ -2444,19 +2427,19 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
 
 const updateLocalConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.updateConversation.match),
+    ofType(ConversationsActions.updateConversation.type),
     filter(({ payload }) => isEntityIdLocal(payload)),
     mergeMap(({ payload }) => {
       const { id, values } = payload;
 
+      const state = state$.value;
       const conversation = ConversationsSelectors.selectConversation(
-        state$.value,
+        state,
         id,
       ) as Conversation;
       const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
-      const overlayNewConversationsFolder = (
-        state$.value.overlay as OverlayState
-      ).newConversationsFolder;
+      const overlayNewConversationsFolder = (state.overlay as OverlayState)
+        .newConversationsFolder;
 
       if (!conversation) {
         return of(
@@ -2517,7 +2500,7 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
 
       const collapsedSections = UISelectors.selectCollapsedSections(
         FeatureType.Chat,
-      )(state$.value);
+      )(state);
 
       return concat(
         of(
@@ -2536,7 +2519,7 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
 
 const uploadFolderIfNotLoadedEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.uploadFoldersIfNotLoaded.match),
+    ofType(ConversationsActions.uploadFoldersIfNotLoaded.type),
     mergeMap(({ payload }) => {
       const folders = ConversationsSelectors.selectFolders(state$.value);
       const notUploadedPaths = folders
@@ -2557,7 +2540,7 @@ const uploadFolderIfNotLoadedEpic: AppEpic = (action$, state$) =>
 
 const uploadFoldersEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ConversationsActions.uploadFolders.match),
+    ofType(ConversationsActions.uploadFolders.type),
     mergeMap(({ payload }) => {
       return zip(
         payload.ids.map((id) =>
@@ -2565,7 +2548,8 @@ const uploadFoldersEpic: AppEpic = (action$) =>
         ),
       ).pipe(
         switchMap((foldersAndEntities) => {
-          const actions: Observable<AnyAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
+
           const folders = foldersAndEntities.flatMap((items) => items.folders);
           const conversations = foldersAndEntities.flatMap(
             (items) => items.entities,
@@ -2634,7 +2618,7 @@ const uploadFoldersEpic: AppEpic = (action$) =>
 
 const uploadConversationsFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ConversationsActions.uploadConversationsFail.match),
+    ofType(ConversationsActions.uploadConversationsFail.type),
     map(() =>
       UIActions.showErrorToast(
         translate(
@@ -2646,14 +2630,15 @@ const uploadConversationsFailEpic: AppEpic = (action$) =>
 
 const uploadConversationsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.uploadConversationsFromMultipleFolders.match),
+    ofType(ConversationsActions.uploadConversationsFromMultipleFolders.type),
     mergeMap(({ payload }) => {
       return ConversationService.getMultipleFoldersConversations(
         payload.paths,
         payload.recursive,
       ).pipe(
         switchMap((conversations) => {
-          const actions: Observable<AnyAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
+
           const paths = uniq(
             conversations.flatMap((conv) =>
               getParentFolderIdsFromFolderId(conv.folderId),
@@ -2727,11 +2712,12 @@ const uploadConversationsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
 
 const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ConversationsActions.uploadConversationsWithFoldersRecursive.match),
+    ofType(ConversationsActions.uploadConversationsWithFoldersRecursive.type),
     mergeMap(({ payload }) =>
       ConversationService.getConversations(payload?.path, true).pipe(
         mergeMap((conversations) => {
-          const actions: Observable<AnyAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
+
           const paths = uniq(
             conversations.flatMap((conv) =>
               getParentFolderIdsFromFolderId(conv.folderId),
@@ -2799,7 +2785,7 @@ const uploadConversationsWithContentRecursiveEpic: AppEpic = (
   state$,
 ) =>
   action$.pipe(
-    filter(ConversationsActions.uploadConversationsWithContentRecursive.match),
+    ofType(ConversationsActions.uploadConversationsWithContentRecursive.type),
     mergeMap(({ payload }) =>
       ConversationService.getConversations(payload.path, true).pipe(
         mergeMap((conversations) => {
@@ -2868,7 +2854,7 @@ const uploadConversationsWithContentRecursiveEpic: AppEpic = (
 
 const toggleFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.toggleFolder.match),
+    ofType(ConversationsActions.toggleFolder.type),
     switchMap(({ payload }) => {
       const openedFoldersIds = UISelectors.selectOpenedFoldersIds(
         FeatureType.Chat,
@@ -2887,7 +2873,7 @@ const toggleFolderEpic: AppEpic = (action$, state$) =>
 
 const openFolderEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(UIActions.openFolder.match),
+    ofType(UIActions.openFolder.type),
     filter(({ payload }) => payload.featureType === FeatureType.Chat),
     switchMap(({ payload }) =>
       of(
@@ -2900,7 +2886,7 @@ const openFolderEpic: AppEpic = (action$) =>
 
 const getChartAttachmentEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ConversationsActions.getChartAttachment.match),
+    ofType(ConversationsActions.getChartAttachment.type),
     switchMap(({ payload }) =>
       FileService.getFileContent<PlotParams>(payload.pathToChart).pipe(
         switchMap((params) => {
@@ -2924,7 +2910,7 @@ const getChartAttachmentEpic: AppEpic = (action$) =>
 
 const getCustomAttachmentDataEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ConversationsActions.getCustomAttachmentData.match),
+    ofType(ConversationsActions.getCustomAttachmentData.type),
     switchMap(({ payload }) =>
       FileService.getFileContent<CustomVisualizerData>(
         payload.pathToAttachment,
@@ -2950,9 +2936,10 @@ const getCustomAttachmentDataEpic: AppEpic = (action$) =>
 
 const deleteChosenConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.deleteChosenConversations.match),
+    ofType(ConversationsActions.deleteChosenConversations.type),
     switchMap(() => {
-      const actions: Observable<AnyAction>[] = [];
+      const actions: Observable<AppAction>[] = [];
+
       const conversations = ConversationsSelectors.selectConversations(
         state$.value,
       );
@@ -3007,7 +2994,7 @@ const deleteChosenConversationsEpic: AppEpic = (action$, state$) =>
 
 const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.applyMarketplaceModel.match),
+    ofType(ConversationsActions.applyMarketplaceModel.type),
     switchMap(({ payload }) =>
       forkJoin({
         selectedModelId: of(payload.selectedModelId),
@@ -3124,24 +3111,17 @@ const applyMarketplaceModelSuccessEpic: AppEpic = (action$, state$) =>
 
 const updateLastConversationSettingsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(
-      (action) =>
-        ConversationsActions.initFoldersAndConversationsSuccess.match(action) ||
-        ConversationsActions.deleteConversationsComplete.match(action) ||
-        ConversationsActions.updateFoldersSuccess.match(action) ||
-        ConversationsActions.setConversations.match(action) ||
-        ConversationsActions.uploadConversationsWithFoldersRecursiveSuccess.match(
-          action,
-        ) ||
-        ConversationsActions.saveConversationSuccess.match(action) ||
-        ConversationsActions.updateConversationSuccess.match(action),
+    ofType(
+      ConversationsActions.initFoldersAndConversationsSuccess.type,
+      ConversationsActions.deleteConversationsComplete.type,
+      ConversationsActions.updateFoldersSuccess.type,
+      ConversationsActions.setConversations.type,
+      ConversationsActions.uploadConversationsWithFoldersRecursiveSuccess.type,
+      ConversationsActions.saveConversationSuccess.type,
+      ConversationsActions.updateConversationSuccess.type,
     ),
-    map(() => ({
-      lastConversation: ConversationsSelectors.selectLastConversation(
-        state$.value,
-      ),
-    })),
-    switchMap(({ lastConversation }) =>
+    map(() => ConversationsSelectors.selectLastConversation(state$.value)),
+    switchMap((lastConversation) =>
       forkJoin({
         oldLastConversationSettings: DataService.getLastConversationSettings(),
         wasAlreadyUploaded: of(
@@ -3200,14 +3180,14 @@ const updateLastConversationSettingsEpic: AppEpic = (action$, state$) =>
 
 const setLastConversationSettingsEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ConversationsActions.setLastConversationSettings.match),
+    ofType(ConversationsActions.setLastConversationSettings.type),
     map(({ payload }) => DataService.setLastConversationSettings(payload)),
     ignoreElements(),
   );
 
 const initLastConversationSettingsEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ConversationsActions.initLastConversationSettings.match),
+    ofType(ConversationsActions.initLastConversationSettings.type),
     switchMap(() =>
       DataService.getLastConversationSettings().pipe(
         switchMap((lastConversationSettings) =>
@@ -3225,7 +3205,7 @@ const initLastConversationSettingsEpic: AppEpic = (action$) =>
 
 const getConversationMetadataEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ConversationsActions.getConversationMetadata.match),
+    ofType(ConversationsActions.getConversationMetadata.type),
     switchMap(({ payload }) =>
       ConversationService.getConversationMetadata(payload.conversationId).pipe(
         switchMap((conversationMetadata) => {

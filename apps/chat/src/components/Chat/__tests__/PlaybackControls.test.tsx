@@ -5,7 +5,7 @@ import { userEvent } from '@testing-library/user-event';
 
 import { MutableRefObject } from 'react';
 
-import { AnyAction } from '@reduxjs/toolkit';
+import { AppAction } from '@/src/types/store';
 
 import {
   ConversationsActions,
@@ -21,7 +21,7 @@ vi.mock('@/src/store/hooks', async () => {
   return {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     useAppSelector: (selector: any) => selector({}),
-    useAppDispatch: () => (action: AnyAction) => action,
+    useAppDispatch: () => (action: AppAction) => action,
   };
 });
 vi.mock('@/src/store/conversations/conversations.reducers', async () => {
