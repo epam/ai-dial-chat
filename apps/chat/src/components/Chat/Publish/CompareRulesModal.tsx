@@ -51,6 +51,7 @@ export function CompareRulesModal({
       onClose={onClose}
       headingClassName="px-6"
       heading={t('Comparison')}
+      hideHeadingTooltip
     >
       <div className="grid grid-cols-2 gap-x-5">
         <p className="mb-3 pl-6 text-sm">{t('Previous Access Settings')}</p>

@@ -164,6 +164,7 @@ export const CustomLogoSelect = ({
       {confirmDialogValues && confirmDialogOpen && (
         <ConfirmDialog
           isOpen
+          hideHeadingTooltip
           heading={t(confirmDialogValues.heading)}
           description={t(confirmDialogValues.description)}
           confirmLabel={t('Confirm')}

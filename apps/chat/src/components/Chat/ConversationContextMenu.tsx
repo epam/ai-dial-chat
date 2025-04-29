@@ -461,6 +461,7 @@ export const ConversationContextMenu = ({
       {isDeleting && (
         <ConfirmDialog
           isOpen
+          hideHeadingTooltip
           heading={t('Confirm deleting conversation')}
           description={`${t('Are you sure that you want to delete a conversation?')}${t(
             conversation.isShared

@@ -134,6 +134,7 @@ export const ChatMessageTemplatesModal = ({
     <Modal
       portalId="theme-main"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
+      hideHeadingTooltip
       onClose={handleClose}
       dataQa="message-templates-dialog"
       containerClassName="h-fit max-h-full inline-block w-full min-w-[90%] text-center md:min-w-[300px] md:max-w-[880px] flex flex-col"

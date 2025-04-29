@@ -186,6 +186,7 @@ export const SystemPrompt: FC<Props> = ({
 
       <ConfirmDialog
         isOpen={isPromptLimitModalOpen}
+        hideHeadingTooltip
         heading={t('Prompt limit exceeded')}
         description={t(
           `Prompt limit is ${maxTokensLength} tokens. ${getPromptLimitDescription(getTokensLength(content) ?? 0, maxTokensLength)}`,

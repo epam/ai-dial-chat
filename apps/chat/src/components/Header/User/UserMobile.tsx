@@ -99,6 +99,7 @@ const Logout = () => {
       </div>
       <ConfirmDialog
         isOpen={isLogoutConfirmationOpened}
+        hideHeadingTooltip
         heading={t('Confirm logging out')}
         description={t('Are you sure that you want to log out?')}
         confirmLabel={t('Log out')}

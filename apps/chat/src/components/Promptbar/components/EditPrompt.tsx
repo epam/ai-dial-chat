@@ -283,6 +283,7 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
       {confirmClose && (
         <ConfirmDialog
           isOpen
+          hideHeadingTooltip
           heading={t('Unsaved changes')}
           description={t(
             'There are unsaved changes. Do you want to save them before closing?',

@@ -126,16 +126,17 @@ const PromptModalView = () => {
       containerClassName="flex flex-col gap-4 w-full py-4 md:py-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
       dataQa={
         prompt?.content === '' || !isViewMode
-          ? 'prompt-modal'
-          : 'preview-prompt-modal'
+        ? 'prompt-modal'
+        : 'preview-prompt-modal'
       }
       headingClassName={classNames(
         'px-3 md:px-6',
         prompt &&
-          prompt.publicationInfo?.action === PublishActions.DELETE &&
-          'text-error',
+        prompt.publicationInfo?.action === PublishActions.DELETE &&
+        'text-error',
       )}
       state={isLoading ? ModalState.LOADING : ModalState.OPENED}
+      hideHeadingTooltip
       heading={t(isViewMode ? 'View prompt' : 'Edit prompt')}
       hideClose={!isViewMode}
       onClose={handleClose}

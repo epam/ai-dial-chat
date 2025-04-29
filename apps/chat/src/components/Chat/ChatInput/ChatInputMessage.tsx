@@ -591,6 +591,7 @@ export const ChatInputMessage = Inversify.register(
 
         <ConfirmDialog
           isOpen={isPromptLimitModalOpen}
+          hideHeadingTooltip
           heading={t('Prompt limit exceeded')}
           description={t(
             `Prompt limit is ${maxTokensLength} tokens. ${getPromptLimitDescription(getTokensLength(content), maxTokensLength)}`,

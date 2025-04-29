@@ -39,6 +39,7 @@ export interface Props extends FormHTMLAttributes<HTMLFormElement> {
   containerClassName: string;
   lockScroll?: boolean;
   hideClose?: boolean;
+  hideHeadingTooltip?: boolean;
   dismissProps?: UseDismissProps;
   form?: {
     noValidate: boolean;
@@ -65,6 +66,7 @@ function ModalView({
   onKeyDownOverlay,
   dismissProps,
   form,
+  hideHeadingTooltip,
 }: Props) {
   const { refs, context } = useFloating({
     open: state !== ModalState.CLOSED && !!state,
@@ -133,6 +135,7 @@ function ModalView({
                   <Tooltip
                     contentClassName="max-w-[400px] break-words"
                     tooltip={heading}
+                    hideTooltip={hideHeadingTooltip}
                   >
                     <div
                       className="line-clamp-2 w-full break-words"

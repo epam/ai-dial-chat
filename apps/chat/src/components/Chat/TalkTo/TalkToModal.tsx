@@ -314,6 +314,7 @@ const TalkToModalView = ({
       {deleteModel && (
         <ConfirmDialog
           isOpen
+          hideHeadingTooltip
           heading={t('Confirm deleting application')}
           description={t(
             'Are you sure you want to delete the {{modelName}}{{modelVersion}}?',

@@ -163,6 +163,7 @@ export function TargetAudienceFilterComponent({
         dataQa="mobile-filters-select"
         containerClassName="inline-block flex flex-col w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 h-full xl:max-w-[720px] 2xl:max-w-[780px]"
         state={ModalState.OPENED}
+        hideHeadingTooltip
         heading={t('Add filter')}
         onClose={onCloseFilter}
       >
