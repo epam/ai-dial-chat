@@ -137,7 +137,6 @@ export function PromptbarSettings() {
 
       <ConfirmDialog
         isOpen={isClearModalOpen}
-        hasHeadingTooltip
         heading={t(`Confirm deleting ${deleteTerm} prompts`)}
         description={t(
           `Are you sure that you want to delete ${deleteTerm} prompts?`,
