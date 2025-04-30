@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { isSmallScreen, isTabletScreen } from '@/src/utils/app/mobile';
 import { centralChatWidth, getNewSidebarWidth } from '@/src/utils/app/sidebar';
 
-import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
@@ -39,9 +38,6 @@ const Header = Inversify.register('Header', () => {
 
   const chatbarWidth = useAppSelector(UISelectors.selectChatbarWidth);
   const promptbarWidth = useAppSelector(UISelectors.selectPromptbarWidth);
-  const selectedWidget = useAppSelector(
-    ApplicationSelectors.selectSelectedWidget,
-  );
 
   const dispatch = useAppDispatch();
 
@@ -127,21 +123,19 @@ const Header = Inversify.register('Header', () => {
     <BaseHeader
       LeftItems={
         <>
-          {enabledFeatures.has(Feature.ConversationsSection) &&
-            !selectedWidget && (
-              <ToggleSidebarButton
-                iconSize={headerIconSize}
-                tooltip="Conversation list"
-                isOpened={showChatbar}
-                onToggle={handleToggleChatbar}
-                dataQa="left-panel-toggle"
-                isOverlay={isOverlay}
-              />
-            )}
+          {enabledFeatures.has(Feature.ConversationsSection) && (
+            <ToggleSidebarButton
+              iconSize={headerIconSize}
+              tooltip="Conversation list"
+              isOpened={showChatbar}
+              onToggle={handleToggleChatbar}
+              dataQa="left-panel-toggle"
+              isOverlay={isOverlay}
+            />
+          )}
           <div className="w-12 md:w-16">
             {!enabledFeatures.has(Feature.HideNewConversation) &&
-              !showChatbar &&
-              !selectedWidget && (
+              !showChatbar && (
                 <CreateNewConversation iconSize={headerIconSize} />
               )}
           </div>
@@ -152,7 +146,7 @@ const Header = Inversify.register('Header', () => {
           <div className="flex w-[48px] items-center justify-center md:w-auto">
             <User />
           </div>
-          {enabledFeatures.has(Feature.PromptsSection) && !selectedWidget && (
+          {enabledFeatures.has(Feature.PromptsSection) && (
             <ToggleSidebarButton
               iconSize={headerIconSize}
               tooltip="Prompt list"

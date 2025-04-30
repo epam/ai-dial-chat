@@ -95,7 +95,8 @@ export const ShareModalSelectors = {
   copyLink: '[data-qa="copy-link"]',
   entityName: '[data-qa="modal-entity-name"]',
   shareText: '[data-qa="share-message"]',
-  shareAccessMessage: '[data-qa="shared-access-message"]',
+  removeAccessBtn: '[data-qa="remove-access-button"]',
+  notSharedEntityLabel: '[data-qa="not-shared-entity-label"]',
 };
 
 export const UploadFromDeviceModalSelectors = {

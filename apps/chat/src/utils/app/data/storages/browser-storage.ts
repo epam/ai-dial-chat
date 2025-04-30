@@ -334,6 +334,14 @@ export class BrowserStorage implements DialStorage {
     );
   }
 
+  public static getSelectedWidget(): Observable<string | undefined> {
+    return BrowserStorage.getData(UIStorageKeys.SelectedWidget, undefined);
+  }
+
+  public static setSelectedWidget(id: string | undefined): Observable<void> {
+    return BrowserStorage.setData(UIStorageKeys.SelectedWidget, id);
+  }
+
   public static getData<K = undefined>(
     key: UIStorageKeys | MigrationStorageKeys,
     defaultValue: K,
