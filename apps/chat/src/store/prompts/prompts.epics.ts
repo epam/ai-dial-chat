@@ -580,12 +580,8 @@ const uploadPromptsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
 
             actions.push(
               concat(
-                of(PromptsActions.setIsPromptModalOpen({ isOpen: true })),
                 of(
-                  PromptsActions.uploadPrompt({ promptId: topLevelPrompt.id }),
-                ),
-                of(
-                  PromptsActions.setSelectedPrompt({
+                  PromptsActions.selectPrompt({
                     promptId: topLevelPrompt.id,
                   }),
                 ),
@@ -924,13 +920,29 @@ const getPromptMetadataEpic: AppEpic = (action$) =>
     ),
   );
 
-const selectPromptEpic: AppEpic = (action$) =>
+const selectPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(PromptsActions.selectPrompt.type),
     switchMap(({ payload }) => {
       const actions: Observable<AppAction>[] = [];
 
-      if (isEntityIdPublic({ id: payload.promptId })) {
+      if (!payload.promptId) {
+        const selectedPromptInfo = PromptsSelectors.selectSelectedPromptId(
+          state$.value,
+        );
+        if (selectedPromptInfo?.selectedPromptId) {
+          const { versionGroupId } = getVersionGroupFromId(
+            selectedPromptInfo.selectedPromptId,
+          );
+          actions.push(
+            of(
+              PublicationActions.resetSelectedVersionForPublicVersionGroup({
+                versionGroupId,
+              }),
+            ),
+          );
+        }
+      } else if (isEntityIdPublic({ id: payload.promptId })) {
         const { versionGroupId, currentVersion } = getVersionGroupFromId(
           payload.promptId,
         );
@@ -945,13 +957,18 @@ const selectPromptEpic: AppEpic = (action$) =>
         );
       }
 
+      if (payload.promptId) {
+        actions.push(
+          of(
+            PromptsActions.uploadPrompt({
+              promptId: payload.promptId,
+            }),
+          ),
+        );
+      }
+
       return concat(
         ...actions,
-        of(
-          PromptsActions.uploadPrompt({
-            promptId: payload.promptId,
-          }),
-        ),
         of(
           PromptsActions.setSelectedPrompt({
             promptId: payload.promptId,
@@ -960,7 +977,7 @@ const selectPromptEpic: AppEpic = (action$) =>
         ),
         of(
           PromptsActions.setIsPromptModalOpen({
-            isOpen: true,
+            isOpen: !!payload.promptId,
             isInitModeEdit: !!payload.selectInEditMode,
           }),
         ),
