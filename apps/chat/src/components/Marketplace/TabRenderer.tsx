@@ -456,6 +456,7 @@ export const TabRenderer = () => {
       {!!deleteModel && (
         <ConfirmDialog
           isOpen
+          hasHeadingTooltip
           {...getDeleteConfirmationText(deleteModel.action, deleteModel.entity)}
           onClose={handleDeleteClose}
           cancelLabel={t('Cancel')}
