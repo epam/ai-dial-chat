@@ -1358,7 +1358,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       {onUnshareFolder && (
         <ConfirmDialog
           isOpen={isUnshareConfirmDialog}
-          hasHeadingTooltip
+          showHeadingTooltip
           heading={t('Confirm unsharing: {{folderName}}', {
             folderName: currentFolder.name,
           })}

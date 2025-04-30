@@ -314,7 +314,7 @@ const ButtonsProperty = ({
 
       <ConfirmDialog
         isOpen={!!confirmation}
-        hasHeadingTooltip
+        showHeadingTooltip
         heading={t(
           confirmation?.[DialSchemaProperties.DialWidgetOptions]
             ?.confirmationMessage ?? '',
