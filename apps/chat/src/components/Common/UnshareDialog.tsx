@@ -93,7 +93,6 @@ function UnshareDialogView() {
   return (
     <ConfirmDialog
       isOpen
-      hideHeadingTooltip
       heading={t('Confirm removing access')}
       description={description}
       confirmLabel={t('Confirm')}

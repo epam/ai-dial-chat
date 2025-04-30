@@ -135,7 +135,6 @@ const PromptModalView = () => {
           'text-error',
       )}
       state={isLoading ? ModalState.LOADING : ModalState.OPENED}
-      hideHeadingTooltip
       heading={t(isViewMode ? 'View prompt' : 'Edit prompt')}
       hideClose={!isViewMode}
       onClose={handleClose}

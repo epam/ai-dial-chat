@@ -13,7 +13,7 @@ interface Props {
   confirmLabel: string;
   cancelLabel?: string | null;
   headingClassName?: string;
-  hideHeadingTooltip?: boolean;
+  hasHeadingTooltip?: boolean;
   onClose: (isConfirmed: boolean) => void;
 }
 
@@ -25,7 +25,7 @@ export const ConfirmDialog = ({
   cancelLabel,
   isOpen,
   onClose,
-  hideHeadingTooltip,
+  hasHeadingTooltip,
 }: Props) => {
   const confirmLabelRef = useRef<HTMLButtonElement>(null);
 
@@ -58,7 +58,7 @@ export const ConfirmDialog = ({
       hideClose
       heading={heading}
       headingClassName={headingClassName}
-      hideHeadingTooltip={hideHeadingTooltip}
+      hasHeadingTooltip={hasHeadingTooltip}
     >
       <div className="flex flex-col justify-between gap-4">
         <div className="flex w-full flex-col gap-2 text-start">

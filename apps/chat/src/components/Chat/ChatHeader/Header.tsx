@@ -444,7 +444,6 @@ export const ChatHeader = Inversify.register(
         </div>
         <ConfirmDialog
           isOpen={isClearConversationModalOpen}
-          hideHeadingTooltip
           heading={t('Confirm deleting all messages in the conversation')}
           description={t('Are you sure that you want to delete all messages?')}
           confirmLabel={t('Delete')}

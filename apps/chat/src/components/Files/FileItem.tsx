@@ -291,6 +291,7 @@ export const FileItem = ({
       {isRemoveAccessConfirmOpened && (
         <ConfirmDialog
           isOpen={isRemoveAccessConfirmOpened}
+          hasHeadingTooltip
           heading={t('Confirm removing access: {{fileName}}', {
             fileName: item.name,
           })}

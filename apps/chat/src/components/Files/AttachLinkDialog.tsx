@@ -56,7 +56,6 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
     <Modal
       portalId="theme-main"
       state={ModalState.OPENED}
-      hideHeadingTooltip
       onClose={handleClose}
       dataQa="attach-link-dialog"
       overlayClassName="fixed inset-0"

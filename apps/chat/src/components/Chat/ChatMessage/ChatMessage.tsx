@@ -202,7 +202,6 @@ export const ChatMessage: FC<Props> = memo(
         )}
         <ConfirmDialog
           isOpen={isDeleteConfirmationOpened}
-          hideHeadingTooltip
           heading={t('Confirm deleting message')}
           description={t('Are you sure that you want to delete the message?')}
           confirmLabel={t('Delete')}

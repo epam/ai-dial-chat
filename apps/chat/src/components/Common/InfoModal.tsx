@@ -50,7 +50,6 @@ export function InfoModalView() {
     <Modal
       portalId="theme-main"
       state={modalState}
-      hideHeadingTooltip
       onClose={handleClose}
       dataQa="info-modal"
       containerClassName="inline-block w-full min-w-[90%] px-3 py-4 md:p-6 md:min-w-[300px] md:max-w-[400px]"

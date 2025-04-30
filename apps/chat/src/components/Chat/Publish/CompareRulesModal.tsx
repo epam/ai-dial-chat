@@ -46,7 +46,6 @@ export function CompareRulesModal({
     <Modal
       portalId="theme-main"
       state={ModalState.OPENED}
-      hideHeadingTooltip
       dataQa="compare-rules"
       containerClassName="m-auto flex max-h-full w-full flex-col overflow-y-auto py-6 xl:max-w-[1000px]"
       onClose={onClose}

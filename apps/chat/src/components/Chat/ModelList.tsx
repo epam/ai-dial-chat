@@ -427,7 +427,6 @@ export const ModelList = ({
       {isDeleteModalOpen && (
         <ConfirmDialog
           isOpen={isDeleteModalOpen}
-          hideHeadingTooltip
           heading="Confirm deleting application"
           description="Are you sure you want to delete the application?"
           confirmLabel="Delete"

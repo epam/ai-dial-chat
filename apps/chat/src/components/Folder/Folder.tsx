@@ -1339,7 +1339,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       {onDeleteFolder && (
         <ConfirmDialog
           isOpen={isDeletingConfirmDialog}
-          hideHeadingTooltip
           heading={t('Confirm deleting folder')}
           description={`${t('Are you sure that you want to delete a folder with all nested elements?')}${t(
             currentFolder.isShared
@@ -1359,6 +1358,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       {onUnshareFolder && (
         <ConfirmDialog
           isOpen={isUnshareConfirmDialog}
+          hasHeadingTooltip
           heading={t('Confirm unsharing: {{folderName}}', {
             folderName: currentFolder.name,
           })}
@@ -1375,7 +1375,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       )}
       <ConfirmDialog
         isOpen={isConfirmRenaming}
-        hideHeadingTooltip
         heading={t('Confirm renaming folder')}
         confirmLabel={t('Rename')}
         cancelLabel={t('Cancel')}
@@ -1398,7 +1397,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       {sharedFolderDropModel && (
         <ConfirmDialog
           isOpen
-          hideHeadingTooltip
           heading={t('Confirm Moving Folder')}
           confirmLabel={t('Move')}
           cancelLabel={t('Cancel')}

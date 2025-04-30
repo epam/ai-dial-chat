@@ -35,7 +35,6 @@ export const ButtonsSchemaModal: React.FC<Props> = ({
       dataQa="hidden-schema-buttons"
       heading="Chat starters"
       state={ModalState.OPENED}
-      hideHeadingTooltip
       containerClassName="h-fit flex flex-col md:py-6 py-4 md:px-6 px-3 max-h-full inline-block w-full max-w-[768px]"
       onClose={onClose}
     >

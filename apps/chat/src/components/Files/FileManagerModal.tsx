@@ -1043,7 +1043,6 @@ export const FileManagerModal = ({
 
       <ConfirmDialog
         isOpen={!!deletingFileIds.length || !!deletingFolderIds.length}
-        hideHeadingTooltip
         heading={t(
           [
             'Confirm ',

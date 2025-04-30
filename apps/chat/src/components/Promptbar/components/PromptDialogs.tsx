@@ -87,7 +87,6 @@ export const PromptDialogs: React.FC<Props> = ({
       {isDeleteDialog && (
         <ConfirmDialog
           isOpen
-          hideHeadingTooltip
           heading={t('Confirm deleting prompt')}
           description={`${t('Are you sure that you want to delete a prompt?')}${t(
             prompt.isShared

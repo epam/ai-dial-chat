@@ -692,7 +692,6 @@ export const CodeEditor = ({
         )}
         <ConfirmDialog
           isOpen={!!deletingFileId}
-          hideHeadingTooltip
           heading={t('Confirm deleting')}
           description={t(
             'Are you sure that you want to delete "{{name}}" permanently?',

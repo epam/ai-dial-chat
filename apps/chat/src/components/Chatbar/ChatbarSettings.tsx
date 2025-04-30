@@ -235,6 +235,7 @@ export const ChatbarSettings = () => {
 
       <ConfirmDialog
         isOpen={isClearModalOpen}
+        hasHeadingTooltip
         heading={t(`Confirm deleting ${deleteTerm} conversations`)}
         description={t(
           `Are you sure that you want to delete ${deleteTerm} conversations?`,
