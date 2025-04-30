@@ -231,11 +231,8 @@ export const applicationSlice = createSlice({
     setHasUnsavedChanges(state, action: PayloadAction<boolean>) {
       state.hasUnsavedChanges = action.payload;
     },
-    setSelectedWidget(state, { payload }: PayloadAction<string>) {
+    setSelectedWidget(state, { payload }: PayloadAction<string | undefined>) {
       state.selectedWidget = payload;
-    },
-    clearSelectedWidget(state) {
-      state.selectedWidget = undefined;
     },
   },
 });

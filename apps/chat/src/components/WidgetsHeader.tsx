@@ -31,7 +31,7 @@ export const WidgetsHeader = () => {
 
   const handleGoBack = useCallback(() => {
     router.push(Routes.Widgets).then(() => {
-      dispatch(ApplicationActions.clearSelectedWidget());
+      dispatch(ApplicationActions.setSelectedWidget(undefined));
     });
   }, [dispatch, router]);
 

@@ -684,13 +684,6 @@ const exitEditModeEpic: AppEpic = (action$, _state$, { router }) =>
     ignoreElements(),
   );
 
-const clearSelectedWidgetEpic: AppEpic = (action$) =>
-  action$.pipe(
-    ofType(ApplicationActions.clearSelectedWidget.type),
-    tap(() => BrowserStorage.setSelectedWidget(undefined)),
-    ignoreElements(),
-  );
-
 const setSelectedWidgetEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ApplicationActions.setSelectedWidget.type),
@@ -713,6 +706,5 @@ export const ApplicationEpics = combineEpics(
   getApplicationLogsEpic,
   enterEditModeEpic,
   exitEditModeEpic,
-  clearSelectedWidgetEpic,
   setSelectedWidgetEpic,
 );
