@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
-import { useWidgets } from '@/src/hooks/useWidgets';
+import { useResetSelectedWidget, useWidgets } from '@/src/hooks/useWidgets';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
@@ -29,6 +29,8 @@ function WidgetsPage() {
       router.push(Routes.Chat);
     }
   }, [router]);
+
+  useResetSelectedWidget();
 
   return (
     <div className="flex size-full flex-col divide-y divide-tertiary bg-layer-1">

@@ -1,7 +1,8 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { useRouter } from 'next/router';
 
+import { ApplicationSelectors } from '../store/application/application.selectors';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { ModelsSelectors } from '../store/models/models.reducers';
 import { SettingsSelectors } from '../store/settings/settings.selectors';
@@ -11,7 +12,6 @@ import { Routes } from '../constants/routes';
 
 export const useWidgets = () => {
   const router = useRouter();
-  const dispatch = useAppDispatch();
 
   const widgetsSchemaIds = useAppSelector(
     SettingsSelectors.selectWidgetsSchemaIds,
@@ -28,12 +28,22 @@ export const useWidgets = () => {
 
   const handleWidgetClick = useCallback(
     (id: string) => {
-      router.push(Routes.SelectedWidget.replace('[slug]', id)).then(() => {
-        dispatch(ApplicationActions.setSelectedWidget(id));
-      });
+      router.push(Routes.SelectedWidget.replace('[slug]', id));
     },
-    [dispatch, router],
+    [router],
   );
 
   return { widgetModels, handleWidgetClick };
+};
+
+export const useResetSelectedWidget = (widgetId?: string) => {
+  const dispatch = useAppDispatch();
+  const selectedWidget = useAppSelector(
+    ApplicationSelectors.selectSelectedWidget,
+  );
+  useEffect(() => {
+    if (selectedWidget !== widgetId) {
+      dispatch(ApplicationActions.setSelectedWidget(widgetId));
+    }
+  }, [dispatch, selectedWidget, widgetId]);
 };

@@ -2,6 +2,8 @@ import { useEffect } from 'react';
 
 import { useRouter } from 'next/router';
 
+import { useResetSelectedWidget } from '@/src/hooks/useWidgets';
+
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -24,6 +26,8 @@ function SelectedWidgetPage() {
   const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
 
   const widget = widgetId ? modelsMap[widgetId as string] : null;
+
+  useResetSelectedWidget(widget?.reference);
 
   useEffect(() => {
     if (!widget && !isModelsLoading) {
