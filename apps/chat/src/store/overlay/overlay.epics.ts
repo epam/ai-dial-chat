@@ -12,6 +12,7 @@ import {
   iif,
   map,
   merge,
+  mergeMap,
   of,
   switchMap,
   takeUntil,
@@ -269,7 +270,7 @@ const createConversationEffectEpic: AppEpic = (action$, state$) =>
         ofType(ConversationsActions.createNotLocalConversationsSuccess.type),
         takeUntil(timer(10000)),
         filter(Boolean),
-        map(({ payload: conversations }) => {
+        mergeMap(({ payload: conversations }) => {
           const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
 
           const conversation = conversations[0];
@@ -280,16 +281,21 @@ const createConversationEffectEpic: AppEpic = (action$, state$) =>
             parentPath,
           };
 
-          return OverlayActions.sendPMResponse({
-            type: OverlayRequests.createConversation,
-            requestParams: {
-              requestId,
-              hostDomain,
-              payload: {
-                conversation: resultConversation,
-              } as CreateConversationResponse,
-            },
-          });
+          return concat(
+            of(UIActions.setScrollToEntityId(conversation.id)),
+            of(
+              OverlayActions.sendPMResponse({
+                type: OverlayRequests.createConversation,
+                requestParams: {
+                  requestId,
+                  hostDomain,
+                  payload: {
+                    conversation: resultConversation,
+                  } as CreateConversationResponse,
+                },
+              }),
+            ),
+          );
         }),
       );
     }),
@@ -327,6 +333,7 @@ const selectConversationEpic: AppEpic = (action$, state$) =>
             conversationIds: [conversation.id],
           }),
         ),
+        of(UIActions.setScrollToEntityId(conversation.id)),
         of(
           OverlayActions.sendPMResponse({
             type: OverlayRequests.selectConversation,

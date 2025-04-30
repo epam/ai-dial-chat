@@ -24,8 +24,8 @@ export const useScrollToEntity = ({
             behavior: 'smooth',
             block: 'center',
           });
-          dispatch(UIActions.setScrollToEntityId());
         }
+        dispatch(UIActions.setScrollToEntityId());
       });
       intersectionObserver.observe(elementRef.current);
       return () => intersectionObserver.disconnect();
