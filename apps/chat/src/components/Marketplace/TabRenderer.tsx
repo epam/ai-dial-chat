@@ -5,15 +5,12 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getApplicationType } from '@/src/utils/app/application';
-import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
 import { translate } from '@/src/utils/app/translation';
 import {
   doesApplicationMatchFilters,
   doesApplicationMatchSearchTerm,
 } from '@/src/utils/marketplace';
-import { ApiUtils } from '@/src/utils/server/api';
 
 import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
@@ -40,16 +37,14 @@ import {
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
 import { ApplicationDetails } from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
 import { MarketplaceBanner } from '@/src/components/Marketplace/MarketplaceBanner';
 import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
 
-import { NoResultsFound } from '../Common/NoResultsFound';
 import { AgentsTable } from './AgentsList/AgentsTable/AgentsTable';
 import { AgentsTiles } from './AgentsList/AgentsTiles/AgentsTiles';
 import { ApplicationLogs } from './ApplicationLogs';
-
-import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 
 interface NoAgentsFoundProps {
   children: React.ReactNode;
@@ -89,11 +84,7 @@ interface ResultsViewProps {
   areAllFiltersEmpty: boolean;
   selectedViewType: ViewTypes;
   onCardClick: (entity: DialAIEntityModel) => void;
-  onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
-  onDelete: (entity: DialAIEntityModel) => void;
-  onEdit: (entity: DialAIEntityModel) => void;
   onBookmarkClick: (entity: DialAIEntityModel) => void;
-  onLogsClick: (entity: DialAIEntityModel) => void;
 }
 
 const ResultsView = memo(
@@ -198,25 +189,16 @@ export const TabRenderer = () => {
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
-  const detailedApplicationTypeSchema = useAppSelector(
-    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
-  );
   const isBannerVisible = useAppSelector(
     MarketplaceSelectors.selectIsBannerVisible,
   );
+  const deleteModel = useAppSelector(MarketplaceSelectors.selectDeleteModel);
+  const publishModel = useAppSelector(MarketplaceSelectors.selectPublishModel);
+  const logsEntity = useAppSelector(MarketplaceSelectors.selectLogsEntity);
 
   const [suggestedResults, setSuggestedResults] = useState<DialAIEntityModel[]>(
     [],
   );
-  const [deleteModel, setDeleteModel] = useState<{
-    action: DeleteType;
-    entity: DialAIEntityModel;
-  }>();
-  const [publishModel, setPublishModel] = useState<{
-    entity: ShareEntity & { iconUrl?: string };
-    action: PublishActions;
-  }>();
-  const [logsEntity, setLogsEntity] = useState<DialAIEntityModel>();
 
   const isSomeFilterNotEmpty =
     searchTerm.length ||
@@ -294,20 +276,6 @@ export const TabRenderer = () => {
     applicationTypeSchemas,
   ]);
 
-  const handleEditApplication = useCallback(
-    (entity: DialAIEntityModel) => {
-      const applicationType = getApplicationType(entity);
-      dispatch(
-        ApplicationActions.enterEditMode({
-          entity: entity,
-          applicationType,
-          detailedApplicationTypeSchemaId: detailedApplicationTypeSchema?.$id,
-        }),
-      );
-    },
-    [dispatch, detailedApplicationTypeSchema],
-  );
-
   const handleDeleteClose = useCallback(
     (confirm: boolean) => {
       if (confirm && deleteModel) {
@@ -325,33 +293,14 @@ export const TabRenderer = () => {
         dispatch(MarketplaceActions.setDetailsModel());
       }
 
-      setDeleteModel(undefined);
+      dispatch(MarketplaceActions.setDeleteModel());
     },
     [deleteModel, dispatch],
   );
 
-  const handleSetPublishEntity = useCallback(
-    (entity: DialAIEntityModel, action: PublishActions) =>
-      setPublishModel({
-        entity: {
-          name: entity.name,
-          id: ApiUtils.decodeApiUrl(entity.id),
-          folderId: getFolderIdFromEntityId(entity.id),
-          iconUrl: entity.iconUrl,
-        },
-        action,
-      }),
-    [],
-  );
-
-  const handlePublishClose = useCallback(() => setPublishModel(undefined), []);
-
-  const handleDelete = useCallback(
-    (entity: DialAIEntityModel) => {
-      setDeleteModel({ entity, action: DeleteType.DELETE });
-    },
-    [setDeleteModel],
-  );
+  const handlePublishClose = useCallback(() => {
+    dispatch(MarketplaceActions.setPublishModel());
+  }, [dispatch]);
 
   const handleSetDetailsModel = useCallback(
     (model: DialAIEntityModel) => {
@@ -389,7 +338,10 @@ export const TabRenderer = () => {
   const handleBookmarkClick = useCallback(
     (entity: DialAIEntityModel) => {
       if (installedModelIds.has(entity.reference)) {
-        setDeleteModel({ entity, action: DeleteType.REMOVE });
+        MarketplaceActions.setDeleteModel({
+          entity,
+          action: DeleteType.REMOVE,
+        });
       } else {
         dispatch(
           ModelsActions.addInstalledModels({
@@ -402,13 +354,9 @@ export const TabRenderer = () => {
     [dispatch, installedModelIds],
   );
 
-  const handleLogsClick = useCallback((entity: DialAIEntityModel) => {
-    setLogsEntity(entity);
-  }, []);
-
   const handleCloseApplicationLogs = useCallback(() => {
-    setLogsEntity(undefined);
-  }, []);
+    dispatch(MarketplaceActions.setApplicationLogsEntity());
+  }, [dispatch]);
 
   const currentDetailsModel = detailsModel && modelsMap[detailsModel.reference];
 
@@ -445,11 +393,7 @@ export const TabRenderer = () => {
         areAllFiltersEmpty={areAllFiltersEmpty}
         selectedViewType={selectedViewType}
         onCardClick={handleSetDetailsModel}
-        onPublish={handleSetPublishEntity}
-        onDelete={handleDelete}
-        onEdit={handleEditApplication}
         onBookmarkClick={handleBookmarkClick}
-        onLogsClick={handleLogsClick}
       />
 
       {/* MODALS */}
@@ -463,12 +407,9 @@ export const TabRenderer = () => {
       )}
       {currentDetailsModel && (
         <ApplicationDetails
-          onPublish={handleSetPublishEntity}
           entity={currentDetailsModel}
           onChangeVersion={handleSetVersion}
           onClose={handleCloseDetailsDialog}
-          onDelete={handleDelete}
-          onEdit={handleEditApplication}
           onBookmarkClick={handleBookmarkClick}
           allEntities={allModels}
           isMyAppsTab={selectedTab === MarketplaceTabs.MY_WORKSPACE}

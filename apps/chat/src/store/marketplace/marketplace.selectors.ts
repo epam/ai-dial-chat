@@ -94,3 +94,10 @@ export const selectSourceTypes = createSelector(
     );
   },
 );
+
+export const selectDeleteModel = (state: RootState) =>
+  rootSelector(state).deleteModel;
+export const selectPublishModel = (state: RootState) =>
+  rootSelector(state).publishModel;
+export const selectLogsEntity = (state: RootState) =>
+  rootSelector(state).logsEntity;

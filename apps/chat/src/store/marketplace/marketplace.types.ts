@@ -1,13 +1,19 @@
 import { SortOrder } from '@/src/types/common';
 import { MarketplaceFilters } from '@/src/types/marketplace';
+import { DialAIEntityModel } from '@/src/types/models';
 
 import {
+  DeleteType,
   MarketplaceTabs,
   TableColumnSortKeys,
   ViewTypes,
 } from '@/src/constants/marketplace';
 
-import { UploadStatus } from '@epam/ai-dial-shared';
+import {
+  PublishActions,
+  ShareEntity,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 
 export interface MarketplaceState {
   selectedFilters: MarketplaceFilters;
@@ -22,4 +28,10 @@ export interface MarketplaceState {
     order: SortOrder;
   };
   isBannerVisible: boolean;
+
+  logsEntity: DialAIEntityModel | undefined;
+  publishModel:
+    | { entity: ShareEntity & { iconUrl?: string }; action: PublishActions }
+    | undefined;
+  deleteModel: { entity: DialAIEntityModel; action: DeleteType } | undefined;
 }
