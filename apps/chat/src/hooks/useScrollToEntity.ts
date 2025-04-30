@@ -1,20 +1,20 @@
 import { RefObject, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 
-import { UIActions } from '../store/ui/ui.reducers';
+import { useAppSelector } from '../store/hooks';
+import { UIActions, UISelectors } from '../store/ui/ui.reducers';
 
 interface ScrollToEntityProps {
   entityId: string;
-  scrollToEntityId: string | undefined;
   elementRef: RefObject<HTMLElement>;
 }
 
 export const useScrollToEntity = ({
   entityId,
-  scrollToEntityId,
   elementRef,
 }: ScrollToEntityProps) => {
   const dispatch = useDispatch();
+  const scrollToEntityId = useAppSelector(UISelectors.selectScrollToEntityId);
 
   useEffect(() => {
     if (scrollToEntityId === entityId && elementRef.current) {

@@ -47,7 +47,6 @@ import {
   PublicationActions,
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { stopBubbling } from '@/src/constants/chat';
 
@@ -110,8 +109,6 @@ export const PromptComponent = ({
     PublicationSelectors.selectSelectedPublication,
   );
 
-  const scrollToPromptId = useAppSelector(UISelectors.selectScrollToEntityId);
-
   const isExternal = isEntityIdExternal(prompt);
   const isApproveRequiredResource = !!additionalItemData?.publicationUrl;
   const isPartOfSelectedPublication =
@@ -144,7 +141,6 @@ export const PromptComponent = ({
 
   useScrollToEntity({
     entityId: prompt.id,
-    scrollToEntityId: scrollToPromptId,
     elementRef: promptRef,
   });
 

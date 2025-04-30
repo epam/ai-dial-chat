@@ -34,7 +34,6 @@ import {
   PublicationActions,
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { ConversationContextMenu } from '@/src/components/Chat/ConversationContextMenu';
 import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
@@ -224,9 +223,6 @@ export const ConversationComponent = ({
   const selectedPublicationUrl = useAppSelector(
     PublicationSelectors.selectSelectedPublicationUrl,
   );
-  const scrollToConversationId = useAppSelector(
-    UISelectors.selectScrollToEntityId,
-  );
 
   const [isContextMenu, setIsContextMenu] = useState(false);
 
@@ -241,7 +237,6 @@ export const ConversationComponent = ({
 
   useScrollToEntity({
     entityId: conversation.id,
-    scrollToEntityId: scrollToConversationId,
     elementRef: conversationRef,
   });
 
