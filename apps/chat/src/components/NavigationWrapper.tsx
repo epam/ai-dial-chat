@@ -5,7 +5,7 @@ import {
   IconMessage2,
   TablerIconsProps,
 } from '@tabler/icons-react';
-import { JSX, ReactNode, useCallback } from 'react';
+import { JSX, ReactNode, useCallback, useMemo } from 'react';
 
 import { useRouter } from 'next/router';
 
@@ -17,10 +17,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { Translation } from '@/src/types/translation';
 
 import { ModelsSelectors } from '../store/models/models.reducers';
-import {
-  ApplicationActions,
-  ApplicationSelectors,
-} from '@/src/store/application/application.reducers';
+import { ApplicationSelectors } from '@/src/store/application/application.reducers';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -31,21 +28,17 @@ import {
   MarketplaceSelectors,
 } from '@/src/store/marketplace/marketplace.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_CONVERSATION_NAME } from '../constants/default-ui-settings';
-import {
-  MarketplaceQueryParams,
-  MarketplaceTabs,
-} from '@/src/constants/marketplace';
+import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
 import { Chatbar } from '@/src/components/Chatbar/Chatbar';
 import { ModelIcon, ModelTooltip } from '@/src/components/Chatbar/ModelIcon';
+import Loader from '@/src/components/Common/Loader';
 import Tooltip from '@/src/components/Common/Tooltip';
 import { MarketplaceFilterbar } from '@/src/components/Marketplace/MarketplaceFilterbar';
 import { Promptbar } from '@/src/components/Promptbar';
-import { Widgetbar } from '@/src/components/Widgetbar';
 
 import { Feature } from '@epam/ai-dial-shared';
 
@@ -58,6 +51,7 @@ interface NavigationButtonProps {
   dataQa?: string;
   caption?: string;
   rounded?: boolean;
+  allowClickSelected?: boolean;
 }
 
 const NavigationButton = ({
@@ -68,6 +62,7 @@ const NavigationButton = ({
   dataQa,
   caption,
   rounded = false,
+  allowClickSelected = false,
 }: NavigationButtonProps) => {
   const isLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
   const streaming = useAppSelector(
@@ -93,7 +88,9 @@ const NavigationButton = ({
     >
       <button
         data-qa={dataQa}
-        onClick={!selected && !disabled ? onClick : undefined}
+        onClick={
+          (!selected || allowClickSelected) && !disabled ? onClick : undefined
+        }
         className={classNames(
           'flex size-full flex-col items-center justify-center gap-[2px]',
           disabled ? 'cursor-not-allowed' : 'cursor-pointer',
@@ -140,20 +137,19 @@ const MarketplaceNavigation = () => {
 
   const isMarketplace = router.route === Routes.Marketplace;
 
+  const currentTab = useMemo(() => {
+    return (router.query?.tab as MarketplaceTabs) ?? selectedMarketplaceTab;
+  }, [router.query, selectedMarketplaceTab]);
+
   const handleChangeTab = useCallback(
     (tab: MarketplaceTabs) => {
       if (!isMarketplace) {
-        const query =
-          tab === MarketplaceTabs.MY_WORKSPACE
-            ? `?${MarketplaceQueryParams.tab}=${MarketplaceTabs.MY_WORKSPACE}`
-            : '';
-        router.push(`${Routes.Marketplace}${query}`).then(() => {
-          dispatch(MarketplaceActions.setSelectedTab(tab));
-          dispatch(ApplicationActions.selectWidget(undefined));
+        router.push({
+          pathname: Routes.Marketplace,
+          query: { tab },
         });
       } else {
         dispatch(MarketplaceActions.setSelectedTab(tab));
-        dispatch(ApplicationActions.selectWidget(undefined));
       }
     },
     [dispatch, isMarketplace, router],
@@ -175,9 +171,7 @@ const MarketplaceNavigation = () => {
         onClick={handleHomeClick}
         tooltip={t('DIAL Marketplace')}
         Icon={IconLayoutGrid}
-        selected={
-          isMarketplace && selectedMarketplaceTab === MarketplaceTabs.HOME
-        }
+        selected={isMarketplace && currentTab === MarketplaceTabs.HOME}
         dataQa="marketplace-home-page"
         caption={t('Apps')}
       />
@@ -185,10 +179,7 @@ const MarketplaceNavigation = () => {
         onClick={handleMyAppsClick}
         tooltip={t('My workspace')}
         Icon={IconHomeRibbon}
-        selected={
-          isMarketplace &&
-          selectedMarketplaceTab === MarketplaceTabs.MY_WORKSPACE
-        }
+        selected={isMarketplace && currentTab === MarketplaceTabs.MY_WORKSPACE}
         dataQa="my-workspace"
         caption={t('Workspace')}
       />
@@ -201,17 +192,48 @@ const UsedWidgets = () => {
 
   const router = useRouter();
 
-  const dispatch = useAppDispatch();
-
-  const selectedWidget = useAppSelector(
+  const selectedWidgetId = useAppSelector(
     ApplicationSelectors.selectSelectedWidget,
   );
+  const isApplicationsInitialised = useAppSelector(
+    ApplicationSelectors.selectInitialized,
+  );
+
+  const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
 
   const { widgetModels, handleWidgetClick } = useWidgets();
 
   const handleOpenWidgetsClick = useCallback(() => {
-    dispatch(UIActions.setShowWidgetbar(true));
-  }, [dispatch]);
+    if (router.route === Routes.SelectedWidget) return;
+    if (selectedWidgetId && router.route !== Routes.SelectedWidget) {
+      handleWidgetClick(selectedWidgetId);
+    } else {
+      router.push(Routes.Widgets);
+    }
+  }, [handleWidgetClick, router, selectedWidgetId]);
+
+  const selectedWidget = useMemo(
+    () => widgetModels.find((model) => model.reference === selectedWidgetId),
+    [widgetModels, selectedWidgetId],
+  );
+
+  const WidgetBarIcon = useMemo(() => {
+    if (isModelsLoading || !isApplicationsInitialised)
+      // eslint-disable-next-line react/display-name
+      return ({ height }: TablerIconsProps) => (
+        <Loader size={height as number} />
+      );
+
+    return selectedWidget
+      ? ({ height }: TablerIconsProps) => (
+          <ModelIcon
+            entity={selectedWidget}
+            entityId={selectedWidget.reference}
+            size={height as number}
+          />
+        )
+      : IconBrowser;
+  }, [isApplicationsInitialised, isModelsLoading, selectedWidget]);
 
   return (
     <>
@@ -222,7 +244,8 @@ const UsedWidgets = () => {
             rounded
             onClick={() => handleWidgetClick(model.reference)}
             selected={
-              model.reference === selectedWidget && router.route === Routes.Chat
+              model.reference === selectedWidgetId &&
+              router.route === Routes.SelectedWidget
             }
             Icon={({ height }) => (
               <ModelIcon
@@ -240,11 +263,15 @@ const UsedWidgets = () => {
       <div className="md:hidden">
         <NavigationButton
           onClick={handleOpenWidgetsClick}
-          Icon={IconBrowser}
-          selected={!!selectedWidget && router.route === Routes.Chat}
+          Icon={WidgetBarIcon}
+          selected={
+            router.route === Routes.Widgets ||
+            router.route === Routes.SelectedWidget
+          }
           dataQa="widgets-sidebar-trigger"
           caption={t('Widgets')}
           tooltip={t('Widgets')}
+          allowClickSelected={router.route === Routes.SelectedWidget}
         />
       </div>
     </>
@@ -264,9 +291,6 @@ const Navigation = () => {
   const widgetsSchemaIds = useAppSelector(
     SettingsSelectors.selectWidgetsSchemaIds,
   );
-  const selectedWidget = useAppSelector(
-    ApplicationSelectors.selectSelectedWidget,
-  );
   const selectedConversationIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
   );
@@ -277,7 +301,6 @@ const Navigation = () => {
       dispatch(
         ConversationsActions.setIsStartedCustomViewerConversation(false),
       );
-      dispatch(ApplicationActions.selectWidget(undefined));
       if (!selectedConversationIds.length) {
         dispatch(
           ConversationsActions.createNewConversations({
@@ -301,7 +324,7 @@ const Navigation = () => {
         onClick={handleChatClick}
         tooltip={t('Chat')}
         Icon={IconMessage2}
-        selected={router.route === Routes.Chat && !selectedWidget}
+        selected={router.route === Routes.Chat}
         dataQa="back-to-chat"
         caption={t('Chat')}
       />
@@ -324,11 +347,11 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
 
   return (
     <div className="size-full">
-      <Widgetbar />
-
       <div className="flex size-full flex-col md:flex-row ">
         {(router.route === Routes.Chat ||
-          router.route === Routes.Marketplace) && <Navigation />}
+          router.route === Routes.Marketplace ||
+          router.route === Routes.Widgets ||
+          router.route === Routes.SelectedWidget) && <Navigation />}
         {router.route === Routes.Chat &&
           enabledFeatures.has(Feature.ConversationsSection) && <Chatbar />}
         {router.route === Routes.Marketplace && <MarketplaceFilterbar />}

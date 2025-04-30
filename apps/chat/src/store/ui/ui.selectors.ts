@@ -1,13 +1,10 @@
-import { createSelector } from '@reduxjs/toolkit';
-
-import { FeatureType } from '@/src/types/common';
-import { RootState } from '@/src/types/store';
-
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-
 import { UIState } from './ui.types';
 
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { FeatureType } from '@/src/types/common';
+import { RootState } from '@/src/types/store';
 import { Feature } from '@epam/ai-dial-shared';
+import { createSelector } from '@reduxjs/toolkit';
 
 const rootSelector = (state: RootState): UIState => state.ui;
 
@@ -20,9 +17,6 @@ const selectShowChatbar = (state: RootState) => rootSelector(state).showChatbar;
 
 const selectShowPromptbar = (state: RootState) =>
   rootSelector(state).showPromptbar;
-
-const selectShowWidgetbar = (state: RootState) =>
-  rootSelector(state).showWidgetbar;
 
 const selectShowMarketplaceFilterbar = (state: RootState) =>
   rootSelector(state).showMarketplaceFilterbar;
@@ -69,8 +63,7 @@ export const selectIsAnyMenuOpen = createSelector(
   (state, enabledFeatures) =>
     (state.showPromptbar && enabledFeatures.has(Feature.PromptsSection)) ||
     (state.showChatbar && enabledFeatures.has(Feature.ConversationsSection)) ||
-    state.isProfileOpen ||
-    state.showWidgetbar,
+    state.isProfileOpen,
 );
 
 export const selectCollapsedSections = //TODO: review later how it is used
@@ -108,6 +101,5 @@ export const UISelectors = {
   selectCollapsedSections,
   selectPreviousRoute,
   selectInitialized,
-  selectShowWidgetbar,
   selectScrollToEntityId,
 };
