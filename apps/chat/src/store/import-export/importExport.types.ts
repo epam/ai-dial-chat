@@ -1,7 +1,7 @@
 import { Conversation } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, MappedReplaceActions } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { MappedReplaceActions, Operation } from '@/src/types/import-export';
+import { Operation } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 
 import { UploadedAttachment } from '@/src/store/import-export/importExport.reducers';
