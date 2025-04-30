@@ -107,8 +107,7 @@ export const ApplicationDetailsFooter = ({
 
   const { menuItems, actions } = useApplicationMenuActions({ entity });
 
-  const isExecutable =
-    isExecutableApp(entity) && (isMyApp || isAdmin || canWrite);
+  const isExecutable = isExecutableApp(entity) && (isMyApp || canWrite);
 
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
@@ -254,7 +253,7 @@ export const ApplicationDetailsFooter = ({
                   </button>
                 </Tooltip>
               )}
-              {(isMyApp || canWrite || isAdmin) && (
+              {(isMyApp || canWrite) && (
                 <Tooltip tooltip={t('Edit')}>
                   <button
                     disabled={isAppInDeployment}
