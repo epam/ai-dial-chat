@@ -1,5 +1,8 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { ApiUtils } from '@/src/utils/server/api';
+
 import { SortOrder } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 
@@ -143,7 +146,19 @@ export const marketplaceSlice = createSlice({
         { entity: DialAIEntityModel; action: PublishActions } | undefined
       >,
     ) {
-      state.publishModel = payload;
+      if (payload) {
+        state.publishModel = {
+          entity: {
+            name: payload.entity.name,
+            id: ApiUtils.decodeApiUrl(payload.entity.id),
+            folderId: getFolderIdFromEntityId(payload.entity.id),
+            iconUrl: payload.entity.iconUrl,
+          },
+          action: payload.action,
+        };
+      } else {
+        state.publishModel = undefined;
+      }
     },
     setDeleteModel(
       state,
