@@ -1,35 +1,3 @@
-import { IconBulb, IconCheck, IconFile } from '@tabler/icons-react';
-import {
-  ReactElement,
-  ReactNode,
-  useCallback,
-  useEffect,
-  useState,
-} from 'react';
-
-import classNames from 'classnames';
-
-import { useTranslation } from '@/src/hooks/useTranslation';
-
-import {
-  isPlaybackConversation,
-  isReplayConversation,
-} from '@/src/utils/app/conversation';
-import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-
-import {
-  AdditionalItemData,
-  EntityType,
-  FeatureType,
-} from '@/src/types/common';
-import { DialFile } from '@/src/types/files';
-import { ReplaceOptions } from '@/src/types/import-export';
-import { Prompt } from '@/src/types/prompt';
-import { Translation } from '@/src/types/translation';
-
-import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
-
 import { PlaybackIcon } from '../../Chat/Playback/PlaybackIcon';
 import { ReplayAsIsIcon } from '../../Chat/ReplayAsIsIcon';
 import { ModelIcon } from '../../Chatbar/ModelIcon';
@@ -37,11 +5,37 @@ import { Select, SelectOption } from '../Select';
 import ShareIcon from '../ShareIcon';
 import Tooltip from '../Tooltip';
 
+import { useTranslation } from '@/src/hooks/useTranslation';
+import { useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import {
+  AdditionalItemData,
+  EntityType,
+  FeatureType,
+  ReplaceOptions,
+} from '@/src/types/common';
+import { DialFile } from '@/src/types/files';
+import { Prompt } from '@/src/types/prompt';
+import { Translation } from '@/src/types/translation';
+import {
+  isPlaybackConversation,
+  isReplayConversation,
+} from '@/src/utils/app/conversation';
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import {
   ConversationInfo,
   PublishActions,
   ShareEntity,
 } from '@epam/ai-dial-shared';
+import { IconBulb, IconCheck, IconFile } from '@tabler/icons-react';
+import classNames from 'classnames';
+import {
+  ReactElement,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 
 interface ReplaceSelectorProps {
   selectedOption: ReplaceOptions;
