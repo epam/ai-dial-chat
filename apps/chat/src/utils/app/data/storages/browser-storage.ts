@@ -17,12 +17,8 @@ import {
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
-import { BackendChatEntity, MoveModel } from '@/src/types/common';
-import {
-  FolderInterface,
-  FolderType,
-  FoldersAndEntities,
-} from '@/src/types/folder';
+import { BackendChatEntity, FeatureType, MoveModel } from '@/src/types/common';
+import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import {
   DialStorage,
@@ -221,7 +217,7 @@ export class BrowserStorage implements DialStorage {
       map((folders: FolderInterface[]) => {
         return folders.filter(
           (folder) =>
-            folder.type === FolderType.Chat &&
+            folder.type === FeatureType.Chat &&
             (recursive || folder.folderId === path),
         );
       }),
@@ -233,7 +229,7 @@ export class BrowserStorage implements DialStorage {
       map((folders: FolderInterface[]) => {
         return folders.filter(
           (folder) =>
-            folder.type === FolderType.Prompt &&
+            folder.type === FeatureType.Prompt &&
             (recursive || folder.folderId === path),
         );
       }),
@@ -245,7 +241,7 @@ export class BrowserStorage implements DialStorage {
   ): Observable<void> {
     return BrowserStorage.getData(UIStorageKeys.Folders, []).pipe(
       map((items: FolderInterface[]) =>
-        items.filter((item) => item.type !== FolderType.Chat),
+        items.filter((item) => item.type !== FeatureType.Chat),
       ),
       map((promptsFolders: FolderInterface[]) => {
         return promptsFolders.concat(conversationFolders);
@@ -259,7 +255,7 @@ export class BrowserStorage implements DialStorage {
   setPromptsFolders(promptsFolders: FolderInterface[]): Observable<void> {
     return BrowserStorage.getData(UIStorageKeys.Folders, []).pipe(
       map((items: FolderInterface[]) =>
-        items.filter((item) => item.type !== FolderType.Prompt),
+        items.filter((item) => item.type !== FeatureType.Prompt),
       ),
       map((convFolders: FolderInterface[]) => {
         return convFolders.concat(promptsFolders);

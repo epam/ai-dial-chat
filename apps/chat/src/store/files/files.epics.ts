@@ -28,7 +28,6 @@ import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
-import { FolderType } from '@/src/types/folder';
 import { AppEpic } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
@@ -125,7 +124,7 @@ const renameFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(FilesActions.renameFolder.type),
     switchMap(({ payload }) => {
-      const oldFolder = getFolderFromId(payload.folderId, FolderType.File);
+      const oldFolder = getFolderFromId(payload.folderId, FeatureType.File);
       const targetFolderId = getGeneratedFolderId({
         ...oldFolder,
         name: payload.newName,
@@ -181,7 +180,7 @@ const renameFolderFailEpic: AppEpic = (action$) =>
             'Renaming folder {{folderName}} failed. Please try again later',
             {
               ns: Translation.Files,
-              folderName: getFolderFromId(payload.oldId, FolderType.File).name,
+              folderName: getFolderFromId(payload.oldId, FeatureType.File).name,
             },
           ),
         ),

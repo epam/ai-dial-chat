@@ -1,7 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { FeatureType } from '@/src/types/common';
-import { FolderType } from '@/src/types/folder';
 import { ToastType } from '@/src/types/toasts';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
@@ -136,7 +135,7 @@ export const uiSlice = createSlice({
       state,
       {
         payload,
-      }: PayloadAction<{ openedFolderIds: string[]; folderType: FolderType }>,
+      }: PayloadAction<{ openedFolderIds: string[]; folderType: FeatureType }>,
     ) => {
       state.openedFoldersIds = {
         ...state.openedFoldersIds,

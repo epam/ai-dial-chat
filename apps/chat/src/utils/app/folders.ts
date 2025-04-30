@@ -9,9 +9,9 @@ import {
 } from '@/src/utils/app/file';
 
 import { Conversation, PrepareNameOptions } from '@/src/types/chat';
-import { BaseDialEntity, PartialBy } from '@/src/types/common';
+import { BaseDialEntity, FeatureType, PartialBy } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { FolderInterface, FolderType } from '@/src/types/folder';
+import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 import { AppAction } from '@/src/types/store';
@@ -393,7 +393,7 @@ export const getParentFolderIdsFromEntityId = (id: string): string[] => {
 
 export const getFolderFromId = (
   id: string,
-  type: FolderType,
+  type: FeatureType,
   status?: UploadStatus,
 ): FolderInterface => {
   const { apiKey, bucket, name, parentPath } = splitEntityId(id);
@@ -408,7 +408,7 @@ export const getFolderFromId = (
 
 export const getFoldersFromIds = (
   ids: (string | undefined)[],
-  type: FolderType,
+  type: FeatureType,
   status?: UploadStatus,
 ): FolderInterface[] => {
   return (ids.filter(Boolean) as string[]).map((path) =>
@@ -418,7 +418,7 @@ export const getFoldersFromIds = (
 
 export const getEntitiesFoldersFromEntities = (
   entities: Conversation[] | Prompt[] | DialFile[],
-  folderType: FolderType,
+  folderType: FeatureType,
 ): FolderInterface[] => {
   const foldersIds = uniq(entities.map((info) => info.folderId));
   //calculate all folders;
@@ -587,7 +587,7 @@ export const getActionsAddFoldersFromFolderId = ({
   shouldOpen,
 }: {
   folderId: string;
-  folderType: FolderType;
+  folderType: FeatureType;
   shouldOpen?: boolean;
 }): Observable<AppAction>[] => {
   const actions: Observable<AppAction>[] = [];

@@ -36,7 +36,7 @@ import {
 } from '@/src/utils/app/overlay';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
-import { FolderType } from '@/src/types/folder';
+import { FeatureType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
@@ -238,7 +238,7 @@ const createConversationEpic: AppEpic = (action$) =>
         actions.push(
           ...getActionsAddFoldersFromFolderId({
             folderId: conversationFolderId,
-            folderType: FolderType.Chat,
+            folderType: FeatureType.Chat,
             shouldOpen: true,
           }),
         );
@@ -324,7 +324,7 @@ const selectConversationEpic: AppEpic = (action$, state$) =>
           ? of(
               UIActions.setOpenedFoldersIds({
                 openedFolderIds: foldersPaths,
-                folderType: FolderType.Chat,
+                folderType: FeatureType.Chat,
               }),
             )
           : EMPTY,

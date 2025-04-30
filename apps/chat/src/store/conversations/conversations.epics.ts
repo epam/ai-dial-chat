@@ -90,7 +90,6 @@ import { parseConversationApiKey } from '@/src/utils/server/api';
 
 import { ChatBody, Conversation, RateBody } from '@/src/types/chat';
 import { EntityType, FeatureType } from '@/src/types/common';
-import { FolderType } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
 import { AppAction, AppEpic } from '@/src/types/store';
 
@@ -331,7 +330,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
                 openedFolderIds: selectedConversationsIds.flatMap(
                   getParentFolderIdsFromEntityId,
                 ),
-                folderType: FolderType.Chat,
+                folderType: FeatureType.Chat,
               }),
             ),
             ...actions,
@@ -362,7 +361,7 @@ const initFoldersAndConversationsEpic: AppEpic = (action$) =>
             of(
               ConversationsActions.addFolders({
                 folders: paths.map((path) => ({
-                  ...getFolderFromId(path, FolderType.Chat),
+                  ...getFolderFromId(path, FeatureType.Chat),
                   status: UploadStatus.LOADED,
                 })),
               }),
@@ -865,7 +864,7 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
         of(
           UIActions.setOpenedFoldersIds({
             openedFolderIds: updatedOpenedFolderIds,
-            folderType: FolderType.Chat,
+            folderType: FeatureType.Chat,
           }),
         ),
         of(
@@ -2666,7 +2665,7 @@ const uploadConversationsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
                 ),
                 of(
                   UIActions.setOpenedFoldersIds({
-                    folderType: FolderType.Chat,
+                    folderType: FeatureType.Chat,
                     openedFolderIds: [
                       ...openedFolders,
                       ...paths.filter(
@@ -2690,7 +2689,7 @@ const uploadConversationsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
             of(
               ConversationsActions.addFolders({
                 folders: paths.map((path) => ({
-                  ...getFolderFromId(path, FolderType.Chat),
+                  ...getFolderFromId(path, FeatureType.Chat),
                   status: UploadStatus.LOADED,
                 })),
               }),
@@ -2762,7 +2761,7 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (action$) =>
             of(
               ConversationsActions.addFolders({
                 folders: paths.map((path) => ({
-                  ...getFolderFromId(path, FolderType.Chat),
+                  ...getFolderFromId(path, FeatureType.Chat),
                   status: UploadStatus.LOADED,
                 })),
               }),
@@ -2829,7 +2828,7 @@ const uploadConversationsWithContentRecursiveEpic: AppEpic = (
             of(
               ConversationsActions.addFolders({
                 folders: paths.map((path) => ({
-                  ...getFolderFromId(path, FolderType.Chat),
+                  ...getFolderFromId(path, FeatureType.Chat),
                   status: UploadStatus.LOADED,
                 })),
               }),

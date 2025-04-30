@@ -20,7 +20,6 @@ import { EnumMapper } from '@/src/utils/app/mappers';
 import { getPublicationId } from '@/src/utils/app/publications';
 
 import { FeatureType } from '@/src/types/common';
-import { FolderType } from '@/src/types/folder';
 import { Publication, PublicationRule } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
@@ -253,7 +252,7 @@ export function PublicationHandler({ publication }: Props) {
         dispatch(
           UIActions.setOpenedFoldersIds({
             openedFolderIds: conversationPaths,
-            folderType: FolderType.Chat,
+            folderType: FeatureType.Chat,
           }),
         );
       }
@@ -271,7 +270,7 @@ export function PublicationHandler({ publication }: Props) {
         dispatch(
           UIActions.setOpenedFoldersIds({
             openedFolderIds: promptPaths,
-            folderType: FolderType.Prompt,
+            folderType: FeatureType.Prompt,
           }),
         );
       }
