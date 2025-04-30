@@ -231,3 +231,7 @@ pre:has(div.codeblock) {
   min-height: calc(var(--vh, 1vh) * 100);
   height: calc(var(--vh, 1vh) * 100);
 }
+
+span.katex-mathml {
+  display: none;
+}
