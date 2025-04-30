@@ -72,7 +72,6 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
       return [
         of(UIActions.init()),
         of(ModelsActions.init()),
-        of(ApplicationActions.init()),
         of(ShareActions.init()),
         of(AddonsActions.init()),
         of(FilesActions.init()),
