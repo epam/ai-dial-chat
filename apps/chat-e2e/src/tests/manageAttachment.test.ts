@@ -3,13 +3,18 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
   Attachment,
+  CheckboxState,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
   UploadMenuOptions,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
-import { BaseElement, FileModalSection } from '@/src/ui/webElements';
+import {
+  BaseElement,
+  DropdownMenu,
+  FileModalSection,
+} from '@/src/ui/webElements';
 import { AttachFilesTree } from '@/src/ui/webElements/entityTree';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
@@ -704,5 +709,161 @@ dialTest(
         },
       );
     }
+  },
+);
+
+dialTest(
+  '[Manage attachments] Select files using file context menu.\n' +
+    '[Manage attachments] Unselect files using file context menu',
+  async ({
+    dialHomePage,
+    setTestIds,
+    attachFilesModal,
+    fileApiHelper,
+    chatBar,
+    manageAttachmentsAssertion,
+    localStorageManager,
+    attachAllFilesTreeAssertion,
+    baseAssertion,
+  }) => {
+    setTestIds('EPMRTC-6091', 'EPMRTC-6092');
+    let fileDropdownMenu: DropdownMenu;
+    const expectedHighlightingColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.textAccentPrimary,
+    );
+    const attachments = [Attachment.sunImageName, Attachment.flowerImageName];
+
+    await dialTest.step('Upload 2 files to app', async () => {
+      for (const attachment of attachments) {
+        await fileApiHelper.putFile(attachment);
+      }
+      await localStorageManager.setShowSideBarPanels();
+    });
+
+    await dialTest.step(
+      'Open "Manage attachments" modal, open file dropdown menu and verify it includes "Select" option',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
+        await attachFilesModal.openFileDropdownMenu(
+          Attachment.sunImageName,
+          FileModalSection.AllFiles,
+        );
+        fileDropdownMenu = attachFilesModal.getFileDropdownMenu();
+        const menuOptions = await fileDropdownMenu.getAllMenuOptions();
+        baseAssertion.assertArrayIncludesAll(
+          menuOptions,
+          [MenuOptions.select],
+          ExpectedMessages.contextMenuOptionIsAvailable,
+        );
+        baseAssertion.assertArrayExcludesAll(
+          menuOptions,
+          [MenuOptions.unselect],
+          ExpectedMessages.contextMenuOptionIsNotAvailable,
+        );
+      },
+    );
+
+    await dialTest.step('Choose "Select" option for both files', async () => {
+      await fileDropdownMenu.selectMenuOption(MenuOptions.select);
+      await attachFilesModal.openFileDropdownMenu(
+        Attachment.flowerImageName,
+        FileModalSection.AllFiles,
+      );
+      await fileDropdownMenu.selectMenuOption(MenuOptions.select);
+    });
+
+    await dialTest.step(
+      'Verify files are checked and highlighted',
+      async () => {
+        for (const attachment of attachments) {
+          await attachAllFilesTreeAssertion.assertEntityCheckboxState(
+            { name: attachment },
+            CheckboxState.checked,
+          );
+          await attachAllFilesTreeAssertion.assertEntityCheckboxColor(
+            {
+              name: attachment,
+            },
+            expectedHighlightingColor,
+          );
+          await attachAllFilesTreeAssertion.assertEntityCheckboxBorderColors(
+            { name: attachment },
+            expectedHighlightingColor,
+          );
+          await attachAllFilesTreeAssertion.assertEntityColor(
+            {
+              name: attachment,
+            },
+            expectedHighlightingColor,
+          );
+          await attachAllFilesTreeAssertion.assertEntityBackgroundColor(
+            {
+              name: attachment,
+            },
+            ThemesUtil.getRgbColorByKey(
+              ThemeColorAttributes.bgAccentPrimaryAlpha,
+            ),
+          );
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Open file dropdown menu and verify it includes "Unselect" option',
+      async () => {
+        await attachFilesModal.openFileDropdownMenu(
+          Attachment.sunImageName,
+          FileModalSection.AllFiles,
+        );
+        const menuOptions = await fileDropdownMenu.getAllMenuOptions();
+        baseAssertion.assertArrayIncludesAll(
+          menuOptions,
+          [MenuOptions.unselect],
+          ExpectedMessages.contextMenuOptionIsAvailable,
+        );
+        baseAssertion.assertArrayExcludesAll(
+          menuOptions,
+          [MenuOptions.select],
+          ExpectedMessages.contextMenuOptionIsNotAvailable,
+        );
+      },
+    );
+
+    await dialTest.step('Choose "Unselect" option for both files', async () => {
+      await fileDropdownMenu.selectMenuOption(MenuOptions.unselect);
+      await attachFilesModal.openFileDropdownMenu(
+        Attachment.flowerImageName,
+        FileModalSection.AllFiles,
+      );
+      await fileDropdownMenu.selectMenuOption(MenuOptions.unselect);
+    });
+
+    await dialTest.step(
+      'Verify files are not highlighted, checkboxes are transformed into file icons',
+      async () => {
+        for (const attachment of attachments) {
+          await attachAllFilesTreeAssertion.assertEntityCheckbox(
+            { name: attachment },
+            'hidden',
+          );
+          await manageAttachmentsAssertion.assertFileIconState(
+            FileModalSection.AllFiles,
+            { name: attachment },
+            'visible',
+          );
+          await attachAllFilesTreeAssertion.assertEntityColor(
+            {
+              name: attachment,
+            },
+            ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textPrimary),
+          );
+          await attachAllFilesTreeAssertion.assertEntityBackgroundColor({
+            name: attachment,
+          });
+        }
+      },
+    );
   },
 );

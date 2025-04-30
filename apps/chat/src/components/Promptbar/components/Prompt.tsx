@@ -93,7 +93,6 @@ export const PromptComponent = ({
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
-  const showModal = useAppSelector(PromptsSelectors.selectIsPromptModalOpen);
   const resourceToReview = useAppSelector((state) =>
     PublicationSelectors.selectResourceToReviewByReviewAndPublicationUrls(
       state,
@@ -127,7 +126,6 @@ export const PromptComponent = ({
   const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
 
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isOpened, setIsOpened] = useState(false);
   const [isMoveTo, setIsMoveTo] = useState(false);
   const [publishPromptAction, setPublishPromptAction] =
     useState<PublishActions>();
@@ -177,12 +175,6 @@ export const PromptComponent = ({
   const dismiss = useDismiss(context);
   const { getFloatingProps } = useInteractions([dismiss]);
 
-  useEffect(() => {
-    if (!showModal) {
-      setIsOpened(false);
-    }
-  }, [showModal]);
-
   const handleOpenPublishing = useCallback(() => {
     setPublishPromptAction(PublishActions.ADD);
   }, []);
@@ -195,7 +187,6 @@ export const PromptComponent = ({
     e.stopPropagation();
     e.preventDefault();
 
-    setIsOpened(false);
     setIsDeleting(true);
   }, []);
 
@@ -213,7 +204,6 @@ export const PromptComponent = ({
     (e: React.MouseEvent<unknown, globalThis.MouseEvent>, isEdit?: boolean) => {
       e.stopPropagation();
       e.preventDefault();
-      setIsOpened(true);
 
       dispatch(
         PromptsActions.selectPrompt({
@@ -251,7 +241,7 @@ export const PromptComponent = ({
   }, []);
 
   const isHighlighted = !isSelectMode
-    ? isDeleting || isOpened || (showModal && isSelected) || isContextMenu
+    ? isDeleting || isSelected || isContextMenu
     : isChosen;
 
   const handleSelect: MouseEventHandler<HTMLButtonElement> = useCallback(
@@ -274,7 +264,6 @@ export const PromptComponent = ({
 
   useEffect(() => {
     if (isSelectMode) {
-      setIsOpened(false);
       setIsDeleting(false);
     }
   }, [isSelectMode]);
@@ -320,7 +309,6 @@ export const PromptComponent = ({
 
           if (isSelectMode && !isExternal) {
             setIsDeleting(false);
-            setIsOpened(false);
             dispatch(PromptsActions.setChosenPrompts({ ids: [prompt.id] }));
           }
         }}
@@ -333,8 +321,7 @@ export const PromptComponent = ({
       >
         <div
           className={classNames('flex size-full items-center gap-2', {
-            'pr-6 xl:pr-0':
-              !isSelectMode && !isDeleting && !isOpened && isSelected,
+            'pr-6 xl:pr-0': !isSelectMode && !isDeleting && isSelected,
           })}
           draggable={!isExternal && !isNameOrPathInvalid && !isSelectMode}
           onDragStart={(e) => handleDragStart(e, prompt)}
@@ -414,13 +401,13 @@ export const PromptComponent = ({
             </Tooltip>
           </div>
         </div>
-        {!isSelectMode && !isDeleting && !isOpened && (
+        {!isSelectMode && !isDeleting && (
           <div
             ref={refs.setFloating}
             {...getFloatingProps()}
             className={classNames(
               'absolute right-0 z-50 flex justify-end group-hover:visible',
-              isSelected || isContextMenu ? 'visible' : 'invisible',
+              !isSelected && isContextMenu ? 'visible' : 'invisible',
             )}
             onClick={stopBubbling}
           >
