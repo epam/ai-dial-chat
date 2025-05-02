@@ -338,10 +338,12 @@ export const TabRenderer = () => {
   const handleBookmarkClick = useCallback(
     (entity: DialAIEntityModel) => {
       if (installedModelIds.has(entity.reference)) {
-        MarketplaceActions.setDeleteModel({
-          entity,
-          action: DeleteType.REMOVE,
-        });
+        dispatch(
+          MarketplaceActions.setDeleteModel({
+            entity,
+            action: DeleteType.REMOVE,
+          }),
+        );
       } else {
         dispatch(
           ModelsActions.addInstalledModels({

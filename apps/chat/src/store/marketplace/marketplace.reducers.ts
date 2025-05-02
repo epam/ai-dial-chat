@@ -168,6 +168,7 @@ export const marketplaceSlice = createSlice({
         { entity: DialAIEntityModel; action: DeleteType } | undefined
       >,
     ) {
+      console.log(payload);
       state.deleteModel = payload;
     },
   },

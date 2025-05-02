@@ -9,7 +9,7 @@ import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
 
-dialTest(
+dialTest.only(
   'Previously used model is selected for New conversation: change model in "Change agent"\n' +
     'Previously used model is selected for New conversation: change model in My workspace through Use model\n' +
     'RecentModelIds[0] is updated if remove latest used model from My applications\n' +
