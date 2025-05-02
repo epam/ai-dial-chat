@@ -9,11 +9,11 @@ import {
 import { isRootId } from '@/src/utils/app/id';
 import { getMappedActions } from '@/src/utils/app/import-export';
 
-import { FolderType } from '@/src/types/folder';
 import {
+  FeatureType,
   MappedReplaceActions,
   ReplaceOptions,
-} from '@/src/types/import-export';
+} from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
@@ -57,18 +57,18 @@ export function ReplaceConfirmationModalView() {
   const conversationsFolders = useMemo(
     () =>
       conversations
-        ? getEntitiesFoldersFromEntities(conversations, FolderType.Chat)
+        ? getEntitiesFoldersFromEntities(conversations, FeatureType.Chat)
         : [],
     [conversations],
   );
 
   const promptsFolders = useMemo(
-    () => getEntitiesFoldersFromEntities(prompts, FolderType.Prompt),
+    () => getEntitiesFoldersFromEntities(prompts, FeatureType.Prompt),
     [prompts],
   );
 
   const filesFolders = useMemo(
-    () => getEntitiesFoldersFromEntities(duplicatedFiles, FolderType.Chat),
+    () => getEntitiesFoldersFromEntities(duplicatedFiles, FeatureType.Chat),
     [duplicatedFiles],
   );
 

@@ -3,9 +3,13 @@ import { EMPTY, Observable, map, of } from 'rxjs';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { Conversation } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import {
+  FeatureType,
+  MappedReplaceActions,
+  ReplaceOptions,
+} from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { FolderInterface, FolderType } from '@/src/types/folder';
+import { FolderInterface } from '@/src/types/folder';
 import {
   ExportFormatV1,
   ExportFormatV2,
@@ -14,9 +18,7 @@ import {
   ExportFormatV5,
   LatestExportConversationsFormat,
   LatestExportFormat,
-  MappedReplaceActions,
   PromptsHistory,
-  ReplaceOptions,
   SupportedExportFormats,
 } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
@@ -106,7 +108,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
       folders: (data.folders || []).map((chatFolder) => ({
         id: chatFolder.id.toString(),
         name: chatFolder.name,
-        type: FolderType.Chat,
+        type: FeatureType.Chat,
         folderId: getConversationRootId(),
       })),
       prompts: [],
@@ -409,7 +411,7 @@ export const getConversationActions = (
       of(
         UIActions.setOpenedFoldersIds({
           openedFolderIds: [conversation.folderId],
-          featureType: FeatureType.Chat,
+          folderType: FeatureType.Chat,
         }),
       ),
     );
@@ -436,7 +438,7 @@ export const getPromptActions = (
       ? of(
           UIActions.setOpenedFoldersIds({
             openedFolderIds: [prompt.folderId],
-            featureType: FeatureType.Prompt,
+            folderType: FeatureType.Prompt,
           }),
         )
       : EMPTY;

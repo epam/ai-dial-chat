@@ -11,7 +11,6 @@ import { PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   PromptsActions,
@@ -25,10 +24,9 @@ import { PromptFolders } from './components/PromptFolders';
 import { PromptbarSettings } from './components/PromptbarSettings';
 import { Prompts } from './components/Prompts';
 
-import { withRenderWhenNot } from '../Common/RenderWhen';
 import Sidebar from '../Sidebar';
 
-const PromptbarView = () => {
+export const Promptbar = () => {
   const { t } = useTranslation(Translation.PromptBar);
 
   const dispatch = useAppDispatch();
@@ -147,7 +145,3 @@ const PromptbarView = () => {
     </>
   );
 };
-
-export const Promptbar = withRenderWhenNot(
-  ApplicationSelectors.selectSelectedWidget,
-)(PromptbarView);
