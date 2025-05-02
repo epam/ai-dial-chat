@@ -29,7 +29,7 @@ const initialState: ApplicationState = {
   exitAfterSave: false,
   publicFolders: [],
   hasUnsavedChanges: false,
-  logsEntity: undefined,
+  logsEntityId: undefined,
 };
 
 export const applicationSlice = createSlice({
@@ -235,11 +235,8 @@ export const applicationSlice = createSlice({
     setSelectedWidget(state, { payload }: PayloadAction<string | undefined>) {
       state.selectedWidget = payload;
     },
-    setApplicationLogsEntity(
-      state,
-      { payload }: PayloadAction<DialAIEntityModel | undefined>,
-    ) {
-      state.logsEntity = payload;
+    setLogsEntityId(state, { payload }: PayloadAction<string | undefined>) {
+      state.logsEntityId = payload;
     },
   },
 });

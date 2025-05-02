@@ -52,7 +52,7 @@ export const useApplicationMenuActions = (entity: DialAIEntityModel) => {
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      dispatch(ApplicationActions.setApplicationLogsEntity(entity));
+      dispatch(ApplicationActions.setLogsEntityId(entity.id));
     },
     [entity, dispatch],
   );

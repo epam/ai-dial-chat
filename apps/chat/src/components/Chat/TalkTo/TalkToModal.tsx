@@ -84,7 +84,7 @@ const TalkToModalView = ({
   const widgetsSchemaIds = useAppSelector(
     SettingsSelectors.selectWidgetsSchemaIds,
   );
-  const logsEntity = useAppSelector(ApplicationSelectors.selectLogsEntity);
+  const logsEntityId = useAppSelector(ApplicationSelectors.selectLogsEntityId);
   const deleteModel = useAppSelector(MarketplaceSelectors.selectDeleteModel);
   const publishModel = useAppSelector(PublicationSelectors.selectPublishModel);
 
@@ -177,7 +177,7 @@ const TalkToModalView = ({
   ]);
 
   const handleCloseApplicationLogs = useCallback(() => {
-    dispatch(ApplicationActions.setApplicationLogsEntity());
+    dispatch(ApplicationActions.setLogsEntityId());
   }, [dispatch]);
 
   const handleSelectModel = useCallback(
@@ -307,11 +307,11 @@ const TalkToModalView = ({
           publishAction={PublishActions.ADD}
         />
       )}
-      {logsEntity && (
+      {logsEntityId && (
         <ApplicationLogs
           isOpen
           onClose={handleCloseApplicationLogs}
-          entityId={logsEntity.id}
+          entityId={logsEntityId}
         />
       )}
     </>

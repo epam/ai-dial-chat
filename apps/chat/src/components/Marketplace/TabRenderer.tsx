@@ -201,7 +201,7 @@ export const TabRenderer = () => {
   );
   const deleteModel = useAppSelector(MarketplaceSelectors.selectDeleteModel);
   const publishModel = useAppSelector(PublicationSelectors.selectPublishModel);
-  const logsEntity = useAppSelector(ApplicationSelectors.selectLogsEntity);
+  const logsEntityId = useAppSelector(ApplicationSelectors.selectLogsEntityId);
 
   const [suggestedResults, setSuggestedResults] = useState<DialAIEntityModel[]>(
     [],
@@ -364,7 +364,7 @@ export const TabRenderer = () => {
   );
 
   const handleCloseApplicationLogs = useCallback(() => {
-    dispatch(ApplicationActions.setApplicationLogsEntity());
+    dispatch(ApplicationActions.setLogsEntityId());
   }, [dispatch]);
 
   const currentDetailsModel = detailsModel && modelsMap[detailsModel.reference];
@@ -434,11 +434,11 @@ export const TabRenderer = () => {
           publishAction={publishModel.action}
         />
       )}
-      {logsEntity && (
+      {logsEntityId && (
         <ApplicationLogs
           isOpen
           onClose={handleCloseApplicationLogs}
-          entityId={logsEntity.id}
+          entityId={logsEntityId}
         />
       )}
     </>
