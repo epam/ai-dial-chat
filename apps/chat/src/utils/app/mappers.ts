@@ -1,17 +1,16 @@
 import { ApiKeys, BackendResourceType, FeatureType } from '@/src/types/common';
-import { FolderType } from '@/src/types/folder';
 import { SharingType } from '@/src/types/share';
 
 export class EnumMapper {
-  public static getFolderTypeByApiKey = (key: ApiKeys): FolderType => {
+  public static getFolderTypeByApiKey = (key: ApiKeys): FeatureType => {
     switch (key) {
       case ApiKeys.Conversations:
-        return FolderType.Chat;
+        return FeatureType.Chat;
       case ApiKeys.Prompts:
-        return FolderType.Prompt;
+        return FeatureType.Prompt;
       case ApiKeys.Files:
       default:
-        return FolderType.File;
+        return FeatureType.File;
     }
   };
 
