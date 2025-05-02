@@ -106,7 +106,7 @@ export const AgentDialogs = () => {
         <PublishModal
           entity={publishModel.entity}
           type={SharingType.Application}
-          isOpen={!!publishModel}
+          isOpen
           onClose={handlePublishClose}
           publishAction={publishModel.action}
         />
