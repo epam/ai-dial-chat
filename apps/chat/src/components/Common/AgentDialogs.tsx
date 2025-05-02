@@ -102,7 +102,7 @@ export const AgentDialogs = () => {
           cancelLabel={t('Cancel')}
         />
       )}
-      {!!(publishModel && publishModel?.entity?.id) && (
+      {!!publishModel && (
         <PublishModal
           entity={publishModel.entity}
           type={SharingType.Application}
