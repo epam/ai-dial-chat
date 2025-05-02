@@ -93,7 +93,6 @@ export const AgentDialogs = () => {
 
   return (
     <>
-      {/* MODALS */}
       {!!deleteModel && (
         <ConfirmDialog
           isOpen
