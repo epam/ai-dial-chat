@@ -15,6 +15,7 @@ import { Translation } from '@/src/types/translation';
 import {
   ApplicationActions,
   MarketplaceActions,
+  PublicationActions,
   ShareActions,
   UIActions,
 } from '@/src/store/actions';
@@ -51,7 +52,7 @@ export const useApplicationMenuActions = (entity: DialAIEntityModel) => {
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      dispatch(MarketplaceActions.setApplicationLogsEntity(entity));
+      dispatch(ApplicationActions.setApplicationLogsEntity(entity));
     },
     [entity, dispatch],
   );
@@ -110,7 +111,7 @@ export const useApplicationMenuActions = (entity: DialAIEntityModel) => {
       e.preventDefault();
       e.stopPropagation();
       dispatch(
-        MarketplaceActions.setPublishModel({
+        PublicationActions.setPublishModel({
           entity,
           action: PublishActions.ADD,
         }),
@@ -124,7 +125,7 @@ export const useApplicationMenuActions = (entity: DialAIEntityModel) => {
       e.preventDefault();
       e.stopPropagation();
       dispatch(
-        MarketplaceActions.setPublishModel({
+        PublicationActions.setPublishModel({
           entity,
           action: PublishActions.DELETE,
         }),

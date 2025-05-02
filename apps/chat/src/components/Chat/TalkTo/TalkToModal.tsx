@@ -25,8 +25,12 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
+import { PublicationActions } from '@/src/store/actions';
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
-import { ApplicationActions } from '@/src/store/application/application.reducers';
+import {
+  ApplicationActions,
+  ApplicationSelectors,
+} from '@/src/store/application/application.reducers';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import {
@@ -34,6 +38,7 @@ import {
   MarketplaceSelectors,
 } from '@/src/store/marketplace/marketplace.reducers';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
@@ -79,9 +84,9 @@ const TalkToModalView = ({
   const widgetsSchemaIds = useAppSelector(
     SettingsSelectors.selectWidgetsSchemaIds,
   );
-  const logsEntity = useAppSelector(MarketplaceSelectors.selectLogsEntity);
+  const logsEntity = useAppSelector(ApplicationSelectors.selectLogsEntity);
   const deleteModel = useAppSelector(MarketplaceSelectors.selectDeleteModel);
-  const publishModel = useAppSelector(MarketplaceSelectors.selectPublishModel);
+  const publishModel = useAppSelector(PublicationSelectors.selectPublishModel);
 
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -172,7 +177,7 @@ const TalkToModalView = ({
   ]);
 
   const handleCloseApplicationLogs = useCallback(() => {
-    dispatch(MarketplaceActions.setApplicationLogsEntity());
+    dispatch(ApplicationActions.setApplicationLogsEntity());
   }, [dispatch]);
 
   const handleSelectModel = useCallback(
@@ -217,7 +222,7 @@ const TalkToModalView = ({
   );
 
   const handlePublishClose = useCallback(() => {
-    dispatch(MarketplaceActions.setPublishModel());
+    dispatch(PublicationActions.setPublishModel());
   }, [dispatch]);
 
   const handleGoToWorkspace = useCallback(

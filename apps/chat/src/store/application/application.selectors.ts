@@ -58,6 +58,8 @@ const selectSelectedWidget = (state: RootState) =>
 
 const selectInitialized = (state: RootState) => rootSelector(state).initialized;
 
+const selectLogsEntity = (state: RootState) => rootSelector(state).logsEntity;
+
 export const ApplicationSelectors = {
   selectAppLoading,
   selectIsApplicationLoading,
@@ -71,4 +73,5 @@ export const ApplicationSelectors = {
   selectHasUnsavedChanges,
   selectInitialized,
   selectSelectedWidget,
+  selectLogsEntity,
 };

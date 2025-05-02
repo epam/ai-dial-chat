@@ -3,6 +3,7 @@ import {
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { FolderInterface } from '@/src/types/folder';
+import { DialAIEntityModel } from '@/src/types/models';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 
@@ -19,4 +20,6 @@ export interface ApplicationState {
   returnConversationIds?: string[];
   hasUnsavedChanges?: boolean;
   selectedWidget?: string;
+
+  logsEntity: DialAIEntityModel | undefined;
 }

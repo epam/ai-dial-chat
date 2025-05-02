@@ -9,11 +9,7 @@ import {
   ViewTypes,
 } from '@/src/constants/marketplace';
 
-import {
-  PublishActions,
-  ShareEntity,
-  UploadStatus,
-} from '@epam/ai-dial-shared';
+import { UploadStatus } from '@epam/ai-dial-shared';
 
 export interface MarketplaceState {
   selectedFilters: MarketplaceFilters;
@@ -29,9 +25,5 @@ export interface MarketplaceState {
   };
   isBannerVisible: boolean;
 
-  logsEntity: DialAIEntityModel | undefined;
-  publishModel:
-    | { entity: ShareEntity & { iconUrl?: string }; action: PublishActions }
-    | undefined;
   deleteModel: { entity: DialAIEntityModel; action: DeleteType } | undefined;
 }

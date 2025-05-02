@@ -1,8 +1,5 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { ApiUtils } from '@/src/utils/server/api';
-
 import { SortOrder } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 
@@ -17,7 +14,7 @@ import {
 import * as MarketplaceSelectors from './marketplace.selectors';
 import { MarketplaceState } from './marketplace.types';
 
-import { PublishActions, UploadStatus } from '@epam/ai-dial-shared';
+import { UploadStatus } from '@epam/ai-dial-shared';
 import xor from 'lodash/xor';
 
 export { MarketplaceSelectors };
@@ -43,8 +40,6 @@ const initialState: MarketplaceState = {
   },
   isBannerVisible: true,
 
-  logsEntity: undefined,
-  publishModel: undefined,
   deleteModel: undefined,
 };
 
@@ -131,34 +126,6 @@ export const marketplaceSlice = createSlice({
       }>,
     ) => {
       state.isBannerVisible = payload.isVisible;
-    },
-    setApplicationLogsEntity(
-      state,
-      { payload }: PayloadAction<DialAIEntityModel | undefined>,
-    ) {
-      state.logsEntity = payload;
-    },
-    setPublishModel(
-      state,
-      {
-        payload,
-      }: PayloadAction<
-        { entity: DialAIEntityModel; action: PublishActions } | undefined
-      >,
-    ) {
-      if (payload) {
-        state.publishModel = {
-          entity: {
-            name: payload.entity.name,
-            id: ApiUtils.decodeApiUrl(payload.entity.id),
-            folderId: getFolderIdFromEntityId(payload.entity.id),
-            iconUrl: payload.entity.iconUrl,
-          },
-          action: payload.action,
-        };
-      } else {
-        state.publishModel = undefined;
-      }
     },
     setDeleteModel(
       state,

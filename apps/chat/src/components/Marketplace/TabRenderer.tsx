@@ -16,7 +16,10 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
+import {
+  ApplicationActions,
+  ApplicationSelectors,
+} from '@/src/store/application/application.reducers';
 import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -27,6 +30,10 @@ import {
   ModelsActions,
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
+import {
+  PublicationActions,
+  PublicationSelectors,
+} from '@/src/store/publication/publication.reducers';
 
 import {
   DeleteType,
@@ -193,8 +200,8 @@ export const TabRenderer = () => {
     MarketplaceSelectors.selectIsBannerVisible,
   );
   const deleteModel = useAppSelector(MarketplaceSelectors.selectDeleteModel);
-  const publishModel = useAppSelector(MarketplaceSelectors.selectPublishModel);
-  const logsEntity = useAppSelector(MarketplaceSelectors.selectLogsEntity);
+  const publishModel = useAppSelector(PublicationSelectors.selectPublishModel);
+  const logsEntity = useAppSelector(ApplicationSelectors.selectLogsEntity);
 
   const [suggestedResults, setSuggestedResults] = useState<DialAIEntityModel[]>(
     [],
@@ -299,7 +306,7 @@ export const TabRenderer = () => {
   );
 
   const handlePublishClose = useCallback(() => {
-    dispatch(MarketplaceActions.setPublishModel());
+    dispatch(PublicationActions.setPublishModel());
   }, [dispatch]);
 
   const handleSetDetailsModel = useCallback(
@@ -357,7 +364,7 @@ export const TabRenderer = () => {
   );
 
   const handleCloseApplicationLogs = useCallback(() => {
-    dispatch(MarketplaceActions.setApplicationLogsEntity());
+    dispatch(ApplicationActions.setApplicationLogsEntity());
   }, [dispatch]);
 
   const currentDetailsModel = detailsModel && modelsMap[detailsModel.reference];
