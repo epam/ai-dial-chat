@@ -6,20 +6,14 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
-import { translate } from '@/src/utils/app/translation';
 import {
   doesApplicationMatchFilters,
   doesApplicationMatchSearchTerm,
 } from '@/src/utils/marketplace';
 
 import { DialAIEntityModel } from '@/src/types/models';
-import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ApplicationActions,
-  ApplicationSelectors,
-} from '@/src/store/application/application.reducers';
 import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -30,10 +24,6 @@ import {
   ModelsActions,
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
-import {
-  PublicationActions,
-  PublicationSelectors,
-} from '@/src/store/publication/publication.reducers';
 
 import {
   DeleteType,
@@ -42,16 +32,14 @@ import {
   ViewTypes,
 } from '@/src/constants/marketplace';
 
-import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
-import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
 import { ApplicationDetails } from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
 import { MarketplaceBanner } from '@/src/components/Marketplace/MarketplaceBanner';
 import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
 
+import { AgentDialogs } from '../Common/AgentDialogs';
 import { AgentsTable } from './AgentsList/AgentsTable/AgentsTable';
 import { AgentsTiles } from './AgentsList/AgentsTiles/AgentsTiles';
-import { ApplicationLogs } from './ApplicationLogs';
 
 interface NoAgentsFoundProps {
   children: React.ReactNode;
@@ -139,42 +127,7 @@ const ResultsView = memo(
 );
 ResultsView.displayName = 'ResultsView';
 
-const getDeleteConfirmationText = (
-  action: DeleteType,
-  entity: DialAIEntityModel,
-) => {
-  const translationVariables = {
-    modelName: entity.name,
-    modelVersion: entity.version
-      ? translate(' (version {{version}})', { version: entity.version })
-      : '',
-  };
-
-  const deleteConfirmationText = {
-    [DeleteType.DELETE]: {
-      heading: translate('Confirm deleting application'),
-      description: translate(
-        'Are you sure you want to delete the {{modelName}}{{modelVersion}}?',
-        translationVariables,
-      ),
-      confirmLabel: translate('Delete'),
-    },
-    [DeleteType.REMOVE]: {
-      heading: translate('Confirm removing agent'),
-      description: translate(
-        'Are you sure you want to remove {{modelName}} from My workspace?',
-        translationVariables,
-      ),
-      confirmLabel: translate('Remove'),
-    },
-  };
-
-  return deleteConfirmationText[action];
-};
-
 export const TabRenderer = () => {
-  const { t } = useTranslation(Translation.Marketplace);
-
   const dispatch = useAppDispatch();
 
   const installedModelIds = useAppSelector(
@@ -199,9 +152,6 @@ export const TabRenderer = () => {
   const isBannerVisible = useAppSelector(
     MarketplaceSelectors.selectIsBannerVisible,
   );
-  const deleteModel = useAppSelector(MarketplaceSelectors.selectDeleteModel);
-  const publishModel = useAppSelector(PublicationSelectors.selectPublishModel);
-  const logsEntityId = useAppSelector(ApplicationSelectors.selectLogsEntityId);
 
   const [suggestedResults, setSuggestedResults] = useState<DialAIEntityModel[]>(
     [],
@@ -283,32 +233,6 @@ export const TabRenderer = () => {
     applicationTypeSchemas,
   ]);
 
-  const handleDeleteClose = useCallback(
-    (confirm: boolean) => {
-      if (confirm && deleteModel) {
-        if (deleteModel.action === DeleteType.REMOVE) {
-          dispatch(
-            ModelsActions.removeInstalledModels({
-              references: [deleteModel.entity.reference],
-              action: DeleteType.REMOVE,
-            }),
-          );
-        } else if (deleteModel.action === DeleteType.DELETE) {
-          dispatch(ApplicationActions.delete(deleteModel.entity));
-        }
-
-        dispatch(MarketplaceActions.setDetailsModel());
-      }
-
-      dispatch(MarketplaceActions.setDeleteModel());
-    },
-    [deleteModel, dispatch],
-  );
-
-  const handlePublishClose = useCallback(() => {
-    dispatch(PublicationActions.setPublishModel());
-  }, [dispatch]);
-
   const handleSetDetailsModel = useCallback(
     (model: DialAIEntityModel) => {
       dispatch(
@@ -363,10 +287,6 @@ export const TabRenderer = () => {
     [dispatch, installedModelIds],
   );
 
-  const handleCloseApplicationLogs = useCallback(() => {
-    dispatch(ApplicationActions.setLogsEntityId());
-  }, [dispatch]);
-
   const currentDetailsModel = detailsModel && modelsMap[detailsModel.reference];
 
   return (
@@ -406,14 +326,7 @@ export const TabRenderer = () => {
       />
 
       {/* MODALS */}
-      {!!deleteModel && (
-        <ConfirmDialog
-          isOpen
-          {...getDeleteConfirmationText(deleteModel.action, deleteModel.entity)}
-          onClose={handleDeleteClose}
-          cancelLabel={t('Cancel')}
-        />
-      )}
+
       {currentDetailsModel && (
         <ApplicationDetails
           entity={currentDetailsModel}
@@ -425,22 +338,8 @@ export const TabRenderer = () => {
           isSuggested={detailsModel.isSuggested}
         />
       )}
-      {!!(publishModel && publishModel?.entity?.id) && (
-        <PublishModal
-          entity={publishModel.entity}
-          type={SharingType.Application}
-          isOpen={!!publishModel}
-          onClose={handlePublishClose}
-          publishAction={publishModel.action}
-        />
-      )}
-      {logsEntityId && (
-        <ApplicationLogs
-          isOpen
-          onClose={handleCloseApplicationLogs}
-          entityId={logsEntityId}
-        />
-      )}
+
+      <AgentDialogs />
     </>
   );
 };

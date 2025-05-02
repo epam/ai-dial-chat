@@ -22,36 +22,23 @@ import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
-import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import { PublicationActions } from '@/src/store/actions';
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
-import {
-  ApplicationActions,
-  ApplicationSelectors,
-} from '@/src/store/application/application.reducers';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
-import {
-  MarketplaceActions,
-  MarketplaceSelectors,
-} from '@/src/store/marketplace/marketplace.reducers';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 
-import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
-import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Modal } from '@/src/components/Common/Modal';
-import { ApplicationLogs } from '@/src/components/Marketplace/ApplicationLogs';
 
+import { AgentDialogs } from '../../Common/AgentDialogs';
 import { TalkToSlider } from './TalkToSlider';
 
-import { Feature, PublishActions } from '@epam/ai-dial-shared';
+import { Feature } from '@epam/ai-dial-shared';
 import orderBy from 'lodash-es/orderBy';
 
 interface TalkToModalViewProps {
@@ -84,9 +71,6 @@ const TalkToModalView = ({
   const widgetsSchemaIds = useAppSelector(
     SettingsSelectors.selectWidgetsSchemaIds,
   );
-  const logsEntityId = useAppSelector(ApplicationSelectors.selectLogsEntityId);
-  const deleteModel = useAppSelector(MarketplaceSelectors.selectDeleteModel);
-  const publishModel = useAppSelector(PublicationSelectors.selectPublishModel);
 
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -176,10 +160,6 @@ const TalkToModalView = ({
     widgetsSchemaIds,
   ]);
 
-  const handleCloseApplicationLogs = useCallback(() => {
-    dispatch(ApplicationActions.setLogsEntityId());
-  }, [dispatch]);
-
   const handleSelectModel = useCallback(
     (entity: DialAIEntityModel) => {
       const model = modelsMap[entity.reference];
@@ -209,21 +189,6 @@ const TalkToModalView = ({
     },
     [addonsMap, conversation, dispatch, modelsMap, onClose],
   );
-
-  const handleDeleteClose = useCallback(
-    (confirm: boolean) => {
-      if (confirm && deleteModel) {
-        dispatch(ApplicationActions.delete(deleteModel.entity));
-      }
-
-      dispatch(MarketplaceActions.setDeleteModel());
-    },
-    [deleteModel, dispatch],
-  );
-
-  const handlePublishClose = useCallback(() => {
-    dispatch(PublicationActions.setPublishModel());
-  }, [dispatch]);
 
   const handleGoToWorkspace = useCallback(
     (e: MouseEvent<HTMLAnchorElement>) => {
@@ -278,42 +243,7 @@ const TalkToModalView = ({
         </Link>
       )}
 
-      {deleteModel && (
-        <ConfirmDialog
-          isOpen
-          heading={t('Confirm deleting application')}
-          description={t(
-            'Are you sure you want to delete the {{modelName}}{{modelVersion}}?',
-            {
-              modelName: deleteModel.entity.name,
-              modelVersion: deleteModel.entity.version
-                ? t(' (version {{version}})', {
-                    version: deleteModel.entity.version,
-                  })
-                : '',
-            },
-          )}
-          confirmLabel={t('Delete')}
-          onClose={handleDeleteClose}
-          cancelLabel={t('Cancel')}
-        />
-      )}
-      {publishModel && (
-        <PublishModal
-          entity={publishModel.entity}
-          type={SharingType.Application}
-          isOpen
-          onClose={handlePublishClose}
-          publishAction={PublishActions.ADD}
-        />
-      )}
-      {logsEntityId && (
-        <ApplicationLogs
-          isOpen
-          onClose={handleCloseApplicationLogs}
-          entityId={logsEntityId}
-        />
-      )}
+      <AgentDialogs />
     </>
   );
 };
