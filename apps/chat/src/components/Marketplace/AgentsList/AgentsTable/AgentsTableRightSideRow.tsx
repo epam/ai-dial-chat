@@ -12,11 +12,10 @@ import { Translation } from '@/src/types/translation';
 
 import { DateRenderer } from '@/src/components/Common/DateRenderer';
 import Tooltip from '@/src/components/Common/Tooltip';
-
-import { AgentBookmark } from '../../AgentBookmark';
-import { AgentContextMenu } from '../../AgentContextMenu';
-import { ApplicationTopic } from '../../ApplicationTopic';
-import { TopicsList } from '../../TopicsList';
+import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
+import { AgentContextMenu } from '@/src/components/Marketplace/AgentContextMenu';
+import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
+import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 
 interface Props {
   entity: DialAIEntityModel;

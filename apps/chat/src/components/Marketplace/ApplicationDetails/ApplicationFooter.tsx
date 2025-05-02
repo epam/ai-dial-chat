@@ -46,11 +46,12 @@ import {
   StatusIcons,
 } from '@/src/constants/marketplace';
 
-import { ModelVersionSelect } from '../../Chat/ModelVersionSelect';
-import Tooltip from '../../Common/Tooltip';
-import { AgentBookmark } from '../AgentBookmark';
-import { AgentContextMenu } from '../AgentContextMenu';
-import { ApplicationLogs } from '../ApplicationLogs';
+import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
+import Tooltip from '@/src/components/Common/Tooltip';
+import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
+import { AgentContextMenu } from '@/src/components/Marketplace/AgentContextMenu';
+import { ApplicationLogs } from '@/src/components/Marketplace/ApplicationLogs';
+
 import { ApplicationCopyLink } from './ApplicationCopyLink';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';

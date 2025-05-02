@@ -42,8 +42,8 @@ import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Modal } from '@/src/components/Common/Modal';
+import { ApplicationLogs } from '@/src/components/Marketplace/ApplicationLogs';
 
-import { ApplicationLogs } from '../../Marketplace/ApplicationLogs';
 import { TalkToSlider } from './TalkToSlider';
 
 import { Feature, PublishActions } from '@epam/ai-dial-shared';

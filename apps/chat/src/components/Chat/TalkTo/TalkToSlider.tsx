@@ -21,7 +21,8 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 
-import { NoResultsFound } from '../../Common/NoResultsFound';
+import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
+
 import { TalkToCard } from './TalkToCard';
 
 import chunk from 'lodash-es/chunk';

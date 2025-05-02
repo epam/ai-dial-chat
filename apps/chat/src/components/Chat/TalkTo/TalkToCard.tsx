@@ -30,11 +30,10 @@ import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
 import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
+import ShareIcon from '@/src/components/Common/ShareIcon';
+import { AgentContextMenu } from '@/src/components/Marketplace/AgentContextMenu';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
-
-import ShareIcon from '../../Common/ShareIcon';
-import { AgentContextMenu } from '../../Marketplace/AgentContextMenu';
-import { TopicsList } from '../../Marketplace/TopicsList';
+import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 
 interface ApplicationCardProps {
   entity: DialAIEntityModel;
