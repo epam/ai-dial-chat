@@ -7,7 +7,6 @@ export interface UIState {
   availableThemes: Theme[];
   showChatbar: boolean;
   showPromptbar: boolean;
-  showWidgetbar: boolean;
   showMarketplaceFilterbar: boolean;
   isUserSettingsOpen: boolean;
   isProfileOpen: boolean;
@@ -22,4 +21,5 @@ export interface UIState {
   customLogo?: string;
   collapsedSections: Record<FeatureType, string[]>;
   previousRoute?: string;
+  scrollToEntityId?: string;
 }

@@ -53,7 +53,6 @@ import {
 } from '@/src/utils/server/api';
 
 import { EntityType, FeatureType } from '@/src/types/common';
-import { FolderType } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
 import { PublishedFileItem } from '@/src/types/publication';
 import { AppAction, AppEpic } from '@/src/types/store';
@@ -315,7 +314,7 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
                   of(
                     ConversationsActions.addFolders({
                       folders: conversationPaths.map((path) => ({
-                        ...getFolderFromId(path, FolderType.Chat),
+                        ...getFolderFromId(path, FeatureType.Chat),
                         status: UploadStatus.LOADED,
                       })),
                     }),
@@ -363,7 +362,7 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
                   of(
                     PromptsActions.addFolders({
                       folders: promptPaths.map((path) => ({
-                        ...getFolderFromId(path, FolderType.Prompt),
+                        ...getFolderFromId(path, FeatureType.Prompt),
                         status: UploadStatus.LOADED,
                       })),
                     }),
@@ -389,7 +388,7 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
                 of(
                   PromptsActions.addFolders({
                     folders: promptPaths.map((path) => ({
-                      ...getFolderFromId(path, FolderType.Prompt),
+                      ...getFolderFromId(path, FeatureType.Prompt),
                       status: UploadStatus.LOADED,
                       isPublicationFolder: true,
                     })),
@@ -475,7 +474,7 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
                 of(
                   ConversationsActions.addFolders({
                     folders: conversationPaths.map((path) => ({
-                      ...getFolderFromId(path, FolderType.Chat),
+                      ...getFolderFromId(path, FeatureType.Chat),
                       status: UploadStatus.LOADED,
                       isPublicationFolder: true,
                     })),
@@ -527,7 +526,7 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
                 of(
                   FilesActions.getFoldersSuccess({
                     folders: filePaths.map((path) => ({
-                      ...getFolderFromId(path, FolderType.File),
+                      ...getFolderFromId(path, FeatureType.File),
                       status: UploadStatus.LOADED,
                       isPublicationFolder: true,
                     })),
@@ -635,7 +634,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
                       id: folder.url,
                       folderId: getFolderIdFromEntityId(folder.url),
                       publishedWithMe: true,
-                      type: FolderType.Chat,
+                      type: FeatureType.Chat,
                     })),
                   }),
                 ),
@@ -675,7 +674,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
                       id: folder.url,
                       folderId: getFolderIdFromEntityId(folder.url),
                       publishedWithMe: true,
-                      type: FolderType.Prompt,
+                      type: FeatureType.Prompt,
                     })),
                   }),
                 ),
@@ -712,7 +711,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
                       id: item.url,
                       folderId: getFolderIdFromEntityId(item.url),
                       publishedWithMe: true,
-                      type: FolderType.File,
+                      type: FeatureType.File,
                     })),
                   }),
                 ),
@@ -922,7 +921,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
               of(
                 ConversationsActions.addFolders({
                   folders: conversationPaths.map((path) => ({
-                    ...getFolderFromId(path, FolderType.Chat),
+                    ...getFolderFromId(path, FeatureType.Chat),
                     status: UploadStatus.LOADED,
                     publishedWithMe: path.split('/').length === 3,
                   })),
@@ -1072,7 +1071,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
               of(
                 PromptsActions.addFolders({
                   folders: promptPaths.map((path) => ({
-                    ...getFolderFromId(path, FolderType.Prompt),
+                    ...getFolderFromId(path, FeatureType.Prompt),
                     status: UploadStatus.LOADED,
                     publishedWithMe: path.split('/').length === 3,
                   })),
@@ -1287,8 +1286,8 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           const folders = getFoldersFromIds(
             paths,
             payload.featureType === FeatureType.Chat
-              ? FolderType.Chat
-              : FolderType.Prompt,
+              ? FeatureType.Chat
+              : FeatureType.Prompt,
             UploadStatus.LOADED,
           ).map((folder) => ({
             ...folder,

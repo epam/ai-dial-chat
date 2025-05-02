@@ -22,7 +22,6 @@ const initialState: UIState = {
   availableThemes: [],
   showChatbar: false,
   showPromptbar: false,
-  showWidgetbar: false,
   showMarketplaceFilterbar: false,
   isUserSettingsOpen: false,
   isProfileOpen: false,
@@ -66,17 +65,6 @@ export const uiSlice = createSlice({
       { payload }: PayloadAction<UIState['showChatbar']>,
     ) => {
       state.showChatbar = payload;
-    },
-    setShowWidgetbar: (
-      state,
-      { payload }: PayloadAction<UIState['showWidgetbar']>,
-    ) => {
-      if (payload) {
-        state.showChatbar = false;
-        state.showMarketplaceFilterbar = false;
-        state.showPromptbar = false;
-      }
-      state.showWidgetbar = payload;
     },
     setShowPromptbar: (
       state,
@@ -135,13 +123,13 @@ export const uiSlice = createSlice({
       state,
       {
         payload,
-      }: PayloadAction<{ openedFolderIds: string[]; featureType: FeatureType }>,
+      }: PayloadAction<{ openedFolderIds: string[]; folderType: FeatureType }>,
     ) => {
       state.openedFoldersIds = {
         ...state.openedFoldersIds,
-        [payload.featureType]: uniq([
+        [payload.folderType]: uniq([
           ...payload.openedFolderIds,
-          ...state.openedFoldersIds[payload.featureType],
+          ...state.openedFoldersIds[payload.folderType],
         ]),
       };
     },
@@ -216,6 +204,12 @@ export const uiSlice = createSlice({
     },
     setPreviousRoute: (state, { payload }: PayloadAction<string>) => {
       state.previousRoute = payload;
+    },
+    setScrollToEntityId: (
+      state,
+      { payload }: PayloadAction<string | undefined>,
+    ) => {
+      state.scrollToEntityId = payload;
     },
   },
 });

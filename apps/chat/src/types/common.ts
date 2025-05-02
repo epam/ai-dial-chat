@@ -1,5 +1,3 @@
-import { MappedReplaceActions } from './import-export';
-
 import { SharePermission, UploadStatus } from '@epam/ai-dial-shared';
 
 export enum EntityType {
@@ -92,6 +90,15 @@ export enum ApiKeys {
 export enum CoreApiKeys {
   Deployments = 'deployments',
 }
+
+export enum ReplaceOptions {
+  Postfix = 'Postfix',
+  Replace = 'Replace',
+  Ignore = 'Ignore',
+  Mixed = 'Mixed',
+}
+
+export type MappedReplaceActions = Record<string, ReplaceOptions>;
 
 export interface AdditionalItemData {
   publicationUrl?: string;

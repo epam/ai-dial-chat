@@ -22,13 +22,8 @@ export const SystemDialogs = () => {
   const { hash, resetHash } = useUrlHash();
 
   useEffect(() => {
-    if (hash === requestApiKeyHash) {
-      setIsReportIssueDialogOpen(false);
-      setIsRequestAPIDialogOpen(true);
-    } else if (hash === reportAnIssueHash) {
-      setIsRequestAPIDialogOpen(false);
-      setIsReportIssueDialogOpen(true);
-    }
+    setIsRequestAPIDialogOpen(hash === requestApiKeyHash);
+    setIsReportIssueDialogOpen(hash === reportAnIssueHash);
   }, [hash]);
 
   return (

@@ -21,6 +21,8 @@ import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { PageType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
 
+import { ApplicationActions } from '@/src/store/application/application.reducers';
+
 import { errorsMessages } from '@/src/constants/errors';
 
 import { AddonsActions } from '../addons/addons.reducers';
@@ -43,6 +45,7 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
       return [
         of(UIActions.init()),
         of(ModelsActions.init()),
+        of(ApplicationActions.init()),
         of(AddonsActions.init()),
         of(FilesActions.init()),
         of(PublicationActions.init()),
@@ -55,6 +58,7 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
         of(UIActions.init()),
         of(MigrationActions.init()),
         of(ModelsActions.init()),
+        of(ApplicationActions.init()),
         of(AddonsActions.init()),
         of(ConversationsActions.init()),
         of(PromptsActions.init()),
@@ -68,6 +72,7 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
       return [
         of(UIActions.init()),
         of(ModelsActions.init()),
+        of(ShareActions.init()),
         of(AddonsActions.init()),
         of(FilesActions.init()),
         of(PublicationActions.init()),
@@ -78,6 +83,7 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
       return [
         of(UIActions.init()),
         of(ModelsActions.init()),
+        of(ApplicationActions.init()),
         of(AddonsActions.init()),
         of(FilesActions.init()),
         of(PublicationActions.init()),

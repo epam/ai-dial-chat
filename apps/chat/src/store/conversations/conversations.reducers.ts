@@ -18,7 +18,8 @@ import {
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
-import { FolderInterface, FolderType } from '@/src/types/folder';
+import { FeatureType } from '@/src/types/common';
+import { FolderInterface } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 import { LastConversationSettings } from '@/src/types/settings';
 import { RootState } from '@/src/types/store';
@@ -382,7 +383,7 @@ export const conversationsSlice = createSlice({
             { conversations: state } as RootState,
             payload?.parentId,
           ),
-        type: FolderType.Chat,
+        type: FeatureType.Chat,
         status: UploadStatus.LOADED,
       });
 
@@ -401,7 +402,7 @@ export const conversationsSlice = createSlice({
       state.temporaryFolders.push({
         id: payload.id,
         name: payload.name,
-        type: FolderType.Chat,
+        type: FeatureType.Chat,
         folderId: payload.folderId || getConversationRootId(),
         temporary: true,
       });
