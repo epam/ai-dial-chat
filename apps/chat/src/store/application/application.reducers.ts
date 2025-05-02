@@ -11,7 +11,7 @@ import {
   ApplicationStatus,
   CustomApplicationModel,
 } from '@/src/types/applications';
-import { FolderType } from '@/src/types/folder';
+import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 
 import { ApplicationState } from './applications.types';
@@ -20,6 +20,7 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 import uniqBy from 'lodash-es/uniqBy';
 
 const initialState: ApplicationState = {
+  initialized: false,
   appLoading: UploadStatus.UNINITIALIZED,
   logsLoadingStatus: UploadStatus.UNINITIALIZED,
   appDetails: undefined,
@@ -34,6 +35,10 @@ export const applicationSlice = createSlice({
   name: 'application',
   initialState,
   reducers: {
+    init: (state) => state,
+    initFinish: (state) => {
+      state.initialized = true;
+    },
     create: (
       state,
       _action: PayloadAction<{
@@ -212,13 +217,10 @@ export const applicationSlice = createSlice({
       const folders = payload
         .flatMap((id) => getParentFolderIdsFromEntityId(id).slice(0, -1))
         .map((id) =>
-          getFolderFromId(id, FolderType.Application, UploadStatus.LOADED),
+          getFolderFromId(id, FeatureType.Application, UploadStatus.LOADED),
         );
 
       state.publicFolders = uniqBy(folders, 'id');
-    },
-    selectWidget: (state, { payload }: PayloadAction<string | undefined>) => {
-      state.selectedWidget = payload;
     },
     setReturnConversationIds(
       state,
@@ -228,6 +230,9 @@ export const applicationSlice = createSlice({
     },
     setHasUnsavedChanges(state, action: PayloadAction<boolean>) {
       state.hasUnsavedChanges = action.payload;
+    },
+    setSelectedWidget(state, { payload }: PayloadAction<string | undefined>) {
+      state.selectedWidget = payload;
     },
   },
 });
