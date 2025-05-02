@@ -31,7 +31,6 @@ import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { AuthSelectors } from '@/src/store/auth/auth.selectors';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
@@ -58,7 +57,6 @@ export const AgentContextMenu: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation(Translation.Marketplace);
 
-  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
   const isCodeAppsEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
   );
