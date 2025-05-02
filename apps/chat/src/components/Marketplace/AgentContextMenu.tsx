@@ -109,8 +109,7 @@ export const AgentContextMenu: React.FC<Props> = ({
       {
         name: t('Edit'),
         dataQa: 'edit',
-        display:
-          hasEditPermissions || (isAdmin && entity.reference !== entity.id),
+        display: hasEditPermissions,
         Icon: IconPencilMinus,
         onClick: handleEdit,
       },
@@ -171,7 +170,6 @@ export const AgentContextMenu: React.FC<Props> = ({
       hasEditPermissions,
       PlayerContextIcon,
       handleUpdateFunctionStatus,
-      isAdmin,
       handleEdit,
       isMyApp,
       isApplicationsSharingEnabled,
