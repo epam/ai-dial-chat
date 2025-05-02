@@ -8,14 +8,12 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getApplicationType } from '@/src/utils/app/application';
 import {
   getConversationModelParams,
   isPlaybackConversation,
   isReplayAsIsConversation,
   isReplayConversation,
 } from '@/src/utils/app/conversation';
-import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils, PseudoModel } from '@/src/utils/server/api';
@@ -29,9 +27,12 @@ import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
+import {
+  MarketplaceActions,
+  MarketplaceSelectors,
+} from '@/src/store/marketplace/marketplace.reducers';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
@@ -45,7 +46,7 @@ import { Modal } from '@/src/components/Common/Modal';
 import { ApplicationLogs } from '../../Marketplace/ApplicationLogs';
 import { TalkToSlider } from './TalkToSlider';
 
-import { Feature, PublishActions, ShareEntity } from '@epam/ai-dial-shared';
+import { Feature, PublishActions } from '@epam/ai-dial-shared';
 import orderBy from 'lodash-es/orderBy';
 
 interface TalkToModalViewProps {
@@ -78,13 +79,11 @@ const TalkToModalView = ({
   const widgetsSchemaIds = useAppSelector(
     SettingsSelectors.selectWidgetsSchemaIds,
   );
+  const logsEntity = useAppSelector(MarketplaceSelectors.selectLogsEntity);
+  const deleteModel = useAppSelector(MarketplaceSelectors.selectDeleteModel);
+  const publishModel = useAppSelector(MarketplaceSelectors.selectPublishModel);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [deleteModel, setDeleteModel] = useState<DialAIEntityModel>();
-  const [logModel, setLogModel] = useState<DialAIEntityModel>();
-  const [publishModel, setPublishModel] = useState<
-    ShareEntity & { iconUrl?: string }
-  >();
 
   const isPlayback = isPlaybackConversation(conversation);
   const isReplay = isReplayConversation(conversation);
@@ -173,12 +172,8 @@ const TalkToModalView = ({
   ]);
 
   const handleCloseApplicationLogs = useCallback(() => {
-    setLogModel(undefined);
-  }, []);
-
-  const handleOpenApplicationLogs = useCallback((entity: DialAIEntityModel) => {
-    setLogModel(entity);
-  }, []);
+    dispatch(MarketplaceActions.setApplicationLogsEntity());
+  }, [dispatch]);
 
   const handleSelectModel = useCallback(
     (entity: DialAIEntityModel) => {
@@ -210,49 +205,20 @@ const TalkToModalView = ({
     [addonsMap, conversation, dispatch, modelsMap, onClose],
   );
 
-  const detailedApplicationTypeSchema = useAppSelector(
-    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
-  );
-
-  const handleEditApplication = useCallback(
-    (entity: DialAIEntityModel) => {
-      const applicationType = getApplicationType(entity);
-      dispatch(
-        ApplicationActions.enterEditMode({
-          entity: entity,
-          applicationType,
-          detailedApplicationTypeSchemaId: detailedApplicationTypeSchema?.$id,
-        }),
-      );
-    },
-    [detailedApplicationTypeSchema, dispatch],
-  );
-
   const handleDeleteClose = useCallback(
     (confirm: boolean) => {
       if (confirm && deleteModel) {
-        dispatch(ApplicationActions.delete(deleteModel));
+        dispatch(ApplicationActions.delete(deleteModel.entity));
       }
 
-      setDeleteModel(undefined);
+      dispatch(MarketplaceActions.setDeleteModel());
     },
     [deleteModel, dispatch],
   );
 
-  const handleSetPublishEntity = useCallback((entity: DialAIEntityModel) => {
-    setPublishModel({
-      name: entity.name,
-      id: ApiUtils.decodeApiUrl(entity.id),
-      folderId: getFolderIdFromEntityId(entity.id),
-      iconUrl: entity.iconUrl,
-    });
-  }, []);
-
-  const handlePublishClose = useCallback(() => setPublishModel(undefined), []);
-
-  const handleDeleteApplication = useCallback((entity: DialAIEntityModel) => {
-    setDeleteModel(entity);
-  }, []);
+  const handlePublishClose = useCallback(() => {
+    dispatch(MarketplaceActions.setPublishModel());
+  }, [dispatch]);
 
   const handleGoToWorkspace = useCallback(
     (e: MouseEvent<HTMLAnchorElement>) => {
@@ -289,11 +255,7 @@ const TalkToModalView = ({
       <TalkToSlider
         conversation={conversation}
         items={displayedModels}
-        onEdit={handleEditApplication}
-        onDelete={handleDeleteApplication}
-        onPublish={handleSetPublishEntity}
         onSelectModel={handleSelectModel}
-        onOpenLogs={handleOpenApplicationLogs}
       />
 
       {isMarketplaceEnabled && (
@@ -318,10 +280,10 @@ const TalkToModalView = ({
           description={t(
             'Are you sure you want to delete the {{modelName}}{{modelVersion}}?',
             {
-              modelName: deleteModel.name,
-              modelVersion: deleteModel.version
+              modelName: deleteModel.entity.name,
+              modelVersion: deleteModel.entity.version
                 ? t(' (version {{version}})', {
-                    version: deleteModel.version,
+                    version: deleteModel.entity.version,
                   })
                 : '',
             },
@@ -333,18 +295,18 @@ const TalkToModalView = ({
       )}
       {publishModel && (
         <PublishModal
-          entity={publishModel}
+          entity={publishModel.entity}
           type={SharingType.Application}
           isOpen
           onClose={handlePublishClose}
           publishAction={PublishActions.ADD}
         />
       )}
-      {logModel && (
+      {logsEntity && (
         <ApplicationLogs
           isOpen
           onClose={handleCloseApplicationLogs}
-          entityId={logModel.id}
+          entityId={logsEntity.id}
         />
       )}
     </>
