@@ -62,9 +62,11 @@ const LogsView = () => {
   );
 };
 
-const LogsFooter = ({ entityId }: { entityId: string }) => {
+const LogsFooter = () => {
   const { t } = useTranslation(Translation.Marketplace);
   const dispatch = useAppDispatch();
+
+  const entityId = useAppSelector(ApplicationSelectors.selectLogsEntityId);
 
   const applicationLogs = useAppSelector(
     ApplicationSelectors.selectApplicationLogs,
@@ -74,7 +76,7 @@ const LogsFooter = ({ entityId }: { entityId: string }) => {
   );
 
   const uploadLogs = useCallback(
-    () => dispatch(ApplicationActions.getLogs(entityId)),
+    () => dispatch(ApplicationActions.getLogs(entityId!)),
     [dispatch, entityId],
   );
 
@@ -127,10 +129,11 @@ const LogsFooter = ({ entityId }: { entityId: string }) => {
 
 export const ApplicationLogsView = () => {
   const dispatch = useAppDispatch();
-  const logsEntityId = useAppSelector(ApplicationSelectors.selectLogsEntityId);
+
   const handleClose = useCallback(() => {
     dispatch(ApplicationActions.setLogsEntityId());
   }, [dispatch]);
+
   return (
     <Modal
       portalId="theme-main"
@@ -141,7 +144,7 @@ export const ApplicationLogsView = () => {
     >
       <LogsHeader />
       <LogsView />
-      <LogsFooter entityId={logsEntityId!} />
+      <LogsFooter />
     </Modal>
   );
 };
