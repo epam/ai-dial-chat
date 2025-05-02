@@ -11,7 +11,7 @@ import {
   ApplicationStatus,
   CustomApplicationModel,
 } from '@/src/types/applications';
-import { FolderType } from '@/src/types/folder';
+import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 
 import { ApplicationState } from './applications.types';
@@ -217,7 +217,7 @@ export const applicationSlice = createSlice({
       const folders = payload
         .flatMap((id) => getParentFolderIdsFromEntityId(id).slice(0, -1))
         .map((id) =>
-          getFolderFromId(id, FolderType.Application, UploadStatus.LOADED),
+          getFolderFromId(id, FeatureType.Application, UploadStatus.LOADED),
         );
 
       state.publicFolders = uniqBy(folders, 'id');

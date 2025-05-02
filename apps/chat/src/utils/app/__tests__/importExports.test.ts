@@ -11,7 +11,7 @@ import {
 } from '@/src/utils/app/import-export';
 
 import { Conversation } from '@/src/types/chat';
-import { FolderType } from '@/src/types/folder';
+import { FeatureType } from '@/src/types/common';
 import {
   ExportFormatV1,
   ExportFormatV2,
@@ -163,7 +163,7 @@ describe('cleanData Functions', () => {
           {
             id: '1',
             name: 'folder 1',
-            type: FolderType.Chat,
+            type: FeatureType.Chat,
             folderId: getConversationRootId(bucket),
           },
         ],
@@ -190,7 +190,7 @@ describe('cleanData Functions', () => {
           {
             id: '1',
             name: 'folder 1',
-            type: FolderType.Chat,
+            type: FeatureType.Chat,
           },
         ],
         prompts: [
@@ -212,7 +212,7 @@ describe('cleanData Functions', () => {
           {
             id: '1',
             name: 'folder 1',
-            type: FolderType.Chat,
+            type: FeatureType.Chat,
           },
         ],
         prompts: [
@@ -251,7 +251,7 @@ describe('Export helpers functions', () => {
         {
           id: 'pf-1',
           name: 'Test folder',
-          type: FolderType.Prompt,
+          type: FeatureType.Prompt,
           folderId: getConversationRootId(bucket),
         },
       ],

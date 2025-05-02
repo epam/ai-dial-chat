@@ -40,6 +40,8 @@ import Tooltip from '@/src/components/Common/Tooltip';
 import { MarketplaceFilterbar } from '@/src/components/Marketplace/MarketplaceFilterbar';
 import { Promptbar } from '@/src/components/Promptbar';
 
+import { ChatModalsManager } from './Chat/ChatModalsManager';
+
 import { Feature } from '@epam/ai-dial-shared';
 
 interface NavigationButtonProps {
@@ -359,6 +361,7 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
         {router.route === Routes.Chat &&
           enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
       </div>
+      <ChatModalsManager />
     </div>
   );
 };

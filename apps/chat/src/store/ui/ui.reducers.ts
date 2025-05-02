@@ -123,13 +123,13 @@ export const uiSlice = createSlice({
       state,
       {
         payload,
-      }: PayloadAction<{ openedFolderIds: string[]; featureType: FeatureType }>,
+      }: PayloadAction<{ openedFolderIds: string[]; folderType: FeatureType }>,
     ) => {
       state.openedFoldersIds = {
         ...state.openedFoldersIds,
-        [payload.featureType]: uniq([
+        [payload.folderType]: uniq([
           ...payload.openedFolderIds,
-          ...state.openedFoldersIds[payload.featureType],
+          ...state.openedFoldersIds[payload.folderType],
         ]),
       };
     },
@@ -204,6 +204,12 @@ export const uiSlice = createSlice({
     },
     setPreviousRoute: (state, { payload }: PayloadAction<string>) => {
       state.previousRoute = payload;
+    },
+    setScrollToEntityId: (
+      state,
+      { payload }: PayloadAction<string | undefined>,
+    ) => {
+      state.scrollToEntityId = payload;
     },
   },
 });
