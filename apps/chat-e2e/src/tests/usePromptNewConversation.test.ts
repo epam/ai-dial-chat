@@ -586,11 +586,14 @@ dialTest(
 
 dialSharedWithMeTest(
   'Use prompt not available for chat from Shared with me\n' +
+    `View prompt: 'Use prompt' button is disabled for just created new prompt if there is a chat without available input field selected.\n` +
     'Use prompt from "Shared with me" section for chat with history',
   async ({
     dialHomePage,
     sharedWithMeConversations,
     prompts,
+    promptBar,
+    promptModalDialog,
     promptDropdownMenuAssertion,
     setTestIds,
     promptData,
@@ -604,8 +607,10 @@ dialSharedWithMeTest(
     sendMessageAssertion,
     chatBar,
     promptDropdownMenu,
+    promptPreviewModal,
+    promptPreviewModalAssertion,
   }) => {
-    setTestIds('EPMRTC-5498', 'EPMRTC-5488');
+    setTestIds('EPMRTC-5498', 'EPMRTC-6042', 'EPMRTC-5488');
     const prompt = promptData.prepareDefaultPrompt();
     const model = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
@@ -639,6 +644,27 @@ dialSharedWithMeTest(
           MenuOptions.use,
           'disabled',
         );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Create a new prompt and verify "Use" prompt button is disabled within "View prompt" modal',
+      async () => {
+        await promptBar.createNewEntity();
+        await promptModalDialog.fillPromptDetails(
+          GeneratorUtil.randomString(5),
+          undefined,
+          GeneratorUtil.randomString(5),
+        );
+        await promptModalDialog.saveButton.click();
+        await promptPreviewModalAssertion.assertPromptPreviewModalState(
+          'visible',
+        );
+        await promptPreviewModalAssertion.assertElementActionabilityState(
+          promptPreviewModal.usePromptButton,
+          'disabled',
+        );
+        await promptPreviewModal.closeButton.click();
       },
     );
 
