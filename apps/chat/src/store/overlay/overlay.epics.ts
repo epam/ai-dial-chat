@@ -12,6 +12,7 @@ import {
   iif,
   map,
   merge,
+  mergeMap,
   of,
   switchMap,
   takeUntil,
@@ -23,6 +24,10 @@ import { combineEpics, ofType } from 'redux-observable';
 
 import { parseCommaSeparatedList } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
+import {
+  getActionsAddFoldersFromFolderId,
+  getParentFolderIdsFromFolderId,
+} from '@/src/utils/app/folders';
 import { getConversationRootId } from '@/src/utils/app/id';
 import {
   isPostMessageOverlayRequest,
@@ -31,6 +36,7 @@ import {
 } from '@/src/utils/app/overlay';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
+import { FeatureType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
@@ -69,6 +75,7 @@ import {
   validateFeature,
 } from '@epam/ai-dial-shared';
 import isEqual from 'lodash-es/isEqual';
+import uniq from 'lodash-es/uniq';
 
 export const postMessageMapperEpic: AppEpic = (_, state$) =>
   typeof window === 'object'
@@ -216,7 +223,7 @@ const getConversationsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const createConversationEpic: AppEpic = (action$, state$) =>
+const createConversationEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(OverlayActions.createConversation.type),
     switchMap(({ payload: { requestId, parentPath } }) => {
@@ -225,25 +232,20 @@ const createConversationEpic: AppEpic = (action$, state$) =>
         parentPath,
       );
 
-      const isFolderExists = ConversationsSelectors.selectFolderById(
-        state$.value,
-        conversationFolderId,
-      );
-
       const actions: Observable<AppAction>[] = [];
 
-      if (parentPath && !isFolderExists) {
+      if (parentPath) {
         actions.push(
-          of(
-            ConversationsActions.createFolder({
-              name: parentPath,
-              parentId: getConversationRootId(),
-            }),
-          ),
+          ...getActionsAddFoldersFromFolderId({
+            folderId: conversationFolderId,
+            folderType: FeatureType.Chat,
+            shouldOpen: true,
+          }),
         );
       }
 
-      actions.push(
+      return concat(
+        ...actions,
         of(
           ConversationsActions.createNewConversations({
             names: [DEFAULT_CONVERSATION_NAME],
@@ -257,8 +259,6 @@ const createConversationEpic: AppEpic = (action$, state$) =>
           }),
         ),
       );
-
-      return concat(...actions);
     }),
   );
 
@@ -270,7 +270,7 @@ const createConversationEffectEpic: AppEpic = (action$, state$) =>
         ofType(ConversationsActions.createNotLocalConversationsSuccess.type),
         takeUntil(timer(10000)),
         filter(Boolean),
-        map(({ payload: conversations }) => {
+        mergeMap(({ payload: conversations }) => {
           const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
 
           const conversation = conversations[0];
@@ -281,16 +281,21 @@ const createConversationEffectEpic: AppEpic = (action$, state$) =>
             parentPath,
           };
 
-          return OverlayActions.sendPMResponse({
-            type: OverlayRequests.createConversation,
-            requestParams: {
-              requestId,
-              hostDomain,
-              payload: {
-                conversation: resultConversation,
-              } as CreateConversationResponse,
-            },
-          });
+          return concat(
+            of(UIActions.setScrollToEntityId(conversation.id)),
+            of(
+              OverlayActions.sendPMResponse({
+                type: OverlayRequests.createConversation,
+                requestParams: {
+                  requestId,
+                  hostDomain,
+                  payload: {
+                    conversation: resultConversation,
+                  } as CreateConversationResponse,
+                },
+              }),
+            ),
+          );
         }),
       );
     }),
@@ -310,12 +315,25 @@ const selectConversationEpic: AppEpic = (action$, state$) =>
         return EMPTY;
       }
 
+      const foldersPaths = uniq(
+        getParentFolderIdsFromFolderId(conversation.folderId),
+      );
+
       return concat(
+        foldersPaths
+          ? of(
+              UIActions.setOpenedFoldersIds({
+                openedFolderIds: foldersPaths,
+                folderType: FeatureType.Chat,
+              }),
+            )
+          : EMPTY,
         of(
           ConversationsActions.selectConversations({
             conversationIds: [conversation.id],
           }),
         ),
+        of(UIActions.setScrollToEntityId(conversation.id)),
         of(
           OverlayActions.sendPMResponse({
             type: OverlayRequests.selectConversation,

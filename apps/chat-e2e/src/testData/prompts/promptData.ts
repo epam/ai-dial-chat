@@ -1,4 +1,5 @@
-import { FolderInterface, FolderType } from '@/chat/types/folder';
+import { FeatureType } from '@/chat/types/common';
+import { FolderInterface } from '@/chat/types/folder';
 import { Prompt } from '@/chat/types/prompt';
 import { FolderData } from '@/src/testData/folders/folderData';
 import { PromptBuilder } from '@/src/testData/prompts/promptBuilder';
@@ -13,7 +14,7 @@ export class PromptData extends FolderData {
   private promptBuilder: PromptBuilder;
 
   constructor() {
-    super(FolderType.Prompt);
+    super(FeatureType.Prompt);
     this.promptBuilder = new PromptBuilder();
   }
 
@@ -37,7 +38,7 @@ export class PromptData extends FolderData {
   ) {
     return super.prepareNestedFolder(
       nestedLevel,
-      FolderType.Prompt,
+      FeatureType.Prompt,
       folderNames,
     );
   }

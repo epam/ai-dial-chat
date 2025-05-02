@@ -4,6 +4,7 @@ import { DragEvent, useCallback, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
 
 import { useContextMenuTrigger } from '@/src/hooks/useContextMenuTrigger';
+import { useScrollToEntity } from '@/src/hooks/useScrollToEntity';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -233,6 +234,11 @@ export const ConversationComponent = ({
     }
     setIsContextMenu(true);
   }, []);
+
+  useScrollToEntity({
+    entityId: conversation.id,
+    elementRef: conversationRef,
+  });
 
   useContextMenuTrigger(handleContextMenuOpen, conversationRef);
 
