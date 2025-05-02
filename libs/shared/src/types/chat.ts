@@ -23,6 +23,7 @@ export interface Attachment {
   url?: string;
   reference_type?: MIMEType;
   reference_url?: string;
+  openFullScreen?: boolean;
 }
 
 export type StageStatus = 'completed' | 'failed' | null;

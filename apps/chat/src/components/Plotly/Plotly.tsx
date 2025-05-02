@@ -16,6 +16,7 @@ export const PlotlyComponent = memo(
   ({ plotlyData: { layout, ...data } }: Props) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [width, setWidth] = useState(0);
+    const [height, setHeight] = useState(0);
     const [currentLayout, setCurrentLayout] = useState<Partial<Layout>>(layout);
 
     useEffect(() => {
@@ -23,7 +24,11 @@ export const PlotlyComponent = memo(
         return;
       }
 
+      const containerHeight = containerRef.current.clientHeight;
+      const layoutHeight = currentLayout.height && currentLayout.height > containerHeight ? currentLayout.height : containerHeight;
+      setHeight(layoutHeight);
       setWidth(containerRef.current.scrollWidth);
+
     }, []);
 
     const handleRelayout = (newLayout: PlotRelayoutEvent) => {
@@ -35,7 +40,7 @@ export const PlotlyComponent = memo(
       <div ref={containerRef} className="size-full">
         <Plot
           {...data}
-          layout={{ ...currentLayout, width }}
+          layout={{ ...currentLayout, width, height }}
           onRelayout={handleRelayout}
         />
       </div>

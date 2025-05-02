@@ -280,9 +280,10 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     <div
       data-no-context-menu
       className={classNames(
-        'rounded bg-layer-3 px-1 py-2',
+        'bg-layer-3 rounded px-1 py-2',
         isExpanded && 'col-span-1 col-start-1 sm:col-span-2 md:col-span-3',
-        !isInner && 'border border-secondary',
+        !isInner && 'border-secondary border',
+        attachment.openFullScreen && isOpened && 'fixed inset-x-0 top-0 z-40 flex h-full flex-col',
       )}
     >
       <div className="flex items-center gap-3 px-2">
@@ -303,7 +304,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               </a>
             </Tooltip>
           ) : (
-            <Icon size={18} className="shrink-0 text-secondary" />
+            <Icon size={18} className="text-secondary shrink-0" />
           )}
         </div>
         <button
@@ -348,7 +349,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
                 height={18}
                 width={18}
                 className={classNames(
-                  'shrink-0 text-secondary transition',
+                  'text-secondary shrink-0 transition',
                   isOpened && 'rotate-180',
                 )}
               />
@@ -371,7 +372,10 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
       </div>
       {isOpenable && isOpened && (
         <div
-          className="relative mt-2 h-auto w-full overflow-hidden border-t border-tertiary p-3 pt-4 text-sm duration-200"
+          className={classNames(
+            'border-tertiary relative mt-2 w-full border-t p-3 pt-4 text-sm duration-200',
+            attachment.openFullScreen ? 'grow overflow-auto' : 'h-auto overflow-hidden'
+          )}
           ref={anchorRef}
         >
           {attachment.data && (
@@ -388,7 +392,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               href={mappedAttachmentReferenceUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 block text-accent-primary"
+              className="text-accent-primary mt-3 block"
             >
               {t('Reference...')}
             </a>
