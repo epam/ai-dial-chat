@@ -2,7 +2,6 @@ import React, { memo } from 'react';
 
 import classNames from 'classnames';
 
-import { useApplicationMenuActions } from '@/src/hooks/useApplicationActions';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -16,12 +15,12 @@ import { Translation } from '@/src/types/translation';
 import { CardIconSizes } from '@/src/constants/marketplace';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
-import ContextMenu from '@/src/components/Common/ContextMenu';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import ShareIcon from '@/src/components/Common/ShareIcon';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
 import { AgentBookmark } from '../../AgentBookmark';
+import { AgentContextMenu } from '../../AgentContextMenu';
 import { TopicsList } from '../../TopicsList';
 
 import { PublishActions } from '@epam/ai-dial-shared';
@@ -74,9 +73,6 @@ export const ApplicationCard = memo(
     const screenState = useScreenState();
 
     const isMyApp = isMyApplication(entity);
-
-    const { menuItems } = useApplicationMenuActions({ entity });
-
     const { iconSize, shareIconSize } = CardIconSizes[screenState];
 
     return (
@@ -93,14 +89,11 @@ export const ApplicationCard = memo(
           <div className="absolute right-4 top-4 flex gap-1 xl:right-5 xl:top-5">
             {!isPreview && (
               <>
-                <ContextMenu
-                  menuItems={menuItems}
-                  featureType={FeatureType.Application}
-                  triggerIconHighlight
-                  triggerIconSize={18}
-                  className="m-0 xl:invisible group-hover:xl:visible"
+                <AgentContextMenu
+                  isPreview={isPreview}
+                  className="xl:invisible group-hover:xl:visible"
+                  entity={entity}
                 />
-
                 <AgentBookmark
                   onBookmarkClick={onBookmarkClick}
                   entity={entity}

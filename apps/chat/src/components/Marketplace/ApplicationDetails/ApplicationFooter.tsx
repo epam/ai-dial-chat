@@ -47,9 +47,9 @@ import {
 } from '@/src/constants/marketplace';
 
 import { ModelVersionSelect } from '../../Chat/ModelVersionSelect';
-import ContextMenu from '../../Common/ContextMenu';
 import Tooltip from '../../Common/Tooltip';
 import { AgentBookmark } from '../AgentBookmark';
+import { AgentContextMenu } from '../AgentContextMenu';
 import { ApplicationLogs } from '../ApplicationLogs';
 import { ApplicationCopyLink } from './ApplicationCopyLink';
 
@@ -105,7 +105,13 @@ export const ApplicationDetailsFooter = ({
 
   const canWrite = canWriteSharedWithMe(entity);
 
-  const { menuItems, actions } = useApplicationMenuActions({ entity });
+  const {
+    handleDelete,
+    handleUnpublish,
+    handlePublish,
+    handleEdit,
+    handleOpenApplicationLogs,
+  } = useApplicationMenuActions(entity);
 
   const isExecutable = isExecutableApp(entity) && (isMyApp || canWrite);
 
@@ -158,21 +164,17 @@ export const ApplicationDetailsFooter = ({
     SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
   );
 
-  const hasBookmark = !isMyApp && !entity.sharedWithMe;
-  const countDisplayTrue = menuItems.filter((item) => item.display).length;
-  const menuItemsCount = hasBookmark ? countDisplayTrue + 1 : countDisplayTrue;
+  const showContextMenu = entity.reference !== entity.id;
 
   return (
     <section className="flex px-3 py-4 md:px-6">
       <div className="flex w-full items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          {isSmallScreen && menuItemsCount > 2 ? (
+          {isSmallScreen && showContextMenu ? (
             <button className="icon-button">
-              <ContextMenu
-                menuItems={menuItems}
-                featureType={FeatureType.Application}
-                triggerIconHighlight
-                className="m-0 xl:invisible group-hover:xl:visible"
+              <AgentContextMenu
+                className="xl:invisible group-hover:xl:visible"
+                entity={entity}
               />
             </button>
           ) : (
@@ -226,7 +228,7 @@ export const ApplicationDetailsFooter = ({
                 <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
                   <button
                     disabled={isModifyDisabled}
-                    onClick={actions.handleDelete}
+                    onClick={handleDelete}
                     className="icon-button"
                     data-qa="application-delete"
                   >
@@ -237,11 +239,7 @@ export const ApplicationDetailsFooter = ({
               {(isMyApp || hasPublicId) && (
                 <Tooltip tooltip={hasPublicId ? t('Unpublish') : t('Publish')}>
                   <button
-                    onClick={
-                      hasPublicId
-                        ? actions.handleUnpublish
-                        : actions.handlePublish
-                    }
+                    onClick={hasPublicId ? handleUnpublish : handlePublish}
                     className="icon-button"
                     data-qa="application-publish"
                   >
@@ -257,7 +255,7 @@ export const ApplicationDetailsFooter = ({
                 <Tooltip tooltip={t('Edit')}>
                   <button
                     disabled={isAppInDeployment}
-                    onClick={actions.handleEdit}
+                    onClick={handleEdit}
                     className="icon-button"
                     data-qa="application-edit"
                   >
@@ -269,7 +267,7 @@ export const ApplicationDetailsFooter = ({
                 playerStatus === SimpleApplicationStatus.UNDEPLOY && (
                   <Tooltip tooltip={t('Application logs')}>
                     <button
-                      onClick={actions.handleOpenApplicationLogs}
+                      onClick={handleOpenApplicationLogs}
                       className="icon-button"
                       data-qa="application-logs"
                     >

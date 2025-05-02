@@ -4,18 +4,17 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { useApplicationMenuActions } from '@/src/hooks/useApplicationActions';
 import { useScreenState } from '@/src/hooks/useScreenState';
 
-import { FeatureType, ScreenState } from '@/src/types/common';
+import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import ContextMenu from '@/src/components/Common/ContextMenu';
 import { DateRenderer } from '@/src/components/Common/DateRenderer';
 import Tooltip from '@/src/components/Common/Tooltip';
 
 import { AgentBookmark } from '../../AgentBookmark';
+import { AgentContextMenu } from '../../AgentContextMenu';
 import { ApplicationTopic } from '../../ApplicationTopic';
 import { TopicsList } from '../../TopicsList';
 
@@ -40,8 +39,6 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
     const { t } = useTranslation(Translation.Marketplace);
 
     const screenState = useScreenState();
-
-    const { menuItems } = useApplicationMenuActions({ entity });
 
     const { visibleTopics, hiddenTopics } = useMemo<{
       visibleTopics: string[];
@@ -117,15 +114,9 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
         <div className="hidden flex-none items-center xl:flex">
           <div className="flex gap-1">
             <AgentBookmark onBookmarkClick={onBookmarkClick} entity={entity} />
-            <ContextMenu
-              menuItems={menuItems}
-              featureType={FeatureType.Application}
-              triggerIconHighlight
-              triggerIconSize={18}
-              className={classNames(
-                'm-0',
-                isHovered ? 'xl:visible' : 'xl:invisible',
-              )}
+            <AgentContextMenu
+              className={isHovered ? 'xl:visible' : 'xl:invisible'}
+              entity={entity}
             />
           </div>
         </div>
