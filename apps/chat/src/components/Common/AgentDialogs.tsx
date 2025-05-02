@@ -9,7 +9,6 @@ import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions, ModelsActions } from '@/src/store/actions';
-import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MarketplaceActions,
@@ -66,7 +65,6 @@ export const AgentDialogs = () => {
 
   const deleteModel = useAppSelector(MarketplaceSelectors.selectDeleteModel);
   const publishModel = useAppSelector(PublicationSelectors.selectPublishModel);
-  const logsEntityId = useAppSelector(ApplicationSelectors.selectLogsEntityId);
 
   const handleDeleteClose = useCallback(
     (confirm: boolean) => {
@@ -93,10 +91,6 @@ export const AgentDialogs = () => {
     dispatch(PublicationActions.setPublishModel());
   }, [dispatch]);
 
-  const handleCloseApplicationLogs = useCallback(() => {
-    dispatch(ApplicationActions.setLogsEntityId());
-  }, [dispatch]);
-
   return (
     <>
       {/* MODALS */}
@@ -117,13 +111,7 @@ export const AgentDialogs = () => {
           publishAction={publishModel.action}
         />
       )}
-      {logsEntityId && (
-        <ApplicationLogs
-          isOpen
-          onClose={handleCloseApplicationLogs}
-          entityId={logsEntityId}
-        />
-      )}
+      <ApplicationLogs />
     </>
   );
 };

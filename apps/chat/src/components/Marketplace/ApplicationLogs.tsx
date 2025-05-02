@@ -1,5 +1,5 @@
 import { IconDownload, IconRefresh } from '@tabler/icons-react';
-import React from 'react';
+import { useCallback, useEffect } from 'react';
 
 import classNames from 'classnames';
 
@@ -16,6 +16,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { Modal } from '../Common/Modal';
+import { withRenderWhen } from '../Common/RenderWhen';
 import { Spinner } from '../Common/Spinner';
 import Tooltip from '../Common/Tooltip';
 
@@ -72,11 +73,20 @@ const LogsFooter = ({ entityId }: { entityId: string }) => {
     ApplicationSelectors.selectIsLogsLoading,
   );
 
+  const uploadLogs = useCallback(
+    () => dispatch(ApplicationActions.getLogs(entityId)),
+    [dispatch, entityId],
+  );
+
+  useEffect(() => {
+    uploadLogs();
+  }, [uploadLogs]);
+
   return (
     <div className="flex items-center justify-between gap-3 divide-y-0 border-t border-tertiary px-3 py-4 md:px-6">
       <Tooltip tooltip={t('Reload logs')}>
         <button
-          onClick={() => dispatch(ApplicationActions.getLogs(entityId))}
+          onClick={uploadLogs}
           className="icon-button"
           data-qa="application-reload-logs"
           disabled={isLogsLoading}
@@ -115,28 +125,27 @@ const LogsFooter = ({ entityId }: { entityId: string }) => {
   );
 };
 
-interface ApplicationLogsProps {
-  entityId: string;
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export const ApplicationLogs = ({
-  entityId,
-  isOpen,
-  onClose,
-}: ApplicationLogsProps) => {
+export const ApplicationLogsView = () => {
+  const dispatch = useAppDispatch();
+  const logsEntityId = useAppSelector(ApplicationSelectors.selectLogsEntityId);
+  const handleClose = useCallback(() => {
+    dispatch(ApplicationActions.setLogsEntityId());
+  }, [dispatch]);
   return (
     <Modal
       portalId="theme-main"
-      state={isOpen}
+      state
       dataQa="marketplace-application-logs"
       containerClassName="group/modal flex w-full flex-col min-h-[350px] xl:max-w-[820px] max-w-[800px]"
-      onClose={onClose}
+      onClose={handleClose}
     >
       <LogsHeader />
       <LogsView />
-      <LogsFooter entityId={entityId} />
+      <LogsFooter entityId={logsEntityId!} />
     </Modal>
   );
 };
+
+export const ApplicationLogs = withRenderWhen(
+  ApplicationSelectors.selectLogsEntityId,
+)(ApplicationLogsView);
