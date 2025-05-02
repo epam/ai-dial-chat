@@ -14,6 +14,8 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isTabletScreenOrMobile } from '@/src/utils/app/mobile';
+
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -55,6 +57,8 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
     pathname,
   } = useRouter();
   const { t } = useTranslation(Translation.Chat);
+
+  const isTabletOrMobile = isTabletScreenOrMobile();
 
   const isUserSettingsOpen = useAppSelector(
     UISelectors.selectIsUserSettingsOpen,
@@ -161,17 +165,21 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
               {menuOpen ? <IconX size={24} /> : <IconMenu2 size={24} />}
             </button>
           </div>
-          <Logo />
-          <div className="h-full border-l border-secondary"></div>
+          {!isTabletOrMobile && (
+            <>
+              <Logo />
+              <div className="h-full border-l border-secondary"></div>
+            </>
+          )}
           <span
-            className="hidden items-center text-primary md:flex"
+            className="hidden items-center pl-1 text-primary md:flex xl:pl-0"
             data-qa="action-application-type-title"
           >
             {isEditApplication && !add ? t('Edit') : t('Add')}{' '}
             {applicationTypeDisplayName}
           </span>
           <div
-            className="hidden items-center space-x-2 md:flex"
+            className="hidden items-center md:flex"
             data-qa="steps-container"
           >
             {tabs.map((tab, index) => {
@@ -188,7 +196,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
                   >
                     <div
                       className={classNames(
-                        'flex cursor-pointer items-center gap-2 rounded px-1 py-1.5 hover:bg-accent-primary-alpha',
+                        'flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-accent-primary-alpha',
                         isDisabled ? 'text-secondary' : 'text-primary',
                       )}
                       onClick={handleTabClick(isDisabled)}
@@ -232,10 +240,10 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
           </div>
         </div>
 
-        <div className="flex h-full items-center space-x-2">
+        <div className="flex h-full items-center space-x-2 pr-5 xl:pr-0">
           {isEditApplication && !hasCustomEditor ? (
             <button
-              className="button flex items-center space-x-1 text-accent-primary md:flex"
+              className="xl:button flex items-center space-x-1 text-accent-primary md:flex"
               onClick={handleSaveAndRedirect}
               data-qa="save-and-exit"
             >
@@ -255,10 +263,11 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
               <span>{t('Exit')}</span>
             </Link>
           )}
-
-          <div className="h-full max-md:pr-2 md:border-l md:border-secondary md:pl-2">
-            <User />
-          </div>
+          {!isTabletOrMobile && (
+            <div className="h-full max-md:pr-2 md:border-l md:border-secondary md:pl-2">
+              <User />
+            </div>
+          )}
         </div>
       </div>
 

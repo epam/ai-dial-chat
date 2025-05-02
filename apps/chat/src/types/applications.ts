@@ -134,3 +134,9 @@ export enum ApplicationType {
   CUSTOM_APP = 'custom app',
   CODE_APP = 'code app',
 }
+
+export enum PreviewMode {
+  half,
+  full,
+  closed,
+}
