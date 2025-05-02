@@ -6,7 +6,7 @@ import {
   IconUserShare,
   IconWorldShare,
 } from '@tabler/icons-react';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 
 import classNames from 'classnames';
 
@@ -50,7 +50,6 @@ import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import Tooltip from '@/src/components/Common/Tooltip';
 import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
 import { AgentContextMenu } from '@/src/components/Marketplace/AgentContextMenu';
-import { ApplicationLogs } from '@/src/components/Marketplace/ApplicationLogs';
 
 import { ApplicationCopyLink } from './ApplicationCopyLink';
 
@@ -90,8 +89,6 @@ export const ApplicationDetailsFooter = ({
   const dispatch = useAppDispatch();
   const screenState = useScreenState();
 
-  const [isOpenLogs, setIsOpenLogs] = useState<boolean>();
-
   const isCodeAppsEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
   );
@@ -119,11 +116,6 @@ export const ApplicationDetailsFooter = ({
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
   const isAppInDeployment = isApplicationDeploymentInProgress(entity);
-
-  const handleCloseApplicationLogs = useCallback(
-    () => setIsOpenLogs(false),
-    [setIsOpenLogs],
-  );
 
   const PlayerIcon = StatusIcons[playerStatus];
 
@@ -326,13 +318,6 @@ export const ApplicationDetailsFooter = ({
           </Tooltip>
         </div>
       </div>
-      {isOpenLogs && (
-        <ApplicationLogs
-          isOpen={isOpenLogs}
-          onClose={handleCloseApplicationLogs}
-          entityId={entity.id}
-        />
-      )}
     </section>
   );
 };
