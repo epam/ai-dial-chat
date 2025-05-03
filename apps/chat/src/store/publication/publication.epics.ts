@@ -1096,11 +1096,10 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
             );
           }
 
-          const appResources = selectedPublication.resources.filter((r) =>
-            isApplicationId(r.targetUrl),
-          );
-          const appResourcesToUnpublish = appResources.filter(
-            (r) => r.action === PublishActions.DELETE,
+          const appResourcesToUnpublish = selectedPublication.resources.filter(
+            (r) =>
+              r.action === PublishActions.DELETE &&
+              isApplicationId(r.targetUrl),
           );
 
           if (appResourcesToUnpublish.length) {
