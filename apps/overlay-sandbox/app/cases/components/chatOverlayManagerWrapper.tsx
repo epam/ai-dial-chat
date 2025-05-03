@@ -160,7 +160,7 @@ export const ChatOverlayManagerWrapper: React.FC<
                 const conversation =
                   await overlayManager.current?.createConversation(
                     overlayManagerOptions.id,
-                    'test-inner-folder',
+                    'test-inner-folder-root/test-inner-folder-child',
                   );
 
                 handleDisplayInformation(JSON.stringify(conversation, null, 2));
