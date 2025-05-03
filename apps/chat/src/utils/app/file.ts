@@ -4,7 +4,12 @@ import { translate } from '@/src/utils/app/translation';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
-import { DialFile, DialLink, FileFolderAttachment, FileValidationErrors } from '@/src/types/files';
+import {
+  DialFile,
+  DialLink,
+  FileFolderAttachment,
+  FileValidationErrors,
+} from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 
 import { MAX_FILE_SIZE_IN_BYTES } from '@/src/constants/file';
