@@ -3,13 +3,9 @@ import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 
 import { Conversation } from '@/src/types/chat';
-import {
-  DialFile,
-  DialLink,
-  FileFolderAttachment,
-  FileValidationErrors,
-} from '@/src/types/files';
-import { FolderInterface, FolderType } from '@/src/types/folder';
+import { FeatureType } from '@/src/types/common';
+import { DialFile, DialLink, FileFolderAttachment, FileValidationErrors } from '@/src/types/files';
+import { FolderInterface } from '@/src/types/folder';
 
 import { MAX_FILE_SIZE_IN_BYTES } from '@/src/constants/file';
 import {
@@ -233,7 +229,7 @@ export const getDialFoldersFromAttachments = (
 
       return {
         id: attachment.url,
-        type: FolderType.File,
+        type: FeatureType.File,
         contentType: FOLDER_ATTACHMENT_CONTENT_TYPE,
         name,
         folderId: absolutePath,

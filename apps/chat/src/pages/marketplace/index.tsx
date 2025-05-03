@@ -11,7 +11,6 @@ import { Routes } from '@/src/constants/routes';
 
 import { getLayout } from '@/src/pages/_app';
 
-import { ChatModalsManager } from '@/src/components/Chat/ChatModalsManager';
 import Loader from '@/src/components/Common/Loader';
 import { Marketplace as MarketplaceView } from '@/src/components/Marketplace/Marketplace';
 import { MarketplaceHeader } from '@/src/components/Marketplace/MarketplaceHeader';
@@ -37,8 +36,6 @@ function Marketplace() {
       <MarketplaceHeader />
       <div className="flex size-full grow overflow-hidden">
         <MarketplaceView />
-
-        <ChatModalsManager />
       </div>
     </div>
   );

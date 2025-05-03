@@ -14,7 +14,6 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { getLayout } from '@/src/pages/_app';
 
-import { ChatModalsManager } from '../components/Chat/ChatModalsManager';
 import { ImportExportLoader } from '../components/Chatbar/ImportExportLoader';
 import { AnnouncementsBanner } from '../components/Common/AnnouncementBanner';
 import { Chat } from '@/src/components/Chat/Chat';
@@ -100,7 +99,6 @@ function Home() {
               <Chat />
               <ImportExportLoader />
             </div>
-            <ChatModalsManager />
           </div>
         </div>
       )}
