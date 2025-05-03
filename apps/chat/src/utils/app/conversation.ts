@@ -20,7 +20,7 @@ import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-setti
 import { getConversationApiKey, parseConversationApiKey } from '../server/api';
 import { DefaultsService } from './data/defaults-service';
 import { constructPath } from './file';
-import { getConversationRootId, isEntityIdLocal } from './id';
+import { getConversationRootId, getFileRootId, isEntityIdLocal } from './id';
 
 import {
   ConversationInfo,
@@ -359,3 +359,7 @@ export const isReplayConversation = (conversation: ConversationInfo) =>
 
 export const isReplayAsIsConversation = (conversation: ConversationInfo) =>
   (conversation as Conversation).replay?.replayAsIs ?? false;
+
+export const getQuickAttachmentsSavingPath = () => {
+  return `${getFileRootId()}/temp`;
+};
