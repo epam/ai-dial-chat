@@ -95,9 +95,10 @@ export const AgentContextMenu: React.FC<Props> = ({
   const canWrite = canWriteSharedWithMe(entity);
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
-  const hasEditPermissions = isMyApp || canWrite || isAdmin;
-  const isExecutable = isExecutableApp(entity) && hasEditPermissions;
+  const isExecutable =
+    isExecutableApp(entity) && (isMyApp || canWrite || isAdmin);
   const isMyAppOrPreview = isMyApp || isPreview;
+  const canEdit = isMyApp || !!canWrite;
 
   const PlayerContextIcon = PlayerContextIcons[playerStatus];
 
@@ -115,10 +116,7 @@ export const AgentContextMenu: React.FC<Props> = ({
         dataQa: 'status-change',
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
         display:
-          isExecutable &&
-          isCodeAppsEnabled &&
-          hasEditPermissions &&
-          disabledActions.deploy !== true,
+          isExecutable && isCodeAppsEnabled && disabledActions.deploy !== true,
         Icon: PlayerContextIcon,
         iconClassName: PlayerContextIconClasses[playerStatus],
         onClick: handleUpdateFunctionStatus,
@@ -126,7 +124,7 @@ export const AgentContextMenu: React.FC<Props> = ({
       {
         name: t('Edit'),
         dataQa: 'edit',
-        display: hasEditPermissions && disabledActions.edit !== true,
+        display: canEdit && disabledActions.edit !== true,
         Icon: IconPencilMinus,
         onClick: handleEdit,
       },
@@ -187,23 +185,23 @@ export const AgentContextMenu: React.FC<Props> = ({
     [
       t,
       isPublicApp,
-      disabledActions?.copyLink,
-      disabledActions?.deploy,
-      disabledActions?.edit,
-      disabledActions?.share,
-      disabledActions?.unshare,
-      disabledActions?.publish,
-      disabledActions?.unpublish,
-      disabledActions?.logs,
-      disabledActions?.delete,
+      disabledActions.copyLink,
+      disabledActions.deploy,
+      disabledActions.edit,
+      disabledActions.share,
+      disabledActions.unshare,
+      disabledActions.publish,
+      disabledActions.unpublish,
+      disabledActions.logs,
+      disabledActions.delete,
       handleCopy,
       entity,
       playerStatus,
       isExecutable,
       isCodeAppsEnabled,
-      hasEditPermissions,
       PlayerContextIcon,
       handleUpdateFunctionStatus,
+      canEdit,
       handleEdit,
       isMyApp,
       isApplicationsSharingEnabled,
