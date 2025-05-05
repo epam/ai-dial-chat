@@ -5,21 +5,15 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getApplicationType } from '@/src/utils/app/application';
-import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
-import { translate } from '@/src/utils/app/translation';
 import {
   doesApplicationMatchFilters,
   doesApplicationMatchSearchTerm,
 } from '@/src/utils/marketplace';
-import { ApiUtils } from '@/src/utils/server/api';
 
 import { DialAIEntityModel } from '@/src/types/models';
-import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -38,18 +32,14 @@ import {
   ViewTypes,
 } from '@/src/constants/marketplace';
 
-import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
-import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
 import { ApplicationDetails } from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
 import { MarketplaceBanner } from '@/src/components/Marketplace/MarketplaceBanner';
 import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
 
-import { NoResultsFound } from '../Common/NoResultsFound';
+import { AgentDialogs } from '../Common/AgentDialogs';
 import { AgentsTable } from './AgentsList/AgentsTable/AgentsTable';
 import { AgentsTiles } from './AgentsList/AgentsTiles/AgentsTiles';
-import { ApplicationLogs } from './ApplicationLogs';
-
-import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 
 interface NoAgentsFoundProps {
   children: React.ReactNode;
@@ -89,11 +79,7 @@ interface ResultsViewProps {
   areAllFiltersEmpty: boolean;
   selectedViewType: ViewTypes;
   onCardClick: (entity: DialAIEntityModel) => void;
-  onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
-  onDelete: (entity: DialAIEntityModel) => void;
-  onEdit: (entity: DialAIEntityModel) => void;
   onBookmarkClick: (entity: DialAIEntityModel) => void;
-  onLogsClick: (entity: DialAIEntityModel) => void;
 }
 
 const ResultsView = memo(
@@ -141,42 +127,7 @@ const ResultsView = memo(
 );
 ResultsView.displayName = 'ResultsView';
 
-const getDeleteConfirmationText = (
-  action: DeleteType,
-  entity: DialAIEntityModel,
-) => {
-  const translationVariables = {
-    modelName: entity.name,
-    modelVersion: entity.version
-      ? translate(' (version {{version}})', { version: entity.version })
-      : '',
-  };
-
-  const deleteConfirmationText = {
-    [DeleteType.DELETE]: {
-      heading: translate('Confirm deleting application'),
-      description: translate(
-        'Are you sure you want to delete the {{modelName}}{{modelVersion}}?',
-        translationVariables,
-      ),
-      confirmLabel: translate('Delete'),
-    },
-    [DeleteType.REMOVE]: {
-      heading: translate('Confirm removing agent'),
-      description: translate(
-        'Are you sure you want to remove {{modelName}} from My workspace?',
-        translationVariables,
-      ),
-      confirmLabel: translate('Remove'),
-    },
-  };
-
-  return deleteConfirmationText[action];
-};
-
 export const TabRenderer = () => {
-  const { t } = useTranslation(Translation.Marketplace);
-
   const dispatch = useAppDispatch();
 
   const installedModelIds = useAppSelector(
@@ -198,9 +149,6 @@ export const TabRenderer = () => {
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
-  const detailedApplicationTypeSchema = useAppSelector(
-    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
-  );
   const isBannerVisible = useAppSelector(
     MarketplaceSelectors.selectIsBannerVisible,
   );
@@ -208,15 +156,6 @@ export const TabRenderer = () => {
   const [suggestedResults, setSuggestedResults] = useState<DialAIEntityModel[]>(
     [],
   );
-  const [deleteModel, setDeleteModel] = useState<{
-    action: DeleteType;
-    entity: DialAIEntityModel;
-  }>();
-  const [publishModel, setPublishModel] = useState<{
-    entity: ShareEntity & { iconUrl?: string };
-    action: PublishActions;
-  }>();
-  const [logsEntity, setLogsEntity] = useState<DialAIEntityModel>();
 
   const isSomeFilterNotEmpty =
     searchTerm.length ||
@@ -294,65 +233,6 @@ export const TabRenderer = () => {
     applicationTypeSchemas,
   ]);
 
-  const handleEditApplication = useCallback(
-    (entity: DialAIEntityModel) => {
-      const applicationType = getApplicationType(entity);
-      dispatch(
-        ApplicationActions.enterEditMode({
-          entity: entity,
-          applicationType,
-          detailedApplicationTypeSchemaId: detailedApplicationTypeSchema?.$id,
-        }),
-      );
-    },
-    [dispatch, detailedApplicationTypeSchema],
-  );
-
-  const handleDeleteClose = useCallback(
-    (confirm: boolean) => {
-      if (confirm && deleteModel) {
-        if (deleteModel.action === DeleteType.REMOVE) {
-          dispatch(
-            ModelsActions.removeInstalledModels({
-              references: [deleteModel.entity.reference],
-              action: DeleteType.REMOVE,
-            }),
-          );
-        } else if (deleteModel.action === DeleteType.DELETE) {
-          dispatch(ApplicationActions.delete(deleteModel.entity));
-        }
-
-        dispatch(MarketplaceActions.setDetailsModel());
-      }
-
-      setDeleteModel(undefined);
-    },
-    [deleteModel, dispatch],
-  );
-
-  const handleSetPublishEntity = useCallback(
-    (entity: DialAIEntityModel, action: PublishActions) =>
-      setPublishModel({
-        entity: {
-          name: entity.name,
-          id: ApiUtils.decodeApiUrl(entity.id),
-          folderId: getFolderIdFromEntityId(entity.id),
-          iconUrl: entity.iconUrl,
-        },
-        action,
-      }),
-    [],
-  );
-
-  const handlePublishClose = useCallback(() => setPublishModel(undefined), []);
-
-  const handleDelete = useCallback(
-    (entity: DialAIEntityModel) => {
-      setDeleteModel({ entity, action: DeleteType.DELETE });
-    },
-    [setDeleteModel],
-  );
-
   const handleSetDetailsModel = useCallback(
     (model: DialAIEntityModel) => {
       dispatch(
@@ -389,7 +269,12 @@ export const TabRenderer = () => {
   const handleBookmarkClick = useCallback(
     (entity: DialAIEntityModel) => {
       if (installedModelIds.has(entity.reference)) {
-        setDeleteModel({ entity, action: DeleteType.REMOVE });
+        dispatch(
+          MarketplaceActions.setDeleteModel({
+            entity,
+            action: DeleteType.REMOVE,
+          }),
+        );
       } else {
         dispatch(
           ModelsActions.addInstalledModels({
@@ -401,14 +286,6 @@ export const TabRenderer = () => {
     },
     [dispatch, installedModelIds],
   );
-
-  const handleLogsClick = useCallback((entity: DialAIEntityModel) => {
-    setLogsEntity(entity);
-  }, []);
-
-  const handleCloseApplicationLogs = useCallback(() => {
-    setLogsEntity(undefined);
-  }, []);
 
   const currentDetailsModel = detailsModel && modelsMap[detailsModel.reference];
 
@@ -445,52 +322,24 @@ export const TabRenderer = () => {
         areAllFiltersEmpty={areAllFiltersEmpty}
         selectedViewType={selectedViewType}
         onCardClick={handleSetDetailsModel}
-        onPublish={handleSetPublishEntity}
-        onDelete={handleDelete}
-        onEdit={handleEditApplication}
         onBookmarkClick={handleBookmarkClick}
-        onLogsClick={handleLogsClick}
       />
 
       {/* MODALS */}
-      {!!deleteModel && (
-        <ConfirmDialog
-          isOpen
-          {...getDeleteConfirmationText(deleteModel.action, deleteModel.entity)}
-          onClose={handleDeleteClose}
-          cancelLabel={t('Cancel')}
-        />
-      )}
+
       {currentDetailsModel && (
         <ApplicationDetails
-          onPublish={handleSetPublishEntity}
           entity={currentDetailsModel}
           onChangeVersion={handleSetVersion}
           onClose={handleCloseDetailsDialog}
-          onDelete={handleDelete}
-          onEdit={handleEditApplication}
           onBookmarkClick={handleBookmarkClick}
           allEntities={allModels}
           isMyAppsTab={selectedTab === MarketplaceTabs.MY_WORKSPACE}
           isSuggested={detailsModel.isSuggested}
         />
       )}
-      {!!(publishModel && publishModel?.entity?.id) && (
-        <PublishModal
-          entity={publishModel.entity}
-          type={SharingType.Application}
-          isOpen={!!publishModel}
-          onClose={handlePublishClose}
-          publishAction={publishModel.action}
-        />
-      )}
-      {logsEntity && (
-        <ApplicationLogs
-          isOpen
-          onClose={handleCloseApplicationLogs}
-          entityId={logsEntity.id}
-        />
-      )}
+
+      <AgentDialogs />
     </>
   );
 };

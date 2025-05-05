@@ -1,69 +1,39 @@
-import {
-  IconFileDescription,
-  IconPencilMinus,
-  IconTrashX,
-  IconUserShare,
-  IconWorldShare,
-} from '@tabler/icons-react';
 import React, { useCallback, useMemo } from 'react';
 
 import classNames from 'classnames';
 
-import { useMenuItemHandler } from '@/src/hooks/useHandler';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import {
-  getApplicationNextStatus,
-  getApplicationSimpleStatus,
-  getModelShortDescription,
-  getPlayerCaption,
-  isApplicationStatusUpdating,
-  isExecutableApp,
-} from '@/src/utils/app/application';
+import { getModelShortDescription } from '@/src/utils/app/application';
 import {
   isOldConversationReplay,
   isPlaybackConversation,
 } from '@/src/utils/app/conversation';
 import { isMyApplication } from '@/src/utils/app/id';
 import { getGroupModelKey } from '@/src/utils/app/models';
-import { canWriteSharedWithMe } from '@/src/utils/app/share';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
-import { SimpleApplicationStatus } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
-import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { AuthSelectors } from '@/src/store/auth/auth.reducers';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { ShareActions } from '@/src/store/share/share.reducers';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
-import {
-  CardIconSizes,
-  PlayerContextIconClasses,
-  PlayerContextIcons,
-} from '@/src/constants/marketplace';
+import { CardIconSizes } from '@/src/constants/marketplace';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
 import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
-import ContextMenu from '@/src/components/Common/ContextMenu';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
+import ShareIcon from '@/src/components/Common/ShareIcon';
+import { AgentContextMenu } from '@/src/components/Marketplace/AgentContextMenu';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
-
-import ShareIcon from '../../Common/ShareIcon';
-import { TopicsList } from '../../Marketplace/TopicsList';
-
-import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
-import { Feature } from '@epam/ai-dial-shared';
+import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 
 interface ApplicationCardProps {
   entity: DialAIEntityModel;
@@ -72,12 +42,13 @@ interface ApplicationCardProps {
   disabled: boolean;
   isUnavailableModel: boolean;
   onClick: (entity: DialAIEntityModel) => void;
-  onPublish: (entity: DialAIEntityModel) => void;
-  onDelete: (entity: DialAIEntityModel) => void;
-  onEdit: (entity: DialAIEntityModel) => void;
   onSelectVersion: (entity: DialAIEntityModel) => void;
-  onOpenLogs: (entity: DialAIEntityModel) => void;
 }
+
+const disabledActions = {
+  copyLink: true,
+  unpublish: true,
+};
 
 export const TalkToCard = ({
   entity,
@@ -86,36 +57,18 @@ export const TalkToCard = ({
   disabled,
   isUnavailableModel,
   onClick,
-  onDelete,
-  onEdit,
-  onPublish,
   onSelectVersion,
-  onOpenLogs,
 }: ApplicationCardProps) => {
   const { t } = useTranslation(Translation.Marketplace);
-
-  const dispatch = useAppDispatch();
 
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
   const allModels = useAppSelector(ModelsSelectors.selectModels);
-  const isCodeAppsEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
-  );
-  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
   const isMyEntity = isMyApplication(entity);
 
-  const canWrite = canWriteSharedWithMe(entity);
-
-  const isExecutable =
-    isExecutableApp(entity) && (isMyEntity || isAdmin || canWrite);
   const screenState = useScreenState();
-
-  const isApplicationsSharingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
-  );
 
   const { iconSize, shareIconSize } = CardIconSizes[screenState];
 
@@ -129,140 +82,11 @@ export const TalkToCard = ({
     );
   }, [allModels, entity, installedModelIds, isSelected]);
 
-  const isModifyDisabled = isApplicationStatusUpdating(entity);
-  const playerStatus = getApplicationSimpleStatus(entity);
-
-  const PlayerContextIcon = PlayerContextIcons[playerStatus];
-
-  const handleUpdateFunctionStatus = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      dispatch(
-        ApplicationActions.startUpdatingFunctionStatus({
-          id: entity.id,
-          status: getApplicationNextStatus(entity),
-        }),
-      );
-    },
-    [dispatch, entity],
-  );
-
   const handleSelectVersion = useCallback(
     (model: DialAIEntityModel) => {
       onSelectVersion(model);
     },
     [onSelectVersion],
-  );
-
-  const handleOpenSharing = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      dispatch(
-        ShareActions.share({
-          featureType: FeatureType.Application,
-          entity,
-        }),
-      );
-    },
-    [dispatch, entity],
-  );
-
-  const handleOpenUnshare = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      dispatch(ShareActions.setUnshareEntity(entity));
-    },
-    [dispatch, entity],
-  );
-
-  const handleEdit = useMenuItemHandler(onEdit, entity);
-  const handleDelete = useMenuItemHandler(onDelete, entity);
-  const handleOpenLogs = useMenuItemHandler(onOpenLogs, entity);
-  const handlePublish = useMenuItemHandler(onPublish, entity);
-
-  const menuItems: DisplayMenuItemProps[] = useMemo(
-    () => [
-      {
-        name: t(getPlayerCaption(entity)),
-        dataQa: 'status-change',
-        disabled: playerStatus === SimpleApplicationStatus.UPDATING,
-        display:
-          (isAdmin || isMyEntity || canWrite) &&
-          !!entity.functionStatus &&
-          isCodeAppsEnabled,
-        Icon: PlayerContextIcon,
-        iconClassName: PlayerContextIconClasses[playerStatus],
-        onClick: handleUpdateFunctionStatus,
-      },
-      {
-        name: t('Edit'),
-        dataQa: 'edit',
-        display: (isMyEntity || canWrite) && !!onEdit,
-        Icon: IconPencilMinus,
-        onClick: handleEdit,
-      },
-      {
-        name: t('Share'),
-        dataQa: 'share',
-        display: isMyEntity && isApplicationsSharingEnabled,
-        Icon: IconUserShare,
-        onClick: handleOpenSharing,
-      },
-      {
-        name: t('Unshare'),
-        dataQa: 'unshare',
-        display: !!entity.sharedWithMe && isApplicationsSharingEnabled,
-        Icon: IconUserUnshare,
-        onClick: handleOpenUnshare,
-      },
-      {
-        name: t('Publish'),
-        dataQa: 'publish',
-        display: isMyEntity && !!onPublish,
-        Icon: IconWorldShare,
-        onClick: handlePublish,
-      },
-      {
-        name: t('Logs'),
-        dataQa: 'app-logs',
-        display:
-          !!isExecutable && playerStatus === SimpleApplicationStatus.UNDEPLOY,
-        Icon: IconFileDescription,
-        onClick: handleOpenLogs,
-      },
-      {
-        name: t('Delete'),
-        dataQa: 'delete',
-        display: isMyEntity && !!onDelete,
-        disabled: isModifyDisabled,
-        Icon: IconTrashX,
-        iconClassName: 'stroke-error',
-        onClick: handleDelete,
-      },
-    ],
-    [
-      t,
-      entity,
-      playerStatus,
-      isAdmin,
-      isMyEntity,
-      isCodeAppsEnabled,
-      PlayerContextIcon,
-      handleUpdateFunctionStatus,
-      canWrite,
-      onEdit,
-      handleEdit,
-      isApplicationsSharingEnabled,
-      handleOpenSharing,
-      handleOpenUnshare,
-      onPublish,
-      handlePublish,
-      isExecutable,
-      handleOpenLogs,
-      onDelete,
-      isModifyDisabled,
-      handleDelete,
-    ],
   );
 
   const isOldReplay =
@@ -288,12 +112,10 @@ export const TalkToCard = ({
       data-qa="agent"
     >
       <div className="absolute right-4 top-4 flex cursor-pointer gap-1 xl:right-5 xl:top-5">
-        <ContextMenu
-          menuItems={menuItems}
-          featureType={FeatureType.Application}
-          triggerIconHighlight
-          triggerIconSize={18}
-          className="m-0 xl:invisible group-hover:xl:visible"
+        <AgentContextMenu
+          entity={entity}
+          disabledActions={disabledActions}
+          className="xl:invisible group-hover:xl:visible"
         />
       </div>
       <div className="flex items-center gap-4 overflow-hidden">

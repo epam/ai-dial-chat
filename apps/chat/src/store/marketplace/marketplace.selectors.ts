@@ -94,3 +94,6 @@ export const selectSourceTypes = createSelector(
     );
   },
 );
+
+export const selectDeleteModel = (state: RootState) =>
+  rootSelector(state).deleteModel;

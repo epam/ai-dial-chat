@@ -40,11 +40,7 @@ export const AgentsTiles: React.FC<AgentsListProps> = ({
   suggestedResults,
   separator,
   onCardClick,
-  onPublish,
-  onDelete,
-  onEdit,
   onBookmarkClick,
-  onLogsClick,
 }) => {
   const wrapperRefs = useRef<{
     parentRef: React.RefObject<HTMLDivElement>;
@@ -175,11 +171,7 @@ export const AgentsTiles: React.FC<AgentsListProps> = ({
                     <ApplicationCard
                       key={entity.id}
                       entity={entity}
-                      onPublish={onPublish}
-                      onDelete={onDelete}
                       onClick={onCardClick}
-                      onEdit={onEdit}
-                      onLogsClick={onLogsClick}
                       onBookmarkClick={onBookmarkClick}
                       dataQA={
                         suggestedResults.includes(entity)
