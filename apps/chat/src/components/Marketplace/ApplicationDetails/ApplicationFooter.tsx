@@ -103,6 +103,9 @@ export const ApplicationDetailsFooter = ({
 
   const canWrite = canWriteSharedWithMe(entity);
 
+  const isExecutable =
+    isExecutableApp(entity) && (isMyApp || canWrite || isAdmin);
+
   const {
     handleDelete,
     handleUnpublish,
@@ -110,8 +113,6 @@ export const ApplicationDetailsFooter = ({
     handleEdit,
     handleOpenApplicationLogs,
   } = useApplicationMenuActions(entity);
-
-  const isExecutable = isExecutableApp(entity) && (isMyApp || canWrite);
 
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
