@@ -14,40 +14,55 @@ export class MarketplacePage extends BasePage {
   }
 
   async openMyWorkspacePage(
-    options: { updateInstalledDeployments?: boolean } = {
+    options: { updateInstalledDeployments?: boolean;
+      getInstalledDeployments?: boolean;
+      getPublishedApplications?: boolean;
+    } = {
       updateInstalledDeployments: true,
+      getInstalledDeployments: false,
+      getPublishedApplications: true,
     },
   ): Promise<void> {
     await this.openMarketplaceUrl(ExpectedConstants.workspacePath(), {
       updateInstalledDeployments: options.updateInstalledDeployments,
-      getInstalledDeployments: false,
-      getPublishedApplications: true,
+      getInstalledDeployments: options.getInstalledDeployments,
+      getPublishedApplications: options.getPublishedApplications,
     });
     await this.waitForPageLoaded();
   }
 
   async openMarketplacePage(
-    options: { updateInstalledDeployments?: boolean } = {
-      updateInstalledDeployments: false,
+    options: { updateInstalledDeployments?: boolean;
+      getInstalledDeployments?: boolean;
+      getPublishedApplications?: boolean;
+    } = {
+      updateInstalledDeployments: true,
+      getInstalledDeployments: false,
+      getPublishedApplications: true,
     },
   ): Promise<void> {
     await this.openMarketplaceUrl(ExpectedConstants.marketplacePath, {
       updateInstalledDeployments: options.updateInstalledDeployments,
-      getInstalledDeployments: true,
-      getPublishedApplications: true,
+      getInstalledDeployments: options.getInstalledDeployments,
+      getPublishedApplications: options.getPublishedApplications,
     });
     await this.waitForPageLoaded();
   }
 
   async openCreateCustomAppPage(
-    options: { updateInstalledDeployments?: boolean } = {
+    options: { updateInstalledDeployments?: boolean;
+      getInstalledDeployments?: boolean;
+      getPublishedApplications?: boolean;
+    } = {
       updateInstalledDeployments: true,
+      getInstalledDeployments: false,
+      getPublishedApplications: false,
     },
   ): Promise<void> {
     await this.openMarketplaceUrl(ExpectedConstants.createCustomAppPath, {
       updateInstalledDeployments: options.updateInstalledDeployments,
-      getInstalledDeployments: false,
-      getPublishedApplications: false,
+      getInstalledDeployments: options.getInstalledDeployments,
+      getPublishedApplications: options.getPublishedApplications,
     });
   }
 
@@ -93,7 +108,10 @@ export class MarketplacePage extends BasePage {
 
     // Perform navigation and wait for all expected responses
     await this.navigateToUrl(url);
-    await Promise.all(responsePromises);
+    // await Promise.all(responsePromises);
+    for (const resp of responsePromises) {
+      await resp;
+    }
   }
 
   async waitForPageLoaded() {
