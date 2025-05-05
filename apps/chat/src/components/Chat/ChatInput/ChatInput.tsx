@@ -8,7 +8,7 @@ import {
 
 import classNames from 'classnames';
 
-import { useFilePaste } from '@/src/hooks/useCopyPaste';
+import { useFilePaste } from '@/src/hooks/useFilePaste';
 import { useUploadFilesHandler } from '@/src/hooks/useUploadFilesHandler';
 
 import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';

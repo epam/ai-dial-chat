@@ -1,8 +1,13 @@
+import { IconFileFilled, IconFileXFilled } from '@tabler/icons-react';
 import { DragEvent, ReactNode, useCallback, useState } from 'react';
 
 import classNames from 'classnames';
 
+import { useTranslation } from '@/src/hooks/useTranslation';
+
 import { getFileNameExtension } from '@/src/utils/app/file';
+
+import { Translation } from '@/src/types/translation';
 
 interface FileDropAreaProps {
   children: ReactNode;
@@ -17,6 +22,8 @@ export const FileDropArea = ({
   className,
   onDrop,
 }: FileDropAreaProps) => {
+  const { t } = useTranslation(Translation.Files);
+
   const [isDraggingOver, setIsDraggingOver] = useState(false);
 
   const handleDragOver = useCallback((e: DragEvent) => {
@@ -59,15 +66,36 @@ export const FileDropArea = ({
         <div
           onDragLeave={handleDragLeave}
           className={classNames(
-            'absolute z-50 flex size-full items-start justify-center bg-accent-primary-alpha pt-[100px]',
+            'absolute z-50 flex size-full items-center justify-center bg-overlay backdrop-blur-sm',
             droppable ? 'cursor-copy' : 'cursor-not-allowed',
           )}
         >
-          <h1 className="text-lg font-bold text-primary">
-            {droppable
-              ? 'Drop items here'
-              : 'This conversation does not support attachments'}
-          </h1>
+          <div className="flex flex-col items-center">
+            {droppable ? (
+              <>
+                <IconFileFilled
+                  size="100px"
+                  className="mb-5 text-accent-primary"
+                />
+                <h5 className="mb-4 text-lg font-semibold text-primary">
+                  {t('Add files')}
+                </h5>
+                <p className="text-sm text-primary">
+                  {t('Drop files here to add them to conversation')}
+                </p>
+              </>
+            ) : (
+              <>
+                <IconFileXFilled size="100px" className="mb-5 text-error" />
+                <h5 className="mb-4 text-lg font-semibold text-primary">
+                  {t('No attachments allowed')}
+                </h5>
+                <p className="text-sm text-primary">
+                  {t("Attachments can't be added to conversation")}
+                </p>
+              </>
+            )}
+          </div>
         </div>
       )}
       {children}
