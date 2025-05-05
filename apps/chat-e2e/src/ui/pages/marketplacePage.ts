@@ -28,7 +28,7 @@ export class MarketplacePage extends BasePage {
 
   async openMarketplacePage(
     options: { updateInstalledDeployments?: boolean } = {
-      updateInstalledDeployments: true,
+      updateInstalledDeployments: false,
     },
   ): Promise<void> {
     await this.openMarketplaceUrl(ExpectedConstants.marketplacePath, {
