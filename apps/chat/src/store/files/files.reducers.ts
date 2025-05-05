@@ -9,8 +9,9 @@ import {
 } from '@/src/utils/app/folders';
 import { getFileRootId } from '@/src/utils/app/id';
 
+import { FeatureType } from '@/src/types/common';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
-import { FolderInterface, FolderType } from '@/src/types/folder';
+import { FolderInterface } from '@/src/types/folder';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
@@ -243,7 +244,7 @@ export const filesSlice = createSlice({
       state.folders.push(
         addGeneratedFolderId({
           name: folderName,
-          type: FolderType.File,
+          type: FeatureType.File,
           folderId: payload.parentId || getFileRootId(),
           status: UploadStatus.LOADED,
         }),

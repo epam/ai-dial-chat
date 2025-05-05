@@ -42,7 +42,6 @@ import {
 import { translate } from '@/src/utils/app/translation';
 
 import { FeatureType } from '@/src/types/common';
-import { FolderType } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
 import { AppAction, AppEpic } from '@/src/types/store';
 
@@ -78,7 +77,7 @@ const initEpic: AppEpic = (action$, state$) =>
             of(
               PromptsActions.addFolders({
                 folders: paths.map((path) => ({
-                  ...getFolderFromId(path, FolderType.Prompt),
+                  ...getFolderFromId(path, FeatureType.Prompt),
                   status: UploadStatus.LOADED,
                 })),
               }),
@@ -418,7 +417,7 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
         of(
           UIActions.setOpenedFoldersIds({
             openedFolderIds: updatedOpenedFolderIds,
-            featureType: FeatureType.Prompt,
+            folderType: FeatureType.Prompt,
           }),
         ),
         of(
@@ -533,6 +532,7 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
 
       return concat(
         of(PromptsActions.saveNewPrompt({ newPrompt })),
+        of(UIActions.setScrollToEntityId(newPrompt.id)),
         iif(
           () => selectedPromptId === prompt.id,
           concat(
@@ -586,7 +586,7 @@ const uploadPromptsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
                 ),
                 of(
                   UIActions.setOpenedFoldersIds({
-                    featureType: FeatureType.Prompt,
+                    folderType: FeatureType.Prompt,
                     openedFolderIds: [
                       ...openedFolders,
                       ...paths.filter(
@@ -610,7 +610,7 @@ const uploadPromptsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
             of(
               PromptsActions.addFolders({
                 folders: paths.map((path) => ({
-                  ...getFolderFromId(path, FolderType.Prompt),
+                  ...getFolderFromId(path, FeatureType.Prompt),
                   status: UploadStatus.LOADED,
                 })),
               }),
@@ -664,7 +664,7 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$) =>
             of(
               PromptsActions.addFolders({
                 folders: paths.map((path) => ({
-                  ...getFolderFromId(path, FolderType.Prompt),
+                  ...getFolderFromId(path, FeatureType.Prompt),
                   status: UploadStatus.LOADED,
                 })),
               }),

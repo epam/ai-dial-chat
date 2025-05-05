@@ -109,11 +109,7 @@ export const AgentsTable: React.FC<AgentsListProps> = ({
   suggestedResults,
   separator,
   onCardClick,
-  onPublish,
-  onDelete,
-  onEdit,
   onBookmarkClick,
-  onLogsClick,
 }) => {
   const dispatch = useAppDispatch();
 
@@ -292,14 +288,10 @@ export const AgentsTable: React.FC<AgentsListProps> = ({
                   <AgentsTableRightSideRow
                     entity={entity}
                     isHovered={entity.id === hoveredRowId}
-                    onPublish={onPublish}
-                    onDelete={onDelete}
                     onClick={onCardClick}
-                    onEdit={onEdit}
                     onBookmarkClick={onBookmarkClick}
                     onRowHover={handleRowHover}
                     onRowHoverOver={handleRowHoverOver}
-                    onLogsClick={onLogsClick}
                   />
                 )}
               </DataRowItem>
