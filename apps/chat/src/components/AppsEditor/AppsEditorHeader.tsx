@@ -5,7 +5,7 @@ import {
   IconMenu2,
   IconX,
 } from '@tabler/icons-react';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -63,18 +63,16 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
   const returnConversationIds = useAppSelector(
     ApplicationSelectors.selectReturnConversationIds,
   );
-
   const shouldSaveApplication = useAppSelector(
     ApplicationSelectors.selectShouldSaveApplication,
   );
-
   const hasUnsavedChanges = useAppSelector(
     ApplicationSelectors.selectHasUnsavedChanges,
   );
 
-  const handleCloseUserSettings = () => {
+  const handleCloseUserSettings = useCallback(() => {
     dispatch(UIActions.setIsUserSettingsOpen(false));
-  };
+  }, [dispatch]);
 
   const handleTabClick = (isDisabled: boolean) => {
     return (e: React.MouseEvent) => {
