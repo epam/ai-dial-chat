@@ -224,3 +224,6 @@ export const selectPublicVersionGroupById = (
   state: RootState,
   versionGroupId: string,
 ) => (versionGroupId ? selectPublicVersionGroups(state)[versionGroupId] : null);
+
+export const selectPublishModel = (state: RootState) =>
+  rootSelector(state).publishModel;
