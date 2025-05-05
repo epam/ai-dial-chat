@@ -1,65 +1,21 @@
-import {
-  IconFileDescription,
-  IconLink,
-  IconPencilMinus,
-  IconTrashX,
-  IconUserShare,
-  IconWorldShare,
-} from '@tabler/icons-react';
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import {
-  useMenuItemHandler,
-  useMenuItemHandlerWithTwoArgs,
-} from '@/src/hooks/useHandler';
 import { useScreenState } from '@/src/hooks/useScreenState';
 
-import {
-  getApplicationNextStatus,
-  getApplicationSimpleStatus,
-  getPlayerCaption,
-  isApplicationPublic,
-  isApplicationStatusUpdating,
-  isExecutableApp,
-} from '@/src/utils/app/application';
-import { isMyApplication } from '@/src/utils/app/id';
-import { isEntityIdPublic } from '@/src/utils/app/publications';
-import { canWriteSharedWithMe } from '@/src/utils/app/share';
-import { getApplicationLink } from '@/src/utils/marketplace';
-
-import { SimpleApplicationStatus } from '@/src/types/applications';
-import { FeatureType, ScreenState } from '@/src/types/common';
-import { DisplayMenuItemProps } from '@/src/types/menu';
+import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { AuthSelectors } from '@/src/store/auth/auth.reducers';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { ShareActions } from '@/src/store/share/share.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-
-import {
-  PlayerContextIconClasses,
-  PlayerContextIcons,
-} from '@/src/constants/marketplace';
-
-import ContextMenu from '@/src/components/Common/ContextMenu';
 import { DateRenderer } from '@/src/components/Common/DateRenderer';
 import Tooltip from '@/src/components/Common/Tooltip';
-
-import { AgentBookmark } from '../../AgentBookmark';
-import { ApplicationTopic } from '../../ApplicationTopic';
-import { TopicsList } from '../../TopicsList';
-
-import UnpublishIcon from '@/public/images/icons/unpublish.svg';
-import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
-import { Feature, PublishActions } from '@epam/ai-dial-shared';
+import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
+import { AgentContextMenu } from '@/src/components/Marketplace/AgentContextMenu';
+import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
+import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 
 interface Props {
   entity: DialAIEntityModel;
@@ -67,11 +23,7 @@ interface Props {
   onClick: (entity: DialAIEntityModel) => void;
   onRowHoverOver: () => void;
   onRowHover: (id: string) => void;
-  onPublish?: (entity: DialAIEntityModel, action: PublishActions) => void;
-  onDelete?: (entity: DialAIEntityModel) => void;
-  onEdit?: (entity: DialAIEntityModel) => void;
   onBookmarkClick?: (entity: DialAIEntityModel) => void;
-  onLogsClick?: (entity: DialAIEntityModel) => void;
 }
 
 export const AgentsTableRightSideRow: React.FC<Props> = memo(
@@ -81,205 +33,11 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
     onClick,
     onRowHover,
     onRowHoverOver,
-    onDelete,
-    onEdit,
     onBookmarkClick,
-    onPublish,
-    onLogsClick,
   }) => {
     const { t } = useTranslation(Translation.Marketplace);
 
-    const dispatch = useAppDispatch();
-
-    const isCodeAppsEnabled = useAppSelector((state) =>
-      SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
-    );
-    const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
-
     const screenState = useScreenState();
-
-    const isMyApp = isMyApplication(entity);
-    const isPublicApp = isApplicationPublic(entity);
-    const canWrite = canWriteSharedWithMe(entity);
-    const isModifyDisabled = isApplicationStatusUpdating(entity);
-    const playerStatus = getApplicationSimpleStatus(entity);
-    const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin);
-
-    const PlayerContextIcon = PlayerContextIcons[playerStatus];
-
-    const handleUpdateFunctionStatus = useCallback(
-      (e: React.MouseEvent) => {
-        e.stopPropagation();
-        dispatch(
-          ApplicationActions.startUpdatingFunctionStatus({
-            id: entity.id,
-            status: getApplicationNextStatus(entity),
-          }),
-        );
-      },
-      [dispatch, entity],
-    );
-
-    const handleOpenApplicationLogs = useCallback(
-      (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        onLogsClick?.(entity);
-      },
-      [entity, onLogsClick],
-    );
-
-    const handleOpenSharing = useCallback(
-      (e: React.MouseEvent) => {
-        e.stopPropagation();
-        dispatch(
-          ShareActions.share({
-            featureType: FeatureType.Application,
-            entity: entity,
-          }),
-        );
-      },
-      [dispatch, entity],
-    );
-
-    const handleOpenUnshare = useCallback(
-      (e: React.MouseEvent) => {
-        e.stopPropagation();
-        dispatch(ShareActions.setUnshareEntity(entity));
-      },
-      [dispatch, entity],
-    );
-
-    const isApplicationsSharingEnabled = useAppSelector((state) =>
-      SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
-    );
-
-    const handleCopy = useCallback(
-      (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (!navigator.clipboard) return;
-        const link = getApplicationLink(entity);
-        navigator.clipboard.writeText(link);
-        dispatch(UIActions.showSuccessToast(t('Link copied!')));
-      },
-      [dispatch, entity, t],
-    );
-
-    const handleEdit = useMenuItemHandler(onEdit, entity);
-    const handleDelete = useMenuItemHandler(onDelete, entity);
-    const handlePublish = useMenuItemHandlerWithTwoArgs(
-      onPublish,
-      entity,
-      PublishActions.ADD,
-    );
-    const handleUnpublish = useMenuItemHandlerWithTwoArgs(
-      onPublish,
-      entity,
-      PublishActions.DELETE,
-    );
-
-    const menuItems: DisplayMenuItemProps[] = useMemo(
-      () => [
-        {
-          name: t('Copy link'),
-          dataQa: 'application-copy-link',
-          display: isPublicApp,
-          Icon: IconLink,
-          onClick: handleCopy,
-        },
-        {
-          name: t(getPlayerCaption(entity)),
-          dataQa: 'status-change',
-          disabled: playerStatus === SimpleApplicationStatus.UPDATING,
-          display:
-            (isAdmin || isMyApp || canWrite) &&
-            !!entity.functionStatus &&
-            isCodeAppsEnabled,
-          Icon: PlayerContextIcon,
-          iconClassName: PlayerContextIconClasses[playerStatus],
-          onClick: handleUpdateFunctionStatus,
-        },
-        {
-          name: t('Edit'),
-          dataQa: 'edit',
-          display: (isMyApp || !!canWrite) && !!onEdit,
-          Icon: IconPencilMinus,
-          onClick: handleEdit,
-        },
-        {
-          name: t('Share'),
-          dataQa: 'share',
-          display: isMyApp && isApplicationsSharingEnabled,
-          Icon: IconUserShare,
-          onClick: handleOpenSharing,
-        },
-        {
-          name: t('Unshare'),
-          dataQa: 'unshare',
-          display: !!entity.sharedWithMe && isApplicationsSharingEnabled,
-          Icon: IconUserUnshare,
-          onClick: handleOpenUnshare,
-        },
-        {
-          name: t('Publish'),
-          dataQa: 'publish',
-          display: isMyApp && !!onPublish,
-          Icon: IconWorldShare,
-          onClick: handlePublish,
-        },
-        {
-          name: t('Unpublish'),
-          dataQa: 'unpublish',
-          display: isEntityIdPublic(entity) && !!onPublish,
-          Icon: UnpublishIcon,
-          onClick: handleUnpublish,
-        },
-        {
-          name: t('Logs'),
-          dataQa: 'app-logs',
-          display:
-            !!isExecutable && playerStatus === SimpleApplicationStatus.UNDEPLOY,
-          Icon: IconFileDescription,
-          onClick: handleOpenApplicationLogs,
-        },
-        {
-          name: t('Delete'),
-          dataQa: 'delete',
-          display: isMyApp && !!onDelete,
-          disabled: isModifyDisabled,
-          Icon: IconTrashX,
-          iconClassName: 'stroke-error',
-          onClick: handleDelete,
-        },
-      ],
-      [
-        t,
-        isPublicApp,
-        handleCopy,
-        entity,
-        playerStatus,
-        isAdmin,
-        isMyApp,
-        isCodeAppsEnabled,
-        PlayerContextIcon,
-        handleUpdateFunctionStatus,
-        canWrite,
-        onEdit,
-        handleEdit,
-        isApplicationsSharingEnabled,
-        handleOpenSharing,
-        handleOpenUnshare,
-        onPublish,
-        handlePublish,
-        handleUnpublish,
-        isExecutable,
-        handleOpenApplicationLogs,
-        onDelete,
-        isModifyDisabled,
-        handleDelete,
-      ],
-    );
 
     const { visibleTopics, hiddenTopics } = useMemo<{
       visibleTopics: string[];
@@ -355,15 +113,9 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
         <div className="hidden flex-none items-center xl:flex">
           <div className="flex gap-1">
             <AgentBookmark onBookmarkClick={onBookmarkClick} entity={entity} />
-            <ContextMenu
-              menuItems={menuItems}
-              featureType={FeatureType.Application}
-              triggerIconHighlight
-              triggerIconSize={18}
-              className={classNames(
-                'm-0',
-                isHovered ? 'xl:visible' : 'xl:invisible',
-              )}
+            <AgentContextMenu
+              className={isHovered ? 'xl:visible' : 'xl:invisible'}
+              entity={entity}
             />
           </div>
         </div>

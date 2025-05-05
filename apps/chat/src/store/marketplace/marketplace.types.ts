@@ -1,7 +1,9 @@
 import { SortOrder } from '@/src/types/common';
 import { MarketplaceFilters } from '@/src/types/marketplace';
+import { DialAIEntityModel } from '@/src/types/models';
 
 import {
+  DeleteType,
   MarketplaceTabs,
   TableColumnSortKeys,
   ViewTypes,
@@ -22,4 +24,6 @@ export interface MarketplaceState {
     order: SortOrder;
   };
   isBannerVisible: boolean;
+
+  deleteModel: { entity: DialAIEntityModel; action: DeleteType } | undefined;
 }

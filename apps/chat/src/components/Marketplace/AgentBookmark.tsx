@@ -12,7 +12,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
-import Tooltip from '../Common/Tooltip';
+import Tooltip from '@/src/components/Common/Tooltip';
 
 interface Props {
   entity: DialAIEntityModel;
@@ -42,24 +42,27 @@ export const AgentBookmark: React.FC<Props> = ({
     : [IconBookmark, 'Add to My workspace', 'add-bookmark'];
 
   return (
-    <Tooltip
-      tooltip={t(tooltip)}
-      triggerClassName={classNames(
-        className,
-        'group flex cursor-pointer items-center',
-      )}
-      isTriggerClickable
+    <div
+      onClick={(e) => {
+        e.stopPropagation();
+        onBookmarkClick?.(entity);
+      }}
     >
-      <button data-qa={dataQa}>
-        <Bookmark
-          onClick={(e) => {
-            e.stopPropagation();
-            onBookmarkClick?.(entity);
-          }}
-          className="rounded text-secondary hover:text-accent-primary group-hover/bookmark:text-accent-primary"
-          size={size}
-        />
-      </button>
-    </Tooltip>
+      <Tooltip
+        tooltip={t(tooltip)}
+        triggerClassName={classNames(
+          className,
+          'group flex cursor-pointer items-center',
+        )}
+        isTriggerClickable
+      >
+        <button data-qa={dataQa}>
+          <Bookmark
+            className="rounded text-secondary hover:text-accent-primary group-hover/bookmark:text-accent-primary"
+            size={size}
+          />
+        </button>
+      </Tooltip>
+    </div>
   );
 };

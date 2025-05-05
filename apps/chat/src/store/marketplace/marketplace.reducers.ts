@@ -1,8 +1,10 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { SortOrder } from '@/src/types/common';
+import { DialAIEntityModel } from '@/src/types/models';
 
 import {
+  DeleteType,
   FilterTypes,
   MarketplaceTabs,
   TableColumnSortKeys,
@@ -37,6 +39,8 @@ const initialState: MarketplaceState = {
     order: 'asc',
   },
   isBannerVisible: true,
+
+  deleteModel: undefined,
 };
 
 export const marketplaceSlice = createSlice({
@@ -122,6 +126,16 @@ export const marketplaceSlice = createSlice({
       }>,
     ) => {
       state.isBannerVisible = payload.isVisible;
+    },
+    setDeleteModel(
+      state,
+      {
+        payload,
+      }: PayloadAction<
+        { entity: DialAIEntityModel; action: DeleteType } | undefined
+      >,
+    ) {
+      state.deleteModel = payload;
     },
   },
 });
