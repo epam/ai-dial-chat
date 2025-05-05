@@ -111,7 +111,7 @@ export const ApplicationDetailsFooter = ({
   const isExecutable =
     isExecutableApp(entity) && (isMyApp || canWrite || isAdmin);
   const canEdit =
-    isMyApp || !!canWrite || (isAdmin && isEntityIdPublic(entity));
+    isMyApp || !!canWrite || (isAdmin && isPublicApp);
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
   const isAppInDeployment = isApplicationDeploymentInProgress(entity);

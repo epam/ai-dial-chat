@@ -102,8 +102,7 @@ export const AgentContextMenu: React.FC<Props> = ({
     isExecutableApp(entity) && (isMyApp || canWrite || isAdmin);
   const isMyAppOrPreview = isMyApp || isPreview;
   const isPublicAndAdmin = isPublicApp && isAdmin;
-  const canEdit =
-    isMyApp || !!canWrite || (isAdmin && isEntityIdPublic(entity));
+  const canEdit = isMyApp || !!canWrite || isPublicApp;
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -202,9 +201,9 @@ export const AgentContextMenu: React.FC<Props> = ({
       playerStatus,
       isExecutable,
       isCodeAppsEnabled,
-      isMyApp,
-      handleUpdateFunctionStatus,
       isPublicAndAdmin,
+      PlayerContextIcon,
+      handleUpdateFunctionStatus,
       canEdit,
       handleEdit,
       isApplicationsSharingEnabled,
