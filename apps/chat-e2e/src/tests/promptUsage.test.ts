@@ -136,6 +136,7 @@ dialTest(
     variableModalDialog,
     setTestIds,
     localStorageManager,
+    chat,
   }) => {
     setTestIds('EPMRTC-3823', 'EPMRTC-3803', 'EPMRTC-4371');
     let simplePrompt: Prompt;
@@ -199,7 +200,7 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        await sendMessage.sendMessageButton.click();
+        await chat.sendRequestWithButton();
         await chatMessages.openMessageTemplateModal(1);
 
         await messageTemplateModalAssertion.assertElementState(
