@@ -79,7 +79,10 @@ export const ApplicationSettings: React.FC<Props> = ({
   schema,
   type,
 }) => {
+  const { t } = useTranslation(Translation.Chat);
+
   const router = useRouter();
+
   const dispatch = useAppDispatch();
 
   const isTabletOrMobile = isTabletScreenOrMobile();
@@ -88,18 +91,6 @@ export const ApplicationSettings: React.FC<Props> = ({
     SettingsSelectors.selectCodeEditorPythonVersions,
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const modelFromState = applicationData
-    ? modelsMap[applicationData.reference]
-    : null;
-  const isAppDeployed = useMemo(
-    () => !!modelFromState && isApplicationDeployed(modelFromState),
-    [modelFromState],
-  );
-  const isAppDeploymentInProgress = useMemo(
-    () => !!modelFromState && isApplicationDeploymentInProgress(modelFromState),
-    [modelFromState],
-  );
-
   const previewConversationId = useAppSelector(
     ConversationsSelectors.selectPreviewConversationId,
   );
@@ -113,9 +104,7 @@ export const ApplicationSettings: React.FC<Props> = ({
     ConversationsSelectors.selectAreSelectedConversationsLoaded,
   );
   const isCodeEditorDirty = useAppSelector(CodeEditorSelectors.selectIsDirty);
-
   const theme = useAppSelector(UISelectors.selectThemeState);
-  const { t } = useTranslation(Translation.Chat);
 
   const [previewMode, setPreviewMode] = useState<PreviewMode>(() => {
     if (isTabletOrMobile) return PreviewMode.closed;
@@ -123,6 +112,18 @@ export const ApplicationSettings: React.FC<Props> = ({
       ? PreviewMode.closed
       : PreviewMode.half;
   });
+
+  const modelFromState = applicationData
+    ? modelsMap[applicationData.reference]
+    : null;
+  const isAppDeployed = useMemo(
+    () => !!modelFromState && isApplicationDeployed(modelFromState),
+    [modelFromState],
+  );
+  const isAppDeploymentInProgress = useMemo(
+    () => !!modelFromState && isApplicationDeploymentInProgress(modelFromState),
+    [modelFromState],
+  );
 
   const getDefaultValues = useCallback(
     (type: string) => {

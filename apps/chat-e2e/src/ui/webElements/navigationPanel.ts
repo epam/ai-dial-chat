@@ -17,6 +17,8 @@ export class NavigationPanel extends BaseElement {
   public myWorkspaceButton = this.getChildElementBySelector(
     NavigationPanelSelectors.myWorkspaceButton,
   );
+  public buttonLabel = (button: BaseElement) =>
+    button.getChildElementBySelector(NavigationPanelSelectors.buttonLabel);
 
   public async goToMarketplaceHome() {
     // eslint-disable-next-line playwright/no-force-option

@@ -117,6 +117,7 @@ const NavigationButton = ({
               'text-xs leading-[15px] md:hidden',
               selected ? 'text-accent-primary' : 'text-secondary',
             )}
+            data-qa="caption"
           >
             {caption}
           </span>
