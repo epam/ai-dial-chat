@@ -21,7 +21,8 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 
-import { NoResultsFound } from '../../Common/NoResultsFound';
+import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
+
 import { TalkToCard } from './TalkToCard';
 
 import chunk from 'lodash-es/chunk';
@@ -120,11 +121,7 @@ interface SliderModelsGroupProps {
   conversation: Conversation;
   screenState: ScreenState;
   rowsCount: number;
-  onEdit: (entity: DialAIEntityModel) => void;
-  onDelete: (entity: DialAIEntityModel) => void;
-  onPublish: (entity: DialAIEntityModel) => void;
   onSelectModel: (entity: DialAIEntityModel) => void;
-  onOpenLogs: (entity: DialAIEntityModel) => void;
 }
 
 const SliderModelsGroup = ({
@@ -193,11 +190,7 @@ const SliderModelsGroup = ({
 interface Props {
   conversation: Conversation;
   items: DialAIEntityModel[];
-  onEdit: (entity: DialAIEntityModel) => void;
-  onDelete: (entity: DialAIEntityModel) => void;
-  onPublish: (entity: DialAIEntityModel) => void;
   onSelectModel: (entity: DialAIEntityModel) => void;
-  onOpenLogs: (entity: DialAIEntityModel) => void;
 }
 
 export const TalkToSlider = ({ conversation, items, ...restProps }: Props) => {

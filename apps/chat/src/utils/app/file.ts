@@ -2,8 +2,9 @@ import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { Conversation } from '@/src/types/chat';
+import { FeatureType } from '@/src/types/common';
 import { DialFile, DialLink, FileFolderAttachment } from '@/src/types/files';
-import { FolderInterface, FolderType } from '@/src/types/folder';
+import { FolderInterface } from '@/src/types/folder';
 
 import {
   FOLDER_ATTACHMENT_CONTENT_TYPE,
@@ -223,7 +224,7 @@ export const getDialFoldersFromAttachments = (
 
       return {
         id: attachment.url,
-        type: FolderType.File,
+        type: FeatureType.File,
         contentType: FOLDER_ATTACHMENT_CONTENT_TYPE,
         name,
         folderId: absolutePath,

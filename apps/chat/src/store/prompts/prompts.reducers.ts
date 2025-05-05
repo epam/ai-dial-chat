@@ -11,7 +11,8 @@ import {
 import { getPromptRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 
-import { FolderInterface, FolderType } from '@/src/types/folder';
+import { FeatureType } from '@/src/types/common';
+import { FolderInterface } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 import '@/src/types/share';
@@ -206,7 +207,7 @@ export const promptsSlice = createSlice({
             } as RootState,
             payload.parentId,
           ),
-        type: FolderType.Prompt,
+        type: FeatureType.Prompt,
         status: UploadStatus.LOADED,
       });
 
@@ -225,7 +226,7 @@ export const promptsSlice = createSlice({
       state.temporaryFolders.push({
         id: payload.id,
         name: payload.name,
-        type: FolderType.Prompt,
+        type: FeatureType.Prompt,
         folderId: payload.folderId || getPromptRootId(),
         temporary: true,
       });

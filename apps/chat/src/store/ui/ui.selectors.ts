@@ -79,6 +79,9 @@ export const selectPreviousRoute = (state: RootState) =>
 export const selectInitialized = (state: RootState) =>
   rootSelector(state).initialized;
 
+const selectScrollToEntityId = (state: RootState) =>
+  rootSelector(state).scrollToEntityId;
+
 export const UISelectors = {
   selectThemeState,
   selectShowChatbar,
@@ -101,4 +104,5 @@ export const UISelectors = {
   selectCollapsedSections,
   selectPreviousRoute,
   selectInitialized,
+  selectScrollToEntityId,
 };

@@ -1,9 +1,8 @@
 import { isRootId } from '@/src/utils/app/id';
 
 import { Conversation } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, MappedReplaceActions } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
-import { MappedReplaceActions } from '@/src/types/import-export';
 import { OnItemEvent } from '@/src/types/modal';
 
 import Folder from '../../Folder/Folder';
