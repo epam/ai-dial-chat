@@ -15,8 +15,6 @@ import { FileManagerModal } from '../Files/FileManagerModal';
 
 interface CustomLogoSelectProps {
   localLogo?: string;
-  onLogoSelect: (filesIds: string[]) => void;
-  onDeleteLocalLogoHandler: () => void;
   customPlaceholder?: string | null;
   title?: string | null;
   className?: string;
@@ -27,12 +25,12 @@ interface CustomLogoSelectProps {
   sourceFilters?: Set<FileSourceType>;
   confirmDialogValues?: ConfirmDialogValueTypes;
   warningMessage?: string;
+  onLogoSelect: (filesIds: string[]) => void;
+  onDeleteLocalLogoHandler: () => void;
 }
 
 export const CustomLogoSelect = ({
   localLogo,
-  onLogoSelect,
-  onDeleteLocalLogoHandler,
   customPlaceholder,
   title,
   className,
@@ -43,6 +41,8 @@ export const CustomLogoSelect = ({
   sourceFilters,
   confirmDialogValues,
   warningMessage,
+  onLogoSelect,
+  onDeleteLocalLogoHandler,
 }: CustomLogoSelectProps) => {
   const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
     useState(false);

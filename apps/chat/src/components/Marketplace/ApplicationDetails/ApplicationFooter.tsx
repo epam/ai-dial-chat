@@ -1,12 +1,12 @@
 import {
   IconEdit,
+  IconEye,
   IconFileDescription,
   IconPlayerPlay,
   IconTrashX,
   IconUserShare,
   IconWorldShare,
 } from '@tabler/icons-react';
-import { useCallback } from 'react';
 
 import classNames from 'classnames';
 
@@ -15,7 +15,6 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
-  getApplicationNextStatus,
   getApplicationSimpleStatus,
   getPlayerCaption,
   isApplicationDeploymentInProgress,
@@ -31,15 +30,13 @@ import {
   ApplicationStatus,
   SimpleApplicationStatus,
 } from '@/src/types/applications';
-import { FeatureType, ScreenState } from '@/src/types/common';
+import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { AuthSelectors } from '@/src/store/auth/auth.reducers';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { ShareActions } from '@/src/store/share/share.reducers';
 
 import {
   PlayerContextButtonClasses,
@@ -86,78 +83,41 @@ export const ApplicationDetailsFooter = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
 
-  const dispatch = useAppDispatch();
-  const screenState = useScreenState();
-
   const isCodeAppsEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
   );
-
-  const isMyApp = isMyApplication(entity);
-  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
-
-  const hasPublicId = isEntityIdPublic(entity);
-  const isPublicApp = isApplicationPublic(entity);
-
-  const isSmallScreen = screenState === ScreenState.SM;
-
-  const canWrite = canWriteSharedWithMe(entity);
-
-  const {
-    handleDelete,
-    handleUnpublish,
-    handlePublish,
-    handleEdit,
-    handleOpenApplicationLogs,
-  } = useApplicationMenuActions(entity);
-
-  const isExecutable = isExecutableApp(entity) && (isMyApp || canWrite);
-
-  const isModifyDisabled = isApplicationStatusUpdating(entity);
-  const playerStatus = getApplicationSimpleStatus(entity);
-  const isAppInDeployment = isApplicationDeploymentInProgress(entity);
-
-  const PlayerIcon = StatusIcons[playerStatus];
-
-  const handleUpdateFunctionStatus = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      dispatch(
-        ApplicationActions.startUpdatingFunctionStatus({
-          id: entity.id,
-          status: getApplicationNextStatus(entity),
-        }),
-      );
-    },
-    [dispatch, entity],
-  );
-
-  const handleOpenUnshare = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      dispatch(ShareActions.setUnshareEntity(entity));
-    },
-    [dispatch, entity],
-  );
-
-  const handleOpenSharing = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      dispatch(
-        ShareActions.share({
-          featureType: FeatureType.Application,
-          entity: entity,
-        }),
-      );
-    },
-    [dispatch, entity],
-  );
-
   const isApplicationsSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
   );
 
+  const screenState = useScreenState();
+
+  const {
+    handleDelete,
+    handleEdit,
+    handleOpenApplicationLogs,
+    handleOpenSharing,
+    handleOpenUnshare,
+    handlePublish,
+    handleUnpublish,
+    handleUpdateFunctionStatus,
+  } = useApplicationMenuActions(entity);
+
+  const isMyApp = isMyApplication(entity);
+  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
+  const hasPublicId = isEntityIdPublic(entity);
+  const isPublicApp = isApplicationPublic(entity);
+  const isSmallScreen = screenState === ScreenState.SM;
+  const canWrite = canWriteSharedWithMe(entity);
+  const canEdit = isMyApp || canWrite || isAdmin;
+  const isExecutable = isExecutableApp(entity) && canEdit;
+  const isModifyDisabled = isApplicationStatusUpdating(entity);
+  const playerStatus = getApplicationSimpleStatus(entity);
+  const isAppInDeployment = isApplicationDeploymentInProgress(entity);
   const showContextMenu = entity.reference !== entity.id;
+  const isPublicAndAdmin = isAdmin && isPublicApp;
+  const GoToEditorIcon = isPublicAndAdmin ? IconEye : IconEdit;
+  const PlayerIcon = StatusIcons[playerStatus];
 
   return (
     <section className="flex px-3 py-4 md:px-6">
@@ -195,6 +155,18 @@ export const ApplicationDetailsFooter = ({
                   </button>
                 </Tooltip>
               )}
+              {canEdit && (
+                <Tooltip tooltip={t(isPublicAndAdmin ? 'View' : 'Edit')}>
+                  <button
+                    disabled={isAppInDeployment}
+                    onClick={handleEdit}
+                    className="icon-button"
+                    data-qa="application-edit"
+                  >
+                    <GoToEditorIcon size={24} />
+                  </button>
+                </Tooltip>
+              )}
               {isMyApp && isApplicationsSharingEnabled && isSmallScreen && (
                 <Tooltip tooltip={t('Share')}>
                   <button
@@ -217,18 +189,6 @@ export const ApplicationDetailsFooter = ({
                   </button>
                 </Tooltip>
               )}
-              {isMyApp && (
-                <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
-                  <button
-                    disabled={isModifyDisabled}
-                    onClick={handleDelete}
-                    className="icon-button"
-                    data-qa="application-delete"
-                  >
-                    <IconTrashX size={24} />
-                  </button>
-                </Tooltip>
-              )}
               {(isMyApp || hasPublicId) && (
                 <Tooltip tooltip={hasPublicId ? t('Unpublish') : t('Publish')}>
                   <button
@@ -244,18 +204,6 @@ export const ApplicationDetailsFooter = ({
                   </button>
                 </Tooltip>
               )}
-              {(isMyApp || canWrite) && (
-                <Tooltip tooltip={t('Edit')}>
-                  <button
-                    disabled={isAppInDeployment}
-                    onClick={handleEdit}
-                    className="icon-button"
-                    data-qa="application-edit"
-                  >
-                    <IconEdit size={24} />
-                  </button>
-                </Tooltip>
-              )}
               {isExecutable &&
                 playerStatus === SimpleApplicationStatus.UNDEPLOY && (
                   <Tooltip tooltip={t('Application logs')}>
@@ -268,6 +216,18 @@ export const ApplicationDetailsFooter = ({
                     </button>
                   </Tooltip>
                 )}
+              {isMyApp && (
+                <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
+                  <button
+                    disabled={isModifyDisabled}
+                    onClick={handleDelete}
+                    className="icon-button"
+                    data-qa="application-delete"
+                  >
+                    <IconTrashX size={24} />
+                  </button>
+                </Tooltip>
+              )}
             </>
           )}
           <AgentBookmark

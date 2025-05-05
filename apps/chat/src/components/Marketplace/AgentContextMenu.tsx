@@ -1,4 +1,5 @@
 import {
+  IconEye,
   IconFileDescription,
   IconLink,
   IconPencilMinus,
@@ -98,6 +99,7 @@ export const AgentContextMenu: React.FC<Props> = ({
   const hasEditPermissions = isMyApp || canWrite || isAdmin;
   const isExecutable = isExecutableApp(entity) && hasEditPermissions;
   const isMyAppOrPreview = isMyApp || isPreview;
+  const isPublicAndAdmin = isPublicApp && isAdmin;
 
   const PlayerContextIcon = PlayerContextIcons[playerStatus];
 
@@ -124,10 +126,10 @@ export const AgentContextMenu: React.FC<Props> = ({
         onClick: handleUpdateFunctionStatus,
       },
       {
-        name: t('Edit'),
+        name: t(isPublicAndAdmin ? 'View' : 'Edit'),
         dataQa: 'edit',
         display: hasEditPermissions && disabledActions.edit !== true,
-        Icon: IconPencilMinus,
+        Icon: isPublicAndAdmin ? IconEye : IconPencilMinus,
         onClick: handleEdit,
       },
       {
@@ -187,15 +189,15 @@ export const AgentContextMenu: React.FC<Props> = ({
     [
       t,
       isPublicApp,
-      disabledActions?.copyLink,
-      disabledActions?.deploy,
-      disabledActions?.edit,
-      disabledActions?.share,
-      disabledActions?.unshare,
-      disabledActions?.publish,
-      disabledActions?.unpublish,
-      disabledActions?.logs,
-      disabledActions?.delete,
+      disabledActions.copyLink,
+      disabledActions.deploy,
+      disabledActions.edit,
+      disabledActions.share,
+      disabledActions.unshare,
+      disabledActions.publish,
+      disabledActions.unpublish,
+      disabledActions.logs,
+      disabledActions.delete,
       handleCopy,
       entity,
       playerStatus,
@@ -204,6 +206,7 @@ export const AgentContextMenu: React.FC<Props> = ({
       hasEditPermissions,
       PlayerContextIcon,
       handleUpdateFunctionStatus,
+      isPublicAndAdmin,
       handleEdit,
       isMyApp,
       isApplicationsSharingEnabled,

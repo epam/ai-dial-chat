@@ -9,6 +9,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip, topicToOption } from '@/src/utils/app/application';
 import { encode } from '@/src/utils/app/application-type-schema';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { getRouteForSlug } from '@/src/utils/app/route';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
@@ -22,6 +23,7 @@ import {
   ApplicationActions,
   ApplicationSelectors,
 } from '@/src/store/application/application.reducers';
+import { AuthSelectors } from '@/src/store/auth/auth.selectors';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -71,6 +73,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
 
   const files = useAppSelector(FilesSelectors.selectFiles);
   const topics = useAppSelector(SettingsSelectors.selectTopics);
+  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
   const {
     register,
@@ -205,6 +208,10 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     router,
   ]);
 
+  const isPublicApp = !!oldApplication && isEntityIdPublic(oldApplication);
+  const isReadonly = isPublicApp && isAdmin;
+  const publicAppTooltip = t('This application is public and cannot be edited');
+
   return (
     <div className="size-full overflow-hidden bg-layer-2">
       <form
@@ -221,10 +228,11 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             placeholder={t('Type name')}
             id="name"
             error={errors.name?.message}
-            disabled={isAppDeployed || isSharedWithMe}
+            disabled={isAppDeployed || isSharedWithMe || isReadonly}
             tooltip={
               (isSharedWithMe && getSharedTooltip('name')) ||
               (isAppDeployed && t('Undeploy application to edit name')) ||
+              (isReadonly && publicAppTooltip) ||
               ''
             }
           />
@@ -238,10 +246,11 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             control={control}
             name="version"
             rules={validators['version']}
-            disabled={isAppDeployed || isSharedWithMe}
+            disabled={isAppDeployed || isSharedWithMe || isReadonly}
             tooltip={
               (isSharedWithMe && getSharedTooltip('version')) ||
               (isAppDeployed && t('Undeploy application to edit version')) ||
+              (isReadonly && publicAppTooltip) ||
               ''
             }
           />
@@ -260,8 +269,12 @@ export const GeneralInfoEditor: React.FC<Props> = ({
                 fileManagerModalTitle="Select application icon"
                 allowedTypes={IMAGE_TYPES}
                 error={errors.iconUrl?.message}
-                disabled={isSharedWithMe}
-                tooltip={isSharedWithMe ? getSharedTooltip('icon') : ''}
+                disabled={isSharedWithMe || isReadonly}
+                tooltip={
+                  (isSharedWithMe && getSharedTooltip('icon')) ||
+                  (isReadonly && publicAppTooltip) ||
+                  ''
+                }
                 confirmDialogValues={confirmIconValues}
                 warningMessage={iconWarning}
               />
@@ -276,6 +289,8 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             )}
             placeholder={t('A description of your application')}
             rows={3}
+            disabled={isReadonly}
+            tooltip={isReadonly ? publicAppTooltip : ''}
             className="resize-none"
             id="description"
           />
@@ -286,6 +301,8 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             render={({ field }) => (
               <TopicsSelector
                 label={t('Topics')}
+                disabled={isReadonly}
+                tooltip={isReadonly ? publicAppTooltip : ''}
                 values={field.value?.map(topicToOption)}
                 options={topicOptions}
                 placeholder={t('Select one or more topics')}
