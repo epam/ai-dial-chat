@@ -61,6 +61,7 @@ interface Props {
   };
   className?: string;
   isPreview?: boolean;
+  triggerIconSize?: number;
 }
 
 export const AgentContextMenu: React.FC<Props> = ({
@@ -68,6 +69,7 @@ export const AgentContextMenu: React.FC<Props> = ({
   disabledActions = {},
   className,
   isPreview = false,
+  triggerIconSize = 18,
 }) => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -226,7 +228,7 @@ export const AgentContextMenu: React.FC<Props> = ({
       menuItems={menuItems}
       featureType={FeatureType.Application}
       triggerIconHighlight
-      triggerIconSize={18}
+      triggerIconSize={triggerIconSize}
       className={classNames('m-0', className)}
     />
   );

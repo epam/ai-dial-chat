@@ -127,6 +127,7 @@ export const ApplicationDetailsFooter = ({
             <button className="icon-button">
               <AgentContextMenu
                 className="xl:invisible group-hover:xl:visible"
+                triggerIconSize={24}
                 entity={entity}
               />
             </button>
