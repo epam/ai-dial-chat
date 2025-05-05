@@ -4,13 +4,16 @@
  * @param content The input string containing LaTeX expressions.
  * @returns The processed string with replaced delimiters and escaped characters.
  */
-export function preprocessLaTeX(content: string): string {
+export function preprocessLaTeX(content: string) {
   // Step 1: Protect code blocks
   const codeBlocks: string[] = [];
-  content = content.replace(/(```[\s\S]*?```|`[^`\n]+`)/g, (match, code) => {
-    codeBlocks.push(code);
-    return `<<CODE_BLOCK_${codeBlocks.length - 1}>>`;
-  });
+  content = content.replace(
+    /(```[\s\S]*?```|`[^`\n]+`)/g,
+    (_, code: string) => {
+      codeBlocks.push(code);
+      return `<<CODE_BLOCK_${codeBlocks.length - 1}>>`;
+    },
+  );
 
   // Step 2: Protect existing LaTeX expressions
   const latexExpressions: string[] = [];
@@ -28,13 +31,13 @@ export function preprocessLaTeX(content: string): string {
   // Step 4: Restore LaTeX expressions
   content = content.replace(
     /<<LATEX_(\d+)>>/g,
-    (_, index) => latexExpressions[parseInt(index)],
+    (_, index: string) => latexExpressions[parseInt(index)],
   );
 
   // Step 5: Restore code blocks
   content = content.replace(
     /<<CODE_BLOCK_(\d+)>>/g,
-    (_, index) => codeBlocks[parseInt(index)],
+    (_, index: string) => codeBlocks[parseInt(index)],
   );
 
   // Step 6: Apply additional escaping functions
@@ -44,17 +47,17 @@ export function preprocessLaTeX(content: string): string {
   return content;
 }
 
-export function escapeBrackets(text: string): string {
+export function escapeBrackets(text: string) {
   const pattern =
     /(```[\S\s]*?```|`.*?`)|\\\[([\S\s]*?[^\\])\\]|\\\((.*?)\\\)/g;
   return text.replace(
     pattern,
     (
-      match: string,
+      match,
       codeBlock: string | undefined,
       squareBracket: string | undefined,
       roundBracket: string | undefined,
-    ): string => {
+    ) => {
       if (codeBlock != null) {
         return codeBlock;
       } else if (squareBracket != null) {
@@ -62,6 +65,7 @@ export function escapeBrackets(text: string): string {
       } else if (roundBracket != null) {
         return `$${roundBracket}$`;
       }
+
       return match;
     },
   );

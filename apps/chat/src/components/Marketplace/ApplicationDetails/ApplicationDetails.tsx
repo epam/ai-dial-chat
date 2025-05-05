@@ -26,17 +26,12 @@ import { ApplicationDetailsContent } from './ApplicationContent';
 import { ApplicationDetailsFooter } from './ApplicationFooter';
 import { ApplicationDetailsHeader } from './ApplicationHeader';
 
-import { PublishActions } from '@epam/ai-dial-shared';
-
 interface Props {
   entity: DialAIEntityModel;
   allEntities: DialAIEntityModel[];
   isMyAppsTab: boolean;
   isSuggested?: boolean;
   onClose: () => void;
-  onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
-  onEdit: (entity: DialAIEntityModel) => void;
-  onDelete: (entity: DialAIEntityModel) => void;
   onChangeVersion: (entity: DialAIEntityModel) => void;
   onBookmarkClick: (entity: DialAIEntityModel) => void;
 }
@@ -47,9 +42,6 @@ export const ApplicationDetails = ({
   isMyAppsTab,
   isSuggested,
   onClose,
-  onPublish,
-  onEdit,
-  onDelete,
   onChangeVersion,
   onBookmarkClick,
 }: Props) => {
@@ -121,13 +113,10 @@ export const ApplicationDetails = ({
       <ApplicationDetailsHeader entity={entity} />
       <ApplicationDetailsContent entity={entity} />
       <ApplicationDetailsFooter
-        onPublish={onPublish}
         onUseEntity={handleUseEntity}
         onChangeVersion={onChangeVersion}
         entity={entity}
         allVersions={filteredEntities}
-        onEdit={onEdit}
-        onDelete={onDelete}
         onBookmarkClick={onBookmarkClick}
       />
     </Modal>

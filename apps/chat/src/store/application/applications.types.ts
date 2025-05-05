@@ -19,4 +19,6 @@ export interface ApplicationState {
   returnConversationIds?: string[];
   hasUnsavedChanges?: boolean;
   selectedWidget?: string;
+
+  logsEntityId: string | undefined;
 }
