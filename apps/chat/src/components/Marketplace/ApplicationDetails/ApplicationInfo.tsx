@@ -18,7 +18,9 @@ function InfoColumn({ dataQa, infoLabel, children }: infoColumnProps) {
       <span className=" w-[148px] whitespace-pre-wrap break-words font-semibold">
         {infoLabel}:
       </span>
-      <span className="whitespace-pre-wrap break-words" data-qa={dataQa}>{children}</span>
+      <span className="whitespace-pre-wrap break-words" data-qa={dataQa}>
+        {children}
+      </span>
     </div>
   );
 }

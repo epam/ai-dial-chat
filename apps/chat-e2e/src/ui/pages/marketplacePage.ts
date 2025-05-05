@@ -1,6 +1,6 @@
 import config from '@/config/chat.playwright.config';
 import { API, ExpectedConstants } from '@/src/testData';
-import { BasePage } from '@/src/ui/pages/basePage';
+import { BasePage, ExpectedApiResponse } from '@/src/ui/pages/basePage';
 import { MarketplaceContainer } from '@/src/ui/webElements/marketplace/marketplaceContainer';
 
 export class MarketplacePage extends BasePage {
@@ -77,43 +77,32 @@ export class MarketplacePage extends BasePage {
       getPublishedApplications?: boolean;
     } = {},
   ): Promise<void> {
-    const responsePromises = [];
-    const commonGetHosts: string[] = [];
+    const expectedResponses: ExpectedApiResponse[] = [];
 
     if (options.getInstalledDeployments) {
-      commonGetHosts.push(API.installedDeploymentsHost());
+      expectedResponses.push({
+        apiMethod: 'GET',
+        urlPattern: API.installedDeploymentsHost(),
+      });
     }
     if (options.getPublishedApplications) {
-      commonGetHosts.push(API.publishedApplicationsHost);
+      expectedResponses.push({
+        apiMethod: 'GET',
+        urlPattern: API.publishedApplicationsHost,
+      });
     }
 
-    // Wait for the common GET requests
-    for (const host of commonGetHosts) {
-      const resp = this.page.waitForResponse(
-        (resp) =>
-          resp.url().includes(host) &&
-          resp.request().method() === 'GET' &&
-          resp.status() === 200,
-      );
-      responsePromises.push(resp);
-    }
-
-    // Wait for the PUT request if needed
     if (options.updateInstalledDeployments) {
-      const putResp = this.page.waitForResponse(
-        (resp) =>
-          resp.url().includes(API.installedDeploymentsHost()) &&
-          resp.request().method() === 'PUT' &&
-          resp.status() === 200,
-      );
-      responsePromises.push(putResp);
+      expectedResponses.push({
+        apiMethod: 'PUT',
+        urlPattern: API.installedDeploymentsHost(),
+      });
     }
 
-    // Perform navigation and wait for all expected responses
-    await this.navigateToUrl(url);
-    for (const resp of responsePromises) {
-      await resp;
-    }
+    await this.waitForExpectedResponses(
+      () => this.navigateToUrl(url),
+      expectedResponses,
+    );
   }
 
   async waitForPageLoaded() {
