@@ -264,7 +264,8 @@ export const AddApplicationGeneralInfoFormSelector = {
   name: '#name',
   version: '#version',
   iconField: '[data-qa="custom-logo"]',
-  description: '#description',
+  descriptionInput: '#description',
+  descriptionLabel: '[for="description"]',
   topicsDropdownContainer: '#topics-dropdown',
   nextButton: '[data-qa="save-application-general-info"]',
   topicsDropdownToggle: '[class*="-indicatorContainer"]', // Selector for the dropdown arrow within the container
@@ -278,6 +279,8 @@ export const AddApplicationGeneralInfoFormSelector = {
 };
 
 export const AddApplicationAppSettingsFormSelector = {
+  featuresLabel: '[for="features"]',
+  attachmentsTypesLabel: '[for="attachmentTypes"]',
   chatCompletionUrl: '#completionUrl',
   addButton: '[data-qa="add-application"]',
   appViewFormContainer: '[data-qa="app-view-form"]',

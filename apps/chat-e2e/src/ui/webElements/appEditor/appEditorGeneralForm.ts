@@ -1,4 +1,5 @@
 import { API, Attachment } from '@/src/testData';
+import { Tags } from '@/src/ui/domData';
 import { AddApplicationGeneralInfoFormSelector } from '@/src/ui/selectors';
 import { AppEditorForm } from '@/src/ui/webElements/appEditor/appEditorForm';
 import { Locator, Page } from '@playwright/test';
@@ -19,7 +20,13 @@ export class AppEditorGeneralForm extends AppEditorForm {
     AddApplicationGeneralInfoFormSelector.version,
   );
   public description = this.getChildElementBySelector(
-    AddApplicationGeneralInfoFormSelector.description,
+    AddApplicationGeneralInfoFormSelector.descriptionInput,
+  );
+  public descriptionLabel = this.getChildElementBySelector(
+    AddApplicationGeneralInfoFormSelector.descriptionLabel,
+  );
+  public descriptionHintIcon = this.descriptionLabel.getChildElementBySelector(
+    Tags.svg,
   );
   public nextButton = this.getChildElementBySelector(
     AddApplicationGeneralInfoFormSelector.nextButton,

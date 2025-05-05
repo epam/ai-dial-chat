@@ -719,15 +719,17 @@ dialTest(
 );
 
 dialTest(
-  'Custom app Topic dropdown select',
+  'Custom app Topic dropdown select. +\n' + '[Custom app]: Hints on for fields',
   async ({
     marketplacePage,
     appEditorPage,
     appEditorGeneralForm,
     setTestIds,
     baseAssertion,
+    tooltipAssertion,
+    appEditorViewForm,
   }) => {
-    setTestIds('EPMRTC-4374');
+    setTestIds('EPMRTC-4374', 'EPMRTC-4278');
     const numberOfTopicsToSelect = 5;
     let allTopics: string[] = [];
     let topicsToSelect: string[] = [];
@@ -736,6 +738,16 @@ dialTest(
       await marketplacePage.openCreateCustomAppPage();
       await appEditorPage.waitForPageLoaded();
     });
+
+    await dialTest.step(
+      'Hover over question icon for Description field and verify hint',
+      async () => {
+        await appEditorGeneralForm.descriptionHintIcon.hoverOver();
+        await tooltipAssertion.assertTooltipContent(
+          ExpectedConstants.customApplicationDescriptionTooltip,
+        );
+      },
+    );
 
     await dialTest.step(
       'Click on Topics drop down and verify the list is expanded',
@@ -829,6 +841,29 @@ dialTest(
           appEditorGeneralForm.selectedTopicPills,
           0,
           ExpectedMessages.elementsCountIsValid,
+        );
+      },
+    );
+
+    await dialTest.step('Click Next button to go to App Settings', async () => {
+      await appEditorGeneralForm.fillInAppFields({
+        name: GeneratorUtil.randomApplicationName(),
+        version: GeneratorUtil.randomApplicationVersion(),
+      });
+      await appEditorGeneralForm.goNext({ waitForResponses: false });
+      await baseAssertion.assertElementState(appEditorViewForm, 'visible');
+    });
+
+    await dialTest.step(
+      'Hover over question icons for Features data and Attachment types and verify hints',
+      async () => {
+        await appEditorViewForm.featuresDataHintIcon.hoverOver();
+        await tooltipAssertion.assertTooltipContent(
+          ExpectedConstants.customApplicationFeaturesTooltip,
+        );
+        await appEditorViewForm.attachmentTypesHintIcon.hoverOver();
+        await tooltipAssertion.assertTooltipContent(
+          ExpectedConstants.customApplicationAttachmentsTypesTooltip,
         );
       },
     );
