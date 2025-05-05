@@ -105,18 +105,18 @@ export const ApplicationDetailsFooter = ({
 
   const isMyApp = isMyApplication(entity);
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
-  const hasPublicId = isEntityIdPublic(entity);
   const isPublicApp = isApplicationPublic(entity);
   const isSmallScreen = screenState === ScreenState.SM;
   const canWrite = canWriteSharedWithMe(entity);
-  const canEdit = isMyApp || canWrite || isAdmin;
-  const isExecutable = isExecutableApp(entity) && canEdit;
+  const isExecutable =
+    isExecutableApp(entity) && (isMyApp || canWrite || isAdmin);
+  const canEdit =
+    isMyApp || !!canWrite || (isAdmin && isEntityIdPublic(entity));
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
   const isAppInDeployment = isApplicationDeploymentInProgress(entity);
   const showContextMenu = entity.reference !== entity.id;
-  const isPublicAndAdmin = isAdmin && isPublicApp;
-  const GoToEditorIcon = isPublicAndAdmin ? IconEye : IconEdit;
+  const GoToEditorIcon = isPublicApp ? IconEye : IconEdit;
   const PlayerIcon = StatusIcons[playerStatus];
 
   return (
@@ -157,7 +157,7 @@ export const ApplicationDetailsFooter = ({
                 </Tooltip>
               )}
               {canEdit && (
-                <Tooltip tooltip={t(isPublicAndAdmin ? 'View' : 'Edit')}>
+                <Tooltip tooltip={t(isPublicApp ? 'View' : 'Edit')}>
                   <button
                     disabled={isAppInDeployment}
                     onClick={handleEdit}
@@ -190,14 +190,14 @@ export const ApplicationDetailsFooter = ({
                   </button>
                 </Tooltip>
               )}
-              {(isMyApp || hasPublicId) && (
-                <Tooltip tooltip={hasPublicId ? t('Unpublish') : t('Publish')}>
+              {(isMyApp || isPublicApp) && (
+                <Tooltip tooltip={isPublicApp ? t('Unpublish') : t('Publish')}>
                   <button
-                    onClick={hasPublicId ? handleUnpublish : handlePublish}
+                    onClick={isPublicApp ? handleUnpublish : handlePublish}
                     className="icon-button"
                     data-qa="application-publish"
                   >
-                    {hasPublicId ? (
+                    {isPublicApp ? (
                       <UnpublishIcon className="size-6 shrink-0" />
                     ) : (
                       <IconWorldShare size={24} />
@@ -252,7 +252,7 @@ export const ApplicationDetailsFooter = ({
               playerStatus === SimpleApplicationStatus.UNDEPLOY
             }
             tooltip={
-              hasPublicId && !isAdmin
+              isPublicApp && !isAdmin
                 ? t(
                     'Ask your administrator to deploy this application to be able to use it',
                   )

@@ -31,6 +31,7 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { CONFIRM_ICON_FILE_VALUES } from '@/src/constants/applications';
 import { IMAGE_TYPES } from '@/src/constants/chat';
+import { PUBLIC_APP_TOOLTIP } from '@/src/constants/code-apps';
 import { DEFAULT_VERSION } from '@/src/constants/public';
 import { Routes } from '@/src/constants/routes';
 
@@ -118,6 +119,18 @@ export const GeneralInfoEditor: React.FC<Props> = ({
 
   const handleSubmit = useCallback(
     (data: ApplicationGeneralInfoFormData, isAutoSave = false) => {
+      if (oldApplication && isEntityIdPublic(oldApplication)) {
+        router.push({
+          pathname: Routes.AppsEditorSettings,
+          query: {
+            id: router.query.id ?? '',
+            slug: router.query.slug ?? '',
+            add: router.query.add ?? '',
+          },
+        });
+        return;
+      }
+
       const { slug } = router.query;
       if (!slug) return;
 
@@ -169,9 +182,9 @@ export const GeneralInfoEditor: React.FC<Props> = ({
       reset(data);
     },
     [
-      router.query,
-      schema,
       oldApplication,
+      router,
+      schema,
       reset,
       isFormChanged,
       isAppDeployed,
@@ -210,7 +223,6 @@ export const GeneralInfoEditor: React.FC<Props> = ({
 
   const isPublicApp = !!oldApplication && isEntityIdPublic(oldApplication);
   const isReadonly = isPublicApp && isAdmin;
-  const publicAppTooltip = t('This application is public and cannot be edited');
 
   return (
     <div className="size-full overflow-hidden bg-layer-2">
@@ -230,9 +242,9 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             error={errors.name?.message}
             disabled={isAppDeployed || isSharedWithMe || isReadonly}
             tooltip={
+              (isReadonly && PUBLIC_APP_TOOLTIP) ||
               (isSharedWithMe && getSharedTooltip('name')) ||
               (isAppDeployed && t('Undeploy application to edit name')) ||
-              (isReadonly && publicAppTooltip) ||
               ''
             }
           />
@@ -248,9 +260,9 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             rules={validators['version']}
             disabled={isAppDeployed || isSharedWithMe || isReadonly}
             tooltip={
+              (isReadonly && PUBLIC_APP_TOOLTIP) ||
               (isSharedWithMe && getSharedTooltip('version')) ||
               (isAppDeployed && t('Undeploy application to edit version')) ||
-              (isReadonly && publicAppTooltip) ||
               ''
             }
           />
@@ -271,8 +283,8 @@ export const GeneralInfoEditor: React.FC<Props> = ({
                 error={errors.iconUrl?.message}
                 disabled={isSharedWithMe || isReadonly}
                 tooltip={
+                  (isReadonly && PUBLIC_APP_TOOLTIP) ||
                   (isSharedWithMe && getSharedTooltip('icon')) ||
-                  (isReadonly && publicAppTooltip) ||
                   ''
                 }
                 confirmDialogValues={confirmIconValues}
@@ -290,7 +302,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             placeholder={t('A description of your application')}
             rows={3}
             disabled={isReadonly}
-            tooltip={isReadonly ? publicAppTooltip : ''}
+            tooltip={isReadonly ? PUBLIC_APP_TOOLTIP : ''}
             className="resize-none"
             id="description"
           />
@@ -302,7 +314,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
               <TopicsSelector
                 label={t('Topics')}
                 disabled={isReadonly}
-                tooltip={isReadonly ? publicAppTooltip : ''}
+                tooltip={isReadonly ? PUBLIC_APP_TOOLTIP : ''}
                 values={field.value?.map(topicToOption)}
                 options={topicOptions}
                 placeholder={t('Select one or more topics')}

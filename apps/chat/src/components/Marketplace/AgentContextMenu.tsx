@@ -98,12 +98,12 @@ export const AgentContextMenu: React.FC<Props> = ({
   const canWrite = canWriteSharedWithMe(entity);
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
-  const hasEditPermissions = isMyApp || canWrite || isAdmin;
-  const isExecutable = isExecutableApp(entity) && hasEditPermissions;
+  const isExecutable =
+    isExecutableApp(entity) && (isMyApp || canWrite || isAdmin);
   const isMyAppOrPreview = isMyApp || isPreview;
   const isPublicAndAdmin = isPublicApp && isAdmin;
-
-  const PlayerContextIcon = PlayerContextIcons[playerStatus];
+  const canEdit =
+    isMyApp || !!canWrite || (isAdmin && isEntityIdPublic(entity));
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -119,18 +119,15 @@ export const AgentContextMenu: React.FC<Props> = ({
         dataQa: 'status-change',
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
         display:
-          isExecutable &&
-          isCodeAppsEnabled &&
-          hasEditPermissions &&
-          disabledActions.deploy !== true,
-        Icon: PlayerContextIcon,
+          isExecutable && isCodeAppsEnabled && disabledActions.deploy !== true,
+        Icon: PlayerContextIcons[playerStatus],
         iconClassName: PlayerContextIconClasses[playerStatus],
         onClick: handleUpdateFunctionStatus,
       },
       {
         name: t(isPublicAndAdmin ? 'View' : 'Edit'),
         dataQa: 'edit',
-        display: hasEditPermissions && disabledActions.edit !== true,
+        display: canEdit && disabledActions.edit !== true,
         Icon: isPublicAndAdmin ? IconEye : IconPencilMinus,
         onClick: handleEdit,
       },
@@ -205,12 +202,11 @@ export const AgentContextMenu: React.FC<Props> = ({
       playerStatus,
       isExecutable,
       isCodeAppsEnabled,
-      hasEditPermissions,
-      PlayerContextIcon,
+      isMyApp,
       handleUpdateFunctionStatus,
       isPublicAndAdmin,
+      canEdit,
       handleEdit,
-      isMyApp,
       isApplicationsSharingEnabled,
       handleOpenSharing,
       handleOpenUnshare,

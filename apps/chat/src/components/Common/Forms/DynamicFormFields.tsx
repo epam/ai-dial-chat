@@ -23,6 +23,8 @@ import { Translation } from '@/src/types/translation';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 import { FieldErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 
+import Tooltip from '../Tooltip';
+
 export interface DynamicField extends SelectOption<string, string> {
   editableKey?: boolean;
   static?: boolean;
@@ -44,6 +46,8 @@ interface DynamicFieldsProps<
   >;
   keyOptions?: RegisterOptions<T, Path<T>>;
   valueOptions?: RegisterOptions<T, Path<T>>;
+  disabled?: boolean;
+  tooltip?: string;
 
   name: K;
 }
@@ -59,6 +63,8 @@ export const DynamicFormFields = <
   creatable,
   keyOptions,
   valueOptions,
+  disabled,
+  tooltip,
   keyLabel = 'Name',
   valueLabel = 'Value',
 }: DynamicFieldsProps<T, K>) => {
@@ -92,94 +98,109 @@ export const DynamicFormFields = <
   }, [options, fields]);
 
   return (
-    <div className="flex flex-col gap-2">
-      {fields.map((field, i) => (
-        <div
-          key={field.label}
-          className="flex gap-3 rounded border border-tertiary bg-layer-3 px-3 py-2"
-        >
-          {!field.editableKey ? (
-            <div className="w-[127px] px-2 py-1 text-sm text-primary">
-              {field.visibleName ?? field.label}
-            </div>
-          ) : (
-            <div className="w-[127px]">
+    <Tooltip triggerClassName="w-full" tooltip={tooltip}>
+      <div className="flex flex-col gap-2">
+        {fields.map((field, i) => (
+          <div
+            key={field.label}
+            className="flex gap-3 rounded border border-tertiary bg-layer-3 px-3 py-2"
+          >
+            {!field.editableKey ? (
+              <div className="w-[127px] px-2 py-1 text-sm text-primary">
+                {field.visibleName ?? field.label}
+              </div>
+            ) : (
+              <div className="w-[127px]">
+                <input
+                  {...register(`${name}.${i}.label` as Path<T>, keyOptions)}
+                  disabled={disabled}
+                  className={classNames(
+                    'w-full border-b border-primary bg-transparent px-2 py-1 text-sm text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none',
+                    errors?.[i]?.label && '!border-error',
+                    disabled
+                      ? 'cursor-not-allowed'
+                      : 'hover:border-accent-primary',
+                  )}
+                  placeholder={`Enter ${keyLabel?.toLowerCase()}`}
+                />
+                <FieldErrorMessage
+                  className="!mb-0"
+                  error={errors?.[i]?.label?.message}
+                />
+              </div>
+            )}
+
+            <div className="grow">
               <input
-                {...register(`${name}.${i}.label` as Path<T>, keyOptions)}
+                {...register(`${name}.${i}.value` as Path<T>, valueOptions)}
+                disabled={disabled}
                 className={classNames(
-                  'w-full border-b border-primary bg-transparent px-2 py-1 text-sm text-primary placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none',
-                  errors?.[i]?.label && '!border-error',
+                  'w-full border-b border-primary bg-transparent px-2 py-1 text-sm text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none',
+                  errors?.[i]?.value && '!border-error',
+                  disabled
+                    ? 'cursor-not-allowed'
+                    : 'hover:border-accent-primary',
                 )}
-                placeholder={`Enter ${keyLabel?.toLowerCase()}`}
+                placeholder={`Enter ${valueLabel?.toLowerCase()}`}
               />
               <FieldErrorMessage
                 className="!mb-0"
-                error={errors?.[i]?.label?.message}
+                error={errors?.[i]?.value?.message}
               />
             </div>
-          )}
 
-          <div className="grow">
-            <input
-              {...register(`${name}.${i}.value` as Path<T>, valueOptions)}
-              className={classNames(
-                'w-full border-b border-primary bg-transparent px-2 py-1 text-sm text-primary placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none',
-                errors?.[i]?.value && '!border-error',
-              )}
-              placeholder={`Enter ${valueLabel?.toLowerCase()}`}
-            />
-            <FieldErrorMessage
-              className="!mb-0"
-              error={errors?.[i]?.value?.message}
-            />
-          </div>
-
-          <button
-            type="button"
-            disabled={field.static}
-            className={classNames(
-              'flex items-start rounded border border-transparent pt-1 text-secondary outline-none hover:text-accent-primary',
-              field.static && 'invisible',
-            )}
-            onClick={() => remove(i)}
-          >
-            <IconTrashX size={18} />
-          </button>
-        </div>
-      ))}
-
-      {(filteredOptions.length || creatable) && (
-        <Menu
-          className="max-w-[150px]"
-          trigger={
             <button
               type="button"
-              className="flex items-center gap-2 rounded text-accent-primary"
-              onClick={
-                !filteredOptions.length && creatable
-                  ? () => handleAdd()
-                  : undefined
-              }
+              disabled={field.static || disabled}
+              className={classNames(
+                'flex items-start rounded border border-transparent pt-1 text-secondary outline-none',
+                field.static && 'invisible',
+                disabled ? 'cursor-not-allowed' : 'hover:text-accent-primary',
+              )}
+              onClick={() => remove(i)}
             >
-              <IconPlus size={18} />
-
-              {t(addLabel ?? 'Add')}
+              <IconTrashX size={18} />
             </button>
-          }
-        >
-          <div className="w-full bg-layer-3">
-            {filteredOptions.map((option) => (
-              <MenuItem
-                key={option.value}
-                className="max-w-full text-xs hover:bg-accent-primary-alpha"
-                item={option.label}
-                value={option.value}
-                onClick={() => handleAdd(option)}
-              />
-            ))}
           </div>
-        </Menu>
-      )}
-    </div>
+        ))}
+
+        {(filteredOptions.length || creatable) && (
+          <Menu
+            isTriggerEnabled={!disabled}
+            className="max-w-[150px]"
+            trigger={
+              <button
+                type="button"
+                className={classNames(
+                  'flex items-center gap-2 rounded text-accent-primary',
+                  disabled && 'cursor-not-allowed',
+                )}
+                onClick={
+                  !filteredOptions.length && creatable
+                    ? () => handleAdd()
+                    : undefined
+                }
+              >
+                <IconPlus size={18} />
+
+                {t(addLabel ?? 'Add')}
+              </button>
+            }
+          >
+            <div className="w-full bg-layer-3">
+              {filteredOptions.map((option) => (
+                <MenuItem
+                  key={option.value}
+                  className="max-w-full text-xs hover:bg-accent-primary-alpha"
+                  item={option.label}
+                  value={option.value}
+                  onClick={() => handleAdd(option)}
+                />
+              ))}
+            </div>
+          </Menu>
+        )}
+      </div>
+    </Tooltip>
   );
 };
