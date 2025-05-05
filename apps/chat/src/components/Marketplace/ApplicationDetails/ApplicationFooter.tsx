@@ -23,7 +23,6 @@ import {
   isExecutableApp,
 } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
-import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
 import {
@@ -110,8 +109,7 @@ export const ApplicationDetailsFooter = ({
   const canWrite = canWriteSharedWithMe(entity);
   const isExecutable =
     isExecutableApp(entity) && (isMyApp || canWrite || isAdmin);
-  const canEdit =
-    isMyApp || !!canWrite || (isAdmin && isPublicApp);
+  const canEdit = isMyApp || !!canWrite || (isAdmin && isPublicApp);
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
   const isAppInDeployment = isApplicationDeploymentInProgress(entity);
