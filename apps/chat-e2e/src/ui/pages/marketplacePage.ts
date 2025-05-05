@@ -14,7 +14,8 @@ export class MarketplacePage extends BasePage {
   }
 
   async openMyWorkspacePage(
-    options: { updateInstalledDeployments?: boolean;
+    options: {
+      updateInstalledDeployments?: boolean;
       getInstalledDeployments?: boolean;
       getPublishedApplications?: boolean;
     } = {
@@ -32,7 +33,8 @@ export class MarketplacePage extends BasePage {
   }
 
   async openMarketplacePage(
-    options: { updateInstalledDeployments?: boolean;
+    options: {
+      updateInstalledDeployments?: boolean;
       getInstalledDeployments?: boolean;
       getPublishedApplications?: boolean;
     } = {
@@ -50,7 +52,8 @@ export class MarketplacePage extends BasePage {
   }
 
   async openCreateCustomAppPage(
-    options: { updateInstalledDeployments?: boolean;
+    options: {
+      updateInstalledDeployments?: boolean;
       getInstalledDeployments?: boolean;
       getPublishedApplications?: boolean;
     } = {
@@ -108,7 +111,6 @@ export class MarketplacePage extends BasePage {
 
     // Perform navigation and wait for all expected responses
     await this.navigateToUrl(url);
-    // await Promise.all(responsePromises);
     for (const resp of responsePromises) {
       await resp;
     }

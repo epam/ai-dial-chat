@@ -860,7 +860,6 @@ dialTest(
     const newIconFileName = Attachment.sunImageName;
     let agentElement: BaseElement;
     let expectedNewIconUrl: string;
-    let createdAppUrl: string;
 
     await dialTest.step(
       'Precondition: Create custom application via API',
@@ -871,9 +870,6 @@ dialTest(
           .build();
         const createdApp =
           await applicationApiHelper.createApplication(applicationModel);
-
-        // Store the URL path part returned by the backend
-        createdAppUrl = createdApp.url;
 
         expectedNewIconUrl = `${API.fileHost}/${createdApp.bucket}/${newIconFileName}`;
       },

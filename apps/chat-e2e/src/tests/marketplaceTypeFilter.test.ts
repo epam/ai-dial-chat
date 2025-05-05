@@ -51,7 +51,10 @@ dialTest(
     await dialTest.step(
       'Open Dial Marketplace, check Types=Model filter and verify all available models are displayed',
       async () => {
-        await marketplacePage.openMarketplacePage();
+        await marketplacePage.openMarketplacePage({
+          updateInstalledDeployments: false,
+          getInstalledDeployments: true,
+        });
         await marketplacePage.waitForPageLoaded();
         await marketplaceFilter
           .filterByPropertyOptionInput(
