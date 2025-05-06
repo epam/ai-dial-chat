@@ -78,10 +78,10 @@ export const FileDropArea = ({
                   className="mb-5 text-accent-primary"
                 />
                 <h5 className="mb-4 text-lg font-semibold text-primary">
-                  {t('Add files')}
+                  {t('Attach files')}
                 </h5>
                 <p className="text-sm text-primary">
-                  {t('Drop files here to add them to conversation')}
+                  {t('Drop files here to attach them to message')}
                 </p>
               </>
             ) : (

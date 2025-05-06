@@ -1,8 +1,6 @@
 import { ReactNode } from 'react';
 
-import { useUploadFilesHandler } from '@/src/hooks/useUploadFilesHandler';
-
-import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
+import { useChatUploadFiles } from '@/src/hooks/useChatUploadFiles';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
@@ -14,21 +12,11 @@ interface ChatDropAreaProps {
 }
 
 export const ChatDropArea = ({ children }: ChatDropAreaProps) => {
-  const availableAttachmentsTypes = useAppSelector(
-    ConversationsSelectors.selectAvailableAttachmentsTypes,
-  );
-  const maximumAttachmentsAmount = useAppSelector(
-    ConversationsSelectors.selectMaximumAttachmentsAmount,
-  );
   const canAttachFiles = useAppSelector(
     ConversationsSelectors.selectCanAttachFile,
   );
 
-  const handleUploadFiles = useUploadFilesHandler(
-    getQuickAttachmentsSavingPath(),
-    maximumAttachmentsAmount,
-    availableAttachmentsTypes,
-  );
+  const handleUploadFiles = useChatUploadFiles();
 
   return (
     <FileDropArea

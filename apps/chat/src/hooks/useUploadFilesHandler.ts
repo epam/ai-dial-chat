@@ -64,14 +64,15 @@ export const useUploadFilesHandler = (
 
   const handleUpload = useCallback(
     (files: File[]) => {
-      if (attachments.length + files.length > maximumAttachmentsAmount) {
+      const attachmentsAmount = attachments.length + files.length;
+      if (attachmentsAmount > maximumAttachmentsAmount) {
         dispatch(
           UIActions.showErrorToast(
             t(
-              `Maximum allowed attachments number is {{maxAttachmentsAmount}}. With your uploading amount will be {{selectedAttachmentsAmount}}`,
+              `Maximum allowed attachments number is {{maxAttachmentsAmount}}. With your uploading amount will be {{attachmentsAmount}}`,
               {
                 maxAttachmentsAmount: maximumAttachmentsAmount,
-                selectedAttachmentsAmount: files.length + attachments.length,
+                attachmentsAmount,
               },
             ),
           ),
