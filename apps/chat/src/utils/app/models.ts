@@ -10,8 +10,8 @@ import { getModelIdWithoutVersion } from '../server/api';
 import { constructPath } from './file';
 
 import groupBy from 'lodash-es/groupBy';
-import uniqBy from 'lodash-es/uniqBy';
 import omit from 'lodash-es/omit';
+import uniqBy from 'lodash-es/uniqBy';
 
 export const doesModelAllowSystemPrompt = (
   model: DialAIEntityModel | undefined,
@@ -68,7 +68,10 @@ export const groupModelsAndSaveOrder = (
   return result;
 };
 
-export const addToModelsMap = (modelsMap: ModelsMap, ...models: DialAIEntityModel[]) => {
+export const addToModelsMap = (
+  modelsMap: ModelsMap,
+  ...models: DialAIEntityModel[]
+) => {
   models.forEach((model) => {
     modelsMap[model.id] = model;
     if (model.id !== model.reference) {
@@ -87,5 +90,3 @@ export const deleteFromModelsMap = (modelsMap: ModelsMap, ...ids: string[]) => {
   });
   return modelsMap;
 };
-
-

@@ -1,7 +1,11 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { combineEntities } from '@/src/utils/app/common';
-import { addToModelsMap, deleteFromModelsMap, getGroupModelKey } from '@/src/utils/app/models';
+import {
+  addToModelsMap,
+  deleteFromModelsMap,
+  getGroupModelKey,
+} from '@/src/utils/app/models';
 import { translate } from '@/src/utils/app/translation';
 
 import { ApplicationStatus } from '@/src/types/applications';
@@ -9,7 +13,7 @@ import { ErrorMessage } from '@/src/types/error';
 import {
   DialAIEntityModel,
   InstalledModel,
-  PublishRequestDialAIEntityModel
+  PublishRequestDialAIEntityModel,
 } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
@@ -230,7 +234,10 @@ export const modelsSlice = createSlice({
       state.recentModelsIds = state.recentModelsIds.filter(
         (id) => !payload.references.includes(id),
       );
-      state.modelsMap = deleteFromModelsMap(state.modelsMap, ...payload.references);
+      state.modelsMap = deleteFromModelsMap(
+        state.modelsMap,
+        ...payload.references,
+      );
     },
     deleteSharedWithMeModel: (
       state,
