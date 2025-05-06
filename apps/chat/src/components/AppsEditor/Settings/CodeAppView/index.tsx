@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   Controller,
   Path,
   RegisterOptions,
   useFormContext,
 } from 'react-hook-form';
+
+import { useRouter } from 'next/router';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -22,10 +24,7 @@ import {
   ApplicationActions,
   ApplicationSelectors,
 } from '@/src/store/application/application.reducers';
-import {
-  CodeEditorActions,
-  CodeEditorSelectors,
-} from '@/src/store/codeEditor/codeEditor.reducer';
+import { CodeEditorActions } from '@/src/store/codeEditor/codeEditor.reducer';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -44,10 +43,8 @@ import { withController } from '@/src/components/Common/Forms/ControlledFormFiel
 import { DynamicFormFields } from '@/src/components/Common/Forms/DynamicFormFields';
 import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
-import { withWarningMessage } from '@/src/components/Common/Forms/FieldWarningMessage';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
-import { OptionsDialog } from '@/src/components/Common/OptionsDialog';
 
 import {
   CodeAppFormData,
@@ -103,9 +100,7 @@ const validators: Validators = {
 
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const ControlledField = withController(Field);
-const FilesEditor = withController(
-  withWarningMessage(withLabel(SourceFilesEditor)),
-);
+const FilesEditor = withController(withLabel(SourceFilesEditor));
 const RuntimeSelector = withController(withLabel(RuntimeVersionSelector));
 const MappingsForm = withLabel(
   DynamicFormFields<CodeAppFormData, 'endpoints' | 'env'>,
@@ -113,7 +108,6 @@ const MappingsForm = withLabel(
 
 interface CodeAppViewProps {
   isSharedWithMe: boolean;
-  isAppDeployed: boolean;
   oldApplication: CustomApplicationModel;
   isShared: boolean;
   applicationStatus?: ApplicationStatus;
@@ -121,16 +115,14 @@ interface CodeAppViewProps {
 
 export const CodeAppView: React.FC<CodeAppViewProps> = ({
   isSharedWithMe,
-  isAppDeployed,
   oldApplication,
   isShared,
   applicationStatus,
 }) => {
   const { t } = useTranslation(Translation.Chat);
-  const [editorConfirmation, setEditorConfirmation] =
-    useState<CodeAppFormData>();
+
   const dispatch = useAppDispatch();
-  const isCodeEditorDirty = useAppSelector(CodeEditorSelectors.selectIsDirty);
+
   const {
     control,
     handleSubmit: submitWrapper,
@@ -157,26 +149,29 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     ? CONFIRM_SOURCE_FOLDER_VALUES
     : undefined;
 
+  const router = useRouter();
+
   const handleEdit = useCallback(
     (data: CodeAppFormData) => {
       if (
         oldApplication.reference &&
         shouldSaveApplication &&
-        (!isEqual(data, lastSubmittedValuesRef.current) || exitAfterSave)
+        !isEqual(data, lastSubmittedValuesRef.current)
       ) {
         const preparedData = getCodeAppData(data);
+        const areNotTheSameAndShared =
+          isShared &&
+          preparedData.function?.sourceFolder !==
+            oldApplication.function?.sourceFolder;
 
         preparedData.functionStatus = applicationStatus;
         const applicationData: CustomApplicationModel = {
           ...oldApplication,
           ...preparedData,
+          isShared: areNotTheSameAndShared ? false : isShared,
         };
 
-        if (
-          isShared &&
-          preparedData.function?.sourceFolder !==
-            oldApplication.function?.sourceFolder
-        ) {
+        if (areNotTheSameAndShared) {
           dispatch(
             ShareActions.revokeAccess({
               resourceId: oldApplication.id,
@@ -192,14 +187,8 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           }),
         );
         lastSubmittedValuesRef.current = data;
-
-        if (isAppDeployed) {
-          dispatch(
-            UIActions.showWarningToast(
-              t('Saved changes will be applied during next deployment'),
-            ),
-          );
-        }
+      } else if (shouldSaveApplication && exitAfterSave) {
+        dispatch(ApplicationActions.exitEditor({}));
       } else {
         dispatch(ApplicationActions.setShouldSaveApplication(false));
         dispatch(ApplicationActions.setExitAfterSave(false));
@@ -207,53 +196,12 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     },
     [
       oldApplication,
-      dispatch,
-      isAppDeployed,
-      t,
-      isShared,
       shouldSaveApplication,
-      applicationStatus,
       exitAfterSave,
+      applicationStatus,
+      isShared,
+      dispatch,
     ],
-  );
-
-  const handleSave = useCallback(
-    (data: CodeAppFormData) => {
-      if (isCodeEditorDirty) {
-        setEditorConfirmation(data);
-      } else {
-        handleEdit(data);
-      }
-    },
-    [handleEdit, isCodeEditorDirty],
-  );
-
-  const modalOptions = useMemo(
-    () => [
-      {
-        label: t("Don't save"),
-        dataQa: 'not-save-option',
-        className: 'button-secondary',
-        onClick: () => {
-          if (editorConfirmation) {
-            handleEdit(editorConfirmation);
-          }
-          setEditorConfirmation(undefined);
-        },
-      },
-      {
-        label: t('Save'),
-        dataQa: 'save-option',
-        onClick: () => {
-          dispatch(CodeEditorActions.saveAllModifiedFiles());
-          if (editorConfirmation) {
-            handleEdit(editorConfirmation);
-          }
-          setEditorConfirmation(undefined);
-        },
-      },
-    ],
-    [t, editorConfirmation, handleEdit, dispatch],
   );
 
   register('sourceFiles', validators['sourceFiles']);
@@ -266,23 +214,35 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
   }, [dispatch]);
 
   useEffect(() => {
-    if (shouldSaveApplication) {
-      if (!isValid) {
-        dispatch(ApplicationActions.setShouldSaveApplication(false));
-        dispatch(ApplicationActions.setExitAfterSave(false));
-        dispatch(
-          UIActions.showErrorToast(t('Please fill in all mandatory fields')),
-        );
-        return;
-      }
+    const isTriggered = shouldSaveApplication || exitAfterSave;
+    if (!isTriggered) return;
 
-      submitWrapper(handleSave)();
+    if (!isValid) {
+      dispatch(ApplicationActions.setShouldSaveApplication(false));
+      dispatch(ApplicationActions.setExitAfterSave(false));
+      dispatch(
+        UIActions.showErrorToast(t('Please fill in all mandatory fields')),
+      );
+      return;
     }
-  }, [submitWrapper, shouldSaveApplication, handleSave, isValid, dispatch, t]);
+
+    if (shouldSaveApplication) {
+      submitWrapper(handleEdit)();
+    }
+  }, [
+    exitAfterSave,
+    router,
+    submitWrapper,
+    shouldSaveApplication,
+    handleEdit,
+    isValid,
+    dispatch,
+    t,
+  ]);
 
   return (
     <form
-      onSubmit={submitWrapper(handleSave)}
+      onSubmit={submitWrapper(handleEdit)}
       className="flex size-full flex-col bg-layer-2"
     >
       <div className="grow space-y-4 divide-tertiary overflow-y-auto p-5">
@@ -330,7 +290,6 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           tooltip={
             isSharedWithMe ? getSharedTooltip('folder with source files') : ''
           }
-          warning={confirmSourceFolderValues?.description}
           confirmDialogValues={confirmSourceFolderValues}
         />
 
@@ -361,13 +320,6 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           keyOptions={envKeysValidator}
           valueOptions={envValueValidator}
           errors={errors.env}
-        />
-
-        <OptionsDialog
-          isOpen={!!editorConfirmation}
-          heading={t('Do you want to save changes in the code editor?')}
-          onClose={() => setEditorConfirmation(undefined)}
-          options={modalOptions}
         />
       </div>
     </form>

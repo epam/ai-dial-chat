@@ -23,7 +23,7 @@ dialTest.skip(
   async ({
     dialHomePage,
     conversations,
-    header,
+    chatBar,
     conversationData,
     dataInjector,
     setTestIds,
@@ -54,7 +54,7 @@ dialTest.skip(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(conversation.name);
         for (let i = 1; i <= 2; i++) {
-          await header.createNewConversation();
+          await chatBar.createNewEntity();
           await expect
             .soft(
               conversations.getEntityByName(
@@ -76,7 +76,7 @@ dialTest.skip(
   async ({
     dialHomePage,
     conversations,
-    header,
+    chatBar,
     conversationData,
     dataInjector,
     conversationDropdownMenu,
@@ -118,7 +118,7 @@ dialTest.skip(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(secondConversation.name);
-        await header.createNewConversation();
+        await chatBar.createNewEntity();
         await expect
           .soft(
             conversations.getEntityByName(thirdConversationName),
@@ -145,7 +145,7 @@ dialTest.skip(
           GeneratorUtil.randomString(7),
           { isHttpMethodTriggered: false },
         );
-        await header.createNewConversation();
+        await chatBar.createNewEntity();
         await expect
           .soft(
             conversations.getEntityByName(fourthConversationName),
@@ -162,7 +162,7 @@ dialTest.skip(
   async ({
     dialHomePage,
     conversations,
-    header,
+    chatBar,
     conversationData,
     dataInjector,
     conversationDropdownMenu,
@@ -201,7 +201,7 @@ dialTest.skip(
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-        await header.createNewConversation();
+        await chatBar.createNewEntity();
         await expect
           .soft(
             conversations.getEntityByName(
@@ -221,7 +221,6 @@ dialTest(
     dialHomePage,
     conversations,
     chat,
-    header,
     chatBar,
     conversationData,
     dataInjector,
@@ -287,7 +286,7 @@ dialTest(
     await dialTest.step(
       'Verify one more conversation with the same name can be created',
       async () => {
-        await header.createNewConversation();
+        await chatBar.createNewEntity();
         await chat.sendRequestWithButton(initConversationName);
         await expect
           .soft(

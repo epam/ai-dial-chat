@@ -59,9 +59,12 @@ import {
 } from '@/src/assertions';
 import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
 import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
+import { AgentDetailsModalAssertion } from '@/src/assertions/agentDetailsModalAssertion';
+import { AppEditorHeaderAssertion } from '@/src/assertions/appEditorHeaderAssertion';
 import { LocalStorageAssertion } from '@/src/assertions/localStorageAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
 import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateModalAssertion';
+import { PromptPreviewModalAssertion } from '@/src/assertions/promptPreviewModalAssertion';
 import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
 import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
@@ -88,12 +91,12 @@ import { AddonsDialog } from '@/src/ui/webElements/addonsDialog';
 import { AgentSettings } from '@/src/ui/webElements/agentSettings';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { Banner } from '@/src/ui/webElements/banner';
-import { ChatLoader } from '@/src/ui/webElements/chatLoader';
 import { Compare } from '@/src/ui/webElements/compare';
 import { ConfirmationDialog } from '@/src/ui/webElements/confirmationDialog';
 import { DropdownCheckboxMenu } from '@/src/ui/webElements/dropdownCheckboxMenu';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import {
+  AttachFilesTree,
   ConversationsToPublishTree,
   ConversationsTree,
   FilesToPublishTree,
@@ -123,8 +126,10 @@ import { MarketplaceFilter } from '@/src/ui/webElements/marketplace/marketplaceF
 import { MarketplaceHeader } from '@/src/ui/webElements/marketplace/marketplaceHeader';
 import { MarketplaceSidebar } from '@/src/ui/webElements/marketplace/marketplaceSidebar';
 import { ModelInfoTooltip } from '@/src/ui/webElements/modelInfoTooltip';
+import { NavigationPanel } from '@/src/ui/webElements/navigationPanel';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { PromptModalDialog } from '@/src/ui/webElements/promptModalDialog';
+import { PromptPreviewModalWindow } from '@/src/ui/webElements/promptPreviewModalWindow';
 import { PublishingRequestModal } from '@/src/ui/webElements/publishingRequestModal';
 import { RenameConversationModal } from '@/src/ui/webElements/renameConversationModal';
 import { Search } from '@/src/ui/webElements/search';
@@ -161,11 +166,12 @@ const dialTest = test.extend<{
   marketplaceHeader: MarketplaceHeader;
   addAppDropdownMenu: DropdownMenu;
   appEditorHeader: AppEditorHeader;
+  appEditorHeaderAssertion: AppEditorHeaderAssertion;
   appEditorGeneralForm: AppEditorGeneralForm;
   appEditorPreview: AppEditorPreview;
   appEditorViewForm: AppEditorViewForm;
   chatBar: ChatBar;
-  chatLoader: ChatLoader;
+  navigationPanel: NavigationPanel;
   importExportLoader: ImportExportLoader;
   header: Header;
   accountSettings: AccountSettings;
@@ -269,6 +275,7 @@ const dialTest = test.extend<{
   publishingRules: PublishingRules;
   conversationAssertion: ConversationAssertion;
   chatBarFolderAssertion: FolderAssertion<FolderConversations>;
+  allFilesFolderAssertion: FolderAssertion<Folders>;
   organizationConversationAssertion: SideBarConversationAssertion<OrganizationConversationsTree>;
   organizationPromptAssertion: SideBarEntityAssertion<OrganizationPromptsTree>;
   toastAssertion: ToastAssertion;
@@ -320,6 +327,10 @@ const dialTest = test.extend<{
   agentVersionsDropdownMenuAssertion: MenuAssertion;
   sharedWithMeConversationAssertion: SideBarConversationAssertion<SharedWithMeConversationsTree>;
   localStorageAssertion: LocalStorageAssertion;
+  promptPreviewModal: PromptPreviewModalWindow;
+  promptPreviewModalAssertion: PromptPreviewModalAssertion;
+  agentDetailsModalAssertion: AgentDetailsModalAssertion;
+  attachAllFilesTreeAssertion: EntityTreeAssertion<AttachFilesTree>;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper }, use) => {
@@ -329,6 +340,18 @@ const dialTest = test.extend<{
     },
     { scope: 'test', auto: true },
   ],
+  agentDetailsModalAssertion: async ({ agentDetailsModal }, use) => {
+    const agentDetailsModalAssertion = new AgentDetailsModalAssertion(
+      agentDetailsModal,
+    );
+    await use(agentDetailsModalAssertion);
+  },
+  appEditorHeaderAssertion: async ({ appEditorHeader }, use) => {
+    const appEditorHeaderAssertion = new AppEditorHeaderAssertion(
+      appEditorHeader,
+    );
+    await use(appEditorHeaderAssertion);
+  },
   sendMessageInputAttachmentsAssertions: async (
     { sendMessageInputAttachments },
     use,
@@ -458,9 +481,9 @@ const dialTest = test.extend<{
     const chatBar = appContainer.getChatBar();
     await use(chatBar);
   },
-  chatLoader: async ({ appContainer }, use) => {
-    const chatLoader = appContainer.getChatLoader();
-    await use(chatLoader);
+  navigationPanel: async ({ appContainer }, use) => {
+    const navigationPanel = appContainer.getNavigationPanel();
+    await use(navigationPanel);
   },
   importExportLoader: async ({ appContainer }, use) => {
     const importExportLoader = appContainer.getImportExportLoader();
@@ -958,6 +981,12 @@ const dialTest = test.extend<{
     );
     await use(chatBarFolderAssertion);
   },
+  allFilesFolderAssertion: async ({ attachedAllFiles }, use) => {
+    const allFilesFolderAssertion = new FolderAssertion<Folders>(
+      attachedAllFiles,
+    );
+    await use(allFilesFolderAssertion);
+  },
   toastAssertion: async ({ toast }, use) => {
     const toastAssertion = new ToastAssertion(toast);
     await use(toastAssertion);
@@ -1204,6 +1233,23 @@ const dialTest = test.extend<{
       agentDetailsModal.getVersionDropdownMenu(),
     );
     await use(agentVersionsDropdownMenuAssertion);
+  },
+  promptPreviewModal: async ({ page }, use) => {
+    const promptPreviewModalWindow = new PromptPreviewModalWindow(page);
+    await use(promptPreviewModalWindow);
+  },
+  promptPreviewModalAssertion: async ({ promptPreviewModal }, use) => {
+    const promptPreviewModalAssertion = new PromptPreviewModalAssertion(
+      promptPreviewModal,
+    );
+    await use(promptPreviewModalAssertion);
+  },
+  attachAllFilesTreeAssertion: async ({ attachFilesModal }, use) => {
+    const attachAllFilesTreeAssertion =
+      new EntityTreeAssertion<AttachFilesTree>(
+        attachFilesModal.getAllFilesTree(),
+      );
+    await use(attachAllFilesTreeAssertion);
   },
 });
 

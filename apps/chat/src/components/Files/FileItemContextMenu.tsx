@@ -2,6 +2,8 @@ import {
   IconDeviceFloppy,
   IconDots,
   IconDownload,
+  IconSquareCheck,
+  IconSquareOff,
   IconTrashX,
   IconUserX,
 } from '@tabler/icons-react';
@@ -27,26 +29,35 @@ import ContextMenu from '../Common/ContextMenu';
 import DownloadRenderer from './Download';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { UploadStatus } from '@epam/ai-dial-shared';
 
 interface ContextMenuProps {
   file: DialFile;
   className: string;
+  isOpen: boolean;
   onDelete: (props?: unknown) => void | MouseEventHandler<unknown>;
+  onUnshare: (props?: unknown) => void | MouseEventHandler<unknown>;
   onOpenChange?: (isOpen: boolean) => void;
-  onUnshare?: MouseEventHandler<unknown>;
+  onRemoveAccess?: MouseEventHandler<unknown>;
   onUnpublish?: MouseEventHandler<unknown>;
   onSave?: (fileId: string) => void | MouseEventHandler<unknown>;
+  onSelect?: MouseEventHandler<unknown>;
+  isSelected?: boolean;
 }
 
 export function FileItemContextMenu({
   file,
   className,
+  isOpen,
   onDelete,
-  onOpenChange,
   onUnshare,
+  onOpenChange,
+  onRemoveAccess,
   onUnpublish,
   onSave,
+  onSelect,
+  isSelected,
 }: ContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
 
@@ -61,14 +72,21 @@ export function FileItemContextMenu({
     [file.id],
   );
   const isCodeEditorFile = !!useAppSelector(selectFileContentSelector);
-
   const folders = useAppSelector(FilesSelectors.selectFolders);
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const handleSave = useMenuItemHandler(onSave, file.id);
   const handleDownload = useMenuItemHandler(onOpenChange, false, false);
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
+      {
+        name: t(isSelected ? 'Unselect' : 'Select'),
+        dataQa: 'select',
+        display: !!onSelect && !isOverlay,
+        Icon: isSelected ? IconSquareOff : IconSquareCheck,
+        onClick: onSelect,
+      },
       {
         name: t('Save'),
         dataQa: 'save',
@@ -95,10 +113,18 @@ export function FileItemContextMenu({
         CustomTriggerRenderer: DownloadRenderer,
       },
       {
-        name: t('Unshare'),
+        name: t('Remove access'),
         dataQa: 'unshare',
-        display: isSharingConversationEnabled && !!onUnshare && !!file.isShared,
+        display:
+          isSharingConversationEnabled && !!onRemoveAccess && !!file.isShared,
         Icon: IconUserX,
+        onClick: onRemoveAccess,
+      },
+      {
+        name: t('Unshare'),
+        display: !!file.sharedWithMe,
+        dataQa: 'unshare-file',
+        Icon: IconUserUnshare,
         onClick: onUnshare,
       },
       {
@@ -116,9 +142,7 @@ export function FileItemContextMenu({
         dataQa: 'delete',
         display:
           isMyEntity(file, FeatureType.File) ||
-          !!file.sharedWithMe ||
           canEditSharedFolderOrParent(folders, file.folderId),
-
         Icon: IconTrashX,
         onClick: onDelete,
       },
@@ -131,16 +155,21 @@ export function FileItemContextMenu({
       file,
       handleDownload,
       isSharingConversationEnabled,
+      onRemoveAccess,
       onUnshare,
       isPublishingConversationEnabled,
       onUnpublish,
       folders,
       onDelete,
+      isOverlay,
+      onSelect,
+      isSelected,
     ],
   );
 
   return (
     <ContextMenu
+      isOpen={isOpen}
       onOpenChange={onOpenChange}
       menuItems={menuItems}
       TriggerIcon={IconDots}

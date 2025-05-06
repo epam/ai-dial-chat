@@ -28,13 +28,18 @@ export class Header extends BaseElement {
     HeaderSelectors.newEntity,
   );
 
-  public backToChatButton = this.getChildElementBySelector(
-    HeaderSelectors.backToChatButton,
-  );
-
   public logo = this.getChildElementBySelector(HeaderSelectors.logo);
 
-  public async createNewConversation() {
-    await this.newEntityButton.click();
+  public async createNewConversation(options?: { triggeredHttpHost?: string }) {
+    if (options?.triggeredHttpHost) {
+      const respPromise = this.page.waitForResponse(
+        (r) =>
+          r.url().includes(options.triggeredHttpHost!) && r.status() === 200,
+      );
+      await this.newEntityButton.click();
+      await respPromise;
+    } else {
+      await this.newEntityButton.click();
+    }
   }
 }

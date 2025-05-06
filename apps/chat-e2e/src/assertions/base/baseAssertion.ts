@@ -6,7 +6,7 @@ import {
   Sorting,
 } from '@/src/testData';
 import { IconApiHelper } from '@/src/testData/api';
-import { Attributes, Cursors, Styles } from '@/src/ui/domData';
+import { Attributes, Colors, Cursors, Styles } from '@/src/ui/domData';
 import { BaseElement } from '@/src/ui/webElements';
 import { SortingUtil } from '@/src/utils/sortingUtil';
 import { Locator, expect } from '@playwright/test';
@@ -76,20 +76,27 @@ export class BaseAssertion {
   public async assertElementActionabilityState(
     element: BaseElement | Locator,
     expectedState: ElementActionabilityState,
+    expectedMessage?: string,
   ) {
     const elementLocator = this.getElementLocator(element);
     expectedState == 'enabled'
       ? await expect
-          .soft(elementLocator, ExpectedMessages.elementIsEnabled)
+          .soft(
+            elementLocator,
+            expectedMessage ?? ExpectedMessages.elementIsEnabled,
+          )
           .toBeEnabled()
       : await expect
-          .soft(elementLocator, ExpectedMessages.elementIsDisabled)
+          .soft(
+            elementLocator,
+            expectedMessage ?? ExpectedMessages.elementIsDisabled,
+          )
           .toBeDisabled();
   }
 
   public async assertElementState(
     element: BaseElement | Locator,
-    expectedState: ElementState,
+    expectedState: ElementState = 'visible',
     expectedMessage?: string,
   ) {
     const elementLocator = this.getElementLocator(element);
@@ -120,6 +127,19 @@ export class BaseAssertion {
         expectedMessage ?? ExpectedMessages.fieldValueIsValid,
       )
       .toHaveText(expectedText);
+  }
+
+  public async assertInputValue(
+    element: BaseElement | Locator,
+    expectedValue: string,
+    expectedMessage?: string,
+  ) {
+    const elementLocator = this.getElementLocator(element);
+    // Use Playwright's recommended matcher for input values
+    await expect(
+      elementLocator,
+      expectedMessage ?? ExpectedMessages.fieldValueIsValid,
+    ).toHaveValue(expectedValue);
   }
 
   public async assertElementAttribute(
@@ -184,13 +204,20 @@ export class BaseAssertion {
 
   public async assertElementBackgroundColors(
     element: BaseElement | Locator,
-    expectedColor: string,
+    expectedColor?: string,
   ) {
     const elementLocator = this.getElementLocator(element);
-    await expect(
-      elementLocator,
-      ExpectedMessages.entityBackgroundColorIsValid,
-    ).toHaveCSS(Styles.backgroundColor, expectedColor);
+    if (expectedColor !== undefined) {
+      await expect(
+        elementLocator,
+        ExpectedMessages.entityBackgroundColorIsValid,
+      ).toHaveCSS(Styles.backgroundColor, expectedColor);
+    } else {
+      await expect(
+        elementLocator,
+        ExpectedMessages.entityBackgroundColorIsValid,
+      ).toHaveCSS(Styles.backgroundColor, Colors.defaultBackground);
+    }
   }
 
   public async assertElementColor(

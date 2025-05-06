@@ -1,14 +1,7 @@
-import { IconX } from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
-
-import classNames from 'classnames';
-
-import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isSmallScreen, isTabletScreen } from '@/src/utils/app/mobile';
 import { centralChatWidth, getNewSidebarWidth } from '@/src/utils/app/sidebar';
-
-import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -20,14 +13,12 @@ import {
   OVERLAY_HEADER_ICON_SIZE,
 } from '@/src/constants/default-ui-settings';
 
-import Tooltip from '../Common/Tooltip';
+import { ToggleSidebarButton } from '../Common/Buttons/ToggleSidebarButtor';
 import { SettingDialog } from '../Settings/SettingDialog';
-import { CreateNewConversation } from './CreateNewConversation';
-import { Logo } from './Logo';
+import { BaseHeader } from './BaseHeader';
+import { CreateNewConversation } from './CreateNewEntity';
 import { User } from './User/User';
 
-import MoveLeftIcon from '@/public/images/icons/move-left.svg';
-import MoveRightIcon from '@/public/images/icons/move-right.svg';
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature } from '@epam/ai-dial-shared';
 
@@ -50,7 +41,6 @@ const Header = Inversify.register('Header', () => {
 
   const dispatch = useAppDispatch();
 
-  const { t } = useTranslation(Translation.Header);
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
@@ -130,87 +120,47 @@ const Header = Inversify.register('Header', () => {
   }, []);
 
   return (
-    <div
-      className={classNames(
-        'z-40 flex w-full border-b border-tertiary bg-layer-3',
-        isOverlay ? 'min-h-[36px]' : 'min-h-[48px]',
-      )}
-      data-qa="header"
-    >
-      {enabledFeatures.has(Feature.ConversationsSection) && (
-        <Tooltip isTriggerClickable tooltip={t('Conversation list')}>
-          <div
-            className="flex h-full cursor-pointer items-center justify-center border-r border-tertiary px-3 md:px-5"
-            onClick={handleToggleChatbar}
-            data-qa="left-panel-toggle"
-          >
-            {showChatbar ? (
-              <>
-                <IconX
-                  className="text-secondary md:hidden"
-                  width={headerIconSize}
-                  height={headerIconSize}
-                />
-
-                <MoveLeftIcon
-                  className="text-secondary hover:text-accent-secondary max-md:hidden"
-                  width={headerIconSize}
-                  height={headerIconSize}
-                />
-              </>
-            ) : (
-              <MoveRightIcon
-                className="text-secondary hover:text-accent-secondary"
-                width={headerIconSize}
-                height={headerIconSize}
-              />
-            )}
+    <BaseHeader
+      LeftItems={
+        <>
+          {enabledFeatures.has(Feature.ConversationsSection) && (
+            <ToggleSidebarButton
+              iconSize={headerIconSize}
+              tooltip="Conversation list"
+              isOpened={showChatbar}
+              onToggle={handleToggleChatbar}
+              dataQa="left-panel-toggle"
+              isOverlay={isOverlay}
+            />
+          )}
+          <div className="w-12 md:w-16">
+            {!enabledFeatures.has(Feature.HideNewConversation) &&
+              !showChatbar && (
+                <CreateNewConversation iconSize={headerIconSize} />
+              )}
           </div>
-        </Tooltip>
-      )}
-      {!enabledFeatures.has(Feature.HideNewConversation) && (
-        <CreateNewConversation iconSize={headerIconSize} />
-      )}
-      <div className="flex grow justify-between">
-        <Logo />
-        <div className="w-[48px] max-md:border-l max-md:border-tertiary md:w-auto">
-          <User />
-        </div>
-      </div>
-
-      {enabledFeatures.has(Feature.PromptsSection) && (
-        <Tooltip isTriggerClickable tooltip={t('Prompt list')}>
-          <div
-            className="flex h-full cursor-pointer items-center justify-center border-l border-tertiary px-3 md:px-5"
-            onClick={handleTogglePromtbar}
-            data-qa="right-panel-toggle"
-          >
-            {showPromptbar ? (
-              <>
-                <IconX
-                  className="text-secondary md:hidden"
-                  width={headerIconSize}
-                  height={headerIconSize}
-                />
-
-                <MoveLeftIcon
-                  className="rotate-180 text-secondary hover:text-accent-tertiary max-md:hidden"
-                  width={headerIconSize}
-                  height={headerIconSize}
-                />
-              </>
-            ) : (
-              <MoveRightIcon
-                className="rotate-180 text-secondary hover:text-accent-tertiary"
-                width={headerIconSize}
-                height={headerIconSize}
-              />
-            )}
+        </>
+      }
+      RightItems={
+        <>
+          <div className="flex w-[48px] items-center justify-center md:w-auto">
+            <User />
           </div>
-        </Tooltip>
-      )}
-      <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
-    </div>
+          {enabledFeatures.has(Feature.PromptsSection) && (
+            <ToggleSidebarButton
+              iconSize={headerIconSize}
+              tooltip="Prompt list"
+              isOpened={showPromptbar}
+              onToggle={handleTogglePromtbar}
+              dataQa="right-panel-toggle"
+              rightSide
+              isOverlay={isOverlay}
+            />
+          )}
+          <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
+        </>
+      }
+    />
   );
 });
 export default Header;

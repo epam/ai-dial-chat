@@ -73,11 +73,25 @@ export class GeneratorUtil {
     const minor = GeneratorUtil.randomIntegerNumber();
     const patch = GeneratorUtil.randomIntegerNumber();
     let version = `${major}.${minor}.${patch}`;
-    if (stringsToExclude) {
-      while (stringsToExclude.some((s) => s.includes(version))) {
-        version = GeneratorUtil.randomApplicationVersion(stringsToExclude);
-      }
+    stringsToExclude = stringsToExclude ?? [];
+    if (!stringsToExclude.includes(ExpectedConstants.defaultAppVersion)) {
+      stringsToExclude.push();
+    }
+    while (stringsToExclude.some((s) => s.includes(version))) {
+      version = GeneratorUtil.randomApplicationVersion(stringsToExclude);
     }
     return version;
+  }
+
+  static randomShortAndLongDescription(): string {
+    return `${this.randomShortDescription()}\n\n${this.randomLongDescription()}`;
+  }
+
+  static randomShortDescription() {
+    return `short description: ${GeneratorUtil.randomString(20)}`;
+  }
+
+  static randomLongDescription() {
+    return `long description: ${GeneratorUtil.randomString(150)}`;
   }
 }

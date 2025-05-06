@@ -13,7 +13,6 @@ import {
   IconSquareCheck,
   IconTrashX,
   IconUserShare,
-  IconUserX,
   IconWorldShare,
 } from '@tabler/icons-react';
 import { MouseEventHandler, useMemo } from 'react';
@@ -63,7 +62,6 @@ interface ItemContextMenuProps {
   onCompare?: MouseEventHandler<unknown>;
   onPlayback?: MouseEventHandler<unknown>;
   onShare?: MouseEventHandler<unknown>;
-  onUnshare?: MouseEventHandler<unknown>;
   onPublish?: MouseEventHandler<unknown>;
   onUnpublish?: MouseEventHandler<unknown>;
   onOpenChange?: (isOpen: boolean) => void;
@@ -95,7 +93,6 @@ export default function ItemContextMenu({
   onMoveToFolder,
   onOpenMoveToModal,
   onShare,
-  onUnshare,
   onPublish,
   onUnpublish,
   onOpenChange,
@@ -137,6 +134,13 @@ export default function ItemContextMenu({
         onClick: onUse,
       },
       {
+        name: t('View'),
+        display: !!onView,
+        dataQa: 'view',
+        Icon: IconEye,
+        onClick: onView,
+      },
+      {
         name: t('Select'),
         display: !isExternal && !!onSelect,
         dataQa: 'select',
@@ -166,13 +170,6 @@ export default function ItemContextMenu({
         Icon: IconCopy,
         onClick: onDuplicate,
         disabled: disableAll,
-      },
-      {
-        name: t('View'),
-        display: !!onView && isExternal,
-        dataQa: 'view',
-        Icon: IconEye,
-        onClick: onView,
       },
       {
         name: t('Replay'),
@@ -234,7 +231,7 @@ export default function ItemContextMenu({
       {
         name: t('Move to'),
         display: !isExternal,
-        dataQa: 'move-to-mobile',
+        dataQa: 'move-to-modal',
         Icon: IconFolderShare,
         onClick: onOpenMoveToModal,
         className: 'md:hidden',
@@ -275,18 +272,6 @@ export default function ItemContextMenu({
           !isEmptyConversation && isSharingEnabled && !!onShare && !isExternal,
         Icon: IconUserShare,
         onClick: onShare,
-        disabled: disableAll,
-      },
-      {
-        name: t('Unshare'),
-        dataQa: 'unshare',
-        display:
-          !isEmptyConversation &&
-          isSharingEnabled &&
-          !!onUnshare &&
-          !!entity.isShared,
-        Icon: IconUserX,
-        onClick: onUnshare,
         disabled: disableAll,
       },
       {
@@ -353,7 +338,6 @@ export default function ItemContextMenu({
       onShare,
       onShowInfo,
       onUnpublish,
-      onUnshare,
       onUse,
       onView,
       t,

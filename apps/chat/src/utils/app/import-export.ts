@@ -1,13 +1,15 @@
 import { EMPTY, Observable, map, of } from 'rxjs';
 
-import { AnyAction } from '@reduxjs/toolkit';
-
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { Conversation } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import {
+  FeatureType,
+  MappedReplaceActions,
+  ReplaceOptions,
+} from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { FolderInterface, FolderType } from '@/src/types/folder';
+import { FolderInterface } from '@/src/types/folder';
 import {
   ExportFormatV1,
   ExportFormatV2,
@@ -16,12 +18,11 @@ import {
   ExportFormatV5,
   LatestExportConversationsFormat,
   LatestExportFormat,
-  MappedReplaceActions,
   PromptsHistory,
-  ReplaceOptions,
   SupportedExportFormats,
 } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
+import { AppAction } from '@/src/types/store';
 
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { UploadedAttachment } from '@/src/store/import-export/importExport.reducers';
@@ -107,7 +108,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
       folders: (data.folders || []).map((chatFolder) => ({
         id: chatFolder.id.toString(),
         name: chatFolder.name,
-        type: FolderType.Chat,
+        type: FeatureType.Chat,
         folderId: getConversationRootId(),
       })),
       prompts: [],
@@ -398,8 +399,8 @@ export const getDuplicatedConversations = (
 export const getConversationActions = (
   conversation: Conversation,
   index: number,
-): Observable<AnyAction>[] => {
-  const firstConversationActions: Observable<AnyAction>[] = [];
+): Observable<AppAction>[] => {
+  const firstConversationActions: Observable<AppAction>[] = [];
   if (index === 0) {
     firstConversationActions.push(
       of(
@@ -410,7 +411,7 @@ export const getConversationActions = (
       of(
         UIActions.setOpenedFoldersIds({
           openedFolderIds: [conversation.folderId],
-          featureType: FeatureType.Chat,
+          folderType: FeatureType.Chat,
         }),
       ),
     );
@@ -431,13 +432,13 @@ export const getConversationActions = (
 export const getPromptActions = (
   prompt: Prompt,
   index: number,
-): Observable<AnyAction>[] => {
-  const firstPromptAction: Observable<AnyAction> =
+): Observable<AppAction>[] => {
+  const firstPromptAction: Observable<AppAction> =
     index === 0
       ? of(
           UIActions.setOpenedFoldersIds({
             openedFolderIds: [prompt.folderId],
-            featureType: FeatureType.Prompt,
+            folderType: FeatureType.Prompt,
           }),
         )
       : EMPTY;
@@ -457,7 +458,7 @@ export const getPromptActions = (
 export const getToastAction = (
   errorList: string[],
   featureType: string,
-): Observable<AnyAction> => {
+): Observable<AppAction> => {
   const errorMessage = `It looks like these ${featureType}(s) ${errorList.join(', ')} have been deleted. Please reload the page and try again`;
   const successMessage = `${featureType}(s) ${successMessages.importSuccess}`;
 

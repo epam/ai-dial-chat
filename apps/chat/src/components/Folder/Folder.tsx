@@ -6,7 +6,6 @@ import {
   FC,
   Fragment,
   KeyboardEvent,
-  MouseEvent,
   MouseEventHandler,
   createElement,
   useCallback,
@@ -18,6 +17,7 @@ import {
 
 import classNames from 'classnames';
 
+import { useContextMenuTrigger } from '@/src/hooks/useContextMenuTrigger';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -37,6 +37,7 @@ import {
   sortByName,
 } from '@/src/utils/app/folders';
 import { isEntityIdExternal, isRootId } from '@/src/utils/app/id';
+import { isTabletScreen } from '@/src/utils/app/mobile';
 import {
   hasParentWithAttribute,
   hasParentWithFloatingOverlay,
@@ -110,6 +111,7 @@ export interface FolderProps<T, P = unknown> {
   ) => void;
   onRenameFolder?: (newName: string, folderId: string) => void;
   onDeleteFolder?: (folderId: string) => void;
+  onUnshareFolder?: (folderId: string) => void;
   onSelectFolder?: (folderId: string, isSelected: boolean) => void;
   onAddFolder?: (parentFolderId: string) => void;
   onClickFolder?: (folderId: string) => void;
@@ -157,6 +159,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   handleDrop,
   onRenameFolder,
   onDeleteFolder,
+  onUnshareFolder,
   onSelectFolder,
   onClickFolder,
   onAddFolder,
@@ -185,6 +188,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const renameInputRef = useRef<HTMLInputElement>(null);
 
   const [isDeletingConfirmDialog, setIsDeletingConfirmDialog] = useState(false);
+  const [isUnshareConfirmDialog, setIsUnshareConfirmDialog] = useState(false);
   const [search, setSearch] = useState(searchTerm);
   const [isRenaming, setIsRenaming] = useState(
     isInitialRenameEnabled &&
@@ -199,10 +203,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     currentFolder: FolderInterface;
     draggedData: FolderInterface;
   }>();
-  const dragDropElement = useRef<HTMLDivElement>(null);
-  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
   const [isPartialSelected, setIsPartialSelected] = useState(false);
+
+  const dragDropElement = useRef<HTMLDivElement>(null);
 
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.selectIsPublishingEnabled(state, featureType),
@@ -221,13 +225,28 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     PublicationSelectors.selectPublicVersionGroups,
   );
 
+  const handleContextMenuOpen = useCallback(
+    (e: MouseEvent | TouchEvent) => {
+      if (
+        hasParentWithFloatingOverlay(e.target as Element) &&
+        featureType !== FeatureType.File
+      ) {
+        return;
+      }
+      setIsContextMenu(true);
+    },
+    [featureType],
+  );
+
+  useContextMenuTrigger(handleContextMenuOpen, dragDropElement);
+
   const isNameInvalid = isEntityNameInvalid(currentFolder.name);
   const isInvalidPath = hasInvalidNameInPath(currentFolder.folderId);
   const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
   const isExternal = isEntityIdExternal(currentFolder);
 
   const handleToggleFolder = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
+    (e: ChangeEvent<HTMLInputElement> | React.MouseEvent) => {
       e.stopPropagation();
 
       onSelectFolder?.(`${currentFolder.id}/`, isSelected);
@@ -288,18 +307,14 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       e.stopPropagation();
       dispatch(
         ShareActions.share({
-          resourceId: currentFolder.id,
+          entity: currentFolder,
           featureType,
           isFolder: true,
         }),
       );
     },
-    [currentFolder.id, dispatch, featureType],
+    [currentFolder, dispatch, featureType],
   );
-  const handleUnshare: MouseEventHandler = useCallback((e) => {
-    e.stopPropagation();
-    setIsUnshareConfirmOpened(true);
-  }, []);
 
   const allChildItems = useMemo(
     () =>
@@ -763,6 +778,19 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     },
     [onDeleteFolder],
   );
+
+  const handleUnshare: MouseEventHandler = useCallback(
+    (e) => {
+      if (!onUnshareFolder) {
+        return;
+      }
+
+      e.stopPropagation();
+      setIsUnshareConfirmDialog(true);
+    },
+    [onUnshareFolder],
+  );
+
   const onSelect: MouseEventHandler = useCallback(
     (e) => {
       if (!onSelectFolder) {
@@ -826,15 +854,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     [currentFolder, dispatch, featureType, isExternal],
   );
 
-  const handleContextMenuOpen = (e: MouseEvent) => {
-    if (hasParentWithFloatingOverlay(e.target as Element)) {
-      return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-    setIsContextMenu(true);
-  };
-
   useEffect(() => {
     if (isRenaming) {
       setIsDeletingConfirmDialog(false);
@@ -876,10 +895,14 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     (selectedPublicationUrl && additionalItemData?.publicationUrl) ||
     (!selectedPublicationUrl && !additionalItemData?.publicationUrl);
 
+  const isMobileCheckboxVisible =
+    canSelectFolders && isContextMenu && isTabletScreen();
+
   return (
     <div
       id="folder"
       className={classNames(
+        'select-none',
         isDraggingOver && 'bg-accent-primary-alpha',
         currentFolder.temporary && 'text-primary',
       )}
@@ -887,7 +910,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       onDragOver={allowDrop}
       onDragEnter={highlightDrop}
       onDragLeave={deleteHighlight}
-      onContextMenu={handleContextMenuOpen}
       ref={dragDropElement}
     >
       <div
@@ -956,6 +978,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       (!isExternal || !additionalItemData?.isSidePanelItem) &&
                         canSelectFolders &&
                         'group-hover:hidden',
+                      isMobileCheckboxVisible && 'hidden',
                     )}
                   >
                     {hasResourcesToReview &&
@@ -971,6 +994,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         (!isExternal || !additionalItemData?.isSidePanelItem) &&
                           canSelectFolders &&
                           'group-hover:hidden',
+                        isMobileCheckboxVisible && 'hidden',
                       )}
                     />
                   </ShareIcon>
@@ -985,7 +1009,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         additionalItemData?.isSidePanelItem
                           ? 'size-[24px] items-center justify-center'
                           : 'size-[18px]',
-                        isSelected ? 'flex' : 'hidden',
+                        isSelected || isMobileCheckboxVisible
+                          ? 'flex'
+                          : 'hidden',
                       )}
                       data-item-checkbox
                     >
@@ -1055,7 +1081,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         additionalItemData?.isSidePanelItem
                           ? 'size-[24px] items-center justify-center'
                           : 'size-[18px]',
-                        isSelected || isPartialSelected || isSelectAlwaysVisible
+                        isSelected ||
+                          isPartialSelected ||
+                          isSelectAlwaysVisible ||
+                          isMobileCheckboxVisible
                           ? 'flex'
                           : 'hidden',
                       )}
@@ -1098,13 +1127,13 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     {...currentFolder}
                     isHighlighted={isContextMenu}
                     featureType={featureType}
-                    containerClassName={
+                    containerClassName={classNames(
                       (!isExternal || !additionalItemData?.isSidePanelItem) &&
-                      canSelectFolders &&
-                      !isSelectAlwaysVisible
-                        ? 'group-hover/folder-item:hidden'
-                        : ''
-                    }
+                        canSelectFolders &&
+                        !isSelectAlwaysVisible &&
+                        'group-hover/folder-item:hidden',
+                      isMobileCheckboxVisible && 'hidden',
+                    )}
                   >
                     {hasResourcesToReview &&
                       additionalItemData?.isSidePanelItem &&
@@ -1112,6 +1141,11 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         <ReviewDot className="group-hover/folder-item:bg-accent-primary-alpha" />
                       )}
                     <IconFolder
+                      onClick={(e) => {
+                        if (canSelectFolders) {
+                          handleToggleFolder(e);
+                        }
+                      }}
                       strokeWidth={folderIconStrokeWidth}
                       size={iconSize}
                       className="mr-1 text-secondary"
@@ -1122,13 +1156,15 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             )}
             <div
               className={classNames(
-                'relative max-h-5 flex-1 truncate text-left',
+                'relative max-h-5 flex-1 select-none truncate text-left',
                 isNameOrPathInvalid && 'text-secondary',
                 !hideContextMenu && 'group-hover/button:pr-5',
+                isContextMenu && 'pr-5',
               )}
               data-qa="folder-name"
             >
               <Tooltip
+                hideTooltip={isContextMenu}
                 tooltip={
                   showTooltip && !isNameOrPathInvalid
                     ? currentFolder.name
@@ -1141,6 +1177,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       )
                 }
                 contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+                isTriggerClickable
                 triggerClassName={classNames(
                   'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
                   highlightTemporaryFolders &&
@@ -1164,17 +1201,19 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             {(onDeleteFolder ||
               onRenameFolder ||
               onAddFolder ||
-              onSelectFolder) &&
+              onSelectFolder ||
+              onUnshareFolder) &&
               !hideContextMenu && (
                 <div
                   ref={refs.setFloating}
                   {...getFloatingProps()}
                   className={classNames(
-                    'invisible absolute right-3 z-50 flex justify-end group-hover/button:visible',
-                    isContextMenu && 'max-md:visible',
+                    'invisible absolute right-0 z-50 flex justify-end group-hover/button:visible',
+                    isContextMenu && 'md:visible',
                   )}
                 >
                   <FolderContextMenu
+                    isSelected={isSelected}
                     folder={currentFolder}
                     featureType={featureType}
                     onRename={
@@ -1202,6 +1241,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     isOpen={isContextMenu}
                     isEmpty={!hasChildItemOnAnyLevel}
                     onSelect={onSelectFolder && onSelect}
+                    canSelectFolders={canSelectFolders}
                     additionalItemData={additionalItemData}
                   />
                 </div>
@@ -1315,26 +1355,20 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           }}
         />
       )}
-      {isUnshareConfirmOpened && (
+      {onUnshareFolder && (
         <ConfirmDialog
-          isOpen={isUnshareConfirmOpened}
+          isOpen={isUnshareConfirmDialog}
+          showHeadingTooltip
           heading={t('Confirm unsharing: {{folderName}}', {
             folderName: currentFolder.name,
           })}
-          description={t('Are you sure that you want to unshare this folder?')}
+          description={`${t('Are you sure that you want to unshare this folder?')}`}
           confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {
-            setIsUnshareConfirmOpened(false);
-
+            setIsUnshareConfirmDialog(false);
             if (result) {
-              dispatch(
-                ShareActions.revokeAccess({
-                  resourceId: currentFolder.id,
-                  isFolder: true,
-                  featureType,
-                }),
-              );
+              onUnshareFolder(currentFolder.id);
             }
           }}
         />

@@ -16,9 +16,15 @@ import { DialAIEntity } from '@/src/types/models';
 
 import Tooltip from '@/src/components/Common/Tooltip';
 
-interface Props {
+interface ModelTooltipProps {
   entityId: string;
   entity: DialAIEntity | undefined;
+}
+export const ModelTooltip = ({ entity, entityId }: ModelTooltipProps) => {
+  const name = entity ? getOpenAIEntityFullName(entity) : entityId;
+  return entity?.version ? `${name}\nv. ${entity.version}` : name;
+};
+interface Props extends ModelTooltipProps {
   size: number;
   animate?: boolean;
   isCustomTooltip?: boolean;
@@ -92,14 +98,12 @@ export const ModelIcon = ({
   animate,
   isCustomTooltip,
 }: Props) => {
-  const name = entity ? getOpenAIEntityFullName(entity) : entityId;
-  const fullTooltip = entity?.version ? `${name}\nv. ${entity.version}` : name;
-
   return (
     <Tooltip
       hideTooltip={isCustomTooltip}
-      tooltip={fullTooltip}
-      triggerClassName="flex shrink-0 relative"
+      tooltip={<ModelTooltip entity={entity} entityId={entityId} />}
+      triggerClassName="flex shrink-0 relative select-none"
+      contentClassName="max-w-[300px] break-words"
     >
       <ModelIconTemplate
         entity={entity}

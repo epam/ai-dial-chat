@@ -1,4 +1,5 @@
 import { IconCheck, IconCopy } from '@tabler/icons-react';
+import { QRCodeSVG } from 'qrcode.react';
 import {
   ClipboardEvent,
   MouseEvent,
@@ -62,6 +63,35 @@ function ShareAccessOption({
   );
 }
 
+function ShareAccessSection({
+  isShared,
+  onUnshare,
+  notSharedMessage,
+  unshareLabel,
+}: {
+  isShared: boolean;
+  onUnshare: () => void;
+  notSharedMessage: string;
+  unshareLabel: string;
+}) {
+  return (
+    <div className="divide-y-0 border-t border-tertiary px-3 py-4 text-sm text-secondary md:p-6">
+      {isShared ? (
+        <button
+          onClick={onUnshare}
+          className="flex gap-2 text-sm text-accent-primary"
+          data-qa="remove-access-button"
+        >
+          <IconUserUnshare height={18} width={18} />
+          <p>{unshareLabel}</p>
+        </button>
+      ) : (
+        <p data-qa="not-shared-entity-label">{notSharedMessage}</p>
+      )}
+    </div>
+  );
+}
+
 export function ShareModalView() {
   const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
@@ -82,6 +112,11 @@ export function ShareModalView() {
   const shareResourceName = useAppSelector(
     ShareSelectors.selectShareResourceName,
   );
+
+  const isResourceShared = useAppSelector(
+    ShareSelectors.selectIsResourceShared,
+  );
+
   const shareFeatureType = useAppSelector(
     ShareSelectors.selectShareFeatureType,
   );
@@ -156,6 +191,11 @@ export function ShareModalView() {
     dispatch(ShareActions.setUnshareEntity(entity));
   }, [dispatch, entity, handleClose]);
 
+  const handleOpenUnshareResource = useCallback(() => {
+    handleClose();
+    dispatch(ShareActions.setUnshareResourceId(shareResourceId));
+  }, [dispatch, handleClose, shareResourceId]);
+
   useEffect(() => () => clearTimeout(timeoutRef.current), []);
 
   return (
@@ -174,7 +214,7 @@ export function ShareModalView() {
             tooltip={t(`${t('Share')}: ${shareResourceName?.trim()}`)}
           >
             <div
-              className="line-clamp-2 w-full break-words"
+              className="line-clamp-2 w-full break-words pr-6"
               data-qa="modal-entity-name"
             >
               {t(`${t('Share')}: ${shareResourceName?.trim()}`)}
@@ -184,23 +224,28 @@ export function ShareModalView() {
 
         <div className="flex flex-col justify-between gap-2">
           {entity?.version && <span>Version: {entity.version}</span>}
-          <p className="text-sm text-secondary">
+          <p className="text-sm text-secondary" data-qa="share-message">
             {t('share.modal.link.description')}
           </p>
-          <p className="text-sm text-secondary">
+          <p className="text-sm text-secondary" data-qa="share-message">
             {t('share.modal.link', { context: sharingType })}
           </p>
           {shareFeatureType === FeatureType.Application && (
-            <div className="my-2 flex flex-col gap-2">
+            <div className="mt-2 flex gap-2">
               <ShareAccessOption
-                filterValue="Allow editing by other users"
+                filterValue={t('Allow editing by other users')}
                 selected={editAccess}
                 onSelect={onChangeSharePermissionHandler}
               />
             </div>
           )}
+          <div className="mt-2 flex justify-center gap-2">
+            <div className="flex w-fit rounded bg-[#FCFCFC] p-3">
+              <QRCodeSVG value={url} size={226} />
+            </div>
+          </div>
           <div className="relative mt-2">
-            <Tooltip tooltip={url}>
+            <Tooltip tooltip={url} contentClassName="max-w-[400px] break-words">
               <input
                 type="text"
                 readOnly
@@ -235,19 +280,34 @@ export function ShareModalView() {
         </div>
       </div>
       {shareFeatureType === FeatureType.Application && (
-        <div className="divide-y-0 border-t border-tertiary px-3 py-4 text-sm text-secondary md:p-6">
-          {entity?.isShared ? (
-            <button
-              onClick={handleOpenUnshare}
-              className="flex gap-2 text-sm text-accent-primary"
-            >
-              <IconUserUnshare height={18} width={18} />
-              <p>{t('Remove access for all users')}</p>
-            </button>
-          ) : (
-            <p>{t('This app has not been shared with anyone yet.')}</p>
+        <ShareAccessSection
+          isShared={!!entity?.isShared}
+          onUnshare={handleOpenUnshare}
+          notSharedMessage={t('This app has not been shared with anyone yet.')}
+          unshareLabel={t('Remove access for all users')}
+        />
+      )}
+      {isFolder ? (
+        <ShareAccessSection
+          isShared={!!isResourceShared}
+          onUnshare={handleOpenUnshareResource}
+          notSharedMessage={t(
+            'This folder has not been shared with anyone yet.',
           )}
-        </div>
+          unshareLabel={t('Remove access for all users')}
+        />
+      ) : (
+        (shareFeatureType === FeatureType.Chat ||
+          shareFeatureType === FeatureType.Prompt) && (
+          <ShareAccessSection
+            isShared={!!isResourceShared}
+            onUnshare={handleOpenUnshareResource}
+            notSharedMessage={t(
+              `This ${shareFeatureType} has not been shared with anyone yet.`,
+            )}
+            unshareLabel={t('Remove access for all users')}
+          />
+        )
       )}
     </Modal>
   );

@@ -1,7 +1,9 @@
+import type { MouseEvent } from 'react';
+
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
-import { PrepareNameOptions } from '@/src/types/chat';
+import { Conversation, PrepareNameOptions } from '@/src/types/chat';
 import {
   PublicVersionGroups,
   PublicVersionOption,
@@ -13,12 +15,20 @@ import { NA_VERSION } from '@/src/constants/public';
 
 import { getPublicItemIdWithoutVersion } from '../server/api';
 
-import { Entity, ShareEntity } from '@epam/ai-dial-shared';
+import {
+  Entity,
+  EntityDates,
+  ShareEntity,
+  ShareInterface,
+} from '@epam/ai-dial-shared';
+import countBy from 'lodash-es/countBy';
 import groupBy from 'lodash-es/groupBy';
+import isEqual from 'lodash-es/isEqual';
 import keyBy from 'lodash-es/keyBy';
 import merge from 'lodash-es/merge';
 import trimEnd from 'lodash-es/trimEnd';
 import values from 'lodash-es/values';
+import { nanoid } from 'nanoid';
 import { substring } from 'stringz';
 
 /**
@@ -250,3 +260,38 @@ export const parseCommaSeparatedList = (
   str: string | undefined,
   defaultValue: string[] = [],
 ): string[] => str?.split(',').map((str) => str.trim()) ?? defaultValue;
+
+export const dispatchMouseLeaveEvent = (e: MouseEvent) => {
+  const mouseLeaveEvent = new MouseEvent('mouseleave', {
+    bubbles: true,
+    cancelable: true,
+    view: window,
+  });
+
+  e.currentTarget.dispatchEvent(mouseLeaveEvent);
+};
+
+export const arraysHaveSameElements = <T>(
+  arr1: T[] | undefined,
+  arr2: T[] | undefined,
+) => {
+  const count1 = countBy(arr1);
+  const count2 = countBy(arr2);
+
+  return isEqual(count1, count2);
+};
+
+export const getDefaultEntityProps = (): ShareInterface & EntityDates => ({
+  isShared: false,
+  publishedWithMe: false,
+  sharedWithMe: false,
+  updatedAt: Date.now(),
+  createdAt: Date.now(),
+});
+
+export const getDefaultConversationProps = (): ShareInterface &
+  EntityDates &
+  Pick<Conversation, 'reference'> => ({
+  ...getDefaultEntityProps(),
+  reference: nanoid(),
+});

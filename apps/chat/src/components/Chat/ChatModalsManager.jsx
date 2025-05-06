@@ -1,3 +1,6 @@
+import { SystemDialogs } from '@/src/components/Common/SystemDialogs';
+import { PromptModal } from '@/src/components/Promptbar/components/PromptModal';
+
 import { InfoModal } from '../Common/InfoModal';
 import { ReplaceConfirmationModal } from '../Common/ReplaceConfirmationModal/ReplaceConfirmationModal';
 import { UnshareDialog } from '../Common/UnshareDialog';
@@ -16,6 +19,8 @@ export function ChatModalsManager() {
       <ReplaceConfirmationModal />
       <RenameConversationModal />
       <PromptVariablesForApplyDialog />
+      <PromptModal />
+      <SystemDialogs />
     </>
   );
 }

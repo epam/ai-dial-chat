@@ -29,16 +29,19 @@ export const MarketplaceAgentSelectors = {
 
 export const MarketplaceDetailsModal = {
   modalContainer: '[data-qa="marketplace-agent-details"]',
+  applicationContentContainer: '[data-qa="application-content"]',
+  applicationDescription: '[data-qa="application-description"]',
+  applicationInformation: '[data-qa="application-information"]',
   agentName: '[data-qa="agent-name"]',
   agentVersion: '[data-qa="version"]',
   versionMenuTrigger: '[data-qa="agent-version-select-trigger"]',
   useButton: '[data-qa="use-button"]',
+  editButton: '[data-qa="application-edit"]',
+  deleteButton: '[data-qa="application-delete"]',
 };
 
 export const MarketplaceSideBarSelectors = {
   sidebar: '[data-qa="marketplace-sidebar"]',
-  marketplaceHomePageButton: '[data-qa="home-page"]',
-  myWorkspaceButton: '[data-qa="my-workspace"]',
   searchInput: '[name="titleInput"]',
   marketplaceFilter: '[data-qa="marketplace-filter"]',
   filterProperty: '[data-qa="filter-property"]',

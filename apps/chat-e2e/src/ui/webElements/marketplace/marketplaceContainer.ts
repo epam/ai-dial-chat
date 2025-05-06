@@ -38,7 +38,7 @@ export class MarketplaceContainer extends BaseLayoutContainer<Header> {
   }
 
   public async goToMarketplaceHome() {
-    await this.getMarketplaceSidebar().marketplaceHomePageButton.click();
+    await this.getNavigationPanel().goToMarketplaceHome();
     await this.getMarketplace().getMarketplaceAgentsSection().waitForState();
   }
 }

@@ -21,9 +21,9 @@ import {
   AdditionalItemData,
   EntityType,
   FeatureType,
+  ReplaceOptions,
 } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { ReplaceOptions } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 

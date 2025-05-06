@@ -62,12 +62,14 @@ import { ChatNotFound } from '@/src/ui/webElements/chatNotFound';
 import {
   ConversationsTree,
   FolderPrompts,
+  Folders,
   PromptsTree,
 } from '@/src/ui/webElements/entityTree';
 import { SharedFolderConversations } from '@/src/ui/webElements/entityTree/sidebar/sharedFolderConversations';
 import { SharedWithMeConversationsTree } from '@/src/ui/webElements/entityTree/sidebar/sharedWithMeConversationsTree';
 import { SharedWithMePromptsTree } from '@/src/ui/webElements/entityTree/sidebar/sharedWithMePromptsTree';
 import { MarketplaceAgentsSection } from '@/src/ui/webElements/marketplace/marketplaceAgentsSection';
+import { NavigationPanel } from '@/src/ui/webElements/navigationPanel';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { BucketUtil } from '@/src/utils';
 import { Page } from '@playwright/test';
@@ -129,6 +131,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserPromptAssertion: PromptAssertion;
   additionalShareUserPromptModalAssertion: PromptModalAssertion;
   additionalShareUserPromptBarFolderAssertion: FolderAssertion<FolderPrompts>;
+  additionalShareUserSharedWithMeFoldersAssertion: FolderAssertion<Folders>;
   additionalShareUserSystemPromptListAssertion: PromptListAssertion;
   additionalShareUserAgentSettingAssertion: AgentSettingAssertion;
   additionalShareUserAttachFilesModal: AttachFilesModal;
@@ -141,6 +144,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserMarketplacePage: MarketplacePage;
   additionalShareUserMarketplaceContainer: MarketplaceContainer;
   additionalShareUserMarketplaceSidebar: MarketplaceSidebar;
+  additionalShareUserNavigationPanel: NavigationPanel;
   additionalShareUserMarketplaceFilter: MarketplaceFilter;
   additionalShareUserMarketplace: Marketplace;
   additionalShareUserMarketplaceAgentsSection: MarketplaceAgentsSection;
@@ -656,6 +660,15 @@ const dialSharedWithMeTest = dialTest.extend<{
     );
     await use(additionalShareUserPromptBarFolderAssertion);
   },
+  additionalShareUserSharedWithMeFoldersAssertion: async (
+    { additionalShareUserSharedFolderConversations },
+    use,
+  ) => {
+    const additionalShareUserSharedWithMeFoldersAssertion = new FolderAssertion(
+      additionalShareUserSharedFolderConversations,
+    );
+    await use(additionalShareUserSharedWithMeFoldersAssertion);
+  },
   additionalShareUserSystemPromptListAssertion: async (
     { additionalShareUserAgentSettings },
     use,
@@ -723,6 +736,14 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserMarketplaceSidebar =
       additionalShareUserMarketplaceContainer.getMarketplaceSidebar();
     await use(additionalShareUserMarketplaceSidebar);
+  },
+  additionalShareUserNavigationPanel: async (
+    { additionalShareUserMarketplaceContainer },
+    use,
+  ) => {
+    const additionalShareUserNavigationPanel =
+      additionalShareUserMarketplaceContainer.getNavigationPanel();
+    await use(additionalShareUserNavigationPanel);
   },
   additionalShareUserMarketplaceFilter: async (
     { additionalShareUserMarketplaceSidebar },

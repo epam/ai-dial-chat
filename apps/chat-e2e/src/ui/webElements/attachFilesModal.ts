@@ -178,21 +178,24 @@ export class AttachFilesModal extends BaseElement {
 
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
 
+  public getFilesTree(section: FileModalSection): AttachFilesTree {
+    switch (section) {
+      case FileModalSection.AllFiles:
+        return this.getAllFilesTree();
+      case FileModalSection.Organization:
+        return this.getOrganizationTree();
+      case FileModalSection.SharedWithMe:
+        return this.getSharedWithMeTree();
+      default:
+        throw new Error(`Unknown file modal section: ${section}`);
+    }
+  }
+
   public async checkAttachedFile(
     filename: string,
     section: FileModalSection = FileModalSection.AllFiles,
   ) {
-    let treeElement;
-    switch (section) {
-      case FileModalSection.AllFiles:
-        treeElement = this.getAllFilesTree();
-        break;
-      case FileModalSection.SharedWithMe:
-        treeElement = this.getSharedWithMeTree();
-        break;
-      default:
-        throw new Error(`Unknown file modal section: ${section}`);
-    }
+    const treeElement = this.getFilesTree(section);
     await treeElement.attachedFileIcon(filename).click();
   }
 
@@ -215,5 +218,13 @@ export class AttachFilesModal extends BaseElement {
     await file.hover();
     await file.locator(MenuSelectors.dotsMenu).click();
     await this.getFileDropdownMenu().waitForState();
+  }
+
+  public async uploadFromDevice() {
+    const respPremise = this.page.waitForResponse(
+      (r) => r.request().method() === 'GET' && r.status() === 200,
+    );
+    await this.uploadFromDeviceButton.click();
+    await respPremise;
   }
 }

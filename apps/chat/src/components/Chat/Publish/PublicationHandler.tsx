@@ -252,7 +252,7 @@ export function PublicationHandler({ publication }: Props) {
         dispatch(
           UIActions.setOpenedFoldersIds({
             openedFolderIds: conversationPaths,
-            featureType: FeatureType.Chat,
+            folderType: FeatureType.Chat,
           }),
         );
       }
@@ -270,7 +270,7 @@ export function PublicationHandler({ publication }: Props) {
         dispatch(
           UIActions.setOpenedFoldersIds({
             openedFolderIds: promptPaths,
-            featureType: FeatureType.Prompt,
+            folderType: FeatureType.Prompt,
           }),
         );
       }
@@ -307,17 +307,11 @@ export function PublicationHandler({ publication }: Props) {
         }),
       );
       dispatch(
-        PromptsActions.setSelectedPrompt({
+        PromptsActions.selectPrompt({
           promptId: promptsToReviewIds.length
             ? promptsToReviewIds[0].reviewUrl
             : reviewedPromptsIds[0].reviewUrl,
           isApproveRequiredResource: true,
-        }),
-      );
-      dispatch(
-        PromptsActions.setIsEditModalOpen({
-          isOpen: true,
-          isPreview: true,
         }),
       );
     };

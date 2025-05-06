@@ -1,6 +1,6 @@
-import { EMPTY, catchError, concat, filter, map, of, switchMap } from 'rxjs';
+import { EMPTY, catchError, concat, map, of, switchMap, takeUntil } from 'rxjs';
 
-import { combineEpics } from 'redux-observable';
+import { combineEpics, ofType } from 'redux-observable';
 
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { getUserCustomContent } from '@/src/utils/app/file';
@@ -29,7 +29,7 @@ import { Message, Role } from '@epam/ai-dial-shared';
 
 const setFormValueEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ChatActions.setFormValue.match),
+    ofType(ChatActions.setFormValue.type),
     switchMap(({ payload }) => {
       if (!payload.submit) return EMPTY;
 
@@ -82,7 +82,7 @@ const setFormValueEpic: AppEpic = (action$, state$) =>
 
 const getConfigurationSchemaEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ChatActions.getConfigurationSchema.match),
+    ofType(ChatActions.getConfigurationSchema.type),
     switchMap(({ payload }) => {
       const selectedConversations =
         ConversationsSelectors.selectSelectedConversations(state$.value);
@@ -103,13 +103,16 @@ const getConfigurationSchemaEpic: AppEpic = (action$, state$) =>
         catchError(() => {
           return of(ChatActions.getConfigurationSchemaFailed());
         }),
+        takeUntil(
+          action$.pipe(ofType(ConversationsActions.selectConversations.type)),
+        ),
       );
     }),
   );
 
 const getConfigurationSchemaFailedEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ChatActions.getConfigurationSchemaFailed.match),
+    ofType(ChatActions.getConfigurationSchemaFailed.type),
     map(() => {
       return UIActions.showErrorToast(
         translate('Failed to load chat starters'),
@@ -119,13 +122,13 @@ const getConfigurationSchemaFailedEpic: AppEpic = (action$) =>
 
 const appendInputContentEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ChatActions.appendInputContent.match),
+    ofType(ChatActions.appendInputContent.type),
     map(() => ChatActions.setShouldFocusAndScroll(true)),
   );
 
 const getEntityInfoEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ChatActions.getEntityInfo.match),
+    ofType(ChatActions.getEntityInfo.type),
     switchMap(({ payload }) => {
       const { createdAt, updatedAt, author, id: entityId } = payload.entityInfo;
       const isExternal = isEntityIdExternal({ id: entityId });
@@ -168,7 +171,7 @@ const getEntityInfoEpic: AppEpic = (action$) =>
 
 const getEntityInfoFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ChatActions.getEntityInfoFail.match),
+    ofType(ChatActions.getEntityInfoFail.type),
     switchMap(({ payload }) => {
       return concat(
         of(ChatActions.resetInfoModal()),

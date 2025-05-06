@@ -141,11 +141,10 @@ export class ChatMessagesAssertion extends BaseAssertion {
   }
 
   public async assertMessagesCount(expectedCount: number) {
-    const messagesCount =
-      await this.chatMessages.chatMessages.getElementsInnerContent();
-    expect
-      .soft(messagesCount.length, ExpectedMessages.messageCountIsCorrect)
-      .toBe(expectedCount);
+    await super.assertElementsCount(
+      this.chatMessages.chatMessages,
+      expectedCount,
+    );
   }
 
   public async assertMessageAttachmentUrl(

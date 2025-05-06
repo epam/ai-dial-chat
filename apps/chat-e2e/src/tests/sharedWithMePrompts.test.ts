@@ -69,7 +69,7 @@ dialSharedWithMeTest(
           'visible',
         );
         await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
-          prompt.name,
+          ExpectedConstants.promptViewModalTitle,
         );
         await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptName(
           prompt.name,
@@ -140,6 +140,7 @@ dialTest(
     prompts,
     promptData,
     promptDropdownMenu,
+    shareModal,
     confirmationDialog,
     dataInjector,
     mainUserShareApiHelper,
@@ -169,7 +170,8 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await prompts.openEntityDropdownMenu(prompt.name);
-        await promptDropdownMenu.selectMenuOption(MenuOptions.unshare);
+        await promptDropdownMenu.selectMenuOption(MenuOptions.share);
+        await shareModal.removeAccessBtn.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
         await promptAssertion.assertEntityArrowIconState(
           { name: prompt.name },
@@ -178,7 +180,7 @@ dialTest(
 
         const sharedEntities =
           await additionalUserShareApiHelper.listSharedWithMePrompts();
-        await shareApiAssertion.assertSharedWithMeEntityState(
+        shareApiAssertion.assertSharedWithMeEntityState(
           sharedEntities,
           prompt,
           'hidden',

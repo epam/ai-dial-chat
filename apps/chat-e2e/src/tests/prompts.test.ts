@@ -3,11 +3,13 @@ import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
   CollapsedSections,
+  EditPromptFormFields,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
 } from '@/src/testData';
-import { Colors, Cursors } from '@/src/ui/domData';
+import { Colors, Cursors, ThemeColorAttributes } from '@/src/ui/domData';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 const newName = 'test prompt';
@@ -24,6 +26,7 @@ dialTest(
     setTestIds,
     header,
     baseAssertion,
+    promptPreviewModal,
   }) => {
     setTestIds('EPMRTC-945', 'EPMRTC-956', 'EPMRTC-1452');
     await dialTest.step(
@@ -35,42 +38,41 @@ dialTest(
         await dialHomePage.waitForPageLoaded({ skipSidebars: true });
         await header.rightPanelToggle.click();
         await baseAssertion.assertElementState(promptBar, 'visible');
-        await promptBar.hoverOverNewEntity();
-        const newPromptCursor = await promptBar.getNewEntityCursor();
-        expect
-          .soft(
-            newPromptCursor[0],
-            ExpectedMessages.newPromptButtonCursorIsPointer,
-          )
-          .toBe(Cursors.pointer);
-
-        const newPromptColor = await promptBar.getNewEntityBackgroundColor();
-        expect
-          .soft(newPromptColor, ExpectedMessages.newPromptButtonIsHighlighted)
-          .toBe(Colors.backgroundAccentTertiary);
+        await promptBar.newEntityButton.hoverOver();
+        await baseAssertion.assertElementCursor(
+          promptBar.newEntityButton,
+          Cursors.pointer,
+        );
+        const expectedColor = ThemesUtil.getRgbColorByKey(
+          ThemeColorAttributes.textPrimary,
+        );
+        await baseAssertion.assertElementColor(
+          promptBar.newEntityButton,
+          expectedColor,
+        );
+        await baseAssertion.assertElementBorderColors(
+          promptBar.newEntityButton,
+          expectedColor,
+        );
       },
     );
 
     await dialTest.step(
       'Click "New prompt" button and verify Name and Prompt fields have asterisk',
       async () => {
-        await promptBar.createNewPrompt();
-        expect
-          .soft(
-            await promptModalDialog.isFieldHasAsterisk(
-              ExpectedConstants.promptNameLabel,
-            ),
-            ExpectedMessages.fieldIsRequired,
-          )
-          .toBeTruthy();
-        expect
-          .soft(
-            await promptModalDialog.isFieldHasAsterisk(
-              ExpectedConstants.promptContentLabel,
-            ),
-            ExpectedMessages.fieldIsRequired,
-          )
-          .toBeTruthy();
+        await promptBar.createNewEntity();
+        await baseAssertion.assertElementState(
+          promptModalDialog.getFieldAsterisk(EditPromptFormFields.name),
+          'visible',
+          ExpectedMessages.fieldIsRequired,
+        );
+        await baseAssertion.assertElementState(
+          promptModalDialog.getFieldAsterisk(
+            EditPromptFormFields.promptContent,
+          ),
+          'visible',
+          ExpectedMessages.fieldIsRequired,
+        );
       },
     );
 
@@ -277,6 +279,7 @@ dialTest(
           newDescr,
         );
         await promptModalDialog.saveButton.click();
+        await promptPreviewModal.closeButton.click();
         await prompts.getEntityByName(newName).waitFor();
       },
     );
@@ -308,6 +311,7 @@ dialTest(
       .soft(menuOptions, ExpectedMessages.contextMenuOptionsValid)
       .toEqual([
         MenuOptions.use,
+        MenuOptions.view,
         MenuOptions.select,
         MenuOptions.edit,
         MenuOptions.duplicate,
@@ -332,6 +336,7 @@ dialTest(
     promptModalDialog,
     setTestIds,
     localStorageManager,
+    confirmationDialog,
   }) => {
     setTestIds('EPMRTC-953');
     const prompt = promptData.prepareDefaultPrompt();
@@ -345,7 +350,7 @@ dialTest(
     await promptModalDialog.fillPromptDetails(newName, newDescr, newValue);
 
     await promptModalDialog.closeButton.click();
-
+    await confirmationDialog.cancelButton.click();
     await expect
       .soft(
         promptModalDialog.getElementLocator(),
@@ -373,6 +378,9 @@ dialTest(
     promptModalDialog,
     setTestIds,
     localStorageManager,
+    promptPreviewModal,
+    promptPreviewModalAssertion,
+    promptAssertion,
   }) => {
     setTestIds('EPMRTC-954');
     const prompt = promptData.prepareDefaultPrompt();
@@ -388,38 +396,26 @@ dialTest(
       newDescr,
       newValue,
     );
-
-    await expect
-      .soft(
-        promptModalDialog.getElementLocator(),
-        ExpectedMessages.promptModalClosed,
-      )
-      .toBeHidden();
-
-    await expect
-      .soft(prompts.getEntityByName(newName), ExpectedMessages.promptNotUpdated)
-      .toBeVisible();
-
-    await prompts.openEntityDropdownMenu(newName);
-    await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-    expect
-      .soft(
-        await promptModalDialog.getName(),
-        ExpectedMessages.promptNameUpdated,
-      )
-      .toBe(newName);
-    expect
-      .soft(
-        await promptModalDialog.getDescription(),
-        ExpectedMessages.promptDescriptionUpdated,
-      )
-      .toBe(newDescr);
-    expect
-      .soft(
-        await promptModalDialog.getPrompt(),
-        ExpectedMessages.promptValueUpdated,
-      )
-      .toBe(newValue);
+    await promptPreviewModalAssertion.assertElementState(
+      promptPreviewModal,
+      'visible',
+    );
+    await promptAssertion.assertEntityState({ name: newName }, 'visible');
+    await promptPreviewModalAssertion.assertElementText(
+      promptPreviewModal.promptName,
+      newName,
+      ExpectedMessages.promptNameUpdated,
+    );
+    await promptPreviewModalAssertion.assertElementText(
+      promptPreviewModal.promptDescription,
+      newDescr,
+      ExpectedMessages.promptDescriptionUpdated,
+    );
+    await promptPreviewModalAssertion.assertElementText(
+      promptPreviewModal.promptContent,
+      newValue,
+      ExpectedMessages.promptValueUpdated,
+    );
   },
 );
 
@@ -434,6 +430,9 @@ dialTest(
     promptModalDialog,
     setTestIds,
     localStorageManager,
+    promptPreviewModal,
+    promptPreviewModalAssertion,
+    promptAssertion,
   }) => {
     setTestIds('EPMRTC-955', 'EPMRTC-1278');
     const prompt = promptData.prepareDefaultPrompt();
@@ -449,41 +448,29 @@ dialTest(
       newDescr,
       newValue,
     );
-
-    await expect
-      .soft(
-        promptModalDialog.getElementLocator(),
-        ExpectedMessages.promptModalClosed,
-      )
-      .toBeHidden();
-
-    await expect
-      .soft(
-        prompts.getEntityByName(ExpectedConstants.allowedSpecialChars),
-        ExpectedMessages.promptNotUpdated,
-      )
-      .toBeVisible();
-
-    await prompts.openEntityDropdownMenu(ExpectedConstants.allowedSpecialChars);
-    await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-    expect
-      .soft(
-        await promptModalDialog.getName(),
-        ExpectedMessages.promptNameUpdated,
-      )
-      .toBe(ExpectedConstants.allowedSpecialChars);
-    expect
-      .soft(
-        await promptModalDialog.getDescription(),
-        ExpectedMessages.promptDescriptionUpdated,
-      )
-      .toBe(newDescr);
-    expect
-      .soft(
-        await promptModalDialog.getPrompt(),
-        ExpectedMessages.promptValueUpdated,
-      )
-      .toBe(newValue);
+    await promptPreviewModalAssertion.assertElementState(
+      promptPreviewModal,
+      'visible',
+    );
+    await promptPreviewModalAssertion.assertElementText(
+      promptPreviewModal.promptName,
+      ExpectedConstants.allowedSpecialChars,
+      ExpectedMessages.promptNameUpdated,
+    );
+    await promptPreviewModalAssertion.assertElementText(
+      promptPreviewModal.promptDescription,
+      newDescr,
+      ExpectedMessages.promptDescriptionUpdated,
+    );
+    await promptPreviewModalAssertion.assertElementText(
+      promptPreviewModal.promptContent,
+      newValue,
+      ExpectedMessages.promptValueUpdated,
+    );
+    await promptAssertion.assertEntityState(
+      { name: ExpectedConstants.allowedSpecialChars },
+      'visible',
+    );
   },
 );
 

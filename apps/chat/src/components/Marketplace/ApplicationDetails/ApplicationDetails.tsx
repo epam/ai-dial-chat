@@ -1,7 +1,10 @@
 import { useCallback, useMemo } from 'react';
 
 import { useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/router';
 
+import { sortItemsVersions } from '@/src/utils/app/common';
+import { isMyApplication } from '@/src/utils/app/id';
 import { getGroupModelKey } from '@/src/utils/app/models';
 
 import { ModalState } from '@/src/types/modal';
@@ -9,16 +12,19 @@ import { DialAIEntityModel } from '@/src/types/models';
 
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import {
+  ModelsActions,
+  ModelsSelectors,
+} from '@/src/store/models/models.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
+import { Routes } from '@/src/constants/routes';
 
 import { Modal } from '../../Common/Modal';
 import { ApplicationDetailsContent } from './ApplicationContent';
 import { ApplicationDetailsFooter } from './ApplicationFooter';
 import { ApplicationDetailsHeader } from './ApplicationHeader';
-
-import { PublishActions } from '@epam/ai-dial-shared';
 
 interface Props {
   entity: DialAIEntityModel;
@@ -26,9 +32,6 @@ interface Props {
   isMyAppsTab: boolean;
   isSuggested?: boolean;
   onClose: () => void;
-  onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
-  onEdit: (entity: DialAIEntityModel) => void;
-  onDelete: (entity: DialAIEntityModel) => void;
   onChangeVersion: (entity: DialAIEntityModel) => void;
   onBookmarkClick: (entity: DialAIEntityModel) => void;
 }
@@ -39,29 +42,46 @@ export const ApplicationDetails = ({
   isMyAppsTab,
   isSuggested,
   onClose,
-  onPublish,
-  onEdit,
-  onDelete,
   onChangeVersion,
   onBookmarkClick,
 }: Props) => {
   const dispatch = useAppDispatch();
+  const router = useRouter();
 
   const searchParams = useSearchParams();
 
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
+  const widgetsSchemaIds = useAppSelector(
+    SettingsSelectors.selectWidgetsSchemaIds,
+  );
 
   const filteredEntities = useMemo(() => {
-    return allEntities.filter(
+    const filtered = allEntities.filter(
       (e) =>
         getGroupModelKey(entity) === getGroupModelKey(e) &&
         (!isMyAppsTab || installedModelIds.has(e.reference) || isSuggested),
     );
+
+    return isMyApplication(entity) ? sortItemsVersions(filtered) : filtered;
   }, [allEntities, entity, installedModelIds, isMyAppsTab, isSuggested]);
 
   const handleUseEntity = useCallback(() => {
+    if (widgetsSchemaIds.has(entity.applicationTypeSchemaId as string)) {
+      return router
+        .push(Routes.SelectedWidget.replace('[slug]', entity.reference))
+        .then(() => {
+          if (!installedModelIds.has(entity.reference)) {
+            dispatch(
+              ModelsActions.addInstalledModels({
+                references: [entity.reference],
+              }),
+            );
+          }
+        });
+    }
+
     dispatch(
       ConversationsActions.applyMarketplaceModel({
         targetConversationId:
@@ -71,7 +91,15 @@ export const ApplicationDetails = ({
       }),
     );
     dispatch(ConversationsActions.setIsStartedCustomViewerConversation(true));
-  }, [dispatch, entity.reference, searchParams]);
+  }, [
+    dispatch,
+    entity.applicationTypeSchemaId,
+    entity.reference,
+    installedModelIds,
+    router,
+    searchParams,
+    widgetsSchemaIds,
+  ]);
 
   return (
     <Modal
@@ -85,13 +113,10 @@ export const ApplicationDetails = ({
       <ApplicationDetailsHeader entity={entity} />
       <ApplicationDetailsContent entity={entity} />
       <ApplicationDetailsFooter
-        onPublish={onPublish}
         onUseEntity={handleUseEntity}
         onChangeVersion={onChangeVersion}
         entity={entity}
         allVersions={filteredEntities}
-        onEdit={onEdit}
-        onDelete={onDelete}
         onBookmarkClick={onBookmarkClick}
       />
     </Modal>

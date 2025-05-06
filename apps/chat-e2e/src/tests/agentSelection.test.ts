@@ -16,16 +16,17 @@ dialTest(
     'RecentModelIds updated when click "Add the agent to My workspace to continue"',
   async ({
     dialHomePage,
-    header,
     chat,
     talkToAgentDialog,
+    chatBar,
     marketplacePage,
+    marketplaceHeader,
     agentInfoAssertion,
     setTestIds,
     localStorageManager,
     iconApiHelper,
     agentDetailsModal,
-    chatBar,
+    navigationPanel,
     confirmationDialog,
     talkToAgentDialogAssertion,
     conversations,
@@ -109,7 +110,7 @@ dialTest(
     await dialTest.step(
       'Create a new conversation and verify the first model is still selected',
       async () => {
-        await header.createNewConversation();
+        await chatBar.createNewEntity();
         await talkToAgentDialog.cancelButton.click();
         await agentInfoAssertion.assertAgentName(initialModel1.name);
       },
@@ -148,7 +149,7 @@ dialTest(
     await dialTest.step(
       'Create a new conversation and verify the second model is still selected',
       async () => {
-        await header.createNewConversation();
+        await chatBar.createNewEntity();
         await talkToAgentDialog.cancelButton.click();
         await agentInfoAssertion.assertAgentName(initialModel2.name);
       },
@@ -157,8 +158,9 @@ dialTest(
     await dialTest.step(
       'Click on "DIAL Marketplace", select a new model, and click "Use model"',
       async () => {
-        await chatBar.dialMarketplaceLink.click();
+        await dialHomePage.goToMarketplace();
         await marketplacePage.waitForPageLoaded();
+        await marketplaceHeader.searchInput.fillInInput(addedModel.name);
         await marketplaceAgentsSection.findAndUseAgent(addedModel, {
           isInstalledDeploymentsUpdated: true,
         });
@@ -174,20 +176,22 @@ dialTest(
     await dialTest.step(
       'Click "Change agent" and "Go to My workspace", remove the third model, and go back to chat',
       async () => {
-        await chatBar.dialMarketplaceLink.click();
+        await dialHomePage.goToMarketplace();
         await marketplacePage.waitForPageLoaded();
+        await marketplaceHeader.searchInput.fillInInput(addedModel.name);
         const addedModelElement =
           await marketplaceAgentsSection.findAgentElement(addedModel);
         await addedModelElement.click();
         await agentDetailsModal.removeBookmarkIcon.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
-        await header.backToChatButton.click();
+        await navigationPanel.backToChat({ isHttpMethodTriggered: false });
       },
     );
 
     await dialTest.step(
       'Verify recentModelsIds is updated and the second model is now first',
       async () => {
+        await dialHomePage.waitForPageLoaded();
         await localStorageAssertion.assertRecentModels([
           initialModel2.id,
           initialModel1.id,
@@ -198,7 +202,11 @@ dialTest(
     await dialTest.step(
       'Create a new conversation and verify the second model is still selected',
       async () => {
-        await header.createNewConversation();
+        await chatBar.createNewEntity();
+        await talkToAgentDialogAssertion.assertAgentState(
+          initialModel2,
+          'visible',
+        );
         await talkToAgentDialogAssertion.assertAgentIsSelected(initialModel2);
         await talkToAgentDialog.cancelButton.click();
         await agentInfoAssertion.assertAgentName(initialModel2.name);
@@ -241,13 +249,13 @@ dialAdminTest(
     publishRequestBuilder,
     setTestIds,
     localStorageManager,
-    header,
     agentInfoAssertion,
     organizationConversations,
     conversationDropdownMenu,
     chatMessages,
     itemApiHelper,
     conversations,
+    chatBar,
     localStorageAssertion,
     chat,
   }) => {
@@ -329,7 +337,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Click "New Conversation" and verify the first model is still selected',
       async () => {
-        await header.createNewConversation();
+        await chatBar.createNewEntity();
         await agentInfoAssertion.assertAgentName(firstModel.name);
       },
     );
@@ -361,7 +369,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Click New Conversation and check that the model is not changed',
       async () => {
-        await header.createNewConversation();
+        await chatBar.createNewEntity();
         await agentInfoAssertion.assertAgentName(secondModel.name);
         await localStorageAssertion.assertRecentModels([
           secondModel.id,
@@ -385,7 +393,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Click New Conversation and check that the model is not changed',
       async () => {
-        await header.createNewConversation();
+        await chatBar.createNewEntity();
         await agentInfoAssertion.assertAgentName(secondModel.name);
         await localStorageAssertion.assertRecentModels([
           secondModel.id,
@@ -403,7 +411,6 @@ dialTest(
     "RecentModelIds updated when regenerate message to imported chat. Chat's model is not in RecentModelIds[0]",
   async ({
     dialHomePage,
-    header,
     agentInfoAssertion,
     setTestIds,
     localStorageManager,
@@ -486,7 +493,7 @@ dialTest(
     await dialTest.step(
       'Create a new conversation and verify the first model is still selected',
       async () => {
-        await header.createNewConversation();
+        await chatBar.createNewEntity();
         await agentInfoAssertion.assertAgentName(initialModel1.name);
       },
     );
@@ -516,7 +523,7 @@ dialTest(
     await dialTest.step(
       'Create a new conversation and verify the first model is still selected',
       async () => {
-        await header.createNewConversation();
+        await chatBar.createNewEntity();
         await agentInfoAssertion.assertAgentName(initialModel1.name);
       },
     );
@@ -548,7 +555,7 @@ dialTest(
     await dialTest.step(
       'Create a new conversation and verify the first model is still selected',
       async () => {
-        await header.createNewConversation();
+        await chatBar.createNewEntity();
         await agentInfoAssertion.assertAgentName(initialModel2.name);
       },
     );
@@ -574,7 +581,7 @@ dialTest(
     await dialTest.step(
       'Create a new conversation and verify is selected',
       async () => {
-        await header.createNewConversation();
+        await chatBar.createNewEntity();
         await agentInfoAssertion.assertAgentName(initialModel1.name);
       },
     );
@@ -585,7 +592,8 @@ dialTest(
   'RecentModelIds[0] is updated if remove latest used model from My applications',
   async ({
     dialHomePage,
-    header,
+    chatBar,
+    navigationPanel,
     chat,
     talkToAgentDialog,
     agentInfoAssertion,
@@ -625,7 +633,7 @@ dialTest(
         await firstModelElement.click();
         await agentDetailsModal.removeBookmarkIcon.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
-        await header.backToChatButton.click();
+        await navigationPanel.backToChat({ isHttpMethodTriggered: false });
       },
     );
 
@@ -633,7 +641,7 @@ dialTest(
       'Verify recentModelIds is updated and the second model is selected',
       async () => {
         await chatAssertion.assertAddAgentButtonState('visible');
-        await header.createNewConversation();
+        await chatBar.createNewEntity();
         await talkToAgentDialogAssertion.assertAgentIsSelected(secondModel);
         await talkToAgentDialog.cancelButton.click();
         await localStorageAssertion.assertRecentModels([secondModel.id]);
@@ -655,7 +663,7 @@ dialSharedWithMeTest(
     additionalUserShareApiHelper,
     setTestIds,
     localStorageManager,
-    header,
+    chatBar,
     agentInfoAssertion,
     sharedWithMeConversations,
     conversationDropdownMenu,
@@ -722,7 +730,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Click new conversation and check that the same model is selected',
       async () => {
-        await header.createNewConversation();
+        await chatBar.createNewEntity();
         await agentInfoAssertion.assertAgentName(initialModel1.name);
       },
     );
@@ -754,7 +762,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Click new conversation and check that the same model is selected',
       async () => {
-        await header.createNewConversation();
+        await chatBar.createNewEntity();
         await agentInfoAssertion.assertAgentName(initialModel2.name);
       },
     );

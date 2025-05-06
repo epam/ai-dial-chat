@@ -1,4 +1,3 @@
-import { FloatingOverlay } from '@floating-ui/react';
 import { IconPlayerPlay } from '@tabler/icons-react';
 import {
   memo,
@@ -24,9 +23,12 @@ import {
   isReplayAsIsConversation,
   isReplayConversation,
 } from '@/src/utils/app/conversation';
-import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
+import {
+  isConversationWithFormSchema,
+  isFormSchemaValid,
+} from '@/src/utils/app/form-schema';
 import { isEntityIdExternal } from '@/src/utils/app/id';
-import { is4XLScreen, isSmallScreen } from '@/src/utils/app/mobile';
+import { is4XLScreen } from '@/src/utils/app/mobile';
 import { doesModelHaveConfiguration } from '@/src/utils/app/models';
 
 import { ApplicationStatus } from '@/src/types/applications';
@@ -39,7 +41,7 @@ import { EntityType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
-import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducer';
+import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { ChatActions } from '@/src/store/chat/chat.reducer';
 import { ChatSelectors } from '@/src/store/chat/chat.selectors';
 import {
@@ -133,7 +135,6 @@ const ChatView = memo(() => {
   const talkToConversationId = useAppSelector(
     ConversationsSelectors.selectTalkToConversationId,
   );
-  const isAnyMenuOpen = useAppSelector(UISelectors.selectIsAnyMenuOpen);
   const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
@@ -143,6 +144,12 @@ const ChatView = memo(() => {
   );
   const notAvailableEntityType = useAppSelector(
     ChatSelectors.selectNotAvailableEntityType,
+  );
+  const isConfigurationSchemaLoading = useAppSelector(
+    ChatSelectors.selectIsConfigurationSchemaLoading,
+  );
+  const configurationSchema = useAppSelector(
+    ChatSelectors.selectConfigurationSchema,
   );
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
@@ -527,8 +534,6 @@ const ChatView = memo(() => {
     !messageIsStreaming &&
     !isLastMessageError &&
     !notAvailableEntityType;
-  const showFloatingOverlay =
-    isSmallScreen() && isAnyMenuOpen && !isIsolatedView;
   const isModelsInstalled = selectedConversations.every((conv) =>
     installedModelIds.has(conv.model.id),
   );
@@ -539,7 +544,9 @@ const ChatView = memo(() => {
 
   const isConversationWithSchema = selectedConversations.some(
     (conv) =>
-      doesModelHaveConfiguration(modelsMap[conv.model.id]) ||
+      (!isConfigurationSchemaLoading &&
+        configurationSchema &&
+        isFormSchemaValid(configurationSchema)) ||
       isConversationWithFormSchema(conv),
   );
 
@@ -596,7 +603,6 @@ const ChatView = memo(() => {
       data-qa="chat"
       id="chat"
     >
-      {showFloatingOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
       {modelError ? (
         <ErrorMessageDiv error={modelError} />
       ) : customViewer ? (
@@ -628,7 +634,9 @@ const ChatView = memo(() => {
                     ? 'w-1/2'
                     : 'w-full',
                 )}
-                data-qa={isCompareMode ? 'compare-mode' : 'chat-mode'}
+                data-qa={
+                  isCompareMode ? 'compare-mode' : 'app-settings-chat-mode'
+                }
               >
                 <div
                   className={classNames(
@@ -1030,6 +1038,7 @@ interface ChatProps {
 
 export function Chat({ isPreview }: ChatProps) {
   const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
 
   const areSelectedConversationsLoaded = useAppSelector(
@@ -1057,12 +1066,6 @@ export function Chat({ isPreview }: ChatProps) {
     ChatSelectors.selectIsConfigurationSchemaLoading,
   );
 
-  const configurationAppReference = selectedConversations.find((conv) =>
-    doesModelHaveConfiguration(modelsMap[conv.model.id]),
-  )?.model?.id;
-  const configurationAppId = configurationAppReference
-    ? modelsMap[configurationAppReference]?.id
-    : undefined;
   const isNoMessages = selectedConversations.every(
     ({ messages }) => !messages?.length,
   );
@@ -1072,13 +1075,21 @@ export function Chat({ isPreview }: ChatProps) {
   }, [dispatch, selectedConversationsIds]);
 
   useEffect(() => {
-    dispatch(ChatActions.resetConfigurationSchema());
+    const configurationAppReference = selectedConversations.find((conv) =>
+      doesModelHaveConfiguration(modelsMap[conv.model.id]),
+    )?.model?.id;
+    const configurationAppId = configurationAppReference
+      ? modelsMap[configurationAppReference]?.id
+      : undefined;
+
     if (configurationAppId && isNoMessages) {
       dispatch(
         ChatActions.getConfigurationSchema({ modelId: configurationAppId }),
       );
+    } else {
+      dispatch(ChatActions.resetConfigurationSchema());
     }
-  }, [dispatch, configurationAppId, isNoMessages]);
+  }, [dispatch, isNoMessages, modelsMap, selectedConversations]);
 
   if (selectedPublication?.resources && !selectedConversationsIds.length) {
     return (

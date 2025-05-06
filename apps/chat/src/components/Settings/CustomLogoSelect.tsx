@@ -26,6 +26,7 @@ interface CustomLogoSelectProps {
   tooltip?: string;
   sourceFilters?: Set<FileSourceType>;
   confirmDialogValues?: ConfirmDialogValueTypes;
+  warningMessage?: string;
 }
 
 export const CustomLogoSelect = ({
@@ -41,13 +42,16 @@ export const CustomLogoSelect = ({
   tooltip,
   sourceFilters,
   confirmDialogValues,
+  warningMessage,
 }: CustomLogoSelectProps) => {
   const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
     useState(false);
-  const { t } = useTranslation(Translation.Settings);
-  const maximumAttachmentsAmount = 1;
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<string[]>();
+  const [pendingDelete, setPendingDelete] = useState(false);
+
+  const { t } = useTranslation(Translation.Settings);
+  const maximumAttachmentsAmount = 1;
 
   const onClickAddHandler = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -66,20 +70,42 @@ export const CustomLogoSelect = ({
 
   const handleOnClose = useCallback(
     (files: boolean | string[]) => {
-      if (Array.isArray(files)) {
-        if (files.length > 0) {
-          if (confirmDialogValues) {
-            setPendingFiles(files);
-            setConfirmDialogOpen(true);
-          } else {
-            handleSelectFiles(files);
-          }
+      if (Array.isArray(files) && files.length > 0) {
+        if (confirmDialogValues && localLogo) {
+          setPendingFiles(files);
+          setConfirmDialogOpen(true);
+        } else {
+          handleSelectFiles(files);
         }
       }
       setIsSelectFilesDialogOpened(false);
     },
-    [confirmDialogValues, handleSelectFiles],
+    [confirmDialogValues, handleSelectFiles, localLogo],
   );
+
+  const handleDeleteLogo = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    if (confirmDialogValues) {
+      setPendingDelete(true);
+      setConfirmDialogOpen(true);
+    } else {
+      onDeleteLocalLogoHandler();
+    }
+  };
+
+  const handleConfirmClose = (result: boolean) => {
+    if (result) {
+      if (pendingDelete) {
+        onDeleteLocalLogoHandler();
+      } else if (pendingFiles) {
+        handleSelectFiles(pendingFiles);
+      }
+    }
+
+    setConfirmDialogOpen(false);
+    setPendingDelete(false);
+    setPendingFiles(undefined);
+  };
 
   return (
     <div className="flex items-center gap-5" data-qa="custom-logo">
@@ -109,7 +135,7 @@ export const CustomLogoSelect = ({
             </button>
             {localLogo && (
               <button
-                onClick={onDeleteLocalLogoHandler}
+                onClick={handleDeleteLogo}
                 className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
                 disabled={disabled}
               >
@@ -119,6 +145,7 @@ export const CustomLogoSelect = ({
           </div>
         </Tooltip>
       </div>
+
       {isSelectFilesDialogOpened && (
         <FileManagerModal
           isOpen
@@ -130,21 +157,18 @@ export const CustomLogoSelect = ({
           customUploadButtonLabel={t('Upload files')}
           forceShowSelectCheckBox
           sourceFilters={sourceFilters}
+          warningMessage={warningMessage}
         />
       )}
+
       {confirmDialogValues && confirmDialogOpen && (
         <ConfirmDialog
-          isOpen={confirmDialogOpen}
-          heading={t(confirmDialogValues?.heading)}
-          description={t(confirmDialogValues?.description)}
+          isOpen
+          heading={t(confirmDialogValues.heading)}
+          description={t(confirmDialogValues.description)}
           confirmLabel={t('Confirm')}
           cancelLabel={t('Cancel')}
-          onClose={(result) => {
-            setConfirmDialogOpen(false);
-            if (result && pendingFiles) {
-              handleSelectFiles(pendingFiles);
-            }
-          }}
+          onClose={handleConfirmClose}
         />
       )}
     </div>

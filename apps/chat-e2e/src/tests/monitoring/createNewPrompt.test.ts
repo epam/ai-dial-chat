@@ -17,7 +17,7 @@ dialTest(
       await localStorageManager.setShowSideBarPanels();
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await promptBar.createNewPrompt();
+      await promptBar.createNewEntity();
     });
 
     await dialTest.step(

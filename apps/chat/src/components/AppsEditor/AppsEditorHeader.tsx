@@ -5,7 +5,7 @@ import {
   IconMenu2,
   IconX,
 } from '@tabler/icons-react';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -16,11 +16,16 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
+import {
+  ApplicationActions,
+  ApplicationSelectors,
+} from '@/src/store/application/application.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
@@ -55,14 +60,53 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
     UISelectors.selectIsUserSettingsOpen,
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+  const returnConversationIds = useAppSelector(
+    ApplicationSelectors.selectReturnConversationIds,
+  );
+  const shouldSaveApplication = useAppSelector(
+    ApplicationSelectors.selectShouldSaveApplication,
+  );
+  const hasUnsavedChanges = useAppSelector(
+    ApplicationSelectors.selectHasUnsavedChanges,
+  );
 
-  const handleCloseUserSettings = () => {
+  const handleCloseUserSettings = useCallback(() => {
     dispatch(UIActions.setIsUserSettingsOpen(false));
+  }, [dispatch]);
+
+  const handleTabClick = (isDisabled: boolean) => {
+    return (e: React.MouseEvent) => {
+      if (isDisabled) {
+        e.preventDefault();
+        return;
+      }
+
+      if (hasUnsavedChanges) {
+        dispatch(ApplicationActions.setShouldSaveApplication(true));
+        dispatch(ApplicationActions.setHasUnsavedChanges(false));
+      }
+    };
   };
 
   const handleSaveAndRedirect = () => {
-    dispatch(ApplicationActions.setExitAfterSave(true));
-    dispatch(ApplicationActions.setShouldSaveApplication(true));
+    if (!shouldSaveApplication) {
+      dispatch(ApplicationActions.setShouldSaveApplication(true));
+      dispatch(ApplicationActions.setExitAfterSave(true));
+    }
+    if (returnConversationIds?.length) {
+      dispatch(
+        ConversationsActions.selectConversations({
+          conversationIds: returnConversationIds,
+        }),
+      );
+      dispatch(ApplicationActions.setReturnConversationIds(undefined));
+    } else {
+      dispatch(
+        ConversationsActions.createNewConversations({
+          names: [DEFAULT_CONVERSATION_NAME],
+        }),
+      );
+    }
   };
 
   const tabs = useMemo(
@@ -100,7 +144,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
   return (
     <div
       className={classNames(
-        'z-40 flex w-full border-b border-tertiary bg-layer-3',
+        'z-40 flex w-full border-b border-secondary bg-layer-1',
         isOverlay ? 'min-h-[36px]' : 'min-h-[48px]',
       )}
       data-qa="app-editor-header"
@@ -116,12 +160,18 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
             </button>
           </div>
           <Logo />
-          <div className="h-full border-l border-tertiary"></div>
-          <span className="hidden items-center text-primary md:flex">
+          <div className="h-full border-l border-secondary"></div>
+          <span
+            className="hidden items-center text-primary md:flex"
+            data-qa="action-application-type-title"
+          >
             {isEditApplication && !add ? t('Edit') : t('Add')}{' '}
             {applicationTypeDisplayName}
           </span>
-          <div className="hidden items-center space-x-2 md:flex">
+          <div
+            className="hidden items-center space-x-2 md:flex"
+            data-qa="steps-container"
+          >
             {tabs.map((tab, index) => {
               const isDisabled = tab.key === TabKeys.SETTINGS && !id;
               return (
@@ -129,6 +179,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
                   <Link
                     href={tab.href}
                     className={isDisabled ? 'pointer-events-none' : ''}
+                    data-qa="single-step-link"
                     aria-disabled={isDisabled}
                     tabIndex={isDisabled ? -1 : undefined}
                     passHref
@@ -138,10 +189,12 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
                         'flex cursor-pointer items-center gap-2 rounded px-1 py-1.5 hover:bg-accent-primary-alpha',
                         isDisabled ? 'text-secondary' : 'text-primary',
                       )}
+                      onClick={handleTabClick(isDisabled)}
                     >
                       {tab.key === TabKeys.GENERAL && id ? (
                         <IconCircleCheck
                           className="text-accent-primary"
+                          data-qa="selected-step-icon"
                           width={24}
                           height={24}
                         />
@@ -152,11 +205,17 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
                               ? 'text-secondary'
                               : 'text-accent-primary'
                           }
+                          data-qa="not-selected-step-icon"
                           width={24}
                           height={24}
                         />
                       )}
-                      <span className="grow truncate">{tab.label}</span>
+                      <span
+                        className="grow truncate"
+                        data-qa="single-step-title"
+                      >
+                        {tab.label}
+                      </span>
                     </div>
                   </Link>
                   {index < tabs.length - 1 && (
@@ -184,6 +243,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
           ) : (
             <Link
               className="hidden items-center space-x-1 px-3 text-accent-primary md:flex"
+              data-qa="exit-link"
               href={{
                 pathname: Routes.Marketplace,
                 query: { tab: MarketplaceTabs.MY_WORKSPACE },
@@ -194,14 +254,14 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
             </Link>
           )}
 
-          <div className="h-full border-l border-tertiary max-md:border-tertiary md:pl-2">
+          <div className="h-full max-md:pr-2 md:border-l md:border-secondary md:pl-2">
             <User />
           </div>
         </div>
       </div>
 
       {menuOpen && (
-        <div className="absolute left-0 top-[48px] w-full border-b border-tertiary bg-layer-3 md:hidden">
+        <div className="absolute left-0 top-[48px] w-full border-b border-secondary bg-layer-3 md:hidden">
           {tabs.map((tab) => {
             const isDisabled = tab.key === TabKeys.SETTINGS && !id;
             const isActive = pathname === tab.href.pathname;
@@ -209,7 +269,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
               <Link key={tab.key} href={tab.href} passHref>
                 <div
                   className={classNames(
-                    'cursor-pointer border-b border-tertiary px-4 py-2',
+                    'cursor-pointer border-b border-secondary px-4 py-2',
                     isDisabled ? 'text-secondary' : 'text-primary',
                     isActive && !isDisabled
                       ? 'font-semibold text-accent-primary'

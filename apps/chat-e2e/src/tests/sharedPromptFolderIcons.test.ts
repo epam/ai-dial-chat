@@ -22,6 +22,7 @@ dialTest(
     dialHomePage,
     folderDropdownMenu,
     promptBar,
+    shareModal,
     shareModalAssertion,
     folderPrompts,
     folderDropdownMenuAssertion,
@@ -98,8 +99,16 @@ dialTest(
           await folderDropdownMenu.selectShareMenuOption();
         shareResponse = shareRequestResponse!.response;
         await shareModalAssertion.assertModalState('visible');
+        await shareModalAssertion.assertElementState(
+          shareModal.linkInputLoader,
+          'hidden',
+        );
         await shareModalAssertion.assertMessageContent(
           ExpectedConstants.sharePromptFolderText,
+        );
+        await shareModalAssertion.assertElementText(
+          shareModal.notSharedEntityLabel,
+          ExpectedConstants.notSharedFolderText,
         );
       },
     );
@@ -179,7 +188,7 @@ dialTest(
 
 dialTest(
   `Shared icon appears in prompt if it's located in shared folder.\n` +
-    `Shared icon disappears from folder if the folder was deleted from "Shared with me" by others`,
+    `Shared icon disappears from folder if the folder from "Shared with me" was Unshared by others`,
   async ({
     dialHomePage,
     promptData,
@@ -264,7 +273,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Delete shared folder by one of the users and verify folder still has arrow icon',
+      'Unshare folder by one of the users and verify folder still has arrow icon',
       async () => {
         const sharedEntities =
           await additionalSecondUserShareApiHelper.listSharedWithMePrompts();
@@ -285,7 +294,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Delete shared folder by rest user and verify arrow icon disappears for folder',
+      'Unshare folder by rest user and verify arrow icon disappears for folder',
       async () => {
         const sharedEntities =
           await additionalUserShareApiHelper.listSharedWithMePrompts();
@@ -385,6 +394,7 @@ dialTest(
     dataInjector,
     folderPrompts,
     folderDropdownMenu,
+    shareModal,
     confirmationDialog,
     confirmationDialogAssertion,
     mainUserShareApiHelper,
@@ -419,15 +429,18 @@ dialTest(
     );
 
     await dialTest.step(
-      'Select "Unshare" option for shared folder and verify confirmation modal is shown',
+      'Select "Share" option for shared folder and verify confirmation modal is shown',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await folderPrompts.expandFolder(folderPrompt.folders.name);
         await folderPrompts.openFolderDropdownMenu(folderPrompt.folders.name);
-        await folderDropdownMenu.selectMenuOption(MenuOptions.unshare);
+        await folderDropdownMenu.selectMenuOption(MenuOptions.share);
+        await shareModal.removeAccessBtn.click();
         await confirmationDialogAssertion.assertConfirmationMessage(
-          ExpectedConstants.unshareFolderMessage,
+          ExpectedConstants.removeFolderAccessMessage(
+            folderPrompt.folders.name,
+          ),
         );
       },
     );
@@ -436,7 +449,9 @@ dialTest(
       'Close confirmation modal and verify arrow icon is still displayed',
       async () => {
         await confirmationDialogAssertion.assertConfirmationMessage(
-          ExpectedConstants.unshareFolderMessage,
+          ExpectedConstants.removeFolderAccessMessage(
+            folderPrompt.folders.name,
+          ),
         );
         await confirmationDialog.cancelDialog();
         await promptBarFolderAssertion.assertFolderArrowIconState(
@@ -450,7 +465,8 @@ dialTest(
       'Confirm unsharing and verify no arrow icon is displayed on folder',
       async () => {
         await folderPrompts.openFolderDropdownMenu(folderPrompt.folders.name);
-        await folderDropdownMenu.selectMenuOption(MenuOptions.unshare);
+        await folderDropdownMenu.selectMenuOption(MenuOptions.share);
+        await shareModal.removeAccessBtn.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
         await promptBarFolderAssertion.assertFolderArrowIconState(
           { name: folderPrompt.folders.name },
@@ -464,7 +480,7 @@ dialTest(
         folderPrompt.prompts[0].folderId + ItemUtil.urlSeparator;
       const sharedEntities =
         await additionalUserShareApiHelper.listSharedWithMePrompts();
-      await shareApiAssertion.assertSharedWithMeEntityState(
+      shareApiAssertion.assertSharedWithMeEntityState(
         sharedEntities,
         folderPrompt.folders,
         'hidden',

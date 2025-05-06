@@ -18,7 +18,7 @@ import {
   SourceTypeFilterOrder,
 } from '@/src/constants/marketplace';
 
-import { ApplicationTypesSchemasSelectors } from '../applicationTypeSchemas/applicationTypeSchemas.reducer';
+import { ApplicationTypesSchemasSelectors } from '../applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { ModelsSelectors } from '../models/models.reducers';
 import { MarketplaceState } from './marketplace.types';
 
@@ -94,3 +94,6 @@ export const selectSourceTypes = createSelector(
     );
   },
 );
+
+export const selectDeleteModel = (state: RootState) =>
+  rootSelector(state).deleteModel;

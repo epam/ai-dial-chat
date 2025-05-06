@@ -24,12 +24,10 @@ dialTest(
       page,
       marketplaceHeader,
       providerLogin,
-      marketplaceSidebar,
       dialHomePage,
-      chatBar,
       header,
       marketplaceUrlBuilder,
-      context,
+      accountSettings,
     },
     testInfo,
   ) => {
@@ -90,7 +88,7 @@ dialTest(
     await dialTest.step(
       'Logout, re-login again and verify filters and search term are reset on the "My Workspace" tab',
       async () => {
-        await context.clearCookies();
+        await accountSettings.logout();
         await providerLogin.login(
           testInfo,
           process.env.E2E_USERNAME!.split(',')[+testInfo.parallelIndex],
@@ -99,9 +97,8 @@ dialTest(
         );
         await dialHomePage.waitForPageLoaded({ skipSidebars: true });
         await header.leftPanelToggle.click();
-        await chatBar.dialMarketplaceLink.click();
+        await dialHomePage.goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceSidebar.myWorkspaceButton.click();
         await baseAssertion.assertCheckboxState(
           marketplaceFilter.filterByPropertyOptionInput(
             MarketplaceFilterTypes.type,
@@ -193,14 +190,14 @@ dialTest(
               await incognitoMarketplaceHeader.searchInput.fillInInput(
                 GeneratorUtil.randomString(5),
               );
-              await incognitoAppContainer.getHeader().backToChatButton.click();
+              await incognitoAppContainer
+                .getNavigationPanel()
+                .backToChat({ isHttpMethodTriggered: false });
               await incognitoDialHomePage.waitForPageLoaded({
                 skipSidebars: true,
               });
               await incognitoAppContainer.getHeader().leftPanelToggle.click();
-              await incognitoAppContainer
-                .getChatBar()
-                .dialMarketplaceLink.click();
+              await incognitoDialHomePage.goToMarketplace();
               break;
           }
           await incognitoMarketplacePage.waitForPageLoaded();

@@ -83,13 +83,16 @@ export enum UploadStatus {
   ALL_LOADED = 'ALL_LOADED',
 }
 
-export interface Entity {
+export interface EntityDates {
+  createdAt?: number;
+  updatedAt?: number;
+}
+
+export interface Entity extends EntityDates {
   id: string;
   name: string;
   folderId: string;
   status?: UploadStatus;
-  createdAt?: number;
-  updatedAt?: number;
   author?: string;
 }
 
@@ -126,8 +129,6 @@ export interface ShareEntity extends Entity, ShareInterface {}
 
 export interface ConversationInfo extends ShareEntity {
   model: ConversationEntityModel;
-  //TODO remove lastActivityDate when no need for the migration. See migration.epics.ts
-  lastActivityDate?: number;
   isPlayback?: boolean;
   isReplay?: boolean;
 }

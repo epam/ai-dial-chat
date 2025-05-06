@@ -14,6 +14,7 @@ import { ConversationsSelectors } from '@/src/store/conversations/conversations.
 import { useAppSelector } from '@/src/store/hooks';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { withErrorBoundary } from '@/src/components/Common/ErrorBoundary';
 
 import { ButtonsSchemaModal } from './ButtonsSchemaModal';
 import { SchemaButton } from './SchemaButton';
@@ -171,7 +172,7 @@ const HiddenButtonsProperty = ({
     <div
       ref={hiddenContainerRef}
       className={classNames(
-        'invisible absolute w-full',
+        'invisible max-h-0',
         buttonsWrapperClassName,
         className,
       )}
@@ -287,7 +288,7 @@ const ButtonsProperty = ({
         )}
       </div>
 
-      {!selectedConversations[0].messages.length && (
+      {!selectedConversations[0]?.messages.length && (
         <HiddenButtonsProperty
           options={options}
           className={className}
@@ -313,6 +314,7 @@ const ButtonsProperty = ({
 
       <ConfirmDialog
         isOpen={!!confirmation}
+        showHeadingTooltip
         heading={t(
           confirmation?.[DialSchemaProperties.DialWidgetOptions]
             ?.confirmationMessage ?? '',
@@ -363,10 +365,7 @@ const PropertyRenderer = ({
 
   return (
     <div
-      className={classNames(
-        'relative flex flex-col gap-3 overflow-hidden',
-        className,
-      )}
+      className={classNames('flex flex-col gap-3 overflow-hidden', className)}
     >
       {property.description && (
         <p className="whitespace-pre-line text-base text-primary">
@@ -407,7 +406,7 @@ interface FormSchemaProps {
   buttonClassName?: string;
 }
 
-export const FormSchema = memo(function FormSchema({
+export const FormSchemaMemo = memo(function FormSchema({
   schema,
   formValue,
   onChange,
@@ -437,3 +436,5 @@ export const FormSchema = memo(function FormSchema({
     </div>
   );
 });
+
+export const FormSchema = withErrorBoundary(FormSchemaMemo);

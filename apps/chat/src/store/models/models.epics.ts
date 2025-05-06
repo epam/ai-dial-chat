@@ -21,25 +21,19 @@ import {
 } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
-import { AnyAction } from '@reduxjs/toolkit';
+import { combineEpics, ofType } from 'redux-observable';
 
-import { combineEpics } from 'redux-observable';
-
-import { sortItemsVersions } from '@/src/utils/app/common';
 import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { isMyApplication } from '@/src/utils/app/id';
-import {
-  getGroupModelKey,
-  groupModelsAndSaveOrder,
-} from '@/src/utils/app/models';
+import { getGroupModelKey } from '@/src/utils/app/models';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { translate } from '@/src/utils/app/translation';
 
 import { ApplicationStatus } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel, InstalledModel } from '@/src/types/models';
-import { AppEpic } from '@/src/types/store';
+import { AppAction, AppEpic } from '@/src/types/store';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 
@@ -60,11 +54,8 @@ import uniqBy from 'lodash-es/uniqBy';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(
-      (action) =>
-        ModelsActions.init.match(action) &&
-        !ModelsSelectors.selectInitialized(state$.value),
-    ),
+    ofType(ModelsActions.init.type),
+    filter(() => !ModelsSelectors.selectInitialized(state$.value)),
     switchMap(() =>
       concat(of(ModelsActions.getModels()), of(ModelsActions.initFinish())),
     ),
@@ -72,7 +63,7 @@ const initEpic: AppEpic = (action$, state$) =>
 
 const initRecentModelsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ModelsActions.init.match),
+    ofType(ModelsActions.init.type),
     switchMap(() => DataService.getRecentModelsIds()),
     switchMap((recentModelsIds) => {
       return state$.pipe(
@@ -118,7 +109,7 @@ const initRecentModelsEpic: AppEpic = (action$, state$) =>
 
 const getModelsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ModelsActions.getModels.match),
+    ofType(ModelsActions.getModels.type),
     switchMap(() => {
       return fromFetch('/api/models', {
         headers: {
@@ -132,19 +123,6 @@ const getModelsEpic: AppEpic = (action$, state$) =>
           return from(resp.json());
         }),
         switchMap((response: DialAIEntityModel[]) => {
-          const sortedAgents = groupModelsAndSaveOrder(response).flatMap(
-            ({ entities }) => {
-              if (
-                entities.length > 0 &&
-                entities[0].id !== entities[0].reference
-              ) {
-                sortItemsVersions(entities);
-              }
-
-              return entities;
-            },
-          );
-
           const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
           const userName = AuthSelectors.selectUserName(state$.value);
           const isHeaderFeatureEnabled = SettingsSelectors.isFeatureEnabled(
@@ -152,21 +130,17 @@ const getModelsEpic: AppEpic = (action$, state$) =>
             Feature.Header,
           );
 
-          if (
-            sortedAgents.length === 0 &&
-            isOverlay &&
-            !isHeaderFeatureEnabled
-          ) {
+          if (!response.length && isOverlay && !isHeaderFeatureEnabled) {
             signOut();
           }
 
-          const updatingModels = sortedAgents.filter(
+          const updatingModels = response.filter(
             (model) =>
               model.functionStatus &&
               (model.functionStatus === ApplicationStatus.DEPLOYING ||
                 model.functionStatus === ApplicationStatus.UNDEPLOYING),
           );
-          const continueUpdateActions: Observable<AnyAction>[] =
+          const continueUpdateActions: Observable<AppAction>[] =
             updatingModels.map((model) =>
               of(
                 ApplicationActions.continueUpdatingFunctionStatus({
@@ -175,14 +149,14 @@ const getModelsEpic: AppEpic = (action$, state$) =>
                 }),
               ),
             );
-          const publicApplicationIds = sortedAgents
+          const publicApplicationIds = response
             .filter((model) => isEntityIdPublic(model))
             .map(({ id }) => id);
 
           return concat(
             of(
               ModelsActions.getModelsSuccess({
-                models: sortedAgents.map((model) =>
+                models: response.map((model) =>
                   isMyApplication(model)
                     ? { ...model, owner: userName }
                     : model,
@@ -206,15 +180,14 @@ const getModelsEpic: AppEpic = (action$, state$) =>
         catchError((err) => {
           return of(ModelsActions.getModelsFail({ error: err }));
         }),
-        takeUntil(action$.pipe(filter(ModelsActions.getModels.match))),
+        takeUntil(action$.pipe(ofType(ModelsActions.getModels.type))),
       );
     }),
   );
 
 const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ModelsActions.getInstalledModelIds.match),
-
+    ofType(ModelsActions.getInstalledModelIds.type),
     switchMap(() => {
       const allModels = ModelsSelectors.selectModels(state$.value);
 
@@ -228,7 +201,7 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
             return of(ModelsActions.getInstalledModelIdsFail(myAppIds));
           }
 
-          const actions: Observable<AnyAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
 
           const recentModelIds = ModelsSelectors.selectRecentModelsIds(
             state$.value,
@@ -275,6 +248,7 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
           if (error?.message && error?.message.endsWith('Not Found')) {
             return of(ModelsActions.getInstalledModelIdsFail(myAppIds));
           }
+
           return EMPTY;
         }),
       );
@@ -283,7 +257,7 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
 
 const getInstalledModelIdsFailEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ModelsActions.getInstalledModelIdsFail.match),
+    ofType(ModelsActions.getInstalledModelIdsFail.type),
     switchMap(({ payload: myAppIds }) => {
       const defaultModelIds = SettingsSelectors.selectDefaultRecentModelsIds(
         state$.value,
@@ -315,7 +289,7 @@ const getInstalledModelIdsFailEpic: AppEpic = (action$, state$) =>
 
 const removeInstalledModelsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ModelsActions.removeInstalledModels.match),
+    ofType(ModelsActions.removeInstalledModels.type),
     switchMap(({ payload }) => {
       const installedModels = ModelsSelectors.selectInstalledModels(
         state$.value,
@@ -353,7 +327,7 @@ const removeInstalledModelsEpic: AppEpic = (action$, state$) =>
 
           return DataService.setRecentModelsIds(filteredRecentModelIds).pipe(
             switchMap(() => {
-              const actions: Observable<AnyAction>[] = [];
+              const actions: Observable<AppAction>[] = [];
 
               if (payload.action === DeleteType.DELETE) {
                 actions.push(
@@ -387,7 +361,7 @@ const removeInstalledModelsEpic: AppEpic = (action$, state$) =>
 
 const addInstalledModelsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ModelsActions.addInstalledModels.match),
+    ofType(ModelsActions.addInstalledModels.type),
     switchMap(({ payload }) => {
       const installedModels = ModelsSelectors.selectInstalledModels(
         state$.value,
@@ -420,7 +394,7 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
 
           return DataService.setRecentModelsIds(recentModelIds).pipe(
             switchMap(() => {
-              const actions: Observable<AnyAction>[] = [];
+              const actions: Observable<AppAction>[] = [];
 
               if (payload.showSuccessToast) {
                 actions.push(
@@ -461,10 +435,9 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
 
 const updateRecentModelsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(
-      (action) =>
-        ModelsActions.initRecentModels.match(action) ||
-        ModelsActions.updateRecentModels.match(action),
+    ofType(
+      ModelsActions.initRecentModels.type,
+      ModelsActions.updateRecentModels.type,
     ),
     withLatestFrom(state$),
     map(([_action, state]) => ModelsSelectors.selectRecentModelsIds(state)),
@@ -476,7 +449,7 @@ const updateRecentModelsEpic: AppEpic = (action$, state$) =>
 
 const getModelsSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ModelsActions.getModelsSuccess.match),
+    ofType(ModelsActions.getModelsSuccess.type),
     switchMap(({ payload }) => {
       const overlayDefaultModelId =
         SettingsSelectors.selectOverlayDefaultModelId(state$.value);
@@ -498,7 +471,7 @@ const getModelsSuccessEpic: AppEpic = (action$, state$) =>
 
 const getModelsFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ModelsActions.getModelsFail.match),
+    ofType(ModelsActions.getModelsFail.type),
     tap(({ payload }) => {
       if (payload.error.status === 401) {
         window.location.assign('/api/auth/signin');

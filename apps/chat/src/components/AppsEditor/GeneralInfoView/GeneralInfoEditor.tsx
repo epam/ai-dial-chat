@@ -40,7 +40,6 @@ import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
-import { withWarningMessage } from '../../Common/Forms/FieldWarningMessage';
 import {
   ApplicationGeneralInfoFormData,
   getApplicationData,
@@ -55,9 +54,7 @@ interface Props {
 }
 
 const ControlledField = withController(Field);
-const LogoSelector = withErrorMessage(
-  withWarningMessage(withLabel(CustomLogoSelect)),
-);
+const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const TopicsSelector = withLabel(DropdownSelector);
 
 export const GeneralInfoEditor: React.FC<Props> = ({
@@ -79,7 +76,8 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     register,
     control,
     handleSubmit: submitWrapper,
-    formState: { errors, isValid },
+    formState: { errors, isValid, dirtyFields },
+    reset,
   } = useFormContext<ApplicationGeneralInfoFormData>();
 
   const getLogoId = useCallback(
@@ -89,6 +87,12 @@ export const GeneralInfoEditor: React.FC<Props> = ({
 
   const topicOptions = useMemo(() => topics.map(topicToOption), [topics]);
 
+  const exitAfterSave = useAppSelector(
+    ApplicationSelectors.selectExitAfterSave,
+  );
+
+  const isFormChanged = Object.keys(dirtyFields).length > 0;
+
   const shouldSaveApplication = useAppSelector(
     ApplicationSelectors.selectShouldSaveApplication,
   );
@@ -97,90 +101,115 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     ? CONFIRM_ICON_FILE_VALUES
     : undefined;
 
+  const iconWarning = oldApplication?.isShared
+    ? t(
+        'After you add or change an icon, other users will see the default one immediately after confirmation. Share the link again so they can see the new icon.',
+      )
+    : '';
+
+  useEffect(() => {
+    if (isFormChanged && isValid) {
+      dispatch(ApplicationActions.setHasUnsavedChanges(isFormChanged));
+    }
+  }, [dispatch, isFormChanged, isValid]);
+
   const handleSubmit = useCallback(
-    (data: ApplicationGeneralInfoFormData) => {
+    (data: ApplicationGeneralInfoFormData, isAutoSave = false) => {
       const { slug } = router.query;
-      if (slug) {
-        const preparedData = getApplicationData(data, slug.toString(), schema);
+      if (!slug) return;
 
-        if (slug === ApplicationType.CODE_APP) {
-          preparedData.functionStatus = data?.functionStatus;
-        }
+      const slugStr = slug.toString();
+      const preparedData = getApplicationData(data, slugStr, schema);
 
-        if (oldApplication) {
+      if (slugStr === ApplicationType.CODE_APP) {
+        preparedData.functionStatus =
+          data?.functionStatus ?? oldApplication?.functionStatus;
+      }
+
+      if (oldApplication) {
+        if (isFormChanged || !isAutoSave) {
           dispatch(
             ApplicationActions.update({
               applicationData: {
                 ...preparedData,
-                isShared: oldApplication.isShared,
+                isShared: oldApplication?.isShared,
                 sharedWithMe: isSharedWithMe,
                 reference: data.reference,
-                id: oldApplication.id,
+                id: oldApplication?.id,
               },
               oldApplication: oldApplication,
-              redirectUrl: getRouteForSlug(
-                Routes.AppsEditorSettings,
-                encode(slug.toString()),
-              ),
-              schema: schema ?? undefined,
-            }),
-          );
-
-          if (isAppDeployed) {
-            dispatch(
-              UIActions.showWarningToast(
-                t('Saved changes will be applied during next deployment'),
-              ),
-            );
-          }
-        } else {
-          dispatch(
-            ApplicationActions.create({
-              applicationData: preparedData,
-              slug: slug.toString(),
+              redirectUrl: !isAutoSave
+                ? getRouteForSlug(Routes.AppsEditorSettings, encode(slugStr))
+                : undefined,
               schema: schema ?? undefined,
             }),
           );
         }
+
+        if (!isAutoSave && isAppDeployed) {
+          dispatch(
+            UIActions.showWarningToast(
+              t('Saved changes will be applied during next deployment'),
+            ),
+          );
+        }
+      } else if (!isAutoSave) {
+        dispatch(
+          ApplicationActions.create({
+            applicationData: preparedData,
+            slug: slugStr,
+            schema: schema ?? undefined,
+          }),
+        );
       }
+
+      reset(data);
     },
     [
       router.query,
       schema,
       oldApplication,
+      reset,
+      isFormChanged,
+      isAppDeployed,
       dispatch,
       isSharedWithMe,
-      isAppDeployed,
       t,
     ],
   );
 
   useEffect(() => {
-    if (shouldSaveApplication) {
-      if (!isValid) {
-        dispatch(ApplicationActions.setShouldSaveApplication(false));
-        dispatch(ApplicationActions.setExitAfterSave(false));
-        dispatch(
-          UIActions.showErrorToast(t('Please fill in all mandatory fields')),
-        );
-        return;
-      }
+    const isTriggered = shouldSaveApplication || exitAfterSave;
+    if (!isTriggered) return;
 
-      submitWrapper(handleSubmit)();
+    if (!isValid) {
+      dispatch(ApplicationActions.setShouldSaveApplication(false));
+      dispatch(ApplicationActions.setExitAfterSave(false));
+      dispatch(
+        UIActions.showErrorToast(t('Please fill in all mandatory fields')),
+      );
+      return;
+    }
+
+    if (shouldSaveApplication) {
+      submitWrapper((data) => handleSubmit(data, false))();
     }
   }, [
     shouldSaveApplication,
-    submitWrapper,
-    handleSubmit,
+    exitAfterSave,
     isValid,
     dispatch,
     t,
+    submitWrapper,
+    handleSubmit,
+    router,
   ]);
 
   return (
     <div className="size-full overflow-hidden bg-layer-2">
       <form
-        onSubmit={submitWrapper(handleSubmit)}
+        onSubmit={submitWrapper((data) => handleSubmit(data, false))}
+        onMouseLeave={submitWrapper((data) => handleSubmit(data, true))}
         className="flex size-full flex-col"
         data-qa="app-general-form"
       >
@@ -233,8 +262,8 @@ export const GeneralInfoEditor: React.FC<Props> = ({
                 error={errors.iconUrl?.message}
                 disabled={isSharedWithMe}
                 tooltip={isSharedWithMe ? getSharedTooltip('icon') : ''}
-                warning={confirmIconValues?.description}
                 confirmDialogValues={confirmIconValues}
+                warningMessage={iconWarning}
               />
             )}
           />

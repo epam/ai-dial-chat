@@ -11,7 +11,7 @@ import {
   ApplicationStatus,
   CustomApplicationModel,
 } from '@/src/types/applications';
-import { FolderType } from '@/src/types/folder';
+import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 
 import { ApplicationState } from './applications.types';
@@ -20,6 +20,7 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 import uniqBy from 'lodash-es/uniqBy';
 
 const initialState: ApplicationState = {
+  initialized: false,
   appLoading: UploadStatus.UNINITIALIZED,
   logsLoadingStatus: UploadStatus.UNINITIALIZED,
   appDetails: undefined,
@@ -27,12 +28,18 @@ const initialState: ApplicationState = {
   shouldSaveApplication: false,
   exitAfterSave: false,
   publicFolders: [],
+  hasUnsavedChanges: false,
+  logsEntityId: undefined,
 };
 
 export const applicationSlice = createSlice({
   name: 'application',
   initialState,
   reducers: {
+    init: (state) => state,
+    initFinish: (state) => {
+      state.initialized = true;
+    },
     create: (
       state,
       _action: PayloadAction<{
@@ -198,6 +205,12 @@ export const applicationSlice = createSlice({
     ) => {
       state.appLoading = UploadStatus.LOADING;
     },
+    exitEditor: (
+      state,
+      _action: PayloadAction<{
+        redirectUrl?: string;
+      }>,
+    ) => state,
     enterEditModeComplete: (state) => {
       state.appLoading = UploadStatus.LOADED;
     },
@@ -205,10 +218,25 @@ export const applicationSlice = createSlice({
       const folders = payload
         .flatMap((id) => getParentFolderIdsFromEntityId(id).slice(0, -1))
         .map((id) =>
-          getFolderFromId(id, FolderType.Application, UploadStatus.LOADED),
+          getFolderFromId(id, FeatureType.Application, UploadStatus.LOADED),
         );
 
       state.publicFolders = uniqBy(folders, 'id');
+    },
+    setReturnConversationIds(
+      state,
+      { payload }: PayloadAction<string[] | undefined>,
+    ) {
+      state.returnConversationIds = payload;
+    },
+    setHasUnsavedChanges(state, action: PayloadAction<boolean>) {
+      state.hasUnsavedChanges = action.payload;
+    },
+    setSelectedWidget(state, { payload }: PayloadAction<string | undefined>) {
+      state.selectedWidget = payload;
+    },
+    setLogsEntityId(state, { payload }: PayloadAction<string | undefined>) {
+      state.logsEntityId = payload;
     },
   },
 });

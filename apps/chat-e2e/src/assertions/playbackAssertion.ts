@@ -1,21 +1,22 @@
+import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ElementState, ExpectedMessages } from '@/src/testData';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { expect } from '@playwright/test';
 
-export class PlaybackAssertion {
+export class PlaybackAssertion extends BaseAssertion {
   readonly playbackControl: PlaybackControl;
 
   constructor(playbackControl: PlaybackControl) {
+    super();
     this.playbackControl = playbackControl;
   }
 
   public async assertPlaybackMessageContent(expectedContent: string) {
-    const playbackMessage = await this.playbackControl
-      .getPlaybackMessage()
-      .getPlaybackMessageContent();
-    expect
-      .soft(playbackMessage, ExpectedMessages.playbackChatMessageIsValid)
-      .toBe(expectedContent);
+    await super.assertElementText(
+      this.playbackControl.getPlaybackMessage(),
+      expectedContent,
+      ExpectedMessages.playbackChatMessageIsValid,
+    );
   }
 
   public async assertPlaybackMessageAttachmentState(

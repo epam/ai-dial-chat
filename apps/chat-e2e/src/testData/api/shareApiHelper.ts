@@ -85,7 +85,7 @@ export class ShareApiHelper extends BaseApiHelper {
 
   public async shareAppByLink(app: BackendEntity) {
     const resources: { url: string }[] = [];
-    let url: string;
+    const url = '';
     if (!resources.find((r) => r.url === url)) {
       resources.push({ url: app.url });
     }

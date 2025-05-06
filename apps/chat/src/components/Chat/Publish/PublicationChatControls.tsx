@@ -59,14 +59,8 @@ export function PublicationControlsView<
 
   const unselectPrompt = useCallback(() => {
     dispatch(
-      PromptsActions.setSelectedPrompt({
+      PromptsActions.selectPrompt({
         promptId: undefined,
-      }),
-    );
-    dispatch(
-      PromptsActions.setIsEditModalOpen({
-        isOpen: false,
-        isPreview: false,
       }),
     );
     dispatch(
@@ -113,22 +107,12 @@ export function PublicationControlsView<
         unselectConversation();
         unselectApplication();
         dispatch(
-          PromptsActions.uploadPrompt({
-            promptId: resourcesToReview[publicationIdx + offset].reviewUrl,
-          }),
-        );
-        dispatch(
-          PromptsActions.setSelectedPrompt({
+          PromptsActions.selectPrompt({
             promptId: resourcesToReview[publicationIdx + offset].reviewUrl,
             isApproveRequiredResource: true,
           }),
         );
-        dispatch(
-          PromptsActions.setIsEditModalOpen({
-            isOpen: true,
-            isPreview: true,
-          }),
-        );
+        dispatch(PromptsActions.setIsPromptModalOpen({ isOpen: true }));
       } else {
         unselectConversation();
         unselectPrompt();

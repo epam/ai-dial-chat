@@ -33,6 +33,10 @@ import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import {
+  CodeEditorActions,
+  CodeEditorSelectors,
+} from '@/src/store/codeEditor/codeEditor.reducer';
+import {
   ConversationsActions,
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
@@ -42,7 +46,7 @@ import {
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_QUICK_APPS_SCHEMA_ID } from '@/src/constants/quick-apps';
 import { Routes } from '@/src/constants/routes';
@@ -62,8 +66,6 @@ import {
   getQuickAppDefaultValues,
 } from './form';
 
-import debounce from 'lodash-es/debounce';
-
 enum PreviewMode {
   half,
   full,
@@ -81,24 +83,16 @@ export const ApplicationSettings: React.FC<Props> = ({
   schema,
   type,
 }) => {
+  const { t } = useTranslation(Translation.Chat);
+
   const router = useRouter();
+
   const dispatch = useAppDispatch();
+
   const pythonVersions = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const modelFromState = applicationData
-    ? modelsMap[applicationData.reference]
-    : null;
-  const isAppDeployed = useMemo(
-    () => !!modelFromState && isApplicationDeployed(modelFromState),
-    [modelFromState],
-  );
-  const isAppDeploymentInProgress = useMemo(
-    () => !!modelFromState && isApplicationDeploymentInProgress(modelFromState),
-    [modelFromState],
-  );
-
   const previewConversationId = useAppSelector(
     ConversationsSelectors.selectPreviewConversationId,
   );
@@ -111,13 +105,25 @@ export const ApplicationSettings: React.FC<Props> = ({
   const areSelectedConversationsLoaded = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsLoaded,
   );
+  const isCodeEditorDirty = useAppSelector(CodeEditorSelectors.selectIsDirty);
   const theme = useAppSelector(UISelectors.selectThemeState);
-  const { t } = useTranslation(Translation.Chat);
 
   const [previewMode, setPreviewMode] = useState<PreviewMode>(
     schema?.[ApplicationTypeSchemaProperties.applicationTypeViewerUrl]
       ? PreviewMode.closed
       : PreviewMode.half,
+  );
+
+  const modelFromState = applicationData
+    ? modelsMap[applicationData.reference]
+    : null;
+  const isAppDeployed = useMemo(
+    () => !!modelFromState && isApplicationDeployed(modelFromState),
+    [modelFromState],
+  );
+  const isAppDeploymentInProgress = useMemo(
+    () => !!modelFromState && isApplicationDeploymentInProgress(modelFromState),
+    [modelFromState],
   );
 
   const getDefaultValues = useCallback(
@@ -164,7 +170,6 @@ export const ApplicationSettings: React.FC<Props> = ({
         return (
           <CodeAppView
             isSharedWithMe={modelFromState?.sharedWithMe ?? false}
-            isAppDeployed={isAppDeployed}
             oldApplication={applicationData}
             isShared={modelFromState?.isShared ?? false}
             applicationStatus={modelFromState?.functionStatus}
@@ -202,21 +207,45 @@ export const ApplicationSettings: React.FC<Props> = ({
     defaultValues: getDefaultValues(type) ?? {},
   });
 
+  const isFormChanged = useCallback(() => {
+    return (
+      Object.keys(methods.formState.dirtyFields).length > 0 || isCodeEditorDirty
+    );
+  }, [methods.formState.dirtyFields, isCodeEditorDirty]);
+
   const saveForm = useCallback(() => {
-    methods.formState.isValid &&
+    if (isFormChanged() && methods.formState.isValid) {
       dispatch(ApplicationActions.setShouldSaveApplication(true));
-  }, [dispatch, methods.formState.isValid]);
+      dispatch(CodeEditorActions.saveAllModifiedFiles());
+      if (isAppDeployed) {
+        dispatch(
+          UIActions.showWarningToast(
+            t('Saved changes will be applied during next deployment'),
+          ),
+        );
+      }
+      const currentValues = methods.getValues();
 
-  const debouncedSave = useMemo(() => debounce(saveForm, 750), [saveForm]);
+      methods.reset(currentValues);
+    }
+  }, [dispatch, isAppDeployed, isFormChanged, methods, t]);
 
-  const handlePreviewMouseEnter = useCallback(() => {
-    debouncedSave();
-  }, [debouncedSave]);
-  const handlePreviewMouseLeave = useCallback(() => {
-    debouncedSave.cancel();
-  }, [debouncedSave]);
+  useEffect(() => {
+    if (methods.formState.isValid) {
+      dispatch(ApplicationActions.setHasUnsavedChanges(isFormChanged()));
+    }
+  }, [dispatch, isFormChanged, methods.formState]);
 
   const formViewElement = getFormView(type);
+
+  const handleRedeploy = () => {
+    dispatch(
+      ApplicationActions.startUpdatingFunctionStatus({
+        id: applicationData.id,
+        status: ApplicationStatus.REDEPLOYING,
+      }),
+    );
+  };
 
   useEffect(() => {
     const redirectHandler = (url: string) => {
@@ -267,10 +296,11 @@ export const ApplicationSettings: React.FC<Props> = ({
   ]);
 
   return (
-    <div className="flex w-full overflow-hidden">
+    <div className="flex w-full flex-nowrap overflow-hidden">
       <div
+        onMouseLeave={saveForm}
         className={classNames('transition-all duration-300 ease-in-out', {
-          'w-full opacity-100': previewMode === PreviewMode.closed,
+          'w-[calc(100%-40px)] opacity-100': previewMode === PreviewMode.closed,
           'w-1/2 opacity-100': previewMode === PreviewMode.half,
           'w-0 opacity-0': previewMode === PreviewMode.full,
         })}
@@ -306,14 +336,7 @@ export const ApplicationSettings: React.FC<Props> = ({
                 className="button button-accent-secondary mb-2 flex items-center gap-2 text-accent-secondary md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
                 data-qa="redeploy-code-app"
                 disabled={!methods.formState.isValid}
-                onClick={() => {
-                  dispatch(
-                    ApplicationActions.startUpdatingFunctionStatus({
-                      id: applicationData.id,
-                      status: ApplicationStatus.REDEPLOYING,
-                    }),
-                  );
-                }}
+                onClick={handleRedeploy}
               >
                 <IconRefresh size={18} />
                 <span>{t('Redeploy')}</span>
@@ -352,8 +375,6 @@ export const ApplicationSettings: React.FC<Props> = ({
         {previewMode !== PreviewMode.closed && (
           <div className="flex-1 overflow-auto">
             <ApplicationPreviewChat
-              handlePreviewMouseEnter={handlePreviewMouseEnter}
-              handlePreviewMouseLeave={handlePreviewMouseLeave}
               isAppDeploymentInProgress={isAppDeploymentInProgress}
               isApplicationValid={methods.formState.isValid}
               applicationId={applicationData.id}

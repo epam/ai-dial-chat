@@ -12,19 +12,21 @@ import {
   tap,
 } from 'rxjs';
 
-import { combineEpics } from 'redux-observable';
+import { combineEpics, ofType } from 'redux-observable';
 
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 
 import { PageType } from '@/src/types/common';
-import { AppEpic } from '@/src/types/store';
+import { AppAction, AppEpic } from '@/src/types/store';
+
+import { ApplicationActions } from '@/src/store/application/application.reducers';
 
 import { errorsMessages } from '@/src/constants/errors';
 
 import { AddonsActions } from '../addons/addons.reducers';
-import { ApplicationTypesSchemasActions } from '../applicationTypeSchemas/applicationTypeSchemas.reducer';
+import { ApplicationTypesSchemasActions } from '../applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { AuthSelectors } from '../auth/auth.reducers';
 import { ConversationsActions } from '../conversations/conversations.reducers';
 import { FilesActions } from '../files/files.reducers';
@@ -37,17 +39,13 @@ import { ShareActions } from '../share/share.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import { SettingsActions, SettingsSelectors } from './settings.reducers';
 
-interface ActionInit {
-  payload: undefined;
-  type: string;
-}
-
-const getInitActions = (page?: PageType): Observable<ActionInit>[] => {
+const getInitActions = (page?: PageType): Observable<AppAction>[] => {
   switch (page) {
     case PageType.Marketplace:
       return [
         of(UIActions.init()),
         of(ModelsActions.init()),
+        of(ApplicationActions.init()),
         of(AddonsActions.init()),
         of(FilesActions.init()),
         of(PublicationActions.init()),
@@ -60,6 +58,7 @@ const getInitActions = (page?: PageType): Observable<ActionInit>[] => {
         of(UIActions.init()),
         of(MigrationActions.init()),
         of(ModelsActions.init()),
+        of(ApplicationActions.init()),
         of(AddonsActions.init()),
         of(ConversationsActions.init()),
         of(PromptsActions.init()),
@@ -73,6 +72,7 @@ const getInitActions = (page?: PageType): Observable<ActionInit>[] => {
       return [
         of(UIActions.init()),
         of(ModelsActions.init()),
+        of(ShareActions.init()),
         of(AddonsActions.init()),
         of(FilesActions.init()),
         of(PublicationActions.init()),
@@ -83,6 +83,7 @@ const getInitActions = (page?: PageType): Observable<ActionInit>[] => {
       return [
         of(UIActions.init()),
         of(ModelsActions.init()),
+        of(ApplicationActions.init()),
         of(AddonsActions.init()),
         of(FilesActions.init()),
         of(PublicationActions.init()),
@@ -94,7 +95,7 @@ const getInitActions = (page?: PageType): Observable<ActionInit>[] => {
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(SettingsActions.initApp.match),
+    ofType(SettingsActions.initApp.type),
     tap(() => {
       const storageType = SettingsSelectors.selectStorageType(state$.value);
       const defaults = SettingsSelectors.selectDefaults(state$.value);

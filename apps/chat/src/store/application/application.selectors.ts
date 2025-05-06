@@ -47,6 +47,20 @@ const selectExitAfterSave = (state: RootState) =>
 const selectPublicFolders = (state: RootState) =>
   rootSelector(state).publicFolders;
 
+const selectReturnConversationIds = (state: RootState) =>
+  rootSelector(state).returnConversationIds;
+
+const selectHasUnsavedChanges = (state: RootState) =>
+  rootSelector(state).hasUnsavedChanges;
+
+const selectSelectedWidget = (state: RootState) =>
+  rootSelector(state).selectedWidget;
+
+const selectInitialized = (state: RootState) => rootSelector(state).initialized;
+
+const selectLogsEntityId = (state: RootState) =>
+  rootSelector(state).logsEntityId;
+
 export const ApplicationSelectors = {
   selectAppLoading,
   selectIsApplicationLoading,
@@ -56,4 +70,9 @@ export const ApplicationSelectors = {
   selectExitAfterSave,
   selectApplicationLogs,
   selectPublicFolders,
+  selectReturnConversationIds,
+  selectHasUnsavedChanges,
+  selectInitialized,
+  selectSelectedWidget,
+  selectLogsEntityId,
 };

@@ -6,6 +6,9 @@ import {
   useFormContext,
 } from 'react-hook-form';
 
+import { useRouter } from 'next/router';
+
+import { usePreventSpaceHandlers } from '@/src/hooks/usePreventSpaceHandlers';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { CustomApplicationModel } from '@/src/types/applications';
@@ -97,9 +100,6 @@ const validators: Validators = {
     required: 'Completion URL is required',
     validate: (value) => {
       try {
-        if (value.trim() !== value) {
-          return 'Completion URL cannot start or end with spaces';
-        }
         if (!value.startsWith('http://') && !value.startsWith('https://')) {
           return 'Completion URL must start with http:// or https://';
         }
@@ -131,7 +131,6 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
   const {
     register,
     control,
-
     handleSubmit: submitWrapper,
     formState: { errors, defaultValues, isValid },
     setError,
@@ -149,10 +148,15 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
     ApplicationSelectors.selectExitAfterSave,
   );
 
+  const router = useRouter();
+
+  const { onBeforeInput, onInput, onKeyDownOrPaste } =
+    usePreventSpaceHandlers();
+
   const handleSubmit = useCallback(
     (data: CustomApplicationFormData) => {
       if (
-        (!isEqual(data, lastSubmittedValuesRef.current) || exitAfterSave) &&
+        !isEqual(data, lastSubmittedValuesRef.current) &&
         shouldSaveApplication
       ) {
         const applicationData = getCustomApplicationData(data);
@@ -166,40 +170,46 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
           }),
         );
         lastSubmittedValuesRef.current = data;
+      } else if (shouldSaveApplication && exitAfterSave) {
+        dispatch(ApplicationActions.exitEditor({}));
       } else {
         dispatch(ApplicationActions.setShouldSaveApplication(false));
         dispatch(ApplicationActions.setExitAfterSave(false));
       }
     },
-    [
-      lastSubmittedValuesRef,
-      oldApplication,
-      dispatch,
-      shouldSaveApplication,
-      exitAfterSave,
-    ],
+    [exitAfterSave, shouldSaveApplication, dispatch, oldApplication],
   );
 
-  useEffect(() => {
-    if (shouldSaveApplication) {
-      if (!isValid) {
-        dispatch(ApplicationActions.setShouldSaveApplication(false));
-        dispatch(ApplicationActions.setExitAfterSave(false));
-        dispatch(
-          UIActions.showErrorToast(t('Please fill in all mandatory fields')),
-        );
-        return;
-      }
+  const autoSaveHandler = useCallback(() => {
+    submitWrapper(handleSubmit)();
+  }, [submitWrapper, handleSubmit]);
 
-      submitWrapper(handleSubmit)();
+  useEffect(() => {
+    const isTriggered = shouldSaveApplication || exitAfterSave;
+    if (!isTriggered) return;
+
+    if (!isValid) {
+      dispatch(ApplicationActions.setShouldSaveApplication(false));
+      dispatch(ApplicationActions.setExitAfterSave(false));
+      dispatch(
+        UIActions.showErrorToast(t('Please fill in all mandatory fields')),
+      );
+      return;
+    }
+
+    if (shouldSaveApplication) {
+      autoSaveHandler();
     }
   }, [
-    submitWrapper,
     shouldSaveApplication,
-    handleSubmit,
+    exitAfterSave,
     isValid,
+    submitWrapper,
+    handleSubmit,
     dispatch,
+    router,
     t,
+    autoSaveHandler,
   ]);
 
   return (
@@ -234,6 +244,7 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
               getItemValue={getItemLabel}
               onChangeSelectedItems={field.onChange}
               placeholder={t('Enter one or more attachment types')}
+              id="attachmentTypes"
               className="input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full"
               hasDeleteAll
               hideSuggestions
@@ -260,6 +271,10 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
           id="completionUrl"
           error={errors.completionUrl?.message}
           data-qa="completion-url"
+          onBeforeInput={onBeforeInput}
+          onInput={onInput}
+          onKeyDown={onKeyDownOrPaste}
+          onPaste={onKeyDownOrPaste}
         />
       </div>
     </form>

@@ -19,8 +19,9 @@ dialTest(
     setTestIds,
     conversationData,
     dataInjector,
-    chatMessages,
     localStorageManager,
+    conversationAssertion,
+    chatMessagesAssertion,
   }) => {
     setTestIds('EPMRTC-3000', 'EPMRTC-3056');
     let conversation: Conversation;
@@ -43,27 +44,28 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(conversation.name);
         for (let i = 1; i <= 2; i++) {
-          await conversations.openEntityDropdownMenu(conversation.name, i);
+          await conversations.openEntityDropdownMenu(conversation.name, {
+            exactMatch: true,
+            index: i,
+          });
           await conversationDropdownMenu.selectMenuOption(
             MenuOptions.duplicate,
             {
               triggeredHttpMethod: 'POST',
             },
           );
-          await expect
-            .soft(
-              conversations.getEntityByName(
-                ExpectedConstants.entityWithIndexTitle(conversation.name, i),
+          await conversationAssertion.assertEntityState(
+            {
+              name: ExpectedConstants.entityWithIndexTitle(
+                conversation.name,
+                i,
               ),
-              ExpectedMessages.conversationIsVisible,
-            )
-            .toBeVisible();
-          expect
-            .soft(
-              await chatMessages.chatMessages.getElementsCount(),
-              ExpectedMessages.messageCountIsCorrect,
-            )
-            .toBe(conversation.messages.length);
+            },
+            'visible',
+          );
+          await chatMessagesAssertion.assertMessagesCount(
+            conversation.messages.length,
+          );
         }
       },
     );

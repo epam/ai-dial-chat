@@ -113,8 +113,8 @@ dialSharedWithMeTest(
 
 dialSharedWithMeTest(
   'Shared with me. Share prompt Folder in the middle.\n' +
-    'Shared with me. Folder with folder/prompt inside is deleted.\n' +
-    'Shared with me. Prompt structure creates again if it was deleted if to open the same link',
+    'Shared with me. Folder with folder/prompt inside is unshared.\n' +
+    'Shared with me. Prompt structure creates again if it was unshared if to open the same link',
   async ({
     additionalShareUserDialHomePage,
     promptData,
@@ -172,7 +172,7 @@ dialSharedWithMeTest(
           'visible',
         );
         await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
-          nestedPrompts[sharedFolderIndex].name,
+          ExpectedConstants.promptViewModalTitle,
         );
         await additionalShareUserPromptPreviewModal.closeButton.click();
       },
@@ -199,13 +199,32 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Delete folder from "Shared with me" section, refresh page and verify folder is not restored',
+      'Select "Unshare" option for the folder, cancel modal and verify folder remains shared',
       async () => {
         await additionalShareUserSharedFolderPrompts.openFolderDropdownMenu(
           nestedFolders[sharedFolderIndex].name,
         );
         await additionalShareUserSharedWithMeFolderDropdownMenu.selectMenuOption(
-          MenuOptions.delete,
+          MenuOptions.unshare,
+        );
+        await additionalShareUserConfirmationDialog.cancelDialog();
+        for (let i = sharedFolderIndex; i <= sharedFolderIndex + 1; i++) {
+          await additionalShareUserSharedFolderPromptsAssertions.assertFolderState(
+            { name: nestedFolders[i].name },
+            'visible',
+          );
+        }
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Unshare folder from "Shared with me" section, refresh page and verify folder is not restored',
+      async () => {
+        await additionalShareUserSharedFolderPrompts.openFolderDropdownMenu(
+          nestedFolders[sharedFolderIndex].name,
+        );
+        await additionalShareUserSharedWithMeFolderDropdownMenu.selectMenuOption(
+          MenuOptions.unshare,
         );
         await additionalShareUserConfirmationDialog.confirm({
           triggeredHttpMethod: 'POST',
@@ -243,7 +262,7 @@ dialSharedWithMeTest(
           'visible',
         );
         await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
-          nestedPrompts[sharedFolderIndex].name,
+          ExpectedConstants.promptViewModalTitle,
         );
         await additionalShareUserPromptPreviewModal.closeButton.click();
         for (let i = sharedFolderIndex; i <= sharedFolderIndex + 1; i++) {
@@ -261,7 +280,7 @@ dialSharedWithMeTest(
 dialSharedWithMeTest(
   `Shared with me. Share root prompt Folder.\n` +
     `When open link with shared prompt folder from nested structure, dialog about 'root' prompt from the root folder should be shown.\n` +
-    `Shared with me. No delete option in context menu for prompt/folder inside shared folder`,
+    'Shared with me. No unshare option in context menu for prompt/folder inside shared folder',
   async ({
     additionalShareUserDialHomePage,
     promptData,
@@ -322,7 +341,7 @@ dialSharedWithMeTest(
           'visible',
         );
         await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
-          nestedPrompts[sharedFolderIndex].name,
+          ExpectedConstants.promptViewModalTitle,
         );
         await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptName(
           nestedPrompts[sharedFolderIndex].name,
@@ -351,7 +370,7 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Verify dropdown menu with "Delete" option is available only for root level folder',
+      'Verify dropdown menu with "Unshare" option is available only for root level folder',
       async () => {
         for (let i = 0; i < nestedLevels; i++) {
           if (i === sharedFolderIndex) {
@@ -359,7 +378,7 @@ dialSharedWithMeTest(
               nestedFolders[i].name,
             );
             await additionalShareUserFolderDropdownMenuAssertion.assertMenuIncludesOptions(
-              MenuOptions.delete,
+              MenuOptions.unshare,
             );
           } else {
             await additionalShareUserSharedFolderPromptsAssertions.assertFolderDotsMenuState(
@@ -372,7 +391,7 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Verify no "Delete" option is available in prompts dropdown menu',
+      'Verify no "Unshare" option is available in prompts dropdown menu',
       async () => {
         for (let i = 0; i < nestedLevels; i++) {
           await additionalShareUserSharedFolderPrompts.openFolderEntityDropdownMenu(
@@ -380,7 +399,7 @@ dialSharedWithMeTest(
             nestedPrompts[i].name,
           );
           await additionalShareUserPromptsDropdownMenuAssertion.assertMenuExcludesOptions(
-            MenuOptions.delete,
+            MenuOptions.unshare,
           );
         }
       },
@@ -444,7 +463,7 @@ dialSharedWithMeTest(
         const sharedEntities =
           await additionalUserShareApiHelper.listSharedWithMePrompts();
         folder.id = prompt.folderId + ItemUtil.urlSeparator;
-        await shareApiAssertion.assertSharedWithMeEntitiesCount(
+        shareApiAssertion.assertSharedWithMeEntitiesCount(
           sharedEntities,
           folder,
         );
@@ -497,12 +516,12 @@ dialSharedWithMeTest(
       async () => {
         const sharedPrompts =
           await additionalUserShareApiHelper.listSharedWithMePrompts();
-        await shareApiAssertion.assertSharedWithMeEntityState(
+        shareApiAssertion.assertSharedWithMeEntityState(
           sharedPrompts,
           prompt,
           'hidden',
         );
-        await shareApiAssertion.assertSharedWithMeEntityState(
+        shareApiAssertion.assertSharedWithMeEntityState(
           sharedPrompts,
           folder,
           'visible',

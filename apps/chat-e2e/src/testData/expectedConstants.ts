@@ -20,6 +20,7 @@ export const ExpectedConstants = {
     `${ExpectedConstants.newFolderTitle} ${index}`,
   newPromptFolderWithIndexTitle: (index: number) =>
     `${ExpectedConstants.newFolderTitle} ${index}`,
+  promptViewModalTitle: 'View prompt',
   renameConversationModalTitle: 'Rename conversation',
   emptyString: '',
   defaultTemperature: '1',
@@ -65,7 +66,8 @@ export const ExpectedConstants = {
   deletePromptConfirmationModalTitle: 'Confirm deleting prompt',
   deletePromptConfirmationModalMessage:
     'Are you sure that you want to delete a prompt?',
-  unshareFolderMessage: 'Are you sure that you want to unshare this folder?',
+  removeFolderAccessMessage: (name: string) =>
+    `Are you sure you want to remove access for all users to ${name}?`,
   backgroundColorPattern: /(rgba\(\d+,\s*\d+,\s*\d+),\s*\d+\.*\d+\)/,
   sendMessageTooltip: 'Please type a message',
   sendMessageAttachmentLoadingTooltip: 'Please wait for the attachment to load',
@@ -100,7 +102,7 @@ export const ExpectedConstants = {
   shareInviteDoesNotExist:
     'We are sorry, but the link you are trying to access has expired or does not exist.',
   copyUrlTooltip: 'Copy URL',
-  revokeAccessTo: (name: string) => `Confirm unsharing: ${name}`,
+  removeAccessTitle: 'Confirm removing access',
   attachments: 'Attachments',
   responseContentPattern: /(?<="content":")[^"^$]+/g,
   responseFileUrlPattern: /(?<="url":")[^"$]+/g,
@@ -114,12 +116,14 @@ export const ExpectedConstants = {
     'This application and its updates will be visible to users with the link. Renaming or changing the version will stop sharing.',
   shareConversationFolderText:
     'This link is temporary and will be active for 3 days. This conversation folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
+  notSharedFolderText: 'This folder has not been shared with anyone yet.',
+  notSharedChatText: 'This chat has not been shared with anyone yet.',
+  removeAccessText: 'Remove access for all users',
+  notSharedPromptText: 'This prompt has not been shared with anyone yet.',
   sharePromptFolderText:
     'This link is temporary and will be active for 3 days. This prompt folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
   chatNotFoundMessage:
     'Conversation not found.Please select another conversation.',
-  promptNameLabel: 'promptName',
-  promptContentLabel: 'content',
   requiredFieldErrorMessage: 'Please fill in all required fields',
   isolatedUrl: (modelId: string) => `${config.use!.baseURL}/models/${modelId}`,
   modelNotFountErrorMessage:
@@ -183,7 +187,7 @@ export const ExpectedConstants = {
   availabilityLabel:
     'This publication will be available to all users in the organization',
   unpublishFrom: 'Unpublish from',
-  noPublishNameTooltip: 'Enter a name for the publish request',
+  noPublishNameTooltip: 'Enter a valid name for the publish request',
   nothingToPublishTooltip: 'Nothing is selected and rules have not changed',
   defaultAppVersion: '0.0.1',
   rootPublicationFolder: 'public/',
@@ -261,10 +265,12 @@ export enum MenuOptions {
   attachFolders = 'Attach folders',
   attachLink = 'Attach link',
   select = 'Select',
+  unselect = 'Unselect',
   view = 'View',
   use = 'Use',
   info = 'Info',
   copyLink = 'Copy link',
+  removeAccess = 'Remove access',
 }
 
 export enum FilterMenuOptions {
@@ -282,11 +288,41 @@ export enum UploadMenuOptions {
   uploadFromDevice = 'Upload from device',
 }
 
+export enum ExampleURLs {
+  chatCompletionURL = 'http://test.example.com',
+}
+
 export enum AddAppMenuOptions {
   codeApp = 'Code app',
   customApp = 'Custom app',
   quickApp = 'Quick app',
 }
+
+export enum AppEditorGeneralFormFields {
+  name = 'Name',
+  version = 'Version',
+  icon = 'Icon',
+  description = 'Description',
+  topics = 'Topics',
+}
+
+export enum AppEditorViewFormFields {
+  featuresData = 'Features data',
+  attachmentTypes = 'Attachment types',
+  maxAttachmentsNumber = 'Max. attachments number',
+  chatCompletionUrl = 'Chat completion URL',
+}
+
+export enum EditPromptFormFields {
+  name = 'Name',
+  description = 'Description',
+  promptContent = 'Prompt',
+}
+
+export const AppMenuActions = {
+  add: (app: AddAppMenuOptions) => `Add ${app.toLowerCase()}`,
+  edit: (app: AddAppMenuOptions) => `Edit ${app.toLowerCase()}`,
+};
 
 export const Chronology = {
   today: 'Today',
@@ -328,6 +364,7 @@ export const API = {
   installedDeploymentsFile: 'installed_deployments.json',
   installedDeploymentsHost: () =>
     `${API.installedDeploymentsFolder}/${API.installedDeploymentsFile}`,
+  configurationHost: '/configuration',
   marketplaceHost: 'marketplace.json',
   publicationRequestHost: '/api/publication/create',
   publicationRequestCreate: '/api/publication/create',
@@ -341,6 +378,7 @@ export const API = {
   applicationCreateHost: '/api/applications',
   publishedApplicationsHost:
     'api/publication/applications/public?recursive=true',
+  pagePropsHost: 'development/en.json',
 };
 
 export const Import = {

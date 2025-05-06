@@ -4,10 +4,10 @@ import {
   IconFolderPlus,
   IconPencilMinus,
   IconSquareCheck,
+  IconSquareOff,
   IconTrashX,
   IconUpload,
   IconUserShare,
-  IconUserX,
   IconWorldShare,
 } from '@tabler/icons-react';
 import { MouseEventHandler, useMemo } from 'react';
@@ -34,6 +34,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import ContextMenu from './ContextMenu';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 
 interface FolderContextMenuProps {
   folder: FolderInterface;
@@ -41,6 +42,7 @@ interface FolderContextMenuProps {
   isOpen?: boolean;
   isEmpty?: boolean;
   additionalItemData?: AdditionalItemData;
+  canSelectFolders?: boolean;
   onDelete?: MouseEventHandler<unknown>;
   onRename?: MouseEventHandler<unknown>;
   onAddFolder?: MouseEventHandler;
@@ -52,11 +54,13 @@ interface FolderContextMenuProps {
   onPublishUpdate?: MouseEventHandler<unknown>;
   onUpload?: MouseEventHandler<unknown>;
   onSelect?: MouseEventHandler<unknown>;
+  isSelected?: boolean;
 }
 
 export const FolderContextMenu = ({
   folder,
   featureType,
+  canSelectFolders,
   onDelete,
   onRename,
   onAddFolder,
@@ -71,6 +75,7 @@ export const FolderContextMenu = ({
   isOpen,
   isEmpty,
   additionalItemData,
+  isSelected,
 }: FolderContextMenuProps) => {
   const { t } = useTranslation(Translation.SideBar);
 
@@ -101,10 +106,13 @@ export const FolderContextMenu = ({
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: t('Select'),
-        display: !isExternal && !!onSelect && featureType !== FeatureType.File,
+        name: t(isSelected ? 'Unselect' : 'Select'),
+        display:
+          !isExternal &&
+          !!onSelect &&
+          (featureType !== FeatureType.File || !!canSelectFolders),
         dataQa: 'select',
-        Icon: IconSquareCheck,
+        Icon: isSelected ? IconSquareOff : IconSquareCheck,
         onClick: onSelect,
       },
       {
@@ -133,10 +141,9 @@ export const FolderContextMenu = ({
       },
       {
         name: t('Unshare'),
-        display:
-          isSharingEnabled && !!onUnshare && !isExternal && !!folder.isShared,
+        display: !!onUnshare && !!folder.sharedWithMe,
         dataQa: 'unshare',
-        Icon: IconUserX,
+        Icon: IconUserUnshare,
         onClick: onUnshare,
         disabled: disableAll,
       },
@@ -180,10 +187,7 @@ export const FolderContextMenu = ({
       {
         name: t('Delete'),
         display:
-          !!onDelete &&
-          (isMyEntity(folder, featureType) ||
-            !!folder.temporary ||
-            !!folder.sharedWithMe),
+          !!onDelete && (isMyEntity(folder, featureType) || !!folder.temporary),
         dataQa: 'delete',
         Icon: IconTrashX,
         onClick: onDelete,
@@ -207,6 +211,7 @@ export const FolderContextMenu = ({
       isExternal,
       onSelect,
       featureType,
+      canSelectFolders,
       onUpload,
       isMyOrCanEdit,
       disableAll,
@@ -225,6 +230,7 @@ export const FolderContextMenu = ({
       additionalItemData?.isChangePathFolder,
       onDelete,
       onAddFolder,
+      isSelected,
     ],
   );
 
@@ -237,7 +243,7 @@ export const FolderContextMenu = ({
       menuItems={menuItems}
       TriggerIcon={IconDots}
       triggerIconSize={18}
-      className="m-0 justify-self-end"
+      className="m-0 justify-self-end p-2"
       featureType={featureType}
       isOpen={isOpen}
       onOpenChange={onOpenChange}

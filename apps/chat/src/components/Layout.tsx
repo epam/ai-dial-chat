@@ -24,6 +24,8 @@ import {
 import { SettingsState } from '@/src/store/settings/settings.types';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
+import { NavigationWrapper } from '@/src/components/NavigationWrapper';
+
 import Loader from './Common/Loader';
 
 const removeQueryString = (url: string) => url.split('?')[0];
@@ -39,22 +41,22 @@ export default function Layout({
   const session: SessionContextValue<boolean> = useSession();
 
   const { t } = useTranslation(Translation.Chat);
-  const isApplyingModel = useAppSelector(
-    MarketplaceSelectors.selectIsApplyingModel,
-  );
-  const [loading, setLoading] = useState(isApplyingModel);
+
+  const { previousRoute } = useRouteHistory();
 
   const dispatch = useAppDispatch();
 
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
-
   const shouldLogin = useAppSelector(AuthSelectors.selectIsShouldLogin);
   const authStatus = useAppSelector(AuthSelectors.selectStatus);
-  const { previousRoute } = useRouteHistory();
-
   const isSignInInSameWindow = useAppSelector(
     SettingsSelectors.selectIsSignInInSameWindow,
   );
+  const isApplyingModel = useAppSelector(
+    MarketplaceSelectors.selectIsApplyingModel,
+  );
+
+  const [loading, setLoading] = useState(isApplyingModel);
 
   const shouldOverlayLogin = isOverlay && shouldLogin;
 
@@ -168,7 +170,7 @@ export default function Layout({
           className="h-screen w-screen flex-col bg-layer-1 text-sm text-primary"
           id="theme-main"
         >
-          {children}
+          <NavigationWrapper>{children}</NavigationWrapper>
         </main>
       )}
       {loading && (
