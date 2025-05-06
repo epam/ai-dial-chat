@@ -168,11 +168,9 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
     <>
       <div className="flex h-[34px] gap-2">
         {screenState !== ScreenState.SM ? (
-          <>
-            {promptItems.map(({ display, ...props }) =>
-              display ? <ActionButton key={props.name} {...props} /> : null,
-            )}
-          </>
+          promptItems.map(({ display, ...props }) =>
+            display ? <ActionButton key={props.name} {...props} /> : null,
+          )
         ) : (
           <>
             <button className="icon-button size-[34px]">
