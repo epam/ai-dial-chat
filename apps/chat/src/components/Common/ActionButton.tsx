@@ -24,7 +24,7 @@ export const ActionButton: React.FC<Props> = ({
   const { t } = useTranslation(Translation.Common);
 
   return (
-    <Tooltip tooltip={t(name)}>
+    <Tooltip isTriggerClickable tooltip={t(name)}>
       <button
         disabled={disabled}
         onClick={onClick}
