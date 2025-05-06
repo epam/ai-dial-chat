@@ -7,11 +7,8 @@ import {
   IconTrashX,
   IconUserShare,
   IconWorldShare,
-  TablerIconsProps,
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
-
-import { useTranslation } from 'next-i18next';
 
 import { usePromptActions } from '@/src/hooks/usePromptActions';
 import { useScreenState } from '@/src/hooks/useScreenState';
@@ -21,46 +18,17 @@ import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { FeatureType, ScreenState } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
-import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
+import { ActionButton } from '@/src/components/Common/ActionButton';
 import ContextMenu from '@/src/components/Common/ContextMenu';
-import Tooltip from '@/src/components/Common/Tooltip';
 
 import { PromptDialogs } from './PromptDialogs';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import { PublishActions } from '@epam/ai-dial-shared';
-
-interface PromptIconBtnProps {
-  name: string;
-  dataQa: string;
-  Icon: (props: TablerIconsProps) => JSX.Element;
-  onClick: () => void;
-}
-
-const PromptIconBtn: React.FC<PromptIconBtnProps> = ({
-  name,
-  dataQa,
-  Icon,
-  onClick,
-}) => {
-  const { t } = useTranslation(Translation.PromptBar);
-
-  return (
-    <Tooltip placement="top" isTriggerClickable tooltip={t(name)}>
-      <button
-        onClick={onClick}
-        className="flex cursor-pointer items-center justify-center rounded p-[5px] text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
-        data-qa={dataQa}
-      >
-        <Icon className="size-6" strokeWidth="1.5" />
-      </button>
-    </Tooltip>
-  );
-};
 
 interface Props {
   prompt: Prompt;
@@ -202,7 +170,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
         {screenState !== ScreenState.SM ? (
           <>
             {promptItems.map(({ display, ...props }) =>
-              display ? <PromptIconBtn key={props.name} {...props} /> : null,
+              display ? <ActionButton key={props.name} {...props} /> : null,
             )}
           </>
         ) : (
@@ -217,7 +185,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
                 className="m-0 xl:invisible group-hover:xl:visible"
               />
             </button>
-            {editBtn && <PromptIconBtn {...editBtn} />}
+            {editBtn && <ActionButton {...editBtn} />}
           </>
         )}
       </div>
