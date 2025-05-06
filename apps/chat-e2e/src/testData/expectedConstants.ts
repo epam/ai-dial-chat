@@ -234,9 +234,9 @@ export const ExpectedConstants = {
   copyLinkText: 'Copy link',
   copiedToastMessage: 'Link copied!',
   customApplicationDescriptionTooltip:
-    'The first paragraph serves as a short description. To create an extended description, enter two line breaks and start second paragraph.',
+    'The first paragraph serves as a short description. To create an extended description, enter two line breaks and start the second paragraph.',
   customApplicationFeaturesTooltip:
-    'Enter key-value pairs for rate_endpoint and/or configuration_endpoint in JSON format',
+    'Enter key-value pairs for rate_endpoint and/or configuration_endpoint in JSON format.',
   customApplicationAttachmentsTypesTooltip:
     "Input the MIME type and press 'Enter' to add",
 };
