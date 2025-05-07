@@ -1096,6 +1096,25 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
             );
           }
 
+          const appResourcesToUnpublish = selectedPublication.resources.filter(
+            (r) =>
+              r.action === PublishActions.DELETE &&
+              isApplicationId(r.targetUrl),
+          );
+
+          if (appResourcesToUnpublish.length) {
+            appResourcesToUnpublish.forEach((r) => {
+              actions.push(
+                of(
+                  ModelsActions.updateModelPublicationInfo({
+                    reference: r.reviewUrl,
+                    updatedValues: { isNotExist: true },
+                  }),
+                ),
+              );
+            });
+          }
+
           return concat(
             ...actions,
             of(
