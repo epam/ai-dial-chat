@@ -65,17 +65,18 @@ interface Props<T> {
   itemRow?: FC<{ item: T }>;
   selectedItemRow?: FC<{ item: T }>;
   disabled?: boolean;
-  getItemLabel: (item: T) => string;
-  getItemValue: (item: T) => string;
-  onChangeSelectedItems: (value: T[]) => void;
   hasDeleteAll?: boolean;
   itemHeightClassName?: string;
   fontSize?: string;
   className?: string;
   validationRegExp?: RegExp;
+  hideSuggestions?: boolean;
+  tooltip?: string;
+  getItemLabel: (item: T) => string;
+  getItemValue: (item: T) => string;
+  onChangeSelectedItems: (value: T[]) => void;
   handleError?: () => void;
   handleClearError?: () => void;
-  hideSuggestions?: boolean;
 }
 
 export function MultipleComboBox<T>({
@@ -89,14 +90,15 @@ export function MultipleComboBox<T>({
   hasDeleteAll = false,
   itemHeightClassName,
   fontSize = 'text-sm',
+  className,
+  validationRegExp,
+  hideSuggestions,
+  tooltip,
   getItemLabel,
   getItemValue,
   onChangeSelectedItems,
-  className,
-  validationRegExp,
   handleError,
   handleClearError,
-  hideSuggestions,
 }: Props<T>) {
   const { t } = useTranslation(Translation.Common);
   const [inputValue, setInputValue] = useState<string | undefined>('');
@@ -230,138 +232,144 @@ export function MultipleComboBox<T>({
   }, [isOpen, update, refs.floating, refs.reference]);
 
   return (
-    <div
-      className={classNames(
-        'relative w-full bg-transparent md:max-w-[205px]',
-        className,
-      )}
-      data-qa="multiple-combobox"
-    >
-      <div className="flex w-full flex-col gap-1">
-        <div
-          ref={refs.reference as RefObject<HTMLDivElement>}
-          onClick={() => {
-            if (!inputRef.current) {
-              return;
-            }
-            inputRef.current.focus();
-          }}
-          className="relative flex min-h-[31px] w-full flex-wrap gap-1 p-1"
-        >
-          {selectedItems &&
-            selectedItems.map((selectedItemForRender, index) => {
-              return (
-                <Tooltip
-                  key={`selected-item-${getItemLabel(
-                    selectedItemForRender,
-                  )}-${index}`}
-                  tooltip={getItemLabel(selectedItemForRender).trim()}
-                  contentClassName="text-xs"
-                >
-                  <span
-                    className={classNames(
-                      'flex items-center justify-between gap-2 rounded bg-accent-primary-alpha px-2 py-1.5',
-                      itemHeightClassName ? itemHeightClassName : 'h-[23px]',
-                    )}
-                    {...getSelectedItemProps({
-                      selectedItem: selectedItemForRender,
-                      index,
-                    })}
+    <Tooltip tooltip={tooltip}>
+      <div
+        className={classNames(
+          'relative w-full bg-transparent md:max-w-[205px]',
+          disabled && 'cursor-not-allowed',
+          className,
+        )}
+        data-qa="multiple-combobox"
+      >
+        <div className="flex w-full flex-col gap-1">
+          <div
+            ref={refs.reference as RefObject<HTMLDivElement>}
+            onClick={() => {
+              if (!inputRef.current) {
+                return;
+              }
+              inputRef.current.focus();
+            }}
+            className="relative flex min-h-[31px] w-full flex-wrap gap-1 p-1"
+          >
+            {selectedItems &&
+              selectedItems.map((selectedItemForRender, index) => {
+                return (
+                  <Tooltip
+                    key={`selected-item-${getItemLabel(
+                      selectedItemForRender,
+                    )}-${index}`}
+                    tooltip={getItemLabel(selectedItemForRender).trim()}
+                    contentClassName="text-xs"
                   >
-                    {selectedItemRow ? (
-                      createElement(selectedItemRow, {
-                        item: selectedItemForRender,
-                      })
-                    ) : (
-                      <span className="max-w-[150px] truncate break-all text-xs">
-                        {getItemLabel(selectedItemForRender)}
-                      </span>
-                    )}
                     <span
-                      data-qa={`unselect-item-${getItemValue(
-                        selectedItemForRender,
-                      )}`}
-                      className="cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeSelectedItem(selectedItemForRender);
-                      }}
+                      className={classNames(
+                        'flex items-center justify-between gap-2 rounded bg-accent-primary-alpha px-2 py-1.5',
+                        itemHeightClassName ? itemHeightClassName : 'h-[23px]',
+                      )}
+                      {...getSelectedItemProps({
+                        selectedItem: selectedItemForRender,
+                        index,
+                      })}
                     >
-                      <IconX size={14} className="text-secondary" />
+                      {selectedItemRow ? (
+                        createElement(selectedItemRow, {
+                          item: selectedItemForRender,
+                        })
+                      ) : (
+                        <span className="max-w-[150px] truncate break-all text-xs">
+                          {getItemLabel(selectedItemForRender)}
+                        </span>
+                      )}
+                      <button
+                        data-qa={`unselect-item-${getItemValue(
+                          selectedItemForRender,
+                        )}`}
+                        disabled={disabled}
+                        className={disabled ? 'cursor-not-allowed' : ''}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeSelectedItem(selectedItemForRender);
+                        }}
+                      >
+                        <IconX size={14} className="text-secondary" />
+                      </button>
                     </span>
-                  </span>
-                </Tooltip>
-              );
-            })}
-          <input
-            name="option-input"
-            disabled={disabled}
-            placeholder={selectedItems.length ? '' : placeholder || ''}
-            className={classNames(
-              'w-full min-w-[10px] overflow-auto whitespace-break-spaces break-words bg-transparent outline-none placeholder:text-secondary',
-              selectedItems.length ? 'pl-1' : 'pl-2',
-              fontSize,
-            )}
-            {...getInputProps({
-              ...getDropdownProps({
-                preventKeyAction: isOpen,
-                ref: inputRef,
-              }),
-            })}
-          />
-        </div>
-
-        <ul
-          className={classNames(
-            'z-10 max-h-80 overflow-auto rounded bg-layer-3',
-            (hideSuggestions || !isOpen) && 'hidden',
-          )}
-          {...getMenuProps(
-            { ref: refs.floating as RefObject<HTMLUListElement> },
-            { suppressRefError: true },
-          )}
-          style={{
-            position: strategy,
-            top: y ?? '',
-            left: x ?? '',
-            width: `${floatingWidth}px`,
-          }}
-        >
-          {displayedItems?.length > 0
-            ? displayedItems.map((item, index) => (
-                <li
-                  className={classNames(
-                    'group flex min-h-[31px] w-full cursor-pointer flex-col justify-center whitespace-break-spaces break-words px-3 text-xs',
-                    highlightedIndex === index && 'bg-accent-primary-alpha',
-                    selectedItem === item && 'bg-accent-primary-alpha',
-                  )}
-                  key={`${getItemValue(item)}${index}`}
-                  {...getItemProps({ item, index })}
-                >
-                  {itemRow
-                    ? createElement(itemRow, { item })
-                    : getItemLabel(item)}
-                </li>
-              ))
-            : !!inputValue?.length && (
-                <li className="px-3 py-2">
-                  {notFoundPlaceholder || t('No available items')}
-                </li>
+                  </Tooltip>
+                );
+              })}
+            <input
+              name="option-input"
+              disabled={disabled}
+              placeholder={selectedItems.length ? '' : placeholder || ''}
+              className={classNames(
+                'w-full min-w-[10px] overflow-auto whitespace-break-spaces break-words bg-transparent outline-none placeholder:text-secondary',
+                selectedItems.length ? 'pl-1' : 'pl-2',
+                disabled && 'cursor-not-allowed',
+                fontSize,
               )}
-        </ul>
+              {...getInputProps({
+                ...getDropdownProps({
+                  preventKeyAction: isOpen,
+                  ref: inputRef,
+                }),
+              })}
+            />
+          </div>
+
+          <ul
+            className={classNames(
+              'z-10 max-h-80 overflow-auto rounded bg-layer-3',
+              (hideSuggestions || !isOpen) && 'hidden',
+            )}
+            {...getMenuProps(
+              { ref: refs.floating as RefObject<HTMLUListElement> },
+              { suppressRefError: true },
+            )}
+            style={{
+              position: strategy,
+              top: y ?? '',
+              left: x ?? '',
+              width: `${floatingWidth}px`,
+            }}
+          >
+            {displayedItems?.length > 0
+              ? displayedItems.map((item, index) => (
+                  <li
+                    className={classNames(
+                      'group flex min-h-[31px] w-full cursor-pointer flex-col justify-center whitespace-break-spaces break-words px-3 text-xs',
+                      highlightedIndex === index && 'bg-accent-primary-alpha',
+                      selectedItem === item && 'bg-accent-primary-alpha',
+                    )}
+                    key={`${getItemValue(item)}${index}`}
+                    {...getItemProps({ item, index })}
+                  >
+                    {itemRow
+                      ? createElement(itemRow, { item })
+                      : getItemLabel(item)}
+                  </li>
+                ))
+              : !!inputValue?.length && (
+                  <li className="px-3 py-2">
+                    {notFoundPlaceholder || t('No available items')}
+                  </li>
+                )}
+          </ul>
+        </div>
+        {hasDeleteAll && selectedItems.length > 0 ? (
+          <button
+            className={classNames('py-2', disabled && 'cursor-not-allowed')}
+            disabled={disabled}
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedItems([]);
+              onChangeSelectedItems([]);
+            }}
+          >
+            <IconX height={18} width={18} />
+          </button>
+        ) : null}
       </div>
-      {hasDeleteAll && selectedItems.length > 0 ? (
-        <span
-          className="cursor-pointer py-2"
-          onClick={(e) => {
-            e.stopPropagation();
-            setSelectedItems([]);
-            onChangeSelectedItems([]);
-          }}
-        >
-          <IconX height={18} width={18} />
-        </span>
-      ) : null}
-    </div>
+    </Tooltip>
   );
 }
