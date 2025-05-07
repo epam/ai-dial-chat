@@ -6,6 +6,7 @@ import { EntityPublicationInfo, ShareEntity } from '@epam/ai-dial-shared';
 import { TiktokenEncoding } from 'tiktoken';
 
 export type ModelsMap = Partial<Record<string, DialAIEntityModel>>;
+export type AddonsMap = Partial<Record<string, DialAIEntityAddon>>;
 
 export enum TokenizerModel {
   GPT_35_TURBO_0301 = 'gpt-3.5-turbo-0301',
