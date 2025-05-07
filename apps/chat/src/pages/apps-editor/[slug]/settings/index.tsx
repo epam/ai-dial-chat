@@ -11,7 +11,7 @@ import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
 import { ApplicationTypeSchemaProperties } from '@/src/types/application-type-schema';
 
-import { ApplicationSelectors } from '@/src/store/application/application.reducers';
+import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';

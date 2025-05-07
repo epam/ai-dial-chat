@@ -11,7 +11,7 @@ import { ApiUtils } from '@/src/utils/server/api';
 
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationSelectors } from '@/src/store/application/application.reducers';
+import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { useAppSelector } from '@/src/store/hooks';
 
 import { ReviewCodeAppSection } from '@/src/components/Chat/Publish/ReviewApplicationDialog/ReviewCodeAppSection';

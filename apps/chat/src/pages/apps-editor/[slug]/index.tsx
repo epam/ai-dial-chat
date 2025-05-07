@@ -14,7 +14,7 @@ import { canUserUseFeature } from '@/src/utils/session';
 import { ApplicationTypeSchemaProperties } from '@/src/types/application-type-schema';
 import { ApplicationType } from '@/src/types/applications';
 
-import { ApplicationSelectors } from '@/src/store/application/application.reducers';
+import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';

@@ -17,7 +17,7 @@ import { FolderInterface } from '@/src/types/folder';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationSelectors } from '@/src/store/application/application.reducers';
+import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import {
   ConversationsActions,
   ConversationsSelectors,

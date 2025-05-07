@@ -16,7 +16,7 @@ import { useWidgets } from '@/src/hooks/useWidgets';
 
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationSelectors } from '@/src/store/application/application.reducers';
+import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import {
   ConversationsActions,
   ConversationsSelectors,

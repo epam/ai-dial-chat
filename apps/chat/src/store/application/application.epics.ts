@@ -53,10 +53,7 @@ import { errorsMessages } from '@/src/constants/errors';
 import { DeleteType, MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
-import {
-  ApplicationActions,
-  ApplicationSelectors,
-} from '../application/application.reducers';
+import { ApplicationActions } from '../application/application.reducers';
 import { ApplicationTypesSchemasActions } from '../applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { AuthSelectors } from '../auth/auth.selectors';
 import {
@@ -64,6 +61,7 @@ import {
   ConversationsSelectors,
 } from '../conversations/conversations.reducers';
 import { ModelsSelectors } from '../models/models.selectors';
+import { ApplicationSelectors } from './application.selectors';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
