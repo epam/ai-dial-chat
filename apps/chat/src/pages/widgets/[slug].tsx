@@ -23,7 +23,7 @@ function SelectedWidgetPage() {
   const { slug: widgetId } = router.query;
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const isModelsLoading = useAppSelector(
+  const areModelsLoading = useAppSelector(
     ModelsSelectors.selectAreModelsLoading,
   );
 
@@ -32,21 +32,21 @@ function SelectedWidgetPage() {
   useResetSelectedWidget(widget?.reference);
 
   useEffect(() => {
-    if (!widget && !isModelsLoading) {
+    if (!widget && !areModelsLoading) {
       router.push(Routes.NotFound);
     }
-  }, [isModelsLoading, router, widget]);
+  }, [areModelsLoading, router, widget]);
 
   return (
     <div className="flex size-full flex-col divide-y divide-tertiary bg-layer-1">
       <WidgetsHeader />
 
-      {isModelsLoading && (
+      {areModelsLoading && (
         <div className="flex grow items-center justify-center">
           <Loader />
         </div>
       )}
-      {!isModelsLoading && widget && (
+      {!areModelsLoading && widget && (
         <div className="flex grow">
           <WidgetView id={widget.reference} />
         </div>

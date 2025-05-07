@@ -127,7 +127,7 @@ export const ChatInputMessage = Inversify.register(
     const isLastAssistantMessageEmpty = useAppSelector(
       ConversationsSelectors.selectIsLastAssistantMessageEmpty,
     );
-    const isModelsLoaded = useAppSelector(
+    const areModelsLoaded = useAppSelector(
       ModelsSelectors.selectAreModelsLoaded,
     );
     const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
@@ -218,7 +218,7 @@ export const ChatInputMessage = Inversify.register(
       isReplay ||
       isMessageError ||
       isInputEmpty ||
-      !isModelsLoaded ||
+      !areModelsLoaded ||
       isUploadingFilePresent ||
       isConversationNameInvalid ||
       isConversationPathInvalid ||
@@ -452,7 +452,7 @@ export const ChatInputMessage = Inversify.register(
       if (messageIsStreaming) {
         return t('Stop generating');
       }
-      if (!isModelsLoaded) {
+      if (!areModelsLoaded) {
         return t(
           'Please wait for models will be loaded to continue working with conversation',
         );
