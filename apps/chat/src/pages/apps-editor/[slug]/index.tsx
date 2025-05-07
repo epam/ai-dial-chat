@@ -15,7 +15,7 @@ import { ApplicationTypeSchemaProperties } from '@/src/types/application-type-sc
 import { ApplicationType } from '@/src/types/applications';
 
 import { ApplicationSelectors } from '@/src/store/application/application.selectors';
-import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
+import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.selectors';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';

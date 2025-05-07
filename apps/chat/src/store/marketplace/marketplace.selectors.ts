@@ -21,7 +21,7 @@ import {
   SourceTypeFilterOrder,
 } from '@/src/constants/marketplace';
 
-import { ApplicationTypesSchemasSelectors } from '../applicationTypeSchemas/applicationTypeSchemas.reducers';
+import { ApplicationTypesSchemasSelectors } from '../applicationTypeSchemas/applicationTypeSchemas.selectors';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 

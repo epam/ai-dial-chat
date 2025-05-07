@@ -66,7 +66,7 @@ import { Routes } from '@/src/constants/routes';
 
 import { ApplicationActions } from '../application/application.reducers';
 import { ApplicationSelectors } from '../application/application.selectors';
-import { ApplicationTypesSchemasSelectors } from '../applicationTypeSchemas/applicationTypeSchemas.reducers';
+import { ApplicationTypesSchemasSelectors } from '../applicationTypeSchemas/applicationTypeSchemas.selectors';
 import { CodeEditorActions } from '../codeEditor/codeEditor.reducer';
 import {
   ConversationsActions,
