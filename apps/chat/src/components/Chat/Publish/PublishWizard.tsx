@@ -46,7 +46,7 @@ import { Translation } from '@/src/types/translation';
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { AuthSelectors } from '@/src/store/auth/auth.selectors';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';

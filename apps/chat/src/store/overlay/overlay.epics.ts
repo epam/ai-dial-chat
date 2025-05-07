@@ -39,6 +39,8 @@ import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { FeatureType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
 
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { ModelsActions } from '@/src/store/models/models.reducers';
 import { SettingsActions } from '@/src/store/settings/settings.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
@@ -47,10 +49,6 @@ import { ShareActions } from '@/src/store/share/share.reducers';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
 import { AuthSelectors } from '../auth/auth.selectors';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '../conversations/conversations.reducers';
 import { ModelsSelectors } from '../models/models.selectors';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { OverlayActions, OverlaySelectors } from './overlay.reducers';

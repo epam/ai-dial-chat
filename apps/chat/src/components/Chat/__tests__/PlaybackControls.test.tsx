@@ -7,10 +7,8 @@ import { MutableRefObject } from 'react';
 
 import { AppAction } from '@/src/types/store';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { PlaybackControls } from '@/src/components/Chat/Playback/PlaybackControls';
@@ -35,6 +33,15 @@ vi.mock('@/src/store/conversations/conversations.reducers', async () => {
       playbackPrevMessage: vi.fn(),
       playbackNextMessageStart: vi.fn(),
     },
+  };
+});
+vi.mock('@/src/store/conversations/conversations.selectors', async () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const actual: any = await vi.importActual(
+    '@/src/store/conversations/conversations.selectors',
+  );
+  return {
+    ...actual,
     ConversationsSelectors: {
       selectIsPlaybackSelectedConversations: vi.fn(),
       selectSelectedConversations: vi.fn(),

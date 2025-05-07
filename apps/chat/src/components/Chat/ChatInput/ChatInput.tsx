@@ -2,7 +2,7 @@ import { MutableRefObject, ReactNode, useEffect, useRef } from 'react';
 
 import classNames from 'classnames';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppSelector } from '@/src/store/hooks';
 
 import { ChatInputMessage } from './ChatInputMessage';

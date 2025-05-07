@@ -54,6 +54,8 @@ import {
 } from '@/src/types/share';
 import { AppAction, AppEpic } from '@/src/types/store';
 
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { ModelsActions } from '@/src/store/models/models.reducers';
 import { ModelUpdatedValues } from '@/src/store/models/models.types';
@@ -68,10 +70,6 @@ import { ApplicationActions } from '../application/application.reducers';
 import { ApplicationSelectors } from '../application/application.selectors';
 import { ApplicationTypesSchemasSelectors } from '../applicationTypeSchemas/applicationTypeSchemas.selectors';
 import { CodeEditorActions } from '../codeEditor/codeEditor.reducer';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '../conversations/conversations.reducers';
 import { FilesActions } from '../files/files.reducers';
 import { MarketplaceActions } from '../marketplace/marketplace.reducers';
 import { ModelsSelectors } from '../models/models.selectors';

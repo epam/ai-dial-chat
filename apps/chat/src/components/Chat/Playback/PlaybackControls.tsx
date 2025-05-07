@@ -21,10 +21,8 @@ import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { Translation } from '@/src/types/translation';
 
 import { ChatActions } from '@/src/store/chat/chat.reducer';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 

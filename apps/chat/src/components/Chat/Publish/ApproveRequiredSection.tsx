@@ -13,10 +13,8 @@ import { FeatureType } from '@/src/types/common';
 import { FolderSectionProps } from '@/src/types/folder';
 import { Publication, PublicationInfo } from '@/src/types/publication';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';

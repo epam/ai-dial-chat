@@ -12,7 +12,7 @@ import { Conversation } from '@/src/types/chat';
 import { PublicVersionGroups } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 

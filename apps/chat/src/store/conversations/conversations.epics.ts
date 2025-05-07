@@ -121,10 +121,8 @@ import { SHARE_QUERY_PARAM } from '@/src/constants/share';
 
 import { MarketplaceSelectors } from '../marketplace/marketplace.selectors';
 import { ModelsSelectors } from '../models/models.selectors';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from './conversations.reducers';
+import { ConversationsActions } from './conversations.reducers';
+import { ConversationsSelectors } from './conversations.selectors';
 
 import {
   ConversationInfo,

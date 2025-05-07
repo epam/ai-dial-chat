@@ -79,6 +79,7 @@ import { Prompt } from '@/src/types/prompt';
 import { AppAction, AppEpic } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import {
   PromptsActions,
   PromptsSelectors,
@@ -92,11 +93,7 @@ import {
 import { errorsMessages } from '@/src/constants/errors';
 import { successMessages } from '@/src/constants/successMessages';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '../conversations/conversations.reducers';
-import { getUniqueAttachments } from '../conversations/conversations.selectors';
+import { ConversationsSelectors } from '../conversations/conversations.selectors';
 import { FilesActions } from '../files/files.reducers';
 import { MigrationActions } from '../migration/migration.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
@@ -995,7 +992,7 @@ const importZipEpic: AppEpic = (action$) =>
                 );
               }
 
-              const attachments = getUniqueAttachments(
+              const attachments = ConversationsSelectors.getUniqueAttachments(
                 getConversationAttachmentWithPath(
                   cleanConversations[0],
                   cleanFolders,

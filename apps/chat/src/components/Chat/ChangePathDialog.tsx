@@ -18,10 +18,8 @@ import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationSelectors } from '@/src/store/application/application.selectors';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {

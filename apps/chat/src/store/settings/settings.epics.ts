@@ -22,6 +22,7 @@ import { PageType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { ModelsActions } from '@/src/store/models/models.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 
@@ -30,7 +31,6 @@ import { errorsMessages } from '@/src/constants/errors';
 import { AddonsActions } from '../addons/addons.reducers';
 import { ApplicationTypesSchemasActions } from '../applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { AuthSelectors } from '../auth/auth.selectors';
-import { ConversationsActions } from '../conversations/conversations.reducers';
 import { FilesActions } from '../files/files.reducers';
 import { MarketplaceActions } from '../marketplace/marketplace.reducers';
 import { MigrationActions } from '../migration/migration.reducers';

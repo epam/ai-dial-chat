@@ -44,6 +44,8 @@ import {
 } from '@/src/types/applications';
 import { AppAction, AppEpic } from '@/src/types/store';
 
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { ModelsActions } from '@/src/store/models/models.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { ShareSelectors } from '@/src/store/share/share.selectors';
@@ -56,10 +58,6 @@ import { Routes } from '@/src/constants/routes';
 import { ApplicationActions } from '../application/application.reducers';
 import { ApplicationTypesSchemasActions } from '../applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { AuthSelectors } from '../auth/auth.selectors';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '../conversations/conversations.reducers';
 import { ModelsSelectors } from '../models/models.selectors';
 import { ApplicationSelectors } from './application.selectors';
 

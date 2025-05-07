@@ -27,10 +27,8 @@ import { PublicationFolderPayload } from '@/src/types/modal';
 import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';

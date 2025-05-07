@@ -24,10 +24,8 @@ import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
