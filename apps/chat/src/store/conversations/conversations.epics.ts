@@ -97,10 +97,7 @@ import { AddonsActions } from '@/src/store/addons/addons.reducers';
 import { AddonsSelectors } from '@/src/store/addons/addons.selectors';
 import { ChatActions } from '@/src/store/chat/chat.reducer';
 import { FilesActions } from '@/src/store/files/files.reducers';
-import {
-  MarketplaceActions,
-  MarketplaceSelectors,
-} from '@/src/store/marketplace/marketplace.reducers';
+import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
 import {
   ModelsActions,
   ModelsSelectors,
@@ -125,6 +122,7 @@ import { defaultReplay } from '@/src/constants/replay';
 import { CONVERSATIONS_DATE_SECTIONS } from '@/src/constants/sections';
 import { SHARE_QUERY_PARAM } from '@/src/constants/share';
 
+import { MarketplaceSelectors } from '../marketplace/marketplace.selectors';
 import {
   ConversationsActions,
   ConversationsSelectors,

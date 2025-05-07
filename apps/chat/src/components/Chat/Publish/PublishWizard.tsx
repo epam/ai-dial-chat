@@ -47,7 +47,7 @@ import {
   ApplicationActions,
   ApplicationSelectors,
 } from '@/src/store/application/application.reducers';
-import { AuthSelectors } from '@/src/store/auth/auth.reducers';
+import { AuthSelectors } from '@/src/store/auth/auth.selectors';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {

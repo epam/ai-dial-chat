@@ -57,6 +57,11 @@ import { PromptInfo } from '@/src/types/prompt';
 import { PublishedFileItem } from '@/src/types/publication';
 import { AppAction, AppEpic } from '@/src/types/store';
 
+import {
+  ModelsActions,
+  ModelsSelectors,
+} from '@/src/store/models/models.reducers';
+
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -66,7 +71,6 @@ import {
   ConversationsSelectors,
 } from '../conversations/conversations.reducers';
 import { FilesActions } from '../files/files.reducers';
-import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { PromptsActions, PromptsSelectors } from '../prompts/prompts.reducers';
 import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';

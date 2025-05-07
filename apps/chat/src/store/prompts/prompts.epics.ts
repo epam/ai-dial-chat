@@ -45,11 +45,12 @@ import { FeatureType } from '@/src/types/common';
 import { PromptInfo } from '@/src/types/prompt';
 import { AppAction, AppEpic } from '@/src/types/store';
 
+import { ShareActions } from '@/src/store/share/share.reducers';
+
 import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-ui-settings';
 
 import { ChatActions } from '../chat/chat.reducer';
 import { PublicationActions } from '../publication/publication.reducers';
-import { ShareActions } from '../share/share.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 

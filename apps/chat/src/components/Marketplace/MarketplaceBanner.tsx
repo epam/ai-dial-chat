@@ -3,7 +3,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.reducers';
+import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { MarketplaceTabs } from '@/src/constants/marketplace';

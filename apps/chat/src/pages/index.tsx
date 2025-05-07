@@ -1,10 +1,10 @@
 import { FloatingOverlay } from '@floating-ui/react';
 
-import { useScreenState } from '../hooks/useScreenState';
+import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
-import { ScreenState } from '../types/common';
+import { ScreenState } from '@/src/types/common';
 
 import { MigrationSelectors } from '../store/migration/migration.reducers';
 import { useAppSelector } from '@/src/store/hooks';

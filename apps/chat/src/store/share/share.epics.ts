@@ -55,6 +55,11 @@ import {
 import { AppAction, AppEpic } from '@/src/types/store';
 
 import { FilesSelectors } from '@/src/store/files/files.selectors';
+import {
+  ModelsActions,
+  ModelsSelectors,
+} from '@/src/store/models/models.reducers';
+import { ModelUpdatedValues } from '@/src/store/models/models.types';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
@@ -71,12 +76,11 @@ import {
 } from '../conversations/conversations.reducers';
 import { FilesActions } from '../files/files.reducers';
 import { MarketplaceActions } from '../marketplace/marketplace.reducers';
-import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
-import { ModelUpdatedValues } from '../models/models.types';
 import { PromptsActions, PromptsSelectors } from '../prompts/prompts.reducers';
 import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';
-import { ShareActions, ShareSelectors } from './share.reducers';
+import { ShareActions } from './share.reducers';
+import { ShareSelectors } from './share.selectors';
 
 import { ConversationInfo, Message, UploadStatus } from '@epam/ai-dial-shared';
 

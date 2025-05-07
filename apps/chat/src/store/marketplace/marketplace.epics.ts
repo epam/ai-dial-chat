@@ -10,6 +10,11 @@ import { EntityType, SortOrder } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
 import {
+  ModelsActions,
+  ModelsSelectors,
+} from '@/src/store/models/models.reducers';
+
+import {
   ENTITY_TYPES,
   FilterTypes,
   MarketplaceQueryParams,
@@ -19,12 +24,9 @@ import {
   ViewTypes,
 } from '@/src/constants/marketplace';
 
-import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
-import {
-  MarketplaceActions,
-  MarketplaceSelectors,
-} from './marketplace.reducers';
+import { MarketplaceActions } from './marketplace.reducers';
+import { MarketplaceSelectors } from './marketplace.selectors';
 import { MarketplaceState } from './marketplace.types';
 
 import { ParsedUrlQueryInput, parse } from 'querystring';

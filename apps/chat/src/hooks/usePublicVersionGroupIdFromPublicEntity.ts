@@ -1,6 +1,6 @@
-import { constructPath } from '../utils/app/file';
-import { isEntityIdPublic } from '../utils/app/publications';
-import { getPublicItemIdWithoutVersion } from '../utils/server/api';
+import { constructPath } from '@/src/utils/app/file';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
 import { useAppSelector } from '../store/hooks';
 import { PublicationSelectors } from '../store/publication/publication.reducers';

@@ -19,7 +19,7 @@ import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.reducers';
+import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
 
 import { TableColumnSortKeys } from '@/src/constants/marketplace';
 

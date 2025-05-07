@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 
-import { FeatureType } from '../types/common';
+import { FeatureType } from '@/src/types/common';
 
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { UIActions, UISelectors } from '../store/ui/ui.reducers';

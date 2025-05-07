@@ -1,11 +1,11 @@
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 
-import { useTranslation } from '../hooks/useTranslation';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getPageName } from '../utils/app/route';
+import { getPageName } from '@/src/utils/app/route';
 
-import { Translation } from '../types/translation';
+import { Translation } from '@/src/types/translation';
 
 import { SettingsState } from '../store/settings/settings.types';
 

@@ -16,10 +16,8 @@ import { Translation } from '@/src/types/translation';
 
 import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  MarketplaceActions,
-  MarketplaceSelectors,
-} from '@/src/store/marketplace/marketplace.reducers';
+import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
+import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
 import {
   ModelsActions,
   ModelsSelectors,

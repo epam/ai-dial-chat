@@ -39,7 +39,7 @@ import { ApplicationActions } from '@/src/store/application/application.reducers
 
 import { DeleteType } from '@/src/constants/marketplace';
 
-import { AuthSelectors } from '../auth/auth.reducers';
+import { AuthSelectors } from '../auth/auth.selectors';
 import { MarketplaceActions } from '../marketplace/marketplace.reducers';
 import { PublicationActions } from '../publication/publication.reducers';
 import {

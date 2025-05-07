@@ -1,4 +1,4 @@
-import { translate } from '../utils/app/translation';
+import { translate } from '@/src/utils/app/translation';
 
 import {
   CODEAPPS_REQUIRED_FILES,
