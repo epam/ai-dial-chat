@@ -1,10 +1,9 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { Conversation } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, MappedReplaceActions } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import {
-  MappedReplaceActions,
   Operation,
   PromptsHistory,
   SupportedExportFormats,

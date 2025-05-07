@@ -15,6 +15,7 @@ import classNames from 'classnames';
 import { useContextMenuTrigger } from '@/src/hooks/useContextMenuTrigger';
 import { usePromptActions } from '@/src/hooks/usePromptActions';
 import { useScreenState } from '@/src/hooks/useScreenState';
+import { useScrollToEntity } from '@/src/hooks/useScrollToEntity';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -135,6 +136,11 @@ export const PromptComponent = ({
     }
     setIsContextMenu(true);
   }, []);
+
+  useScrollToEntity({
+    entityId: prompt.id,
+    elementRef: promptRef,
+  });
 
   useContextMenuTrigger(handleContextMenuOpen, promptRef);
 

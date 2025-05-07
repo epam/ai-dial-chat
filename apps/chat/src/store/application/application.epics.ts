@@ -7,6 +7,7 @@ import {
   concatMap,
   forkJoin,
   from,
+  iif,
   interval,
   mergeMap,
   of,
@@ -48,7 +49,6 @@ import {
 } from '@/src/types/applications';
 import { AppAction, AppEpic } from '@/src/types/store';
 
-import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_APPLICATION_NAME } from '@/src/constants/default-ui-settings';
@@ -56,7 +56,10 @@ import { errorsMessages } from '@/src/constants/errors';
 import { DeleteType, MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
-import { ApplicationActions } from '../application/application.reducers';
+import {
+  ApplicationActions,
+  ApplicationSelectors,
+} from '../application/application.reducers';
 import { ApplicationTypesSchemasActions } from '../applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { AuthSelectors } from '../auth/auth.reducers';
 import {
@@ -67,7 +70,29 @@ import { MarketplaceActions } from '../marketplace/marketplace.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { ShareActions, ShareSelectors } from '../share/share.reducers';
 
-import isString from 'lodash-es/isString';
+const initEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(ApplicationActions.init.type),
+    filter(() => !ApplicationSelectors.selectInitialized(state$.value)),
+    switchMap(() =>
+      forkJoin({
+        selectedWidget: BrowserStorage.getSelectedWidget(),
+      }).pipe(
+        switchMap(({ selectedWidget }) =>
+          concat(
+            iif(
+              () => !!selectedWidget,
+              of(
+                ApplicationActions.setSelectedWidget(selectedWidget as string),
+              ),
+              EMPTY,
+            ),
+            of(ApplicationActions.initFinish()),
+          ),
+        ),
+      ),
+    ),
+  );
 
 const createApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
@@ -667,21 +692,11 @@ const exitEditModeEpic: AppEpic = (action$, _state$, { router }) =>
     ignoreElements(),
   );
 
-const resetSelectedWidgetEpic: AppEpic = (action$) =>
+const setSelectedWidgetEpic: AppEpic = (action$) =>
   action$.pipe(
-    ofType(
-      ConversationsActions.selectConversations.type,
-      PublicationActions.selectPublication.type,
-    ),
-    switchMap(({ payload }) => {
-      if (
-        !isString(payload) && payload ? payload.conversationIds.length : true
-      ) {
-        return of(ApplicationActions.selectWidget(undefined));
-      }
-
-      return EMPTY;
-    }),
+    ofType(ApplicationActions.setSelectedWidget.type),
+    tap(({ payload }) => BrowserStorage.setSelectedWidget(payload)),
+    ignoreElements(),
   );
 
 const duplicateApplicationEpic: AppEpic = (action$, state$) =>
@@ -749,6 +764,7 @@ const duplicateApplicationEpic: AppEpic = (action$, state$) =>
   );
 
 export const ApplicationEpics = combineEpics(
+  initEpic,
   createApplicationEpic,
   createFailEpic,
   deleteApplicationEpic,
@@ -764,4 +780,5 @@ export const ApplicationEpics = combineEpics(
   exitEditModeEpic,
   resetSelectedWidgetEpic,
   duplicateApplicationEpic,
+  setSelectedWidgetEpic,
 );

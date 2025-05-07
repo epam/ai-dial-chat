@@ -1,8 +1,11 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { sortItemsVersions } from '@/src/utils/app/common';
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
+import { DialAIEntityModel } from '@/src/types/models';
 import {
   PublicVersionGroups,
   PublicVersionOption,
@@ -16,7 +19,7 @@ import {
 import * as PublicationSelectors from './publication.selectors';
 import { PublicationState } from './publication.types';
 
-import { UploadStatus } from '@epam/ai-dial-shared';
+import { PublishActions, UploadStatus } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
 import uniqBy from 'lodash-es/uniqBy';
 import xor from 'lodash-es/xor';
@@ -39,6 +42,7 @@ const initialState: PublicationState = {
   selectedItemsToPublish: [],
   isApplicationReview: false,
   publicVersionGroups: {},
+  publishModel: undefined,
 };
 
 export const publicationSlice = createSlice({
@@ -301,6 +305,28 @@ export const publicationSlice = createSlice({
           }
         },
       );
+    },
+    setPublishModel(
+      state,
+      {
+        payload,
+      }: PayloadAction<
+        { entity: DialAIEntityModel; action: PublishActions } | undefined
+      >,
+    ) {
+      if (payload) {
+        state.publishModel = {
+          entity: {
+            name: payload.entity.name,
+            id: ApiUtils.decodeApiUrl(payload.entity.id),
+            folderId: getFolderIdFromEntityId(payload.entity.id),
+            iconUrl: payload.entity.iconUrl,
+          },
+          action: payload.action,
+        };
+      } else {
+        state.publishModel = undefined;
+      }
     },
   },
 });
