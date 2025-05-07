@@ -12,7 +12,7 @@ import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { Conversation, Replay } from '@/src/types/chat';
 import { EntityType, PartialBy } from '@/src/types/common';
-import { DialAIEntityAddon, DialAIEntityModel } from '@/src/types/models';
+import { AddonsMap, DialAIEntityModel, ModelsMap } from '@/src/types/models';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
@@ -40,7 +40,7 @@ export const getValidEntitiesFromIds = <T>(
 
 export const getSelectedAddons = (
   selectedAddons: string[],
-  addonsMap: Partial<Record<string, DialAIEntityAddon>>,
+  addonsMap: AddonsMap,
   model?: DialAIEntityModel,
 ) => {
   if (model && model.type !== EntityType.Application) {
@@ -272,8 +272,8 @@ export const addPausedError = (
 export const getConversationModelParams = (
   conversation: Conversation,
   modelId: string | undefined,
-  modelsMap: Partial<Record<string, DialAIEntityModel>>,
-  addonsMap: Partial<Record<string, DialAIEntityAddon>>,
+  modelsMap: ModelsMap,
+  addonsMap: AddonsMap,
 ): Partial<Conversation> => {
   if (modelId === REPLAY_AS_IS_MODEL && conversation.replay) {
     return {
