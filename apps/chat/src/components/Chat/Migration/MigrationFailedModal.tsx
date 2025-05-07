@@ -29,7 +29,7 @@ import {
   MigrationSelectors,
 } from '@/src/store/migration/migration.reducers';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { ReportIssueDialog } from '@/src/components/Chat/ReportIssueDialog';

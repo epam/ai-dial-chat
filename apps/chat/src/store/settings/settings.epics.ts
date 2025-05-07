@@ -37,7 +37,8 @@ import { MigrationActions } from '../migration/migration.reducers';
 import { PromptsActions } from '../prompts/prompts.reducers';
 import { PublicationActions } from '../publication/publication.reducers';
 import { UIActions } from '../ui/ui.reducers';
-import { SettingsActions, SettingsSelectors } from './settings.reducers';
+import { SettingsActions } from './settings.reducers';
+import { SettingsSelectors } from './settings.selectors';
 
 const getInitActions = (page?: PageType): Observable<AppAction>[] => {
   switch (page) {

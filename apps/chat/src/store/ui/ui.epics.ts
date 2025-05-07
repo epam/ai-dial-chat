@@ -28,7 +28,7 @@ import { errorsMessages } from '@/src/constants/errors';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 
-import { SettingsSelectors } from '../settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { UIActions, UISelectors } from './ui.reducers';
 
 import { Feature } from '@epam/ai-dial-shared';

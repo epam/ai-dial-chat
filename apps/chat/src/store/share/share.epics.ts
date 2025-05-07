@@ -75,7 +75,7 @@ import { FilesActions } from '../files/files.reducers';
 import { MarketplaceActions } from '../marketplace/marketplace.reducers';
 import { ModelsSelectors } from '../models/models.selectors';
 import { PromptsActions, PromptsSelectors } from '../prompts/prompts.reducers';
-import { SettingsSelectors } from '../settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { UIActions } from '../ui/ui.reducers';
 import { ShareActions } from './share.reducers';
 import { ShareSelectors } from './share.selectors';

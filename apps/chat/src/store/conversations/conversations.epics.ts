@@ -102,7 +102,7 @@ import { ModelsActions } from '@/src/store/models/models.reducers';
 import { OverlaySelectors } from '@/src/store/overlay/overlay.reducers';
 import { OverlayState } from '@/src/store/overlay/overlay.types';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 

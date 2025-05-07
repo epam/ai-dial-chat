@@ -25,7 +25,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
 import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '../constants/default-ui-settings';
 import { MarketplaceTabs } from '@/src/constants/marketplace';

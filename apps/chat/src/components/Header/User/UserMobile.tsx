@@ -13,7 +13,7 @@ import { ScreenState } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';

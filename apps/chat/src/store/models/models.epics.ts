@@ -44,14 +44,14 @@ import { MarketplaceActions } from '../marketplace/marketplace.reducers';
 import { PublicationActions } from '../publication/publication.reducers';
 import {
   SettingsActions,
-  SettingsSelectors,
-} from '../settings/settings.reducers';
+} from '@/src/store/settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import { ModelsActions } from './models.reducers';
 import { ModelsSelectors } from './models.selectors';
 
 import { Feature } from '@epam/ai-dial-shared';
 import uniqBy from 'lodash-es/uniqBy';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(

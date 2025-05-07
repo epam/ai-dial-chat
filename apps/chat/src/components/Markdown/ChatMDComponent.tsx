@@ -12,7 +12,7 @@ import { preprocessLaTeX } from '@/src/utils/app/latex';
 import { ScreenState } from '@/src/types/common';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import {

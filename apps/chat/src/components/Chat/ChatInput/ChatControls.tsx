@@ -12,7 +12,7 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { SendMessageButton } from '@/src/components/Chat/ChatInput/SendMessageButton';
 import Tooltip from '@/src/components/Common/Tooltip';

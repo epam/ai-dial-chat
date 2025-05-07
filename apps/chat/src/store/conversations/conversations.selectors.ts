@@ -58,7 +58,7 @@ import { PublicationSelectors } from '@/src/store/publication/publication.reduce
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import { ChatSelectors } from '../chat/chat.selectors';
-import { SettingsSelectors } from '../settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { ConversationsState } from './conversations.types';
 
 import {

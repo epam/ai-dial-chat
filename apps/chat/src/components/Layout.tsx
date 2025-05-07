@@ -17,10 +17,8 @@ import { AuthActions } from '@/src/store/auth/auth.reducers';
 import { AuthSelectors } from '@/src/store/auth/auth.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
-import {
-  SettingsActions,
-  SettingsSelectors,
-} from '@/src/store/settings/settings.reducers';
+import { SettingsActions } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { SettingsState } from '@/src/store/settings/settings.types';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 

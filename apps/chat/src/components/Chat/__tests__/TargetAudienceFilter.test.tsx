@@ -7,7 +7,7 @@ import userEvent from '@testing-library/user-event';
 import { PublicationFunctions } from '@/src/types/publication';
 import { AppAction } from '@/src/types/store';
 
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/TargetAudienceFilterComponent';
 

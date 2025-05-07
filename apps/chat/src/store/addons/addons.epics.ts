@@ -20,7 +20,7 @@ import { DataService } from '@/src/utils/app/data/data-service';
 import { DialAIEntityAddon } from '@/src/types/models';
 import { AppEpic } from '@/src/types/store';
 
-import { SettingsSelectors } from '../settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { AddonsActions } from './addons.reducers';
 import { AddonsSelectors } from './addons.selectors';
 

@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { useRouter } from 'next/router';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { Routes } from '@/src/constants/routes';
 

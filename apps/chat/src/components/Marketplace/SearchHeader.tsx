@@ -24,7 +24,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
 import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { MarketplaceTabs } from '@/src/constants/marketplace';
 

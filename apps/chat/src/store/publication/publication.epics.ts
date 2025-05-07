@@ -70,7 +70,7 @@ import {
 import { FilesActions } from '../files/files.reducers';
 import { ModelsSelectors } from '../models/models.selectors';
 import { PromptsActions, PromptsSelectors } from '../prompts/prompts.reducers';
-import { SettingsSelectors } from '../settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { UIActions } from '../ui/ui.reducers';
 import {
   PublicationActions,

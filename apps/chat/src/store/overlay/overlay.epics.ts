@@ -52,8 +52,7 @@ import {
 import { ModelsSelectors } from '../models/models.selectors';
 import {
   SettingsActions,
-  SettingsSelectors,
-} from '../settings/settings.reducers';
+} from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { OverlayActions, OverlaySelectors } from './overlay.reducers';
 
@@ -78,6 +77,7 @@ import {
 } from '@epam/ai-dial-shared';
 import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 export const postMessageMapperEpic: AppEpic = (_, state$) =>
   typeof window === 'object'

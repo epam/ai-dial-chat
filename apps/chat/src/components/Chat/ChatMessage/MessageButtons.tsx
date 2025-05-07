@@ -20,7 +20,7 @@ import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { MenuItem } from '@/src/components/Common/DropdownMenu';
 import Tooltip from '@/src/components/Common/Tooltip';
