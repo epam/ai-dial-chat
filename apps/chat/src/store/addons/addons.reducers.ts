@@ -3,7 +3,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { translate } from '@/src/utils/app/translation';
 
 import { ErrorMessage } from '@/src/types/error';
-import { DialAIEntityAddon } from '@/src/types/models';
+import { AddonsMap, DialAIEntityAddon } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { errorsMessages } from '@/src/constants/errors';
@@ -43,7 +43,7 @@ export const addonsSlice = createSlice({
 
           return acc;
         },
-        {} as Record<string, DialAIEntityAddon>,
+        {} as AddonsMap,
       );
     },
     getAddonsFail: (

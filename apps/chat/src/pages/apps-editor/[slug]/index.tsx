@@ -80,7 +80,11 @@ export default function AppsEditor() {
                 : decode(slug.toString())
             }
             isEditApplication={!!id}
-            hasCustomEditor={!!schema?.['dial:applicationTypeEditorUrl']}
+            hasCustomEditor={
+              !!schema?.[
+                ApplicationTypeSchemaProperties.applicationTypeEditorUrl
+              ]
+            }
           />
           <div className="flex size-full">
             <GeneralInfoView
