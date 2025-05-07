@@ -23,7 +23,9 @@ function SelectedWidgetPage() {
   const { slug: widgetId } = router.query;
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
+  const isModelsLoading = useAppSelector(
+    ModelsSelectors.selectAreModelsLoading,
+  );
 
   const widget = widgetId ? modelsMap[widgetId as string] : null;
 

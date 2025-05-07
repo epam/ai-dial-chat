@@ -35,7 +35,7 @@ export const SendMessageButton = Inversify.register(
     const { t } = useTranslation(Translation.Chat);
 
     const isModelsLoading = useAppSelector(
-      ModelsSelectors.selectModelsIsLoading,
+      ModelsSelectors.selectAreModelsLoading,
     );
     const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 

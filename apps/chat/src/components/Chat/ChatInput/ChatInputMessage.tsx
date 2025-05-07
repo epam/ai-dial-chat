@@ -127,7 +127,9 @@ export const ChatInputMessage = Inversify.register(
     const isLastAssistantMessageEmpty = useAppSelector(
       ConversationsSelectors.selectIsLastAssistantMessageEmpty,
     );
-    const isModelsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
+    const isModelsLoaded = useAppSelector(
+      ModelsSelectors.selectAreModelsLoaded,
+    );
     const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
     const chatFormValue = useAppSelector(ChatSelectors.selectChatFormValue);
 

@@ -48,7 +48,7 @@ export const AttachButton = ({
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
-  const isModelLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
+  const isModelLoaded = useAppSelector(ModelsSelectors.selectAreModelsLoaded);
   const availableAttachmentsTypes = useAppSelector(
     ConversationsSelectors.selectAvailableAttachmentsTypes,
   );

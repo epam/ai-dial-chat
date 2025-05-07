@@ -99,7 +99,7 @@ const ChatView = memo(() => {
   const models = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const modelError = useAppSelector(ModelsSelectors.selectModelsError);
-  const isModelsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
+  const isModelsLoaded = useAppSelector(ModelsSelectors.selectAreModelsLoaded);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const isCompareMode = useAppSelector(UISelectors.selectIsCompareMode);
   const selectedConversationsIds = useAppSelector(
@@ -1050,7 +1050,7 @@ export function Chat({ isPreview }: ChatProps) {
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
   );
-  const modelIsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
+  const modelIsLoaded = useAppSelector(ModelsSelectors.selectAreModelsLoaded);
   const isolatedModelId = useAppSelector(
     SettingsSelectors.selectIsolatedModelId,
   );

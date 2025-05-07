@@ -66,7 +66,7 @@ const NavigationButton = ({
   rounded = false,
   allowClickSelected = false,
 }: NavigationButtonProps) => {
-  const isLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
+  const isLoading = useAppSelector(ModelsSelectors.selectAreModelsLoading);
   const streaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
@@ -202,7 +202,9 @@ const UsedWidgets = () => {
     ApplicationSelectors.selectInitialized,
   );
 
-  const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
+  const isModelsLoading = useAppSelector(
+    ModelsSelectors.selectAreModelsLoading,
+  );
 
   const { widgetModels, handleWidgetClick } = useWidgets();
 

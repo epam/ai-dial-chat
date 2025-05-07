@@ -4,11 +4,14 @@ import { useTranslation } from '../hooks/useTranslation';
 
 import { Translation } from '../types/translation';
 
+import { Title } from '../components/Title';
+
 function Custom404() {
   const { t } = useTranslation(Translation.Common);
 
   return (
     <div className="flex h-screen w-screen flex-col items-center justify-center space-y-4 px-4 text-center">
+      <Title />
       <h1 className="text-6xl font-bold md:text-7xl">{t('404')}</h1>
 
       <div className="space-y-2">
