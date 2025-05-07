@@ -148,7 +148,6 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
   const shouldSaveApplication = useAppSelector(
     ApplicationSelectors.selectShouldSaveApplication,
   );
-
   const exitAfterSave = useAppSelector(
     ApplicationSelectors.selectExitAfterSave,
   );
