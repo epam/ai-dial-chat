@@ -8,7 +8,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { AddonsMap } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
+import { AddonsSelectors } from '@/src/store/addons/addons.selectors';
 import { useAppSelector } from '@/src/store/hooks';
 
 import { ModelIcon } from '../../Chatbar/ModelIcon';

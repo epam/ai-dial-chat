@@ -30,7 +30,7 @@ import { EntityType, ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
+import { AddonsSelectors } from '@/src/store/addons/addons.selectors';
 import {
   ConversationsActions,
   ConversationsSelectors,
