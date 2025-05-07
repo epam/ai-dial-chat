@@ -1,4 +1,4 @@
-import { Message, Stage } from '@epam/ai-dial-shared';
+import { ContentParts, Message, Stage } from '@epam/ai-dial-shared';
 
 export const parseStreamMessages = (message: string): Partial<Message>[] => {
   const parsedMessage = message
@@ -67,10 +67,20 @@ export const mergeMessages = (
     }
 
     if (newData.content) {
-      if (!newSource.content) {
-        newSource.content = '';
+      if (!newSource.parts) {
+        newSource.parts = [];
       }
-      newSource.content += newData.content;
+
+      // Add parts of the text to parts array
+      const lastIndex = newSource.parts.length - 1;
+      if (newSource.parts[lastIndex]?.content) {
+        const newContent = {
+          content: newSource.parts[lastIndex].content.concat(newData.content),
+        };
+        newSource.parts[lastIndex] = newContent;
+      } else {
+        newSource.parts = newSource.parts.concat({ content: newData.content });
+      }
     }
 
     if (newData.custom_content) {
@@ -79,14 +89,24 @@ export const mergeMessages = (
       }
 
       if (newData.custom_content.attachments) {
-        if (!newSource.custom_content.attachments) {
-          newSource.custom_content.attachments = [];
+        if (!newSource.parts) {
+          newSource.parts = [];
         }
+        // Add attachments to parts array
+        const lastIndex = newSource.parts.length - 1;
 
-        newSource.custom_content.attachments =
-          newSource.custom_content.attachments.concat(
-            newData.custom_content.attachments,
-          );
+        if (newSource.parts[lastIndex]?.attachments) {
+          const newAttachments = {
+            attachments: newSource.parts[lastIndex].attachments.concat(
+              newData.custom_content.attachments,
+            ),
+          };
+          newSource.parts[lastIndex] = newAttachments;
+        } else {
+          newSource.parts = newSource.parts.concat({
+            attachments: newData.custom_content.attachments,
+          });
+        }
       }
 
       if (newData.custom_content.stages) {
@@ -124,4 +144,14 @@ export const mergeMessages = (
     }
   });
   return newSource;
+};
+
+export const getMessageTextFromParts = (parts: ContentParts[]) => {
+  let content = '';
+  parts.forEach((part) => {
+    if (part.content) {
+      content += part.content;
+    }
+  });
+  return content;
 };

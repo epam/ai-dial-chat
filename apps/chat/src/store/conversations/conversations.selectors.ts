@@ -433,7 +433,8 @@ export const selectIsLastAssistantMessageEmpty = createSelector(
         lastMessage.role === Role.Assistant &&
         !lastMessage.content.length &&
         !lastMessage.custom_content?.attachments?.length &&
-        !lastMessage.custom_content?.stages?.length
+        !lastMessage.custom_content?.stages?.length &&
+        !lastMessage.parts?.length
       );
     });
   },

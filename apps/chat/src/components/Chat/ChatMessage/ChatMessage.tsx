@@ -3,6 +3,7 @@ import { FC, memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
+import { getMessageTextFromParts } from '@/src/utils/app/merge-streams';
 import { isMobile, isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation } from '@/src/types/chat';
@@ -93,13 +94,17 @@ export const ChatMessage: FC<Props> = memo(
     const handleCopy = useCallback(() => {
       if (!navigator.clipboard) return;
 
-      navigator.clipboard.writeText(message.content).then(() => {
+      const messageContent = message.parts
+        ? getMessageTextFromParts(message.parts)
+        : message.content;
+
+      navigator.clipboard.writeText(messageContent).then(() => {
         setMessageCopied(true);
         setTimeout(() => {
           setMessageCopied(false);
         }, 2000);
       });
-    }, [message.content]);
+    }, [message.content, message.parts]);
 
     const handleDeleteMessage = useCallback(() => {
       onDelete();

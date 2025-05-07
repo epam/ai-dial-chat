@@ -159,7 +159,7 @@ export const MessageAssistantButtons = ({
           </Button>
         </Tooltip>
       )}
-      {message.content.trim() &&
+      {(message.content.trim() || !!message.parts?.length) &&
         (messageCopied ? (
           <Tooltip key="copied" placement="top" tooltip={t('Text copied')}>
             <IconCheck size={18} className="text-secondary" />
@@ -178,7 +178,9 @@ export const MessageAssistantButtons = ({
         ))}
       <div className="flex flex-row gap-2">
         {isLikesEnabled &&
-          (message.content.trim() || !!getMessageCustomContent(message)) && (
+          (message.content.trim() ||
+            !!getMessageCustomContent(message) ||
+            !!message.parts?.length) && (
             <>
               {message.like !== LikeState.Disliked && (
                 <Tooltip
@@ -289,7 +291,7 @@ export const MessageMobileButtons = ({
       !(isMessageStreaming && isLastMessage) &&
       !isConversationInvalid && (
         <>
-          {message.content.trim() &&
+          {(message.content.trim() || !!message.parts?.length) &&
             (messageCopied ? (
               <MenuItem
                 item={
@@ -324,7 +326,9 @@ export const MessageMobileButtons = ({
             />
           )}
           {isLikesEnabled &&
-            (message.content.trim() || !!getMessageCustomContent(message)) && (
+            (message.content.trim() ||
+              !!getMessageCustomContent(message) ||
+              !!message.parts?.length) && (
               <>
                 {message.like !== LikeState.Disliked && (
                   <MenuItem

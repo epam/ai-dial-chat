@@ -21,6 +21,7 @@ import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import ChatMDComponent from '@/src/components/Markdown/ChatMDComponent';
 
 import { LikeState, Message } from '@epam/ai-dial-shared';
+import { nanoid } from 'nanoid';
 
 interface AssistantMessageProps {
   message: Message;
@@ -52,6 +53,7 @@ export const AssistantMessage = memo(function AssistantMessage({
   const isShowResponseLoader =
     !!conversation.isMessageStreaming && isLastMessage;
   const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
+  const lastContentPartIndex = message.parts && message.parts?.length - 1;
 
   const codeRegEx =
     /(?:(?:^|\n)[ \t]*`{3}[\s\S]*?(?:^|\n)[ \t]*`{3}|(?:^|\n)(?: {4}|\t)[^\n]*)/g;
@@ -71,6 +73,40 @@ export const AssistantMessage = memo(function AssistantMessage({
         {!!message.custom_content?.stages?.length && (
           <MessageStages stages={message.custom_content?.stages} />
         )}
+
+        {!!message.parts?.length &&
+          message.parts.map((contentPart, index) => {
+            if (contentPart.content) {
+              return (
+                <>
+                  <ChatMDComponent
+                    key={nanoid(4)}
+                    isShowResponseLoader={
+                      isShowResponseLoader && index === lastContentPartIndex
+                    }
+                    content={contentPart.content}
+                  />
+                  {codeWarning &&
+                    codeWarning.length !== 0 &&
+                    codeDetection(contentPart.content) && (
+                      <div className="select-none text-xxs text-error">
+                        {t(codeWarning)}
+                      </div>
+                    )}
+                </>
+              );
+            }
+            if (contentPart.attachments) {
+              return (
+                <MessageAttachments
+                  key={nanoid(4)}
+                  attachments={contentPart.attachments}
+                />
+              );
+            }
+          })}
+
+        {/* Keep support old render for backward compatibility */}
         {!!(message.content || isShowResponseLoader) && (
           <ChatMDComponent
             isShowResponseLoader={isShowResponseLoader}
