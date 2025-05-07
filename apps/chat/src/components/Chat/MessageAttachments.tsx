@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { MouseEvent, useCallback, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -10,6 +10,7 @@ import { MessageAttachment } from './MessageAttachment';
 
 import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import { Attachment } from '@epam/ai-dial-shared';
+import { nanoid } from 'nanoid';
 
 interface Props {
   attachments: Attachment[] | undefined;
@@ -23,6 +24,10 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
   }, [attachments]);
 
   const [isSectionOpened, setIsSectionOpened] = useState(false);
+  const handleOpen = useCallback((e: MouseEvent) => {
+    e.preventDefault();
+    setIsSectionOpened((val) => !val);
+  }, []);
 
   if (!attachments?.length) {
     return null;
@@ -31,11 +36,11 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
   return isUnderSection && !isInner ? (
     <div
       data-no-context-menu
-      className="rounded border border-secondary bg-layer-1"
+      className="mb-5 rounded border border-secondary bg-layer-1 last:mb-0"
     >
       <button
         className="flex w-full items-center justify-between gap-2 p-2 text-sm"
-        onClick={() => setIsSectionOpened((val) => !val)}
+        onClick={handleOpen}
         data-qa="grouped-attachments"
       >
         {t('Attachments')}
@@ -49,10 +54,10 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
         />
       </button>
       {isSectionOpened && (
-        <div className="grid max-w-full grid-cols-1 gap-1 border-t border-secondary p-2 sm:grid-cols-2 md:grid-cols-3">
+        <div className="mb-5 grid max-w-full grid-cols-1 gap-1 border-t border-secondary p-2 last:mb-0 sm:grid-cols-2 md:grid-cols-3">
           {attachments?.map((attachment) => (
             <MessageAttachment
-              key={attachment.url || attachment.title}
+              key={nanoid(4)}
               attachment={attachment}
               isInner
             />
@@ -61,10 +66,10 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
       )}
     </div>
   ) : (
-    <div className="grid max-w-full grid-cols-1 gap-1 sm:grid-cols-2 md:grid-cols-3">
+    <div className="mb-5 grid max-w-full grid-cols-1 gap-1 last:mb-0 sm:grid-cols-2 md:grid-cols-3">
       {attachments?.map((attachment) => (
         <MessageAttachment
-          key={attachment.url || attachment.title}
+          key={nanoid(4)}
           attachment={attachment}
           isInner={isInner}
         />
