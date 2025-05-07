@@ -14,6 +14,8 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isEntityIdPublic } from '@/src/utils/app/publications';
+
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -22,6 +24,7 @@ import {
 } from '@/src/store/application/application.reducers';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
@@ -29,15 +32,20 @@ import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
+import { Logo } from '@/src/components/Header/Logo';
 import { User } from '@/src/components/Header/User/User';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
-
-import { Logo } from '../Header/Logo';
 
 enum TabKeys {
   GENERAL = 'general',
   SETTINGS = 'settings',
 }
+
+const myWorkspaceHref = {
+  pathname: Routes.Marketplace,
+  query: { tab: MarketplaceTabs.MY_WORKSPACE },
+};
+
 interface AppsEditorHeaderProps {
   applicationTypeDisplayName: string;
   isEditApplication?: boolean;
@@ -50,11 +58,14 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
   hasCustomEditor,
 }) => {
   const dispatch = useAppDispatch();
+
   const {
     query: { id = '', slug = '', add },
     pathname,
   } = useRouter();
   const { t } = useTranslation(Translation.Chat);
+
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const isUserSettingsOpen = useAppSelector(
     UISelectors.selectIsUserSettingsOpen,
@@ -69,6 +80,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
   const hasUnsavedChanges = useAppSelector(
     ApplicationSelectors.selectHasUnsavedChanges,
   );
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   const handleCloseUserSettings = useCallback(() => {
     dispatch(UIActions.setIsUserSettingsOpen(false));
@@ -93,6 +105,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
       dispatch(ApplicationActions.setShouldSaveApplication(true));
       dispatch(ApplicationActions.setExitAfterSave(true));
     }
+
     if (returnConversationIds?.length) {
       dispatch(
         ConversationsActions.selectConversations({
@@ -139,7 +152,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
     [t, id, slug, add],
   );
 
-  const [menuOpen, setMenuOpen] = useState(false);
+  const agent = modelsMap[id as string];
 
   return (
     <div
@@ -231,7 +244,9 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
         </div>
 
         <div className="flex h-full items-center space-x-2">
-          {isEditApplication && !hasCustomEditor ? (
+          {isEditApplication &&
+          !hasCustomEditor &&
+          !isEntityIdPublic({ id: agent?.id as string }) ? (
             <button
               className="button flex items-center space-x-1 text-accent-primary md:flex"
               onClick={handleSaveAndRedirect}
@@ -244,10 +259,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
             <Link
               className="hidden items-center space-x-1 px-3 text-accent-primary md:flex"
               data-qa="exit-link"
-              href={{
-                pathname: Routes.Marketplace,
-                query: { tab: MarketplaceTabs.MY_WORKSPACE },
-              }}
+              href={myWorkspaceHref}
             >
               <IconLogout size={14} />
               <span>{t('Exit')}</span>
@@ -284,10 +296,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
           })}
           <Link
             className="flex items-center px-4 py-2 hover:text-accent-primary"
-            href={{
-              pathname: Routes.Marketplace,
-              query: { tab: MarketplaceTabs.MY_WORKSPACE },
-            }}
+            href={myWorkspaceHref}
           >
             <IconLogout size={14} />
             <span>{t('Go to marketplace')}</span>

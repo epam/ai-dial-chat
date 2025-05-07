@@ -24,6 +24,7 @@ interface Props {
   readonly?: boolean;
   addBtnTooltip?: string;
   confirmDialogValues?: ConfirmDialogValueTypes;
+  tooltip?: string;
   onRemoveFile?: (document: string) => void;
   onAddFiles?: (documents: string[]) => void;
 }
@@ -36,6 +37,7 @@ export const FilesSelector: React.FC<Props> = ({
   readonly,
   addBtnTooltip,
   confirmDialogValues,
+  tooltip,
   onAddFiles,
   onRemoveFile,
 }) => {
@@ -100,61 +102,63 @@ export const FilesSelector: React.FC<Props> = ({
   );
 
   return (
-    <div className="relative grow space-y-4 divide-tertiary">
-      <div className="flex flex-col">
-        <div className="absolute right-0 top-[-22px]">
-          <Tooltip tooltip={addBtnTooltip}>
-            <button
-              disabled={readonly}
-              className={classNames(
-                'flex items-center text-accent-primary',
-                readonly && 'cursor-not-allowed',
-              )}
-              onClick={handleOpenFilesModal}
-            >
-              <IconPlus size={18} />
-              <p className="ml-2">{t('Add')}</p>
-            </button>
-          </Tooltip>
-        </div>
-        {!files.length ? (
-          <NoFiles />
-        ) : (
-          <div className="flex flex-col gap-y-2 overflow-auto rounded border border-primary p-2">
-            {files.map((file) => (
-              <SelectedFile
-                key={file}
-                document={file}
-                readonly={readonly}
-                onRemove={handleRemoveFile}
-              />
-            ))}
+    <Tooltip tooltip={tooltip}>
+      <div className="relative grow space-y-4 divide-tertiary">
+        <div className="flex flex-col">
+          <div className="absolute right-0 top-[-22px]">
+            <Tooltip tooltip={addBtnTooltip}>
+              <button
+                disabled={readonly}
+                className={classNames(
+                  'flex items-center text-accent-primary',
+                  readonly && 'cursor-not-allowed',
+                )}
+                onClick={handleOpenFilesModal}
+              >
+                <IconPlus size={18} />
+                <p className="ml-2">{t('Add')}</p>
+              </button>
+            </Tooltip>
           </div>
+          {!files.length ? (
+            <NoFiles />
+          ) : (
+            <div className="flex flex-col gap-y-2 overflow-auto rounded border border-primary p-2">
+              {files.map((file) => (
+                <SelectedFile
+                  key={file}
+                  document={file}
+                  readonly={readonly}
+                  onRemove={handleRemoveFile}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+        {isOpenFileModal && !readonly && (
+          <FileManagerModal
+            isOpen
+            onClose={handleOnCloseFilesModal}
+            maximumAttachmentsAmount={Number.MAX_SAFE_INTEGER}
+            allowedTypes={allowedTypes}
+            headerLabel={fileManagerTitle ?? ''}
+            customButtonLabel={t('Select files') ?? ''}
+            forceShowSelectCheckBox
+            sourceFilters={filesFilter}
+            warningMessage={confirmDialogValues?.description}
+          />
+        )}
+        {confirmDialogValues && confirmDialogOpen && (
+          <ConfirmDialog
+            isOpen
+            heading={t(confirmDialogValues.heading)}
+            description={t(confirmDialogValues.description) ?? ''}
+            confirmLabel={t('Confirm')}
+            cancelLabel={t('Cancel')}
+            onClose={handleConfirmClose}
+          />
         )}
       </div>
-      {isOpenFileModal && !readonly && (
-        <FileManagerModal
-          isOpen
-          onClose={handleOnCloseFilesModal}
-          maximumAttachmentsAmount={Number.MAX_SAFE_INTEGER}
-          allowedTypes={allowedTypes}
-          headerLabel={fileManagerTitle ?? ''}
-          customButtonLabel={t('Select files') ?? ''}
-          forceShowSelectCheckBox
-          sourceFilters={filesFilter}
-          warningMessage={confirmDialogValues?.description}
-        />
-      )}
-      {confirmDialogValues && confirmDialogOpen && (
-        <ConfirmDialog
-          isOpen
-          heading={t(confirmDialogValues.heading)}
-          description={t(confirmDialogValues.description) ?? ''}
-          confirmLabel={t('Confirm')}
-          cancelLabel={t('Cancel')}
-          onClose={handleConfirmClose}
-        />
-      )}
-    </div>
+    </Tooltip>
   );
 };
