@@ -23,7 +23,7 @@ import { AuthSelectors } from '@/src/store/auth/auth.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
-import { ActionButton } from '@/src/components/Common/ActionButton';
+import { IconButton } from '@/src/components/Common/IconButton';
 import Tooltip from '@/src/components/Common/Tooltip';
 import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
 import { AgentContextMenu } from '@/src/components/Marketplace/AgentContextMenu';
@@ -93,7 +93,7 @@ export const ApplicationDetailsFooter = ({
           ) : (
             menuItems.map(({ display, name, disabled, ...props }) =>
               display ? (
-                <ActionButton
+                <IconButton
                   key={name}
                   name={disabled ? getDisabledTooltip(entity, name) : name}
                   disabled={disabled}

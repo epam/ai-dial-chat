@@ -14,7 +14,7 @@ interface Props {
   onClick?: (e: React.MouseEvent) => void;
 }
 
-export const ActionButton: React.FC<Props> = ({
+export const IconButton: React.FC<Props> = ({
   name,
   dataQa,
   disabled,

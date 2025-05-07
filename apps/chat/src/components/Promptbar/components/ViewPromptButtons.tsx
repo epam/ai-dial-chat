@@ -22,8 +22,8 @@ import { Prompt } from '@/src/types/prompt';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
-import { ActionButton } from '@/src/components/Common/ActionButton';
 import ContextMenu from '@/src/components/Common/ContextMenu';
+import { IconButton } from '@/src/components/Common/IconButton';
 
 import { PromptDialogs } from './PromptDialogs';
 
@@ -169,7 +169,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
       <div className="flex h-[34px] gap-2">
         {screenState !== ScreenState.SM ? (
           promptItems.map(({ display, ...props }) =>
-            display ? <ActionButton key={props.name} {...props} /> : null,
+            display ? <IconButton key={props.name} {...props} /> : null,
           )
         ) : (
           <>
@@ -183,7 +183,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
                 className="m-0 xl:invisible group-hover:xl:visible"
               />
             </button>
-            {editBtn && <ActionButton {...editBtn} />}
+            {editBtn && <IconButton {...editBtn} />}
           </>
         )}
       </div>

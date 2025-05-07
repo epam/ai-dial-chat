@@ -121,7 +121,6 @@ export const GeneralInfoEditor: React.FC<Props> = ({
           query: {
             id: router.query.id ?? '',
             slug: router.query.slug ?? '',
-            add: router.query.add,
           },
         });
         return;
