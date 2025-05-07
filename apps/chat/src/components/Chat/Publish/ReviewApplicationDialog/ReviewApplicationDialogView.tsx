@@ -40,8 +40,6 @@ function ReviewApplicationDialogContent() {
       }
     : null;
 
-  //const { handleEdit } = useApplicationMenuActions(application);
-
   return (
     <>
       <div className="flex flex-col gap-2 overflow-auto px-3 py-4 text-sm md:p-6">
@@ -157,16 +155,6 @@ function ReviewApplicationDialogContent() {
         <ReviewQuickAppSection application={application} />
       </div>
       <div className="flex w-full items-center justify-end border-t border-tertiary px-3 py-4 md:px-5">
-        {/* <Tooltip tooltip={t('Edit')}>
-          <button
-            //disabled={isAppInDeployment}
-            onClick={handleEdit}
-            className="icon-button"
-            data-qa="application-edit"
-          >
-            <IconEdit size={24} />
-          </button>
-        </Tooltip> */}
         {controlsEntity && (
           <PublicationControls
             entity={controlsEntity}
