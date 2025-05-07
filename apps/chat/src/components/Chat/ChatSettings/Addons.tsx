@@ -1,11 +1,11 @@
 import { IconX } from '@tabler/icons-react';
-import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { DialAIEntityAddon } from '@/src/types/models';
+import { AddonsMap } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
@@ -114,7 +114,7 @@ const filterRecentAddons = (
   recentAddonsIds: string[],
   selectedAddonsIds: string[],
   preselectedAddonsIds: string[],
-  addonsMap: Partial<Record<string, DialAIEntityAddon>>,
+  addonsMap: AddonsMap,
 ) => {
   return recentAddonsIds.filter(
     (id) =>
