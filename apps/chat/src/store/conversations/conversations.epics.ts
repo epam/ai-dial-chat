@@ -99,7 +99,7 @@ import { ChatActions } from '@/src/store/chat/chat.reducer';
 import { FilesActions } from '@/src/store/files/files.reducers';
 import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
 import { ModelsActions } from '@/src/store/models/models.reducers';
-import { OverlaySelectors } from '@/src/store/overlay/overlay.reducers';
+import { OverlaySelectors } from '@/src/store/overlay/overlay.selectors';
 import { OverlayState } from '@/src/store/overlay/overlay.types';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';

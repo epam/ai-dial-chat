@@ -51,7 +51,8 @@ import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { AuthSelectors } from '../auth/auth.selectors';
 import { ModelsSelectors } from '../models/models.selectors';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
-import { OverlayActions, OverlaySelectors } from './overlay.reducers';
+import { OverlayActions } from './overlay.reducers';
+import { OverlaySelectors } from './overlay.selectors';
 
 import {
   ChatOverlayOptions,
