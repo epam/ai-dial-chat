@@ -46,6 +46,7 @@ export const ApplicationDetails = ({
   onBookmarkClick,
 }: Props) => {
   const dispatch = useAppDispatch();
+
   const router = useRouter();
 
   const searchParams = useSearchParams();

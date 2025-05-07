@@ -11,9 +11,10 @@ import { CodeAppExamples } from './CodeAppExamples';
 
 interface Props {
   sourcesFolderId: string | undefined;
+  disabled?: boolean;
 }
 
-export const FormCodeEditor = ({ sourcesFolderId }: Props) => {
+export const FormCodeEditor = ({ sourcesFolderId, disabled }: Props) => {
   const { setValue } = useFormContext<CodeData>();
 
   const files = useAppSelector(FilesSelectors.selectFiles);
@@ -40,9 +41,10 @@ export const FormCodeEditor = ({ sourcesFolderId }: Props) => {
 
   return (
     <>
-      <CodeAppExamples fileNames={rootFileNames} folderId={sourcesFolderId} />
-
-      <CodeEditor sourcesFolderId={sourcesFolderId} />
+      {!disabled && (
+        <CodeAppExamples fileNames={rootFileNames} folderId={sourcesFolderId} />
+      )}
+      <CodeEditor readOnly={disabled} sourcesFolderId={sourcesFolderId} />
     </>
   );
 };
