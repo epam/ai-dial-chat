@@ -54,7 +54,7 @@ export const AgentsTableLeftSideRow: React.FC<Props> = memo(
         <div className="flex h-full items-center gap-3 md:gap-4">
           <div className="flex items-center gap-2 md:gap-4">
             {(screenState === ScreenState.MD ||
-              screenState == ScreenState.SM) && (
+              screenState === ScreenState.SM) && (
               <AgentBookmark
                 entity={entity}
                 onBookmarkClick={onBookmarkClick}
