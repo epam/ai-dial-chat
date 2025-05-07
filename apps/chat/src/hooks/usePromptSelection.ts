@@ -18,10 +18,8 @@ import { Prompt } from '@/src/types/prompt';
 import { ChatActions } from '@/src/store/chat/chat.reducer';
 import { ChatSelectors } from '@/src/store/chat/chat.selectors';
 import { useAppSelector } from '@/src/store/hooks';
-import {
-  PromptsActions,
-  PromptsSelectors,
-} from '@/src/store/prompts/prompts.reducers';
+import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
+import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 
 import { useTokenizer } from './useTokenizer';

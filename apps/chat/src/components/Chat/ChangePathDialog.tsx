@@ -22,10 +22,8 @@ import { ConversationsActions } from '@/src/store/conversations/conversations.re
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  PromptsActions,
-  PromptsSelectors,
-} from '@/src/store/prompts/prompts.reducers';
+import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
+import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';

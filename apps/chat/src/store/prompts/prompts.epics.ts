@@ -52,7 +52,8 @@ import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-ui-settings';
 import { ChatActions } from '../chat/chat.reducer';
 import { PublicationActions } from '../publication/publication.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
-import { PromptsActions, PromptsSelectors } from './prompts.reducers';
+import { PromptsActions } from './prompts.reducers';
+import { PromptsSelectors } from './prompts.selectors';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';

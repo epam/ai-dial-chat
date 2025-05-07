@@ -60,6 +60,8 @@ import { AppAction, AppEpic } from '@/src/types/store';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { ModelsActions } from '@/src/store/models/models.reducers';
+import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
+import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
@@ -68,7 +70,6 @@ import { errorsMessages } from '@/src/constants/errors';
 import { AuthSelectors } from '../auth/auth.selectors';
 import { FilesActions } from '../files/files.reducers';
 import { ModelsSelectors } from '../models/models.selectors';
-import { PromptsActions, PromptsSelectors } from '../prompts/prompts.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import { PublicationActions } from './publication.reducers';
 import { PublicationSelectors } from './publication.selectors';

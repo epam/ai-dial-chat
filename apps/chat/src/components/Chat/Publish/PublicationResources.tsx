@@ -19,10 +19,8 @@ import { ConversationsSelectors } from '@/src/store/conversations/conversations.
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import {
-  PromptsActions,
-  PromptsSelectors,
-} from '@/src/store/prompts/prompts.reducers';
+import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
+import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { NA_VERSION } from '@/src/constants/public';
