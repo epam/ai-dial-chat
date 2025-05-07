@@ -371,6 +371,14 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
             ),
           );
 
+          if(!modelFromState) {
+            actions.push(
+              of(
+                ModelsActions.addModelToMap(application),
+              ),
+            );
+          }
+
           if (payload.isForSharing) {
             const permissionsFromState = ShareSelectors.selectSharePermissions(
               state$.value,

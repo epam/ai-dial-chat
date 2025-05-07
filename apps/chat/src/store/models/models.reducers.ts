@@ -91,7 +91,7 @@ export const modelsSlice = createSlice({
       state.status = UploadStatus.LOADED;
       state.error = undefined;
       state.models = payload.models;
-      state.modelsMap = addToModelsMap({}, ...payload.models);
+      state.modelsMap = addToModelsMap(state.modelsMap ?? {}, ...payload.models);
     },
     getModelsFail: (
       state,
