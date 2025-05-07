@@ -465,6 +465,28 @@ export const validatePreUploadFiles = (
   return { validFiles, errorMsg };
 };
 
+const getIncorrectNamesError = (names: string[]) => {
+  const isThereDotsAtTheEnd = names.some(doesHaveDotsInTheEnd);
+  const isThereNotAllowedSymbols = names.some(doesHaveNotAllowedSymbols);
+
+  if (isThereDotsAtTheEnd && isThereNotAllowedSymbols)
+    return translate(
+      'The symbols {{notAllowedSymbols}} and a dot at the end are not allowed in file name. Please rename or delete them from uploading files list: {{names}}',
+      { notAllowedSymbols, names },
+    );
+
+  if (isThereNotAllowedSymbols)
+    return translate(
+      'The symbols {{notAllowedSymbols}} are not allowed in file name. Please rename or delete them from uploading files list: {{names}}',
+      { notAllowedSymbols, names },
+    );
+
+  return translate(
+    'Using a dot at the end of a name is not permitted. Please rename or delete them from uploading files list: {{names}}',
+    { names },
+  );
+};
+
 export const validateUploadFiles = <T extends { name: string }>(
   files: T[],
 ): { validFiles: T[]; invalidFiles: T[]; errorMsg: string } => {
@@ -492,10 +514,7 @@ export const validateUploadFiles = <T extends { name: string }>(
     .map(([error, names]) => {
       switch (error as FileValidationErrors) {
         case FileValidationErrors.IncorrectName:
-          return translate(
-            'The symbols {{notAllowedSymbols}} and a dot at the end are not allowed in file name. Please rename or delete them from uploading files list: {{names}}',
-            { notAllowedSymbols, names },
-          );
+          return getIncorrectNamesError(names);
         default:
           return '';
       }
