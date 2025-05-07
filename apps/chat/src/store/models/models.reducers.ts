@@ -24,7 +24,7 @@ import { DeleteType } from '@/src/constants/marketplace';
 import * as ModelsSelectors from './models.selectors';
 import { ModelUpdatedValues, ModelsState } from './models.types';
 
-import { UploadStatus } from '@epam/ai-dial-shared';
+import { EntityPublicationInfo, UploadStatus } from '@epam/ai-dial-shared';
 import cloneDeep from 'lodash-es/cloneDeep';
 import uniq from 'lodash-es/uniq';
 
@@ -264,6 +264,34 @@ export const modelsSlice = createSlice({
       state.publishRequestModels = combineEntities(
         state.publishRequestModels,
         payload.models,
+      );
+    },
+    updateModelPublicationInfo: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        reference: string;
+        updatedValues: EntityPublicationInfo;
+      }>,
+    ) => {
+      const targetModel = state.publishRequestModels.find(
+        (m) => m.reference === payload.reference,
+      );
+
+      if (!targetModel) return state;
+
+      const updatedModel = {
+        ...targetModel,
+        publicationInfo: {
+          ...targetModel.publicationInfo,
+          ...payload.updatedValues,
+        },
+      };
+
+      state.publishRequestModels = combineEntities(
+        [updatedModel],
+        state.publishRequestModels,
       );
     },
     updateFunctionStatus: (
