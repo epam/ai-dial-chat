@@ -27,7 +27,7 @@ import { Translation } from '@/src/types/translation';
 import { AddonsSelectors } from '@/src/store/addons/addons.selectors';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';

@@ -13,7 +13,7 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { RootState } from '@/src/types/store';
 
 import { MarketplaceState } from '@/src/store/marketplace/marketplace.types';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
 
 import {
   ApplicationTypeToSourceType,

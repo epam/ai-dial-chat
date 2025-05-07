@@ -28,7 +28,7 @@ import {
   MigrationActions,
   MigrationSelectors,
 } from '@/src/store/migration/migration.reducers';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 

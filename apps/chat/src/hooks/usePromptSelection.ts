@@ -15,7 +15,6 @@ import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 
-import { PublicationSelectors } from '../store/publication/publication.reducers';
 import { ChatActions } from '@/src/store/chat/chat.reducer';
 import { ChatSelectors } from '@/src/store/chat/chat.selectors';
 import { useAppSelector } from '@/src/store/hooks';
@@ -23,6 +22,7 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 
 import { useTokenizer } from './useTokenizer';
 

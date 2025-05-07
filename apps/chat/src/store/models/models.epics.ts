@@ -47,7 +47,8 @@ import {
   SettingsSelectors,
 } from '../settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';
-import { ModelsActions, ModelsSelectors } from './models.reducers';
+import { ModelsActions } from './models.reducers';
+import { ModelsSelectors } from './models.selectors';
 
 import { Feature } from '@epam/ai-dial-shared';
 import uniqBy from 'lodash-es/uniqBy';

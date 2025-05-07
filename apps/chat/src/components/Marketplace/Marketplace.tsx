@@ -10,7 +10,7 @@ import { ScreenState } from '@/src/types/common';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
 import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { Routes } from '@/src/constants/routes';

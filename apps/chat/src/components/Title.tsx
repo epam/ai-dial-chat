@@ -7,7 +7,7 @@ import { getPageName } from '@/src/utils/app/route';
 
 import { Translation } from '@/src/types/translation';
 
-import { SettingsState } from '../store/settings/settings.types';
+import { SettingsState } from '@/src/store/settings/settings.types';
 
 export function Title({ settings }: { settings?: SettingsState }) {
   const router = useRouter();

@@ -44,10 +44,7 @@ import {
 } from '@/src/types/applications';
 import { AppAction, AppEpic } from '@/src/types/store';
 
-import {
-  ModelsActions,
-  ModelsSelectors,
-} from '@/src/store/models/models.reducers';
+import { ModelsActions } from '@/src/store/models/models.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { ShareSelectors } from '@/src/store/share/share.selectors';
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -66,6 +63,7 @@ import {
   ConversationsActions,
   ConversationsSelectors,
 } from '../conversations/conversations.reducers';
+import { ModelsSelectors } from '../models/models.selectors';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(

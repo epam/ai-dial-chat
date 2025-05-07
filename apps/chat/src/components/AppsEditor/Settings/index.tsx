@@ -31,6 +31,7 @@ import {
 } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
+import { ModelsActions } from '@/src/store/actions';
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import {
   CodeEditorActions,
@@ -41,10 +42,7 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  ModelsActions,
-  ModelsSelectors,
-} from '@/src/store/models/models.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 

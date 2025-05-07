@@ -18,10 +18,8 @@ import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSch
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
 import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
-import {
-  ModelsActions,
-  ModelsSelectors,
-} from '@/src/store/models/models.reducers';
+import { ModelsActions } from '@/src/store/models/models.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
 
 import {
   DeleteType,

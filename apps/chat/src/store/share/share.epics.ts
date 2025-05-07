@@ -55,10 +55,7 @@ import {
 import { AppAction, AppEpic } from '@/src/types/store';
 
 import { FilesSelectors } from '@/src/store/files/files.selectors';
-import {
-  ModelsActions,
-  ModelsSelectors,
-} from '@/src/store/models/models.reducers';
+import { ModelsActions } from '@/src/store/models/models.reducers';
 import { ModelUpdatedValues } from '@/src/store/models/models.types';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
@@ -76,6 +73,7 @@ import {
 } from '../conversations/conversations.reducers';
 import { FilesActions } from '../files/files.reducers';
 import { MarketplaceActions } from '../marketplace/marketplace.reducers';
+import { ModelsSelectors } from '../models/models.selectors';
 import { PromptsActions, PromptsSelectors } from '../prompts/prompts.reducers';
 import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';

@@ -17,7 +17,7 @@ import { ApplicationType } from '@/src/types/applications';
 import { ApplicationSelectors } from '@/src/store/application/application.reducers';
 import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { AppsEditorHeader } from '@/src/components/AppsEditor/AppsEditorHeader';

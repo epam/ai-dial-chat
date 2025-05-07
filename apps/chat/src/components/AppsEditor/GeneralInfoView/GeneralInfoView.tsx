@@ -11,7 +11,7 @@ import {
 import { DialAIEntityModel } from '@/src/types/models';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { GeneralInfoEditor } from './GeneralInfoEditor';

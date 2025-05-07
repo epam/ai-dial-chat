@@ -9,10 +9,7 @@ import { parseCommaSeparatedList } from '@/src/utils/app/common';
 import { EntityType, SortOrder } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
-import {
-  ModelsActions,
-  ModelsSelectors,
-} from '@/src/store/models/models.reducers';
+import { ModelsActions } from '@/src/store/models/models.reducers';
 
 import {
   ENTITY_TYPES,
@@ -24,6 +21,7 @@ import {
   ViewTypes,
 } from '@/src/constants/marketplace';
 
+import { ModelsSelectors } from '../models/models.selectors';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { MarketplaceActions } from './marketplace.reducers';
 import { MarketplaceSelectors } from './marketplace.selectors';

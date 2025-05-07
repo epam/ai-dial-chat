@@ -39,10 +39,7 @@ import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { FeatureType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
 
-import {
-  ModelsActions,
-  ModelsSelectors,
-} from '@/src/store/models/models.reducers';
+import { ModelsActions } from '@/src/store/models/models.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
@@ -52,6 +49,7 @@ import {
   ConversationsActions,
   ConversationsSelectors,
 } from '../conversations/conversations.reducers';
+import { ModelsSelectors } from '../models/models.selectors';
 import {
   SettingsActions,
   SettingsSelectors,

@@ -98,10 +98,7 @@ import { AddonsSelectors } from '@/src/store/addons/addons.selectors';
 import { ChatActions } from '@/src/store/chat/chat.reducer';
 import { FilesActions } from '@/src/store/files/files.reducers';
 import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
-import {
-  ModelsActions,
-  ModelsSelectors,
-} from '@/src/store/models/models.reducers';
+import { ModelsActions } from '@/src/store/models/models.reducers';
 import { OverlaySelectors } from '@/src/store/overlay/overlay.reducers';
 import { OverlayState } from '@/src/store/overlay/overlay.types';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
@@ -123,6 +120,7 @@ import { CONVERSATIONS_DATE_SECTIONS } from '@/src/constants/sections';
 import { SHARE_QUERY_PARAM } from '@/src/constants/share';
 
 import { MarketplaceSelectors } from '../marketplace/marketplace.selectors';
+import { ModelsSelectors } from '../models/models.selectors';
 import {
   ConversationsActions,
   ConversationsSelectors,
