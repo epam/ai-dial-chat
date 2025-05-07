@@ -33,6 +33,7 @@ import {
 import { encode } from '@/src/utils/app/application-type-schema';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
+import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { generateNextName } from '@/src/utils/app/folders';
 import {
   isApplicationId,
@@ -778,7 +779,6 @@ export const ApplicationEpics = combineEpics(
   getApplicationLogsEpic,
   enterEditModeEpic,
   exitEditModeEpic,
-  resetSelectedWidgetEpic,
   duplicateApplicationEpic,
   setSelectedWidgetEpic,
 );
