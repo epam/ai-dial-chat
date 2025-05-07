@@ -202,7 +202,7 @@ const UsedWidgets = () => {
     ApplicationSelectors.selectInitialized,
   );
 
-  const isModelsLoading = useAppSelector(
+  const areModelsLoading = useAppSelector(
     ModelsSelectors.selectAreModelsLoading,
   );
 
@@ -223,7 +223,7 @@ const UsedWidgets = () => {
   );
 
   const WidgetBarIcon = useMemo(() => {
-    if (isModelsLoading || !isApplicationsInitialised)
+    if (areModelsLoading || !isApplicationsInitialised)
       // eslint-disable-next-line react/display-name
       return ({ height }: TablerIconsProps) => (
         <Loader size={height as number} />
@@ -238,7 +238,7 @@ const UsedWidgets = () => {
           />
         )
       : IconBrowser;
-  }, [isApplicationsInitialised, isModelsLoading, selectedWidget]);
+  }, [isApplicationsInitialised, areModelsLoading, selectedWidget]);
 
   return (
     <>
