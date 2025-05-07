@@ -31,7 +31,7 @@ export const Marketplace = () => {
     UISelectors.selectShowMarketplaceFilterbar,
   );
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
-  const isLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
+  const isLoading = useAppSelector(ModelsSelectors.selectAreModelsLoading);
   const applyModelStatus = useAppSelector(
     MarketplaceSelectors.selectApplyModelStatus,
   );

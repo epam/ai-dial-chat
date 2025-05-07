@@ -12,7 +12,6 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
-  getApplicationType,
   getModelDescription,
   isApplicationStatusUpdating,
 } from '@/src/utils/app/application';
@@ -343,7 +342,6 @@ export const ModelList = ({
   const handleEdit = useCallback(
     (currentEntity: DialAIEntityModel) => {
       dispatch(ApplicationActions.get({ applicationId: currentEntity.id }));
-      getApplicationType(currentEntity);
     },
     [dispatch],
   );

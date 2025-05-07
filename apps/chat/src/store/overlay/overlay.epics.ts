@@ -657,7 +657,7 @@ const notifyHostAboutReadyEpic: AppEpic = (_action$, state$) =>
     map((state) => {
       return {
         isShouldLogin: AuthSelectors.selectIsShouldLogin(state),
-        isModelLoaded: ModelsSelectors.selectIsModelsLoaded(state),
+        isModelLoaded: ModelsSelectors.selectAreModelsLoaded(state),
       };
     }),
     filter(({ isModelLoaded, isShouldLogin }) => {
