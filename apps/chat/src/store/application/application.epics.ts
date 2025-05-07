@@ -371,12 +371,8 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
             ),
           );
 
-          if(!modelFromState) {
-            actions.push(
-              of(
-                ModelsActions.addModelToMap(application),
-              ),
-            );
+          if (!modelFromState) {
+            actions.push(of(ModelsActions.addModelToMap(application)));
           }
 
           if (payload.isForSharing) {
@@ -396,7 +392,7 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
           return concat(...actions);
         }),
         catchError(() => {
-          Router.push('/404');
+          Router.push(Routes.NotFound);
           return of(ApplicationActions.getFail());
         }),
       ),

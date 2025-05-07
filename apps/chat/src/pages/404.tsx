@@ -14,7 +14,9 @@ function Custom404() {
       <div className="space-y-2">
         <p className="text-xl font-bold md:text-2xl">{t('Page not found')}</p>
         <p className="text-base text-secondary">
-          {t("It seems like the page you're looking for doesn't exist.")}
+          {t(
+            "It seems like the page you're looking for doesn't exist or you don't have access.",
+          )}
         </p>
       </div>
 
