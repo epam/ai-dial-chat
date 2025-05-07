@@ -1,3 +1,4 @@
+import { Tags } from '@/src/ui/domData';
 import { IconSelectors } from '@/src/ui/selectors';
 import { PromptPreviewModal } from '@/src/ui/selectors/dialogSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
@@ -23,6 +24,8 @@ export class PromptPreviewModalWindow extends BaseElement {
   public promptExportButton = this.getChildElementBySelector(
     PromptPreviewModal.promptExportButton,
   );
+  public promptExportButtonIcon =
+    this.promptExportButton.getChildElementBySelector(Tags.svg);
   public editPromptButton = this.getChildElementBySelector(
     PromptPreviewModal.editPromptButton,
   );
