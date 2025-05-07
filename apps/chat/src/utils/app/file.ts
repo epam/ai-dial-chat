@@ -445,16 +445,17 @@ export const validatePreUploadFiles = (
 
   const errorMsg = Object.entries(byError)
     .map(([error, names]) => {
+      const fileNames = names.join(', ');
       switch (error as FileValidationErrors) {
         case FileValidationErrors.IncorrectSize:
           return translate(
-            "Max file size up to 512 Mb. Next files haven't been uploaded: {{names}}",
-            { names },
+            "Max file size up to 512 Mb. Next files haven't been uploaded: {{fileNames}}",
+            { fileNames },
           );
         case FileValidationErrors.IncorrectType:
           return translate(
-            "You're trying to upload files with incorrect type: {{names}}",
-            { names },
+            "You're trying to upload files with incorrect type: {{fileNames}}",
+            { fileNames },
           );
         default:
           return '';
@@ -468,22 +469,23 @@ export const validatePreUploadFiles = (
 const getIncorrectNamesError = (names: string[]) => {
   const isThereDotsAtTheEnd = names.some(doesHaveDotsInTheEnd);
   const isThereNotAllowedSymbols = names.some(doesHaveNotAllowedSymbols);
+  const fileNames = names.join(', ');
 
   if (isThereDotsAtTheEnd && isThereNotAllowedSymbols)
     return translate(
-      'The symbols {{notAllowedSymbols}} and a dot at the end are not allowed in file name. Please rename or delete them from uploading files list: {{names}}',
-      { notAllowedSymbols, names },
+      'The symbols {{notAllowedSymbols}} and a dot at the end are not allowed in file name. Please rename or delete them from uploading files list: {{fileNames}}',
+      { notAllowedSymbols, fileNames },
     );
 
   if (isThereNotAllowedSymbols)
     return translate(
-      'The symbols {{notAllowedSymbols}} are not allowed in file name. Please rename or delete them from uploading files list: {{names}}',
-      { notAllowedSymbols, names },
+      'The symbols {{notAllowedSymbols}} are not allowed in file name. Please rename or delete them from uploading files list: {{fileNames}}',
+      { notAllowedSymbols, fileNames },
     );
 
   return translate(
-    'Using a dot at the end of a name is not permitted. Please rename or delete them from uploading files list: {{names}}',
-    { names },
+    'Using a dot at the end of a name is not permitted. Please rename or delete them from uploading files list: {{fileNames}}',
+    { fileNames },
   );
 };
 
