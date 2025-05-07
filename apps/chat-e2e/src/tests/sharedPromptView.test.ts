@@ -6,8 +6,9 @@ import {
   ExpectedMessages,
   MenuOptions,
 } from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 
 dialSharedWithMeTest(
   'Shared with me. View prompt.\n' +
@@ -33,6 +34,9 @@ dialSharedWithMeTest(
     setTestIds('EPMRTC-2035', 'EPMRTC-3183', 'EPMRTC-3184');
     let prompt: Prompt;
     let shareByLinkResponse: ShareByLinkResponseModel;
+    const expectedColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.textAccentPrimary,
+    );
 
     await dialSharedWithMeTest.step('Prepare shared prompt', async () => {
       prompt = promptData.prepareDefaultPrompt();
@@ -85,7 +89,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserPromptPreviewModal.promptExportButton.hoverOver();
         await additionalShareUserSharedPromptPreviewModalAssertion.assertExportButtonColors(
-          Colors.controlsBackgroundAccent,
+          expectedColor,
         );
       },
     );
@@ -110,7 +114,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserPromptPreviewModal.promptDeleteButton.hoverOver();
         await additionalShareUserSharedPromptPreviewModalAssertion.assertDeleteButtonColors(
-          Colors.controlsBackgroundAccent,
+          expectedColor,
         );
       },
     );
