@@ -14,7 +14,7 @@ import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 
 import Loader from '../Common/Loader';
 import { ConversationCompareItem } from './ConversationCompareItem';

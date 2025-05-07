@@ -29,7 +29,7 @@ import { Prompt } from '@/src/types/prompt';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
 import { RootState } from '@/src/types/store';
 
-import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 
 import {
   DEFAULT_FOLDER_NAME,

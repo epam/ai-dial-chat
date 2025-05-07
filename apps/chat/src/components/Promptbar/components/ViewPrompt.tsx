@@ -14,7 +14,7 @@ import { ConversationsSelectors } from '@/src/store/conversations/conversations.
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 
 import { TemplateRenderer } from '@/src/components/Chat/ChatMessage/ChatMessageTemplatesModal/TemplateRenderer';
 import { PublicVersionSelector } from '@/src/components/Chat/Publish/PublicVersionSelector';

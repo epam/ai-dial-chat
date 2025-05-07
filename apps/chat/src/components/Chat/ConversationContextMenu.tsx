@@ -41,7 +41,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';

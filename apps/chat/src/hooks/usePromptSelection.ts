@@ -22,7 +22,7 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
-import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 
 import { useTokenizer } from './useTokenizer';
 

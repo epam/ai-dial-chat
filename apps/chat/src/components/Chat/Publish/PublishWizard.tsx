@@ -48,10 +48,8 @@ import { ApplicationSelectors } from '@/src/store/application/application.select
 import { AuthSelectors } from '@/src/store/auth/auth.selectors';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  PublicationActions,
-  PublicationSelectors,
-} from '@/src/store/publication/publication.reducers';
+import { PublicationActions } from '@/src/store/publication/publication.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { PUBLIC_URL_PREFIX } from '@/src/constants/public';

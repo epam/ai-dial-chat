@@ -35,10 +35,8 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
-import {
-  PublicationActions,
-  PublicationSelectors,
-} from '@/src/store/publication/publication.reducers';
+import { PublicationActions } from '@/src/store/publication/publication.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { PUBLIC_URL_PREFIX } from '@/src/constants/public';

@@ -18,10 +18,8 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  PublicationActions,
-  PublicationSelectors,
-} from '@/src/store/publication/publication.reducers';
+import { PublicationActions } from '@/src/store/publication/publication.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 
 import CaretIconComponent from '../../Common/CaretIconComponent';
 import CollapsibleSection from '../../Common/CollapsibleSection';

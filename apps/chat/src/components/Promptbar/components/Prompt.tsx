@@ -43,10 +43,8 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
-import {
-  PublicationActions,
-  PublicationSelectors,
-} from '@/src/store/publication/publication.reducers';
+import { PublicationActions } from '@/src/store/publication/publication.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 
 import { stopBubbling } from '@/src/constants/chat';
 

@@ -74,7 +74,6 @@ import { PromptsActions, PromptsSelectors } from '../prompts/prompts.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import {
   PublicationActions,
-  PublicationSelectors,
 } from './publication.reducers';
 
 import {
@@ -84,6 +83,7 @@ import {
   UploadStatus,
 } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
+import { PublicationSelectors } from './publication.selectors';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(

@@ -10,7 +10,7 @@ import { groupAllVersions } from '@/src/utils/app/common';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 
 import { stopBubbling } from '@/src/constants/chat';
 

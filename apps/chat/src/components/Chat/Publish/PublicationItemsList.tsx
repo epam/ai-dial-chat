@@ -19,10 +19,8 @@ import { Translation } from '@/src/types/translation';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
-import {
-  PublicationActions,
-  PublicationSelectors,
-} from '@/src/store/publication/publication.reducers';
+import { PublicationActions } from '@/src/store/publication/publication.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 
 import { ApplicationPublishItems } from '@/src/components/Chat/Publish/ApplicationPublishItems';
 import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
