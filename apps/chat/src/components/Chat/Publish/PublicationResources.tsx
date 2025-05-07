@@ -21,7 +21,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { NA_VERSION } from '@/src/constants/public';
 

@@ -62,6 +62,7 @@ import { ModelUpdatedValues } from '@/src/store/models/models.types';
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
@@ -75,7 +76,6 @@ import { CodeEditorActions } from '../codeEditor/codeEditor.reducer';
 import { FilesActions } from '../files/files.reducers';
 import { MarketplaceActions } from '../marketplace/marketplace.reducers';
 import { ModelsSelectors } from '../models/models.selectors';
-import { UIActions } from '../ui/ui.reducers';
 import { ShareActions } from './share.reducers';
 import { ShareSelectors } from './share.selectors';
 

@@ -4,7 +4,8 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import {
   DEFAULT_HEADER_ICON_SIZE,

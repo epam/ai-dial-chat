@@ -18,9 +18,9 @@ vi.mock('@/src/store/hooks', async () => {
   };
 });
 
-vi.mock('@/src/store/settings/settings.reducers', async () => {
+vi.mock('@/src/store/settings/settings.selectors', async () => {
   const actual: any = await vi.importActual(
-    '@/src/store/settings/settings.reducers',
+    '@/src/store/settings/settings.selectors',
   );
   return {
     ...actual,

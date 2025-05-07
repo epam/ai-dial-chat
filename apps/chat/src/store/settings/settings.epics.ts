@@ -26,6 +26,7 @@ import { ConversationsActions } from '@/src/store/conversations/conversations.re
 import { ModelsActions } from '@/src/store/models/models.reducers';
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -36,7 +37,6 @@ import { FilesActions } from '../files/files.reducers';
 import { MarketplaceActions } from '../marketplace/marketplace.reducers';
 import { MigrationActions } from '../migration/migration.reducers';
 import { PublicationActions } from '../publication/publication.reducers';
-import { UIActions } from '../ui/ui.reducers';
 import { SettingsActions } from './settings.reducers';
 import { SettingsSelectors } from './settings.selectors';
 

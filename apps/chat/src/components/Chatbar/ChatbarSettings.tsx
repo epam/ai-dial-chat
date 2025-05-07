@@ -23,7 +23,8 @@ import { ConversationsSelectors } from '@/src/store/conversations/conversations.
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { PINNED_CONVERSATIONS_SECTION_NAME } from '@/src/constants/sections';

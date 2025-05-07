@@ -50,7 +50,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { Routes } from '@/src/constants/routes';
 

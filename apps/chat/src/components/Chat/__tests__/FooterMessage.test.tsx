@@ -31,7 +31,7 @@ vi.mock('@/src/store/hooks', () => ({
   useAppDispatch: vi.fn((action) => action),
 }));
 
-vi.mock('@/src/store/settings/settings.reducers', () => ({
+vi.mock('@/src/store/settings/settings.selectors', () => ({
   SettingsSelectors: {
     selectFooterHtmlMessage: vi.fn(() => footerHtmlMessage),
     selectEnabledFeatures: vi.fn(() => footerEnabledFeatures),

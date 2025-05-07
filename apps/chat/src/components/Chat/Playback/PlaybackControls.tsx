@@ -24,7 +24,7 @@ import { ChatActions } from '@/src/store/chat/chat.reducer';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 

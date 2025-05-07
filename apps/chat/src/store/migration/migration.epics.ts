@@ -30,8 +30,8 @@ import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
-import { UIActions } from '../ui/ui.reducers';
 import { MigrationActions } from './migration.reducers';
 import { MigrationSelectors } from './migration.selectors';
 

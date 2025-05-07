@@ -14,7 +14,8 @@ import { Translation } from '@/src/types/translation';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { RECENT_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 

@@ -104,7 +104,8 @@ import { OverlayState } from '@/src/store/overlay/overlay.types';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { ShareActions } from '@/src/store/share/share.reducers';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { LOCAL_BUCKET } from '@/src/constants/chat';
 import {

@@ -10,6 +10,8 @@ import { EntityType, SortOrder } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
 import { ModelsActions } from '@/src/store/models/models.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import {
   ENTITY_TYPES,
@@ -22,7 +24,6 @@ import {
 } from '@/src/constants/marketplace';
 
 import { ModelsSelectors } from '../models/models.selectors';
-import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { MarketplaceActions } from './marketplace.reducers';
 import { MarketplaceSelectors } from './marketplace.selectors';
 import { MarketplaceState } from './marketplace.types';

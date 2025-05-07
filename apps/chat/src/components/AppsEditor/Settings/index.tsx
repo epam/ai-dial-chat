@@ -42,7 +42,8 @@ import { ConversationsSelectors } from '@/src/store/conversations/conversations.
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { DEFAULT_QUICK_APPS_SCHEMA_ID } from '@/src/constants/quick-apps';
 import { Routes } from '@/src/constants/routes';

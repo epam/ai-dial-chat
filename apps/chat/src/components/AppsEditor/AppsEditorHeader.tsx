@@ -24,7 +24,8 @@ import { ConversationsActions } from '@/src/store/conversations/conversations.re
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { MarketplaceTabs } from '@/src/constants/marketplace';

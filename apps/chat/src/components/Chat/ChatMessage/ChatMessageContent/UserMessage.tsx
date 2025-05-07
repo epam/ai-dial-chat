@@ -32,7 +32,7 @@ import { ConversationsSelectors } from '@/src/store/conversations/conversations.
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 

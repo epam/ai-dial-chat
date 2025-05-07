@@ -32,7 +32,8 @@ import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { ShareActions } from '@/src/store/share/share.reducers';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 import {

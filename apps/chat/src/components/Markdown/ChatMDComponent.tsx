@@ -13,7 +13,7 @@ import { ScreenState } from '@/src/types/common';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import {
   modelCursorSign,

@@ -14,7 +14,8 @@ import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { FooterMessage } from '@/src/components/Common/FooterMessage';

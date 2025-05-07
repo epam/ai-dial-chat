@@ -2,7 +2,8 @@ import { RefObject, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 interface ScrollToEntityProps {
   entityId: string;

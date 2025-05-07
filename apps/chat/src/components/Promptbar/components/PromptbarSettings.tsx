@@ -20,7 +20,8 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { PINNED_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 

@@ -45,12 +45,13 @@ import { ModelsActions } from '@/src/store/models/models.reducers';
 import { SettingsActions } from '@/src/store/settings/settings.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { ShareActions } from '@/src/store/share/share.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
 import { AuthSelectors } from '../auth/auth.selectors';
 import { ModelsSelectors } from '../models/models.selectors';
-import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { OverlayActions } from './overlay.reducers';
 import { OverlaySelectors } from './overlay.selectors';
 

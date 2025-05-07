@@ -13,7 +13,8 @@ import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers
 import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { ENTITY_TYPES, FilterTypes } from '@/src/constants/marketplace';
 

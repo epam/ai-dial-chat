@@ -83,6 +83,8 @@ import { ConversationsActions } from '@/src/store/conversations/conversations.re
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import {
   DEFAULT_CONVERSATION_NAME,
@@ -94,7 +96,6 @@ import { successMessages } from '@/src/constants/successMessages';
 import { ConversationsSelectors } from '../conversations/conversations.selectors';
 import { FilesActions } from '../files/files.reducers';
 import { MigrationActions } from '../migration/migration.reducers';
-import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { ImportExportActions } from './importExport.reducers';
 import { ImportExportSelectors } from './importExport.selectors';
 

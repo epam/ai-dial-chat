@@ -11,7 +11,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
 import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { Routes } from '@/src/constants/routes';
 

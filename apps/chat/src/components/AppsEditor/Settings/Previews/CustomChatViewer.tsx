@@ -8,7 +8,7 @@ import { ConversationsActions } from '@/src/store/conversations/conversations.re
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsActions } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { Routes } from '@/src/constants/routes';
 

@@ -30,7 +30,8 @@ import { errorsMessages } from '@/src/constants/errors';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 
-import { UIActions, UISelectors } from './ui.reducers';
+import { UIActions } from './ui.reducers';
+import { UISelectors } from './ui.selectors';
 
 import { Feature } from '@epam/ai-dial-shared';
 
