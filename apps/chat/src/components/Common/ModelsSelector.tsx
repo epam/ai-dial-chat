@@ -18,6 +18,8 @@ import { Combobox } from '@/src/components/Common/Combobox';
 import { DisableOverlay } from '@/src/components/Common/DisableOverlay';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 
+import Tooltip from './Tooltip';
+
 interface ModelSelectRowProps {
   item: DialAIEntityModel;
   isNotAllowed: boolean;
@@ -57,14 +59,16 @@ const ModelSelectRow = ({ item, isNotAllowed }: ModelSelectRowProps) => {
 
 interface ModelsSelectorProps {
   value: string;
-  onChange: (modelId: string) => void;
   disabled?: boolean;
+  tooltip?: string;
+  onChange: (modelId: string) => void;
 }
 
 export const ModelsSelector = memo(function ModelsSelector({
   value,
-  onChange,
   disabled,
+  tooltip,
+  onChange,
 }: ModelsSelectorProps) {
   const onlyModels = useAppSelector(ModelsSelectors.selectModelsOnly);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -72,31 +76,33 @@ export const ModelsSelector = memo(function ModelsSelector({
   const model = useMemo(() => modelsMap[value], [value, modelsMap]);
 
   return (
-    <div className="relative">
-      {disabled && <DisableOverlay />}
-      <Combobox
-        items={onlyModels}
-        initialSelectedItem={
-          model || {
-            name: value,
-            isDefault: false,
-            type: EntityType.Model,
-            id: value,
-            reference: value,
+    <Tooltip triggerClassName="w-full" tooltip={tooltip}>
+      <div className="relative">
+        {disabled && <DisableOverlay />}
+        <Combobox
+          items={onlyModels}
+          initialSelectedItem={
+            model || {
+              name: value,
+              isDefault: false,
+              type: EntityType.Model,
+              id: value,
+              reference: value,
+            }
           }
-        }
-        getItemLabel={(model: DialAIEntityModel) =>
-          getOpenAIEntityFullName(model)
-        }
-        getItemValue={(model: DialAIEntityModel) => model.id}
-        itemRow={({ item }) => (
-          <ModelSelectRow
-            item={item}
-            isNotAllowed={item.id === value && !model}
-          />
-        )}
-        onSelectItem={onChange}
-      />
-    </div>
+          getItemLabel={(model: DialAIEntityModel) =>
+            getOpenAIEntityFullName(model)
+          }
+          getItemValue={(model: DialAIEntityModel) => model.id}
+          itemRow={({ item }) => (
+            <ModelSelectRow
+              item={item}
+              isNotAllowed={item.id === value && !model}
+            />
+          )}
+          onSelectItem={onChange}
+        />
+      </div>
+    </Tooltip>
   );
 });

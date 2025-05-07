@@ -12,6 +12,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip } from '@/src/utils/app/application';
 import { castToString } from '@/src/utils/app/common';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import {
   ApplicationStatus,
@@ -33,7 +34,10 @@ import {
   CODEAPPS_REQUIRED_FILES,
   CONFIRM_SOURCE_FOLDER_VALUES,
 } from '@/src/constants/applications';
-import { CODE_APPS_ENDPOINTS } from '@/src/constants/code-apps';
+import {
+  CODE_APPS_ENDPOINTS,
+  PUBLIC_APP_TOOLTIP,
+} from '@/src/constants/code-apps';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
 
 import { FormCodeEditor } from '@/src/components/Common/ApplicationWizard/CodeAppView/FormCodeEditor';
@@ -140,7 +144,6 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
   const shouldSaveApplication = useAppSelector(
     ApplicationSelectors.selectShouldSaveApplication,
   );
-
   const exitAfterSave = useAppSelector(
     ApplicationSelectors.selectExitAfterSave,
   );
@@ -240,6 +243,8 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     t,
   ]);
 
+  const isAppPublic = isEntityIdPublic(oldApplication);
+
   return (
     <form
       onSubmit={submitWrapper(handleEdit)}
@@ -264,6 +269,8 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
               hideSuggestions
               itemHeightClassName="h-[31px]"
               error={errors.inputAttachmentTypes?.message}
+              disabled={isAppPublic}
+              tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
               {...getAttachmentTypeErrorHandlers(setError, clearErrors)}
             />
           )}
@@ -277,6 +284,8 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           control={control}
           name="maxInputAttachments"
           rules={validators['maxInputAttachments']}
+          disabled={isAppPublic}
+          tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
         />
 
         <FilesEditor
@@ -286,19 +295,25 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           label={t('Select folder with source files')}
           rules={validators['sources']}
           error={errors.sources?.message || errors.sourceFiles?.message}
-          disabled={isSharedWithMe}
+          disabled={isSharedWithMe || isAppPublic}
           tooltip={
-            isSharedWithMe ? getSharedTooltip('folder with source files') : ''
+            (isAppPublic && PUBLIC_APP_TOOLTIP) ||
+            (isSharedWithMe && getSharedTooltip('folder with source files')) ||
+            ''
           }
           confirmDialogValues={confirmSourceFolderValues}
         />
 
-        {sources && <FormCodeEditor sourcesFolderId={sources} />}
+        {sources && (
+          <FormCodeEditor disabled={isAppPublic} sourcesFolderId={sources} />
+        )}
 
         <RuntimeSelector
           control={control}
           name="runtime"
           label={t('Runtime version')}
+          disabled={isAppPublic}
+          tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
         />
 
         <MappingsForm
@@ -310,6 +325,8 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           keyOptions={endpointsKeyValidator}
           valueOptions={endpointsValueValidator}
           errors={errors.endpoints}
+          disabled={isAppPublic}
+          tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
         />
 
         <MappingsForm
@@ -320,6 +337,8 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           keyOptions={envKeysValidator}
           valueOptions={envValueValidator}
           errors={errors.env}
+          disabled={isAppPublic}
+          tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
         />
       </div>
     </form>
