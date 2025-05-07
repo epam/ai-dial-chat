@@ -3,10 +3,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { Conversation } from '@/src/types/chat';
 import { Prompt } from '@/src/types/prompt';
 
-import * as MigrationSelectors from './migration.selectors';
 import { MigrationState } from './migration.types';
-
-export { MigrationSelectors };
 
 const initialState: MigrationState = {
   initialized: false,

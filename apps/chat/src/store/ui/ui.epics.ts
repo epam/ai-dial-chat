@@ -24,11 +24,12 @@ import { FeatureType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
 import { ToastType } from '@/src/types/toasts';
 
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+
 import { errorsMessages } from '@/src/constants/errors';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { UIActions, UISelectors } from './ui.reducers';
 
 import { Feature } from '@epam/ai-dial-shared';

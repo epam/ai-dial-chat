@@ -7,7 +7,7 @@ import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 import { ScreenState } from '@/src/types/common';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { MigrationSelectors } from '@/src/store/migration/migration.reducers';
+import { MigrationSelectors } from '@/src/store/migration/migration.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { SettingsState } from '@/src/store/settings/settings.types';
 import { UISelectors } from '@/src/store/ui/ui.reducers';

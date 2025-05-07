@@ -54,11 +54,11 @@ import { RootState } from '@/src/types/store';
 
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import { ChatSelectors } from '../chat/chat.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { ConversationsState } from './conversations.types';
 
 import {

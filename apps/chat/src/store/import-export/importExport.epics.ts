@@ -83,6 +83,7 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import {
   DEFAULT_CONVERSATION_NAME,
@@ -98,7 +99,6 @@ import {
 import { getUniqueAttachments } from '../conversations/conversations.selectors';
 import { FilesActions } from '../files/files.reducers';
 import { MigrationActions } from '../migration/migration.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { ImportExportActions } from './importExport.reducers';
 import { ImportExportSelectors } from './importExport.selectors';

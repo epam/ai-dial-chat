@@ -36,22 +36,20 @@ import { DialAIEntityModel, InstalledModel } from '@/src/types/models';
 import { AppAction, AppEpic } from '@/src/types/store';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { SettingsActions } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { DeleteType } from '@/src/constants/marketplace';
 
 import { AuthSelectors } from '../auth/auth.selectors';
 import { MarketplaceActions } from '../marketplace/marketplace.reducers';
 import { PublicationActions } from '../publication/publication.reducers';
-import {
-  SettingsActions,
-} from '@/src/store/settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import { ModelsActions } from './models.reducers';
 import { ModelsSelectors } from './models.selectors';
 
 import { Feature } from '@epam/ai-dial-shared';
 import uniqBy from 'lodash-es/uniqBy';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(

@@ -21,6 +21,7 @@ import { DialAIEntityAddon } from '@/src/types/models';
 import { AppEpic } from '@/src/types/store';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+
 import { AddonsActions } from './addons.reducers';
 import { AddonsSelectors } from './addons.selectors';
 

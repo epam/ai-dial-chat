@@ -40,6 +40,8 @@ import { FeatureType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
 
 import { ModelsActions } from '@/src/store/models/models.reducers';
+import { SettingsActions } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { ShareActions } from '@/src/store/share/share.reducers';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
@@ -50,9 +52,6 @@ import {
   ConversationsSelectors,
 } from '../conversations/conversations.reducers';
 import { ModelsSelectors } from '../models/models.selectors';
-import {
-  SettingsActions,
-} from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { OverlayActions, OverlaySelectors } from './overlay.reducers';
 
@@ -77,7 +76,6 @@ import {
 } from '@epam/ai-dial-shared';
 import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 export const postMessageMapperEpic: AppEpic = (_, state$) =>
   typeof window === 'object'

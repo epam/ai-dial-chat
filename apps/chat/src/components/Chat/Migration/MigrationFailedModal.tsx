@@ -24,10 +24,8 @@ import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
-import {
-  MigrationActions,
-  MigrationSelectors,
-} from '@/src/store/migration/migration.reducers';
+import { MigrationActions } from '@/src/store/migration/migration.reducers';
+import { MigrationSelectors } from '@/src/store/migration/migration.selectors';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { UIActions } from '@/src/store/ui/ui.reducers';

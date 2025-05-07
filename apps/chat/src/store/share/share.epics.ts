@@ -57,6 +57,7 @@ import { AppAction, AppEpic } from '@/src/types/store';
 import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { ModelsActions } from '@/src/store/models/models.reducers';
 import { ModelUpdatedValues } from '@/src/store/models/models.types';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
@@ -75,7 +76,6 @@ import { FilesActions } from '../files/files.reducers';
 import { MarketplaceActions } from '../marketplace/marketplace.reducers';
 import { ModelsSelectors } from '../models/models.selectors';
 import { PromptsActions, PromptsSelectors } from '../prompts/prompts.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { UIActions } from '../ui/ui.reducers';
 import { ShareActions } from './share.reducers';
 import { ShareSelectors } from './share.selectors';
