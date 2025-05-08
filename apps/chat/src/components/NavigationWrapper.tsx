@@ -11,23 +11,19 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
-import { useWidgets } from '../hooks/useWidgets';
 import { useTranslation } from '@/src/hooks/useTranslation';
+import { useWidgets } from '@/src/hooks/useWidgets';
 
 import { Translation } from '@/src/types/translation';
 
-import { ModelsSelectors } from '../store/models/models.reducers';
-import { ApplicationSelectors } from '@/src/store/application/application.reducers';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ApplicationSelectors } from '@/src/store/application/application.selectors';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  MarketplaceActions,
-  MarketplaceSelectors,
-} from '@/src/store/marketplace/marketplace.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
+import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '../constants/default-ui-settings';
 import { MarketplaceTabs } from '@/src/constants/marketplace';

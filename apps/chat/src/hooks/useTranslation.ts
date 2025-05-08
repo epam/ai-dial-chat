@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 
 import { useTranslation as useNextTranslation } from 'next-i18next';
 
-import { Translation, TranslationOptions } from '../types/translation';
+import { Translation, TranslationOptions } from '@/src/types/translation';
 
 export const useTranslation = (translationNamespace: Translation) => {
   const { t } = useNextTranslation(translationNamespace);

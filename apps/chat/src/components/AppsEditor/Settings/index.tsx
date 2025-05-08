@@ -31,22 +31,19 @@ import {
 } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
+import { ModelsActions } from '@/src/store/actions';
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import {
   CodeEditorActions,
   CodeEditorSelectors,
 } from '@/src/store/codeEditor/codeEditor.reducer';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  ModelsActions,
-  ModelsSelectors,
-} from '@/src/store/models/models.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { DEFAULT_QUICK_APPS_SCHEMA_ID } from '@/src/constants/quick-apps';
 import { Routes } from '@/src/constants/routes';

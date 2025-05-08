@@ -40,19 +40,17 @@ import {
 import { EntityType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
-import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
+import { AddonsSelectors } from '@/src/store/addons/addons.selectors';
+import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.selectors';
 import { ChatActions } from '@/src/store/chat/chat.reducer';
 import { ChatSelectors } from '@/src/store/chat/chat.selectors';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { Routes } from '@/src/constants/routes';
 

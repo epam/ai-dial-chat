@@ -39,21 +39,21 @@ import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { FeatureType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
 
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { ModelsActions } from '@/src/store/models/models.reducers';
+import { SettingsActions } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { ShareActions } from '@/src/store/share/share.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
+
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
 import { AuthSelectors } from '../auth/auth.selectors';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '../conversations/conversations.reducers';
-import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
-import {
-  SettingsActions,
-  SettingsSelectors,
-} from '../settings/settings.reducers';
-import { ShareActions } from '../share/share.reducers';
-import { UIActions, UISelectors } from '../ui/ui.reducers';
-import { OverlayActions, OverlaySelectors } from './overlay.reducers';
+import { ModelsSelectors } from '../models/models.selectors';
+import { OverlayActions } from './overlay.reducers';
+import { OverlaySelectors } from './overlay.selectors';
 
 import {
   ChatOverlayOptions,

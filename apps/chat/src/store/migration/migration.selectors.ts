@@ -6,7 +6,7 @@ import { MigrationState } from './migration.types';
 
 const rootSelector = (state: RootState): MigrationState => state.migration;
 
-export const selectConversationsToMigrateAndMigratedCount = createSelector(
+const selectConversationsToMigrateAndMigratedCount = createSelector(
   [rootSelector],
   (state) => ({
     conversationsToMigrateCount: state.conversationsToMigrateCount,
@@ -14,13 +14,13 @@ export const selectConversationsToMigrateAndMigratedCount = createSelector(
   }),
 );
 
-export const selectFailedMigratedConversations = (state: RootState) =>
+const selectFailedMigratedConversations = (state: RootState) =>
   rootSelector(state).failedMigratedConversations;
 
-export const selectIsChatsBackedUp = (state: RootState) =>
+const selectIsChatsBackedUp = (state: RootState) =>
   rootSelector(state).isChatsBackedUp;
 
-export const selectPromptsToMigrateAndMigratedCount = createSelector(
+const selectPromptsToMigrateAndMigratedCount = createSelector(
   [rootSelector],
   (state) => ({
     promptsToMigrateCount: state.promptsToMigrateCount,
@@ -28,11 +28,20 @@ export const selectPromptsToMigrateAndMigratedCount = createSelector(
   }),
 );
 
-export const selectFailedMigratedPrompts = (state: RootState) =>
+const selectFailedMigratedPrompts = (state: RootState) =>
   rootSelector(state).failedMigratedPrompts;
 
-export const selectIsPromptsBackedUp = (state: RootState) =>
+const selectIsPromptsBackedUp = (state: RootState) =>
   rootSelector(state).isPromptsBackedUp;
 
-export const selectInitialized = (state: RootState) =>
-  rootSelector(state).initialized;
+const selectInitialized = (state: RootState) => rootSelector(state).initialized;
+
+export const MigrationSelectors = {
+  selectConversationsToMigrateAndMigratedCount,
+  selectFailedMigratedConversations,
+  selectIsChatsBackedUp,
+  selectPromptsToMigrateAndMigratedCount,
+  selectFailedMigratedPrompts,
+  selectIsPromptsBackedUp,
+  selectInitialized,
+};

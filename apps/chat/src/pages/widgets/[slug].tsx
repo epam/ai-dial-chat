@@ -7,7 +7,7 @@ import { useResetSelectedWidget } from '@/src/hooks/useWidgets';
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
 
 import { Routes } from '@/src/constants/routes';
 
