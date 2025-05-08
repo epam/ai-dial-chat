@@ -20,10 +20,6 @@ export function Title({ settings }: { settings?: SettingsState }) {
         {[settings?.appName, pageName].filter(Boolean).join(' : ')}
       </title>
       <meta name="description" content={t('ChatGPT but better.')} />
-      <meta
-        name="viewport"
-        content="height=device-height ,width=device-width, initial-scale=1, user-scalable=no"
-      />
     </Head>
   );
 }
