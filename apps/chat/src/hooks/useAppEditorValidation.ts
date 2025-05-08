@@ -6,11 +6,11 @@ import { isMyApplication } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
-import { ApplicationActions } from '../store/application/application.reducers';
-import { ApplicationSelectors } from '../store/application/application.selectors';
-import { AuthSelectors } from '../store/auth/auth.selectors';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { ModelsSelectors } from '../store/models/models.reducers';
+import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { ApplicationSelectors } from '@/src/store/application/application.selectors';
+import { AuthSelectors } from '@/src/store/auth/auth.selectors';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
 
 import { Routes } from '../constants/routes';
 

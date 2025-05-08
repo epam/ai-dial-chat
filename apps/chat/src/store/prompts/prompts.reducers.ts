@@ -18,13 +18,11 @@ import { SearchFilters } from '@/src/types/search';
 import '@/src/types/share';
 import { RootState } from '@/src/types/store';
 
-import * as PromptsSelectors from './prompts.selectors';
+import { PromptsSelectors } from './prompts.selectors';
 import { PromptsState } from './prompts.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import xor from 'lodash-es/xor';
-
-export { PromptsSelectors };
 
 const initialState: PromptsState = {
   initialized: false,

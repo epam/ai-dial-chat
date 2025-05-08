@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.selectors';
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
 
 import { CustomChatViewer } from '@/src/components/AppsEditor/Settings/Previews/CustomChatViewer';
 

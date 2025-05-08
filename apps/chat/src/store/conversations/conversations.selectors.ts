@@ -5,7 +5,7 @@ import {
   isEntityNameInvalid,
   isSearchFilterMatched,
   isSectionFilterMatched,
-  isVersionFilterMatched
+  isVersionFilterMatched,
 } from '@/src/utils/app/common';
 import {
   isPlaybackConversation,
@@ -51,13 +51,13 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
 import { RootState } from '@/src/types/store';
 
-import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import { ChatSelectors } from '../chat/chat.selectors';
-import { ModelsSelectors } from '../models/models.reducers';
-import { SettingsSelectors } from '../settings/settings.reducers';
 import { ConversationsState } from './conversations.types';
 
 import {
@@ -127,8 +127,7 @@ const selectFilteredConversations = (
     },
   );
 
-const selectFolders = (state: RootState) =>
-  rootSelector(state).folders || [];
+const selectFolders = (state: RootState) => rootSelector(state).folders || [];
 
 const selectFolderById = createSelector(
   [selectFolders, (_state, id: string) => id],
@@ -702,8 +701,7 @@ const selectChosenFolderIds = (itemsShouldBeChosen: ShareEntity[]) =>
 const selectIsNewConversationUpdating = (state: RootState) =>
   rootSelector(state).isNewConversationUpdating;
 
-const selectInitialized = (state: RootState) =>
-  rootSelector(state).initialized;
+const selectInitialized = (state: RootState) => rootSelector(state).initialized;
 
 const selectRenamingConversationId = (state: RootState) =>
   rootSelector(state).renamingConversationId;

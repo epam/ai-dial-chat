@@ -29,9 +29,11 @@ import { Conversation } from '@/src/types/chat';
 import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
 
-import { SettingsSelectors } from '../settings/settings.reducers';
-import { UIActions } from '../ui/ui.reducers';
-import { MigrationActions, MigrationSelectors } from './migration.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+
+import { MigrationActions } from './migration.reducers';
+import { MigrationSelectors } from './migration.selectors';
 
 import orderBy from 'lodash-es/orderBy';
 

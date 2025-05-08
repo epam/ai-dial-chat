@@ -10,7 +10,6 @@ import { ModalState } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
 import { ShareRelations } from '@/src/types/share';
 
-import * as ShareSelectors from './share.selectors';
 import { ShareState } from './share.types';
 
 import {
@@ -20,7 +19,6 @@ import {
   UploadStatus,
 } from '@epam/ai-dial-shared';
 
-export { ShareSelectors };
 export type { ShareState };
 
 const initialState: ShareState = {

@@ -3,23 +3,22 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { useRouter } from 'next/router';
 
-import { useRouteHistory } from '../hooks/useRouteHistory';
+import { useRouteHistory } from '@/src/hooks/useRouteHistory';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getPageType } from '../utils/app/route';
+import { getPageType } from '@/src/utils/app/route';
 import { AuthWindowLocationLike } from '@/src/utils/auth/auth-window-location-like';
 import { delay } from '@/src/utils/auth/delay';
 import { timeoutAsync } from '@/src/utils/auth/timeout-async';
 
-import { Translation } from '../types/translation';
+import { Translation } from '@/src/types/translation';
 
-import { AuthActions, AuthSelectors } from '../store/auth/auth.reducers';
-import { MarketplaceSelectors } from '../store/marketplace/marketplace.reducers';
+import { AuthActions } from '@/src/store/auth/auth.reducers';
+import { AuthSelectors } from '@/src/store/auth/auth.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  SettingsActions,
-  SettingsSelectors,
-} from '@/src/store/settings/settings.reducers';
+import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
+import { SettingsActions } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { SettingsState } from '@/src/store/settings/settings.types';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 

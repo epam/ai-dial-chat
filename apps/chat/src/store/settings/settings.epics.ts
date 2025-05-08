@@ -22,22 +22,23 @@ import { PageType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ModelsActions } from '@/src/store/models/models.reducers';
+import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { errorsMessages } from '@/src/constants/errors';
 
 import { AddonsActions } from '../addons/addons.reducers';
 import { ApplicationTypesSchemasActions } from '../applicationTypeSchemas/applicationTypeSchemas.reducers';
-import { AuthSelectors } from '../auth/auth.reducers';
-import { ConversationsActions } from '../conversations/conversations.reducers';
+import { AuthSelectors } from '../auth/auth.selectors';
 import { FilesActions } from '../files/files.reducers';
 import { MarketplaceActions } from '../marketplace/marketplace.reducers';
 import { MigrationActions } from '../migration/migration.reducers';
-import { ModelsActions } from '../models/models.reducers';
-import { PromptsActions } from '../prompts/prompts.reducers';
 import { PublicationActions } from '../publication/publication.reducers';
-import { ShareActions } from '../share/share.reducers';
-import { UIActions } from '../ui/ui.reducers';
-import { SettingsActions, SettingsSelectors } from './settings.reducers';
+import { SettingsActions } from './settings.reducers';
+import { SettingsSelectors } from './settings.selectors';
 
 const getInitActions = (page?: PageType): Observable<AppAction>[] => {
   switch (page) {

@@ -7,7 +7,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 

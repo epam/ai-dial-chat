@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 
-import { isRootId } from '../utils/app/id';
+import { isRootId } from '@/src/utils/app/id';
 
-import { DialFile } from '../types/files';
-import { FolderInterface } from '../types/folder';
-import { PromptInfo } from '../types/prompt';
-import { PublicationResource } from '../types/publication';
+import { DialFile } from '@/src/types/files';
+import { FolderInterface } from '@/src/types/folder';
+import { PromptInfo } from '@/src/types/prompt';
+import { PublicationResource } from '@/src/types/publication';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
 import minBy from 'lodash-es/minBy';
