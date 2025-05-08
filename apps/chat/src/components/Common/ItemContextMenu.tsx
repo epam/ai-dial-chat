@@ -35,11 +35,11 @@ import { FolderInterface } from '@/src/types/folder';
 import { ContextMenuProps, DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
-import { FilesSelectors } from '@/src/store/files/files.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { FilesSelectors } from '@/src/store/files/files.selectors';
+import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { useAppSelector } from '@/src/store/hooks';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import ContextMenu from './ContextMenu';
 

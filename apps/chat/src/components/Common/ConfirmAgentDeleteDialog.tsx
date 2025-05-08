@@ -9,10 +9,8 @@ import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions, ModelsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  MarketplaceActions,
-  MarketplaceSelectors,
-} from '@/src/store/marketplace/marketplace.reducers';
+import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
+import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
 
 import { DeleteType } from '@/src/constants/marketplace';
 

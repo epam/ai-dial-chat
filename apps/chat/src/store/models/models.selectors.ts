@@ -20,23 +20,22 @@ const rootSelector = (state: RootState): ModelsState => state.models;
 
 const selectModelStatus = (state: RootState) => rootSelector(state).status;
 
-export const selectAreModelsLoading = (state: RootState) =>
+const selectAreModelsLoading = (state: RootState) =>
   selectModelStatus(state) === UploadStatus.LOADING ||
   selectModelStatus(state) === UploadStatus.UNINITIALIZED;
 
-export const selectAreModelsLoaded = (state: RootState) =>
+const selectAreModelsLoaded = (state: RootState) =>
   rootSelector(state).status === UploadStatus.LOADED;
 
-export const selectIsInstalledModelsInitialized = (state: RootState) =>
+const selectIsInstalledModelsInitialized = (state: RootState) =>
   rootSelector(state).isInstalledModelsInitialized;
 
-export const selectModelsError = (state: RootState) =>
-  rootSelector(state).error;
+const selectModelsError = (state: RootState) => rootSelector(state).error;
 
-export const selectIsRecentModelsLoaded = (state: RootState) =>
+const selectIsRecentModelsLoaded = (state: RootState) =>
   rootSelector(state).recentModelsStatus === UploadStatus.LOADED;
 
-export const selectModels = createSelector([rootSelector], (state) => {
+const selectModels = createSelector([rootSelector], (state) => {
   const sortedResponse = sortBy(state.models, (model) =>
     model.name.toLowerCase(),
   );
@@ -52,47 +51,46 @@ export const selectModels = createSelector([rootSelector], (state) => {
   return sortedAgents;
 });
 
-export const selectModelTopics = createSelector([rootSelector], (state) => {
+const selectModelTopics = createSelector([rootSelector], (state) => {
   return sortBy(
     uniq(state.models?.flatMap((model) => model.topics ?? []) ?? []),
     (topic) => topic.toLowerCase(),
   );
 });
 
-export const selectModelsMap = (state: RootState) =>
-  rootSelector(state).modelsMap;
+const selectModelsMap = (state: RootState) => rootSelector(state).modelsMap;
 
-export const selectRecentModelsIds = (state: RootState) =>
+const selectRecentModelsIds = (state: RootState) =>
   rootSelector(state).recentModelsIds;
 
-export const selectRecentModels = createSelector(
+const selectRecentModels = createSelector(
   [selectRecentModelsIds, selectModelsMap],
   (recentModelsIds, modelsMap) => {
     return recentModelsIds.map((id) => modelsMap[id]).filter(Boolean);
   },
 );
 
-export const selectModelsOnly = createSelector([selectModels], (models) => {
+const selectModelsOnly = createSelector([selectModels], (models) => {
   return models.filter((model) => model.type === EntityType.Model);
 });
 
-export const selectPublishRequestModels = (state: RootState) =>
+const selectPublishRequestModels = (state: RootState) =>
   rootSelector(state).publishRequestModels;
 
-export const selectPublishedApplicationIds = (state: RootState) =>
+const selectPublishedApplicationIds = (state: RootState) =>
   rootSelector(state).publishedApplicationIds;
 
-export const selectInstalledModels = (state: RootState) =>
+const selectInstalledModels = (state: RootState) =>
   rootSelector(state).installedModels;
 
-export const selectInstalledModelIds = createSelector(
+const selectInstalledModelIds = createSelector(
   [selectInstalledModels],
   (installedModels) => {
     return new Set(installedModels.map(({ id }) => id));
   },
 );
 
-export const selectRecentWithInstalledModelsIds = createSelector(
+const selectRecentWithInstalledModelsIds = createSelector(
   [selectRecentModelsIds, selectInstalledModelIds],
   (recentModelIds, installedModelIds) => {
     // TODO: implement Pin-behavior in future
@@ -103,36 +101,30 @@ export const selectRecentWithInstalledModelsIds = createSelector(
   },
 );
 
-export const selectInitialized = (state: RootState) =>
-  rootSelector(state).initialized;
+const selectInitialized = (state: RootState) => rootSelector(state).initialized;
 
-export const selectCustomModels = createSelector([rootSelector], (state) => {
+const selectCustomModels = createSelector([rootSelector], (state) => {
   return state.models.filter((model) => model.reference !== model.id);
 });
 
-export const selectSharedWithMeModels = createSelector(
+const selectSharedWithMeModels = createSelector(
   [selectCustomModels],
   (customModels) => {
     return customModels.filter((model) => model.sharedWithMe);
   },
 );
 
-export const selectSharedWriteModels = createSelector(
+const selectSharedWriteModels = createSelector(
   [selectCustomModels],
   (customModels) => {
     return customModels.filter((model) => canWriteSharedWithMe(model));
   },
 );
 
-export const selectModelById = (
-  state: RootState,
-  modelId: string | undefined,
-) => (modelId ? selectModelsMap(state)[modelId] : undefined);
+const selectModelById = (state: RootState, modelId: string | undefined) =>
+  modelId ? selectModelsMap(state)[modelId] : undefined;
 
-export const selectAllGroupModelKeySet = (
-  state: RootState,
-  references: string[],
-) => {
+const selectAllGroupModelKeySet = (state: RootState, references: string[]) => {
   const modelsMap = selectModelsMap(state);
   return new Set(
     references
@@ -140,4 +132,29 @@ export const selectAllGroupModelKeySet = (
       .filter(Boolean)
       .map((model) => getGroupModelKey(model!)),
   );
+};
+
+export const ModelsSelectors = {
+  selectModels,
+  selectModelsMap,
+  selectModelById,
+  selectModelsError,
+  selectAreModelsLoading,
+  selectAreModelsLoaded,
+  selectIsInstalledModelsInitialized,
+  selectRecentModels,
+  selectRecentModelsIds,
+  selectModelsOnly,
+  selectPublishRequestModels,
+  selectPublishedApplicationIds,
+  selectInstalledModels,
+  selectInstalledModelIds,
+  selectRecentWithInstalledModelsIds,
+  selectModelTopics,
+  selectInitialized,
+  selectCustomModels,
+  selectSharedWithMeModels,
+  selectSharedWriteModels,
+  selectAllGroupModelKeySet,
+  selectIsRecentModelsLoaded,
 };

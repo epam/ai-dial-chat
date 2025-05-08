@@ -6,7 +6,8 @@ import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ShareActions, ShareSelectors } from '@/src/store/share/share.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
+import { ShareSelectors } from '@/src/store/share/share.selectors';
 
 import { ConfirmDialog } from './ConfirmDialog';
 import { withRenderWhen } from './RenderWhen';

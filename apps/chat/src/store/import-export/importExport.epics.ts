@@ -79,10 +79,12 @@ import { Prompt } from '@/src/types/prompt';
 import { AppAction, AppEpic } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
-import {
-  PromptsActions,
-  PromptsSelectors,
-} from '@/src/store/prompts/prompts.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
+import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import {
   DEFAULT_CONVERSATION_NAME,
@@ -91,15 +93,9 @@ import {
 import { errorsMessages } from '@/src/constants/errors';
 import { successMessages } from '@/src/constants/successMessages';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '../conversations/conversations.reducers';
-import { getUniqueAttachments } from '../conversations/conversations.selectors';
+import { ConversationsSelectors } from '../conversations/conversations.selectors';
 import { FilesActions } from '../files/files.reducers';
 import { MigrationActions } from '../migration/migration.reducers';
-import { SettingsSelectors } from '../settings/settings.reducers';
-import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { ImportExportActions } from './importExport.reducers';
 import { ImportExportSelectors } from './importExport.selectors';
 
@@ -995,7 +991,7 @@ const importZipEpic: AppEpic = (action$) =>
                 );
               }
 
-              const attachments = getUniqueAttachments(
+              const attachments = ConversationsSelectors.getUniqueAttachments(
                 getConversationAttachmentWithPath(
                   cleanConversations[0],
                   cleanFolders,

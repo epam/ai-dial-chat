@@ -96,6 +96,4 @@ export const addonsSlice = createSlice({
   },
 });
 
-export { AddonsSelectors } from './addons.selectors';
-
 export const AddonsActions = addonsSlice.actions;

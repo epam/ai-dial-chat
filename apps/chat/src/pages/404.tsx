@@ -1,8 +1,8 @@
 import { IconPlus } from '@tabler/icons-react';
 
-import { useTranslation } from '../hooks/useTranslation';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { Translation } from '../types/translation';
+import { Translation } from '@/src/types/translation';
 
 import { Title } from '../components/Title';
 

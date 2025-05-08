@@ -241,8 +241,6 @@ export const applicationSlice = createSlice({
   },
 });
 
-export { ApplicationSelectors } from './application.selectors';
-
 export const ApplicationActions = applicationSlice.actions;
 
 export default applicationSlice.reducer;

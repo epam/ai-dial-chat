@@ -21,6 +21,4 @@ export const authSlice = createSlice({
   },
 });
 
-export { AuthSelectors } from './auth.selectors';
-
 export const AuthActions = authSlice.actions;

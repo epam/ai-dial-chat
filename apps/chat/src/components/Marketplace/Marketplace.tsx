@@ -8,12 +8,10 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 import { ScreenState } from '@/src/types/common';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  MarketplaceActions,
-  MarketplaceSelectors,
-} from '@/src/store/marketplace/marketplace.reducers';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
+import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { Routes } from '@/src/constants/routes';
 

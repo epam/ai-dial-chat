@@ -11,7 +11,7 @@ import { ModalState } from '@/src/types/modal';
 import { DialAIEntity } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
+import { AddonsSelectors } from '@/src/store/addons/addons.selectors';
 import { useAppSelector } from '@/src/store/hooks';
 
 import { OUTSIDE_PRESS } from '@/src/constants/modal';
