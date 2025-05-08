@@ -20,8 +20,9 @@ import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { ShareActions, ShareSelectors } from '@/src/store/share/share.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { ShareActions } from '@/src/store/share/share.reducers';
+import { ShareSelectors } from '@/src/store/share/share.selectors';
 
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 

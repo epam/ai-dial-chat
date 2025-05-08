@@ -7,53 +7,66 @@ import { ShareState } from './share.types';
 
 const rootSelector = (state: RootState): ShareState => state.share;
 
-export const selectInvitationId = (state: RootState) =>
+const selectInvitationId = (state: RootState) =>
   rootSelector(state).invitationId;
 
-export const selectWriteInvitationId = (state: RootState) =>
+const selectWriteInvitationId = (state: RootState) =>
   rootSelector(state).writeInvitationId;
 
-export const selectShareModalState = (state: RootState) =>
+const selectShareModalState = (state: RootState) =>
   rootSelector(state).shareModalState;
 
-export const selectShareModalOpened = (state: RootState) =>
+const selectShareModalOpened = (state: RootState) =>
   rootSelector(state).shareModalState !== ModalState.CLOSED;
 
-export const selectShareResourceId = (state: RootState) =>
+const selectShareResourceId = (state: RootState) =>
   rootSelector(state).shareResourceId;
 
-export const selectShareResourceName = (state: RootState) =>
+const selectShareResourceName = (state: RootState) =>
   rootSelector(state).shareResourceName;
 
-export const selectShareFeatureType = (state: RootState) =>
+const selectShareFeatureType = (state: RootState) =>
   rootSelector(state).shareFeatureType;
 
-export const selectShareIsFolder = (state: RootState) =>
+const selectShareIsFolder = (state: RootState) =>
   rootSelector(state).shareIsFolder;
 
-export const selectAcceptedEntityInfo = createSelector(
-  [rootSelector],
-  (state) => {
-    return {
-      acceptedId: state.acceptedId,
-      isFolderAccepted: state.isFolderAccepted,
-      isConversation: state.isConversation,
-      isPrompt: state.isPrompt,
-    };
-  },
-);
+const selectAcceptedEntityInfo = createSelector([rootSelector], (state) => {
+  return {
+    acceptedId: state.acceptedId,
+    isFolderAccepted: state.isFolderAccepted,
+    isConversation: state.isConversation,
+    isPrompt: state.isPrompt,
+  };
+});
 
-export const selectInitialized = (state: RootState) =>
-  rootSelector(state).initialized;
+const selectInitialized = (state: RootState) => rootSelector(state).initialized;
 
-export const selectSharePermissions = (state: RootState) =>
+const selectSharePermissions = (state: RootState) =>
   rootSelector(state).sharePermissions;
 
-export const selectUnshareModel = (state: RootState) =>
+const selectUnshareModel = (state: RootState) =>
   rootSelector(state).unshareEntity;
 
-export const selectUnshareResourceId = (state: RootState) =>
+const selectUnshareResourceId = (state: RootState) =>
   rootSelector(state).unshareResourceId;
 
-export const selectIsResourceShared = (state: RootState) =>
+const selectIsResourceShared = (state: RootState) =>
   rootSelector(state).isShared;
+
+export const ShareSelectors = {
+  selectInvitationId,
+  selectWriteInvitationId,
+  selectShareModalState,
+  selectShareModalOpened,
+  selectShareResourceId,
+  selectShareResourceName,
+  selectShareFeatureType,
+  selectShareIsFolder,
+  selectAcceptedEntityInfo,
+  selectInitialized,
+  selectSharePermissions,
+  selectUnshareModel,
+  selectUnshareResourceId,
+  selectIsResourceShared,
+};

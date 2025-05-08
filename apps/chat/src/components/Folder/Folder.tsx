@@ -63,8 +63,8 @@ import { Translation } from '@/src/types/translation';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { FilesActions } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 

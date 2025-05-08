@@ -28,7 +28,7 @@ import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
 
 import { PlaybackIcon } from '../../Chat/Playback/PlaybackIcon';
 import { ReplayAsIsIcon } from '../../Chat/ReplayAsIsIcon';

@@ -7,7 +7,8 @@ import { isExecutableApp } from '@/src/utils/app/application';
 import { CustomApplicationModel } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
-import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
+import { FilesActions } from '@/src/store/files/files.reducers';
+import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { FEATURES_ENDPOINTS_NAMES } from '@/src/constants/applications';

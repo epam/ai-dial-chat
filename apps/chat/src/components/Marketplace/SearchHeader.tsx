@@ -17,16 +17,12 @@ import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
-import {
-  ApplicationTypesSchemasActions,
-  ApplicationTypesSchemasSelectors,
-} from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
+import { ApplicationTypesSchemasActions } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
+import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  MarketplaceActions,
-  MarketplaceSelectors,
-} from '@/src/store/marketplace/marketplace.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
+import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { MarketplaceTabs } from '@/src/constants/marketplace';
 
