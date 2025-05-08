@@ -106,7 +106,7 @@ export const AssistantMessage = memo(function AssistantMessage({
           })}
 
         {/* Keep support old render for backward compatibility */}
-        {!!(message.content || isShowResponseLoader) && (
+        {!!(message.content || (!message.parts && isShowResponseLoader)) && (
           <ChatMDComponent
             isShowResponseLoader={isShowResponseLoader}
             content={message.content}
