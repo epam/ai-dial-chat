@@ -56,6 +56,7 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { Routes } from '@/src/constants/routes';
 
+import { ChatDropArea } from '@/src/components/Chat/ChatDropArea';
 import { ChatStarters } from '@/src/components/Chat/ChatStarters';
 
 import { CustomChatViewer } from '../AppsEditor/Settings/Previews/CustomChatViewer';
@@ -599,7 +600,7 @@ const ChatView = memo(() => {
 
   return (
     <div
-      className="relative min-w-0 shrink grow basis-0 overflow-y-auto"
+      className="relative size-full min-w-0 overflow-y-auto"
       data-qa="chat"
       id="chat"
     >
@@ -1135,7 +1136,9 @@ export function Chat({ isPreview }: ChatProps) {
 
   return (
     <>
-      <ChatView />
+      <ChatDropArea>
+        <ChatView />
+      </ChatDropArea>
       {!isPreview && <ChatInputFooter />}
     </>
   );
