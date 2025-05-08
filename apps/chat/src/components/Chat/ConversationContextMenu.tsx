@@ -434,6 +434,7 @@ export const ConversationContextMenu = ({
           }}
           folders={folders}
           onMoveToFolder={handleMoveToFolder}
+          featureType={FeatureType.Chat}
         />
       )}
 
