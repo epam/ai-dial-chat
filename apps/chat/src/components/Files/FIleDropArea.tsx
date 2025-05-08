@@ -30,11 +30,11 @@ export const FileDropArea = ({
 
   const handleDragOver = useCallback(
     (e: DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
       if (disabled || !e.dataTransfer?.types?.includes('Files')) {
         return;
       }
+      e.preventDefault();
+      e.stopPropagation();
       setIsDraggingOver(true);
     },
     [disabled],
