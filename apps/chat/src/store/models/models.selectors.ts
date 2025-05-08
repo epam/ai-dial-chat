@@ -5,7 +5,6 @@ import {
   getGroupModelKey,
   groupModelsAndSaveOrder,
 } from '@/src/utils/app/models';
-import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
 import { EntityType } from '@/src/types/common';
 import { RootState } from '@/src/types/store';
@@ -63,22 +62,12 @@ const selectModelsMap = (state: RootState) => rootSelector(state).modelsMap;
 const selectRecentModelsIds = (state: RootState) =>
   rootSelector(state).recentModelsIds;
 
-const selectRecentModels = createSelector(
-  [selectRecentModelsIds, selectModelsMap],
-  (recentModelsIds, modelsMap) => {
-    return recentModelsIds.map((id) => modelsMap[id]).filter(Boolean);
-  },
-);
-
 const selectModelsOnly = createSelector([selectModels], (models) => {
   return models.filter((model) => model.type === EntityType.Model);
 });
 
 const selectPublishRequestModels = (state: RootState) =>
   rootSelector(state).publishRequestModels;
-
-const selectPublishedApplicationIds = (state: RootState) =>
-  rootSelector(state).publishedApplicationIds;
 
 const selectInstalledModels = (state: RootState) =>
   rootSelector(state).installedModels;
@@ -103,24 +92,6 @@ const selectRecentWithInstalledModelsIds = createSelector(
 
 const selectInitialized = (state: RootState) => rootSelector(state).initialized;
 
-const selectCustomModels = createSelector([rootSelector], (state) => {
-  return state.models.filter((model) => model.reference !== model.id);
-});
-
-const selectSharedWithMeModels = createSelector(
-  [selectCustomModels],
-  (customModels) => {
-    return customModels.filter((model) => model.sharedWithMe);
-  },
-);
-
-const selectSharedWriteModels = createSelector(
-  [selectCustomModels],
-  (customModels) => {
-    return customModels.filter((model) => canWriteSharedWithMe(model));
-  },
-);
-
 const selectModelById = (state: RootState, modelId: string | undefined) =>
   modelId ? selectModelsMap(state)[modelId] : undefined;
 
@@ -142,19 +113,14 @@ export const ModelsSelectors = {
   selectAreModelsLoading,
   selectAreModelsLoaded,
   selectIsInstalledModelsInitialized,
-  selectRecentModels,
   selectRecentModelsIds,
   selectModelsOnly,
   selectPublishRequestModels,
-  selectPublishedApplicationIds,
   selectInstalledModels,
   selectInstalledModelIds,
   selectRecentWithInstalledModelsIds,
   selectModelTopics,
   selectInitialized,
-  selectCustomModels,
-  selectSharedWithMeModels,
-  selectSharedWriteModels,
   selectAllGroupModelKeySet,
   selectIsRecentModelsLoaded,
 };
