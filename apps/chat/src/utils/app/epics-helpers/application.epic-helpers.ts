@@ -1,13 +1,9 @@
-import { concat, forkJoin, mergeMap, of, switchMap } from 'rxjs';
+import { concat, forkJoin, of, switchMap } from 'rxjs';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { CustomApplicationModel } from '@/src/types/applications';
 
-import {
-  ApplicationActions,
-  FilesActions,
-  ModelsActions,
-} from '@/src/store/actions';
+import { ApplicationActions, FilesActions } from '@/src/store/actions';
 
 import { FileService } from '../data/file-service';
 import { constructPath, splitEntityId } from '../shared-utils';
