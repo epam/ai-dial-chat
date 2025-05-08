@@ -16,7 +16,7 @@ import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import ContextMenu from '../Common/ContextMenu';
 import Tooltip from '../Common/Tooltip';

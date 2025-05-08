@@ -12,54 +12,52 @@ import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { DialAIEntityModel } from '@/src/types/models';
 import { RootState } from '@/src/types/store';
 
+import { MarketplaceState } from '@/src/store/marketplace/marketplace.types';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
+
 import {
   ApplicationTypeToSourceType,
   SourceType,
   SourceTypeFilterOrder,
 } from '@/src/constants/marketplace';
 
-import { ApplicationTypesSchemasSelectors } from '../applicationTypeSchemas/applicationTypeSchemas.reducers';
-import { ModelsSelectors } from '../models/models.reducers';
-import { MarketplaceState } from './marketplace.types';
+import { ApplicationTypesSchemasSelectors } from '../applicationTypeSchemas/applicationTypeSchemas.selectors';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState): MarketplaceState => state.marketplace;
 
-export const selectSelectedViewType = (state: RootState) =>
+const selectSelectedViewType = (state: RootState) =>
   rootSelector(state).selectedView;
 
-export const selectTableSort = (state: RootState) =>
-  rootSelector(state).tableSort;
+const selectTableSort = (state: RootState) => rootSelector(state).tableSort;
 
-export const selectIsBannerVisible = (state: RootState) =>
+const selectIsBannerVisible = (state: RootState) =>
   rootSelector(state).isBannerVisible;
 
-export const selectSelectedFilters = (state: RootState) =>
+const selectSelectedFilters = (state: RootState) =>
   rootSelector(state).selectedFilters;
 
-export const selectSearchTerm = (state: RootState) =>
-  rootSelector(state).searchTerm;
+const selectSearchTerm = (state: RootState) => rootSelector(state).searchTerm;
 
-export const selectTrimmedSearchTerm = createSelector(
+const selectTrimmedSearchTerm = createSelector(
   [selectSearchTerm],
   (searchTerm) => searchTerm.trim(),
 );
 
-export const selectSelectedTab = (state: RootState) =>
-  rootSelector(state).selectedTab;
+const selectSelectedTab = (state: RootState) => rootSelector(state).selectedTab;
 
-export const selectApplyModelStatus = (state: RootState) =>
+const selectApplyModelStatus = (state: RootState) =>
   rootSelector(state).applyModelStatus;
 
-export const selectIsApplyingModel = (state: RootState) =>
+const selectIsApplyingModel = (state: RootState) =>
   selectApplyModelStatus(state) !== UploadStatus.UNINITIALIZED &&
   selectApplyModelStatus(state) !== UploadStatus.FAILED;
 
-export const selectDetailsModel = (state: RootState) =>
+const selectDetailsModel = (state: RootState) =>
   rootSelector(state).detailsModel;
 
-export const selectSourceTypes = createSelector(
+const selectSourceTypes = createSelector(
   [
     ModelsSelectors.selectModels,
     ApplicationTypesSchemasSelectors.selectAllSchemas,
@@ -95,5 +93,19 @@ export const selectSourceTypes = createSelector(
   },
 );
 
-export const selectDeleteModel = (state: RootState) =>
-  rootSelector(state).deleteModel;
+const selectDeleteModel = (state: RootState) => rootSelector(state).deleteModel;
+
+export const MarketplaceSelectors = {
+  selectSelectedViewType,
+  selectTableSort,
+  selectIsBannerVisible,
+  selectSelectedFilters,
+  selectSearchTerm,
+  selectTrimmedSearchTerm,
+  selectSelectedTab,
+  selectApplyModelStatus,
+  selectIsApplyingModel,
+  selectDetailsModel,
+  selectSourceTypes,
+  selectDeleteModel,
+};

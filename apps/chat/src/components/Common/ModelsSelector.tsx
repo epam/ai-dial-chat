@@ -11,7 +11,7 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Combobox } from '@/src/components/Common/Combobox';

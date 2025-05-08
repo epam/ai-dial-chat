@@ -214,6 +214,4 @@ export const uiSlice = createSlice({
   },
 });
 
-export { UISelectors } from './ui.selectors';
-
 export const UIActions = uiSlice.actions;

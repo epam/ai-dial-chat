@@ -28,15 +28,14 @@ import { Translation } from '@/src/types/translation';
 
 import { ChatActions } from '@/src/store/chat/chat.reducer';
 import { ChatSelectors } from '@/src/store/chat/chat.selectors';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
-import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { FilesActions } from '@/src/store/files/files.reducers';
+import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -127,7 +126,9 @@ export const ChatInputMessage = Inversify.register(
     const isLastAssistantMessageEmpty = useAppSelector(
       ConversationsSelectors.selectIsLastAssistantMessageEmpty,
     );
-    const isModelsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
+    const areModelsLoaded = useAppSelector(
+      ModelsSelectors.selectAreModelsLoaded,
+    );
     const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
     const chatFormValue = useAppSelector(ChatSelectors.selectChatFormValue);
 
@@ -216,7 +217,7 @@ export const ChatInputMessage = Inversify.register(
       isReplay ||
       isMessageError ||
       isInputEmpty ||
-      !isModelsLoaded ||
+      !areModelsLoaded ||
       isUploadingFilePresent ||
       isConversationNameInvalid ||
       isConversationPathInvalid ||
@@ -450,7 +451,7 @@ export const ChatInputMessage = Inversify.register(
       if (messageIsStreaming) {
         return t('Stop generating');
       }
-      if (!isModelsLoaded) {
+      if (!areModelsLoaded) {
         return t(
           'Please wait for models will be loaded to continue working with conversation',
         );

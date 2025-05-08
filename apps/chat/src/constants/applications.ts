@@ -1,5 +1,4 @@
-import { ConfirmDialogValueTypes } from '../types/common';
-import { ApiKeys } from '@/src/types/common';
+import { ApiKeys, ConfirmDialogValueTypes } from '@/src/types/common';
 
 export const FEATURES_ENDPOINTS = {
   chat_completion: 'chat_completion',

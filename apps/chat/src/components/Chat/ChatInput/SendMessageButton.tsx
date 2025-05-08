@@ -10,10 +10,10 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import Tooltip from '@/src/components/Common/Tooltip';
 
@@ -34,8 +34,8 @@ export const SendMessageButton = Inversify.register(
   ({ isLastMessageError, onSend, isDisabled, tooltip, isLoading }: Props) => {
     const { t } = useTranslation(Translation.Chat);
 
-    const isModelsLoading = useAppSelector(
-      ModelsSelectors.selectModelsIsLoading,
+    const areModelsLoading = useAppSelector(
+      ModelsSelectors.selectAreModelsLoading,
     );
     const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
@@ -69,7 +69,7 @@ export const SendMessageButton = Inversify.register(
       );
     }
 
-    const isSpinner = isLoading || isModelsLoading;
+    const isSpinner = isLoading || areModelsLoading;
     const [Icon, dataQa, disabled] = messageIsStreaming
       ? [IconPlaystationSquare, 'stop-generating', false]
       : [IconSend, 'send', isDisabled];

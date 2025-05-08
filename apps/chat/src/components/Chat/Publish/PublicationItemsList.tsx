@@ -16,13 +16,11 @@ import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
-import {
-  PublicationActions,
-  PublicationSelectors,
-} from '@/src/store/publication/publication.reducers';
+import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
+import { PublicationActions } from '@/src/store/publication/publication.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 
 import { ApplicationPublishItems } from '@/src/components/Chat/Publish/ApplicationPublishItems';
 import CollapsibleSection from '@/src/components/Common/CollapsibleSection';

@@ -37,8 +37,9 @@ import { FolderInterface } from '@/src/types/folder';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
-import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { FilesActions } from '@/src/store/files/files.reducers';
+import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ShareActions } from '@/src/store/share/share.reducers';
 

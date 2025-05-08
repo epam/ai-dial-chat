@@ -8,21 +8,19 @@ import {
 } from 'react';
 import { useDispatch } from 'react-redux';
 
-import { parseVariablesFromContent } from '../utils/app/prompts';
-import { getPublicItemIdWithoutVersion } from '../utils/server/api';
+import { parseVariablesFromContent } from '@/src/utils/app/prompts';
+import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
-import { FeatureType } from '../types/common';
-import { DialAIEntityModel } from '../types/models';
+import { FeatureType } from '@/src/types/common';
+import { DialAIEntityModel } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 
-import { PublicationSelectors } from '../store/publication/publication.reducers';
 import { ChatActions } from '@/src/store/chat/chat.reducer';
 import { ChatSelectors } from '@/src/store/chat/chat.selectors';
 import { useAppSelector } from '@/src/store/hooks';
-import {
-  PromptsActions,
-  PromptsSelectors,
-} from '@/src/store/prompts/prompts.reducers';
+import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
+import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 
 import { useTokenizer } from './useTokenizer';
 

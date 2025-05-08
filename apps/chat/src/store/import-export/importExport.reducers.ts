@@ -234,6 +234,4 @@ export const importExportSlice = createSlice({
   },
 });
 
-export { ImportExportSelectors } from './importExport.selectors';
-
 export const ImportExportActions = importExportSlice.actions;
