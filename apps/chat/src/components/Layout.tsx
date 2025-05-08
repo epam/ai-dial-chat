@@ -1,7 +1,6 @@
 import { SessionContextValue, signIn, useSession } from 'next-auth/react';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import Head from 'next/head';
 import { useRouter } from 'next/router';
 
 import { useRouteHistory } from '../hooks/useRouteHistory';
@@ -27,6 +26,7 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import { NavigationWrapper } from '@/src/components/NavigationWrapper';
 
 import Loader from './Common/Loader';
+import { Title } from './Title';
 
 const removeQueryString = (url: string) => url.split('?')[0];
 
@@ -146,14 +146,7 @@ export default function Layout({
 
   return (
     <>
-      <Head>
-        <title className="whitespace-pre">{settings?.appName}</title>
-        <meta name="description" content="ChatGPT but better." />
-        <meta
-          name="viewport"
-          content="height=device-height ,width=device-width, initial-scale=1, user-scalable=no"
-        />
-      </Head>
+      <Title settings={settings} />
       {shouldOverlayLogin ? (
         <div className="grid size-full min-h-[100px] place-items-center bg-layer-1 text-sm text-primary">
           <button

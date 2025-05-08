@@ -93,11 +93,11 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
     [dispatch],
   );
 
-  const isModelsInstalled = selectedConversations.every((conv) =>
+  const areModelsInstalled = selectedConversations.every((conv) =>
     installedModelIds.has(conv.model.id),
   );
   const disableUsePrompt =
-    isConversationBlocksInput || !isModelsInstalled || !!selectedPublication;
+    isConversationBlocksInput || !areModelsInstalled || !!selectedPublication;
 
   const onUse = useMenuItemHandler(handleUse, undefined);
 
