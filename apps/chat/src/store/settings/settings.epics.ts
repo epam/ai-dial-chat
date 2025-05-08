@@ -25,7 +25,6 @@ import { ApplicationActions } from '@/src/store/application/application.reducers
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { ModelsActions } from '@/src/store/models/models.reducers';
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { errorsMessages } from '@/src/constants/errors';

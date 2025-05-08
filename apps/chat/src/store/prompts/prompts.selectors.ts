@@ -14,7 +14,7 @@ import {
   isFolderEmpty,
   sortByName,
 } from '@/src/utils/app/folders';
-import { getPromptRootId, isRootId } from '@/src/utils/app/id';
+import { getPromptRootId } from '@/src/utils/app/id';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
 import {
   PublishedWithMeFilter,

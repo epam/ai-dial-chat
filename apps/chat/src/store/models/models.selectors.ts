@@ -5,7 +5,6 @@ import {
   getGroupModelKey,
   groupModelsAndSaveOrder,
 } from '@/src/utils/app/models';
-import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
 import { EntityType } from '@/src/types/common';
 import { RootState } from '@/src/types/store';
