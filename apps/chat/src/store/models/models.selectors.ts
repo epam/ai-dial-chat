@@ -20,11 +20,11 @@ const rootSelector = (state: RootState): ModelsState => state.models;
 
 const selectModelStatus = (state: RootState) => rootSelector(state).status;
 
-export const selectModelsIsLoading = (state: RootState) =>
+export const selectAreModelsLoading = (state: RootState) =>
   selectModelStatus(state) === UploadStatus.LOADING ||
   selectModelStatus(state) === UploadStatus.UNINITIALIZED;
 
-export const selectIsModelsLoaded = (state: RootState) =>
+export const selectAreModelsLoaded = (state: RootState) =>
   rootSelector(state).status === UploadStatus.LOADED;
 
 export const selectIsInstalledModelsInitialized = (state: RootState) =>

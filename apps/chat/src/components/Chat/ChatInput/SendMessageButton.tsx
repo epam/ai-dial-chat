@@ -34,8 +34,8 @@ export const SendMessageButton = Inversify.register(
   ({ isLastMessageError, onSend, isDisabled, tooltip, isLoading }: Props) => {
     const { t } = useTranslation(Translation.Chat);
 
-    const isModelsLoading = useAppSelector(
-      ModelsSelectors.selectModelsIsLoading,
+    const areModelsLoading = useAppSelector(
+      ModelsSelectors.selectAreModelsLoading,
     );
     const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
@@ -69,7 +69,7 @@ export const SendMessageButton = Inversify.register(
       );
     }
 
-    const isSpinner = isLoading || isModelsLoading;
+    const isSpinner = isLoading || areModelsLoading;
     const [Icon, dataQa, disabled] = messageIsStreaming
       ? [IconPlaystationSquare, 'stop-generating', false]
       : [IconSend, 'send', isDisabled];

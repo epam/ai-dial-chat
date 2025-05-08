@@ -19,6 +19,7 @@ interface Props {
   size?: number;
   className?: string;
   onBookmarkClick?: (entity: DialAIEntityModel) => void;
+  allocatePlace?: boolean;
 }
 
 export const AgentBookmark: React.FC<Props> = ({
@@ -26,6 +27,7 @@ export const AgentBookmark: React.FC<Props> = ({
   size = 18,
   className,
   onBookmarkClick,
+  allocatePlace = false,
 }) => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -35,7 +37,10 @@ export const AgentBookmark: React.FC<Props> = ({
 
   const isMyApp = isMyApplication(entity);
 
-  if (isMyApp || entity.sharedWithMe) return null;
+  const hidden = isMyApp || entity.sharedWithMe;
+  if (hidden && !allocatePlace) {
+    return null;
+  }
 
   const [Bookmark, tooltip, dataQa] = installedModelIds.has(entity.reference)
     ? [IconBookmarkFilled, 'Remove from My workspace', 'remove-bookmark']
@@ -45,14 +50,16 @@ export const AgentBookmark: React.FC<Props> = ({
     <div
       onClick={(e) => {
         e.stopPropagation();
-        onBookmarkClick?.(entity);
+        e.preventDefault();
+        !hidden && onBookmarkClick?.(entity);
       }}
     >
       <Tooltip
         tooltip={t(tooltip)}
         triggerClassName={classNames(
           className,
-          'group flex cursor-pointer items-center',
+          'group flex items-center',
+          hidden ? 'invisible' : 'cursor-pointer',
         )}
         isTriggerClickable
       >
