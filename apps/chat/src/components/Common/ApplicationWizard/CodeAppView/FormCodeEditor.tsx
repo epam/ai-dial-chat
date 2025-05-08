@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { FilesSelectors } from '@/src/store/files/files.reducers';
+import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppSelector } from '@/src/store/hooks';
 
 import { CodeEditor } from '@/src/components/Common/CodeEditor';

@@ -21,14 +21,11 @@ import { RECENT_MODELS_COUNT } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
 import { DeleteType } from '@/src/constants/marketplace';
 
-import * as ModelsSelectors from './models.selectors';
 import { ModelUpdatedValues, ModelsState } from './models.types';
 
 import { EntityPublicationInfo, UploadStatus } from '@epam/ai-dial-shared';
 import cloneDeep from 'lodash-es/cloneDeep';
 import uniq from 'lodash-es/uniq';
-
-export { ModelsSelectors };
 
 const initialState: ModelsState = {
   initialized: false,

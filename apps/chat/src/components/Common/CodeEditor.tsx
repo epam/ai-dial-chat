@@ -38,7 +38,8 @@ import {
   CodeEditorActions,
   CodeEditorSelectors,
 } from '@/src/store/codeEditor/codeEditor.reducer';
-import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
+import { FilesActions } from '@/src/store/files/files.reducers';
+import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';

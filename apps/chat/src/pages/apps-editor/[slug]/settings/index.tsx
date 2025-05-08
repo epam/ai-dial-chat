@@ -11,11 +11,11 @@ import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
 import { ApplicationTypeSchemaProperties } from '@/src/types/application-type-schema';
 
-import { ApplicationSelectors } from '@/src/store/application/application.reducers';
-import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
+import { ApplicationSelectors } from '@/src/store/application/application.selectors';
+import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.selectors';
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { AppsEditorHeader } from '@/src/components/AppsEditor/AppsEditorHeader';
 import { ApplicationSettings } from '@/src/components/AppsEditor/Settings';

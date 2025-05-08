@@ -58,10 +58,10 @@ const selectIsChatFullWidth = (state: RootState) =>
 
 const selectCustomLogo = (state: RootState) => rootSelector(state).customLogo;
 
-export const selectShowSelectToMigrateWindow = (state: RootState) =>
+const selectShowSelectToMigrateWindow = (state: RootState) =>
   rootSelector(state).showSelectToMigrateWindow;
 
-export const selectIsAnyMenuOpen = createSelector(
+const selectIsAnyMenuOpen = createSelector(
   [rootSelector, SettingsSelectors.selectEnabledFeatures],
   (state, enabledFeatures) =>
     (state.showPromptbar && enabledFeatures.has(Feature.PromptsSection)) ||
@@ -69,15 +69,14 @@ export const selectIsAnyMenuOpen = createSelector(
     state.isProfileOpen,
 );
 
-export const selectCollapsedSections = //TODO: review later how it is used
+const selectCollapsedSections = //TODO: review later how it is used
   (featureType: FeatureType) => (state: RootState) =>
     rootSelector(state).collapsedSections[featureType];
 
-export const selectPreviousRoute = (state: RootState) =>
+const selectPreviousRoute = (state: RootState) =>
   rootSelector(state).previousRoute;
 
-export const selectInitialized = (state: RootState) =>
-  rootSelector(state).initialized;
+const selectInitialized = (state: RootState) => rootSelector(state).initialized;
 
 const selectScrollToEntityId = (state: RootState) =>
   rootSelector(state).scrollToEntityId;

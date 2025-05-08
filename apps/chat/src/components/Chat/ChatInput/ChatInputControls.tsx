@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppSelector } from '@/src/store/hooks';
 
 import { SchemaCompareWarning } from '@/src/components/Chat/ChatInput/SchemaCompareWarning';

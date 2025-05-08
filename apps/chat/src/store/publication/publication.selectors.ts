@@ -14,10 +14,10 @@ import { ShareEntity, UploadStatus } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState): PublicationState => state.publication;
 
-export const selectPublications = (state: RootState) =>
+const selectPublications = (state: RootState) =>
   rootSelector(state).publications;
 
-export const selectFilteredPublications = (
+const selectFilteredPublications = (
   featureTypes: FeatureType[],
   includeEmptyResourceTypes?: boolean,
 ) =>
@@ -35,9 +35,7 @@ export const selectFilteredPublications = (
     );
   });
 
-export const selectFilteredPublicationResources = (
-  featureTypes: FeatureType[],
-) =>
+const selectFilteredPublicationResources = (featureTypes: FeatureType[]) =>
   createSelector(
     [selectFilteredPublications(featureTypes)],
     (filteredPublications) => {
@@ -49,10 +47,10 @@ export const selectFilteredPublicationResources = (
     },
   );
 
-export const selectSelectedPublicationUrl = (state: RootState) =>
+const selectSelectedPublicationUrl = (state: RootState) =>
   rootSelector(state).selectedPublicationUrl;
 
-export const selectSelectedPublication = createSelector(
+const selectSelectedPublication = createSelector(
   [selectSelectedPublicationUrl, selectPublications],
   (selectedPublicationUrl, publications) => {
     return selectedPublicationUrl
@@ -63,10 +61,10 @@ export const selectSelectedPublication = createSelector(
   },
 );
 
-export const selectResourcesToReview = (state: RootState) =>
+const selectResourcesToReview = (state: RootState) =>
   rootSelector(state).resourcesToReview;
 
-export const selectResourceToReviewByReviewUrl = createSelector(
+const selectResourceToReviewByReviewUrl = createSelector(
   [
     selectResourcesToReview,
     selectSelectedPublication,
@@ -81,7 +79,7 @@ export const selectResourceToReviewByReviewUrl = createSelector(
   },
 );
 
-export const selectResourceToReviewByReviewAndPublicationUrls = createSelector(
+const selectResourceToReviewByReviewAndPublicationUrls = createSelector(
   [
     selectResourcesToReview,
     (_state, id: string) => id,
@@ -95,14 +93,14 @@ export const selectResourceToReviewByReviewAndPublicationUrls = createSelector(
   },
 );
 
-export const selectResourcesToReviewByPublicationUrl = createSelector(
+const selectResourcesToReviewByPublicationUrl = createSelector(
   [selectResourcesToReview, (_state, id: string) => id],
   (resourcesToReview, id) => {
     return resourcesToReview.filter((r) => r.publicationUrl === id);
   },
 );
 
-export const selectRulesByPath = createSelector(
+const selectRulesByPath = createSelector(
   [rootSelector, (_state, path: string) => path],
   (state, path) => {
     return Object.fromEntries(
@@ -113,18 +111,16 @@ export const selectRulesByPath = createSelector(
   },
 );
 
-export const selectIsRulesLoading = (state: RootState) =>
+const selectIsRulesLoading = (state: RootState) =>
   rootSelector(state).isRulesLoading;
 
-export const selectIsAllItemsUploaded = (
-  state: RootState,
-  featureType: FeatureType,
-) => rootSelector(state).allPublishedWithMeItemsUploaded[featureType];
+const selectIsAllItemsUploaded = (state: RootState, featureType: FeatureType) =>
+  rootSelector(state).allPublishedWithMeItemsUploaded[featureType];
 
-export const selectSelectedItemsToPublish = (state: RootState) =>
+const selectSelectedItemsToPublish = (state: RootState) =>
   rootSelector(state).selectedItemsToPublish;
 
-export const selectChosenFolderIds = createSelector(
+const selectChosenFolderIds = createSelector(
   [
     selectSelectedItemsToPublish,
     (_state, folders: FolderInterface[]) => folders,
@@ -163,7 +159,7 @@ export const selectChosenFolderIds = createSelector(
   },
 );
 
-export const selectPublicationsToReviewCount = createSelector(
+const selectPublicationsToReviewCount = createSelector(
   [
     selectPublications,
     selectResourcesToReview,
@@ -195,7 +191,7 @@ export const selectPublicationsToReviewCount = createSelector(
   },
 );
 
-export const selectIsFolderContainsResourcesToReview = createSelector(
+const selectIsFolderContainsResourcesToReview = createSelector(
   [
     selectResourcesToReview,
     (_state, folderId: string) => folderId,
@@ -211,19 +207,42 @@ export const selectIsFolderContainsResourcesToReview = createSelector(
   },
 );
 
-export const selectIsApplicationReview = (state: RootState) =>
+const selectIsApplicationReview = (state: RootState) =>
   rootSelector(state).isApplicationReview;
 
-export const selectInitialized = (state: RootState) =>
-  rootSelector(state).initialized;
+const selectInitialized = (state: RootState) => rootSelector(state).initialized;
 
-export const selectPublicVersionGroups = (state: RootState) =>
+const selectPublicVersionGroups = (state: RootState) =>
   rootSelector(state).publicVersionGroups;
 
-export const selectPublicVersionGroupById = (
+const selectPublicVersionGroupById = (
   state: RootState,
   versionGroupId: string,
 ) => (versionGroupId ? selectPublicVersionGroups(state)[versionGroupId] : null);
 
-export const selectPublishModel = (state: RootState) =>
+const selectPublishModel = (state: RootState) =>
   rootSelector(state).publishModel;
+
+export const PublicationSelectors = {
+  selectPublications,
+  selectFilteredPublications,
+  selectFilteredPublicationResources,
+  selectSelectedPublicationUrl,
+  selectSelectedPublication,
+  selectResourcesToReview,
+  selectResourceToReviewByReviewUrl,
+  selectResourceToReviewByReviewAndPublicationUrls,
+  selectResourcesToReviewByPublicationUrl,
+  selectRulesByPath,
+  selectIsRulesLoading,
+  selectIsAllItemsUploaded,
+  selectSelectedItemsToPublish,
+  selectChosenFolderIds,
+  selectPublicationsToReviewCount,
+  selectIsFolderContainsResourcesToReview,
+  selectIsApplicationReview,
+  selectInitialized,
+  selectPublicVersionGroups,
+  selectPublicVersionGroupById,
+  selectPublishModel,
+};

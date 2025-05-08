@@ -57,23 +57,22 @@ import { PromptInfo } from '@/src/types/prompt';
 import { PublishedFileItem } from '@/src/types/publication';
 import { AppAction, AppEpic } from '@/src/types/store';
 
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { ModelsActions } from '@/src/store/models/models.reducers';
+import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
+import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
 import { AuthSelectors } from '../auth/auth.selectors';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '../conversations/conversations.reducers';
 import { FilesActions } from '../files/files.reducers';
-import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
-import { PromptsActions, PromptsSelectors } from '../prompts/prompts.reducers';
-import { SettingsSelectors } from '../settings/settings.reducers';
-import { UIActions } from '../ui/ui.reducers';
-import {
-  PublicationActions,
-  PublicationSelectors,
-} from './publication.reducers';
+import { ModelsSelectors } from '../models/models.selectors';
+import { PublicationActions } from './publication.reducers';
+import { PublicationSelectors } from './publication.selectors';
 
 import {
   ConversationInfo,
