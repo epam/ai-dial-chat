@@ -43,8 +43,6 @@ const selectUserName = (state: RootState) =>
 
 export const AuthSelectors = {
   selectIsShouldLogin,
-  selectIsAuthDisabled,
-  selectSession,
   selectSessionData,
   selectUserName,
   selectStatus,

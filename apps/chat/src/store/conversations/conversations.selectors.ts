@@ -3,7 +3,6 @@ import { createSelector } from '@reduxjs/toolkit';
 import {
   hasInvalidNameInPath,
   isEntityNameInvalid,
-  isEntityNameOrPathInvalid,
   isSearchFilterMatched,
   isSectionFilterMatched,
   isVersionFilterMatched,
@@ -85,12 +84,6 @@ const selectNotExternalConversations = createSelector(
     ),
 );
 
-const selectLocalConversations = createSelector(
-  [selectConversations],
-  (conversations) =>
-    conversations.filter((conversation) => isEntityIdLocal(conversation)),
-);
-
 const selectConversationsByFolderId = createSelector(
   [selectConversations, (_state, folderId: string) => folderId],
   (conversations, folderId) => {
@@ -99,11 +92,6 @@ const selectConversationsByFolderId = createSelector(
       conversation.id.startsWith(folderPath),
     );
   },
-);
-
-const selectPublishedOrSharedByMeConversations = createSelector(
-  [selectConversations],
-  (conversations) => conversations.filter((c) => c.isShared || c.isPublished),
 );
 
 const selectFilteredConversations = (
@@ -154,13 +142,6 @@ const selectFoldersByFolderId = createSelector(
     const folderPath = `${folderId}/`;
 
     return folders.filter((folder) => folder.id.startsWith(folderPath));
-  },
-);
-
-const selectPublicationFolders = createSelector(
-  [rootSelector],
-  (state: ConversationsState) => {
-    return state.folders.filter((f) => f.isPublicationFolder);
   },
 );
 
@@ -289,13 +270,6 @@ const selectIsConversationPathInvalid = createSelector(
   },
 );
 
-const selectIsConversationNameOrPathInvalid = createSelector(
-  [selectSelectedConversations],
-  (conversations) => {
-    return conversations.some((conv) => isEntityNameOrPathInvalid(conv));
-  },
-);
-
 const selectSearchTerm = (state: RootState) => rootSelector(state).searchTerm;
 
 const selectSearchFilters = (state: RootState) =>
@@ -307,14 +281,6 @@ const selectIsEmptySearchFilter = (state: RootState) =>
 const selectMyItemsFilters = createSelector(
   [selectSearchFilters],
   (searchFilters) => getMyItemsFilters(searchFilters),
-);
-
-const selectSearchedConversations = createSelector(
-  [selectConversations, selectSearchTerm],
-  (conversations, searchTerm) =>
-    conversations.filter((conversation) =>
-      doesEntityContainSearchTerm(conversation, searchTerm),
-    ),
 );
 
 const selectIsReplayPaused = (state: RootState) =>
@@ -336,8 +302,6 @@ const selectWillReplayRequireVariables = createSelector(
     );
   },
 );
-const selectIsSendMessageAborted = (state: RootState) =>
-  selectConversationSignal(state).signal.aborted;
 
 const selectIsReplaySelectedConversations = createSelector(
   [selectSelectedConversations],
@@ -389,21 +353,6 @@ const selectIsErrorReplayConversations = createSelector(
 
 const selectIsPlaybackPaused = (state: RootState) =>
   rootSelector(state).isPlaybackPaused;
-
-const selectPlaybackActiveMessage = createSelector(
-  [selectSelectedConversations],
-  (conversations) => {
-    const activeIndex =
-      conversations[0].playback &&
-      conversations[0].playback.activePlaybackIndex;
-    const activeMessage =
-      conversations[0].playback?.messagesStack[activeIndex ?? -1];
-    if (!activeMessage || activeMessage.role === Role.Assistant) {
-      return;
-    }
-    return activeMessage;
-  },
-);
 
 const selectIsMessagesError = createSelector(
   [selectSelectedConversations],
@@ -618,12 +567,6 @@ const getAttachments = createSelector(
 const areConversationsUploaded = (state: RootState) =>
   rootSelector(state).conversationsLoaded;
 
-const selectFoldersStatus = (state: RootState) =>
-  rootSelector(state).foldersStatus;
-
-const selectConversationsStatus = (state: RootState) =>
-  rootSelector(state).conversationsStatus;
-
 const selectAreSelectedConversationsLoaded = (state: RootState) =>
   rootSelector(state).areSelectedConversationsLoaded;
 
@@ -649,9 +592,6 @@ const selectLoadingFolderIds = (state: RootState) =>
 
 const selectIsCompareLoading = (state: RootState) =>
   rootSelector(state).compareLoading;
-
-const selectIsMessageSending = (state: RootState) =>
-  rootSelector(state).isMessageSending;
 
 const selectDuplicatedConversation = createSelector(
   [
@@ -694,15 +634,6 @@ const selectCustomAttachmentData = createSelector(
           loadedData.url.endsWith(attachmentUrl),
         )?.data
       : undefined;
-  },
-);
-
-const selectIsConversationsEmpty = createSelector(
-  [selectSelectedConversations],
-  (conversations) => {
-    return conversations.some((conv) => {
-      return !conv.messages || conv.messages.length === 0;
-    });
   },
 );
 
@@ -773,9 +704,6 @@ const selectIsNewConversationUpdating = (state: RootState) =>
 
 const selectInitialized = (state: RootState) => rootSelector(state).initialized;
 
-const selectLastConversationSettings = (state: RootState) =>
-  rootSelector(state).lastConversationSettings;
-
 const selectRenamingConversationId = (state: RootState) =>
   rootSelector(state).renamingConversationId;
 
@@ -821,15 +749,11 @@ const selectIsSelectedConversationsWithSchema = createSelector(
 
 export const ConversationsSelectors = {
   selectConversations,
-  selectNotExternalConversations,
-  selectLocalConversations,
   selectConversationsByFolderId,
-  selectPublishedOrSharedByMeConversations,
   selectFilteredConversations,
   selectFolders,
   selectFolderById,
   selectFoldersByFolderId,
-  selectPublicationFolders,
   selectEmptyFolderIds,
   selectFilteredFolders,
   selectLastConversation,
@@ -845,16 +769,13 @@ export const ConversationsSelectors = {
   selectIsConversationsStreaming,
   selectIsConversationNameInvalid,
   selectIsConversationPathInvalid,
-  selectIsConversationNameOrPathInvalid,
   selectSearchTerm,
   selectSearchFilters,
   selectIsEmptySearchFilter,
   selectMyItemsFilters,
-  selectSearchedConversations,
   selectIsReplayPaused,
   selectIsReplayRequiresVariables,
   selectWillReplayRequireVariables,
-  selectIsSendMessageAborted,
   selectIsReplaySelectedConversations,
   selectIsPlaybackSelectedConversations,
   selectAreSelectedConversationsExternal,
@@ -862,7 +783,6 @@ export const ConversationsSelectors = {
   selectPlaybackActiveIndex,
   selectIsErrorReplayConversations,
   selectIsPlaybackPaused,
-  selectPlaybackActiveMessage,
   selectIsMessagesError,
   selectIsLastAssistantMessageEmpty,
   selectSelectedConversationsModels,
@@ -872,34 +792,24 @@ export const ConversationsSelectors = {
   selectIsStartedCustomViewerConversation,
   selectCanAttachFolders,
   selectCanAttachFile,
-  selectTemporaryFolders,
-  selectPublishedWithMeFolders,
   selectTemporaryAndPublishedFolders,
   selectNewAddedFolderId,
   selectLoadingFolderIds,
   selectIsCompareLoading,
-  selectIsMessageSending,
   selectDuplicatedConversation,
   selectCustomAttachmentLoading,
-  selectLoadedCustomAttachments,
   selectCustomAttachmentData,
-  selectIsConversationsEmpty,
   selectIsSelectMode,
   selectSelectedItems,
-  selectChosenEmptyFolderIds,
   selectChosenFolderIds,
   selectIsFolderEmpty,
   selectIsNewConversationUpdating,
   selectInitialized,
-  selectLastConversationSettings,
-  selectRenamingConversationId,
   selectRenamingConversation,
   selectTalkToConversationId,
   selectIsSelectedConversationBlocksInput,
   selectPreviewConversationId,
   selectIsSelectedConversationsWithSchema,
-  selectFoldersStatus,
-  selectConversationsStatus,
   selectAreSelectedConversationsLoaded,
   selectNewFolderName,
   areConversationsUploaded,
