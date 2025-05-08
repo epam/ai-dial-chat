@@ -2,11 +2,11 @@ import { useCallback, useEffect, useMemo } from 'react';
 
 import { useRouter } from 'next/router';
 
-import { ApplicationSelectors } from '../store/application/application.selectors';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { ModelsSelectors } from '../store/models/models.reducers';
-import { SettingsSelectors } from '../store/settings/settings.selectors';
 import { ApplicationActions } from '@/src/store/actions';
+import { ApplicationSelectors } from '@/src/store/application/application.selectors';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { Routes } from '../constants/routes';
 

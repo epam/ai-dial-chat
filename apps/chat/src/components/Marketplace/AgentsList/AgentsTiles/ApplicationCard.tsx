@@ -85,16 +85,16 @@ export const ApplicationCard = memo(
         aria-details={dataQA}
       >
         <div>
-          <div className="absolute right-4 top-4 flex gap-1 xl:right-5 xl:top-5">
+          <div className="absolute right-4 top-4 flex gap-1 xl:right-5 xl:top-5 xl:flex-row-reverse">
             {!isPreview && (
               <>
+                <AgentBookmark
+                  onBookmarkClick={onBookmarkClick}
+                  entity={entity}
+                />
                 <AgentContextMenu
                   isPreview={isPreview}
                   className="xl:invisible group-hover:xl:visible"
-                  entity={entity}
-                />
-                <AgentBookmark
-                  onBookmarkClick={onBookmarkClick}
                   entity={entity}
                 />
               </>

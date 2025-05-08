@@ -49,3 +49,9 @@ export enum FileSourceType {
   SHARED_WITH_ME = 'SHARED_WITH_ME',
   PUBLIC = 'PUBLIC',
 }
+
+export enum FileValidationErrors {
+  IncorrectSize = 'incorrectSize',
+  IncorrectType = 'incorrectType',
+  IncorrectName = 'incorrectName',
+}

@@ -7,13 +7,11 @@ import classNames from 'classnames';
 
 import { ApiUtils } from '@/src/utils/server/api';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { Routes } from '@/src/constants/routes';

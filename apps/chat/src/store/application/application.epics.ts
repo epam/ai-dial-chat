@@ -56,6 +56,11 @@ import {
 } from '@/src/types/applications';
 import { AppAction, AppEpic } from '@/src/types/store';
 
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { ModelsActions } from '@/src/store/models/models.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
+import { ShareSelectors } from '@/src/store/share/share.selectors';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_APPLICATION_NAME } from '@/src/constants/default-ui-settings';
@@ -68,14 +73,11 @@ import {
   ApplicationActions,
   ApplicationSelectors,
 } from '../application/application.reducers';
+
 import { ApplicationTypesSchemasActions } from '../applicationTypeSchemas/applicationTypeSchemas.reducers';
-import { AuthSelectors } from '../auth/auth.reducers';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '../conversations/conversations.reducers';
-import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
-import { ShareActions, ShareSelectors } from '../share/share.reducers';
+import { AuthSelectors } from '../auth/auth.selectors';
+import { ModelsSelectors } from '../models/models.selectors';
+import { ApplicationSelectors } from './application.selectors';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -387,6 +389,10 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
             ),
           );
 
+          if (!modelFromState) {
+            actions.push(of(ModelsActions.addModelToMap(application)));
+          }
+
           if (payload.isForSharing) {
             const permissionsFromState = ShareSelectors.selectSharePermissions(
               state$.value,
@@ -404,7 +410,7 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
           return concat(...actions);
         }),
         catchError(() => {
-          Router.push('/404');
+          Router.push(Routes.NotFound);
           return of(ApplicationActions.getFail());
         }),
       ),

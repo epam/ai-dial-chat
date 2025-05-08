@@ -29,7 +29,7 @@ import { Prompt } from '@/src/types/prompt';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
 import { RootState } from '@/src/types/store';
 
-import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 
 import {
   DEFAULT_FOLDER_NAME,
@@ -421,3 +421,48 @@ export const selectInitialized = (state: RootState) =>
 
 export const selectPromptWithVariablesForApply = (state: RootState) =>
   rootSelector(state).promptWithVariablesForApply;
+
+export const PromptsSelectors = {
+  selectPrompts,
+  selectSearchTerm,
+  selectFilteredPrompts,
+  selectPrompt,
+  selectFolders,
+  selectFolderById,
+  selectFoldersByFolderId,
+  selectEmptyFolderIds,
+  selectFilteredFolders,
+  selectParentFolders,
+  selectRootParentFolder,
+  selectParentFoldersIds,
+  selectPromptsByFolderId,
+  selectSearchFilters,
+  selectMyItemsFilters,
+  selectSearchedPrompts,
+  selectIsEmptySearchFilter,
+  selectDoesAnyMyItemExist,
+  selectTemporaryFolders,
+  selectPublishedWithMeFolders,
+  selectTemporaryAndPublishedFolders,
+  selectNewAddedFolderId,
+  selectLoadingFolderIds,
+  arePromptsUploaded,
+  isPromptLoading,
+  selectNewFolderName,
+  selectIsNewPromptCreating,
+  selectSelectedPrompt,
+  selectSelectedPromptFoldersIds,
+  selectSelectedOrNewPrompt,
+  selectDuplicatedPrompt,
+  selectPublicationFolders,
+  selectSelectedItems,
+  selectChosenEmptyFolderIds,
+  selectIsSelectMode,
+  selectChosenFolderIds,
+  selectIsPromptModalOpen,
+  selectIsPromptModalInitModelEdit,
+  selectSelectedPromptId,
+  selectIsFolderEmpty,
+  selectInitialized,
+  selectPromptWithVariablesForApply,
+};

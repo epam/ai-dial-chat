@@ -21,14 +21,11 @@ import { RECENT_MODELS_COUNT } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
 import { DeleteType } from '@/src/constants/marketplace';
 
-import * as ModelsSelectors from './models.selectors';
 import { ModelUpdatedValues, ModelsState } from './models.types';
 
-import { UploadStatus } from '@epam/ai-dial-shared';
+import { EntityPublicationInfo, UploadStatus } from '@epam/ai-dial-shared';
 import cloneDeep from 'lodash-es/cloneDeep';
 import uniq from 'lodash-es/uniq';
-
-export { ModelsSelectors };
 
 const initialState: ModelsState = {
   initialized: false,
@@ -91,7 +88,10 @@ export const modelsSlice = createSlice({
       state.status = UploadStatus.LOADED;
       state.error = undefined;
       state.models = payload.models;
-      state.modelsMap = addToModelsMap({}, ...payload.models);
+      state.modelsMap = addToModelsMap(
+        state.modelsMap ?? {},
+        ...payload.models,
+      );
     },
     getModelsFail: (
       state,
@@ -268,6 +268,34 @@ export const modelsSlice = createSlice({
       state.publishRequestModels = combineEntities(
         state.publishRequestModels,
         payload.models,
+      );
+    },
+    updateModelPublicationInfo: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        reference: string;
+        updatedValues: EntityPublicationInfo;
+      }>,
+    ) => {
+      const targetModel = state.publishRequestModels.find(
+        (m) => m.reference === payload.reference,
+      );
+
+      if (!targetModel) return state;
+
+      const updatedModel = {
+        ...targetModel,
+        publicationInfo: {
+          ...targetModel.publicationInfo,
+          ...payload.updatedValues,
+        },
+      };
+
+      state.publishRequestModels = combineEntities(
+        [updatedModel],
+        state.publishRequestModels,
       );
     },
     updateFunctionStatus: (

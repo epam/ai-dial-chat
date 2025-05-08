@@ -32,9 +32,10 @@ import { AppEpic } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
 import { FilesSelectors } from '@/src/store/files/files.selectors';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { PublicationActions } from '../publication/publication.reducers';
-import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { FilesActions } from './files.reducers';
 
 import { UploadStatus } from '@epam/ai-dial-shared';

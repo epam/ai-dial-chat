@@ -19,7 +19,7 @@ import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { AuthSelectors } from '@/src/store/auth/auth.reducers';
+import { AuthSelectors } from '@/src/store/auth/auth.selectors';
 import { useAppSelector } from '@/src/store/hooks';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';

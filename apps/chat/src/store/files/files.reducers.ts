@@ -444,6 +444,4 @@ export const filesSlice = createSlice({
   },
 });
 
-export { FilesSelectors } from './files.selectors';
-
 export const FilesActions = filesSlice.actions;

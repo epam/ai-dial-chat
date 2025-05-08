@@ -5,7 +5,7 @@ import classNames from 'classnames';
 
 import { DialAIEntityAddon } from '@/src/types/models';
 
-import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
+import { AddonsSelectors } from '@/src/store/addons/addons.selectors';
 import { useAppSelector } from '@/src/store/hooks';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';

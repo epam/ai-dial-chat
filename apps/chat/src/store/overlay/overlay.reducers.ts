@@ -17,8 +17,6 @@ import {
   SetSystemPromptRequest,
 } from '@epam/ai-dial-shared';
 
-export { OverlaySelectors } from './overlay.selectors';
-
 type WithRequestId<T> = T & { requestId: string };
 
 const initialState: OverlayState = {

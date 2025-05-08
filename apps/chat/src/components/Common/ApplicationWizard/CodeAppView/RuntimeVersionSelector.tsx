@@ -4,7 +4,7 @@ import { useState } from 'react';
 import classNames from 'classnames';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { Menu, MenuItem } from '../../DropdownMenu';
 import Tooltip from '../../Tooltip';
