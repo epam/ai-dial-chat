@@ -13,12 +13,14 @@ interface FileDropAreaProps {
   children: ReactNode;
   onDrop: (files: File[]) => void;
   droppable?: boolean;
+  disabled?: boolean;
   className?: string;
 }
 
 export const FileDropArea = ({
   children,
   droppable = true,
+  disabled = false,
   className,
   onDrop,
 }: FileDropAreaProps) => {
@@ -26,14 +28,17 @@ export const FileDropArea = ({
 
   const [isDraggingOver, setIsDraggingOver] = useState(false);
 
-  const handleDragOver = useCallback((e: DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!e.dataTransfer?.types?.includes('Files')) {
-      return;
-    }
-    setIsDraggingOver(true);
-  }, []);
+  const handleDragOver = useCallback(
+    (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (disabled || !e.dataTransfer?.types?.includes('Files')) {
+        return;
+      }
+      setIsDraggingOver(true);
+    },
+    [disabled],
+  );
 
   const handleDragLeave = useCallback((e: DragEvent) => {
     e.preventDefault();
