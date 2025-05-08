@@ -1,11 +1,18 @@
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { translate } from '@/src/utils/app/translation';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
-import { DialFile, DialLink, FileFolderAttachment } from '@/src/types/files';
+import {
+  DialFile,
+  DialLink,
+  FileFolderAttachment,
+  FileValidationErrors,
+} from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 
+import { MAX_FILE_SIZE_IN_BYTES } from '@/src/constants/file';
 import {
   FOLDER_ATTACHMENT_CONTENT_TYPE,
   METADATA_PREFIX,
@@ -145,11 +152,14 @@ export const notAllowedSymbolsRegex = new RegExp(
   `[${escapeRegExp(notAllowedSymbols)}]|(\r\n|\n|\r|\t)|[\x00-\x1F]`,
   'gm',
 );
+export const doesHaveNotAllowedSymbols = (name: string) =>
+  !!name.match(notAllowedSymbolsRegex);
+
 export const getFilesWithInvalidFileName = <T extends { name: string }>(
   files: T[],
 ): { filesWithNotAllowedSymbols: T[]; filesWithDotInTheEnd: T[] } => ({
   filesWithNotAllowedSymbols: files.filter(({ name }) =>
-    name.match(notAllowedSymbolsRegex),
+    doesHaveNotAllowedSymbols(name),
   ),
   filesWithDotInTheEnd: files.filter(({ name }) => doesHaveDotsInTheEnd(name)),
 });
@@ -405,4 +415,113 @@ export const isConversationHasExternalAttachments = (
 
     return attachmentBucket !== userBucket;
   });
+};
+
+export const validatePreUploadFiles = (
+  files: File[],
+  allowedTypes: string[] = [],
+): { validFiles: File[]; errorMsg: string } => {
+  const validFiles: File[] = [];
+  const byError: Partial<Record<FileValidationErrors, string[]>> = {};
+
+  files.forEach((file) => {
+    if (file.size > MAX_FILE_SIZE_IN_BYTES) {
+      byError[FileValidationErrors.IncorrectSize] = [
+        ...(byError[FileValidationErrors.IncorrectSize] ?? []),
+        file.name,
+      ];
+      return;
+    }
+    if (!isAllowedMimeType(allowedTypes, file.type)) {
+      byError[FileValidationErrors.IncorrectType] = [
+        ...(byError[FileValidationErrors.IncorrectType] ?? []),
+        file.name,
+      ];
+      return;
+    }
+
+    validFiles.push(file);
+  });
+
+  const errorMsg = Object.entries(byError)
+    .map(([error, names]) => {
+      const fileNames = names.join(', ');
+      switch (error as FileValidationErrors) {
+        case FileValidationErrors.IncorrectSize:
+          return translate(
+            "Max file size up to 512 Mb. Next files haven't been uploaded: {{fileNames}}",
+            { fileNames },
+          );
+        case FileValidationErrors.IncorrectType:
+          return translate(
+            "You're trying to upload files with incorrect type: {{fileNames}}",
+            { fileNames },
+          );
+        default:
+          return '';
+      }
+    })
+    .join('\n');
+
+  return { validFiles, errorMsg };
+};
+
+const getIncorrectNamesError = (names: string[]) => {
+  const isThereDotsAtTheEnd = names.some(doesHaveDotsInTheEnd);
+  const isThereNotAllowedSymbols = names.some(doesHaveNotAllowedSymbols);
+  const fileNames = names.join(', ');
+
+  if (isThereDotsAtTheEnd && isThereNotAllowedSymbols)
+    return translate(
+      'The symbols {{notAllowedSymbols}} and a dot at the end are not allowed in file name. Please rename or delete them from uploading files list: {{fileNames}}',
+      { notAllowedSymbols, fileNames },
+    );
+
+  if (isThereNotAllowedSymbols)
+    return translate(
+      'The symbols {{notAllowedSymbols}} are not allowed in file name. Please rename or delete them from uploading files list: {{fileNames}}',
+      { notAllowedSymbols, fileNames },
+    );
+
+  return translate(
+    'Using a dot at the end of a name is not permitted. Please rename or delete them from uploading files list: {{fileNames}}',
+    { fileNames },
+  );
+};
+
+export const validateUploadFiles = <T extends { name: string }>(
+  files: T[],
+): { validFiles: T[]; invalidFiles: T[]; errorMsg: string } => {
+  const validFiles: T[] = [];
+  const invalidFiles: T[] = [];
+  const byError: Partial<Record<FileValidationErrors, string[]>> = {};
+
+  files.forEach((file) => {
+    if (
+      doesHaveDotsInTheEnd(file.name) ||
+      doesHaveNotAllowedSymbols(file.name)
+    ) {
+      byError[FileValidationErrors.IncorrectName] = [
+        ...(byError[FileValidationErrors.IncorrectName] ?? []),
+        file.name,
+      ];
+      invalidFiles.push(file);
+      return;
+    }
+
+    validFiles.push(file);
+  });
+
+  const errorMsg = Object.entries(byError)
+    .map(([error, names]) => {
+      switch (error as FileValidationErrors) {
+        case FileValidationErrors.IncorrectName:
+          return getIncorrectNamesError(names);
+        default:
+          return '';
+      }
+    })
+    .join('\n');
+
+  return { validFiles, invalidFiles, errorMsg };
 };
