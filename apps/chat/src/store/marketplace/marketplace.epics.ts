@@ -79,7 +79,7 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
       MarketplaceActions.setSelectedView.type,
       MarketplaceActions.setTableSort.type,
     ),
-    filter(() => ModelsSelectors.selectIsModelsLoaded(state$.value)),
+    filter(() => ModelsSelectors.selectAreModelsLoaded(state$.value)),
     switchMap(() => {
       const state = state$.value;
       const query = parse(window.location.search.slice(1));

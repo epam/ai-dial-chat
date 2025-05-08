@@ -159,7 +159,7 @@ export const PromptComponent = ({
     () => chosenPromptIds.includes(prompt.id),
     [chosenPromptIds, prompt.id],
   );
-  const isModelsInstalled = selectedConversations.every((conv) =>
+  const areModelsInstalled = selectedConversations.every((conv) =>
     installedModelIds.has(conv.model.id),
   );
 
@@ -250,7 +250,7 @@ export const PromptComponent = ({
   );
 
   const disableUsePrompt =
-    isConversationBlocksInput || !isModelsInstalled || !!selectedPublication;
+    isConversationBlocksInput || !areModelsInstalled || !!selectedPublication;
 
   const handleCloseDialogs = useCallback(() => {
     setIsDeleting(false);

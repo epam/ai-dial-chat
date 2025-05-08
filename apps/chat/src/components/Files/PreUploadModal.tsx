@@ -15,12 +15,10 @@ import {
   constructPath,
   getFileNameExtension,
   getFileNameWithoutExtension,
-  getFilesWithInvalidFileName,
-  getFilesWithInvalidFileSize,
-  getFilesWithInvalidFileType,
   getShortExtensionsListFromMimeType,
-  notAllowedSymbols,
   prepareFileName,
+  validatePreUploadFiles,
+  validateUploadFiles,
 } from '@/src/utils/app/file';
 import { getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
 import { getFileRootId, isMyBucket } from '@/src/utils/app/id';
@@ -56,8 +54,6 @@ interface Props {
   customUploadButtonLabel?: string;
   rootFolderId?: string;
 }
-
-const bytesInMb = 1_048_576;
 
 export const PreUploadDialog = ({
   isOpen,
@@ -124,47 +120,18 @@ export const PreUploadDialog = ({
         (e.target as HTMLInputElement).files as FileList,
       );
 
-      const incorrectSizeFiles: string[] = getFilesWithInvalidFileSize(
-        files,
-        512 * bytesInMb,
-      ).map((file) => file.name);
-      const incorrectTypeFiles: string[] = getFilesWithInvalidFileType(
+      const { validFiles, errorMsg } = validatePreUploadFiles(
         files,
         allowedTypes,
-      ).map((file) => file.name);
-      const invalidFileNames = new Set([
-        ...incorrectSizeFiles,
-        ...incorrectTypeFiles,
-      ]);
-      const filteredFiles = files.filter(
-        (file) => !invalidFileNames.has(file.name),
       );
-      const errors = [];
-      if (incorrectSizeFiles.length > 0) {
-        errors.push(
-          t(
-            `Max file size up to 512 Mb. Next files haven't been uploaded: {{incorrectSizeFileNames}}`,
-            { incorrectSizeFileNames: incorrectSizeFiles.join(', ') },
-          ),
-        );
-      }
-      if (incorrectTypeFiles.length > 0) {
-        errors.push(
-          t(
-            `You're trying to upload files with incorrect type: {{incorrectTypeFileNames}}`,
-            {
-              incorrectTypeFileNames: incorrectTypeFiles.join(', '),
-            },
-          ),
-        );
-      }
-      if (errors.length) {
-        setErrorMessage(errors.join('\n'));
+
+      if (errorMsg) {
+        setErrorMessage(errorMsg);
       }
 
       setSelectedFiles((oldFiles) =>
         oldFiles.concat(
-          filteredFiles.map((file) => {
+          validFiles.map((file) => {
             return {
               fileContent: file,
               id: constructPath(
@@ -181,7 +148,7 @@ export const PreUploadDialog = ({
         uploadInputRef.current.value = '';
       }
     },
-    [allowedTypes, bucket, folderPath, t],
+    [allowedTypes, bucket, folderPath],
   );
 
   const handleUpload = useCallback(() => {
@@ -198,55 +165,18 @@ export const PreUploadDialog = ({
         ),
       );
     }
-    const { filesWithNotAllowedSymbols, filesWithDotInTheEnd } =
-      getFilesWithInvalidFileName(selectedFiles);
-    const filesWithNotAllowedSymbolsNames = filesWithNotAllowedSymbols.map(
-      (f) => f.name,
-    );
-    const filesWithDotInTheEndNames = filesWithDotInTheEnd.map((f) => f.name);
 
-    if (
-      filesWithNotAllowedSymbolsNames.length &&
-      filesWithDotInTheEndNames.length
-    ) {
-      errors.push(
-        t(
-          `The symbols {{notAllowedSymbols}} and a dot at the end are not allowed in file name. Please rename or delete them from uploading files list: {{fileNames}}`,
-          {
-            notAllowedSymbols,
-            fileNames: filesWithNotAllowedSymbolsNames.join(', '),
-          },
-        ),
-      );
-    } else {
-      if (filesWithNotAllowedSymbolsNames.length) {
-        errors.push(
-          t(
-            `The symbols {{notAllowedSymbols}} are not allowed in file name. Please rename or delete them from uploading files list: {{fileNames}}`,
-            {
-              notAllowedSymbols,
-              fileNames: filesWithNotAllowedSymbolsNames.join(', '),
-            },
-          ),
-        );
-      }
+    const { errorMsg, validFiles, invalidFiles } =
+      validateUploadFiles(selectedFiles);
 
-      if (filesWithDotInTheEndNames.length) {
-        errors.push(
-          t(
-            `Using a dot at the end of a name is not permitted. Please rename or delete them from uploading files list: {{fileNames}}`,
-            {
-              fileNames: filesWithDotInTheEndNames.join(', '),
-            },
-          ),
-        );
-      }
-    }
+    const filesToUpload = [...validFiles, ...invalidFiles];
+
+    if (errorMsg) errors.push(errorMsg);
 
     const attachmentsSameLevelNames = files
       .filter((file) => file.folderId === selectedFolderId)
       .map((file) => prepareFileName(file.name));
-    const localIncorrectSameNameFiles = selectedFiles
+    const localIncorrectSameNameFiles = filesToUpload
       .filter((file) =>
         attachmentsSameLevelNames.includes(prepareFileName(file.name)),
       )
@@ -261,7 +191,7 @@ export const PreUploadDialog = ({
       );
     }
 
-    const duplicateNames = selectedFiles
+    const duplicateNames = filesToUpload
       .map((file) => file.name)
       .filter((value, index, self) => self.indexOf(value) !== index);
     if (duplicateNames.length) {
@@ -280,7 +210,7 @@ export const PreUploadDialog = ({
       return;
     }
 
-    onUploadFiles(selectedFiles, folderPath);
+    onUploadFiles(filesToUpload, folderPath);
 
     onClose(true);
   }, [

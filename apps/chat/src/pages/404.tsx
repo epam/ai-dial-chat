@@ -4,6 +4,8 @@ import { useTranslation } from '../hooks/useTranslation';
 
 import { Translation } from '../types/translation';
 
+import { Title } from '../components/Title';
+
 function Custom404() {
   const { t } = useTranslation(Translation.Common);
 
@@ -12,6 +14,7 @@ function Custom404() {
       className="flex h-screen w-screen flex-col items-center justify-center space-y-4 px-4 text-center"
       data-qa="not-found-container"
     >
+      <Title />
       <h1 className="text-6xl font-bold md:text-7xl" data-qa="not-found-header">
         {t('404')}
       </h1>
@@ -21,7 +24,9 @@ function Custom404() {
           {t('Page not found')}
         </p>
         <p className="text-base text-secondary" data-qa="not-found-description">
-          {t("It seems like the page you're looking for doesn't exist.")}
+          {t(
+            "It seems like the page you're looking for doesn't exist or you don't have access.",
+          )}
         </p>
       </div>
 
