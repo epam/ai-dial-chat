@@ -132,6 +132,4 @@ export const settingsSlice = createSlice({
   },
 });
 
-export { SettingsSelectors } from './settings.selectors';
-
 export const SettingsActions = settingsSlice.actions;

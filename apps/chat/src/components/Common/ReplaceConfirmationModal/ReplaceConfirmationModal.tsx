@@ -18,10 +18,8 @@ import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  ImportExportActions,
-  ImportExportSelectors,
-} from '@/src/store/import-export/importExport.reducers';
+import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
+import { ImportExportSelectors } from '@/src/store/import-export/importExport.selectors';
 
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 

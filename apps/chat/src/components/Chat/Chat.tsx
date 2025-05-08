@@ -40,22 +40,21 @@ import {
 import { EntityType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
-import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
+import { AddonsSelectors } from '@/src/store/addons/addons.selectors';
+import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.selectors';
 import { ChatActions } from '@/src/store/chat/chat.reducer';
 import { ChatSelectors } from '@/src/store/chat/chat.selectors';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { Routes } from '@/src/constants/routes';
 
+import { ChatDropArea } from '@/src/components/Chat/ChatDropArea';
 import { ChatStarters } from '@/src/components/Chat/ChatStarters';
 
 import { CustomChatViewer } from '../AppsEditor/Settings/Previews/CustomChatViewer';
@@ -99,7 +98,7 @@ const ChatView = memo(() => {
   const models = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const modelError = useAppSelector(ModelsSelectors.selectModelsError);
-  const isModelsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
+  const areModelsLoaded = useAppSelector(ModelsSelectors.selectAreModelsLoaded);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const isCompareMode = useAppSelector(UISelectors.selectIsCompareMode);
   const selectedConversationsIds = useAppSelector(
@@ -195,7 +194,7 @@ const ChatView = memo(() => {
 
   useLayoutEffect(() => {
     const isNotAllowedModel =
-      isModelsLoaded &&
+      areModelsLoaded &&
       (models.length === 0 ||
         selectedConversations.some((conv) => {
           if (
@@ -242,7 +241,7 @@ const ChatView = memo(() => {
   }, [
     selectedConversations,
     models,
-    isModelsLoaded,
+    areModelsLoaded,
     addonsMap,
     modelsMap,
     dispatch,
@@ -534,7 +533,7 @@ const ChatView = memo(() => {
     !messageIsStreaming &&
     !isLastMessageError &&
     !notAvailableEntityType;
-  const isModelsInstalled = selectedConversations.every((conv) =>
+  const areModelsInstalled = selectedConversations.every((conv) =>
     installedModelIds.has(conv.model.id),
   );
 
@@ -559,7 +558,7 @@ const ChatView = memo(() => {
   const isInputVisible =
     (!isReplay || isNotEmptyConversations) &&
     !isExternal &&
-    (isModelsInstalled || isReplay || isIsolatedView) &&
+    (areModelsInstalled || isReplay || isIsolatedView) &&
     !(isConversationWithSchema && selectedConversations.length > 1);
 
   const applicationTypeSchemas = useAppSelector(
@@ -599,7 +598,7 @@ const ChatView = memo(() => {
 
   return (
     <div
-      className="relative min-w-0 shrink grow basis-0 overflow-y-auto"
+      className="relative size-full min-w-0 overflow-y-auto"
       data-qa="chat"
       id="chat"
     >
@@ -870,8 +869,8 @@ const ChatView = memo(() => {
                             isWideLayout={isWideLayout}
                             isNotEmptyConversations={isNotEmptyConversations}
                             showReplayControls={showReplayControls}
-                            isModelsInstalled={
-                              isModelsInstalled || isIsolatedView
+                            areModelsInstalled={
+                              areModelsInstalled || isIsolatedView
                             }
                             isConversationWithSchema={isConversationWithSchema}
                             showScrollDownButton={showScrollDownButton}
@@ -1050,7 +1049,7 @@ export function Chat({ isPreview }: ChatProps) {
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
   );
-  const modelIsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
+  const modelIsLoaded = useAppSelector(ModelsSelectors.selectAreModelsLoaded);
   const isolatedModelId = useAppSelector(
     SettingsSelectors.selectIsolatedModelId,
   );
@@ -1135,7 +1134,9 @@ export function Chat({ isPreview }: ChatProps) {
 
   return (
     <>
-      <ChatView />
+      <ChatDropArea>
+        <ChatView />
+      </ChatDropArea>
       {!isPreview && <ChatInputFooter />}
     </>
   );

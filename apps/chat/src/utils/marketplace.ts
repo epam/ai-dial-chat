@@ -6,8 +6,8 @@ import {
 import { isMyApplication } from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 
-import { ApplicationTypeSchema } from '../types/application-type-schema';
-import { PageType } from '../types/common';
+import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
+import { PageType } from '@/src/types/common';
 import { MarketplaceFilters } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
 

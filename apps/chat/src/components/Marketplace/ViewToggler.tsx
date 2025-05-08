@@ -4,10 +4,8 @@ import { useCallback } from 'react';
 import classNames from 'classnames';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  MarketplaceActions,
-  MarketplaceSelectors,
-} from '@/src/store/marketplace/marketplace.reducers';
+import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
+import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
 
 import { ViewTypes } from '@/src/constants/marketplace';
 

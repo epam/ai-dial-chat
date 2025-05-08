@@ -4,7 +4,7 @@ import { Epic } from 'redux-observable';
 
 import * as allActions from '@/src/store/actions';
 
-import { rootReducer } from '../store';
+import { rootReducer } from '@/src/store';
 
 type ExtractAction<T> =
   T extends Record<string, (...args: never[]) => infer R> ? R : never;
