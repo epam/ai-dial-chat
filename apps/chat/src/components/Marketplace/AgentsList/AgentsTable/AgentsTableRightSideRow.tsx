@@ -112,7 +112,11 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
         </div>
         <div className="hidden flex-none items-center xl:flex">
           <div className="flex gap-1">
-            <AgentBookmark onBookmarkClick={onBookmarkClick} entity={entity} />
+            <AgentBookmark
+              onBookmarkClick={onBookmarkClick}
+              entity={entity}
+              allocatePlace
+            />
             <AgentContextMenu
               className={isHovered ? 'xl:visible' : 'xl:invisible'}
               entity={entity}
