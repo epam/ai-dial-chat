@@ -40,10 +40,6 @@ const selectOpenedFoldersIds =
   (featureType: FeatureType) => (state: RootState) =>
     selectAllOpenedFoldersIds(state)[featureType];
 
-const selectIsFolderOpened = (featureType: FeatureType, id: string) =>
-  createSelector([selectOpenedFoldersIds(featureType)], (ids): boolean => {
-    return ids.includes(id);
-  });
 const selectTextOfClosedAnnouncement = (state: RootState) =>
   rootSelector(state).textOfClosedAnnouncement;
 
@@ -92,7 +88,6 @@ export const UISelectors = {
   selectIsCompareMode,
   selectAllOpenedFoldersIds,
   selectOpenedFoldersIds,
-  selectIsFolderOpened,
   selectTextOfClosedAnnouncement,
   selectAvailableThemes,
   selectChatbarWidth,

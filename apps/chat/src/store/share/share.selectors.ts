@@ -43,10 +43,7 @@ export const selectAcceptedEntityInfo = createSelector(
   },
 );
 
-export const selectInitialized = (state: RootState) =>
-  rootSelector(state).initialized;
-
-export const selectSharePermissions = (state: RootState) =>
+const selectSharePermissions = (state: RootState) =>
   rootSelector(state).sharePermissions;
 
 export const selectUnshareModel = (state: RootState) =>
@@ -57,3 +54,19 @@ export const selectUnshareResourceId = (state: RootState) =>
 
 export const selectIsResourceShared = (state: RootState) =>
   rootSelector(state).isShared;
+
+export const ShareSelectors = {
+  selectInvitationId,
+  selectWriteInvitationId,
+  selectShareModalState,
+  selectShareModalOpened,
+  selectShareResourceId,
+  selectShareResourceName,
+  selectShareFeatureType,
+  selectShareIsFolder,
+  selectAcceptedEntityInfo,
+  selectSharePermissions,
+  selectUnshareModel,
+  selectUnshareResourceId,
+  selectIsResourceShared,
+};

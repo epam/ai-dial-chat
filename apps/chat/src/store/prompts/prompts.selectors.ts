@@ -146,23 +146,6 @@ export const selectParentFolders = createSelector(
   },
 );
 
-export const selectRootParentFolder = createSelector(
-  [
-    (state, folderId: string | undefined) =>
-      selectParentFolders(state, folderId),
-  ],
-  (parentFolders) => {
-    return parentFolders.find((folder) => isRootId(folder.folderId));
-  },
-);
-
-export const selectParentFoldersIds = createSelector(
-  [selectParentFolders],
-  (folders) => {
-    return folders.map((folder) => folder.id);
-  },
-);
-
 export const selectPromptsByFolderId = createSelector(
   [selectPrompts, (_state, folderId: string) => folderId],
   (prompts, folderId) => {
@@ -180,15 +163,6 @@ export const selectIsEmptySearchFilter = (state: RootState) =>
 export const selectMyItemsFilters = createSelector(
   [selectSearchFilters],
   (searchFilters) => getMyItemsFilters(searchFilters),
-);
-
-export const selectSearchedPrompts = createSelector(
-  [selectPrompts, selectSearchTerm],
-  (prompts, searchTerm) => {
-    return prompts.filter((prompt) =>
-      doesEntityContainSearchTerm(prompt, searchTerm),
-    );
-  },
 );
 
 export const selectIsPromptModalOpen = (state: RootState) =>
@@ -347,13 +321,6 @@ export const selectDuplicatedPrompt = createSelector(
   },
 );
 
-export const selectPublicationFolders = createSelector(
-  [selectFolders],
-  (folders) => {
-    return folders.filter((f) => f.isPublicationFolder);
-  },
-);
-
 export const selectSelectedItems = (state: RootState) =>
   rootSelector(state).chosenPromptIds;
 
@@ -421,3 +388,41 @@ export const selectInitialized = (state: RootState) =>
 
 export const selectPromptWithVariablesForApply = (state: RootState) =>
   rootSelector(state).promptWithVariablesForApply;
+
+export const PromptsSelectors = {
+  selectPrompts,
+  selectSearchTerm,
+  selectFilteredPrompts,
+  selectPrompt,
+  selectFolders,
+  selectFolderById,
+  selectFoldersByFolderId,
+  selectEmptyFolderIds,
+  selectFilteredFolders,
+  selectParentFolders,
+  selectPromptsByFolderId,
+  selectSearchFilters,
+  selectMyItemsFilters,
+  selectIsEmptySearchFilter,
+  selectDoesAnyMyItemExist,
+  selectTemporaryAndPublishedFolders,
+  selectNewAddedFolderId,
+  selectLoadingFolderIds,
+  arePromptsUploaded,
+  isPromptLoading,
+  selectNewFolderName,
+  selectIsNewPromptCreating,
+  selectSelectedPrompt,
+  selectSelectedPromptFoldersIds,
+  selectSelectedOrNewPrompt,
+  selectDuplicatedPrompt,
+  selectSelectedItems,
+  selectIsSelectMode,
+  selectChosenFolderIds,
+  selectIsPromptModalOpen,
+  selectIsPromptModalInitModelEdit,
+  selectSelectedPromptId,
+  selectIsFolderEmpty,
+  selectInitialized,
+  selectPromptWithVariablesForApply,
+};

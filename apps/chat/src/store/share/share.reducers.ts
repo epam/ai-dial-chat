@@ -24,7 +24,6 @@ export { ShareSelectors };
 export type { ShareState };
 
 const initialState: ShareState = {
-  initialized: false,
   status: UploadStatus.UNINITIALIZED,
   error: undefined,
   invitationId: undefined,
@@ -48,10 +47,6 @@ export const shareSlice = createSlice({
   name: 'share',
   initialState,
   reducers: {
-    init: (state) => state,
-    initFinish: (state) => {
-      state.initialized = true;
-    },
     share: (
       state,
       {

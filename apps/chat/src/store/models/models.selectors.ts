@@ -65,24 +65,14 @@ export const selectModelsMap = (state: RootState) =>
 export const selectRecentModelsIds = (state: RootState) =>
   rootSelector(state).recentModelsIds;
 
-export const selectRecentModels = createSelector(
-  [selectRecentModelsIds, selectModelsMap],
-  (recentModelsIds, modelsMap) => {
-    return recentModelsIds.map((id) => modelsMap[id]).filter(Boolean);
-  },
-);
-
-export const selectModelsOnly = createSelector([selectModels], (models) => {
+const selectModelsOnly = createSelector([selectModels], (models) => {
   return models.filter((model) => model.type === EntityType.Model);
 });
 
 export const selectPublishRequestModels = (state: RootState) =>
   rootSelector(state).publishRequestModels;
 
-export const selectPublishedApplicationIds = (state: RootState) =>
-  rootSelector(state).publishedApplicationIds;
-
-export const selectInstalledModels = (state: RootState) =>
+const selectInstalledModels = (state: RootState) =>
   rootSelector(state).installedModels;
 
 export const selectInstalledModelIds = createSelector(
@@ -110,24 +100,8 @@ export const selectCustomModels = createSelector([rootSelector], (state) => {
   return state.models.filter((model) => model.reference !== model.id);
 });
 
-export const selectSharedWithMeModels = createSelector(
-  [selectCustomModels],
-  (customModels) => {
-    return customModels.filter((model) => model.sharedWithMe);
-  },
-);
-
-export const selectSharedWriteModels = createSelector(
-  [selectCustomModels],
-  (customModels) => {
-    return customModels.filter((model) => canWriteSharedWithMe(model));
-  },
-);
-
-export const selectModelById = (
-  state: RootState,
-  modelId: string | undefined,
-) => (modelId ? selectModelsMap(state)[modelId] : undefined);
+const selectModelById = (state: RootState, modelId: string | undefined) =>
+  modelId ? selectModelsMap(state)[modelId] : undefined;
 
 export const selectAllGroupModelKeySet = (
   state: RootState,
@@ -140,4 +114,24 @@ export const selectAllGroupModelKeySet = (
       .filter(Boolean)
       .map((model) => getGroupModelKey(model!)),
   );
+};
+
+export const ModelsSelectors = {
+  selectModels,
+  selectModelsMap,
+  selectModelById,
+  selectModelsError,
+  selectAreModelsLoading,
+  selectAreModelsLoaded,
+  selectIsInstalledModelsInitialized,
+  selectRecentModelsIds,
+  selectModelsOnly,
+  selectPublishRequestModels,
+  selectInstalledModels,
+  selectInstalledModelIds,
+  selectRecentWithInstalledModelsIds,
+  selectModelTopics,
+  selectInitialized,
+  selectAllGroupModelKeySet,
+  selectIsRecentModelsLoaded,
 };

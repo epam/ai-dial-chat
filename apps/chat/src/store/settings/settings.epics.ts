@@ -62,7 +62,6 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
         of(AddonsActions.init()),
         of(ConversationsActions.init()),
         of(PromptsActions.init()),
-        of(ShareActions.init()),
         of(FilesActions.init()),
         of(PublicationActions.init()),
         of(ApplicationTypesSchemasActions.init()),
@@ -72,7 +71,6 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
       return [
         of(UIActions.init()),
         of(ModelsActions.init()),
-        of(ShareActions.init()),
         of(AddonsActions.init()),
         of(FilesActions.init()),
         of(PublicationActions.init()),
