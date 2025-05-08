@@ -92,10 +92,6 @@ const selectRecentWithInstalledModelsIds = createSelector(
 
 const selectInitialized = (state: RootState) => rootSelector(state).initialized;
 
-const selectCustomModels = createSelector([rootSelector], (state) => {
-  return state.models.filter((model) => model.reference !== model.id);
-});
-
 const selectModelById = (state: RootState, modelId: string | undefined) =>
   modelId ? selectModelsMap(state)[modelId] : undefined;
 
