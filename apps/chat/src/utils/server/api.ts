@@ -222,6 +222,27 @@ export class ApiUtils {
     );
   }
 
+  static requestBlob(url: string, options?: RequestInit) {
+    return fromFetch(url, {
+      headers: { 'Content-Type': 'application/json' },
+      ...options,
+    }).pipe(
+      switchMap((response) => {
+        if (!response.ok) {
+          return from(ServerUtils.getErrorMessageFromResponse(response)).pipe(
+            switchMap((errorMessage) => {
+              return throwError(
+                () => new Error(errorMessage || response.status + ''),
+              );
+            }),
+          );
+        }
+
+        return from(response.blob());
+      }),
+    );
+  }
+
   static requestOld({
     url,
     method,

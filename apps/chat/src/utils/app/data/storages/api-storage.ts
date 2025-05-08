@@ -25,6 +25,7 @@ import { Conversation } from '@/src/types/chat';
 import {
   BackendChatEntity,
   BackendResourceType,
+  CopyModel,
   MoveModel,
 } from '@/src/types/common';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
@@ -275,6 +276,16 @@ export class ApiStorage implements DialStorage {
         sourceUrl: ApiUtils.encodeApiUrl(data.sourceUrl),
         destinationUrl: ApiUtils.encodeApiUrl(data.destinationUrl),
         overwrite: data.overwrite,
+      }),
+    });
+  }
+
+  copy(data: CopyModel): Observable<null> {
+    return ApiUtils.request('/api/ops/resource/copy', {
+      method: HTTPMethod.POST,
+      body: JSON.stringify({
+        sourceUrl: ApiUtils.encodeApiUrl(data.sourceUrl),
+        destinationUrl: ApiUtils.encodeApiUrl(data.destinationUrl),
       }),
     });
   }

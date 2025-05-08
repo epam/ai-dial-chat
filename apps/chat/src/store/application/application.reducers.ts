@@ -40,6 +40,8 @@ export const applicationSlice = createSlice({
     initFinish: (state) => {
       state.initialized = true;
     },
+    addNewlyCreated: (state, _action: PayloadAction<CustomApplicationModel>) =>
+      state,
     create: (
       state,
       _action: PayloadAction<{
@@ -240,7 +242,12 @@ export const applicationSlice = createSlice({
       _action: PayloadAction<{
         reference: string;
       }>,
-    ) => state,
+    ) => {
+      state.appLoading = UploadStatus.LOADING;
+    },
+    duplicateFail: (state) => {
+      state.appLoading = UploadStatus.LOADED;
+    },
     setSelectedWidget(state, { payload }: PayloadAction<string | undefined>) {
       state.selectedWidget = payload;
     },

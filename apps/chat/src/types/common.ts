@@ -117,6 +117,11 @@ export interface MoveModel {
   overwrite: boolean;
 }
 
+export interface CopyModel {
+  sourceUrl: string;
+  destinationUrl: string;
+}
+
 export interface DropdownSelectorOption {
   readonly value: string;
   readonly label: string;

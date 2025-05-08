@@ -18,7 +18,7 @@ import { isFolderId } from './shared-utils';
 import { Attachment, UploadStatus } from '@epam/ai-dial-shared';
 import escapeRegExp from 'lodash-es/escapeRegExp';
 import uniq from 'lodash-es/uniq';
-import { extensions } from 'mime-types';
+import { extensions, lookup } from 'mime-types';
 
 export function triggerDownload(url: string, name: string): void {
   const link = document.createElement('a');

@@ -32,15 +32,21 @@ import {
 } from '@/src/utils/app/application';
 import { encode } from '@/src/utils/app/application-type-schema';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
+import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application-type-schemas-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
+import {
+  duplicateAndUpdateDocumentsActions,
+  duplicateAndUpdateSourceFolderActions,
+} from '@/src/utils/app/epics-helpers/application.epic-helpers';
 import { generateNextName } from '@/src/utils/app/folders';
 import {
-  isApplicationId,
+  getFileRootId,
   isEntityIdExternal,
   isEntityIdLocal,
   isMyApplication,
 } from '@/src/utils/app/id';
+import { constructPath } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 import { parseApplicationApiKey } from '@/src/utils/server/api';
 
@@ -57,6 +63,7 @@ import { errorsMessages } from '@/src/constants/errors';
 import { DeleteType, MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
+import { MarketplaceActions } from '../actions';
 import {
   ApplicationActions,
   ApplicationSelectors,
@@ -67,7 +74,6 @@ import {
   ConversationsActions,
   ConversationsSelectors,
 } from '../conversations/conversations.reducers';
-import { MarketplaceActions } from '../marketplace/marketplace.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { ShareActions, ShareSelectors } from '../share/share.reducers';
 
@@ -216,9 +222,10 @@ const updateApplicationEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      const updatedCustomApplication = regenerateApplicationId(
-        payload.applicationData,
-      ) as CustomApplicationModel;
+      const updatedCustomApplication =
+        regenerateApplicationId<CustomApplicationModel>(
+          payload.applicationData,
+        );
 
       const isMoved = payload.oldApplication.id !== updatedCustomApplication.id;
 
@@ -700,68 +707,131 @@ const setSelectedWidgetEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
-const duplicateApplicationEpic: AppEpic = (action$, state$) =>
+const duplicateAgentEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ApplicationActions.duplicate.type),
     switchMap(({ payload }) => {
       const state = state$.value;
+
       const agentsMap = ModelsSelectors.selectModelsMap(state);
-      const myCustomAgents = ModelsSelectors.selectCustomModels(state).filter(
-        (application) => isMyApplication(application),
-      );
       const agent = agentsMap[payload.reference];
 
+      const notExistToastAction$ = of(
+        UIActions.showErrorToast(
+          translate('Application does not exist. Try to reload the page.'),
+        ),
+      );
+
       if (!agent) {
+        return notExistToastAction$;
+      }
+
+      if (!isMyApplication(agent)) {
         return of(
           UIActions.showErrorToast(
-            'Application does not exist. Try to reload the page.',
+            translate('You can duplicate only your applications.'),
           ),
         );
       }
 
-      if (!isApplicationId(agent.id)) {
-        return of(
-          UIActions.showErrorToast('You can duplicate only your applications.'),
-        );
-      }
+      const fetchAgentAndSchema$ = forkJoin({
+        agent: ApplicationService.get(agent.id),
+        schema: agent.applicationTypeSchemaId
+          ? ApplicationTypesSchemasService.getApplicationTypeSchema(
+              agent.applicationTypeSchemaId,
+            )
+          : of(undefined),
+      });
 
-      return ApplicationService.get(agent.id).pipe(
-        switchMap((application) => {
-          if (!application) {
-            return of(
-              UIActions.showErrorToast(
-                'Application does not exist. Try to reload the page.',
-              ),
-            );
+      return fetchAgentAndSchema$.pipe(
+        switchMap(({ agent, schema }) => {
+          if (!agent) {
+            return notExistToastAction$;
           }
 
-          const applicationData = {
-            ...application,
-            name: generateNextName(
-              DEFAULT_APPLICATION_NAME,
-              application.name,
-              myCustomAgents.map((agent) => ({ ...agent, folderId: '' })),
-            ),
-          };
-
-          return concat(
-            of(
-              ApplicationActions.create({
-                applicationData: applicationData,
-              }),
-            ),
-            of(
-              MarketplaceActions.setDetailsModel({
-                reference: regenerateApplicationId({
-                  ...applicationData,
-                }).id,
-                isSuggested: false,
-              }),
-            ),
+          const myCustomAgents =
+            ModelsSelectors.selectCustomModels(state).filter(isMyApplication);
+          const newAgentName = generateNextName(
+            DEFAULT_APPLICATION_NAME,
+            agent.name,
+            myCustomAgents.map((agent) => ({ ...agent, folderId: '' })),
           );
+          const regeneratedAgent =
+            regenerateApplicationId<CustomApplicationModel>({
+              ...agent,
+              name: newAgentName,
+              reference: '',
+            });
+
+          const create$ = ApplicationService.create(
+            regeneratedAgent,
+            schema,
+          ).pipe(
+            switchMap((createdAgent) =>
+              ApplicationService.get(createdAgent.id),
+            ),
+            switchMap((newAgent) => {
+              if (!newAgent) {
+                return of(ApplicationActions.getFail());
+              }
+
+              const basePath = constructPath(
+                getFileRootId(),
+                'appdata',
+                'custom applications',
+                newAgent.reference,
+              );
+              const newDocsPath = constructPath(basePath, 'documents');
+              const newSourcePath = constructPath(basePath, 'sources');
+
+              const duplicateAndUpdateSourceFolderActions$ =
+                duplicateAndUpdateSourceFolderActions(newAgent, newDocsPath);
+              const duplicateAndUpdateDocumentsActions$ =
+                duplicateAndUpdateDocumentsActions(
+                  newAgent,
+                  schema,
+                  newSourcePath,
+                );
+
+              return concat(
+                of(
+                  ModelsActions.addModels({
+                    models: [newAgent],
+                  }),
+                ),
+                of(
+                  MarketplaceActions.setDetailsModel({
+                    reference: newAgent.reference,
+                    isSuggested: false,
+                  }),
+                ),
+                of(
+                  ModelsActions.addInstalledModels({
+                    references: [newAgent.reference],
+                  }),
+                ),
+                duplicateAndUpdateSourceFolderActions$,
+                duplicateAndUpdateDocumentsActions$,
+              );
+            }),
+          );
+
+          return create$;
+        }),
+        catchError((error) => {
+          console.error('Error during duplication:', error);
+          return of(ApplicationActions.duplicateFail());
         }),
       );
     }),
+  );
+
+const duplicateAgentFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ApplicationActions.duplicateFail.type),
+    switchMap(() =>
+      of(UIActions.showErrorToast(translate('Duplication failed. Try again.'))),
+    ),
   );
 
 export const ApplicationEpics = combineEpics(
@@ -779,6 +849,7 @@ export const ApplicationEpics = combineEpics(
   getApplicationLogsEpic,
   enterEditModeEpic,
   exitEditModeEpic,
-  duplicateApplicationEpic,
   setSelectedWidgetEpic,
+  duplicateAgentEpic,
+  duplicateAgentFailEpic,
 );
