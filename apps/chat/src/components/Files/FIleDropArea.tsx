@@ -69,12 +69,17 @@ export const FileDropArea = ({
     >
       {isDraggingOver && (
         <div
-          onDragLeave={handleDragLeave}
           className={classNames(
             'absolute z-50 flex size-full items-center justify-center bg-overlay backdrop-blur-sm',
-            droppable ? 'cursor-copy' : 'cursor-not-allowed',
           )}
         >
+          <div
+            className={classNames(
+              'absolute z-50 size-full',
+              droppable ? 'cursor-copy' : 'cursor-not-allowed',
+            )}
+            onDragLeave={handleDragLeave}
+          />
           <div className="flex flex-col items-center">
             {droppable ? (
               <>
