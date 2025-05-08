@@ -69,11 +69,7 @@ import { DeleteType, MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
 import { MarketplaceActions } from '../actions';
-import {
-  ApplicationActions,
-  ApplicationSelectors,
-} from '../application/application.reducers';
-
+import { ApplicationActions } from '../application/application.reducers';
 import { ApplicationTypesSchemasActions } from '../applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { AuthSelectors } from '../auth/auth.selectors';
 import { ModelsSelectors } from '../models/models.selectors';
