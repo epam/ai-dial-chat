@@ -10,7 +10,6 @@ import { MessageAttachment } from './MessageAttachment';
 
 import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import { Attachment } from '@epam/ai-dial-shared';
-import { nanoid } from 'nanoid';
 
 interface Props {
   attachments: Attachment[] | undefined;
@@ -57,7 +56,7 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
         <div className="mb-5 grid max-w-full grid-cols-1 gap-1 border-t border-secondary p-2 last:mb-0 sm:grid-cols-2 md:grid-cols-3">
           {attachments?.map((attachment) => (
             <MessageAttachment
-              key={nanoid(4)}
+              key={attachment.url || attachment.title}
               attachment={attachment}
               isInner
             />
@@ -69,7 +68,7 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
     <div className="mb-5 grid max-w-full grid-cols-1 gap-1 last:mb-0 sm:grid-cols-2 md:grid-cols-3">
       {attachments?.map((attachment) => (
         <MessageAttachment
-          key={nanoid(4)}
+          key={attachment.url || attachment.title}
           attachment={attachment}
           isInner={isInner}
         />

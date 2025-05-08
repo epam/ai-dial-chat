@@ -54,13 +54,14 @@ export interface ConversationEntityModel {
   id: string;
 }
 
-export interface ContentParts {
+export interface ContentPart {
+  partId: string;
   content?: string;
   attachments?: Attachment[];
 }
 export interface Message {
   role: Role;
-  parts?: ContentParts[];
+  parts?: ContentPart[];
   content: string;
   custom_content?: {
     attachments?: Attachment[];

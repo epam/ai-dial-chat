@@ -1,6 +1,13 @@
 /* eslint-disable @next/next/no-img-element */
 import { IconDownload, IconFile, IconFolder } from '@tabler/icons-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  MouseEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { PlotParams } from 'react-plotly.js';
 
 import classNames from 'classnames';
@@ -276,6 +283,23 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     [attachment.reference_url],
   );
 
+  const handleOpen = useCallback(
+    (e: MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsExpanded((isExpanded) => !isExpanded);
+      if (isOpenable) {
+        setIsOpened((isOpened) => {
+          if (!isOpened) {
+            setWasOpened(true);
+          }
+          return !isOpened;
+        });
+      }
+    },
+    [isOpenable],
+  );
+
   return (
     <div
       data-no-context-menu
@@ -307,17 +331,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
           )}
         </div>
         <button
-          onClick={() => {
-            setIsExpanded((isExpanded) => !isExpanded);
-            if (isOpenable) {
-              setIsOpened((isOpened) => {
-                if (!isOpened) {
-                  setWasOpened(true);
-                }
-                return !isOpened;
-              });
-            }
-          }}
+          onClick={handleOpen}
           className="flex grow items-center justify-between overflow-hidden"
           data-qa={isExpanded ? 'attachment-expanded' : 'attachment-collapsed'}
         >

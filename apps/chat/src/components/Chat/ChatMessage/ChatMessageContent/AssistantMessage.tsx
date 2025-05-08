@@ -21,7 +21,6 @@ import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import ChatMDComponent from '@/src/components/Markdown/ChatMDComponent';
 
 import { LikeState, Message } from '@epam/ai-dial-shared';
-import { nanoid } from 'nanoid';
 
 interface AssistantMessageProps {
   message: Message;
@@ -76,11 +75,11 @@ export const AssistantMessage = memo(function AssistantMessage({
 
         {!!message.parts?.length &&
           message.parts.map((contentPart, index) => {
-            if (contentPart.content) {
+            if (contentPart.content?.length) {
               return (
                 <>
                   <ChatMDComponent
-                    key={nanoid(4)}
+                    key={contentPart.partId}
                     isShowResponseLoader={
                       isShowResponseLoader && index === lastContentPartIndex
                     }
@@ -96,10 +95,10 @@ export const AssistantMessage = memo(function AssistantMessage({
                 </>
               );
             }
-            if (contentPart.attachments) {
+            if (contentPart.attachments?.length) {
               return (
                 <MessageAttachments
-                  key={nanoid(4)}
+                  key={contentPart.partId}
                   attachments={contentPart.attachments}
                 />
               );

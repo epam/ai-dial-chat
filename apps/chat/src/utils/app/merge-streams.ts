@@ -1,4 +1,5 @@
-import { ContentParts, Message, Stage } from '@epam/ai-dial-shared';
+import { ContentPart, Message, Stage } from '@epam/ai-dial-shared';
+import { nanoid } from 'nanoid';
 
 export const parseStreamMessages = (message: string): Partial<Message>[] => {
   const parsedMessage = message
@@ -74,12 +75,16 @@ export const mergeMessages = (
       // Add parts of the text to parts array
       const lastIndex = newSource.parts.length - 1;
       if (newSource.parts[lastIndex]?.content) {
-        const newContent = {
+        const newContent: ContentPart = {
+          partId: nanoid(4),
           content: newSource.parts[lastIndex].content.concat(newData.content),
         };
         newSource.parts[lastIndex] = newContent;
       } else {
-        newSource.parts = newSource.parts.concat({ content: newData.content });
+        newSource.parts = newSource.parts.concat({
+          partId: nanoid(4),
+          content: newData.content,
+        });
       }
     }
 
@@ -97,6 +102,7 @@ export const mergeMessages = (
 
         if (newSource.parts[lastIndex]?.attachments) {
           const newAttachments = {
+            partId: nanoid(4),
             attachments: newSource.parts[lastIndex].attachments.concat(
               newData.custom_content.attachments,
             ),
@@ -104,6 +110,7 @@ export const mergeMessages = (
           newSource.parts[lastIndex] = newAttachments;
         } else {
           newSource.parts = newSource.parts.concat({
+            partId: nanoid(4),
             attachments: newData.custom_content.attachments,
           });
         }
@@ -146,7 +153,7 @@ export const mergeMessages = (
   return newSource;
 };
 
-export const getMessageTextFromParts = (parts: ContentParts[]) => {
+export const getMessageTextFromParts = (parts: ContentPart[]) => {
   let content = '';
   parts.forEach((part) => {
     if (part.content) {
