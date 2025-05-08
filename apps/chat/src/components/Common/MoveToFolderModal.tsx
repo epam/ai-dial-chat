@@ -10,9 +10,9 @@ import { FolderInterface, MoveToFolderProps } from '@/src/types/folder';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppSelector } from '@/src/store/hooks';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
+import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
 
 import { Modal } from './Modal';
 
