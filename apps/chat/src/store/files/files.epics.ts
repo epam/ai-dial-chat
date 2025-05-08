@@ -391,7 +391,7 @@ const duplicateFilesFolderEpic: AppEpic = (action$) =>
               return of(
                 FilesActions.duplicateFile({
                   fileId: file.id,
-                  destinationUrl: `${payload.destinationUrl}${fileDestination}`,
+                  destinationUrl: `${payload.destinationUrl ?? getFileRootId()}${fileDestination}`,
                 }),
               );
             }),
