@@ -361,5 +361,7 @@ export const isReplayAsIsConversation = (conversation: ConversationInfo) =>
   (conversation as Conversation).replay?.replayAsIs ?? false;
 
 export const getQuickAttachmentsSavingPath = () => {
-  return `${getFileRootId()}/temp`;
+  const date = new Date();
+
+  return `${getFileRootId()}/${date.getFullYear()}-${date.getMonth() + 1}`;
 };
