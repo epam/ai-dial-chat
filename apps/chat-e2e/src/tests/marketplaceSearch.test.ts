@@ -384,9 +384,7 @@ dialTest(
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(secondAppFirstVersion);
         const secondAgentElement =
-          await marketplaceAgentsSection.findAgentElement(secondAppName, {
-            isWorkspaceAgent: false,
-          });
+          await marketplaceAgentsSection.findAgentElement(secondAppName);
         await marketplaceAgents.addAgentToWorkspace(secondAgentElement);
         await toast.closeToast();
       },

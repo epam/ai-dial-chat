@@ -62,22 +62,18 @@ export class TalkToAgentDialog extends BaseElement {
       await marketplacePage.waitForPageLoaded(); // Wait for "My Workspace" page to load
       //use agent if it is visible on "My Workspace" tab
       const marketplaceContainer = marketplacePage.getMarketplaceContainer();
-      const marketplaceAgentsSection = marketplaceContainer
-        .getMarketplace()
-        .getMarketplaceAgentsSection();
+      const marketplace = marketplaceContainer.getMarketplace();
+      const marketplaceAgentsSection =
+        marketplace.getMarketplaceAgentsSection();
+      await marketplace
+        .getMarketplaceHeader()
+        .searchInput.fillInInput(entity.name);
       const isMyWorkspaceAgentUsed =
         await marketplaceAgentsSection.findAndUseAgent(entity, options);
-      //otherwise go to marketplace "DIAL Marketplace page"
       if (!isMyWorkspaceAgentUsed) {
-        await marketplaceContainer.goToMarketplaceHome();
-        await marketplacePage.waitForPageLoaded(); // Wait for "Home Page" to load
-        const isMarketplaceAgentUsed =
-          await marketplaceAgentsSection.findAndUseAgent(entity, options);
-        if (!isMarketplaceAgentUsed) {
-          throw new Error(
-            `Agent with name: ${entity.name} and version: ${entity.version ?? 'N/A'} is not found!`,
-          );
-        }
+        throw new Error(
+          `Agent with name: ${entity.name} and version: ${entity.version ?? 'N/A'} is not found!`,
+        );
       }
     }
   }
