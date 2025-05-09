@@ -7,7 +7,6 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { encode } from '@/src/utils/app/application-type-schema';
 import { getAppEditorRoute } from '@/src/utils/app/route';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
@@ -157,7 +156,7 @@ export const SearchHeader = () => {
                 ),
               );
             }
-            router.push(getAppEditorRoute(encode(schema.id)));
+            router.push(getAppEditorRoute(schema.id));
           },
         })) ?? []),
       ].sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1)),
