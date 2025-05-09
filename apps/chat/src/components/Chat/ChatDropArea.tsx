@@ -6,7 +6,7 @@ import { ConversationsSelectors } from '@/src/store/conversations/conversations.
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 
-import { FileDropArea } from '@/src/components/Files/FIleDropArea';
+import { FileDropArea } from '@/src/components/Files/FileDropArea';
 
 interface ChatDropAreaProps {
   children: ReactNode;

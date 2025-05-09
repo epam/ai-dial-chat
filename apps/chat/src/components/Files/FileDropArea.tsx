@@ -9,6 +9,8 @@ import { getFileNameExtension } from '@/src/utils/app/file';
 
 import { Translation } from '@/src/types/translation';
 
+const containerId = 'file-drop-area';
+
 interface FileDropAreaProps {
   children: ReactNode;
   onDrop: (files: File[]) => void;
@@ -30,7 +32,15 @@ export const FileDropArea = ({
 
   const handleDragOver = useCallback(
     (e: DragEvent) => {
-      if (disabled || !e.dataTransfer?.types?.includes('Files')) {
+      const isModalOverlayOpened = (e.target as HTMLElement)?.closest(
+        '[data-floating-overlay]',
+      );
+
+      if (
+        disabled ||
+        !e.dataTransfer?.types?.includes('Files') ||
+        isModalOverlayOpened
+      ) {
         return;
       }
       e.preventDefault();
@@ -63,19 +73,20 @@ export const FileDropArea = ({
 
   return (
     <div
-      onDragOver={handleDragOver}
+      id={containerId}
+      onDragOverCapture={handleDragOver}
       onDrop={handleDrop}
       className={classNames('relative', className)}
     >
       {isDraggingOver && (
         <div
           className={classNames(
-            'absolute z-50 flex size-full items-center justify-center bg-overlay backdrop-blur-sm',
+            'absolute z-10 flex size-full items-center justify-center bg-overlay backdrop-blur-sm',
           )}
         >
           <div
             className={classNames(
-              'absolute z-50 size-full',
+              'absolute z-10 size-full',
               droppable ? 'cursor-copy' : 'cursor-not-allowed',
             )}
             onDragLeave={handleDragLeave}
