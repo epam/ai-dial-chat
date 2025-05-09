@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { getScreenState } from '../utils/app/mobile';
+import { getScreenState } from '@/src/utils/app/mobile';
 
 export const useScreenState = () => {
   const [screenState, setScreenState] = useState(getScreenState());

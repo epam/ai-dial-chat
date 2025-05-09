@@ -3,10 +3,8 @@ import { useCallback } from 'react';
 import { SharingType } from '@/src/types/share';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  PublicationActions,
-  PublicationSelectors,
-} from '@/src/store/publication/publication.reducers';
+import { PublicationActions } from '@/src/store/publication/publication.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 
 import { PublishModal } from '../Chat/Publish/PublishWizard';
 import { withRenderWhen } from './RenderWhen';

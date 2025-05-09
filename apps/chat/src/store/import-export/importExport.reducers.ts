@@ -197,10 +197,6 @@ export const importExportSlice = createSlice({
       }
     },
 
-    closeReplaceDialog: (state) => {
-      state.isShowReplaceDialog = false;
-    },
-
     replaceConversations: (
       state,
       _action: PayloadAction<{
@@ -224,16 +220,7 @@ export const importExportSlice = createSlice({
       state.isShowReplaceDialog = false;
       state.mappedActions = payload.mappedActions;
     },
-
-    setImportedConversations: (
-      state,
-      { payload }: PayloadAction<{ importedConversations: Conversation[] }>,
-    ) => {
-      state.importedConversations = payload.importedConversations;
-    },
   },
 });
-
-export { ImportExportSelectors } from './importExport.selectors';
 
 export const ImportExportActions = importExportSlice.actions;

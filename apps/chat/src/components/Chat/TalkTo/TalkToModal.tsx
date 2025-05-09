@@ -24,11 +24,11 @@ import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
+import { AddonsSelectors } from '@/src/store/addons/addons.selectors';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';

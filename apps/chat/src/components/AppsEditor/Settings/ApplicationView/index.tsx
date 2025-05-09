@@ -8,19 +8,22 @@ import {
 
 import { useRouter } from 'next/router';
 
+import classNames from 'classnames';
+
 import { usePreventSpaceHandlers } from '@/src/hooks/usePreventSpaceHandlers';
 import { useTranslation } from '@/src/hooks/useTranslation';
+
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { CustomApplicationModel } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ApplicationActions,
-  ApplicationSelectors,
-} from '@/src/store/application/application.reducers';
+import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
+import { PUBLIC_APP_TOOLTIP } from '@/src/constants/code-apps';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
 
 import { withController } from '@/src/components/Common/Forms/ControlledFormField';
@@ -143,7 +146,6 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
   const shouldSaveApplication = useAppSelector(
     ApplicationSelectors.selectShouldSaveApplication,
   );
-
   const exitAfterSave = useAppSelector(
     ApplicationSelectors.selectExitAfterSave,
   );
@@ -212,6 +214,8 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
     autoSaveHandler,
   ]);
 
+  const isAppPublic = isEntityIdPublic(oldApplication);
+
   return (
     <form
       onSubmit={submitWrapper(handleSubmit)}
@@ -230,6 +234,8 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
           rows={4}
           data-qa="features-data"
           error={errors.features?.message}
+          disabled={isAppPublic}
+          tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
         />
         <Controller
           name="inputAttachmentTypes"
@@ -245,11 +251,16 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
               onChangeSelectedItems={field.onChange}
               placeholder={t('Enter one or more attachment types')}
               id="attachmentTypes"
-              className="input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full"
+              className={classNames(
+                'input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full',
+                isAppPublic && 'hover:border-primary',
+              )}
               hasDeleteAll
               hideSuggestions
               itemHeightClassName="h-[31px]"
               error={errors.inputAttachmentTypes?.message}
+              disabled={isAppPublic}
+              tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
               {...getAttachmentTypeErrorHandlers(setError, clearErrors)}
             />
           )}
@@ -262,6 +273,8 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
           control={control}
           name="maxInputAttachments"
           rules={validators['maxInputAttachments']}
+          disabled={isAppPublic}
+          tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
         />
         <Field
           {...register('completionUrl', validators['completionUrl'])}
@@ -275,6 +288,8 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
           onInput={onInput}
           onKeyDown={onKeyDownOrPaste}
           onPaste={onKeyDownOrPaste}
+          disabled={isAppPublic}
+          tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
         />
       </div>
     </form>

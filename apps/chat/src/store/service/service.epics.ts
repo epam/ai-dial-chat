@@ -9,9 +9,10 @@ import { HTTPMethod } from '@/src/types/http';
 import { AppEpic } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
+import { UIActions } from '@/src/store/ui/ui.reducers';
+
 import { errorsMessages } from '@/src/constants/errors';
 
-import { UIActions } from '../ui/ui.reducers';
 import { ServiceActions } from './service.reducer';
 
 const reportIssueEpic: AppEpic = (action$) =>
