@@ -25,7 +25,6 @@ import { ApplicationActions } from '@/src/store/application/application.reducers
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { ModelsActions } from '@/src/store/models/models.reducers';
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { errorsMessages } from '@/src/constants/errors';
@@ -63,7 +62,6 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
         of(AddonsActions.init()),
         of(ConversationsActions.init()),
         of(PromptsActions.init()),
-        of(ShareActions.init()),
         of(FilesActions.init()),
         of(PublicationActions.init()),
         of(ApplicationTypesSchemasActions.init()),
@@ -73,7 +71,6 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
       return [
         of(UIActions.init()),
         of(ModelsActions.init()),
-        of(ShareActions.init()),
         of(AddonsActions.init()),
         of(FilesActions.init()),
         of(PublicationActions.init()),
