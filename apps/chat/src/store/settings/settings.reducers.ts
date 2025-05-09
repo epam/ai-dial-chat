@@ -36,47 +36,11 @@ export const settingsSlice = createSlice({
   initialState,
   reducers: {
     initApp: (state, _action: PayloadAction<PageType | undefined>) => state,
-    setAppName: (
-      state,
-      { payload }: PayloadAction<SettingsState['appName']>,
-    ) => {
-      state.appName = payload;
-    },
-    setIsOverlay: (
-      state,
-      { payload }: PayloadAction<SettingsState['isOverlay']>,
-    ) => {
-      state.isOverlay = payload;
-    },
-    setAuthDisabled: (
-      state,
-      { payload }: PayloadAction<SettingsState['isAuthDisabled']>,
-    ) => {
-      state.isAuthDisabled = payload;
-    },
-    setFooterHtmlMessage: (
-      state,
-      { payload }: PayloadAction<SettingsState['footerHtmlMessage']>,
-    ) => {
-      state.footerHtmlMessage = payload;
-    },
     setEnabledFeatures: (
       state,
       { payload }: PayloadAction<SettingsState['enabledFeatures']>,
     ) => {
       state.enabledFeatures = payload;
-    },
-    setPublicationFilters: (
-      state,
-      { payload }: PayloadAction<SettingsState['publicationFilters']>,
-    ) => {
-      state.publicationFilters = payload;
-    },
-    setCodeWarning: (
-      state,
-      { payload }: PayloadAction<SettingsState['codeWarning']>,
-    ) => {
-      state.codeWarning = payload;
     },
     setDefaultModelId: (
       state,
@@ -89,33 +53,6 @@ export const settingsSlice = createSlice({
       { payload }: PayloadAction<{ overlayDefaultModelId: string | undefined }>,
     ) => {
       state.overlayDefaultModelId = payload.overlayDefaultModelId;
-    },
-    setDefaultRecentModelsIds: (
-      state,
-      { payload }: PayloadAction<{ defaultRecentModelsIds: string[] }>,
-    ) => {
-      state.defaultRecentModelsIds = payload.defaultRecentModelsIds;
-    },
-    setDefaultRecentAddonsIds: (
-      state,
-      { payload }: PayloadAction<{ defaultRecentAddonsIds: string[] }>,
-    ) => {
-      state.defaultRecentAddonsIds = payload.defaultRecentAddonsIds;
-    },
-    setStorageType: (
-      state,
-      { payload }: PayloadAction<{ storageType: StorageType }>,
-    ) => {
-      state.storageType = payload.storageType;
-    },
-    setThemeHostDefined: (
-      state,
-      { payload }: PayloadAction<{ themesHostDefined: boolean }>,
-    ) => {
-      state.themesHostDefined = payload.themesHostDefined;
-    },
-    setIsolatedModelId: (state, { payload }: PayloadAction<string>) => {
-      state.isolatedModelId = payload;
     },
     setOverlayConversationId: (state, { payload }: PayloadAction<string>) => {
       state.overlayConversationId = payload;
