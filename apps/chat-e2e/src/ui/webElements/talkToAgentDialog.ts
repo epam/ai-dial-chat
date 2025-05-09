@@ -48,6 +48,11 @@ export class TalkToAgentDialog extends BaseElement {
   public async selectAgent(
     entity: DialAIEntityModel,
     marketplacePage: MarketplacePage | OverlayMarketplacePage,
+    options?: {
+      isInstalledDeploymentsUpdated?: boolean;
+      isWorkspaceAgent?: boolean;
+      isEditable?: boolean;
+    },
   ) {
     //check if agent is among recent ones
     const isRecentAgentUsed = await this.useRecentAgent(entity);
@@ -61,17 +66,13 @@ export class TalkToAgentDialog extends BaseElement {
         .getMarketplace()
         .getMarketplaceAgentsSection();
       const isMyWorkspaceAgentUsed =
-        await marketplaceAgentsSection.findAndUseAgent(entity, {
-          isInstalledDeploymentsUpdated: true,
-        });
+        await marketplaceAgentsSection.findAndUseAgent(entity, options);
       //otherwise go to marketplace "DIAL Marketplace page"
       if (!isMyWorkspaceAgentUsed) {
         await marketplaceContainer.goToMarketplaceHome();
         await marketplacePage.waitForPageLoaded(); // Wait for "Home Page" to load
         const isMarketplaceAgentUsed =
-          await marketplaceAgentsSection.findAndUseAgent(entity, {
-            isInstalledDeploymentsUpdated: true,
-          });
+          await marketplaceAgentsSection.findAndUseAgent(entity, options);
         if (!isMarketplaceAgentUsed) {
           throw new Error(
             `Agent with name: ${entity.name} and version: ${entity.version ?? 'N/A'} is not found!`,
