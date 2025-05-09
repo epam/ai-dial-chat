@@ -54,7 +54,6 @@ export const ImportExportSelectors = {
   selectUploadedAttachments,
   selectAttachmentsErrors,
   selectImportedConversations,
-  selectImportStatus,
   selectOperationName,
   selectIsLoadingImportExport,
   selectIsShowReplaceDialog,
