@@ -416,9 +416,6 @@ export const conversationsSlice = createSlice({
         ({ id }) => id !== payload.folderId,
       );
     },
-    deleteAllTemporaryFolders: (state) => {
-      state.temporaryFolders = [];
-    },
     renameTemporaryFolder: (
       state,
       { payload }: PayloadAction<{ folderId: string; name: string }>,
@@ -648,9 +645,6 @@ export const conversationsSlice = createSlice({
         (id) => !payload.paths.has(id),
       );
       state.foldersStatus = UploadStatus.FAILED;
-    },
-    initConversationsRecursive: (state) => {
-      state.conversationsStatus = UploadStatus.LOADING;
     },
     uploadConversationsFromMultipleFolders: (
       state,
