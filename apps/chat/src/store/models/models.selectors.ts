@@ -105,6 +105,10 @@ const selectAllGroupModelKeySet = (state: RootState, references: string[]) => {
   );
 };
 
+const selectCustomModels = createSelector([rootSelector], (state) => {
+  return state.models.filter((model) => model.reference !== model.id);
+});
+
 export const ModelsSelectors = {
   selectModels,
   selectModelsMap,
@@ -123,4 +127,5 @@ export const ModelsSelectors = {
   selectInitialized,
   selectAllGroupModelKeySet,
   selectIsRecentModelsLoaded,
+  selectCustomModels,
 };
