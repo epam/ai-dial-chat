@@ -7,7 +7,6 @@ import { usePromptActions } from '@/src/hooks/usePromptActions';
 import { getIdWithoutRootPathSegments, isRootId } from '@/src/utils/app/id';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
 
-import { FeatureType } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
@@ -67,7 +66,6 @@ export const PromptDialogs: React.FC<Props> = ({
             folders={folders}
             onMoveToFolder={handleMoveToFolder}
             onClose={onCloseModals}
-            featureType={FeatureType.Prompt}
           />
         </div>
       )}
