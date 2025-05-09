@@ -40,7 +40,7 @@ export const ChatDropArea = ({
   );
 
   const isDroppable =
-    canAttachFiles && isConversationBlocksInput && areModelsInstalled;
+    canAttachFiles && !isConversationBlocksInput && areModelsInstalled;
 
   return (
     <FileDropArea
