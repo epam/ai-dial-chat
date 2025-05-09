@@ -20,15 +20,6 @@ export const ChatDropArea = ({
   const canAttachFiles = useAppSelector(
     ConversationsSelectors.selectCanAttachFile,
   );
-  const isReplay = useAppSelector(
-    ConversationsSelectors.selectIsReplaySelectedConversations,
-  );
-  const isPlayback = useAppSelector(
-    ConversationsSelectors.selectIsPlaybackSelectedConversations,
-  );
-  const isExternal = useAppSelector(
-    ConversationsSelectors.selectAreSelectedConversationsExternal,
-  );
   const isConversationBlocksInput = useAppSelector(
     ConversationsSelectors.selectIsSelectedConversationBlocksInput,
   );
@@ -49,12 +40,7 @@ export const ChatDropArea = ({
   );
 
   const isDroppable =
-    canAttachFiles &&
-    !isReplay &&
-    !isPlayback &&
-    !isExternal &&
-    !isConversationBlocksInput &&
-    areModelsInstalled;
+    canAttachFiles && isConversationBlocksInput && areModelsInstalled;
 
   return (
     <FileDropArea
