@@ -779,7 +779,6 @@ const duplicateAgentEpic: AppEpic = (action$, state$) =>
 
               const basePath = constructPath(
                 getFileRootId(),
-                'appdata',
                 'custom applications',
                 newAgent.reference,
               );
