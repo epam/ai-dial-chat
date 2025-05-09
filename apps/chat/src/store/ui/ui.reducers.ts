@@ -133,21 +133,6 @@ export const uiSlice = createSlice({
         ]),
       };
     },
-    toggleFolder: (
-      state,
-      { payload }: PayloadAction<{ id: string; featureType: FeatureType }>,
-    ) => {
-      const featureType = payload.featureType;
-      const openedFoldersIds = state.openedFoldersIds[featureType];
-      const isOpened = openedFoldersIds.includes(payload.id);
-      if (isOpened) {
-        state.openedFoldersIds[featureType] = openedFoldersIds.filter(
-          (id) => id !== payload.id,
-        );
-      } else {
-        state.openedFoldersIds[featureType].push(payload.id);
-      }
-    },
     openFolder: (
       state,
       {

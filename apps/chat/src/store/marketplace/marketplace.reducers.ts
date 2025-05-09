@@ -86,9 +86,6 @@ export const marketplaceSlice = createSlice({
     setApplyModelStatus: (state, { payload }: PayloadAction<UploadStatus>) => {
       state.applyModelStatus = payload;
     },
-    setApplyModelId: (state, { payload }: PayloadAction<string>) => {
-      state.applyModelId = payload;
-    },
     setDetailsModel: (
       state,
       {
