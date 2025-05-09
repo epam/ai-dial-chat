@@ -365,19 +365,6 @@ export const filesSlice = createSlice({
         return file;
       });
     },
-    unpublishFile: (state, { payload }: PayloadAction<{ id: string }>) => {
-      state.files = state.files.map((file) => {
-        if (file.id === payload.id) {
-          return {
-            ...file,
-            //TODO: unpublish file by API
-            isPublished: false,
-          };
-        }
-
-        return file;
-      });
-    },
     updateFoldersStatus: (
       state,
       {
@@ -416,15 +403,6 @@ export const filesSlice = createSlice({
       const filteredFiles = state.files.filter((file) => !file.sharedWithMe);
       state.files = combineEntities(payload.files, filteredFiles);
     },
-    updateFileContent: (
-      state,
-      _action: PayloadAction<{
-        relativePath: string;
-        fileName: string;
-        content: string;
-        contentType: string;
-      }>,
-    ) => state,
     resetAllFoldersStatus: (state) => {
       state.folders = state.folders.map((folder) => ({
         ...folder,
