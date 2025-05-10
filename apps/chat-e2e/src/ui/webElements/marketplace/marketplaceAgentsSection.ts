@@ -36,7 +36,6 @@ export class MarketplaceAgentsSection extends BaseElement {
       isEditable?: boolean;
     },
   ) {
-    const { isInstalledDeploymentsUpdated = false } = options || {};
     let isAgentFoundAndUsed = false;
     const agentElement = await this.findAgentElement(agent, options);
     //open agent's details card
@@ -63,7 +62,8 @@ export class MarketplaceAgentsSection extends BaseElement {
               .getVersionDropdownMenu()
               .selectMenuOption(agent.version);
             await agentDetailsModal.clickUseButton({
-              isInstalledDeploymentsUpdated: isInstalledDeploymentsUpdated,
+              isInstalledDeploymentsUpdated:
+                options?.isInstalledDeploymentsUpdated,
             });
             isAgentFoundAndUsed = true;
           } else {
@@ -74,13 +74,13 @@ export class MarketplaceAgentsSection extends BaseElement {
         }
       } else {
         await agentDetailsModal.clickUseButton({
-          isInstalledDeploymentsUpdated: isInstalledDeploymentsUpdated,
+          isInstalledDeploymentsUpdated: options?.isInstalledDeploymentsUpdated,
         });
         isAgentFoundAndUsed = true;
       }
     } else {
       await agentDetailsModal.clickUseButton({
-        isInstalledDeploymentsUpdated: isInstalledDeploymentsUpdated,
+        isInstalledDeploymentsUpdated: options?.isInstalledDeploymentsUpdated,
       });
       isAgentFoundAndUsed = true;
     }
@@ -91,7 +91,6 @@ export class MarketplaceAgentsSection extends BaseElement {
     agent: DialAIEntityModel | string,
     options?: { isWorkspaceAgent?: boolean; isEditable?: boolean },
   ) {
-    const { isWorkspaceAgent = false, isEditable = false } = options || {};
     const scrollPosition: { scrollTop: number; clientHeight: number } = {
       scrollTop: 0,
       clientHeight: await this.rootLocator.evaluate((p) => p.clientHeight),
@@ -113,26 +112,35 @@ export class MarketplaceAgentsSection extends BaseElement {
         });
         const agentsCount = await agentElements.getElementsCount();
         //if need to find an agent from a specific section
-        for (let j = 1; j <= agentsCount; j++) {
-          const nthAgentElement = agentElements.getNthElement(j);
-          const agentType = await nthAgentElement.getAttribute(
-            Attributes.ariaDetails,
-          );
-          const isFilteredAgent =
-            agentType ===
-            FoundMarketplaceAgents[FoundMarketplaceAgents.filtered];
-          agentElement = this.createElementFromLocator(nthAgentElement);
-          const hasPencilIcon = await visibleAgents
-            .getAgentPencilIcon(agentElement)
-            .isVisible();
-          if (
-            isWorkspaceAgent === isFilteredAgent &&
-            isEditable === hasPencilIcon
-          ) {
-            return agentElement;
-          } else {
-            agentElement = undefined;
+        if (options?.isWorkspaceAgent !== undefined) {
+          //marketplace agent cannot be editable
+          if (!options.isWorkspaceAgent) {
+            options.isEditable = false;
           }
+          for (let j = 1; j <= agentsCount; j++) {
+            const nthAgentElement = agentElements.getNthElement(j);
+            const agentType = await nthAgentElement.getAttribute(
+              Attributes.ariaDetails,
+            );
+            const isWorkspaceAgent =
+              agentType ===
+              FoundMarketplaceAgents[FoundMarketplaceAgents.filtered];
+            agentElement = this.createElementFromLocator(nthAgentElement);
+            const hasPencilIcon = await visibleAgents
+              .getAgentPencilIcon(agentElement)
+              .isVisible();
+            if (
+              options.isWorkspaceAgent === isWorkspaceAgent &&
+              options?.isEditable === hasPencilIcon
+            ) {
+              return agentElement;
+            }
+          }
+        } else {
+          agentElement = this.createElementFromLocator(
+            agentElements.getNthElement(1),
+          );
+          return agentElement;
         }
       }
       await this.scrollIntoLastRow();

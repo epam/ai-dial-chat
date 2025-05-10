@@ -128,9 +128,7 @@ dialTest(
     await dialTest.step(
       'Click "Use model" for the second model and verify recentModelsIds is updated',
       async () => {
-        await marketplaceAgentsSection.findAndUseAgent(initialModel2, {
-          isWorkspaceAgent: true,
-        });
+        await marketplaceAgentsSection.findAndUseAgent(initialModel2);
         await dialHomePage.waitForPageLoaded();
         await localStorageAssertion.assertRecentModels([
           initialModel2.id,
@@ -165,7 +163,6 @@ dialTest(
         await marketplaceHeader.searchInput.fillInInput(addedModel.name);
         await marketplaceAgentsSection.findAndUseAgent(addedModel, {
           isInstalledDeploymentsUpdated: true,
-          isWorkspaceAgent: true,
         });
         await dialHomePage.waitForPageLoaded();
         await localStorageAssertion.assertRecentModels([
@@ -183,9 +180,7 @@ dialTest(
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(addedModel.name);
         const addedModelElement =
-          await marketplaceAgentsSection.findAgentElement(addedModel, {
-            isWorkspaceAgent: true,
-          });
+          await marketplaceAgentsSection.findAgentElement(addedModel);
         await addedModelElement.click();
         await agentDetailsModal.removeBookmarkIcon.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
