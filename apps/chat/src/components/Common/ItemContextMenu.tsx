@@ -35,7 +35,10 @@ import { FolderInterface } from '@/src/types/folder';
 import { ContextMenuProps, DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppSelector } from '@/src/store/hooks';
+import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import ContextMenu from './ContextMenu';
@@ -43,6 +46,33 @@ import ContextMenu from './ContextMenu';
 import InsertPromptIcon from '@/public/images/icons/insert-prompt.svg';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import { ShareEntity } from '@epam/ai-dial-shared';
+
+const getFolderMenuItems = (
+  folders: FolderInterface[],
+  allFolders: FolderInterface[],
+  onClick: ({ folderId }: { folderId: string }) => void,
+): DisplayMenuItemProps[] => {
+  return folders.map((folder) => {
+    const subFolders = allFolders.filter((subFolder) =>
+      subFolder.folderId.startsWith(folder.id),
+    );
+
+    return {
+      name: folder.name,
+      dataQa: `folder-${folder.id}`,
+      onClick: () => {
+        onClick({ folderId: folder.id });
+      },
+      ...(subFolders.length && {
+        childMenuItems: getFolderMenuItems(
+          subFolders.filter((subFolder) => subFolder.folderId === folder.id),
+          subFolders,
+          onClick,
+        ),
+      }),
+    };
+  });
+};
 
 interface ItemContextMenuProps {
   entity: ShareEntity;
@@ -113,6 +143,18 @@ export default function ItemContextMenu({
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
+  const allFoldersSelector = useMemo(() => {
+    switch (featureType) {
+      case FeatureType.Chat:
+        return ConversationsSelectors.selectFolders;
+      case FeatureType.Prompt:
+        return PromptsSelectors.selectFolders;
+      case FeatureType.File:
+      default:
+        return FilesSelectors.selectFolders;
+    }
+  }, [featureType]);
+  const allFolders = useAppSelector(allFoldersSelector);
 
   const isExternal = isEntityIdExternal(entity);
   const isNameInvalid = isEntityNameInvalid(entity.name);
@@ -256,13 +298,7 @@ export default function ItemContextMenu({
               'border-b border-primary': folders?.length > 0,
             }),
           },
-          ...folders.map((folder) => ({
-            name: folder.name,
-            dataQa: `folder-${folder.id}`,
-            onClick: () => {
-              onMoveToFolder({ folderId: folder.id });
-            },
-          })),
+          ...getFolderMenuItems(folders, allFolders, onMoveToFolder),
         ],
       },
       {
@@ -312,6 +348,7 @@ export default function ItemContextMenu({
       },
     ],
     [
+      allFolders,
       disableAll,
       disableUse,
       entity,
