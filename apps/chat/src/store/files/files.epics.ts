@@ -24,6 +24,7 @@ import {
   updateMovedEntityId,
 } from '@/src/utils/app/folders';
 import { getFileRootId } from '@/src/utils/app/id';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -78,6 +79,7 @@ const uploadFileEpic: AppEpic = (action$) =>
           if (result) {
             return FilesActions.uploadFileSuccess({
               apiResult: result,
+              showSuccessMessage: payload.showSuccessMessage,
             });
           }
 
@@ -96,6 +98,29 @@ const uploadFileEpic: AppEpic = (action$) =>
           return of(FilesActions.uploadFileFail({ id: payload.id }));
         }),
       );
+    }),
+  );
+
+const uploadFilesSuccessEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.uploadFileSuccess.type),
+    switchMap(({ payload }) => {
+      if (payload.showSuccessMessage) {
+        const { parentPath, name } = splitEntityId(payload.apiResult.id);
+
+        return of(
+          UIActions.showSuccessToast(
+            translate(
+              'File uploaded successfully to storage at path: {{path}}',
+              {
+                path: `${parentPath}/${name}`,
+              },
+            ),
+          ),
+        );
+      }
+
+      return EMPTY;
     }),
   );
 
@@ -367,6 +392,7 @@ export const FilesEpics = combineEpics(
   initEpic,
 
   uploadFileEpic,
+  uploadFilesSuccessEpic,
   getFileFoldersEpic,
   getFilesEpic,
   reuploadFileEpic,

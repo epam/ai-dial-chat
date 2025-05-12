@@ -110,6 +110,8 @@ export const useUploadFilesHandler = (
             id: file.id,
             relativePath: folderPath,
             name: file.name,
+
+            showSuccessMessage: true,
           }),
         );
       });
