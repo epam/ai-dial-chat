@@ -71,9 +71,9 @@ export const GeneralInfoView: React.FC<Props> = ({
 
   const formData = methods.watch();
 
-  const [previewMode, setPreviewMode] = useState<PreviewMode>(
-    PreviewMode.closed,
-  );
+  const [previewMode, setPreviewMode] = useState<PreviewMode>(() => {
+    return isTabletOrMobile ? PreviewMode.closed : PreviewMode.half;
+  });
 
   return (
     <div className="flex w-full overflow-hidden">
@@ -82,6 +82,7 @@ export const GeneralInfoView: React.FC<Props> = ({
           'overflow-hidden transition-all duration-300 ease-in-out',
           {
             'grow opacity-100': previewMode === PreviewMode.closed,
+            'size-full': previewMode === PreviewMode.half,
             'w-0 opacity-0': previewMode === PreviewMode.full,
           },
         )}
@@ -101,6 +102,7 @@ export const GeneralInfoView: React.FC<Props> = ({
           'relative flex min-h-0 flex-col overflow-hidden border-l border-primary transition-all duration-300 ease-in-out',
           {
             'w-full opacity-100': previewMode === PreviewMode.full,
+            'size-full grow': previewMode === PreviewMode.half,
             'absolute w-0 opacity-0': previewMode === PreviewMode.closed,
           },
         )}
