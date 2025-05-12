@@ -221,7 +221,8 @@ export const GeneralInfoEditor: React.FC<Props> = ({
         onSubmit={submitWrapper((data) => handleSubmit(data, false))}
         onMouseLeave={() => {
           if (!isAppPublic) {
-            submitWrapper((data) => handleSubmit(data, true));
+            const submit = submitWrapper((data) => handleSubmit(data, true));
+            submit();
           }
         }}
         className="flex size-full flex-col"

@@ -300,7 +300,11 @@ export const ApplicationSettings: React.FC<Props> = ({
   return (
     <div className="flex w-full flex-nowrap overflow-hidden">
       <div
-        onMouseLeave={saveForm}
+        onMouseLeave={() => {
+          if (!isAppPublic) {
+            saveForm();
+          }
+        }}
         className={classNames('transition-all duration-300 ease-in-out', {
           'w-[calc(100%-40px)] opacity-100': previewMode === PreviewMode.closed,
           'w-1/2 opacity-100': previewMode === PreviewMode.half,
