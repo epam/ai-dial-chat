@@ -176,16 +176,6 @@ export const modelsSlice = createSlice({
         RECENT_MODELS_COUNT,
       );
     },
-    setPublishedApplicationIds: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        modelIds: string[];
-      }>,
-    ) => {
-      state.publishedApplicationIds = payload.modelIds;
-    },
     addModels: (
       state,
       { payload }: PayloadAction<{ models: DialAIEntityModel[] }>,
@@ -238,20 +228,6 @@ export const modelsSlice = createSlice({
         state.modelsMap,
         ...payload.references,
       );
-    },
-    deleteSharedWithMeModel: (
-      state,
-      { payload }: PayloadAction<{ modelId: string }>,
-    ) => {
-      const modelReference = state.modelsMap[payload.modelId]?.reference;
-
-      state.models = state.models.filter(
-        (model) => model.id !== payload.modelId,
-      );
-      state.recentModelsIds = state.recentModelsIds.filter(
-        (id) => id !== modelReference,
-      );
-      state.modelsMap = deleteFromModelsMap(state.modelsMap, payload.modelId);
     },
     addPublishRequestModels: (
       state,
