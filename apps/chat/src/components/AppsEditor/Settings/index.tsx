@@ -20,6 +20,7 @@ import {
 } from '@/src/utils/app/application';
 import { decode } from '@/src/utils/app/application-type-schema';
 import { isTabletScreenOrMobile } from '@/src/utils/app/mobile';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import {
   ApiDetailedApplicationTypeSchema,
@@ -110,6 +111,7 @@ export const ApplicationSettings: React.FC<Props> = ({
       : PreviewMode.half;
   });
 
+  const isAppPublic = isEntityIdPublic(applicationData);
   const modelFromState = applicationData
     ? modelsMap[applicationData.reference]
     : null;
@@ -291,10 +293,17 @@ export const ApplicationSettings: React.FC<Props> = ({
     areSelectedConversationLoaded,
   ]);
 
+  const showRedeployButton =
+    type === ApplicationType.CODE_APP && isAppDeployed && !isAppPublic;
+
   return (
     <div className="flex w-full flex-nowrap overflow-hidden">
       <div
-        onMouseLeave={saveForm}
+        onMouseLeave={() => {
+          if (!isAppPublic) {
+            saveForm();
+          }
+        }}
         className={classNames('transition-all duration-300 ease-in-out', {
           'w-[calc(100%-40px)] opacity-100': previewMode === PreviewMode.closed,
           'w-1/2 opacity-100': previewMode === PreviewMode.half,
@@ -327,7 +336,7 @@ export const ApplicationSettings: React.FC<Props> = ({
             </span>
           </div>
           <div className="flex space-x-2">
-            {type === ApplicationType.CODE_APP && isAppDeployed && (
+            {showRedeployButton && (
               <button
                 className="xl:button button-accent-secondary mb-0 flex items-center gap-2 border-r border-secondary px-3 py-0 text-accent-secondary md:last:mb-6 lg:max-w-3xl xl:mx-auto xl:border-none"
                 data-qa="redeploy-code-app"
