@@ -731,7 +731,7 @@ dialTest(
     appEditorViewForm,
   }) => {
     setTestIds('EPMRTC-4374', 'EPMRTC-4278');
-    const numberOfTopicsToSelect = 5;
+    let numberOfTopicsToSelect: number;
     let allTopics: string[] = [];
     let topicsToSelect: string[] = [];
 
@@ -760,45 +760,48 @@ dialTest(
           ExpectedMessages.dropdownMenuIsVisible,
         );
         allTopics = await appEditorGeneralForm.getAllTopicsOptions();
+        numberOfTopicsToSelect = allTopics.length - 1;
         baseAssertion.assertNumberIsGreaterThan(allTopics.length, 0);
       },
     );
 
-    await dialTest.step(
-      `Select ${numberOfTopicsToSelect} Topics with the longest names and verify they appear on the form`,
-      async () => {
-        topicsToSelect = allTopics
-          .sort((a, b) => b.length - a.length)
-          .slice(0, numberOfTopicsToSelect);
+    await dialTest.step(`Select topics and verify height changes`, async () => {
+      topicsToSelect = allTopics
+        .sort((a, b) => b.length - a.length)
+        .slice(0, numberOfTopicsToSelect);
 
-        for (const topic of topicsToSelect) {
-          await appEditorGeneralForm.selectTopicOption(topic);
-        }
-        //TODO ask which property controls the linebreaks and pills wrapping.
-        // I can remove the sorting step because we need to check whether the property is there or not.
-        // Close the dropdown
-        await appEditorGeneralForm.topicsDropdownToggle.click();
-        // Assert the menu element is hidden
-        await baseAssertion.assertElementState(
-          appEditorGeneralForm.topicsDropdownMenuElement, // Assert on the menu container
-          'hidden',
-          ExpectedMessages.dropdownMenuIsHidden,
-        );
+      const topicsInputControlBox1 =
+        await appEditorGeneralForm.topicsDropdownContainer.getElementBoundingBox();
+      const initialHeight = topicsInputControlBox1!.height;
+      // expect(heightAfterOneTopic).toBeGreaterThan(0);
 
-        const selectedTopics = await appEditorGeneralForm.getSelectedTopics();
-        await baseAssertion.assertElementsCount(
-          appEditorGeneralForm.selectedTopicPills,
-          numberOfTopicsToSelect,
-          ExpectedMessages.elementsCountIsValid,
-        );
-        // Sort both arrays for consistent comparison
-        baseAssertion.assertArrayIncludesAll(
-          selectedTopics,
-          topicsToSelect,
-          ExpectedMessages.fieldValueIsValid,
-        );
-      },
-    );
+      for (let i = 0; i < numberOfTopicsToSelect; i++) {
+        await appEditorGeneralForm.selectTopicOption(topicsToSelect[i]);
+      }
+      const topicsInputControlBoxAll =
+        await appEditorGeneralForm.topicsDropdownContainer.getElementBoundingBox();
+      const topicsHeightAfterSelection = topicsInputControlBoxAll!.height;
+
+      // Assertions for selected topics
+      const selectedTopics = await appEditorGeneralForm.getSelectedTopics();
+      await baseAssertion.assertElementsCount(
+        appEditorGeneralForm.selectedTopicPills,
+        topicsToSelect.length,
+        ExpectedMessages.elementsCountIsValid,
+      );
+      baseAssertion.assertArrayIncludesAll(
+        selectedTopics,
+        topicsToSelect,
+        ExpectedMessages.fieldValueIsValid,
+      );
+
+      // Height assertion (only if more than one topic was selected to make the comparison meaningful)
+      baseAssertion.assertNumberIsGreaterThan(
+        topicsHeightAfterSelection,
+        initialHeight * 2,
+        `Height after selecting ${topicsToSelect.length} topics should be greater`,
+      );
+    });
 
     await dialTest.step(
       'Delete any single Topic using the X icon on the pill',
