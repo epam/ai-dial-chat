@@ -1,10 +1,4 @@
-import {
-  MutableRefObject,
-  ReactNode,
-  useCallback,
-  useEffect,
-  useRef,
-} from 'react';
+import { MutableRefObject, ReactNode, useCallback, useRef } from 'react';
 
 import classNames from 'classnames';
 
