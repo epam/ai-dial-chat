@@ -19,6 +19,7 @@ import {
   isApplicationDeploymentInProgress,
 } from '@/src/utils/app/application';
 import { decode } from '@/src/utils/app/application-type-schema';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import {
   ApiDetailedApplicationTypeSchema,
