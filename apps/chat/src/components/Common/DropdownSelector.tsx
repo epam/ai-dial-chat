@@ -31,71 +31,6 @@ export function DropdownSelector({
 }: Props) {
   const { t } = useTranslation(Translation.Common);
   return (
-    <Select
-      placeholder={placeholder}
-      isMulti
-      onChange={onChange}
-      closeMenuOnSelect={false}
-      name="colors"
-      options={options}
-      value={values}
-      id={id}
-      components={{
-        ClearIndicator: (props) => (
-          <button type="button" className="group p-2">
-            <IconX
-              className="shrink-0 text-secondary group-hover:text-accent-primary"
-              data-qa="clear-dropdown-selection"
-              onClick={() => props.clearValue()}
-              size={18}
-            />
-          </button>
-        ),
-        MultiValueRemove: (props) => (
-          <components.MultiValueRemove
-            {...props}
-            innerProps={{
-              ...props.innerProps,
-              style: {
-                ...props.innerProps.style,
-                backgroundColor: 'transparent',
-              },
-              className: 'group',
-            }}
-          >
-            <IconX
-              className="cursor-pointer text-secondary group-hover:text-accent-primary"
-              size={16}
-            />
-          </components.MultiValueRemove>
-        ),
-      }}
-      styles={{
-        indicatorsContainer: (styles) => ({
-          ...styles,
-          cursor: 'default',
-          alignSelf: 'start',
-        }),
-        input: (styles) => ({
-          ...styles,
-          height: '21px',
-          padding: 0,
-          margin: 0,
-          color: 'var(--text-primary)',
-        }),
-        menu: (styles) => ({ ...styles, margin: 0 }),
-        menuList: (styles) => ({
-          ...styles,
-          margin: 0,
-          padding: 0,
-          backgroundColor: 'var(--bg-layer-0)',
-        }),
-        option: (styles, state) => ({
-          ...styles,
-          WebkitTapHighlightColor: state.data.backgroundColor,
-          backgroundColor: '',
-          cursor: 'pointer',
-          ':hover': {
     <Tooltip
       triggerClassName={classNames('w-full', disabled && 'cursor-not-allowed')}
       tooltip={tooltip}
@@ -106,6 +41,7 @@ export function DropdownSelector({
         onChange={onChange}
         closeMenuOnSelect={false}
         name="colors"
+        id={id}
         isDisabled={disabled}
         options={options}
         value={values}
@@ -114,6 +50,7 @@ export function DropdownSelector({
             <button type="button" className="group p-2">
               <IconX
                 className="shrink-0 text-secondary group-hover:text-accent-primary"
+                data-qa="clear-dropdown-selection"
                 onClick={() => props.clearValue()}
                 size={18}
               />
