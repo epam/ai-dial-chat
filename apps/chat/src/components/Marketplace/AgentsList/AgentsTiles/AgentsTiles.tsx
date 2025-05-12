@@ -1,7 +1,8 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useMarketplaceBannerVisibility } from '@/src/hooks/useMarketplaceBannerVisibility';
+import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { ScreenState } from '@/src/types/common';
@@ -59,30 +60,21 @@ export const AgentsTiles: React.FC<AgentsListProps> = ({
     gap = DEFAULT_GAP,
     minWidth = MIN_CARD_WIDTH,
   } = ROWS_INFO[screenState];
-  useEffect(() => {
-    const handleResize = () => {
-      if (dataRef.current) {
-        let count = 1;
-        while (
-          minWidth * (count + 1) + gap * count <=
-          dataRef.current.offsetWidth
-        ) {
-          count++;
-        }
-        setColumnCount(count);
-      }
-    };
 
-    const resizeObserver = new ResizeObserver(handleResize);
-
+  const handleResize = useCallback(() => {
     if (dataRef.current) {
-      resizeObserver.observe(dataRef.current);
+      let count = 1;
+      while (
+        minWidth * (count + 1) + gap * count <=
+        dataRef.current.offsetWidth
+      ) {
+        count++;
+      }
+      setColumnCount(count);
     }
-
-    return () => {
-      resizeObserver.disconnect();
-    };
   }, [gap, minWidth]);
+
+  useResizeObserver(dataRef.current, handleResize);
 
   const allEntities: (DialAIEntityModel | string)[] = useMemo(() => {
     if (!suggestedResults.length) return entities;

@@ -1,4 +1,6 @@
-import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useRef, useState } from 'react';
+
+import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 
 import { stopBubbling } from '@/src/constants/chat';
 
@@ -49,74 +51,63 @@ export const TopicsList = ({
 
   const extraSpace = counterWidth + counterMarginRight;
 
-  useEffect(() => {
-    const checkOverflow = () => {
-      if (containerRef.current && allTopicsRef.current) {
-        if (
-          allTopicsRef.current.getBoundingClientRect().width <=
-          containerRef.current.getBoundingClientRect().width
-        ) {
-          setVisibleTopics(topics);
-          setHiddenTopics([]);
-        } else {
-          const initialVisibleTopics: string[] = [];
-          const initialHiddenTopics: string[] = [];
-          const children = Array.from(allTopicsRef.current.children);
-          const containerWidth =
-            containerRef.current.getBoundingClientRect().width - extraSpace;
-          let occupiedWidth = 0;
+  const checkOverflow = useCallback(() => {
+    if (containerRef.current && allTopicsRef.current) {
+      if (
+        allTopicsRef.current.getBoundingClientRect().width <=
+        containerRef.current.getBoundingClientRect().width
+      ) {
+        setVisibleTopics(topics);
+        setHiddenTopics([]);
+      } else {
+        const initialVisibleTopics: string[] = [];
+        const initialHiddenTopics: string[] = [];
+        const children = Array.from(allTopicsRef.current.children);
+        const containerWidth =
+          containerRef.current.getBoundingClientRect().width - extraSpace;
+        let occupiedWidth = 0;
 
-          const hiddenTopicWidths: { topic: string; topicWidth: number }[] = [];
+        const hiddenTopicWidths: { topic: string; topicWidth: number }[] = [];
 
-          children.forEach((childNode, index) => {
-            const element = childNode as HTMLElement;
+        children.forEach((childNode, index) => {
+          const element = childNode as HTMLElement;
 
-            const elementWidth = element.getBoundingClientRect().width;
+          const elementWidth = element.getBoundingClientRect().width;
 
-            if (occupiedWidth + elementWidth + topicGap <= containerWidth) {
-              initialVisibleTopics.push(topics[index]);
-              occupiedWidth += elementWidth + topicGap;
-            } else {
-              initialHiddenTopics.push(topics[index]);
-              hiddenTopicWidths.push({
-                topic: topics[index],
-                topicWidth: elementWidth,
-              });
-            }
-          });
-
-          setVisibleTopics(initialVisibleTopics);
-          setHiddenTopics(initialHiddenTopics);
-
-          let maxRowWidth = 0,
-            currentRowWidth = -topicGap;
-          for (const { topicWidth } of hiddenTopicWidths) {
-            if (
-              currentRowWidth + topicWidth + topicGap >
-              innerMaxTooltipWidth
-            ) {
-              maxRowWidth = Math.max(currentRowWidth, maxRowWidth);
-              currentRowWidth = topicWidth;
-            } else {
-              currentRowWidth += topicWidth + topicGap;
-            }
+          if (occupiedWidth + elementWidth + topicGap <= containerWidth) {
+            initialVisibleTopics.push(topics[index]);
+            occupiedWidth += elementWidth + topicGap;
+          } else {
+            initialHiddenTopics.push(topics[index]);
+            hiddenTopicWidths.push({
+              topic: topics[index],
+              topicWidth: elementWidth,
+            });
           }
-          maxRowWidth = Math.max(currentRowWidth, maxRowWidth);
+        });
 
-          setMaxTooltipWidth(maxRowWidth);
+        setVisibleTopics(initialVisibleTopics);
+        setHiddenTopics(initialHiddenTopics);
+
+        let maxRowWidth = 0,
+          currentRowWidth = -topicGap;
+        for (const { topicWidth } of hiddenTopicWidths) {
+          if (currentRowWidth + topicWidth + topicGap > innerMaxTooltipWidth) {
+            maxRowWidth = Math.max(currentRowWidth, maxRowWidth);
+            currentRowWidth = topicWidth;
+          } else {
+            currentRowWidth += topicWidth + topicGap;
+          }
         }
+        maxRowWidth = Math.max(currentRowWidth, maxRowWidth);
+
+        setMaxTooltipWidth(maxRowWidth);
       }
-    };
-    const resizeObserver = new ResizeObserver(checkOverflow);
-
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
     }
-
-    return () => {
-      resizeObserver.disconnect();
-    };
   }, [extraSpace, topics]);
+
+  useResizeObserver(containerRef.current, checkOverflow);
+
   const handleDelayShowTooltip = useCallback((show: boolean) => {
     clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(

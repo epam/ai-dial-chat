@@ -10,6 +10,7 @@ import {
 
 import classNames from 'classnames';
 
+import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -202,22 +203,12 @@ export const PlaybackControls = ({
     }
   }, [handleKeyDown, isPlayback]);
 
-  useEffect(() => {
-    if (!controlsContainerRef) {
-      return;
-    }
+  const handleResize = useCallback(() => {
+    controlsContainerRef.current?.clientHeight &&
+      onResize(controlsContainerRef.current.clientHeight);
+  }, [onResize]);
 
-    const resizeObserver = new ResizeObserver(() => {
-      controlsContainerRef.current?.clientHeight &&
-        onResize(controlsContainerRef.current.clientHeight);
-    });
-    controlsContainerRef.current &&
-      resizeObserver.observe(controlsContainerRef.current);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [controlsContainerRef, onResize]);
+  useResizeObserver(controlsContainerRef.current, handleResize);
 
   useEffect(() => {
     if (

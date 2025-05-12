@@ -3,6 +3,7 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
+import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getFormButtonType } from '@/src/utils/app/form-schema';
@@ -150,23 +151,14 @@ const HiddenButtonsProperty = ({
     onSetHiddenOptions(hidden.map((item) => item.option));
   }, [onCloseModal, onSetHiddenOptions, onSetVisibleOptions, options]);
 
+  useResizeObserver(hiddenContainerRef.current, determineVisibility);
+
   useEffect(() => {
-    const handleResize = () => {
-      determineVisibility();
-    };
-
-    const resizeObserver = new ResizeObserver(handleResize);
-
-    if (hiddenContainerRef.current) {
-      resizeObserver.observe(hiddenContainerRef.current);
-    }
-
     return () => {
-      resizeObserver.disconnect();
       onSetHiddenOptions([]);
       onSetVisibleOptions(options);
     };
-  }, [determineVisibility, onSetHiddenOptions, onSetVisibleOptions, options]);
+  }, [onSetHiddenOptions, onSetVisibleOptions, options]);
 
   return (
     <div

@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import classNames from 'classnames';
+
+import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 
 import { MenuItemRendererProps, MenuProps } from '@/src/types/menu';
 
@@ -76,8 +78,8 @@ export default function SidebarMenu({
     return [visibleItems, hiddenItems];
   }, [displayedItems, displayItemsCount]);
 
-  useEffect(() => {
-    const resizeObserver = new ResizeObserver((entries) => {
+  const handleResize = useCallback(
+    (entries: ResizeObserverEntry[]) => {
       for (const entry of entries) {
         if (entry.contentBoxSize) {
           const itemsContainerWidth = entry.contentBoxSize[0].inlineSize;
@@ -106,14 +108,11 @@ export default function SidebarMenu({
           setDisplayItemsCount(count);
         }
       }
-    });
-    const containerElement = containerRef.current;
-    containerElement && resizeObserver.observe(containerElement);
+    },
+    [displayedItems.length],
+  );
 
-    return () => {
-      containerElement && resizeObserver.observe(containerElement);
-    };
-  }, [displayedItems.length]);
+  useResizeObserver(containerRef.current, handleResize);
 
   return (
     <div

@@ -12,13 +12,14 @@ import {
 import classNames from 'classnames';
 
 import { useMarketplaceBannerVisibility } from '@/src/hooks/useMarketplaceBannerVisibility';
+import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useSyncXScroll } from '@/src/hooks/useSyncXScroll';
 
 import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
 
 import { TableColumnSortKeys } from '@/src/constants/marketplace';
@@ -111,8 +112,6 @@ export const AgentsTable: React.FC<AgentsListProps> = ({
   onCardClick,
   onBookmarkClick,
 }) => {
-  const dispatch = useAppDispatch();
-
   const wrapperRefs = useRef<{
     parentRef: React.RefObject<HTMLDivElement>;
     suggestedRowRef: React.RefObject<HTMLSpanElement>;
@@ -180,35 +179,17 @@ export const AgentsTable: React.FC<AgentsListProps> = ({
 
   useMarketplaceBannerVisibility(currentParentRef);
 
-  useEffect(() => {
-    const headerCurrentRefs = headerRefs.current ? headerRefs.current : null;
-    let leftObserver: ResizeObserver | undefined,
-      rightObserver: ResizeObserver | undefined;
+  const { leftColumnHeaderRef, rightColumnHeaderRef } =
+    headerRefs.current ?? {};
+  const handleLeftResize = useCallback(() => {
+    setLeftColumnWidth(leftColumnHeaderRef?.current?.offsetWidth ?? 0);
+  }, [leftColumnHeaderRef]);
+  const handleRightResize = useCallback(() => {
+    setRightColumnWidth(rightColumnHeaderRef?.current?.offsetWidth ?? 0);
+  }, [rightColumnHeaderRef]);
 
-    if (headerCurrentRefs) {
-      const { leftColumnHeaderRef, rightColumnHeaderRef } = headerCurrentRefs;
-      const leftObserver = new ResizeObserver(() => {
-        setLeftColumnWidth(leftColumnHeaderRef.current?.offsetWidth ?? 0);
-      });
-
-      if (leftColumnHeaderRef.current) {
-        leftObserver.observe(leftColumnHeaderRef.current);
-      }
-
-      const rightObserver = new ResizeObserver(() => {
-        setRightColumnWidth(rightColumnHeaderRef.current?.offsetWidth ?? 0);
-      });
-
-      if (rightColumnHeaderRef.current) {
-        rightObserver.observe(rightColumnHeaderRef.current);
-      }
-    }
-
-    return () => {
-      leftObserver?.disconnect();
-      rightObserver?.disconnect();
-    };
-  }, [dispatch]);
+  useResizeObserver(leftColumnHeaderRef?.current ?? null, handleLeftResize);
+  useResizeObserver(rightColumnHeaderRef?.current ?? null, handleRightResize);
 
   useEffect(() => {
     rowVirtualizer.measure();

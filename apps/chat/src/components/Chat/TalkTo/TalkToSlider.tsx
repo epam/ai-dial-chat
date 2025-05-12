@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
+import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useSwipe } from '@/src/hooks/useSwipe';
 
@@ -270,41 +271,13 @@ export const TalkToSlider = ({ conversation, items, ...restProps }: Props) => {
     },
   });
 
-  useEffect(() => {
-    const handleResize = () => {
-      if (sliderRef.current) {
-        setSliderHeight(sliderRef.current.clientHeight);
-      }
-    };
-
-    const resizeObserver = new ResizeObserver(handleResize);
-
+  const handleResize = useCallback(() => {
     if (sliderRef.current) {
-      resizeObserver.observe(sliderRef.current);
+      setSliderHeight(sliderRef.current.clientHeight);
     }
-
-    return () => {
-      resizeObserver.disconnect();
-    };
   }, []);
 
-  useEffect(() => {
-    const handleResize = () => {
-      if (sliderRef.current) {
-        setSliderHeight(sliderRef.current.clientHeight);
-      }
-    };
-
-    const resizeObserver = new ResizeObserver(handleResize);
-
-    if (sliderRef.current) {
-      resizeObserver.observe(sliderRef.current);
-    }
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, []);
+  useResizeObserver(sliderRef.current, handleResize);
 
   useEffect(() => {
     if (!sliderGroups.length) {

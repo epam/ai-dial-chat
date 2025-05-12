@@ -1,6 +1,13 @@
-import React, { useEffect, useImperativeHandle, useRef } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+} from 'react';
 
 import classNames from 'classnames';
+
+import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 
 type Props = React.DetailedHTMLProps<
   React.TextareaHTMLAttributes<HTMLTextAreaElement>,
@@ -26,26 +33,16 @@ export const AdjustedTextarea = React.forwardRef((props: Props, ref) => {
     }
   }, [maxHeight, value]);
 
-  useEffect(() => {
-    const handleResize = () => {
-      if (hiddenTextareaRef.current && mainTextareaRef.current) {
-        // we should change hidden textarea width along with main textarea width
-        hiddenTextareaRef.current.style.width = `${mainTextareaRef.current.clientWidth}px`;
-        const scrollHeight = hiddenTextareaRef.current.scrollHeight;
-        mainTextareaRef.current.style.height = `${scrollHeight}px`; // set height as scrollHeight of hidden element
-      }
-    };
-
-    const resizeObserver = new ResizeObserver(handleResize);
-
-    if (mainTextareaRef.current) {
-      resizeObserver.observe(mainTextareaRef.current);
+  const handleResize = useCallback(() => {
+    if (hiddenTextareaRef.current && mainTextareaRef.current) {
+      // we should change hidden textarea width along with main textarea width
+      hiddenTextareaRef.current.style.width = `${mainTextareaRef.current.clientWidth}px`;
+      const scrollHeight = hiddenTextareaRef.current.scrollHeight;
+      mainTextareaRef.current.style.height = `${scrollHeight}px`; // set height as scrollHeight of hidden element
     }
-
-    return () => {
-      resizeObserver.disconnect();
-    };
   }, []);
+
+  useResizeObserver(mainTextareaRef.current, handleResize);
 
   return (
     <>
