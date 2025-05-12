@@ -21,9 +21,9 @@ import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { CodeEditorSelectors } from '@/src/store/codeEditor/codeEditor.reducer';
-import { FilesSelectors } from '@/src/store/files/files.reducers';
+import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import ContextMenu from '../Common/ContextMenu';
 import DownloadRenderer from './Download';

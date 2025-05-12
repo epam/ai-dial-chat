@@ -16,15 +16,12 @@ import {
   ResourceToReview,
 } from '@/src/types/publication';
 
-import * as PublicationSelectors from './publication.selectors';
 import { PublicationState } from './publication.types';
 
 import { PublishActions, UploadStatus } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
 import uniqBy from 'lodash-es/uniqBy';
 import xor from 'lodash-es/xor';
-
-export { PublicationSelectors };
 
 const initialState: PublicationState = {
   initialized: false,

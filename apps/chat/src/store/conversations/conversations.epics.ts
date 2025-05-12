@@ -97,20 +97,15 @@ import { AddonsActions } from '@/src/store/addons/addons.reducers';
 import { AddonsSelectors } from '@/src/store/addons/addons.selectors';
 import { ChatActions } from '@/src/store/chat/chat.reducer';
 import { FilesActions } from '@/src/store/files/files.reducers';
-import {
-  MarketplaceActions,
-  MarketplaceSelectors,
-} from '@/src/store/marketplace/marketplace.reducers';
-import {
-  ModelsActions,
-  ModelsSelectors,
-} from '@/src/store/models/models.reducers';
-import { OverlaySelectors } from '@/src/store/overlay/overlay.reducers';
+import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
+import { ModelsActions } from '@/src/store/models/models.reducers';
+import { OverlaySelectors } from '@/src/store/overlay/overlay.selectors';
 import { OverlayState } from '@/src/store/overlay/overlay.types';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { ShareActions } from '@/src/store/share/share.reducers';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { LOCAL_BUCKET } from '@/src/constants/chat';
 import {
@@ -125,10 +120,10 @@ import { defaultReplay } from '@/src/constants/replay';
 import { CONVERSATIONS_DATE_SECTIONS } from '@/src/constants/sections';
 import { SHARE_QUERY_PARAM } from '@/src/constants/share';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from './conversations.reducers';
+import { MarketplaceSelectors } from '../marketplace/marketplace.selectors';
+import { ModelsSelectors } from '../models/models.selectors';
+import { ConversationsActions } from './conversations.reducers';
+import { ConversationsSelectors } from './conversations.selectors';
 
 import {
   ConversationInfo,

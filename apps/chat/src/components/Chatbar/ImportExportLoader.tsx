@@ -6,10 +6,8 @@ import { Operation } from '@/src/types/import-export';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  ImportExportActions,
-  ImportExportSelectors,
-} from '@/src/store/import-export/importExport.reducers';
+import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
+import { ImportExportSelectors } from '@/src/store/import-export/importExport.selectors';
 
 import { FullPageLoader } from '../Common/FullPageLoader';
 import { withRenderWhen } from '../Common/RenderWhen';

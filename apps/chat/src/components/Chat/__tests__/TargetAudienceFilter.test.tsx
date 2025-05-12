@@ -7,7 +7,7 @@ import userEvent from '@testing-library/user-event';
 import { PublicationFunctions } from '@/src/types/publication';
 import { AppAction } from '@/src/types/store';
 
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/TargetAudienceFilterComponent';
 
@@ -18,9 +18,9 @@ vi.mock('@/src/store/hooks', async () => {
   };
 });
 
-vi.mock('@/src/store/settings/settings.reducers', async () => {
+vi.mock('@/src/store/settings/settings.selectors', async () => {
   const actual: any = await vi.importActual(
-    '@/src/store/settings/settings.reducers',
+    '@/src/store/settings/settings.selectors',
   );
   return {
     ...actual,

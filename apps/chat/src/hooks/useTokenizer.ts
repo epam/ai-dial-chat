@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 
-import { DialAIEntityModel } from '../types/models';
+import { DialAIEntityModel } from '@/src/types/models';
 
 import { Tiktoken, get_encoding } from 'tiktoken';
 

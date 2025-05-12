@@ -12,7 +12,6 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
-  getApplicationType,
   getModelDescription,
   isApplicationStatusUpdating,
 } from '@/src/utils/app/application';
@@ -32,10 +31,10 @@ import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
 
@@ -343,7 +342,6 @@ export const ModelList = ({
   const handleEdit = useCallback(
     (currentEntity: DialAIEntityModel) => {
       dispatch(ApplicationActions.get({ applicationId: currentEntity.id }));
-      getApplicationType(currentEntity);
     },
     [dispatch],
   );

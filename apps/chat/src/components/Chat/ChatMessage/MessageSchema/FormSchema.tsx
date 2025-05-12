@@ -10,7 +10,7 @@ import { getFormButtonType } from '@/src/utils/app/form-schema';
 import { FormButtonType } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppSelector } from '@/src/store/hooks';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';

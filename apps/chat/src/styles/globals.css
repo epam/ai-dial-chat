@@ -159,7 +159,7 @@ pre:has(div.codeblock) {
 
 @layer components {
   .icon-button {
-    @apply rounded border border-transparent p-[5px] outline-none;
+    @apply flex items-center justify-center rounded border border-transparent p-[5px] outline-none;
   }
 
   .icon-button:disabled {
