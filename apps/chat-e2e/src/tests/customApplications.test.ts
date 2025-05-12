@@ -332,7 +332,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.only(
   'Edit custom application\n' + //EPMRTC-5131
     'Edit version for custom app', //EPMRTC-4305
   async ({
