@@ -6,7 +6,13 @@ import {
   Sorting,
 } from '@/src/testData';
 import { IconApiHelper } from '@/src/testData/api';
-import { Attributes, Colors, Cursors, Styles } from '@/src/ui/domData';
+import {
+  Attributes,
+  Colors,
+  Cursors,
+  Overflow,
+  Styles,
+} from '@/src/ui/domData';
 import { BaseElement } from '@/src/ui/webElements';
 import { SortingUtil } from '@/src/utils/sortingUtil';
 import { Locator, expect } from '@playwright/test';
@@ -24,9 +30,10 @@ export class BaseAssertion {
   }
 
   public async assertEntityIcon(
-    iconLocator: Locator,
+    element: BaseElement | Locator,
     expectedIconSource?: string,
   ) {
+    const iconLocator = this.getElementLocator(element);
     const actualIconSource = await iconLocator
       .getAttribute(Attributes.src)
       .then((s) => IconApiHelper.getNonCachedIconSource(s));
@@ -127,6 +134,20 @@ export class BaseAssertion {
         expectedMessage ?? ExpectedMessages.fieldValueIsValid,
       )
       .toHaveText(expectedText);
+  }
+
+  public async assertElementInnerHtml(
+    element: BaseElement | Locator,
+    expectedHtml: string | RegExp,
+    expectedMessage?: string,
+  ) {
+    const elementLocator = this.getElementLocator(element);
+    expect
+      .soft(
+        await elementLocator.innerHTML(),
+        expectedMessage ?? ExpectedMessages.fieldInnerHtmlIsValid,
+      )
+      .toBe(expectedHtml);
   }
 
   public async assertInputValue(
@@ -316,6 +337,19 @@ export class BaseAssertion {
       .toBe(expectedCount);
   }
 
+  public assertNumberIsGreaterThan(
+    actualNumber: number,
+    expectedNumber: number,
+    expectedMessage?: string,
+  ) {
+    expect
+      .soft(
+        actualNumber,
+        expectedMessage ?? ExpectedMessages.elementsCountIsValid,
+      )
+      .toBeGreaterThan(expectedNumber);
+  }
+
   public assertValue(
     actualValue: string | number | undefined | null,
     expectedValue: string | number,
@@ -336,6 +370,17 @@ export class BaseAssertion {
         expectedMessage ?? ExpectedMessages.elementTextIsValid,
       )
       .toEqual(expectedInnerText);
+  }
+
+  public async assertElementTextIsTruncated(
+    element: BaseElement | Locator,
+    expectedMessage?: string,
+  ) {
+    const elementLocator = this.getElementLocator(element);
+    await expect(
+      elementLocator,
+      expectedMessage ?? ExpectedMessages.elementTextIsTruncated,
+    ).toHaveCSS(Styles.text_overflow, Overflow.ellipsis);
   }
 
   private getElementLocator(element: BaseElement | Locator) {

@@ -27,7 +27,7 @@ export class AgentDetailsModal extends BaseElement {
     MarketplaceDetailsModal.agentVersion,
   );
   public agentTopics = this.getChildElementBySelector(
-    MarketplaceAgentSelectors.topics,
+    MarketplaceAgentSelectors.topicsContainer,
   );
   public useButton = this.getChildElementBySelector(
     MarketplaceDetailsModal.useButton,

@@ -20,4 +20,13 @@ export class ApplicationApiHelper extends BaseApiHelper {
     ).toBe(200);
     return (await response.json()) as BackendEntity;
   }
+
+  public async deleteApplication(entity: BackendEntity) {
+    const url = `/api/${entity.url}`;
+    const response = await this.request.delete(this.getHost(url));
+    expect(
+      response.status(),
+      `App with id: ${entity.name} was successfully deleted`,
+    ).toBe(200);
+  }
 }

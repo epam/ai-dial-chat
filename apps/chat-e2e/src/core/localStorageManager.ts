@@ -151,7 +151,7 @@ export class LocalStorageManager {
   async setRecentModelsIds(...models: DialAIEntityModel[]) {
     await this.page.addInitScript(
       this.setRecentModelsIdsKey(),
-      JSON.stringify(models.map((m) => m.id)),
+      JSON.stringify(models.map((m) => m.reference)),
     );
   }
 

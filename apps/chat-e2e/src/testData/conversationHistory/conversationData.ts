@@ -43,7 +43,7 @@ export class ConversationData extends FolderData {
   ) {
     const conversation = this.conversationBuilder.getConversation();
     const modelToUse = model
-      ? { id: typeof model === 'string' ? model : model.id }
+      ? { id: typeof model === 'string' ? model : model.reference }
       : conversation.model;
     const settings: MessageSettings = {
       prompt: conversation.prompt,
