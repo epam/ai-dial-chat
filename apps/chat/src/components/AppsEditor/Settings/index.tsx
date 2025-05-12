@@ -111,6 +111,7 @@ export const ApplicationSettings: React.FC<Props> = ({
       : PreviewMode.half,
   );
 
+  const isAppPublic = isEntityIdPublic(applicationData);
   const modelFromState = applicationData
     ? modelsMap[applicationData.reference]
     : null;
@@ -292,6 +293,9 @@ export const ApplicationSettings: React.FC<Props> = ({
     areSelectedConversationLoaded,
   ]);
 
+  const showRedeployButton =
+    type === ApplicationType.CODE_APP && isAppDeployed && !isAppPublic;
+
   return (
     <div className="flex w-full flex-nowrap overflow-hidden">
       <div
@@ -328,7 +332,7 @@ export const ApplicationSettings: React.FC<Props> = ({
             </span>
           </div>
           <div className="flex space-x-2">
-            {type === ApplicationType.CODE_APP && isAppDeployed && (
+            {showRedeployButton && (
               <button
                 className="button button-accent-secondary mb-2 flex items-center gap-2 text-accent-secondary md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
                 data-qa="redeploy-code-app"
