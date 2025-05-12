@@ -38,17 +38,7 @@ export class AppEditorPreview extends BaseElement {
       ApplicationPreviewSelector.previewAuthorValue,
     );
 
-  public async getAppName(): Promise<string | null> {
-    return this.previewName.getElementContent();
-  }
-
-  public async getAuthorName(): Promise<string | null> {
-    return this.previewAuthorValue.getElementContent();
-  }
-
-  public async getTopics(): Promise<string[]> {
-    const topicElements =
-      this.previewTopicsContainer.getChildElementBySelector('span');
-    return topicElements.getElementsInnerContent();
-  }
+  public topicElements = this.previewTopicsContainer.getChildElementBySelector(
+    Tags.span,
+  );
 }

@@ -12,7 +12,6 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
-import { Attributes, Tags } from '@/src/ui/domData';
 import { AppEditSteps, BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 
@@ -63,7 +62,9 @@ dialTest(
     await localStorageManager.setShowSideBarPanels();
 
     await dialTest.step('Open My workspace directly', async () => {
-      await marketplacePage.openMyWorkspacePage();
+      await marketplacePage.openMyWorkspacePage({
+        updateInstalledDeployments: false,
+      });
       await marketplacePage.waitForPageLoaded();
     });
 
@@ -753,9 +754,8 @@ dialTest(
       'Click on Topics drop down and verify the list is expanded',
       async () => {
         await appEditorGeneralForm.topicsDropdownToggle.click();
-        await appEditorGeneralForm.topicsDropdownMenuElement.waitForState();
         await baseAssertion.assertElementState(
-          appEditorGeneralForm.topicsDropdownMenuElement, // Assert on the menu container
+          appEditorGeneralForm.topicsDropdownMenuElement,
           'visible',
           ExpectedMessages.dropdownMenuIsVisible,
         );
@@ -774,6 +774,8 @@ dialTest(
         for (const topic of topicsToSelect) {
           await appEditorGeneralForm.selectTopicOption(topic);
         }
+        //TODO ask which property controls the linebreaks and pills wrapping.
+        // I can remove the sorting step because we need to check whether the property is there or not.
         // Close the dropdown
         await appEditorGeneralForm.topicsDropdownToggle.click();
         // Assert the menu element is hidden
@@ -791,8 +793,8 @@ dialTest(
         );
         // Sort both arrays for consistent comparison
         baseAssertion.assertArrayIncludesAll(
-          selectedTopics.sort(),
-          topicsToSelect.sort(),
+          selectedTopics,
+          topicsToSelect,
           ExpectedMessages.fieldValueIsValid,
         );
       },
@@ -805,9 +807,9 @@ dialTest(
         const topicToDelete = GeneratorUtil.randomArrayElement(topicsToSelect);
         await appEditorGeneralForm.deleteSelectedTopic(topicToDelete);
 
-        const remainingTopics = topicsToSelect
-          .filter((t) => t !== topicToDelete)
-          .sort();
+        const remainingTopics = topicsToSelect.filter(
+          (t) => t !== topicToDelete,
+        );
         // Get current selected topics again
         const currentSelectedTopics =
           await appEditorGeneralForm.getSelectedTopics();
@@ -819,7 +821,7 @@ dialTest(
         );
         // Verify remaining topics
         baseAssertion.assertArrayIncludesAll(
-          currentSelectedTopics.sort(),
+          currentSelectedTopics,
           remainingTopics,
           ExpectedMessages.fieldValueIsValid,
         );
@@ -939,8 +941,6 @@ dialTest(
         await uploadFromDeviceModal.addMoreFilesToUpload(newIconFileName);
         await uploadFromDeviceModal.uploadFiles();
         await attachFilesModal.attachFiles();
-        // // Wait for potential preview update delay
-        // await appEditorPage.page.waitForTimeout(1000);
       },
     );
 
@@ -948,12 +948,7 @@ dialTest(
       'Verify the updated icon is displayed in the preview on the "General info" step',
       async () => {
         const previewIcon = appEditorPreview.previewIcon;
-        await baseAssertion.assertElementAttribute(
-          previewIcon,
-          Attributes.src,
-          expectedNewIconUrl,
-          ExpectedMessages.entityIconIsValid,
-        );
+        await baseAssertion.assertEntityIcon(previewIcon, expectedNewIconUrl);
       },
     );
 
@@ -962,11 +957,9 @@ dialTest(
       async () => {
         await appEditorGeneralForm.goNext({ waitForResponses: false });
         const previewIconAppSettings = appEditorPreview.previewIcon;
-        await baseAssertion.assertElementAttribute(
+        await baseAssertion.assertEntityIcon(
           previewIconAppSettings,
-          Attributes.src,
           expectedNewIconUrl,
-          ExpectedMessages.entityIconIsValid,
         );
       },
     );
@@ -984,11 +977,9 @@ dialTest(
         const cardIconElement = agentElement.getElementIcon(
           agentElement.getElementLocator(),
         );
-        await baseAssertion.assertElementAttribute(
+        await baseAssertion.assertEntityIcon(
           cardIconElement,
-          Attributes.src,
           expectedNewIconUrl,
-          ExpectedMessages.entityIconIsValid,
         );
       },
     );
@@ -998,11 +989,9 @@ dialTest(
       async () => {
         await agentElement.click();
         await agentDetailsModal.waitForState();
-        await baseAssertion.assertElementAttribute(
-          agentDetailsModal.icon.getChildElementBySelector(Tags.img),
-          Attributes.src,
+        await baseAssertion.assertEntityIcon(
+          agentDetailsModal.icon,
           expectedNewIconUrl,
-          ExpectedMessages.entityIconIsValid,
         );
       },
     );

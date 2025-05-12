@@ -2,6 +2,7 @@ import { API, Attachment } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
 import { AddApplicationGeneralInfoFormSelector } from '@/src/ui/selectors';
 import { AppEditorForm } from '@/src/ui/webElements/appEditor/appEditorForm';
+import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
 export class AppEditorGeneralForm extends AppEditorForm {
@@ -54,25 +55,27 @@ export class AppEditorGeneralForm extends AppEditorForm {
   public iconInputElement = this.getChildElementBySelector(
     AddApplicationGeneralInfoFormSelector.iconField,
   );
+  public topicsOptions =
+    this.topicsDropdownMenuElement.getChildElementBySelector(
+      AddApplicationGeneralInfoFormSelector.topicsDropdownOption,
+    );
   public addIconButton = this.iconInputElement.getChildButtonElement();
 
   // Method to get all available topic options from the dropdown
   public async getAllTopicsOptions(): Promise<string[]> {
-    const optionsLocator =
-      this.topicsDropdownMenuElement.getChildElementBySelector(
-        AddApplicationGeneralInfoFormSelector.topicsDropdownOption,
-      );
-    return optionsLocator.getElementLocator().allInnerTexts();
+    return this.topicsOptions.getElementsInnerContent();
   }
 
   // Method to select a topic option by its text
   public async selectTopicOption(topicName: string) {
+    const escapedTopicName = RegexUtil.escapeRegexChars(topicName);
+    const exactMatchRegex = new RegExp(`^${escapedTopicName}$`);
     const optionElement = this.topicsDropdownMenuElement
       .getChildElementBySelector(
         AddApplicationGeneralInfoFormSelector.topicsDropdownOption,
       )
       .getElementLocator()
-      .filter({ hasText: topicName });
+      .filter({ hasText: exactMatchRegex });
     await optionElement.click();
   }
 
@@ -80,15 +83,12 @@ export class AppEditorGeneralForm extends AppEditorForm {
   public async getSelectedTopics(): Promise<string[]> {
     const pillsCount = await this.selectedTopicPills.getElementsCount();
     const topics: string[] = [];
-    if (pillsCount > 0) {
-      for (let i = 1; i <= pillsCount; i++) {
-        const topicText = await this.selectedTopicPills
-          .getNthElement(i)
-          .locator(AddApplicationGeneralInfoFormSelector.selectedTopicPillText)
-          .textContent();
-        if (topicText) {
-          topics.push(topicText);
-        }
+    for (let i = 1; i <= pillsCount; i++) {
+      const topicText = await this.selectedTopicPills
+        .getNthElement(i)
+        .textContent();
+      if (topicText) {
+        topics.push(topicText);
       }
     }
     return topics;
@@ -96,14 +96,14 @@ export class AppEditorGeneralForm extends AppEditorForm {
 
   // Method to delete a specific selected topic pill
   public async deleteSelectedTopic(topicName: string) {
+    const escapedTopicName = RegexUtil.escapeRegexChars(topicName);
+    const exactMatchRegex = new RegExp(`^${escapedTopicName}$`);
     const topicPill = this.selectedTopicPills
       .getElementLocator()
-      .filter({ hasText: topicName });
-    const removeIcon = this.createElementFromLocator(
-      topicPill.locator(
-        AddApplicationGeneralInfoFormSelector.selectedTopicPillRemoveIcon(
-          topicName,
-        ),
+      .filter({ hasText: exactMatchRegex });
+    const removeIcon = topicPill.locator(
+      AddApplicationGeneralInfoFormSelector.selectedTopicPillRemoveIcon(
+        topicName,
       ),
     );
     await removeIcon.click();

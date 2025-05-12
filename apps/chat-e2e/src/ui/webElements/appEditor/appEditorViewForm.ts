@@ -1,8 +1,6 @@
 import { ExampleURLs } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
-import {
-  AddApplicationAppSettingsFormSelector,
-} from '@/src/ui/selectors';
+import { AddApplicationAppSettingsFormSelector } from '@/src/ui/selectors';
 import { AppEditorForm } from '@/src/ui/webElements/appEditor/appEditorForm';
 import { Locator, Page } from '@playwright/test';
 
