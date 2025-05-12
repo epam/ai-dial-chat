@@ -382,7 +382,7 @@ export const ApplicationSettings: React.FC<Props> = ({
       </div>
       {previewMode === PreviewMode.closed && (
         <div
-          className="flex h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-4 transition-all duration-300 ease-in-out hover:cursor-pointer lg:pt-5"
+          className="flex h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-4 transition-all duration-300 ease-in-out hover:cursor-pointer xl:pt-5"
           onClick={() => {
             if (!isTabletOrMobile) setPreviewMode(PreviewMode.half);
           }}
