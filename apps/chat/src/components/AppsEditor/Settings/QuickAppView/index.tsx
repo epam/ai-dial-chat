@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Controller,
   Path,
@@ -15,6 +15,7 @@ import {
   getSharedTooltip,
 } from '@/src/utils/app/application';
 import { arraysHaveSameElements } from '@/src/utils/app/common';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { CustomApplicationModel } from '@/src/types/applications';
@@ -22,15 +23,14 @@ import { FeatureType } from '@/src/types/common';
 import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ApplicationActions,
-  ApplicationSelectors,
-} from '@/src/store/application/application.reducers';
+import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { CONFIRM_DOCUMENT_VALUES } from '@/src/constants/applications';
+import { PUBLIC_APP_TOOLTIP } from '@/src/constants/code-apps';
 
 import { TemperatureSlider } from '@/src/components/Chat/ChatSettings/Temperature';
 import { FilesSelector } from '@/src/components/Common/FilesSelector/FilesSelector';
@@ -197,6 +197,14 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
     t,
   ]);
 
+  const isAppPublic = isEntityIdPublic(oldApplication);
+  const editorOptions = useMemo(
+    () => ({
+      readOnly: isAppPublic,
+    }),
+    [isAppPublic],
+  );
+
   return (
     <form
       onSubmit={submitWrapper(handleSubmit)}
@@ -219,7 +227,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
                   field.value?.filter((field) => field !== document),
                 );
               }}
-              readonly={isSharedWithMe}
+              readonly={isSharedWithMe || isAppPublic}
               error={errors.documentRelativeUrl?.message}
               fileManagerTitle={t('Select documents')}
               filesFilter={myFilesFilter}
@@ -228,6 +236,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
                 isSharedWithMe ? getSharedTooltip(t('documents')) : undefined
               }
               confirmDialogValues={confirmDocumentUrlValues}
+              tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
             />
           )}
         />
@@ -242,6 +251,8 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
               onChange={field.onChange}
               mandatory
               error={errors.model?.message}
+              disabled={isAppPublic}
+              tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
             />
           )}
         />
@@ -260,6 +271,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
               language="json"
               onChange={(v) => field.onChange(v ?? '')}
               allowFullScreen
+              options={editorOptions}
             />
           )}
         />
@@ -271,6 +283,8 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
           rows={4}
           className="resize-none"
           id="instructions"
+          disabled={isAppPublic}
+          tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
         />
 
         <Controller
@@ -280,6 +294,8 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
             <Slider
               label={t('Temperature')}
               temperature={field.value}
+              disabled={isAppPublic}
+              tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
               onChangeTemperature={field.onChange}
             />
           )}

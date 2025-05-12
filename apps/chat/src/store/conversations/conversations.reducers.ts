@@ -24,7 +24,7 @@ import { SearchFilters } from '@/src/types/search';
 import { LastConversationSettings } from '@/src/types/settings';
 import { RootState } from '@/src/types/store';
 
-import * as ConversationsSelectors from './conversations.selectors';
+import { ConversationsSelectors } from './conversations.selectors';
 import { ConversationsState } from './conversations.types';
 
 import {
@@ -36,8 +36,6 @@ import {
 } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 import xor from 'lodash-es/xor';
-
-export { ConversationsSelectors };
 
 const initialState: ConversationsState = {
   initialized: false,
@@ -418,9 +416,6 @@ export const conversationsSlice = createSlice({
         ({ id }) => id !== payload.folderId,
       );
     },
-    deleteAllTemporaryFolders: (state) => {
-      state.temporaryFolders = [];
-    },
     renameTemporaryFolder: (
       state,
       { payload }: PayloadAction<{ folderId: string; name: string }>,
@@ -650,9 +645,6 @@ export const conversationsSlice = createSlice({
         (id) => !payload.paths.has(id),
       );
       state.foldersStatus = UploadStatus.FAILED;
-    },
-    initConversationsRecursive: (state) => {
-      state.conversationsStatus = UploadStatus.LOADING;
     },
     uploadConversationsFromMultipleFolders: (
       state,

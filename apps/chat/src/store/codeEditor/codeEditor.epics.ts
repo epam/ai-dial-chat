@@ -21,11 +21,12 @@ import { translate } from '@/src/utils/app/translation';
 import { AppAction, AppEpic } from '@/src/types/store';
 
 import { FilesSelectors } from '@/src/store/files/files.selectors';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { CODEAPPS_REQUIRED_FILES } from '@/src/constants/applications';
 
 import { FilesActions } from '../files/files.reducers';
-import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { CodeEditorActions } from './codeEditor.reducer';
 import { CodeEditorSelectors } from './codeEditor.selectors';
 
