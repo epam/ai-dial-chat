@@ -1,4 +1,4 @@
-import { IconFileFilled, IconFileXFilled } from '@tabler/icons-react';
+import { IconFileXFilled } from '@tabler/icons-react';
 import { DragEvent, ReactNode, useCallback, useState } from 'react';
 
 import classNames from 'classnames';
@@ -8,6 +8,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { getFileNameExtension } from '@/src/utils/app/file';
 
 import { Translation } from '@/src/types/translation';
+
+import IconFileTextFilled from '@/public/images/icons/file-text-filled.svg';
 
 const containerId = 'file-drop-area';
 
@@ -71,10 +73,15 @@ export const FileDropArea = ({
     [droppable, onDrop],
   );
 
+  // reset drag state if drag leave or drag over events were not emitted
+  const handleResetDragOver = useCallback(() => {
+    setIsDraggingOver(false);
+  }, []);
+
   return (
     <div
       id={containerId}
-      onDragOverCapture={handleDragOver}
+      onDragOver={handleDragOver}
       onDrop={handleDrop}
       className={classNames('relative', className)}
     >
@@ -90,12 +97,16 @@ export const FileDropArea = ({
               droppable ? 'cursor-copy' : 'cursor-not-allowed',
             )}
             onDragLeave={handleDragLeave}
+            onBlur={handleResetDragOver}
+            onFocus={handleResetDragOver}
+            onMouseLeave={handleResetDragOver}
           />
           <div className="flex flex-col items-center">
             {droppable ? (
               <>
-                <IconFileFilled
-                  size="100px"
+                <IconFileTextFilled
+                  width={100}
+                  height={100}
                   className="mb-5 text-accent-primary"
                 />
                 <h5 className="mb-4 text-lg font-semibold text-primary">
