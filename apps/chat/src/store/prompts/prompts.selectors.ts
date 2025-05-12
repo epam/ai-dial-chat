@@ -389,6 +389,12 @@ export const selectInitialized = (state: RootState) =>
 export const selectPromptWithVariablesForApply = (state: RootState) =>
   rootSelector(state).promptWithVariablesForApply;
 
+export const selectDeletingPrompt = (state: RootState) =>
+  rootSelector(state).deletingPrompt;
+
+export const selectMoveToPrompt = (state: RootState) =>
+  rootSelector(state).moveToPrompt;
+
 export const PromptsSelectors = {
   selectPrompts,
   selectSearchTerm,
@@ -405,6 +411,7 @@ export const PromptsSelectors = {
   selectMyItemsFilters,
   selectIsEmptySearchFilter,
   selectDoesAnyMyItemExist,
+  selectTemporaryFolders,
   selectTemporaryAndPublishedFolders,
   selectNewAddedFolderId,
   selectLoadingFolderIds,
@@ -425,4 +432,6 @@ export const PromptsSelectors = {
   selectIsFolderEmpty,
   selectInitialized,
   selectPromptWithVariablesForApply,
+  selectDeletingPrompt,
+  selectMoveToPrompt,
 };

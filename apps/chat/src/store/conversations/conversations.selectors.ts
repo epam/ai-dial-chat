@@ -791,6 +791,7 @@ export const ConversationsSelectors = {
   selectIsStartedCustomViewerConversation,
   selectCanAttachFolders,
   selectCanAttachFile,
+  selectTemporaryFolders,
   selectTemporaryAndPublishedFolders,
   selectNewAddedFolderId,
   selectLoadingFolderIds,

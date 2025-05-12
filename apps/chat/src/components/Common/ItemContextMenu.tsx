@@ -84,7 +84,6 @@ interface ItemContextMenuProps {
   useStandardColor?: boolean;
   onOpenMoveToModal: () => void;
   onOpenExportModal?: () => void;
-  onMoveToFolder: (args: { folderId?: string; isNewFolder?: boolean }) => void;
   onDelete: MouseEventHandler<unknown>;
   onRename?: MouseEventHandler<unknown>;
   onExport: (args?: unknown) => void;
@@ -120,7 +119,6 @@ export default function ItemContextMenu({
   onReplay,
   onCompare,
   onPlayback,
-  onMoveToFolder,
   onOpenMoveToModal,
   onShare,
   onPublish,
@@ -276,30 +274,7 @@ export default function ItemContextMenu({
         dataQa: 'move-to-modal',
         Icon: IconFolderShare,
         onClick: onOpenMoveToModal,
-        className: 'md:hidden',
         disabled: disableAll,
-      },
-      {
-        name: t('Move to'),
-        display: !isExternal,
-        dataQa: 'move-to',
-        Icon: IconFolderShare,
-        className: 'max-md:hidden',
-        disabled: disableAll,
-        childMenuItems: [
-          {
-            name: t('New folder'),
-            dataQa: 'new-folder',
-            Icon: IconFolderPlus,
-            onClick: () => {
-              onMoveToFolder({ isNewFolder: true });
-            },
-            className: classNames('invisible md:visible', {
-              'border-b border-primary': folders?.length > 0,
-            }),
-          },
-          ...getFolderMenuItems(folders, allFolders, onMoveToFolder),
-        ],
       },
       {
         name: t('Share'),
@@ -364,7 +339,6 @@ export default function ItemContextMenu({
       onDelete,
       onDuplicate,
       onExport,
-      onMoveToFolder,
       onOpenExportModal,
       onOpenMoveToModal,
       onPlayback,

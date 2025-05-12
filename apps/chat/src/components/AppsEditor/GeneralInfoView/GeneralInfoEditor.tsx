@@ -219,7 +219,11 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     <div className="size-full overflow-hidden bg-layer-2">
       <form
         onSubmit={submitWrapper((data) => handleSubmit(data, false))}
-        onMouseLeave={submitWrapper((data) => handleSubmit(data, true))}
+        onMouseLeave={() => {
+          if (!isAppPublic) {
+            submitWrapper((data) => handleSubmit(data, true));
+          }
+        }}
         className="flex size-full flex-col"
         data-qa="app-general-form"
       >

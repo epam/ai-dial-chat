@@ -42,6 +42,9 @@ const initialState: PromptsState = {
   isNewPromptCreating: false,
   chosenPromptIds: [],
   chosenEmptyFoldersIds: [],
+
+  deletingPrompt: undefined,
+  moveToPrompt: undefined,
 };
 
 export const promptsSlice = createSlice({
@@ -451,6 +454,18 @@ export const promptsSlice = createSlice({
         isApproveRequiredResource?: boolean;
       }>,
     ) => state,
+    setDeletingPrompt: (
+      state,
+      { payload }: PayloadAction<PromptInfo | undefined>,
+    ) => {
+      state.deletingPrompt = payload;
+    },
+    setMoveToPrompt: (
+      state,
+      { payload }: PayloadAction<PromptInfo | undefined>,
+    ) => {
+      state.moveToPrompt = payload;
+    },
   },
 });
 
