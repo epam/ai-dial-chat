@@ -46,11 +46,22 @@ export class Actions extends BaseElement {
   }
 
   public async clickCreateConversation() {
+    return this.clickCreateConversationButton(() =>
+      this.createConversationButton.click(),
+    );
+  }
+  public async clickCreateConversationInInnerFolder() {
+    return this.clickCreateConversationButton(() =>
+      this.createConversationInFolderButton.click(),
+    );
+  }
+
+  private async clickCreateConversationButton(method: () => Promise<void>) {
     const respPromise = this.page.waitForResponse(
       (response) =>
         response.request().method() === 'POST' && response.status() === 200,
     );
-    await this.createConversationButton.click();
+    await method();
     const response = await respPromise;
     const responseBody = (await response.json()) as BackendChatEntity;
     return {

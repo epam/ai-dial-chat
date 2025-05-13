@@ -168,10 +168,9 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
             <button
               className="button"
               onClick={async () => {
-                const conversation =
-                  await overlay.current?.createConversation(
-                    'test-inner-folder',
-                  );
+                const conversation = await overlay.current?.createConversation(
+                  'test-inner-folder-root/test-inner-folder-child',
+                );
 
                 handleDisplayInformation(JSON.stringify(conversation, null, 2));
               }}

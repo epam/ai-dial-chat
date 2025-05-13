@@ -247,6 +247,17 @@ export class BaseAssertion {
         ).not.toBeFocused();
   }
 
+  public async assertElementIsInViewport(
+    element: BaseElement | Locator,
+    ratio?: number,
+  ) {
+    const elementLocator = this.getElementLocator(element);
+    await expect(
+      elementLocator,
+      ExpectedMessages.elementIsInFocus,
+    ).toBeInViewport({ ratio: ratio });
+  }
+
   public async assertElementCursor(
     element: BaseElement | Locator,
     cursor: Cursors,
