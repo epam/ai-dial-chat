@@ -37,14 +37,15 @@ const validateFiles = (
 
 export const useUploadFilesHandler = (
   folderId: string,
+  selectedAttachmentsAmount = 0,
   maximumAttachmentsAmount = 0,
   allowedTypes: string[] = [],
+  skipSelect?: boolean,
 ) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
   const allFiles = useAppSelector(FilesSelectors.selectFiles);
-  const attachments = useAppSelector(FilesSelectors.selectSelectedFiles);
 
   const { bucket } = useMemo(
     () =>
@@ -64,7 +65,7 @@ export const useUploadFilesHandler = (
 
   const handleUpload = useCallback(
     (files: File[]) => {
-      const attachmentsAmount = attachments.length + files.length;
+      const attachmentsAmount = selectedAttachmentsAmount + files.length;
       if (attachmentsAmount > maximumAttachmentsAmount) {
         dispatch(
           UIActions.showErrorToast(
@@ -109,23 +110,30 @@ export const useUploadFilesHandler = (
             id: file.id,
             relativePath: folderPath,
             name: file.name,
+
+            showSuccessMessage: true,
           }),
         );
       });
-      dispatch(
-        FilesActions.selectFiles({ ids: preparedFiles.map(({ id }) => id) }),
-      );
+      if (!skipSelect) {
+        dispatch(
+          FilesActions.selectFiles({ ids: preparedFiles.map(({ id }) => id) }),
+        );
+      }
+
+      return Promise.resolve(preparedFiles);
     },
     [
       allFiles,
       allowedTypes,
-      attachments.length,
+      selectedAttachmentsAmount,
       bucket,
       dispatch,
       folderId,
       folderPath,
       maximumAttachmentsAmount,
       t,
+      skipSelect,
     ],
   );
 
