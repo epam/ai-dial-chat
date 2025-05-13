@@ -3115,27 +3115,30 @@ const updateLastConversationSettingsEpic: AppEpic = (action$, state$) =>
       ConversationsActions.saveConversationSuccess.type,
       ConversationsActions.updateConversationSuccess.type,
     ),
-    map(() => ConversationsSelectors.selectLastConversation(state$.value)),
-    switchMap((lastConversation) =>
+    map(() => {
+      const lastConversation = ConversationsSelectors.selectLastConversation(
+        state$.value,
+      );
+      return {
+        lastConversation,
+        wasAlreadyUploaded:
+          !lastConversation ||
+          lastConversation.status === UploadStatus.LOADED ||
+          isEntityIdLocal(lastConversation),
+      };
+    }),
+    switchMap(({ lastConversation, wasAlreadyUploaded }) =>
       forkJoin({
         oldLastConversationSettings: DataService.getLastConversationSettings(),
-        wasAlreadyUploaded: of(
-          lastConversation?.status === UploadStatus.LOADED,
-        ),
-        lastConversation:
-          lastConversation &&
-          lastConversation.status !== UploadStatus.LOADED &&
-          !isEntityIdLocal(lastConversation)
-            ? ConversationService.getConversation(lastConversation).pipe(
-                catchError((err) => {
-                  console.error(
-                    'The last used conversation was not found:',
-                    err,
-                  );
-                  return of(null);
-                }),
-              )
-            : of(lastConversation as Conversation),
+        wasAlreadyUploaded: of(wasAlreadyUploaded),
+        lastConversation: !wasAlreadyUploaded
+          ? ConversationService.getConversation(lastConversation!).pipe(
+              catchError((err) => {
+                console.error('The last used conversation was not found:', err);
+                return of(null);
+              }),
+            )
+          : of(lastConversation as Conversation),
       }),
     ),
     switchMap(
@@ -3162,12 +3165,14 @@ const updateLastConversationSettingsEpic: AppEpic = (action$, state$) =>
               temperature: lastConversation.temperature,
             }),
           ),
-          of(
-            ConversationsActions.uploadConversationsByIdsSuccess({
-              setIds: new Set(lastConversation.id),
-              conversations: [lastConversation],
-            }),
-          ),
+          !wasAlreadyUploaded
+            ? of(
+                ConversationsActions.uploadConversationsByIdsSuccess({
+                  setIds: new Set(lastConversation.id),
+                  conversations: [lastConversation],
+                }),
+              )
+            : EMPTY,
         );
       },
     ),
