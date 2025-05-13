@@ -84,7 +84,7 @@ export const useAgentActions = (entity: DialAIEntityModel) => {
     [dispatch, entity.reference],
   );
 
-  const handleOpenShare = useCallback(
+  const handleOpenSharing = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
       dispatch(
@@ -161,7 +161,7 @@ export const useAgentActions = (entity: DialAIEntityModel) => {
     handleUpdateFunctionStatus,
     handleEdit,
     handleDuplicate,
-    handleOpenShare,
+    handleOpenSharing,
     handleOpenUnshare,
     handlePublish,
     handleUnpublish,

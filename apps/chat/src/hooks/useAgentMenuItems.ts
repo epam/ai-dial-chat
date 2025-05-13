@@ -83,7 +83,7 @@ export const useAgentMenuItems = ({
     handleUpdateFunctionStatus,
     handleEdit,
     handleDuplicate,
-    handleOpenShare,
+    handleOpenSharing,
     handleOpenUnshare,
     handlePublish,
     handleUnpublish,
@@ -149,7 +149,7 @@ export const useAgentMenuItems = ({
           isApplicationsSharingEnabled &&
           disabledActions.share !== true,
         Icon: IconUserShare,
-        onClick: handleOpenShare,
+        onClick: handleOpenSharing,
       },
       {
         name: t('Unshare'),
@@ -219,7 +219,7 @@ export const useAgentMenuItems = ({
       isMyApp,
       handleDuplicate,
       isApplicationsSharingEnabled,
-      handleOpenShare,
+      handleOpenSharing,
       handleOpenUnshare,
       isMyAppOrPreview,
       handlePublish,
