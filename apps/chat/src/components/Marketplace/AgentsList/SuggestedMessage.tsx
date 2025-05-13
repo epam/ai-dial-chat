@@ -1,12 +1,20 @@
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import Magnifier from '@/public/images/icons/search-alt.svg';
 
-export const SuggestedMessage: React.FC<{ entities: DialAIEntityModel[] }> = ({
+interface SuggestedMessageProps {
+  entities: DialAIEntityModel[];
+  className?: string;
+}
+
+export const SuggestedMessage: React.FC<SuggestedMessageProps> = ({
   entities,
+  className,
 }) => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -15,7 +23,12 @@ export const SuggestedMessage: React.FC<{ entities: DialAIEntityModel[] }> = ({
   }
 
   return (
-    <div className="flex flex-col justify-center px-3">
+    <div
+      className={classNames(
+        'flex flex-col justify-center px-3 md:px-5 xl:px-16',
+        className,
+      )}
+    >
       <div
         className="flex items-center gap-1"
         data-qa="no-workspace-results-found"
