@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useUrlHash } from '@/src/hooks/useUrlHash';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { reportAnIssueHash, requestApiKeyHash } from '@/src/constants/footer';
 
@@ -22,13 +22,8 @@ export const SystemDialogs = () => {
   const { hash, resetHash } = useUrlHash();
 
   useEffect(() => {
-    if (hash === requestApiKeyHash) {
-      setIsReportIssueDialogOpen(false);
-      setIsRequestAPIDialogOpen(true);
-    } else if (hash === reportAnIssueHash) {
-      setIsRequestAPIDialogOpen(false);
-      setIsReportIssueDialogOpen(true);
-    }
+    setIsRequestAPIDialogOpen(hash === requestApiKeyHash);
+    setIsReportIssueDialogOpen(hash === reportAnIssueHash);
   }, [hash]);
 
   return (

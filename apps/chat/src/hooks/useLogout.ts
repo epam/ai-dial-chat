@@ -1,7 +1,7 @@
 import { signIn, useSession } from 'next-auth/react';
 import { useCallback } from 'react';
 
-import { customSignOut } from '../utils/auth/signOut';
+import { customSignOut } from '@/src/utils/auth/signOut';
 
 export const useLogout = () => {
   const { data: session } = useSession();

@@ -8,7 +8,8 @@ import {
 } from '@/src/utils/app/folders';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
-import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
+import { FilesActions } from '@/src/store/files/files.reducers';
+import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { SelectFolder } from '@/src/components/Common/SelectFolder/SelectFolder';

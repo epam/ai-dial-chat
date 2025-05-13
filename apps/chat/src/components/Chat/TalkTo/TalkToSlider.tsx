@@ -17,11 +17,12 @@ import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 
-import { NoResultsFound } from '../../Common/NoResultsFound';
+import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
+
 import { TalkToCard } from './TalkToCard';
 
 import chunk from 'lodash-es/chunk';
@@ -120,11 +121,7 @@ interface SliderModelsGroupProps {
   conversation: Conversation;
   screenState: ScreenState;
   rowsCount: number;
-  onEdit: (entity: DialAIEntityModel) => void;
-  onDelete: (entity: DialAIEntityModel) => void;
-  onPublish: (entity: DialAIEntityModel) => void;
   onSelectModel: (entity: DialAIEntityModel) => void;
-  onOpenLogs: (entity: DialAIEntityModel) => void;
 }
 
 const SliderModelsGroup = ({
@@ -193,11 +190,7 @@ const SliderModelsGroup = ({
 interface Props {
   conversation: Conversation;
   items: DialAIEntityModel[];
-  onEdit: (entity: DialAIEntityModel) => void;
-  onDelete: (entity: DialAIEntityModel) => void;
-  onPublish: (entity: DialAIEntityModel) => void;
   onSelectModel: (entity: DialAIEntityModel) => void;
-  onOpenLogs: (entity: DialAIEntityModel) => void;
 }
 
 export const TalkToSlider = ({ conversation, items, ...restProps }: Props) => {
@@ -276,24 +269,6 @@ export const TalkToSlider = ({ conversation, items, ...restProps }: Props) => {
       setActiveSlide((slide) => (slide === 0 ? 0 : slide - 1));
     },
   });
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (sliderRef.current) {
-        setSliderHeight(sliderRef.current.clientHeight);
-      }
-    };
-
-    const resizeObserver = new ResizeObserver(handleResize);
-
-    if (sliderRef.current) {
-      resizeObserver.observe(sliderRef.current);
-    }
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, []);
 
   useEffect(() => {
     const handleResize = () => {

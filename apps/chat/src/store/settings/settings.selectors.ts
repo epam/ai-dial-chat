@@ -240,7 +240,6 @@ export const SettingsSelectors = {
   selectIsolatedModelId,
   selectPreselectedConversationId,
   selectPreselectedAction,
-  selectCustomVisualizers,
   selectMappedVisualizers,
   selectIsCustomAttachmentType,
   selectPublicationFilters,

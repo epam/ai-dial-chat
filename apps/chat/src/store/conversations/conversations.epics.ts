@@ -90,7 +90,6 @@ import { parseConversationApiKey } from '@/src/utils/server/api';
 
 import { ChatBody, Conversation, RateBody } from '@/src/types/chat';
 import { EntityType, FeatureType } from '@/src/types/common';
-import { FolderType } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
 import { AppAction, AppEpic } from '@/src/types/store';
 
@@ -98,20 +97,15 @@ import { AddonsActions } from '@/src/store/addons/addons.reducers';
 import { AddonsSelectors } from '@/src/store/addons/addons.selectors';
 import { ChatActions } from '@/src/store/chat/chat.reducer';
 import { FilesActions } from '@/src/store/files/files.reducers';
-import {
-  MarketplaceActions,
-  MarketplaceSelectors,
-} from '@/src/store/marketplace/marketplace.reducers';
-import {
-  ModelsActions,
-  ModelsSelectors,
-} from '@/src/store/models/models.reducers';
-import { OverlaySelectors } from '@/src/store/overlay/overlay.reducers';
+import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
+import { ModelsActions } from '@/src/store/models/models.reducers';
+import { OverlaySelectors } from '@/src/store/overlay/overlay.selectors';
 import { OverlayState } from '@/src/store/overlay/overlay.types';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { ShareActions } from '@/src/store/share/share.reducers';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { LOCAL_BUCKET } from '@/src/constants/chat';
 import {
@@ -126,10 +120,10 @@ import { defaultReplay } from '@/src/constants/replay';
 import { CONVERSATIONS_DATE_SECTIONS } from '@/src/constants/sections';
 import { SHARE_QUERY_PARAM } from '@/src/constants/share';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from './conversations.reducers';
+import { MarketplaceSelectors } from '../marketplace/marketplace.selectors';
+import { ModelsSelectors } from '../models/models.selectors';
+import { ConversationsActions } from './conversations.reducers';
+import { ConversationsSelectors } from './conversations.selectors';
 
 import {
   ConversationInfo,
@@ -344,7 +338,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
                 openedFolderIds: selectedConversationsIds.flatMap(
                   getParentFolderIdsFromEntityId,
                 ),
-                featureType: FeatureType.Chat,
+                folderType: FeatureType.Chat,
               }),
             ),
             ...actions,
@@ -375,7 +369,7 @@ const initFoldersAndConversationsEpic: AppEpic = (action$) =>
             of(
               ConversationsActions.addFolders({
                 folders: paths.map((path) => ({
-                  ...getFolderFromId(path, FolderType.Chat),
+                  ...getFolderFromId(path, FeatureType.Chat),
                   status: UploadStatus.LOADED,
                 })),
               }),
@@ -726,6 +720,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
             conversations: [newConversation],
           }),
         ),
+        of(UIActions.setScrollToEntityId(newConversation.id)),
         of(
           ConversationsActions.saveNewConversation({
             newConversation,
@@ -877,7 +872,7 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
         of(
           UIActions.setOpenedFoldersIds({
             openedFolderIds: updatedOpenedFolderIds,
-            featureType: FeatureType.Chat,
+            folderType: FeatureType.Chat,
           }),
         ),
         of(
@@ -2678,7 +2673,7 @@ const uploadConversationsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
                 ),
                 of(
                   UIActions.setOpenedFoldersIds({
-                    featureType: FeatureType.Chat,
+                    folderType: FeatureType.Chat,
                     openedFolderIds: [
                       ...openedFolders,
                       ...paths.filter(
@@ -2702,7 +2697,7 @@ const uploadConversationsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
             of(
               ConversationsActions.addFolders({
                 folders: paths.map((path) => ({
-                  ...getFolderFromId(path, FolderType.Chat),
+                  ...getFolderFromId(path, FeatureType.Chat),
                   status: UploadStatus.LOADED,
                 })),
               }),
@@ -2774,7 +2769,7 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (action$) =>
             of(
               ConversationsActions.addFolders({
                 folders: paths.map((path) => ({
-                  ...getFolderFromId(path, FolderType.Chat),
+                  ...getFolderFromId(path, FeatureType.Chat),
                   status: UploadStatus.LOADED,
                 })),
               }),
@@ -2841,7 +2836,7 @@ const uploadConversationsWithContentRecursiveEpic: AppEpic = (
             of(
               ConversationsActions.addFolders({
                 folders: paths.map((path) => ({
-                  ...getFolderFromId(path, FolderType.Chat),
+                  ...getFolderFromId(path, FeatureType.Chat),
                   status: UploadStatus.LOADED,
                 })),
               }),
@@ -3133,27 +3128,30 @@ const updateLastConversationSettingsEpic: AppEpic = (action$, state$) =>
       ConversationsActions.saveConversationSuccess.type,
       ConversationsActions.updateConversationSuccess.type,
     ),
-    map(() => ConversationsSelectors.selectLastConversation(state$.value)),
-    switchMap((lastConversation) =>
+    map(() => {
+      const lastConversation = ConversationsSelectors.selectLastConversation(
+        state$.value,
+      );
+      return {
+        lastConversation,
+        wasAlreadyUploaded:
+          !lastConversation ||
+          lastConversation.status === UploadStatus.LOADED ||
+          isEntityIdLocal(lastConversation),
+      };
+    }),
+    switchMap(({ lastConversation, wasAlreadyUploaded }) =>
       forkJoin({
         oldLastConversationSettings: DataService.getLastConversationSettings(),
-        wasAlreadyUploaded: of(
-          lastConversation?.status === UploadStatus.LOADED,
-        ),
-        lastConversation:
-          lastConversation &&
-          lastConversation.status !== UploadStatus.LOADED &&
-          !isEntityIdLocal(lastConversation)
-            ? ConversationService.getConversation(lastConversation).pipe(
-                catchError((err) => {
-                  console.error(
-                    'The last used conversation was not found:',
-                    err,
-                  );
-                  return of(null);
-                }),
-              )
-            : of(lastConversation as Conversation),
+        wasAlreadyUploaded: of(wasAlreadyUploaded),
+        lastConversation: !wasAlreadyUploaded
+          ? ConversationService.getConversation(lastConversation!).pipe(
+              catchError((err) => {
+                console.error('The last used conversation was not found:', err);
+                return of(null);
+              }),
+            )
+          : of(lastConversation as Conversation),
       }),
     ),
     switchMap(
@@ -3180,12 +3178,14 @@ const updateLastConversationSettingsEpic: AppEpic = (action$, state$) =>
               temperature: lastConversation.temperature,
             }),
           ),
-          of(
-            ConversationsActions.uploadConversationsByIdsSuccess({
-              setIds: new Set(lastConversation.id),
-              conversations: [lastConversation],
-            }),
-          ),
+          !wasAlreadyUploaded
+            ? of(
+                ConversationsActions.uploadConversationsByIdsSuccess({
+                  setIds: new Set(lastConversation.id),
+                  conversations: [lastConversation],
+                }),
+              )
+            : EMPTY,
         );
       },
     ),

@@ -1,8 +1,17 @@
-import { MutableRefObject, ReactNode, useEffect, useRef } from 'react';
+import {
+  MutableRefObject,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+} from 'react';
 
 import classNames from 'classnames';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import { useChatUploadFiles } from '@/src/hooks/useChatUploadFiles';
+import { useFilePaste } from '@/src/hooks/useFilePaste';
+
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppSelector } from '@/src/store/hooks';
 
 import { ChatInputMessage } from './ChatInputMessage';
@@ -44,8 +53,22 @@ export const ChatInput = Inversify.register(
     const messageIsStreaming = useAppSelector(
       ConversationsSelectors.selectIsConversationsStreaming,
     );
+    const canAttachFiles = useAppSelector(
+      ConversationsSelectors.selectCanAttachFile,
+    );
 
     const inputRef = useRef<HTMLDivElement | null>(null);
+
+    const handleUploadFiles = useChatUploadFiles();
+
+    const handlePaste = useCallback(
+      (files: File[]) => {
+        if (canAttachFiles) handleUploadFiles(files);
+      },
+      [canAttachFiles, handleUploadFiles],
+    );
+
+    useFilePaste(textareaRef, handlePaste);
 
     useEffect(() => {
       if (!inputRef) {

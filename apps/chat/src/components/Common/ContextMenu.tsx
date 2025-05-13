@@ -59,6 +59,7 @@ function ContextMenuItemRenderer({
           'text-secondary',
           'hover:bg-accent-primary-alpha',
         )}
+        onTriggerClick={onClick}
         TriggerCustomRenderer={item}
         onOpenChange={onChildMenuOpenChange}
         useStandardColor={useStandardColor}
@@ -95,6 +96,7 @@ export default function ContextMenu({
   isLoading,
   placement,
   useStandardColor,
+  onTriggerClick,
 }: ContextMenuProps) {
   const displayedMenuItems = useMemo(
     () => menuItems.filter(({ display = true }) => !!display),
@@ -151,6 +153,7 @@ export default function ContextMenu({
             triggerIconHighlight && 'hover:text-accent-primary',
             className,
           )}
+          onClick={onTriggerClick}
         >
           {triggerTooltip ? (
             <Tooltip isTriggerClickable tooltip={triggerTooltip}>

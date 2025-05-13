@@ -1,10 +1,9 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { Conversation } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, MappedReplaceActions } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import {
-  MappedReplaceActions,
   Operation,
   PromptsHistory,
   SupportedExportFormats,
@@ -198,10 +197,6 @@ export const importExportSlice = createSlice({
       }
     },
 
-    closeReplaceDialog: (state) => {
-      state.isShowReplaceDialog = false;
-    },
-
     replaceConversations: (
       state,
       _action: PayloadAction<{
@@ -225,16 +220,7 @@ export const importExportSlice = createSlice({
       state.isShowReplaceDialog = false;
       state.mappedActions = payload.mappedActions;
     },
-
-    setImportedConversations: (
-      state,
-      { payload }: PayloadAction<{ importedConversations: Conversation[] }>,
-    ) => {
-      state.importedConversations = payload.importedConversations;
-    },
   },
 });
-
-export { ImportExportSelectors } from './importExport.selectors';
 
 export const ImportExportActions = importExportSlice.actions;

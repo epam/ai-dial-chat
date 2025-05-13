@@ -28,14 +28,14 @@ import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
-import { FolderType } from '@/src/types/folder';
 import { AppEpic } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
 import { FilesSelectors } from '@/src/store/files/files.selectors';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { PublicationActions } from '../publication/publication.reducers';
-import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { FilesActions } from './files.reducers';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
@@ -125,7 +125,7 @@ const renameFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(FilesActions.renameFolder.type),
     switchMap(({ payload }) => {
-      const oldFolder = getFolderFromId(payload.folderId, FolderType.File);
+      const oldFolder = getFolderFromId(payload.folderId, FeatureType.File);
       const targetFolderId = getGeneratedFolderId({
         ...oldFolder,
         name: payload.newName,
@@ -181,7 +181,7 @@ const renameFolderFailEpic: AppEpic = (action$) =>
             'Renaming folder {{folderName}} failed. Please try again later',
             {
               ns: Translation.Files,
-              folderName: getFolderFromId(payload.oldId, FolderType.File).name,
+              folderName: getFolderFromId(payload.oldId, FeatureType.File).name,
             },
           ),
         ),

@@ -22,7 +22,6 @@ const initialState: UIState = {
   availableThemes: [],
   showChatbar: false,
   showPromptbar: false,
-  showWidgetbar: false,
   showMarketplaceFilterbar: false,
   isUserSettingsOpen: false,
   isProfileOpen: false,
@@ -66,17 +65,6 @@ export const uiSlice = createSlice({
       { payload }: PayloadAction<UIState['showChatbar']>,
     ) => {
       state.showChatbar = payload;
-    },
-    setShowWidgetbar: (
-      state,
-      { payload }: PayloadAction<UIState['showWidgetbar']>,
-    ) => {
-      if (payload) {
-        state.showChatbar = false;
-        state.showMarketplaceFilterbar = false;
-        state.showPromptbar = false;
-      }
-      state.showWidgetbar = payload;
     },
     setShowPromptbar: (
       state,
@@ -135,30 +123,15 @@ export const uiSlice = createSlice({
       state,
       {
         payload,
-      }: PayloadAction<{ openedFolderIds: string[]; featureType: FeatureType }>,
+      }: PayloadAction<{ openedFolderIds: string[]; folderType: FeatureType }>,
     ) => {
       state.openedFoldersIds = {
         ...state.openedFoldersIds,
-        [payload.featureType]: uniq([
+        [payload.folderType]: uniq([
           ...payload.openedFolderIds,
-          ...state.openedFoldersIds[payload.featureType],
+          ...state.openedFoldersIds[payload.folderType],
         ]),
       };
-    },
-    toggleFolder: (
-      state,
-      { payload }: PayloadAction<{ id: string; featureType: FeatureType }>,
-    ) => {
-      const featureType = payload.featureType;
-      const openedFoldersIds = state.openedFoldersIds[featureType];
-      const isOpened = openedFoldersIds.includes(payload.id);
-      if (isOpened) {
-        state.openedFoldersIds[featureType] = openedFoldersIds.filter(
-          (id) => id !== payload.id,
-        );
-      } else {
-        state.openedFoldersIds[featureType].push(payload.id);
-      }
     },
     openFolder: (
       state,
@@ -217,9 +190,13 @@ export const uiSlice = createSlice({
     setPreviousRoute: (state, { payload }: PayloadAction<string>) => {
       state.previousRoute = payload;
     },
+    setScrollToEntityId: (
+      state,
+      { payload }: PayloadAction<string | undefined>,
+    ) => {
+      state.scrollToEntityId = payload;
+    },
   },
 });
-
-export { UISelectors } from './ui.selectors';
 
 export const UIActions = uiSlice.actions;

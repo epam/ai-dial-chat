@@ -57,8 +57,6 @@ export const applicationTypesSchemasSlice = createSlice({
   },
 });
 
-export { ApplicationTypesSchemasSelectors } from './applicationTypeSchemas.selectors';
-
 export const ApplicationTypesSchemasActions =
   applicationTypesSchemasSlice.actions;
 

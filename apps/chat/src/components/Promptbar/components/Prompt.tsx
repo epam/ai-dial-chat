@@ -15,6 +15,7 @@ import classNames from 'classnames';
 import { useContextMenuTrigger } from '@/src/hooks/useContextMenuTrigger';
 import { usePromptActions } from '@/src/hooks/usePromptActions';
 import { useScreenState } from '@/src/hooks/useScreenState';
+import { useScrollToEntity } from '@/src/hooks/useScrollToEntity';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -35,17 +36,13 @@ import {
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import {
-  PromptsActions,
-  PromptsSelectors,
-} from '@/src/store/prompts/prompts.reducers';
-import {
-  PublicationActions,
-  PublicationSelectors,
-} from '@/src/store/publication/publication.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
+import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
+import { PublicationActions } from '@/src/store/publication/publication.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 
 import { stopBubbling } from '@/src/constants/chat';
 
@@ -136,6 +133,11 @@ export const PromptComponent = ({
     setIsContextMenu(true);
   }, []);
 
+  useScrollToEntity({
+    entityId: prompt.id,
+    elementRef: promptRef,
+  });
+
   useContextMenuTrigger(handleContextMenuOpen, promptRef);
 
   const screenState = useScreenState();
@@ -153,7 +155,7 @@ export const PromptComponent = ({
     () => chosenPromptIds.includes(prompt.id),
     [chosenPromptIds, prompt.id],
   );
-  const isModelsInstalled = selectedConversations.every((conv) =>
+  const areModelsInstalled = selectedConversations.every((conv) =>
     installedModelIds.has(conv.model.id),
   );
 
@@ -244,7 +246,7 @@ export const PromptComponent = ({
   );
 
   const disableUsePrompt =
-    isConversationBlocksInput || !isModelsInstalled || !!selectedPublication;
+    isConversationBlocksInput || !areModelsInstalled || !!selectedPublication;
 
   const handleCloseDialogs = useCallback(() => {
     setIsDeleting(false);

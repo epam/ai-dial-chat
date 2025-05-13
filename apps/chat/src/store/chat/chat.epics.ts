@@ -15,15 +15,12 @@ import { AppEpic } from '@/src/types/store';
 
 import { ChatActions } from '@/src/store/chat/chat.reducer';
 import { ChatSelectors } from '@/src/store/chat/chat.selectors';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { FilesActions } from '@/src/store/files/files.reducers';
 import { FilesSelectors } from '@/src/store/files/files.selectors';
+import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
-
-import { PromptsActions } from '../prompts/prompts.reducers';
 
 import { Message, Role } from '@epam/ai-dial-shared';
 
