@@ -12,13 +12,13 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   isApplicationDeployed,
   isApplicationDeploymentInProgress,
 } from '@/src/utils/app/application';
-import { isTabletScreenOrMobile } from '@/src/utils/app/mobile';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import {
@@ -31,6 +31,7 @@ import {
   CustomApplicationModel,
   PreviewMode,
 } from '@/src/types/applications';
+import { ScreenState } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { ModelsActions } from '@/src/store/actions';
@@ -82,7 +83,7 @@ export const ApplicationSettings: React.FC<Props> = ({
 
   const dispatch = useAppDispatch();
 
-  const isTabletOrMobile = isTabletScreenOrMobile();
+  const screenState = useScreenState();
 
   const pythonVersions = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
@@ -104,11 +105,19 @@ export const ApplicationSettings: React.FC<Props> = ({
   const theme = useAppSelector(UISelectors.selectThemeState);
 
   const [previewMode, setPreviewMode] = useState<PreviewMode>(() => {
-    if (isTabletOrMobile) return PreviewMode.closed;
+    if (screenState === ScreenState.MD) return PreviewMode.closed;
     return schema?.[ApplicationTypeSchemaProperties.applicationTypeViewerUrl]
       ? PreviewMode.closed
       : PreviewMode.half;
   });
+
+  useEffect(() => {
+    if (screenState === ScreenState.MD) {
+      setPreviewMode(PreviewMode.closed);
+    } else {
+      setPreviewMode(PreviewMode.half);
+    }
+  }, [screenState]);
 
   const isAppPublic = isEntityIdPublic(applicationData);
   const modelFromState = applicationData
@@ -346,9 +355,9 @@ export const ApplicationSettings: React.FC<Props> = ({
                 <span>{t('Redeploy')}</span>
               </button>
             )}
-            {!isTabletOrMobile && previewMode === PreviewMode.half && (
+            {previewMode === PreviewMode.half && (
               <button
-                className="text-secondary hover:text-accent-primary"
+                className="hidden text-secondary hover:text-accent-primary xl:flex"
                 onClick={() => setPreviewMode(PreviewMode.full)}
               >
                 <Tooltip tooltip={t('Expand preview')}>
@@ -356,9 +365,9 @@ export const ApplicationSettings: React.FC<Props> = ({
                 </Tooltip>
               </button>
             )}
-            {!isTabletOrMobile && previewMode === PreviewMode.full && (
+            {previewMode === PreviewMode.full && (
               <button
-                className="text-secondary hover:text-accent-primary"
+                className="hidden text-secondary hover:text-accent-primary xl:flex"
                 onClick={() => setPreviewMode(PreviewMode.half)}
               >
                 <Tooltip tooltip={t('Split view')}>
@@ -392,7 +401,8 @@ export const ApplicationSettings: React.FC<Props> = ({
         <div
           className="flex h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-4 transition-all duration-300 ease-in-out hover:cursor-pointer xl:pt-5"
           onClick={() => {
-            if (!isTabletOrMobile) setPreviewMode(PreviewMode.half);
+            if (screenState !== ScreenState.MD)
+              setPreviewMode(PreviewMode.half);
           }}
         >
           <button
@@ -407,16 +417,14 @@ export const ApplicationSettings: React.FC<Props> = ({
             </Tooltip>
           </button>
 
-          {!isTabletOrMobile && (
-            <button
-              className="text-secondary hover:text-accent-primary"
-              onClick={() => setPreviewMode(PreviewMode.half)}
-            >
-              <Tooltip tooltip={t('Split view')}>
-                <IconLayoutSidebarLeftCollapse size={24} />
-              </Tooltip>
-            </button>
-          )}
+          <button
+            className="hidden text-secondary hover:text-accent-primary xl:flex"
+            onClick={() => setPreviewMode(PreviewMode.half)}
+          >
+            <Tooltip tooltip={t('Split view')}>
+              <IconLayoutSidebarLeftCollapse size={24} />
+            </Tooltip>
+          </button>
 
           <span
             className="select-none text-primary"

@@ -4,7 +4,6 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { fakeCallback } from '@/src/utils/app/common';
-import { isTabletScreenOrMobile } from '@/src/utils/app/mobile';
 
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -32,16 +31,13 @@ export const GeneralInfoPreview = ({
   }, []);
 
   const { t } = useTranslation(Translation.Chat);
-  const isTabletOrMobile = isTabletScreenOrMobile();
 
   return (
     <div className="flex h-full flex-col px-5 py-4 xl:p-6">
       <div className="flex max-w-full items-center justify-between xl:justify-end">
-        {isTabletOrMobile && (
-          <span className="mr-2 flex min-w-0 shrink grow select-none gap-2 text-primary">
-            {t('Preview')}
-          </span>
-        )}
+        <span className="mr-2 hidden min-w-0 shrink grow select-none gap-2 text-primary max-xl:flex">
+          {t('Preview')}
+        </span>
         <div className="w-min border-r border-secondary pr-3 xl:border-none xl:pr-0">
           <ToggleSwitchLabeled
             isOn={isDetailed}
@@ -49,16 +45,14 @@ export const GeneralInfoPreview = ({
             labelText="Detailed"
           />
         </div>
-        {isTabletOrMobile && (
-          <button
-            className="pl-3 text-secondary hover:text-accent-primary"
-            onClick={onClosePreview}
-          >
-            <Tooltip tooltip={t('Hide preview')}>
-              <IconArrowsMinimize size={24} />
-            </Tooltip>
-          </button>
-        )}
+        <button
+          className="hidden pl-3 text-secondary hover:text-accent-primary max-xl:flex"
+          onClick={onClosePreview}
+        >
+          <Tooltip tooltip={t('Hide preview')}>
+            <IconArrowsMinimize size={24} />
+          </Tooltip>
+        </button>
       </div>
       <div className="flex flex-1 items-center justify-center">
         <div

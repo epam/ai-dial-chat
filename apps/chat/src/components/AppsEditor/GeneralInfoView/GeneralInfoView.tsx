@@ -1,14 +1,14 @@
 import { IconArrowsMaximize } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import classNames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getApplicationEntityFields } from '@/src/utils/app/application';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
-import { isTabletScreenOrMobile } from '@/src/utils/app/mobile';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
@@ -16,6 +16,7 @@ import {
   CustomApplicationModel,
   PreviewMode,
 } from '@/src/types/applications';
+import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
@@ -66,14 +67,25 @@ export const GeneralInfoView: React.FC<Props> = ({
     ),
   });
 
-  const isTabletOrMobile = isTabletScreenOrMobile();
   const { t } = useTranslation(Translation.Chat);
 
   const formData = methods.watch();
 
+  const screenState = useScreenState();
+
   const [previewMode, setPreviewMode] = useState<PreviewMode>(() => {
-    return isTabletOrMobile ? PreviewMode.closed : PreviewMode.half;
+    return screenState === ScreenState.MD
+      ? PreviewMode.closed
+      : PreviewMode.half;
   });
+
+  useEffect(() => {
+    if (screenState === ScreenState.MD) {
+      setPreviewMode(PreviewMode.closed);
+    } else {
+      setPreviewMode(PreviewMode.half);
+    }
+  }, [screenState]);
 
   return (
     <div className="flex w-full overflow-hidden">
@@ -116,8 +128,8 @@ export const GeneralInfoView: React.FC<Props> = ({
         />
       </div>
 
-      {isTabletOrMobile && previewMode === PreviewMode.closed && (
-        <div className="flex h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-4 hover:cursor-pointer">
+      {previewMode === PreviewMode.closed && (
+        <div className="hidden h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-4 hover:cursor-pointer max-xl:flex">
           <button
             className="text-secondary hover:text-accent-primary"
             onClick={(e) => {

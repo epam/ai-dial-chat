@@ -14,7 +14,6 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { isTabletScreenOrMobile } from '@/src/utils/app/mobile';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { Translation } from '@/src/types/translation';
@@ -65,7 +64,6 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
   } = useRouter();
   const { t } = useTranslation(Translation.Chat);
 
-  const isTabletOrMobile = isTabletScreenOrMobile();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const isUserSettingsOpen = useAppSelector(
@@ -173,12 +171,6 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
               {menuOpen ? <IconX size={24} /> : <IconMenu2 size={24} />}
             </button>
           </div>
-          {!isTabletOrMobile && (
-            <>
-              <Logo />
-              <div className="h-full border-l border-secondary"></div>
-            </>
-          )}
           <span
             className="hidden items-center pl-1 text-primary md:flex xl:pl-0"
             data-qa="action-application-type-title"
@@ -248,6 +240,10 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
           </div>
         </div>
 
+        <div className="hidden h-full xl:flex">
+          <Logo />
+        </div>
+
         <div className="flex h-full items-center space-x-2 pr-5 xl:pr-0">
           {isEditApplication &&
           !hasCustomEditor &&
@@ -270,11 +266,9 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
               <span>{t('Exit')}</span>
             </Link>
           )}
-          {!isTabletOrMobile && (
-            <div className="h-full max-md:pr-2 md:border-l md:border-secondary md:pl-2">
-              <User />
-            </div>
-          )}
+          <div className="h-full max-xl:hidden max-md:pr-2 md:border-l md:border-secondary md:pl-2">
+            <User />
+          </div>
         </div>
       </div>
 
