@@ -5,6 +5,7 @@ import { catchError, filter, switchMap } from 'rxjs/operators';
 
 import { combineEpics, ofType } from 'redux-observable';
 
+import { cleanSchemaId } from '@/src/utils/app/application-type-schema';
 import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application-type-schemas-service';
 
 import { AppEpic } from '@/src/types/store';
@@ -51,9 +52,7 @@ const fetchDetailedApplicationTypeSchemaEpic: AppEpic = (action$, state$) =>
             state$.value,
           );
           const schema = schemas.find(
-            (schema) =>
-              schema.id.replace(/^https?:\/\//, '') ===
-              decodeURIComponent(slug),
+            (schema) => cleanSchemaId(schema.id) === decodeURIComponent(slug),
           );
           id = schema?.id;
         }

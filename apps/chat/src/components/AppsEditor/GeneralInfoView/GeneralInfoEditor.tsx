@@ -8,7 +8,6 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip, topicToOption } from '@/src/utils/app/application';
-import { encode } from '@/src/utils/app/application-type-schema';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { getRouteForSlug } from '@/src/utils/app/route';
 
@@ -148,7 +147,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
               },
               oldApplication: oldApplication,
               redirectUrl: !isAutoSave
-                ? getRouteForSlug(Routes.AppsEditorSettings, encode(slugStr))
+                ? getRouteForSlug(Routes.AppsEditorSettings, slugStr)
                 : undefined,
               schema: schema ?? undefined,
             }),
