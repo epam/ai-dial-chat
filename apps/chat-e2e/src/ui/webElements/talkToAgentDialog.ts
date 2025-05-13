@@ -45,6 +45,12 @@ export class TalkToAgentDialog extends BaseElement {
     return this.versionDropdownMenu;
   }
 
+  public getTalkToAgent(entity: DialAIEntityModel | string) {
+    const agents = this.getAgents();
+    const uniqueAgent = agents.getAgent(entity).getNthElement(1);
+    return this.createElementFromLocator(uniqueAgent);
+  }
+
   public async selectAgent(
     entity: DialAIEntityModel,
     marketplacePage: MarketplacePage | OverlayMarketplacePage,
@@ -81,7 +87,7 @@ export class TalkToAgentDialog extends BaseElement {
   private async useRecentAgent(entity: DialAIEntityModel): Promise<boolean> {
     let isAgentSelected = false;
     const agents = this.getAgents();
-    const agentLocator = agents.getAgent(entity);
+    const agentLocator = this.getTalkToAgent(entity);
     //select agent if it is visible
     if (await agentLocator.isVisible()) {
       await agentLocator.click();
@@ -133,7 +139,7 @@ export class TalkToAgentDialog extends BaseElement {
   }
 
   public async selectReplayAsIs() {
-    await this.getAgents().getAgent(ExpectedConstants.replayAsIsLabel).click();
+    await this.getTalkToAgent(ExpectedConstants.replayAsIsLabel).click();
   }
 
   //select agent available on 'Talk to' modal
@@ -141,7 +147,7 @@ export class TalkToAgentDialog extends BaseElement {
     const resp = this.page.waitForResponse((r) =>
       r.url().includes(API.moveHost),
     );
-    await this.getAgents().getAgent(agent).click();
+    await this.getTalkToAgent(agent).click();
     await resp;
   }
 
