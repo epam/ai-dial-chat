@@ -4,6 +4,7 @@ import {
   IconFolderShare,
   IconInfoCircle,
   IconPencilMinus,
+  IconProps,
   IconTrashX,
   IconUserShare,
   IconWorldShare,
@@ -105,7 +106,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
         name: 'Unpublish',
         display: isPublic && isPublishingEnabled,
         dataQa: 'publish-prompt',
-        Icon: (props) => (
+        Icon: (props: IconProps) => (
           <UnpublishIcon {...props} style={{ strokeWidth: 1.1 }} />
         ),
         onClick: handleUnpublish,
