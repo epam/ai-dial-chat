@@ -285,6 +285,7 @@ dialSharedWithMeTest(
     setTestIds,
     baseAssertion,
   }) => {
+    dialSharedWithMeTest.slow();
     setTestIds('EPMRTC-5237', 'EPMRTC-5233', 'EPMRTC-5276');
     const sharedAppName = GeneratorUtil.randomApplicationName();
     const publishedAppName = GeneratorUtil.randomApplicationName();

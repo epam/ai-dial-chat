@@ -4,7 +4,8 @@ import dialOverlayTest from '@/src/core/dialOverlayFixtures';
 import { OverlaySandboxUrls } from '@/src/testData';
 
 dialOverlayTest(
-  '[Overlay] DIAL Marketplace feature is enabled - Feature.Marketplace.\n' +
+  '[Overlay] Navigation panel. There is no text-names for buttons. The hight of the panel is 36px.\n' +
+    '[Overlay] DIAL Marketplace feature is enabled - Feature.Marketplace.\n' +
     '[Overlay] Add app button is not available in Overlay (Mobile view).\n' +
     '[Overlay] Add app button on My workspace is unavailable even though all the features for apps creation is on',
   async ({
@@ -22,7 +23,7 @@ dialOverlayTest(
     overlayNavigationPanel,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-4447', 'EPMRTC-4712', 'EPMRTC-5782');
+    setTestIds('EPMRTC-6031', 'EPMRTC-4447', 'EPMRTC-4712', 'EPMRTC-5782');
 
     let conversation: Conversation;
 
