@@ -3,9 +3,12 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
+import { useChatUploadFiles } from '@/src/hooks/useChatUploadFiles';
+import { useFilePaste } from '@/src/hooks/useFilePaste';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
+import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
 import {
   getDialFilesFromAttachments,
   getDialFoldersFromAttachments,
@@ -87,6 +90,7 @@ export const UserMessage = memo(function UserMessage({
   const dispatch = useAppDispatch();
 
   const anchorRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
@@ -112,6 +116,7 @@ export const UserMessage = memo(function UserMessage({
   const isMessageTemplatesEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.MessageTemplates),
   );
+
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
 
   const isMobileOrOverlay = isSmallScreen() || isOverlay;
@@ -420,6 +425,25 @@ export const UserMessage = memo(function UserMessage({
     }
   }, [shouldScroll]);
 
+  const uploadPastedFiles = useChatUploadFiles(
+    getQuickAttachmentsSavingPath(),
+    newEditableAttachments.length,
+    true,
+  );
+
+  const handleUploadPastedFiles = useCallback(
+    (files: File[]) => {
+      uploadPastedFiles(files)?.then((newFiles) => {
+        setNewEditableAttachmentsIds((ids) =>
+          uniq(ids.concat(newFiles.map(({ id }) => id))),
+        );
+      });
+    },
+    [uploadPastedFiles],
+  );
+
+  useFilePaste(textareaRef, handleUploadPastedFiles);
+
   if (isEditing)
     return (
       <div className="flex w-full flex-col gap-3">
@@ -442,6 +466,7 @@ export const UserMessage = memo(function UserMessage({
             )}
           >
             <AdjustedTextarea
+              ref={textareaRef}
               className="w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none"
               value={messageContent}
               onChange={handleInputChange}
