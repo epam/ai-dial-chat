@@ -49,6 +49,8 @@ export const filesSlice = createSlice({
         relativePath?: string;
         name: string;
         bucket?: string;
+
+        showSuccessMessage?: boolean;
       }>,
     ) => {
       state.files = state.files.filter((file) => file.id !== payload.id);
@@ -97,6 +99,7 @@ export const filesSlice = createSlice({
         payload,
       }: PayloadAction<{
         apiResult: DialFile;
+        showSuccessMessage?: boolean;
       }>,
     ) => {
       state.files = state.files.map((file) => {
