@@ -46,9 +46,7 @@ export class TalkToAgentDialog extends BaseElement {
   }
 
   public getTalkToAgent(entity: DialAIEntityModel | string) {
-    const agents = this.getAgents();
-    const uniqueAgent = agents.getAgent(entity).getNthElement(1);
-    return this.createElementFromLocator(uniqueAgent);
+    return this.getAgents().getAgent(entity);
   }
 
   public async selectAgent(
