@@ -1,4 +1,4 @@
-import { TablerIconsProps } from '@tabler/icons-react';
+import { Icon } from '@tabler/icons-react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -10,7 +10,7 @@ interface Props {
   name: string;
   dataQa: string;
   disabled?: boolean;
-  Icon?: (props: TablerIconsProps) => JSX.Element;
+  Icon?: Icon;
   onClick?: (e: React.MouseEvent) => void;
 }
 
