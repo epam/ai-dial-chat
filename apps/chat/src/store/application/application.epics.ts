@@ -685,7 +685,7 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
 const exitEditModeEpic: AppEpic = (action$, _state$, { router }) =>
   action$.pipe(
     ofType(ApplicationActions.exitEditor.type),
-    tap(({ payload }) => {
+    switchMap(({ payload }) => {
       if (payload.redirectUrl) {
         router.push({
           pathname: payload.redirectUrl,
@@ -696,8 +696,9 @@ const exitEditModeEpic: AppEpic = (action$, _state$, { router }) =>
           query: { tab: MarketplaceTabs.MY_WORKSPACE },
         });
       }
+
+      return of(ApplicationActions.setExitAfterSave(false));
     }),
-    ignoreElements(),
   );
 
 const setSelectedWidgetEpic: AppEpic = (action$) =>
