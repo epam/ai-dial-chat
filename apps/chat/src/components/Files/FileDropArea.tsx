@@ -1,4 +1,4 @@
-import { IconFileXFilled, IconFileTextFilled } from '@tabler/icons-react';
+import { IconFileTextFilled, IconFileXFilled } from '@tabler/icons-react';
 import { DragEvent, ReactNode, useCallback, useState } from 'react';
 
 import classNames from 'classnames';
