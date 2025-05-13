@@ -18,7 +18,6 @@ import {
   isApplicationDeployed,
   isApplicationDeploymentInProgress,
 } from '@/src/utils/app/application';
-import { decode } from '@/src/utils/app/application-type-schema';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import {
@@ -251,7 +250,7 @@ export const ApplicationSettings: React.FC<Props> = ({
       const pathname = new URL(url, window.location.origin).pathname;
       const targetRoute = Routes.AppsEditorGeneralInfo.replace('[slug]', type);
 
-      if (decode(pathname ?? '') === targetRoute) saveForm();
+      if (decodeURIComponent(pathname ?? '') === targetRoute) saveForm();
     };
 
     router.events.on('routeChangeStart', redirectHandler);
