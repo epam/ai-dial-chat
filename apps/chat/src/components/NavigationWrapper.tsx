@@ -1,9 +1,10 @@
 import {
+  Icon,
   IconBrowser,
   IconHomeRibbon,
   IconLayoutGrid,
   IconMessage2,
-  TablerIconsProps,
+  IconProps,
 } from '@tabler/icons-react';
 import { JSX, ReactNode, useCallback, useMemo } from 'react';
 
@@ -42,7 +43,7 @@ import { Feature } from '@epam/ai-dial-shared';
 
 interface NavigationButtonProps {
   onClick: () => void;
-  Icon?: (props: TablerIconsProps) => JSX.Element;
+  Icon?: Icon;
   ModelIcon?: () => JSX.Element;
   selected?: boolean;
   tooltip?: ReactNode;
@@ -221,12 +222,10 @@ const UsedWidgets = () => {
   const WidgetBarIcon = useMemo(() => {
     if (areModelsLoading || !isApplicationsInitialised)
       // eslint-disable-next-line react/display-name
-      return ({ height }: TablerIconsProps) => (
-        <Loader size={height as number} />
-      );
+      return ({ height }: IconProps) => <Loader size={height as number} />;
 
     return selectedWidget
-      ? ({ height }: TablerIconsProps) => (
+      ? ({ height }: IconProps) => (
           <ModelIcon
             entity={selectedWidget}
             entityId={selectedWidget.reference}

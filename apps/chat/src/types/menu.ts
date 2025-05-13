@@ -1,5 +1,5 @@
 import { Placement } from '@floating-ui/react';
-import { TablerIconsProps } from '@tabler/icons-react';
+import { Icon } from '@tabler/icons-react';
 import { FC, MouseEventHandler, ReactNode } from 'react';
 
 import { FeatureType } from './common';
@@ -17,7 +17,7 @@ export interface DisplayMenuItemProps {
   name: string;
   additionalNameNode?: ReactNode;
   disabled?: boolean;
-  Icon?: (props: TablerIconsProps) => JSX.Element;
+  Icon?: Icon;
   iconClassName?: string;
   dataQa: string;
   onClick?: onClickMenuItemHandler;
@@ -45,7 +45,7 @@ export interface MenuProps {
 }
 
 export interface ContextMenuProps extends MenuProps {
-  TriggerIcon?: (props: TablerIconsProps) => JSX.Element;
+  TriggerIcon?: Icon;
   triggerIconSize?: number;
   triggerIconHighlight?: boolean;
   triggerIconClassName?: string;
