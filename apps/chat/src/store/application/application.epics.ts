@@ -780,16 +780,16 @@ const duplicateAgentEpic: AppEpic = (action$, state$) =>
                 'custom applications',
                 newAgent.reference,
               );
-              const newDocsPath = constructPath(basePath, 'documents');
               const newSourcePath = constructPath(basePath, 'sources');
+              const newDocsPath = constructPath(basePath, 'documents');
 
               const duplicateAndUpdateSourceFolderActions$ =
-                duplicateAndUpdateSourceFolderActions(newAgent, newDocsPath);
+                duplicateAndUpdateSourceFolderActions(newAgent, newSourcePath);
               const duplicateAndUpdateDocumentsActions$ =
                 duplicateAndUpdateDocumentsActions(
                   newAgent,
                   schema,
-                  newSourcePath,
+                  newDocsPath,
                 );
 
               return concat(
