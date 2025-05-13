@@ -1,10 +1,12 @@
+import { useEffect, useRef } from 'react';
+
 import classNames from 'classnames';
 
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
-import { useAppSelector } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { FormSchemaButtonOption, MessageFormValue } from '@epam/ai-dial-shared';
-import { useEffect, useRef } from 'react';
 
 interface Props {
   option: FormSchemaButtonOption;
@@ -27,17 +29,17 @@ export const SchemaButton: React.FC<Props> = ({
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
 
-  const selectedAction = useAppSelector(
-    ConversationsSelectors.selectAction,
-  );
+  const selectedAction = useAppSelector(ConversationsSelectors.selectAction);
 
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     if (option.title === selectedAction) {
       buttonRef.current?.click();
+      dispatch(ConversationsActions.selectAction(null));
     }
-  }, [option.title, selectedAction]);
+  }, [option.title, selectedAction, dispatch]);
 
   return (
     <button

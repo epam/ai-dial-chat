@@ -873,12 +873,9 @@ export const conversationsSlice = createSlice({
       state,
       _action: PayloadAction<{ conversationId: string }>,
     ) => state,
-    selectAction: (
-      state,
-      { payload }: PayloadAction<string | null>,
-    ) => {
-      state.preselectedAction = payload
-    }
+    selectAction: (state, { payload }: PayloadAction<string | null>) => {
+      state.preselectedAction = payload;
+    },
   },
 });
 

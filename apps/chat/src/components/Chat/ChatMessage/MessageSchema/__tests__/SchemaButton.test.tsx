@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { render, screen } from '@testing-library/react';
+
 import { SchemaButton } from '../SchemaButton';
 
 const selectedAction = 'Test action';
@@ -53,7 +54,6 @@ describe('SchemaButton', () => {
     expect(onButtonClick).toBeCalledTimes(0);
   });
 
-
   describe('selected action is the same as button title', () => {
     const option = {
       title: selectedAction,
@@ -82,4 +82,4 @@ describe('SchemaButton', () => {
       expect(onButtonClick).toBeCalledTimes(0);
     });
   });
-})
+});

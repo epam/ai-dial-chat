@@ -746,12 +746,8 @@ const selectIsSelectedConversationsWithSchema = createSelector(
   (conversations) => conversations.some(isConversationWithFormSchema),
 );
 
-const selectAction = createSelector(
-  [rootSelector],
-  (state: ConversationsState) => {
-    return state.preselectedAction;
-  },
-);
+export const selectAction = (state: RootState) =>
+  rootSelector(state).preselectedAction;
 
 export const ConversationsSelectors = {
   selectConversations,

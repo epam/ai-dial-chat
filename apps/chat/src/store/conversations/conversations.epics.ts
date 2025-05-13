@@ -195,9 +195,8 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
       const isIsolatedView = SettingsSelectors.selectIsIsolatedView(
         state$.value,
       );
-      const preselectedConversationId = SettingsSelectors.selectPreselectedConversationId(
-        state$.value,
-      );
+      const preselectedConversationId =
+        SettingsSelectors.selectPreselectedConversationId(state$.value);
 
       if (preselectedConversationId) {
         const preselectedAction = SettingsSelectors.selectPreselectedAction(
@@ -208,8 +207,8 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
           ConversationsActions.selectConversations({
             conversationIds: [preselectedConversationId as string],
           }),
-          ConversationsActions.selectAction(preselectedAction || null)
-        )
+          ConversationsActions.selectAction(preselectedAction || null),
+        );
       } else if (isIsolatedView) {
         const isolatedModelId = SettingsSelectors.selectIsolatedModelId(
           state$.value,

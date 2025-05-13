@@ -11,7 +11,11 @@ import { Translation } from '@/src/types/translation';
 
 import { SettingsState } from '@/src/store/settings/settings.types';
 
-import { ISOLATED_MODEL_QUERY_PARAM, CONVERSATION_QUERY_PARAM, ACTION_QUERY_PARAM } from '@/src/constants/chat';
+import {
+  ACTION_QUERY_PARAM,
+  CONVERSATION_QUERY_PARAM,
+  ISOLATED_MODEL_QUERY_PARAM,
+} from '@/src/constants/chat';
 import {
   FALLBACK_ASSISTANT_SUBMODEL_ID,
   FALLBACK_MODEL_ID,
@@ -165,11 +169,12 @@ export const getCommonPageProps: GetServerSideProps = async ({
   }
 
   if (isPreselectedConversation) {
-    settings.preselectedConversationId = params?.get(CONVERSATION_QUERY_PARAM) || '';
+    settings.preselectedConversationId =
+      params?.get(CONVERSATION_QUERY_PARAM) || '';
   }
 
   if (isPreselectedAction) {
-    settings.preselectedAction = params?.get(ACTION_QUERY_PARAM) || ''
+    settings.preselectedAction = params?.get(ACTION_QUERY_PARAM) || '';
   }
 
   return {
