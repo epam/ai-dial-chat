@@ -65,10 +65,7 @@ export class MarketplaceAgents extends BaseElement {
       `${MarketplaceAgentSelectors.version}:text-is('${ExpectedConstants.versionPrefix}${version}')`,
     ).getElementLocator();
 
-  public getAgent = (
-    entity: DialAIEntityModel | string,
-    options: { isUnique: boolean } = { isUnique: true },
-  ) => {
+  public getAgent = (entity: DialAIEntityModel | string) => {
     let agent;
     if (typeof entity === 'string') {
       agent = this.rootLocator.filter({ has: this.agentName(entity) });
@@ -91,9 +88,7 @@ export class MarketplaceAgents extends BaseElement {
         });
       }
     }
-    return this.createElementFromLocator(
-      options.isUnique ? agent.first() : agent,
-    );
+    return this.createElementFromLocator(agent);
   };
 
   public getAgentDescription(entity: DialAIEntityModel | string | BaseElement) {

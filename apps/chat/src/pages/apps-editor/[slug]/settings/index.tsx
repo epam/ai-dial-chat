@@ -6,7 +6,6 @@ import { useRouter } from 'next/router';
 import { useAppEditorValidation } from '@/src/hooks/useAppEditorValidation';
 
 import { isApplicationType } from '@/src/utils/app/application';
-import { decode } from '@/src/utils/app/application-type-schema';
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
 import { ApplicationTypeSchemaProperties } from '@/src/types/application-type-schema';
@@ -34,7 +33,7 @@ export default function AppsSettings() {
     () =>
       isApplicationType(slug.toString())
         ? slug.toString()
-        : decode(slug?.toString() ?? ''),
+        : decodeURIComponent(slug?.toString() ?? ''),
     [slug],
   );
 
@@ -45,7 +44,9 @@ export default function AppsSettings() {
     ModelsSelectors.selectAreModelsLoading,
   );
 
-  const isSchemaApplicationType = !isApplicationType(decode(slug.toString()));
+  const isSchemaApplicationType = !isApplicationType(
+    decodeURIComponent(slug.toString()),
+  );
 
   const applicationData = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
@@ -87,7 +88,7 @@ export default function AppsSettings() {
                 ? (schema?.[
                     ApplicationTypeSchemaProperties.applicationTypeDisplayName
                   ] ?? '')
-                : decode(slug.toString())
+                : decodeURIComponent(slug.toString())
             }
             hasCustomEditor={
               !!schema?.[

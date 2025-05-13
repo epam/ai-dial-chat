@@ -107,9 +107,7 @@ export class MarketplaceAgentsSection extends BaseElement {
           typeof agent === 'string' ? agent : agent.name,
         )
       ) {
-        const agentElements = visibleAgents.getAgent(agent, {
-          isUnique: false,
-        });
+        const agentElements = visibleAgents.getAgent(agent);
         const agentsCount = await agentElements.getElementsCount();
         //if need to find an agent from a specific section
         if (options?.isWorkspaceAgent !== undefined) {
@@ -177,9 +175,7 @@ export class MarketplaceAgentsSection extends BaseElement {
       for (let i = 0; i < visibleAgentsCount; i++) {
         const agentName = visibleAgentNames[i];
         //agent's name may be duplicated on "My Workspace" tab in the filtered and suggested results
-        const visibleAgent = visibleAgents.getAgent(agentName, {
-          isUnique: false,
-        });
+        const visibleAgent = visibleAgents.getAgent(agentName);
         const agentsCount = await visibleAgent.getElementsCount();
         //iterate through agents with duplicated name
         for (let j = 1; j <= agentsCount; j++) {

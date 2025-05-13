@@ -8,7 +8,6 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip, topicToOption } from '@/src/utils/app/application';
-import { encode } from '@/src/utils/app/application-type-schema';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { getRouteForSlug } from '@/src/utils/app/route';
 
@@ -148,7 +147,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
               },
               oldApplication: oldApplication,
               redirectUrl: !isAutoSave
-                ? getRouteForSlug(Routes.AppsEditorSettings, encode(slugStr))
+                ? getRouteForSlug(Routes.AppsEditorSettings, slugStr)
                 : undefined,
               schema: schema ?? undefined,
             }),
@@ -219,7 +218,12 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     <div className="size-full overflow-hidden bg-layer-2">
       <form
         onSubmit={submitWrapper((data) => handleSubmit(data, false))}
-        onMouseLeave={submitWrapper((data) => handleSubmit(data, true))}
+        onMouseLeave={() => {
+          if (!isAppPublic) {
+            const submit = submitWrapper((data) => handleSubmit(data, true));
+            submit();
+          }
+        }}
         className="flex size-full flex-col"
         data-qa="app-general-form"
       >
