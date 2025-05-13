@@ -11,7 +11,7 @@ import {
 } from '@/src/testData';
 import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
-import {BaseElement, MarketplaceAgentProperties} from '@/src/ui/webElements';
+import { BaseElement, MarketplaceAgentProperties } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil, SortingUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
