@@ -1,10 +1,19 @@
+import { EntityType } from '@/chat/types/common';
 import { Publication } from '@/chat/types/publication';
 import config from '@/config/chat.playwright.config';
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedConstants, ExpectedMessages } from '@/src/testData';
-import { Attributes } from '@/src/ui/domData';
+import {
+  ExpectedConstants,
+  ExpectedMessages,
+  MarketplaceExpectedMessages,
+  MarketplaceFilterTypes,
+  SourcesFilterOptions,
+} from '@/src/testData';
+import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
-import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { MarketplaceAgentProperties } from '@/src/ui/webElements';
+import { GeneratorUtil, ModelsUtil, SortingUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
@@ -270,6 +279,333 @@ dialTest(
           marketplaceHeader.searchInput,
           Attributes.value,
           searchTerm,
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Search by version. My custom application, published applications. Sorting. Suggested options.',
+  async ({
+    marketplacePage,
+    marketplaceHeader,
+    marketplaceAgentsSection,
+    marketplaceAgents,
+    agentDetailsModal,
+    marketplace,
+    localStorageManager,
+    setTestIds,
+    baseAssertion,
+    customApplicationBuilder,
+    toast,
+    applicationApiHelper,
+    publicationApiHelper,
+    adminPublicationApiHelper,
+    publishRequestBuilder,
+    agentDetailsModalAssertion,
+    agentVersionsDropdownMenuAssertion,
+  }) => {
+    setTestIds('EPMRTC-4510');
+    let appCommonVersion: string;
+    let secondAppFirstVersion: string;
+    let secondAppThirdVersion: string;
+    let firstAppName: string;
+    let secondAppName: string;
+    let expectedAgents: MarketplaceAgentProperties[];
+
+    await dialTest.step(
+      'Prepare one application with v2, another app with v1, v2, v3 available in the "Marketplace". Second app is added to the "My Workspace"',
+      async () => {
+        const recentModelIds = await localStorageManager.getRecentModelsIds();
+        const recentNames = ModelsUtil.getRecentAgentsNames(recentModelIds);
+        const recentVersions =
+          ModelsUtil.getRecentAgentsVersions(recentModelIds);
+
+        appCommonVersion = GeneratorUtil.randomApplicationVersion([
+          ...recentNames,
+          ...recentVersions,
+        ]);
+        secondAppFirstVersion = GeneratorUtil.randomApplicationVersion([
+          ...recentNames,
+          ...recentVersions,
+          appCommonVersion,
+        ]);
+        secondAppThirdVersion = GeneratorUtil.randomApplicationVersion([
+          ...recentNames,
+          ...recentVersions,
+          appCommonVersion,
+          secondAppFirstVersion,
+        ]);
+
+        firstAppName = GeneratorUtil.randomApplicationName();
+        secondAppName = GeneratorUtil.randomApplicationName();
+
+        const firstApplicationModel = customApplicationBuilder
+          .withDisplayName(firstAppName)
+          .withDisplayVersion(appCommonVersion)
+          .build();
+        const secondApplicationFirstVersionModel = customApplicationBuilder
+          .withDisplayName(secondAppName)
+          .withDisplayVersion(secondAppFirstVersion)
+          .build();
+        const secondApplicationSecondVersionModel = customApplicationBuilder
+          .withDisplayName(secondAppName)
+          .withDisplayVersion(appCommonVersion)
+          .build();
+        const secondApplicationThirdVersionModel = customApplicationBuilder
+          .withDisplayName(secondAppName)
+          .withDisplayVersion(secondAppThirdVersion)
+          .build();
+
+        for (const appModel of [
+          firstApplicationModel,
+          secondApplicationFirstVersionModel,
+          secondApplicationSecondVersionModel,
+          secondApplicationThirdVersionModel,
+        ]) {
+          const app = await applicationApiHelper.createApplication(appModel);
+          const publishRequest = publishRequestBuilder
+            .withName(GeneratorUtil.randomPublicationRequestName())
+            .withApplicationResource(app, PublishActions.ADD)
+            .build();
+          const appPublication =
+            await publicationApiHelper.createPublishRequest(publishRequest);
+          publicationsToUnpublish.push(appPublication);
+          await adminPublicationApiHelper.approveRequest(appPublication);
+        }
+      },
+    );
+
+    await dialTest.step(
+      'On the "My Workspace" tab search the second agent and bookmark it',
+      async () => {
+        await marketplacePage.openMyWorkspacePage();
+        await marketplacePage.waitForPageLoaded();
+        await marketplaceHeader.searchInput.fillInInput(secondAppFirstVersion);
+        const secondAgentElement =
+          await marketplaceAgentsSection.findAgentElement(secondAppName, {
+            isWorkspaceAgent: false,
+          });
+        await marketplaceAgents.addAgentToWorkspace(secondAgentElement);
+        await toast.closeToast();
+      },
+    );
+
+    await dialTest.step(
+      'Search agents by the common version and verify 4 cards are found. Editable first agent card, editable and bookmarked second agent cards are found',
+      async () => {
+        await marketplaceHeader.searchInput.fillInInput(appCommonVersion);
+        const allAgents = await marketplaceAgentsSection.getAllAgents();
+        expectedAgents = allAgents.filter(
+          (a) =>
+            (a.name === firstAppName || a.name === secondAppName) &&
+            a.version === appCommonVersion,
+        );
+        baseAssertion.assertValue(
+          expectedAgents.length,
+          4,
+          ExpectedMessages.elementsCountIsValid,
+        );
+
+        const expectedAgentCriteria = [
+          { name: firstAppName, isEditable: true },
+          { name: secondAppName, isEditable: true },
+          { name: secondAppName, isEditable: false },
+        ];
+        for (const criteria of expectedAgentCriteria) {
+          baseAssertion.assertValue(
+            expectedAgents.filter(
+              (agent) =>
+                agent.name === criteria.name &&
+                agent.isEditable === criteria.isEditable &&
+                agent.isWorkspaceAgent &&
+                agent.version === appCommonVersion,
+            ).length,
+            1,
+            ExpectedMessages.elementsCountIsValid,
+          );
+        }
+
+        const bookmarkedSecondAgent =
+          await marketplaceAgentsSection.findAgentElement(secondAppName, {
+            isWorkspaceAgent: true,
+            isEditable: false,
+          });
+        await baseAssertion.assertElementState(
+          marketplaceAgents.getAgentElementRemoveBookmarkIcon(
+            bookmarkedSecondAgent,
+          ),
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Not editable first agent card is suggested',
+      async () => {
+        await baseAssertion.assertElementState(
+          marketplace.marketplaceSuggestionsLabel,
+          'visible',
+        );
+        const suggestedAgent = expectedAgents.filter(
+          (agent) => agent.isSuggested,
+        );
+        baseAssertion.assertValue(
+          suggestedAgent.length,
+          1,
+          ExpectedMessages.elementsCountIsValid,
+        );
+        baseAssertion.assertValue(
+          expectedAgents.filter(
+            (a) =>
+              a.name === firstAppName &&
+              a.isSuggested &&
+              a.version === appCommonVersion &&
+              !a.isEditable,
+          ).length,
+          1,
+          ExpectedMessages.elementsCountIsValid,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Open bookmarked second agent card and verify versions available in the menu',
+      async () => {
+        const bookmarkedSecondAgentElement =
+          await marketplaceAgentsSection.findAgentElement(secondAppName, {
+            isWorkspaceAgent: true,
+            isEditable: false,
+          });
+        await bookmarkedSecondAgentElement.click();
+        await agentDetailsModalAssertion.assertApplicationVersion(
+          appCommonVersion,
+        );
+        await agentDetailsModal.versionMenuTrigger.click();
+        await agentVersionsDropdownMenuAssertion.assertMenuOptions(
+          SortingUtil.sortVersionsArray([
+            secondAppFirstVersion,
+            appCommonVersion,
+            secondAppThirdVersion,
+          ]),
+        );
+
+        await baseAssertion.assertElementBackgroundColors(
+          agentDetailsModal
+            .getVersionDropdownMenu()
+            .menuOption(appCommonVersion),
+          ThemesUtil.getRgbColorByKey(
+            ThemeColorAttributes.bgAccentPrimaryAlpha,
+          ),
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Search in DIAL Marketplace: Search word and other filters work together type and topics',
+  async ({
+    customApplicationBuilder,
+    applicationApiHelper,
+    marketplacePage,
+    marketplaceFilter,
+    marketplaceHeader,
+    marketplaceAgentsSection,
+    setTestIds,
+    baseAssertion,
+  }) => {
+    setTestIds('EPMRTC-4425');
+    const firstAppName = GeneratorUtil.randomApplicationName();
+    const secondAppName = GeneratorUtil.randomApplicationName();
+    const thirdAppName = GeneratorUtil.randomApplicationName();
+    const appTopic = GeneratorUtil.randomString(5);
+
+    await dialTest.step(
+      'Prepare three custom applications, two of them have a common topic',
+      async () => {
+        const firstApplicationModel = customApplicationBuilder
+          .withDisplayName(firstAppName)
+          .withDescriptionKeywords(appTopic)
+          .build();
+        const secondApplicationModel = customApplicationBuilder
+          .withDisplayName(secondAppName)
+          .withDescriptionKeywords(appTopic)
+          .build();
+        const thirdApplicationModel = customApplicationBuilder
+          .withDisplayName(thirdAppName)
+          .build();
+        for (const app of [
+          firstApplicationModel,
+          secondApplicationModel,
+          thirdApplicationModel,
+        ]) {
+          await applicationApiHelper.createApplication(app);
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Open "Dial Marketplace", check Type="Applications", Source="My Custom app" filter options and verify three apps are filtered',
+      async () => {
+        await marketplacePage.openMarketplacePage();
+        await marketplacePage.waitForPageLoaded();
+        await marketplaceFilter
+          .filterByPropertyOptionInput(
+            MarketplaceFilterTypes.type,
+            EntityType.Application,
+          )
+          .click();
+        await marketplaceFilter
+          .filterByPropertyOptionInput(
+            MarketplaceFilterTypes.sources,
+            SourcesFilterOptions.myCustomApps,
+          )
+          .click();
+        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        baseAssertion.assertArrayIncludesAll(
+          actualAgents.map((agent) => agent.name),
+          [firstAppName, secondAppName, thirdAppName],
+          MarketplaceExpectedMessages.filteredAgentsAreValid,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Check apps common topic filter option and verify two apps are filtered',
+      async () => {
+        await marketplaceFilter
+          .filterByPropertyOptionInput(MarketplaceFilterTypes.topics, appTopic)
+          .click();
+        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        baseAssertion.assertValue(
+          actualAgents.length,
+          2,
+          ExpectedMessages.elementsCountIsValid,
+        );
+        baseAssertion.assertArrayIncludesAll(
+          actualAgents.map((agent) => agent.name),
+          [firstAppName, secondAppName],
+          MarketplaceExpectedMessages.filteredAgentsAreValid,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Set first app name in the search field and verify only one app is filtered',
+      async () => {
+        await marketplaceHeader.searchInput.fillInInput(firstAppName);
+        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        baseAssertion.assertValue(
+          actualAgents.length,
+          1,
+          ExpectedMessages.elementsCountIsValid,
+        );
+        baseAssertion.assertArrayIncludesAll(
+          actualAgents.map((agent) => agent.name),
+          [firstAppName],
+          MarketplaceExpectedMessages.filteredAgentsAreValid,
         );
       },
     );

@@ -20,4 +20,5 @@ export enum Attributes {
   id = 'id',
   ariaExpanded = 'aria-expanded',
   ariaDetails = 'aria-details',
+  ariaColcount = 'aria-colcount',
 }
