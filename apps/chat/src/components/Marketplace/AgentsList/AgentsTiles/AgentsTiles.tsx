@@ -149,6 +149,7 @@ export const AgentsTiles: React.FC<AgentsListProps> = ({
                   gap: `${gap}px`,
                 }}
                 data-qa="agents-row"
+                aria-colcount={colsCount}
               >
                 {rowEntities.map((entity) => {
                   if (!entity) {

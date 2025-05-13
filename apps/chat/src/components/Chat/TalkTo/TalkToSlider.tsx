@@ -289,24 +289,6 @@ export const TalkToSlider = ({ conversation, items, ...restProps }: Props) => {
   }, []);
 
   useEffect(() => {
-    const handleResize = () => {
-      if (sliderRef.current) {
-        setSliderHeight(sliderRef.current.clientHeight);
-      }
-    };
-
-    const resizeObserver = new ResizeObserver(handleResize);
-
-    if (sliderRef.current) {
-      resizeObserver.observe(sliderRef.current);
-    }
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, []);
-
-  useEffect(() => {
     if (!sliderGroups.length) {
       setActiveSlide(0);
     } else if (activeSlide !== 0 && activeSlide > sliderGroups.length - 1) {
