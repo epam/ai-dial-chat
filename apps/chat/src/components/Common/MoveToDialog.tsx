@@ -60,7 +60,7 @@ export const MoveToDialog: React.FC<Props> = ({
 
   const filteredFoldersSelector = useMemo(
     () => selectors.selectFilteredFolders(defaultMyItemsFilters, '', true),
-    [],
+    [selectors],
   );
 
   const myFolders = useAppSelector(filteredFoldersSelector);
@@ -74,7 +74,10 @@ export const MoveToDialog: React.FC<Props> = ({
   const [errorMessage, setErrorMessage] = useState<string>();
 
   const rootFolderId = getRootId({ featureType });
-  const folders = [...myFolders, ...tempFolders];
+  const folders = useMemo(
+    () => [...myFolders, ...tempFolders],
+    [myFolders, tempFolders],
+  );
 
   const handleToggleFolder = useCallback(
     (folderId?: string) => {

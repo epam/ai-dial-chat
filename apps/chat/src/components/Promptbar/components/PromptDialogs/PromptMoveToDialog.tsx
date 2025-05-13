@@ -4,7 +4,6 @@ import { useTranslation } from 'next-i18next';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
-import { defaultMyItemsFilters } from '@/src/utils/app/search';
 
 import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';

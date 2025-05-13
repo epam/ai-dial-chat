@@ -26,7 +26,6 @@ import { getEntityNameError } from '@/src/utils/app/errors';
 import { isEntityIdExternal } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
-import { defaultMyItemsFilters } from '@/src/utils/app/search';
 
 import {
   AdditionalItemData,
@@ -68,13 +67,6 @@ export const PromptComponent = ({
 
   const { t } = useTranslation(Translation.Chat);
 
-  const filteredFoldersSelector = useMemo(
-    () =>
-      PromptsSelectors.selectFilteredFolders(defaultMyItemsFilters, '', true),
-    [],
-  );
-
-  const folders = useAppSelector(filteredFoldersSelector);
   const { selectedPromptId, isSelectedPromptApproveRequiredResource } =
     useAppSelector(PromptsSelectors.selectSelectedPromptId);
   const selectedPublicationUrl = useAppSelector(
@@ -371,7 +363,6 @@ export const PromptComponent = ({
             <ItemContextMenu
               entity={prompt}
               featureType={FeatureType.Prompt}
-              folders={folders}
               onDelete={handleDelete}
               onRename={handleOpenEditModal}
               onExport={handleExport}

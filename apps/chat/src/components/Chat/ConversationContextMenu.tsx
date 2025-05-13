@@ -16,7 +16,6 @@ import {
   isReplayConversation,
 } from '@/src/utils/app/conversation';
 import { getIdWithoutRootPathSegments, isRootId } from '@/src/utils/app/id';
-import { defaultMyItemsFilters } from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, ScreenState, isNotLoaded } from '@/src/types/common';
@@ -75,22 +74,12 @@ export const ConversationContextMenu = ({
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
-  const selectFilteredFoldersSelector = useMemo(
-    () =>
-      ConversationsSelectors.selectFilteredFolders(
-        defaultMyItemsFilters,
-        '',
-        true,
-      ),
-    [],
-  );
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
 
-  const folders = useAppSelector(selectFilteredFoldersSelector);
   const allConversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );
@@ -220,7 +209,7 @@ export const ConversationContextMenu = ({
         }),
       );
     },
-    [allConversations, collapsedSections, conversation, dispatch, folders, t],
+    [allConversations, collapsedSections, conversation, dispatch, t],
   );
 
   const handleCompare: MouseEventHandler<HTMLButtonElement> =
@@ -358,7 +347,6 @@ export const ConversationContextMenu = ({
           className={className}
           entity={conversation}
           isEmptyConversation={!isReplay && !isPlayback && isEmptyConversation}
-          folders={folders}
           featureType={FeatureType.Chat}
           onOpenMoveToModal={() => setIsShowMoveToModal(true)}
           onDelete={handleOpenDeleteModal}
