@@ -7,6 +7,7 @@ import {
   concatMap,
   forkJoin,
   from,
+  iif,
   interval,
   mergeMap,
   of,
@@ -29,9 +30,10 @@ import {
   isApplicationType,
   regenerateApplicationId,
 } from '@/src/utils/app/application';
-import { encode } from '@/src/utils/app/application-type-schema';
+import { encodeSlug } from '@/src/utils/app/application-type-schema';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
+import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { isEntityIdExternal, isEntityIdLocal } from '@/src/utils/app/id';
 import { translate } from '@/src/utils/app/translation';
 import { parseApplicationApiKey } from '@/src/utils/server/api';
@@ -42,7 +44,11 @@ import {
 } from '@/src/types/applications';
 import { AppAction, AppEpic } from '@/src/types/store';
 
-import { PublicationActions } from '@/src/store/publication/publication.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { ModelsActions } from '@/src/store/models/models.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
+import { ShareSelectors } from '@/src/store/share/share.selectors';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { errorsMessages } from '@/src/constants/errors';
@@ -51,15 +57,33 @@ import { Routes } from '@/src/constants/routes';
 
 import { ApplicationActions } from '../application/application.reducers';
 import { ApplicationTypesSchemasActions } from '../applicationTypeSchemas/applicationTypeSchemas.reducers';
-import { AuthSelectors } from '../auth/auth.reducers';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '../conversations/conversations.reducers';
-import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
-import { ShareActions, ShareSelectors } from '../share/share.reducers';
+import { AuthSelectors } from '../auth/auth.selectors';
+import { ModelsSelectors } from '../models/models.selectors';
+import { ApplicationSelectors } from './application.selectors';
 
-import isString from 'lodash-es/isString';
+const initEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(ApplicationActions.init.type),
+    filter(() => !ApplicationSelectors.selectInitialized(state$.value)),
+    switchMap(() =>
+      forkJoin({
+        selectedWidget: BrowserStorage.getSelectedWidget(),
+      }).pipe(
+        switchMap(({ selectedWidget }) =>
+          concat(
+            iif(
+              () => !!selectedWidget,
+              of(
+                ApplicationActions.setSelectedWidget(selectedWidget as string),
+              ),
+              EMPTY,
+            ),
+            of(ApplicationActions.initFinish()),
+          ),
+        ),
+      ),
+    ),
+  );
 
 const createApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
@@ -345,6 +369,10 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
             ),
           );
 
+          if (!modelFromState) {
+            actions.push(of(ModelsActions.addModelToMap(application)));
+          }
+
           if (payload.isForSharing) {
             const permissionsFromState = ShareSelectors.selectSharePermissions(
               state$.value,
@@ -362,7 +390,7 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
           return concat(...actions);
         }),
         catchError(() => {
-          Router.push('/404');
+          Router.push(Routes.NotFound);
           return of(ApplicationActions.getFail());
         }),
       ),
@@ -620,9 +648,7 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
             pathname: Routes.AppsEditorSettings,
             query: {
               id: encodeURIComponent(entity.reference),
-              slug: isApplicationType(applicationType)
-                ? applicationType
-                : encode(applicationType ?? ''),
+              slug: encodeSlug(applicationType),
             },
           });
         }),
@@ -658,24 +684,15 @@ const exitEditModeEpic: AppEpic = (action$, _state$, { router }) =>
     ignoreElements(),
   );
 
-const resetSelectedWidgetEpic: AppEpic = (action$) =>
+const setSelectedWidgetEpic: AppEpic = (action$) =>
   action$.pipe(
-    ofType(
-      ConversationsActions.selectConversations.type,
-      PublicationActions.selectPublication.type,
-    ),
-    switchMap(({ payload }) => {
-      if (
-        !isString(payload) && payload ? payload.conversationIds.length : true
-      ) {
-        return of(ApplicationActions.selectWidget(undefined));
-      }
-
-      return EMPTY;
-    }),
+    ofType(ApplicationActions.setSelectedWidget.type),
+    tap(({ payload }) => BrowserStorage.setSelectedWidget(payload)),
+    ignoreElements(),
   );
 
 export const ApplicationEpics = combineEpics(
+  initEpic,
   createApplicationEpic,
   createFailEpic,
   deleteApplicationEpic,
@@ -689,5 +706,5 @@ export const ApplicationEpics = combineEpics(
   getApplicationLogsEpic,
   enterEditModeEpic,
   exitEditModeEpic,
-  resetSelectedWidgetEpic,
+  setSelectedWidgetEpic,
 );

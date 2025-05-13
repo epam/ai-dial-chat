@@ -1,5 +1,6 @@
 import { Conversation } from '@/chat/types/chat';
-import { FolderInterface, FolderType } from '@/chat/types/folder';
+import { FeatureType } from '@/chat/types/common';
+import { FolderInterface } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { Prompt } from '@/chat/types/prompt';
 import { ConversationBuilder, ExpectedConstants } from '@/src/testData';
@@ -27,7 +28,7 @@ export class ConversationData extends FolderData {
   private conversationBuilder: ConversationBuilder;
 
   constructor() {
-    super(FolderType.Chat);
+    super(FeatureType.Chat);
     this.conversationBuilder = new ConversationBuilder();
   }
 
@@ -379,7 +380,11 @@ export class ConversationData extends FolderData {
     nestedLevel: number,
     folderNames?: Record<number, string>,
   ) {
-    return super.prepareNestedFolder(nestedLevel, FolderType.Chat, folderNames);
+    return super.prepareNestedFolder(
+      nestedLevel,
+      FeatureType.Chat,
+      folderNames,
+    );
   }
 
   public prepareConversationsForNestedFolders(

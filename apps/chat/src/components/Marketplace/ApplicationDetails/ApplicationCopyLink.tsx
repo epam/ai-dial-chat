@@ -10,7 +10,7 @@ import { getApplicationLink } from '@/src/utils/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import Tooltip from '../../Common/Tooltip';
+import Tooltip from '@/src/components/Common/Tooltip';
 
 interface ApplicationCopyLinkProps {
   entity: DialAIEntityModel;
@@ -31,13 +31,18 @@ export function ApplicationCopyLink({
   className,
 }: ApplicationCopyLinkProps) {
   const { t } = useTranslation(Translation.Marketplace);
+
   const [urlCopied, setUrlCopied] = useState(false);
+
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
   const link = getApplicationLink(entity);
+
   const handleCopy = useCallback(
     (e: MouseEvent<HTMLAnchorElement>) => {
       e.preventDefault();
       e.stopPropagation();
+
       if (!navigator.clipboard) return;
 
       navigator.clipboard.writeText(link).then(() => {

@@ -7,7 +7,6 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { encode } from '@/src/utils/app/application-type-schema';
 import { getAppEditorRoute } from '@/src/utils/app/route';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
@@ -17,16 +16,12 @@ import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
-import {
-  ApplicationTypesSchemasActions,
-  ApplicationTypesSchemasSelectors,
-} from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
+import { ApplicationTypesSchemasActions } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
+import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  MarketplaceActions,
-  MarketplaceSelectors,
-} from '@/src/store/marketplace/marketplace.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
+import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { MarketplaceTabs } from '@/src/constants/marketplace';
 
@@ -59,7 +54,7 @@ const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
     return (
       <button
         onClick={visibleActions[0].onClick}
-        className="button button-primary hidden items-center gap-2 py-2 sm:flex"
+        className="button button-primary hidden items-center gap-2 py-2 xl:flex"
       >
         <IconPlus size={18} />
         <span>{t('Add app')}</span>
@@ -73,7 +68,7 @@ const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       placement="bottom"
-      triggerIconClassName="max-sm:hidden"
+      triggerIconClassName="max-xl:hidden"
       TriggerCustomRenderer={
         <button
           className="button button-primary flex items-center gap-2 py-2"
@@ -161,7 +156,7 @@ export const SearchHeader = () => {
                 ),
               );
             }
-            router.push(getAppEditorRoute(encode(schema.id)));
+            router.push(getAppEditorRoute(schema.id));
           },
         })) ?? []),
       ].sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1)),
@@ -181,7 +176,7 @@ export const SearchHeader = () => {
   };
 
   return (
-    <div className="flex w-full gap-4 sm:justify-end md:w-auto">
+    <div className="flex w-full gap-2 sm:justify-end md:w-auto">
       <div className="relative flex h-[38px] shrink-0 grow sm:w-[315px] md:w-[440px] lg:w-[500px]">
         <IconSearch
           className="absolute left-3 top-1/2 -translate-y-1/2"

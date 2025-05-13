@@ -71,19 +71,20 @@ import {
 } from '@/src/utils/app/zip-import-export';
 
 import { Conversation } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, ReplaceOptions } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { FolderType } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
-import { LatestExportFormat, ReplaceOptions } from '@/src/types/import-export';
+import { LatestExportFormat } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 import { AppAction, AppEpic } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
-import {
-  PromptsActions,
-  PromptsSelectors,
-} from '@/src/store/prompts/prompts.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
+import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import {
   DEFAULT_CONVERSATION_NAME,
@@ -92,15 +93,9 @@ import {
 import { errorsMessages } from '@/src/constants/errors';
 import { successMessages } from '@/src/constants/successMessages';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '../conversations/conversations.reducers';
-import { getUniqueAttachments } from '../conversations/conversations.selectors';
+import { ConversationsSelectors } from '../conversations/conversations.selectors';
 import { FilesActions } from '../files/files.reducers';
 import { MigrationActions } from '../migration/migration.reducers';
-import { SettingsSelectors } from '../settings/settings.reducers';
-import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { ImportExportActions } from './importExport.reducers';
 import { ImportExportSelectors } from './importExport.selectors';
 
@@ -186,7 +181,7 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
       const foldersIds = uniq(conversations.map((info) => info.folderId));
       const folders = getFoldersFromIds(
         uniq(foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id))),
-        FolderType.Chat,
+        FeatureType.Chat,
       );
 
       return forkJoin({
@@ -261,7 +256,7 @@ const exportPromptsEpic: AppEpic = (action$, state$) =>
       const foldersIds = uniq(prompts.map((info) => info.folderId));
       const folders = getFoldersFromIds(
         uniq(foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id))),
-        FolderType.Prompt,
+        FeatureType.Prompt,
       );
 
       return forkJoin({
@@ -484,7 +479,7 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
               //calculate all folders;
               const conversationsFolders = getFoldersFromIds(
                 uniq(foldersIds.flatMap(getParentFolderIdsFromFolderId)),
-                FolderType.Chat,
+                FeatureType.Chat,
               );
 
               const firstImportedConversation = uploadedConversations[0];
@@ -519,7 +514,7 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
                       ...uploadedConversationsFoldersIds,
                       ...openedFolderIds,
                     ]),
-                    featureType: FeatureType.Chat,
+                    folderType: FeatureType.Chat,
                   }),
                 ),
                 iif(
@@ -574,7 +569,7 @@ const uploadImportedPromptsEpic: AppEpic = (action$, state$) =>
               //calculate all folders;
               const promptsFolders = getFoldersFromIds(
                 uniq(foldersIds.flatMap(getParentFolderIdsFromFolderId)),
-                FolderType.Prompt,
+                FeatureType.Prompt,
               );
               const uploadedPromptsFolderIds = uniq(
                 itemsToUpload.flatMap((prompt) =>
@@ -601,7 +596,7 @@ const uploadImportedPromptsEpic: AppEpic = (action$, state$) =>
                       ...uploadedPromptsFolderIds,
                       ...openedFolderIds,
                     ]),
-                    featureType: FeatureType.Prompt,
+                    folderType: FeatureType.Prompt,
                   }),
                 ),
                 iif(
@@ -996,7 +991,7 @@ const importZipEpic: AppEpic = (action$) =>
                 );
               }
 
-              const attachments = getUniqueAttachments(
+              const attachments = ConversationsSelectors.getUniqueAttachments(
                 getConversationAttachmentWithPath(
                   cleanConversations[0],
                   cleanFolders,

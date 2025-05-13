@@ -28,91 +28,62 @@ export class MarketplaceAgentsSection extends BaseElement {
     MarketplaceSelectors.marketplaceAgentsRow,
   );
 
-  public async useAgent(
+  public async findAndUseAgent(
     agent: DialAIEntityModel,
-    {
-      isInstalledDeploymentsUpdated = false,
-    }: { isInstalledDeploymentsUpdated?: boolean } = {},
+    options?: {
+      isInstalledDeploymentsUpdated?: boolean;
+      isWorkspaceAgent?: boolean;
+      isEditable?: boolean;
+    },
   ) {
-    let isAgentUsed = false;
-    const visibleAgents = this.getAgents();
-    const visibleAgentNames = await visibleAgents.getAgentNames();
-    //open agent details modal if it is found
-    if (visibleAgentNames.includes(agent.name)) {
-      //open agent's details card
-      await visibleAgents.agentName(agent.name).click();
-      const agentDetailsModal = visibleAgents.getAgentDetailsModal();
+    let isAgentFoundAndUsed = false;
+    const agentElement = await this.findAgentElement(agent, options);
+    //open agent's details card
+    await agentElement.click();
+    const agentDetailsModal = this.getAgents().getAgentDetailsModal();
 
-      //if agent has more than one version in the config
-      if (agent.version) {
-        //check if current version match expected
-        const currentVersion =
-          await agentDetailsModal.agentVersion.getElementInnerContent();
-        //select version from dropdown menu if it does not match the current one
-        if (currentVersion !== agent.version) {
-          const menuTrigger = agentDetailsModal.versionMenuTrigger;
-          //check if version menu is available
-          if (await menuTrigger.isVisible()) {
-            await menuTrigger.click();
-            //check if menu includes version
-            const version = agentDetailsModal
+    //if agent has more than one version in the config
+    if (agent.version) {
+      //check if current version match expected
+      const currentVersion =
+        await agentDetailsModal.agentVersion.getElementInnerContent();
+      //select version from dropdown menu if it does not match the current one
+      if (currentVersion !== agent.version) {
+        const menuTrigger = agentDetailsModal.versionMenuTrigger;
+        //check if version menu is available
+        if (await menuTrigger.isVisible()) {
+          await menuTrigger.click();
+          //check if menu includes version
+          const version = agentDetailsModal
+            .getVersionDropdownMenu()
+            .menuOption(agent.version);
+          if (await version.isVisible()) {
+            await agentDetailsModal
               .getVersionDropdownMenu()
-              .menuOption(agent.version);
-            if (await version.isVisible()) {
-              await agentDetailsModal
-                .getVersionDropdownMenu()
-                .selectMenuOption(agent.version);
-              await agentDetailsModal.clickUseButton({
-                isInstalledDeploymentsUpdated: isInstalledDeploymentsUpdated,
-              });
-              isAgentUsed = true;
-            } else {
-              await agentDetailsModal.closeButton.click();
-            }
+              .selectMenuOption(agent.version);
+            await agentDetailsModal.clickUseButton({
+              isInstalledDeploymentsUpdated:
+                options?.isInstalledDeploymentsUpdated,
+            });
+            isAgentFoundAndUsed = true;
           } else {
             await agentDetailsModal.closeButton.click();
           }
         } else {
-          await agentDetailsModal.clickUseButton({
-            isInstalledDeploymentsUpdated: isInstalledDeploymentsUpdated,
-          });
-          isAgentUsed = true;
+          await agentDetailsModal.closeButton.click();
         }
       } else {
         await agentDetailsModal.clickUseButton({
-          isInstalledDeploymentsUpdated: isInstalledDeploymentsUpdated,
+          isInstalledDeploymentsUpdated: options?.isInstalledDeploymentsUpdated,
         });
-        isAgentUsed = true;
+        isAgentFoundAndUsed = true;
       }
-    }
-    return isAgentUsed;
-  }
-
-  public async findAndUseAgent(
-    agent: DialAIEntityModel,
-    {
-      isInstalledDeploymentsUpdated = false,
-    }: { isInstalledDeploymentsUpdated?: boolean } = {},
-  ) {
-    const scrollPosition: { scrollTop: number; clientHeight: number } = {
-      scrollTop: 0,
-      clientHeight: await this.rootLocator.evaluate((p) => p.clientHeight),
-    };
-    const scrollHeight = await this.rootLocator.evaluate((p) => p.scrollHeight);
-    let isAgentFoundAndUsed = false;
-    await this.moveToAgentsSection();
-    do {
-      isAgentFoundAndUsed = await this.useAgent(agent, {
-        isInstalledDeploymentsUpdated: isInstalledDeploymentsUpdated,
+    } else {
+      await agentDetailsModal.clickUseButton({
+        isInstalledDeploymentsUpdated: options?.isInstalledDeploymentsUpdated,
       });
-      if (isAgentFoundAndUsed) {
-        break;
-      }
-      await this.scrollIntoLastRow();
-    } while (
-      Math.ceil(scrollHeight - scrollPosition.scrollTop) >
-      2 * scrollPosition.clientHeight
-    );
+      isAgentFoundAndUsed = true;
+    }
     return isAgentFoundAndUsed;
   }
 
@@ -136,12 +107,14 @@ export class MarketplaceAgentsSection extends BaseElement {
           typeof agent === 'string' ? agent : agent.name,
         )
       ) {
-        const agentElements = visibleAgents.getAgent(agent, {
-          isUnique: false,
-        });
+        const agentElements = visibleAgents.getAgent(agent);
         const agentsCount = await agentElements.getElementsCount();
         //if need to find an agent from a specific section
         if (options?.isWorkspaceAgent !== undefined) {
+          //marketplace agent cannot be editable
+          if (!options.isWorkspaceAgent) {
+            options.isEditable = false;
+          }
           for (let j = 1; j <= agentsCount; j++) {
             const nthAgentElement = agentElements.getNthElement(j);
             const agentType = await nthAgentElement.getAttribute(
@@ -155,7 +128,7 @@ export class MarketplaceAgentsSection extends BaseElement {
               .getAgentPencilIcon(agentElement)
               .isVisible();
             if (
-              options?.isWorkspaceAgent === isWorkspaceAgent &&
+              options.isWorkspaceAgent === isWorkspaceAgent &&
               options?.isEditable === hasPencilIcon
             ) {
               return agentElement;
@@ -202,9 +175,7 @@ export class MarketplaceAgentsSection extends BaseElement {
       for (let i = 0; i < visibleAgentsCount; i++) {
         const agentName = visibleAgentNames[i];
         //agent's name may be duplicated on "My Workspace" tab in the filtered and suggested results
-        const visibleAgent = visibleAgents.getAgent(agentName, {
-          isUnique: false,
-        });
+        const visibleAgent = visibleAgents.getAgent(agentName);
         const agentsCount = await visibleAgent.getElementsCount();
         //iterate through agents with duplicated name
         for (let j = 1; j <= agentsCount; j++) {

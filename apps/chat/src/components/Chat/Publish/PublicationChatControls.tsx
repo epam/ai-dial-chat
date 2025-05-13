@@ -16,10 +16,8 @@ import { ApplicationActions } from '@/src/store/application/application.reducers
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import {
-  PublicationActions,
-  PublicationSelectors,
-} from '@/src/store/publication/publication.reducers';
+import { PublicationActions } from '@/src/store/publication/publication.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 
 import { ScrollDownButton } from '../../Common/ScrollDownButton';
 
@@ -59,11 +57,10 @@ export function PublicationControlsView<
 
   const unselectPrompt = useCallback(() => {
     dispatch(
-      PromptsActions.setSelectedPrompt({
+      PromptsActions.selectPrompt({
         promptId: undefined,
       }),
     );
-    dispatch(PromptsActions.setIsPromptModalOpen({ isOpen: false }));
     dispatch(
       ConversationsActions.selectConversations({
         conversationIds: [],
@@ -108,12 +105,7 @@ export function PublicationControlsView<
         unselectConversation();
         unselectApplication();
         dispatch(
-          PromptsActions.uploadPrompt({
-            promptId: resourcesToReview[publicationIdx + offset].reviewUrl,
-          }),
-        );
-        dispatch(
-          PromptsActions.setSelectedPrompt({
+          PromptsActions.selectPrompt({
             promptId: resourcesToReview[publicationIdx + offset].reviewUrl,
             isApproveRequiredResource: true,
           }),

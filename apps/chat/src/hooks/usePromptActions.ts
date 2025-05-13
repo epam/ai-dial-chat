@@ -17,10 +17,8 @@ import { Translation } from '@/src/types/translation';
 import { ChatActions } from '@/src/store/chat/chat.reducer';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
-import {
-  PromptsActions,
-  PromptsSelectors,
-} from '@/src/store/prompts/prompts.reducers';
+import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
+import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 import { UISelectors } from '@/src/store/ui/ui.selectors';
@@ -164,8 +162,7 @@ export const usePromptActions = (prompt: Prompt) => {
       dispatch(PromptsActions.deletePrompt({ prompt }));
     }
 
-    dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
-    dispatch(PromptsActions.setIsPromptModalOpen({ isOpen: false }));
+    dispatch(PromptsActions.selectPrompt({ promptId: undefined }));
   }, [dispatch, prompt]);
 
   const handleInfo = useCallback(() => {
@@ -174,8 +171,7 @@ export const usePromptActions = (prompt: Prompt) => {
 
   const handleUse = useCallback(() => {
     dispatch(PromptsActions.applyPrompt(prompt));
-    dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
-    dispatch(PromptsActions.setIsPromptModalOpen({ isOpen: false }));
+    dispatch(PromptsActions.selectPrompt({ promptId: undefined }));
   }, [dispatch, prompt]);
 
   return {

@@ -12,7 +12,7 @@ import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
+import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';

@@ -11,7 +11,7 @@ import {
 } from '@/src/testData';
 import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
-import { BaseElement, MarketplaceAgentProperties } from '@/src/ui/webElements';
+import {BaseElement, MarketplaceAgentProperties} from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil, SortingUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
@@ -408,39 +408,24 @@ dialTest(
           ExpectedMessages.elementsCountIsValid,
         );
 
-        baseAssertion.assertValue(
-          expectedAgents.filter(
-            (a) =>
-              a.name === firstAppName &&
-              a.isEditable &&
-              a.isWorkspaceAgent &&
-              a.version === appCommonVersion,
-          ).length,
-          1,
-          ExpectedMessages.elementsCountIsValid,
-        );
-        baseAssertion.assertValue(
-          expectedAgents.filter(
-            (a) =>
-              a.name === secondAppName &&
-              a.isEditable &&
-              a.isWorkspaceAgent &&
-              a.version === appCommonVersion,
-          ).length,
-          1,
-          ExpectedMessages.elementsCountIsValid,
-        );
-        baseAssertion.assertValue(
-          expectedAgents.filter(
-            (a) =>
-              a.name === secondAppName &&
-              !a.isEditable &&
-              a.version === appCommonVersion &&
-              a.isWorkspaceAgent,
-          ).length,
-          1,
-          ExpectedMessages.elementsCountIsValid,
-        );
+        const expectedAgentCriteria = [
+          { name: firstAppName, isEditable: true },
+          { name: secondAppName, isEditable: true },
+          { name: secondAppName, isEditable: false },
+        ];
+        for (const criteria of expectedAgentCriteria) {
+          baseAssertion.assertValue(
+            expectedAgents.filter(
+              (agent) =>
+                agent.name === criteria.name &&
+                agent.isEditable === criteria.isEditable &&
+                agent.isWorkspaceAgent &&
+                agent.version === appCommonVersion,
+            ).length,
+            1,
+            ExpectedMessages.elementsCountIsValid,
+          );
+        }
 
         const bookmarkedSecondAgent =
           await marketplaceAgentsSection.findAgentElement(secondAppName, {

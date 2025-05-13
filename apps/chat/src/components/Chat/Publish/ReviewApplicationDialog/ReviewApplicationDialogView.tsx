@@ -11,11 +11,12 @@ import { ApiUtils } from '@/src/utils/server/api';
 
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationSelectors } from '@/src/store/application/application.reducers';
+import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { useAppSelector } from '@/src/store/hooks';
 
 import { ReviewCodeAppSection } from '@/src/components/Chat/Publish/ReviewApplicationDialog/ReviewCodeAppSection';
 import { ReviewQuickAppSection } from '@/src/components/Chat/Publish/ReviewApplicationDialog/ReviewQuickAppSection';
+import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
 
 import { ModelIcon } from '../../../Chatbar/ModelIcon';
@@ -23,7 +24,7 @@ import { PublicationControls } from '../PublicationChatControls';
 
 import isEmpty from 'lodash-es/isEmpty';
 
-export function ReviewApplicationDialogView() {
+function ReviewApplicationDialogContent() {
   const { t } = useTranslation(Translation.Chat);
 
   const application = useAppSelector(
@@ -164,3 +165,7 @@ export function ReviewApplicationDialogView() {
     </>
   );
 }
+
+export const ReviewApplicationDialogView = withRenderWhen(
+  ApplicationSelectors.selectApplicationDetail,
+)(ReviewApplicationDialogContent);

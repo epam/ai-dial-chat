@@ -20,8 +20,9 @@ import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { ShareActions, ShareSelectors } from '@/src/store/share/share.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { ShareActions } from '@/src/store/share/share.reducers';
+import { ShareSelectors } from '@/src/store/share/share.selectors';
 
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
@@ -80,12 +81,13 @@ function ShareAccessSection({
         <button
           onClick={onUnshare}
           className="flex gap-2 text-sm text-accent-primary"
+          data-qa="remove-access-button"
         >
           <IconUserUnshare height={18} width={18} />
-          <p data-qa="shared-access-message">{unshareLabel}</p>
+          <p>{unshareLabel}</p>
         </button>
       ) : (
-        <p data-qa="shared-access-message">{notSharedMessage}</p>
+        <p data-qa="not-shared-entity-label">{notSharedMessage}</p>
       )}
     </div>
   );

@@ -26,12 +26,6 @@ export const codeEditorSlice = createSlice({
       state.selectedFileId = undefined;
       state.filesContent = [];
     },
-    initCodeSuccess: (
-      state,
-      { payload }: PayloadAction<{ selectedFileId: string }>,
-    ) => {
-      state.selectedFileId = payload.selectedFileId;
-    },
     getFileTextContent: (state, _action: PayloadAction<{ id: string }>) => {
       state.fileContentLoadingStatus = UploadStatus.LOADING;
     },

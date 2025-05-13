@@ -96,6 +96,7 @@ import { ConfirmationDialog } from '@/src/ui/webElements/confirmationDialog';
 import { DropdownCheckboxMenu } from '@/src/ui/webElements/dropdownCheckboxMenu';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import {
+  AttachFilesTree,
   ConversationsToPublishTree,
   ConversationsTree,
   FilesToPublishTree,
@@ -329,6 +330,7 @@ const dialTest = test.extend<{
   promptPreviewModal: PromptPreviewModalWindow;
   promptPreviewModalAssertion: PromptPreviewModalAssertion;
   agentDetailsModalAssertion: AgentDetailsModalAssertion;
+  attachAllFilesTreeAssertion: EntityTreeAssertion<AttachFilesTree>;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper }, use) => {
@@ -1241,6 +1243,13 @@ const dialTest = test.extend<{
       promptPreviewModal,
     );
     await use(promptPreviewModalAssertion);
+  },
+  attachAllFilesTreeAssertion: async ({ attachFilesModal }, use) => {
+    const attachAllFilesTreeAssertion =
+      new EntityTreeAssertion<AttachFilesTree>(
+        attachFilesModal.getAllFilesTree(),
+      );
+    await use(attachAllFilesTreeAssertion);
   },
 });
 

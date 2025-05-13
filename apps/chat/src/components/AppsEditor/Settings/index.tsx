@@ -18,7 +18,7 @@ import {
   isApplicationDeployed,
   isApplicationDeploymentInProgress,
 } from '@/src/utils/app/application';
-import { decode } from '@/src/utils/app/application-type-schema';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import {
   ApiDetailedApplicationTypeSchema,
@@ -31,22 +31,19 @@ import {
 } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
+import { ModelsActions } from '@/src/store/actions';
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import {
   CodeEditorActions,
   CodeEditorSelectors,
 } from '@/src/store/codeEditor/codeEditor.reducer';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  ModelsActions,
-  ModelsSelectors,
-} from '@/src/store/models/models.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { DEFAULT_QUICK_APPS_SCHEMA_ID } from '@/src/constants/quick-apps';
 import { Routes } from '@/src/constants/routes';
@@ -83,24 +80,16 @@ export const ApplicationSettings: React.FC<Props> = ({
   schema,
   type,
 }) => {
+  const { t } = useTranslation(Translation.Chat);
+
   const router = useRouter();
+
   const dispatch = useAppDispatch();
+
   const pythonVersions = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const modelFromState = applicationData
-    ? modelsMap[applicationData.reference]
-    : null;
-  const isAppDeployed = useMemo(
-    () => !!modelFromState && isApplicationDeployed(modelFromState),
-    [modelFromState],
-  );
-  const isAppDeploymentInProgress = useMemo(
-    () => !!modelFromState && isApplicationDeploymentInProgress(modelFromState),
-    [modelFromState],
-  );
-
   const previewConversationId = useAppSelector(
     ConversationsSelectors.selectPreviewConversationId,
   );
@@ -114,14 +103,25 @@ export const ApplicationSettings: React.FC<Props> = ({
     ConversationsSelectors.selectAreSelectedConversationsLoaded,
   );
   const isCodeEditorDirty = useAppSelector(CodeEditorSelectors.selectIsDirty);
-
   const theme = useAppSelector(UISelectors.selectThemeState);
-  const { t } = useTranslation(Translation.Chat);
 
   const [previewMode, setPreviewMode] = useState<PreviewMode>(
     schema?.[ApplicationTypeSchemaProperties.applicationTypeViewerUrl]
       ? PreviewMode.closed
       : PreviewMode.half,
+  );
+
+  const isAppPublic = isEntityIdPublic(applicationData);
+  const modelFromState = applicationData
+    ? modelsMap[applicationData.reference]
+    : null;
+  const isAppDeployed = useMemo(
+    () => !!modelFromState && isApplicationDeployed(modelFromState),
+    [modelFromState],
+  );
+  const isAppDeploymentInProgress = useMemo(
+    () => !!modelFromState && isApplicationDeploymentInProgress(modelFromState),
+    [modelFromState],
   );
 
   const getDefaultValues = useCallback(
@@ -250,7 +250,7 @@ export const ApplicationSettings: React.FC<Props> = ({
       const pathname = new URL(url, window.location.origin).pathname;
       const targetRoute = Routes.AppsEditorGeneralInfo.replace('[slug]', type);
 
-      if (decode(pathname ?? '') === targetRoute) saveForm();
+      if (decodeURIComponent(pathname ?? '') === targetRoute) saveForm();
     };
 
     router.events.on('routeChangeStart', redirectHandler);
@@ -293,10 +293,17 @@ export const ApplicationSettings: React.FC<Props> = ({
     areSelectedConversationLoaded,
   ]);
 
+  const showRedeployButton =
+    type === ApplicationType.CODE_APP && isAppDeployed && !isAppPublic;
+
   return (
     <div className="flex w-full flex-nowrap overflow-hidden">
       <div
-        onMouseLeave={saveForm}
+        onMouseLeave={() => {
+          if (!isAppPublic) {
+            saveForm();
+          }
+        }}
         className={classNames('transition-all duration-300 ease-in-out', {
           'w-[calc(100%-40px)] opacity-100': previewMode === PreviewMode.closed,
           'w-1/2 opacity-100': previewMode === PreviewMode.half,
@@ -329,7 +336,7 @@ export const ApplicationSettings: React.FC<Props> = ({
             </span>
           </div>
           <div className="flex space-x-2">
-            {type === ApplicationType.CODE_APP && isAppDeployed && (
+            {showRedeployButton && (
               <button
                 className="button button-accent-secondary mb-2 flex items-center gap-2 text-accent-secondary md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
                 data-qa="redeploy-code-app"

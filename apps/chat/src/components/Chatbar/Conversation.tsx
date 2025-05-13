@@ -4,6 +4,7 @@ import { DragEvent, useCallback, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
 
 import { useContextMenuTrigger } from '@/src/hooks/useContextMenuTrigger';
+import { useScrollToEntity } from '@/src/hooks/useScrollToEntity';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -23,16 +24,12 @@ import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import {
-  PublicationActions,
-  PublicationSelectors,
-} from '@/src/store/publication/publication.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { PublicationActions } from '@/src/store/publication/publication.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 
 import { ConversationContextMenu } from '@/src/components/Chat/ConversationContextMenu';
 import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
@@ -233,6 +230,11 @@ export const ConversationComponent = ({
     }
     setIsContextMenu(true);
   }, []);
+
+  useScrollToEntity({
+    entityId: conversation.id,
+    elementRef: conversationRef,
+  });
 
   useContextMenuTrigger(handleContextMenuOpen, conversationRef);
 

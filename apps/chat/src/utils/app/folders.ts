@@ -1,3 +1,5 @@
+import { Observable, of } from 'rxjs';
+
 import {
   constructPath,
   getDialFilesFromAttachments,
@@ -7,11 +9,14 @@ import {
 } from '@/src/utils/app/file';
 
 import { Conversation, PrepareNameOptions } from '@/src/types/chat';
-import { BaseDialEntity, PartialBy } from '@/src/types/common';
+import { BaseDialEntity, FeatureType, PartialBy } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { FolderInterface, FolderType } from '@/src/types/folder';
+import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
+import { AppAction } from '@/src/types/store';
+
+import { ConversationsActions, UIActions } from '@/src/store/actions';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
@@ -388,7 +393,7 @@ export const getParentFolderIdsFromEntityId = (id: string): string[] => {
 
 export const getFolderFromId = (
   id: string,
-  type: FolderType,
+  type: FeatureType,
   status?: UploadStatus,
 ): FolderInterface => {
   const { apiKey, bucket, name, parentPath } = splitEntityId(id);
@@ -403,7 +408,7 @@ export const getFolderFromId = (
 
 export const getFoldersFromIds = (
   ids: (string | undefined)[],
-  type: FolderType,
+  type: FeatureType,
   status?: UploadStatus,
 ): FolderInterface[] => {
   return (ids.filter(Boolean) as string[]).map((path) =>
@@ -413,7 +418,7 @@ export const getFoldersFromIds = (
 
 export const getEntitiesFoldersFromEntities = (
   entities: Conversation[] | Prompt[] | DialFile[],
-  folderType: FolderType,
+  folderType: FeatureType,
 ): FolderInterface[] => {
   const foldersIds = uniq(entities.map((info) => info.folderId));
   //calculate all folders;
@@ -574,4 +579,41 @@ export const updateChildFoldersIds = (
         }),
       };
     });
+};
+
+export const getActionsAddFoldersFromFolderId = ({
+  folderId,
+  folderType,
+  shouldOpen,
+}: {
+  folderId: string;
+  folderType: FeatureType;
+  shouldOpen?: boolean;
+}): Observable<AppAction>[] => {
+  const actions: Observable<AppAction>[] = [];
+  const paths = uniq(getParentFolderIdsFromFolderId(folderId));
+
+  actions.push(
+    of(
+      ConversationsActions.addFolders({
+        folders: paths.map((path) => ({
+          ...getFolderFromId(path, folderType),
+          status: UploadStatus.LOADED,
+        })),
+      }),
+    ),
+  );
+
+  if (shouldOpen) {
+    actions.push(
+      of(
+        UIActions.setOpenedFoldersIds({
+          openedFolderIds: paths,
+          folderType: folderType,
+        }),
+      ),
+    );
+  }
+
+  return actions;
 };

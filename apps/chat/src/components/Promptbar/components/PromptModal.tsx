@@ -14,10 +14,8 @@ import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  PromptsActions,
-  PromptsSelectors,
-} from '@/src/store/prompts/prompts.reducers';
+import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
+import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
 
 import { Modal } from '@/src/components/Common/Modal';
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
@@ -116,8 +114,7 @@ const PromptModalView = () => {
   }, []);
 
   const handleClose = useCallback(() => {
-    dispatch(PromptsActions.setIsPromptModalOpen({ isOpen: false }));
-    dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
+    dispatch(PromptsActions.selectPrompt({ promptId: undefined }));
   }, [dispatch]);
 
   return (

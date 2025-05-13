@@ -1,20 +1,19 @@
 import { FloatingOverlay } from '@floating-ui/react';
 
-import { useScreenState } from '../hooks/useScreenState';
+import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
-import { ScreenState } from '../types/common';
+import { ScreenState } from '@/src/types/common';
 
-import { MigrationSelectors } from '../store/migration/migration.reducers';
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { MigrationSelectors } from '@/src/store/migration/migration.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { SettingsState } from '@/src/store/settings/settings.types';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { getLayout } from '@/src/pages/_app';
 
-import { ChatModalsManager } from '../components/Chat/ChatModalsManager';
 import { ImportExportLoader } from '../components/Chatbar/ImportExportLoader';
 import { AnnouncementsBanner } from '../components/Common/AnnouncementBanner';
 import { Chat } from '@/src/components/Chat/Chat';
@@ -100,7 +99,6 @@ function Home() {
               <Chat />
               <ImportExportLoader />
             </div>
-            <ChatModalsManager />
           </div>
         </div>
       )}
