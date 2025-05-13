@@ -131,7 +131,7 @@ async function refreshAccessToken(token: Token) {
 
       if (!refresh || !refresh.isRefreshing) {
         const localToken: RefreshToken = refresh || {
-          isRefreshing: true,
+          isRefreshing: false,
           token,
         };
         if (
@@ -141,7 +141,10 @@ async function refreshAccessToken(token: Token) {
           return localToken.token;
         }
 
-        NextClient.setIsRefreshTokenStart(token.userId, localToken);
+        NextClient.setIsRefreshTokenStart(token.userId, {
+          token: localToken.token,
+          isRefreshing: true,
+        });
         break;
       }
 
