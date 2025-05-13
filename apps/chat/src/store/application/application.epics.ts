@@ -30,7 +30,7 @@ import {
   isApplicationType,
   regenerateApplicationId,
 } from '@/src/utils/app/application';
-import { encode } from '@/src/utils/app/application-type-schema';
+import { encodeSlug } from '@/src/utils/app/application-type-schema';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
@@ -648,9 +648,7 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
             pathname: Routes.AppsEditorSettings,
             query: {
               id: encodeURIComponent(entity.reference),
-              slug: isApplicationType(applicationType)
-                ? applicationType
-                : encode(applicationType ?? ''),
+              slug: encodeSlug(applicationType),
             },
           });
         }),
