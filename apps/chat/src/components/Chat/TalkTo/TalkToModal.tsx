@@ -16,7 +16,7 @@ import {
 } from '@/src/utils/app/conversation';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
-import { ApiUtils, PseudoModel } from '@/src/utils/server/api';
+import { PseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
@@ -31,7 +31,10 @@ import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
-import { MarketplaceQueryParams } from '@/src/constants/marketplace';
+import {
+  MarketplaceQueryParams,
+  MarketplaceTabs,
+} from '@/src/constants/marketplace';
 
 import { Modal } from '@/src/components/Common/Modal';
 
@@ -40,6 +43,30 @@ import { TalkToSlider } from './TalkToSlider';
 
 import { Feature } from '@epam/ai-dial-shared';
 import orderBy from 'lodash-es/orderBy';
+
+interface TabButtonProps {
+  label: string;
+  tab: MarketplaceTabs;
+  setTab: (tab: MarketplaceTabs) => void;
+  currentTab: MarketplaceTabs;
+}
+
+function TabButton({ label, tab, setTab, currentTab }: TabButtonProps) {
+  const { t } = useTranslation(Translation.Marketplace);
+  return (
+    <button
+      className={classNames(
+        'button text-nowrap rounded border-b border-primary hover:bg-accent-primary-alpha',
+        currentTab === tab
+          ? 'border-b-accent-primary bg-accent-primary-alpha'
+          : '',
+      )}
+      onClick={() => setTab(tab)}
+    >
+      {t(label)}
+    </button>
+  );
+}
 
 interface TalkToModalViewProps {
   conversation: Conversation;
@@ -57,6 +84,7 @@ const TalkToModalView = ({
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useDispatch();
+  const [tab, setTab] = useState(MarketplaceTabs.MY_WORKSPACE);
 
   const isMarketplaceEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
@@ -82,10 +110,14 @@ const TalkToModalView = ({
     const recentInstalledModels = recentModelIds
       .filter((id) => installedModelIdsSet.has(id) && modelsMap[id])
       .map((id) => modelsMap[id]) as DialAIEntityModel[];
-    const installedModels = allModels.filter(
-      (model) =>
-        installedModelIdsSet.has(model.reference) && modelsMap[model.reference],
-    );
+    const installedModels =
+      tab !== MarketplaceTabs.HOME
+        ? allModels.filter(
+            (model) =>
+              installedModelIdsSet.has(model.reference) &&
+              modelsMap[model.reference],
+          )
+        : allModels;
     const sortedModels = [
       ...(currentModel &&
       (installedModelIdsSet.has(currentModel.reference) || !isReplay)
@@ -157,6 +189,7 @@ const TalkToModalView = ({
     recentModelIds,
     searchTerm,
     t,
+    tab,
     widgetsSchemaIds,
   ]);
 
@@ -208,7 +241,7 @@ const TalkToModalView = ({
           `Select an agent for ${isCompareMode ? (isRight ? 'right side' : 'left side') : ''} conversation`,
         )}
       </h3>
-      <div className="relative my-4 w-full">
+      <div className="relative my-4 flex h-[38px] w-full gap-2">
         <IconSearch
           className="absolute left-3 top-1/2 -translate-y-1/2"
           size={18}
@@ -220,6 +253,18 @@ const TalkToModalView = ({
           className="input-form peer m-0 pl-[38px]"
           data-qa="search-agents"
         />
+        <TabButton
+          label="My agents"
+          tab={MarketplaceTabs.MY_WORKSPACE}
+          setTab={setTab}
+          currentTab={tab}
+        />
+        <TabButton
+          label="All agents"
+          tab={MarketplaceTabs.HOME}
+          setTab={setTab}
+          currentTab={tab}
+        />
       </div>
 
       <TalkToSlider
@@ -230,7 +275,7 @@ const TalkToModalView = ({
 
       {isMarketplaceEnabled && (
         <Link
-          href={`/marketplace?${MarketplaceQueryParams.fromConversation}=${ApiUtils.encodeApiUrl(conversation.id)}`}
+          href={`/marketplace?${MarketplaceQueryParams.fromConversation}=${encodeURIComponent(conversation.id)}${tab === MarketplaceTabs.MY_WORKSPACE ? `&${MarketplaceQueryParams.tab}=${tab}` : ''}`}
           shallow
           onClick={handleGoToWorkspace}
           className={classNames(
@@ -239,7 +284,11 @@ const TalkToModalView = ({
           )}
           data-qa="go-to-my-workspace"
         >
-          {t('Go to My workspace')}
+          {t(
+            tab === MarketplaceTabs.MY_WORKSPACE
+              ? 'Go to My workspace'
+              : 'Go to DIAL Marketplace',
+          )}
         </Link>
       )}
 
