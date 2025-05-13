@@ -41,6 +41,11 @@ export class PublishRequestBuilder {
     return this;
   }
 
+  withDisplayAuthor(author: string): PublishRequestBuilder {
+    this.publishRequest.displayAuthor = author;
+    return this;
+  }
+
   withTargetFolder(path: string): PublishRequestBuilder {
     //remove leading and ending slashes
     path = path.replace(/^\/+|\/+$/g, '');
@@ -48,7 +53,8 @@ export class PublishRequestBuilder {
     const rootFolder = this.publishRequest.targetFolder.endsWith('/')
       ? this.publishRequest.targetFolder
       : this.publishRequest.targetFolder.concat('/');
-    this.publishRequest.targetFolder = rootFolder.concat(`${path}/`);
+    this.publishRequest.targetFolder =
+      path !== '' ? rootFolder.concat(`${path}/`) : rootFolder;
     return this;
   }
 

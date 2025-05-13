@@ -1,13 +1,21 @@
+import { BackendEntity } from '@/chat/types/common';
 import dialTest from '@/src/core/dialFixtures';
+import { API } from '@/src/testData';
 import {
   BucketUtil,
+  applicationNamePrefix,
   publicationRequestPrefix,
   unpublishRequestPrefix,
 } from '@/src/utils';
+import { PublishActions } from '@epam/ai-dial-shared';
 
 dialTest(
   'Cleanup admin data',
-  async ({ adminUserItemApiHelper, adminPublicationApiHelper }) => {
+  async ({
+    adminUserItemApiHelper,
+    adminPublicationApiHelper,
+    publishRequestBuilder,
+  }) => {
     await adminUserItemApiHelper.deleteAllData(BucketUtil.getAdminUserBucket());
 
     //list pending requests
@@ -37,6 +45,50 @@ dialTest(
       ) {
         await adminPublicationApiHelper.rejectRequest(publicationRequest);
       }
+    }
+
+    let publishedApps = await adminPublicationApiHelper.listPublishedApps();
+    let publishedE2EApps = publishedApps.items?.filter((a) =>
+      a.name.includes(applicationNamePrefix),
+    );
+
+    for (const app of publishedE2EApps!) {
+      const pathParts = app.url.split('/');
+      let relativePath = '';
+      const publicSegmentIndex = pathParts.indexOf('public');
+
+      if (
+        publicSegmentIndex !== -1 &&
+        publicSegmentIndex < pathParts.length - 2
+      ) {
+        relativePath =
+          pathParts.slice(publicSegmentIndex + 1, -1).join('/') + '/';
+      } else if (
+        publicSegmentIndex !== -1 &&
+        publicSegmentIndex === pathParts.length - 2
+      ) {
+        relativePath = '';
+      }
+
+      const unpublishRequest = publishRequestBuilder
+        .withName(unpublishRequestPrefix + app.name)
+        .withTargetFolder(relativePath)
+        .withDisplayAuthor('dial_admin')
+        .withApplicationResource(
+          {
+            url: app.url,
+            name: app.name,
+            bucket: app.bucket,
+          } as BackendEntity,
+          PublishActions.DELETE,
+        )
+        .build();
+
+      const unpublishResponse =
+        await adminPublicationApiHelper.createUnpublishRequest(
+          unpublishRequest,
+        );
+      await adminPublicationApiHelper.approveRequest(unpublishResponse);
     }
   },
 );
