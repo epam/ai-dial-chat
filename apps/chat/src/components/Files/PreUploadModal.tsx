@@ -15,12 +15,12 @@ import {
   constructPath,
   getFileNameExtension,
   getFileNameWithoutExtension,
+  getRelativePath,
   getShortExtensionsListFromMimeType,
   prepareFileName,
   validatePreUploadFiles,
   validateUploadFiles,
 } from '@/src/utils/app/file';
-import { getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
 import { getFileRootId, isMyBucket } from '@/src/utils/app/id';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
@@ -72,7 +72,6 @@ export const PreUploadDialog = ({
   const { t } = useTranslation(Translation.Chat);
   const files = useAppSelector(FilesSelectors.selectFiles);
   const attachments = useAppSelector(FilesSelectors.selectSelectedFiles);
-  const folders = useAppSelector(FilesSelectors.selectFolders);
 
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const [errorMessage, setErrorMessage] = useState('');
@@ -97,14 +96,7 @@ export const PreUploadDialog = ({
     [rootFolderId],
   );
 
-  const folderPath = useMemo(() => {
-    return (
-      getParentAndCurrentFoldersById(folders, selectedFolderId)
-        .map((folder) => folder.name)
-        .reverse()
-        .join('/') || undefined
-    );
-  }, [folders, selectedFolderId]);
+  const folderPath = getRelativePath(selectedFolderId);
   const allowedExtensions = useMemo(() => {
     if (allowedTypes.includes('*/*')) {
       return [t('all')];
