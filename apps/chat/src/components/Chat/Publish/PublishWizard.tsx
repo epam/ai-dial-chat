@@ -383,7 +383,6 @@ export function PublishModal<
                   entity: entity as PublishRequestDialAIEntityModel,
                   path: trimmedPath,
                   publishAction,
-                  applicationDetails,
                 })
               : []),
           ],
