@@ -1,4 +1,4 @@
-import { concat, forkJoin, of, switchMap } from 'rxjs';
+import { EMPTY, concat, forkJoin, of, switchMap } from 'rxjs';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { CustomApplicationModel } from '@/src/types/applications';
@@ -37,7 +37,7 @@ export function duplicateAndUpdateSourceFolderActions(
     );
   }
 
-  return of();
+  return EMPTY;
 }
 
 // Helper to create actions for copying document-relative URLs
@@ -50,13 +50,26 @@ export function duplicateAndUpdateDocumentsActions(
     ?.document_relative_url as string[] | undefined;
 
   if (documentRelativeUrl?.length && schema) {
-    const copyFilesObservables = documentRelativeUrl.map((url) =>
+    // handle case if some files have the same name
+    const existingNames = new Set<string>();
+    const uniquePaths = documentRelativeUrl.map((url: string) => {
+      const originalName = splitEntityId(url).name;
+      let uniqueName = originalName;
+      let counter = 1;
+
+      while (existingNames.has(uniqueName)) {
+        uniqueName = `${originalName} ${counter}`;
+        counter++;
+      }
+
+      existingNames.add(uniqueName);
+      return constructPath(documentsDestination, uniqueName);
+    });
+
+    const copyFilesObservables = documentRelativeUrl.map((url, i) =>
       FileService.copyFile({
         sourceUrl: url,
-        destinationUrl: constructPath(
-          documentsDestination,
-          splitEntityId(url).name,
-        ),
+        destinationUrl: uniquePaths[i],
       }),
     );
 
@@ -69,9 +82,7 @@ export function duplicateAndUpdateDocumentsActions(
               ...newAgent,
               applicationProperties: {
                 ...newAgent.applicationProperties,
-                document_relative_url: documentRelativeUrl.map((url) =>
-                  constructPath(documentsDestination, splitEntityId(url).name),
-                ),
+                document_relative_url: uniquePaths,
               },
             },
             schema,
@@ -81,5 +92,5 @@ export function duplicateAndUpdateDocumentsActions(
     );
   }
 
-  return of();
+  return EMPTY;
 }
