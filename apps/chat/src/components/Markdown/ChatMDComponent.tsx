@@ -1,14 +1,19 @@
+import { memo } from 'react';
 import { Components } from 'react-markdown';
 import { PluggableList } from 'react-markdown/lib/react-markdown';
 
 import classnames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
+
 import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
-import { convertLaTeXToMarkdownMath } from '@/src/utils/converters';
+import { preprocessLaTeX } from '@/src/utils/app/latex';
+
+import { ScreenState } from '@/src/types/common';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import {
   modelCursorSign,
@@ -110,35 +115,49 @@ const getMDComponents = (
   };
 };
 
-const ChatMDComponent = ({
-  isShowResponseLoader,
-  content,
-  isInner = false,
-}: ChatMDComponentProps) => {
-  const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
-  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+const remarkPlugins: PluggableList = [
+  remarkGfm,
+  [remarkMath, { singleDollarTextMath: true }],
+];
+const rehypePlugins = [
+  [rehypeKatex, { output: 'mathml', strict: false }],
+] as PluggableList;
 
-  const mdClassNames = classnames(
-    'prose min-w-full leading-[150%] dark:prose-invert prose-a:text-primary prose-a:underline',
-    isChatFullWidth && 'max-w-none',
-    isOverlay ? 'text-sm' : 'md:leading-normal',
-  );
+const ChatMDComponent = memo(
+  ({
+    isShowResponseLoader,
+    content,
+    isInner = false,
+  }: ChatMDComponentProps) => {
+    const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
+    const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
-  const processedContent = convertLaTeXToMarkdownMath(content);
+    const screenState = useScreenState();
 
-  return (
-    <MemoizedReactMarkdown
-      className={mdClassNames}
-      remarkPlugins={[remarkGfm, remarkMath]}
-      rehypePlugins={[rehypeKatex] as PluggableList}
-      linkTarget="_blank"
-      components={getMDComponents(isShowResponseLoader, isInner)}
-      transformImageUri={transformUri}
-      transformLinkUri={transformUri}
-    >
-      {`${processedContent}${isShowResponseLoader ? modelCursorSignWithBackquote : ''}`}
-    </MemoizedReactMarkdown>
-  );
-};
+    const mdClassNames = classnames(
+      'prose min-w-full dark:prose-invert prose-a:text-primary prose-a:underline',
+      isChatFullWidth && 'max-w-none',
+      isOverlay && 'text-sm',
+      (screenState === ScreenState.SM || isOverlay) && 'leading-[150%]',
+    );
+
+    const processedContent = preprocessLaTeX(content);
+
+    return (
+      <MemoizedReactMarkdown
+        className={mdClassNames}
+        remarkPlugins={remarkPlugins}
+        rehypePlugins={rehypePlugins}
+        linkTarget="_blank"
+        components={getMDComponents(isShowResponseLoader, isInner)}
+        transformImageUri={transformUri}
+        transformLinkUri={transformUri}
+      >
+        {`${processedContent}${isShowResponseLoader ? modelCursorSignWithBackquote : ''}`}
+      </MemoizedReactMarkdown>
+    );
+  },
+);
+ChatMDComponent.displayName = 'ChatMDComponent';
 
 export default ChatMDComponent;

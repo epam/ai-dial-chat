@@ -1,4 +1,4 @@
-import { translate } from '../utils/app/translation';
+import { translate } from '@/src/utils/app/translation';
 
 export const ORGANIZATION_SECTION_NAME = translate('Organization');
 export const APPROVE_REQUIRED_SECTION_NAME = translate('Approve required');

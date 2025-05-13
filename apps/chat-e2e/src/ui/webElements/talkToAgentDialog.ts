@@ -45,9 +45,18 @@ export class TalkToAgentDialog extends BaseElement {
     return this.versionDropdownMenu;
   }
 
+  public getTalkToAgent(entity: DialAIEntityModel | string) {
+    return this.getAgents().getAgent(entity);
+  }
+
   public async selectAgent(
     entity: DialAIEntityModel,
     marketplacePage: MarketplacePage | OverlayMarketplacePage,
+    options?: {
+      isInstalledDeploymentsUpdated?: boolean;
+      isWorkspaceAgent?: boolean;
+      isEditable?: boolean;
+    },
   ) {
     //check if agent is among recent ones
     const isRecentAgentUsed = await this.useRecentAgent(entity);
@@ -57,26 +66,18 @@ export class TalkToAgentDialog extends BaseElement {
       await marketplacePage.waitForPageLoaded(); // Wait for "My Workspace" page to load
       //use agent if it is visible on "My Workspace" tab
       const marketplaceContainer = marketplacePage.getMarketplaceContainer();
-      const marketplaceAgentsSection = marketplaceContainer
-        .getMarketplace()
-        .getMarketplaceAgentsSection();
+      const marketplace = marketplaceContainer.getMarketplace();
+      const marketplaceAgentsSection =
+        marketplace.getMarketplaceAgentsSection();
+      await marketplace
+        .getMarketplaceHeader()
+        .searchInput.fillInInput(entity.name);
       const isMyWorkspaceAgentUsed =
-        await marketplaceAgentsSection.findAndUseAgent(entity, {
-          isInstalledDeploymentsUpdated: true,
-        });
-      //otherwise go to marketplace "DIAL Marketplace page"
+        await marketplaceAgentsSection.findAndUseAgent(entity, options);
       if (!isMyWorkspaceAgentUsed) {
-        await marketplaceContainer.goToMarketplaceHome();
-        await marketplacePage.waitForPageLoaded(); // Wait for "Home Page" to load
-        const isMarketplaceAgentUsed =
-          await marketplaceAgentsSection.findAndUseAgent(entity, {
-            isInstalledDeploymentsUpdated: true,
-          });
-        if (!isMarketplaceAgentUsed) {
-          throw new Error(
-            `Agent with name: ${entity.name} and version: ${entity.version ?? 'N/A'} is not found!`,
-          );
-        }
+        throw new Error(
+          `Agent with name: ${entity.name} and version: ${entity.version ?? 'N/A'} is not found!`,
+        );
       }
     }
   }
@@ -84,7 +85,7 @@ export class TalkToAgentDialog extends BaseElement {
   private async useRecentAgent(entity: DialAIEntityModel): Promise<boolean> {
     let isAgentSelected = false;
     const agents = this.getAgents();
-    const agentLocator = agents.getAgent(entity);
+    const agentLocator = this.getTalkToAgent(entity);
     //select agent if it is visible
     if (await agentLocator.isVisible()) {
       await agentLocator.click();
@@ -136,7 +137,7 @@ export class TalkToAgentDialog extends BaseElement {
   }
 
   public async selectReplayAsIs() {
-    await this.getAgents().getAgent(ExpectedConstants.replayAsIsLabel).click();
+    await this.getTalkToAgent(ExpectedConstants.replayAsIsLabel).click();
   }
 
   //select agent available on 'Talk to' modal
@@ -144,7 +145,7 @@ export class TalkToAgentDialog extends BaseElement {
     const resp = this.page.waitForResponse((r) =>
       r.url().includes(API.moveHost),
     );
-    await this.getAgents().getAgent(agent).click();
+    await this.getTalkToAgent(agent).click();
     await resp;
   }
 

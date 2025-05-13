@@ -10,20 +10,19 @@ import { getGroupModelKey } from '@/src/utils/app/models';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { ModelsActions } from '@/src/store/models/models.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
+import { Routes } from '@/src/constants/routes';
 
 import { Modal } from '../../Common/Modal';
 import { ApplicationDetailsContent } from './ApplicationContent';
 import { ApplicationDetailsFooter } from './ApplicationFooter';
 import { ApplicationDetailsHeader } from './ApplicationHeader';
-
-import { PublishActions } from '@epam/ai-dial-shared';
 
 interface Props {
   entity: DialAIEntityModel;
@@ -31,9 +30,6 @@ interface Props {
   isMyAppsTab: boolean;
   isSuggested?: boolean;
   onClose: () => void;
-  onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
-  onEdit: (entity: DialAIEntityModel) => void;
-  onDelete: (entity: DialAIEntityModel) => void;
   onChangeVersion: (entity: DialAIEntityModel) => void;
   onBookmarkClick: (entity: DialAIEntityModel) => void;
 }
@@ -44,13 +40,11 @@ export const ApplicationDetails = ({
   isMyAppsTab,
   isSuggested,
   onClose,
-  onPublish,
-  onEdit,
-  onDelete,
   onChangeVersion,
   onBookmarkClick,
 }: Props) => {
   const dispatch = useAppDispatch();
+
   const router = useRouter();
 
   const searchParams = useSearchParams();
@@ -74,14 +68,17 @@ export const ApplicationDetails = ({
 
   const handleUseEntity = useCallback(() => {
     if (widgetsSchemaIds.has(entity.applicationTypeSchemaId as string)) {
-      return router.push('/').then(() => {
-        dispatch(ApplicationActions.selectWidget(entity.reference));
-        dispatch(
-          ConversationsActions.selectConversations({
-            conversationIds: [],
-          }),
-        );
-      });
+      return router
+        .push(Routes.SelectedWidget.replace('[slug]', entity.reference))
+        .then(() => {
+          if (!installedModelIds.has(entity.reference)) {
+            dispatch(
+              ModelsActions.addInstalledModels({
+                references: [entity.reference],
+              }),
+            );
+          }
+        });
     }
 
     dispatch(
@@ -97,6 +94,7 @@ export const ApplicationDetails = ({
     dispatch,
     entity.applicationTypeSchemaId,
     entity.reference,
+    installedModelIds,
     router,
     searchParams,
     widgetsSchemaIds,
@@ -114,13 +112,10 @@ export const ApplicationDetails = ({
       <ApplicationDetailsHeader entity={entity} />
       <ApplicationDetailsContent entity={entity} />
       <ApplicationDetailsFooter
-        onPublish={onPublish}
         onUseEntity={handleUseEntity}
         onChangeVersion={onChangeVersion}
         entity={entity}
         allVersions={filteredEntities}
-        onEdit={onEdit}
-        onDelete={onDelete}
         onBookmarkClick={onBookmarkClick}
       />
     </Modal>

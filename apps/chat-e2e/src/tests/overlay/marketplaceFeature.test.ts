@@ -4,7 +4,8 @@ import dialOverlayTest from '@/src/core/dialOverlayFixtures';
 import { OverlaySandboxUrls } from '@/src/testData';
 
 dialOverlayTest(
-  '[Overlay] DIAL Marketplace feature is enabled - Feature.Marketplace.\n' +
+  '[Overlay] Navigation panel. There is no text-names for buttons. The hight of the panel is 36px.\n' +
+    '[Overlay] DIAL Marketplace feature is enabled - Feature.Marketplace.\n' +
     '[Overlay] Add app button is not available in Overlay (Mobile view).\n' +
     '[Overlay] Add app button on My workspace is unavailable even though all the features for apps creation is on',
   async ({
@@ -22,7 +23,7 @@ dialOverlayTest(
     overlayNavigationPanel,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-4447', 'EPMRTC-4712', 'EPMRTC-5782');
+    setTestIds('EPMRTC-6031', 'EPMRTC-4447', 'EPMRTC-4712', 'EPMRTC-5782');
 
     let conversation: Conversation;
 
@@ -32,20 +33,23 @@ dialOverlayTest(
     });
 
     await dialTest.step(
-      'Verify "Dial Marketplace" buttons are available at the bottom panel',
+      'Verify "Dial Marketplace" buttons are available at the bottom panel, buttons do not have titles',
       async () => {
         await overlayHomePage.navigateToUrl(
           OverlaySandboxUrls.enableMarketplaceUrl,
         );
         await overlayHomePage.waitForPageLoaded();
-        await overlayBaseAssertion.assertElementState(
+        for (const button of [
           overlayNavigationPanel.marketplaceHomeButton,
-          'visible',
-        );
-        await overlayBaseAssertion.assertElementState(
           overlayNavigationPanel.myWorkspaceButton,
-          'visible',
-        );
+          overlayNavigationPanel.backToChatButton,
+        ]) {
+          await overlayBaseAssertion.assertElementState(button, 'visible');
+          await overlayBaseAssertion.assertElementState(
+            overlayNavigationPanel.buttonLabel(button),
+            'hidden',
+          );
+        }
       },
     );
 

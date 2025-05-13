@@ -232,7 +232,6 @@ export const SettingsSelectors = {
   selectThemeHostDefined,
   selectIsIsolatedView,
   selectIsolatedModelId,
-  selectCustomVisualizers,
   selectMappedVisualizers,
   selectIsCustomAttachmentType,
   selectPublicationFilters,

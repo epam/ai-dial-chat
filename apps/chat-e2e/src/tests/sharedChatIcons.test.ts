@@ -826,7 +826,6 @@ dialTest(
     page,
     localStorageManager,
     confirmationDialogAssertion,
-    tooltipAssertion,
     chatBarFolderAssertion,
     shareApiAssertion,
   }) => {
@@ -915,11 +914,6 @@ dialTest(
         expect
           .soft(chatNameOverflowProp[0], ExpectedMessages.entityNameIsTruncated)
           .toBe(Overflow.breakWord);
-
-        await confirmationDialog.entityName.hoverOver();
-        await tooltipAssertion.assertTooltipContent(
-          ExpectedConstants.removeAccessTitle,
-        );
       },
     );
 

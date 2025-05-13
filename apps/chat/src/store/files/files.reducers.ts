@@ -9,8 +9,9 @@ import {
 } from '@/src/utils/app/folders';
 import { getFileRootId } from '@/src/utils/app/id';
 
+import { FeatureType } from '@/src/types/common';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
-import { FolderInterface, FolderType } from '@/src/types/folder';
+import { FolderInterface } from '@/src/types/folder';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
@@ -243,7 +244,7 @@ export const filesSlice = createSlice({
       state.folders.push(
         addGeneratedFolderId({
           name: folderName,
-          type: FolderType.File,
+          type: FeatureType.File,
           folderId: payload.parentId || getFileRootId(),
           status: UploadStatus.LOADED,
         }),
@@ -364,19 +365,6 @@ export const filesSlice = createSlice({
         return file;
       });
     },
-    unpublishFile: (state, { payload }: PayloadAction<{ id: string }>) => {
-      state.files = state.files.map((file) => {
-        if (file.id === payload.id) {
-          return {
-            ...file,
-            //TODO: unpublish file by API
-            isPublished: false,
-          };
-        }
-
-        return file;
-      });
-    },
     updateFoldersStatus: (
       state,
       {
@@ -415,15 +403,6 @@ export const filesSlice = createSlice({
       const filteredFiles = state.files.filter((file) => !file.sharedWithMe);
       state.files = combineEntities(payload.files, filteredFiles);
     },
-    updateFileContent: (
-      state,
-      _action: PayloadAction<{
-        relativePath: string;
-        fileName: string;
-        content: string;
-        contentType: string;
-      }>,
-    ) => state,
     resetAllFoldersStatus: (state) => {
       state.folders = state.folders.map((folder) => ({
         ...folder,
@@ -433,7 +412,5 @@ export const filesSlice = createSlice({
     },
   },
 });
-
-export { FilesSelectors } from './files.selectors';
 
 export const FilesActions = filesSlice.actions;

@@ -159,7 +159,7 @@ pre:has(div.codeblock) {
 
 @layer components {
   .icon-button {
-    @apply rounded border border-transparent p-[5px] outline-none;
+    @apply flex items-center justify-center rounded border border-transparent p-[5px] outline-none;
   }
 
   .icon-button:disabled {
@@ -230,4 +230,8 @@ pre:has(div.codeblock) {
   min-height: 100vh;
   min-height: calc(var(--vh, 1vh) * 100);
   height: calc(var(--vh, 1vh) * 100);
+}
+
+span.katex-mathml {
+  display: none;
 }

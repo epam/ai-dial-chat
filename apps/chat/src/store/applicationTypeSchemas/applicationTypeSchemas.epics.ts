@@ -5,14 +5,13 @@ import { catchError, filter, switchMap } from 'rxjs/operators';
 
 import { combineEpics, ofType } from 'redux-observable';
 
+import { cleanSchemaId } from '@/src/utils/app/application-type-schema';
 import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application-type-schemas-service';
 
 import { AppEpic } from '@/src/types/store';
 
-import {
-  ApplicationTypesSchemasActions,
-  ApplicationTypesSchemasSelectors,
-} from './applicationTypeSchemas.reducers';
+import { ApplicationTypesSchemasActions } from './applicationTypeSchemas.reducers';
+import { ApplicationTypesSchemasSelectors } from './applicationTypeSchemas.selectors';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 
@@ -53,9 +52,7 @@ const fetchDetailedApplicationTypeSchemaEpic: AppEpic = (action$, state$) =>
             state$.value,
           );
           const schema = schemas.find(
-            (schema) =>
-              schema.id.replace(/^https?:\/\//, '') ===
-              decodeURIComponent(slug),
+            (schema) => cleanSchemaId(schema.id) === decodeURIComponent(slug),
           );
           id = schema?.id;
         }

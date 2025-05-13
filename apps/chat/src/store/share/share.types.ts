@@ -9,7 +9,6 @@ import {
 } from '@epam/ai-dial-shared';
 
 export interface ShareState {
-  initialized: boolean;
   status: UploadStatus;
   error: ErrorMessage | undefined;
   invitationId: string | undefined;

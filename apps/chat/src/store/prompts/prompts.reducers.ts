@@ -11,19 +11,18 @@ import {
 import { getPromptRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 
-import { FolderInterface, FolderType } from '@/src/types/folder';
+import { FeatureType } from '@/src/types/common';
+import { FolderInterface } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 import '@/src/types/share';
 import { RootState } from '@/src/types/store';
 
-import * as PromptsSelectors from './prompts.selectors';
+import { PromptsSelectors } from './prompts.selectors';
 import { PromptsState } from './prompts.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import xor from 'lodash-es/xor';
-
-export { PromptsSelectors };
 
 const initialState: PromptsState = {
   initialized: false,
@@ -108,13 +107,6 @@ export const promptsSlice = createSlice({
       );
     },
     savePrompt: (state, _action: PayloadAction<Prompt>) => state,
-    moveOrUpdatePrompt: (
-      state,
-      _action: PayloadAction<{
-        prompt: PromptInfo;
-        newValues: Partial<Prompt>;
-      }>,
-    ) => state,
     movePrompt: (
       state,
       _action: PayloadAction<{
@@ -206,7 +198,7 @@ export const promptsSlice = createSlice({
             } as RootState,
             payload.parentId,
           ),
-        type: FolderType.Prompt,
+        type: FeatureType.Prompt,
         status: UploadStatus.LOADED,
       });
 
@@ -225,7 +217,7 @@ export const promptsSlice = createSlice({
       state.temporaryFolders.push({
         id: payload.id,
         name: payload.name,
-        type: FolderType.Prompt,
+        type: FeatureType.Prompt,
         folderId: payload.folderId || getPromptRootId(),
         temporary: true,
       });
@@ -241,9 +233,6 @@ export const promptsSlice = createSlice({
       state.temporaryFolders = state.temporaryFolders.filter(
         ({ id }) => id !== payload.folderId,
       );
-    },
-    deleteAllTemporaryFolders: (state) => {
-      state.temporaryFolders = [];
     },
     renameTemporaryFolder: (
       state,

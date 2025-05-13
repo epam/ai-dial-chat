@@ -1,6 +1,6 @@
 import { ModalState } from '@/src/types/modal';
 
-import { ApplicationSelectors } from '@/src/store/application/application.reducers';
+import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 

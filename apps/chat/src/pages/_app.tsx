@@ -54,6 +54,10 @@ function App({ Component, ...rest }: AppPropsWithLayout) {
   return (
     <>
       <Head>
+        <meta
+          name="viewport"
+          content="height=device-height ,width=device-width, initial-scale=1, user-scalable=no"
+        />
         {process.env.NODE_ENV !== 'development' && (
           <>
             <link

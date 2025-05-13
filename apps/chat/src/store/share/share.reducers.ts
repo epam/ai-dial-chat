@@ -10,7 +10,6 @@ import { ModalState } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
 import { ShareRelations } from '@/src/types/share';
 
-import * as ShareSelectors from './share.selectors';
 import { ShareState } from './share.types';
 
 import {
@@ -20,11 +19,9 @@ import {
   UploadStatus,
 } from '@epam/ai-dial-shared';
 
-export { ShareSelectors };
 export type { ShareState };
 
 const initialState: ShareState = {
-  initialized: false,
   status: UploadStatus.UNINITIALIZED,
   error: undefined,
   invitationId: undefined,
@@ -48,10 +45,6 @@ export const shareSlice = createSlice({
   name: 'share',
   initialState,
   reducers: {
-    init: (state) => state,
-    initFinish: (state) => {
-      state.initialized = true;
-    },
     share: (
       state,
       {
