@@ -16,13 +16,12 @@ export const convertApplicationTypeSchemaFromApi = (
   };
 };
 
-export function encode(text: string) {
-  const cleanedLink = text.replace(/^https?:\/\//, '');
-  return encodeURIComponent(cleanedLink);
-}
+export const cleanSchemaId = (schemaId: string) =>
+  schemaId.replace(/^https?:\/\//, '');
 
-export function decode(encryptedText: string) {
-  return decodeURIComponent(encryptedText);
+export function encodeSlug(text: string) {
+  const cleanedLink = cleanSchemaId(text);
+  return encodeURIComponent(cleanedLink);
 }
 
 export function pluralizeDisplayName(displayName: string): string {
