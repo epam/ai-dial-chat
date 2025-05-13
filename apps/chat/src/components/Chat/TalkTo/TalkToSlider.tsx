@@ -5,6 +5,7 @@ import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useSwipe } from '@/src/hooks/useSwipe';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   isPlaybackConversation,
@@ -15,11 +16,13 @@ import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 import { Conversation } from '@/src/types/chat';
 import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
+import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+import { ChangeAgentTabs, MarketplaceTabs } from '@/src/constants/marketplace';
 
 import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
 
@@ -191,9 +194,18 @@ interface Props {
   conversation: Conversation;
   items: DialAIEntityModel[];
   onSelectModel: (entity: DialAIEntityModel) => void;
+  onOpenMarketplaceTab: () => void;
+  isMyWorkspace: boolean;
 }
 
-export const TalkToSlider = ({ conversation, items, ...restProps }: Props) => {
+export const TalkToSlider = ({
+  conversation,
+  items,
+  isMyWorkspace,
+  onOpenMarketplaceTab,
+  ...restProps
+}: Props) => {
+  const { t } = useTranslation(Translation.Chat);
   const sliderRef = useRef<HTMLDivElement>(null);
 
   const [activeSlide, setActiveSlide] = useState(0);
@@ -305,6 +317,16 @@ export const TalkToSlider = ({ conversation, items, ...restProps }: Props) => {
   const isMobileOrTablet =
     screenState === ScreenState.SM || screenState === ScreenState.MD;
 
+  const suggestionButton = useMemo(
+    () =>
+      isMyWorkspace ? (
+        <button className="text-accent-primary" onClick={onOpenMarketplaceTab}>
+          {t(`See results from ${ChangeAgentTabs[MarketplaceTabs.HOME]}`)}
+        </button>
+      ) : null,
+    [isMyWorkspace, onOpenMarketplaceTab, t],
+  );
+
   return (
     <>
       <div
@@ -338,10 +360,21 @@ export const TalkToSlider = ({ conversation, items, ...restProps }: Props) => {
             ))
           ) : (
             <div className="flex size-full items-center justify-center">
-              <NoResultsFound />
+              <NoResultsFound
+                additionalText={
+                  isMyWorkspace
+                    ? t(` in ${ChangeAgentTabs[MarketplaceTabs.MY_WORKSPACE]}`)
+                    : ''
+                }
+              >
+                {suggestionButton}
+              </NoResultsFound>
             </div>
           )}
         </div>
+        {sliderGroups.length === 1 && (
+          <div className="flex w-full">{suggestionButton}</div>
+        )}
       </div>
       <div className="mt-4 flex w-full items-center justify-center md:justify-end">
         <div className="flex flex-col items-center md:h-5 md:w-1/2 md:flex-row md:justify-between">
