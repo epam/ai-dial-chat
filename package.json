@@ -160,7 +160,8 @@
   "overrides": {
     "js-yaml": "4.1.0",
     "argparse": "2.0.1",
-    "esbuild": "0.25.1"
+    "esbuild": "0.25.1",
+    "koa": "2.16.1"
   },
   "optionalDependencies": {
     "@nx/playwright": "^20.6.2",
