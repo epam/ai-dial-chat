@@ -599,7 +599,7 @@ dialTest(
     await dialTest.step(
       'Hover over app card, click on 3 dots, select Delete option and confirm',
       async () => {
-        agentElementInDialog = talkToAgents.getAgent(appEntity1);
+        agentElementInDialog = talkToAgentDialog.getTalkToAgent(appEntity1);
         await agentElementInDialog.hoverOver();
         await talkToAgents
           .getAgentElementDotsMenu(agentElementInDialog)

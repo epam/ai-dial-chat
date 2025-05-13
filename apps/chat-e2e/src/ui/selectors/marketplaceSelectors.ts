@@ -25,6 +25,7 @@ export const MarketplaceAgentSelectors = {
   copyIcon: '[data-qa="copy-icon"]',
   copiedLink: '[data-qa="copied-link"]',
   copiedIcon: '[data-qa="copied-icon"]',
+  pencilIcon: '[data-qa="pencil-icon"]',
 };
 
 export const MarketplaceDetailsModal = {
