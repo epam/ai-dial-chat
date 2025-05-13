@@ -228,7 +228,7 @@ export const AgentsTable: React.FC<AgentsListProps> = ({
 
   return (
     <>
-      <SuggestedMessage entities={entities} />
+      <SuggestedMessage entities={entities} className="md:ml-3" />
       <AgentsTableHeader ref={headerRefs} />
       <AgentsListWrapper
         separatorRowId={separatorRowId}
