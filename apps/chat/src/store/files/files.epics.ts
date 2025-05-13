@@ -111,9 +111,10 @@ const uploadFilesSuccessEpic: AppEpic = (action$) =>
         return of(
           UIActions.showSuccessToast(
             translate(
-              'File uploaded successfully to storage at path: {{path}}',
+              'The file "{{name}}" has been uploaded successfully to "{{parentPath}}"',
               {
-                path: `${parentPath}/${name}`,
+                name,
+                parentPath,
               },
             ),
           ),

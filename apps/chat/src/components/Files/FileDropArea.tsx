@@ -1,4 +1,4 @@
-import { IconFileXFilled } from '@tabler/icons-react';
+import { IconFileXFilled, IconFileTextFilled } from '@tabler/icons-react';
 import { DragEvent, ReactNode, useCallback, useState } from 'react';
 
 import classNames from 'classnames';
@@ -8,8 +8,6 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { getFileNameExtension } from '@/src/utils/app/file';
 
 import { Translation } from '@/src/types/translation';
-
-import IconFileTextFilled from '@/public/images/icons/file-text-filled.svg';
 
 const containerId = 'file-drop-area';
 
@@ -105,8 +103,7 @@ export const FileDropArea = ({
             {droppable ? (
               <>
                 <IconFileTextFilled
-                  width={100}
-                  height={100}
+                  size="100px"
                   className="mb-5 text-accent-primary"
                 />
                 <h5 className="mb-4 text-lg font-semibold text-primary">
