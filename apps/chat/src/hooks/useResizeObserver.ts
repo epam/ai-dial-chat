@@ -5,12 +5,14 @@ export const useResizeObserver = (
   callback: ResizeObserverCallback,
 ) => {
   useEffect(() => {
-    const observer = target ? new ResizeObserver(callback) : null;
+    if (!target) return;
+
+    const observer = new ResizeObserver(callback);
 
     if (target) {
-      observer?.observe(target);
+      observer.observe(target);
     }
 
-    return () => observer?.disconnect();
+    return () => observer.disconnect();
   }, [callback, target]);
 };
