@@ -238,7 +238,7 @@ const createConversationEpic: AppEpic = (action$) =>
         actions.push(
           ...getActionsAddFoldersFromFolderId({
             folderId: conversationFolderId,
-            folderType: FeatureType.Chat,
+            featureType: FeatureType.Chat,
             shouldOpen: true,
           }),
         );
@@ -324,7 +324,7 @@ const selectConversationEpic: AppEpic = (action$, state$) =>
           ? of(
               UIActions.setOpenedFoldersIds({
                 openedFolderIds: foldersPaths,
-                folderType: FeatureType.Chat,
+                featureType: FeatureType.Chat,
               }),
             )
           : EMPTY,

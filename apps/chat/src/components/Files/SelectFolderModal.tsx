@@ -197,17 +197,15 @@ export const SelectFolderModal = ({
         type={warningMessage ? 'warning' : 'error'}
       >
         <SelectFolderList
-          folderProps={{
-            searchTerm: searchQuery,
-            allFolders: folders,
-            isInitialRenameEnabled: true,
-            openedFoldersIds,
-            onClickFolder: handleFolderSelect,
-            onRenameFolder: handleRenameFolder,
-            onAddFolder: handleAddFolder,
-            newAddedFolderId: newFolderId,
-            loadingFolderIds: loadingFolderIds,
-          }}
+          searchTerm={searchQuery}
+          allFolders={folders}
+          isInitialRenameEnabled
+          openedFoldersIds={openedFoldersIds}
+          onClickFolder={handleFolderSelect}
+          onRenameFolder={handleRenameFolder}
+          onAddFolder={handleAddFolder}
+          newAddedFolderId={newFolderId}
+          loadingFolderIds={loadingFolderIds}
           handleFolderSelect={handleFolderSelect}
           isAllEntitiesOpened={isAllFilesOpened}
           selectedFolderId={selectedFolderId}

@@ -3,6 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
+import { getParentAndCurrentFolderIdsById } from '@/src/utils/app/folders';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
 
 import { FeatureType } from '@/src/types/common';
@@ -75,6 +76,7 @@ const PromptMoveToDialogComponent = () => {
           values: { folderId },
         }),
       );
+
       if (isPromptModalOpen) {
         dispatch(
           PromptsActions.setSelectedPrompt({
@@ -84,6 +86,12 @@ const PromptMoveToDialogComponent = () => {
         dispatch(PromptsActions.uploadPromptSuccess({ prompt: null }));
       }
 
+      dispatch(
+        UIActions.setOpenedFoldersIds({
+          openedFolderIds: getParentAndCurrentFolderIdsById(folderId),
+          featureType: FeatureType.Prompt,
+        }),
+      );
       dispatch(PromptsActions.setMoveToPrompt());
     },
 

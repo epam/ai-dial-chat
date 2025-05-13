@@ -416,6 +416,9 @@ export const conversationsSlice = createSlice({
         ({ id }) => id !== payload.folderId,
       );
     },
+    clearTemporaryFolders: (state) => {
+      state.temporaryFolders = [];
+    },
     renameTemporaryFolder: (
       state,
       { payload }: PayloadAction<{ folderId: string; name: string }>,

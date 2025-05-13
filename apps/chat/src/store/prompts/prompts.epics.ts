@@ -421,7 +421,7 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
         of(
           UIActions.setOpenedFoldersIds({
             openedFolderIds: updatedOpenedFolderIds,
-            folderType: FeatureType.Prompt,
+            featureType: FeatureType.Prompt,
           }),
         ),
         of(
@@ -590,7 +590,7 @@ const uploadPromptsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
                 ),
                 of(
                   UIActions.setOpenedFoldersIds({
-                    folderType: FeatureType.Prompt,
+                    featureType: FeatureType.Prompt,
                     openedFolderIds: [
                       ...openedFolders,
                       ...paths.filter(

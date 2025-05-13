@@ -27,8 +27,6 @@ import {
   RECENT_PROMPTS_SECTION_NAME,
 } from '@/src/constants/sections';
 
-import { FolderProps } from '@/src/components/Folder/Folder';
-
 import { SelectFolder } from './SelectFolder/SelectFolder';
 import { SelectFolderFooter } from './SelectFolder/SelectFolderFooter';
 import { SelectFolderHeader } from './SelectFolder/SelectFolderHeader';
@@ -65,6 +63,7 @@ export const MoveToDialog: React.FC<Props> = ({
 
   const myFolders = useAppSelector(filteredFoldersSelector);
   const tempFolders = useAppSelector(selectors.selectTemporaryFolders);
+  const newFolderId = useAppSelector(selectors.selectNewAddedFolderId);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
@@ -184,41 +183,51 @@ export const MoveToDialog: React.FC<Props> = ({
     [actions, dispatch, folders, rootFolderId, openedFoldersIds, t],
   );
 
-  const handleSelect = useCallback(() => {
-    onSelect(selectedFolderId ?? rootFolderId);
-  }, [onSelect, rootFolderId, selectedFolderId]);
+  const clearState = useCallback(() => {
+    dispatch(actions.clearTemporaryFolders());
+    dispatch(actions.resetNewFolderId());
+  }, [actions, dispatch]);
 
-  const folderProps: Omit<
-    FolderProps<ShareEntity, unknown>,
-    'currentFolder' | 'featureType'
-  > = useMemo(
-    () => ({
-      searchTerm: searchQuery,
-      allFolders: folders,
-      isInitialRenameEnabled: true,
-      openedFoldersIds,
-      //   newAddedFolderId: newFolderId,
-      onClickFolder: handleFolderSelect,
-      onRenameFolder: handleRenameFolder,
-      onDeleteFolder: handleDeleteFolder,
-      onAddFolder: handleAddFolder,
-    }),
-    [
-      folders,
-      handleAddFolder,
-      handleDeleteFolder,
-      handleFolderSelect,
-      handleRenameFolder,
-      openedFoldersIds,
-      searchQuery,
-    ],
-  );
+  const handleSelect = useCallback(() => {
+    if (selectedFolderId) {
+      const selectedTempFolders = tempFolders.filter(
+        (folder) =>
+          folder.id === selectedFolderId ||
+          selectedFolderId.startsWith(`${folder.id}/`),
+      );
+
+      dispatch(
+        actions.addFolders({
+          folders: selectedTempFolders.map((folder) => ({
+            ...folder,
+            temporary: false,
+          })),
+        }),
+      );
+    }
+
+    clearState();
+    onSelect(selectedFolderId ?? rootFolderId);
+  }, [
+    actions,
+    clearState,
+    dispatch,
+    onSelect,
+    rootFolderId,
+    selectedFolderId,
+    tempFolders,
+  ]);
+
+  const handleClose = useCallback(() => {
+    clearState();
+    onClose();
+  }, [clearState, onClose]);
 
   return (
     <SelectFolder
       isOpen
-      modalDataQa="select-folder-modal"
-      onClose={onClose}
+      modalDataQa="move-to-modal"
+      onClose={handleClose}
       title={t('Move to')}
     >
       <SelectFolderHeader
@@ -227,12 +236,19 @@ export const MoveToDialog: React.FC<Props> = ({
         searchQuery={searchQuery}
       >
         <SelectFolderList
-          folderProps={folderProps}
+          searchTerm={searchQuery}
+          allFolders={folders}
+          isInitialRenameEnabled
+          openedFoldersIds={openedFoldersIds}
+          newAddedFolderId={newFolderId}
+          onClickFolder={handleFolderSelect}
+          onRenameFolder={handleRenameFolder}
+          onDeleteFolder={handleDeleteFolder}
+          onAddFolder={handleAddFolder}
           handleFolderSelect={handleFolderSelect}
           isAllEntitiesOpened
           initiallySelectedFolderId={entity.folderId}
           selectedFolderId={selectedFolderId}
-          highlightTemporaryFolders
           rootFolderName={
             featureType === FeatureType.Chat
               ? CONVERSATIONS_DATE_SECTIONS.today
@@ -241,6 +257,8 @@ export const MoveToDialog: React.FC<Props> = ({
           rootFolderId={rootFolderId}
           showAllRootFolders
           onShowError={setErrorMessage}
+          editOnlyTemporary
+          deleteOnlyTemporary
         />
       </SelectFolderHeader>
       <SelectFolderFooter
