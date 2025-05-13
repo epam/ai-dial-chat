@@ -77,11 +77,14 @@ const PromptMoveToDialogComponent = () => {
         }),
       );
 
+      const regeneratedPromptId = regeneratePromptId({
+        ...moveToPrompt,
+        folderId,
+      }).id;
+
       if (isPromptModalOpen) {
         dispatch(
-          PromptsActions.setSelectedPrompt({
-            promptId: regeneratePromptId({ ...moveToPrompt, folderId }).id,
-          }),
+          PromptsActions.setSelectedPrompt({ promptId: regeneratedPromptId }),
         );
         dispatch(PromptsActions.uploadPromptSuccess({ prompt: null }));
       }
@@ -92,6 +95,7 @@ const PromptMoveToDialogComponent = () => {
           featureType: FeatureType.Prompt,
         }),
       );
+      dispatch(UIActions.setScrollToEntityId(regeneratedPromptId));
       dispatch(PromptsActions.setMoveToPrompt());
     },
 

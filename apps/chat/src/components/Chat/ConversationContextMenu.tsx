@@ -14,7 +14,9 @@ import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import {
   isPlaybackConversation,
   isReplayConversation,
+  regenerateConversationId,
 } from '@/src/utils/app/conversation';
+import { getParentAndCurrentFolderIdsById } from '@/src/utils/app/folders';
 import { getIdWithoutRootPathSegments, isRootId } from '@/src/utils/app/id';
 
 import { Conversation } from '@/src/types/chat';
@@ -208,9 +210,27 @@ export const ConversationContextMenu = ({
           values: { folderId },
         }),
       );
+      dispatch(
+        UIActions.setOpenedFoldersIds({
+          openedFolderIds: getParentAndCurrentFolderIdsById(folderId),
+          featureType: FeatureType.Chat,
+        }),
+      );
+      dispatch(
+        UIActions.setScrollToEntityId(
+          regenerateConversationId({
+            ...conversation,
+            folderId,
+          }).id,
+        ),
+      );
     },
     [allConversations, collapsedSections, conversation, dispatch, t],
   );
+
+  const handleCloseMoveTo = useCallback(() => {
+    setIsShowMoveToModal(false);
+  }, []);
 
   const handleCompare: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
@@ -385,7 +405,7 @@ export const ConversationContextMenu = ({
         <MoveToDialog
           entity={conversation}
           featureType={FeatureType.Chat}
-          onClose={() => setIsShowMoveToModal(false)}
+          onClose={handleCloseMoveTo}
           onSelect={handleMoveToFolder}
         />
       )}
