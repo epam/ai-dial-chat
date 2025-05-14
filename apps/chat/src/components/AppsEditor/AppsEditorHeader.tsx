@@ -249,7 +249,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
           !hasCustomEditor &&
           !isEntityIdPublic({ id: agent?.id as string }) ? (
             <button
-              className="xl:button flex items-center space-x-1 text-accent-primary md:flex"
+              className="button flex items-center space-x-1 text-accent-primary max-xl:p-0 md:flex"
               onClick={handleSaveAndRedirect}
               data-qa="save-and-exit"
             >

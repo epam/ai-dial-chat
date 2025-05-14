@@ -35,7 +35,7 @@ export const GeneralInfoPreview = ({
   return (
     <div className="flex h-full flex-col px-5 py-4 xl:p-6">
       <div className="flex max-w-full items-center justify-between xl:justify-end">
-        <span className="mr-2 hidden min-w-0 shrink grow select-none gap-2 text-primary max-xl:flex">
+        <span className="mr-2 flex min-w-0 shrink grow select-none gap-2 text-primary xl:hidden">
           {t('Preview')}
         </span>
         <div className="w-min border-r border-secondary pr-3 xl:border-none xl:pr-0">

@@ -14,9 +14,9 @@ import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-s
 import {
   ApplicationStatus,
   CustomApplicationModel,
-  PreviewMode,
 } from '@/src/types/applications';
 import { ScreenState } from '@/src/types/common';
+import { PreviewMode } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 

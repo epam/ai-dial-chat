@@ -29,9 +29,9 @@ import {
   ApplicationStatus,
   ApplicationType,
   CustomApplicationModel,
-  PreviewMode,
 } from '@/src/types/applications';
 import { ScreenState } from '@/src/types/common';
+import { PreviewMode } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { ModelsActions } from '@/src/store/actions';
@@ -104,20 +104,18 @@ export const ApplicationSettings: React.FC<Props> = ({
   const isCodeEditorDirty = useAppSelector(CodeEditorSelectors.selectIsDirty);
   const theme = useAppSelector(UISelectors.selectThemeState);
 
-  const [previewMode, setPreviewMode] = useState<PreviewMode>(() => {
-    if (screenState === ScreenState.MD) return PreviewMode.closed;
-    return schema?.[ApplicationTypeSchemaProperties.applicationTypeViewerUrl]
+  const [previewMode, setPreviewMode] = useState<PreviewMode>(
+    screenState === ScreenState.MD ||
+      schema?.[ApplicationTypeSchemaProperties.applicationTypeViewerUrl]
       ? PreviewMode.closed
-      : PreviewMode.half;
-  });
+      : PreviewMode.half,
+  );
 
   useEffect(() => {
-    if (screenState === ScreenState.MD) {
+    if (screenState <= ScreenState.MD && previewMode === PreviewMode.half) {
       setPreviewMode(PreviewMode.closed);
-    } else {
-      setPreviewMode(PreviewMode.half);
     }
-  }, [screenState]);
+  }, [previewMode, screenState]);
 
   const isAppPublic = isEntityIdPublic(applicationData);
   const modelFromState = applicationData
@@ -401,8 +399,7 @@ export const ApplicationSettings: React.FC<Props> = ({
         <div
           className="flex h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-4 transition-all duration-300 ease-in-out hover:cursor-pointer xl:pt-5"
           onClick={() => {
-            if (screenState !== ScreenState.MD)
-              setPreviewMode(PreviewMode.half);
+            if (screenState > ScreenState.MD) setPreviewMode(PreviewMode.half);
           }}
         >
           <button
