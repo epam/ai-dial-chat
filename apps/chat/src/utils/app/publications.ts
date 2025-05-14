@@ -1,11 +1,9 @@
-import { getQuickAppDocumentUrl } from '@/src/utils/app/application';
 import {
   isPlaybackConversation,
   isReplayConversation,
 } from '@/src/utils/app/conversation';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
-import { CustomApplicationModel } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
 import { ApiKeys, FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
@@ -234,19 +232,15 @@ export const getApplicationPublishResources = ({
   entity,
   publishAction,
   path,
-  applicationDetails,
 }: {
   entity: PublishRequestDialAIEntityModel;
   publishAction: PublishActions;
   path: string;
-  applicationDetails?: CustomApplicationModel;
 }) => {
   const iconUrl = entity.iconUrl;
-  const documentUrl = getQuickAppDocumentUrl(applicationDetails);
 
   const resources = [
     iconUrl && !isEntityIdExternal({ id: iconUrl }) ? iconUrl : undefined,
-    ...(documentUrl ? documentUrl : []),
   ];
 
   return resources.reduce(
