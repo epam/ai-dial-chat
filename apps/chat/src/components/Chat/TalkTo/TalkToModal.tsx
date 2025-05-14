@@ -2,8 +2,6 @@ import { IconSearch } from '@tabler/icons-react';
 import { MouseEvent, useCallback, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
-
-
 import Link from 'next/link';
 
 import classNames from 'classnames';
