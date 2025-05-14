@@ -45,6 +45,7 @@ export enum ThemeColorAttributes {
   textAccentTertiary = 'text-accent-tertiary',
   textAccentPrimary = 'text-accent-primary',
   bgLayer3 = 'bg-layer-3',
+  bgAccentPrimary = 'bg-accent-primary',
   bgAccentPrimaryAlpha = 'bg-accent-primary-alpha',
   textPrimary = 'text-primary',
   textError = 'text-error',
@@ -55,4 +56,5 @@ export enum ThemeColorAttributes {
   controlsTextDisable = 'controls-text-disable',
   textAccentSecondary = 'text-accent-secondary',
   textSuccess = 'text-success',
+  controlsBgAccentHover = 'controls-bg-accent-hover',
 }
