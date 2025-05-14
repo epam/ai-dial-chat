@@ -456,6 +456,24 @@ export class ChatOverlayManager {
     return overlay.setOverlayOptions(options);
   }
 
+  public async deleteConversation(id: string, conversationId: string) {
+    const { overlay } = this.getOverlay(id);
+
+    return overlay.deleteConversation(conversationId);
+  }
+
+  public async replayConversation(id: string, conversationId: string) {
+    const { overlay } = this.getOverlay(id);
+
+    return overlay.createPlaybackConversation(conversationId);
+  }
+
+  public async exportConversation(id: string, conversationId: string) {
+    const { overlay } = this.getOverlay(id);
+
+    return overlay.exportConversation(conversationId);
+  }
+
   public subscribe(
     id: string,
     eventType: string,

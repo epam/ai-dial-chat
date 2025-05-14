@@ -20,3 +20,11 @@ export interface CreateConversationResponse {
 export interface SelectConversationResponse {
   conversation: OverlayConversation;
 }
+
+export interface CreatePlaybackConversationResponse {
+  conversation: OverlayConversation;
+}
+
+export interface ExportConversationResponse {
+  conversation: OverlayConversation;
+}

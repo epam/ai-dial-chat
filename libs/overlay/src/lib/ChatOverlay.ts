@@ -2,7 +2,11 @@ import {
   ChatOverlayOptions,
   CreateConversationRequest,
   CreateConversationResponse,
+  CreatePlaybackConversationRequest,
+  CreatePlaybackConversationResponse,
   DeferredRequest,
+  ExportConversationRequest,
+  ExportConversationResponse,
   GetConversationsResponse,
   GetMessagesResponse,
   OverlayEvents,
@@ -382,6 +386,57 @@ export class ChatOverlay {
       OverlayRequests.selectConversation,
       request,
     ) as Promise<SelectConversationResponse>;
+  }
+
+  /**
+   * Delete conversation
+   * @param {string} id - id of conversation to delete
+   */
+  public async deleteConversation(id: string): Promise<void> {
+    const request: SelectConversationRequest = {
+      id,
+    };
+
+    return this.send(
+      OverlayRequests.deleteConversation,
+      request,
+    ) as Promise<void>;
+  }
+
+  /**
+   * Create playback conversation
+   * @param {string} id - id of conversation from create playback
+   * @returns Returns newly created playback conversation info
+   */
+  public async createPlaybackConversation(
+    id: string,
+  ): Promise<CreatePlaybackConversationResponse> {
+    const request: CreatePlaybackConversationRequest = {
+      id,
+    };
+
+    return this.send(
+      OverlayRequests.createPlaybackConversation,
+      request,
+    ) as Promise<CreatePlaybackConversationResponse>;
+  }
+
+  /**
+   * Export conversation
+   * @param {string} id - id of conversation to export
+   * @returns Returns export conversation info
+   */
+  public async exportConversation(
+    id: string,
+  ): Promise<ExportConversationResponse> {
+    const request: ExportConversationRequest = {
+      id,
+    };
+
+    return this.send(
+      OverlayRequests.exportConversation,
+      request,
+    ) as Promise<ExportConversationResponse>;
   }
 
   /**

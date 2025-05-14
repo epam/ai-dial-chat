@@ -10,3 +10,12 @@ export interface CreateConversationRequest {
 export interface SelectConversationRequest {
   id: string;
 }
+export interface DeleteConversationRequest {
+  id: string;
+}
+export interface CreatePlaybackConversationRequest {
+  id: string;
+}
+export interface ExportConversationRequest {
+  id: string;
+}

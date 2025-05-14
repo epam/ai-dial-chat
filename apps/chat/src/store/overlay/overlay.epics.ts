@@ -50,6 +50,7 @@ import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
+import { ImportExportActions } from '../actions';
 import { AuthSelectors } from '../auth/auth.selectors';
 import { ModelsSelectors } from '../models/models.selectors';
 import { OverlayActions } from './overlay.reducers';
@@ -59,6 +60,10 @@ import {
   ChatOverlayOptions,
   CreateConversationRequest,
   CreateConversationResponse,
+  CreatePlaybackConversationRequest,
+  CreatePlaybackConversationResponse,
+  DeleteConversationRequest,
+  ExportConversationRequest,
   Feature,
   GetConversationsResponse,
   GetMessagesResponse,
@@ -112,6 +117,36 @@ export const postMessageMapperEpic: AppEpic = (_, state$) =>
 
               return of(
                 OverlayActions.selectConversation({
+                  requestId,
+                  id: options.id,
+                }),
+              );
+            }
+            case OverlayRequests.deleteConversation: {
+              const options = payload as DeleteConversationRequest;
+
+              return of(
+                OverlayActions.deleteConversation({
+                  requestId,
+                  id: options.id,
+                }),
+              );
+            }
+            case OverlayRequests.createPlaybackConversation: {
+              const options = payload as CreatePlaybackConversationRequest;
+
+              return of(
+                OverlayActions.createPlaybackConversation({
+                  requestId,
+                  id: options.id,
+                }),
+              );
+            }
+            case OverlayRequests.exportConversation: {
+              const options = payload as ExportConversationRequest;
+
+              return of(
+                OverlayActions.exportConversation({
                   requestId,
                   id: options.id,
                 }),
@@ -297,6 +332,130 @@ const createConversationEffectEpic: AppEpic = (action$, state$) =>
             ),
           );
         }),
+      );
+    }),
+  );
+
+const deleteConversationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.deleteConversation.type),
+    switchMap(({ payload: { requestId, id } }) => {
+      const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+      const conversation = ConversationsSelectors.selectConversation(
+        state$.value,
+        id,
+      );
+
+      if (!conversation) {
+        return EMPTY;
+      }
+
+      return concat(
+        of(
+          ConversationsActions.deleteConversations({
+            conversationIds: [conversation.id],
+          }),
+        ),
+        of(
+          OverlayActions.sendPMResponse({
+            type: OverlayRequests.deleteConversation,
+            requestParams: {
+              requestId,
+              hostDomain,
+            },
+          }),
+        ),
+      );
+    }),
+  );
+
+const createPlaybackConversationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.createPlaybackConversation.type),
+    switchMap(({ payload }) => {
+      const conversation = ConversationsSelectors.selectConversation(
+        state$.value,
+        payload.id,
+      );
+
+      if (!conversation) {
+        return EMPTY;
+      }
+
+      return concat(
+        of(ConversationsActions.createNewPlaybackConversation(conversation)),
+        of(OverlayActions.createPlaybackConversationEffect(payload)),
+      );
+    }),
+  );
+
+const createPlaybackConversationEffectEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.createPlaybackConversationEffect.type),
+    switchMap(({ payload: { requestId } }) => {
+      return action$.pipe(
+        ofType(ConversationsActions.saveNewConversationSuccess.type),
+        takeUntil(timer(10000)),
+        filter(Boolean),
+        mergeMap(({ payload: { newConversation } }) => {
+          const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+
+          const { bucket, parentPath } = splitEntityId(newConversation.id);
+          const resultConversation = {
+            ...newConversation,
+            bucket,
+            parentPath,
+          };
+
+          return concat(
+            of(UIActions.setScrollToEntityId(newConversation.id)),
+            of(
+              OverlayActions.sendPMResponse({
+                type: OverlayRequests.createPlaybackConversation,
+                requestParams: {
+                  requestId,
+                  hostDomain,
+                  payload: {
+                    conversation: resultConversation,
+                  } as CreatePlaybackConversationResponse,
+                },
+              }),
+            ),
+          );
+        }),
+      );
+    }),
+  );
+
+const exportConversationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.exportConversation.type),
+    switchMap(({ payload: { requestId, id } }) => {
+      const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+      const conversation = ConversationsSelectors.selectConversation(
+        state$.value,
+        id,
+      );
+
+      if (!conversation) {
+        return EMPTY;
+      }
+
+      return concat(
+        of(
+          ImportExportActions.exportConversation({
+            conversationId: conversation.id,
+          }),
+        ),
+        of(
+          OverlayActions.sendPMResponse({
+            type: OverlayRequests.exportConversation,
+            requestParams: {
+              requestId,
+              hostDomain,
+            },
+          }),
+        ),
       );
     }),
   );
@@ -710,6 +869,10 @@ export const OverlayEpics = combineEpics(
   createConversationEpic,
   createConversationEffectEpic,
   selectConversationEpic,
+  deleteConversationEpic,
+  createPlaybackConversationEpic,
+  createPlaybackConversationEffectEpic,
+  exportConversationEpic,
 
   initOverlayEpic,
   sendPMEventEpic,
