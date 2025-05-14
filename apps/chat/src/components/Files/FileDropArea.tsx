@@ -1,4 +1,4 @@
-import { IconFileFilled, IconFileXFilled } from '@tabler/icons-react';
+import { IconFileTextFilled, IconFileXFilled } from '@tabler/icons-react';
 import { DragEvent, ReactNode, useCallback, useState } from 'react';
 
 import classNames from 'classnames';
@@ -71,10 +71,15 @@ export const FileDropArea = ({
     [droppable, onDrop],
   );
 
+  // reset drag state if drag leave or drag over events were not emitted
+  const handleResetDragOver = useCallback(() => {
+    setIsDraggingOver(false);
+  }, []);
+
   return (
     <div
       id={containerId}
-      onDragOverCapture={handleDragOver}
+      onDragOver={handleDragOver}
       onDrop={handleDrop}
       className={classNames('relative', className)}
     >
@@ -90,11 +95,14 @@ export const FileDropArea = ({
               droppable ? 'cursor-copy' : 'cursor-not-allowed',
             )}
             onDragLeave={handleDragLeave}
+            onBlur={handleResetDragOver}
+            onFocus={handleResetDragOver}
+            onMouseLeave={handleResetDragOver}
           />
           <div className="flex flex-col items-center">
             {droppable ? (
               <>
-                <IconFileFilled
+                <IconFileTextFilled
                   size="100px"
                   className="mb-5 text-accent-primary"
                 />
