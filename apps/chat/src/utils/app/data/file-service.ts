@@ -5,6 +5,7 @@ import { DataService } from '@/src/utils/app/data/data-service';
 import {
   ApiKeys,
   BackendDataNodeType,
+  CopyModel,
   FeatureType,
   MoveModel,
 } from '@/src/types/common';
@@ -214,5 +215,9 @@ export class FileService {
 
   public static moveFile(moveModel: MoveModel): Observable<MoveModel> {
     return DataService.getDataStorage().move(moveModel);
+  }
+
+  public static copyFile(copyModel: CopyModel): Observable<null> {
+    return DataService.getDataStorage().copy(copyModel);
   }
 }

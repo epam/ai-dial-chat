@@ -6,6 +6,7 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
+import { NotFound } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -580,6 +581,72 @@ dialTest(
           ExpectedMessages.noAddonsSelected,
         );
         await conversationSettingsModal.cancelButton.click();
+      },
+    );
+  },
+);
+
+dialTest(
+  'New conversation screen is shown when user clicks on the corresponding button on Error page',
+  async ({
+    dialHomePage,
+    dialErrorPage,
+    baseAssertion,
+    setTestIds,
+    sendMessage,
+    chat,
+    localStorageManager,
+  }) => {
+    setTestIds('EPMRTC-5819');
+    let notFoundElement: NotFound;
+
+    await dialTest.step(
+      'Open Dial non existent page and verify messages and "New Conversation" btn is available',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        await dialErrorPage.navigateToUrl('/errorpage');
+        notFoundElement = dialErrorPage.getNotFound();
+        await baseAssertion.assertElementText(
+          notFoundElement.header,
+          ExpectedConstants.notFoundHeader,
+        );
+        await baseAssertion.assertElementText(
+          notFoundElement.title,
+          ExpectedConstants.notFoundTitle,
+        );
+        await baseAssertion.assertElementText(
+          notFoundElement.description,
+          ExpectedConstants.notFoundDescription,
+        );
+        await baseAssertion.assertElementState(
+          notFoundElement.newConversationButton,
+          'visible',
+        );
+        await baseAssertion.assertElementActionabilityState(
+          notFoundElement.newConversationButton,
+          'enabled',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on "+" button and verify new conversation is created, dial home is opened',
+      async () => {
+        await notFoundElement.newConversationButton.click();
+        await dialHomePage.waitForPageLoaded();
+        await baseAssertion.assertElementState(notFoundElement, 'hidden');
+        await baseAssertion.assertElementState(
+          chat.configureSettingsButton,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          chat.changeAgentButton,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          sendMessage.messageInput,
+          'visible',
+        );
       },
     );
   },

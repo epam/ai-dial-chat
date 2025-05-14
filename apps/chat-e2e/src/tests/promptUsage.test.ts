@@ -136,6 +136,7 @@ dialTest(
     variableModalDialog,
     setTestIds,
     localStorageManager,
+    chat,
   }) => {
     setTestIds('EPMRTC-3823', 'EPMRTC-3803', 'EPMRTC-4371');
     let simplePrompt: Prompt;
@@ -199,7 +200,7 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        await sendMessage.sendMessageButton.click();
+        await chat.sendRequestWithButton();
         await chatMessages.openMessageTemplateModal(1);
 
         await messageTemplateModalAssertion.assertElementState(
@@ -723,6 +724,73 @@ dialSharedWithMeTest(
         apiAssertion.assertRequestPrompt(
           request,
           promptTemplate(promptParamValue) + promptInFolder.content,
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  `View prompt: on 'Use prompt' button click the prompt parameters modal is opened. Prompt contains parameters.`,
+  async ({
+    dialHomePage,
+    promptData,
+    dataInjector,
+    variableModalAssertion,
+    sendMessageAssertion,
+    variableModalDialog,
+    prompts,
+    promptDropdownMenu,
+    promptPreviewModal,
+    setTestIds,
+    localStorageManager,
+  }) => {
+    setTestIds('EPMRTC-6108');
+    let prompt: Prompt;
+    const aVar = 'a';
+    const aVarDefaultValue = '5';
+    const bVar = 'b';
+    const bVarDefaultValue = '4';
+    const promptTemplate = (a: string, b: string) => `${a} - ${b} = `;
+    const promptContent = promptTemplate(
+      `{{${aVar}|${aVarDefaultValue}}}`,
+      `{{${bVar}|${bVarDefaultValue}}}`,
+    );
+
+    await dialTest.step('Prepare a prompt with vars', async () => {
+      prompt = promptData.preparePrompt(promptContent);
+      await dataInjector.createPrompts([prompt]);
+      await localStorageManager.setShowSideBarPanels();
+    });
+
+    await dialTest.step(
+      `Open prompt view modal, click on "Use prompt" button and verify variable modal with default values is displayed`,
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenu.selectMenuOption(MenuOptions.view, {
+          triggeredHttpMethod: 'GET',
+        });
+        await promptPreviewModal.usePromptButton.click();
+        await variableModalAssertion.assertVariableModalState('visible');
+        await variableModalAssertion.assertPromptVariableValue(
+          aVar,
+          aVarDefaultValue,
+        );
+        await variableModalAssertion.assertPromptVariableValue(
+          bVar,
+          bVarDefaultValue,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Submit and verify prompt is applied in the field',
+      async () => {
+        await variableModalDialog.submitButton.click();
+        await sendMessageAssertion.assertMessageValue(
+          promptTemplate(aVarDefaultValue, bVarDefaultValue),
         );
       },
     );

@@ -199,7 +199,8 @@ export const modelsSlice = createSlice({
         oldApplicationId: string;
       }>,
     ) => {
-      const oldModel = state.modelsMap[payload.model.reference];
+      const oldModel =
+        state.modelsMap[payload.model.reference ?? payload.model.id];
       //Copy permissions and sharedWithMe after update
       const newModel: DialAIEntityModel = {
         ...oldModel,
@@ -209,7 +210,10 @@ export const modelsSlice = createSlice({
       };
 
       state.models = state.models.map((model) =>
-        model.reference === newModel.reference ? newModel : model,
+        (model.reference && model.reference === newModel.reference) ||
+        model.id === newModel.id
+          ? newModel
+          : model,
       );
       deleteFromModelsMap(state.modelsMap, payload.oldApplicationId);
       state.modelsMap = addToModelsMap(state.modelsMap, newModel);

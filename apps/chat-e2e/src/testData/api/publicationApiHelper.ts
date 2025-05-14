@@ -50,6 +50,18 @@ export class PublicationApiHelper extends BaseApiHelper {
     return (await response.json()) as PublishedList;
   }
 
+  public async listPublishedApps() {
+    const response = await this.request.get(
+      this.getHost(API.publishedApplicationsHost),
+    );
+    const statusCode = response.status();
+    expect(
+      statusCode,
+      `Received response code: ${statusCode} with body: ${await response.text()}`,
+    ).toBe(200);
+    return (await response.json()) as PublishedList;
+  }
+
   public async getPublicationRequestDetails(publicationUrl: string) {
     const response = await this.request.post(
       this.getHost(API.publicationRequestDetails),
