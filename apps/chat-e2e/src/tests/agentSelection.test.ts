@@ -12,6 +12,7 @@ const publicationsToUnpublish: Publication[] = [];
 dialTest(
   'Previously used model is selected for New conversation: change model in "Change agent"\n' +
     'Previously used model is selected for New conversation: change model in My workspace through Use model\n' +
+    `[Select an agent for conversation] My workspace tab is opened by default if to click on 'Go to My workspace' from 'Select an agent for conversation' window.\n` +
     'RecentModelIds[0] is updated if remove latest used model from My applications\n' +
     'RecentModelIds updated when click "Add the agent to My workspace to continue"',
   async ({
@@ -38,7 +39,13 @@ dialTest(
     toast,
   }) => {
     dialTest.slow();
-    setTestIds('EPMRTC-4878', 'EPMRTC-4880', 'EPMRTC-4356', 'EPMRTC-5168');
+    setTestIds(
+      'EPMRTC-4878',
+      'EPMRTC-4880',
+      'EPMRTC-4386',
+      'EPMRTC-4356',
+      'EPMRTC-5168',
+    );
     const models = GeneratorUtil.randomArrayElements(
       ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
       2,

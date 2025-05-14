@@ -29,6 +29,9 @@ export class PromptPreviewModalWindow extends BaseElement {
   public editPromptButton = this.getChildElementBySelector(
     PromptPreviewModal.editPromptButton,
   );
+  public usePromptButton = this.getChildElementBySelector(
+    PromptPreviewModal.usePromptButton,
+  );
   public promptInfoButton = this.getChildElementBySelector(
     PromptPreviewModal.promptInfoButton,
   );

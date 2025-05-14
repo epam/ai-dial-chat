@@ -8,7 +8,7 @@ import {
   ExpectedMessages,
   MenuOptions,
 } from '@/src/testData';
-import { Colors, Cursors, ThemeColorAttributes } from '@/src/ui/domData';
+import { Cursors, ThemeColorAttributes } from '@/src/ui/domData';
 import { DateUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
@@ -18,18 +18,35 @@ const newDescr = 'test description';
 const newValue = 'what is {{}}';
 
 dialTest(
-  'Create new prompt',
+  'Create new prompt.\n' +
+    'Prompt name can not be empty.\n' +
+    'Prompt body can not be empty.\n' +
+    `View prompt: 'Use prompt' button is enabled for just created new prompt if there is a chat with available input field selected.\n` +
+    `View prompt: on 'Use prompt' button click the modal is closed, the prompt is entered to the input user field. Prompt is without parameters.`,
   async ({
     dialHomePage,
     promptBar,
-    prompts,
     promptModalDialog,
     setTestIds,
     header,
     baseAssertion,
     promptPreviewModal,
+    promptModalAssertion,
+    promptPreviewModalAssertion,
+    promptAssertion,
+    sendMessageAssertion,
   }) => {
-    setTestIds('EPMRTC-945', 'EPMRTC-956', 'EPMRTC-1452');
+    setTestIds(
+      'EPMRTC-945',
+      'EPMRTC-956',
+      'EPMRTC-1452',
+      'EPMRTC-6043',
+      'EPMRTC-6044',
+    );
+    const expectedValidFieldBorderColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.textAccentPrimary,
+    );
+
     await dialTest.step(
       'Hover over "New prompt" button and verify cursor type and color highlight.\n' +
         'Prompt name can not be empty.\n' +
@@ -82,32 +99,13 @@ dialTest(
       async () => {
         await promptModalDialog.setField(promptModalDialog.name, '');
         await promptModalDialog.description.click();
-        const nameBorderColors =
-          await promptModalDialog.name.getAllBorderColors();
-        Object.values(nameBorderColors).forEach((borders) => {
-          borders.forEach((borderColor) => {
-            expect
-              .soft(borderColor, ExpectedMessages.fieldIsHighlightedWithRed)
-              .toBe(Colors.textError);
-          });
-        });
-
-        await promptModalDialog
-          .getFieldBottomMessage(promptModalDialog.name)
-          .waitFor();
-        await expect
-          .soft(
-            promptModalDialog.getFieldBottomMessage(promptModalDialog.name),
-            ExpectedMessages.fieldIsHighlightedWithRed,
-          )
-          .toHaveText(ExpectedConstants.requiredFieldErrorMessage);
-
-        expect
-          .soft(
-            await promptModalDialog.saveButton.isElementEnabled(),
-            ExpectedMessages.buttonIsDisabled,
-          )
-          .toBeFalsy();
+        await promptModalAssertion.assertNameFieldIsInvalid(
+          ExpectedConstants.requiredFieldErrorMessage,
+        );
+        await promptModalAssertion.assertElementActionabilityState(
+          promptModalDialog.saveButton,
+          'disabled',
+        );
       },
     );
 
@@ -116,38 +114,14 @@ dialTest(
       async () => {
         await promptModalDialog.setField(promptModalDialog.name, '   ');
         await promptModalDialog.description.click();
-        const nameBorderColors =
-          await promptModalDialog.name.getAllBorderColors();
-        Object.values(nameBorderColors).forEach((borders) => {
-          borders.forEach((borderColor) => {
-            expect
-              .soft(borderColor, ExpectedMessages.fieldIsHighlightedWithRed)
-              .toBe(Colors.textError);
-          });
-        });
-
-        await promptModalDialog
-          .getFieldBottomMessage(promptModalDialog.name)
-          .waitFor();
-        await expect
-          .soft(
-            promptModalDialog.getFieldBottomMessage(promptModalDialog.name),
-            ExpectedMessages.fieldIsHighlightedWithRed,
-          )
-          .toHaveText(ExpectedConstants.requiredFieldErrorMessage);
-
-        expect
-          .soft(
-            await promptModalDialog.getName(),
-            ExpectedMessages.promptNameUpdated,
-          )
-          .toBe('');
-        expect
-          .soft(
-            await promptModalDialog.saveButton.isElementEnabled(),
-            ExpectedMessages.buttonIsDisabled,
-          )
-          .toBeFalsy();
+        await promptModalAssertion.assertNameFieldIsInvalid(
+          ExpectedConstants.requiredFieldErrorMessage,
+        );
+        await promptModalAssertion.assertNameFieldIsEmpty();
+        await promptModalAssertion.assertElementActionabilityState(
+          promptModalDialog.saveButton,
+          'disabled',
+        );
       },
     );
 
@@ -155,19 +129,14 @@ dialTest(
       'Type value in Name field and verify error message disappears, field has blue border, Save button is enabled',
       async () => {
         await promptModalDialog.setField(promptModalDialog.name, newName);
-        const nameBorderColors =
-          await promptModalDialog.name.getAllBorderColors();
-        Object.values(nameBorderColors).forEach((borders) => {
-          borders.forEach((borderColor) => {
-            expect
-              .soft(borderColor, ExpectedMessages.fieldIsHighlightedWithBlue)
-              .toBe(Colors.controlsBackgroundAccent);
-          });
-        });
-
-        await promptModalDialog
-          .getFieldBottomMessage(promptModalDialog.name)
-          .waitFor({ state: 'hidden' });
+        await promptModalAssertion.assertElementBorderColors(
+          promptModalDialog.name,
+          expectedValidFieldBorderColor,
+        );
+        await promptModalAssertion.assertElementState(
+          promptModalDialog.getFieldBottomMessage(promptModalDialog.name),
+          'hidden',
+        );
       },
     );
 
@@ -176,32 +145,13 @@ dialTest(
       async () => {
         await promptModalDialog.setField(promptModalDialog.prompt, '');
         await promptModalDialog.description.click();
-        const promptBorderColors =
-          await promptModalDialog.prompt.getAllBorderColors();
-        Object.values(promptBorderColors).forEach((borders) => {
-          borders.forEach((borderColor) => {
-            expect
-              .soft(borderColor, ExpectedMessages.fieldIsHighlightedWithRed)
-              .toBe(Colors.textError);
-          });
-        });
-
-        await promptModalDialog
-          .getFieldBottomMessage(promptModalDialog.prompt)
-          .waitFor();
-        await expect
-          .soft(
-            promptModalDialog.getFieldBottomMessage(promptModalDialog.prompt),
-            ExpectedMessages.fieldIsHighlightedWithRed,
-          )
-          .toHaveText(ExpectedConstants.requiredFieldErrorMessage);
-
-        expect
-          .soft(
-            await promptModalDialog.saveButton.isElementEnabled(),
-            ExpectedMessages.buttonIsDisabled,
-          )
-          .toBeFalsy();
+        await promptModalAssertion.assertPromptFieldIsInvalid(
+          ExpectedConstants.requiredFieldErrorMessage,
+        );
+        await promptModalAssertion.assertElementActionabilityState(
+          promptModalDialog.saveButton,
+          'disabled',
+        );
       },
     );
 
@@ -210,38 +160,17 @@ dialTest(
       async () => {
         await promptModalDialog.setField(promptModalDialog.prompt, '   ');
         await promptModalDialog.description.click();
-        const promptBorderColors =
-          await promptModalDialog.prompt.getAllBorderColors();
-        Object.values(promptBorderColors).forEach((borders) => {
-          borders.forEach((borderColor) => {
-            expect
-              .soft(borderColor, ExpectedMessages.fieldIsHighlightedWithRed)
-              .toBe(Colors.textError);
-          });
-        });
-
-        await promptModalDialog
-          .getFieldBottomMessage(promptModalDialog.prompt)
-          .waitFor();
-        await expect
-          .soft(
-            promptModalDialog.getFieldBottomMessage(promptModalDialog.prompt),
-            ExpectedMessages.fieldIsHighlightedWithRed,
-          )
-          .toHaveText(ExpectedConstants.requiredFieldErrorMessage);
-
-        expect
-          .soft(
-            await promptModalDialog.getPrompt(),
-            ExpectedMessages.promptValueUpdated,
-          )
-          .toBe('');
-        expect
-          .soft(
-            await promptModalDialog.saveButton.isElementEnabled(),
-            ExpectedMessages.buttonIsDisabled,
-          )
-          .toBeFalsy();
+        await promptModalAssertion.assertPromptFieldIsInvalid(
+          ExpectedConstants.requiredFieldErrorMessage,
+        );
+        await promptModalAssertion.assertElementText(
+          promptModalDialog.prompt,
+          '',
+        );
+        await promptModalAssertion.assertElementActionabilityState(
+          promptModalDialog.saveButton,
+          'disabled',
+        );
       },
     );
 
@@ -249,39 +178,67 @@ dialTest(
       'Type value in Prompt field and verify error message disappears, field has blue border, Save button is enabled',
       async () => {
         await promptModalDialog.setField(promptModalDialog.prompt, newValue);
-        const promptBorderColors =
-          await promptModalDialog.prompt.getAllBorderColors();
-        Object.values(promptBorderColors).forEach((borders) => {
-          borders.forEach((borderColor) => {
-            expect
-              .soft(borderColor, ExpectedMessages.fieldIsHighlightedWithBlue)
-              .toBe(Colors.controlsBackgroundAccent);
-          });
-        });
-
-        await promptModalDialog
-          .getFieldBottomMessage(promptModalDialog.prompt)
-          .waitFor({ state: 'hidden' });
-
-        expect
-          .soft(
-            await promptModalDialog.saveButton.isElementEnabled(),
-            ExpectedMessages.buttonIsEnabled,
-          )
-          .toBeTruthy();
+        await promptModalAssertion.assertElementBorderColors(
+          promptModalDialog.prompt,
+          expectedValidFieldBorderColor,
+        );
+        await promptModalAssertion.assertElementState(
+          promptModalDialog.getFieldBottomMessage(promptModalDialog.prompt),
+          'hidden',
+        );
+        await promptModalAssertion.assertElementActionabilityState(
+          promptModalDialog.saveButton,
+          'enabled',
+        );
       },
     );
 
     await dialTest.step(
-      'Set Description field value, click Save and verify prompt is created',
+      'Set Description field value, click Save and verify prompt is created, prompt view modal is opened',
       async () => {
         await promptModalDialog.setField(
           promptModalDialog.description,
           newDescr,
         );
         await promptModalDialog.saveButton.click();
-        await promptPreviewModal.closeButton.click();
-        await prompts.getEntityByName(newName).waitFor();
+        await promptPreviewModalAssertion.assertElementState(
+          promptPreviewModal,
+          'visible',
+        );
+        await promptAssertion.assertEntityState({ name: newName }, 'visible');
+        await promptPreviewModalAssertion.assertElementActionabilityState(
+          promptPreviewModal.usePromptButton,
+          'enabled',
+        );
+        await promptPreviewModalAssertion.assertElementBackgroundColors(
+          promptPreviewModal.usePromptButton,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgAccentPrimary),
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Hover over "Use prompt" button and verify its color changes',
+      async () => {
+        await promptPreviewModal.usePromptButton.hoverOver();
+        await promptPreviewModalAssertion.assertElementBackgroundColors(
+          promptPreviewModal.usePromptButton,
+          ThemesUtil.getRgbColorByKey(
+            ThemeColorAttributes.controlsBgAccentHover,
+          ),
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on "Use prompt" button and verify modal is closed, prompt content is set in the request field',
+      async () => {
+        await promptPreviewModal.usePromptButton.click();
+        await promptPreviewModalAssertion.assertElementState(
+          promptPreviewModal.usePromptButton,
+          'hidden',
+        );
+        await sendMessageAssertion.assertMessageValue(newValue);
       },
     );
   },
