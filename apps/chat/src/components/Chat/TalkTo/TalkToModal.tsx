@@ -184,6 +184,7 @@ const TalkToModalView = ({
 
     return orderedModels;
   }, [
+    isMyWorkspace,
     allModels,
     conversation.model.id,
     installedModelIdsSet,

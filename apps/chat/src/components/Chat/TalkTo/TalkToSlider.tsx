@@ -1,12 +1,5 @@
 import { IconCaretLeftFilled, IconCaretRightFilled } from '@tabler/icons-react';
-import {
-  ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -144,6 +137,7 @@ const SliderModelsGroup = ({
   onOpenMarketplaceTab,
   ...restProps
 }: SliderModelsGroupProps) => {
+  const { t } = useTranslation(Translation.Chat);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   return (
@@ -178,8 +172,9 @@ const SliderModelsGroup = ({
               <div
                 className="flex size-full cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-primary hover:bg-layer-3"
                 onClick={onOpenMarketplaceTab}
+                key={SuggestedCard.id}
               >
-                <h3>Couln't find what you need?</h3>
+                <h3>{t("Couln't find what you need?")}</h3>
                 <SuggestionButton />
               </div>
             );

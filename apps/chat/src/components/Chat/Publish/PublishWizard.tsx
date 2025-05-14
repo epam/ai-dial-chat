@@ -406,7 +406,6 @@ export function PublishModal<
       dispatch,
       publishAction,
       type,
-      applicationDetails,
       onClose,
       selectedItemsIds,
     ],
