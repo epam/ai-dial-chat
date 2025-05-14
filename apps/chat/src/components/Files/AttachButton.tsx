@@ -10,6 +10,8 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
+
 import { FeatureType } from '@/src/types/common';
 import { DialFile, DialLink } from '@/src/types/files';
 import { DisplayMenuItemProps } from '@/src/types/menu';
@@ -164,6 +166,7 @@ export const AttachButton = ({
           onClose={() => {
             setIsPreUploadDialogOpened(false);
           }}
+          uploadFolderId={getQuickAttachmentsSavingPath()}
         />
       )}
       {isAttachLinkDialogOpened && (
