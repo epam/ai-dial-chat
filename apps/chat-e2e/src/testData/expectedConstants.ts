@@ -382,7 +382,7 @@ export const API = {
   applicationCreateHost: '/api/applications',
   publishedApplicationsHost:
     'api/publication/applications/public?recursive=true',
-  pagePropsHost: 'development/en.json',
+  pagePropsHost: '/en.json',
 };
 
 export const Import = {
