@@ -37,17 +37,18 @@ const selectIsRecentModelsLoaded = (state: RootState) =>
   rootSelector(state).recentModelsStatus === UploadStatus.LOADED;
 
 const selectSortedModels = createSelector([selectModels], (models) => {
-  const sortedModels = sortBy(models, (model) => model.name.toLowerCase());
-  const sortedAgents = groupModelsAndSaveOrder(sortedModels).flatMap(
-    ({ entities }) => {
-      if (entities.length > 0 && entities[0].id !== entities[0].reference) {
-        sortItemsVersions(entities);
-      }
+  const sortedAgents = sortBy(models, (model) => model.name.toLowerCase());
+  const groupedAndSortedByVersionAgents = groupModelsAndSaveOrder(
+    sortedAgents,
+  ).flatMap(({ entities }) => {
+    if (entities.length > 0 && entities[0].id !== entities[0].reference) {
+      sortItemsVersions(entities);
+    }
 
-      return entities;
-    },
-  );
-  return sortedAgents;
+    return entities;
+  });
+
+  return groupedAndSortedByVersionAgents;
 });
 
 const selectModelTopics = createSelector([selectModels], (models) => {
