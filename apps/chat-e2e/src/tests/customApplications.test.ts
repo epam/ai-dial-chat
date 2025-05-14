@@ -773,7 +773,6 @@ dialTest(
       const topicsInputControlBox1 =
         await appEditorGeneralForm.topicsDropdownContainer.getElementBoundingBox();
       const initialHeight = topicsInputControlBox1!.height;
-      // expect(heightAfterOneTopic).toBeGreaterThan(0);
 
       for (let i = 0; i < numberOfTopicsToSelect; i++) {
         await appEditorGeneralForm.selectTopicOption(topicsToSelect[i]);

@@ -73,7 +73,6 @@ dialTest(
       const unpublishRequest = publishRequestBuilder
         .withName(unpublishRequestPrefix + app.name)
         .withTargetFolder(relativePath)
-        .withDisplayAuthor(process.env.E2E_ADMIN!)
         .withApplicationResource(
           {
             url: app.url,
