@@ -4,6 +4,7 @@ import {
   concat,
   filter,
   forkJoin,
+  groupBy,
   ignoreElements,
   iif,
   map,
@@ -218,15 +219,20 @@ const renameFolderFailEpic: AppEpic = (action$) =>
 const getFilesEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(FilesActions.getFiles.type),
-    switchMap(({ payload }) =>
-      FileService.getFiles(payload.id).pipe(
-        map((files) =>
-          FilesActions.getFilesSuccess({
-            files,
-            foldersSet: new Set([payload.id ?? getFileRootId()]),
-          }),
+    groupBy(({ payload }) => payload.id),
+    mergeMap((group$) =>
+      group$.pipe(
+        switchMap(({ payload }) =>
+          FileService.getFiles(payload.id).pipe(
+            map((files) =>
+              FilesActions.getFilesSuccess({
+                files,
+                foldersSet: new Set([payload.id ?? getFileRootId()]),
+              }),
+            ),
+            catchError(() => of(FilesActions.getFilesFail())),
+          ),
         ),
-        catchError(() => of(FilesActions.getFilesFail())),
       ),
     ),
   );
