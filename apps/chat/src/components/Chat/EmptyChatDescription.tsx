@@ -75,7 +75,7 @@ const EmptyChatDescriptionView = ({
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
-  const models = useAppSelector(ModelsSelectors.selectModels);
+  const models = useAppSelector(ModelsSelectors.selectSortedModels);
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );

@@ -64,7 +64,7 @@ export const TalkToCard = ({
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
-  const allModels = useAppSelector(ModelsSelectors.selectModels);
+  const allModels = useAppSelector(ModelsSelectors.selectSortedModels);
 
   const isMyEntity = isMyApplication(entity);
 

@@ -61,7 +61,7 @@ const TalkToModalView = ({
   const isMarketplaceEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
   );
-  const allModels = useAppSelector(ModelsSelectors.selectModels);
+  const allModels = useAppSelector(ModelsSelectors.selectSortedModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const installedModelIdsSet = useAppSelector(

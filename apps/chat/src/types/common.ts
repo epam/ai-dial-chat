@@ -111,15 +111,13 @@ export interface AdditionalItemData {
   mappedActions?: MappedReplaceActions;
 }
 
-export interface MoveModel {
-  sourceUrl: string;
-  destinationUrl: string;
-  overwrite: boolean;
-}
-
 export interface CopyModel {
   sourceUrl: string;
   destinationUrl: string;
+}
+
+export interface MoveModel extends CopyModel {
+  overwrite: boolean;
 }
 
 export interface DropdownSelectorOption {

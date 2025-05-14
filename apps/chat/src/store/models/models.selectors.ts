@@ -17,6 +17,8 @@ import uniq from 'lodash-es/uniq';
 
 const rootSelector = (state: RootState): ModelsState => state.models;
 
+const selectModels = (state: RootState) => rootSelector(state).models;
+
 const selectModelStatus = (state: RootState) => rootSelector(state).status;
 
 const selectAreModelsLoading = (state: RootState) =>
@@ -34,11 +36,9 @@ const selectModelsError = (state: RootState) => rootSelector(state).error;
 const selectIsRecentModelsLoaded = (state: RootState) =>
   rootSelector(state).recentModelsStatus === UploadStatus.LOADED;
 
-const selectModels = createSelector([rootSelector], (state) => {
-  const sortedResponse = sortBy(state.models, (model) =>
-    model.name.toLowerCase(),
-  );
-  const sortedAgents = groupModelsAndSaveOrder(sortedResponse).flatMap(
+const selectSortedModels = createSelector([selectModels], (models) => {
+  const sortedModels = sortBy(models, (model) => model.name.toLowerCase());
+  const sortedAgents = groupModelsAndSaveOrder(sortedModels).flatMap(
     ({ entities }) => {
       if (entities.length > 0 && entities[0].id !== entities[0].reference) {
         sortItemsVersions(entities);
@@ -50,9 +50,9 @@ const selectModels = createSelector([rootSelector], (state) => {
   return sortedAgents;
 });
 
-const selectModelTopics = createSelector([rootSelector], (state) => {
+const selectModelTopics = createSelector([selectModels], (models) => {
   return sortBy(
-    uniq(state.models?.flatMap((model) => model.topics ?? []) ?? []),
+    uniq(models.flatMap((model) => model.topics ?? []) ?? []),
     (topic) => topic.toLowerCase(),
   );
 });
@@ -105,12 +105,13 @@ const selectAllGroupModelKeySet = (state: RootState, references: string[]) => {
   );
 };
 
-const selectCustomModels = createSelector([rootSelector], (state) => {
-  return state.models.filter((model) => model.reference !== model.id);
+const selectCustomModels = createSelector([selectModels], (models) => {
+  return models.filter((model) => model.reference !== model.id);
 });
 
 export const ModelsSelectors = {
   selectModels,
+  selectSortedModels,
   selectModelsMap,
   selectModelById,
   selectModelsError,

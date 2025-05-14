@@ -16,7 +16,7 @@ export const useWidgets = () => {
   const widgetsSchemaIds = useAppSelector(
     SettingsSelectors.selectWidgetsSchemaIds,
   );
-  const models = useAppSelector(ModelsSelectors.selectModels);
+  const models = useAppSelector(ModelsSelectors.selectSortedModels);
 
   const widgetModels = useMemo(() => {
     return models

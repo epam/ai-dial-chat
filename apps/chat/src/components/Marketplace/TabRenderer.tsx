@@ -136,7 +136,7 @@ export const TabRenderer = () => {
   const searchTerm = useAppSelector(
     MarketplaceSelectors.selectTrimmedSearchTerm,
   );
-  const allModels = useAppSelector(ModelsSelectors.selectModels);
+  const allModels = useAppSelector(ModelsSelectors.selectSortedModels);
   const detailsModel = useAppSelector(MarketplaceSelectors.selectDetailsModel);
   const selectedViewType = useAppSelector(
     MarketplaceSelectors.selectSelectedViewType,
