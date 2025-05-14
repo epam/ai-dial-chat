@@ -73,19 +73,20 @@ export const GeneralInfoView: React.FC<Props> = ({
 
   const screenState = useScreenState();
 
-  const [previewMode, setPreviewMode] = useState<PreviewMode>(() => {
-    return screenState === ScreenState.MD
-      ? PreviewMode.closed
-      : PreviewMode.half;
-  });
+  const [previewMode, setPreviewMode] = useState<PreviewMode>(
+    screenState <= ScreenState.MD ? PreviewMode.closed : PreviewMode.half,
+  );
 
   useEffect(() => {
-    if (screenState === ScreenState.MD) {
-      setPreviewMode(PreviewMode.closed);
-    } else {
+    if (screenState > ScreenState.MD && previewMode !== PreviewMode.half) {
       setPreviewMode(PreviewMode.half);
+    } else if (
+      screenState <= ScreenState.MD &&
+      previewMode === PreviewMode.half
+    ) {
+      setPreviewMode(PreviewMode.closed);
     }
-  }, [screenState]);
+  }, [screenState, previewMode]);
 
   return (
     <div className="flex w-full overflow-hidden">
