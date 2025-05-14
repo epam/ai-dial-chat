@@ -226,7 +226,7 @@ export const MoveToDialog: React.FC<Props> = ({
   return (
     <SelectFolder
       isOpen
-      modalDataQa="move-to-modal"
+      modalDataQa="select-folder-modal"
       onClose={handleClose}
       title={t('Move to')}
     >
