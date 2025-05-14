@@ -204,6 +204,10 @@ const UsedWidgets = () => {
     ModelsSelectors.selectAreModelsLoading,
   );
 
+  const widgetsSchemaIds = useAppSelector(
+    SettingsSelectors.selectWidgetsSchemaIds,
+  );
+
   const { widgetModels, handleWidgetClick } = useWidgets();
 
   const handleOpenWidgetsClick = useCallback(() => {
@@ -235,6 +239,9 @@ const UsedWidgets = () => {
         )
       : IconBrowser;
   }, [isApplicationsInitialised, areModelsLoading, selectedWidget]);
+
+  if ((!widgetModels.length && !areModelsLoading) || !widgetsSchemaIds.size)
+    return null;
 
   return (
     <>
