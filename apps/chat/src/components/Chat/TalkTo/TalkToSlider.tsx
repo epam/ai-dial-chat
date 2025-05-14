@@ -1,5 +1,12 @@
 import { IconCaretLeftFilled, IconCaretRightFilled } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import classNames from 'classnames';
 
@@ -120,11 +127,12 @@ const getDotSizeClass = (
 };
 
 interface SliderModelsGroupProps {
-  modelsGroup: DialAIEntityModel[];
+  modelsGroup: CardType[];
   conversation: Conversation;
   screenState: ScreenState;
   rowsCount: number;
   onSelectModel: (entity: DialAIEntityModel) => void;
+  onOpenMarketplaceTab: () => void;
 }
 
 const SliderModelsGroup = ({
@@ -133,13 +141,14 @@ const SliderModelsGroup = ({
   screenState,
   rowsCount,
   onSelectModel,
+  onOpenMarketplaceTab,
   ...restProps
 }: SliderModelsGroupProps) => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   return (
     <section
-      key={modelsGroup.map((model) => model.id).join('.')}
+      key={modelsGroup.map((model) => model.reference).join('.')}
       className="h-full min-w-full"
       data-qa="agents-section"
     >
@@ -164,6 +173,18 @@ const SliderModelsGroup = ({
             (model.reference === REPLAY_AS_IS_MODEL &&
               isReplayAsIsConversation(conversation));
 
+          if (model === SuggestedCard) {
+            return (
+              <div
+                className="flex size-full cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-primary hover:bg-layer-3"
+                onClick={onOpenMarketplaceTab}
+              >
+                <h3>Couln't find what you need?</h3>
+                <SuggestionButton />
+              </div>
+            );
+          }
+
           return (
             <TalkToCard
               isSelected={isNotPseudoModelSelected || isPseudoModelSelected}
@@ -178,7 +199,7 @@ const SliderModelsGroup = ({
                 model.reference !== PseudoModel.Playback
               }
               key={model.id}
-              entity={model}
+              entity={model as DialAIEntityModel}
               onClick={onSelectModel}
               onSelectVersion={onSelectModel}
               {...restProps}
@@ -190,12 +211,20 @@ const SliderModelsGroup = ({
   );
 };
 
+export const SuggestedCard = {
+  id: 'suggested',
+  reference: 'suggested',
+};
+
+export type CardType = DialAIEntityModel | typeof SuggestedCard;
+
 interface Props {
   conversation: Conversation;
-  items: DialAIEntityModel[];
+  items: CardType[];
   onSelectModel: (entity: DialAIEntityModel) => void;
   onOpenMarketplaceTab: () => void;
   isMyWorkspace: boolean;
+  isSearchMode: boolean;
 }
 
 export const TalkToSlider = ({
@@ -317,16 +346,6 @@ export const TalkToSlider = ({
   const isMobileOrTablet =
     screenState === ScreenState.SM || screenState === ScreenState.MD;
 
-  const suggestionButton = useMemo(
-    () =>
-      isMyWorkspace ? (
-        <button className="text-accent-primary" onClick={onOpenMarketplaceTab}>
-          {t(`See results from ${ChangeAgentTabs[MarketplaceTabs.HOME]}`)}
-        </button>
-      ) : null,
-    [isMyWorkspace, onOpenMarketplaceTab, t],
-  );
-
   return (
     <>
       <div
@@ -355,6 +374,7 @@ export const TalkToSlider = ({
                 conversation={conversation}
                 screenState={screenState}
                 rowsCount={sliderRowsCount}
+                onOpenMarketplaceTab={onOpenMarketplaceTab}
                 {...restProps}
               />
             ))
@@ -367,14 +387,13 @@ export const TalkToSlider = ({
                     : ''
                 }
               >
-                {suggestionButton}
+                {isMyWorkspace && (
+                  <SuggestionButton onClick={onOpenMarketplaceTab} />
+                )}
               </NoResultsFound>
             </div>
           )}
         </div>
-        {sliderGroups.length === 1 && (
-          <div className="flex w-full">{suggestionButton}</div>
-        )}
       </div>
       <div className="mt-4 flex w-full items-center justify-center md:justify-end">
         <div className="flex flex-col items-center md:h-5 md:w-1/2 md:flex-row md:justify-between">
@@ -447,5 +466,18 @@ export const TalkToSlider = ({
         </div>
       </div>
     </>
+  );
+};
+
+interface SuggestionButtonProps {
+  onClick?: () => void;
+}
+
+const SuggestionButton = ({ onClick }: SuggestionButtonProps) => {
+  const { t } = useTranslation(Translation.Chat);
+  return (
+    <button className="text-accent-primary" onClick={onClick}>
+      {t(`See results from ${ChangeAgentTabs[MarketplaceTabs.HOME]}`)}
+    </button>
   );
 };

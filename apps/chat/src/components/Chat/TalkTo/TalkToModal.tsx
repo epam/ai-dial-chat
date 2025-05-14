@@ -2,6 +2,8 @@ import { IconSearch } from '@tabler/icons-react';
 import { MouseEvent, useCallback, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
+
+
 import Link from 'next/link';
 
 import classNames from 'classnames';
@@ -40,7 +42,7 @@ import {
 import { Modal } from '@/src/components/Common/Modal';
 
 import { AgentDialogs } from '../../Common/AgentDialogs';
-import { TalkToSlider } from './TalkToSlider';
+import { CardType, SuggestedCard, TalkToSlider } from './TalkToSlider';
 
 import { Feature } from '@epam/ai-dial-shared';
 import orderBy from 'lodash-es/orderBy';
@@ -135,7 +137,7 @@ const TalkToModalView = ({
             doesEntityContainSearchTerm({ name: entity.version }, searchTerm))),
     );
     const groupedModels = groupModelsAndSaveOrder(filteredModels);
-    const orderedModels = groupedModels.map(({ entities }) => {
+    const orderedModels: CardType[] = groupedModels.map(({ entities }) => {
       const selectedEntity = entities.find(
         ({ reference }) => reference === conversation.model.id,
       );
@@ -177,6 +179,9 @@ const TalkToModalView = ({
         type: EntityType.Model,
         isDefault: false,
       });
+    }
+    if (searchTerm.length > 0 && isMyWorkspace && orderedModels.length > 0) {
+      orderedModels.push(SuggestedCard);
     }
 
     return orderedModels;
@@ -276,6 +281,7 @@ const TalkToModalView = ({
         onSelectModel={handleSelectModel}
         isMyWorkspace={isMyWorkspace}
         onOpenMarketplaceTab={() => setTab(MarketplaceTabs.HOME)}
+        isSearchMode={searchTerm.length > 0}
       />
 
       {isMarketplaceEnabled && (
