@@ -1,6 +1,5 @@
 import { BackendEntity } from '@/chat/types/common';
 import dialTest from '@/src/core/dialFixtures';
-import { API } from '@/src/testData';
 import {
   BucketUtil,
   applicationNamePrefix,
@@ -11,11 +10,7 @@ import { PublishActions } from '@epam/ai-dial-shared';
 
 dialTest(
   'Cleanup admin data',
-  async ({
-    adminUserItemApiHelper,
-    adminPublicationApiHelper,
-    publishRequestBuilder,
-  }) => {
+  async ({ adminUserItemApiHelper, adminPublicationApiHelper }) => {
     await adminUserItemApiHelper.deleteAllData(BucketUtil.getAdminUserBucket());
 
     //list pending requests
@@ -46,9 +41,14 @@ dialTest(
         await adminPublicationApiHelper.rejectRequest(publicationRequest);
       }
     }
+  },
+);
 
-    let publishedApps = await adminPublicationApiHelper.listPublishedApps();
-    let publishedE2EApps = publishedApps.items?.filter((a) =>
+dialTest(
+  'Cleanup published E2E apps',
+  async ({ adminPublicationApiHelper, publishRequestBuilder }) => {
+    const publishedApps = await adminPublicationApiHelper.listPublishedApps();
+    const publishedE2EApps = publishedApps.items?.filter((a) =>
       a.name.includes(applicationNamePrefix),
     );
 
@@ -73,7 +73,7 @@ dialTest(
       const unpublishRequest = publishRequestBuilder
         .withName(unpublishRequestPrefix + app.name)
         .withTargetFolder(relativePath)
-        .withDisplayAuthor('dial_admin')
+        .withDisplayAuthor(process.env.E2E_ADMIN!)
         .withApplicationResource(
           {
             url: app.url,
