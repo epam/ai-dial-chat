@@ -95,7 +95,7 @@ const checkIsWideLayout = (messagesLength: number, isCompareMode: boolean) =>
 const ChatView = memo(() => {
   const dispatch = useAppDispatch();
 
-  const models = useAppSelector(ModelsSelectors.selectSortedModels);
+  const models = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const modelError = useAppSelector(ModelsSelectors.selectModelsError);
   const areModelsLoaded = useAppSelector(ModelsSelectors.selectAreModelsLoaded);

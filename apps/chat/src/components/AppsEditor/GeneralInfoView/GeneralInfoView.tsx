@@ -36,7 +36,7 @@ export const GeneralInfoView: React.FC<Props> = ({
     SettingsSelectors.selectCodeEditorPythonVersions,
   );
 
-  const models = useAppSelector(ModelsSelectors.selectSortedModels);
+  const models = useAppSelector(ModelsSelectors.selectModels);
   const modelsWithFolderId = models.map((model) => ({
     ...model,
     folderId: '',
