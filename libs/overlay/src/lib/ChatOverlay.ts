@@ -12,6 +12,8 @@ import {
   OverlayEvents,
   OverlayRequest,
   OverlayRequests,
+  RenameConversationRequest,
+  RenameConversationResponse,
   SelectConversationRequest,
   SelectConversationResponse,
   SendMessageRequest,
@@ -401,6 +403,27 @@ export class ChatOverlay {
       OverlayRequests.deleteConversation,
       request,
     ) as Promise<void>;
+  }
+
+  /**
+   * Rename conversation
+   * @param {string} id - id of conversation to rename
+   * @param {string} newName - new name of conversation
+   * @returns Returns renamed conversation info
+   */
+  public async renameConversation(
+    id: string,
+    newName: string,
+  ): Promise<RenameConversationResponse> {
+    const request: RenameConversationRequest = {
+      id,
+      newName,
+    };
+
+    return this.send(
+      OverlayRequests.renameConversation,
+      request,
+    ) as Promise<RenameConversationResponse>;
   }
 
   /**

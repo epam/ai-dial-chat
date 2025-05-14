@@ -15,6 +15,7 @@ import {
   ExportConversationRequest,
   OverlayEvents,
   OverlayRequests,
+  RenameConversationRequest,
   SelectConversationRequest,
   SendMessageRequest,
   SetSystemPromptRequest,
@@ -51,6 +52,14 @@ export const overlaySlice = createSlice({
     deleteConversation: (
       state,
       _action: PayloadAction<WithRequestId<DeleteConversationRequest>>,
+    ) => state,
+    renameConversation: (
+      state,
+      _action: PayloadAction<WithRequestId<RenameConversationRequest>>,
+    ) => state,
+    renameConversationEffect: (
+      state,
+      _action: PayloadAction<WithRequestId<RenameConversationRequest>>,
     ) => state,
     createPlaybackConversation: (
       state,

@@ -22,7 +22,11 @@ import {
 
 import { combineEpics, ofType } from 'redux-observable';
 
-import { parseCommaSeparatedList } from '@/src/utils/app/common';
+import {
+  doesHaveDotsInTheEnd,
+  isEntityNameOnSameLevelUnique,
+  parseCommaSeparatedList,
+} from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import {
   getActionsAddFoldersFromFolderId,
@@ -70,6 +74,8 @@ import {
   OverlayEvents,
   OverlayRequest,
   OverlayRequests,
+  RenameConversationRequest,
+  RenameConversationResponse,
   Role,
   SelectConversationRequest,
   SelectConversationResponse,
@@ -129,6 +135,17 @@ export const postMessageMapperEpic: AppEpic = (_, state$) =>
                 OverlayActions.deleteConversation({
                   requestId,
                   id: options.id,
+                }),
+              );
+            }
+            case OverlayRequests.renameConversation: {
+              const options = payload as RenameConversationRequest;
+
+              return of(
+                OverlayActions.renameConversation({
+                  requestId,
+                  id: options.id,
+                  newName: options.newName,
                 }),
               );
             }
@@ -418,6 +435,87 @@ const createPlaybackConversationEffectEpic: AppEpic = (action$, state$) =>
                   payload: {
                     conversation: resultConversation,
                   } as CreatePlaybackConversationResponse,
+                },
+              }),
+            ),
+          );
+        }),
+      );
+    }),
+  );
+
+const renameConversationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.renameConversation.type),
+    switchMap(({ payload }) => {
+      const conversations = ConversationsSelectors.selectConversations(
+        state$.value,
+      );
+      const conversation = ConversationsSelectors.selectConversation(
+        state$.value,
+        payload.id,
+      );
+
+      if (
+        !conversation ||
+        !isEntityNameOnSameLevelUnique(
+          payload.newName,
+          conversation,
+          conversations,
+        ) ||
+        doesHaveDotsInTheEnd(payload.newName)
+      ) {
+        return EMPTY;
+      }
+
+      return concat(
+        of(
+          ConversationsActions.updateConversation({
+            id: conversation.id,
+            values: { name: payload.newName, isNameChanged: true },
+          }),
+        ),
+        of(OverlayActions.renameConversationEffect(payload)),
+      );
+    }),
+  );
+
+const renameConversationEffectEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.renameConversationEffect.type),
+    switchMap(({ payload: { requestId } }) => {
+      return action$.pipe(
+        ofType(ConversationsActions.updateConversationSuccess.type),
+        takeUntil(timer(10000)),
+        filter(Boolean),
+        mergeMap(({ payload: { id } }) => {
+          const conversation = ConversationsSelectors.selectConversation(
+            state$.value,
+            id,
+          );
+
+          if (!conversation) return EMPTY;
+
+          const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+
+          const { bucket, parentPath } = splitEntityId(conversation.id);
+          const resultConversation = {
+            ...conversation,
+            bucket,
+            parentPath,
+          };
+
+          return concat(
+            of(UIActions.setScrollToEntityId(conversation.id)),
+            of(
+              OverlayActions.sendPMResponse({
+                type: OverlayRequests.renameConversation,
+                requestParams: {
+                  requestId,
+                  hostDomain,
+                  payload: {
+                    conversation: resultConversation,
+                  } as RenameConversationResponse,
                 },
               }),
             ),
@@ -873,6 +971,8 @@ export const OverlayEpics = combineEpics(
   createPlaybackConversationEpic,
   createPlaybackConversationEffectEpic,
   exportConversationEpic,
+  renameConversationEpic,
+  renameConversationEffectEpic,
 
   initOverlayEpic,
   sendPMEventEpic,

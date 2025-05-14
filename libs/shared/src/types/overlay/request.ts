@@ -13,6 +13,10 @@ export interface SelectConversationRequest {
 export interface DeleteConversationRequest {
   id: string;
 }
+export interface RenameConversationRequest {
+  id: string;
+  newName: string;
+}
 export interface CreatePlaybackConversationRequest {
   id: string;
 }

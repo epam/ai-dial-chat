@@ -450,6 +450,16 @@ export class ChatOverlayManager {
     return overlay.selectConversation(conversationId);
   }
 
+  public async renameConversation(
+    id: string,
+    conversationId: string,
+    newName: string,
+  ) {
+    const { overlay } = this.getOverlay(id);
+
+    return overlay.renameConversation(conversationId, newName);
+  }
+
   public async setOverlayOptions(id: string, options: ChatOverlayOptions) {
     const { overlay } = this.getOverlay(id);
 

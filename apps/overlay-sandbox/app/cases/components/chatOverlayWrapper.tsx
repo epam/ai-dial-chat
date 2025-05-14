@@ -31,6 +31,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
   const [conversations, setConversations] = useState<OverlayConversation[]>([]);
   const [dialogInfo, setDialogInfo] = useState('');
   const [conversationIdInputValue, setConversationIdInputValue] = useState('');
+  const [conversationNewName, setConversationNewName] = useState('');
 
   const handleDisplayInformation = useCallback((textToShow: string) => {
     dialogRef.current?.showModal();
@@ -69,6 +70,17 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
   const handleExportConversation = useCallback(async () => {
     await overlay.current?.exportConversation(conversationIdInputValue);
   }, [conversationIdInputValue]);
+
+  const handleRenameConversation = useCallback(async () => {
+    const replayResult = await overlay.current?.renameConversation(
+      conversationIdInputValue,
+      conversationNewName,
+    );
+
+    handleDisplayInformation(
+      JSON.stringify(replayResult?.conversation, null, 2),
+    );
+  }, [conversationIdInputValue, conversationNewName, handleDisplayInformation]);
 
   useEffect(() => {
     if (!overlay.current) {
@@ -263,6 +275,22 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
                 >
                   Trigger Export conversation by source conversation ID
                 </button>
+                <div>
+                  <button
+                    className="button"
+                    onClick={handleRenameConversation}
+                    data-qa="rename-conversation-by-id"
+                  >
+                    Rename conversation by source conversation ID
+                  </button>
+                  <input
+                    className="border"
+                    placeholder="New name"
+                    value={conversationNewName}
+                    onChange={(e) => setConversationNewName(e.target.value)}
+                    data-qa="conversation-new-name"
+                  />
+                </div>
               </div>
             </div>
           </div>

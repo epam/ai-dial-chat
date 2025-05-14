@@ -21,6 +21,10 @@ export interface SelectConversationResponse {
   conversation: OverlayConversation;
 }
 
+export interface RenameConversationResponse {
+  conversation: OverlayConversation;
+}
+
 export interface CreatePlaybackConversationResponse {
   conversation: OverlayConversation;
 }

@@ -9,6 +9,7 @@ export enum OverlayRequests {
   selectConversation = 'SELECT_CONVERSATION',
   createConversation = 'CREATE_CONVERSATION',
   deleteConversation = 'DELETE_CONVERSATION',
+  renameConversation = 'RENAME_CONVERSATION',
   createPlaybackConversation = 'CREATE_PLAYBACK_CONVERSATION',
   exportConversation = 'EXPORT_CONVERSATION',
 }
