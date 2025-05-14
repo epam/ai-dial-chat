@@ -85,6 +85,7 @@ import { PublicationApiHelper } from '@/src/testData/api/publicationApiHelper';
 import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
+import { DialErrorPage } from '@/src/ui/pages/DialErrorPage';
 import { AccountSettings } from '@/src/ui/webElements/accountSettings';
 import { Addons } from '@/src/ui/webElements/addons';
 import { AddonsDialog } from '@/src/ui/webElements/addonsDialog';
@@ -152,6 +153,7 @@ export const stateFilePath = (index: number) =>
 const dialTest = test.extend<{
   beforeTestCleanup: string;
   dialHomePage: DialHomePage;
+  dialErrorPage: DialErrorPage;
   marketplacePage: MarketplacePage;
   appEditorPage: AppEditorPage;
   appContainer: AppContainer;
@@ -408,6 +410,10 @@ const dialTest = test.extend<{
   dialHomePage: async ({ page }, use) => {
     const dialHomePage = new DialHomePage(page);
     await use(dialHomePage);
+  },
+  dialErrorPage: async ({ page }, use) => {
+    const dialErrorPage = new DialErrorPage(page);
+    await use(dialErrorPage);
   },
   marketplacePage: async ({ page }, use) => {
     const marketplacePage = new MarketplacePage(page);
