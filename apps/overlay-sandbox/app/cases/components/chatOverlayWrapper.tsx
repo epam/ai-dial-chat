@@ -138,87 +138,94 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
         }}
       ></div>
 
-      <div className="flex max-w-[300px] flex-col gap-2">
+      <div className="flex max-w-[600px] flex-col gap-2">
         <BackToButton />
         <details open={true} id="chat-actions">
           <summary>Chat actions</summary>
 
-          <div className="flex flex-col gap-2">
-            <button
-              className="button"
-              onClick={() => {
-                overlay.current?.sendMessage('Hello');
-              }}
-              data-qa="send-message"
-            >
-              Send &apos;Hello&apos; to Chat
-            </button>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-col gap-2">
+              <button
+                className="button"
+                onClick={() => {
+                  overlay.current?.sendMessage('Hello');
+                }}
+                data-qa="send-message"
+              >
+                Send &apos;Hello&apos; to Chat
+              </button>
 
-            <button
-              className="button"
-              onClick={() => {
-                overlay.current?.setSystemPrompt(
-                  'End each word with string "!?!?!"',
-                );
-              }}
-              data-qa="set-sys-prompt"
-            >
-              Set system prompt: End each word with string &quot;!?!?!&quot;
-            </button>
-
-            <button
-              className="button"
-              onClick={async () => {
-                const messages = await overlay.current?.getMessages();
-
-                handleDisplayInformation(JSON.stringify(messages, null, 2));
-              }}
-              data-qa="get-messages"
-            >
-              Get messages
-            </button>
-
-            <button
-              className="button"
-              onClick={async () => {
-                const conversations = await overlay.current?.getConversations();
-
-                handleDisplayInformation(
-                  JSON.stringify(conversations, null, 2),
-                );
-              }}
-              data-qa="get-conversations"
-            >
-              Get conversations
-            </button>
-
-            <button
-              className="button"
-              onClick={async () => {
-                const conversation =
-                  await overlay.current?.createConversation();
-
-                handleDisplayInformation(JSON.stringify(conversation, null, 2));
-              }}
-              data-qa="create-conversation"
-            >
-              Create conversation
-            </button>
-
-            <button
-              className="button"
-              onClick={async () => {
-                const conversation =
-                  await overlay.current?.createConversation(
-                    'test-inner-folder',
+              <button
+                className="button"
+                onClick={() => {
+                  overlay.current?.setSystemPrompt(
+                    'End each word with string "!?!?!"',
                   );
+                }}
+                data-qa="set-sys-prompt"
+              >
+                Set system prompt: End each word with string &quot;!?!?!&quot;
+              </button>
 
-                handleDisplayInformation(JSON.stringify(conversation, null, 2));
-              }}
-              data-qa="create-conversation-in-folder"
-            >
-              Create conversation in inner folder
-            </button>
+              <button
+                className="button"
+                onClick={async () => {
+                  const messages = await overlay.current?.getMessages();
+
+                  handleDisplayInformation(JSON.stringify(messages, null, 2));
+                }}
+                data-qa="get-messages"
+              >
+                Get messages
+              </button>
+
+              <button
+                className="button"
+                onClick={async () => {
+                  const conversations =
+                    await overlay.current?.getConversations();
+
+                  handleDisplayInformation(
+                    JSON.stringify(conversations, null, 2),
+                  );
+                }}
+                data-qa="get-conversations"
+              >
+                Get conversations
+              </button>
+
+              <button
+                className="button"
+                onClick={async () => {
+                  const conversation =
+                    await overlay.current?.createConversation();
+
+                  handleDisplayInformation(
+                    JSON.stringify(conversation, null, 2),
+                  );
+                }}
+                data-qa="create-conversation"
+              >
+                Create conversation
+              </button>
+
+              <button
+                className="button"
+                onClick={async () => {
+                  const conversation =
+                    await overlay.current?.createConversation(
+                      'test-inner-folder',
+                    );
+
+                  handleDisplayInformation(
+                    JSON.stringify(conversation, null, 2),
+                  );
+                }}
+                data-qa="create-conversation-in-folder"
+              >
+                Create conversation in inner folder
+              </button>
+            </div>
 
             <div className="flex flex-col gap-1 border p-1">
               <textarea
