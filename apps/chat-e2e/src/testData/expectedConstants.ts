@@ -223,6 +223,7 @@ export const ExpectedConstants = {
     'Publishing failed. You are only allowed to publish conversations with attachments from "All files"',
   marketplacePath: '/marketplace',
   workspacePath: () => `${ExpectedConstants.marketplacePath}?tab=workspace`,
+  createCustomAppPath: '/apps-editor/custom%20app',
   noWorkspaceAgentsFoundMessage:
     'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
   noMarketplaceAgentsFoundMessage: `Sorry, we couldn't find any results for your search.`,
@@ -232,6 +233,12 @@ export const ExpectedConstants = {
   copiedLinkText: 'Copied!',
   copyLinkText: 'Copy link',
   copiedToastMessage: 'Link copied!',
+  customApplicationDescriptionTooltip:
+    'The first paragraph serves as a short description. To create an extended description, enter two line breaks and start the second paragraph.',
+  customApplicationFeaturesTooltip:
+    'Enter key-value pairs for rate_endpoint and/or configuration_endpoint in JSON format.',
+  customApplicationAttachmentsTypesTooltip:
+    "Input the MIME type and press 'Enter' to add",
   notFoundHeader: '404',
   notFoundTitle: 'Page not found',
   notFoundDescription: `It seems like the page you're looking for doesn't exist or you don't have access.`,

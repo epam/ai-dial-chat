@@ -43,6 +43,10 @@ export class BaseElement {
     return this.createElementFromLocator(this.rootLocator.locator(selector));
   }
 
+  public getChildButtonElement(): BaseElement {
+    return this.getChildElementBySelector(Tags.button);
+  }
+
   public getElementLocatorByText(
     text: string | RegExp,
     index?: number,
