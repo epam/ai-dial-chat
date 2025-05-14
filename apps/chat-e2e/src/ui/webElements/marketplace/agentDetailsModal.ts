@@ -75,6 +75,7 @@ export class AgentDetailsModal extends BaseElement {
     this.applicationContent.getChildElementBySelector(
       MarketplaceDetailsModal.applicationInformation,
     );
+  public icon = this.getElementIcon(this.rootLocator);
 
   public async clickUseButton({
     isInstalledDeploymentsUpdated = false,

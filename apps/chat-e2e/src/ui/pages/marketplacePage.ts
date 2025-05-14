@@ -1,6 +1,6 @@
 import config from '@/config/chat.playwright.config';
 import { API, ExpectedConstants } from '@/src/testData';
-import { BasePage } from '@/src/ui/pages/basePage';
+import { BasePage, ExpectedApiResponse } from '@/src/ui/pages/basePage';
 import { MarketplaceContainer } from '@/src/ui/webElements/marketplace/marketplaceContainer';
 
 export class MarketplacePage extends BasePage {
@@ -13,41 +13,96 @@ export class MarketplacePage extends BasePage {
     return this.marketplaceContainer;
   }
 
-  async openMyWorkspacePage({
-    updateInstalledDeployments = true,
-  }: { updateInstalledDeployments?: boolean } = {}) {
-    if (updateInstalledDeployments) {
-      const resp = this.page.waitForResponse(
-        (resp) =>
-          resp.url().includes(API.installedDeploymentsHost()) &&
-          resp.request().method() === 'PUT' &&
-          resp.status() === 200,
-      );
-      await this.navigateToUrl(ExpectedConstants.workspacePath());
-      await resp;
-    } else {
-      await this.navigateToUrl(ExpectedConstants.workspacePath());
-    }
+  async openMyWorkspacePage(
+    options: {
+      updateInstalledDeployments?: boolean;
+      getInstalledDeployments?: boolean;
+      getPublishedApplications?: boolean;
+    } = {
+      updateInstalledDeployments: true,
+      getInstalledDeployments: false,
+      getPublishedApplications: true,
+    },
+  ): Promise<void> {
+    await this.openMarketplaceUrl(ExpectedConstants.workspacePath(), {
+      updateInstalledDeployments: options.updateInstalledDeployments,
+      getInstalledDeployments: options.getInstalledDeployments,
+      getPublishedApplications: options.getPublishedApplications,
+    });
     await this.waitForPageLoaded();
   }
 
-  async openMarketplacePage() {
-    const responses = [];
-    const hostsArray = [
-      API.publishedApplicationsHost,
-      API.installedDeploymentsHost(),
-    ];
-    for (const host of hostsArray) {
-      const resp = this.page.waitForResponse(
-        (resp) => resp.url().includes(host) && resp.status() === 200,
-      );
-      responses.push(resp);
-    }
-    await this.navigateToUrl(ExpectedConstants.marketplacePath);
-    for (const resp of responses) {
-      await resp;
-    }
+  async openMarketplacePage(
+    options: {
+      updateInstalledDeployments?: boolean;
+      getInstalledDeployments?: boolean;
+      getPublishedApplications?: boolean;
+    } = {
+      updateInstalledDeployments: true,
+      getInstalledDeployments: false,
+      getPublishedApplications: true,
+    },
+  ): Promise<void> {
+    await this.openMarketplaceUrl(ExpectedConstants.marketplacePath, {
+      updateInstalledDeployments: options.updateInstalledDeployments,
+      getInstalledDeployments: options.getInstalledDeployments,
+      getPublishedApplications: options.getPublishedApplications,
+    });
     await this.waitForPageLoaded();
+  }
+
+  async openCreateCustomAppPage(
+    options: {
+      updateInstalledDeployments?: boolean;
+      getInstalledDeployments?: boolean;
+      getPublishedApplications?: boolean;
+    } = {
+      updateInstalledDeployments: true,
+      getInstalledDeployments: false,
+      getPublishedApplications: false,
+    },
+  ): Promise<void> {
+    await this.openMarketplaceUrl(ExpectedConstants.createCustomAppPath, {
+      updateInstalledDeployments: options.updateInstalledDeployments,
+      getInstalledDeployments: options.getInstalledDeployments,
+      getPublishedApplications: options.getPublishedApplications,
+    });
+  }
+
+  private async openMarketplaceUrl(
+    url: string,
+    options: {
+      updateInstalledDeployments?: boolean;
+      getInstalledDeployments?: boolean;
+      getPublishedApplications?: boolean;
+    } = {},
+  ): Promise<void> {
+    const expectedResponses: ExpectedApiResponse[] = [];
+
+    if (options.getInstalledDeployments) {
+      expectedResponses.push({
+        apiMethod: 'GET',
+        urlPattern: API.installedDeploymentsHost(),
+      });
+    }
+    if (options.getPublishedApplications) {
+      expectedResponses.push({
+        apiMethod: 'GET',
+        urlPattern: API.publishedApplicationsHost,
+      });
+    }
+
+    if (options.updateInstalledDeployments) {
+      expectedResponses.push({
+        apiMethod: 'PUT',
+        urlPattern: API.installedDeploymentsHost(),
+      });
+    }
+
+    await this.waitForExpectedResponses(
+      () => this.navigateToUrl(url),
+      expectedResponses,
+    );
   }
 
   async waitForPageLoaded() {
