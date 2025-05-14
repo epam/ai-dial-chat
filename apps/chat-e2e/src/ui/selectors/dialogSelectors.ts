@@ -251,19 +251,35 @@ export const ApplicationEditorHeader = {
 export const ApplicationPreviewSelector = {
   containerGeneralInfo: '[data-qa="app-preview-general-info"]',
   containerAppSettings: '[data-qa="app-settings-chat-mode"]',
+  previewIconContainer: '[data-qa="entity-icon"]',
+  previewAgentName: '[data-qa="agent-name"]',
+  previewTopicsContainer: '[data-qa="app-topics"]',
+  previewInformationSection: '[data-qa="application-information"]',
+  previewAuthorContainer: '[data-qa="author-container"]',
+  previewAuthorValue: '[data-qa="author"]',
 };
 
 export const AddApplicationGeneralInfoFormSelector = {
   appGeneralFormContainer: '[data-qa="app-general-form"]',
   name: '#name',
   version: '#version',
-  icon: '#icon',
-  description: '#description',
-  topics: '#topics',
+  iconField: '[data-qa="custom-logo"]',
+  descriptionInput: '#description',
+  descriptionLabel: '[for="description"]',
+  topicsDropdownContainer: '#topics-dropdown',
   nextButton: '[data-qa="save-application-general-info"]',
+  topicsDropdownToggle: '[class*="-indicatorContainer"]', // Selector for the dropdown arrow within the container
+  topicsDropdownMenu: '[class*="-menu"]', // Selector for the opened menu container within the container
+  topicsDropdownOption: '[role="option"]', // Selector for individual options within the menu
+  selectedTopicPills: '[class*="-multiValue"]', // Selector for the selected topic pills within the container
+  selectedTopicPillRemoveIcon: (topicName: string) =>
+    `[role="button"][aria-label="Remove ${topicName}"]`, // Selector for the 'x' icon within the pill
+  clearAllTopicsButton: '[data-qa="clear-dropdown-selection"]', // Selector for the main clear button within the container
 };
 
 export const AddApplicationAppSettingsFormSelector = {
+  featuresLabel: '[for="features"]',
+  attachmentsTypesLabel: '[for="attachmentTypes"]',
   chatCompletionUrl: '#completionUrl',
   addButton: '[data-qa="add-application"]',
   appViewFormContainer: '[data-qa="app-view-form"]',

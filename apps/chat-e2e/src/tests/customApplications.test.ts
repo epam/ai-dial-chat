@@ -1,10 +1,12 @@
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
   AddAppMenuOptions,
   AppEditorGeneralFormFields,
   AppEditorViewFormFields,
   AppMenuActions,
+  Attachment,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
@@ -60,7 +62,9 @@ dialTest(
     await localStorageManager.setShowSideBarPanels();
 
     await dialTest.step('Open My workspace directly', async () => {
-      await marketplacePage.openMyWorkspacePage();
+      await marketplacePage.openMyWorkspacePage({
+        updateInstalledDeployments: false,
+      });
       await marketplacePage.waitForPageLoaded();
     });
 
@@ -709,6 +713,287 @@ dialTest(
         await baseAssertion.assertElementState(agentDetailsModal, 'visible');
         await agentDetailsModalAssertion.assertApplicationVersion(
           appEntity2_v2.version!,
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Custom app Topic dropdown select. +\n' + '[Custom app]: Hints on for fields',
+  async ({
+    marketplacePage,
+    appEditorPage,
+    appEditorGeneralForm,
+    setTestIds,
+    baseAssertion,
+    tooltipAssertion,
+    appEditorViewForm,
+  }) => {
+    setTestIds('EPMRTC-4374', 'EPMRTC-4278');
+    let numberOfTopicsToSelect: number;
+    let allTopics: string[] = [];
+    let topicsToSelect: string[] = [];
+
+    await dialTest.step('Open create a custom app page', async () => {
+      await marketplacePage.openCreateCustomAppPage();
+      await appEditorPage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'Hover over question icon for Description field and verify hint',
+      async () => {
+        await appEditorGeneralForm.descriptionHintIcon.hoverOver();
+        await tooltipAssertion.assertTooltipContent(
+          ExpectedConstants.customApplicationDescriptionTooltip,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on Topics drop down and verify the list is expanded',
+      async () => {
+        await appEditorGeneralForm.topicsDropdownToggle.click();
+        await baseAssertion.assertElementState(
+          appEditorGeneralForm.topicsDropdownMenuElement,
+          'visible',
+          ExpectedMessages.dropdownMenuIsVisible,
+        );
+        allTopics = await appEditorGeneralForm.getAllTopicsOptions();
+        numberOfTopicsToSelect = allTopics.length - 1;
+        baseAssertion.assertNumberIsGreaterThan(allTopics.length, 0);
+      },
+    );
+
+    await dialTest.step(`Select topics and verify height changes`, async () => {
+      topicsToSelect = allTopics
+        .sort((a, b) => b.length - a.length)
+        .slice(0, numberOfTopicsToSelect);
+
+      const topicsInputControlBox1 =
+        await appEditorGeneralForm.topicsDropdownContainer.getElementBoundingBox();
+      const initialHeight = topicsInputControlBox1!.height;
+
+      for (let i = 0; i < numberOfTopicsToSelect; i++) {
+        await appEditorGeneralForm.selectTopicOption(topicsToSelect[i]);
+      }
+      const topicsInputControlBoxAll =
+        await appEditorGeneralForm.topicsDropdownContainer.getElementBoundingBox();
+      const topicsHeightAfterSelection = topicsInputControlBoxAll!.height;
+
+      // Assertions for selected topics
+      const selectedTopics = await appEditorGeneralForm.getSelectedTopics();
+      await baseAssertion.assertElementsCount(
+        appEditorGeneralForm.selectedTopicPills,
+        topicsToSelect.length,
+        ExpectedMessages.elementsCountIsValid,
+      );
+      baseAssertion.assertArrayIncludesAll(
+        selectedTopics,
+        topicsToSelect,
+        ExpectedMessages.fieldValueIsValid,
+      );
+
+      // Height assertion (only if more than one topic was selected to make the comparison meaningful)
+      baseAssertion.assertNumberIsGreaterThan(
+        topicsHeightAfterSelection,
+        initialHeight * 2,
+        `Height after selecting ${topicsToSelect.length} topics should be greater`,
+      );
+    });
+
+    await dialTest.step(
+      'Delete any single Topic using the X icon on the pill',
+      async () => {
+        // Delete random specific topic
+        const topicToDelete = GeneratorUtil.randomArrayElement(topicsToSelect);
+        await appEditorGeneralForm.deleteSelectedTopic(topicToDelete);
+
+        const remainingTopics = topicsToSelect.filter(
+          (t) => t !== topicToDelete,
+        );
+        // Get current selected topics again
+        const currentSelectedTopics =
+          await appEditorGeneralForm.getSelectedTopics();
+
+        await baseAssertion.assertElementsCount(
+          appEditorGeneralForm.selectedTopicPills,
+          numberOfTopicsToSelect - 1,
+          ExpectedMessages.elementsCountIsValid,
+        );
+        // Verify remaining topics
+        baseAssertion.assertArrayIncludesAll(
+          currentSelectedTopics,
+          remainingTopics,
+          ExpectedMessages.fieldValueIsValid,
+        );
+        // Verify deleted topic is absent
+        baseAssertion.assertArrayExcludesAll(
+          currentSelectedTopics,
+          [topicToDelete],
+          ExpectedMessages.fieldValueIsValid,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on the main X icon in the Topics row to clear all selections',
+      async () => {
+        await appEditorGeneralForm.clearAllTopics();
+        // Assert selected topics count
+        await baseAssertion.assertElementsCount(
+          appEditorGeneralForm.selectedTopicPills,
+          0,
+          ExpectedMessages.elementsCountIsValid,
+        );
+      },
+    );
+
+    await dialTest.step('Click Next button to go to App Settings', async () => {
+      await appEditorGeneralForm.fillInAppFields({
+        name: GeneratorUtil.randomApplicationName(),
+        version: GeneratorUtil.randomApplicationVersion(),
+      });
+      await appEditorGeneralForm.goNext({ waitForResponses: false });
+      await baseAssertion.assertElementState(appEditorViewForm, 'visible');
+    });
+
+    await dialTest.step(
+      'Hover over question icons for Features data and Attachment types and verify hints',
+      async () => {
+        await appEditorViewForm.featuresDataHintIcon.hoverOver();
+        await tooltipAssertion.assertTooltipContent(
+          ExpectedConstants.customApplicationFeaturesTooltip,
+        );
+        await appEditorViewForm.attachmentTypesHintIcon.hoverOver();
+        await tooltipAssertion.assertTooltipContent(
+          ExpectedConstants.customApplicationAttachmentsTypesTooltip,
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Edit Custom app: Update icon of custom app',
+  async ({
+    marketplacePage,
+    marketplaceAgentsSection,
+    agentDetailsModal,
+    appEditorPage,
+    attachFilesModal,
+    appEditorHeader,
+    appEditorGeneralForm,
+    appEditorPreview,
+    customApplicationBuilder,
+    applicationApiHelper,
+    uploadFromDeviceModal,
+    baseAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-4109');
+    const appEntity = {
+      name: GeneratorUtil.randomApplicationName(),
+      version: GeneratorUtil.randomApplicationVersion(),
+    } as DialAIEntityModel;
+    const newIconFileName = Attachment.sunImageName;
+    let agentElement: BaseElement;
+    let expectedNewIconUrl: string;
+
+    await dialTest.step(
+      'Precondition: Create custom application via API',
+      async () => {
+        const applicationModel = customApplicationBuilder
+          .withDisplayName(appEntity.name)
+          .withDisplayVersion(appEntity.version!)
+          .build();
+        const createdApp =
+          await applicationApiHelper.createApplication(applicationModel);
+
+        expectedNewIconUrl = `${API.fileHost}/${createdApp.bucket}/${newIconFileName}`;
+      },
+    );
+
+    await dialTest.step('Open My workspace', async () => {
+      await marketplacePage.openMyWorkspacePage();
+      await marketplacePage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'Find the created app, click on its card, then click Edit',
+      async () => {
+        agentElement =
+          await marketplaceAgentsSection.findAgentElement(appEntity);
+        await agentElement.click();
+        await agentDetailsModal.waitForState();
+        await agentDetailsModal.clickEditButton({ triggeredHttpMethod: 'GET' });
+        await appEditorPage.waitForPageLoadedForEdit();
+      },
+    );
+
+    await dialTest.step(
+      'Navigate to "General info" step and upload a new icon file',
+      async () => {
+        await appEditorHeader.goOnGeneralInfoStep({
+          isHttpMethodTriggered: false,
+        }); // Navigate back if needed
+        await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');
+        await appEditorGeneralForm.addIconButton.click();
+        await attachFilesModal.uploadFromDevice();
+        await uploadFromDeviceModal.addMoreFilesToUpload(newIconFileName);
+        await uploadFromDeviceModal.uploadFiles();
+        await attachFilesModal.attachFiles();
+      },
+    );
+
+    await dialTest.step(
+      'Verify the updated icon is displayed in the preview on the "General info" step',
+      async () => {
+        const previewIcon = appEditorPreview.previewIcon;
+        await baseAssertion.assertEntityIcon(previewIcon, expectedNewIconUrl);
+      },
+    );
+
+    await dialTest.step(
+      'Navigate to "App settings" step and verify the updated icon in the preview',
+      async () => {
+        await appEditorGeneralForm.goNext({ waitForResponses: false });
+        const previewIconAppSettings = appEditorPreview.previewIcon;
+        await baseAssertion.assertEntityIcon(
+          previewIconAppSettings,
+          expectedNewIconUrl,
+        );
+      },
+    );
+
+    await dialTest.step('Click "Save and exit"', async () => {
+      await appEditorHeader.saveAndExitButton.click();
+      await marketplacePage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'Verify the updated icon is displayed on the app card in My workspace',
+      async () => {
+        agentElement =
+          await marketplaceAgentsSection.findAgentElement(appEntity);
+        const cardIconElement = agentElement.getElementIcon(
+          agentElement.getElementLocator(),
+        );
+        await baseAssertion.assertEntityIcon(
+          cardIconElement,
+          expectedNewIconUrl,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on the app card and verify the updated icon in the opened pop-up',
+      async () => {
+        await agentElement.click();
+        await agentDetailsModal.waitForState();
+        await baseAssertion.assertEntityIcon(
+          agentDetailsModal.icon,
+          expectedNewIconUrl,
         );
       },
     );
