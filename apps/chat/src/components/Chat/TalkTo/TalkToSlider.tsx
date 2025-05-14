@@ -174,7 +174,7 @@ const SliderModelsGroup = ({
                 onClick={onOpenMarketplaceTab}
                 key={SuggestedCard.id}
               >
-                <h3>{t("Couln't find what you need?")}</h3>
+                <h3>{t("Couldn't find what you need?")}</h3>
                 <SuggestionButton />
               </div>
             );
