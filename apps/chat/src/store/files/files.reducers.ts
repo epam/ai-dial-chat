@@ -49,6 +49,8 @@ export const filesSlice = createSlice({
         relativePath?: string;
         name: string;
         bucket?: string;
+
+        showSuccessMessage?: boolean;
       }>,
     ) => {
       state.files = state.files.filter((file) => file.id !== payload.id);
@@ -97,6 +99,7 @@ export const filesSlice = createSlice({
         payload,
       }: PayloadAction<{
         apiResult: DialFile;
+        showSuccessMessage?: boolean;
       }>,
     ) => {
       state.files = state.files.map((file) => {
@@ -410,6 +413,15 @@ export const filesSlice = createSlice({
         serverSynced: false,
       }));
     },
+    duplicateFile: (
+      state,
+      _action: PayloadAction<{ fileId: string; destinationUrl?: string }>,
+    ) => state,
+    duplicateFileSuccess: (state) => state,
+    duplicateFilesFolder: (
+      state,
+      _action: PayloadAction<{ folderId: string; destinationUrl?: string }>,
+    ) => state,
   },
 });
 

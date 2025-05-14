@@ -24,10 +24,11 @@ export class BaseAssertion {
   }
 
   public async assertEntityIcon(
-    iconLocator: Locator,
+    icon: Locator | BaseElement,
     expectedIconSource?: string,
   ) {
-    const actualIconSource = await iconLocator
+    const elementLocator = this.getElementLocator(icon);
+    const actualIconSource = await elementLocator
       .getAttribute(Attributes.src)
       .then((s) => IconApiHelper.getNonCachedIconSource(s));
     //assert icon source is valid
@@ -37,8 +38,8 @@ export class BaseAssertion {
         .toBe(expectedIconSource);
     }
     //assert icon is loaded and displayed
-    await expect(iconLocator).toHaveJSProperty('complete', true);
-    await expect(iconLocator).not.toHaveJSProperty('naturalWidth', 0);
+    await expect(elementLocator).toHaveJSProperty('complete', true);
+    await expect(elementLocator).not.toHaveJSProperty('naturalWidth', 0);
   }
 
   public assertArrayIncludesAll(
@@ -314,6 +315,19 @@ export class BaseAssertion {
         expectedMessage ?? ExpectedMessages.elementsCountIsValid,
       )
       .toBe(expectedCount);
+  }
+
+  public assertNumberIsGreaterThan(
+    actualNumber: number,
+    expectedNumber: number,
+    expectedMessage?: string,
+  ) {
+    expect
+      .soft(
+        actualNumber,
+        expectedMessage ?? ExpectedMessages.elementsCountIsValid,
+      )
+      .toBeGreaterThan(expectedNumber);
   }
 
   public assertValue(

@@ -10,13 +10,20 @@ function Custom404() {
   const { t } = useTranslation(Translation.Common);
 
   return (
-    <div className="flex h-screen w-screen flex-col items-center justify-center space-y-4 px-4 text-center">
+    <div
+      className="flex h-screen w-screen flex-col items-center justify-center space-y-4 px-4 text-center"
+      data-qa="not-found-container"
+    >
       <Title />
-      <h1 className="text-6xl font-bold md:text-7xl">{t('404')}</h1>
+      <h1 className="text-6xl font-bold md:text-7xl" data-qa="not-found-header">
+        {t('404')}
+      </h1>
 
       <div className="space-y-2">
-        <p className="text-xl font-bold md:text-2xl">{t('Page not found')}</p>
-        <p className="text-base text-secondary">
+        <p className="text-xl font-bold md:text-2xl" data-qa="not-found-title">
+          {t('Page not found')}
+        </p>
+        <p className="text-base text-secondary" data-qa="not-found-description">
           {t(
             "It seems like the page you're looking for doesn't exist or you don't have access.",
           )}
@@ -26,6 +33,7 @@ function Custom404() {
       <a
         className="button button-secondary flex items-center gap-2 rounded"
         href={`/`}
+        data-qa="new-conversation-btn"
       >
         <IconPlus size={18} />
         {t('New Conversation')}
