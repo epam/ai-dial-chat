@@ -239,6 +239,9 @@ export const ExpectedConstants = {
     'Enter key-value pairs for rate_endpoint and/or configuration_endpoint in JSON format.',
   customApplicationAttachmentsTypesTooltip:
     "Input the MIME type and press 'Enter' to add",
+  notFoundHeader: '404',
+  notFoundTitle: 'Page not found',
+  notFoundDescription: `It seems like the page you're looking for doesn't exist or you don't have access.`,
 };
 
 export enum Types {
