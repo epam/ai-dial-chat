@@ -17,6 +17,8 @@ import uniq from 'lodash-es/uniq';
 
 const rootSelector = (state: RootState): ModelsState => state.models;
 
+const _selectModels = (state: RootState) => rootSelector(state).models;
+
 const selectModelStatus = (state: RootState) => rootSelector(state).status;
 
 const selectAreModelsLoading = (state: RootState) =>
@@ -34,25 +36,24 @@ const selectModelsError = (state: RootState) => rootSelector(state).error;
 const selectIsRecentModelsLoaded = (state: RootState) =>
   rootSelector(state).recentModelsStatus === UploadStatus.LOADED;
 
-const selectModels = createSelector([rootSelector], (state) => {
-  const sortedResponse = sortBy(state.models, (model) =>
-    model.name.toLowerCase(),
-  );
-  const sortedAgents = groupModelsAndSaveOrder(sortedResponse).flatMap(
-    ({ entities }) => {
-      if (entities.length > 0 && entities[0].id !== entities[0].reference) {
-        sortItemsVersions(entities);
-      }
+const selectModels = createSelector([_selectModels], (models) => {
+  const sortedAgents = sortBy(models, (model) => model.name.toLowerCase());
+  const groupedAndSortedByVersionAgents = groupModelsAndSaveOrder(
+    sortedAgents,
+  ).flatMap(({ entities }) => {
+    if (entities.length > 0 && entities[0].id !== entities[0].reference) {
+      sortItemsVersions(entities);
+    }
 
-      return entities;
-    },
-  );
-  return sortedAgents;
+    return entities;
+  });
+
+  return groupedAndSortedByVersionAgents;
 });
 
-const selectModelTopics = createSelector([rootSelector], (state) => {
+const selectModelTopics = createSelector([_selectModels], (models) => {
   return sortBy(
-    uniq(state.models?.flatMap((model) => model.topics ?? []) ?? []),
+    uniq(models.flatMap((model) => model.topics ?? []) ?? []),
     (topic) => topic.toLowerCase(),
   );
 });
@@ -62,7 +63,7 @@ const selectModelsMap = (state: RootState) => rootSelector(state).modelsMap;
 const selectRecentModelsIds = (state: RootState) =>
   rootSelector(state).recentModelsIds;
 
-const selectModelsOnly = createSelector([selectModels], (models) => {
+const selectModelsOnly = createSelector([_selectModels], (models) => {
   return models.filter((model) => model.type === EntityType.Model);
 });
 
@@ -105,6 +106,10 @@ const selectAllGroupModelKeySet = (state: RootState, references: string[]) => {
   );
 };
 
+const selectCustomModels = createSelector([_selectModels], (models) => {
+  return models.filter((model) => model.reference !== model.id);
+});
+
 export const ModelsSelectors = {
   selectModels,
   selectModelsMap,
@@ -123,4 +128,5 @@ export const ModelsSelectors = {
   selectInitialized,
   selectAllGroupModelKeySet,
   selectIsRecentModelsLoaded,
+  selectCustomModels,
 };
