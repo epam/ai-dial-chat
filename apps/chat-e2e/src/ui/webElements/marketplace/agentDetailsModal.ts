@@ -90,6 +90,7 @@ export class AgentDetailsModal extends BaseElement {
     } else {
       await this.useButton.click();
     }
+    await this.waitForState({ state: 'hidden' });
   }
 
   public async addAgentToWorkspace() {

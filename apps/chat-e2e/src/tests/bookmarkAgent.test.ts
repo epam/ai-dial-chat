@@ -419,6 +419,7 @@ dialTest(
         await agentDetailsModal.clickUseButton({
           isInstalledDeploymentsUpdated: true,
         });
+        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
         await dialHomePage.goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
         addedAgentElement = await marketplaceAgentsSection.findAgentElement(
