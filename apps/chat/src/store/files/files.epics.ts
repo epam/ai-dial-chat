@@ -389,6 +389,44 @@ const downloadFilesListEpic: AppEpic = (action$, state$) =>
     ignoreElements(),
   );
 
+const duplicateFileEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.duplicateFile.type),
+    mergeMap(({ payload }) => {
+      return FileService.copyFile({
+        sourceUrl: payload.fileId,
+        destinationUrl: payload.destinationUrl ?? getFileRootId(),
+      }).pipe(
+        switchMap(() => {
+          return of(FilesActions.duplicateFileSuccess());
+        }),
+      );
+    }),
+  );
+
+const duplicateFilesFolderEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.duplicateFilesFolder.type),
+    switchMap(({ payload }) => {
+      return FileService.getMultipleFoldersFiles([payload.folderId], true).pipe(
+        switchMap((files) => {
+          return concat(
+            ...files.map((file) => {
+              const fileDestination = file.id.replace(payload.folderId, '');
+
+              return of(
+                FilesActions.duplicateFile({
+                  fileId: file.id,
+                  destinationUrl: `${payload.destinationUrl ?? getFileRootId()}${fileDestination}`,
+                }),
+              );
+            }),
+          );
+        }),
+      );
+    }),
+  );
+
 export const FilesEpics = combineEpics(
   initEpic,
 
@@ -406,4 +444,7 @@ export const FilesEpics = combineEpics(
   downloadFilesListEpic,
   deleteFileFailEpic,
   unselectFilesEpic,
+
+  duplicateFileEpic,
+  duplicateFilesFolderEpic,
 );
