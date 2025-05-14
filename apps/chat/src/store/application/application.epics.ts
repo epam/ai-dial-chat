@@ -32,9 +32,21 @@ import {
 } from '@/src/utils/app/application';
 import { encodeSlug } from '@/src/utils/app/application-type-schema';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
+import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application-type-schemas-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
-import { isEntityIdExternal, isEntityIdLocal } from '@/src/utils/app/id';
+import {
+  duplicateAndUpdateDocumentsActions,
+  duplicateAndUpdateSourceFolderActions,
+} from '@/src/utils/app/epics-helpers/application.epic-helpers';
+import { generateNextName } from '@/src/utils/app/folders';
+import {
+  getFileRootId,
+  isEntityIdExternal,
+  isEntityIdLocal,
+  isMyApplication,
+} from '@/src/utils/app/id';
+import { constructPath } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 import { parseApplicationApiKey } from '@/src/utils/server/api';
 
@@ -51,10 +63,12 @@ import { ShareActions } from '@/src/store/share/share.reducers';
 import { ShareSelectors } from '@/src/store/share/share.selectors';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
+import { DEFAULT_APPLICATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import { DeleteType, MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
+import { MarketplaceActions } from '../actions';
 import { ApplicationActions } from '../application/application.reducers';
 import { ApplicationTypesSchemasActions } from '../applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { AuthSelectors } from '../auth/auth.selectors';
@@ -128,7 +142,8 @@ const createApplicationEpic: AppEpic = (action$) =>
         map((action) => {
           if (
             ModelsActions.addModels.match(action) &&
-            action.payload.models?.[0]?.reference
+            action.payload.models?.[0]?.reference &&
+            payload.slug
           ) {
             Router.push({
               pathname: Routes.AppsEditorSettings,
@@ -205,9 +220,10 @@ const updateApplicationEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      const updatedCustomApplication = regenerateApplicationId(
-        payload.applicationData,
-      ) as CustomApplicationModel;
+      const updatedCustomApplication =
+        regenerateApplicationId<CustomApplicationModel>(
+          payload.applicationData,
+        );
 
       const isMoved = payload.oldApplication.id !== updatedCustomApplication.id;
 
@@ -669,7 +685,7 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
 const exitEditModeEpic: AppEpic = (action$, _state$, { router }) =>
   action$.pipe(
     ofType(ApplicationActions.exitEditor.type),
-    tap(({ payload }) => {
+    switchMap(({ payload }) => {
       if (payload.redirectUrl) {
         router.push({
           pathname: payload.redirectUrl,
@@ -680,8 +696,9 @@ const exitEditModeEpic: AppEpic = (action$, _state$, { router }) =>
           query: { tab: MarketplaceTabs.MY_WORKSPACE },
         });
       }
+
+      return of(ApplicationActions.setExitAfterSave(false));
     }),
-    ignoreElements(),
   );
 
 const setSelectedWidgetEpic: AppEpic = (action$) =>
@@ -689,6 +706,132 @@ const setSelectedWidgetEpic: AppEpic = (action$) =>
     ofType(ApplicationActions.setSelectedWidget.type),
     tap(({ payload }) => BrowserStorage.setSelectedWidget(payload)),
     ignoreElements(),
+  );
+
+const duplicateAgentEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(ApplicationActions.duplicate.type),
+    switchMap(({ payload }) => {
+      const state = state$.value;
+
+      const agentsMap = ModelsSelectors.selectModelsMap(state);
+      const agent = agentsMap[payload.reference];
+
+      const notExistToastAction$ = of(
+        UIActions.showErrorToast(
+          translate('Application does not exist. Try to reload the page.'),
+        ),
+      );
+
+      if (!agent) {
+        return notExistToastAction$;
+      }
+
+      if (!isMyApplication(agent)) {
+        return of(
+          UIActions.showErrorToast(
+            translate('You can duplicate only your applications.'),
+          ),
+        );
+      }
+
+      const fetchAgentAndSchema$ = forkJoin({
+        agent: ApplicationService.get(agent.id),
+        schema: agent.applicationTypeSchemaId
+          ? ApplicationTypesSchemasService.getApplicationTypeSchema(
+              agent.applicationTypeSchemaId,
+            )
+          : of(undefined),
+      });
+
+      return fetchAgentAndSchema$.pipe(
+        switchMap(({ agent, schema }) => {
+          if (!agent) {
+            return notExistToastAction$;
+          }
+
+          const myCustomAgents =
+            ModelsSelectors.selectCustomModels(state).filter(isMyApplication);
+          const newAgentName = generateNextName(
+            DEFAULT_APPLICATION_NAME,
+            agent.name,
+            myCustomAgents.map((agent) => ({ ...agent, folderId: '' })),
+          );
+          const regeneratedAgent =
+            regenerateApplicationId<CustomApplicationModel>({
+              ...agent,
+              name: newAgentName,
+              reference: '',
+            });
+
+          const create$ = ApplicationService.create(
+            regeneratedAgent,
+            schema,
+          ).pipe(
+            switchMap((createdAgent) =>
+              ApplicationService.get(createdAgent.id),
+            ),
+            switchMap((newAgent) => {
+              if (!newAgent) {
+                return of(ApplicationActions.getFail());
+              }
+
+              const basePath = constructPath(
+                getFileRootId(),
+                'custom applications',
+                newAgent.reference,
+              );
+              const newSourcePath = constructPath(basePath, 'sources');
+              const newDocsPath = constructPath(basePath, 'documents');
+
+              const duplicateAndUpdateSourceFolderActions$ =
+                duplicateAndUpdateSourceFolderActions(newAgent, newSourcePath);
+              const duplicateAndUpdateDocumentsActions$ =
+                duplicateAndUpdateDocumentsActions(
+                  newAgent,
+                  schema,
+                  newDocsPath,
+                );
+
+              return concat(
+                of(
+                  ModelsActions.addModels({
+                    models: [newAgent],
+                  }),
+                ),
+                of(
+                  MarketplaceActions.setDetailsModel({
+                    reference: newAgent.reference,
+                    isSuggested: false,
+                  }),
+                ),
+                of(
+                  ModelsActions.addInstalledModels({
+                    references: [newAgent.reference],
+                  }),
+                ),
+                duplicateAndUpdateSourceFolderActions$,
+                duplicateAndUpdateDocumentsActions$,
+              );
+            }),
+          );
+
+          return create$;
+        }),
+        catchError((error) => {
+          console.error('Error during duplication:', error);
+          return of(ApplicationActions.duplicateFail());
+        }),
+      );
+    }),
+  );
+
+const duplicateAgentFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ApplicationActions.duplicateFail.type),
+    switchMap(() =>
+      of(UIActions.showErrorToast(translate('Duplication failed. Try again.'))),
+    ),
   );
 
 export const ApplicationEpics = combineEpics(
@@ -707,4 +850,6 @@ export const ApplicationEpics = combineEpics(
   enterEditModeEpic,
   exitEditModeEpic,
   setSelectedWidgetEpic,
+  duplicateAgentEpic,
+  duplicateAgentFailEpic,
 );

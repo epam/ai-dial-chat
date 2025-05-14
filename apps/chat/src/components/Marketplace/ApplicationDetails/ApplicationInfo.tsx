@@ -14,11 +14,13 @@ interface infoColumnProps {
 
 function InfoColumn({ dataQa, infoLabel, children }: infoColumnProps) {
   return (
-    <div className="flex flex-col gap-2" data-qa={dataQa}>
+    <div className="flex flex-col gap-2" data-qa={`${dataQa}-container`}>
       <span className=" w-[148px] whitespace-pre-wrap break-words font-semibold">
         {infoLabel}:
       </span>
-      <span className="whitespace-pre-wrap break-words">{children}</span>
+      <span className="whitespace-pre-wrap break-words" data-qa={dataQa}>
+        {children}
+      </span>
     </div>
   );
 }
