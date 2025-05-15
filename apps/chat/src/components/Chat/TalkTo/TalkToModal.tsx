@@ -2,6 +2,8 @@ import { IconSearch } from '@tabler/icons-react';
 import { MouseEvent, useCallback, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
+
+
 import Link from 'next/link';
 
 import classNames from 'classnames';
@@ -24,6 +26,7 @@ import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
+import { ModelsActions } from '@/src/store/actions';
 import { AddonsSelectors } from '@/src/store/addons/addons.selectors';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
@@ -222,6 +225,15 @@ const TalkToModalView = ({
         );
       }
       dispatch(ConversationsActions.setIsStartedCustomViewerConversation(true));
+      if (model && model?.reference !== REPLAY_AS_IS_MODEL) {
+        dispatch(
+          ModelsActions.addInstalledModels({
+            references: [model.reference],
+            showSuccessToast: false,
+            updateRecentModels: true,
+          }),
+        );
+      }
 
       onClose();
     },
