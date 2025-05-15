@@ -67,9 +67,7 @@ function Home() {
   }
 
   const showFloatingOverlay =
-    (screenState === ScreenState.SM || screenState === ScreenState.MD) &&
-    isAnyMenuOpen &&
-    !isIsolatedView;
+    screenState <= ScreenState.MD && isAnyMenuOpen && !isIsolatedView;
 
   return (
     <>

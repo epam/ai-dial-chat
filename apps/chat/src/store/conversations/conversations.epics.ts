@@ -2894,9 +2894,9 @@ const openFolderEpic: AppEpic = (action$) =>
 const getChartAttachmentEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ConversationsActions.getChartAttachment.type),
-    switchMap(({ payload }) =>
+    mergeMap(({ payload }) =>
       FileService.getFileContent<PlotParams>(payload.pathToChart).pipe(
-        switchMap((params) => {
+        mergeMap((params) => {
           return of(
             ConversationsActions.getChartAttachmentSuccess({
               params,

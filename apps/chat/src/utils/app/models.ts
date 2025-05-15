@@ -74,7 +74,7 @@ export const addToModelsMap = (
 ) => {
   models.forEach((model) => {
     modelsMap[model.id] = model;
-    if (model.id !== model.reference) {
+    if (model.id !== model.reference && model.reference) {
       modelsMap[model.reference] = model;
     }
   });
