@@ -24,18 +24,19 @@ import {
   updateMovedEntityId,
 } from '@/src/utils/app/folders';
 import { getFileRootId } from '@/src/utils/app/id';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
-import { FolderType } from '@/src/types/folder';
 import { AppEpic } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
 import { FilesSelectors } from '@/src/store/files/files.selectors';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { PublicationActions } from '../publication/publication.reducers';
-import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { FilesActions } from './files.reducers';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
@@ -78,6 +79,7 @@ const uploadFileEpic: AppEpic = (action$) =>
           if (result) {
             return FilesActions.uploadFileSuccess({
               apiResult: result,
+              showSuccessMessage: payload.showSuccessMessage,
             });
           }
 
@@ -96,6 +98,30 @@ const uploadFileEpic: AppEpic = (action$) =>
           return of(FilesActions.uploadFileFail({ id: payload.id }));
         }),
       );
+    }),
+  );
+
+const uploadFilesSuccessEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.uploadFileSuccess.type),
+    switchMap(({ payload }) => {
+      if (payload.showSuccessMessage) {
+        const { parentPath, name } = splitEntityId(payload.apiResult.id);
+
+        return of(
+          UIActions.showSuccessToast(
+            translate(
+              'The file "{{name}}" has been uploaded successfully to "{{parentPath}}"',
+              {
+                name,
+                parentPath,
+              },
+            ),
+          ),
+        );
+      }
+
+      return EMPTY;
     }),
   );
 
@@ -125,7 +151,7 @@ const renameFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(FilesActions.renameFolder.type),
     switchMap(({ payload }) => {
-      const oldFolder = getFolderFromId(payload.folderId, FolderType.File);
+      const oldFolder = getFolderFromId(payload.folderId, FeatureType.File);
       const targetFolderId = getGeneratedFolderId({
         ...oldFolder,
         name: payload.newName,
@@ -181,7 +207,7 @@ const renameFolderFailEpic: AppEpic = (action$) =>
             'Renaming folder {{folderName}} failed. Please try again later',
             {
               ns: Translation.Files,
-              folderName: getFolderFromId(payload.oldId, FolderType.File).name,
+              folderName: getFolderFromId(payload.oldId, FeatureType.File).name,
             },
           ),
         ),
@@ -363,10 +389,49 @@ const downloadFilesListEpic: AppEpic = (action$, state$) =>
     ignoreElements(),
   );
 
+const duplicateFileEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.duplicateFile.type),
+    mergeMap(({ payload }) => {
+      return FileService.copyFile({
+        sourceUrl: payload.fileId,
+        destinationUrl: payload.destinationUrl ?? getFileRootId(),
+      }).pipe(
+        switchMap(() => {
+          return of(FilesActions.duplicateFileSuccess());
+        }),
+      );
+    }),
+  );
+
+const duplicateFilesFolderEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.duplicateFilesFolder.type),
+    switchMap(({ payload }) => {
+      return FileService.getMultipleFoldersFiles([payload.folderId], true).pipe(
+        switchMap((files) => {
+          return concat(
+            ...files.map((file) => {
+              const fileDestination = file.id.replace(payload.folderId, '');
+
+              return of(
+                FilesActions.duplicateFile({
+                  fileId: file.id,
+                  destinationUrl: `${payload.destinationUrl ?? getFileRootId()}${fileDestination}`,
+                }),
+              );
+            }),
+          );
+        }),
+      );
+    }),
+  );
+
 export const FilesEpics = combineEpics(
   initEpic,
 
   uploadFileEpic,
+  uploadFilesSuccessEpic,
   getFileFoldersEpic,
   getFilesEpic,
   reuploadFileEpic,
@@ -379,4 +444,7 @@ export const FilesEpics = combineEpics(
   downloadFilesListEpic,
   deleteFileFailEpic,
   unselectFilesEpic,
+
+  duplicateFileEpic,
+  duplicateFilesFolderEpic,
 );

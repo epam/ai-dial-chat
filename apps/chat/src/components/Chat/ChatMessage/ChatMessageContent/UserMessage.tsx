@@ -3,9 +3,12 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
+import { useChatUploadFiles } from '@/src/hooks/useChatUploadFiles';
+import { useFilePaste } from '@/src/hooks/useFilePaste';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
+import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
 import {
   getDialFilesFromAttachments,
   getDialFoldersFromAttachments,
@@ -28,11 +31,12 @@ import { DialFile, DialLink, FileFolderInterface } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
-import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { FilesActions } from '@/src/store/files/files.reducers';
+import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
@@ -86,6 +90,7 @@ export const UserMessage = memo(function UserMessage({
   const dispatch = useAppDispatch();
 
   const anchorRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
@@ -111,6 +116,7 @@ export const UserMessage = memo(function UserMessage({
   const isMessageTemplatesEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.MessageTemplates),
   );
+
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
 
   const isMobileOrOverlay = isSmallScreen() || isOverlay;
@@ -419,6 +425,25 @@ export const UserMessage = memo(function UserMessage({
     }
   }, [shouldScroll]);
 
+  const uploadPastedFiles = useChatUploadFiles(
+    getQuickAttachmentsSavingPath(),
+    newEditableAttachments.length,
+    true,
+  );
+
+  const handleUploadPastedFiles = useCallback(
+    (files: File[]) => {
+      uploadPastedFiles(files)?.then((newFiles) => {
+        setNewEditableAttachmentsIds((ids) =>
+          uniq(ids.concat(newFiles.map(({ id }) => id))),
+        );
+      });
+    },
+    [uploadPastedFiles],
+  );
+
+  useFilePaste(textareaRef, handleUploadPastedFiles);
+
   if (isEditing)
     return (
       <div className="flex w-full flex-col gap-3">
@@ -441,6 +466,7 @@ export const UserMessage = memo(function UserMessage({
             )}
           >
             <AdjustedTextarea
+              ref={textareaRef}
               className="w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none"
               value={messageContent}
               onChange={handleInputChange}

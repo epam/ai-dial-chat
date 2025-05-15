@@ -25,6 +25,7 @@ export const MarketplaceAgentSelectors = {
   copyIcon: '[data-qa="copy-icon"]',
   copiedLink: '[data-qa="copied-link"]',
   copiedIcon: '[data-qa="copied-icon"]',
+  pencilIcon: '[data-qa="pencil-icon"]',
 };
 
 export const MarketplaceDetailsModal = {
@@ -36,8 +37,11 @@ export const MarketplaceDetailsModal = {
   agentVersion: '[data-qa="version"]',
   versionMenuTrigger: '[data-qa="agent-version-select-trigger"]',
   useButton: '[data-qa="use-button"]',
-  editButton: '[data-qa="application-edit"]',
-  deleteButton: '[data-qa="application-delete"]',
+  icon: '[data-qa="entity-icon"]',
+  // editButton: '[data-qa="application-edit"]',
+  // deleteButton: '[data-qa="application-delete"]',
+  editButton: '[data-qa="edit"]',
+  deleteButton: '[data-qa="delete"]',
 };
 
 export const MarketplaceSideBarSelectors = {

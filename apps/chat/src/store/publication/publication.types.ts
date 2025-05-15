@@ -7,6 +7,8 @@ import {
   ResourceToReview,
 } from '@/src/types/publication';
 
+import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
+
 export interface PublicationState {
   initialized: boolean;
   publications: (PublicationInfo & Partial<Publication>)[];
@@ -23,4 +25,7 @@ export interface PublicationState {
   selectedItemsToPublish: string[];
   isApplicationReview: boolean;
   publicVersionGroups: PublicVersionGroups;
+  publishModel:
+    | { entity: ShareEntity & { iconUrl?: string }; action: PublishActions }
+    | undefined;
 }

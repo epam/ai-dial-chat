@@ -10,15 +10,16 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
 
-import Tooltip from '../Common/Tooltip';
+import Tooltip from '@/src/components/Common/Tooltip';
 
 interface Props {
   entity: DialAIEntityModel;
   size?: number;
   className?: string;
   onBookmarkClick?: (entity: DialAIEntityModel) => void;
+  allocatePlace?: boolean;
 }
 
 export const AgentBookmark: React.FC<Props> = ({
@@ -26,6 +27,7 @@ export const AgentBookmark: React.FC<Props> = ({
   size = 18,
   className,
   onBookmarkClick,
+  allocatePlace = false,
 }) => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -35,31 +37,39 @@ export const AgentBookmark: React.FC<Props> = ({
 
   const isMyApp = isMyApplication(entity);
 
-  if (isMyApp || entity.sharedWithMe) return null;
+  const hidden = isMyApp || entity.sharedWithMe;
+  if (hidden && !allocatePlace) {
+    return null;
+  }
 
   const [Bookmark, tooltip, dataQa] = installedModelIds.has(entity.reference)
     ? [IconBookmarkFilled, 'Remove from My workspace', 'remove-bookmark']
     : [IconBookmark, 'Add to My workspace', 'add-bookmark'];
 
   return (
-    <Tooltip
-      tooltip={t(tooltip)}
-      triggerClassName={classNames(
-        className,
-        'group flex cursor-pointer items-center',
-      )}
-      isTriggerClickable
+    <div
+      onClick={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        !hidden && onBookmarkClick?.(entity);
+      }}
     >
-      <button data-qa={dataQa}>
-        <Bookmark
-          onClick={(e) => {
-            e.stopPropagation();
-            onBookmarkClick?.(entity);
-          }}
-          className="rounded text-secondary hover:text-accent-primary group-hover/bookmark:text-accent-primary"
-          size={size}
-        />
-      </button>
-    </Tooltip>
+      <Tooltip
+        tooltip={t(tooltip)}
+        triggerClassName={classNames(
+          className,
+          'group flex items-center',
+          hidden ? 'invisible' : 'cursor-pointer',
+        )}
+        isTriggerClickable
+      >
+        <button data-qa={dataQa}>
+          <Bookmark
+            className="rounded text-secondary hover:text-accent-primary group-hover/bookmark:text-accent-primary"
+            size={size}
+          />
+        </button>
+      </Tooltip>
+    </div>
   );
 };

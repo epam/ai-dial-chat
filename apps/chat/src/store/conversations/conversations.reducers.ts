@@ -18,12 +18,13 @@ import {
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
-import { FolderInterface, FolderType } from '@/src/types/folder';
+import { FeatureType } from '@/src/types/common';
+import { FolderInterface } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 import { LastConversationSettings } from '@/src/types/settings';
 import { RootState } from '@/src/types/store';
 
-import * as ConversationsSelectors from './conversations.selectors';
+import { ConversationsSelectors } from './conversations.selectors';
 import { ConversationsState } from './conversations.types';
 
 import {
@@ -35,8 +36,6 @@ import {
 } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 import xor from 'lodash-es/xor';
-
-export { ConversationsSelectors };
 
 const initialState: ConversationsState = {
   initialized: false,
@@ -382,7 +381,7 @@ export const conversationsSlice = createSlice({
             { conversations: state } as RootState,
             payload?.parentId,
           ),
-        type: FolderType.Chat,
+        type: FeatureType.Chat,
         status: UploadStatus.LOADED,
       });
 
@@ -401,7 +400,7 @@ export const conversationsSlice = createSlice({
       state.temporaryFolders.push({
         id: payload.id,
         name: payload.name,
-        type: FolderType.Chat,
+        type: FeatureType.Chat,
         folderId: payload.folderId || getConversationRootId(),
         temporary: true,
       });
@@ -416,9 +415,6 @@ export const conversationsSlice = createSlice({
       state.temporaryFolders = state.temporaryFolders.filter(
         ({ id }) => id !== payload.folderId,
       );
-    },
-    deleteAllTemporaryFolders: (state) => {
-      state.temporaryFolders = [];
     },
     renameTemporaryFolder: (
       state,
@@ -649,9 +645,6 @@ export const conversationsSlice = createSlice({
         (id) => !payload.paths.has(id),
       );
       state.foldersStatus = UploadStatus.FAILED;
-    },
-    initConversationsRecursive: (state) => {
-      state.conversationsStatus = UploadStatus.LOADING;
     },
     uploadConversationsFromMultipleFolders: (
       state,

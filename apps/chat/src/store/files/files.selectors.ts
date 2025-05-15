@@ -121,12 +121,6 @@ const selectFoldersWithSearchTerm = createSelector(
     return getParentAndChildFolders(folders, filtered);
   },
 );
-const selectPublicationFolders = createSelector(
-  [rootSelector],
-  (state: FilesState) => {
-    return state.folders.filter((f) => f.isPublicationFolder);
-  },
-);
 
 const selectPublicFolders = createSelector(
   [rootSelector],
@@ -136,13 +130,6 @@ const selectPublicFolders = createSelector(
 );
 
 const selectInitialized = (state: RootState) => rootSelector(state).initialized;
-
-const selectFolderById = createSelector(
-  [selectFolders, (_state, folderId: string) => folderId],
-  (folders, folderId) => {
-    return folders.find((folder) => folder.id == folderId);
-  },
-);
 
 const selectLastRenamedParentFolder = (state: RootState) =>
   rootSelector(state).lastRenamedParentFolder;
@@ -159,11 +146,9 @@ export const FilesSelectors = {
   selectAreFoldersLoading,
   selectLoadingFolderIds,
   selectNewAddedFolderId,
-  selectFolderById,
   selectFilesByIds,
   selectFileById,
   selectFoldersWithSearchTerm,
-  selectPublicationFolders,
   selectPublicFolders,
   selectInitialized,
   selectAreFilesLoading,

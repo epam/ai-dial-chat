@@ -1,21 +1,20 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { SortOrder } from '@/src/types/common';
+import { DialAIEntityModel } from '@/src/types/models';
+
+import { MarketplaceState } from '@/src/store/marketplace/marketplace.types';
 
 import {
+  DeleteType,
   FilterTypes,
   MarketplaceTabs,
   TableColumnSortKeys,
   ViewTypes,
 } from '@/src/constants/marketplace';
 
-import * as MarketplaceSelectors from './marketplace.selectors';
-import { MarketplaceState } from './marketplace.types';
-
 import { UploadStatus } from '@epam/ai-dial-shared';
 import xor from 'lodash/xor';
-
-export { MarketplaceSelectors };
 
 const DEFAULT_FILTERS = {
   [FilterTypes.ENTITY_TYPE]: [],
@@ -37,6 +36,8 @@ const initialState: MarketplaceState = {
     order: 'asc',
   },
   isBannerVisible: true,
+
+  deleteModel: undefined,
 };
 
 export const marketplaceSlice = createSlice({
@@ -85,9 +86,6 @@ export const marketplaceSlice = createSlice({
     setApplyModelStatus: (state, { payload }: PayloadAction<UploadStatus>) => {
       state.applyModelStatus = payload;
     },
-    setApplyModelId: (state, { payload }: PayloadAction<string>) => {
-      state.applyModelId = payload;
-    },
     setDetailsModel: (
       state,
       {
@@ -122,6 +120,16 @@ export const marketplaceSlice = createSlice({
       }>,
     ) => {
       state.isBannerVisible = payload.isVisible;
+    },
+    setDeleteModel(
+      state,
+      {
+        payload,
+      }: PayloadAction<
+        { entity: DialAIEntityModel; action: DeleteType } | undefined
+      >,
+    ) {
+      state.deleteModel = payload;
     },
   },
 });

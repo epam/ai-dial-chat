@@ -2,14 +2,19 @@ import { Observable, map } from 'rxjs';
 
 import { DataService } from '@/src/utils/app/data/data-service';
 
-import { ApiKeys, BackendDataNodeType, MoveModel } from '@/src/types/common';
+import {
+  ApiKeys,
+  BackendDataNodeType,
+  CopyModel,
+  FeatureType,
+  MoveModel,
+} from '@/src/types/common';
 import {
   BackendFile,
   BackendFileFolder,
   DialFile,
   FileFolderInterface,
 } from '@/src/types/files';
-import { FolderType } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
 
 import { CLIENTDATA_PATH } from '@/src/constants/client-data';
@@ -143,7 +148,7 @@ export class FileService {
                 folder.name,
               ),
               name: folder.name,
-              type: FolderType.File,
+              type: FeatureType.File,
               absolutePath: constructPath(
                 ApiKeys.Files,
                 folder.bucket,
@@ -210,5 +215,9 @@ export class FileService {
 
   public static moveFile(moveModel: MoveModel): Observable<MoveModel> {
     return DataService.getDataStorage().move(moveModel);
+  }
+
+  public static copyFile(copyModel: CopyModel): Observable<null> {
+    return DataService.getDataStorage().copy(copyModel);
   }
 }

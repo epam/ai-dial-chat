@@ -9,6 +9,10 @@ import { parseCommaSeparatedList } from '@/src/utils/app/common';
 import { EntityType, SortOrder } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
+import { ModelsActions } from '@/src/store/models/models.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
+
 import {
   ENTITY_TYPES,
   FilterTypes,
@@ -19,12 +23,9 @@ import {
   ViewTypes,
 } from '@/src/constants/marketplace';
 
-import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
-import { UIActions, UISelectors } from '../ui/ui.reducers';
-import {
-  MarketplaceActions,
-  MarketplaceSelectors,
-} from './marketplace.reducers';
+import { ModelsSelectors } from '../models/models.selectors';
+import { MarketplaceActions } from './marketplace.reducers';
+import { MarketplaceSelectors } from './marketplace.selectors';
 import { MarketplaceState } from './marketplace.types';
 
 import { ParsedUrlQueryInput, parse } from 'querystring';
@@ -47,7 +48,6 @@ const initEpic: AppEpic = (action$, state$) =>
     switchMap(() => {
       const query = parse(window.location.search.slice(1));
       const workSpaceTab =
-        query[MarketplaceQueryParams.fromConversation] ||
         query[MarketplaceQueryParams.tab] === MarketplaceTabs.MY_WORKSPACE;
 
       const previousRoute = UISelectors.selectPreviousRoute(state$.value);
@@ -79,7 +79,7 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
       MarketplaceActions.setSelectedView.type,
       MarketplaceActions.setTableSort.type,
     ),
-    filter(() => ModelsSelectors.selectIsModelsLoaded(state$.value)),
+    filter(() => ModelsSelectors.selectAreModelsLoaded(state$.value)),
     switchMap(() => {
       const state = state$.value;
       const query = parse(window.location.search.slice(1));
@@ -173,7 +173,6 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
           : undefined;
       // workspace tab
       const workSpaceTab =
-        query[MarketplaceQueryParams.fromConversation] ||
         query[MarketplaceQueryParams.tab] === MarketplaceTabs.MY_WORKSPACE;
 
       updatedMarketplaceState.selectedTab = workSpaceTab

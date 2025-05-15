@@ -8,45 +8,59 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getApplicationType } from '@/src/utils/app/application';
 import {
   getConversationModelParams,
   isPlaybackConversation,
   isReplayAsIsConversation,
   isReplayConversation,
 } from '@/src/utils/app/conversation';
-import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
-import { ApiUtils, PseudoModel } from '@/src/utils/server/api';
+import { PseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
-import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
-import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
+import { ModelsActions } from '@/src/store/actions';
+import { AddonsSelectors } from '@/src/store/addons/addons.selectors';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
-import { MarketplaceQueryParams } from '@/src/constants/marketplace';
+import {
+  ChangeAgentTabs,
+  MarketplaceQueryParams,
+  MarketplaceTabs,
+} from '@/src/constants/marketplace';
 
-import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
-import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Modal } from '@/src/components/Common/Modal';
 
-import { ApplicationLogs } from '../../Marketplace/ApplicationLogs';
-import { TalkToSlider } from './TalkToSlider';
+import { TabButton } from '../../Buttons/TabButton';
+import { AgentDialogs } from '../../Common/AgentDialogs';
+import { CardType, SuggestedCard, TalkToSlider } from './TalkToSlider';
 
-import { Feature, PublishActions, ShareEntity } from '@epam/ai-dial-shared';
+import { Feature } from '@epam/ai-dial-shared';
 import orderBy from 'lodash-es/orderBy';
+
+interface TabButtonProps {
+  tab: MarketplaceTabs;
+  setTab: (tab: MarketplaceTabs) => void;
+  currentTab: MarketplaceTabs;
+}
+
+function AgentsTabButton({ tab, setTab, currentTab }: TabButtonProps) {
+  const { t } = useTranslation(Translation.Marketplace);
+  return (
+    <TabButton selected={currentTab === tab} onClick={() => setTab(tab)}>
+      {t(ChangeAgentTabs[tab])}
+    </TabButton>
+  );
+}
 
 interface TalkToModalViewProps {
   conversation: Conversation;
@@ -64,6 +78,8 @@ const TalkToModalView = ({
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useDispatch();
+  const [tab, setTab] = useState(MarketplaceTabs.MY_WORKSPACE);
+  const isMyWorkspace = tab === MarketplaceTabs.MY_WORKSPACE;
 
   const isMarketplaceEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
@@ -80,11 +96,6 @@ const TalkToModalView = ({
   );
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [deleteModel, setDeleteModel] = useState<DialAIEntityModel>();
-  const [logModel, setLogModel] = useState<DialAIEntityModel>();
-  const [publishModel, setPublishModel] = useState<
-    ShareEntity & { iconUrl?: string }
-  >();
 
   const isPlayback = isPlaybackConversation(conversation);
   const isReplay = isReplayConversation(conversation);
@@ -94,10 +105,14 @@ const TalkToModalView = ({
     const recentInstalledModels = recentModelIds
       .filter((id) => installedModelIdsSet.has(id) && modelsMap[id])
       .map((id) => modelsMap[id]) as DialAIEntityModel[];
-    const installedModels = allModels.filter(
-      (model) =>
-        installedModelIdsSet.has(model.reference) && modelsMap[model.reference],
-    );
+    const installedModels =
+      tab !== MarketplaceTabs.HOME
+        ? allModels.filter(
+            (model) =>
+              installedModelIdsSet.has(model.reference) &&
+              modelsMap[model.reference],
+          )
+        : allModels;
     const sortedModels = [
       ...(currentModel &&
       (installedModelIdsSet.has(currentModel.reference) || !isReplay)
@@ -114,7 +129,7 @@ const TalkToModalView = ({
             doesEntityContainSearchTerm({ name: entity.version }, searchTerm))),
     );
     const groupedModels = groupModelsAndSaveOrder(filteredModels);
-    const orderedModels = groupedModels.map(({ entities }) => {
+    const orderedModels: CardType[] = groupedModels.map(({ entities }) => {
       const selectedEntity = entities.find(
         ({ reference }) => reference === conversation.model.id,
       );
@@ -157,9 +172,13 @@ const TalkToModalView = ({
         isDefault: false,
       });
     }
+    if (searchTerm.length > 0 && isMyWorkspace && orderedModels.length > 0) {
+      orderedModels.push(SuggestedCard);
+    }
 
     return orderedModels;
   }, [
+    isMyWorkspace,
     allModels,
     conversation.model.id,
     installedModelIdsSet,
@@ -169,16 +188,9 @@ const TalkToModalView = ({
     recentModelIds,
     searchTerm,
     t,
+    tab,
     widgetsSchemaIds,
   ]);
-
-  const handleCloseApplicationLogs = useCallback(() => {
-    setLogModel(undefined);
-  }, []);
-
-  const handleOpenApplicationLogs = useCallback((entity: DialAIEntityModel) => {
-    setLogModel(entity);
-  }, []);
 
   const handleSelectModel = useCallback(
     (entity: DialAIEntityModel) => {
@@ -204,55 +216,24 @@ const TalkToModalView = ({
         );
       }
       dispatch(ConversationsActions.setIsStartedCustomViewerConversation(true));
+      if (
+        model &&
+        model.reference !== REPLAY_AS_IS_MODEL &&
+        !installedModelIdsSet.has(model.reference)
+      ) {
+        dispatch(
+          ModelsActions.addInstalledModels({
+            references: [model.reference],
+            showSuccessToast: false,
+            updateRecentModels: true,
+          }),
+        );
+      }
 
       onClose();
     },
     [addonsMap, conversation, dispatch, modelsMap, onClose],
   );
-
-  const detailedApplicationTypeSchema = useAppSelector(
-    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
-  );
-
-  const handleEditApplication = useCallback(
-    (entity: DialAIEntityModel) => {
-      const applicationType = getApplicationType(entity);
-      dispatch(
-        ApplicationActions.enterEditMode({
-          entity: entity,
-          applicationType,
-          detailedApplicationTypeSchemaId: detailedApplicationTypeSchema?.$id,
-        }),
-      );
-    },
-    [detailedApplicationTypeSchema, dispatch],
-  );
-
-  const handleDeleteClose = useCallback(
-    (confirm: boolean) => {
-      if (confirm && deleteModel) {
-        dispatch(ApplicationActions.delete(deleteModel));
-      }
-
-      setDeleteModel(undefined);
-    },
-    [deleteModel, dispatch],
-  );
-
-  const handleSetPublishEntity = useCallback((entity: DialAIEntityModel) => {
-    setPublishModel({
-      name: entity.name,
-      id: ApiUtils.decodeApiUrl(entity.id),
-      folderId: getFolderIdFromEntityId(entity.id),
-      iconUrl: entity.iconUrl,
-    });
-  }, []);
-
-  const handlePublishClose = useCallback(() => setPublishModel(undefined), []);
-
-  const handleDeleteApplication = useCallback((entity: DialAIEntityModel) => {
-    setDeleteModel(entity);
-  }, []);
 
   const handleGoToWorkspace = useCallback(
     (e: MouseEvent<HTMLAnchorElement>) => {
@@ -272,33 +253,47 @@ const TalkToModalView = ({
           `Select an agent for ${isCompareMode ? (isRight ? 'right side' : 'left side') : ''} conversation`,
         )}
       </h3>
-      <div className="relative my-4 w-full">
-        <IconSearch
-          className="absolute left-3 top-1/2 -translate-y-1/2"
-          size={18}
-        />
-        <input
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder={t('Search')}
-          className="input-form peer m-0 pl-[38px]"
-          data-qa="search-agents"
-        />
+      <div className="relative my-4 flex w-full gap-2 max-sm:flex-col-reverse">
+        <div className="relative flex grow">
+          <IconSearch
+            className="absolute left-3 top-1/2 -translate-y-1/2"
+            size={18}
+          />
+          <input
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder={t('Search')}
+            className="input-form peer m-0 pl-[38px]"
+            data-qa="search-agents"
+            autoFocus
+          />
+        </div>
+        <div className="flex gap-2">
+          <AgentsTabButton
+            tab={MarketplaceTabs.MY_WORKSPACE}
+            setTab={setTab}
+            currentTab={tab}
+          />
+          <AgentsTabButton
+            tab={MarketplaceTabs.HOME}
+            setTab={setTab}
+            currentTab={tab}
+          />
+        </div>
       </div>
 
       <TalkToSlider
         conversation={conversation}
         items={displayedModels}
-        onEdit={handleEditApplication}
-        onDelete={handleDeleteApplication}
-        onPublish={handleSetPublishEntity}
         onSelectModel={handleSelectModel}
-        onOpenLogs={handleOpenApplicationLogs}
+        isMyWorkspace={isMyWorkspace}
+        onOpenMarketplaceTab={() => setTab(MarketplaceTabs.HOME)}
+        isSearchMode={searchTerm.length > 0}
       />
 
       {isMarketplaceEnabled && (
         <Link
-          href={`/marketplace?${MarketplaceQueryParams.fromConversation}=${ApiUtils.encodeApiUrl(conversation.id)}`}
+          href={`/marketplace?${MarketplaceQueryParams.fromConversation}=${encodeURIComponent(conversation.id)}${isMyWorkspace ? `&${MarketplaceQueryParams.tab}=${tab}` : ''}`}
           shallow
           onClick={handleGoToWorkspace}
           className={classNames(
@@ -307,46 +302,11 @@ const TalkToModalView = ({
           )}
           data-qa="go-to-my-workspace"
         >
-          {t('Go to My workspace')}
+          {t(`Go to ${isMyWorkspace ? 'My workspace' : 'DIAL Marketplace'}`)}
         </Link>
       )}
 
-      {deleteModel && (
-        <ConfirmDialog
-          isOpen
-          heading={t('Confirm deleting application')}
-          description={t(
-            'Are you sure you want to delete the {{modelName}}{{modelVersion}}?',
-            {
-              modelName: deleteModel.name,
-              modelVersion: deleteModel.version
-                ? t(' (version {{version}})', {
-                    version: deleteModel.version,
-                  })
-                : '',
-            },
-          )}
-          confirmLabel={t('Delete')}
-          onClose={handleDeleteClose}
-          cancelLabel={t('Cancel')}
-        />
-      )}
-      {publishModel && (
-        <PublishModal
-          entity={publishModel}
-          type={SharingType.Application}
-          isOpen
-          onClose={handlePublishClose}
-          publishAction={PublishActions.ADD}
-        />
-      )}
-      {logModel && (
-        <ApplicationLogs
-          isOpen
-          onClose={handleCloseApplicationLogs}
-          entityId={logModel.id}
-        />
-      )}
+      <AgentDialogs />
     </>
   );
 };

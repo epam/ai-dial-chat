@@ -3,8 +3,8 @@ import { IconPlayerPlay, IconPlaystationSquare } from '@tabler/icons-react';
 import {
   ApplicationType,
   SimpleApplicationStatus,
-} from '../types/applications';
-import { EntityType, ScreenState } from '../types/common';
+} from '@/src/types/applications';
+import { EntityType, ScreenState } from '@/src/types/common';
 
 import Loader from '../components/Common/Loader';
 
@@ -34,6 +34,11 @@ export enum MarketplaceTabs {
   HOME = 'marketplace',
   MY_WORKSPACE = 'workspace',
 }
+
+export const ChangeAgentTabs = {
+  [MarketplaceTabs.MY_WORKSPACE]: 'My agents',
+  [MarketplaceTabs.HOME]: 'All agents',
+};
 
 export enum DeleteType {
   DELETE,

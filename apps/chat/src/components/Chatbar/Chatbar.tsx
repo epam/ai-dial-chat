@@ -10,17 +10,14 @@ import { FeatureType } from '@/src/types/common';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationSelectors } from '@/src/store/application/application.selectors';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { CONVERSATIONS_DATE_SECTIONS } from '@/src/constants/sections';
 
-import { withRenderWhenNot } from '../Common/RenderWhen';
 import Sidebar from '../Sidebar';
 import { ChatFolders } from './ChatFolders';
 import { ChatbarSettings } from './ChatbarSettings';
@@ -28,7 +25,7 @@ import { Conversations } from './Conversations';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
 
-const ChatbarView = () => {
+export const Chatbar = () => {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -159,7 +156,3 @@ const ChatbarView = () => {
     />
   );
 };
-
-export const Chatbar = withRenderWhenNot(
-  ApplicationSelectors.selectSelectedWidget,
-)(ChatbarView);

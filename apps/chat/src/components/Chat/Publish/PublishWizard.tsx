@@ -43,17 +43,13 @@ import {
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ApplicationActions,
-  ApplicationSelectors,
-} from '@/src/store/application/application.reducers';
-import { AuthSelectors } from '@/src/store/auth/auth.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { ApplicationSelectors } from '@/src/store/application/application.selectors';
+import { AuthSelectors } from '@/src/store/auth/auth.selectors';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  PublicationActions,
-  PublicationSelectors,
-} from '@/src/store/publication/publication.reducers';
+import { PublicationActions } from '@/src/store/publication/publication.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
@@ -139,9 +135,6 @@ export function PublishModal<
   );
   const selectedItemsIds = useAppSelector(
     PublicationSelectors.selectSelectedItemsToPublish,
-  );
-  const applicationDetails = useAppSelector(
-    ApplicationSelectors.selectApplicationDetail,
   );
 
   const applicationId = isApplicationId(entity?.id) ? entity.id : null;
@@ -387,7 +380,6 @@ export function PublishModal<
                   entity: entity as PublishRequestDialAIEntityModel,
                   path: trimmedPath,
                   publishAction,
-                  applicationDetails,
                 })
               : []),
           ],
@@ -411,7 +403,6 @@ export function PublishModal<
       dispatch,
       publishAction,
       type,
-      applicationDetails,
       onClose,
       selectedItemsIds,
     ],

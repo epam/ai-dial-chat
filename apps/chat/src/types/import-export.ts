@@ -85,12 +85,3 @@ export enum ImportRoot {
   Imports = 'imports',
   Files = 'files',
 }
-
-export enum ReplaceOptions {
-  Postfix = 'Postfix',
-  Replace = 'Replace',
-  Ignore = 'Ignore',
-  Mixed = 'Mixed',
-}
-
-export type MappedReplaceActions = Record<string, ReplaceOptions>;

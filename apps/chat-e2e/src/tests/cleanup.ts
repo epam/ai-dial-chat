@@ -1,9 +1,12 @@
+import { BackendEntity } from '@/chat/types/common';
 import dialTest from '@/src/core/dialFixtures';
 import {
   BucketUtil,
+  applicationNamePrefix,
   publicationRequestPrefix,
   unpublishRequestPrefix,
 } from '@/src/utils';
+import { PublishActions } from '@epam/ai-dial-shared';
 
 dialTest(
   'Cleanup admin data',
@@ -37,6 +40,54 @@ dialTest(
       ) {
         await adminPublicationApiHelper.rejectRequest(publicationRequest);
       }
+    }
+  },
+);
+
+dialTest(
+  'Cleanup published E2E apps',
+  async ({ adminPublicationApiHelper, publishRequestBuilder }) => {
+    const publishedApps = await adminPublicationApiHelper.listPublishedApps();
+    const publishedE2EApps = publishedApps.items?.filter((a) =>
+      a.name.includes(applicationNamePrefix),
+    );
+
+    for (const app of publishedE2EApps!) {
+      const pathParts = app.url.split('/');
+      let relativePath = '';
+      const publicSegmentIndex = pathParts.indexOf('public');
+
+      if (
+        publicSegmentIndex !== -1 &&
+        publicSegmentIndex < pathParts.length - 2
+      ) {
+        relativePath =
+          pathParts.slice(publicSegmentIndex + 1, -1).join('/') + '/';
+      } else if (
+        publicSegmentIndex !== -1 &&
+        publicSegmentIndex === pathParts.length - 2
+      ) {
+        relativePath = '';
+      }
+
+      const unpublishRequest = publishRequestBuilder
+        .withName(unpublishRequestPrefix + app.name)
+        .withTargetFolder(relativePath)
+        .withApplicationResource(
+          {
+            url: app.url,
+            name: app.name,
+            bucket: app.bucket,
+          } as BackendEntity,
+          PublishActions.DELETE,
+        )
+        .build();
+
+      const unpublishResponse =
+        await adminPublicationApiHelper.createUnpublishRequest(
+          unpublishRequest,
+        );
+      await adminPublicationApiHelper.approveRequest(unpublishResponse);
     }
   },
 );

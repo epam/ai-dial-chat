@@ -14,18 +14,15 @@ import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { PublicationResource } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
-import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { FilesActions } from '@/src/store/files/files.reducers';
+import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import {
-  PromptsActions,
-  PromptsSelectors,
-} from '@/src/store/prompts/prompts.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
+import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { NA_VERSION } from '@/src/constants/public';
 

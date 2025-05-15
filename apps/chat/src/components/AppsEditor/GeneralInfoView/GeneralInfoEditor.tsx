@@ -8,7 +8,7 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip, topicToOption } from '@/src/utils/app/application';
-import { encode } from '@/src/utils/app/application-type-schema';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { getRouteForSlug } from '@/src/utils/app/route';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
@@ -18,17 +18,16 @@ import {
 } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ApplicationActions,
-  ApplicationSelectors,
-} from '@/src/store/application/application.reducers';
-import { FilesSelectors } from '@/src/store/files/files.reducers';
+import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { ApplicationSelectors } from '@/src/store/application/application.selectors';
+import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { CONFIRM_ICON_FILE_VALUES } from '@/src/constants/applications';
 import { IMAGE_TYPES } from '@/src/constants/chat';
+import { PUBLIC_APP_TOOLTIP } from '@/src/constants/code-apps';
 import { DEFAULT_VERSION } from '@/src/constants/public';
 import { Routes } from '@/src/constants/routes';
 
@@ -71,6 +70,12 @@ export const GeneralInfoEditor: React.FC<Props> = ({
 
   const files = useAppSelector(FilesSelectors.selectFiles);
   const topics = useAppSelector(SettingsSelectors.selectTopics);
+  const exitAfterSave = useAppSelector(
+    ApplicationSelectors.selectExitAfterSave,
+  );
+  const shouldSaveApplication = useAppSelector(
+    ApplicationSelectors.selectShouldSaveApplication,
+  );
 
   const {
     register,
@@ -86,16 +91,8 @@ export const GeneralInfoEditor: React.FC<Props> = ({
   );
 
   const topicOptions = useMemo(() => topics.map(topicToOption), [topics]);
-
-  const exitAfterSave = useAppSelector(
-    ApplicationSelectors.selectExitAfterSave,
-  );
-
   const isFormChanged = Object.keys(dirtyFields).length > 0;
-
-  const shouldSaveApplication = useAppSelector(
-    ApplicationSelectors.selectShouldSaveApplication,
-  );
+  const isAppPublic = !!oldApplication && isEntityIdPublic(oldApplication);
 
   const confirmIconValues = oldApplication?.isShared
     ? CONFIRM_ICON_FILE_VALUES
@@ -115,6 +112,17 @@ export const GeneralInfoEditor: React.FC<Props> = ({
 
   const handleSubmit = useCallback(
     (data: ApplicationGeneralInfoFormData, isAutoSave = false) => {
+      if (isAppPublic) {
+        router.push({
+          pathname: Routes.AppsEditorSettings,
+          query: {
+            id: router.query.id ?? '',
+            slug: router.query.slug ?? '',
+          },
+        });
+        return;
+      }
+
       const { slug } = router.query;
       if (!slug) return;
 
@@ -139,7 +147,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
               },
               oldApplication: oldApplication,
               redirectUrl: !isAutoSave
-                ? getRouteForSlug(Routes.AppsEditorSettings, encode(slugStr))
+                ? getRouteForSlug(Routes.AppsEditorSettings, slugStr)
                 : undefined,
               schema: schema ?? undefined,
             }),
@@ -166,7 +174,8 @@ export const GeneralInfoEditor: React.FC<Props> = ({
       reset(data);
     },
     [
-      router.query,
+      isAppPublic,
+      router,
       schema,
       oldApplication,
       reset,
@@ -209,7 +218,12 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     <div className="size-full overflow-hidden bg-layer-2">
       <form
         onSubmit={submitWrapper((data) => handleSubmit(data, false))}
-        onMouseLeave={submitWrapper((data) => handleSubmit(data, true))}
+        onMouseLeave={() => {
+          if (!isAppPublic) {
+            const submit = submitWrapper((data) => handleSubmit(data, true));
+            submit();
+          }
+        }}
         className="flex size-full flex-col"
         data-qa="app-general-form"
       >
@@ -221,8 +235,9 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             placeholder={t('Type name')}
             id="name"
             error={errors.name?.message}
-            disabled={isAppDeployed || isSharedWithMe}
+            disabled={isAppDeployed || isSharedWithMe || isAppPublic}
             tooltip={
+              (isAppPublic && PUBLIC_APP_TOOLTIP) ||
               (isSharedWithMe && getSharedTooltip('name')) ||
               (isAppDeployed && t('Undeploy application to edit name')) ||
               ''
@@ -238,8 +253,9 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             control={control}
             name="version"
             rules={validators['version']}
-            disabled={isAppDeployed || isSharedWithMe}
+            disabled={isAppDeployed || isSharedWithMe || isAppPublic}
             tooltip={
+              (isAppPublic && PUBLIC_APP_TOOLTIP) ||
               (isSharedWithMe && getSharedTooltip('version')) ||
               (isAppDeployed && t('Undeploy application to edit version')) ||
               ''
@@ -251,6 +267,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             control={control}
             render={({ field }) => (
               <LogoSelector
+                id="icon"
                 label={t('Icon')}
                 localLogo={field.value?.split('/')?.pop()}
                 onLogoSelect={(v) => field.onChange(getLogoId(v))}
@@ -260,8 +277,12 @@ export const GeneralInfoEditor: React.FC<Props> = ({
                 fileManagerModalTitle="Select application icon"
                 allowedTypes={IMAGE_TYPES}
                 error={errors.iconUrl?.message}
-                disabled={isSharedWithMe}
-                tooltip={isSharedWithMe ? getSharedTooltip('icon') : ''}
+                disabled={isSharedWithMe || isAppPublic}
+                tooltip={
+                  (isAppPublic && PUBLIC_APP_TOOLTIP) ||
+                  (isSharedWithMe && getSharedTooltip('icon')) ||
+                  ''
+                }
                 confirmDialogValues={confirmIconValues}
                 warningMessage={iconWarning}
               />
@@ -276,6 +297,8 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             )}
             placeholder={t('A description of your application')}
             rows={3}
+            disabled={isAppPublic}
+            tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
             className="resize-none"
             id="description"
           />
@@ -286,10 +309,13 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             render={({ field }) => (
               <TopicsSelector
                 label={t('Topics')}
+                disabled={isAppPublic}
+                tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
                 values={field.value?.map(topicToOption)}
                 options={topicOptions}
                 placeholder={t('Select one or more topics')}
                 onChange={(v) => field.onChange(v.map((o) => o.value))}
+                id="topics-dropdown"
               />
             )}
           />

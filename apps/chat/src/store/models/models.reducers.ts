@@ -1,7 +1,11 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { combineEntities } from '@/src/utils/app/common';
-import { getGroupModelKey } from '@/src/utils/app/models';
+import {
+  addToModelsMap,
+  deleteFromModelsMap,
+  getGroupModelKey,
+} from '@/src/utils/app/models';
 import { translate } from '@/src/utils/app/translation';
 
 import { ApplicationStatus } from '@/src/types/applications';
@@ -17,15 +21,11 @@ import { RECENT_MODELS_COUNT } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
 import { DeleteType } from '@/src/constants/marketplace';
 
-import * as ModelsSelectors from './models.selectors';
 import { ModelUpdatedValues, ModelsState } from './models.types';
 
-import { UploadStatus } from '@epam/ai-dial-shared';
+import { EntityPublicationInfo, UploadStatus } from '@epam/ai-dial-shared';
 import cloneDeep from 'lodash-es/cloneDeep';
-import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
-
-export { ModelsSelectors };
 
 const initialState: ModelsState = {
   initialized: false,
@@ -88,16 +88,9 @@ export const modelsSlice = createSlice({
       state.status = UploadStatus.LOADED;
       state.error = undefined;
       state.models = payload.models;
-      state.modelsMap = (payload.models as DialAIEntityModel[]).reduce(
-        (acc, model) => {
-          acc[model.id] = model;
-          if (model.id !== model.reference) {
-            acc[model.reference] = model;
-          }
-
-          return acc;
-        },
-        {} as Record<string, DialAIEntityModel>,
+      state.modelsMap = addToModelsMap(
+        state.modelsMap ?? {},
+        ...payload.models,
       );
     },
     getModelsFail: (
@@ -183,25 +176,19 @@ export const modelsSlice = createSlice({
         RECENT_MODELS_COUNT,
       );
     },
-    setPublishedApplicationIds: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        modelIds: string[];
-      }>,
-    ) => {
-      state.publishedApplicationIds = payload.modelIds;
-    },
     addModels: (
       state,
       { payload }: PayloadAction<{ models: DialAIEntityModel[] }>,
     ) => {
       state.models = [...state.models, ...payload.models];
-      payload.models.forEach((model) => {
-        state.modelsMap[model.id] = model;
-        state.modelsMap[model.reference] = model;
-      });
+
+      state.modelsMap = addToModelsMap(state.modelsMap, ...payload.models);
+    },
+    addModelToMap: (
+      state,
+      { payload: model }: PayloadAction<DialAIEntityModel>,
+    ) => {
+      state.modelsMap = addToModelsMap(state.modelsMap, model);
     },
     updateModel: (
       state,
@@ -212,7 +199,8 @@ export const modelsSlice = createSlice({
         oldApplicationId: string;
       }>,
     ) => {
-      const oldModel = state.modelsMap[payload.model.reference];
+      const oldModel =
+        state.modelsMap[payload.model.reference ?? payload.model.id];
       //Copy permissions and sharedWithMe after update
       const newModel: DialAIEntityModel = {
         ...oldModel,
@@ -222,40 +210,28 @@ export const modelsSlice = createSlice({
       };
 
       state.models = state.models.map((model) =>
-        model.reference === newModel.reference ? newModel : model,
+        (model.reference && model.reference === newModel.reference) ||
+        model.id === newModel.id
+          ? newModel
+          : model,
       );
-      state.modelsMap = omit(state.modelsMap, [payload.oldApplicationId]);
-      state.modelsMap[newModel.id] = newModel;
-      state.modelsMap[newModel.reference] = newModel;
+      deleteFromModelsMap(state.modelsMap, payload.oldApplicationId);
+      state.modelsMap = addToModelsMap(state.modelsMap, newModel);
     },
     deleteModels: (
       state,
       { payload }: PayloadAction<{ references: string[] }>,
     ) => {
-      const ids = payload.references
-        .map((reference) => state.modelsMap[reference]?.id)
-        .filter(Boolean) as string[];
       state.models = state.models.filter(
         (model) => !payload.references.includes(model.reference),
       );
       state.recentModelsIds = state.recentModelsIds.filter(
         (id) => !payload.references.includes(id),
       );
-      state.modelsMap = omit(state.modelsMap, [...payload.references, ...ids]);
-    },
-    deleteSharedWithMeModel: (
-      state,
-      { payload }: PayloadAction<{ modelId: string }>,
-    ) => {
-      const modelReference = state.modelsMap[payload.modelId]?.reference;
-
-      state.models = state.models.filter(
-        (model) => model.id !== payload.modelId,
+      state.modelsMap = deleteFromModelsMap(
+        state.modelsMap,
+        ...payload.references,
       );
-      state.recentModelsIds = state.recentModelsIds.filter(
-        (id) => id !== modelReference,
-      );
-      state.modelsMap = omit(state.modelsMap, payload.modelId);
     },
     addPublishRequestModels: (
       state,
@@ -268,6 +244,34 @@ export const modelsSlice = createSlice({
       state.publishRequestModels = combineEntities(
         state.publishRequestModels,
         payload.models,
+      );
+    },
+    updateModelPublicationInfo: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        reference: string;
+        updatedValues: EntityPublicationInfo;
+      }>,
+    ) => {
+      const targetModel = state.publishRequestModels.find(
+        (m) => m.reference === payload.reference,
+      );
+
+      if (!targetModel) return state;
+
+      const updatedModel = {
+        ...targetModel,
+        publicationInfo: {
+          ...targetModel.publicationInfo,
+          ...payload.updatedValues,
+        },
+      };
+
+      state.publishRequestModels = combineEntities(
+        [updatedModel],
+        state.publishRequestModels,
       );
     },
     updateFunctionStatus: (
@@ -288,8 +292,7 @@ export const modelsSlice = createSlice({
         state.models = state.models.map((model) =>
           model.reference === targetModel.reference ? updatedModel : model,
         );
-        state.modelsMap[targetModel.id] = updatedModel;
-        state.modelsMap[targetModel.reference] = updatedModel;
+        state.modelsMap = addToModelsMap(state.modelsMap, updatedModel);
       }
     },
     updateLocalModels: (
@@ -308,8 +311,7 @@ export const modelsSlice = createSlice({
             ...model,
             ...modelToUpdate.updatedValues,
           };
-          state.modelsMap[model.reference] = updatedModel;
-          state.modelsMap[model.id] = updatedModel;
+          state.modelsMap = addToModelsMap(state.modelsMap, updatedModel);
 
           state.models = state.models.map((modelFromState) => {
             if (modelFromState.reference === modelToUpdate.reference) {

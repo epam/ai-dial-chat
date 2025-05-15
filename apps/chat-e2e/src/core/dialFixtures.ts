@@ -5,8 +5,8 @@ import {
   AgentInfo,
   AppEditorContainer,
   AppEditorGeneralForm,
+  AppEditorGeneralInfoAgentPreview,
   AppEditorHeader,
-  AppEditorPreview,
   AppEditorViewForm,
   AttachFilesModal,
   Chat,
@@ -85,11 +85,13 @@ import { PublicationApiHelper } from '@/src/testData/api/publicationApiHelper';
 import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
+import { DialErrorPage } from '@/src/ui/pages/DialErrorPage';
 import { AccountSettings } from '@/src/ui/webElements/accountSettings';
 import { Addons } from '@/src/ui/webElements/addons';
 import { AddonsDialog } from '@/src/ui/webElements/addonsDialog';
 import { AgentSettings } from '@/src/ui/webElements/agentSettings';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
+import { AppEditorAppSettingsAgentPreview } from '@/src/ui/webElements/appEditor/appEditorAppSettingsAgentPreview';
 import { Banner } from '@/src/ui/webElements/banner';
 import { Compare } from '@/src/ui/webElements/compare';
 import { ConfirmationDialog } from '@/src/ui/webElements/confirmationDialog';
@@ -152,6 +154,7 @@ export const stateFilePath = (index: number) =>
 const dialTest = test.extend<{
   beforeTestCleanup: string;
   dialHomePage: DialHomePage;
+  dialErrorPage: DialErrorPage;
   marketplacePage: MarketplacePage;
   appEditorPage: AppEditorPage;
   appContainer: AppContainer;
@@ -168,7 +171,8 @@ const dialTest = test.extend<{
   appEditorHeader: AppEditorHeader;
   appEditorHeaderAssertion: AppEditorHeaderAssertion;
   appEditorGeneralForm: AppEditorGeneralForm;
-  appEditorPreview: AppEditorPreview;
+  appEditorGeneralInfoAgentPreview: AppEditorGeneralInfoAgentPreview;
+  appEditorAppSettingsAgentPreview: AppEditorAppSettingsAgentPreview;
   appEditorViewForm: AppEditorViewForm;
   chatBar: ChatBar;
   navigationPanel: NavigationPanel;
@@ -409,6 +413,10 @@ const dialTest = test.extend<{
     const dialHomePage = new DialHomePage(page);
     await use(dialHomePage);
   },
+  dialErrorPage: async ({ page }, use) => {
+    const dialErrorPage = new DialErrorPage(page);
+    await use(dialErrorPage);
+  },
   marketplacePage: async ({ page }, use) => {
     const marketplacePage = new MarketplacePage(page);
     await use(marketplacePage);
@@ -469,9 +477,15 @@ const dialTest = test.extend<{
     const appEditorGeneralForm = appEditorContainer.getAppEditorGeneralForm();
     await use(appEditorGeneralForm);
   },
-  appEditorPreview: async ({ appEditorContainer }, use) => {
-    const appEditorPreview = appEditorContainer.getAppEditorPreview();
-    await use(appEditorPreview);
+  appEditorGeneralInfoAgentPreview: async ({ appEditorContainer }, use) => {
+    const appEditorGeneralInfoPreview =
+      appEditorContainer.getAppEditorGeneralInfoPreview();
+    await use(appEditorGeneralInfoPreview);
+  },
+  appEditorAppSettingsAgentPreview: async ({ appEditorContainer }, use) => {
+    const appEditorAppSettingsPreview =
+      appEditorContainer.getAppEditorAppSettingsPreview();
+    await use(appEditorAppSettingsPreview);
   },
   appEditorViewForm: async ({ appEditorContainer }, use) => {
     const appEditorViewForm = appEditorContainer.getAppEditorViewForm();

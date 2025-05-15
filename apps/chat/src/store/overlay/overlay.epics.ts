@@ -12,6 +12,7 @@ import {
   iif,
   map,
   merge,
+  mergeMap,
   of,
   switchMap,
   takeUntil,
@@ -21,8 +22,16 @@ import {
 
 import { combineEpics, ofType } from 'redux-observable';
 
-import { parseCommaSeparatedList } from '@/src/utils/app/common';
+import {
+  doesHaveDotsInTheEnd,
+  isEntityNameOnSameLevelUnique,
+  parseCommaSeparatedList,
+} from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
+import {
+  getActionsAddFoldersFromFolderId,
+  getParentFolderIdsFromFolderId,
+} from '@/src/utils/app/folders';
 import { getConversationRootId } from '@/src/utils/app/id';
 import {
   isPostMessageOverlayRequest,
@@ -31,34 +40,42 @@ import {
 } from '@/src/utils/app/overlay';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
+import { FeatureType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
+
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { ModelsActions } from '@/src/store/models/models.reducers';
+import { SettingsActions } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { ShareActions } from '@/src/store/share/share.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
+import { ImportExportActions } from '../actions';
 import { AuthSelectors } from '../auth/auth.selectors';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '../conversations/conversations.reducers';
-import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
-import {
-  SettingsActions,
-  SettingsSelectors,
-} from '../settings/settings.reducers';
-import { ShareActions } from '../share/share.reducers';
-import { UIActions, UISelectors } from '../ui/ui.reducers';
-import { OverlayActions, OverlaySelectors } from './overlay.reducers';
+import { ModelsSelectors } from '../models/models.selectors';
+import { OverlayActions } from './overlay.reducers';
+import { OverlaySelectors } from './overlay.selectors';
 
 import {
   ChatOverlayOptions,
   CreateConversationRequest,
   CreateConversationResponse,
+  CreatePlaybackConversationRequest,
+  CreatePlaybackConversationResponse,
+  DeleteConversationRequest,
+  ExportConversationRequest,
   Feature,
   GetConversationsResponse,
   GetMessagesResponse,
   OverlayEvents,
   OverlayRequest,
   OverlayRequests,
+  RenameConversationRequest,
+  RenameConversationResponse,
   Role,
   SelectConversationRequest,
   SelectConversationResponse,
@@ -69,6 +86,7 @@ import {
   validateFeature,
 } from '@epam/ai-dial-shared';
 import isEqual from 'lodash-es/isEqual';
+import uniq from 'lodash-es/uniq';
 
 export const postMessageMapperEpic: AppEpic = (_, state$) =>
   typeof window === 'object'
@@ -105,6 +123,47 @@ export const postMessageMapperEpic: AppEpic = (_, state$) =>
 
               return of(
                 OverlayActions.selectConversation({
+                  requestId,
+                  id: options.id,
+                }),
+              );
+            }
+            case OverlayRequests.deleteConversation: {
+              const options = payload as DeleteConversationRequest;
+
+              return of(
+                OverlayActions.deleteConversation({
+                  requestId,
+                  id: options.id,
+                }),
+              );
+            }
+            case OverlayRequests.renameConversation: {
+              const options = payload as RenameConversationRequest;
+
+              return of(
+                OverlayActions.renameConversation({
+                  requestId,
+                  id: options.id,
+                  newName: options.newName,
+                }),
+              );
+            }
+            case OverlayRequests.createPlaybackConversation: {
+              const options = payload as CreatePlaybackConversationRequest;
+
+              return of(
+                OverlayActions.createPlaybackConversation({
+                  requestId,
+                  id: options.id,
+                }),
+              );
+            }
+            case OverlayRequests.exportConversation: {
+              const options = payload as ExportConversationRequest;
+
+              return of(
+                OverlayActions.exportConversation({
                   requestId,
                   id: options.id,
                 }),
@@ -216,7 +275,7 @@ const getConversationsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const createConversationEpic: AppEpic = (action$, state$) =>
+const createConversationEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(OverlayActions.createConversation.type),
     switchMap(({ payload: { requestId, parentPath } }) => {
@@ -225,25 +284,20 @@ const createConversationEpic: AppEpic = (action$, state$) =>
         parentPath,
       );
 
-      const isFolderExists = ConversationsSelectors.selectFolderById(
-        state$.value,
-        conversationFolderId,
-      );
-
       const actions: Observable<AppAction>[] = [];
 
-      if (parentPath && !isFolderExists) {
+      if (parentPath) {
         actions.push(
-          of(
-            ConversationsActions.createFolder({
-              name: parentPath,
-              parentId: getConversationRootId(),
-            }),
-          ),
+          ...getActionsAddFoldersFromFolderId({
+            folderId: conversationFolderId,
+            folderType: FeatureType.Chat,
+            shouldOpen: true,
+          }),
         );
       }
 
-      actions.push(
+      return concat(
+        ...actions,
         of(
           ConversationsActions.createNewConversations({
             names: [DEFAULT_CONVERSATION_NAME],
@@ -257,8 +311,6 @@ const createConversationEpic: AppEpic = (action$, state$) =>
           }),
         ),
       );
-
-      return concat(...actions);
     }),
   );
 
@@ -270,7 +322,7 @@ const createConversationEffectEpic: AppEpic = (action$, state$) =>
         ofType(ConversationsActions.createNotLocalConversationsSuccess.type),
         takeUntil(timer(10000)),
         filter(Boolean),
-        map(({ payload: conversations }) => {
+        mergeMap(({ payload: conversations }) => {
           const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
 
           const conversation = conversations[0];
@@ -281,17 +333,246 @@ const createConversationEffectEpic: AppEpic = (action$, state$) =>
             parentPath,
           };
 
-          return OverlayActions.sendPMResponse({
-            type: OverlayRequests.createConversation,
+          return concat(
+            of(UIActions.setScrollToEntityId(conversation.id)),
+            of(
+              OverlayActions.sendPMResponse({
+                type: OverlayRequests.createConversation,
+                requestParams: {
+                  requestId,
+                  hostDomain,
+                  payload: {
+                    conversation: resultConversation,
+                  } as CreateConversationResponse,
+                },
+              }),
+            ),
+          );
+        }),
+      );
+    }),
+  );
+
+const deleteConversationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.deleteConversation.type),
+    switchMap(({ payload: { requestId, id } }) => {
+      const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+      const conversation = ConversationsSelectors.selectConversation(
+        state$.value,
+        id,
+      );
+
+      if (!conversation) {
+        console.warn(`[Overlay] Conversation not exists with id '${id}'`);
+
+        return EMPTY;
+      }
+
+      return concat(
+        of(
+          ConversationsActions.deleteConversations({
+            conversationIds: [conversation.id],
+          }),
+        ),
+        of(
+          OverlayActions.sendPMResponse({
+            type: OverlayRequests.deleteConversation,
             requestParams: {
               requestId,
               hostDomain,
-              payload: {
-                conversation: resultConversation,
-              } as CreateConversationResponse,
             },
-          });
+          }),
+        ),
+      );
+    }),
+  );
+
+const createPlaybackConversationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.createPlaybackConversation.type),
+    switchMap(({ payload }) => {
+      const conversation = ConversationsSelectors.selectConversation(
+        state$.value,
+        payload.id,
+      );
+
+      if (!conversation) {
+        console.warn(
+          `[Overlay] Conversation not exists with id '${payload.id}'`,
+        );
+
+        return EMPTY;
+      }
+
+      return concat(
+        of(ConversationsActions.createNewPlaybackConversation(conversation)),
+        of(OverlayActions.createPlaybackConversationEffect(payload)),
+      );
+    }),
+  );
+
+const createPlaybackConversationEffectEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.createPlaybackConversationEffect.type),
+    switchMap(({ payload: { requestId } }) => {
+      return action$.pipe(
+        ofType(ConversationsActions.saveNewConversationSuccess.type),
+        takeUntil(timer(10000)),
+        filter(Boolean),
+        mergeMap(({ payload: { newConversation } }) => {
+          const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+
+          const { bucket, parentPath } = splitEntityId(newConversation.id);
+          const resultConversation = {
+            ...newConversation,
+            bucket,
+            parentPath,
+          };
+
+          return concat(
+            of(UIActions.setScrollToEntityId(newConversation.id)),
+            of(
+              OverlayActions.sendPMResponse({
+                type: OverlayRequests.createPlaybackConversation,
+                requestParams: {
+                  requestId,
+                  hostDomain,
+                  payload: {
+                    conversation: resultConversation,
+                  } as CreatePlaybackConversationResponse,
+                },
+              }),
+            ),
+          );
         }),
+      );
+    }),
+  );
+
+const renameConversationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.renameConversation.type),
+    switchMap(({ payload }) => {
+      const conversations = ConversationsSelectors.selectConversations(
+        state$.value,
+      );
+      const conversation = ConversationsSelectors.selectConversation(
+        state$.value,
+        payload.id,
+      );
+
+      if (!conversation) {
+        console.warn(
+          `[Overlay] Conversation not exists with id '${payload.id}'`,
+        );
+
+        return EMPTY;
+      }
+
+      if (
+        !isEntityNameOnSameLevelUnique(
+          payload.newName,
+          conversation,
+          conversations,
+        ) ||
+        doesHaveDotsInTheEnd(payload.newName)
+      ) {
+        console.warn(
+          '[Overlay] Conversation rename failed because new name is invalid',
+        );
+
+        return EMPTY;
+      }
+
+      return concat(
+        of(
+          ConversationsActions.updateConversation({
+            id: conversation.id,
+            values: { name: payload.newName, isNameChanged: true },
+          }),
+        ),
+        of(OverlayActions.renameConversationEffect(payload)),
+      );
+    }),
+  );
+
+const renameConversationEffectEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.renameConversationEffect.type),
+    switchMap(({ payload: { requestId } }) => {
+      return action$.pipe(
+        ofType(ConversationsActions.updateConversationSuccess.type),
+        takeUntil(timer(10000)),
+        filter(Boolean),
+        mergeMap(({ payload: { id } }) => {
+          const conversation = ConversationsSelectors.selectConversation(
+            state$.value,
+            id,
+          );
+
+          if (!conversation) return EMPTY;
+
+          const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+
+          const { bucket, parentPath } = splitEntityId(conversation.id);
+          const resultConversation = {
+            ...conversation,
+            bucket,
+            parentPath,
+          };
+
+          return concat(
+            of(UIActions.setScrollToEntityId(conversation.id)),
+            of(
+              OverlayActions.sendPMResponse({
+                type: OverlayRequests.renameConversation,
+                requestParams: {
+                  requestId,
+                  hostDomain,
+                  payload: {
+                    conversation: resultConversation,
+                  } as RenameConversationResponse,
+                },
+              }),
+            ),
+          );
+        }),
+      );
+    }),
+  );
+
+const exportConversationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.exportConversation.type),
+    switchMap(({ payload: { requestId, id } }) => {
+      const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+      const conversation = ConversationsSelectors.selectConversation(
+        state$.value,
+        id,
+      );
+
+      if (!conversation) {
+        console.warn(`[Overlay] Conversation not exists with id '${id}'`);
+
+        return EMPTY;
+      }
+
+      return concat(
+        of(
+          ImportExportActions.exportConversation({
+            conversationId: conversation.id,
+          }),
+        ),
+        of(
+          OverlayActions.sendPMResponse({
+            type: OverlayRequests.exportConversation,
+            requestParams: {
+              requestId,
+              hostDomain,
+            },
+          }),
+        ),
       );
     }),
   );
@@ -310,12 +591,25 @@ const selectConversationEpic: AppEpic = (action$, state$) =>
         return EMPTY;
       }
 
+      const foldersPaths = uniq(
+        getParentFolderIdsFromFolderId(conversation.folderId),
+      );
+
       return concat(
+        foldersPaths
+          ? of(
+              UIActions.setOpenedFoldersIds({
+                openedFolderIds: foldersPaths,
+                folderType: FeatureType.Chat,
+              }),
+            )
+          : EMPTY,
         of(
           ConversationsActions.selectConversations({
             conversationIds: [conversation.id],
           }),
         ),
+        of(UIActions.setScrollToEntityId(conversation.id)),
         of(
           OverlayActions.sendPMResponse({
             type: OverlayRequests.selectConversation,
@@ -639,7 +933,7 @@ const notifyHostAboutReadyEpic: AppEpic = (_action$, state$) =>
     map((state) => {
       return {
         isShouldLogin: AuthSelectors.selectIsShouldLogin(state),
-        isModelLoaded: ModelsSelectors.selectIsModelsLoaded(state),
+        isModelLoaded: ModelsSelectors.selectAreModelsLoaded(state),
       };
     }),
     filter(({ isModelLoaded, isShouldLogin }) => {
@@ -692,6 +986,12 @@ export const OverlayEpics = combineEpics(
   createConversationEpic,
   createConversationEffectEpic,
   selectConversationEpic,
+  deleteConversationEpic,
+  createPlaybackConversationEpic,
+  createPlaybackConversationEffectEpic,
+  exportConversationEpic,
+  renameConversationEpic,
+  renameConversationEffectEpic,
 
   initOverlayEpic,
   sendPMEventEpic,

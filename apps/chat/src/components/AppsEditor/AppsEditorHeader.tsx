@@ -5,7 +5,7 @@ import {
   IconMenu2,
   IconX,
 } from '@tabler/icons-react';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -14,30 +14,37 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isEntityIdPublic } from '@/src/utils/app/publications';
+
 import { Translation } from '@/src/types/translation';
 
-import {
-  ApplicationActions,
-  ApplicationSelectors,
-} from '@/src/store/application/application.reducers';
+import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
+import { Logo } from '@/src/components/Header/Logo';
 import { User } from '@/src/components/Header/User/User';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
-
-import { Logo } from '../Header/Logo';
 
 enum TabKeys {
   GENERAL = 'general',
   SETTINGS = 'settings',
 }
+
+const myWorkspaceHref = {
+  pathname: Routes.Marketplace,
+  query: { tab: MarketplaceTabs.MY_WORKSPACE },
+};
+
 interface AppsEditorHeaderProps {
   applicationTypeDisplayName: string;
   isEditApplication?: boolean;
@@ -50,11 +57,14 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
   hasCustomEditor,
 }) => {
   const dispatch = useAppDispatch();
+
   const {
     query: { id = '', slug = '', add },
     pathname,
   } = useRouter();
   const { t } = useTranslation(Translation.Chat);
+
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const isUserSettingsOpen = useAppSelector(
     UISelectors.selectIsUserSettingsOpen,
@@ -63,18 +73,17 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
   const returnConversationIds = useAppSelector(
     ApplicationSelectors.selectReturnConversationIds,
   );
-
   const shouldSaveApplication = useAppSelector(
     ApplicationSelectors.selectShouldSaveApplication,
   );
-
   const hasUnsavedChanges = useAppSelector(
     ApplicationSelectors.selectHasUnsavedChanges,
   );
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
-  const handleCloseUserSettings = () => {
+  const handleCloseUserSettings = useCallback(() => {
     dispatch(UIActions.setIsUserSettingsOpen(false));
-  };
+  }, [dispatch]);
 
   const handleTabClick = (isDisabled: boolean) => {
     return (e: React.MouseEvent) => {
@@ -95,6 +104,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
       dispatch(ApplicationActions.setShouldSaveApplication(true));
       dispatch(ApplicationActions.setExitAfterSave(true));
     }
+
     if (returnConversationIds?.length) {
       dispatch(
         ConversationsActions.selectConversations({
@@ -141,7 +151,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
     [t, id, slug, add],
   );
 
-  const [menuOpen, setMenuOpen] = useState(false);
+  const agent = modelsMap[id as string];
 
   return (
     <div
@@ -193,7 +203,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
                       )}
                       onClick={handleTabClick(isDisabled)}
                     >
-                      {tab.key === TabKeys.GENERAL && id ? (
+                      {tab.href.pathname !== pathname && id ? (
                         <IconCircleCheck
                           className="text-accent-primary"
                           data-qa="selected-step-icon"
@@ -233,7 +243,9 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
         </div>
 
         <div className="flex h-full items-center space-x-2">
-          {isEditApplication && !hasCustomEditor ? (
+          {isEditApplication &&
+          !hasCustomEditor &&
+          !isEntityIdPublic({ id: agent?.id as string }) ? (
             <button
               className="button flex items-center space-x-1 text-accent-primary md:flex"
               onClick={handleSaveAndRedirect}
@@ -246,10 +258,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
             <Link
               className="hidden items-center space-x-1 px-3 text-accent-primary md:flex"
               data-qa="exit-link"
-              href={{
-                pathname: Routes.Marketplace,
-                query: { tab: MarketplaceTabs.MY_WORKSPACE },
-              }}
+              href={myWorkspaceHref}
             >
               <IconLogout size={14} />
               <span>{t('Exit')}</span>
@@ -286,10 +295,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
           })}
           <Link
             className="flex items-center px-4 py-2 hover:text-accent-primary"
-            href={{
-              pathname: Routes.Marketplace,
-              query: { tab: MarketplaceTabs.MY_WORKSPACE },
-            }}
+            href={myWorkspaceHref}
           >
             <IconLogout size={14} />
             <span>{t('Go to marketplace')}</span>
