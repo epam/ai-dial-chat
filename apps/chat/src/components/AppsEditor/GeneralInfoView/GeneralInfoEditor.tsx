@@ -267,6 +267,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             control={control}
             render={({ field }) => (
               <LogoSelector
+                id="icon"
                 label={t('Icon')}
                 localLogo={field.value?.split('/')?.pop()}
                 onLogoSelect={(v) => field.onChange(getLogoId(v))}
@@ -314,6 +315,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
                 options={topicOptions}
                 placeholder={t('Select one or more topics')}
                 onChange={(v) => field.onChange(v.map((o) => o.value))}
+                id="topics-dropdown"
               />
             )}
           />

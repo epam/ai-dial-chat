@@ -1,34 +1,43 @@
+import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ExpectedMessages } from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
-import { PromptModalDialog } from '@/src/ui/webElements';
+import { ThemeColorAttributes } from '@/src/ui/domData';
+import { BaseElement, PromptModalDialog } from '@/src/ui/webElements';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
-export class PromptModalAssertion {
+export class PromptModalAssertion extends BaseAssertion {
   readonly promptModalDialog: PromptModalDialog;
 
   constructor(promptModalDialog: PromptModalDialog) {
+    super();
     this.promptModalDialog = promptModalDialog;
   }
 
-  public async assertNameFieldIsInvalid(expectedErrorMessage: string) {
-    const nameBorderColors =
-      await this.promptModalDialog.name.getAllBorderColors();
-    Object.values(nameBorderColors).forEach((borders) => {
-      borders.forEach((borderColor) => {
-        expect
-          .soft(borderColor, ExpectedMessages.fieldIsHighlightedWithRed)
-          .toBe(Colors.textError);
-      });
-    });
-
-    const nameFieldErrorMessage = this.promptModalDialog.getFieldBottomMessage(
-      this.promptModalDialog.name,
+  public async assertFieldIsInvalid(
+    element: BaseElement,
+    expectedErrorMessage: string,
+  ) {
+    await this.assertElementBorderColors(
+      element,
+      ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textError),
     );
-    await nameFieldErrorMessage.waitFor();
+    const nameFieldErrorMessage =
+      this.promptModalDialog.getFieldBottomMessage(element);
+    await this.assertElementText(nameFieldErrorMessage, expectedErrorMessage);
+  }
 
-    await expect
-      .soft(nameFieldErrorMessage, ExpectedMessages.promptNameInvalid)
-      .toHaveText(expectedErrorMessage);
+  public async assertNameFieldIsInvalid(expectedErrorMessage: string) {
+    await this.assertFieldIsInvalid(
+      this.promptModalDialog.name,
+      expectedErrorMessage,
+    );
+  }
+
+  public async assertPromptFieldIsInvalid(expectedErrorMessage: string) {
+    await this.assertFieldIsInvalid(
+      this.promptModalDialog.prompt,
+      expectedErrorMessage,
+    );
   }
 
   public async assertNameFieldIsEmpty() {
