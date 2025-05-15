@@ -9,11 +9,15 @@ import Magnifier from '@/public/images/icons/search-alt.svg';
 interface NoResultsFoundProps {
   iconSize?: number;
   className?: string;
+  additionalText?: string;
+  children?: React.ReactNode | React.ReactNode[];
 }
 
 export const NoResultsFound = ({
   iconSize = 60,
   className = 'text-sm gap-3',
+  additionalText = '',
+  children,
 }: NoResultsFoundProps) => {
   const { t } = useTranslation(Translation.Common);
 
@@ -30,7 +34,11 @@ export const NoResultsFound = ({
         width={iconSize}
         className="font-semibold text-secondary"
       />
-      <span>{t('No results found')}</span>
+      <span>
+        {t('No results found')}
+        {additionalText}
+      </span>
+      {children && <span>{children}</span>}
     </div>
   );
 };
