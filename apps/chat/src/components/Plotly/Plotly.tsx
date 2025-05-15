@@ -24,11 +24,12 @@ export const PlotlyComponent = memo(
         return;
       }
 
-      const containerHeight = containerRef.current.clientHeight;
-      const layoutHeight = currentLayout.height && currentLayout.height > containerHeight ? currentLayout.height : containerHeight;
+      const layoutHeight = Math.max(
+        currentLayout.height ?? 0,
+        containerRef.current.clientHeight,
+      );
       setHeight(layoutHeight);
       setWidth(containerRef.current.scrollWidth);
-
     }, []);
 
     const handleRelayout = (newLayout: PlotRelayoutEvent) => {
