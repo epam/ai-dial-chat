@@ -24,6 +24,7 @@ import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
+import { ModelsActions } from '@/src/store/actions';
 import { AddonsSelectors } from '@/src/store/addons/addons.selectors';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
@@ -222,6 +223,19 @@ const TalkToModalView = ({
         );
       }
       dispatch(ConversationsActions.setIsStartedCustomViewerConversation(true));
+      if (
+        model &&
+        model.reference !== REPLAY_AS_IS_MODEL &&
+        !installedModelIdsSet.has(model.reference)
+      ) {
+        dispatch(
+          ModelsActions.addInstalledModels({
+            references: [model.reference],
+            showSuccessToast: false,
+            updateRecentModels: true,
+          }),
+        );
+      }
 
       onClose();
     },
@@ -258,6 +272,7 @@ const TalkToModalView = ({
             placeholder={t('Search')}
             className="input-form peer m-0 pl-[38px]"
             data-qa="search-agents"
+            autoFocus
           />
         </div>
         <div className="flex gap-2">
