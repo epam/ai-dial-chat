@@ -201,7 +201,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
                       )}
                       onClick={handleTabClick(isDisabled)}
                     >
-                      {tab.key === TabKeys.GENERAL && id ? (
+                      {tab.href.pathname !== pathname && id ? (
                         <IconCircleCheck
                           className="text-accent-primary"
                           data-qa="selected-step-icon"
