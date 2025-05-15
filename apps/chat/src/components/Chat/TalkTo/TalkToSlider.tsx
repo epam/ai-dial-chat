@@ -5,6 +5,7 @@ import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useSwipe } from '@/src/hooks/useSwipe';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   isPlaybackConversation,
@@ -15,11 +16,13 @@ import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 import { Conversation } from '@/src/types/chat';
 import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
+import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+import { ChangeAgentTabs, MarketplaceTabs } from '@/src/constants/marketplace';
 
 import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
 
@@ -117,11 +120,12 @@ const getDotSizeClass = (
 };
 
 interface SliderModelsGroupProps {
-  modelsGroup: DialAIEntityModel[];
+  modelsGroup: CardType[];
   conversation: Conversation;
   screenState: ScreenState;
   rowsCount: number;
   onSelectModel: (entity: DialAIEntityModel) => void;
+  onOpenMarketplaceTab: () => void;
 }
 
 const SliderModelsGroup = ({
@@ -130,13 +134,15 @@ const SliderModelsGroup = ({
   screenState,
   rowsCount,
   onSelectModel,
+  onOpenMarketplaceTab,
   ...restProps
 }: SliderModelsGroupProps) => {
+  const { t } = useTranslation(Translation.Chat);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   return (
     <section
-      key={modelsGroup.map((model) => model.id).join('.')}
+      key={modelsGroup.map((model) => model.reference).join('.')}
       className="h-full min-w-full"
       data-qa="agents-section"
     >
@@ -161,6 +167,19 @@ const SliderModelsGroup = ({
             (model.reference === REPLAY_AS_IS_MODEL &&
               isReplayAsIsConversation(conversation));
 
+          if (model === SuggestedCard) {
+            return (
+              <div
+                className="flex size-full cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-primary hover:bg-layer-3"
+                onClick={onOpenMarketplaceTab}
+                key={SuggestedCard.id}
+              >
+                <h3>{t("Couldn't find what you need?")}</h3>
+                <SuggestionButton />
+              </div>
+            );
+          }
+
           return (
             <TalkToCard
               isSelected={isNotPseudoModelSelected || isPseudoModelSelected}
@@ -175,7 +194,7 @@ const SliderModelsGroup = ({
                 model.reference !== PseudoModel.Playback
               }
               key={model.id}
-              entity={model}
+              entity={model as DialAIEntityModel}
               onClick={onSelectModel}
               onSelectVersion={onSelectModel}
               {...restProps}
@@ -187,13 +206,30 @@ const SliderModelsGroup = ({
   );
 };
 
+export const SuggestedCard = {
+  id: 'suggested',
+  reference: 'suggested',
+};
+
+export type CardType = DialAIEntityModel | typeof SuggestedCard;
+
 interface Props {
   conversation: Conversation;
-  items: DialAIEntityModel[];
+  items: CardType[];
   onSelectModel: (entity: DialAIEntityModel) => void;
+  onOpenMarketplaceTab: () => void;
+  isMyWorkspace: boolean;
+  isSearchMode: boolean;
 }
 
-export const TalkToSlider = ({ conversation, items, ...restProps }: Props) => {
+export const TalkToSlider = ({
+  conversation,
+  items,
+  isMyWorkspace,
+  onOpenMarketplaceTab,
+  ...restProps
+}: Props) => {
+  const { t } = useTranslation(Translation.Chat);
   const sliderRef = useRef<HTMLDivElement>(null);
 
   const [activeSlide, setActiveSlide] = useState(0);
@@ -333,12 +369,23 @@ export const TalkToSlider = ({ conversation, items, ...restProps }: Props) => {
                 conversation={conversation}
                 screenState={screenState}
                 rowsCount={sliderRowsCount}
+                onOpenMarketplaceTab={onOpenMarketplaceTab}
                 {...restProps}
               />
             ))
           ) : (
             <div className="flex size-full items-center justify-center">
-              <NoResultsFound />
+              <NoResultsFound
+                additionalText={
+                  isMyWorkspace
+                    ? t(` in ${ChangeAgentTabs[MarketplaceTabs.MY_WORKSPACE]}`)
+                    : ''
+                }
+              >
+                {isMyWorkspace && (
+                  <SuggestionButton onClick={onOpenMarketplaceTab} />
+                )}
+              </NoResultsFound>
             </div>
           )}
         </div>
@@ -414,5 +461,18 @@ export const TalkToSlider = ({ conversation, items, ...restProps }: Props) => {
         </div>
       </div>
     </>
+  );
+};
+
+interface SuggestionButtonProps {
+  onClick?: () => void;
+}
+
+const SuggestionButton = ({ onClick }: SuggestionButtonProps) => {
+  const { t } = useTranslation(Translation.Chat);
+  return (
+    <button className="text-accent-primary" onClick={onClick}>
+      {t(`See results from ${ChangeAgentTabs[MarketplaceTabs.HOME]}`)}
+    </button>
   );
 };
