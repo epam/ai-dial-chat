@@ -8,7 +8,7 @@ import {
   ApplicationLogsType,
   CustomApplicationModel,
 } from './applications';
-import { BackendChatEntity, MoveModel } from './common';
+import { BackendChatEntity, CopyModel, MoveModel } from './common';
 import { FolderInterface, FoldersAndEntities } from './folder';
 import { Prompt, PromptInfo } from './prompt';
 
@@ -155,6 +155,8 @@ export interface DialStorage {
   setPrompts(prompts: Prompt[]): Observable<PromptInfo>;
 
   move(data: MoveModel): Observable<MoveModel>;
+
+  copy(data: CopyModel): Observable<null>;
 
   createApplication(
     application: CustomApplicationModel,

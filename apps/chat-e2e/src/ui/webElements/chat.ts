@@ -257,7 +257,7 @@ export class Chat extends BaseElement {
     return request?.postDataJSON();
   }
 
-  public async sendRequestWithButton(message: string, waitForAnswer = true) {
+  public async sendRequestWithButton(message?: string, waitForAnswer = true) {
     return this.sendRequest(
       message,
       () => this.getSendMessage().send(message),

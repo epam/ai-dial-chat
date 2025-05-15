@@ -10,6 +10,7 @@ import { getGroupModelKey } from '@/src/utils/app/models';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 
+import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsActions } from '@/src/store/models/models.reducers';
@@ -23,6 +24,8 @@ import { Modal } from '../../Common/Modal';
 import { ApplicationDetailsContent } from './ApplicationContent';
 import { ApplicationDetailsFooter } from './ApplicationFooter';
 import { ApplicationDetailsHeader } from './ApplicationHeader';
+
+import { UploadStatus } from '@epam/ai-dial-shared';
 
 interface Props {
   entity: DialAIEntityModel;
@@ -55,6 +58,9 @@ export const ApplicationDetails = ({
   const widgetsSchemaIds = useAppSelector(
     SettingsSelectors.selectWidgetsSchemaIds,
   );
+  const appLoading =
+    useAppSelector(ApplicationSelectors.selectAppLoading) ===
+    UploadStatus.LOADING;
 
   const filteredEntities = useMemo(() => {
     const filtered = allEntities.filter(
@@ -103,7 +109,7 @@ export const ApplicationDetails = ({
   return (
     <Modal
       portalId="chat"
-      state={ModalState.OPENED}
+      state={appLoading ? ModalState.LOADING : ModalState.OPENED}
       dataQa="marketplace-agent-details"
       overlayClassName="!z-40"
       containerClassName="flex w-full flex-col divide-y divide-tertiary xl:max-w-[720px] max-w-[700px]"
