@@ -413,15 +413,6 @@ export const filesSlice = createSlice({
         serverSynced: false,
       }));
     },
-    duplicateFile: (
-      state,
-      _action: PayloadAction<{ fileId: string; destinationUrl?: string }>,
-    ) => state,
-    duplicateFileSuccess: (state) => state,
-    duplicateFilesFolder: (
-      state,
-      _action: PayloadAction<{ folderId: string; destinationUrl?: string }>,
-    ) => state,
   },
 });
 
