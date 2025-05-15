@@ -884,8 +884,8 @@ dialTest(
     attachFilesModal,
     appEditorHeader,
     appEditorGeneralForm,
-    appEditorGeneralInfoPreview,
-    appEditorAppSettingsPreview,
+    appEditorGeneralInfoAgentPreview,
+    appEditorAppSettingsAgentPreview,
     customApplicationBuilder,
     applicationApiHelper,
     uploadFromDeviceModal,
@@ -950,7 +950,7 @@ dialTest(
     await dialTest.step(
       'Verify the updated icon is displayed in the preview on the "General info" step',
       async () => {
-        const previewIcon = appEditorGeneralInfoPreview.previewIcon;
+        const previewIcon = appEditorGeneralInfoAgentPreview.previewIcon;
         await baseAssertion.assertEntityIcon(previewIcon, expectedNewIconUrl);
       },
     );
@@ -960,7 +960,7 @@ dialTest(
       async () => {
         await appEditorGeneralForm.goNext({ waitForResponses: false });
         const previewChatIconAppSettings =
-          appEditorAppSettingsPreview.getAppEditorChatMode().previewChatIcon;
+          appEditorAppSettingsAgentPreview.previewChatIcon;
         await baseAssertion.assertEntityIcon(
           previewChatIconAppSettings,
           expectedNewIconUrl,

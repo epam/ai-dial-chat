@@ -5,7 +5,7 @@ import {
   AgentInfo,
   AppEditorContainer,
   AppEditorGeneralForm,
-  AppEditorGeneralInfoPreview,
+  AppEditorGeneralInfoAgentPreview,
   AppEditorHeader,
   AppEditorViewForm,
   AttachFilesModal,
@@ -91,7 +91,7 @@ import { Addons } from '@/src/ui/webElements/addons';
 import { AddonsDialog } from '@/src/ui/webElements/addonsDialog';
 import { AgentSettings } from '@/src/ui/webElements/agentSettings';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
-import { AppEditorAppSettingsPreview } from '@/src/ui/webElements/appEditor/appEditorAppSettingsPreview';
+import { AppEditorAppSettingsAgentPreview } from '@/src/ui/webElements/appEditor/appEditorAppSettingsAgentPreview';
 import { Banner } from '@/src/ui/webElements/banner';
 import { Compare } from '@/src/ui/webElements/compare';
 import { ConfirmationDialog } from '@/src/ui/webElements/confirmationDialog';
@@ -171,8 +171,8 @@ const dialTest = test.extend<{
   appEditorHeader: AppEditorHeader;
   appEditorHeaderAssertion: AppEditorHeaderAssertion;
   appEditorGeneralForm: AppEditorGeneralForm;
-  appEditorGeneralInfoPreview: AppEditorGeneralInfoPreview;
-  appEditorAppSettingsPreview: AppEditorAppSettingsPreview;
+  appEditorGeneralInfoAgentPreview: AppEditorGeneralInfoAgentPreview;
+  appEditorAppSettingsAgentPreview: AppEditorAppSettingsAgentPreview;
   appEditorViewForm: AppEditorViewForm;
   chatBar: ChatBar;
   navigationPanel: NavigationPanel;
@@ -477,12 +477,12 @@ const dialTest = test.extend<{
     const appEditorGeneralForm = appEditorContainer.getAppEditorGeneralForm();
     await use(appEditorGeneralForm);
   },
-  appEditorGeneralInfoPreview: async ({ appEditorContainer }, use) => {
+  appEditorGeneralInfoAgentPreview: async ({ appEditorContainer }, use) => {
     const appEditorGeneralInfoPreview =
       appEditorContainer.getAppEditorGeneralInfoPreview();
     await use(appEditorGeneralInfoPreview);
   },
-  appEditorAppSettingsPreview: async ({ appEditorContainer }, use) => {
+  appEditorAppSettingsAgentPreview: async ({ appEditorContainer }, use) => {
     const appEditorAppSettingsPreview =
       appEditorContainer.getAppEditorAppSettingsPreview();
     await use(appEditorAppSettingsPreview);

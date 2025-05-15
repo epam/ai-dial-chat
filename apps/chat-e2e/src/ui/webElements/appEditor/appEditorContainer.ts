@@ -1,7 +1,7 @@
 import { ChatSelectors } from '@/src/ui/selectors';
 import { AppEditorGeneralForm, BaseElement } from '@/src/ui/webElements';
-import { AppEditorAppSettingsPreview } from '@/src/ui/webElements/appEditor/appEditorAppSettingsPreview';
-import { AppEditorGeneralInfoPreview } from '@/src/ui/webElements/appEditor/appEditorGeneralInfoPreview';
+import { AppEditorAppSettingsAgentPreview } from '@/src/ui/webElements/appEditor/appEditorAppSettingsAgentPreview';
+import { AppEditorGeneralInfoAgentPreview } from '@/src/ui/webElements/appEditor/appEditorGeneralInfoAgentPreview';
 import { AppEditorHeader } from '@/src/ui/webElements/appEditor/appEditorHeader';
 import { AppEditorViewForm } from '@/src/ui/webElements/appEditor/appEditorViewForm';
 import { BaseLayoutContainer } from '@/src/ui/webElements/baseLayoutContainer';
@@ -10,8 +10,8 @@ export class AppEditorContainer extends BaseLayoutContainer<AppEditorHeader> {
   private appEditorHeader!: AppEditorHeader;
   private appEditorGeneralForm!: AppEditorGeneralForm;
   private appEditorViewForm!: AppEditorViewForm;
-  private appEditorGeneralInfoPreview!: AppEditorGeneralInfoPreview;
-  private appEditorAppSettingsPreview!: AppEditorAppSettingsPreview;
+  private appEditorGeneralInfoPreview!: AppEditorGeneralInfoAgentPreview;
+  private appEditorAppSettingsPreview!: AppEditorAppSettingsAgentPreview;
 
   getHeader(): AppEditorHeader {
     if (!this.header) {
@@ -47,9 +47,9 @@ export class AppEditorContainer extends BaseLayoutContainer<AppEditorHeader> {
     return this.appEditorViewForm;
   }
 
-  getAppEditorGeneralInfoPreview(): AppEditorGeneralInfoPreview {
+  getAppEditorGeneralInfoPreview(): AppEditorGeneralInfoAgentPreview {
     if (!this.appEditorGeneralInfoPreview) {
-      this.appEditorGeneralInfoPreview = new AppEditorGeneralInfoPreview(
+      this.appEditorGeneralInfoPreview = new AppEditorGeneralInfoAgentPreview(
         this.page,
         this.rootLocator,
       );
@@ -57,9 +57,9 @@ export class AppEditorContainer extends BaseLayoutContainer<AppEditorHeader> {
     return this.appEditorGeneralInfoPreview;
   }
 
-  getAppEditorAppSettingsPreview(): AppEditorAppSettingsPreview {
+  getAppEditorAppSettingsPreview(): AppEditorAppSettingsAgentPreview {
     if (!this.appEditorAppSettingsPreview) {
-      this.appEditorAppSettingsPreview = new AppEditorAppSettingsPreview(
+      this.appEditorAppSettingsPreview = new AppEditorAppSettingsAgentPreview(
         this.page,
         this.rootLocator,
       );

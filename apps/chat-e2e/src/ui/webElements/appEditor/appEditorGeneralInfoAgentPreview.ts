@@ -3,7 +3,7 @@ import { AppEditorGeneralInfoPreviewSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
 
-export class AppEditorGeneralInfoPreview extends BaseElement {
+export class AppEditorGeneralInfoAgentPreview extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
     super(
       page,
