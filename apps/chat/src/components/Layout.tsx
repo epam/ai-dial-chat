@@ -6,7 +6,7 @@ import { useRouter } from 'next/router';
 import { useRouteHistory } from '@/src/hooks/useRouteHistory';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { signInInOverlay } from '../utils/auth/auth-overlay';
+import { signInInOverlay } from '@/src/utils/auth/auth-overlay';
 import { getPageType } from '@/src/utils/app/route';
 
 import { Translation } from '@/src/types/translation';
