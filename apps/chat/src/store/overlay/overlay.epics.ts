@@ -364,6 +364,8 @@ const deleteConversationEpic: AppEpic = (action$, state$) =>
       );
 
       if (!conversation) {
+        console.warn(`[Overlay] Conversation not exists with id '${id}'`);
+
         return EMPTY;
       }
 
@@ -396,6 +398,10 @@ const createPlaybackConversationEpic: AppEpic = (action$, state$) =>
       );
 
       if (!conversation) {
+        console.warn(
+          `[Overlay] Conversation not exists with id '${payload.id}'`,
+        );
+
         return EMPTY;
       }
 
@@ -456,8 +462,15 @@ const renameConversationEpic: AppEpic = (action$, state$) =>
         payload.id,
       );
 
+      if (!conversation) {
+        console.warn(
+          `[Overlay] Conversation not exists with id '${payload.id}'`,
+        );
+
+        return EMPTY;
+      }
+
       if (
-        !conversation ||
         !isEntityNameOnSameLevelUnique(
           payload.newName,
           conversation,
@@ -465,6 +478,10 @@ const renameConversationEpic: AppEpic = (action$, state$) =>
         ) ||
         doesHaveDotsInTheEnd(payload.newName)
       ) {
+        console.warn(
+          '[Overlay] Conversation rename failed because new name is invalid',
+        );
+
         return EMPTY;
       }
 
@@ -536,6 +553,8 @@ const exportConversationEpic: AppEpic = (action$, state$) =>
       );
 
       if (!conversation) {
+        console.warn(`[Overlay] Conversation not exists with id '${id}'`);
+
         return EMPTY;
       }
 
