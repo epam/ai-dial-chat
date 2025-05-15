@@ -35,6 +35,11 @@ export enum MarketplaceTabs {
   MY_WORKSPACE = 'workspace',
 }
 
+export const ChangeAgentTabs = {
+  [MarketplaceTabs.MY_WORKSPACE]: 'My agents',
+  [MarketplaceTabs.HOME]: 'All agents',
+};
+
 export enum DeleteType {
   DELETE,
   REMOVE,

@@ -1,8 +1,8 @@
 import { ChatSelectors } from '@/src/ui/selectors';
 import { AppEditorGeneralForm, BaseElement } from '@/src/ui/webElements';
-import { AppEditorChatMode } from '@/src/ui/webElements/appEditor/appEditorChatMode';
+import { AppEditorAppSettingsAgentPreview } from '@/src/ui/webElements/appEditor/appEditorAppSettingsAgentPreview';
+import { AppEditorGeneralInfoAgentPreview } from '@/src/ui/webElements/appEditor/appEditorGeneralInfoAgentPreview';
 import { AppEditorHeader } from '@/src/ui/webElements/appEditor/appEditorHeader';
-import { AppEditorPreview } from '@/src/ui/webElements/appEditor/appEditorPreview';
 import { AppEditorViewForm } from '@/src/ui/webElements/appEditor/appEditorViewForm';
 import { BaseLayoutContainer } from '@/src/ui/webElements/baseLayoutContainer';
 
@@ -10,8 +10,8 @@ export class AppEditorContainer extends BaseLayoutContainer<AppEditorHeader> {
   private appEditorHeader!: AppEditorHeader;
   private appEditorGeneralForm!: AppEditorGeneralForm;
   private appEditorViewForm!: AppEditorViewForm;
-  private appEditorPreview!: AppEditorPreview;
-  private appEditorChatMode!: AppEditorChatMode;
+  private appEditorGeneralInfoPreview!: AppEditorGeneralInfoAgentPreview;
+  private appEditorAppSettingsPreview!: AppEditorAppSettingsAgentPreview;
 
   getHeader(): AppEditorHeader {
     if (!this.header) {
@@ -47,21 +47,24 @@ export class AppEditorContainer extends BaseLayoutContainer<AppEditorHeader> {
     return this.appEditorViewForm;
   }
 
-  getAppEditorPreview(): AppEditorPreview {
-    if (!this.appEditorPreview) {
-      this.appEditorPreview = new AppEditorPreview(this.page, this.rootLocator);
-    }
-    return this.appEditorPreview;
-  }
-
-  getAppEditorChatMode(): AppEditorChatMode {
-    if (!this.appEditorChatMode) {
-      this.appEditorChatMode = new AppEditorChatMode(
+  getAppEditorGeneralInfoPreview(): AppEditorGeneralInfoAgentPreview {
+    if (!this.appEditorGeneralInfoPreview) {
+      this.appEditorGeneralInfoPreview = new AppEditorGeneralInfoAgentPreview(
         this.page,
         this.rootLocator,
       );
     }
-    return this.appEditorChatMode;
+    return this.appEditorGeneralInfoPreview;
+  }
+
+  getAppEditorAppSettingsPreview(): AppEditorAppSettingsAgentPreview {
+    if (!this.appEditorAppSettingsPreview) {
+      this.appEditorAppSettingsPreview = new AppEditorAppSettingsAgentPreview(
+        this.page,
+        this.rootLocator,
+      );
+    }
+    return this.appEditorAppSettingsPreview;
   }
 
   getChatLoader(): BaseElement {

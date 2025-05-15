@@ -450,10 +450,38 @@ export class ChatOverlayManager {
     return overlay.selectConversation(conversationId);
   }
 
+  public async renameConversation(
+    id: string,
+    conversationId: string,
+    newName: string,
+  ) {
+    const { overlay } = this.getOverlay(id);
+
+    return overlay.renameConversation(conversationId, newName);
+  }
+
   public async setOverlayOptions(id: string, options: ChatOverlayOptions) {
     const { overlay } = this.getOverlay(id);
 
     return overlay.setOverlayOptions(options);
+  }
+
+  public async deleteConversation(id: string, conversationId: string) {
+    const { overlay } = this.getOverlay(id);
+
+    return overlay.deleteConversation(conversationId);
+  }
+
+  public async replayConversation(id: string, conversationId: string) {
+    const { overlay } = this.getOverlay(id);
+
+    return overlay.createPlaybackConversation(conversationId);
+  }
+
+  public async exportConversation(id: string, conversationId: string) {
+    const { overlay } = this.getOverlay(id);
+
+    return overlay.exportConversation(conversationId);
   }
 
   public subscribe(
