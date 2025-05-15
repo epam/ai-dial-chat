@@ -226,10 +226,11 @@ export const MoveToDialog: React.FC<Props> = ({
     >
       <SelectFolderHeader
         errorMessage={errorMessage}
-        handleSearch={handleSearch}
+        onSearch={handleSearch}
         searchQuery={searchQuery}
       >
         <SelectFolderList
+          disableSectionToggle
           searchTerm={searchQuery}
           allFolders={folders}
           isInitialRenameEnabled
@@ -239,7 +240,7 @@ export const MoveToDialog: React.FC<Props> = ({
           onRenameFolder={handleRenameFolder}
           onDeleteFolder={handleDeleteFolder}
           onAddFolder={handleAddFolder}
-          handleFolderSelect={handleFolderSelect}
+          onFolderSelect={handleFolderSelect}
           isAllEntitiesOpened
           initiallySelectedFolderId={entity.folderId}
           selectedFolderId={selectedFolderId}
@@ -256,7 +257,7 @@ export const MoveToDialog: React.FC<Props> = ({
         />
       </SelectFolderHeader>
       <SelectFolderFooter
-        handleNewFolder={handleAddFolder}
+        onCreateNewFolder={handleAddFolder}
         onSelectFolderClick={handleSelect}
       />
     </SelectFolder>

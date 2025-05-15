@@ -190,7 +190,7 @@ export const SelectFolderModal = ({
       title="Select folder"
     >
       <SelectFolderHeader
-        handleSearch={handleSearch}
+        onSearch={handleSearch}
         searchQuery={searchQuery}
         errorMessage={warningMessage || errorMessage}
         showSpinner={showSpinner}
@@ -206,7 +206,7 @@ export const SelectFolderModal = ({
           onAddFolder={handleAddFolder}
           newAddedFolderId={newFolderId}
           loadingFolderIds={loadingFolderIds}
-          handleFolderSelect={handleFolderSelect}
+          onFolderSelect={handleFolderSelect}
           isAllEntitiesOpened={isAllFilesOpened}
           selectedFolderId={selectedFolderId}
           rootFolderName={rootFolderName}
@@ -215,7 +215,7 @@ export const SelectFolderModal = ({
         />
       </SelectFolderHeader>
       <SelectFolderFooter
-        handleNewFolder={handleNewFolder}
+        onCreateNewFolder={handleNewFolder}
         onSelectFolderClick={handleSelectFolder}
         disableSelect={!selectedFolderId}
       />

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import classNames from 'classnames';
 
@@ -35,10 +35,11 @@ interface Props<T, P = unknown>
   newAddedFolderId?: string;
   editOnlyTemporary?: boolean;
   deleteOnlyTemporary?: boolean;
+  disableSectionToggle?: boolean;
   onClickFolder: (folderId: string) => void;
   onRenameFolder: (newName: string, folderId: string) => void;
   onAddFolder: (parentFolderId: string) => void;
-  handleFolderSelect: (folderId: string) => void;
+  onFolderSelect: (folderId: string) => void;
   onDeleteFolder?: (folderId: string) => void;
   onShowError?: (error: string) => void;
 }
@@ -55,7 +56,8 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
   showAllRootFolders,
   editOnlyTemporary,
   deleteOnlyTemporary,
-  handleFolderSelect,
+  disableSectionToggle,
+  onFolderSelect,
   onRenameFolder,
   onDeleteFolder,
   onShowError,
@@ -66,14 +68,19 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
     [selectedFolderId],
   );
 
+  const handleToggleSection = useCallback(() => {
+    onFolderSelect(rootFolderId);
+  }, [onFolderSelect, rootFolderId]);
+
   const noFolders = !allFolders.length;
   const isSearching = !!searchTerm;
 
   return (
     <div className="flex min-h-[350px] flex-col" data-qa="select-folders">
       <CollapsibleSection
-        onToggle={() => handleFolderSelect(rootFolderId)}
+        onToggle={handleToggleSection}
         name={rootFolderName}
+        isExpanded={disableSectionToggle}
         openByDefault
         dataQa="root-folder"
         isHighlighted={rootFolderId === selectedFolderId}

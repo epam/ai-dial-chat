@@ -36,9 +36,6 @@ const PromptMoveToDialogComponent = () => {
     PromptsSelectors.selectMoveToPrompt,
   ) as ShareEntity;
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
-  const isPromptModalOpen = useAppSelector(
-    PromptsSelectors.selectIsPromptModalOpen,
-  );
 
   const handleMoveToFolder = useCallback(
     (folderId: string) => {
@@ -82,13 +79,6 @@ const PromptMoveToDialogComponent = () => {
         folderId,
       }).id;
 
-      if (isPromptModalOpen) {
-        dispatch(
-          PromptsActions.setSelectedPrompt({ promptId: regeneratedPromptId }),
-        );
-        dispatch(PromptsActions.uploadPromptSuccess({ prompt: null }));
-      }
-
       dispatch(
         UIActions.setOpenedFoldersIds({
           openedFolderIds: getParentAndCurrentFolderIdsById(folderId),
@@ -99,14 +89,7 @@ const PromptMoveToDialogComponent = () => {
       dispatch(PromptsActions.setMoveToPrompt());
     },
 
-    [
-      allPrompts,
-      collapsedSections,
-      dispatch,
-      isPromptModalOpen,
-      moveToPrompt,
-      t,
-    ],
+    [allPrompts, collapsedSections, dispatch, moveToPrompt, t],
   );
 
   const handleClose = useCallback(() => {

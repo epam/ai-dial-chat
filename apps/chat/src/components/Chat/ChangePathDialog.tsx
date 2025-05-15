@@ -251,7 +251,7 @@ export const ChangePathDialog = ({
       title={t('Change path')}
     >
       <SelectFolderHeader
-        handleSearch={handleSearch}
+        onSearch={handleSearch}
         searchQuery={searchQuery}
         errorMessage={errorMessage}
       >
@@ -267,7 +267,7 @@ export const ChangePathDialog = ({
           onRenameFolder={handleRenameFolder}
           onDeleteFolder={handleDeleteFolder}
           onAddFolder={handleAddFolder}
-          handleFolderSelect={handleFolderSelect}
+          onFolderSelect={handleFolderSelect}
           isAllEntitiesOpened={isAllFoldersOpened}
           initiallySelectedFolderId={initiallySelectedFolderId}
           selectedFolderId={selectedFolderId}
@@ -279,7 +279,7 @@ export const ChangePathDialog = ({
         />
       </SelectFolderHeader>
       <SelectFolderFooter
-        handleNewFolder={handleAddFolder}
+        onCreateNewFolder={handleAddFolder}
         onSelectFolderClick={getPath}
       />
     </SelectFolder>
