@@ -10,8 +10,12 @@ import { OverlayState } from './overlay.types';
 import {
   ChatOverlayOptions,
   CreateConversationRequest,
+  CreatePlaybackConversationRequest,
+  DeleteConversationRequest,
+  ExportConversationRequest,
   OverlayEvents,
   OverlayRequests,
+  RenameConversationRequest,
   SelectConversationRequest,
   SendMessageRequest,
   SetSystemPromptRequest,
@@ -44,6 +48,30 @@ export const overlaySlice = createSlice({
     selectConversation: (
       state,
       _action: PayloadAction<WithRequestId<SelectConversationRequest>>,
+    ) => state,
+    deleteConversation: (
+      state,
+      _action: PayloadAction<WithRequestId<DeleteConversationRequest>>,
+    ) => state,
+    renameConversation: (
+      state,
+      _action: PayloadAction<WithRequestId<RenameConversationRequest>>,
+    ) => state,
+    renameConversationEffect: (
+      state,
+      _action: PayloadAction<WithRequestId<RenameConversationRequest>>,
+    ) => state,
+    createPlaybackConversation: (
+      state,
+      _action: PayloadAction<WithRequestId<CreatePlaybackConversationRequest>>,
+    ) => state,
+    createPlaybackConversationEffect: (
+      state,
+      _action: PayloadAction<WithRequestId<CreatePlaybackConversationRequest>>,
+    ) => state,
+    exportConversation: (
+      state,
+      _action: PayloadAction<WithRequestId<ExportConversationRequest>>,
     ) => state,
     createConversation: (
       state,
