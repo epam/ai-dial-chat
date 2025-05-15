@@ -429,8 +429,12 @@ dialTest(
         await appEditorHeader.goOnGeneralInfoStep();
         await baseAssertion.assertElementState(appEditorGeneralForm);
         await appEditorHeaderAssertion.assertStepIsCompleted(
-          AppEditSteps.generalInfo,
+          AppEditSteps.appSettings,
           true,
+        );
+        await appEditorHeaderAssertion.assertStepIsCompleted(
+          AppEditSteps.generalInfo,
+          false,
         );
         //need to explicitly click on the form to trigger autosave after fields update
         await appEditorGeneralForm.version.click();
