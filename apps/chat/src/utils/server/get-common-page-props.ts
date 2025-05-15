@@ -11,7 +11,11 @@ import { Translation } from '@/src/types/translation';
 
 import { SettingsState } from '@/src/store/settings/settings.types';
 
-import { ISOLATED_MODEL_QUERY_PARAM } from '@/src/constants/chat';
+import {
+  ACTION_QUERY_PARAM,
+  CONVERSATION_QUERY_PARAM,
+  ISOLATED_MODEL_QUERY_PARAM,
+} from '@/src/constants/chat';
 import {
   FALLBACK_ASSISTANT_SUBMODEL_ID,
   FALLBACK_MODEL_ID,
@@ -97,6 +101,8 @@ export const getCommonPageProps: GetServerSideProps = async ({
     JSON.parse(process.env.CUSTOM_VISUALIZERS);
 
   const isIsolatedView = params?.has(ISOLATED_MODEL_QUERY_PARAM);
+  const isPreselectedConversation = params?.has(CONVERSATION_QUERY_PARAM);
+  const isPreselectedAction = params?.has(ACTION_QUERY_PARAM);
 
   const settings: SettingsState = {
     appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'AI Dial',
@@ -160,6 +166,15 @@ export const getCommonPageProps: GetServerSideProps = async ({
 
   if (isIsolatedView) {
     settings.isolatedModelId = params?.get(ISOLATED_MODEL_QUERY_PARAM) || '';
+  }
+
+  if (isPreselectedConversation) {
+    settings.preselectedConversationId =
+      params?.get(CONVERSATION_QUERY_PARAM) || '';
+  }
+
+  if (isPreselectedAction) {
+    settings.preselectedAction = params?.get(ACTION_QUERY_PARAM) || '';
   }
 
   return {
