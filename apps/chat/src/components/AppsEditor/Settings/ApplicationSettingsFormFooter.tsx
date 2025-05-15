@@ -13,7 +13,7 @@ export const ApplicationSettingsFormFooter: React.FC<Props> = ({ isValid }) => {
   return (
     <div
       className={classNames(
-        'mt-auto flex gap-2 border-t border-tertiary p-4 md:px-6',
+        'mt-auto flex gap-2 border-t border-tertiary px-3 py-4 md:px-5 xl:px-6',
         'justify-end',
       )}
     >

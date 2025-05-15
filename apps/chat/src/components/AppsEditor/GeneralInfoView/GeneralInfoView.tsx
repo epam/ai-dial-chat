@@ -24,6 +24,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
+import { TabButton } from '../../Buttons/TabButton';
 import Tooltip from '../../Common/Tooltip';
 import { GeneralInfoEditor } from './GeneralInfoEditor';
 import { GeneralInfoPreview } from './GeneralInfoPreview';
@@ -89,67 +90,85 @@ export const GeneralInfoView: React.FC<Props> = ({
   }, [screenState, previewMode]);
 
   return (
-    <div className="flex w-full overflow-hidden">
-      <div
-        className={classNames(
-          'overflow-hidden transition-all duration-300 ease-in-out',
-          {
-            'grow opacity-100': previewMode === PreviewMode.closed,
-            'size-full': previewMode === PreviewMode.half,
-            'w-0 opacity-0': previewMode === PreviewMode.full,
-          },
-        )}
-      >
-        <FormProvider {...methods}>
-          <GeneralInfoEditor
-            oldApplication={applicationData ? applicationData : undefined}
-            schema={schema}
-            isSharedWithMe={modelFromState?.sharedWithMe ?? false}
-            isAppDeployed={isAppDeployed}
-          />
-        </FormProvider>
+    <div className="flex w-full flex-col overflow-hidden">
+      <div className="flex w-full justify-center gap-2 border-b border-primary px-3 py-2 text-primary md:hidden">
+        <TabButton
+          selected={previewMode === PreviewMode.closed}
+          onClick={() => setPreviewMode(PreviewMode.closed)}
+          className="w-full"
+        >
+          {t('Settings')}
+        </TabButton>
+        <TabButton
+          selected={previewMode === PreviewMode.full}
+          onClick={() => setPreviewMode(PreviewMode.full)}
+          className="w-full"
+        >
+          {t('Preview')}
+        </TabButton>
       </div>
-
-      <div
-        className={classNames(
-          'relative flex min-h-0 flex-col overflow-hidden border-l border-primary transition-all duration-300 ease-in-out',
-          {
-            'w-full opacity-100': previewMode === PreviewMode.full,
-            'size-full grow': previewMode === PreviewMode.half,
-            'absolute w-0 opacity-0': previewMode === PreviewMode.closed,
-          },
-        )}
-      >
-        <GeneralInfoPreview
-          entity={getApplicationEntityFields(
-            formData,
-            modelFromState as DialAIEntityModel,
+      <div className="flex w-full grow overflow-hidden">
+        <div
+          className={classNames(
+            'overflow-hidden transition-all duration-300 ease-in-out',
+            {
+              'grow opacity-100': previewMode === PreviewMode.closed,
+              'size-full': previewMode === PreviewMode.half,
+              'w-0 opacity-0': previewMode === PreviewMode.full,
+            },
           )}
-          onClosePreview={() => setPreviewMode(PreviewMode.closed)}
-        />
-      </div>
-
-      {previewMode === PreviewMode.closed && (
-        <div className="hidden h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-4 hover:cursor-pointer max-xl:flex">
-          <button
-            className="text-secondary hover:text-accent-primary"
-            onClick={(e) => {
-              e.stopPropagation();
-              setPreviewMode(PreviewMode.full);
-            }}
-          >
-            <Tooltip tooltip={t('Expand preview')}>
-              <IconArrowsMaximize size={24} />
-            </Tooltip>
-          </button>
-          <span
-            className="select-none text-primary"
-            style={{ writingMode: 'vertical-rl' }}
-          >
-            {t('Preview')}
-          </span>
+        >
+          <FormProvider {...methods}>
+            <GeneralInfoEditor
+              oldApplication={applicationData ? applicationData : undefined}
+              schema={schema}
+              isSharedWithMe={modelFromState?.sharedWithMe ?? false}
+              isAppDeployed={isAppDeployed}
+            />
+          </FormProvider>
         </div>
-      )}
+
+        <div
+          className={classNames(
+            'relative flex min-h-0 flex-col overflow-hidden border-l border-primary transition-all duration-300 ease-in-out',
+            {
+              'w-full opacity-100': previewMode === PreviewMode.full,
+              'size-full grow': previewMode === PreviewMode.half,
+              'absolute w-0 opacity-0': previewMode === PreviewMode.closed,
+            },
+          )}
+        >
+          <GeneralInfoPreview
+            entity={getApplicationEntityFields(
+              formData,
+              modelFromState as DialAIEntityModel,
+            )}
+            onClosePreview={() => setPreviewMode(PreviewMode.closed)}
+          />
+        </div>
+
+        {previewMode === PreviewMode.closed && (
+          <div className="hidden h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-4 hover:cursor-pointer md:flex">
+            <button
+              className="text-secondary hover:text-accent-primary"
+              onClick={(e) => {
+                e.stopPropagation();
+                setPreviewMode(PreviewMode.full);
+              }}
+            >
+              <Tooltip tooltip={t('Expand preview')}>
+                <IconArrowsMaximize size={24} />
+              </Tooltip>
+            </button>
+            <span
+              className="select-none text-primary"
+              style={{ writingMode: 'vertical-rl' }}
+            >
+              {t('Preview')}
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -51,6 +51,7 @@ import { UISelectors } from '@/src/store/ui/ui.selectors';
 import { DEFAULT_QUICK_APPS_SCHEMA_ID } from '@/src/constants/quick-apps';
 import { Routes } from '@/src/constants/routes';
 
+import { TabButton } from '../../Buttons/TabButton';
 import Tooltip from '../../Common/Tooltip';
 import { ApplicationView } from './ApplicationView';
 import { CodeAppView } from './CodeAppView';
@@ -105,7 +106,7 @@ export const ApplicationSettings: React.FC<Props> = ({
   const theme = useAppSelector(UISelectors.selectThemeState);
 
   const [previewMode, setPreviewMode] = useState<PreviewMode>(
-    screenState === ScreenState.MD ||
+    screenState <= ScreenState.MD ||
       schema?.[ApplicationTypeSchemaProperties.applicationTypeViewerUrl]
       ? PreviewMode.closed
       : PreviewMode.half,
@@ -303,135 +304,157 @@ export const ApplicationSettings: React.FC<Props> = ({
     type === ApplicationType.CODE_APP && isAppDeployed && !isAppPublic;
 
   return (
-    <div className="flex w-full flex-nowrap overflow-hidden">
-      <div
-        onMouseLeave={() => {
-          if (!isAppPublic) {
-            saveForm();
-          }
-        }}
-        className={classNames('transition-all duration-300 ease-in-out', {
-          'w-[calc(100%-40px)] opacity-100': previewMode === PreviewMode.closed,
-          'w-1/2 opacity-100': previewMode === PreviewMode.half,
-          'w-0 opacity-0': previewMode === PreviewMode.full,
-        })}
-      >
-        <FormProvider {...methods}>{formViewElement}</FormProvider>
-      </div>
-      <div
-        className={classNames(
-          'flex h-full flex-col border-l border-primary transition-all duration-300 ease-in-out',
-          {
-            'w-1/2 opacity-100': previewMode === PreviewMode.half,
-            'w-full opacity-100': previewMode === PreviewMode.full,
-            'w-0 overflow-hidden opacity-0': previewMode === PreviewMode.closed,
-          },
-        )}
-      >
-        <div className="flex max-w-full items-center justify-between px-5 py-4 xl:p-2">
-          <div className="mr-2 flex min-w-0 shrink grow gap-2 text-primary">
-            <span>{t('Preview')}:</span>
-            <span
-              data-qa="preview-app-version"
-              className="min-w-0 shrink truncate"
-            >
-              {applicationData.name}
-            </span>
-            <span data-qa="preview-app-version" className="text-nowrap">
-              {t('v.')} {applicationData.version}
-            </span>
-          </div>
-          <div className="flex space-x-2">
-            {showRedeployButton && (
-              <button
-                className="xl:button button-accent-secondary mb-0 flex items-center gap-2 border-r border-secondary px-3 py-0 text-accent-secondary md:last:mb-6 lg:max-w-3xl xl:mx-auto xl:border-none"
-                data-qa="redeploy-code-app"
-                disabled={!methods.formState.isValid}
-                onClick={handleRedeploy}
-              >
-                <IconRefresh size={18} />
-                <span>{t('Redeploy')}</span>
-              </button>
-            )}
-            {previewMode === PreviewMode.half && (
-              <button
-                className="hidden text-secondary hover:text-accent-primary xl:flex"
-                onClick={() => setPreviewMode(PreviewMode.full)}
-              >
-                <Tooltip tooltip={t('Expand preview')}>
-                  <IconArrowsMaximize size={24} />
-                </Tooltip>
-              </button>
-            )}
-            {previewMode === PreviewMode.full && (
-              <button
-                className="hidden text-secondary hover:text-accent-primary xl:flex"
-                onClick={() => setPreviewMode(PreviewMode.half)}
-              >
-                <Tooltip tooltip={t('Split view')}>
-                  <IconLayoutSidebarRightCollapse size={24} />
-                </Tooltip>
-              </button>
-            )}
-            <button
-              className="ml-4 text-secondary hover:text-accent-primary xl:ml-2"
-              onClick={() => setPreviewMode(PreviewMode.closed)}
-            >
-              <Tooltip tooltip={t('Hide preview')}>
-                <IconArrowsMinimize size={24} />
-              </Tooltip>
-            </button>
-          </div>
-        </div>
-        {previewMode !== PreviewMode.closed && (
-          <div className="flex-1 overflow-auto">
-            <ApplicationPreviewChat
-              isAppDeploymentInProgress={isAppDeploymentInProgress}
-              isApplicationValid={methods.formState.isValid}
-              applicationId={applicationData.id}
-              type={type}
-              isAppDeployed={isAppDeployed}
-            />
-          </div>
-        )}
-      </div>
-      {previewMode === PreviewMode.closed && (
-        <div
-          className="flex h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-4 transition-all duration-300 ease-in-out hover:cursor-pointer xl:pt-5"
-          onClick={() => {
-            if (screenState > ScreenState.MD) setPreviewMode(PreviewMode.half);
-          }}
+    <div className="flex size-full flex-col">
+      <div className="flex w-full justify-center gap-2 border-b border-primary px-3 py-2 text-primary md:hidden">
+        <TabButton
+          selected={previewMode !== PreviewMode.full}
+          onClick={() => setPreviewMode(PreviewMode.closed)}
+          className="w-full"
         >
-          <button
-            className="text-secondary hover:text-accent-primary"
-            onClick={(e) => {
-              e.stopPropagation();
-              setPreviewMode(PreviewMode.full);
+          {t('Settings')}
+        </TabButton>
+        <TabButton
+          selected={previewMode === PreviewMode.full}
+          onClick={() => setPreviewMode(PreviewMode.full)}
+          className="w-full"
+        >
+          {t('Preview')}
+        </TabButton>
+      </div>
+
+      <div className="flex w-full grow overflow-hidden">
+        <div
+          onMouseLeave={() => {
+            if (!isAppPublic) {
+              saveForm();
+            }
+          }}
+          className={classNames('transition-all duration-300 ease-in-out', {
+            'w-[calc(100%-40px)] opacity-100 max-md:w-full':
+              previewMode === PreviewMode.closed,
+            'w-1/2 opacity-100': previewMode === PreviewMode.half,
+            'w-0 opacity-0': previewMode === PreviewMode.full,
+          })}
+        >
+          <FormProvider {...methods}>{formViewElement}</FormProvider>
+        </div>
+        <div
+          className={classNames(
+            'flex h-full flex-col border-l border-primary transition-all duration-300 ease-in-out',
+            {
+              'w-1/2 opacity-100': previewMode === PreviewMode.half,
+              'w-full opacity-100': previewMode === PreviewMode.full,
+              'w-0 overflow-hidden opacity-0':
+                previewMode === PreviewMode.closed,
+            },
+          )}
+        >
+          <div className="flex max-w-full items-center justify-between px-0 py-3 max-md:self-end md:px-5 md:py-4 xl:p-2">
+            <div className="mr-2 hidden min-w-0 shrink grow gap-2 text-primary md:flex">
+              <span>{t('Preview')}:</span>
+              <span
+                data-qa="preview-app-version"
+                className="min-w-0 shrink truncate"
+              >
+                {applicationData.name}
+              </span>
+              <span data-qa="preview-app-version" className="text-nowrap">
+                {t('v.')} {applicationData.version}
+              </span>
+            </div>
+            <div className="flex space-x-2">
+              {showRedeployButton && (
+                <button
+                  className="xl:button button-accent-secondary mb-0 flex items-center gap-2 border-r border-secondary px-3 py-0 text-accent-secondary md:last:mb-6 lg:max-w-3xl xl:mx-auto xl:border-none"
+                  data-qa="redeploy-code-app"
+                  disabled={!methods.formState.isValid}
+                  onClick={handleRedeploy}
+                >
+                  <IconRefresh size={18} />
+                  <span>{t('Redeploy')}</span>
+                </button>
+              )}
+              {previewMode === PreviewMode.half && (
+                <button
+                  className="text-secondary hover:text-accent-primary max-xl:hidden"
+                  onClick={() => setPreviewMode(PreviewMode.full)}
+                >
+                  <Tooltip tooltip={t('Expand preview')}>
+                    <IconArrowsMaximize size={24} />
+                  </Tooltip>
+                </button>
+              )}
+              {previewMode === PreviewMode.full && (
+                <button
+                  className="text-secondary hover:text-accent-primary max-xl:hidden"
+                  onClick={() => setPreviewMode(PreviewMode.half)}
+                >
+                  <Tooltip tooltip={t('Split view')}>
+                    <IconLayoutSidebarRightCollapse size={24} />
+                  </Tooltip>
+                </button>
+              )}
+              <button
+                className="ml-4 hidden text-secondary hover:text-accent-primary md:flex xl:ml-2"
+                onClick={() => setPreviewMode(PreviewMode.closed)}
+              >
+                <Tooltip tooltip={t('Hide preview')}>
+                  <IconArrowsMinimize size={24} />
+                </Tooltip>
+              </button>
+            </div>
+          </div>
+          {previewMode !== PreviewMode.closed && (
+            <div className="flex-1 overflow-auto">
+              <ApplicationPreviewChat
+                isAppDeploymentInProgress={isAppDeploymentInProgress}
+                isApplicationValid={methods.formState.isValid}
+                applicationId={applicationData.id}
+                type={type}
+                isAppDeployed={isAppDeployed}
+              />
+            </div>
+          )}
+        </div>
+        {previewMode === PreviewMode.closed && (
+          <div
+            className="flex h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-4 transition-all duration-300 ease-in-out hover:cursor-pointer max-md:hidden xl:pt-5"
+            onClick={() => {
+              if (screenState > ScreenState.MD)
+                setPreviewMode(PreviewMode.half);
             }}
           >
-            <Tooltip tooltip={t('Expand preview')}>
-              <IconArrowsMaximize size={24} />
-            </Tooltip>
-          </button>
+            <button
+              className="text-secondary hover:text-accent-primary"
+              onClick={(e) => {
+                e.stopPropagation();
+                setPreviewMode(PreviewMode.full);
+              }}
+            >
+              <Tooltip tooltip={t('Expand preview')}>
+                <IconArrowsMaximize size={24} />
+              </Tooltip>
+            </button>
 
-          <button
-            className="hidden text-secondary hover:text-accent-primary xl:flex"
-            onClick={() => setPreviewMode(PreviewMode.half)}
-          >
-            <Tooltip tooltip={t('Split view')}>
-              <IconLayoutSidebarLeftCollapse size={24} />
-            </Tooltip>
-          </button>
+            <button
+              className="text-secondary hover:text-accent-primary max-xl:hidden"
+              onClick={() => setPreviewMode(PreviewMode.half)}
+            >
+              <Tooltip tooltip={t('Split view')}>
+                <IconLayoutSidebarLeftCollapse size={24} />
+              </Tooltip>
+            </button>
 
-          <span
-            className="select-none text-primary"
-            style={{ writingMode: 'vertical-rl' }}
-          >
-            {t('Preview')}: {applicationData.name} {t('v.')}{' '}
-            {applicationData.version}
-          </span>
-        </div>
-      )}
+            <span
+              className="select-none text-primary"
+              style={{ writingMode: 'vertical-rl' }}
+            >
+              {t('Preview')}: {applicationData.name} {t('v.')}{' '}
+              {applicationData.version}
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
