@@ -258,6 +258,7 @@ const TalkToModalView = ({
             placeholder={t('Search')}
             className="input-form peer m-0 pl-[38px]"
             data-qa="search-agents"
+            autoFocus
           />
         </div>
         <div className="flex gap-2">
