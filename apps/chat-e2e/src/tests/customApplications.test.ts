@@ -429,8 +429,12 @@ dialTest(
         await appEditorHeader.goOnGeneralInfoStep();
         await baseAssertion.assertElementState(appEditorGeneralForm);
         await appEditorHeaderAssertion.assertStepIsCompleted(
-          AppEditSteps.generalInfo,
+          AppEditSteps.appSettings,
           true,
+        );
+        await appEditorHeaderAssertion.assertStepIsCompleted(
+          AppEditSteps.generalInfo,
+          false,
         );
         //need to explicitly click on the form to trigger autosave after fields update
         await appEditorGeneralForm.version.click();
@@ -884,7 +888,8 @@ dialTest(
     attachFilesModal,
     appEditorHeader,
     appEditorGeneralForm,
-    appEditorPreview,
+    appEditorGeneralInfoAgentPreview,
+    appEditorAppSettingsAgentPreview,
     customApplicationBuilder,
     applicationApiHelper,
     uploadFromDeviceModal,
@@ -949,18 +954,19 @@ dialTest(
     await dialTest.step(
       'Verify the updated icon is displayed in the preview on the "General info" step',
       async () => {
-        const previewIcon = appEditorPreview.previewIcon;
+        const previewIcon = appEditorGeneralInfoAgentPreview.previewIcon;
         await baseAssertion.assertEntityIcon(previewIcon, expectedNewIconUrl);
       },
     );
 
     await dialTest.step(
-      'Navigate to "App settings" step and verify the updated icon in the preview',
+      'Navigate to "App settings" step and verify the updated icon in the chat preview',
       async () => {
         await appEditorGeneralForm.goNext({ waitForResponses: false });
-        const previewIconAppSettings = appEditorPreview.previewIcon;
+        const previewChatIconAppSettings =
+          appEditorAppSettingsAgentPreview.previewChatIcon;
         await baseAssertion.assertEntityIcon(
-          previewIconAppSettings,
+          previewChatIconAppSettings,
           expectedNewIconUrl,
         );
       },
