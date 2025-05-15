@@ -13,4 +13,4 @@ jobs:
     uses: epam/ai-dial-ci/.github/workflows/node_release.yml@2.0.1
     secrets: inherit
     with:
-      node_version: 22
+      node-version: 22
