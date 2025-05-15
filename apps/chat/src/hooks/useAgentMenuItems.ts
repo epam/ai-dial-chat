@@ -1,5 +1,4 @@
 import {
-  IconCopy,
   IconEye,
   IconFileDescription,
   IconLink,
@@ -12,7 +11,7 @@ import { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { useAgentActions } from '@/src/hooks/useAgentActions';
+import { useApplicationMenuActions } from '@/src/hooks/useApplicationActions';
 
 import {
   getApplicationSimpleStatus,
@@ -80,16 +79,15 @@ export const useAgentMenuItems = ({
 
   const {
     handleCopy,
-    handleUpdateFunctionStatus,
+    handleDelete,
     handleEdit,
-    handleDuplicate,
+    handleOpenApplicationLogs,
     handleOpenSharing,
     handleOpenUnshare,
     handlePublish,
     handleUnpublish,
-    handleDelete,
-    handleOpenApplicationLogs,
-  } = useAgentActions(entity);
+    handleUpdateFunctionStatus,
+  } = useApplicationMenuActions(entity);
 
   const isMyApp = isMyApplication(entity);
   const isPublicApp = isApplicationPublic(entity);
@@ -133,13 +131,6 @@ export const useAgentMenuItems = ({
         display: canEditOrView && disabledActions.edit !== true,
         Icon: isAppIdPublic ? IconEye : IconPencilMinus,
         onClick: handleEdit,
-      },
-      {
-        name: t('Duplicate'),
-        dataQa: 'application-duplicate',
-        display: isMyApp,
-        Icon: IconCopy,
-        onClick: handleDuplicate,
       },
       {
         name: t('Share'),
@@ -217,7 +208,6 @@ export const useAgentMenuItems = ({
       canEditOrView,
       handleEdit,
       isMyApp,
-      handleDuplicate,
       isApplicationsSharingEnabled,
       handleOpenSharing,
       handleOpenUnshare,
