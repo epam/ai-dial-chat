@@ -18,10 +18,10 @@ const buttonDefaultProps = {
 
 vi.mock('@/src/store/hooks', () => ({
   useAppSelector: vi.fn((selector) => selector()),
-  useAppDispatch: vi.fn((action) => action),
+  useAppDispatch: () => vi.fn((action) => action),
 }));
 
-vi.mock('@/src/store/conversations/conversations.reducers', () => ({
+vi.mock('@/src/store/conversations/conversations.selectors', () => ({
   ConversationsSelectors: {
     selectIsPlaybackSelectedConversations: vi.fn(() => false),
     selectAction: vi.fn(() => selectedAction),
