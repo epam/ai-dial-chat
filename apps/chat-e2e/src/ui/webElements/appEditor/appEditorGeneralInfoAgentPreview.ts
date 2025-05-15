@@ -1,15 +1,19 @@
 import { Tags } from '@/src/ui/domData';
-import { ApplicationPreviewSelector } from '@/src/ui/selectors';
+import { AppEditorGeneralInfoPreviewSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
 
-export class AppEditorPreview extends BaseElement {
+export class AppEditorGeneralInfoAgentPreview extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, ApplicationPreviewSelector.containerGeneralInfo, parentLocator);
+    super(
+      page,
+      AppEditorGeneralInfoPreviewSelectors.containerGeneralInfo,
+      parentLocator,
+    );
   }
 
   public previewIconContainer = this.getChildElementBySelector(
-    ApplicationPreviewSelector.previewIconContainer,
+    AppEditorGeneralInfoPreviewSelectors.previewIconContainer,
   );
 
   public previewIcon = this.previewIconContainer.getChildElementBySelector(
@@ -17,25 +21,25 @@ export class AppEditorPreview extends BaseElement {
   );
 
   public previewName = this.getChildElementBySelector(
-    ApplicationPreviewSelector.previewAgentName,
+    AppEditorGeneralInfoPreviewSelectors.previewAgentName,
   );
 
   public previewTopicsContainer = this.getChildElementBySelector(
-    ApplicationPreviewSelector.previewTopicsContainer,
+    AppEditorGeneralInfoPreviewSelectors.previewTopicsContainer,
   );
 
   public previewInformationSection = this.getChildElementBySelector(
-    ApplicationPreviewSelector.previewInformationSection,
+    AppEditorGeneralInfoPreviewSelectors.previewInformationSection,
   );
 
   public previewAuthorContainer =
     this.previewInformationSection.getChildElementBySelector(
-      ApplicationPreviewSelector.previewAuthorContainer,
+      AppEditorGeneralInfoPreviewSelectors.previewAuthorContainer,
     );
 
   public previewAuthorValue =
     this.previewAuthorContainer.getChildElementBySelector(
-      ApplicationPreviewSelector.previewAuthorValue,
+      AppEditorGeneralInfoPreviewSelectors.previewAuthorValue,
     );
 
   public topicElements = this.previewTopicsContainer.getChildElementBySelector(
