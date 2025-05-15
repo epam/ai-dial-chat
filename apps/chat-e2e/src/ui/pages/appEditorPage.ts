@@ -14,7 +14,8 @@ export class AppEditorPage extends BasePage {
   async waitForPageLoaded() {
     const appEditorContainer = this.getAppEditorContainer();
     const applicationGeneralForm = appEditorContainer.getAppEditorGeneralForm();
-    const applicationPreview = appEditorContainer.getAppEditorPreview();
+    const applicationPreview =
+      appEditorContainer.getAppEditorGeneralInfoPreview();
     await this.appEditorContainer
       .getChatLoader()
       .waitForState({ state: 'hidden' });
@@ -26,7 +27,8 @@ export class AppEditorPage extends BasePage {
   async waitForPageLoadedForEdit() {
     const appEditorContainer = this.getAppEditorContainer();
     const applicationViewForm = appEditorContainer.getAppEditorViewForm();
-    const applicationPreview = appEditorContainer.getAppEditorChatMode();
+    const applicationPreview =
+      appEditorContainer.getAppEditorAppSettingsPreview();
     await this.appEditorContainer
       .getChatLoader()
       .waitForState({ state: 'hidden' });
