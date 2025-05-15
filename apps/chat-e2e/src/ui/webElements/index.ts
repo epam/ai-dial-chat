@@ -59,6 +59,7 @@ export * from './messageTemplateModal';
 export * from './appEditor/appEditorContainer';
 export * from './appEditor/appEditorHeader';
 export * from './appEditor/appEditorGeneralForm';
-export * from './appEditor/appEditorPreview';
+export * from './appEditor/appEditorGeneralInfoAgentPreview';
+export * from './appEditor/appEditorAppSettingsAgentPreview';
 export * from './appEditor/appEditorViewForm';
 export * from './notFound';

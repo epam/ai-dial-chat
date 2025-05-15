@@ -752,6 +752,9 @@ const selectIsSelectedConversationsWithSchema = createSelector(
   (conversations) => conversations.some(isConversationWithFormSchema),
 );
 
+export const selectAction = (state: RootState) =>
+  rootSelector(state).preselectedAction;
+
 export const ConversationsSelectors = {
   selectConversations,
   selectConversationsByFolderId,
@@ -824,4 +827,5 @@ export const ConversationsSelectors = {
   getAttachments,
   selectConversationSignal,
   getUniqueAttachments,
+  selectAction,
 };
