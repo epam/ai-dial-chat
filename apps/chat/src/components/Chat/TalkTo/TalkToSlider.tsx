@@ -170,11 +170,13 @@ const SliderModelsGroup = ({
           if (model === SuggestedCard) {
             return (
               <div
-                className="flex size-full cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-primary hover:bg-layer-3"
+                className="flex size-full cursor-pointer flex-col items-center justify-center gap-3 rounded-md border border-primary hover:bg-layer-3"
                 onClick={onOpenMarketplaceTab}
                 key={SuggestedCard.id}
               >
-                <h3>{t("Couldn't find what you need?")}</h3>
+                <h3 className="text-base">
+                  {t("Couldn't find what you need?")}
+                </h3>
                 <SuggestionButton />
               </div>
             );
