@@ -62,13 +62,6 @@ const PromptModalContent: React.FC<PromptModalViewProps> = ({
         }
       }
 
-      dispatch(
-        PromptsActions.setSelectedPrompt({
-          promptId: regeneratePrompt.id,
-        }),
-      );
-      dispatch(PromptsActions.uploadPromptSuccess({ prompt: null }));
-
       onToggleEditMode(true);
     },
     [dispatch, isNewPromptCreating, onToggleEditMode, prompt],
