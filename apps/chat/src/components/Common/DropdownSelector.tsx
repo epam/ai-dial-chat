@@ -17,18 +17,19 @@ interface Props {
   disabled?: boolean;
   tooltip?: string;
   onChange: (options: readonly DropdownSelectorOption[]) => void;
+  id?: string;
 }
 
 export function DropdownSelector({
   options,
   placeholder,
   values,
+  id,
   disabled,
   tooltip,
   onChange,
 }: Props) {
   const { t } = useTranslation(Translation.Common);
-
   return (
     <Tooltip
       triggerClassName={classNames('w-full', disabled && 'cursor-not-allowed')}
@@ -40,6 +41,7 @@ export function DropdownSelector({
         onChange={onChange}
         closeMenuOnSelect={false}
         name="colors"
+        id={id}
         isDisabled={disabled}
         options={options}
         value={values}
@@ -48,6 +50,7 @@ export function DropdownSelector({
             <button type="button" className="group p-2">
               <IconX
                 className="shrink-0 text-secondary group-hover:text-accent-primary"
+                data-qa="clear-dropdown-selection"
                 onClick={() => props.clearValue()}
                 size={18}
               />

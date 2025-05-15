@@ -48,7 +48,6 @@ const initEpic: AppEpic = (action$, state$) =>
     switchMap(() => {
       const query = parse(window.location.search.slice(1));
       const workSpaceTab =
-        query[MarketplaceQueryParams.fromConversation] ||
         query[MarketplaceQueryParams.tab] === MarketplaceTabs.MY_WORKSPACE;
 
       const previousRoute = UISelectors.selectPreviousRoute(state$.value);
@@ -174,7 +173,6 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
           : undefined;
       // workspace tab
       const workSpaceTab =
-        query[MarketplaceQueryParams.fromConversation] ||
         query[MarketplaceQueryParams.tab] === MarketplaceTabs.MY_WORKSPACE;
 
       updatedMarketplaceState.selectedTab = workSpaceTab
