@@ -40,8 +40,6 @@ export const applicationSlice = createSlice({
     initFinish: (state) => {
       state.initialized = true;
     },
-    addNewlyCreated: (state, _action: PayloadAction<CustomApplicationModel>) =>
-      state,
     create: (
       state,
       _action: PayloadAction<{
@@ -225,28 +223,14 @@ export const applicationSlice = createSlice({
 
       state.publicFolders = uniqBy(folders, 'id');
     },
-    selectWidget: (state, { payload }: PayloadAction<string | undefined>) => {
-      state.selectedWidget = payload;
-    },
-    setReturnConversationIds: (
+    setReturnConversationIds(
       state,
       { payload }: PayloadAction<string[] | undefined>,
-    ) => {
+    ) {
       state.returnConversationIds = payload;
     },
-    setHasUnsavedChanges: (state, action: PayloadAction<boolean>) => {
+    setHasUnsavedChanges(state, action: PayloadAction<boolean>) {
       state.hasUnsavedChanges = action.payload;
-    },
-    duplicate: (
-      state,
-      _action: PayloadAction<{
-        reference: string;
-      }>,
-    ) => {
-      state.appLoading = UploadStatus.LOADING;
-    },
-    duplicateFail: (state) => {
-      state.appLoading = UploadStatus.LOADED;
     },
     setSelectedWidget(state, { payload }: PayloadAction<string | undefined>) {
       state.selectedWidget = payload;
