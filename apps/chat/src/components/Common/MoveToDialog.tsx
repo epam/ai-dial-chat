@@ -10,7 +10,6 @@ import {
   validateFolderRenaming,
 } from '@/src/utils/app/folders';
 import { getRootId } from '@/src/utils/app/id';
-import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { constructPath } from '@/src/utils/app/shared-utils';
 
 import { FeatureType } from '@/src/types/common';
@@ -56,12 +55,7 @@ export const MoveToDialog: React.FC<Props> = ({
       ? { selectors: ConversationsSelectors, actions: ConversationsActions }
       : { selectors: PromptsSelectors, actions: PromptsActions };
 
-  const filteredFoldersSelector = useMemo(
-    () => selectors.selectFilteredFolders(defaultMyItemsFilters, '', true),
-    [selectors],
-  );
-
-  const myFolders = useAppSelector(filteredFoldersSelector);
+  const myFolders = useAppSelector(selectors.selectMyFolders);
   const tempFolders = useAppSelector(selectors.selectTemporaryFolders);
   const newFolderId = useAppSelector(selectors.selectNewAddedFolderId);
 
