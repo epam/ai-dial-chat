@@ -223,7 +223,11 @@ const TalkToModalView = ({
         );
       }
       dispatch(ConversationsActions.setIsStartedCustomViewerConversation(true));
-      if (model && model?.reference !== REPLAY_AS_IS_MODEL) {
+      if (
+        model &&
+        model.reference !== REPLAY_AS_IS_MODEL &&
+        !installedModelIdsSet.has(model.reference)
+      ) {
         dispatch(
           ModelsActions.addInstalledModels({
             references: [model.reference],
