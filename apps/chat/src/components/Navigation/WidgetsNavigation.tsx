@@ -12,7 +12,6 @@ import { WidgetsSelectors } from '../../store/widgets/widgets.selectors';
 import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { Routes } from '@/src/constants/routes';
 
