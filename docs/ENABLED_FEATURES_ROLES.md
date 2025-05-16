@@ -20,13 +20,13 @@ The parameter supports the following formats into `.env`:
 - **JSON Object Format**:
 
 ```env
-ENABLED_FEATURES_ROLES: {"code-apps":["code-app-developer", "admin"],"marketplace-table-view":["quick-app-developer"],"message-templates":["admin"]}
+ENABLED_FEATURES_ROLES: {"code-apps":["code-app-developer", "admin"],"custom-applications":["custom-app-developer"],"message-templates":["admin"]}
 ```
 
 - **Escaped JSON String Format**:
 
 ```env
-ENABLED_FEATURES_ROLES: "{\"code-apps\":[\"code-app-developer\", \"admin\"],\"marketplace-table-view\":[\"quick-app-developer\"],\"message-templates\":[\"admin\"]}"
+ENABLED_FEATURES_ROLES: "{\"code-apps\":[\"code-app-developer\", \"admin\"],\"custom-applications\":[\"custom-app-developer\"],\"message-templates\":[\"admin\"]}"
 ```
 
 - **Multi-line Escaped JSON String Format**:
@@ -34,7 +34,7 @@ ENABLED_FEATURES_ROLES: "{\"code-apps\":[\"code-app-developer\", \"admin\"],\"ma
 ```env
 ENABLED_FEATURES_ROLES: "{
   \"code-apps\":[\"code-app-developer\", \"admin\"],
-  \"quick-apps\":[\"quick-app-developer\"],
+  \"custom-applications\":[\"custom-app-developer\"],
   \"message-templates\": [\"admin\"]
 }"
 ```
@@ -44,13 +44,13 @@ ENABLED_FEATURES_ROLES: "{
 The `ENABLED_FEATURES_ROLES` parameter works in conjunction with the `ENABLED_FEATURES` parameter. For example:
 
 ```env
-ENABLED_FEATURES="custom-applications,message-templates,marketplace,quick-apps,code-apps"
+ENABLED_FEATURES="message-templates,marketplace,custom-applications,code-apps"
 ```
 
 In this scenario:
 
 - All features listed in `ENABLED_FEATURES` are enabled in the system
 - Only users with the role `code-app-developer` or `admin` can access the `code-apps` feature
-- Only users with the role `quick-app-developer` can access the `quick-apps` feature
+- Only users with the role `custom-app-developer` can access the `custom-applications` feature
 - Only users with the role `admin` can access the `message-templates` feature
 - All other enabled features will be accessible to all users (no role restriction)

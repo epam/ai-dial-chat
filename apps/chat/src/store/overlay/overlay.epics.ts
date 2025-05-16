@@ -39,6 +39,7 @@ import {
   sendPMResponse,
 } from '@/src/utils/app/overlay';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { signInInOverlay } from '@/src/utils/auth/auth-overlay';
 
 import { FeatureType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
@@ -794,8 +795,20 @@ const signInOptionsSet: AppEpic = (action$, state$) =>
     tap(({ payload: { signInOptions } }) => {
       const isShouldLogin = AuthSelectors.selectIsShouldLogin(state$.value);
 
-      if (isShouldLogin && signInOptions?.autoSignIn) {
-        signIn(signInOptions?.signInProvider);
+      if (
+        isShouldLogin &&
+        signInOptions?.autoSignIn &&
+        signInOptions?.signInProvider
+      ) {
+        if (signInOptions?.signInInNewWindow) {
+          //will open '/auth/signin?provider=' in a new page
+          signInInOverlay(
+            `/auth/signin?provider=${signInOptions.signInProvider}`,
+          );
+        } else {
+          //will try to signin in the iframe
+          signIn(signInOptions?.signInProvider);
+        }
       }
     }),
     ignoreElements(),
