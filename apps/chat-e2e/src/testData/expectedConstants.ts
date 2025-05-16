@@ -228,7 +228,12 @@ export const ExpectedConstants = {
     'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
   noMarketplaceAgentsFoundMessage: `Sorry, we couldn't find any results for your search.`,
   versionPrefix: 'Version: ',
+  addToMyWorkspaceTooltip: 'Add to My workspace',
+  removeFromMyWorkspaceTooltip: 'Remove from My workspace',
   agentAddedToWorkspaceMessage: 'The agent added to my workspace',
+  removeAgentModalTitle: 'Confirm removing agent',
+  removeAgentModalMessage: (name: string) =>
+    `Are you sure you want to remove ${name} from My workspace?`,
   agentNotFoundError: 'Agent by this link not found',
   copiedLinkText: 'Copied!',
   copyLinkText: 'Copy link',

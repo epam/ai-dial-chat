@@ -1,5 +1,6 @@
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { API } from '@/src/testData';
+import { Tags } from '@/src/ui/domData';
 import { IconSelectors, MarketplaceAgentSelectors } from '@/src/ui/selectors';
 import { MarketplaceDetailsModal } from '@/src/ui/selectors/marketplaceSelectors';
 import { BaseElement } from '@/src/ui/webElements';
@@ -43,10 +44,10 @@ export class AgentDetailsModal extends BaseElement {
   );
   public addBookmarkIcon = this.getChildElementBySelector(
     MarketplaceAgentSelectors.addBookmarkIcon,
-  );
+  ).getChildElementBySelector(Tags.svg);
   public removeBookmarkIcon = this.getChildElementBySelector(
     MarketplaceAgentSelectors.removeBookmarkIcon,
-  );
+  ).getChildElementBySelector(Tags.svg);
   public copyLink = this.getChildElementBySelector(
     MarketplaceAgentSelectors.copyLink,
   );
@@ -90,6 +91,7 @@ export class AgentDetailsModal extends BaseElement {
     } else {
       await this.useButton.click();
     }
+    await this.waitForState({ state: 'hidden' });
   }
 
   public async addAgentToWorkspace() {
