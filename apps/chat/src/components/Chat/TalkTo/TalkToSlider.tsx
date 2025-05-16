@@ -387,7 +387,7 @@ export const TalkToSlider = ({
           className={classNames(
             'flex size-full',
             sliderGroups.length && 'transition ease-out',
-            resizeDeltaTime < 100 ? 'duration-0' : 'duration-1000',
+            resizeDeltaTime < 50 ? 'duration-0' : 'duration-1000',
           )}
           style={{
             transform: calculateTranslateX(
