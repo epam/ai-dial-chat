@@ -11,12 +11,12 @@ export const useSwipe = ({
 }) => {
   const [startX, setStartX] = useState<number>();
 
-  const onStart = useCallback((e: TouchEvent) => {
+  const onStart = useCallback((e: React.TouchEvent) => {
     setStartX(e.targetTouches[0].clientX);
   }, []);
 
   const onEnd = useCallback(
-    (e: TouchEvent) => {
+    (e: React.TouchEvent) => {
       const endX = e.changedTouches[0].clientX;
       if (!isNumber(startX) || !isNumber(endX)) return;
 

@@ -38,10 +38,10 @@ import {
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
 
+import { TabButton } from '@/src/components/Buttons/TabButton';
+import { AgentDialogs } from '@/src/components/Common/AgentDialogs';
 import { Modal } from '@/src/components/Common/Modal';
 
-import { TabButton } from '../../Buttons/TabButton';
-import { AgentDialogs } from '../../Common/AgentDialogs';
 import { CardType, SuggestedCard, TalkToSlider } from './TalkToSlider';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -78,6 +78,7 @@ const TalkToModalView = ({
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useDispatch();
+
   const [tab, setTab] = useState(MarketplaceTabs.MY_WORKSPACE);
   const isMyWorkspace = tab === MarketplaceTabs.MY_WORKSPACE;
 
@@ -296,6 +297,7 @@ const TalkToModalView = ({
         isMyWorkspace={isMyWorkspace}
         onOpenMarketplaceTab={() => setTab(MarketplaceTabs.HOME)}
         isSearchMode={searchTerm.length > 0}
+        searchTerm={searchTerm}
       />
 
       {isMarketplaceEnabled && (

@@ -265,16 +265,18 @@ export type CardType = DialAIEntityModel | typeof SuggestedCard;
 interface Props {
   conversation: Conversation;
   items: CardType[];
-  onSelectModel: (entity: DialAIEntityModel) => void;
-  onOpenMarketplaceTab: () => void;
   isMyWorkspace: boolean;
   isSearchMode: boolean;
+  searchTerm: string;
+  onSelectModel: (entity: DialAIEntityModel) => void;
+  onOpenMarketplaceTab: () => void;
 }
 
 export const TalkToSlider = ({
   conversation,
   items,
   isMyWorkspace,
+  searchTerm,
   onOpenMarketplaceTab,
   ...restProps
 }: Props) => {
@@ -284,11 +286,13 @@ export const TalkToSlider = ({
 
   const [activeSlide, setActiveSlide] = useState(0);
   const [sliderRowsCount, setSliderRowsCount] = useState(1);
+  const [resizeTime, setResizeTime] = useState(Date.now());
 
   const screenState = useScreenState();
 
   const handleResize = useCallback(() => {
     setSliderRowsCount(getRowsCount());
+    setResizeTime(Date.now());
   }, []);
   useWindowResizeEvent(handleResize);
 
@@ -351,6 +355,10 @@ export const TalkToSlider = ({
     }
   }, [activeSlide, sliderGroups]);
 
+  useEffect(() => {
+    setActiveSlide(0);
+  }, [searchTerm, isMyWorkspace]);
+
   const excessDots = sliderDotsArray.length - MAX_VISIBLE_SLIDER_DOTS;
   const maxDotsTranslate = Math.max(0, excessDots * SLIDER_DOT_SIZE_WITH_GAPS);
   const translateXValue = Math.max(
@@ -360,6 +368,7 @@ export const TalkToSlider = ({
   const isMobileOrTablet =
     screenState === ScreenState.SM || screenState === ScreenState.MD;
   const gridGap = getGridGap(screenState);
+  const resizeDeltaTime = Date.now() - resizeTime;
 
   return (
     <>
@@ -377,7 +386,8 @@ export const TalkToSlider = ({
           {...swipeHandlers}
           className={classNames(
             'flex size-full',
-            sliderGroups.length && 'transition duration-1000 ease-out',
+            sliderGroups.length && 'transition ease-out',
+            resizeDeltaTime < 100 ? 'duration-0' : 'duration-1000',
           )}
           style={{
             transform: calculateTranslateX(
