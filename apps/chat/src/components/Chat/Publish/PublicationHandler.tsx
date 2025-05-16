@@ -246,7 +246,7 @@ export function PublicationHandler({ publication }: Props) {
         dispatch(
           UIActions.setOpenedFoldersIds({
             openedFolderIds: conversationPaths,
-            folderType: FeatureType.Chat,
+            featureType: FeatureType.Chat,
           }),
         );
       }
@@ -264,7 +264,7 @@ export function PublicationHandler({ publication }: Props) {
         dispatch(
           UIActions.setOpenedFoldersIds({
             openedFolderIds: promptPaths,
-            folderType: FeatureType.Prompt,
+            featureType: FeatureType.Prompt,
           }),
         );
       }

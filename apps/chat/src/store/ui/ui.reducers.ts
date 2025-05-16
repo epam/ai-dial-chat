@@ -123,13 +123,13 @@ export const uiSlice = createSlice({
       state,
       {
         payload,
-      }: PayloadAction<{ openedFolderIds: string[]; folderType: FeatureType }>,
+      }: PayloadAction<{ openedFolderIds: string[]; featureType: FeatureType }>,
     ) => {
       state.openedFoldersIds = {
         ...state.openedFoldersIds,
-        [payload.folderType]: uniq([
+        [payload.featureType]: uniq([
           ...payload.openedFolderIds,
-          ...state.openedFoldersIds[payload.folderType],
+          ...state.openedFoldersIds[payload.featureType],
         ]),
       };
     },
