@@ -81,7 +81,7 @@ const selectScrollToEntityId = (state: RootState) =>
 const selectIsNavigationVisible = createSelector(
   [WidgetsSelectors.selectIsAnyWidget, SettingsSelectors.selectEnabledFeatures],
   (isAnyWidget, enabledFeatures) => {
-    return isAnyWidget && enabledFeatures.has(Feature.Marketplace);
+    return isAnyWidget || enabledFeatures.has(Feature.Marketplace);
   },
 );
 
