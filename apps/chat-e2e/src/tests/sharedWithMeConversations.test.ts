@@ -11,6 +11,7 @@ import {
   ExpectedMessages,
   FolderConversation,
   MenuOptions,
+  MockedChatApiResponseBodies,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
@@ -1092,6 +1093,9 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Click on Replay button and verify request is sent',
       async () => {
+        await additionalShareUserDialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         const replayRequest = await additionalShareUserChat.startReplay();
         expect
           .soft(replayRequest, ExpectedMessages.chatRequestIsSent)
