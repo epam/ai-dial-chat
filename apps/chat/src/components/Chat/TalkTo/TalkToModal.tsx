@@ -55,7 +55,6 @@ interface TabButtonProps {
 
 function AgentsTabButton({ tab, setTab, currentTab }: TabButtonProps) {
   const { t } = useTranslation(Translation.Marketplace);
-
   return (
     <TabButton selected={currentTab === tab} onClick={() => setTab(tab)}>
       {t(ChangeAgentTabs[tab])}
@@ -216,9 +215,7 @@ const TalkToModalView = ({
           }),
         );
       }
-
       dispatch(ConversationsActions.setIsStartedCustomViewerConversation(true));
-
       if (
         model &&
         model.reference !== REPLAY_AS_IS_MODEL &&
@@ -235,14 +232,7 @@ const TalkToModalView = ({
 
       onClose();
     },
-    [
-      addonsMap,
-      conversation,
-      dispatch,
-      installedModelIdsSet,
-      modelsMap,
-      onClose,
-    ],
+    [addonsMap, conversation, dispatch, modelsMap, onClose],
   );
 
   const handleGoToWorkspace = useCallback(

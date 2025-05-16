@@ -40,46 +40,42 @@ import { TalkToCard } from './TalkToCard';
 import chunk from 'lodash-es/chunk';
 import range from 'lodash-es/range';
 
-const maxChunksCountConfig = {
-  [ScreenState.XL5]: {
-    cardHeight: 166,
-    maxRows: 3,
-    cols: 3,
-  },
-  [ScreenState.XL4]: {
-    cardHeight: 166,
-    maxRows: 3,
-    cols: 3,
-  },
-  [ScreenState.XL3]: {
-    cardHeight: 166,
-    maxRows: 3,
-    cols: 3,
-  },
-  [ScreenState.XL]: {
-    cardHeight: 166,
-    maxRows: 3,
-    cols: 3,
-  },
-  [ScreenState.MD]: {
-    cardHeight: 160,
-    maxRows: 4,
-    cols: 2,
-  },
-  [ScreenState.SM]: {
-    cardHeight: 98,
-    maxRows: 5,
-    cols: 1,
-  },
+const DEFAULT_MAX_CHUNKS_COUNT_CONFIG = {
+  cardHeight: 166,
+  maxRows: 3,
+  cols: 3,
+};
+const TABLET_MAX_CHUNKS_COUNT_CONFIG = {
+  cardHeight: 160,
+  maxRows: 4,
+  cols: 2,
+};
+const MOBILE_MAX_CHUNKS_COUNT_CONFIG = {
+  cardHeight: 98,
+  maxRows: 5,
+  cols: 1,
+};
+const MAX_CHUNKS_COUNT_CONFIG = {
+  [ScreenState.XL5]: DEFAULT_MAX_CHUNKS_COUNT_CONFIG,
+  [ScreenState.XL4]: DEFAULT_MAX_CHUNKS_COUNT_CONFIG,
+  [ScreenState.XL3]: DEFAULT_MAX_CHUNKS_COUNT_CONFIG,
+  [ScreenState.XL]: DEFAULT_MAX_CHUNKS_COUNT_CONFIG,
+  [ScreenState.MD]: TABLET_MAX_CHUNKS_COUNT_CONFIG,
+  [ScreenState.SM]: MOBILE_MAX_CHUNKS_COUNT_CONFIG,
 };
 
-const startInnerHeightForRow = {
-  [ScreenState.XL5]: 217,
-  [ScreenState.XL4]: 217,
-  [ScreenState.XL3]: 217,
-  [ScreenState.XL]: 217,
-  [ScreenState.MD]: 217,
-  [ScreenState.SM]: 255,
+const getMaxChunksCountConfig = (screenState: ScreenState) =>
+  MAX_CHUNKS_COUNT_CONFIG[screenState] ?? DEFAULT_MAX_CHUNKS_COUNT_CONFIG;
+
+const DEFAULT_SINGLE_ROW_OFFSET = 217;
+const MOBILE__SINGLE_ROW_OFFSET = 255;
+const START_SINGLE_ROW_OFFSET = {
+  [ScreenState.XL5]: DEFAULT_SINGLE_ROW_OFFSET,
+  [ScreenState.XL4]: DEFAULT_SINGLE_ROW_OFFSET,
+  [ScreenState.XL3]: DEFAULT_SINGLE_ROW_OFFSET,
+  [ScreenState.XL]: DEFAULT_SINGLE_ROW_OFFSET,
+  [ScreenState.MD]: DEFAULT_SINGLE_ROW_OFFSET,
+  [ScreenState.SM]: MOBILE__SINGLE_ROW_OFFSET,
 };
 
 const SLIDER_DOT_SIZE_WITH_GAPS = 24;
@@ -97,15 +93,18 @@ const getGridGap = (screenState: ScreenState) => {
 
 const getRowsCount = () => {
   const screenState = getScreenState();
-  const cardHeight = maxChunksCountConfig[screenState].cardHeight;
+  const maxChunksCountConfig =
+    MAX_CHUNKS_COUNT_CONFIG[screenState] ?? DEFAULT_MAX_CHUNKS_COUNT_CONFIG;
+  const cardHeight = maxChunksCountConfig.cardHeight;
   const gap = getGridGap(screenState);
-  let currentHeight =
-    startInnerHeightForRow[screenState] + cardHeight * 2 + gap;
+  const startSingleRowOffset =
+    START_SINGLE_ROW_OFFSET[screenState] ?? DEFAULT_SINGLE_ROW_OFFSET;
+  let currentHeight = startSingleRowOffset + cardHeight * 2 + gap;
   let currentRows = 1;
 
   while (
     currentHeight < window.innerHeight &&
-    currentRows + 1 <= maxChunksCountConfig[screenState].maxRows
+    currentRows + 1 <= maxChunksCountConfig.maxRows
   ) {
     currentRows++;
     currentHeight += cardHeight + gap;
@@ -185,6 +184,8 @@ const SliderModelsGroup = ({
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
+  const maxChunksCountConfig = getMaxChunksCountConfig(screenState);
+
   return (
     <section
       key={modelsGroup.map((model) => model.reference).join('.')}
@@ -194,8 +195,8 @@ const SliderModelsGroup = ({
       <div
         className="grid"
         style={{
-          gridTemplateColumns: `repeat(${maxChunksCountConfig[screenState].cols}, minmax(0, 1fr))`,
-          gridTemplateRows: `repeat(${rowsCount}, ${maxChunksCountConfig[screenState].cardHeight}px)`,
+          gridTemplateColumns: `repeat(${maxChunksCountConfig.cols}, minmax(0, 1fr))`,
+          gridTemplateRows: `repeat(${rowsCount}, ${maxChunksCountConfig.cardHeight}px)`,
           gap: getGridGap(screenState),
         }}
       >
@@ -292,12 +293,11 @@ export const TalkToSlider = ({
     handleResize();
   }, [handleResize]);
 
+  const maxChunksCountConfig = getMaxChunksCountConfig(screenState);
+
   const sliderGroups = useMemo(() => {
-    return chunk(
-      items,
-      sliderRowsCount * maxChunksCountConfig[screenState].cols,
-    );
-  }, [items, screenState, sliderRowsCount]);
+    return chunk(items, sliderRowsCount * maxChunksCountConfig.cols);
+  }, [items, maxChunksCountConfig.cols, sliderRowsCount]);
 
   const sliderDotsArray = useMemo(() => {
     return range(0, sliderGroups.length);
@@ -364,8 +364,7 @@ export const TalkToSlider = ({
         className="flex max-h-[538px] w-full flex-col overflow-y-auto overflow-x-hidden md:max-h-[688px] xl:max-h-[530px]"
         style={{
           height: `${
-            sliderRowsCount *
-              (maxChunksCountConfig[screenState].cardHeight + gridGap) -
+            sliderRowsCount * (maxChunksCountConfig.cardHeight + gridGap) -
             gridGap
           }px`,
         }}
