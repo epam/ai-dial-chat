@@ -78,30 +78,42 @@ export const GeneralInfoView: React.FC<Props> = ({
     screenState <= ScreenState.MD ? PreviewMode.closed : PreviewMode.half,
   );
 
+  const isPreviewClosed = previewMode === PreviewMode.closed;
+  const isPreviewHalf = previewMode === PreviewMode.half;
+  const isPreviewFull = previewMode === PreviewMode.full;
+
+  const handlePreviewModeChange = (mode: PreviewMode) => {
+    setPreviewMode(mode);
+  };
+
+  const handleFullModeClick = (
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+  ) => {
+    e.stopPropagation();
+    handlePreviewModeChange(PreviewMode.full);
+  };
+
   useEffect(() => {
-    if (screenState > ScreenState.MD && previewMode !== PreviewMode.half) {
-      setPreviewMode(PreviewMode.half);
-    } else if (
-      screenState <= ScreenState.MD &&
-      previewMode === PreviewMode.half
-    ) {
-      setPreviewMode(PreviewMode.closed);
+    if (screenState > ScreenState.MD && !isPreviewHalf) {
+      handlePreviewModeChange(PreviewMode.half);
+    } else if (screenState <= ScreenState.MD && isPreviewHalf) {
+      handlePreviewModeChange(PreviewMode.closed);
     }
-  }, [screenState, previewMode]);
+  }, [screenState, previewMode, isPreviewHalf]);
 
   return (
     <div className="flex w-full flex-col overflow-hidden">
       <div className="flex w-full justify-center gap-2 border-b border-primary px-3 py-2 text-primary md:hidden">
         <TabButton
-          selected={previewMode === PreviewMode.closed}
-          onClick={() => setPreviewMode(PreviewMode.closed)}
+          selected={isPreviewClosed}
+          onClick={() => handlePreviewModeChange(PreviewMode.closed)}
           className="w-full"
         >
           {t('Settings')}
         </TabButton>
         <TabButton
-          selected={previewMode === PreviewMode.full}
-          onClick={() => setPreviewMode(PreviewMode.full)}
+          selected={isPreviewFull}
+          onClick={() => handlePreviewModeChange(PreviewMode.full)}
           className="w-full"
         >
           {t('Preview')}
@@ -112,9 +124,9 @@ export const GeneralInfoView: React.FC<Props> = ({
           className={classNames(
             'overflow-hidden transition-all duration-300 ease-in-out',
             {
-              'grow opacity-100': previewMode === PreviewMode.closed,
-              'size-full': previewMode === PreviewMode.half,
-              'w-0 opacity-0': previewMode === PreviewMode.full,
+              'grow opacity-100': isPreviewClosed,
+              'size-full': isPreviewHalf,
+              'w-0 opacity-0': isPreviewFull,
             },
           )}
         >
@@ -132,9 +144,9 @@ export const GeneralInfoView: React.FC<Props> = ({
           className={classNames(
             'relative flex min-h-0 flex-col overflow-hidden border-l border-primary transition-all duration-300 ease-in-out',
             {
-              'w-full opacity-100': previewMode === PreviewMode.full,
-              'size-full grow': previewMode === PreviewMode.half,
-              'absolute w-0 opacity-0': previewMode === PreviewMode.closed,
+              'w-full opacity-100': isPreviewFull,
+              'size-full grow': isPreviewHalf,
+              'absolute w-0 opacity-0': isPreviewClosed,
             },
           )}
         >
@@ -143,18 +155,15 @@ export const GeneralInfoView: React.FC<Props> = ({
               formData,
               modelFromState as DialAIEntityModel,
             )}
-            onClosePreview={() => setPreviewMode(PreviewMode.closed)}
+            onClosePreview={() => handlePreviewModeChange(PreviewMode.closed)}
           />
         </div>
 
-        {previewMode === PreviewMode.closed && (
+        {isPreviewClosed && (
           <div className="hidden h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-4 hover:cursor-pointer md:flex">
             <button
               className="text-secondary hover:text-accent-primary"
-              onClick={(e) => {
-                e.stopPropagation();
-                setPreviewMode(PreviewMode.full);
-              }}
+              onClick={handleFullModeClick}
             >
               <Tooltip tooltip={t('Expand preview')}>
                 <IconArrowsMaximize size={24} />
@@ -170,14 +179,11 @@ export const GeneralInfoView: React.FC<Props> = ({
         )}
       </div>
 
-      {previewMode === PreviewMode.closed && (
+      {isPreviewClosed && (
         <div className="hidden h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-4 hover:cursor-pointer xl:flex">
           <button
             className="text-secondary hover:text-accent-primary"
-            onClick={(e) => {
-              e.stopPropagation();
-              setPreviewMode(PreviewMode.full);
-            }}
+            onClick={handleFullModeClick}
           >
             <Tooltip tooltip={t('Expand preview')}>
               <IconArrowsMaximize size={24} />

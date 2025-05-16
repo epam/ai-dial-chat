@@ -112,11 +112,32 @@ export const ApplicationSettings: React.FC<Props> = ({
       : PreviewMode.half,
   );
 
-  useEffect(() => {
-    if (screenState <= ScreenState.MD && previewMode === PreviewMode.half) {
-      setPreviewMode(PreviewMode.closed);
+  const isPreviewClosed = previewMode === PreviewMode.closed;
+  const isPreviewHalf = previewMode === PreviewMode.half;
+  const isPreviewFull = previewMode === PreviewMode.full;
+
+  const handlePreviewModeChange = (mode: PreviewMode) => {
+    setPreviewMode(mode);
+  };
+
+  const handleHalfModeClick = () => {
+    if (screenState > ScreenState.MD) {
+      handlePreviewModeChange(PreviewMode.half);
     }
-  }, [previewMode, screenState]);
+  };
+
+  const handleFullModeClick = (
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+  ) => {
+    e.stopPropagation();
+    handlePreviewModeChange(PreviewMode.full);
+  };
+
+  useEffect(() => {
+    if (screenState <= ScreenState.MD && isPreviewHalf) {
+      handlePreviewModeChange(PreviewMode.closed);
+    }
+  }, [isPreviewHalf, previewMode, screenState]);
 
   const isAppPublic = isEntityIdPublic(applicationData);
   const modelFromState = applicationData
@@ -307,15 +328,15 @@ export const ApplicationSettings: React.FC<Props> = ({
     <div className="flex size-full flex-col">
       <div className="flex w-full justify-center gap-2 border-b border-primary px-3 py-2 text-primary md:hidden">
         <TabButton
-          selected={previewMode !== PreviewMode.full}
-          onClick={() => setPreviewMode(PreviewMode.closed)}
+          selected={!isPreviewFull}
+          onClick={() => handlePreviewModeChange(PreviewMode.closed)}
           className="w-full"
         >
           {t('Settings')}
         </TabButton>
         <TabButton
-          selected={previewMode === PreviewMode.full}
-          onClick={() => setPreviewMode(PreviewMode.full)}
+          selected={isPreviewFull}
+          onClick={() => handlePreviewModeChange(PreviewMode.full)}
           className="w-full"
         >
           {t('Preview')}
@@ -330,10 +351,9 @@ export const ApplicationSettings: React.FC<Props> = ({
             }
           }}
           className={classNames('transition-all duration-300 ease-in-out', {
-            'w-[calc(100%-40px)] opacity-100 max-md:w-full':
-              previewMode === PreviewMode.closed,
-            'w-1/2 opacity-100': previewMode === PreviewMode.half,
-            'w-0 opacity-0': previewMode === PreviewMode.full,
+            'w-[calc(100%-40px)] opacity-100 max-md:w-full': isPreviewClosed,
+            'w-1/2 opacity-100': isPreviewHalf,
+            'w-0 opacity-0': isPreviewFull,
           })}
         >
           <FormProvider {...methods}>{formViewElement}</FormProvider>
@@ -342,10 +362,9 @@ export const ApplicationSettings: React.FC<Props> = ({
           className={classNames(
             'flex h-full flex-col border-l border-primary transition-all duration-300 ease-in-out',
             {
-              'w-1/2 opacity-100': previewMode === PreviewMode.half,
-              'w-full opacity-100': previewMode === PreviewMode.full,
-              'w-0 overflow-hidden opacity-0':
-                previewMode === PreviewMode.closed,
+              'w-1/2 opacity-100': isPreviewHalf,
+              'w-full opacity-100': isPreviewFull,
+              'w-0 overflow-hidden opacity-0': isPreviewClosed,
             },
           )}
         >
@@ -374,20 +393,20 @@ export const ApplicationSettings: React.FC<Props> = ({
                   <span>{t('Redeploy')}</span>
                 </button>
               )}
-              {previewMode === PreviewMode.half && (
+              {isPreviewHalf && (
                 <button
                   className="text-secondary hover:text-accent-primary max-xl:hidden"
-                  onClick={() => setPreviewMode(PreviewMode.full)}
+                  onClick={() => handlePreviewModeChange(PreviewMode.full)}
                 >
                   <Tooltip tooltip={t('Expand preview')}>
                     <IconArrowsMaximize size={24} />
                   </Tooltip>
                 </button>
               )}
-              {previewMode === PreviewMode.full && (
+              {isPreviewFull && (
                 <button
                   className="text-secondary hover:text-accent-primary max-xl:hidden"
-                  onClick={() => setPreviewMode(PreviewMode.half)}
+                  onClick={() => handlePreviewModeChange(PreviewMode.half)}
                 >
                   <Tooltip tooltip={t('Split view')}>
                     <IconLayoutSidebarRightCollapse size={24} />
@@ -396,7 +415,7 @@ export const ApplicationSettings: React.FC<Props> = ({
               )}
               <button
                 className="ml-4 hidden text-secondary hover:text-accent-primary md:flex xl:ml-2"
-                onClick={() => setPreviewMode(PreviewMode.closed)}
+                onClick={() => handlePreviewModeChange(PreviewMode.closed)}
               >
                 <Tooltip tooltip={t('Hide preview')}>
                   <IconArrowsMinimize size={24} />
@@ -404,7 +423,7 @@ export const ApplicationSettings: React.FC<Props> = ({
               </button>
             </div>
           </div>
-          {previewMode !== PreviewMode.closed && (
+          {!isPreviewClosed && (
             <div className="flex-1 overflow-auto">
               <ApplicationPreviewChat
                 isAppDeploymentInProgress={isAppDeploymentInProgress}
@@ -416,20 +435,14 @@ export const ApplicationSettings: React.FC<Props> = ({
             </div>
           )}
         </div>
-        {previewMode === PreviewMode.closed && (
+        {isPreviewClosed && (
           <div
             className="flex h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-4 transition-all duration-300 ease-in-out hover:cursor-pointer max-md:hidden xl:pt-5"
-            onClick={() => {
-              if (screenState > ScreenState.MD)
-                setPreviewMode(PreviewMode.half);
-            }}
+            onClick={handleHalfModeClick}
           >
             <button
               className="text-secondary hover:text-accent-primary"
-              onClick={(e) => {
-                e.stopPropagation();
-                setPreviewMode(PreviewMode.full);
-              }}
+              onClick={handleFullModeClick}
             >
               <Tooltip tooltip={t('Expand preview')}>
                 <IconArrowsMaximize size={24} />
@@ -438,7 +451,7 @@ export const ApplicationSettings: React.FC<Props> = ({
 
             <button
               className="text-secondary hover:text-accent-primary max-xl:hidden"
-              onClick={() => setPreviewMode(PreviewMode.half)}
+              onClick={() => handlePreviewModeChange(PreviewMode.half)}
             >
               <Tooltip tooltip={t('Split view')}>
                 <IconLayoutSidebarLeftCollapse size={24} />

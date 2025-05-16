@@ -34,6 +34,8 @@ import { Logo } from '@/src/components/Header/Logo';
 import { User } from '@/src/components/Header/User/User';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
+import { UrlObject } from 'url';
+
 enum TabKeys {
   GENERAL = 'general',
   SETTINGS = 'settings',
@@ -134,6 +136,12 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
     };
   };
 
+  const handleTabClose = (tabHref: UrlObject, isDisabled: boolean) => {
+    if (isDisabled) return;
+    setMenuOpen(false);
+    push(tabHref);
+  };
+
   const handleSaveAndRedirect = () => {
     if (!shouldSaveApplication) {
       dispatch(ApplicationActions.setShouldSaveApplication(true));
@@ -192,11 +200,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
                   return (
                     <button
                       key={tab.key}
-                      onClick={() => {
-                        if (isDisabled) return;
-                        setMenuOpen(false);
-                        push(tab.href);
-                      }}
+                      onClick={() => handleTabClose(tab.href, isDisabled)}
                       disabled={isDisabled}
                       className={classNames(
                         'w-full px-3 py-2 text-left text-sm transition-colors',
