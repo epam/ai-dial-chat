@@ -215,12 +215,13 @@ const selectInitialDataStatus = (state: RootState) =>
   rootSelector(state).initialDataStatus;
 
 const selectProviderId = (state: RootState) => rootSelector(state).providerId;
+
 const _selectWidgetsSchemaIds = (state: RootState) =>
   rootSelector(state).widgetsSchemaIds;
+
 const selectWidgetsSchemaIds = createSelector(
   [_selectWidgetsSchemaIds],
   (widgetsSchemaIds) => new Set(widgetsSchemaIds),
-);
 );
 
 export const SettingsSelectors = {
@@ -255,5 +256,4 @@ export const SettingsSelectors = {
   selectInitialDataStatus,
   selectProviderId,
   selectWidgetsSchemaIds,
-  selectIsNavigationVisible,
 };

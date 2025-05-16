@@ -9,6 +9,7 @@ import {
 import { EntityType } from '@/src/types/common';
 import { RootState } from '@/src/types/store';
 
+import { SettingsSelectors } from '../settings/settings.selectors';
 import { ModelsState } from './models.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
