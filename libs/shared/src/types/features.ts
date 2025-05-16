@@ -49,7 +49,6 @@ export enum Feature {
 
   // Applications
   CustomApplications = 'custom-applications', // custom applications
-  QuickApps = 'quick-apps', // Enable Quick apps
   CodeApps = 'code-apps', // Enable Code apps
 
   // Marketplace
