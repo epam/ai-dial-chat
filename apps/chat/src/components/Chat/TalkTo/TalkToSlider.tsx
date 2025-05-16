@@ -1,4 +1,3 @@
-import { IconCaretLeftFilled, IconCaretRightFilled } from '@tabler/icons-react';
 import {
   memo,
   useCallback,
@@ -26,6 +25,7 @@ import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 import { Conversation } from '@/src/types/chat';
 import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
+import { CardType } from '@/src/types/talkTo';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -33,13 +33,14 @@ import { ModelsSelectors } from '@/src/store/models/models.selectors';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { ChangeAgentTabs, MarketplaceTabs } from '@/src/constants/marketplace';
+import { SuggestedCard } from '@/src/constants/talkTo';
 
 import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
 
+import { SliderDots } from './SliderDots';
 import { TalkToCard } from './TalkToCard';
 
 import chunk from 'lodash-es/chunk';
-import range from 'lodash-es/range';
 
 const DEFAULT_SLIDER_CHUNKS_CONFIG = {
   cardHeight: 166,
@@ -65,16 +66,8 @@ const getSliderChunksConfig = (screenState: ScreenState) =>
     ? SLIDER_CHUNKS_CONFIG[screenState]
     : DEFAULT_SLIDER_CHUNKS_CONFIG;
 
-const DEFAULT_SINGLE_ROW_OFFSET = 217;
-const MOBILE__SINGLE_ROW_OFFSET = 255;
 const getStartSingleRowOffset = (screenState: ScreenState) =>
-  screenState === ScreenState.SM
-    ? MOBILE__SINGLE_ROW_OFFSET
-    : DEFAULT_SINGLE_ROW_OFFSET;
-
-const SLIDER_DOT_SIZE_WITH_GAPS = 24;
-const MAX_VISIBLE_SLIDER_DOTS = 7;
-const SLIDES_GAP = 16;
+  screenState === ScreenState.SM ? 255 : 217;
 
 const getGridGap = (screenState: ScreenState) =>
   screenState === ScreenState.SM ? 12 : 16;
@@ -99,53 +92,13 @@ const getRowsCount = () => {
   return currentRows;
 };
 
+const GAP_BETWEEN_SLIDES = 16;
 const calculateTranslateX = (activeSlide: number, clientWidth?: number) => {
   if (!clientWidth) return 'none';
 
-  const offset = activeSlide * (clientWidth + SLIDES_GAP);
+  const offset = activeSlide * (clientWidth + GAP_BETWEEN_SLIDES);
 
   return `translateX(-${offset}px)`;
-};
-
-const getDotSizeClass = (
-  slideNumber: number,
-  activeSlide: number,
-  slidesCount: number,
-) => {
-  if (slideNumber === activeSlide) {
-    return 'h-2 w-8';
-  }
-
-  if (slidesCount < 7) {
-    return 'size-2';
-  }
-
-  const offsetActive = activeSlide - slideNumber;
-  const offsetLast = slidesCount - activeSlide;
-
-  if (
-    (offsetActive === 3 && activeSlide > 2 && offsetLast > 3) ||
-    (offsetLast === 3 && slideNumber < activeSlide - 3) ||
-    (offsetLast === 2 && slideNumber < activeSlide - 4) ||
-    (offsetLast === 1 && slideNumber < activeSlide - 5) ||
-    (activeSlide <= 3 && slideNumber === 6) ||
-    (activeSlide > 3 && slideNumber > activeSlide + 2)
-  ) {
-    return 'size-1';
-  }
-
-  if (
-    (offsetActive === 2 && activeSlide > 1 && offsetLast > 3) ||
-    (offsetLast === 3 && slideNumber < activeSlide - 2) ||
-    (offsetLast === 2 && slideNumber < activeSlide - 3) ||
-    (offsetLast === 1 && slideNumber < activeSlide - 4) ||
-    (activeSlide <= 3 && slideNumber === 5) ||
-    (activeSlide > 3 && slideNumber > activeSlide + 1)
-  ) {
-    return 'size-1.5';
-  }
-
-  return 'size-2';
 };
 
 interface SliderModelsGroupProps {
@@ -243,13 +196,6 @@ const SliderModelsGroup = memo(
 );
 SliderModelsGroup.displayName = 'SliderModelsGroup';
 
-export const SuggestedCard = {
-  id: 'suggested',
-  reference: 'suggested',
-};
-
-export type CardType = DialAIEntityModel | typeof SuggestedCard;
-
 interface Props {
   conversation: Conversation;
   items: CardType[];
@@ -295,35 +241,6 @@ export const TalkToSlider = ({
     return chunk(items, sliderRowsCount * maxChunksCountConfig.cols);
   }, [items, maxChunksCountConfig.cols, sliderRowsCount]);
 
-  const sliderDotsArray = useMemo(() => {
-    return range(0, sliderGroups.length);
-  }, [sliderGroups.length]);
-
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') {
-        setActiveSlide((activeSlide) =>
-          activeSlide === sliderDotsArray.length - 1
-            ? activeSlide
-            : activeSlide + 1,
-        );
-      } else if (e.key === 'ArrowLeft') {
-        setActiveSlide((activeSlide) =>
-          activeSlide === 0 ? activeSlide : activeSlide - 1,
-        );
-      }
-    },
-    [sliderDotsArray.length],
-  );
-
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [handleKeyDown]);
-
   const swipeHandlers = useSwipe({
     onSwipedLeft: () => {
       setActiveSlide((slide) =>
@@ -347,14 +264,6 @@ export const TalkToSlider = ({
     setActiveSlide(0);
   }, [searchTerm, isMyWorkspace]);
 
-  const excessDots = sliderDotsArray.length - MAX_VISIBLE_SLIDER_DOTS;
-  const maxDotsTranslate = Math.max(0, excessDots * SLIDER_DOT_SIZE_WITH_GAPS);
-  const translateXValue = Math.max(
-    0,
-    Math.min(maxDotsTranslate, (activeSlide - 3) * SLIDER_DOT_SIZE_WITH_GAPS),
-  );
-  const isMobileOrTablet =
-    screenState === ScreenState.SM || screenState === ScreenState.MD;
   const gridGap = getGridGap(screenState);
   const resizeDeltaTime = Date.now() - resizeTime;
 
@@ -382,7 +291,7 @@ export const TalkToSlider = ({
               activeSlide,
               sliderRef.current?.clientWidth,
             ),
-            gap: `${SLIDES_GAP}px`,
+            gap: `${GAP_BETWEEN_SLIDES}px`,
           }}
         >
           {sliderGroups.length ? (
@@ -414,76 +323,11 @@ export const TalkToSlider = ({
           )}
         </div>
       </div>
-      <div className="mt-4 flex w-full items-center justify-center md:justify-end">
-        <div className="flex flex-col items-center md:h-5 md:w-1/2 md:flex-row md:justify-between">
-          <div className="relative flex items-center gap-4 md:-translate-x-1/2">
-            {sliderDotsArray.length <= 1 && screenState === ScreenState.SM && (
-              <span className="h-[18px] bg-transparent"></span>
-            )}
-            {sliderDotsArray.length > 1 && (
-              <>
-                {!isMobileOrTablet && (
-                  <button
-                    onClick={() =>
-                      setActiveSlide((activeSlide) =>
-                        activeSlide === 0 ? activeSlide : activeSlide - 1,
-                      )
-                    }
-                    disabled={activeSlide === 0}
-                    className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:text-secondary"
-                  >
-                    <IconCaretLeftFilled size={18} />
-                  </button>
-                )}
-                <div className="flex max-w-[176px] overflow-hidden">
-                  <div
-                    className="flex items-center gap-4  transition-all duration-200"
-                    style={{
-                      transform: `translateX(-${translateXValue}px)`,
-                    }}
-                  >
-                    {sliderDotsArray.map((slideNumber) => {
-                      return (
-                        <div
-                          key={slideNumber}
-                          onClick={() => setActiveSlide(slideNumber)}
-                          className="flex min-w-2 items-center justify-center"
-                        >
-                          <button
-                            className={classNames(
-                              'rounded-full bg-controls-disable transition-all duration-200',
-                              getDotSizeClass(
-                                slideNumber,
-                                activeSlide,
-                                sliderDotsArray.length,
-                              ),
-                            )}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-                {!isMobileOrTablet && (
-                  <button
-                    onClick={() =>
-                      setActiveSlide((activeSlide) =>
-                        activeSlide === sliderDotsArray.length - 1
-                          ? activeSlide
-                          : activeSlide + 1,
-                      )
-                    }
-                    disabled={activeSlide === sliderDotsArray.length - 1}
-                    className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:text-secondary"
-                  >
-                    <IconCaretRightFilled size={18} />
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-      </div>
+      <SliderDots
+        activeSlide={activeSlide}
+        sliderGroups={sliderGroups}
+        onSetActiveSlide={setActiveSlide}
+      />
     </>
   );
 };

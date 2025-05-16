@@ -22,6 +22,7 @@ import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
+import { CardType } from '@/src/types/talkTo';
 import { Translation } from '@/src/types/translation';
 
 import { ModelsActions } from '@/src/store/actions';
@@ -37,12 +38,13 @@ import {
   MarketplaceQueryParams,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
+import { SuggestedCard } from '@/src/constants/talkTo';
 
 import { TabButton } from '@/src/components/Buttons/TabButton';
 import { AgentDialogs } from '@/src/components/Common/AgentDialogs';
 import { Modal } from '@/src/components/Common/Modal';
 
-import { CardType, SuggestedCard, TalkToSlider } from './TalkToSlider';
+import { TalkToSlider } from './TalkToSlider';
 
 import { Feature } from '@epam/ai-dial-shared';
 import orderBy from 'lodash-es/orderBy';
