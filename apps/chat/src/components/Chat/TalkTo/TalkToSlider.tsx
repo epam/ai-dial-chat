@@ -1,5 +1,6 @@
 import { IconCaretLeftFilled, IconCaretRightFilled } from '@tabler/icons-react';
 import {
+  memo,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -170,86 +171,89 @@ interface SliderModelsGroupProps {
   onOpenMarketplaceTab: () => void;
 }
 
-const SliderModelsGroup = ({
-  modelsGroup,
-  conversation,
-  rowsCount,
-  onSelectModel,
-  onOpenMarketplaceTab,
-  ...restProps
-}: SliderModelsGroupProps) => {
-  const { t } = useTranslation(Translation.Chat);
+const SliderModelsGroup = memo(
+  ({
+    modelsGroup,
+    conversation,
+    rowsCount,
+    onSelectModel,
+    onOpenMarketplaceTab,
+    ...restProps
+  }: SliderModelsGroupProps) => {
+    const { t } = useTranslation(Translation.Chat);
 
-  const screenState = useScreenState();
+    const screenState = useScreenState();
 
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+    const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
-  const maxChunksCountConfig = getMaxChunksCountConfig(screenState);
+    const maxChunksCountConfig = getMaxChunksCountConfig(screenState);
 
-  return (
-    <section
-      key={modelsGroup.map((model) => model.reference).join('.')}
-      className="h-full min-w-full"
-      data-qa="agents-section"
-    >
-      <div
-        className="grid"
-        style={{
-          gridTemplateColumns: `repeat(${maxChunksCountConfig.cols}, minmax(0, 1fr))`,
-          gridTemplateRows: `repeat(${rowsCount}, ${maxChunksCountConfig.cardHeight}px)`,
-          gap: getGridGap(screenState),
-        }}
+    return (
+      <section
+        key={modelsGroup.map((model) => model.reference).join('.')}
+        className="h-full min-w-full"
+        data-qa="agents-section"
       >
-        {modelsGroup.map((model) => {
-          const isNotPseudoModelSelected =
-            model.reference === conversation.model.id &&
-            !isPlaybackConversation(conversation) &&
-            !isReplayAsIsConversation(conversation);
-          const isPseudoModelSelected =
-            model.reference === PseudoModel.Playback ||
-            (model.reference === REPLAY_AS_IS_MODEL &&
-              isReplayAsIsConversation(conversation));
+        <div
+          className="grid"
+          style={{
+            gridTemplateColumns: `repeat(${maxChunksCountConfig.cols}, minmax(0, 1fr))`,
+            gridTemplateRows: `repeat(${rowsCount}, ${maxChunksCountConfig.cardHeight}px)`,
+            gap: getGridGap(screenState),
+          }}
+        >
+          {modelsGroup.map((model) => {
+            const isNotPseudoModelSelected =
+              model.reference === conversation.model.id &&
+              !isPlaybackConversation(conversation) &&
+              !isReplayAsIsConversation(conversation);
+            const isPseudoModelSelected =
+              model.reference === PseudoModel.Playback ||
+              (model.reference === REPLAY_AS_IS_MODEL &&
+                isReplayAsIsConversation(conversation));
 
-          if (model === SuggestedCard) {
+            if (model === SuggestedCard) {
+              return (
+                <div
+                  className="flex size-full cursor-pointer flex-col items-center justify-center gap-3 rounded-md border border-primary hover:bg-layer-3"
+                  onClick={onOpenMarketplaceTab}
+                  key={SuggestedCard.id}
+                >
+                  <h3 className="text-base">
+                    {t("Couldn't find what you need?")}
+                  </h3>
+                  <SuggestionButton />
+                </div>
+              );
+            }
+
             return (
-              <div
-                className="flex size-full cursor-pointer flex-col items-center justify-center gap-3 rounded-md border border-primary hover:bg-layer-3"
-                onClick={onOpenMarketplaceTab}
-                key={SuggestedCard.id}
-              >
-                <h3 className="text-base">
-                  {t("Couldn't find what you need?")}
-                </h3>
-                <SuggestionButton />
-              </div>
+              <TalkToCard
+                isSelected={isNotPseudoModelSelected || isPseudoModelSelected}
+                conversation={conversation}
+                isUnavailableModel={
+                  !modelsMap[model.reference] &&
+                  !isPseudoModel(model.id) &&
+                  model.reference !== REPLAY_AS_IS_MODEL
+                }
+                disabled={
+                  isPlaybackConversation(conversation) &&
+                  model.reference !== PseudoModel.Playback
+                }
+                key={model.id}
+                entity={model as DialAIEntityModel}
+                onClick={onSelectModel}
+                onSelectVersion={onSelectModel}
+                {...restProps}
+              />
             );
-          }
-
-          return (
-            <TalkToCard
-              isSelected={isNotPseudoModelSelected || isPseudoModelSelected}
-              conversation={conversation}
-              isUnavailableModel={
-                !modelsMap[model.reference] &&
-                !isPseudoModel(model.id) &&
-                model.reference !== REPLAY_AS_IS_MODEL
-              }
-              disabled={
-                isPlaybackConversation(conversation) &&
-                model.reference !== PseudoModel.Playback
-              }
-              key={model.id}
-              entity={model as DialAIEntityModel}
-              onClick={onSelectModel}
-              onSelectVersion={onSelectModel}
-              {...restProps}
-            />
-          );
-        })}
-      </div>
-    </section>
-  );
-};
+          })}
+        </div>
+      </section>
+    );
+  },
+);
+SliderModelsGroup.displayName = 'SliderModelsGroup';
 
 export const SuggestedCard = {
   id: 'suggested',

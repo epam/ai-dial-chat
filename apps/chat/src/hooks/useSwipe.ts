@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 type SwipeEvent<T = Element> = React.TouchEvent<T> | React.PointerEvent<T>;
 
@@ -11,25 +11,31 @@ export const useSwipe = ({
 }) => {
   const [startX, setStartX] = useState<number>();
   const [endX, setEndX] = useState<number>();
+  const [isPointerDown, setIsPointerDown] = useState(false);
 
-  const onStart = (e: SwipeEvent) => {
+  const onStart = useCallback((e: SwipeEvent) => {
     if ('touches' in e) {
       setStartX(e.targetTouches[0].clientX);
     } else {
       setStartX(e.clientX);
     }
+
     setEndX(undefined);
-  };
+    setIsPointerDown(true);
+  }, []);
 
-  const onMove = (e: SwipeEvent) => {
-    if ('touches' in e) {
-      setEndX(e.targetTouches[0].clientX);
-    } else {
-      setEndX(e.clientX);
-    }
-  };
+  const onMove = useCallback(
+    (e: SwipeEvent) => {
+      if ('touches' in e) {
+        setEndX(e.targetTouches[0].clientX);
+      } else if (isPointerDown) {
+        setEndX(e.clientX);
+      }
+    },
+    [isPointerDown],
+  );
 
-  const onEnd = () => {
+  const onEnd = useCallback(() => {
     if (startX === undefined || endX === undefined) return;
 
     const distance = startX - endX;
@@ -45,7 +51,8 @@ export const useSwipe = ({
 
     setStartX(undefined);
     setEndX(undefined);
-  };
+    setIsPointerDown(false);
+  }, [endX, onSwipedLeft, onSwipedRight, startX]);
 
   return {
     onTouchStart: onStart,
