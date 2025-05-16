@@ -367,6 +367,7 @@ export const ApplicationSettings: React.FC<Props> = ({
               'w-0 overflow-hidden opacity-0': isPreviewClosed,
             },
           )}
+          data-qa="app-preview-settings"
         >
           <div className="flex max-w-full items-center justify-between px-0 py-3 max-md:self-end md:px-5 md:py-4 xl:p-2">
             <div className="mr-2 hidden min-w-0 shrink grow gap-2 text-primary md:flex">
