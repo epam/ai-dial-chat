@@ -3,7 +3,6 @@ import {
   IconDots,
   IconEye,
   IconFileArrowRight,
-  IconFolderPlus,
   IconFolderShare,
   IconInfoCircle,
   IconPencilMinus,
@@ -17,8 +16,6 @@ import {
 } from '@tabler/icons-react';
 import { MouseEventHandler, useMemo } from 'react';
 
-import classNames from 'classnames';
-
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -31,14 +28,10 @@ import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
-import { FolderInterface } from '@/src/types/folder';
 import { ContextMenuProps, DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
-import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppSelector } from '@/src/store/hooks';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import ContextMenu from './ContextMenu';
@@ -47,36 +40,8 @@ import InsertPromptIcon from '@/public/images/icons/insert-prompt.svg';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import { ShareEntity } from '@epam/ai-dial-shared';
 
-const getFolderMenuItems = (
-  folders: FolderInterface[],
-  allFolders: FolderInterface[],
-  onClick: ({ folderId }: { folderId: string }) => void,
-): DisplayMenuItemProps[] => {
-  return folders.map((folder) => {
-    const subFolders = allFolders.filter((subFolder) =>
-      subFolder.folderId.startsWith(folder.id),
-    );
-
-    return {
-      name: folder.name,
-      dataQa: `folder-${folder.id}`,
-      onClick: () => {
-        onClick({ folderId: folder.id });
-      },
-      ...(subFolders.length && {
-        childMenuItems: getFolderMenuItems(
-          subFolders.filter((subFolder) => subFolder.folderId === folder.id),
-          subFolders,
-          onClick,
-        ),
-      }),
-    };
-  });
-};
-
 interface ItemContextMenuProps {
   entity: ShareEntity;
-  folders: FolderInterface[];
   featureType: FeatureType;
   isEmptyConversation?: boolean;
   className?: string;
@@ -84,7 +49,6 @@ interface ItemContextMenuProps {
   useStandardColor?: boolean;
   onOpenMoveToModal: () => void;
   onOpenExportModal?: () => void;
-  onMoveToFolder: (args: { folderId?: string; isNewFolder?: boolean }) => void;
   onDelete: MouseEventHandler<unknown>;
   onRename?: MouseEventHandler<unknown>;
   onExport: (args?: unknown) => void;
@@ -110,7 +74,6 @@ export default function ItemContextMenu({
   featureType,
   isEmptyConversation,
   className,
-  folders,
   isOpen,
   useStandardColor,
   onDelete,
@@ -120,7 +83,6 @@ export default function ItemContextMenu({
   onReplay,
   onCompare,
   onPlayback,
-  onMoveToFolder,
   onOpenMoveToModal,
   onShare,
   onPublish,
@@ -143,18 +105,6 @@ export default function ItemContextMenu({
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
-  const allFoldersSelector = useMemo(() => {
-    switch (featureType) {
-      case FeatureType.Chat:
-        return ConversationsSelectors.selectFolders;
-      case FeatureType.Prompt:
-        return PromptsSelectors.selectFolders;
-      case FeatureType.File:
-      default:
-        return FilesSelectors.selectFolders;
-    }
-  }, [featureType]);
-  const allFolders = useAppSelector(allFoldersSelector);
 
   const isExternal = isEntityIdExternal(entity);
   const isNameInvalid = isEntityNameInvalid(entity.name);
@@ -276,30 +226,7 @@ export default function ItemContextMenu({
         dataQa: 'move-to-modal',
         Icon: IconFolderShare,
         onClick: onOpenMoveToModal,
-        className: 'md:hidden',
         disabled: disableAll,
-      },
-      {
-        name: t('Move to'),
-        display: !isExternal,
-        dataQa: 'move-to',
-        Icon: IconFolderShare,
-        className: 'max-md:hidden',
-        disabled: disableAll,
-        childMenuItems: [
-          {
-            name: t('New folder'),
-            dataQa: 'new-folder',
-            Icon: IconFolderPlus,
-            onClick: () => {
-              onMoveToFolder({ isNewFolder: true });
-            },
-            className: classNames('invisible md:visible', {
-              'border-b border-primary': folders?.length > 0,
-            }),
-          },
-          ...getFolderMenuItems(folders, allFolders, onMoveToFolder),
-        ],
       },
       {
         name: t('Share'),
@@ -348,12 +275,10 @@ export default function ItemContextMenu({
       },
     ],
     [
-      allFolders,
       disableAll,
       disableUse,
       entity,
       featureType,
-      folders,
       isEmptyConversation,
       isExternal,
       isFormSchemaConversation,
@@ -364,7 +289,6 @@ export default function ItemContextMenu({
       onDelete,
       onDuplicate,
       onExport,
-      onMoveToFolder,
       onOpenExportModal,
       onOpenMoveToModal,
       onPlayback,

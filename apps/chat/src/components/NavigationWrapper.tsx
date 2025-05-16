@@ -30,6 +30,7 @@ import { DEFAULT_CONVERSATION_NAME } from '../constants/default-ui-settings';
 import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
+import { PromptDialogs } from './Promptbar/components/PromptDialogs';
 import { Chatbar } from '@/src/components/Chatbar/Chatbar';
 import { ModelIcon, ModelTooltip } from '@/src/components/Chatbar/ModelIcon';
 import Loader from '@/src/components/Common/Loader';
@@ -366,7 +367,12 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
         {router.route === Routes.Marketplace && <MarketplaceFilterbar />}
         <div className="grow overflow-hidden">{children}</div>
         {router.route === Routes.Chat &&
-          enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
+          enabledFeatures.has(Feature.PromptsSection) && (
+            <>
+              <Promptbar />
+              <PromptDialogs />
+            </>
+          )}
       </div>
       <ChatModalsManager />
     </div>

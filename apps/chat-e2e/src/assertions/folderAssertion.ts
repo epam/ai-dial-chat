@@ -120,6 +120,16 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
     );
   }
 
+  public async assertFolderNameColor(
+    folder: TreeEntity,
+    expectedColor: string,
+  ) {
+    await super.assertElementColor(
+      this.folder.getFolderName(folder.name, folder.index),
+      expectedColor,
+    );
+  }
+
   public async assertFolderDotsMenuState(
     folder: TreeEntity,
     expectedState: ElementState,

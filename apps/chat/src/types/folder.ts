@@ -27,11 +27,6 @@ export interface FolderSectionProps {
   openByDefault?: boolean;
 }
 
-export interface MoveToFolderProps {
-  folderId?: string;
-  isNewFolder?: boolean;
-}
-
 export interface DraggedInterface {
   entity: FolderInterface | ConversationInfo | PromptInfo;
   isFolder: boolean;

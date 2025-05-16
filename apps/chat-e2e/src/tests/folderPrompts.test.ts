@@ -3,6 +3,7 @@ import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
+  API,
   ExpectedConstants,
   ExpectedMessages,
   FolderPrompt,
@@ -229,11 +230,16 @@ dialTest(
     promptDropdownMenu,
     promptData,
     dataInjector,
-    folderPrompts,
     setTestIds,
     localStorageManager,
+    selectFolderModal,
+    selectFolders,
+    selectFoldersAssertion,
+    selectFolderModalAssertion,
+    promptBarFolderAssertion,
   }) => {
     setTestIds('EPMRTC-962');
+    const newFolderName = ExpectedConstants.newFolderWithIndexTitle(1);
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
     await localStorageManager.setShowSideBarPanels();
@@ -242,18 +248,28 @@ dialTest(
     await dialHomePage.waitForPageLoaded();
     await prompts.openEntityDropdownMenu(prompt.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.moveTo);
-    await promptDropdownMenu.selectMenuOption(MenuOptions.newFolder);
-
-    await folderPrompts.expandFolder(ExpectedConstants.newFolderTitle);
-    await expect
-      .soft(
-        folderPrompts.getFolderEntity(
-          ExpectedConstants.newFolderWithIndexTitle(1),
-          prompt.name,
-        ),
-        ExpectedMessages.newFolderCreated,
-      )
-      .toBeVisible();
+    await selectFolderModalAssertion.assertElementState(
+      selectFolderModal,
+      'visible',
+    );
+    await selectFolderModal.newFolderButton.click();
+    await selectFolders.getEditFolderInputActions().clickTickButton();
+    await selectFoldersAssertion.assertFolderState(
+      { name: newFolderName },
+      'visible',
+    );
+    await selectFolderModal.clickSelectFolderButton({
+      triggeredApiHost: API.promptHost,
+    });
+    await selectFolderModalAssertion.assertElementState(
+      selectFolderModal,
+      'hidden',
+    );
+    await promptBarFolderAssertion.assertFolderEntityState(
+      { name: newFolderName },
+      { name: prompt.name },
+      'visible',
+    );
   },
 );
 
@@ -265,10 +281,13 @@ dialTest(
     promptDropdownMenu,
     promptData,
     dataInjector,
-    folderPrompts,
     promptBar,
     setTestIds,
     localStorageManager,
+    selectFolderModal,
+    selectFoldersAssertion,
+    selectFolderModalAssertion,
+    promptBarFolderAssertion,
   }) => {
     setTestIds('EPMRTC-963');
     const prompt = promptData.prepareDefaultPrompt();
@@ -281,19 +300,29 @@ dialTest(
 
     await prompts.openEntityDropdownMenu(prompt.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.moveTo);
-    await prompts.selectMoveToMenuOption(
+    await selectFolderModalAssertion.assertElementState(
+      selectFolderModal,
+      'visible',
+    );
+    await selectFoldersAssertion.assertFolderState(
+      { name: ExpectedConstants.newFolderWithIndexTitle(1) },
+      'visible',
+    );
+    await selectFolderModal.selectFolder(
       ExpectedConstants.newFolderWithIndexTitle(1),
     );
-    await folderPrompts.expandFolder(
-      ExpectedConstants.newFolderWithIndexTitle(1),
+    await selectFolderModal.clickSelectFolderButton({
+      triggeredApiHost: API.promptHost,
+    });
+    await selectFolderModalAssertion.assertElementState(
+      selectFolderModal,
+      'hidden',
     );
-    const isFolderPromptVisible = await folderPrompts.isFolderEntityVisible(
-      ExpectedConstants.newFolderWithIndexTitle(1),
-      prompt.name,
+    await promptBarFolderAssertion.assertFolderEntityState(
+      { name: ExpectedConstants.newFolderWithIndexTitle(1) },
+      { name: prompt.name },
+      'visible',
     );
-    expect
-      .soft(isFolderPromptVisible, ExpectedMessages.promptMovedToFolder)
-      .toBeTruthy();
   },
 );
 

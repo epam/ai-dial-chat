@@ -129,6 +129,12 @@ const selectFilteredConversations = (
 
 const selectFolders = (state: RootState) => rootSelector(state).folders || [];
 
+export const selectMyFolders = createSelector([selectFolders], (folders) => {
+  return folders.filter((folder) =>
+    folder.id.startsWith(`${getConversationRootId()}/`),
+  );
+});
+
 const selectFolderById = createSelector(
   [selectFolders, (_state, id: string) => id],
   (folders, id) => {
@@ -754,6 +760,7 @@ export const ConversationsSelectors = {
   selectConversationsByFolderId,
   selectFilteredConversations,
   selectFolders,
+  selectMyFolders,
   selectFolderById,
   selectFoldersByFolderId,
   selectEmptyFolderIds,
@@ -794,6 +801,7 @@ export const ConversationsSelectors = {
   selectIsStartedCustomViewerConversation,
   selectCanAttachFolders,
   selectCanAttachFile,
+  selectTemporaryFolders,
   selectTemporaryAndPublishedFolders,
   selectNewAddedFolderId,
   selectLoadingFolderIds,
