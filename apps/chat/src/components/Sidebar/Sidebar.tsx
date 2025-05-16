@@ -338,8 +338,8 @@ const Sidebar = <T,>({
     isLeftSidebar
       ? 'sidebar-left left-0 border-r xl:left-0'
       : 'sidebar-right right-0 border-l',
-    isNavigationVisible &&
-      isLeftSidebar &&
+    isLeftSidebar &&
+      isNavigationVisible &&
       (isOverlay ? 'md:left-[44px]' : 'md:left-[60px]'),
     (screenState === ScreenState.SM || screenState === ScreenState.MD) &&
       '!h-full',
