@@ -144,6 +144,7 @@ import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { UploadFromDeviceModal } from '@/src/ui/webElements/uploadFromDeviceModal';
 import { VariableModalDialog } from '@/src/ui/webElements/variableModalDialog';
 import { BucketUtil } from '@/src/utils';
+import { CustomApplicationPublishingUtil } from '@/src/utils/customApplicationPublishingUtil';
 import path from 'path';
 import { APIRequestContext } from 'playwright-core';
 import * as process from 'process';
@@ -335,6 +336,7 @@ const dialTest = test.extend<{
   promptPreviewModalAssertion: PromptPreviewModalAssertion;
   agentDetailsModalAssertion: AgentDetailsModalAssertion;
   attachAllFilesTreeAssertion: EntityTreeAssertion<AttachFilesTree>;
+  adminCustomApplicationPublishingUtil: CustomApplicationPublishingUtil;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper }, use) => {
@@ -1264,6 +1266,24 @@ const dialTest = test.extend<{
         attachFilesModal.getAllFilesTree(),
       );
     await use(attachAllFilesTreeAssertion);
+  },
+  adminCustomApplicationPublishingUtil: async (
+    {
+      customApplicationBuilder,
+      publishRequestBuilder,
+      adminApplicationApiHelper,
+      adminPublicationApiHelper,
+    },
+    use,
+  ) => {
+    const adminCustomApplicationPublishingUtil =
+      new CustomApplicationPublishingUtil(
+        customApplicationBuilder,
+        adminApplicationApiHelper,
+        publishRequestBuilder,
+        adminPublicationApiHelper,
+      );
+    await use(adminCustomApplicationPublishingUtil);
   },
 });
 

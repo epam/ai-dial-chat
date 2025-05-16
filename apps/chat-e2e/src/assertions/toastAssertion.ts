@@ -31,6 +31,6 @@ export class ToastAssertion extends BaseAssertion {
     expectedMessage: string,
     messageType?: ExpectedMessages,
   ) {
-    await super.assertElementText(this.toast, expectedMessage, messageType);
+    await this.assertElementText(this.toast, expectedMessage, messageType);
   }
 }

@@ -1,13 +1,10 @@
-import { Publication } from '@/chat/types/publication';
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedConstants, ExpectedMessages } from '@/src/testData';
 import { Cursors, ThemeColorAttributes } from '@/src/ui/domData';
 import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil, SortingUtil } from '@/src/utils';
+import { CustomAppAttributes } from '@/src/utils/customApplicationPublishingUtil';
 import { ThemesUtil } from '@/src/utils/themesUtil';
-import { PublishActions } from '@epam/ai-dial-shared';
-
-const publicationsToUnpublish: Publication[] = [];
 
 dialTest(
   '[Card view] Add an agent with several versions to My workspace using bookmark icon.\n' +
@@ -26,21 +23,19 @@ dialTest(
     confirmationDialogAssertion,
     localStorageManager,
     setTestIds,
-    baseAssertion,
-    customApplicationBuilder,
     toast,
     tooltipAssertion,
     toastAssertion,
-    adminApplicationApiHelper,
-    adminPublicationApiHelper,
-    publishRequestBuilder,
     marketplaceAgentsAssertion,
+    adminCustomApplicationPublishingUtil,
   }) => {
     setTestIds('EPMRTC-4602', 'EPMRTC-5937', 'EPMRTC-4605', 'EPMRTC-5929');
-    let firstAppVersion: string;
-    let secondAppVersion: string;
-    let thirdAppVersion: string;
+    let recentNames: string[];
+    let recentVersions: string[];
     const appName = GeneratorUtil.randomApplicationName();
+    let appFirstVersion: CustomAppAttributes;
+    let appSecondVersion: CustomAppAttributes;
+    let appThirdVersion: CustomAppAttributes;
     let sortedVersions: string[];
     let agentToAddElement: BaseElement;
     let workspaceAgentElement: BaseElement;
@@ -51,57 +46,22 @@ dialTest(
       'Prepare an application with two versions available in the "Marketplace"',
       async () => {
         const recentModelIds = await localStorageManager.getRecentModelsIds();
-        const recentNames = ModelsUtil.getRecentAgentsNames(recentModelIds);
-        const recentVersions =
-          ModelsUtil.getRecentAgentsVersions(recentModelIds);
+        recentNames = ModelsUtil.getRecentAgentsNames(recentModelIds);
+        recentVersions = ModelsUtil.getRecentAgentsVersions(recentModelIds);
 
-        firstAppVersion = GeneratorUtil.randomApplicationVersion([
-          ...recentNames,
-          ...recentVersions,
-        ]);
-        secondAppVersion = GeneratorUtil.randomApplicationVersion([
-          ...recentNames,
-          ...recentVersions,
-          firstAppVersion,
-        ]);
-        thirdAppVersion = GeneratorUtil.randomApplicationVersion([
-          ...recentNames,
-          ...recentVersions,
-          firstAppVersion,
-          secondAppVersion,
-        ]);
-        sortedVersions = SortingUtil.sortVersionsArray([
-          firstAppVersion,
-          secondAppVersion,
-          thirdAppVersion,
-        ]);
-
-        const applicationFirstVersionModel = customApplicationBuilder
-          .withDisplayName(appName)
-          .withDisplayVersion(firstAppVersion)
-          .build();
-        const applicationSecondVersionModel = customApplicationBuilder
-          .withDisplayName(appName)
-          .withDisplayVersion(secondAppVersion)
-          .build();
-
-        for (const appModel of [
-          applicationFirstVersionModel,
-          applicationSecondVersionModel,
-        ]) {
-          const app =
-            await adminApplicationApiHelper.createApplication(appModel);
-          const publishRequest = publishRequestBuilder
-            .withName(GeneratorUtil.randomPublicationRequestName())
-            .withApplicationResource(app, PublishActions.ADD)
-            .build();
-          const appPublication =
-            await adminPublicationApiHelper.createPublishRequest(
-              publishRequest,
-            );
-          publicationsToUnpublish.push(appPublication);
-          await adminPublicationApiHelper.approveRequest(appPublication);
-        }
+        appFirstVersion =
+          await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
+            appName,
+            ...recentNames,
+            ...recentVersions,
+          );
+        appSecondVersion =
+          await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
+            appName,
+            ...recentNames,
+            ...recentVersions,
+            ...appFirstVersion.version,
+          );
       },
     );
 
@@ -159,8 +119,8 @@ dialTest(
         workspaceAgentElement =
           await marketplaceAgentsSection.findAgentElement(appName);
         const latestVersion = SortingUtil.sortVersionsArray([
-          firstAppVersion,
-          secondAppVersion,
+          appFirstVersion.version,
+          appSecondVersion.version,
         ])[0];
         await marketplaceAgentsAssertion.assertElementText(
           marketplaceAgents.getAgentVersion(workspaceAgentElement),
@@ -172,27 +132,25 @@ dialTest(
     await dialTest.step(
       'Publish one more version of custom application',
       async () => {
-        const applicationThirdVersionModel = customApplicationBuilder
-          .withDisplayName(appName)
-          .withDisplayVersion(thirdAppVersion)
-          .build();
-        const app = await adminApplicationApiHelper.createApplication(
-          applicationThirdVersionModel,
-        );
-        const publishRequest = publishRequestBuilder
-          .withName(GeneratorUtil.randomPublicationRequestName())
-          .withApplicationResource(app, PublishActions.ADD)
-          .build();
-        const appPublication =
-          await adminPublicationApiHelper.createPublishRequest(publishRequest);
-        publicationsToUnpublish.push(appPublication);
-        await adminPublicationApiHelper.approveRequest(appPublication);
+        appThirdVersion =
+          await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
+            appName,
+            ...recentNames,
+            ...recentVersions,
+            ...appFirstVersion.version,
+            ...appSecondVersion.version,
+          );
       },
     );
 
     await dialTest.step(
       'Open the agent and verify three versions are available in the dropdown menu, bookmark icon is shown on version switching',
       async () => {
+        sortedVersions = SortingUtil.sortVersionsArray([
+          appFirstVersion.version,
+          appSecondVersion.version,
+          appThirdVersion.version,
+        ]);
         //TODO: remove page refresh after the issue fixed https://github.com/epam/ai-dial-chat/issues/3693
         await marketplacePage.reloadPage();
         await marketplacePage.waitForPageLoaded();
@@ -307,12 +265,12 @@ dialTest(
         await navigationPanel.goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
         const allAgents = await marketplaceAgentsSection.getAllAgents();
-        baseAssertion.assertValue(
+        marketplaceAgentsAssertion.assertValue(
           allAgents.filter((agent) => agent.isWorkspaceAgent).length,
           0,
           ExpectedMessages.elementsCountIsValid,
         );
-        baseAssertion.assertValue(
+        marketplaceAgentsAssertion.assertValue(
           allAgents.filter(
             (agent) => agent.isSuggested && agent.name === appName,
           ).length,
@@ -336,15 +294,10 @@ dialTest(
     agentDetailsModalAssertion,
     localStorageManager,
     setTestIds,
-    customApplicationBuilder,
-    adminApplicationApiHelper,
-    adminPublicationApiHelper,
-    publishRequestBuilder,
     marketplaceAgentsAssertion,
+    adminCustomApplicationPublishingUtil,
   }) => {
     setTestIds('EPMRTC-4465');
-    let firstAppVersion: string;
-    let secondAppVersion: string;
     const appName = GeneratorUtil.randomApplicationName();
     let sortedVersions: string[];
     let agentToAddElement: BaseElement;
@@ -357,47 +310,23 @@ dialTest(
         const recentNames = ModelsUtil.getRecentAgentsNames(recentModelIds);
         const recentVersions =
           ModelsUtil.getRecentAgentsVersions(recentModelIds);
-
-        firstAppVersion = GeneratorUtil.randomApplicationVersion([
-          ...recentNames,
-          ...recentVersions,
-        ]);
-        secondAppVersion = GeneratorUtil.randomApplicationVersion([
-          ...recentNames,
-          ...recentVersions,
-          firstAppVersion,
-        ]);
+        const appFirstVersion =
+          await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
+            appName,
+            ...recentNames,
+            ...recentVersions,
+          );
+        const appSecondVersion =
+          await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
+            appName,
+            ...recentNames,
+            ...recentVersions,
+            ...appFirstVersion.version,
+          );
         sortedVersions = SortingUtil.sortVersionsArray([
-          firstAppVersion,
-          secondAppVersion,
+          appFirstVersion.version,
+          appSecondVersion.version,
         ]);
-
-        const applicationFirstVersionModel = customApplicationBuilder
-          .withDisplayName(appName)
-          .withDisplayVersion(firstAppVersion)
-          .build();
-        const applicationSecondVersionModel = customApplicationBuilder
-          .withDisplayName(appName)
-          .withDisplayVersion(secondAppVersion)
-          .build();
-
-        for (const appModel of [
-          applicationFirstVersionModel,
-          applicationSecondVersionModel,
-        ]) {
-          const app =
-            await adminApplicationApiHelper.createApplication(appModel);
-          const publishRequest = publishRequestBuilder
-            .withName(GeneratorUtil.randomPublicationRequestName())
-            .withApplicationResource(app, PublishActions.ADD)
-            .build();
-          const appPublication =
-            await adminPublicationApiHelper.createPublishRequest(
-              publishRequest,
-            );
-          publicationsToUnpublish.push(appPublication);
-          await adminPublicationApiHelper.approveRequest(appPublication);
-        }
       },
     );
 
@@ -486,18 +415,13 @@ dialTest(
     agentDetailsModalAssertion,
     localStorageManager,
     setTestIds,
-    customApplicationBuilder,
-    adminApplicationApiHelper,
-    adminPublicationApiHelper,
-    publishRequestBuilder,
     confirmationDialog,
     marketplaceAgentsAssertion,
     confirmationDialogAssertion,
     baseAssertion,
+    adminCustomApplicationPublishingUtil,
   }) => {
     setTestIds('EPMRTC-4603', 'EPMRTC-5930', 'EPMRTC-4606');
-    let firstAppVersion: string;
-    let secondAppVersion: string;
     const appName = GeneratorUtil.randomApplicationName();
     let sortedVersions: string[];
     let agentToAddElement: BaseElement;
@@ -510,47 +434,23 @@ dialTest(
         const recentNames = ModelsUtil.getRecentAgentsNames(recentModelIds);
         const recentVersions =
           ModelsUtil.getRecentAgentsVersions(recentModelIds);
-
-        firstAppVersion = GeneratorUtil.randomApplicationVersion([
-          ...recentNames,
-          ...recentVersions,
-        ]);
-        secondAppVersion = GeneratorUtil.randomApplicationVersion([
-          ...recentNames,
-          ...recentVersions,
-          firstAppVersion,
-        ]);
+        const appFirstVersion =
+          await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
+            appName,
+            ...recentNames,
+            ...recentVersions,
+          );
+        const appSecondVersion =
+          await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
+            appName,
+            ...recentNames,
+            ...recentVersions,
+            ...appFirstVersion.version,
+          );
         sortedVersions = SortingUtil.sortVersionsArray([
-          firstAppVersion,
-          secondAppVersion,
+          appFirstVersion.version,
+          appSecondVersion.version,
         ]);
-
-        const applicationFirstVersionModel = customApplicationBuilder
-          .withDisplayName(appName)
-          .withDisplayVersion(firstAppVersion)
-          .build();
-        const applicationSecondVersionModel = customApplicationBuilder
-          .withDisplayName(appName)
-          .withDisplayVersion(secondAppVersion)
-          .build();
-
-        for (const appModel of [
-          applicationFirstVersionModel,
-          applicationSecondVersionModel,
-        ]) {
-          const app =
-            await adminApplicationApiHelper.createApplication(appModel);
-          const publishRequest = publishRequestBuilder
-            .withName(GeneratorUtil.randomPublicationRequestName())
-            .withApplicationResource(app, PublishActions.ADD)
-            .build();
-          const appPublication =
-            await adminPublicationApiHelper.createPublishRequest(
-              publishRequest,
-            );
-          publicationsToUnpublish.push(appPublication);
-          await adminPublicationApiHelper.approveRequest(appPublication);
-        }
       },
     );
 
@@ -735,11 +635,3 @@ dialTest(
     );
   },
 );
-
-dialTest.afterAll(async ({ adminPublicationApiHelper }) => {
-  for (const publication of publicationsToUnpublish) {
-    const unpublishResponse =
-      await adminPublicationApiHelper.createUnpublishRequest(publication);
-    await adminPublicationApiHelper.approveRequest(unpublishResponse);
-  }
-});
