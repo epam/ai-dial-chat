@@ -41,32 +41,29 @@ import { TalkToCard } from './TalkToCard';
 import chunk from 'lodash-es/chunk';
 import range from 'lodash-es/range';
 
-const DEFAULT_MAX_CHUNKS_COUNT_CONFIG = {
+const DEFAULT_SLIDER_CHUNKS_CONFIG = {
   cardHeight: 166,
   maxRows: 3,
   cols: 3,
 };
-const TABLET_MAX_CHUNKS_COUNT_CONFIG = {
+const TABLET_SLIDER_CHUNKS_CONFIG = {
   cardHeight: 160,
   maxRows: 4,
   cols: 2,
 };
-const MOBILE_MAX_CHUNKS_COUNT_CONFIG = {
+const MOBILE_SLIDER_CHUNKS_CONFIG = {
   cardHeight: 98,
   maxRows: 5,
   cols: 1,
 };
-const MAX_CHUNKS_COUNT_CONFIG = {
-  [ScreenState.MD]: TABLET_MAX_CHUNKS_COUNT_CONFIG,
-  [ScreenState.SM]: MOBILE_MAX_CHUNKS_COUNT_CONFIG,
+const SLIDER_CHUNKS_CONFIG = {
+  [ScreenState.MD]: TABLET_SLIDER_CHUNKS_CONFIG,
+  [ScreenState.SM]: MOBILE_SLIDER_CHUNKS_CONFIG,
 };
-const getMaxChunksCountConfig = (screenState: ScreenState) => {
-  if (screenState === ScreenState.SM || screenState === ScreenState.MD) {
-    return MAX_CHUNKS_COUNT_CONFIG[screenState];
-  }
-
-  return DEFAULT_MAX_CHUNKS_COUNT_CONFIG;
-};
+const getMaxChunksCountConfig = (screenState: ScreenState) =>
+  screenState === ScreenState.SM || screenState === ScreenState.MD
+    ? SLIDER_CHUNKS_CONFIG[screenState]
+    : DEFAULT_SLIDER_CHUNKS_CONFIG;
 
 const DEFAULT_SINGLE_ROW_OFFSET = 217;
 const MOBILE__SINGLE_ROW_OFFSET = 255;
