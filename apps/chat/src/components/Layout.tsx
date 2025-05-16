@@ -7,9 +7,7 @@ import { useRouteHistory } from '@/src/hooks/useRouteHistory';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getPageType } from '@/src/utils/app/route';
-import { AuthWindowLocationLike } from '@/src/utils/auth/auth-window-location-like';
-import { delay } from '@/src/utils/auth/delay';
-import { timeoutAsync } from '@/src/utils/auth/timeout-async';
+import { signInInOverlay } from '@/src/utils/auth/auth-overlay';
 
 import { Translation } from '@/src/types/translation';
 
@@ -111,36 +109,7 @@ export default function Layout({
   }, [dispatch, settings, router.route]);
 
   const handleOverlayAuth = async () => {
-    const timeout = 30 * 1000;
-    let complete = false;
-    await Promise.race([
-      timeoutAsync(timeout),
-      (async () => {
-        const authWindowLocation = new AuthWindowLocationLike(
-          `/api/auth/signin`,
-          isSignInInSameWindow,
-        );
-
-        await authWindowLocation.ready; // ready after redirects
-        const t = Math.max(100, timeout / 1000);
-        // wait for redirection to back
-        while (!complete) {
-          try {
-            if (authWindowLocation.href === window.location.href) {
-              complete = true;
-              authWindowLocation.destroy();
-              break;
-            }
-          } catch {
-            // Do nothing
-          }
-          await delay(t);
-        }
-        window.location.reload();
-
-        return;
-      })(),
-    ]);
+    signInInOverlay(`/api/auth/signin`, isSignInInSameWindow);
   };
 
   return (
