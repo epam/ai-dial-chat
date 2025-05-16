@@ -14,20 +14,13 @@ import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import {
   isPlaybackConversation,
   isReplayConversation,
+  regenerateConversationId,
 } from '@/src/utils/app/conversation';
-import { constructPath } from '@/src/utils/app/file';
-import { getNextDefaultName } from '@/src/utils/app/folders';
-import {
-  getConversationRootId,
-  getIdWithoutRootPathSegments,
-  isRootId,
-} from '@/src/utils/app/id';
-import { defaultMyItemsFilters } from '@/src/utils/app/search';
-import { translate } from '@/src/utils/app/translation';
+import { getParentAndCurrentFolderIdsById } from '@/src/utils/app/folders';
+import { getIdWithoutRootPathSegments, isRootId } from '@/src/utils/app/id';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, ScreenState, isNotLoaded } from '@/src/types/common';
-import { MoveToFolderProps } from '@/src/types/folder';
 import { ContextMenuProps } from '@/src/types/menu';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
@@ -45,14 +38,13 @@ import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 import { UISelectors } from '@/src/store/ui/ui.selectors';
 
-import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import { PINNED_CONVERSATIONS_SECTION_NAME } from '@/src/constants/sections';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import { ExportModal } from '@/src/components/Chatbar/ExportModal';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
-import { MoveToFolderModal } from '@/src/components/Common/MoveToFolderModal';
+import { MoveToDialog } from '@/src/components/Common/MoveToDialog';
 
 import {
   ConversationInfo,
@@ -84,22 +76,12 @@ export const ConversationContextMenu = ({
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
-  const selectFilteredFoldersSelector = useMemo(
-    () =>
-      ConversationsSelectors.selectFilteredFolders(
-        defaultMyItemsFilters,
-        '',
-        true,
-      ),
-    [],
-  );
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
 
-  const folders = useAppSelector(selectFilteredFoldersSelector);
   const allConversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );
@@ -191,21 +173,11 @@ export const ConversationContextMenu = ({
   }, []);
 
   const handleMoveToFolder = useCallback(
-    ({ folderId, isNewFolder }: MoveToFolderProps) => {
-      const conversationRootId = getConversationRootId();
-      const folderPath = (
-        isNewFolder
-          ? getNextDefaultName(
-              translate(DEFAULT_FOLDER_NAME),
-              folders.filter((f) => f.folderId === conversationRootId), // only my root conversation folders
-            )
-          : folderId
-      ) as string;
-
+    (folderId: string) => {
       if (
         !isEntityNameOnSameLevelUnique(
           conversation.name,
-          { ...conversation, folderId: folderPath },
+          { ...conversation, folderId },
           allConversations,
         )
       ) {
@@ -224,15 +196,6 @@ export const ConversationContextMenu = ({
         return;
       }
 
-      if (isNewFolder) {
-        dispatch(
-          ConversationsActions.createFolder({
-            name: folderPath,
-            parentId: getConversationRootId(),
-          }),
-        );
-      }
-
       dispatch(
         UIActions.setCollapsedSections({
           featureType: FeatureType.Chat,
@@ -244,16 +207,30 @@ export const ConversationContextMenu = ({
       dispatch(
         ConversationsActions.updateConversation({
           id: conversation.id,
-          values: {
-            folderId: isNewFolder
-              ? constructPath(getConversationRootId(), folderPath)
-              : folderPath,
-          },
+          values: { folderId },
         }),
       );
+      dispatch(
+        UIActions.setOpenedFoldersIds({
+          openedFolderIds: getParentAndCurrentFolderIdsById(folderId),
+          featureType: FeatureType.Chat,
+        }),
+      );
+      dispatch(
+        UIActions.setScrollToEntityId(
+          regenerateConversationId({
+            ...conversation,
+            folderId,
+          }).id,
+        ),
+      );
     },
-    [allConversations, collapsedSections, conversation, dispatch, folders, t],
+    [allConversations, collapsedSections, conversation, dispatch, t],
   );
+
+  const handleCloseMoveTo = useCallback(() => {
+    setIsShowMoveToModal(false);
+  }, []);
 
   const handleCompare: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
@@ -390,10 +367,8 @@ export const ConversationContextMenu = ({
           className={className}
           entity={conversation}
           isEmptyConversation={!isReplay && !isPlayback && isEmptyConversation}
-          folders={folders}
           featureType={FeatureType.Chat}
           onOpenMoveToModal={() => setIsShowMoveToModal(true)}
-          onMoveToFolder={handleMoveToFolder}
           onDelete={handleOpenDeleteModal}
           onRename={handleOpenRenameModal}
           onExport={handleExport}
@@ -427,12 +402,11 @@ export const ConversationContextMenu = ({
       </button>
 
       {isShowMoveToModal && (
-        <MoveToFolderModal
-          onClose={() => {
-            setIsShowMoveToModal(false);
-          }}
-          folders={folders}
-          onMoveToFolder={handleMoveToFolder}
+        <MoveToDialog
+          entity={conversation}
+          featureType={FeatureType.Chat}
+          onClose={handleCloseMoveTo}
+          onSelect={handleMoveToFolder}
         />
       )}
 
