@@ -2,6 +2,7 @@ import { Conversation } from '@/chat/types/chat';
 import { FolderInterface } from '@/chat/types/folder';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
   CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
@@ -17,8 +18,12 @@ dialTest(
     'Chat folder: renamed and deleted folders are not counted into default numeration',
   async ({
     dialHomePage,
-    conversations,
+    chatBarFolderAssertion,
     conversationDropdownMenu,
+    selectFolderModal,
+    selectFolders,
+    selectFoldersAssertion,
+    selectFolderModalAssertion,
     conversationData,
     dataInjector,
     folderConversations,
@@ -69,25 +74,28 @@ dialTest(
           conversation.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.moveTo);
-        await conversations.selectMoveToMenuOption(MenuOptions.newFolder);
-
-        await expect
-          .soft(
-            folderConversations.getFolderByName(expectedFolderName),
-            ExpectedMessages.newFolderCreated,
-          )
-          .toBeVisible();
-
-        await folderConversations.expandFolder(expectedFolderName);
-        await expect
-          .soft(
-            folderConversations.getFolderEntity(
-              expectedFolderName,
-              conversation.name,
-            ),
-            ExpectedMessages.conversationIsVisible,
-          )
-          .toBeVisible();
+        await selectFolderModalAssertion.assertElementState(
+          selectFolderModal,
+          'visible',
+        );
+        await selectFolderModal.newFolderButton.click();
+        await selectFolders.getEditFolderInputActions().clickTickButton();
+        await selectFoldersAssertion.assertFolderState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(1) },
+          'visible',
+        );
+        await selectFolderModal.clickSelectFolderButton({
+          triggeredApiHost: API.conversationHost,
+        });
+        await selectFolderModalAssertion.assertElementState(
+          selectFolderModal,
+          'hidden',
+        );
+        await chatBarFolderAssertion.assertFolderEntityState(
+          { name: expectedFolderName },
+          { name: conversation.name },
+          'visible',
+        );
       },
     );
 
@@ -103,12 +111,10 @@ dialTest(
           .waitFor({ state: 'hidden' });
 
         await chatBar.createNewFolder();
-        await expect
-          .soft(
-            folderConversations.getFolderByName(incrementedFolderName),
-            ExpectedMessages.newFolderCreated,
-          )
-          .toBeVisible();
+        await chatBarFolderAssertion.assertFolderState(
+          { name: incrementedFolderName },
+          'visible',
+        );
       },
     );
 
@@ -122,12 +128,10 @@ dialTest(
         );
 
         await chatBar.createNewFolder();
-        await expect
-          .soft(
-            folderConversations.getFolderByName(incrementedFolderName),
-            ExpectedMessages.newFolderCreated,
-          )
-          .toBeVisible();
+        await chatBarFolderAssertion.assertFolderState(
+          { name: incrementedFolderName },
+          'visible',
+        );
       },
     );
   },

@@ -272,7 +272,6 @@ export enum MenuOptions {
   update = 'Update',
   unpublish = 'Unpublish',
   delete = 'Delete',
-  newFolder = 'New folder',
   attachments = 'Attachments',
   download = 'Download',
   addNewFolder = 'Add new folder',
