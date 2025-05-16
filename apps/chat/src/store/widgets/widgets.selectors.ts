@@ -8,13 +8,6 @@ const selectWidgetsSchemaIds = createSelector(
   (widgetsSchemaIds) => new Set(widgetsSchemaIds),
 );
 
-const selectIsAnyWidget = createSelector(
-  [selectWidgetsSchemaIds],
-  (widgetsSchemaIds) => {
-    return widgetsSchemaIds.size > 0;
-  },
-);
-
 const selectWidgets = createSelector(
   [ModelsSelectors.selectModels, selectWidgetsSchemaIds],
   (models, widgetsSchemaIds) => {
@@ -23,6 +16,13 @@ const selectWidgets = createSelector(
       .toSorted((a, b) =>
         a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
       );
+  },
+);
+
+const selectIsAnyWidget = createSelector(
+  [selectWidgets],
+  (widgets) => {
+    return widgets.length > 0;
   },
 );
 
