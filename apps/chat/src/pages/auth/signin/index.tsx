@@ -4,7 +4,10 @@ import { useEffect } from 'react';
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 
-import { DEFAULT_PROVIDER } from '@/src/utils/auth/auth-providers';
+import {
+  DEFAULT_PROVIDER,
+  authProviders,
+} from '@/src/utils/auth/auth-providers';
 import { isClientSessionValid } from '@/src/utils/auth/session';
 
 interface PageProps {
@@ -33,10 +36,13 @@ export default function Signin(props: PageProps) {
   return null;
 }
 
-export const getServerSideProps: GetServerSideProps = async () => {
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const { provider } = context.query; // Extract parameter from the URL
+  const checkProvider = authProviders.some(({ id }) => id === provider);
+  const providerFromQuery = checkProvider ? provider : undefined;
   return {
     props: {
-      provider: DEFAULT_PROVIDER,
+      provider: DEFAULT_PROVIDER ?? providerFromQuery,
     },
   };
 };
