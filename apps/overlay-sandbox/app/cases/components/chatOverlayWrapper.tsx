@@ -214,7 +214,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
                 onClick={async () => {
                   const conversation =
                     await overlay.current?.createConversation(
-                      'test-inner-folder',
+                      'test-inner-folder-root/test-inner-folder-child',
                     );
 
                   handleDisplayInformation(

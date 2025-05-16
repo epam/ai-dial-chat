@@ -5,13 +5,13 @@ import { Translation } from '@/src/types/translation';
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
 
 interface Props {
-  handleNewFolder: () => void;
+  onCreateNewFolder: () => void;
   onSelectFolderClick: () => void;
   disableSelect?: boolean;
 }
 
 export const SelectFolderFooter = ({
-  handleNewFolder,
+  onCreateNewFolder,
   onSelectFolderClick,
   disableSelect,
 }: Props) => {
@@ -21,7 +21,7 @@ export const SelectFolderFooter = ({
     <div className="flex items-center justify-between border-t border-tertiary px-3 py-4 md:px-6">
       <div className="flex items-center justify-center">
         <button
-          onClick={() => handleNewFolder()}
+          onClick={() => onCreateNewFolder()}
           className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
           data-qa="new-folder"
         >

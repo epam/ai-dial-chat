@@ -120,7 +120,7 @@ export class Folders extends BaseElement {
 
   public getFolderName(name: string, index?: number) {
     return this.createElementFromLocator(
-      this.getFolderByName(name, index).locator(FolderSelectors.folderName),
+      this.getFolderByName(name, index).locator(FolderSelectors.folderName()),
     );
   }
 

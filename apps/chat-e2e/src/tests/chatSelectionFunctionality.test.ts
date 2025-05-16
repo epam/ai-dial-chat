@@ -1,6 +1,7 @@
 import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
@@ -26,15 +27,18 @@ dialTest(
     dataInjector,
     conversations,
     chatHeader,
+    selectFolders,
+    selectFoldersAssertion,
     chatMessages,
     conversationAssertion,
     setTestIds,
     compareConversation,
     confirmationDialog,
-    folderConversations,
     chatBarFolderAssertion,
     shareModal,
     conversationDropdownMenu,
+    selectFolderModal,
+    selectFolderModalAssertion,
     baseAssertion,
     downloadAssertion,
     renameConversationModal,
@@ -222,14 +226,25 @@ dialTest(
     await dialTest.step('Click on "Move to -> New folder"', async () => {
       await conversations.openEntityDropdownMenu(secondConversation.name);
       await conversationDropdownMenu.selectMenuOption(MenuOptions.moveTo);
-      await conversations
-        .getDropdownMenu()
-        .selectMenuOption(MenuOptions.newFolder);
+      await selectFolderModalAssertion.assertElementState(
+        selectFolderModal,
+        'visible',
+      );
+      await selectFolderModal.newFolderButton.click();
+      await selectFolders.getEditFolderInputActions().clickTickButton();
+      await selectFoldersAssertion.assertFolderState(
+        { name: ExpectedConstants.newFolderWithIndexTitle(1) },
+        'visible',
+      );
+      await selectFolderModal.clickSelectFolderButton({
+        triggeredApiHost: API.conversationHost,
+      });
+      await selectFolderModalAssertion.assertElementState(
+        selectFolderModal,
+        'hidden',
+      );
       await conversationAssertion.assertSelectedConversation(
         playbackConversation,
-      );
-      await folderConversations.expandFolder(
-        ExpectedConstants.newFolderWithIndexTitle(1),
       );
       await chatBarFolderAssertion.assertFolderState(
         { name: ExpectedConstants.newFolderWithIndexTitle(1) },

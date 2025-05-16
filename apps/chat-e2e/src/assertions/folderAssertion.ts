@@ -120,6 +120,16 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
     );
   }
 
+  public async assertFolderNameColor(
+    folder: TreeEntity,
+    expectedColor: string,
+  ) {
+    await super.assertElementColor(
+      this.folder.getFolderName(folder.name, folder.index),
+      expectedColor,
+    );
+  }
+
   public async assertFolderDotsMenuState(
     folder: TreeEntity,
     expectedState: ElementState,
@@ -380,6 +390,20 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
       : await expect
           .soft(selectedFolderEntity, ExpectedMessages.entityIsNotSelected)
           .toBeHidden();
+  }
+
+  public async assertFolderEntityIsInViewport(
+    folder: TreeEntity,
+    folderEntity: TreeEntity,
+    ratio?: number,
+  ) {
+    const folderEntityElement = this.folder.getFolderEntity(
+      folder.name,
+      folderEntity.name,
+      folder.index,
+      folderEntity.index,
+    );
+    await this.assertElementIsInViewport(folderEntityElement, ratio);
   }
 
   //the function argument is a full path to the searched folder, e.g., 'test' - if the folder is not nested, or 'test1/test1.1/test1.1.1' in the case of a nested structure

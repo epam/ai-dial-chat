@@ -21,6 +21,7 @@ import {
   PromptBar,
   PromptModalDialog,
   PublishingRequestModal,
+  SelectFolderModal,
   SendMessage,
   SharedPromptPreviewModal,
   TalkToAgentDialog,
@@ -35,6 +36,7 @@ import {
   ConversationAssertion,
   DownloadAssertion,
   ManageAttachmentsAssertion,
+  SelectFolderModalAssertion,
   TalkToAgentDialogAssertion,
   ToastAssertion,
 } from '@/src/assertions';
@@ -150,6 +152,10 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserMarketplaceAgentsSection: MarketplaceAgentsSection;
   additionalShareUserMarketplaceAgents: MarketplaceAgents;
   additionalShareUserAgentDetailsModal: AgentDetailsModal;
+  additionalShareUserSelectFolderModal: SelectFolderModal;
+  additionalShareUserSelectFolders: Folders;
+  additionalShareUserSelectFoldersAssertion: FolderAssertion<Folders>;
+  additionalShareUserSelectFolderModalAssertion: SelectFolderModalAssertion;
 }>({
   beforeAdditionalShareUserTestCleanup: [
     async (
@@ -784,6 +790,40 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserAgentDetailsModal =
       additionalShareUserMarketplaceAgents.getAgentDetailsModal();
     await use(additionalShareUserAgentDetailsModal);
+  },
+  additionalShareUserSelectFolderModal: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserSelectFolderModal = new SelectFolderModal(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserSelectFolderModal);
+  },
+  additionalShareUserSelectFolders: async (
+    { additionalShareUserSelectFolderModal },
+    use,
+  ) => {
+    const additionalShareUserSelectFolders =
+      additionalShareUserSelectFolderModal.getSelectFolders();
+    await use(additionalShareUserSelectFolders);
+  },
+  additionalShareUserSelectFoldersAssertion: async (
+    { additionalShareUserSelectFolders },
+    use,
+  ) => {
+    const additionalShareUserSelectFoldersAssertion = new FolderAssertion(
+      additionalShareUserSelectFolders,
+    );
+    await use(additionalShareUserSelectFoldersAssertion);
+  },
+  additionalShareUserSelectFolderModalAssertion: async (
+    { additionalShareUserSelectFolderModal },
+    use,
+  ) => {
+    const additionalShareUserSelectFolderModalAssertion =
+      new SelectFolderModalAssertion(additionalShareUserSelectFolderModal);
+    await use(additionalShareUserSelectFolderModalAssertion);
   },
 });
 
