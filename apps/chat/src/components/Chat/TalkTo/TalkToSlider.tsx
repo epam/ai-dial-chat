@@ -57,49 +57,41 @@ const MOBILE_MAX_CHUNKS_COUNT_CONFIG = {
   cols: 1,
 };
 const MAX_CHUNKS_COUNT_CONFIG = {
-  [ScreenState.XL5]: DEFAULT_MAX_CHUNKS_COUNT_CONFIG,
-  [ScreenState.XL4]: DEFAULT_MAX_CHUNKS_COUNT_CONFIG,
-  [ScreenState.XL3]: DEFAULT_MAX_CHUNKS_COUNT_CONFIG,
-  [ScreenState.XL]: DEFAULT_MAX_CHUNKS_COUNT_CONFIG,
   [ScreenState.MD]: TABLET_MAX_CHUNKS_COUNT_CONFIG,
   [ScreenState.SM]: MOBILE_MAX_CHUNKS_COUNT_CONFIG,
 };
+const getMaxChunksCountConfig = (screenState: ScreenState) => {
+  if (screenState === ScreenState.SM || screenState === ScreenState.MD) {
+    return MAX_CHUNKS_COUNT_CONFIG[screenState];
+  }
 
-const getMaxChunksCountConfig = (screenState: ScreenState) =>
-  MAX_CHUNKS_COUNT_CONFIG[screenState] ?? DEFAULT_MAX_CHUNKS_COUNT_CONFIG;
+  return DEFAULT_MAX_CHUNKS_COUNT_CONFIG;
+};
 
 const DEFAULT_SINGLE_ROW_OFFSET = 217;
 const MOBILE__SINGLE_ROW_OFFSET = 255;
-const START_SINGLE_ROW_OFFSET = {
-  [ScreenState.XL5]: DEFAULT_SINGLE_ROW_OFFSET,
-  [ScreenState.XL4]: DEFAULT_SINGLE_ROW_OFFSET,
-  [ScreenState.XL3]: DEFAULT_SINGLE_ROW_OFFSET,
-  [ScreenState.XL]: DEFAULT_SINGLE_ROW_OFFSET,
-  [ScreenState.MD]: DEFAULT_SINGLE_ROW_OFFSET,
-  [ScreenState.SM]: MOBILE__SINGLE_ROW_OFFSET,
-};
+const getStartSingleRowOffset = (screenState: ScreenState) =>
+  screenState === ScreenState.SM
+    ? MOBILE__SINGLE_ROW_OFFSET
+    : DEFAULT_SINGLE_ROW_OFFSET;
 
 const SLIDER_DOT_SIZE_WITH_GAPS = 24;
 const MAX_VISIBLE_SLIDER_DOTS = 7;
 const SLIDES_GAP = 16;
 
-const getGridGap = (screenState: ScreenState) => {
-  const COMMON_GRID_TILES_GAP = 16;
-  const MOBILE_GRID_TILES_GAP = 12;
-
-  return screenState === ScreenState.SM
+const COMMON_GRID_TILES_GAP = 16;
+const MOBILE_GRID_TILES_GAP = 12;
+const getGridGap = (screenState: ScreenState) =>
+  screenState === ScreenState.SM
     ? MOBILE_GRID_TILES_GAP
     : COMMON_GRID_TILES_GAP;
-};
 
 const getRowsCount = () => {
   const screenState = getScreenState();
-  const maxChunksCountConfig =
-    MAX_CHUNKS_COUNT_CONFIG[screenState] ?? DEFAULT_MAX_CHUNKS_COUNT_CONFIG;
+  const maxChunksCountConfig = getMaxChunksCountConfig(screenState);
   const cardHeight = maxChunksCountConfig.cardHeight;
   const gap = getGridGap(screenState);
-  const startSingleRowOffset =
-    START_SINGLE_ROW_OFFSET[screenState] ?? DEFAULT_SINGLE_ROW_OFFSET;
+  const startSingleRowOffset = getStartSingleRowOffset(screenState);
   let currentHeight = startSingleRowOffset + cardHeight * 2 + gap;
   let currentRows = 1;
 
