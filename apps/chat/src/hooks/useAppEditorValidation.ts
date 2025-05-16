@@ -14,7 +14,7 @@ import { AuthSelectors } from '@/src/store/auth/auth.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 
-import { Routes } from '@/src/constants/routes';
+import { Routes } from '../constants/routes';
 
 export const useAppEditorValidation = (isIdRequired: boolean) => {
   const router = useRouter();

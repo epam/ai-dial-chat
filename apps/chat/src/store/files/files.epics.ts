@@ -4,6 +4,7 @@ import {
   concat,
   filter,
   forkJoin,
+  groupBy,
   ignoreElements,
   iif,
   map,
@@ -218,15 +219,20 @@ const renameFolderFailEpic: AppEpic = (action$) =>
 const getFilesEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(FilesActions.getFiles.type),
-    switchMap(({ payload }) =>
-      FileService.getFiles(payload.id).pipe(
-        map((files) =>
-          FilesActions.getFilesSuccess({
-            files,
-            foldersSet: new Set([payload.id ?? getFileRootId()]),
-          }),
+    groupBy(({ payload }) => payload.id),
+    mergeMap((group$) =>
+      group$.pipe(
+        switchMap(({ payload }) =>
+          FileService.getFiles(payload.id).pipe(
+            map((files) =>
+              FilesActions.getFilesSuccess({
+                files,
+                foldersSet: new Set([payload.id ?? getFileRootId()]),
+              }),
+            ),
+            catchError(() => of(FilesActions.getFilesFail())),
+          ),
         ),
-        catchError(() => of(FilesActions.getFilesFail())),
       ),
     ),
   );
@@ -389,44 +395,6 @@ const downloadFilesListEpic: AppEpic = (action$, state$) =>
     ignoreElements(),
   );
 
-const duplicateFileEpic: AppEpic = (action$) =>
-  action$.pipe(
-    ofType(FilesActions.duplicateFile.type),
-    mergeMap(({ payload }) => {
-      return FileService.copyFile({
-        sourceUrl: payload.fileId,
-        destinationUrl: payload.destinationUrl ?? getFileRootId(),
-      }).pipe(
-        switchMap(() => {
-          return of(FilesActions.duplicateFileSuccess());
-        }),
-      );
-    }),
-  );
-
-const duplicateFilesFolderEpic: AppEpic = (action$) =>
-  action$.pipe(
-    ofType(FilesActions.duplicateFilesFolder.type),
-    switchMap(({ payload }) => {
-      return FileService.getMultipleFoldersFiles([payload.folderId], true).pipe(
-        switchMap((files) => {
-          return concat(
-            ...files.map((file) => {
-              const fileDestination = file.id.replace(payload.folderId, '');
-
-              return of(
-                FilesActions.duplicateFile({
-                  fileId: file.id,
-                  destinationUrl: `${payload.destinationUrl ?? getFileRootId()}${fileDestination}`,
-                }),
-              );
-            }),
-          );
-        }),
-      );
-    }),
-  );
-
 export const FilesEpics = combineEpics(
   initEpic,
 
@@ -444,7 +412,4 @@ export const FilesEpics = combineEpics(
   downloadFilesListEpic,
   deleteFileFailEpic,
   unselectFilesEpic,
-
-  duplicateFileEpic,
-  duplicateFilesFolderEpic,
 );

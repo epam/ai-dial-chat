@@ -42,6 +42,9 @@ const initialState: PromptsState = {
   isNewPromptCreating: false,
   chosenPromptIds: [],
   chosenEmptyFoldersIds: [],
+
+  deletingPrompt: undefined,
+  moveToPrompt: undefined,
 };
 
 export const promptsSlice = createSlice({
@@ -141,6 +144,13 @@ export const promptsSlice = createSlice({
     ) => {
       state.prompts = state.prompts.map((prompt) => {
         if (prompt.id === payload.id) {
+          if (state.isPromptModalOpen) {
+            const isPromptSelected = payload.id === state.selectedPromptId;
+            state.selectedPromptId = isPromptSelected
+              ? payload.prompt.id
+              : payload.id;
+          }
+
           return {
             ...prompt,
             ...payload.prompt,
@@ -233,6 +243,9 @@ export const promptsSlice = createSlice({
       state.temporaryFolders = state.temporaryFolders.filter(
         ({ id }) => id !== payload.folderId,
       );
+    },
+    clearTemporaryFolders: (state) => {
+      state.temporaryFolders = [];
     },
     renameTemporaryFolder: (
       state,
@@ -451,6 +464,18 @@ export const promptsSlice = createSlice({
         isApproveRequiredResource?: boolean;
       }>,
     ) => state,
+    setDeletingPrompt: (
+      state,
+      { payload }: PayloadAction<PromptInfo | undefined>,
+    ) => {
+      state.deletingPrompt = payload;
+    },
+    setMoveToPrompt: (
+      state,
+      { payload }: PayloadAction<PromptInfo | undefined>,
+    ) => {
+      state.moveToPrompt = payload;
+    },
   },
 });
 

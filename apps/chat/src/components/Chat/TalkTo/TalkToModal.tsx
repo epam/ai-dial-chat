@@ -24,6 +24,7 @@ import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
+import { ModelsActions } from '@/src/store/actions';
 import { AddonsSelectors } from '@/src/store/addons/addons.selectors';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
@@ -39,6 +40,7 @@ import {
 
 import { Modal } from '@/src/components/Common/Modal';
 
+import { TabButton } from '../../Buttons/TabButton';
 import { AgentDialogs } from '../../Common/AgentDialogs';
 import { CardType, SuggestedCard, TalkToSlider } from './TalkToSlider';
 
@@ -51,20 +53,12 @@ interface TabButtonProps {
   currentTab: MarketplaceTabs;
 }
 
-function TabButton({ tab, setTab, currentTab }: TabButtonProps) {
+function AgentsTabButton({ tab, setTab, currentTab }: TabButtonProps) {
   const { t } = useTranslation(Translation.Marketplace);
   return (
-    <button
-      className={classNames(
-        'button flex items-center justify-center text-nowrap rounded border-b-2 border-primary  hover:bg-accent-primary-alpha',
-        currentTab === tab
-          ? 'border-b-accent-primary bg-accent-primary-alpha'
-          : 'bg-layer-4',
-      )}
-      onClick={() => setTab(tab)}
-    >
+    <TabButton selected={currentTab === tab} onClick={() => setTab(tab)}>
       {t(ChangeAgentTabs[tab])}
-    </button>
+    </TabButton>
   );
 }
 
@@ -222,6 +216,19 @@ const TalkToModalView = ({
         );
       }
       dispatch(ConversationsActions.setIsStartedCustomViewerConversation(true));
+      if (
+        model &&
+        model.reference !== REPLAY_AS_IS_MODEL &&
+        !installedModelIdsSet.has(model.reference)
+      ) {
+        dispatch(
+          ModelsActions.addInstalledModels({
+            references: [model.reference],
+            showSuccessToast: false,
+            updateRecentModels: true,
+          }),
+        );
+      }
 
       onClose();
     },
@@ -258,15 +265,16 @@ const TalkToModalView = ({
             placeholder={t('Search')}
             className="input-form peer m-0 pl-[38px]"
             data-qa="search-agents"
+            autoFocus
           />
         </div>
         <div className="flex gap-2">
-          <TabButton
+          <AgentsTabButton
             tab={MarketplaceTabs.MY_WORKSPACE}
             setTab={setTab}
             currentTab={tab}
           />
-          <TabButton
+          <AgentsTabButton
             tab={MarketplaceTabs.HOME}
             setTab={setTab}
             currentTab={tab}

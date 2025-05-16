@@ -1,5 +1,8 @@
 import { Observable, map, throwError } from 'rxjs';
 
+import { constructPath } from '@/src/utils/app/file';
+import { getRootId } from '@/src/utils/app/id';
+import { EnumMapper } from '@/src/utils/app/mappers';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -13,10 +16,6 @@ import {
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
 import { EntityStorage } from '@/src/types/storage';
-
-import { constructPath } from '../../../file';
-import { getRootId } from '../../../id';
-import { EnumMapper } from '../../../mappers';
 
 import { Entity, UploadStatus } from '@epam/ai-dial-shared';
 
@@ -37,7 +36,7 @@ export abstract class ApiEntityStorage<
       id,
       name: folder.name,
       folderId: constructPath(apiKey, bucket, parentPath),
-      type: EnumMapper.getFolderTypeByApiKey(this.getStorageKey()),
+      type: EnumMapper.getFeatureTypeByApiKey(this.getStorageKey()),
     };
   }
 

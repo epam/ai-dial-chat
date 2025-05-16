@@ -5,7 +5,6 @@ import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
 import {
   PublicVersionGroups,
   PublicVersionOption,
@@ -18,7 +17,11 @@ import {
 
 import { PublicationState } from './publication.types';
 
-import { PublishActions, UploadStatus } from '@epam/ai-dial-shared';
+import {
+  PublishActions,
+  ShareEntity,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
 import uniqBy from 'lodash-es/uniqBy';
 import xor from 'lodash-es/xor';
@@ -308,7 +311,14 @@ export const publicationSlice = createSlice({
       {
         payload,
       }: PayloadAction<
-        { entity: DialAIEntityModel; action: PublishActions } | undefined
+        | {
+            entity: Omit<ShareEntity, 'folderId'> & {
+              iconUrl?: string;
+              folderId?: string;
+            };
+            action: PublishActions;
+          }
+        | undefined
       >,
     ) {
       if (payload) {
