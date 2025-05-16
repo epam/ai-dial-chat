@@ -232,7 +232,14 @@ const TalkToModalView = ({
 
       onClose();
     },
-    [addonsMap, conversation, dispatch, modelsMap, onClose],
+    [
+      addonsMap,
+      conversation,
+      dispatch,
+      installedModelIdsSet,
+      modelsMap,
+      onClose,
+    ],
   );
 
   const handleGoToWorkspace = useCallback(
