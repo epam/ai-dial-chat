@@ -51,6 +51,7 @@ import { UISelectors } from '@/src/store/ui/ui.selectors';
 import { DEFAULT_QUICK_APPS_SCHEMA_ID } from '@/src/constants/quick-apps';
 import { Routes } from '@/src/constants/routes';
 
+import { TabButton } from '../../Buttons/TabButton';
 import Tooltip from '../../Common/Tooltip';
 import { ApplicationView } from './ApplicationView';
 import { CodeAppView } from './CodeAppView';
@@ -105,17 +106,38 @@ export const ApplicationSettings: React.FC<Props> = ({
   const theme = useAppSelector(UISelectors.selectThemeState);
 
   const [previewMode, setPreviewMode] = useState<PreviewMode>(
-    screenState === ScreenState.MD ||
+    screenState <= ScreenState.MD ||
       schema?.[ApplicationTypeSchemaProperties.applicationTypeViewerUrl]
       ? PreviewMode.closed
       : PreviewMode.half,
   );
 
-  useEffect(() => {
-    if (screenState <= ScreenState.MD && previewMode === PreviewMode.half) {
-      setPreviewMode(PreviewMode.closed);
+  const isPreviewClosed = previewMode === PreviewMode.closed;
+  const isPreviewHalf = previewMode === PreviewMode.half;
+  const isPreviewFull = previewMode === PreviewMode.full;
+
+  const handlePreviewModeChange = (mode: PreviewMode) => {
+    setPreviewMode(mode);
+  };
+
+  const handleHalfModeClick = () => {
+    if (screenState > ScreenState.MD) {
+      handlePreviewModeChange(PreviewMode.half);
     }
-  }, [previewMode, screenState]);
+  };
+
+  const handleFullModeClick = (
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+  ) => {
+    e.stopPropagation();
+    handlePreviewModeChange(PreviewMode.full);
+  };
+
+  useEffect(() => {
+    if (screenState <= ScreenState.MD && isPreviewHalf) {
+      handlePreviewModeChange(PreviewMode.closed);
+    }
+  }, [isPreviewHalf, previewMode, screenState]);
 
   const isAppPublic = isEntityIdPublic(applicationData);
   const modelFromState = applicationData
@@ -303,136 +325,150 @@ export const ApplicationSettings: React.FC<Props> = ({
     type === ApplicationType.CODE_APP && isAppDeployed && !isAppPublic;
 
   return (
-    <div className="flex w-full flex-nowrap overflow-hidden">
-      <div
-        onMouseLeave={() => {
-          if (!isAppPublic) {
-            saveForm();
-          }
-        }}
-        className={classNames('transition-all duration-300 ease-in-out', {
-          'w-[calc(100%-40px)] opacity-100': previewMode === PreviewMode.closed,
-          'w-1/2 opacity-100': previewMode === PreviewMode.half,
-          'w-0 opacity-0': previewMode === PreviewMode.full,
-        })}
-      >
-        <FormProvider {...methods}>{formViewElement}</FormProvider>
+    <div className="flex size-full flex-col">
+      <div className="flex w-full justify-center gap-2 border-b border-primary px-3 py-2 text-primary md:hidden">
+        <TabButton
+          selected={!isPreviewFull}
+          onClick={() => handlePreviewModeChange(PreviewMode.closed)}
+          className="w-full"
+        >
+          {t('Settings')}
+        </TabButton>
+        <TabButton
+          selected={isPreviewFull}
+          onClick={() => handlePreviewModeChange(PreviewMode.full)}
+          className="w-full"
+        >
+          {t('Preview')}
+        </TabButton>
       </div>
-      <div
-        className={classNames(
-          'flex h-full flex-col border-l border-primary transition-all duration-300 ease-in-out',
-          {
-            'w-1/2 opacity-100': previewMode === PreviewMode.half,
-            'w-full opacity-100': previewMode === PreviewMode.full,
-            'w-0 overflow-hidden opacity-0': previewMode === PreviewMode.closed,
-          },
-        )}
-        data-qa="app-preview-settings"
-      >
-        <div className="flex max-w-full items-center justify-between px-5 py-4 xl:p-2">
-          <div className="mr-2 flex min-w-0 shrink grow gap-2 text-primary">
-            <span>{t('Preview')}:</span>
-            <span
-              data-qa="preview-app-version"
-              className="min-w-0 shrink truncate"
-            >
-              {applicationData.name}
-            </span>
-            <span data-qa="preview-app-version" className="text-nowrap">
-              {t('v.')} {applicationData.version}
-            </span>
+
+      <div className="flex w-full grow overflow-hidden">
+        <div
+          onMouseLeave={() => {
+            if (!isAppPublic) {
+              saveForm();
+            }
+          }}
+          className={classNames('transition-all duration-300 ease-in-out', {
+            'w-[calc(100%-40px)] opacity-100 max-md:w-full': isPreviewClosed,
+            'w-1/2 opacity-100': isPreviewHalf,
+            'w-0 opacity-0': isPreviewFull,
+          })}
+        >
+          <FormProvider {...methods}>{formViewElement}</FormProvider>
+        </div>
+        <div
+          className={classNames(
+            'flex h-full flex-col border-l border-primary transition-all duration-300 ease-in-out',
+            {
+              'w-1/2 opacity-100': isPreviewHalf,
+              'w-full opacity-100': isPreviewFull,
+              'w-0 overflow-hidden opacity-0': isPreviewClosed,
+            },
+          )}
+          data-qa="app-preview-settings"
+        >
+          <div className="flex max-w-full items-center justify-between px-0 py-3 max-md:self-end md:px-5 md:py-4 xl:p-2">
+            <div className="mr-2 hidden min-w-0 shrink grow gap-2 text-primary md:flex">
+              <span>{t('Preview')}:</span>
+              <span
+                data-qa="preview-app-version"
+                className="min-w-0 shrink truncate"
+              >
+                {applicationData.name}
+              </span>
+              <span data-qa="preview-app-version" className="text-nowrap">
+                {t('v.')} {applicationData.version}
+              </span>
+            </div>
+            <div className="flex space-x-2">
+              {showRedeployButton && (
+                <button
+                  className="xl:button button-accent-secondary mb-0 flex items-center gap-2 border-r border-secondary px-3 py-0 text-accent-secondary md:last:mb-6 lg:max-w-3xl xl:mx-auto xl:border-none"
+                  data-qa="redeploy-code-app"
+                  disabled={!methods.formState.isValid}
+                  onClick={handleRedeploy}
+                >
+                  <IconRefresh size={18} />
+                  <span>{t('Redeploy')}</span>
+                </button>
+              )}
+              {isPreviewHalf && (
+                <button
+                  className="text-secondary hover:text-accent-primary max-xl:hidden"
+                  onClick={() => handlePreviewModeChange(PreviewMode.full)}
+                >
+                  <Tooltip tooltip={t('Expand preview')}>
+                    <IconArrowsMaximize size={24} />
+                  </Tooltip>
+                </button>
+              )}
+              {isPreviewFull && (
+                <button
+                  className="text-secondary hover:text-accent-primary max-xl:hidden"
+                  onClick={() => handlePreviewModeChange(PreviewMode.half)}
+                >
+                  <Tooltip tooltip={t('Split view')}>
+                    <IconLayoutSidebarRightCollapse size={24} />
+                  </Tooltip>
+                </button>
+              )}
+              <button
+                className="ml-4 hidden text-secondary hover:text-accent-primary md:flex xl:ml-2"
+                onClick={() => handlePreviewModeChange(PreviewMode.closed)}
+              >
+                <Tooltip tooltip={t('Hide preview')}>
+                  <IconArrowsMinimize size={24} />
+                </Tooltip>
+              </button>
+            </div>
           </div>
-          <div className="flex space-x-2">
-            {showRedeployButton && (
-              <button
-                className="xl:button button-accent-secondary mb-0 flex items-center gap-2 border-r border-secondary px-3 py-0 text-accent-secondary md:last:mb-6 lg:max-w-3xl xl:mx-auto xl:border-none"
-                data-qa="redeploy-code-app"
-                disabled={!methods.formState.isValid}
-                onClick={handleRedeploy}
-              >
-                <IconRefresh size={18} />
-                <span>{t('Redeploy')}</span>
-              </button>
-            )}
-            {previewMode === PreviewMode.half && (
-              <button
-                className="hidden text-secondary hover:text-accent-primary xl:flex"
-                onClick={() => setPreviewMode(PreviewMode.full)}
-              >
-                <Tooltip tooltip={t('Expand preview')}>
-                  <IconArrowsMaximize size={24} />
-                </Tooltip>
-              </button>
-            )}
-            {previewMode === PreviewMode.full && (
-              <button
-                className="hidden text-secondary hover:text-accent-primary xl:flex"
-                onClick={() => setPreviewMode(PreviewMode.half)}
-              >
-                <Tooltip tooltip={t('Split view')}>
-                  <IconLayoutSidebarRightCollapse size={24} />
-                </Tooltip>
-              </button>
-            )}
+          {!isPreviewClosed && (
+            <div className="flex-1 overflow-auto">
+              <ApplicationPreviewChat
+                isAppDeploymentInProgress={isAppDeploymentInProgress}
+                isApplicationValid={methods.formState.isValid}
+                applicationId={applicationData.id}
+                type={type}
+                isAppDeployed={isAppDeployed}
+              />
+            </div>
+          )}
+        </div>
+        {isPreviewClosed && (
+          <div
+            className="flex h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-4 transition-all duration-300 ease-in-out hover:cursor-pointer max-md:hidden xl:pt-5"
+            onClick={handleHalfModeClick}
+          >
             <button
-              className="ml-4 text-secondary hover:text-accent-primary xl:ml-2"
-              onClick={() => setPreviewMode(PreviewMode.closed)}
+              className="text-secondary hover:text-accent-primary"
+              onClick={handleFullModeClick}
             >
-              <Tooltip tooltip={t('Hide preview')}>
-                <IconArrowsMinimize size={24} />
+              <Tooltip tooltip={t('Expand preview')}>
+                <IconArrowsMaximize size={24} />
               </Tooltip>
             </button>
-          </div>
-        </div>
-        {previewMode !== PreviewMode.closed && (
-          <div className="flex-1 overflow-auto">
-            <ApplicationPreviewChat
-              isAppDeploymentInProgress={isAppDeploymentInProgress}
-              isApplicationValid={methods.formState.isValid}
-              applicationId={applicationData.id}
-              type={type}
-              isAppDeployed={isAppDeployed}
-            />
+
+            <button
+              className="text-secondary hover:text-accent-primary max-xl:hidden"
+              onClick={() => handlePreviewModeChange(PreviewMode.half)}
+            >
+              <Tooltip tooltip={t('Split view')}>
+                <IconLayoutSidebarLeftCollapse size={24} />
+              </Tooltip>
+            </button>
+
+            <span
+              className="select-none text-primary"
+              style={{ writingMode: 'vertical-rl' }}
+            >
+              {t('Preview')}: {applicationData.name} {t('v.')}{' '}
+              {applicationData.version}
+            </span>
           </div>
         )}
       </div>
-      {previewMode === PreviewMode.closed && (
-        <div
-          className="flex h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-4 transition-all duration-300 ease-in-out hover:cursor-pointer xl:pt-5"
-          onClick={() => {
-            if (screenState > ScreenState.MD) setPreviewMode(PreviewMode.half);
-          }}
-        >
-          <button
-            className="text-secondary hover:text-accent-primary"
-            onClick={(e) => {
-              e.stopPropagation();
-              setPreviewMode(PreviewMode.full);
-            }}
-          >
-            <Tooltip tooltip={t('Expand preview')}>
-              <IconArrowsMaximize size={24} />
-            </Tooltip>
-          </button>
-
-          <button
-            className="hidden text-secondary hover:text-accent-primary xl:flex"
-            onClick={() => setPreviewMode(PreviewMode.half)}
-          >
-            <Tooltip tooltip={t('Split view')}>
-              <IconLayoutSidebarLeftCollapse size={24} />
-            </Tooltip>
-          </button>
-
-          <span
-            className="select-none text-primary"
-            style={{ writingMode: 'vertical-rl' }}
-          >
-            {t('Preview')}: {applicationData.name} {t('v.')}{' '}
-            {applicationData.version}
-          </span>
-        </div>
-      )}
     </div>
   );
 };
