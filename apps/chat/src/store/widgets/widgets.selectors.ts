@@ -19,12 +19,9 @@ const selectWidgets = createSelector(
   },
 );
 
-const selectIsAnyWidget = createSelector(
-  [selectWidgets],
-  (widgets) => {
-    return widgets.length > 0;
-  },
-);
+const selectIsAnyWidget = createSelector([selectWidgets], (widgets) => {
+  return widgets.length > 0;
+});
 
 export const WidgetsSelectors = {
   selectWidgets,
