@@ -4,6 +4,7 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
+  API,
   Chronology,
   CollapsedSections,
   ExpectedConstants,
@@ -11,10 +12,11 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
-import { Colors, Overflow, Styles } from '@/src/ui/domData';
+import { Overflow, Styles, ThemeColorAttributes } from '@/src/ui/domData';
 import { ChatBarSelectors } from '@/src/ui/selectors';
 import { GeneratorUtil } from '@/src/utils';
 import { ModelsUtil } from '@/src/utils/modelsUtil';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 let defaultModel: DialAIEntityModel;
@@ -700,11 +702,16 @@ dialTest(
     conversationDropdownMenu,
     conversationData,
     dataInjector,
-    folderConversations,
     setTestIds,
     localStorageManager,
+    selectFolderModal,
+    selectFolders,
+    selectFoldersAssertion,
+    selectFolderModalAssertion,
+    chatBarFolderAssertion,
   }) => {
     setTestIds('EPMRTC-864');
+    const newFolderName = ExpectedConstants.newFolderWithIndexTitle(1);
     const conversation = conversationData.prepareDefaultConversation();
     await dataInjector.createConversations([conversation]);
     await localStorageManager.setShowSideBarPanels();
@@ -714,37 +721,42 @@ dialTest(
     await conversations.selectConversation(conversation.name);
     await conversations.openEntityDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.moveTo);
-    await conversations.selectMoveToMenuOption(
-      ExpectedConstants.newFolderTitle,
+    await selectFolderModalAssertion.assertElementState(
+      selectFolderModal,
+      'visible',
     );
-
-    await folderConversations.expandFolder(
-      ExpectedConstants.newFolderWithIndexTitle(1),
+    await selectFolderModal.newFolderButton.click();
+    await selectFolders.getEditFolderInputActions().clickTickButton();
+    await selectFoldersAssertion.assertFolderState(
+      { name: newFolderName },
+      'visible',
     );
-    const isFolderConversationVisible =
-      await folderConversations.isFolderEntityVisible(
-        ExpectedConstants.newFolderWithIndexTitle(1),
-        conversation.name,
-      );
-    expect
-      .soft(
-        isFolderConversationVisible,
-        ExpectedMessages.conversationMovedToFolder,
-      )
-      .toBeTruthy();
-
-    const folderNameColor = await folderConversations.getFolderNameColor(
-      ExpectedConstants.newFolderWithIndexTitle(1),
+    await selectFolderModal.clickSelectFolderButton({
+      triggeredApiHost: API.conversationHost,
+    });
+    await selectFolderModalAssertion.assertElementState(
+      selectFolderModal,
+      'hidden',
     );
-    expect
-      .soft(folderNameColor[0], ExpectedMessages.folderNameColorIsValid)
-      .toBe(Colors.textAccentSecondary);
+    await chatBarFolderAssertion.assertFolderEntityState(
+      { name: newFolderName },
+      { name: conversation.name },
+      'visible',
+    );
+    await chatBarFolderAssertion.assertFolderEntitySelectedState(
+      { name: newFolderName },
+      { name: conversation.name },
+      true,
+    );
+    await chatBarFolderAssertion.assertFolderNameColor(
+      { name: newFolderName },
+      ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textSuccess),
+    );
   },
 );
 
 dialTest(
-  'Chat is moved to folder from Move to list.\n' +
-    'Long folder name is cut in Move to menu',
+  'Chat is moved to folder from Move to list',
   async ({
     dialHomePage,
     conversations,
@@ -756,8 +768,12 @@ dialTest(
     chatBar,
     setTestIds,
     localStorageManager,
+    selectFolderModal,
+    selectFoldersAssertion,
+    selectFolderModalAssertion,
+    chatBarFolderAssertion,
   }) => {
-    setTestIds('EPMRTC-863', 'EPMRTC-942');
+    setTestIds('EPMRTC-863');
     const folderName = GeneratorUtil.randomString(70);
     let conversation: Conversation;
 
@@ -770,49 +786,60 @@ dialTest(
       },
     );
 
-    await dialTest.step(
-      'Open "Move to" menu option for conversation and verify folder name is truncated',
-      async () => {
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
-        await chatBar.createNewFolder();
-        await folderConversations.openFolderDropdownMenu(
-          ExpectedConstants.newFolderWithIndexTitle(1),
-          1,
-        );
-        await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await folderConversations.renameEmptyFolderWithEnter(folderName);
+    await dialTest.step('Create a new folder with random name', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded();
+      await conversations.selectConversation(conversation.name);
+      await chatBar.createNewFolder();
+      await folderConversations.openFolderDropdownMenu(
+        ExpectedConstants.newFolderWithIndexTitle(1),
+        1,
+      );
+      await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
+      await folderConversations.renameEmptyFolderWithEnter(folderName);
+    });
 
+    await dialTest.step(
+      'Open conversation dropdown menu and select "Move to" menu option',
+      async () => {
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.moveTo);
-
-        const moveToFolder = conversationDropdownMenu.getMenuOption(folderName);
-        await moveToFolder.waitForState();
-        const moveToFolderOverflow =
-          await moveToFolder.getComputedStyleProperty(Styles.text_overflow);
-        expect
-          .soft(moveToFolderOverflow[0], ExpectedMessages.folderNameIsTruncated)
-          .toBe(Overflow.ellipsis);
+        await selectFolderModalAssertion.assertElementState(
+          selectFolderModal,
+          'visible',
+        );
+        await selectFoldersAssertion.assertFolderState(
+          { name: folderName },
+          'visible',
+        );
       },
     );
 
     await dialTest.step(
-      'Select folder name from menu and conversation is moved into folder',
+      'Select existent folder and verify conversation is moved to it',
       async () => {
-        await conversations.selectMoveToMenuOption(folderName);
-        await folderConversations.expandFolder(folderName);
-        const isFolderConversationVisible =
-          await folderConversations.isFolderEntityVisible(
-            folderName,
-            conversation.name,
-          );
-        expect
-          .soft(
-            isFolderConversationVisible,
-            ExpectedMessages.conversationMovedToFolder,
-          )
-          .toBeTruthy();
+        await selectFolderModal.selectFolder(folderName);
+        await selectFolderModal.clickSelectFolderButton({
+          triggeredApiHost: API.conversationHost,
+        });
+        await selectFolderModalAssertion.assertElementState(
+          selectFolderModal,
+          'hidden',
+        );
+        await chatBarFolderAssertion.assertFolderEntityState(
+          { name: folderName },
+          { name: conversation.name },
+          'visible',
+        );
+        await chatBarFolderAssertion.assertFolderEntitySelectedState(
+          { name: folderName },
+          { name: conversation.name },
+          true,
+        );
+        await chatBarFolderAssertion.assertFolderNameColor(
+          { name: folderName },
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textSuccess),
+        );
       },
     );
   },

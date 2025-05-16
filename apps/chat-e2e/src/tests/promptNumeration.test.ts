@@ -219,6 +219,8 @@ dialTest(
     prompts,
     promptBar,
     promptDropdownMenu,
+    selectFolderModal,
+    selectFolderModalAssertion,
     promptModalDialog,
     folderPrompts,
     toast,
@@ -226,6 +228,9 @@ dialTest(
     localStorageManager,
     promptPreviewModal,
     confirmationDialog,
+    promptAssertion,
+    promptBarFolderAssertion,
+    toastAssertion,
   }) => {
     setTestIds(
       'EPMRTC-2984',
@@ -237,7 +242,6 @@ dialTest(
     let nestedFolders: FolderInterface[];
     let nestedFolderPrompts: Prompt[];
     const duplicatedPromptName = ExpectedConstants.newPromptTitle(1);
-    let errorMessage;
     const promptValue = 'That is just a test prompt';
 
     await dialTest.step(
@@ -280,28 +284,20 @@ dialTest(
           ),
           { isHttpMethodTriggered: true },
         );
-
-        await expect
-          .soft(
-            folderPrompts.getFolderEntity(
-              ExpectedConstants.newPromptFolderWithIndexTitle(1),
-              duplicatedPromptName,
-            ),
-            ExpectedMessages.promptIsVisible,
-          )
-          .toBeVisible();
+        await promptBarFolderAssertion.assertFolderEntityState(
+          { name: ExpectedConstants.newPromptFolderWithIndexTitle(1) },
+          { name: duplicatedPromptName },
+          'visible',
+        );
 
         await promptBar.createNewEntity();
         await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
         await promptModalDialog.saveButton.click();
         await promptPreviewModal.closeButton.click();
-
-        await expect
-          .soft(
-            prompts.getEntityByName(duplicatedPromptName),
-            ExpectedMessages.promptIsVisible,
-          )
-          .toBeVisible();
+        await promptAssertion.assertEntityState(
+          { name: duplicatedPromptName },
+          'visible',
+        );
       },
     );
 
@@ -321,17 +317,12 @@ dialTest(
         await promptModalDialog.saveButton.click();
 
         // Check for the error message
-        await expect
-          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
-          .toBeVisible();
-        errorMessage = await toast.getElementContent();
-        expect
-          .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
-          .toBe(
-            ExpectedConstants.duplicatedPromptNameErrorMessage(
-              duplicatedPromptName,
-            ),
-          );
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.duplicatedPromptNameErrorMessage(
+            duplicatedPromptName,
+          ),
+          ExpectedMessages.notAllowedNameErrorShown,
+        );
         await promptModalDialog.closeButton.click();
         await confirmationDialog.cancelButton.click();
         await toast.closeToast();
@@ -343,31 +334,29 @@ dialTest(
       async () => {
         await prompts.openEntityDropdownMenu(duplicatedPromptName);
         await promptDropdownMenu.selectMenuOption(MenuOptions.moveTo);
-        await prompts.selectMoveToMenuOption(
-          ExpectedConstants.newPromptFolderWithIndexTitle(1),
-          { isHttpMethodTriggered: false },
+        await selectFolderModalAssertion.assertElementState(
+          selectFolderModal,
+          'visible',
         );
+        await selectFolderModal.selectFolder(
+          ExpectedConstants.newPromptFolderWithIndexTitle(1),
+        );
+        await selectFolderModal.clickSelectFolderButton();
 
         // Check for the error message
-        await expect
-          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
-          .toBeVisible();
-        errorMessage = await toast.getElementContent();
-        expect
-          .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
-          .toBe(
-            ExpectedConstants.duplicatedPromptNameErrorMessage(
-              duplicatedPromptName,
-            ),
-          );
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.duplicatedPromptNameErrorMessage(
+            duplicatedPromptName,
+          ),
+          ExpectedMessages.notAllowedNameErrorShown,
+        );
+        await selectFolderModal.closeModal.click();
 
         // Verify the prompt is not moved and stays in Recent
-        await expect
-          .soft(
-            prompts.getEntityByName(duplicatedPromptName),
-            ExpectedMessages.promptIsVisible,
-          )
-          .toBeVisible();
+        await promptAssertion.assertEntityState(
+          { name: duplicatedPromptName },
+          'visible',
+        );
         await toast.closeToast();
       },
     );
@@ -391,17 +380,12 @@ dialTest(
         );
 
         // Check for error message
-        await expect
-          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
-          .toBeVisible();
-        errorMessage = await toast.getElementContent();
-        expect
-          .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
-          .toBe(
-            ExpectedConstants.duplicatedPromptNameErrorMessage(
-              duplicatedPromptName,
-            ),
-          );
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.duplicatedPromptNameErrorMessage(
+            duplicatedPromptName,
+          ),
+          ExpectedMessages.notAllowedNameErrorShown,
+        );
         await toast.closeToast();
       },
     );
@@ -415,17 +399,12 @@ dialTest(
         );
 
         // Check for error message
-        await expect
-          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
-          .toBeVisible();
-        errorMessage = await toast.getElementContent();
-        expect
-          .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
-          .toBe(
-            ExpectedConstants.duplicatedRootPromptNameErrorMessage(
-              duplicatedPromptName,
-            ),
-          );
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.duplicatedRootPromptNameErrorMessage(
+            duplicatedPromptName,
+          ),
+          ExpectedMessages.notAllowedNameErrorShown,
+        );
       },
     );
   },

@@ -411,7 +411,7 @@ export const getConversationActions = (
       of(
         UIActions.setOpenedFoldersIds({
           openedFolderIds: [conversation.folderId],
-          folderType: FeatureType.Chat,
+          featureType: FeatureType.Chat,
         }),
       ),
     );
@@ -438,7 +438,7 @@ export const getPromptActions = (
       ? of(
           UIActions.setOpenedFoldersIds({
             openedFolderIds: [prompt.folderId],
-            folderType: FeatureType.Prompt,
+            featureType: FeatureType.Prompt,
           }),
         )
       : EMPTY;

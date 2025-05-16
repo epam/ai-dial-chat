@@ -25,6 +25,7 @@ import {
   BaseAssertion,
   ChatMessagesAssertion,
   ConversationAssertion,
+  FolderAssertion,
   PromptAssertion,
   TalkToAgentDialogAssertion,
 } from '@/src/assertions';
@@ -47,6 +48,7 @@ import { OverlayHomePage } from '@/src/ui/pages/overlay/overlayHomePage';
 import { OverlayMarketplacePage } from '@/src/ui/pages/overlay/overlayMarketplacePage';
 import {
   ConversationsTree,
+  FolderConversations,
   OrganizationConversationsTree,
   PromptsTree,
 } from '@/src/ui/webElements/entityTree';
@@ -114,10 +116,12 @@ const dialOverlayTest = test.extend<{
   overlayAttachFilesModal: AttachFilesModal;
   overlayPlaybackControl: PlaybackControl;
   overlayOrganizationConversations: OrganizationConversationsTree;
+  overlayFolderConversations: FolderConversations;
   overlayTalkToAgentDialogAssertion: TalkToAgentDialogAssertion;
   overlayAssertion: OverlayAssertion;
   overlayConversationAssertion: ConversationAssertion;
   overlayPromptAssertion: PromptAssertion;
+  overlayChatBarFolderAssertion: FolderAssertion<FolderConversations>;
   overlayShareApiHelper: ShareApiHelper;
   adminUserRequestContext: APIRequestContext;
   adminPublicationApiHelper: PublicationApiHelper;
@@ -363,6 +367,10 @@ const dialOverlayTest = test.extend<{
       overlayChatBar.getOrganizationConversationsTree();
     await use(overlayOrganizationConversations);
   },
+  overlayFolderConversations: async ({ overlayChatBar }, use) => {
+    const overlaFolderConversations = overlayChatBar.getFolderConversations();
+    await use(overlaFolderConversations);
+  },
   overlayTalkToAgentDialogAssertion: async (
     { overlayTalkToAgentDialog },
     use,
@@ -386,6 +394,14 @@ const dialOverlayTest = test.extend<{
   overlayPromptAssertion: async ({ overlayPrompts }, use) => {
     const promptAssertion = new PromptAssertion(overlayPrompts);
     await use(promptAssertion);
+  },
+  overlayChatBarFolderAssertion: async (
+    { overlayFolderConversations },
+    use,
+  ) => {
+    const overlayChatBarFolderAssertion =
+      new FolderAssertion<FolderConversations>(overlayFolderConversations);
+    await use(overlayChatBarFolderAssertion);
   },
   overlayShareApiHelper: async ({ request }, use) => {
     const overlayShareApiHelper = new ShareApiHelper(request);

@@ -133,15 +133,15 @@ export class MarketplaceAgents extends BaseElement {
   }
 
   public getAgentElementAddBookmarkIcon(agentElement: BaseElement) {
-    return agentElement.getChildElementBySelector(
-      MarketplaceAgentSelectors.addBookmarkIcon,
-    );
+    return agentElement
+      .getChildElementBySelector(MarketplaceAgentSelectors.addBookmarkIcon)
+      .getChildElementBySelector(Tags.svg);
   }
 
   public getAgentElementRemoveBookmarkIcon(agentElement: BaseElement) {
-    return agentElement.getChildElementBySelector(
-      MarketplaceAgentSelectors.removeBookmarkIcon,
-    );
+    return agentElement
+      .getChildElementBySelector(MarketplaceAgentSelectors.removeBookmarkIcon)
+      .getChildElementBySelector(Tags.svg);
   }
 
   public async agentWithVersionToSet(entity: DialAIEntityModel) {
