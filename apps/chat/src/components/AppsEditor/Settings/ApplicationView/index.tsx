@@ -222,7 +222,7 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
       className="flex h-full flex-col bg-layer-2"
       data-qa="app-view-form"
     >
-      <div className="grow space-y-4 divide-tertiary overflow-y-auto p-5">
+      <div className="grow space-y-4 divide-tertiary overflow-y-auto px-5 py-4 xl:p-5">
         <FieldTextArea
           {...register('features', validators['features'])}
           label={t('Features data')}
