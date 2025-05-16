@@ -623,6 +623,7 @@ dialOverlayTest(
         await overlayHeader.leftPanelToggle.click();
         //TODO: remove page reload and folder expand when the issue is fixed https://github.com/epam/ai-dial-chat/issues/3776
         await overlayHomePage.reloadPage();
+        await overlayHomePage.waitForPageLoaded();
         await overlayBaseAssertion.assertElementState(
           overlaySendMessage,
           'visible',
@@ -643,14 +644,7 @@ dialOverlayTest(
         await overlayChatBar.createNewEntity();
         await overlayTalkToAgentDialog.cancelButton.click();
         await overlayChat.sendRequestWithButton(secondConversationName);
-        //TODO: remove page reload and folder expand when when the issue is fixed https://github.com/epam/ai-dial-chat/issues/3776
-        await overlayHomePage.reloadPage();
-        await overlayBaseAssertion.assertElementState(
-          overlaySendMessage,
-          'visible',
-        );
         await overlayHeader.leftPanelToggle.click();
-        await overlayFolderConversations.expandFolder(expectedFolderPath);
         await overlayChatBarFolderAssertion.assertFolderEntityState(
           { name: expectedFolderPath },
           { name: secondConversationName },
