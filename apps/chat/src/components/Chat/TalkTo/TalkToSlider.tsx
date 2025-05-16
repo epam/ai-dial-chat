@@ -126,6 +126,7 @@ interface SliderModelsGroupProps {
   rowsCount: number;
   onSelectModel: (entity: DialAIEntityModel) => void;
   onOpenMarketplaceTab: () => void;
+  isMyWorkspace: boolean;
 }
 
 const SliderModelsGroup = ({
@@ -135,6 +136,7 @@ const SliderModelsGroup = ({
   rowsCount,
   onSelectModel,
   onOpenMarketplaceTab,
+  isMyWorkspace,
   ...restProps
 }: SliderModelsGroupProps) => {
   const { t } = useTranslation(Translation.Chat);
@@ -199,6 +201,7 @@ const SliderModelsGroup = ({
               entity={model as DialAIEntityModel}
               onClick={onSelectModel}
               onSelectVersion={onSelectModel}
+              isMyWorkspace={isMyWorkspace}
               {...restProps}
             />
           );
@@ -372,6 +375,7 @@ export const TalkToSlider = ({
                 screenState={screenState}
                 rowsCount={sliderRowsCount}
                 onOpenMarketplaceTab={onOpenMarketplaceTab}
+                isMyWorkspace={isMyWorkspace}
                 {...restProps}
               />
             ))

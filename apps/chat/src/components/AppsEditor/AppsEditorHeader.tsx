@@ -1,9 +1,8 @@
 import {
+  IconChevronDown,
   IconCircleCheck,
   IconCircleDot,
   IconLogout,
-  IconMenu2,
-  IconX,
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 
@@ -35,6 +34,8 @@ import { Logo } from '@/src/components/Header/Logo';
 import { User } from '@/src/components/Header/User/User';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
+import { UrlObject } from 'url';
+
 enum TabKeys {
   GENERAL = 'general',
   SETTINGS = 'settings',
@@ -57,15 +58,14 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
   hasCustomEditor,
 }) => {
   const dispatch = useAppDispatch();
-
   const {
     query: { id = '', slug = '', add },
     pathname,
+    push,
   } = useRouter();
   const { t } = useTranslation(Translation.Chat);
 
   const [menuOpen, setMenuOpen] = useState(false);
-
   const isUserSettingsOpen = useAppSelector(
     UISelectors.selectIsUserSettingsOpen,
   );
@@ -80,6 +80,43 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
     ApplicationSelectors.selectHasUnsavedChanges,
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+
+  const tabs = useMemo(
+    () => [
+      {
+        key: TabKeys.GENERAL,
+        label: t('General info'),
+        href: {
+          pathname: Routes.AppsEditorGeneralInfo,
+          query: { id, slug, add },
+        },
+      },
+      {
+        key: TabKeys.SETTINGS,
+        label: t('App settings'),
+        href: {
+          pathname: Routes.AppsEditorSettings,
+          query: { id, slug, add },
+        },
+      },
+    ],
+    [t, id, slug, add],
+  );
+
+  const selectedTab =
+    tabs.find((tab) => tab.href.pathname === pathname) || tabs[0];
+
+  const capitalizedAppType =
+    applicationTypeDisplayName.charAt(0).toUpperCase() +
+    applicationTypeDisplayName.slice(1);
+
+  let labelText = selectedTab.label.toLowerCase();
+
+  if (selectedTab.key === TabKeys.SETTINGS) {
+    labelText = labelText.replace(/^app\s+/i, '');
+  }
+
+  const label = `${capitalizedAppType} ${labelText}`;
 
   const handleCloseUserSettings = useCallback(() => {
     dispatch(UIActions.setIsUserSettingsOpen(false));
@@ -97,6 +134,12 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
         dispatch(ApplicationActions.setHasUnsavedChanges(false));
       }
     };
+  };
+
+  const handleTabClose = (tabHref: UrlObject, isDisabled: boolean) => {
+    if (isDisabled) return;
+    setMenuOpen(false);
+    push(tabHref);
   };
 
   const handleSaveAndRedirect = () => {
@@ -121,36 +164,6 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
     }
   };
 
-  const tabs = useMemo(
-    () => [
-      {
-        key: TabKeys.GENERAL,
-        label: t('General info'),
-        href: {
-          pathname: Routes.AppsEditorGeneralInfo,
-          query: {
-            id,
-            slug,
-            add,
-          },
-        },
-      },
-      {
-        key: TabKeys.SETTINGS,
-        label: t('App settings'),
-        href: {
-          pathname: Routes.AppsEditorSettings,
-          query: {
-            id,
-            slug,
-            add,
-          },
-        },
-      },
-    ],
-    [t, id, slug, add],
-  );
-
   const agent = modelsMap[id as string];
 
   return (
@@ -163,13 +176,47 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
     >
       <div className="flex grow items-center justify-between">
         <div className="flex h-full space-x-4">
-          <div className="flex items-center space-x-4">
+          <div className="relative flex items-center md:hidden">
             <button
-              className="p-2 text-primary md:hidden"
-              onClick={() => setMenuOpen((prevState) => !prevState)}
+              onClick={() => setMenuOpen((prev) => !prev)}
+              className="flex items-center gap-2 px-3 py-1 text-base font-medium text-primary"
             >
-              {menuOpen ? <IconX size={24} /> : <IconMenu2 size={24} />}
+              {label}
+              <IconChevronDown
+                size={18}
+                className={classNames(
+                  'transition-transform',
+                  menuOpen && 'rotate-180',
+                )}
+              />
             </button>
+
+            {menuOpen && (
+              <div className="absolute left-0 top-7 z-10 ml-3 mt-2 w-[168px] overflow-hidden rounded-md bg-layer-3">
+                {tabs.map((tab) => {
+                  const isDisabled = tab.key === TabKeys.SETTINGS && !id;
+                  const isActive = pathname === tab.href.pathname;
+
+                  return (
+                    <button
+                      key={tab.key}
+                      onClick={() => handleTabClose(tab.href, isDisabled)}
+                      disabled={isDisabled}
+                      className={classNames(
+                        'w-full px-3 py-2 text-left text-sm transition-colors',
+                        {
+                          'cursor-not-allowed text-secondary': isDisabled,
+                          'bg-accent-primary-alpha': isActive && !isDisabled,
+                          'hover:bg-gray-100': !isActive && !isDisabled,
+                        },
+                      )}
+                    >
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
           <span
             className="hidden items-center pl-1 text-primary md:flex xl:pl-0"
@@ -244,7 +291,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
           <Logo />
         </div>
 
-        <div className="flex h-full items-center space-x-2 pr-5 xl:pr-0">
+        <div className="flex h-full items-center space-x-2 pr-3 md:pr-5 xl:pr-0">
           {isEditApplication &&
           !hasCustomEditor &&
           !isEntityIdPublic({ id: agent?.id as string }) ? (
@@ -258,7 +305,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
             </button>
           ) : (
             <Link
-              className="hidden items-center space-x-1 px-3 text-accent-primary md:flex"
+              className="flex items-center space-x-1 px-3 text-accent-primary"
               data-qa="exit-link"
               href={myWorkspaceHref}
             >
@@ -271,38 +318,6 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
           </div>
         </div>
       </div>
-
-      {menuOpen && (
-        <div className="absolute left-0 top-[48px] w-full border-b border-secondary bg-layer-3 md:hidden">
-          {tabs.map((tab) => {
-            const isDisabled = tab.key === TabKeys.SETTINGS && !id;
-            const isActive = pathname === tab.href.pathname;
-            return (
-              <Link key={tab.key} href={tab.href} passHref>
-                <div
-                  className={classNames(
-                    'cursor-pointer border-b border-secondary px-4 py-2',
-                    isDisabled ? 'text-secondary' : 'text-primary',
-                    isActive && !isDisabled
-                      ? 'font-semibold text-accent-primary'
-                      : '',
-                  )}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {tab.label}
-                </div>
-              </Link>
-            );
-          })}
-          <Link
-            className="flex items-center px-4 py-2 hover:text-accent-primary"
-            href={myWorkspaceHref}
-          >
-            <IconLogout size={14} />
-            <span>{t('Go to marketplace')}</span>
-          </Link>
-        </div>
-      )}
 
       <SettingDialog
         open={isUserSettingsOpen}
