@@ -26,25 +26,13 @@ import { DeleteType } from '@/src/constants/marketplace';
 
 import { PublishActions } from '@epam/ai-dial-shared';
 
-export const useAgentActions = (entity: DialAIEntityModel) => {
+export const useApplicationMenuActions = (entity: DialAIEntityModel) => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
 
   const detailedApplicationTypeSchema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
-  );
-
-  const handleCopy = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!navigator.clipboard) return;
-      const link = getApplicationLink(entity);
-      navigator.clipboard.writeText(link);
-      dispatch(UIActions.showSuccessToast(t('Link copied!')));
-    },
-    [dispatch, entity, t],
   );
 
   const handleUpdateFunctionStatus = useCallback(
@@ -60,28 +48,13 @@ export const useAgentActions = (entity: DialAIEntityModel) => {
     [dispatch, entity],
   );
 
-  const handleEdit = useCallback(
+  const handleOpenApplicationLogs = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      const applicationType = getApplicationType(entity);
-      dispatch(
-        ApplicationActions.enterEditMode({
-          entity: entity,
-          applicationType,
-          detailedApplicationTypeSchemaId: detailedApplicationTypeSchema?.$id,
-        }),
-      );
+      dispatch(ApplicationActions.setLogsEntityId(entity.id));
     },
-    [entity, dispatch, detailedApplicationTypeSchema?.$id],
-  );
-
-  const handleDuplicate = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      dispatch(ApplicationActions.duplicate({ reference: entity.reference }));
-    },
-    [dispatch, entity.reference],
+    [entity, dispatch],
   );
 
   const handleOpenSharing = useCallback(
@@ -103,6 +76,34 @@ export const useAgentActions = (entity: DialAIEntityModel) => {
       dispatch(ShareActions.setUnshareEntity(entity));
     },
     [dispatch, entity],
+  );
+
+  const handleCopy = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!navigator.clipboard) return;
+      const link = getApplicationLink(entity);
+      navigator.clipboard.writeText(link);
+      dispatch(UIActions.showSuccessToast(t('Link copied!')));
+    },
+    [dispatch, entity, t],
+  );
+
+  const handleEdit = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const applicationType = getApplicationType(entity);
+      dispatch(
+        ApplicationActions.enterEditMode({
+          entity: entity,
+          applicationType,
+          detailedApplicationTypeSchemaId: detailedApplicationTypeSchema?.$id,
+        }),
+      );
+    },
+    [entity, dispatch, detailedApplicationTypeSchema?.$id],
   );
 
   const handlePublish = useCallback(
@@ -147,25 +148,15 @@ export const useAgentActions = (entity: DialAIEntityModel) => {
     [dispatch, entity],
   );
 
-  const handleOpenApplicationLogs = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      dispatch(ApplicationActions.setLogsEntityId(entity.id));
-    },
-    [entity, dispatch],
-  );
-
   return {
     handleCopy,
-    handleUpdateFunctionStatus,
     handleEdit,
-    handleDuplicate,
-    handleOpenSharing,
-    handleOpenUnshare,
     handlePublish,
     handleUnpublish,
     handleDelete,
+    handleOpenSharing,
+    handleOpenUnshare,
+    handleUpdateFunctionStatus,
     handleOpenApplicationLogs,
   };
 };

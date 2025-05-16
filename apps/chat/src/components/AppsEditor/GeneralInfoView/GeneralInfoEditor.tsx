@@ -227,7 +227,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
         className="flex size-full flex-col"
         data-qa="app-general-form"
       >
-        <div className="grow space-y-4 divide-tertiary overflow-y-auto p-5">
+        <div className="grow space-y-4 divide-tertiary overflow-y-auto px-5 py-4 xl:p-5">
           <Field
             {...register('name', validators['name'])}
             label={t('Name')}
