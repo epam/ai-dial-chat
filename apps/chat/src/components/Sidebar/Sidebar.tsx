@@ -2,7 +2,6 @@ import {
   DragEvent,
   ReactNode,
   useCallback,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -12,6 +11,7 @@ import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
+import { useWindowResizeEvent } from '@/src/hooks/useWindowResizeEvent';
 
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { isSmallScreen, isTabletScreen } from '@/src/utils/app/mobile';
@@ -324,13 +324,10 @@ const Sidebar = <T,>({
     }
   };
 
-  useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-
-    window.addEventListener('resize', handleResize);
-
-    return () => window.removeEventListener('resize', handleResize);
+  const handleResize = useCallback(() => {
+    setWindowWidth(window.innerWidth);
   }, []);
+  useWindowResizeEvent(handleResize);
 
   const resizableWrapperClassName = classNames(
     '!fixed z-40 flex max-w-[95%] border-tertiary md:max-w-[45%] xl:!relative xl:top-0 xl:!h-full',

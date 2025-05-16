@@ -1,16 +1,25 @@
 import { IconCaretLeftFilled, IconCaretRightFilled } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useSwipe } from '@/src/hooks/useSwipe';
 import { useTranslation } from '@/src/hooks/useTranslation';
+import { useWindowResizeEvent } from '@/src/hooks/useWindowResizeEvent';
 
 import {
   isPlaybackConversation,
   isReplayAsIsConversation,
 } from '@/src/utils/app/conversation';
+import { getScreenState } from '@/src/utils/app/mobile';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -64,11 +73,46 @@ const maxChunksCountConfig = {
   },
 };
 
+const startInnerHeightForRow = {
+  [ScreenState.XL5]: 217,
+  [ScreenState.XL4]: 217,
+  [ScreenState.XL3]: 217,
+  [ScreenState.XL]: 217,
+  [ScreenState.MD]: 217,
+  [ScreenState.SM]: 255,
+};
+
 const SLIDER_DOT_SIZE_WITH_GAPS = 24;
 const MAX_VISIBLE_SLIDER_DOTS = 7;
 const SLIDES_GAP = 16;
-const COMMON_GRID_TILES_GAP = 16;
-const MOBILE_GRID_TILES_GAP = 12;
+
+const getGridGap = (screenState: ScreenState) => {
+  const COMMON_GRID_TILES_GAP = 16;
+  const MOBILE_GRID_TILES_GAP = 12;
+
+  return screenState === ScreenState.SM
+    ? MOBILE_GRID_TILES_GAP
+    : COMMON_GRID_TILES_GAP;
+};
+
+const getRowsCount = () => {
+  const screenState = getScreenState();
+  const cardHeight = maxChunksCountConfig[screenState].cardHeight;
+  const gap = getGridGap(screenState);
+  let currentHeight =
+    startInnerHeightForRow[screenState] + cardHeight * 2 + gap;
+  let currentRows = 1;
+
+  while (
+    currentHeight < window.innerHeight &&
+    currentRows + 1 <= maxChunksCountConfig[screenState].maxRows
+  ) {
+    currentRows++;
+    currentHeight += cardHeight + gap;
+  }
+
+  return currentRows;
+};
 
 const calculateTranslateX = (activeSlide: number, clientWidth?: number) => {
   if (!clientWidth) return 'none';
@@ -122,7 +166,6 @@ const getDotSizeClass = (
 interface SliderModelsGroupProps {
   modelsGroup: CardType[];
   conversation: Conversation;
-  screenState: ScreenState;
   rowsCount: number;
   onSelectModel: (entity: DialAIEntityModel) => void;
   onOpenMarketplaceTab: () => void;
@@ -131,13 +174,15 @@ interface SliderModelsGroupProps {
 const SliderModelsGroup = ({
   modelsGroup,
   conversation,
-  screenState,
   rowsCount,
   onSelectModel,
   onOpenMarketplaceTab,
   ...restProps
 }: SliderModelsGroupProps) => {
   const { t } = useTranslation(Translation.Chat);
+
+  const screenState = useScreenState();
+
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   return (
@@ -151,10 +196,7 @@ const SliderModelsGroup = ({
         style={{
           gridTemplateColumns: `repeat(${maxChunksCountConfig[screenState].cols}, minmax(0, 1fr))`,
           gridTemplateRows: `repeat(${rowsCount}, ${maxChunksCountConfig[screenState].cardHeight}px)`,
-          gap:
-            screenState === ScreenState.SM
-              ? MOBILE_GRID_TILES_GAP
-              : COMMON_GRID_TILES_GAP,
+          gap: getGridGap(screenState),
         }}
       >
         {modelsGroup.map((model) => {
@@ -232,34 +274,23 @@ export const TalkToSlider = ({
   ...restProps
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+
   const sliderRef = useRef<HTMLDivElement>(null);
 
   const [activeSlide, setActiveSlide] = useState(0);
-  const [sliderHeight, setSliderHeight] = useState(0);
+  const [sliderRowsCount, setSliderRowsCount] = useState(1);
 
   const screenState = useScreenState();
 
-  const sliderRowsCount = useMemo(() => {
-    const availableRows =
-      Math.floor(sliderHeight / maxChunksCountConfig[screenState].cardHeight) ||
-      1;
+  const handleResize = useCallback(() => {
+    setSliderRowsCount(getRowsCount());
+  }, []);
+  useWindowResizeEvent(handleResize);
 
-    const finalRows =
-      availableRows === 1
-        ? availableRows
-        : Math.floor(
-            (sliderHeight -
-              (availableRows - 1) *
-                (screenState === ScreenState.SM
-                  ? MOBILE_GRID_TILES_GAP
-                  : COMMON_GRID_TILES_GAP)) /
-              maxChunksCountConfig[screenState].cardHeight,
-          ) || 1;
-
-    return finalRows > maxChunksCountConfig[screenState].maxRows
-      ? maxChunksCountConfig[screenState].maxRows
-      : finalRows;
-  }, [screenState, sliderHeight]);
+  // Should calculate height before render
+  useLayoutEffect(() => {
+    handleResize();
+  }, [handleResize]);
 
   const sliderGroups = useMemo(() => {
     return chunk(
@@ -309,24 +340,6 @@ export const TalkToSlider = ({
   });
 
   useEffect(() => {
-    const handleResize = () => {
-      if (sliderRef.current) {
-        setSliderHeight(sliderRef.current.clientHeight);
-      }
-    };
-
-    const resizeObserver = new ResizeObserver(handleResize);
-
-    if (sliderRef.current) {
-      resizeObserver.observe(sliderRef.current);
-    }
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, []);
-
-  useEffect(() => {
     if (!sliderGroups.length) {
       setActiveSlide(0);
     } else if (activeSlide !== 0 && activeSlide > sliderGroups.length - 1) {
@@ -342,12 +355,20 @@ export const TalkToSlider = ({
   );
   const isMobileOrTablet =
     screenState === ScreenState.SM || screenState === ScreenState.MD;
+  const gridGap = getGridGap(screenState);
 
   return (
     <>
       <div
         ref={sliderRef}
-        className="flex h-[428px] max-h-[428px] w-full flex-col overflow-y-auto overflow-x-hidden md:h-[688px] md:max-h-[688px] xl:h-[530px] xl:max-h-[530px]"
+        className="flex max-h-[538px] w-full flex-col overflow-y-auto overflow-x-hidden md:max-h-[688px] xl:max-h-[530px]"
+        style={{
+          height: `${
+            sliderRowsCount *
+              (maxChunksCountConfig[screenState].cardHeight + gridGap) -
+            gridGap
+          }px`,
+        }}
       >
         <div
           {...swipeHandlers}
@@ -369,7 +390,6 @@ export const TalkToSlider = ({
                 key={modelsGroup.map((model) => model.id).join('.')}
                 modelsGroup={modelsGroup}
                 conversation={conversation}
-                screenState={screenState}
                 rowsCount={sliderRowsCount}
                 onOpenMarketplaceTab={onOpenMarketplaceTab}
                 {...restProps}
@@ -472,6 +492,7 @@ interface SuggestionButtonProps {
 
 const SuggestionButton = ({ onClick }: SuggestionButtonProps) => {
   const { t } = useTranslation(Translation.Chat);
+
   return (
     <button className="text-accent-primary" onClick={onClick}>
       {t(`See results from ${ChangeAgentTabs[MarketplaceTabs.HOME]}`)}
