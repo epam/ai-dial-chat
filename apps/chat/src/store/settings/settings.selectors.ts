@@ -219,11 +219,6 @@ const selectProviderId = (state: RootState) => rootSelector(state).providerId;
 const _selectWidgetsSchemaIds = (state: RootState) =>
   rootSelector(state).widgetsSchemaIds;
 
-const selectWidgetsSchemaIds = createSelector(
-  [_selectWidgetsSchemaIds],
-  (widgetsSchemaIds) => new Set(widgetsSchemaIds),
-);
-
 export const SettingsSelectors = {
   selectAppName,
   selectIsOverlay,
@@ -255,5 +250,5 @@ export const SettingsSelectors = {
   selectDefaults,
   selectInitialDataStatus,
   selectProviderId,
-  selectWidgetsSchemaIds,
+  _selectWidgetsSchemaIds,
 };

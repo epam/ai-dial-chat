@@ -31,6 +31,7 @@ import { ConversationsActions } from '@/src/store/conversations/conversations.re
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { WidgetsSelectors } from '@/src/store/widgets/widgets.selectors';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import {
@@ -95,7 +96,7 @@ const TalkToModalView = ({
   );
   const recentModelIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
   const widgetsSchemaIds = useAppSelector(
-    SettingsSelectors.selectWidgetsSchemaIds,
+    WidgetsSelectors.selectWidgetsSchemaIds,
   );
 
   const [searchTerm, setSearchTerm] = useState('');

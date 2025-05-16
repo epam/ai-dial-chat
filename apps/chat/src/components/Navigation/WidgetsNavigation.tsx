@@ -38,10 +38,6 @@ const WidgetsNavigationView = () => {
     ModelsSelectors.selectAreModelsLoading,
   );
 
-  const widgetsSchemaIds = useAppSelector(
-    SettingsSelectors.selectWidgetsSchemaIds,
-  );
-
   const { widgetModels, handleWidgetClick } = useWidgets();
 
   const handleOpenWidgetsClick = useCallback(() => {
