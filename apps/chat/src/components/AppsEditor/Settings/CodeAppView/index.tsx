@@ -248,7 +248,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
       onSubmit={submitWrapper(handleEdit)}
       className="flex size-full flex-col bg-layer-2"
     >
-      <div className="grow space-y-4 divide-tertiary overflow-y-auto p-5">
+      <div className="grow space-y-4 divide-tertiary overflow-y-auto px-5 py-4 xl:p-5">
         <Controller
           name="inputAttachmentTypes"
           rules={validators['inputAttachmentTypes']}

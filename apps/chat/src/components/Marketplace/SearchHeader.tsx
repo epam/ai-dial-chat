@@ -68,7 +68,7 @@ const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       placement="bottom"
-      triggerIconClassName="max-xl:hidden"
+      triggerIconClassName="max-md:hidden"
       TriggerCustomRenderer={
         <button
           className="button button-primary flex items-center gap-2 py-2"
