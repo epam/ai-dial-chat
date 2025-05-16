@@ -377,6 +377,11 @@ dialTest(
     dataInjector,
     folderConversations,
     conversationDropdownMenu,
+    selectFolderModal,
+    selectFolderModalAssertion,
+    toastAssertion,
+    chatBarFolderAssertion,
+    conversationAssertion,
     localStorageManager,
     toast,
     setTestIds,
@@ -439,18 +444,12 @@ dialTest(
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         await renameConversationModal.editInputValue(duplicatedName);
         await renameConversationModal.saveButton.click();
-
-        await expect
-          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
-          .toBeVisible();
-        const errorMessage = await toast.getElementContent();
-        expect
-          .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
-          .toBe(
-            ExpectedConstants.duplicatedConversationNameErrorMessage(
-              duplicatedName,
-            ),
-          );
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.duplicatedConversationNameErrorMessage(
+            duplicatedName,
+          ),
+          ExpectedMessages.notAllowedNameErrorShown,
+        );
         await toast.closeToast();
         await renameConversationModal.cancelButton.click();
       },
@@ -467,24 +466,17 @@ dialTest(
         await chatBar.dragAndDropEntityFromFolder(
           firstFolderConversationLocator,
         );
-
-        await expect
-          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
-          .toBeVisible();
-        const errorMessage = await toast.getElementContent();
-        expect
-          .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
-          .toBe(
-            ExpectedConstants.duplicatedConversationRootNameErrorMessage(
-              duplicatedName,
-            ),
-          );
-        await expect
-          .soft(
-            firstFolderConversationLocator,
-            ExpectedMessages.conversationIsVisible,
-          )
-          .toBeVisible();
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.duplicatedConversationRootNameErrorMessage(
+            duplicatedName,
+          ),
+          ExpectedMessages.notAllowedNameErrorShown,
+        );
+        await chatBarFolderAssertion.assertFolderEntityState(
+          { name: folderConversation.folders.name },
+          { name: firstFolderConversation.name },
+          'visible',
+        );
         await toast.closeToast();
       },
     );
@@ -494,27 +486,22 @@ dialTest(
       async () => {
         await conversations.openEntityDropdownMenu(rootConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.moveTo);
-        await conversationDropdownMenu.selectMenuOption(
-          folderConversation.folders.name,
+        await selectFolderModalAssertion.assertElementState(
+          selectFolderModal,
+          'visible',
         );
-
-        await expect
-          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
-          .toBeVisible();
-        const errorMessage = await toast.getElementContent();
-        expect
-          .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
-          .toBe(
-            ExpectedConstants.duplicatedConversationNameErrorMessage(
-              duplicatedName,
-            ),
-          );
-        await expect
-          .soft(
-            conversations.getEntityByName(rootConversation.name),
-            ExpectedMessages.conversationIsVisible,
-          )
-          .toBeVisible();
+        await selectFolderModal.selectFolder(folderConversation.folders.name);
+        await selectFolderModal.clickSelectFolderButton();
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.duplicatedConversationNameErrorMessage(
+            duplicatedName,
+          ),
+          ExpectedMessages.errorToastIsShown,
+        );
+        await conversationAssertion.assertEntityState(
+          { name: rootConversation.name },
+          'visible',
+        );
       },
     );
   },
