@@ -169,6 +169,28 @@ export const GeneralInfoView: React.FC<Props> = ({
           </div>
         )}
       </div>
+
+      {previewMode === PreviewMode.closed && (
+        <div className="hidden h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-4 hover:cursor-pointer max-xl:flex">
+          <button
+            className="text-secondary hover:text-accent-primary"
+            onClick={(e) => {
+              e.stopPropagation();
+              setPreviewMode(PreviewMode.full);
+            }}
+          >
+            <Tooltip tooltip={t('Expand preview')}>
+              <IconArrowsMaximize size={24} />
+            </Tooltip>
+          </button>
+          <span
+            className="select-none text-primary"
+            style={{ writingMode: 'vertical-rl' }}
+          >
+            {t('Preview')}
+          </span>
+        </div>
+      )}
     </div>
   );
 };

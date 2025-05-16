@@ -195,9 +195,21 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
       const isIsolatedView = SettingsSelectors.selectIsIsolatedView(
         state$.value,
       );
+      const preselectedConversationId =
+        SettingsSelectors.selectPreselectedConversationId(state$.value);
 
-      // Always create new conversation in isolated view
-      if (isIsolatedView) {
+      if (preselectedConversationId) {
+        const preselectedAction = SettingsSelectors.selectPreselectedAction(
+          state$.value,
+        );
+
+        return of(
+          ConversationsActions.selectConversations({
+            conversationIds: [preselectedConversationId as string],
+          }),
+          ConversationsActions.selectAction(preselectedAction || null),
+        );
+      } else if (isIsolatedView) {
         const isolatedModelId = SettingsSelectors.selectIsolatedModelId(
           state$.value,
         );

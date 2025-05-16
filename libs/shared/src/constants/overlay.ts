@@ -2,12 +2,16 @@ export const overlayAppName = '@DIAL_OVERLAY';
 
 export enum OverlayRequests {
   getMessages = 'GET_MESSAGES',
+  sendMessage = 'SEND_MESSAGE',
+  setSystemPrompt = 'SET_SYSTEM_PROMPT',
+  setOverlayOptions = 'SET_OVERLAY_OPTIONS',
   getConversations = 'GET_CONVERSATIONS',
   selectConversation = 'SELECT_CONVERSATION',
   createConversation = 'CREATE_CONVERSATION',
-  setOverlayOptions = 'SET_OVERLAY_OPTIONS',
-  setSystemPrompt = 'SET_SYSTEM_PROMPT',
-  sendMessage = 'SEND_MESSAGE',
+  deleteConversation = 'DELETE_CONVERSATION',
+  renameConversation = 'RENAME_CONVERSATION',
+  createPlaybackConversation = 'CREATE_PLAYBACK_CONVERSATION',
+  exportConversation = 'EXPORT_CONVERSATION',
 }
 
 export enum OverlayEvents {

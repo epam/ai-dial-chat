@@ -248,15 +248,20 @@ export const ApplicationEditorHeader = {
   notSelectedStepIcon: '[data-qa="not-selected-step-icon"]',
 };
 
-export const ApplicationPreviewSelector = {
+export const AppEditorGeneralInfoPreviewSelectors = {
   containerGeneralInfo: '[data-qa="app-preview-general-info"]',
-  containerAppSettings: '[data-qa="app-settings-chat-mode"]',
   previewIconContainer: '[data-qa="entity-icon"]',
   previewAgentName: '[data-qa="agent-name"]',
   previewTopicsContainer: '[data-qa="app-topics"]',
   previewInformationSection: '[data-qa="application-information"]',
   previewAuthorContainer: '[data-qa="author-container"]',
   previewAuthorValue: '[data-qa="author"]',
+};
+
+export const AppEditorAppSettingsPreviewSelectors = {
+  container: '[data-qa="app-preview-settings"]',
+  chatPreviewContainer: '[data-qa="app-settings-chat-mode"]',
+  previewIconContainer: '[data-qa="entity-icon"]',
 };
 
 export const AddApplicationGeneralInfoFormSelector = {
