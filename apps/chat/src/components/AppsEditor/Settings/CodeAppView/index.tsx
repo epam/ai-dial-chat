@@ -130,7 +130,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     handleSubmit: submitWrapper,
     setError,
     clearErrors,
-    formState: { errors, defaultValues, isValid },
+    formState: { errors, defaultValues, isSubmitted, isValid },
     watch,
     register,
   } = useFormContext<CodeAppFormData>();
@@ -218,7 +218,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     const isTriggered = shouldSaveApplication || exitAfterSave;
     if (!isTriggered) return;
 
-    if (!isValid) {
+    if (!isValid && isSubmitted) {
       dispatch(ApplicationActions.setShouldSaveApplication(false));
       dispatch(ApplicationActions.setExitAfterSave(false));
       dispatch(
@@ -239,6 +239,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     isValid,
     dispatch,
     t,
+    isSubmitted,
   ]);
 
   const isAppPublic = isEntityIdPublic(oldApplication);

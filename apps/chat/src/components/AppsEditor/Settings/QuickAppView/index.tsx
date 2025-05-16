@@ -96,7 +96,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
     register,
     control,
     handleSubmit: submitWrapper,
-    formState: { errors, defaultValues, isValid },
+    formState: { errors, defaultValues, isSubmitted, isValid },
   } = useFormContext<QuickAppFormData>();
 
   const lastSubmittedValuesRef = useRef<QuickAppFormData | undefined>(
@@ -173,9 +173,10 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
   }, [submitWrapper, handleSubmit]);
 
   useEffect(() => {
-    if (!shouldSaveApplication && !exitAfterSave) return;
+    const isTriggered = shouldSaveApplication || exitAfterSave;
+    if (!isTriggered) return;
 
-    if (!isValid) {
+    if (!isValid && isSubmitted) {
       dispatch(ApplicationActions.setShouldSaveApplication(false));
       dispatch(ApplicationActions.setExitAfterSave(false));
       dispatch(
@@ -195,6 +196,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
     dispatch,
     router,
     t,
+    isSubmitted,
   ]);
 
   const isAppPublic = isEntityIdPublic(oldApplication);
