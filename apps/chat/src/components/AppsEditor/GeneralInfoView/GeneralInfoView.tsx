@@ -171,7 +171,7 @@ export const GeneralInfoView: React.FC<Props> = ({
       </div>
 
       {previewMode === PreviewMode.closed && (
-        <div className="hidden h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-4 hover:cursor-pointer max-xl:flex">
+        <div className="hidden h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-4 hover:cursor-pointer xl:flex">
           <button
             className="text-secondary hover:text-accent-primary"
             onClick={(e) => {
