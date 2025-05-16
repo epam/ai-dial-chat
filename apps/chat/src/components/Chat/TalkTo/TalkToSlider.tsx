@@ -60,7 +60,7 @@ const SLIDER_CHUNKS_CONFIG = {
   [ScreenState.MD]: TABLET_SLIDER_CHUNKS_CONFIG,
   [ScreenState.SM]: MOBILE_SLIDER_CHUNKS_CONFIG,
 };
-const getMaxChunksCountConfig = (screenState: ScreenState) =>
+const getSliderChunksConfig = (screenState: ScreenState) =>
   screenState === ScreenState.SM || screenState === ScreenState.MD
     ? SLIDER_CHUNKS_CONFIG[screenState]
     : DEFAULT_SLIDER_CHUNKS_CONFIG;
@@ -81,7 +81,7 @@ const getGridGap = (screenState: ScreenState) =>
 
 const getRowsCount = () => {
   const screenState = getScreenState();
-  const maxChunksCountConfig = getMaxChunksCountConfig(screenState);
+  const maxChunksCountConfig = getSliderChunksConfig(screenState);
   const cardHeight = maxChunksCountConfig.cardHeight;
   const gap = getGridGap(screenState);
   const startSingleRowOffset = getStartSingleRowOffset(screenState);
@@ -173,7 +173,7 @@ const SliderModelsGroup = memo(
 
     const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
-    const maxChunksCountConfig = getMaxChunksCountConfig(screenState);
+    const maxChunksCountConfig = getSliderChunksConfig(screenState);
 
     return (
       <section
@@ -289,7 +289,7 @@ export const TalkToSlider = ({
     handleResize();
   }, [handleResize]);
 
-  const maxChunksCountConfig = getMaxChunksCountConfig(screenState);
+  const maxChunksCountConfig = getSliderChunksConfig(screenState);
 
   const sliderGroups = useMemo(() => {
     return chunk(items, sliderRowsCount * maxChunksCountConfig.cols);
