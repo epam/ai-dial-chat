@@ -514,7 +514,7 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
                       ...uploadedConversationsFoldersIds,
                       ...openedFolderIds,
                     ]),
-                    folderType: FeatureType.Chat,
+                    featureType: FeatureType.Chat,
                   }),
                 ),
                 iif(
@@ -596,7 +596,7 @@ const uploadImportedPromptsEpic: AppEpic = (action$, state$) =>
                       ...uploadedPromptsFolderIds,
                       ...openedFolderIds,
                     ]),
-                    folderType: FeatureType.Prompt,
+                    featureType: FeatureType.Prompt,
                   }),
                 ),
                 iif(

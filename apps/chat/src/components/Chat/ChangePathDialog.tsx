@@ -35,9 +35,6 @@ import { SelectFolderFooter } from '@/src/components/Common/SelectFolder/SelectF
 import { SelectFolderHeader } from '@/src/components/Common/SelectFolder/SelectFolderHeader';
 import { SelectFolderList } from '@/src/components/Common/SelectFolder/SelectFolderList';
 
-import { FolderProps } from '../Folder/Folder';
-
-import { ShareEntity } from '@epam/ai-dial-shared';
 import uniqBy from 'lodash-es/uniqBy';
 
 interface Props {
@@ -48,6 +45,10 @@ interface Props {
   rootFolderId: string;
   depth?: number;
 }
+
+const additionalItemData = {
+  isChangePathFolder: true,
+};
 
 export const ChangePathDialog = ({
   isOpen,
@@ -227,38 +228,6 @@ export const ChangePathDialog = ({
     [actions, dispatch],
   );
 
-  const folderProps: Omit<
-    FolderProps<ShareEntity, unknown>,
-    'currentFolder' | 'featureType'
-  > = useMemo(
-    () => ({
-      searchTerm: searchQuery,
-      allFolders: folders,
-      isInitialRenameEnabled: true,
-      openedFoldersIds,
-      newAddedFolderId: newFolderId,
-      loadingFolderIds,
-      additionalItemData: {
-        isChangePathFolder: true,
-      },
-      onClickFolder: handleFolderSelect,
-      onRenameFolder: handleRenameFolder,
-      onDeleteFolder: handleDeleteFolder,
-      onAddFolder: handleAddFolder,
-    }),
-    [
-      folders,
-      handleAddFolder,
-      handleDeleteFolder,
-      handleFolderSelect,
-      handleRenameFolder,
-      loadingFolderIds,
-      newFolderId,
-      openedFoldersIds,
-      searchQuery,
-    ],
-  );
-
   const getPath = useCallback(() => {
     const { path, pathDepth } = getPathToFolderById(folders, selectedFolderId);
 
@@ -282,13 +251,23 @@ export const ChangePathDialog = ({
       title={t('Change path')}
     >
       <SelectFolderHeader
-        handleSearch={handleSearch}
+        onSearch={handleSearch}
         searchQuery={searchQuery}
         errorMessage={errorMessage}
       >
         <SelectFolderList
-          folderProps={folderProps}
-          handleFolderSelect={handleFolderSelect}
+          searchTerm={searchQuery}
+          allFolders={folders}
+          isInitialRenameEnabled
+          openedFoldersIds={openedFoldersIds}
+          newAddedFolderId={newFolderId}
+          loadingFolderIds={loadingFolderIds}
+          additionalItemData={additionalItemData}
+          onClickFolder={handleFolderSelect}
+          onRenameFolder={handleRenameFolder}
+          onDeleteFolder={handleDeleteFolder}
+          onAddFolder={handleAddFolder}
+          onFolderSelect={handleFolderSelect}
           isAllEntitiesOpened={isAllFoldersOpened}
           initiallySelectedFolderId={initiallySelectedFolderId}
           selectedFolderId={selectedFolderId}
@@ -300,7 +279,7 @@ export const ChangePathDialog = ({
         />
       </SelectFolderHeader>
       <SelectFolderFooter
-        handleNewFolder={handleAddFolder}
+        onCreateNewFolder={handleAddFolder}
         onSelectFolderClick={getPath}
       />
     </SelectFolder>
