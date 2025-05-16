@@ -79,12 +79,8 @@ const SLIDER_DOT_SIZE_WITH_GAPS = 24;
 const MAX_VISIBLE_SLIDER_DOTS = 7;
 const SLIDES_GAP = 16;
 
-const COMMON_GRID_TILES_GAP = 16;
-const MOBILE_GRID_TILES_GAP = 12;
 const getGridGap = (screenState: ScreenState) =>
-  screenState === ScreenState.SM
-    ? MOBILE_GRID_TILES_GAP
-    : COMMON_GRID_TILES_GAP;
+  screenState === ScreenState.SM ? 12 : 16;
 
 const getRowsCount = () => {
   const screenState = getScreenState();
