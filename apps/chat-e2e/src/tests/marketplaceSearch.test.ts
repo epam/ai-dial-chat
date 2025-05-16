@@ -11,7 +11,7 @@ import {
 } from '@/src/testData';
 import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
-import { MarketplaceAgentProperties } from '@/src/ui/webElements';
+import { BaseElement, MarketplaceAgentProperties } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil, SortingUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
@@ -505,7 +505,9 @@ dialTest(
 );
 
 dialTest(
-  'Search in DIAL Marketplace: Search word and other filters work together type and topics',
+  'Search in DIAL Marketplace: Search word and other filters work together type and topics.\n' +
+    '[Card view] Not published my custom application does not have bookmark icon.\n' +
+    '[Detailed card view] Not published my custom application does not have bookmark icon',
   async ({
     customApplicationBuilder,
     applicationApiHelper,
@@ -513,14 +515,18 @@ dialTest(
     marketplaceFilter,
     marketplaceHeader,
     marketplaceAgentsSection,
+    marketplaceAgents,
+    agentDetailsModal,
+    agentDetailsModalAssertion,
     setTestIds,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-4425');
+    setTestIds('EPMRTC-4425', 'EPMRTC-4610', 'EPMRTC-4609');
     const firstAppName = GeneratorUtil.randomApplicationName();
     const secondAppName = GeneratorUtil.randomApplicationName();
     const thirdAppName = GeneratorUtil.randomApplicationName();
     const appTopic = GeneratorUtil.randomString(5);
+    let actualAgent: BaseElement;
 
     await dialTest.step(
       'Prepare three custom applications, two of them have a common topic',
@@ -606,6 +612,37 @@ dialTest(
           actualAgents.map((agent) => agent.name),
           [firstAppName],
           MarketplaceExpectedMessages.filteredAgentsAreValid,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify custom app does not have bookmark icon',
+      async () => {
+        actualAgent =
+          await marketplaceAgentsSection.findAgentElement(firstAppName);
+        await baseAssertion.assertElementState(
+          marketplaceAgents.getAgentElementAddBookmarkIcon(actualAgent),
+          'hidden',
+        );
+        await baseAssertion.assertElementState(
+          marketplaceAgents.getAgentElementRemoveBookmarkIcon(actualAgent),
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Open app card and verify it does not have bookmark icon',
+      async () => {
+        await actualAgent.click();
+        await agentDetailsModalAssertion.assertElementState(
+          agentDetailsModal.addBookmarkIcon,
+          'hidden',
+        );
+        await agentDetailsModalAssertion.assertElementState(
+          agentDetailsModal.removeBookmarkIcon,
+          'hidden',
         );
       },
     );
