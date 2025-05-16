@@ -46,6 +46,12 @@ const selectIsIsolatedView = (state: RootState) =>
 const selectIsolatedModelId = (state: RootState) =>
   rootSelector(state).isolatedModelId;
 
+const selectPreselectedConversationId = (state: RootState) =>
+  rootSelector(state).preselectedConversationId;
+
+const selectPreselectedAction = (state: RootState) =>
+  rootSelector(state).preselectedAction;
+
 const isFeatureEnabled = (state: RootState, featureName: Feature) =>
   selectEnabledFeatures(state).has(featureName);
 
@@ -232,6 +238,8 @@ export const SettingsSelectors = {
   selectThemeHostDefined,
   selectIsIsolatedView,
   selectIsolatedModelId,
+  selectPreselectedConversationId,
+  selectPreselectedAction,
   selectMappedVisualizers,
   selectIsCustomAttachmentType,
   selectPublicationFilters,
