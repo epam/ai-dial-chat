@@ -12,6 +12,7 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -29,6 +30,8 @@ import {
   ApplicationType,
   CustomApplicationModel,
 } from '@/src/types/applications';
+import { ScreenState } from '@/src/types/common';
+import { PreviewMode } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { ModelsActions } from '@/src/store/actions';
@@ -63,12 +66,6 @@ import {
   getQuickAppDefaultValues,
 } from './form';
 
-enum PreviewMode {
-  half,
-  full,
-  closed,
-}
-
 interface Props {
   schema: ApiDetailedApplicationTypeSchema | null;
   applicationData: CustomApplicationModel;
@@ -85,6 +82,8 @@ export const ApplicationSettings: React.FC<Props> = ({
   const router = useRouter();
 
   const dispatch = useAppDispatch();
+
+  const screenState = useScreenState();
 
   const pythonVersions = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
@@ -106,10 +105,17 @@ export const ApplicationSettings: React.FC<Props> = ({
   const theme = useAppSelector(UISelectors.selectThemeState);
 
   const [previewMode, setPreviewMode] = useState<PreviewMode>(
-    schema?.[ApplicationTypeSchemaProperties.applicationTypeViewerUrl]
+    screenState === ScreenState.MD ||
+      schema?.[ApplicationTypeSchemaProperties.applicationTypeViewerUrl]
       ? PreviewMode.closed
       : PreviewMode.half,
   );
+
+  useEffect(() => {
+    if (screenState <= ScreenState.MD && previewMode === PreviewMode.half) {
+      setPreviewMode(PreviewMode.closed);
+    }
+  }, [previewMode, screenState]);
 
   const isAppPublic = isEntityIdPublic(applicationData);
   const modelFromState = applicationData
@@ -323,7 +329,7 @@ export const ApplicationSettings: React.FC<Props> = ({
         )}
         data-qa="app-preview-settings"
       >
-        <div className="flex max-w-full items-center justify-between p-2">
+        <div className="flex max-w-full items-center justify-between px-5 py-4 xl:p-2">
           <div className="mr-2 flex min-w-0 shrink grow gap-2 text-primary">
             <span>{t('Preview')}:</span>
             <span
@@ -339,7 +345,7 @@ export const ApplicationSettings: React.FC<Props> = ({
           <div className="flex space-x-2">
             {showRedeployButton && (
               <button
-                className="button button-accent-secondary mb-2 flex items-center gap-2 text-accent-secondary md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
+                className="xl:button button-accent-secondary mb-0 flex items-center gap-2 border-r border-secondary px-3 py-0 text-accent-secondary md:last:mb-6 lg:max-w-3xl xl:mx-auto xl:border-none"
                 data-qa="redeploy-code-app"
                 disabled={!methods.formState.isValid}
                 onClick={handleRedeploy}
@@ -350,7 +356,7 @@ export const ApplicationSettings: React.FC<Props> = ({
             )}
             {previewMode === PreviewMode.half && (
               <button
-                className="text-secondary hover:text-accent-primary"
+                className="hidden text-secondary hover:text-accent-primary xl:flex"
                 onClick={() => setPreviewMode(PreviewMode.full)}
               >
                 <Tooltip tooltip={t('Expand preview')}>
@@ -360,7 +366,7 @@ export const ApplicationSettings: React.FC<Props> = ({
             )}
             {previewMode === PreviewMode.full && (
               <button
-                className="text-secondary hover:text-accent-primary"
+                className="hidden text-secondary hover:text-accent-primary xl:flex"
                 onClick={() => setPreviewMode(PreviewMode.half)}
               >
                 <Tooltip tooltip={t('Split view')}>
@@ -369,7 +375,7 @@ export const ApplicationSettings: React.FC<Props> = ({
               </button>
             )}
             <button
-              className="text-secondary hover:text-accent-primary"
+              className="ml-4 text-secondary hover:text-accent-primary xl:ml-2"
               onClick={() => setPreviewMode(PreviewMode.closed)}
             >
               <Tooltip tooltip={t('Hide preview')}>
@@ -392,8 +398,10 @@ export const ApplicationSettings: React.FC<Props> = ({
       </div>
       {previewMode === PreviewMode.closed && (
         <div
-          className="flex h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-2 transition-all duration-300 ease-in-out hover:cursor-pointer"
-          onClick={() => setPreviewMode(PreviewMode.half)}
+          className="flex h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-4 transition-all duration-300 ease-in-out hover:cursor-pointer xl:pt-5"
+          onClick={() => {
+            if (screenState > ScreenState.MD) setPreviewMode(PreviewMode.half);
+          }}
         >
           <button
             className="text-secondary hover:text-accent-primary"
@@ -408,7 +416,7 @@ export const ApplicationSettings: React.FC<Props> = ({
           </button>
 
           <button
-            className="text-secondary hover:text-accent-primary"
+            className="hidden text-secondary hover:text-accent-primary xl:flex"
             onClick={() => setPreviewMode(PreviewMode.half)}
           >
             <Tooltip tooltip={t('Split view')}>
