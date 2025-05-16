@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
+
+import { useWindowResizeEvent } from '@/src/hooks/useWindowResizeEvent';
 
 import { isSmallScreen, isTabletScreen } from '@/src/utils/app/mobile';
 import { centralChatWidth, getNewSidebarWidth } from '@/src/utils/app/sidebar';
@@ -112,13 +114,10 @@ const Header = Inversify.register('Header', () => {
     ? OVERLAY_HEADER_ICON_SIZE
     : DEFAULT_HEADER_ICON_SIZE;
 
-  useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-
-    window.addEventListener('resize', handleResize);
-
-    return () => window.removeEventListener('resize', handleResize);
+  const handleResize = useCallback(() => {
+    setWindowWidth(window.innerWidth);
   }, []);
+  useWindowResizeEvent(handleResize);
 
   return (
     <BaseHeader

@@ -13,6 +13,7 @@ import { useRouter } from 'next/router';
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
+import { useWindowResizeEvent } from '@/src/hooks/useWindowResizeEvent';
 
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { isSmallScreen } from '@/src/utils/app/mobile';
@@ -181,12 +182,10 @@ export const MigrationFailedWindow = ({
     MigrationSelectors.selectIsChatsBackedUp,
   );
 
-  useEffect(() => {
-    const handleResize = () => setIsScreenSmall(isSmallScreen());
-    window.addEventListener('resize', handleResize);
-
-    return () => window.removeEventListener('resize', handleResize);
+  const handleResize = useCallback(() => {
+    setIsScreenSmall(isSmallScreen());
   }, []);
+  useWindowResizeEvent(handleResize);
 
   useEffect(() => {
     setConversationsToRetryIds(
