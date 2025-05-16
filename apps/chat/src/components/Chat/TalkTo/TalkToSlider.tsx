@@ -148,24 +148,27 @@ const getDotSizeClass = (
   return 'size-2';
 };
 
-interface SliderModelsGroupProps {
-  modelsGroup: CardType[];
+interface Props {
   conversation: Conversation;
-  rowsCount: number;
+  items: CardType[];
+  isMyWorkspace: boolean;
+  isSearchMode: boolean;
+  searchTerm: string;
   onSelectModel: (entity: DialAIEntityModel) => void;
   onOpenMarketplaceTab: () => void;
 }
 
-const SliderModelsGroup = memo(
-  ({
-    modelsGroup,
-    conversation,
-    rowsCount,
-    onSelectModel,
-    onOpenMarketplaceTab,
-    ...restProps
-  }: SliderModelsGroupProps) => {
-    const { t } = useTranslation(Translation.Chat);
+const SliderModelsGroup = ({
+  modelsGroup,
+  conversation,
+  rowsCount,
+  isMyWorkspace,
+  onSelectModel,
+  onOpenMarketplaceTab,
+  ...restProps
+}: SliderModelsGroupProps) => {
+  const { t } = useTranslation(Translation.Chat);
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
     const screenState = useScreenState();
 
@@ -229,6 +232,7 @@ const SliderModelsGroup = memo(
                 entity={model as DialAIEntityModel}
                 onClick={onSelectModel}
                 onSelectVersion={onSelectModel}
+                isMyWorkspace={isMyWorkspace}
                 {...restProps}
               />
             );
@@ -390,6 +394,7 @@ export const TalkToSlider = ({
                 conversation={conversation}
                 rowsCount={sliderRowsCount}
                 onOpenMarketplaceTab={onOpenMarketplaceTab}
+                isMyWorkspace={isMyWorkspace}
                 {...restProps}
               />
             ))
