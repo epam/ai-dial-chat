@@ -392,6 +392,20 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
           .toBeHidden();
   }
 
+  public async assertFolderEntityIsInViewport(
+    folder: TreeEntity,
+    folderEntity: TreeEntity,
+    ratio?: number,
+  ) {
+    const folderEntityElement = this.folder.getFolderEntity(
+      folder.name,
+      folderEntity.name,
+      folder.index,
+      folderEntity.index,
+    );
+    await this.assertElementIsInViewport(folderEntityElement, ratio);
+  }
+
   //the function argument is a full path to the searched folder, e.g., 'test' - if the folder is not nested, or 'test1/test1.1/test1.1.1' in the case of a nested structure
   public async assertSearchResultRepresentation(searchFolderPath: string) {
     //extract folder path elements to an array
