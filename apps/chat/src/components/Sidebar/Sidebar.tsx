@@ -101,6 +101,10 @@ const Sidebar = <T,>({
 
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
+  const isNavigationVisible = useAppSelector(
+    UISelectors.selectIsNavigationVisible,
+  );
+
   const [windowWidth, setWindowWidth] = useState<number | undefined>(() => {
     if (typeof window !== 'undefined') {
       return window.innerWidth;
@@ -334,7 +338,9 @@ const Sidebar = <T,>({
     isLeftSidebar
       ? 'sidebar-left left-0 border-r xl:left-0'
       : 'sidebar-right right-0 border-l',
-    isLeftSidebar && (isOverlay ? 'md:left-[44px]' : 'md:left-[60px]'),
+    isNavigationVisible &&
+      isLeftSidebar &&
+      (isOverlay ? 'md:left-[44px]' : 'md:left-[60px]'),
     (screenState === ScreenState.SM || screenState === ScreenState.MD) &&
       '!h-full',
     screenState !== ScreenState.SM &&
