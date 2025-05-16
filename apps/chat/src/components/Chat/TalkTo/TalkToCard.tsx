@@ -83,7 +83,7 @@ export const TalkToCard = ({
           installedModelIds.has(model.reference) ||
           (isSelected && entity.reference === model.reference)),
     );
-  }, [allModels, entity, installedModelIds, isSelected]);
+  }, [allModels, entity, installedModelIds, isMyWorkspace, isSelected]);
 
   const handleSelectVersion = useCallback(
     (model: DialAIEntityModel) => {

@@ -22,6 +22,7 @@ import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
+import { CardType } from '@/src/types/talkTo';
 import { Translation } from '@/src/types/translation';
 
 import { ModelsActions } from '@/src/store/actions';
@@ -37,12 +38,13 @@ import {
   MarketplaceQueryParams,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
+import { SuggestedCard } from '@/src/constants/talkTo';
 
+import { TabButton } from '@/src/components/Buttons/TabButton';
+import { AgentDialogs } from '@/src/components/Common/AgentDialogs';
 import { Modal } from '@/src/components/Common/Modal';
 
-import { TabButton } from '../../Buttons/TabButton';
-import { AgentDialogs } from '../../Common/AgentDialogs';
-import { CardType, SuggestedCard, TalkToSlider } from './TalkToSlider';
+import { TalkToSlider } from './TalkToSlider';
 
 import { Feature } from '@epam/ai-dial-shared';
 import orderBy from 'lodash-es/orderBy';
@@ -78,6 +80,7 @@ const TalkToModalView = ({
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useDispatch();
+
   const [tab, setTab] = useState(MarketplaceTabs.MY_WORKSPACE);
   const isMyWorkspace = tab === MarketplaceTabs.MY_WORKSPACE;
 
@@ -232,7 +235,14 @@ const TalkToModalView = ({
 
       onClose();
     },
-    [addonsMap, conversation, dispatch, modelsMap, onClose],
+    [
+      addonsMap,
+      conversation,
+      dispatch,
+      installedModelIdsSet,
+      modelsMap,
+      onClose,
+    ],
   );
 
   const handleGoToWorkspace = useCallback(
@@ -289,6 +299,7 @@ const TalkToModalView = ({
         isMyWorkspace={isMyWorkspace}
         onOpenMarketplaceTab={() => setTab(MarketplaceTabs.HOME)}
         isSearchMode={searchTerm.length > 0}
+        searchTerm={searchTerm}
       />
 
       {isMarketplaceEnabled && (
