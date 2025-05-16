@@ -26,7 +26,6 @@ import { getEntityNameError } from '@/src/utils/app/errors';
 import { isEntityIdExternal } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
-import { defaultMyItemsFilters } from '@/src/utils/app/search';
 
 import {
   AdditionalItemData,
@@ -51,8 +50,6 @@ import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import ShareIcon from '@/src/components/Common/ShareIcon';
 import Tooltip from '@/src/components/Common/Tooltip';
 
-import { PromptDialogs } from './PromptDialogs';
-
 import { PublishActions } from '@epam/ai-dial-shared';
 
 interface Props {
@@ -70,13 +67,6 @@ export const PromptComponent = ({
 
   const { t } = useTranslation(Translation.Chat);
 
-  const filteredFoldersSelector = useMemo(
-    () =>
-      PromptsSelectors.selectFilteredFolders(defaultMyItemsFilters, '', true),
-    [],
-  );
-
-  const folders = useAppSelector(filteredFoldersSelector);
   const { selectedPromptId, isSelectedPromptApproveRequiredResource } =
     useAppSelector(PromptsSelectors.selectSelectedPromptId);
   const selectedPublicationUrl = useAppSelector(
@@ -96,6 +86,7 @@ export const PromptComponent = ({
     ),
   );
   const chosenPromptIds = useAppSelector(PromptsSelectors.selectSelectedItems);
+  const deletingPrompt = useAppSelector(PromptsSelectors.selectDeletingPrompt);
   const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
   const isConversationBlocksInput = useAppSelector(
     ConversationsSelectors.selectIsSelectedConversationBlocksInput,
@@ -118,10 +109,6 @@ export const PromptComponent = ({
   const isInvalidPath = hasInvalidNameInPath(prompt.folderId);
   const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
 
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isMoveTo, setIsMoveTo] = useState(false);
-  const [publishPromptAction, setPublishPromptAction] =
-    useState<PublishActions>();
   const [isContextMenu, setIsContextMenu] = useState(false);
 
   const promptRef = useRef<HTMLButtonElement>(null);
@@ -149,6 +136,9 @@ export const PromptComponent = ({
     handleInfo,
     handleShare,
     handleUse,
+    handleDelete,
+    handlePublish,
+    handleUnpublish,
   } = usePromptActions(prompt);
 
   const isChosen = useMemo(
@@ -166,21 +156,6 @@ export const PromptComponent = ({
 
   const dismiss = useDismiss(context);
   const { getFloatingProps } = useInteractions([dismiss]);
-
-  const handleOpenPublishing = useCallback(() => {
-    setPublishPromptAction(PublishActions.ADD);
-  }, []);
-
-  const handleOpenUnpublishing = useCallback(() => {
-    setPublishPromptAction(PublishActions.DELETE);
-  }, []);
-
-  const handleOpenDeleteModal: MouseEventHandler = useCallback((e) => {
-    e.stopPropagation();
-    e.preventDefault();
-
-    setIsDeleting(true);
-  }, []);
 
   const handleDragStart = useCallback(
     (e: DragEvent<HTMLDivElement>, prompt: Prompt) => {
@@ -228,12 +203,8 @@ export const PromptComponent = ({
     [handleOpenViewModal],
   );
 
-  const handleOpenMoveToModal = useCallback(() => {
-    setIsMoveTo(true);
-  }, []);
-
   const isHighlighted = !isSelectMode
-    ? isDeleting || isSelected || isContextMenu
+    ? !!deletingPrompt || isSelected || isContextMenu
     : isChosen;
 
   const handleSelect: MouseEventHandler<HTMLButtonElement> = useCallback(
@@ -248,35 +219,21 @@ export const PromptComponent = ({
   const disableUsePrompt =
     isConversationBlocksInput || !areModelsInstalled || !!selectedPublication;
 
-  const handleCloseDialogs = useCallback(() => {
-    setIsDeleting(false);
-    setPublishPromptAction(undefined);
-    setIsMoveTo(false);
-  }, []);
-
   useEffect(() => {
     if (isSelectMode) {
-      setIsDeleting(false);
+      dispatch(PromptsActions.setDeletingPrompt());
     }
-  }, [isSelectMode]);
+  }, [dispatch, isSelectMode]);
 
   useEffect(() => {
     if (screenState !== ScreenState.SM) {
-      setIsMoveTo(false);
+      dispatch(PromptsActions.setMoveToPrompt());
     }
-  }, [screenState]);
+  }, [dispatch, screenState]);
 
   const handleToggle = useCallback(() => {
     PromptsActions.setChosenPrompts({ ids: [prompt.id] });
   }, [prompt.id]);
-
-  const moveToModalModel = useMemo(
-    () => ({
-      isOpen: isMoveTo,
-      isMobileOnly: true,
-    }),
-    [isMoveTo],
-  );
 
   const iconSize = additionalItemData?.isSidePanelItem ? 24 : 18;
   const strokeWidth = additionalItemData?.isSidePanelItem ? 1.5 : 2;
@@ -300,7 +257,7 @@ export const PromptComponent = ({
           }
 
           if (isSelectMode && !isExternal) {
-            setIsDeleting(false);
+            dispatch(PromptsActions.setDeletingPrompt());
             dispatch(PromptsActions.setChosenPrompts({ ids: [prompt.id] }));
           }
         }}
@@ -313,7 +270,7 @@ export const PromptComponent = ({
       >
         <div
           className={classNames('flex size-full items-center gap-2', {
-            'pr-6 xl:pr-0': !isSelectMode && !isDeleting && isSelected,
+            'pr-6 xl:pr-0': !isSelectMode && !deletingPrompt && isSelected,
           })}
           draggable={!isExternal && !isNameOrPathInvalid && !isSelectMode}
           onDragStart={(e) => handleDragStart(e, prompt)}
@@ -393,7 +350,7 @@ export const PromptComponent = ({
             </Tooltip>
           </div>
         </div>
-        {!isSelectMode && !isDeleting && (
+        {!isSelectMode && !deletingPrompt && (
           <div
             ref={refs.setFloating}
             {...getFloatingProps()}
@@ -406,18 +363,14 @@ export const PromptComponent = ({
             <ItemContextMenu
               entity={prompt}
               featureType={FeatureType.Prompt}
-              folders={folders}
-              onMoveToFolder={handleMoveToFolder}
-              onDelete={handleOpenDeleteModal}
+              onDelete={handleDelete}
               onRename={handleOpenEditModal}
               onExport={handleExport}
-              onOpenMoveToModal={handleOpenMoveToModal}
+              onOpenMoveToModal={handleMoveToFolder}
               onShare={handleShare}
-              onPublish={handleOpenPublishing}
+              onPublish={handlePublish}
               onUnpublish={
-                additionalItemData?.publicationUrl
-                  ? undefined
-                  : handleOpenUnpublishing
+                additionalItemData?.publicationUrl ? undefined : handleUnpublish
               }
               onOpenChange={setIsContextMenu}
               onDuplicate={handleDuplicate}
@@ -432,13 +385,6 @@ export const PromptComponent = ({
           </div>
         )}
       </button>
-      <PromptDialogs
-        moveTo={moveToModalModel}
-        prompt={prompt}
-        isDeleteDialog={isDeleting}
-        publishPromptAction={publishPromptAction}
-        onCloseModals={handleCloseDialogs}
-      />
     </>
   );
 };

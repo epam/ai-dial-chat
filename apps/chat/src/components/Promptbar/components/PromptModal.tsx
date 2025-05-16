@@ -51,6 +51,12 @@ const PromptModalContent: React.FC<PromptModalViewProps> = ({
 
       if (isNewPromptCreating) {
         dispatch(PromptsActions.createNewPrompt(regeneratePrompt));
+        dispatch(
+          PromptsActions.setSelectedPrompt({
+            promptId: regeneratePrompt.id,
+          }),
+        );
+        dispatch(PromptsActions.uploadPromptSuccess({ prompt: null }));
       } else {
         if (arePromptsFieldsTheSame(editedPrompt, prompt)) {
           dispatch(
@@ -61,13 +67,6 @@ const PromptModalContent: React.FC<PromptModalViewProps> = ({
           );
         }
       }
-
-      dispatch(
-        PromptsActions.setSelectedPrompt({
-          promptId: regeneratePrompt.id,
-        }),
-      );
-      dispatch(PromptsActions.uploadPromptSuccess({ prompt: null }));
 
       onToggleEditMode(true);
     },
