@@ -1,7 +1,10 @@
+import { useEffect, useRef } from 'react';
+
 import classNames from 'classnames';
 
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
-import { useAppSelector } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { FormSchemaButtonOption, MessageFormValue } from '@epam/ai-dial-shared';
 
@@ -26,10 +29,23 @@ export const SchemaButton: React.FC<Props> = ({
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
 
+  const selectedAction = useAppSelector(ConversationsSelectors.selectAction);
+
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    if (option.title === selectedAction) {
+      buttonRef.current?.click();
+      dispatch(ConversationsActions.selectAction(null));
+    }
+  }, [option.title, selectedAction, dispatch]);
+
   return (
     <button
       data-no-context-menu
       key={`${option.const}`}
+      ref={buttonRef}
       onClick={isPlayback ? undefined : () => onClick(option)}
       className={classNames('chat-button max-w-full truncate', className, {
         'button-accent-primary':

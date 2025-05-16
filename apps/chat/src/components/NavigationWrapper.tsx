@@ -351,14 +351,16 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
+  const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
 
   return (
     <div className="size-full">
       <div className="flex size-full flex-col md:flex-row ">
-        {(router.route === Routes.Chat ||
-          router.route === Routes.Marketplace ||
-          router.route === Routes.Widgets ||
-          router.route === Routes.SelectedWidget) && <Navigation />}
+        {!isIsolatedView &&
+          (router.route === Routes.Chat ||
+            router.route === Routes.Marketplace ||
+            router.route === Routes.Widgets ||
+            router.route === Routes.SelectedWidget) && <Navigation />}
         {router.route === Routes.Chat &&
           enabledFeatures.has(Feature.ConversationsSection) && <Chatbar />}
         {router.route === Routes.Marketplace && <MarketplaceFilterbar />}
