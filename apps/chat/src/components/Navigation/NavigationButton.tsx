@@ -44,7 +44,7 @@ export const NavigationButton = ({
       tooltip={tooltip}
       isTriggerClickable
       triggerClassName={classNames(
-        'flex   shrink-0 select-none rounded transition-colors duration-200 md:min-w-min',
+        'flex shrink-0 select-none rounded transition-colors duration-200 md:min-w-min',
         rounded && 'rounded-full border border-transparent',
         rounded && selected && '!border-accent-primary',
         isOverlay ? 'max-h-[36px] min-w-[44px]' : 'max-h-[52px] min-w-[72px]',
