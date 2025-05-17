@@ -38,6 +38,7 @@ export const NavigationButton = ({
   );
   const disabled = isLoading || streaming;
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+  const isClickAllowed = (!selected || allowClickSelected) && !disabled;
   return (
     <Tooltip
       tooltip={tooltip}
@@ -56,9 +57,7 @@ export const NavigationButton = ({
     >
       <button
         data-qa={dataQa}
-        onClick={
-          (!selected || allowClickSelected) && !disabled ? onClick : undefined
-        }
+        onClick={isClickAllowed ? onClick : undefined}
         className={classNames(
           'flex size-full flex-col items-center justify-center gap-[2px]',
           disabled ? 'cursor-not-allowed' : 'cursor-pointer',

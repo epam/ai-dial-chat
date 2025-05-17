@@ -369,7 +369,7 @@ const Sidebar = <T,>({
           <>
             <div
               className={classNames(
-                'flex  items-center justify-between px-5',
+                'flex items-center justify-between px-5',
                 isOverlay ? 'min-h-[35px]' : 'min-h-12',
               )}
             >
