@@ -122,7 +122,7 @@ import { SHARE_QUERY_PARAM } from '@/src/constants/share';
 
 import { MarketplaceSelectors } from '../marketplace/marketplace.selectors';
 import { ModelsSelectors } from '../models/models.selectors';
-import { WidgetsSelectors } from '../widgets/widgets.selectors';
+import { WidgetsSelectors } from '../models/widgets.selectors';
 import { ConversationsActions } from './conversations.reducers';
 import { ConversationsSelectors } from './conversations.selectors';
 

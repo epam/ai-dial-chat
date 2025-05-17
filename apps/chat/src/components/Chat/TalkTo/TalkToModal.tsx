@@ -30,8 +30,8 @@ import { AddonsSelectors } from '@/src/store/addons/addons.selectors';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { WidgetsSelectors } from '@/src/store/models/widgets.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { WidgetsSelectors } from '@/src/store/widgets/widgets.selectors';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import {

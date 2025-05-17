@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react';
 
 import { useRouter } from 'next/router';
 
-import { WidgetsSelectors } from '../store/widgets/widgets.selectors';
+import { WidgetsSelectors } from '../store/models/widgets.selectors';
 import { ApplicationActions } from '@/src/store/actions';
 import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';

@@ -5,7 +5,7 @@ import { RootState } from '@/src/types/store';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
-import { WidgetsSelectors } from '../widgets/widgets.selectors';
+import { WidgetsSelectors } from '../models/widgets.selectors';
 import { UIState } from './ui.types';
 
 import { Feature } from '@epam/ai-dial-shared';

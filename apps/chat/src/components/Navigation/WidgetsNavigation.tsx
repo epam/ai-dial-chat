@@ -8,7 +8,7 @@ import { useWidgets } from '@/src/hooks/useWidgets';
 
 import { Translation } from '@/src/types/translation';
 
-import { WidgetsSelectors } from '../../store/widgets/widgets.selectors';
+import { WidgetsSelectors } from '../../store/models/widgets.selectors';
 import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';

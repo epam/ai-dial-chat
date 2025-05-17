@@ -14,7 +14,7 @@ import { ConversationsActions } from '@/src/store/conversations/conversations.re
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsActions } from '@/src/store/models/models.reducers';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { WidgetsSelectors } from '@/src/store/widgets/widgets.selectors';
+import { WidgetsSelectors } from '@/src/store/models/widgets.selectors';
 
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
