@@ -7,12 +7,12 @@ import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { Routes } from '@/src/constants/routes';
 
-import { PromptDialogs } from '../Promptbar/components/PromptDialogs';
+import { ChatModalsManager } from '@/src/components/Chat/ChatModalsManager';
 import { Chatbar } from '@/src/components/Chatbar/Chatbar';
 import { MarketplaceFilterbar } from '@/src/components/Marketplace/MarketplaceFilterbar';
 import { Promptbar } from '@/src/components/Promptbar';
+import { PromptDialogs } from '@/src/components/Promptbar/components/PromptDialogs';
 
-import { ChatModalsManager } from '../Chat/ChatModalsManager';
 import { Navigation } from './Navigation';
 
 import { Feature } from '@epam/ai-dial-shared';

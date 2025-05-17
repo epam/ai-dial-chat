@@ -14,7 +14,8 @@ import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.select
 import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
-import { withRenderWhenFeature } from '../Common/RenderWhen';
+import { withRenderWhenFeature } from '@/src/components/Common/RenderWhen';
+
 import { NavigationButton } from './NavigationButton';
 
 import { Feature } from '@epam/ai-dial-shared';
