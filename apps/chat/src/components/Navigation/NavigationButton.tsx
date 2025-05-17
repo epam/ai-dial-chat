@@ -1,5 +1,5 @@
 import { Icon } from '@tabler/icons-react';
-import { JSX, ReactNode } from 'react';
+import { ReactNode } from 'react';
 
 import classNames from 'classnames';
 
@@ -12,8 +12,7 @@ import Tooltip from '@/src/components/Common/Tooltip';
 
 interface NavigationButtonProps {
   onClick: () => void;
-  Icon?: Icon;
-  ModelIcon?: () => JSX.Element;
+  Icon: Icon;
   selected?: boolean;
   tooltip?: ReactNode;
   dataQa?: string;
