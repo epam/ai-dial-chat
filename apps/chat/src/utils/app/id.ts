@@ -52,7 +52,8 @@ export const isConversationId = (id?: string) =>
 export const isPromptId = (id?: string) =>
   id?.startsWith(`${ApiKeys.Prompts}/`) ?? false;
 
-export const isFileId = (id?: string) => id?.startsWith(`${ApiKeys.Files}/`) ?? false;
+export const isFileId = (id?: string) =>
+  id?.startsWith(`${ApiKeys.Files}/`) ?? false;
 
 export const getIdWithoutRootPathSegments = (id: string) =>
   id.split('/').slice(2).join('/');
