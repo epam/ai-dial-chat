@@ -131,6 +131,7 @@ export interface FolderProps<T, P = unknown> {
   isSelectAlwaysVisible?: boolean;
   isUnpublishing?: boolean;
   showTooltip?: boolean;
+  canManageOnlyTemporaryFolders?: boolean;
   onShowError?: (error: string) => void;
   onPublication?: ({
     entity,
@@ -177,6 +178,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   isSelectAlwaysVisible = false,
   isUnpublishing = false,
   showTooltip,
+  canManageOnlyTemporaryFolders = false,
   onShowError,
   onPublication,
 }: FolderProps<T>) => {
@@ -1219,10 +1221,20 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     onRename={
                       (onRenameFolder &&
                         !currentFolder.serverSynced &&
+                        ((canManageOnlyTemporaryFolders &&
+                          currentFolder.temporary) ||
+                          !canManageOnlyTemporaryFolders) &&
                         onRename) ||
                       undefined
                     }
-                    onDelete={onDeleteFolder && onDelete}
+                    onDelete={
+                      (onDeleteFolder &&
+                        ((canManageOnlyTemporaryFolders &&
+                          currentFolder.temporary) ||
+                          !canManageOnlyTemporaryFolders) &&
+                        onDelete) ||
+                      undefined
+                    }
                     onAddFolder={onAddFolder && onAdd}
                     onShare={handleShare}
                     onUnshare={handleUnshare}
@@ -1317,6 +1329,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     showTooltip={showTooltip}
                     onSelectFolder={onSelectFolder}
                     onShowError={onShowError}
+                    canManageOnlyTemporaryFolders={
+                      canManageOnlyTemporaryFolders
+                    }
                   />
                 </Fragment>
               );

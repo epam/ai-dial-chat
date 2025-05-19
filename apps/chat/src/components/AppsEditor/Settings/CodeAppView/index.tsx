@@ -214,6 +214,10 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     };
   }, [dispatch]);
 
+  const autoSaveHandler = useCallback(() => {
+    submitWrapper(handleEdit)();
+  }, [submitWrapper, handleEdit]);
+
   useEffect(() => {
     const isTriggered = shouldSaveApplication || exitAfterSave;
     if (!isTriggered) return;
@@ -228,17 +232,16 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     }
 
     if (shouldSaveApplication) {
-      submitWrapper(handleEdit)();
+      autoSaveHandler();
     }
   }, [
     exitAfterSave,
     router,
-    submitWrapper,
     shouldSaveApplication,
-    handleEdit,
     isValid,
     dispatch,
     t,
+    autoSaveHandler,
   ]);
 
   const isAppPublic = isEntityIdPublic(oldApplication);
