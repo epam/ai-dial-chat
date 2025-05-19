@@ -135,7 +135,7 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
     register,
     control,
     handleSubmit: submitWrapper,
-    formState: { errors, defaultValues, isSubmitted, isValid },
+    formState: { errors, defaultValues, isValid },
     setError,
     clearErrors,
   } = useFormContext<CustomApplicationFormData>();
@@ -190,7 +190,7 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
     const isTriggered = shouldSaveApplication || exitAfterSave;
     if (!isTriggered) return;
 
-    if (!isValid && isSubmitted) {
+    if (!isValid) {
       dispatch(ApplicationActions.setShouldSaveApplication(false));
       dispatch(ApplicationActions.setExitAfterSave(false));
       dispatch(
@@ -206,13 +206,10 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
     shouldSaveApplication,
     exitAfterSave,
     isValid,
-    submitWrapper,
-    handleSubmit,
     dispatch,
     router,
     t,
     autoSaveHandler,
-    isSubmitted,
   ]);
 
   const isAppPublic = isEntityIdPublic(oldApplication);

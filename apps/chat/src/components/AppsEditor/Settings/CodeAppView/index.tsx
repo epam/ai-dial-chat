@@ -130,7 +130,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     handleSubmit: submitWrapper,
     setError,
     clearErrors,
-    formState: { errors, defaultValues, isSubmitted, isValid },
+    formState: { errors, defaultValues, isValid },
     watch,
     register,
   } = useFormContext<CodeAppFormData>();
@@ -214,11 +214,15 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     };
   }, [dispatch]);
 
+  const autoSaveHandler = useCallback(() => {
+    submitWrapper(handleEdit)();
+  }, [submitWrapper, handleEdit]);
+
   useEffect(() => {
     const isTriggered = shouldSaveApplication || exitAfterSave;
     if (!isTriggered) return;
 
-    if (!isValid && isSubmitted) {
+    if (!isValid) {
       dispatch(ApplicationActions.setShouldSaveApplication(false));
       dispatch(ApplicationActions.setExitAfterSave(false));
       dispatch(
@@ -228,18 +232,16 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     }
 
     if (shouldSaveApplication) {
-      submitWrapper(handleEdit)();
+      autoSaveHandler();
     }
   }, [
     exitAfterSave,
     router,
-    submitWrapper,
     shouldSaveApplication,
-    handleEdit,
     isValid,
     dispatch,
     t,
-    isSubmitted,
+    autoSaveHandler,
   ]);
 
   const isAppPublic = isEntityIdPublic(oldApplication);

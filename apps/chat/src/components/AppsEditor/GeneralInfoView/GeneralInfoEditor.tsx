@@ -81,7 +81,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     register,
     control,
     handleSubmit: submitWrapper,
-    formState: { errors, isValid, isSubmitted, dirtyFields },
+    formState: { errors, isValid, dirtyFields },
     reset,
   } = useFormContext<ApplicationGeneralInfoFormData>();
 
@@ -191,7 +191,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     const isTriggered = shouldSaveApplication || exitAfterSave;
     if (!isTriggered) return;
 
-    if (!isValid && isSubmitted) {
+    if (!isValid) {
       dispatch(ApplicationActions.setShouldSaveApplication(false));
       dispatch(ApplicationActions.setExitAfterSave(false));
       dispatch(
@@ -212,7 +212,6 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     submitWrapper,
     handleSubmit,
     router,
-    isSubmitted,
   ]);
 
   return (
