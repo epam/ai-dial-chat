@@ -34,10 +34,10 @@ const selectModelsError = (state: RootState) => rootSelector(state).error;
 const selectIsRecentModelsLoaded = (state: RootState) =>
   rootSelector(state).recentModelsStatus === UploadStatus.LOADED;
 
-const selectModels = createSelector([rootSelector], (state) => {
-  const sortedResponse = sortBy(state.models, (model) =>
-    model.name.toLowerCase(),
-  );
+const _selectModels = (state: RootState) => rootSelector(state).models;
+
+const selectModels = createSelector([_selectModels], (models) => {
+  const sortedResponse = sortBy(models, (model) => model.name.toLowerCase());
   const sortedAgents = groupModelsAndSaveOrder(sortedResponse).flatMap(
     ({ entities }) => {
       if (entities.length > 0 && entities[0].id !== entities[0].reference) {
@@ -50,9 +50,9 @@ const selectModels = createSelector([rootSelector], (state) => {
   return sortedAgents;
 });
 
-const selectModelTopics = createSelector([rootSelector], (state) => {
+const selectModelTopics = createSelector([_selectModels], (models) => {
   return sortBy(
-    uniq(state.models?.flatMap((model) => model.topics ?? []) ?? []),
+    uniq(models?.flatMap((model) => model.topics ?? []) ?? []),
     (topic) => topic.toLowerCase(),
   );
 });

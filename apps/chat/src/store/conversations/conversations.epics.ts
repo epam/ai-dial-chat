@@ -122,6 +122,7 @@ import { SHARE_QUERY_PARAM } from '@/src/constants/share';
 
 import { MarketplaceSelectors } from '../marketplace/marketplace.selectors';
 import { ModelsSelectors } from '../models/models.selectors';
+import { WidgetsSelectors } from '../models/widgets.selectors';
 import { ConversationsActions } from './conversations.reducers';
 import { ConversationsSelectors } from './conversations.selectors';
 
@@ -413,7 +414,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               (m) => m.reference,
             );
             const widgetsSchemaIds =
-              SettingsSelectors.selectWidgetsSchemaIds(state);
+              WidgetsSelectors.selectWidgetsSchemaIds(state);
             const widgetModelsRefs = models
               .filter((model) =>
                 widgetsSchemaIds.has(model.applicationTypeSchemaId ?? ''),

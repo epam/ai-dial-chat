@@ -47,18 +47,19 @@ export const isRootPromptId = (id?: string) => isRootId(id) && isPromptId(id);
 export const isFolderId = (id: string) => id.endsWith('/');
 
 export const isConversationId = (id?: string) =>
-  id?.startsWith(`${ApiKeys.Conversations}/`);
+  id?.startsWith(`${ApiKeys.Conversations}/`) ?? false;
 
 export const isPromptId = (id?: string) =>
-  id?.startsWith(`${ApiKeys.Prompts}/`);
+  id?.startsWith(`${ApiKeys.Prompts}/`) ?? false;
 
-export const isFileId = (id?: string) => id?.startsWith(`${ApiKeys.Files}/`);
+export const isFileId = (id?: string) =>
+  id?.startsWith(`${ApiKeys.Files}/`) ?? false;
 
 export const getIdWithoutRootPathSegments = (id: string) =>
   id.split('/').slice(2).join('/');
 
 export const isApplicationId = (id?: string) =>
-  id?.startsWith(`${ApiKeys.Applications}/`);
+  id?.startsWith(`${ApiKeys.Applications}/`) ?? false;
 
 export const getApplicationRootId = (bucket?: string) =>
   getRootId({ featureType: FeatureType.Application, bucket });
