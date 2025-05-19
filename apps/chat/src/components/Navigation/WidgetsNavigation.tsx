@@ -1,6 +1,8 @@
 import { IconBrowser, IconProps } from '@tabler/icons-react';
 import { useCallback, useMemo } from 'react';
 
+
+
 import { useRouter } from 'next/router';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
@@ -23,7 +25,7 @@ import Loader from '@/src/components/Common/Loader';
 import { withRenderWhen } from '../Common/RenderWhen';
 import { NavigationButton } from './NavigationButton';
 
-const WidgetBarIcon: React.FC<IconProps> = ({ height }) => {
+const WidgetBarIcon: React.FC<IconProps> = ({ height, ...rest }) => {
   const { widgetModels } = useWidgets();
 
   const isApplicationsInitialized = useAppSelector(
@@ -52,7 +54,7 @@ const WidgetBarIcon: React.FC<IconProps> = ({ height }) => {
       size={height as number}
     />
   ) : (
-    <IconBrowser height={height} />
+    <IconBrowser height={height} {...rest} />
   );
 };
 
