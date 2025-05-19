@@ -15,12 +15,13 @@ import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 
-import { ChatActions } from '@/src/store/chat/chat.reducer';
-import { ChatSelectors } from '@/src/store/chat/chat.selectors';
+import { ChatActions, PromptsActions } from '@/src/store/actions';
 import { useAppSelector } from '@/src/store/hooks';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
-import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
+import {
+  ChatSelectors,
+  PromptsSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
 import { useTokenizer } from './useTokenizer';
 

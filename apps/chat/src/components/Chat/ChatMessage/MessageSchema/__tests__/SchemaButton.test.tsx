@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { render, screen } from '@testing-library/react';
 
-import { SchemaButton } from '../SchemaButton';
+import { SchemaButton } from '@/src/components/Chat/ChatMessage/MessageSchema/SchemaButton';
 
 const selectedAction = 'Test action';
 const onButtonClick = vi.fn();
@@ -21,7 +21,7 @@ vi.mock('@/src/store/hooks', () => ({
   useAppDispatch: () => vi.fn((action) => action),
 }));
 
-vi.mock('@/src/store/conversations/conversations.selectors', () => ({
+vi.mock('@/src/store/selectors', () => ({
   ConversationsSelectors: {
     selectIsPlaybackSelectedConversations: vi.fn(() => false),
     selectAction: vi.fn(() => selectedAction),

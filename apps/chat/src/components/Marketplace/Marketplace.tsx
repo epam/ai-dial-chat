@@ -7,11 +7,13 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { ScreenState } from '@/src/types/common';
 
+import { MarketplaceActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
-import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  MarketplaceSelectors,
+  ModelsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { Routes } from '@/src/constants/routes';
 

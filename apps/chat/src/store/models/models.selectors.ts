@@ -9,13 +9,11 @@ import {
 import { EntityType } from '@/src/types/common';
 import { RootState } from '@/src/types/store';
 
-import { ModelsState } from './models.types';
-
 import { UploadStatus } from '@epam/ai-dial-shared';
 import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 
-const rootSelector = (state: RootState): ModelsState => state.models;
+const rootSelector = (state: RootState) => state.models;
 
 const selectModelStatus = (state: RootState) => rootSelector(state).status;
 

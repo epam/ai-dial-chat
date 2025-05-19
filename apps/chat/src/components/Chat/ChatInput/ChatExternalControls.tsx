@@ -6,12 +6,11 @@ import { isEntityIdExternal } from '@/src/utils/app/id';
 
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { PublicationSelectors, SettingsSelectors } from '@/src/store/selectors';
 
-import { ScrollDownButton } from '../../Common/ScrollDownButton';
+import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
 

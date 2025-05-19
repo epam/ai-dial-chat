@@ -28,16 +28,16 @@ import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
-import { FilesActions } from '@/src/store/files/files.reducers';
-import { FilesSelectors } from '@/src/store/files/files.selectors';
+import { FilesActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { FilesSelectors } from '@/src/store/selectors';
 
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 import { SHARED_WITH_ME_SECTION_NAME } from '@/src/constants/sections';
 
+import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { Modal } from '@/src/components/Common/Modal';
 
-import { ErrorMessage } from '../Common/ErrorMessage';
 import { SelectFolderModal } from './SelectFolderModal';
 
 interface Props {

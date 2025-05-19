@@ -6,17 +6,19 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { CustomVisualizer } from '@/src/types/custom-visualizers';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import {
+  ConversationsSelectors,
+  SettingsSelectors,
+} from '@/src/store/selectors';
 
 import {
   DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
   DEFAULT_CUSTOM_ATTACHMENT_WIDTH,
 } from '@/src/constants/chat';
 
-import { Spinner } from '../Common/Spinner';
+import { Spinner } from '@/src/components/Common/Spinner';
 
 import {
   AttachmentData,

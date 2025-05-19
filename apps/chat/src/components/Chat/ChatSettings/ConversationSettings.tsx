@@ -17,7 +17,7 @@ import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { ModelsSelectors } from '@/src/store/selectors';
 
 import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 

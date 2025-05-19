@@ -9,17 +9,18 @@ import { downloadApplicationLogs } from '@/src/utils/app/import-export';
 
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { ApplicationSelectors } from '@/src/store/application/application.selectors';
+import { ApplicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ApplicationSelectors } from '@/src/store/selectors';
 
-import { Modal } from '../Common/Modal';
-import { withRenderWhen } from '../Common/RenderWhen';
-import { Spinner } from '../Common/Spinner';
-import Tooltip from '../Common/Tooltip';
+import { Modal } from '@/src/components/Common/Modal';
+import { withRenderWhen } from '@/src/components/Common/RenderWhen';
+import { Spinner } from '@/src/components/Common/Spinner';
+import Tooltip from '@/src/components/Common/Tooltip';
 
 const LogsHeader = () => {
   const { t } = useTranslation(Translation.Marketplace);
+
   return (
     <div className="px-3 pb-4 pt-6 md:px-6">
       <h2 className="text-base font-semibold">{t('Application logs')}</h2>
@@ -62,6 +63,7 @@ const LogsView = () => {
 
 const LogsFooter = () => {
   const { t } = useTranslation(Translation.Marketplace);
+
   const dispatch = useAppDispatch();
 
   const entityId = useAppSelector(ApplicationSelectors.selectLogsEntityId);

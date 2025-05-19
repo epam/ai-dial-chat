@@ -12,7 +12,7 @@ import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { DialAIEntityModel } from '@/src/types/models';
 import { RootState } from '@/src/types/store';
 
-import { MarketplaceState } from '@/src/store/marketplace/marketplace.types';
+import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.selectors';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 
 import {
@@ -21,11 +21,9 @@ import {
   SourceTypeFilterOrder,
 } from '@/src/constants/marketplace';
 
-import { ApplicationTypesSchemasSelectors } from '../applicationTypeSchemas/applicationTypeSchemas.selectors';
-
 import { UploadStatus } from '@epam/ai-dial-shared';
 
-const rootSelector = (state: RootState): MarketplaceState => state.marketplace;
+const rootSelector = (state: RootState) => state.marketplace;
 
 const selectSelectedViewType = (state: RootState) =>
   rootSelector(state).selectedView;

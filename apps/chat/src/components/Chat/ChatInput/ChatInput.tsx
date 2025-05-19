@@ -6,8 +6,8 @@ import { useChatUploadFiles } from '@/src/hooks/useChatUploadFiles';
 import { useFilePaste } from '@/src/hooks/useFilePaste';
 import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppSelector } from '@/src/store/hooks';
+import { ConversationsSelectors } from '@/src/store/selectors';
 
 import { ChatInputMessage } from './ChatInputMessage';
 

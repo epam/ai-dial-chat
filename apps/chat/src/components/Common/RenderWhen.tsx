@@ -3,7 +3,7 @@ import { ComponentType } from 'react';
 import { RootState } from '@/src/types/store';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { SettingsSelectors } from '@/src/store/selectors';
 
 import { Feature } from '@epam/ai-dial-shared';
 

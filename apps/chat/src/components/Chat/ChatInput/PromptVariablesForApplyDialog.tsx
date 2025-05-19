@@ -1,11 +1,12 @@
 import { useCallback } from 'react';
 
+import { PromptsActions } from '@/src/store/actions';
 import { ChatActions } from '@/src/store/chat/chat.reducer';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
+import { PromptsSelectors } from '@/src/store/selectors';
 
-import { withRenderWhen } from '../../Common/RenderWhen';
+import { withRenderWhen } from '@/src/components/Common/RenderWhen';
+
 import { PromptVariablesDialog } from './PromptVariablesDialog';
 
 function PromptVariablesForApplyDialogView() {

@@ -16,10 +16,11 @@ import {
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { SettingsSelectors } from '@/src/store/selectors';
 
-import { Modal } from '../../Common/Modal';
-import { MultipleComboBox } from '../../Common/MultipleComboBox';
+import { Modal } from '@/src/components/Common/Modal';
+import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
+
 import { RegexParamInput } from './RegexParamInput';
 import { RulesSelect } from './RulesSelect';
 

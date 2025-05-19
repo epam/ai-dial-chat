@@ -4,7 +4,8 @@ import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 
 import { stopBubbling } from '@/src/constants/chat';
 
-import Tooltip from '../Common/Tooltip';
+import Tooltip from '@/src/components/Common/Tooltip';
+
 import { ApplicationTopic } from './ApplicationTopic';
 
 interface AllTopicsProps {
