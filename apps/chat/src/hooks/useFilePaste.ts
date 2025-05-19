@@ -1,6 +1,6 @@
 import { RefObject, useEffect } from 'react';
 
-import { getFileNameExtension } from '@/src/utils/app/file';
+import { getFilesFromDataTransferItems } from '@/src/utils/app/file';
 
 export function useFilePaste<T extends HTMLElement = HTMLElement>(
   container: RefObject<T>,
@@ -12,9 +12,9 @@ export function useFilePaste<T extends HTMLElement = HTMLElement>(
     if (!element) return;
 
     const pasteHandler = (e: ClipboardEvent) => {
-      const files = Array.from(e.clipboardData?.files ?? []).filter(
-        (f) => !!getFileNameExtension(f.name),
-      );
+      const files = e.clipboardData
+        ? getFilesFromDataTransferItems(e.clipboardData.items)
+        : [];
 
       if (!files.length) return;
       e.preventDefault();

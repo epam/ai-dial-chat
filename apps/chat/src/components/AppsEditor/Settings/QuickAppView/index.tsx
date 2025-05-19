@@ -210,7 +210,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
       onSubmit={submitWrapper(handleSubmit)}
       className="flex size-full flex-col bg-layer-2"
     >
-      <div className="grow space-y-4 divide-tertiary overflow-y-auto px-5 py-4 xl:p-5">
+      <div className="grow space-y-4 divide-tertiary overflow-y-auto px-3 py-4 md:px-5 xl:py-5">
         <Controller
           name="documentRelativeUrl"
           control={control}

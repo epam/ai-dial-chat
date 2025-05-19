@@ -5,7 +5,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getFileNameExtension } from '@/src/utils/app/file';
+import { getFilesFromDataTransferItems } from '@/src/utils/app/file';
 
 import { Translation } from '@/src/types/translation';
 
@@ -61,9 +61,7 @@ export const FileDropArea = ({
       e.preventDefault();
       setIsDraggingOver(false);
       if (droppable) {
-        const files = Array.from(e.dataTransfer?.files ?? []).filter(
-          (f) => !!getFileNameExtension(f.name),
-        );
+        const files = getFilesFromDataTransferItems(e.dataTransfer.items);
 
         if (files.length) onDrop(files);
       }

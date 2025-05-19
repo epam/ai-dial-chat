@@ -216,11 +216,17 @@ const selectSelectedConversations = createSelector(
   },
 );
 
-const selectLoadedCharts = createSelector([rootSelector], (state) => {
-  // cloneDeep because of Plot component doesn't work with redux-toolkit maintained state slices which disallow, or guard, against state mutations.
-  // PlotReactState had some additional "state" properties that were never declared or updated.
-  return cloneDeep(state.loadedCharts);
-});
+const _selectLoadedCharts = (state: RootState) =>
+  rootSelector(state).loadedCharts;
+
+const selectLoadedCharts = createSelector(
+  [_selectLoadedCharts],
+  (loadedCharts) => {
+    // cloneDeep because of Plot component doesn't work with redux-toolkit maintained state slices which disallow, or guard, against state mutations.
+    // PlotReactState had some additional "state" properties that were never declared or updated.
+    return cloneDeep(loadedCharts);
+  },
+);
 
 const selectChartLoading = (state: RootState) =>
   rootSelector(state).chartLoading;

@@ -158,7 +158,7 @@ export const ReportIssueDialog: FC<Props> = ({ onClose }) => {
         ></textarea>
         <EmptyRequiredInputMessage />
       </div>
-      <div className="flex  justify-end">
+      <div className="flex justify-end">
         <button type="submit" className="button button-primary">
           {t('Report an issue')}
         </button>
