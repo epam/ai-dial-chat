@@ -47,11 +47,15 @@ export function DropdownSelector({
         value={values}
         components={{
           ClearIndicator: (props) => (
-            <button type="button" className="group p-2">
+            <button
+              type="button"
+              className="group cursor-pointer p-2"
+              onClick={() => props.clearValue()}
+              onTouchEnd={() => props.clearValue()}
+            >
               <IconX
                 className="shrink-0 text-secondary group-hover:text-accent-primary"
                 data-qa="clear-dropdown-selection"
-                onClick={() => props.clearValue()}
                 size={18}
               />
             </button>
