@@ -166,7 +166,7 @@
     "@types/react-dom": "19.1.5"
   },
   "optionalDependencies": {
-    "@nx/playwright": "^20.6.2",
+    "@nx/playwright": "21.0.3",
     "@playwright/test": "^1.52.0",
     "@types/tinycolor2": "^1.4.6",
     "allure-playwright": "^3.2.0",
