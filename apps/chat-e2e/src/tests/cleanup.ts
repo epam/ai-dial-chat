@@ -1,6 +1,7 @@
 import { Conversation } from '@/chat/types/chat';
 import { BackendEntity } from '@/chat/types/common';
 import dialTest from '@/src/core/dialFixtures';
+import { PublishRequestBuilder } from '@/src/testData';
 import {
   BucketUtil,
   applicationNamePrefix,
@@ -53,15 +54,11 @@ dialTest(
 );
 
 dialTest(
-  'Cleanup published E2E apps',
+  'Cleanup published E2E entities (apps and conversations)',
   async ({ adminPublicationApiHelper, publishRequestBuilder }) => {
-    const publishedApps = await adminPublicationApiHelper.listPublishedApps();
-    const publishedE2EApps = publishedApps.items?.filter((a) =>
-      a.name.includes(applicationNamePrefix),
-    );
-
-    for (const app of publishedE2EApps!) {
-      const pathParts = app.url.split('/');
+    // Helper function to extract relative path from URL
+    const extractRelativePath = (url: string): string => {
+      const pathParts = url.split('/');
       let relativePath = '';
       const publicSegmentIndex = pathParts.indexOf('public');
 
@@ -77,60 +74,62 @@ dialTest(
       ) {
         relativePath = '';
       }
+      return relativePath;
+    };
 
+    // Helper function to create and approve an unpublish request
+    const unpublishEntity = async (
+      name: string,
+      relativePath: string,
+      resourceBuilder: (
+        request: PublishRequestBuilder,
+      ) => PublishRequestBuilder,
+    ) => {
       const unpublishRequest = publishRequestBuilder
-        .withName(unpublishRequestPrefix + app.name)
-        .withTargetFolder(relativePath)
-        .withApplicationResource(
+        .withName(unpublishRequestPrefix + name)
+        .withTargetFolder(relativePath);
+
+      resourceBuilder(unpublishRequest);
+
+      const builtRequest = unpublishRequest.build();
+      const unpublishResponse =
+        await adminPublicationApiHelper.createUnpublishRequest(builtRequest);
+      await adminPublicationApiHelper.approveRequest(unpublishResponse);
+    };
+
+    // Cleanup published E2E apps
+    const publishedApps = await adminPublicationApiHelper.listPublishedApps();
+    const publishedE2EApps = publishedApps.items?.filter((app) =>
+      app.name.includes(applicationNamePrefix),
+    );
+
+    for (const app of publishedE2EApps || []) {
+      const relativePath = extractRelativePath(app.url);
+
+      await unpublishEntity(app.name, relativePath, (request) => {
+        return request.withApplicationResource(
           {
             url: app.url,
             name: app.name,
             bucket: app.bucket,
           } as BackendEntity,
           PublishActions.DELETE,
-        )
-        .build();
-
-      const unpublishResponse =
-        await adminPublicationApiHelper.createUnpublishRequest(
-          unpublishRequest,
         );
-      await adminPublicationApiHelper.approveRequest(unpublishResponse);
+      });
     }
-  },
-);
 
-dialTest(
-  'Cleanup published E2E conversations',
-  async ({ adminPublicationApiHelper, publishRequestBuilder }) => {
+    // Cleanup published E2E conversations
     const publishedConversations =
       await adminPublicationApiHelper.listPublishedConversations();
     const publishedE2EConversations = publishedConversations.items?.filter(
-      (a) => a.name.includes(conversationNamePrefix),
+      (conversation) => conversation.name.includes(conversationNamePrefix),
     );
 
-    for (const conversation of publishedE2EConversations!) {
-      const pathParts = conversation.url.split('/');
-      let relativePath = '';
-      const publicSegmentIndex = pathParts.indexOf('public');
+    for (const conversation of publishedE2EConversations || []) {
+      const relativePath = extractRelativePath(conversation.url);
 
-      if (
-        publicSegmentIndex !== -1 &&
-        publicSegmentIndex < pathParts.length - 2
-      ) {
-        relativePath =
-          pathParts.slice(publicSegmentIndex + 1, -1).join('/') + '/';
-      } else if (
-        publicSegmentIndex !== -1 &&
-        publicSegmentIndex === pathParts.length - 2
-      ) {
-        relativePath = '';
-      }
-
-      const unpublishRequest = publishRequestBuilder
-        .withName(unpublishRequestPrefix + conversation.name)
-        .withTargetFolder(relativePath)
-        .withConversationResource(
+      await unpublishEntity(conversation.name, relativePath, (request) => {
+        return request.withConversationResource(
           {
             id: conversation.url.substring(
               0,
@@ -138,14 +137,8 @@ dialTest(
             ),
           } as Conversation,
           PublishActions.DELETE,
-        )
-        .build();
-
-      const unpublishResponse =
-        await adminPublicationApiHelper.createUnpublishRequest(
-          unpublishRequest,
         );
-      await adminPublicationApiHelper.approveRequest(unpublishResponse);
+      });
     }
   },
 );
