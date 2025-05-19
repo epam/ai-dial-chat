@@ -13,9 +13,9 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
-import { useDocumentBody } from '@/src/hooks/useDocumentBody';
 import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useTranslation } from '@/src/hooks/useTranslation';
+import { useWindowResizeEvent } from '@/src/hooks/useWindowResizeEvent';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import {
@@ -332,8 +332,7 @@ const ChatView = memo(() => {
   }, [isCompareMode, mergedMessages.length]);
 
   useResizeObserver(chatMessagesRef.current, handleChatMessagesResize);
-  const bodyRef = useDocumentBody();
-  useResizeObserver(bodyRef.current, handleChatResize);
+  useWindowResizeEvent(handleChatResize);
 
   useEffect(() => {
     const lastMergedMessages = mergedMessages.length

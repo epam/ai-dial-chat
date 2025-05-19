@@ -2,15 +2,13 @@ import { useCallback, useState } from 'react';
 
 import { getScreenState } from '@/src/utils/app/mobile';
 
-import { useDocumentBody } from './useDocumentBody';
-import { useResizeObserver } from './useResizeObserver';
+import { useWindowResizeEvent } from './useWindowResizeEvent';
 
 export const useScreenState = () => {
   const [screenState, setScreenState] = useState(getScreenState());
 
   const handleResize = useCallback(() => setScreenState(getScreenState()), []);
-  const bodyRef = useDocumentBody();
-  useResizeObserver(bodyRef.current, handleResize);
+  useWindowResizeEvent(handleResize);
 
   return screenState;
 };
