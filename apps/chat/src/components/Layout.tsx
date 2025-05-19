@@ -20,7 +20,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { SettingsState } from '@/src/store/settings/settings.types';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
-import { NavigationWrapper } from '@/src/components/NavigationWrapper';
+import { NavigationWrapper } from '@/src/components/Navigation/NavigationWrapper';
 
 import Loader from './Common/Loader';
 import { Title } from './Title';
