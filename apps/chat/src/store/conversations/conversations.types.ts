@@ -43,4 +43,5 @@ export interface ConversationsState {
   talkToConversationId?: string | null;
   isStartedCustomViewerConversation: boolean;
   previewConversationId?: string | null;
+  preselectedAction?: string | null;
 }

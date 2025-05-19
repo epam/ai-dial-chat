@@ -770,6 +770,9 @@ dialTest(
     await dialTest.step(
       'Select any available model and start replaying',
       async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await talkToAgentDialog.selectAgent(defaultModel, marketplacePage);
         const replayRequest = await chat.startReplay();
         apiAssertion.assertRequestModelId(replayRequest, defaultModel);

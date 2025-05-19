@@ -67,6 +67,15 @@ const run = async () => {
     overlayConversationId: 'some-conversation-id',
     // optional, if DIAL should redirect to sign in the same browser window
     signInInSameWindow: false,
+    // optional, auto-sign in options
+    signInOptions: {
+      // optional, If the DIAL should automatically sign in without user interaction (provided there is an active provider session)
+      autoSignIn: true,
+      //provider which will be used for the sign in
+      signInProvider: 'provider_name',
+      //optional, should be true if provider page couldn't be open in iframe and hostDomain and DIAL have different providers or application id within one provider
+      signInInNewWindow: true,
+    },
   });
 
   // overlay loaded application and ready to send and receive information from the application

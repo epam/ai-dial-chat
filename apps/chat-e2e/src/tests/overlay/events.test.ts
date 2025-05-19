@@ -482,6 +482,179 @@ dialOverlayTest(
   },
 );
 
+dialOverlayTest(
+  `[Overlay. Events in sandbox] New conversation is created in new folder if to click on 'Create conversation in inner folder' event. Folders are expanded.\n` +
+    `[Overlay. Events in sandbox] DIAL auto-scrolls to new conversation on 'Create conversation in inner folder'`,
+  async ({
+    overlayHomePage,
+    overlayHeader,
+    overlayBaseAssertion,
+    overlayActions,
+    overlayDialog,
+    overlayChatBarFolderAssertion,
+    conversationData,
+    overlayDataInjector,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-4840', 'EPMRTC-6177');
+    const expectedFoldersPath =
+      'test-inner-folder-root/test-inner-folder-child';
+
+    await dialOverlayTest.step(
+      'Create set of conversations in folders',
+      async () => {
+        for (let i = 1; i <= 15; i++) {
+          const conversationInFolder =
+            conversationData.prepareDefaultConversationInFolder();
+          await overlayDataInjector.createConversations(
+            conversationInFolder.conversations,
+            conversationInFolder.folders,
+          );
+          conversationData.resetData();
+        }
+      },
+    );
+
+    await dialOverlayTest.step(
+      `Click on "Create conversation in inner folder" and verify modal with conversation json is opened`,
+      async () => {
+        await overlayHomePage.navigateToUrl(
+          OverlaySandboxUrls.enabledHeaderSandboxUrl,
+        );
+        await overlayHomePage.waitForPageLoaded();
+        const newConversationData =
+          await overlayActions.clickCreateConversationInInnerFolder();
+        await overlayBaseAssertion.assertElementState(overlayDialog, 'visible');
+        const actualMessages =
+          await overlayDialog.content.getElementInnerContent();
+        const expectedConversation: CreateConversationResponse = {
+          conversation: {
+            model: newConversationData.request.model,
+            name: newConversationData.request.name,
+            isPlayback: newConversationData.request.isPlayback ?? false,
+            isReplay: newConversationData.request.isReplay ?? false,
+            id: newConversationData.request.id,
+            updatedAt: newConversationData.response.updatedAt,
+            folderId: newConversationData.request.folderId,
+            bucket: newConversationData.response.bucket,
+            parentPath: newConversationData.response.parentPath,
+          },
+        };
+        expect
+          .soft(
+            expectedConversation.conversation.id.includes(expectedFoldersPath),
+          )
+          .toBeTruthy();
+        expect
+          .soft(
+            expectedConversation.conversation.folderId.endsWith(
+              expectedFoldersPath,
+            ),
+          )
+          .toBeTruthy();
+        expect
+          .soft(expectedConversation.conversation.parentPath)
+          .toBe(expectedFoldersPath);
+        expect
+          .soft(JSON.parse(actualMessages) as CreateConversationResponse)
+          .toStrictEqual(expectedConversation);
+        await overlayDialog.closeButton.click();
+      },
+    );
+
+    await dialOverlayTest.step(
+      `Open chat panel and verify created conversation is selected and focused`,
+      async () => {
+        await overlayHeader.leftPanelToggle.click();
+        await overlayChatBarFolderAssertion.assertRootFolderState(
+          { name: expectedFoldersPath.split('/')[0] },
+          'visible',
+        );
+        await overlayChatBarFolderAssertion.assertFolderEntitySelectedState(
+          { name: expectedFoldersPath.split('/')[1] },
+          { name: ExpectedConstants.newConversationWithIndexTitle(1) },
+          true,
+        );
+        await overlayChatBarFolderAssertion.assertFolderEntityIsInViewport(
+          { name: expectedFoldersPath.split('/')[1] },
+          { name: ExpectedConstants.newConversationWithIndexTitle(1) },
+          1,
+        );
+      },
+    );
+  },
+);
+
+dialOverlayTest(
+  '[Overlay. Events in sandbox] Chat1 is created into new folder. Chat2 is created into the same folder. Event: newConversationsFolderIdSetOverlay',
+  async ({
+    overlayHomePage,
+    overlayHeader,
+    overlayChatBar,
+    overlayTalkToAgentDialog,
+    overlaySendMessage,
+    overlayChatBarFolderAssertion,
+    overlayFolderConversations,
+    overlayBaseAssertion,
+    overlayChat,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-5695');
+    const expectedFolderPath = 'test-folder';
+    const firstConversationName = 'first';
+    const secondConversationName = 'second';
+
+    await overlayHomePage.mockChatTextResponse(
+      MockedChatApiResponseBodies.simpleTextBody,
+      { isOverlay: true },
+    );
+
+    await dialOverlayTest.step('Send a request to the chat', async () => {
+      await overlayHomePage.navigateToUrl(
+        OverlaySandboxUrls.newConversationsFolderIdSetUrl,
+      );
+      await overlayHomePage.waitForPageLoaded();
+      await overlayChat.sendRequestWithButton(firstConversationName);
+    });
+
+    await dialOverlayTest.step(
+      'Open chat panel and verify conversation is created inside configured folder',
+      async () => {
+        await overlayHeader.leftPanelToggle.click();
+        //TODO: remove page reload and folder expand when the issue is fixed https://github.com/epam/ai-dial-chat/issues/3776
+        await overlayHomePage.reloadPage();
+        await overlayHomePage.waitForPageLoaded();
+        await overlayBaseAssertion.assertElementState(
+          overlaySendMessage,
+          'visible',
+        );
+        await overlayHeader.leftPanelToggle.click();
+        await overlayFolderConversations.expandFolder(expectedFolderPath);
+        await overlayChatBarFolderAssertion.assertFolderEntityState(
+          { name: expectedFolderPath },
+          { name: firstConversationName },
+          'visible',
+        );
+      },
+    );
+
+    await dialOverlayTest.step(
+      'Create one more new conversation and verify it is created inside configured folder',
+      async () => {
+        await overlayChatBar.createNewEntity();
+        await overlayTalkToAgentDialog.cancelButton.click();
+        await overlayChat.sendRequestWithButton(secondConversationName);
+        await overlayHeader.leftPanelToggle.click();
+        await overlayChatBarFolderAssertion.assertFolderEntityState(
+          { name: expectedFolderPath },
+          { name: secondConversationName },
+          'visible',
+        );
+      },
+    );
+  },
+);
+
 dialOverlayTest.afterAll(
   async ({ overlayPublicationApiHelper, adminPublicationApiHelper }) => {
     for (const publication of publicationsToUnpublish) {

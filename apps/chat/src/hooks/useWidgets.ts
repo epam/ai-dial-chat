@@ -1,30 +1,18 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import { useRouter } from 'next/router';
 
+import { WidgetsSelectors } from '../store/models/widgets.selectors';
 import { ApplicationActions } from '@/src/store/actions';
 import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { Routes } from '../constants/routes';
 
 export const useWidgets = () => {
   const router = useRouter();
 
-  const widgetsSchemaIds = useAppSelector(
-    SettingsSelectors.selectWidgetsSchemaIds,
-  );
-  const models = useAppSelector(ModelsSelectors.selectModels);
-
-  const widgetModels = useMemo(() => {
-    return models
-      .filter((m) => widgetsSchemaIds.has(m.applicationTypeSchemaId ?? ''))
-      .toSorted((a, b) =>
-        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
-      );
-  }, [models, widgetsSchemaIds]);
+  const widgetModels = useAppSelector(WidgetsSelectors.selectWidgets);
 
   const handleWidgetClick = useCallback(
     (id: string) => {

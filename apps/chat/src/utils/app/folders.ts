@@ -76,11 +76,17 @@ export const getParentAndCurrentFoldersById = (
   return parentFolders;
 };
 
-export const getParentAndCurrentFolderIdsById = (
-  folders: FolderInterface[],
-  folderId: string | undefined,
-) =>
-  getParentAndCurrentFoldersById(folders, folderId).map((folder) => folder.id);
+export const getParentAndCurrentFolderIdsById = (folderId: string) => {
+  const parts = folderId.split('/');
+  const parentFolders = [];
+
+  for (let i = parts.length - 1; i > 2; i--) {
+    const parentPath = parts.slice(0, i).join('/');
+    parentFolders.push(parentPath);
+  }
+
+  return [folderId, ...parentFolders];
+};
 
 export const getChildAndCurrentFoldersById = (
   folderId: string | undefined,
@@ -255,12 +261,7 @@ export const getFilteredFolders = ({
   // Get roots again for merged array
   const filteredFolderIds = new Set(
     searchedFoldersByEntitiesAndFolders
-      .flatMap((fid) =>
-        getParentAndCurrentFolderIdsById(
-          childAndCurrentSectionFilteredFolders,
-          fid,
-        ),
-      )
+      .flatMap((fid) => getParentAndCurrentFolderIdsById(fid))
       .filter(
         (fid) =>
           fid && sectionFilteredFolders.map(({ id }) => id).includes(fid),
@@ -418,13 +419,13 @@ export const getFoldersFromIds = (
 
 export const getEntitiesFoldersFromEntities = (
   entities: Conversation[] | Prompt[] | DialFile[],
-  folderType: FeatureType,
+  featureType: FeatureType,
 ): FolderInterface[] => {
   const foldersIds = uniq(entities.map((info) => info.folderId));
   //calculate all folders;
   const featuresFolders = getFoldersFromIds(
     uniq(foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id))),
-    folderType,
+    featureType,
   );
 
   return featuresFolders;
@@ -583,11 +584,11 @@ export const updateChildFoldersIds = (
 
 export const getActionsAddFoldersFromFolderId = ({
   folderId,
-  folderType,
+  featureType,
   shouldOpen,
 }: {
   folderId: string;
-  folderType: FeatureType;
+  featureType: FeatureType;
   shouldOpen?: boolean;
 }): Observable<AppAction>[] => {
   const actions: Observable<AppAction>[] = [];
@@ -597,7 +598,7 @@ export const getActionsAddFoldersFromFolderId = ({
     of(
       ConversationsActions.addFolders({
         folders: paths.map((path) => ({
-          ...getFolderFromId(path, folderType),
+          ...getFolderFromId(path, featureType),
           status: UploadStatus.LOADED,
         })),
       }),
@@ -609,7 +610,7 @@ export const getActionsAddFoldersFromFolderId = ({
       of(
         UIActions.setOpenedFoldersIds({
           openedFolderIds: paths,
-          folderType: folderType,
+          featureType,
         }),
       ),
     );

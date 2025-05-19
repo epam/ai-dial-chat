@@ -23,6 +23,8 @@ export interface SettingsState {
   storageType: StorageType;
   themesHostDefined: boolean;
   isolatedModelId?: string;
+  preselectedConversationId?: string;
+  preselectedAction?: string;
   customRenderers?: CustomVisualizer[];
   isSignInInSameWindow?: boolean;
   allowVisualizerSendMessages?: boolean;

@@ -79,7 +79,7 @@ dialOverlayTest(
     );
 
     await dialTest.step(
-      'Click on "Go to my workspace" link and verify workspace page is opened, "Add app" button is not visible',
+      'Click on "Go to my workspace" link and verify workspace page is opened, "Add app" button is visible',
       async () => {
         await overlayTalkToAgentDialog.goToMyWorkspace();
         const marketplace = overlayMarketplacePage
@@ -88,7 +88,7 @@ dialOverlayTest(
         await overlayBaseAssertion.assertElementState(marketplace, 'visible');
         await overlayBaseAssertion.assertElementState(
           marketplace.getMarketplaceHeader().addAppButton,
-          'hidden',
+          'visible',
         );
       },
     );

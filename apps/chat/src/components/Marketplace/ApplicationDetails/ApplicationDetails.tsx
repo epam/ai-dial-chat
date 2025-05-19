@@ -10,12 +10,11 @@ import { getGroupModelKey } from '@/src/utils/app/models';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 
-import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsActions } from '@/src/store/models/models.reducers';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { WidgetsSelectors } from '@/src/store/models/widgets.selectors';
 
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
@@ -24,8 +23,6 @@ import { Modal } from '../../Common/Modal';
 import { ApplicationDetailsContent } from './ApplicationContent';
 import { ApplicationDetailsFooter } from './ApplicationFooter';
 import { ApplicationDetailsHeader } from './ApplicationHeader';
-
-import { UploadStatus } from '@epam/ai-dial-shared';
 
 interface Props {
   entity: DialAIEntityModel;
@@ -56,11 +53,8 @@ export const ApplicationDetails = ({
     ModelsSelectors.selectInstalledModelIds,
   );
   const widgetsSchemaIds = useAppSelector(
-    SettingsSelectors.selectWidgetsSchemaIds,
+    WidgetsSelectors.selectWidgetsSchemaIds,
   );
-  const appLoading =
-    useAppSelector(ApplicationSelectors.selectAppLoading) ===
-    UploadStatus.LOADING;
 
   const filteredEntities = useMemo(() => {
     const filtered = allEntities.filter(
@@ -109,7 +103,7 @@ export const ApplicationDetails = ({
   return (
     <Modal
       portalId="chat"
-      state={appLoading ? ModalState.LOADING : ModalState.OPENED}
+      state={ModalState.OPENED}
       dataQa="marketplace-agent-details"
       overlayClassName="!z-40"
       containerClassName="flex w-full flex-col divide-y divide-tertiary xl:max-w-[720px] max-w-[700px]"

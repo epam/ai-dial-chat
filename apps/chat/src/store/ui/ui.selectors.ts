@@ -5,6 +5,7 @@ import { RootState } from '@/src/types/store';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
+import { WidgetsSelectors } from '../models/widgets.selectors';
 import { UIState } from './ui.types';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -77,6 +78,13 @@ const selectInitialized = (state: RootState) => rootSelector(state).initialized;
 const selectScrollToEntityId = (state: RootState) =>
   rootSelector(state).scrollToEntityId;
 
+const selectIsNavigationVisible = createSelector(
+  [WidgetsSelectors.selectIsAnyWidget, SettingsSelectors.selectEnabledFeatures],
+  (isAnyWidget, enabledFeatures) => {
+    return isAnyWidget || enabledFeatures.has(Feature.Marketplace);
+  },
+);
+
 export const UISelectors = {
   selectThemeState,
   selectShowChatbar,
@@ -99,4 +107,5 @@ export const UISelectors = {
   selectPreviousRoute,
   selectInitialized,
   selectScrollToEntityId,
+  selectIsNavigationVisible,
 };

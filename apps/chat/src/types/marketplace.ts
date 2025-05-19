@@ -7,3 +7,9 @@ export interface MarketplaceFilters {
   // [FilterTypes.CAPABILITIES]: string[];
   // [FilterTypes.ENVIRONMENT]: string[];
 }
+
+export enum PreviewMode {
+  half,
+  full,
+  closed,
+}

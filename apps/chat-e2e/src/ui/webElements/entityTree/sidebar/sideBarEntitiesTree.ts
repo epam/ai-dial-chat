@@ -84,16 +84,6 @@ export class SideBarEntitiesTree extends EntitiesTree {
     return input;
   }
 
-  public async selectMoveToMenuOption(
-    name: string,
-    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
-  ) {
-    return this.getDropdownMenu().selectMenuOption(name, {
-      triggeredHttpMethod: 'POST',
-      isHttpMethodTriggered,
-    });
-  }
-
   public async selectEntity(
     name: string,
     { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
