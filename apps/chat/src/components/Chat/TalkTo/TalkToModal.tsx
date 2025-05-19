@@ -14,6 +14,7 @@ import {
   isReplayAsIsConversation,
   isReplayConversation,
 } from '@/src/utils/app/conversation';
+import { isMobile } from '@/src/utils/app/mobile';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { PseudoModel } from '@/src/utils/server/api';
@@ -276,7 +277,7 @@ const TalkToModalView = ({
             placeholder={t('Search')}
             className="input-form peer m-0 pl-[38px]"
             data-qa="search-agents"
-            autoFocus
+            autoFocus={!isMobile()}
           />
         </div>
         <div className="flex gap-2">
