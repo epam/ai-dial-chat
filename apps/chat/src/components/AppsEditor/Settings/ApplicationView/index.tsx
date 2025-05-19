@@ -205,8 +205,6 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
     shouldSaveApplication,
     exitAfterSave,
     isValid,
-    submitWrapper,
-    handleSubmit,
     dispatch,
     router,
     t,

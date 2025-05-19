@@ -30,7 +30,7 @@ interface SourceFilesEditorProps {
   confirmDialogValues?: ConfirmDialogValueTypes;
 }
 
-const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
+const SourceFilesEditorView: FC<SourceFilesEditorProps> = ({
   value,
   onChange,
   error,
@@ -172,4 +172,4 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
   );
 };
 
-export const SourceFilesEditor = memo(_SourceFilesEditor);
+export const SourceFilesEditor = memo(SourceFilesEditorView);

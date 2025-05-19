@@ -135,6 +135,17 @@ const selectMyFolders = createSelector([selectFolders], (folders) => {
   );
 });
 
+const selectMyFoldersWithSearchTerm = createSelector(
+  [selectMyFolders, (_state, searchTerm: string) => searchTerm],
+  (folders, searchTerm) => {
+    const filtered = folders.filter((folder) =>
+      folder.name.includes(searchTerm.toLowerCase()),
+    );
+
+    return getParentAndChildFolders(folders, filtered);
+  },
+);
+
 const selectFolderById = createSelector(
   [selectFolders, (_state, id: string) => id],
   (folders, id) => {
@@ -502,6 +513,17 @@ const selectCanAttachFile = createSelector(
 const selectTemporaryFolders = (state: RootState) =>
   rootSelector(state).temporaryFolders;
 
+const selectTemporaryFoldersWithSearchTerm = createSelector(
+  [selectTemporaryFolders, (_state, searchTerm: string) => searchTerm],
+  (folders, searchTerm) => {
+    const filtered = folders.filter((folder) =>
+      folder.name.includes(searchTerm.toLowerCase()),
+    );
+
+    return getParentAndChildFolders(folders, filtered);
+  },
+);
+
 const selectPublishedWithMeFolders = createSelector(
   [selectFolders],
   (folders) => {
@@ -776,6 +798,7 @@ export const ConversationsSelectors = {
   selectFilteredConversations,
   selectFolders,
   selectMyFolders,
+  selectMyFoldersWithSearchTerm,
   selectFolderById,
   selectFoldersByFolderId,
   selectEmptyFolderIds,
@@ -817,6 +840,7 @@ export const ConversationsSelectors = {
   selectCanAttachFolders,
   selectCanAttachFile,
   selectTemporaryFolders,
+  selectTemporaryFoldersWithSearchTerm,
   selectTemporaryAndPublishedFolders,
   selectNewAddedFolderId,
   selectLoadingFolderIds,

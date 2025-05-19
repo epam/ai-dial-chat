@@ -338,7 +338,7 @@ const PromptFolderTemplate = ({
   );
 };
 
-const _PromptSection = ({
+const PromptSectionView = ({
   name,
   filters,
   hideIfEmpty = true,
@@ -466,7 +466,7 @@ const _PromptSection = ({
   );
 };
 
-export const PromptSection = memo(_PromptSection);
+export const PromptSection = memo(PromptSectionView);
 
 export function PromptFolders() {
   const isFilterEmpty = useAppSelector(
