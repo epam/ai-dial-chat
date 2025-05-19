@@ -109,7 +109,7 @@ export const GeneralInfoView: React.FC<Props> = ({
           onClick={() => handlePreviewModeChange(PreviewMode.closed)}
           className="w-full"
         >
-          {t('Settings')}
+          {t('Info')}
         </TabButton>
         <TabButton
           selected={isPreviewFull}
