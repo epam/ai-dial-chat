@@ -1,5 +1,6 @@
 import { Conversation } from '@/chat/types/chat';
 import { Prompt } from '@/chat/types/prompt';
+import { PublishedItem } from '@/chat/types/publication';
 import { BucketUtil } from '@/src/utils/bucketUtil';
 
 export class ItemUtil {
@@ -52,5 +53,24 @@ export class ItemUtil {
       .map((f) => encodeURIComponent(f))
       .join(ItemUtil.urlSeparator);
     return itemId.replace(itemId, encodedItemId);
+  }
+
+  public static getPublishedItemRelativePath(item: PublishedItem) {
+    const pathParts = item.url.split('/');
+    let relativePath = '';
+    const publicSegmentIndex = pathParts.indexOf('public');
+    if (
+      publicSegmentIndex !== -1 &&
+      publicSegmentIndex < pathParts.length - 2
+    ) {
+      relativePath =
+        pathParts.slice(publicSegmentIndex + 1, -1).join('/') + '/';
+    } else if (
+      publicSegmentIndex !== -1 &&
+      publicSegmentIndex === pathParts.length - 2
+    ) {
+      relativePath = '';
+    }
+    return relativePath;
   }
 }

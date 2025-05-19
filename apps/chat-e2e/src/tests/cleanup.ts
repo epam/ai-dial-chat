@@ -1,7 +1,9 @@
-import { BackendEntity } from '@/chat/types/common';
+import { BackendEntity, BackendResourceType } from '@/chat/types/common';
 import dialTest from '@/src/core/dialFixtures';
+import { Attachment } from '@/src/testData';
 import {
   BucketUtil,
+  ItemUtil,
   applicationNamePrefix,
   publicationRequestPrefix,
   unpublishRequestPrefix,
@@ -47,32 +49,18 @@ dialTest(
 dialTest(
   'Cleanup published E2E apps',
   async ({ adminPublicationApiHelper, publishRequestBuilder }) => {
-    const publishedApps = await adminPublicationApiHelper.listPublishedApps();
+    const publishedApps =
+      await adminPublicationApiHelper.listPublishedResources(
+        BackendResourceType.APPLICATION,
+      );
     const publishedE2EApps = publishedApps.items?.filter((a) =>
       a.name.includes(applicationNamePrefix),
     );
 
     for (const app of publishedE2EApps!) {
-      const pathParts = app.url.split('/');
-      let relativePath = '';
-      const publicSegmentIndex = pathParts.indexOf('public');
-
-      if (
-        publicSegmentIndex !== -1 &&
-        publicSegmentIndex < pathParts.length - 2
-      ) {
-        relativePath =
-          pathParts.slice(publicSegmentIndex + 1, -1).join('/') + '/';
-      } else if (
-        publicSegmentIndex !== -1 &&
-        publicSegmentIndex === pathParts.length - 2
-      ) {
-        relativePath = '';
-      }
-
       const unpublishRequest = publishRequestBuilder
         .withName(unpublishRequestPrefix + app.name)
-        .withTargetFolder(relativePath)
+        .withTargetFolder(ItemUtil.getPublishedItemRelativePath(app))
         .withApplicationResource(
           {
             url: app.url,
@@ -81,6 +69,32 @@ dialTest(
           } as BackendEntity,
           PublishActions.DELETE,
         )
+        .build();
+      const unpublishResponse =
+        await adminPublicationApiHelper.createUnpublishRequest(
+          unpublishRequest,
+        );
+      await adminPublicationApiHelper.approveRequest(unpublishResponse);
+    }
+  },
+);
+
+dialTest(
+  'Cleanup published E2E files',
+  async ({ adminPublicationApiHelper, publishRequestBuilder }) => {
+    const publishedFiles =
+      await adminPublicationApiHelper.listPublishedResources(
+        BackendResourceType.FILE,
+      );
+    const publishedE2EFiles = publishedFiles.items?.filter((item) =>
+      Object.values(Attachment).includes(item.name),
+    );
+
+    for (const file of publishedE2EFiles!) {
+      const unpublishRequest = publishRequestBuilder
+        .withName(unpublishRequestPrefix + file.name)
+        .withTargetFolder(ItemUtil.getPublishedItemRelativePath(file))
+        .withFileResource(file.url, PublishActions.DELETE)
         .build();
 
       const unpublishResponse =

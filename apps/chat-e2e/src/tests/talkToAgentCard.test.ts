@@ -1,5 +1,5 @@
 import { Conversation } from '@/chat/types/chat';
-import { BackendEntity, BackendResourceType } from '@/chat/types/common';
+import { BackendEntity } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { Publication } from '@/chat/types/publication';
 import dialTest from '@/src/core/dialFixtures';
@@ -97,26 +97,17 @@ dialTest(
     await dialTest.step(
       'Create a custom application with two versions, two topics and icon',
       async () => {
-        const customApplicationFirstVersionModel = customApplicationBuilder
-          .withDisplayName(appName)
-          .withDisplayVersion(appFirstVersion)
-          .withIconUrl(imageUrl)
-          .withDescription(appDescription)
-          .withDescriptionKeywords(...topics)
-          .build();
-        const customApplicationSecondVersionModel = customApplicationBuilder
-          .withDisplayName(appName)
-          .withDisplayVersion(appSecondVersion)
-          .withIconUrl(imageUrl)
-          .withDescription(appDescription)
-          .withDescriptionKeywords(...topics)
-          .build();
-        for (const appModel of [
-          customApplicationFirstVersionModel,
-          customApplicationSecondVersionModel,
-        ]) {
-          const adminApp =
-            await adminApplicationApiHelper.createApplication(appModel);
+        for (const version of [appFirstVersion, appSecondVersion]) {
+          const customApplicationModel = customApplicationBuilder
+            .withDisplayName(appName)
+            .withDisplayVersion(version)
+            .withIconUrl(imageUrl)
+            .withDescription(appDescription)
+            .withDescriptionKeywords(...topics)
+            .build();
+          const adminApp = await adminApplicationApiHelper.createApplication(
+            customApplicationModel,
+          );
           const publishRequest = publishRequestBuilder
             .withName(GeneratorUtil.randomPublicationRequestName())
             .withApplicationResource(adminApp, PublishActions.ADD)
@@ -714,32 +705,3 @@ dialTest(
     );
   },
 );
-
-dialTest.afterAll(async ({ adminPublicationApiHelper }) => {
-  for (const publication of publicationsToUnpublish) {
-    if (publication.resourceTypes.includes(BackendResourceType.FILE)) {
-      //list all published files
-      const publishedFiles =
-        await adminPublicationApiHelper.listPublishedResources(
-          BackendResourceType.FILE,
-        );
-      const fileToUnpublish = publication.resources.find((r) =>
-        r.targetUrl.includes(API.filesHostSegment),
-      );
-      //check if the file has already been unpublished
-      if (
-        publishedFiles.items?.filter(
-          (item) => item.url === fileToUnpublish?.targetUrl,
-        ).length === 0
-      ) {
-        //remove file resource from unpublish request
-        publication.resources = publication.resources.filter(
-          (r) => !r.targetUrl.includes(API.filesHostSegment),
-        );
-      }
-    }
-    const unpublishResponse =
-      await adminPublicationApiHelper.createUnpublishRequest(publication);
-    await adminPublicationApiHelper.approveRequest(unpublishResponse);
-  }
-});

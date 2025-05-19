@@ -6,8 +6,7 @@ import {
   PublicationRequestModel,
   PublicationStatus,
   PublicationsListModel,
-  PublishedFileItem,
-  PublishedItem,
+  PublishedList,
 } from '@/chat/types/publication';
 import { API, ExpectedConstants } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
@@ -61,7 +60,7 @@ export class PublicationApiHelper extends BaseApiHelper {
       statusCode,
       `Received response code: ${statusCode} with body: ${await response.text()}`,
     ).toBe(200);
-    return (await response.json()) as PublishedItem | PublishedFileItem;
+    return (await response.json()) as PublishedList;
   }
 
   public async listPublishedApps() {
