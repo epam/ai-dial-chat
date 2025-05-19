@@ -13,6 +13,7 @@
     {
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
       "rules": {
+        "no-multi-spaces": "error",
         "@nx/enforce-module-boundaries": [
           "error",
           {
@@ -40,6 +41,7 @@
         "plugin:@typescript-eslint/stylistic"
       ],
       "rules": {
+        "no-multi-spaces": "error",
         "@typescript-eslint/no-unused-vars": [
           "error",
           { "argsIgnorePattern": "^_", "varsIgnorePattern": "^__" }
