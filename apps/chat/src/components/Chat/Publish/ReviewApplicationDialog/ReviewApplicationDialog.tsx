@@ -1,13 +1,14 @@
 import { ModalState } from '@/src/types/modal';
 
-import { ApplicationSelectors } from '@/src/store/application/application.selectors';
+import { PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PublicationActions } from '@/src/store/publication/publication.reducers';
+import { ApplicationSelectors } from '@/src/store/selectors';
 
 import { MOUSE_OUTSIDE_PRESS_EVENT } from '@/src/constants/modal';
 
-import { Modal } from '../../../Common/Modal';
-import { Spinner } from '../../../Common/Spinner';
+import { Modal } from '@/src/components/Common/Modal';
+import { Spinner } from '@/src/components/Common/Spinner';
+
 import { ReviewApplicationDialogView } from './ReviewApplicationDialogView';
 
 export function ReviewApplicationDialog() {

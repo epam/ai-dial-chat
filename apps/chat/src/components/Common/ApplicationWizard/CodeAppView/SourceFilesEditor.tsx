@@ -13,14 +13,13 @@ import {
 import { ConfirmDialogValueTypes } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import { FilesActions } from '@/src/store/files/files.reducers';
+import { FilesActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { FieldErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
+import Tooltip from '@/src/components/Common/Tooltip';
 import { SelectFolderModal } from '@/src/components/Files/SelectFolderModal';
-
-import { ConfirmDialog } from '../../ConfirmDialog';
-import { FieldErrorMessage } from '../../Forms/FieldErrorMessage';
-import Tooltip from '../../Tooltip';
 
 interface SourceFilesEditorProps {
   value?: string;

@@ -11,19 +11,16 @@ import { PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
+import { PromptsActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import { PromptsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { RECENT_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
 import { PromptFolders } from './components/PromptFolders';
 import { PromptbarSettings } from './components/PromptbarSettings';
 import { Prompts } from './components/Prompts';
-
-import Sidebar from '../Sidebar';
+import Sidebar from '@/src/components/Sidebar';
 
 export const Promptbar = () => {
   const { t } = useTranslation(Translation.PromptBar);

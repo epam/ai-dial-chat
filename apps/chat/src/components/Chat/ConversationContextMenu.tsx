@@ -25,18 +25,22 @@ import { ContextMenuProps } from '@/src/types/menu';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.selectors';
-import { ChatActions } from '@/src/store/chat/chat.reducer';
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import {
+  ChatActions,
+  ConversationsActions,
+  ImportExportActions,
+  ShareActions,
+  UIActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { ShareActions } from '@/src/store/share/share.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  ApplicationTypesSchemasSelectors,
+  ConversationsSelectors,
+  ModelsSelectors,
+  PublicationSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { PINNED_CONVERSATIONS_SECTION_NAME } from '@/src/constants/sections';
 

@@ -18,10 +18,9 @@ import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { CustomApplicationModel } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { ApplicationSelectors } from '@/src/store/application/application.selectors';
+import { ApplicationActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import { ApplicationSelectors } from '@/src/store/selectors';
 
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/code-apps';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';

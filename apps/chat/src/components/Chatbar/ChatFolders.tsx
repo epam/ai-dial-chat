@@ -27,14 +27,18 @@ import { PublicationFolderPayload } from '@/src/types/modal';
 import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import {
+  ConversationsActions,
+  ShareActions,
+  UIActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { ShareActions } from '@/src/store/share/share.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  ConversationsSelectors,
+  PublicationSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 import {
@@ -44,12 +48,12 @@ import {
   SHARED_WITH_ME_SECTION_NAME,
 } from '@/src/constants/sections';
 
+import { ApproveRequiredSection } from '@/src/components/Chat/Publish/ApproveRequiredSection';
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
+import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
 import Folder from '@/src/components/Folder/Folder';
+import { BetweenFoldersLine } from '@/src/components/Sidebar/BetweenFoldersLine';
 
-import { ApproveRequiredSection } from '../Chat/Publish/ApproveRequiredSection';
-import CollapsibleSection from '../Common/CollapsibleSection';
-import { BetweenFoldersLine } from '../Sidebar/BetweenFoldersLine';
 import { ConversationComponent } from './Conversation';
 
 import { PublishActions } from '@epam/ai-dial-shared';

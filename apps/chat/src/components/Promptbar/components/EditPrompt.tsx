@@ -26,14 +26,13 @@ import { onBlur } from '@/src/utils/app/style-helpers';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
+import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import { PromptsSelectors } from '@/src/store/selectors';
 
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import EmptyRequiredInputMessage from '@/src/components/Common/EmptyRequiredInputMessage';
 import Tooltip from '@/src/components/Common/Tooltip';
-
-import { ConfirmDialog } from '../../Common/ConfirmDialog';
 
 interface Props {
   prompt: Prompt;

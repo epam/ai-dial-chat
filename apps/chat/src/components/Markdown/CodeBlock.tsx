@@ -19,9 +19,9 @@ import {
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import { UISelectors } from '@/src/store/selectors';
 
-import Tooltip from '../Common/Tooltip';
+import Tooltip from '@/src/components/Common/Tooltip';
 
 import Download from '@/public/images/icons/download.svg';
 

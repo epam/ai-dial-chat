@@ -7,10 +7,12 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import {
+  ConversationsSelectors,
+  SettingsSelectors,
+} from '@/src/store/selectors';
 
 import { SendMessageButton } from '@/src/components/Chat/ChatInput/SendMessageButton';
 import Tooltip from '@/src/components/Common/Tooltip';
