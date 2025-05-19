@@ -102,7 +102,11 @@ const selectFilteredConversations = (
   }>,
 ) =>
   createSelector(
-    [selectConversations, PublicationSelectors.selectPublicVersionGroups],
+    [
+      selectConversations,
+      (state: RootState) =>
+        PublicationSelectors.selectPublicVersionGroups(state),
+    ],
     (conversations, versionGroups) => {
       return conversations.filter(
         (conversation) =>
