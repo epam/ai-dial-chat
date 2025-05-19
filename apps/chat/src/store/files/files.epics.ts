@@ -107,14 +107,13 @@ const uploadFilesSuccessEpic: AppEpic = (action$) =>
     ofType(FilesActions.uploadFileSuccess.type),
     switchMap(({ payload }) => {
       if (payload.showSuccessMessage) {
-        const { parentPath, name } = splitEntityId(payload.apiResult.id);
+        const { parentPath } = splitEntityId(payload.apiResult.id);
 
         return of(
           UIActions.showSuccessToast(
             translate(
-              'The file "{{name}}" has been uploaded successfully to "{{parentPath}}"',
+              'The file has been uploaded successfully to "{{parentPath}}"',
               {
-                name,
                 parentPath,
               },
             ),

@@ -525,3 +525,11 @@ export const validateUploadFiles = <T extends { name: string }>(
 
   return { validFiles, invalidFiles, errorMsg };
 };
+
+export const getFilesFromDataTransferItems = (
+  items: DataTransferItemList,
+): File[] => {
+  return Array.from(items)
+    .filter((item) => item.webkitGetAsEntry()?.isFile)
+    .map((item) => item.getAsFile()) as File[];
+};

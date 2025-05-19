@@ -2,7 +2,6 @@ import {
   DragEvent,
   ReactNode,
   useCallback,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -12,6 +11,7 @@ import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
+import { useWindowResizeEvent } from '@/src/hooks/useWindowResizeEvent';
 
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { isSmallScreen, isTabletScreen } from '@/src/utils/app/mobile';
@@ -100,6 +100,10 @@ const Sidebar = <T,>({
   const isPromptbarOpen = useAppSelector(UISelectors.selectShowPromptbar);
 
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+
+  const isNavigationVisible = useAppSelector(
+    UISelectors.selectIsNavigationVisible,
+  );
 
   const [windowWidth, setWindowWidth] = useState<number | undefined>(() => {
     if (typeof window !== 'undefined') {
@@ -324,20 +328,19 @@ const Sidebar = <T,>({
     }
   };
 
-  useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-
-    window.addEventListener('resize', handleResize);
-
-    return () => window.removeEventListener('resize', handleResize);
+  const handleResize = useCallback(() => {
+    setWindowWidth(window.innerWidth);
   }, []);
+  useWindowResizeEvent(handleResize);
 
   const resizableWrapperClassName = classNames(
     '!fixed z-40 flex max-w-[95%] border-tertiary md:max-w-[45%] xl:!relative xl:top-0 xl:!h-full',
     isLeftSidebar
       ? 'sidebar-left left-0 border-r xl:left-0'
       : 'sidebar-right right-0 border-l',
-    isLeftSidebar && (isOverlay ? 'md:left-[44px]' : 'md:left-[60px]'),
+    isLeftSidebar &&
+      isNavigationVisible &&
+      (isOverlay ? 'md:left-[44px]' : 'md:left-[60px]'),
     (screenState === ScreenState.SM || screenState === ScreenState.MD) &&
       '!h-full',
     screenState !== ScreenState.SM &&

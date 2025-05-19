@@ -25,7 +25,7 @@ function Marketplace() {
   const router = useRouter();
   useEffect(() => {
     if (!isMarketplaceEnabled) {
-      router.push(Routes.Chat);
+      router.push(Routes.NotFound);
     }
   }, [isMarketplaceEnabled, router]);
 

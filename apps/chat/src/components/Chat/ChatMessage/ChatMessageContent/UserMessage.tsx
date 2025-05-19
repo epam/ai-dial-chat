@@ -433,13 +433,14 @@ export const UserMessage = memo(function UserMessage({
 
   const handleUploadPastedFiles = useCallback(
     (files: File[]) => {
+      if (!canAttachFiles) return;
       uploadPastedFiles(files)?.then((newFiles) => {
         setNewEditableAttachmentsIds((ids) =>
           uniq(ids.concat(newFiles.map(({ id }) => id))),
         );
       });
     },
-    [uploadPastedFiles],
+    [uploadPastedFiles, canAttachFiles],
   );
 
   useFilePaste(textareaRef, handleUploadPastedFiles);
