@@ -325,7 +325,7 @@ export const TalkToSlider = ({
       </div>
       <SliderDots
         activeSlide={activeSlide}
-        sliderGroups={sliderGroups}
+        slidesCount={sliderGroups.length}
         onSetActiveSlide={setActiveSlide}
       />
     </>
