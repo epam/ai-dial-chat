@@ -65,15 +65,21 @@ export const MoveToDialog: React.FC<Props> = ({
   const myFilteredFolders = useAppSelector((state) =>
     selectors.selectMyFoldersWithSearchTerm(state, searchQuery),
   );
-  const tempFolders = useAppSelector((state) =>
+  const myFolders = useAppSelector(selectors.selectFolders);
+  const tempFilteredFolders = useAppSelector((state) =>
     selectors.selectTemporaryFoldersWithSearchTerm(state, searchQuery),
   );
+  const tempFolders = useAppSelector(selectors.selectTemporaryFolders);
   const newFolderId = useAppSelector(selectors.selectNewAddedFolderId);
 
   const rootFolderId = getRootId({ featureType });
+  const filteredFolders = useMemo(
+    () => [...myFilteredFolders, ...tempFilteredFolders],
+    [myFilteredFolders, tempFilteredFolders],
+  );
   const folders = useMemo(
-    () => [...myFilteredFolders, ...tempFolders],
-    [myFilteredFolders, tempFolders],
+    () => [...myFolders, ...tempFolders],
+    [myFolders, tempFolders],
   );
 
   const handleToggleFolder = useCallback(
@@ -236,7 +242,7 @@ export const MoveToDialog: React.FC<Props> = ({
         <SelectFolderList
           disableSectionToggle
           searchTerm={searchQuery}
-          allFolders={folders}
+          allFolders={filteredFolders}
           isInitialRenameEnabled
           openedFoldersIds={openedFoldersIds}
           newAddedFolderId={newFolderId}
