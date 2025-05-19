@@ -52,7 +52,7 @@ import { SettingsEpics } from './settings/settings.epics';
 import { settingsSlice } from './settings/settings.reducers';
 import { ShareEpics } from './share/share.epics';
 import { shareSlice } from './share/share.reducers';
-import UIEpics from './ui/ui.epics';
+import { UIEpics } from './ui/ui.epics';
 import { uiSlice } from './ui/ui.reducers';
 
 export const rootEpic = combineEpics(

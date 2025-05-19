@@ -12,11 +12,14 @@ import { Conversation } from '@/src/types/chat';
 import { PublicVersionGroups } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
+import {
+  ConversationsSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
-import Loader from '../Common/Loader';
+import Loader from '@/src/components/Common/Loader';
+
 import { ConversationCompareItem } from './ConversationCompareItem';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';

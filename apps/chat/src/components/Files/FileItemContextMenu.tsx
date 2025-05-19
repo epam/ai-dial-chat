@@ -20,12 +20,15 @@ import { DialFile } from '@/src/types/files';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
-import { CodeEditorSelectors } from '@/src/store/codeEditor/codeEditor.reducer';
-import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import {
+  CodeEditorSelectors,
+  FilesSelectors,
+  SettingsSelectors,
+} from '@/src/store/selectors';
 
-import ContextMenu from '../Common/ContextMenu';
+import ContextMenu from '@/src/components/Common/ContextMenu';
+
 import DownloadRenderer from './Download';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';

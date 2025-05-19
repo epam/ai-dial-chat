@@ -1,11 +1,11 @@
 import classNames from 'classnames';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppSelector } from '@/src/store/hooks';
+import { ConversationsSelectors } from '@/src/store/selectors';
 
 import { SchemaCompareWarning } from '@/src/components/Chat/ChatInput/SchemaCompareWarning';
+import { StartReplayButton } from '@/src/components/Chat/StartReplayButton';
 
-import { StartReplayButton } from '../StartReplayButton';
 import { AddModelsControl } from './AddModelsControl';
 import ChatExternalControls from './ChatExternalControls';
 

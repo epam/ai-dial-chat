@@ -3,7 +3,7 @@ import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
+import { PublicationSelectors } from '@/src/store/selectors';
 
 import { NA_VERSION, PUBLIC_URL_PREFIX } from '../constants/public';
 

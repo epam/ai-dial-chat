@@ -19,8 +19,8 @@ import {
   ShareActions,
   UIActions,
 } from '@/src/store/actions';
-import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ApplicationTypesSchemasSelectors } from '@/src/store/selectors';
 
 import { DeleteType } from '@/src/constants/marketplace';
 

@@ -24,20 +24,21 @@ import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { ConversationsActions, PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { PublicationActions } from '@/src/store/publication/publication.reducers';
-import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
+import {
+  ConversationsSelectors,
+  ModelsSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
 import { ConversationContextMenu } from '@/src/components/Chat/ConversationContextMenu';
 import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
+import { ReviewDot } from '@/src/components/Chat/Publish/ReviewDot';
 import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
 import ShareIcon from '@/src/components/Common/ShareIcon';
+import Tooltip from '@/src/components/Common/Tooltip';
 
-import { ReviewDot } from '../Chat/Publish/ReviewDot';
-import Tooltip from '../Common/Tooltip';
 import { ModelIcon } from './ModelIcon';
 
 import {

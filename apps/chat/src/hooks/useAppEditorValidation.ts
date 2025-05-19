@@ -2,19 +2,21 @@ import { useEffect } from 'react';
 
 import { useRouter } from 'next/router';
 
-import { getApplicationType } from '../utils/app/application';
-import { cleanSchemaId } from '../utils/app/application-type-schema';
+import { getApplicationType } from '@/src/utils/app/application';
+import { cleanSchemaId } from '@/src/utils/app/application-type-schema';
 import { isMyApplication } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { ApplicationSelectors } from '@/src/store/application/application.selectors';
-import { AuthSelectors } from '@/src/store/auth/auth.selectors';
+import { ApplicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import {
+  ApplicationSelectors,
+  AuthSelectors,
+  ModelsSelectors,
+} from '@/src/store/selectors';
 
-import { Routes } from '../constants/routes';
+import { Routes } from '@/src/constants/routes';
 
 export const useAppEditorValidation = (isIdRequired: boolean) => {
   const router = useRouter();

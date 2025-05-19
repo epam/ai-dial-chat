@@ -1,8 +1,6 @@
 import { RootState } from '@/src/types/store';
 
-import { OverlayState } from './overlay.types';
-
-const rootSelector = (state: RootState): OverlayState => state.overlay;
+const rootSelector = (state: RootState) => state.overlay;
 
 const selectHostDomain = (state: RootState) => rootSelector(state).hostDomain;
 

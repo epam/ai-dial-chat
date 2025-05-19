@@ -54,30 +54,33 @@ import {
 } from '@/src/types/share';
 import { AppAction, AppEpic } from '@/src/types/store';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
-import { FilesSelectors } from '@/src/store/files/files.selectors';
-import { ModelsActions } from '@/src/store/models/models.reducers';
+import {
+  ApplicationActions,
+  CodeEditorActions,
+  ConversationsActions,
+  FilesActions,
+  MarketplaceActions,
+  ModelsActions,
+  PromptsActions,
+  ShareActions,
+  UIActions,
+} from '@/src/store/actions';
 import { ModelUpdatedValues } from '@/src/store/models/models.types';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import {
+  ApplicationSelectors,
+  ApplicationTypesSchemasSelectors,
+  ConversationsSelectors,
+  FilesSelectors,
+  ModelsSelectors,
+  PromptsSelectors,
+  SettingsSelectors,
+  ShareSelectors,
+} from '@/src/store/selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import { DeleteType } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
-
-import { ApplicationActions } from '../application/application.reducers';
-import { ApplicationSelectors } from '../application/application.selectors';
-import { ApplicationTypesSchemasSelectors } from '../applicationTypeSchemas/applicationTypeSchemas.selectors';
-import { CodeEditorActions } from '../codeEditor/codeEditor.reducer';
-import { FilesActions } from '../files/files.reducers';
-import { MarketplaceActions } from '../marketplace/marketplace.reducers';
-import { ModelsSelectors } from '../models/models.selectors';
-import { ShareActions } from './share.reducers';
-import { ShareSelectors } from './share.selectors';
 
 import { ConversationInfo, Message, UploadStatus } from '@epam/ai-dial-shared';
 

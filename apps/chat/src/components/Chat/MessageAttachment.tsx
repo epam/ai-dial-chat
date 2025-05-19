@@ -11,10 +11,12 @@ import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
 
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import {
+  ConversationsSelectors,
+  SettingsSelectors,
+} from '@/src/store/selectors';
 
 import {
   IMAGE_TYPES_SET,
@@ -24,11 +26,10 @@ import {
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
 import { Spinner } from '@/src/components/Common/Spinner';
+import Tooltip from '@/src/components/Common/Tooltip';
+import ChatMDComponent from '@/src/components/Markdown/ChatMDComponent';
 import { PlotlyComponent } from '@/src/components/Plotly/Plotly';
-
-import Tooltip from '../Common/Tooltip';
-import ChatMDComponent from '../Markdown/ChatMDComponent';
-import { VisualizerRenderer } from '../VisualalizerRenderer/VisualizerRenderer';
+import { VisualizerRenderer } from '@/src/components/VisualalizerRenderer/VisualizerRenderer';
 
 import LinkIcon from '@/public/images/icons/arrow-up-right-from-square.svg';
 import ChevronDown from '@/public/images/icons/chevron-down.svg';

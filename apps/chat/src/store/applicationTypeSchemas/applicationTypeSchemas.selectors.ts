@@ -1,9 +1,6 @@
 import { RootState } from '@/src/types/store';
 
-import { ApplicationTypesSchemasState } from './applicationTypeSchemas.types';
-
-const rootSelector = (state: RootState): ApplicationTypesSchemasState =>
-  state.applicationTypesSchemas;
+const rootSelector = (state: RootState) => state.applicationTypesSchemas;
 
 const selectAllSchemas = (state: RootState) => rootSelector(state).schemas;
 

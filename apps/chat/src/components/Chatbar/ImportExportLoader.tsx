@@ -5,12 +5,12 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { Operation } from '@/src/types/import-export';
 import { Translation } from '@/src/types/translation';
 
+import { ImportExportActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
-import { ImportExportSelectors } from '@/src/store/import-export/importExport.selectors';
+import { ImportExportSelectors } from '@/src/store/selectors';
 
-import { FullPageLoader } from '../Common/FullPageLoader';
-import { withRenderWhen } from '../Common/RenderWhen';
+import { FullPageLoader } from '@/src/components/Common/FullPageLoader';
+import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 
 function ImportExportLoaderView() {
   const { t } = useTranslation(Translation.Chat);

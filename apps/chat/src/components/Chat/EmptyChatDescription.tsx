@@ -20,15 +20,15 @@ import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { ModelsSelectors, SettingsSelectors } from '@/src/store/selectors';
 
-import { ModelIcon } from '../Chatbar/ModelIcon';
-import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
-import { Spinner } from '../Common/Spinner';
-import { FunctionStatusIndicator } from '../Marketplace/FunctionStatusIndicator';
+import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
+import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
+import { Spinner } from '@/src/components/Common/Spinner';
+import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
+
 import { ModelVersionSelect } from './ModelVersionSelect';
 import { PlaybackIcon } from './Playback/PlaybackIcon';
 import { ReplayAsIsIcon } from './ReplayAsIsIcon';

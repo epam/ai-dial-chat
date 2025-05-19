@@ -2,9 +2,8 @@ import { useUploadFilesHandler } from '@/src/hooks/useUploadFilesHandler';
 
 import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
-import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppSelector } from '@/src/store/hooks';
+import { ConversationsSelectors, FilesSelectors } from '@/src/store/selectors';
 
 export const useChatUploadFiles = (
   path: string = getQuickAttachmentsSavingPath(),

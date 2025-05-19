@@ -10,8 +10,8 @@ import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application
 
 import { AppEpic } from '@/src/types/store';
 
-import { ApplicationTypesSchemasActions } from './applicationTypeSchemas.reducers';
-import { ApplicationTypesSchemasSelectors } from './applicationTypeSchemas.selectors';
+import { ApplicationTypesSchemasActions } from '@/src/store/actions';
+import { ApplicationTypesSchemasSelectors } from '@/src/store/selectors';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 

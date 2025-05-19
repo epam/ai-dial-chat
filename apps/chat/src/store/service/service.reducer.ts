@@ -31,6 +31,4 @@ export const serviceSlice = createSlice({
   },
 });
 
-export { ServiceSelectors } from './service.selectors';
-
 export const ServiceActions = serviceSlice.actions;
