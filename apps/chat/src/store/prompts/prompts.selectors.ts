@@ -220,7 +220,7 @@ const selectSelectedPromptFoldersIds = createSelector(
 const selectDoesAnyMyItemExist = createSelector(
   [selectFolders, selectPrompts],
   (folders, prompts) => {
-    const promptRootId = getPromptRootId();
+    const promptRootId = `${getPromptRootId()}/`;
     return (
       prompts.some((prompt) => prompt.id.startsWith(promptRootId)) ||
       folders.some((folder) => folder.id.startsWith(promptRootId))
