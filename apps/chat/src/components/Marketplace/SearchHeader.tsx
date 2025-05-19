@@ -7,6 +7,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isSmallScreen } from '@/src/utils/app/mobile';
 import { getAppEditorRoute } from '@/src/utils/app/route';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
@@ -43,6 +44,7 @@ interface AddAppButtonProps {
 const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
   const { t } = useTranslation(Translation.Marketplace);
   const [isOpen, setIsOpen] = useState(false);
+  const isScreenSmall = isSmallScreen();
 
   const visibleActions = useMemo(() => {
     return menuItems.filter((item) => item.display);
@@ -68,13 +70,12 @@ const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       placement="bottom"
-      triggerIconClassName="max-md:hidden"
       TriggerCustomRenderer={
         <button
           className="button button-primary flex items-center gap-2 py-2"
           data-qa="add-app"
         >
-          <span>{t('Add app')}</span>
+          <span>{isScreenSmall ? t('Add') : t('Add app')}</span>
           <IconChevronDown
             size={18}
             className={classNames(isOpen && 'rotate-180')}
@@ -188,7 +189,7 @@ export const SearchHeader = () => {
           type="text"
           value={searchTerm}
           onChange={onSearchChange}
-          className="grow rounded border border-primary bg-transparent py-2.5 pl-[38px] pr-3 leading-4 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
+          className="w-0 grow rounded border border-primary bg-transparent py-2.5 pl-[38px] pr-3 leading-4 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
         />
       </div>
       {enabledFeatures.has(Feature.MarketplaceTableView) && <ViewToggler />}

@@ -17,6 +17,7 @@ import { useWidgets } from '@/src/hooks/useWidgets';
 
 import { Translation } from '@/src/types/translation';
 
+import { UISelectors } from '../store/ui/ui.selectors';
 import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
@@ -39,6 +40,7 @@ import { MarketplaceFilterbar } from '@/src/components/Marketplace/MarketplaceFi
 import { Promptbar } from '@/src/components/Promptbar';
 
 import { ChatModalsManager } from './Chat/ChatModalsManager';
+import { withRenderWhen } from './Common/RenderWhen';
 
 import { Feature } from '@epam/ai-dial-shared';
 
@@ -286,7 +288,7 @@ const UsedWidgets = () => {
   );
 };
 
-const Navigation = () => {
+const NavigationView = () => {
   const { t } = useTranslation(Translation.SideBar);
 
   const dispatch = useAppDispatch();
@@ -322,8 +324,7 @@ const Navigation = () => {
   return (
     <div
       className={classNames(
-        'order-last w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:z-40 md:order-none md:h-full md:flex-col md:justify-start md:border-r md:py-2',
-        !isMarketplaceEnabled && !widgetsSchemaIds.size ? 'hidden' : 'flex',
+        'order-last flex w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:z-40 md:order-none md:h-full md:flex-col md:justify-start md:border-r md:py-2',
         isOverlay ? 'h-[36px] md:w-[44px]' : 'h-[52px] md:w-[60px]',
       )}
       data-qa="navigation-panel"
@@ -341,6 +342,10 @@ const Navigation = () => {
     </div>
   );
 };
+
+const Navigation = withRenderWhen(UISelectors.selectIsNavigationVisible)(
+  NavigationView,
+);
 
 interface NavigationWrapperProps {
   children: ReactNode;

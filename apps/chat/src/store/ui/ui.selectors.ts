@@ -77,6 +77,18 @@ const selectInitialized = (state: RootState) => rootSelector(state).initialized;
 const selectScrollToEntityId = (state: RootState) =>
   rootSelector(state).scrollToEntityId;
 
+const selectIsNavigationVisible = createSelector(
+  [
+    SettingsSelectors.selectWidgetsSchemaIds,
+    SettingsSelectors.selectEnabledFeatures,
+  ],
+  (widgetsSchemaIds, enabledFeatures) => {
+    return (
+      widgetsSchemaIds.size > 0 || enabledFeatures.has(Feature.Marketplace)
+    );
+  },
+);
+
 export const UISelectors = {
   selectThemeState,
   selectShowChatbar,
@@ -99,4 +111,5 @@ export const UISelectors = {
   selectPreviousRoute,
   selectInitialized,
   selectScrollToEntityId,
+  selectIsNavigationVisible,
 };
