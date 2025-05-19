@@ -36,7 +36,7 @@ function WidgetsPage() {
     <div className="flex size-full flex-col divide-y divide-tertiary bg-layer-1">
       <WidgetsHeader />
 
-      <div className="flex grow flex-col gap-px overflow-y-auto p-3">
+      <div className="flex grow flex-col gap-2 overflow-y-auto p-3">
         {widgetModels.map((model) => (
           <button
             key={model.reference}
