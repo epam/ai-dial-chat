@@ -50,6 +50,7 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-ui-settings';
+import { RECENT_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
 import { ChatActions } from '../chat/chat.reducer';
 import { PublicationActions } from '../publication/publication.reducers';
@@ -122,7 +123,7 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
               UIActions.setCollapsedSections({
                 featureType: FeatureType.Prompt,
                 collapsedSections: collapsedSections.filter(
-                  (section) => section !== translate('Recent'),
+                  (section) => section !== RECENT_PROMPTS_SECTION_NAME,
                 ),
               }),
             ),
@@ -420,7 +421,7 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
         of(
           UIActions.setOpenedFoldersIds({
             openedFolderIds: updatedOpenedFolderIds,
-            folderType: FeatureType.Prompt,
+            featureType: FeatureType.Prompt,
           }),
         ),
         of(
@@ -589,7 +590,7 @@ const uploadPromptsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
                 ),
                 of(
                   UIActions.setOpenedFoldersIds({
-                    folderType: FeatureType.Prompt,
+                    featureType: FeatureType.Prompt,
                     openedFolderIds: [
                       ...openedFolders,
                       ...paths.filter(

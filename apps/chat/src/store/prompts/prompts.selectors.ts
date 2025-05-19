@@ -89,6 +89,12 @@ export const selectPrompt = createSelector(
 
 export const selectFolders = (state: RootState) => rootSelector(state).folders;
 
+export const selectMyFolders = createSelector([selectFolders], (folders) => {
+  return folders.filter((folder) =>
+    folder.id.startsWith(`${getPromptRootId()}/`),
+  );
+});
+
 export const selectFolderById = createSelector(
   [selectFolders, (_state, id: string) => id],
   (folders, id) => {
@@ -389,12 +395,19 @@ export const selectInitialized = (state: RootState) =>
 export const selectPromptWithVariablesForApply = (state: RootState) =>
   rootSelector(state).promptWithVariablesForApply;
 
+export const selectDeletingPrompt = (state: RootState) =>
+  rootSelector(state).deletingPrompt;
+
+export const selectMoveToPrompt = (state: RootState) =>
+  rootSelector(state).moveToPrompt;
+
 export const PromptsSelectors = {
   selectPrompts,
   selectSearchTerm,
   selectFilteredPrompts,
   selectPrompt,
   selectFolders,
+  selectMyFolders,
   selectFolderById,
   selectFoldersByFolderId,
   selectEmptyFolderIds,
@@ -405,6 +418,7 @@ export const PromptsSelectors = {
   selectMyItemsFilters,
   selectIsEmptySearchFilter,
   selectDoesAnyMyItemExist,
+  selectTemporaryFolders,
   selectTemporaryAndPublishedFolders,
   selectNewAddedFolderId,
   selectLoadingFolderIds,
@@ -425,4 +439,6 @@ export const PromptsSelectors = {
   selectIsFolderEmpty,
   selectInitialized,
   selectPromptWithVariablesForApply,
+  selectDeletingPrompt,
+  selectMoveToPrompt,
 };

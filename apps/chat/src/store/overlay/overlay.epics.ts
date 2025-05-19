@@ -22,7 +22,11 @@ import {
 
 import { combineEpics, ofType } from 'redux-observable';
 
-import { parseCommaSeparatedList } from '@/src/utils/app/common';
+import {
+  doesHaveDotsInTheEnd,
+  isEntityNameOnSameLevelUnique,
+  parseCommaSeparatedList,
+} from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import {
   getActionsAddFoldersFromFolderId,
@@ -35,6 +39,7 @@ import {
   sendPMResponse,
 } from '@/src/utils/app/overlay';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { signInInOverlay } from '@/src/utils/auth/auth-overlay';
 
 import { FeatureType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
@@ -50,6 +55,7 @@ import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
+import { ImportExportActions } from '../actions';
 import { AuthSelectors } from '../auth/auth.selectors';
 import { ModelsSelectors } from '../models/models.selectors';
 import { OverlayActions } from './overlay.reducers';
@@ -59,12 +65,18 @@ import {
   ChatOverlayOptions,
   CreateConversationRequest,
   CreateConversationResponse,
+  CreatePlaybackConversationRequest,
+  CreatePlaybackConversationResponse,
+  DeleteConversationRequest,
+  ExportConversationRequest,
   Feature,
   GetConversationsResponse,
   GetMessagesResponse,
   OverlayEvents,
   OverlayRequest,
   OverlayRequests,
+  RenameConversationRequest,
+  RenameConversationResponse,
   Role,
   SelectConversationRequest,
   SelectConversationResponse,
@@ -112,6 +124,47 @@ export const postMessageMapperEpic: AppEpic = (_, state$) =>
 
               return of(
                 OverlayActions.selectConversation({
+                  requestId,
+                  id: options.id,
+                }),
+              );
+            }
+            case OverlayRequests.deleteConversation: {
+              const options = payload as DeleteConversationRequest;
+
+              return of(
+                OverlayActions.deleteConversation({
+                  requestId,
+                  id: options.id,
+                }),
+              );
+            }
+            case OverlayRequests.renameConversation: {
+              const options = payload as RenameConversationRequest;
+
+              return of(
+                OverlayActions.renameConversation({
+                  requestId,
+                  id: options.id,
+                  newName: options.newName,
+                }),
+              );
+            }
+            case OverlayRequests.createPlaybackConversation: {
+              const options = payload as CreatePlaybackConversationRequest;
+
+              return of(
+                OverlayActions.createPlaybackConversation({
+                  requestId,
+                  id: options.id,
+                }),
+              );
+            }
+            case OverlayRequests.exportConversation: {
+              const options = payload as ExportConversationRequest;
+
+              return of(
+                OverlayActions.exportConversation({
                   requestId,
                   id: options.id,
                 }),
@@ -238,7 +291,7 @@ const createConversationEpic: AppEpic = (action$) =>
         actions.push(
           ...getActionsAddFoldersFromFolderId({
             folderId: conversationFolderId,
-            folderType: FeatureType.Chat,
+            featureType: FeatureType.Chat,
             shouldOpen: true,
           }),
         );
@@ -301,6 +354,230 @@ const createConversationEffectEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const deleteConversationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.deleteConversation.type),
+    switchMap(({ payload: { requestId, id } }) => {
+      const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+      const conversation = ConversationsSelectors.selectConversation(
+        state$.value,
+        id,
+      );
+
+      if (!conversation) {
+        console.warn(`[Overlay] Conversation not exists with id '${id}'`);
+
+        return EMPTY;
+      }
+
+      return concat(
+        of(
+          ConversationsActions.deleteConversations({
+            conversationIds: [conversation.id],
+          }),
+        ),
+        of(
+          OverlayActions.sendPMResponse({
+            type: OverlayRequests.deleteConversation,
+            requestParams: {
+              requestId,
+              hostDomain,
+            },
+          }),
+        ),
+      );
+    }),
+  );
+
+const createPlaybackConversationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.createPlaybackConversation.type),
+    switchMap(({ payload }) => {
+      const conversation = ConversationsSelectors.selectConversation(
+        state$.value,
+        payload.id,
+      );
+
+      if (!conversation) {
+        console.warn(
+          `[Overlay] Conversation not exists with id '${payload.id}'`,
+        );
+
+        return EMPTY;
+      }
+
+      return concat(
+        of(ConversationsActions.createNewPlaybackConversation(conversation)),
+        of(OverlayActions.createPlaybackConversationEffect(payload)),
+      );
+    }),
+  );
+
+const createPlaybackConversationEffectEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.createPlaybackConversationEffect.type),
+    switchMap(({ payload: { requestId } }) => {
+      return action$.pipe(
+        ofType(ConversationsActions.saveNewConversationSuccess.type),
+        takeUntil(timer(10000)),
+        filter(Boolean),
+        mergeMap(({ payload: { newConversation } }) => {
+          const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+
+          const { bucket, parentPath } = splitEntityId(newConversation.id);
+          const resultConversation = {
+            ...newConversation,
+            bucket,
+            parentPath,
+          };
+
+          return concat(
+            of(UIActions.setScrollToEntityId(newConversation.id)),
+            of(
+              OverlayActions.sendPMResponse({
+                type: OverlayRequests.createPlaybackConversation,
+                requestParams: {
+                  requestId,
+                  hostDomain,
+                  payload: {
+                    conversation: resultConversation,
+                  } as CreatePlaybackConversationResponse,
+                },
+              }),
+            ),
+          );
+        }),
+      );
+    }),
+  );
+
+const renameConversationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.renameConversation.type),
+    switchMap(({ payload }) => {
+      const conversations = ConversationsSelectors.selectConversations(
+        state$.value,
+      );
+      const conversation = ConversationsSelectors.selectConversation(
+        state$.value,
+        payload.id,
+      );
+
+      if (!conversation) {
+        console.warn(
+          `[Overlay] Conversation not exists with id '${payload.id}'`,
+        );
+
+        return EMPTY;
+      }
+
+      if (
+        !isEntityNameOnSameLevelUnique(
+          payload.newName,
+          conversation,
+          conversations,
+        ) ||
+        doesHaveDotsInTheEnd(payload.newName)
+      ) {
+        console.warn(
+          '[Overlay] Conversation rename failed because new name is invalid',
+        );
+
+        return EMPTY;
+      }
+
+      return concat(
+        of(
+          ConversationsActions.updateConversation({
+            id: conversation.id,
+            values: { name: payload.newName, isNameChanged: true },
+          }),
+        ),
+        of(OverlayActions.renameConversationEffect(payload)),
+      );
+    }),
+  );
+
+const renameConversationEffectEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.renameConversationEffect.type),
+    switchMap(({ payload: { requestId } }) => {
+      return action$.pipe(
+        ofType(ConversationsActions.updateConversationSuccess.type),
+        takeUntil(timer(10000)),
+        filter(Boolean),
+        mergeMap(({ payload: { id } }) => {
+          const conversation = ConversationsSelectors.selectConversation(
+            state$.value,
+            id,
+          );
+
+          if (!conversation) return EMPTY;
+
+          const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+
+          const { bucket, parentPath } = splitEntityId(conversation.id);
+          const resultConversation = {
+            ...conversation,
+            bucket,
+            parentPath,
+          };
+
+          return concat(
+            of(UIActions.setScrollToEntityId(conversation.id)),
+            of(
+              OverlayActions.sendPMResponse({
+                type: OverlayRequests.renameConversation,
+                requestParams: {
+                  requestId,
+                  hostDomain,
+                  payload: {
+                    conversation: resultConversation,
+                  } as RenameConversationResponse,
+                },
+              }),
+            ),
+          );
+        }),
+      );
+    }),
+  );
+
+const exportConversationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.exportConversation.type),
+    switchMap(({ payload: { requestId, id } }) => {
+      const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+      const conversation = ConversationsSelectors.selectConversation(
+        state$.value,
+        id,
+      );
+
+      if (!conversation) {
+        console.warn(`[Overlay] Conversation not exists with id '${id}'`);
+
+        return EMPTY;
+      }
+
+      return concat(
+        of(
+          ImportExportActions.exportConversation({
+            conversationId: conversation.id,
+          }),
+        ),
+        of(
+          OverlayActions.sendPMResponse({
+            type: OverlayRequests.exportConversation,
+            requestParams: {
+              requestId,
+              hostDomain,
+            },
+          }),
+        ),
+      );
+    }),
+  );
+
 const selectConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(OverlayActions.selectConversation.type),
@@ -324,7 +601,7 @@ const selectConversationEpic: AppEpic = (action$, state$) =>
           ? of(
               UIActions.setOpenedFoldersIds({
                 openedFolderIds: foldersPaths,
-                folderType: FeatureType.Chat,
+                featureType: FeatureType.Chat,
               }),
             )
           : EMPTY,
@@ -518,8 +795,20 @@ const signInOptionsSet: AppEpic = (action$, state$) =>
     tap(({ payload: { signInOptions } }) => {
       const isShouldLogin = AuthSelectors.selectIsShouldLogin(state$.value);
 
-      if (isShouldLogin && signInOptions?.autoSignIn) {
-        signIn(signInOptions?.signInProvider);
+      if (
+        isShouldLogin &&
+        signInOptions?.autoSignIn &&
+        signInOptions?.signInProvider
+      ) {
+        if (signInOptions?.signInInNewWindow) {
+          //will open '/auth/signin?provider=' in a new page
+          signInInOverlay(
+            `/auth/signin?provider=${signInOptions.signInProvider}`,
+          );
+        } else {
+          //will try to signin in the iframe
+          signIn(signInOptions?.signInProvider);
+        }
       }
     }),
     ignoreElements(),
@@ -710,6 +999,12 @@ export const OverlayEpics = combineEpics(
   createConversationEpic,
   createConversationEffectEpic,
   selectConversationEpic,
+  deleteConversationEpic,
+  createPlaybackConversationEpic,
+  createPlaybackConversationEffectEpic,
+  exportConversationEpic,
+  renameConversationEpic,
+  renameConversationEffectEpic,
 
   initOverlayEpic,
   sendPMEventEpic,

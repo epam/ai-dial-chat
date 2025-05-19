@@ -122,6 +122,7 @@ import { SHARE_QUERY_PARAM } from '@/src/constants/share';
 
 import { MarketplaceSelectors } from '../marketplace/marketplace.selectors';
 import { ModelsSelectors } from '../models/models.selectors';
+import { WidgetsSelectors } from '../models/widgets.selectors';
 import { ConversationsActions } from './conversations.reducers';
 import { ConversationsSelectors } from './conversations.selectors';
 
@@ -195,9 +196,21 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
       const isIsolatedView = SettingsSelectors.selectIsIsolatedView(
         state$.value,
       );
+      const preselectedConversationId =
+        SettingsSelectors.selectPreselectedConversationId(state$.value);
 
-      // Always create new conversation in isolated view
-      if (isIsolatedView) {
+      if (preselectedConversationId) {
+        const preselectedAction = SettingsSelectors.selectPreselectedAction(
+          state$.value,
+        );
+
+        return of(
+          ConversationsActions.selectConversations({
+            conversationIds: [preselectedConversationId as string],
+          }),
+          ConversationsActions.selectAction(preselectedAction || null),
+        );
+      } else if (isIsolatedView) {
         const isolatedModelId = SettingsSelectors.selectIsolatedModelId(
           state$.value,
         );
@@ -325,7 +338,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
                 openedFolderIds: selectedConversationsIds.flatMap(
                   getParentFolderIdsFromEntityId,
                 ),
-                folderType: FeatureType.Chat,
+                featureType: FeatureType.Chat,
               }),
             ),
             ...actions,
@@ -401,7 +414,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               (m) => m.reference,
             );
             const widgetsSchemaIds =
-              SettingsSelectors.selectWidgetsSchemaIds(state);
+              WidgetsSelectors.selectWidgetsSchemaIds(state);
             const widgetModelsRefs = models
               .filter((model) =>
                 widgetsSchemaIds.has(model.applicationTypeSchemaId ?? ''),
@@ -859,7 +872,7 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
         of(
           UIActions.setOpenedFoldersIds({
             openedFolderIds: updatedOpenedFolderIds,
-            folderType: FeatureType.Chat,
+            featureType: FeatureType.Chat,
           }),
         ),
         of(
@@ -2660,7 +2673,7 @@ const uploadConversationsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
                 ),
                 of(
                   UIActions.setOpenedFoldersIds({
-                    folderType: FeatureType.Chat,
+                    featureType: FeatureType.Chat,
                     openedFolderIds: [
                       ...openedFolders,
                       ...paths.filter(
@@ -2882,9 +2895,9 @@ const openFolderEpic: AppEpic = (action$) =>
 const getChartAttachmentEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ConversationsActions.getChartAttachment.type),
-    switchMap(({ payload }) =>
+    mergeMap(({ payload }) =>
       FileService.getFileContent<PlotParams>(payload.pathToChart).pipe(
-        switchMap((params) => {
+        mergeMap((params) => {
           return of(
             ConversationsActions.getChartAttachmentSuccess({
               params,

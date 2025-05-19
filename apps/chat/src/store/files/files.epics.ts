@@ -4,6 +4,7 @@ import {
   concat,
   filter,
   forkJoin,
+  groupBy,
   ignoreElements,
   iif,
   map,
@@ -106,14 +107,13 @@ const uploadFilesSuccessEpic: AppEpic = (action$) =>
     ofType(FilesActions.uploadFileSuccess.type),
     switchMap(({ payload }) => {
       if (payload.showSuccessMessage) {
-        const { parentPath, name } = splitEntityId(payload.apiResult.id);
+        const { parentPath } = splitEntityId(payload.apiResult.id);
 
         return of(
           UIActions.showSuccessToast(
             translate(
-              'The file "{{name}}" has been uploaded successfully to "{{parentPath}}"',
+              'The file has been uploaded successfully to "{{parentPath}}"',
               {
-                name,
                 parentPath,
               },
             ),
@@ -218,15 +218,20 @@ const renameFolderFailEpic: AppEpic = (action$) =>
 const getFilesEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(FilesActions.getFiles.type),
-    switchMap(({ payload }) =>
-      FileService.getFiles(payload.id).pipe(
-        map((files) =>
-          FilesActions.getFilesSuccess({
-            files,
-            foldersSet: new Set([payload.id ?? getFileRootId()]),
-          }),
+    groupBy(({ payload }) => payload.id),
+    mergeMap((group$) =>
+      group$.pipe(
+        switchMap(({ payload }) =>
+          FileService.getFiles(payload.id).pipe(
+            map((files) =>
+              FilesActions.getFilesSuccess({
+                files,
+                foldersSet: new Set([payload.id ?? getFileRootId()]),
+              }),
+            ),
+            catchError(() => of(FilesActions.getFilesFail())),
+          ),
         ),
-        catchError(() => of(FilesActions.getFilesFail())),
       ),
     ),
   );

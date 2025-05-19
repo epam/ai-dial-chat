@@ -41,7 +41,8 @@ dialTest(
   },
 );
 
-dialTest(
+//TODO: test is not actual after implementing of https://github.com/epam/ai-dial-chat/issues/3802
+dialTest.skip(
   'Prompt folder: folder created from Move to is counted into default numeration',
   async ({
     dialHomePage,

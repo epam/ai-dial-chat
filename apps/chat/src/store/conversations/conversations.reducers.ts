@@ -67,6 +67,7 @@ const initialState: ConversationsState = {
   talkToConversationId: null,
   isStartedCustomViewerConversation: false,
   previewConversationId: null,
+  preselectedAction: null,
 };
 
 export const conversationsSlice = createSlice({
@@ -415,6 +416,9 @@ export const conversationsSlice = createSlice({
       state.temporaryFolders = state.temporaryFolders.filter(
         ({ id }) => id !== payload.folderId,
       );
+    },
+    clearTemporaryFolders: (state) => {
+      state.temporaryFolders = [];
     },
     renameTemporaryFolder: (
       state,
@@ -872,6 +876,9 @@ export const conversationsSlice = createSlice({
       state,
       _action: PayloadAction<{ conversationId: string }>,
     ) => state,
+    selectAction: (state, { payload }: PayloadAction<string | null>) => {
+      state.preselectedAction = payload;
+    },
   },
 });
 

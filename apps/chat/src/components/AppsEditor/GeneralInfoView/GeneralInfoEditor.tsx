@@ -227,7 +227,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
         className="flex size-full flex-col"
         data-qa="app-general-form"
       >
-        <div className="grow space-y-4 divide-tertiary overflow-y-auto p-5">
+        <div className="grow space-y-4 divide-tertiary overflow-y-auto px-3 py-4 md:px-5 xl:py-5">
           <Field
             {...register('name', validators['name'])}
             label={t('Name')}
@@ -267,6 +267,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             control={control}
             render={({ field }) => (
               <LogoSelector
+                id="icon"
                 label={t('Icon')}
                 localLogo={field.value?.split('/')?.pop()}
                 onLogoSelect={(v) => field.onChange(getLogoId(v))}
@@ -314,6 +315,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
                 options={topicOptions}
                 placeholder={t('Select one or more topics')}
                 onChange={(v) => field.onChange(v.map((o) => o.value))}
+                id="topics-dropdown"
               />
             )}
           />
@@ -321,7 +323,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
 
         <div
           className={classNames(
-            'mt-auto flex gap-2 border-t border-tertiary p-4 md:px-6',
+            'mt-auto flex gap-2 border-t border-tertiary px-3 py-4 md:px-5 xl:px-6',
             'justify-end',
           )}
         >

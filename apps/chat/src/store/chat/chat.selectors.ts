@@ -21,11 +21,10 @@ const selectIsConfigurationSchemaLoading = (state: RootState) =>
   rootSelector(state).isConfigurationSchemaLoading;
 
 const selectIsConfigurationBlocksInput = createSelector(
-  [rootSelector],
-  (state) =>
-    state.configurationSchema?.[
-      DialSchemaProperties.DialChatMessageInputDisabled
-    ] ?? false,
+  [selectConfigurationSchema],
+  (configurationSchema) =>
+    configurationSchema?.[DialSchemaProperties.DialChatMessageInputDisabled] ??
+    false,
 );
 
 const selectShouldFocusAndScroll = (state: RootState) =>

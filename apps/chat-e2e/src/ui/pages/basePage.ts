@@ -16,6 +16,7 @@ export interface UploadDownloadData {
 export interface ExpectedApiResponse {
   apiMethod?: 'PUT' | 'POST' | 'DELETE' | 'GET';
   urlPattern?: string | RegExp;
+  status?: number;
 }
 
 export const apiTimeout = 35000;
@@ -368,18 +369,19 @@ export class BasePage {
   public async waitForExpectedResponses(
     action: () => Promise<void>,
     expectedApiResponses: ExpectedApiResponse[],
-    status = 200,
+    defaultStatus = 200,
     timeout = apiTimeout,
   ) {
     const responsePromises = [];
     for (const expectedResponse of expectedApiResponses) {
+      const expectedStatus = expectedResponse.status ?? defaultStatus;
       const promise = this.page.waitForResponse(
         (response) => {
           const expectedMethod = expectedResponse.apiMethod;
           const methodMatch = expectedMethod
             ? response.request().method() === expectedMethod
             : true;
-          const statusMatch = response.status() === status;
+          const statusMatch = response.status() === expectedStatus;
           const urlPattern = expectedResponse.urlPattern;
           const responseUrl = response.url();
           const urlMatch = urlPattern
