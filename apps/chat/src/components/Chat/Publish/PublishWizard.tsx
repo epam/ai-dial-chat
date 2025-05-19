@@ -140,6 +140,9 @@ export function PublishModal<
   const selectedItemsIds = useAppSelector(
     PublicationSelectors.selectSelectedItemsToPublish,
   );
+  const applicationDetails = useAppSelector(
+    ApplicationSelectors.selectApplicationDetail,
+  );
 
   const applicationId = isApplicationId(entity?.id) ? entity.id : null;
 
@@ -408,6 +411,7 @@ export function PublishModal<
       dispatch,
       publishAction,
       type,
+      applicationDetails,
       onClose,
       selectedItemsIds,
     ],
