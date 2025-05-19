@@ -63,17 +63,15 @@ export const NavigationButton = ({
           !isOverlay ? (rounded ? 'md:p-[9px]' : 'md:p-[10px]') : 'md:p-1',
         )}
       >
-        {Icon && (
-          <Icon
-            className={classNames(
-              'min-h-[24px] min-w-[24px]',
-              selected ? 'text-accent-primary' : 'text-secondary',
-            )}
-            width={24}
-            height={24}
-            size={24}
-          />
-        )}
+        <Icon
+          className={classNames(
+            'min-h-[24px] min-w-[24px]',
+            selected ? 'text-accent-primary' : 'text-secondary',
+          )}
+          width={24}
+          height={24}
+          size={24}
+        />
 
         {!isOverlay && (
           <span
