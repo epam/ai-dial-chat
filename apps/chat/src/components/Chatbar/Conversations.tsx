@@ -33,7 +33,7 @@ interface SortedConversations {
   other: SortedBlock;
 }
 
-const _Conversations = ({ conversations }: Props) => {
+const ConversationsView = ({ conversations }: Props) => {
   const [sortedConversations, setSortedConversations] =
     useState<SortedConversations>();
 
@@ -143,4 +143,4 @@ const _Conversations = ({ conversations }: Props) => {
   );
 };
 
-export const Conversations = memo(_Conversations);
+export const Conversations = memo(ConversationsView);
