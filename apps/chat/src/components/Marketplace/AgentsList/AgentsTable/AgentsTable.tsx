@@ -19,7 +19,7 @@ import { useSyncXScroll } from '@/src/hooks/useSyncXScroll';
 import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/selectors';
 
 import { TableColumnSortKeys } from '@/src/constants/marketplace';
