@@ -3,9 +3,11 @@ import { useCallback, useMemo } from 'react';
 
 import { useRouter } from 'next/router';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 import { useWidgets } from '@/src/hooks/useWidgets';
 
+import { ScreenState } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { WidgetsSelectors } from '../../store/models/widgets.selectors';
@@ -21,6 +23,39 @@ import Loader from '@/src/components/Common/Loader';
 import { withRenderWhen } from '../Common/RenderWhen';
 import { NavigationButton } from './NavigationButton';
 
+const WidgetBarIcon: React.FC<IconProps> = ({ height }) => {
+  const { widgetModels } = useWidgets();
+
+  const isApplicationsInitialized = useAppSelector(
+    ApplicationSelectors.selectInitialized,
+  );
+  const areModelsLoading = useAppSelector(
+    ModelsSelectors.selectAreModelsLoading,
+  );
+  const selectedWidgetId = useAppSelector(
+    ApplicationSelectors.selectSelectedWidget,
+  );
+
+  const selectedWidget = useMemo(
+    () => widgetModels.find((model) => model.reference === selectedWidgetId),
+    [widgetModels, selectedWidgetId],
+  );
+
+  if (areModelsLoading || !isApplicationsInitialized) {
+    return <Loader size={height as number} />;
+  }
+
+  return selectedWidget ? (
+    <ModelIcon
+      entity={selectedWidget}
+      entityId={selectedWidget.reference}
+      size={height as number}
+    />
+  ) : (
+    <IconBrowser height={height} />
+  );
+};
+
 const WidgetsNavigationView = () => {
   const { t } = useTranslation(Translation.SideBar);
 
@@ -29,15 +64,14 @@ const WidgetsNavigationView = () => {
   const selectedWidgetId = useAppSelector(
     ApplicationSelectors.selectSelectedWidget,
   );
-  const isApplicationsInitialised = useAppSelector(
-    ApplicationSelectors.selectInitialized,
-  );
 
   const areModelsLoading = useAppSelector(
     ModelsSelectors.selectAreModelsLoading,
   );
 
   const { widgetModels, handleWidgetClick } = useWidgets();
+
+  const screenState = useScreenState();
 
   const handleOpenWidgetsClick = useCallback(() => {
     if (router.route === Routes.SelectedWidget) return;
@@ -48,69 +82,48 @@ const WidgetsNavigationView = () => {
     }
   }, [handleWidgetClick, router, selectedWidgetId]);
 
-  const selectedWidget = useMemo(
-    () => widgetModels.find((model) => model.reference === selectedWidgetId),
-    [widgetModels, selectedWidgetId],
-  );
-
-  const WidgetBarIcon = useMemo(() => {
-    if (areModelsLoading || !isApplicationsInitialised)
-      // eslint-disable-next-line react/display-name
-      return ({ height }: IconProps) => <Loader size={height as number} />;
-
-    return selectedWidget
-      ? ({ height }: IconProps) => (
-          <ModelIcon
-            entity={selectedWidget}
-            entityId={selectedWidget.reference}
-            size={height as number}
-          />
-        )
-      : IconBrowser;
-  }, [isApplicationsInitialised, areModelsLoading, selectedWidget]);
-
   if (!widgetModels.length && !areModelsLoading) return null;
 
-  return (
-    <>
-      <div className="no-scrollbar hidden w-full flex-col items-center gap-2 overflow-y-auto border-t border-tertiary pt-2 empty:border-transparent md:flex">
-        {widgetModels.map((model) => (
-          <NavigationButton
-            key={model.reference}
-            rounded
-            onClick={() => handleWidgetClick(model.reference)}
-            selected={
-              model.reference === selectedWidgetId &&
-              router.route === Routes.SelectedWidget
-            }
-            Icon={({ height }) => (
-              <ModelIcon
-                entity={model}
-                entityId={model.id}
-                size={height as number}
-                isCustomTooltip
-              />
-            )}
-            tooltip={<ModelTooltip entity={model} entityId={model.id} />}
-          />
-        ))}
-      </div>
+  if (screenState === ScreenState.SM) {
+    return (
+      <NavigationButton
+        onClick={handleOpenWidgetsClick}
+        Icon={WidgetBarIcon}
+        selected={
+          router.route === Routes.Widgets ||
+          router.route === Routes.SelectedWidget
+        }
+        dataQa="widgets-sidebar-trigger"
+        caption={t('Widgets')}
+        tooltip={t('Widgets')}
+        allowClickSelected={router.route === Routes.SelectedWidget}
+      />
+    );
+  }
 
-      <div className="md:hidden">
+  return (
+    <div className="no-scrollbar hidden w-full flex-col items-center gap-2 overflow-y-auto border-t border-tertiary pt-2 empty:border-transparent md:flex">
+      {widgetModels.map((model) => (
         <NavigationButton
-          onClick={handleOpenWidgetsClick}
-          Icon={WidgetBarIcon}
+          key={model.reference}
+          rounded
+          onClick={() => handleWidgetClick(model.reference)}
           selected={
-            router.route === Routes.Widgets ||
+            model.reference === selectedWidgetId &&
             router.route === Routes.SelectedWidget
           }
-          dataQa="widgets-sidebar-trigger"
-          caption={t('Widgets')}
-          tooltip={t('Widgets')}
-          allowClickSelected={router.route === Routes.SelectedWidget}
+          Icon={({ height }) => (
+            <ModelIcon
+              entity={model}
+              entityId={model.id}
+              size={height as number}
+              isCustomTooltip
+            />
+          )}
+          tooltip={<ModelTooltip entity={model} entityId={model.id} />}
         />
-      </div>
-    </>
+      ))}
+    </div>
   );
 };
 
