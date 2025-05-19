@@ -55,10 +55,6 @@ export const MoveToDialog: React.FC<Props> = ({
       ? { selectors: ConversationsSelectors, actions: ConversationsActions }
       : { selectors: PromptsSelectors, actions: PromptsActions };
 
-  const myFolders = useAppSelector(selectors.selectMyFolders);
-  const tempFolders = useAppSelector(selectors.selectTemporaryFolders);
-  const newFolderId = useAppSelector(selectors.selectNewAddedFolderId);
-
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
     entity.folderId,
@@ -66,10 +62,18 @@ export const MoveToDialog: React.FC<Props> = ({
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState<string>();
 
+  const myFilteredFolders = useAppSelector((state) =>
+    selectors.selectMyFoldersWithSearchTerm(state, searchQuery),
+  );
+  const tempFolders = useAppSelector((state) =>
+    selectors.selectTemporaryFoldersWithSearchTerm(state, searchQuery),
+  );
+  const newFolderId = useAppSelector(selectors.selectNewAddedFolderId);
+
   const rootFolderId = getRootId({ featureType });
   const folders = useMemo(
-    () => [...myFolders, ...tempFolders],
-    [myFolders, tempFolders],
+    () => [...myFilteredFolders, ...tempFolders],
+    [myFilteredFolders, tempFolders],
   );
 
   const handleToggleFolder = useCallback(
@@ -252,13 +256,13 @@ export const MoveToDialog: React.FC<Props> = ({
           rootFolderId={rootFolderId}
           showAllRootFolders
           onShowError={setErrorMessage}
-          editOnlyTemporary
-          deleteOnlyTemporary
+          canManageOnlyTemporaryFolders
         />
       </SelectFolderHeader>
       <SelectFolderFooter
         onCreateNewFolder={handleAddFolder}
         onSelectFolderClick={handleSelect}
+        selectBtnText="Move"
       />
     </SelectFolder>
   );

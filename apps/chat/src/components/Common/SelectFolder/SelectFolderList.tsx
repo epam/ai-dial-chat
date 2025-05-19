@@ -54,8 +54,6 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
   rootFolderName,
   rootFolderId,
   showAllRootFolders,
-  editOnlyTemporary,
-  deleteOnlyTemporary,
   disableSectionToggle,
   onFolderSelect,
   onRenameFolder,
@@ -115,18 +113,8 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
                         {...props}
                         searchTerm={searchTerm}
                         allFolders={allFolders}
-                        onRenameFolder={
-                          (editOnlyTemporary && folder.temporary) ||
-                          !editOnlyTemporary
-                            ? onRenameFolder
-                            : undefined
-                        }
-                        onDeleteFolder={
-                          (deleteOnlyTemporary && folder.temporary) ||
-                          !deleteOnlyTemporary
-                            ? onDeleteFolder
-                            : undefined
-                        }
+                        onRenameFolder={onRenameFolder}
+                        onDeleteFolder={onDeleteFolder}
                         featureType={
                           isConversationId(folder.id)
                             ? FeatureType.Chat

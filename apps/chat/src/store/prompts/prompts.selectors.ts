@@ -89,11 +89,22 @@ export const selectPrompt = createSelector(
 
 export const selectFolders = (state: RootState) => rootSelector(state).folders;
 
-export const selectMyFolders = createSelector([selectFolders], (folders) => {
+const selectMyFolders = createSelector([selectFolders], (folders) => {
   return folders.filter((folder) =>
     folder.id.startsWith(`${getPromptRootId()}/`),
   );
 });
+
+const selectMyFoldersWithSearchTerm = createSelector(
+  [selectMyFolders, (_state, searchTerm: string) => searchTerm],
+  (folders, searchTerm) => {
+    const filtered = folders.filter((folder) =>
+      folder.name.includes(searchTerm.toLowerCase()),
+    );
+
+    return getParentAndChildFolders(folders, filtered);
+  },
+);
 
 export const selectFolderById = createSelector(
   [selectFolders, (_state, id: string) => id],
@@ -223,6 +234,17 @@ export const selectDoesAnyMyItemExist = createSelector(
 
 export const selectTemporaryFolders = (state: RootState) =>
   rootSelector(state).temporaryFolders;
+
+const selectTemporaryFoldersWithSearchTerm = createSelector(
+  [selectTemporaryFolders, (_state, searchTerm: string) => searchTerm],
+  (folders, searchTerm) => {
+    const filtered = folders.filter((folder) =>
+      folder.name.includes(searchTerm.toLowerCase()),
+    );
+
+    return getParentAndChildFolders(folders, filtered);
+  },
+);
 
 export const selectPublishedWithMeFolders = createSelector(
   [selectFolders],
@@ -408,6 +430,7 @@ export const PromptsSelectors = {
   selectPrompt,
   selectFolders,
   selectMyFolders,
+  selectMyFoldersWithSearchTerm,
   selectFolderById,
   selectFoldersByFolderId,
   selectEmptyFolderIds,
@@ -419,6 +442,7 @@ export const PromptsSelectors = {
   selectIsEmptySearchFilter,
   selectDoesAnyMyItemExist,
   selectTemporaryFolders,
+  selectTemporaryFoldersWithSearchTerm,
   selectTemporaryAndPublishedFolders,
   selectNewAddedFolderId,
   selectLoadingFolderIds,
