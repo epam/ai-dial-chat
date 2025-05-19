@@ -216,10 +216,8 @@ const selectInitialDataStatus = (state: RootState) =>
 
 const selectProviderId = (state: RootState) => rootSelector(state).providerId;
 
-const selectWidgetsSchemaIds = createSelector(
-  [rootSelector],
-  (state) => new Set(state.widgetsSchemaIds),
-);
+const _selectWidgetsSchemaIds = (state: RootState) =>
+  rootSelector(state).widgetsSchemaIds;
 
 export const SettingsSelectors = {
   selectAppName,
@@ -252,5 +250,5 @@ export const SettingsSelectors = {
   selectDefaults,
   selectInitialDataStatus,
   selectProviderId,
-  selectWidgetsSchemaIds,
+  _selectWidgetsSchemaIds,
 };

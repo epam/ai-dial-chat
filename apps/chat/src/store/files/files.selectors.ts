@@ -17,9 +17,12 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState): FilesState => state.files;
 
-const selectFiles = createSelector([rootSelector], (state) => {
-  return sortByName([...state.files]);
+const _selectFiles = (state: RootState) => rootSelector(state).files;
+
+const selectFiles = createSelector([_selectFiles], (files) => {
+  return sortByName([...files]);
 });
+
 export const selectFilteredFiles = createSelector(
   [
     selectFiles,
@@ -50,8 +53,10 @@ const selectFileById = createSelector(
 const selectSelectedFilesIds = (state: RootState) =>
   rootSelector(state).selectedFilesIds;
 
-const selectFolders = createSelector([rootSelector], (state) => {
-  return [...state.folders].sort((a, b) =>
+const _selectFolders = (state: RootState) => rootSelector(state).folders;
+
+const selectFolders = createSelector([_selectFolders], (folders) => {
+  return [...folders].sort((a, b) =>
     a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1,
   );
 });
@@ -105,9 +110,15 @@ const selectAreFoldersLoading = (state: RootState) =>
 const selectAreFilesLoading = (state: RootState) =>
   rootSelector(state).filesStatus === UploadStatus.LOADING;
 
-const selectLoadingFolderIds = createSelector([rootSelector], (state) => {
-  return state.loadingFolderId ? [state.loadingFolderId] : [];
-});
+const selectLoadingFolderId = (state: RootState) =>
+  rootSelector(state).loadingFolderId;
+
+const selectLoadingFolderIds = createSelector(
+  [selectLoadingFolderId],
+  (loadingFolderId) => {
+    return loadingFolderId ? [loadingFolderId] : [];
+  },
+);
 const selectNewAddedFolderId = (state: RootState) =>
   rootSelector(state).newAddedFolderId;
 
@@ -122,12 +133,9 @@ const selectFoldersWithSearchTerm = createSelector(
   },
 );
 
-const selectPublicFolders = createSelector(
-  [rootSelector],
-  (state: FilesState) => {
-    return state.folders.filter((f) => isEntityIdPublic(f));
-  },
-);
+const selectPublicFolders = createSelector([_selectFolders], (folders) => {
+  return folders.filter((f) => isEntityIdPublic(f));
+});
 
 const selectInitialized = (state: RootState) => rootSelector(state).initialized;
 
