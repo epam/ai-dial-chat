@@ -1,8 +1,10 @@
+import { Conversation } from '@/chat/types/chat';
 import { BackendEntity } from '@/chat/types/common';
 import dialTest from '@/src/core/dialFixtures';
 import {
   BucketUtil,
   applicationNamePrefix,
+  conversationNamePrefix,
   publicationRequestPrefix,
   unpublishRequestPrefix,
 } from '@/src/utils';
@@ -12,6 +14,9 @@ dialTest(
   'Cleanup admin data',
   async ({ adminUserItemApiHelper, adminPublicationApiHelper }) => {
     await adminUserItemApiHelper.deleteAllData(BucketUtil.getAdminUserBucket());
+
+    const publishedConversations =
+      await adminPublicationApiHelper.listPublishedConversations();
 
     //list pending requests
     const publicationRequests =
@@ -23,15 +28,18 @@ dialTest(
           await adminPublicationApiHelper.getPublicationRequestDetails(
             publicationRequest.url,
           );
+
         //reject if the request has already been unpublished
-        if (
-          publicationDetails.resources.every(
-            (resource) => resource.sourceUrl === null,
-          )
-        ) {
-          await adminPublicationApiHelper.rejectRequest(publicationRequest);
-        } else {
-          await adminPublicationApiHelper.approveRequest(publicationRequest);
+        if (publishedConversations.items !== undefined) {
+          if (
+            publishedConversations.items.some(
+              (item) => item.url === publicationDetails.resources[0].targetUrl,
+            )
+          ) {
+            await adminPublicationApiHelper.approveRequest(publicationRequest);
+          } else {
+            await adminPublicationApiHelper.rejectRequest(publicationRequest);
+          }
         }
       }
       //if the request is pending publication
@@ -79,6 +87,56 @@ dialTest(
             name: app.name,
             bucket: app.bucket,
           } as BackendEntity,
+          PublishActions.DELETE,
+        )
+        .build();
+
+      const unpublishResponse =
+        await adminPublicationApiHelper.createUnpublishRequest(
+          unpublishRequest,
+        );
+      await adminPublicationApiHelper.approveRequest(unpublishResponse);
+    }
+  },
+);
+
+dialTest(
+  'Cleanup published E2E conversations',
+  async ({ adminPublicationApiHelper, publishRequestBuilder }) => {
+    const publishedConversations =
+      await adminPublicationApiHelper.listPublishedConversations();
+    const publishedE2EConversations = publishedConversations.items?.filter(
+      (a) => a.name.includes(conversationNamePrefix),
+    );
+
+    for (const conversation of publishedE2EConversations!) {
+      const pathParts = conversation.url.split('/');
+      let relativePath = '';
+      const publicSegmentIndex = pathParts.indexOf('public');
+
+      if (
+        publicSegmentIndex !== -1 &&
+        publicSegmentIndex < pathParts.length - 2
+      ) {
+        relativePath =
+          pathParts.slice(publicSegmentIndex + 1, -1).join('/') + '/';
+      } else if (
+        publicSegmentIndex !== -1 &&
+        publicSegmentIndex === pathParts.length - 2
+      ) {
+        relativePath = '';
+      }
+
+      const unpublishRequest = publishRequestBuilder
+        .withName(unpublishRequestPrefix + conversation.name)
+        .withTargetFolder(relativePath)
+        .withConversationResource(
+          {
+            id: conversation.url.substring(
+              0,
+              conversation.url.lastIndexOf('__'),
+            ),
+          } as Conversation,
           PublishActions.DELETE,
         )
         .build();
