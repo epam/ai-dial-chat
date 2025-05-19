@@ -6,7 +6,6 @@ import classNames from 'classnames';
 import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { ScreenState } from '@/src/types/common';
-import { CardType } from '@/src/types/talkTo';
 
 import range from 'lodash-es/range';
 
@@ -56,13 +55,13 @@ const MAX_VISIBLE_SLIDER_DOTS = 7;
 
 interface Props {
   activeSlide: number;
-  sliderGroups: CardType[][];
+  slidesCount: number;
   onSetActiveSlide: (slide: number) => void;
 }
 
 export const SliderDots: React.FC<Props> = ({
   activeSlide,
-  sliderGroups,
+  slidesCount,
   onSetActiveSlide,
 }) => {
   const screenState = useScreenState();
@@ -70,8 +69,8 @@ export const SliderDots: React.FC<Props> = ({
   const isMobileOrTablet =
     screenState === ScreenState.SM || screenState === ScreenState.MD;
   const sliderDotsArray = useMemo(() => {
-    return range(0, sliderGroups.length);
-  }, [sliderGroups.length]);
+    return range(0, slidesCount);
+  }, [slidesCount]);
   const excessDots = sliderDotsArray.length - MAX_VISIBLE_SLIDER_DOTS;
   const maxDotsTranslate = Math.max(0, excessDots * SLIDER_DOT_SIZE_WITH_GAPS);
   const translateXValue = Math.max(
@@ -122,6 +121,7 @@ export const SliderDots: React.FC<Props> = ({
               {!isMobileOrTablet && (
                 <button
                   onClick={handleClickLeftArrow}
+                  data-qa="slider-dot-arrow-prev"
                   disabled={activeSlide === 0}
                   className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:text-secondary"
                 >
@@ -139,6 +139,7 @@ export const SliderDots: React.FC<Props> = ({
                     return (
                       <div
                         key={slideNumber}
+                        data-qa={`slider-dot-${slideNumber}`}
                         onClick={() => onSetActiveSlide(slideNumber)}
                         className="flex min-w-2 items-center justify-center"
                       >
@@ -160,6 +161,7 @@ export const SliderDots: React.FC<Props> = ({
               {!isMobileOrTablet && (
                 <button
                   onClick={handleClickRightArrow}
+                  data-qa="slider-dot-arrow-next"
                   disabled={activeSlide === sliderDotsArray.length - 1}
                   className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:text-secondary"
                 >
