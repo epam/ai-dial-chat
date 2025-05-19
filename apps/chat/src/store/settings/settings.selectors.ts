@@ -8,6 +8,8 @@ import { FeatureType } from '@/src/types/common';
 import { MappedVisualizers } from '@/src/types/custom-visualizers';
 import { RootState } from '@/src/types/store';
 
+import { AuthSelectors } from '@/src/store/auth/auth.selectors';
+
 import {
   DEFAULT_QUICK_APPS_HOST,
   DEFAULT_QUICK_APPS_MODEL,
@@ -26,11 +28,14 @@ const selectIsOverlay = (state: RootState) => rootSelector(state).isOverlay;
 const selectFooterHtmlMessage = (state: RootState) =>
   rootSelector(state).footerHtmlMessage;
 
+const _selectEnabledFeatures = (state: RootState) =>
+  rootSelector(state).enabledFeatures;
+
 const selectEnabledFeatures = createSelector(
-  [rootSelector, (state: RootState) => state.auth.session?.data],
-  (state, session) => {
+  [_selectEnabledFeatures, AuthSelectors.selectSessionData],
+  (enabledFeatures, session) => {
     return new Set(
-      state.enabledFeatures.filter((feature: Feature) =>
+      enabledFeatures.filter((feature: Feature) =>
         canUserUseFeature(session, feature),
       ),
     );

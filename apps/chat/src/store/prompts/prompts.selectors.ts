@@ -36,11 +36,9 @@ import {
   DEFAULT_PROMPT_NAME,
 } from '@/src/constants/default-ui-settings';
 
-import { PromptsState } from './prompts.types';
-
 import { ShareEntity } from '@epam/ai-dial-shared';
 
-const rootSelector = (state: RootState): PromptsState => state.prompts;
+const rootSelector = (state: RootState) => state.prompts;
 
 const selectPrompts = (state: RootState) => rootSelector(state).prompts;
 
