@@ -3,7 +3,8 @@ import { createSelector } from '@reduxjs/toolkit';
 import { FeatureType } from '@/src/types/common';
 import { RootState } from '@/src/types/store';
 
-import { SettingsSelectors, WidgetsSelectors } from '@/src/store/selectors';
+import { WidgetsSelectors } from '@/src/store/models/widgets.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { Feature } from '@epam/ai-dial-shared';
 
@@ -56,10 +57,7 @@ const selectShowSelectToMigrateWindow = (state: RootState) =>
   rootSelector(state).showSelectToMigrateWindow;
 
 const selectIsAnyMenuOpen = createSelector(
-  [
-    rootSelector,
-    (state: RootState) => SettingsSelectors.selectEnabledFeatures(state),
-  ],
+  [rootSelector, SettingsSelectors.selectEnabledFeatures],
   (state, enabledFeatures) =>
     (state.showPromptbar && enabledFeatures.has(Feature.PromptsSection)) ||
     (state.showChatbar && enabledFeatures.has(Feature.ConversationsSection)) ||
@@ -79,10 +77,7 @@ const selectScrollToEntityId = (state: RootState) =>
   rootSelector(state).scrollToEntityId;
 
 const selectIsNavigationVisible = createSelector(
-  [
-    (state: RootState) => WidgetsSelectors.selectIsAnyWidget(state),
-    (state: RootState) => SettingsSelectors.selectEnabledFeatures(state),
-  ],
+  [WidgetsSelectors.selectIsAnyWidget, SettingsSelectors.selectEnabledFeatures],
   (isAnyWidget, enabledFeatures) => {
     return isAnyWidget || enabledFeatures.has(Feature.Marketplace);
   },

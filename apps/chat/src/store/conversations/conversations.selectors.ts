@@ -51,12 +51,10 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
 import { RootState } from '@/src/types/store';
 
-import {
-  ChatSelectors,
-  ModelsSelectors,
-  PublicationSelectors,
-  SettingsSelectors,
-} from '@/src/store/selectors';
+import { ChatSelectors } from '@/src/store/chat/chat.selectors';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
@@ -102,11 +100,7 @@ const selectFilteredConversations = (
   }>,
 ) =>
   createSelector(
-    [
-      selectConversations,
-      (state: RootState) =>
-        PublicationSelectors.selectPublicVersionGroups(state),
-    ],
+    [selectConversations, PublicationSelectors.selectPublicVersionGroups],
     (conversations, versionGroups) => {
       return conversations.filter(
         (conversation) =>
@@ -410,10 +404,7 @@ const selectIsLastAssistantMessageEmpty = createSelector(
 );
 
 const selectSelectedConversationsModels = createSelector(
-  [
-    selectSelectedConversations,
-    (state: RootState) => ModelsSelectors.selectModelsMap(state),
-  ],
+  [selectSelectedConversations, ModelsSelectors.selectModelsMap],
   (conversations, modelsMap) => {
     return conversations
       .map((conv) => modelsMap[conv.model.id])
@@ -463,10 +454,7 @@ const selectMaximumAttachmentsAmount = createSelector(
 );
 
 const selectCanAttachLink = createSelector(
-  [
-    (state: RootState) => SettingsSelectors.selectEnabledFeatures(state),
-    selectSelectedConversationsModels,
-  ],
+  [SettingsSelectors.selectEnabledFeatures, selectSelectedConversationsModels],
   (enabledFeatures, models) => {
     const inputLinksEnabled = enabledFeatures.has(Feature.InputLinks);
     if (!inputLinksEnabled || models.length === 0) {
@@ -492,10 +480,7 @@ const selectCanAttachFolders = createSelector(
 );
 
 const selectCanAttachFile = createSelector(
-  [
-    (state: RootState) => SettingsSelectors.selectEnabledFeatures(state),
-    selectSelectedConversationsModels,
-  ],
+  [SettingsSelectors.selectEnabledFeatures, selectSelectedConversationsModels],
   (enabledFeatures, models) => {
     const inputFilesEnabled = enabledFeatures.has(Feature.InputFiles);
     if (!inputFilesEnabled || models.length === 0) {

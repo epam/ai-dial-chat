@@ -57,9 +57,8 @@ const selectDetailsModel = (state: RootState) =>
 
 const selectSourceTypes = createSelector(
   [
-    (state: RootState) => ModelsSelectors.selectModels(state),
-    (state: RootState) =>
-      ApplicationTypesSchemasSelectors.selectAllSchemas(state),
+    ModelsSelectors.selectModels,
+    ApplicationTypesSchemasSelectors.selectAllSchemas,
   ],
   (models: DialAIEntityModel[], schemas: ApplicationTypeSchema[]) => {
     const sourceTypes = new Set<SourceType>([SourceType.Public]);

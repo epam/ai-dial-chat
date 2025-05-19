@@ -55,10 +55,7 @@ const selectFilteredPrompts = (
   }>,
 ) =>
   createSelector(
-    [
-      selectPrompts,
-      (state) => PublicationSelectors.selectPublicVersionGroups(state),
-    ],
+    [selectPrompts, PublicationSelectors.selectPublicVersionGroups],
     (prompts, versionGroups) => {
       return prompts.filter(
         (prompt) =>

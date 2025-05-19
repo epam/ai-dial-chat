@@ -1,6 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import { SettingsSelectors } from '../settings/settings.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+
 import { ModelsSelectors } from './models.selectors';
 
 const selectWidgetsSchemaIds = createSelector(
