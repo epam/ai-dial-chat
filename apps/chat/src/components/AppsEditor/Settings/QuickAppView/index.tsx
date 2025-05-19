@@ -118,42 +118,47 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
 
   const handleSubmit = useCallback(
     (data: QuickAppFormData) => {
-      if (
-        !isEqual(data, lastSubmittedValuesRef.current) &&
-        shouldSaveApplication
-      ) {
-        const applicationData = getQuickAppData(data);
-        const arrAreNotTheSameAndShared =
-          isShared &&
-          !arraysHaveSameElements(
-            getQuickAppDocumentUrl(applicationData as CustomApplicationModel),
-            getQuickAppDocumentUrl(oldApplication),
-          );
+      const hasChanged = !isEqual(data, lastSubmittedValuesRef.current);
 
-        if (arrAreNotTheSameAndShared) {
+      if (shouldSaveApplication) {
+        if (hasChanged) {
+          const applicationData = getQuickAppData(data);
+
+          const arrAreNotTheSameAndShared =
+            isShared &&
+            !arraysHaveSameElements(
+              getQuickAppDocumentUrl(applicationData as CustomApplicationModel),
+              getQuickAppDocumentUrl(oldApplication),
+            );
+
+          if (arrAreNotTheSameAndShared) {
+            dispatch(
+              ShareActions.revokeAccess({
+                resourceId: oldApplication.id,
+                featureType: FeatureType.Application,
+              }),
+            );
+          }
+
           dispatch(
-            ShareActions.revokeAccess({
-              resourceId: oldApplication.id,
-              featureType: FeatureType.Application,
+            ApplicationActions.update({
+              oldApplication,
+              applicationData: {
+                ...oldApplication,
+                ...applicationData,
+                isShared: arrAreNotTheSameAndShared ? false : isShared,
+              },
+              schema: schema ?? undefined,
             }),
           );
+
+          lastSubmittedValuesRef.current = data;
         }
 
-        dispatch(
-          ApplicationActions.update({
-            oldApplication,
-            applicationData: {
-              ...oldApplication,
-              ...applicationData,
-              isShared: arrAreNotTheSameAndShared ? false : isShared,
-            },
-            schema: schema ?? undefined,
-          }),
-        );
-        lastSubmittedValuesRef.current = data;
-      } else if (shouldSaveApplication && exitAfterSave) {
-        dispatch(ApplicationActions.exitEditor({}));
-      } else {
+        if (exitAfterSave) {
+          dispatch(ApplicationActions.exitEditor({}));
+        }
+
         dispatch(ApplicationActions.setShouldSaveApplication(false));
         dispatch(ApplicationActions.setExitAfterSave(false));
       }
@@ -173,7 +178,8 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
   }, [submitWrapper, handleSubmit]);
 
   useEffect(() => {
-    if (!shouldSaveApplication && !exitAfterSave) return;
+    const isTriggered = shouldSaveApplication || exitAfterSave;
+    if (!isTriggered) return;
 
     if (!isValid) {
       dispatch(ApplicationActions.setShouldSaveApplication(false));
@@ -188,11 +194,11 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
       autoSaveHandler();
     }
   }, [
-    shouldSaveApplication,
-    exitAfterSave,
-    isValid,
     autoSaveHandler,
     dispatch,
+    exitAfterSave,
+    isValid,
+    shouldSaveApplication,
     router,
     t,
   ]);
