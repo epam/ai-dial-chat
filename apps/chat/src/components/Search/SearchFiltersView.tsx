@@ -16,10 +16,11 @@ import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { SettingsSelectors } from '@/src/store/selectors';
 
-import ContextMenu from '../Common/ContextMenu';
-import Tooltip from '../Common/Tooltip';
+import ContextMenu from '@/src/components/Common/ContextMenu';
+import Tooltip from '@/src/components/Common/Tooltip';
+
 import SearchFilterRenderer from './SearchFilterRenderer';
 
 import { Feature } from '@epam/ai-dial-shared';

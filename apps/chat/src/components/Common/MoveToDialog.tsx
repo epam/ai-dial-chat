@@ -16,9 +16,11 @@ import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsActions, PromptsActions } from '@/src/store/actions';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
+import {
+  ConversationsSelectors,
+  PromptsSelectors,
+} from '@/src/store/selectors';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import {

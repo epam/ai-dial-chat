@@ -79,12 +79,21 @@ import { Prompt } from '@/src/types/prompt';
 import { AppAction, AppEpic } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  ConversationsActions,
+  FilesActions,
+  ImportExportActions,
+  MigrationActions,
+  PromptsActions,
+  UIActions,
+} from '@/src/store/actions';
+import {
+  ConversationsSelectors,
+  ImportExportSelectors,
+  PromptsSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import {
   DEFAULT_CONVERSATION_NAME,
@@ -92,12 +101,6 @@ import {
 } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import { successMessages } from '@/src/constants/successMessages';
-
-import { ConversationsSelectors } from '../conversations/conversations.selectors';
-import { FilesActions } from '../files/files.reducers';
-import { MigrationActions } from '../migration/migration.reducers';
-import { ImportExportActions } from './importExport.reducers';
-import { ImportExportSelectors } from './importExport.selectors';
 
 import { Message, UploadStatus } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';

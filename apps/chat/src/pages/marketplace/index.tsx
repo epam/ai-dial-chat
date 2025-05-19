@@ -5,7 +5,7 @@ import { useRouter } from 'next/router';
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { SettingsSelectors } from '@/src/store/selectors';
 
 import { Routes } from '@/src/constants/routes';
 

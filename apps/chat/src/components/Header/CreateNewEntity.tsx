@@ -7,17 +7,18 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import {
+  ConversationsActions,
+  PromptsActions,
+  PublicationActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { PublicationActions } from '@/src/store/publication/publication.reducers';
+import { ConversationsSelectors } from '@/src/store/selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
 import { Spinner } from '@/src/components/Common/Spinner';
-
-import Tooltip from '../Common/Tooltip';
+import Tooltip from '@/src/components/Common/Tooltip';
 
 interface CreateNewEntityButtonProps {
   iconSize: number;

@@ -2,21 +2,19 @@ import { useCallback } from 'react';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
+import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
 import {
   DEFAULT_HEADER_ICON_SIZE,
   OVERLAY_HEADER_ICON_SIZE,
 } from '@/src/constants/default-ui-settings';
 
+import { ToggleSidebarButton } from '@/src/components/Common/Buttons/ToggleSidebarButton';
+import { BaseHeader } from '@/src/components/Header/BaseHeader';
+import { User } from '@/src/components/Header/User/User';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
-
-import { ToggleSidebarButton } from '../Common/Buttons/ToggleSidebarButtor';
-import { BaseHeader } from '../Header/BaseHeader';
-import { User } from '../Header/User/User';
 
 export const MarketplaceHeader = () => {
   const showFilterbar = useAppSelector(

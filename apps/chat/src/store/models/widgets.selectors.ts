@@ -4,12 +4,12 @@ import { SettingsSelectors } from '../settings/settings.selectors';
 import { ModelsSelectors } from './models.selectors';
 
 const selectWidgetsSchemaIds = createSelector(
-  [SettingsSelectors._selectWidgetsSchemaIds],
+  [(state) => SettingsSelectors.selectWidgetsSchemaIds(state)],
   (widgetsSchemaIds) => new Set(widgetsSchemaIds),
 );
 
 const selectWidgets = createSelector(
-  [ModelsSelectors.selectModels, selectWidgetsSchemaIds],
+  [(state) => ModelsSelectors.selectModels(state), selectWidgetsSchemaIds],
   (models, widgetsSchemaIds) => {
     return models
       .filter((m) => widgetsSchemaIds.has(m.applicationTypeSchemaId ?? ''))

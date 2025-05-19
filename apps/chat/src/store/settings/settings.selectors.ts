@@ -14,13 +14,10 @@ import {
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
 
-import { AuthSelectors } from '../auth/auth.selectors';
-import { SettingsState } from './settings.types';
-
 import { Feature } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
-const rootSelector = (state: RootState): SettingsState => state.settings;
+const rootSelector = (state: RootState) => state.settings;
 
 const selectAppName = (state: RootState) => rootSelector(state).appName;
 
@@ -30,10 +27,10 @@ const selectFooterHtmlMessage = (state: RootState) =>
   rootSelector(state).footerHtmlMessage;
 
 const selectEnabledFeatures = createSelector(
-  [rootSelector, AuthSelectors.selectSessionData],
+  [rootSelector, (state: RootState) => state.auth.session?.data],
   (state, session) => {
     return new Set(
-      state.enabledFeatures.filter((feature) =>
+      state.enabledFeatures.filter((feature: Feature) =>
         canUserUseFeature(session, feature),
       ),
     );
@@ -216,8 +213,11 @@ const selectInitialDataStatus = (state: RootState) =>
 
 const selectProviderId = (state: RootState) => rootSelector(state).providerId;
 
-const _selectWidgetsSchemaIds = (state: RootState) =>
+const selectWidgetsSchemaIds = (state: RootState) =>
   rootSelector(state).widgetsSchemaIds;
+
+const selectIsAuthDisabled = (state: RootState) =>
+  rootSelector(state).isAuthDisabled;
 
 export const SettingsSelectors = {
   selectAppName,
@@ -250,5 +250,6 @@ export const SettingsSelectors = {
   selectDefaults,
   selectInitialDataStatus,
   selectProviderId,
-  _selectWidgetsSchemaIds,
+  selectWidgetsSchemaIds,
+  selectIsAuthDisabled,
 };

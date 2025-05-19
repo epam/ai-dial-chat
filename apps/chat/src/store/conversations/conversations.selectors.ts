@@ -51,14 +51,14 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
 import { RootState } from '@/src/types/store';
 
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import {
+  ChatSelectors,
+  ModelsSelectors,
+  PublicationSelectors,
+  SettingsSelectors,
+} from '@/src/store/selectors';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
-
-import { ChatSelectors } from '../chat/chat.selectors';
-import { ConversationsState } from './conversations.types';
 
 import {
   ConversationInfo,
@@ -69,8 +69,7 @@ import {
 import cloneDeep from 'lodash-es/cloneDeep';
 import uniqBy from 'lodash-es/uniqBy';
 
-const rootSelector = (state: RootState): ConversationsState =>
-  state.conversations;
+const rootSelector = (state: RootState) => state.conversations;
 
 const selectConversations = (state: RootState): ConversationInfo[] =>
   rootSelector(state).conversations;
@@ -103,10 +102,7 @@ const selectFilteredConversations = (
   }>,
 ) =>
   createSelector(
-    [
-      selectConversations,
-      (state) => PublicationSelectors.selectPublicVersionGroups(state),
-    ],
+    [selectConversations, PublicationSelectors.selectPublicVersionGroups],
     (conversations, versionGroups) => {
       return conversations.filter(
         (conversation) =>
@@ -127,9 +123,9 @@ const selectFilteredConversations = (
     },
   );
 
-const selectFolders = (state: RootState) => rootSelector(state).folders || [];
+const selectFolders = (state: RootState) => rootSelector(state).folders;
 
-export const selectMyFolders = createSelector([selectFolders], (folders) => {
+const selectMyFolders = createSelector([selectFolders], (folders) => {
   return folders.filter((folder) =>
     folder.id.startsWith(`${getConversationRootId()}/`),
   );
@@ -339,7 +335,7 @@ const selectAreSelectedConversationsExternal = createSelector(
 const selectDoesAnyMyItemExist = createSelector(
   [selectFolders, selectConversations],
   (folders, conversations) => {
-    const conversationRootId = getConversationRootId();
+    const conversationRootId = `${getConversationRootId()}/`;
     return (
       conversations.some((conv) => conv.id.startsWith(conversationRootId)) ||
       folders.some((folder) => folder.id.startsWith(conversationRootId))
@@ -399,7 +395,10 @@ const selectIsLastAssistantMessageEmpty = createSelector(
 );
 
 const selectSelectedConversationsModels = createSelector(
-  [selectSelectedConversations, ModelsSelectors.selectModelsMap],
+  [
+    selectSelectedConversations,
+    (state: RootState) => ModelsSelectors.selectModelsMap(state),
+  ],
   (conversations, modelsMap) => {
     return conversations
       .map((conv) => modelsMap[conv.model.id])
@@ -425,7 +424,7 @@ const selectAvailableAttachmentsTypes = createSelector(
     // Assume that we have only 2 selected models available
     const availableModelsAttachmentTypes = (
       modelsAttachmentsTypes[0] || []
-    ).filter((value) => (modelsAttachmentsTypes[1] || []).includes(value));
+    ).filter((value) => (modelsAttachmentsTypes[1] ?? []).includes(value));
 
     return availableModelsAttachmentTypes.length === 0
       ? undefined
@@ -449,7 +448,10 @@ const selectMaximumAttachmentsAmount = createSelector(
 );
 
 const selectCanAttachLink = createSelector(
-  [SettingsSelectors.selectEnabledFeatures, selectSelectedConversationsModels],
+  [
+    (state: RootState) => SettingsSelectors.selectEnabledFeatures(state),
+    selectSelectedConversationsModels,
+  ],
   (enabledFeatures, models) => {
     const inputLinksEnabled = enabledFeatures.has(Feature.InputLinks);
     if (!inputLinksEnabled || models.length === 0) {
@@ -475,7 +477,10 @@ const selectCanAttachFolders = createSelector(
 );
 
 const selectCanAttachFile = createSelector(
-  [SettingsSelectors.selectEnabledFeatures, selectSelectedConversationsModels],
+  [
+    (state: RootState) => SettingsSelectors.selectEnabledFeatures(state),
+    selectSelectedConversationsModels,
+  ],
   (enabledFeatures, models) => {
     const inputFilesEnabled = enabledFeatures.has(Feature.InputFiles);
     if (!inputFilesEnabled || models.length === 0) {
@@ -758,7 +763,7 @@ const selectIsSelectedConversationsWithSchema = createSelector(
   (conversations) => conversations.some(isConversationWithFormSchema),
 );
 
-export const selectAction = (state: RootState) =>
+const selectAction = (state: RootState) =>
   rootSelector(state).preselectedAction;
 
 export const ConversationsSelectors = {

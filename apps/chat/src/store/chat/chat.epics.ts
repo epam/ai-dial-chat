@@ -13,14 +13,18 @@ import { translate } from '@/src/utils/app/translation';
 
 import { AppEpic } from '@/src/types/store';
 
-import { ChatActions } from '@/src/store/chat/chat.reducer';
-import { ChatSelectors } from '@/src/store/chat/chat.selectors';
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
-import { FilesActions } from '@/src/store/files/files.reducers';
-import { FilesSelectors } from '@/src/store/files/files.selectors';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import {
+  ChatActions,
+  ConversationsActions,
+  FilesActions,
+  PromptsActions,
+  UIActions,
+} from '@/src/store/actions';
+import {
+  ChatSelectors,
+  ConversationsSelectors,
+  FilesSelectors,
+} from '@/src/store/selectors';
 
 import { Message, Role } from '@epam/ai-dial-shared';
 

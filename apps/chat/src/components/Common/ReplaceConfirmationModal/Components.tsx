@@ -28,14 +28,14 @@ import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { ModelsSelectors } from '@/src/store/selectors';
 
-import { PlaybackIcon } from '../../Chat/Playback/PlaybackIcon';
-import { ReplayAsIsIcon } from '../../Chat/ReplayAsIsIcon';
-import { ModelIcon } from '../../Chatbar/ModelIcon';
-import { Select, SelectOption } from '../Select';
-import ShareIcon from '../ShareIcon';
-import Tooltip from '../Tooltip';
+import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
+import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
+import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
+import { Select, SelectOption } from '@/src/components/Common/Select';
+import ShareIcon from '@/src/components/Common/ShareIcon';
+import Tooltip from '@/src/components/Common/Tooltip';
 
 import {
   ConversationInfo,
