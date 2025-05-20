@@ -82,7 +82,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
     try {
       parsedImportedConversation = JSON.parse(importedConversation);
     } catch (e) {
-      console.log('Invalid imported conversation', e);
+      console.warn('Invalid imported conversation', e);
       return;
     }
     const convObject = await overlay.current?.importConversation(
