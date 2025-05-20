@@ -1,9 +1,9 @@
 import { Conversation } from '@/chat/types/chat';
 import { BackendEntity } from '@/chat/types/common';
 import dialTest from '@/src/core/dialFixtures';
-import { PublishRequestBuilder } from '@/src/testData';
 import {
   BucketUtil,
+  ItemUtil,
   applicationNamePrefix,
   conversationNamePrefix,
   publicationRequestPrefix,
@@ -56,47 +56,6 @@ dialTest(
 dialTest(
   'Cleanup published E2E entities (apps and conversations)',
   async ({ adminPublicationApiHelper, publishRequestBuilder }) => {
-    // Helper function to extract relative path from URL
-    const extractRelativePath = (url: string): string => {
-      const pathParts = url.split('/');
-      let relativePath = '';
-      const publicSegmentIndex = pathParts.indexOf('public');
-
-      if (
-        publicSegmentIndex !== -1 &&
-        publicSegmentIndex < pathParts.length - 2
-      ) {
-        relativePath =
-          pathParts.slice(publicSegmentIndex + 1, -1).join('/') + '/';
-      } else if (
-        publicSegmentIndex !== -1 &&
-        publicSegmentIndex === pathParts.length - 2
-      ) {
-        relativePath = '';
-      }
-      return relativePath;
-    };
-
-    // Helper function to create and approve an unpublish request
-    const unpublishEntity = async (
-      name: string,
-      relativePath: string,
-      resourceBuilder: (
-        request: PublishRequestBuilder,
-      ) => PublishRequestBuilder,
-    ) => {
-      const unpublishRequest = publishRequestBuilder
-        .withName(unpublishRequestPrefix + name)
-        .withTargetFolder(relativePath);
-
-      resourceBuilder(unpublishRequest);
-
-      const builtRequest = unpublishRequest.build();
-      const unpublishResponse =
-        await adminPublicationApiHelper.createUnpublishRequest(builtRequest);
-      await adminPublicationApiHelper.approveRequest(unpublishResponse);
-    };
-
     // Cleanup published E2E apps
     const publishedApps = await adminPublicationApiHelper.listPublishedApps();
     const publishedE2EApps = publishedApps.items?.filter((app) =>
@@ -104,18 +63,23 @@ dialTest(
     );
 
     for (const app of publishedE2EApps || []) {
-      const relativePath = extractRelativePath(app.url);
+      const relativePath = ItemUtil.extractRelativePath(app.url);
 
-      await unpublishEntity(app.name, relativePath, (request) => {
-        return request.withApplicationResource(
-          {
-            url: app.url,
-            name: app.name,
-            bucket: app.bucket,
-          } as BackendEntity,
-          PublishActions.DELETE,
-        );
-      });
+      await adminPublicationApiHelper.unpublishEntity(
+        app.name,
+        relativePath,
+        publishRequestBuilder,
+        (request) => {
+          return request.withApplicationResource(
+            {
+              url: app.url,
+              name: app.name,
+              bucket: app.bucket,
+            } as BackendEntity,
+            PublishActions.DELETE,
+          );
+        },
+      );
     }
 
     // Cleanup published E2E conversations
@@ -126,19 +90,24 @@ dialTest(
     );
 
     for (const conversation of publishedE2EConversations || []) {
-      const relativePath = extractRelativePath(conversation.url);
+      const relativePath = ItemUtil.extractRelativePath(conversation.url);
 
-      await unpublishEntity(conversation.name, relativePath, (request) => {
-        return request.withConversationResource(
-          {
-            id: conversation.url.substring(
-              0,
-              conversation.url.lastIndexOf('__'),
-            ),
-          } as Conversation,
-          PublishActions.DELETE,
-        );
-      });
+      await adminPublicationApiHelper.unpublishEntity(
+        conversation.name,
+        relativePath,
+        publishRequestBuilder,
+        (request) => {
+          return request.withConversationResource(
+            {
+              id: conversation.url.substring(
+                0,
+                conversation.url.lastIndexOf('__'),
+              ),
+            } as Conversation,
+            PublishActions.DELETE,
+          );
+        },
+      );
     }
   },
 );
