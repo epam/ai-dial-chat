@@ -235,6 +235,11 @@ export const TalkToSlider = ({
     handleResize();
   }, [handleResize]);
 
+  // Fallback for useLayoutEffect (ex. if mobile keyboard is open)
+  useEffect(() => {
+    handleResize();
+  }, [handleResize]);
+
   const maxChunksCountConfig = getSliderChunksConfig(screenState);
 
   const sliderGroups = useMemo(() => {
