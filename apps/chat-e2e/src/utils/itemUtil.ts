@@ -55,7 +55,7 @@ export class ItemUtil {
   }
 
   // Helper function to extract relative path from URL
-  public extractRelativePath(url: string): string {
+  public static extractRelativePath(url: string): string {
     const pathParts = url.split('/');
     let relativePath = '';
     const publicSegmentIndex = pathParts.indexOf('public');
