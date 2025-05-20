@@ -17,7 +17,7 @@ import { AddonsSelectors } from '@/src/store/selectors';
 import { OUTSIDE_PRESS } from '@/src/constants/modal';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
-import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
+import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import { Modal } from '@/src/components/Common/Modal';
 import { NoResultsFound } from '@/src/components/Common/NoResultsFound';

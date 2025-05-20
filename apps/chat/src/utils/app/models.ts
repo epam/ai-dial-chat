@@ -1,3 +1,5 @@
+import { getModelIdWithoutVersion } from '@/src/utils/server/api';
+
 import { EntityType } from '@/src/types/common';
 import {
   DialAIEntity,
@@ -6,7 +8,6 @@ import {
   ModelsMap,
 } from '@/src/types/models';
 
-import { getModelIdWithoutVersion } from '../server/api';
 import { constructPath } from './file';
 
 import groupBy from 'lodash-es/groupBy';

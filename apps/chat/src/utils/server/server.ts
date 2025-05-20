@@ -1,6 +1,7 @@
 import { NextApiRequest } from 'next';
 
-import { constructPath } from '../app/file';
+import { constructPath } from '@/src/utils/app/file';
+
 import { ApiUtils } from './api';
 
 import { Response as NodeFetchResponse } from 'node-fetch';

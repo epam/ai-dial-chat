@@ -14,7 +14,7 @@ import { ApiUtils } from '@/src/utils/server/api';
 import { EntityType } from '@/src/types/common';
 import { DialAIEntity } from '@/src/types/models';
 
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 interface ModelTooltipProps {
   entityId: string;

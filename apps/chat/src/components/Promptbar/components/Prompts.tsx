@@ -9,7 +9,7 @@ import { PromptInfo } from '@/src/types/prompt';
 
 import { RECENT_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
-import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
+import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 
 import { PromptComponent } from './Prompt';
 

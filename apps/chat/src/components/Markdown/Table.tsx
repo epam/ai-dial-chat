@@ -12,7 +12,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { CopyTableType } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 interface CopyIconProps {
   Icon: Icon;

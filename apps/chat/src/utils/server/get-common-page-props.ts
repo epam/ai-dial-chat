@@ -2,6 +2,7 @@ import { GetServerSideProps } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 
+import { parseCommaSeparatedList } from '@/src/utils/app/common';
 import { pages } from '@/src/utils/auth/auth-pages';
 import { isAuthDisabled } from '@/src/utils/auth/auth-providers';
 import { isServerSessionValid } from '@/src/utils/auth/session';
@@ -28,10 +29,7 @@ import {
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import packageJSON from '../../../../../package.json';
-import { parseCommaSeparatedList } from '../app/common';
-
+import packageJSON from '@/../../package.json';
 import { Feature } from '@epam/ai-dial-shared';
 import { URL, URLSearchParams } from 'url';
 
