@@ -3,6 +3,15 @@ import {
   isReplayConversation,
 } from '@/src/utils/app/conversation';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
+import {
+  ApiUtils,
+  addVersionToId,
+  getIdWithoutVersionFromApiKey,
+  getPublicItemIdWithoutVersion,
+  getVersionFromId,
+  parseConversationApiKey,
+  parsePromptApiKey,
+} from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
 import { ApiKeys, FeatureType } from '@/src/types/common';
@@ -23,15 +32,6 @@ import {
   PUBLIC_URL_PREFIX,
 } from '@/src/constants/public';
 
-import {
-  ApiUtils,
-  addVersionToId,
-  getIdWithoutVersionFromApiKey,
-  getPublicItemIdWithoutVersion,
-  getVersionFromId,
-  parseConversationApiKey,
-  parsePromptApiKey,
-} from '../server/api';
 import { isVersionValid } from './common';
 import { constructPath } from './file';
 import { getFolderIdFromEntityId, sortByName } from './folders';

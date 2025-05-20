@@ -28,8 +28,8 @@ import { ShareActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
-import ShareIcon from '@/src/components/Common/ShareIcon';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { ShareIcon } from '@/src/components/Common/ShareIcon';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { FileItemContextMenu } from './FileItemContextMenu';
 

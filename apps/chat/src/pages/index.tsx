@@ -16,12 +16,12 @@ import { SettingsState } from '@/src/store/settings/settings.types';
 
 import { getLayout } from '@/src/pages/_app';
 
-import { ImportExportLoader } from '../components/Chatbar/ImportExportLoader';
-import { AnnouncementsBanner } from '../components/Common/AnnouncementBanner';
 import { Chat } from '@/src/components/Chat/Chat';
 import { Migration } from '@/src/components/Chat/Migration/Migration';
 import { MigrationFailedWindow } from '@/src/components/Chat/Migration/MigrationFailedModal';
-import Header from '@/src/components/Header/Header';
+import { ImportExportLoader } from '@/src/components/Chatbar/ImportExportLoader';
+import { AnnouncementsBanner } from '@/src/components/Common/AnnouncementBanner';
+import { Header } from '@/src/components/Header/Header';
 
 import { useCustomizations } from '@/src/customizations';
 import { Feature } from '@epam/ai-dial-shared';

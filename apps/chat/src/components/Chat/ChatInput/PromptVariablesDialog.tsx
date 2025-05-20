@@ -25,9 +25,9 @@ import { Translation } from '@/src/types/translation';
 
 import { PROMPT_VARIABLE_REGEX_GLOBAL } from '@/src/constants/folders';
 
-import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
-import Tooltip from '../../Common/Tooltip';
-import { TemplateRenderer } from '../ChatMessage/ChatMessageTemplatesModal/TemplateRenderer';
+import { TemplateRenderer } from '@/src/components/Chat/ChatMessage/ChatMessageTemplatesModal/TemplateRenderer';
+import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 interface Props {
   prompt: Prompt;

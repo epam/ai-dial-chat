@@ -9,7 +9,7 @@ import { ContextMenuProps, MenuItemRendererProps } from '@/src/types/menu';
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import { Menu, MenuItem } from './DropdownMenu';
-import Tooltip from './Tooltip';
+import { Tooltip } from './Tooltip';
 
 function ContextMenuItemRenderer({
   featureType,
@@ -80,7 +80,7 @@ function ContextMenuItemRenderer({
   );
 }
 
-export default function ContextMenu({
+export function ContextMenu({
   menuItems,
   featureType,
   TriggerIcon = IconDotsVertical,

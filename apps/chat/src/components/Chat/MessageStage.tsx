@@ -10,7 +10,7 @@ import { AddonsSelectors } from '@/src/store/selectors';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Spinner } from '@/src/components/Common/Spinner';
-import ChatMDComponent from '@/src/components/Markdown/ChatMDComponent';
+import { ChatMDComponent } from '@/src/components/Markdown/ChatMDComponent';
 
 import { MessageAttachments } from './MessageAttachments';
 

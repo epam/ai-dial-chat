@@ -7,7 +7,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 interface Props {
   value?: string;

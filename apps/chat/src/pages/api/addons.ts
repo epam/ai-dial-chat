@@ -11,10 +11,6 @@ import { CoreAIEntity, DialAIEntity } from '@/src/types/models';
 
 import { authOptions } from './auth/[...nextauth]';
 
-// export const config = {
-//   runtime: 'edge',
-// };
-
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
   const isSessionValid = validateServerSession(session, req, res);

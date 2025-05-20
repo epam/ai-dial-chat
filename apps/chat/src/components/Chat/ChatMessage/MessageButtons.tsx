@@ -25,7 +25,7 @@ import {
 } from '@/src/store/selectors';
 
 import { MenuItem } from '@/src/components/Common/DropdownMenu';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { LikeState, Message, Role } from '@epam/ai-dial-shared';
 

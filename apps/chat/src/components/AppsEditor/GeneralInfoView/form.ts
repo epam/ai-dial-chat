@@ -22,7 +22,7 @@ import {
 import { DEFAULT_APPLICATION_NAME } from '@/src/constants/default-ui-settings';
 import { DEFAULT_VERSION } from '@/src/constants/public';
 
-import { DynamicField } from '../../Common/Forms/DynamicFormFields';
+import { DynamicField } from '@/src/components/Common/Forms/DynamicFormFields';
 
 import { ShareEntity } from '@epam/ai-dial-shared';
 

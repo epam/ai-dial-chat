@@ -7,7 +7,7 @@ import { useAgentMenuItems } from '@/src/hooks/useAgentMenuItems';
 import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 
-import ContextMenu from '@/src/components/Common/ContextMenu';
+import { ContextMenu } from '@/src/components/Common/ContextMenu';
 
 interface Props {
   entity: DialAIEntityModel;
