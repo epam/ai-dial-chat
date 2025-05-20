@@ -16,7 +16,7 @@ import { ConversationsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { CONVERSATIONS_DATE_SECTIONS } from '@/src/constants/sections';
 
-import Sidebar from '@/src/components/Sidebar';
+import { Sidebar } from '@/src/components/Sidebar/Sidebar';
 
 import { ChatFolders } from './ChatFolders';
 import { ChatbarSettings } from './ChatbarSettings';

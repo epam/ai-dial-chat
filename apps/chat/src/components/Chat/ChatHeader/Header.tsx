@@ -43,11 +43,11 @@ import {
 import { FALLBACK_TEMPERATURE } from '@/src/constants/default-ui-settings';
 
 import { ConversationContextMenu } from '@/src/components/Chat/ConversationContextMenu';
+import { PublicVersionSelector } from '@/src/components/Chat/Publish/PublicVersionSelector';
+import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { ModelIcon } from '../../Chatbar/ModelIcon';
-import Tooltip from '../../Common/Tooltip';
-import { PublicVersionSelector } from '../Publish/PublicVersionSelector';
 import { HeaderModelTooltip } from './HeaderModelTooltip';
 import { HeaderSettingsTooltip } from './HeaderSettingsTooltip';
 

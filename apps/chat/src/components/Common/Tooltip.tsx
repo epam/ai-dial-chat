@@ -224,7 +224,7 @@ interface TooltipOptions extends TooltipContainerOptions {
   dataQa?: string;
 }
 
-export default function Tooltip({
+export function Tooltip({
   hideTooltip,
   tooltip,
   children,

@@ -14,10 +14,9 @@ import { TableIconSizes } from '@/src/constants/marketplace';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
-import ShareIcon from '@/src/components/Common/ShareIcon';
-
-import { AgentBookmark } from '../../AgentBookmark';
-import { FunctionStatusIndicator } from '../../FunctionStatusIndicator';
+import { ShareIcon } from '@/src/components/Common/ShareIcon';
+import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
+import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
 interface Props {
   entity: DialAIEntityModel;

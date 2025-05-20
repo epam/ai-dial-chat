@@ -4,9 +4,9 @@ import classNames from 'classnames';
 
 import { MenuItemRendererProps, MenuProps } from '@/src/types/menu';
 
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import ContextMenu from './ContextMenu';
+import { ContextMenu } from './ContextMenu';
 
 const ICON_WIDTH = 24;
 const ITEM_PADDING = 5;
@@ -56,7 +56,7 @@ export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
   return item;
 }
 
-export default function SidebarMenu({
+export function SidebarMenu({
   menuItems,
   featureType,
   displayMenuItemCount = 5,

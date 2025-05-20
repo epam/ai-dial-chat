@@ -13,7 +13,7 @@ import { useRouter } from 'next/router';
 
 import { Routes } from '@/src/constants/routes';
 
-import { Spinner } from '../Common/Spinner';
+import { Spinner } from '@/src/components/Common/Spinner';
 
 import {
   AttachmentData,

@@ -59,7 +59,7 @@ dialOverlayTest(
     const secondRequestContent = 'test';
     const systemPrompt = `End each word with string "!?!?!"`;
     let secondRequest: Conversation;
-    const configuredModelId = 'stability.stable-diffusion-xl';
+    const configuredModelId = 'dall-e-3';
 
     await overlayHomePage.mockChatTextResponse(
       MockedChatApiResponseBodies.simpleTextBody,

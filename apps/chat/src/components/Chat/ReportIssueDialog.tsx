@@ -22,7 +22,7 @@ import { ServiceActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ServiceSelectors } from '@/src/store/selectors';
 
-import EmptyRequiredInputMessage from '@/src/components/Common/EmptyRequiredInputMessage';
+import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
 import { Modal } from '@/src/components/Common/Modal';
 
 interface Props {

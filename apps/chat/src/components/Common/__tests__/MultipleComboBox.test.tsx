@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import React from 'react';
 
-import { MultipleComboBox } from '../MultipleComboBox';
+import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 
 describe('MultipleComboBox', () => {
   interface TestItem {

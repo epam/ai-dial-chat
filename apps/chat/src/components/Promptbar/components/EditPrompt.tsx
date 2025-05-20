@@ -31,8 +31,8 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsSelectors } from '@/src/store/selectors';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
-import EmptyRequiredInputMessage from '@/src/components/Common/EmptyRequiredInputMessage';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 interface Props {
   prompt: Prompt;
