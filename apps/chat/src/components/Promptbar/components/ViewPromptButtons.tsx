@@ -105,7 +105,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
       {
         name: 'Unpublish',
         display: isPublic && isPublishingEnabled,
-        dataQa: 'publish-prompt',
+        dataQa: 'unpublish-prompt',
         Icon: (props: IconProps) => (
           <UnpublishIcon {...props} style={{ strokeWidth: 1.1 }} />
         ),

@@ -229,9 +229,7 @@ dialTest(
         selectFolderModal,
         'hidden',
       );
-      await conversationAssertion.assertSelectedEntity(
-        playbackConversation,
-      );
+      await conversationAssertion.assertSelectedEntity(playbackConversation);
       await chatBarFolderAssertion.assertFolderState(
         { name: ExpectedConstants.newFolderWithIndexTitle(1) },
         'visible',

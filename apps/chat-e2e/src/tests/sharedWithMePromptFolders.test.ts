@@ -5,6 +5,7 @@ import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
   CollapsedSections,
   ExpectedConstants,
+  ExpectedPromptModalConst,
   FolderPrompt,
   MenuOptions,
 } from '@/src/testData';
@@ -33,7 +34,7 @@ dialSharedWithMeTest(
       additionalShareUserPromptDropdownMenu,
       additionalShareUserInformationModal,
       additionalShareUserSharedWithMePromptAssertion,
-      additionalShareUserSharedPromptPreviewModalAssertion,
+      additionalShareUserPromptPreviewModalAssertion,
       baseAssertion,
       setTestIds,
     },
@@ -95,7 +96,7 @@ dialSharedWithMeTest(
           isPromptShared: true,
           skipSidebars: true,
         });
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalState(
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
         );
         await additionalShareUserPromptPreviewModal.closeButton.click();
@@ -119,7 +120,7 @@ dialSharedWithMeTest(
           isPromptShared: true,
           skipSidebars: true,
         });
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalState(
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
         );
         await additionalShareUserPromptPreviewModal.closeButton.click();
@@ -238,7 +239,7 @@ dialSharedWithMeTest(
     mainUserShareApiHelper,
     additionalShareUserSharedFolderPromptsAssertions,
     additionalShareUserPromptPreviewModal,
-    additionalShareUserSharedPromptPreviewModalAssertion,
+    additionalShareUserPromptPreviewModalAssertion,
     additionalShareUserSharedFolderPrompts,
     additionalShareUserSharedWithMeFolderDropdownMenu,
     additionalShareUserConfirmationDialog,
@@ -284,11 +285,11 @@ dialSharedWithMeTest(
           isPromptShared: true,
           skipSidebars: true,
         });
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalState(
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
-          ExpectedConstants.promptViewModalTitle,
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
+          ExpectedPromptModalConst.promptViewModalTitle,
         );
         await additionalShareUserPromptPreviewModal.closeButton.click();
       },
@@ -374,11 +375,11 @@ dialSharedWithMeTest(
           isPromptShared: true,
           skipSidebars: true,
         });
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalState(
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
-          ExpectedConstants.promptViewModalTitle,
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
+          ExpectedPromptModalConst.promptViewModalTitle,
         );
         await additionalShareUserPromptPreviewModal.closeButton.click();
         for (let i = sharedFolderIndex; i <= sharedFolderIndex + 1; i++) {
@@ -404,7 +405,7 @@ dialSharedWithMeTest(
     mainUserShareApiHelper,
     additionalShareUserSharedFolderPromptsAssertions,
     additionalShareUserPromptPreviewModal,
-    additionalShareUserSharedPromptPreviewModalAssertion,
+    additionalShareUserPromptPreviewModalAssertion,
     additionalShareUserSharedFolderPrompts,
     additionalShareUserPromptsDropdownMenuAssertion,
     additionalShareUserFolderDropdownMenuAssertion,
@@ -453,19 +454,19 @@ dialSharedWithMeTest(
           isPromptShared: true,
           skipSidebars: true,
         });
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalState(
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
-          ExpectedConstants.promptViewModalTitle,
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
+          ExpectedPromptModalConst.promptViewModalTitle,
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptName(
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptName(
           nestedPrompts[sharedFolderIndex].name,
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptDescription(
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptDescription(
           nestedPrompts[sharedFolderIndex].description,
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptContent(
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptContent(
           nestedPrompts[sharedFolderIndex].content!,
         );
         await additionalShareUserPromptPreviewModal.closeButton.click();

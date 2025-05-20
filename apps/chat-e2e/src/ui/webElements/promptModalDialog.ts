@@ -17,6 +17,7 @@ export class PromptModalDialog extends BaseElement {
     this.fieldLabelHelper = new FieldLabel(page, this.rootLocator);
   }
 
+  public title = this.getChildElementBySelector(PromptModal.title);
   public name = this.getChildElementBySelector(PromptModal.promptName);
   public description = this.getChildElementBySelector(
     PromptModal.promptDescription,

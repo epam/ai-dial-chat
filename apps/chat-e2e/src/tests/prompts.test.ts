@@ -8,19 +8,22 @@ import {
   ExpectedMessages,
   MenuOptions,
 } from '@/src/testData';
-import { Cursors, ThemeColorAttributes } from '@/src/ui/domData';
+import { Cursors, Overflow, ThemeColorAttributes } from '@/src/ui/domData';
 import { DateUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 const newName = 'test prompt';
-const newDescr = 'test description';
+const newDescr = 'test description\nsecond line\nthird line';
 const newValue = 'what is {{}}';
 
 dialTest(
   'Create new prompt.\n' +
     'Prompt name can not be empty.\n' +
     'Prompt body can not be empty.\n' +
+    '[View prompt] View prompt modal appears after prompt creation.\n' +
+    '[View prompt] Description, body is shown with line breaks.\n' +
+    '[View prompt] Long prompt name is not truncated but is shown in lines.\n' +
     `View prompt: 'Use prompt' button is enabled for just created new prompt if there is a chat with available input field selected.\n` +
     `View prompt: on 'Use prompt' button click the modal is closed, the prompt is entered to the input user field. Prompt is without parameters.`,
   async ({
@@ -40,6 +43,9 @@ dialTest(
       'EPMRTC-945',
       'EPMRTC-956',
       'EPMRTC-1452',
+      'EPMRTC-6141',
+      'EPMRTC-6113',
+      'EPMRTC-6114',
       'EPMRTC-6043',
       'EPMRTC-6044',
     );
@@ -79,6 +85,8 @@ dialTest(
       'Click "New prompt" button and verify Name and Prompt fields have asterisk',
       async () => {
         await promptBar.createNewEntity();
+        //TODO: enable next line when fixed https://github.com/epam/ai-dial-chat/issues/3650
+        // await baseAssertion.assertElementText(promptModalDialog.title, ExpectedPromptPreviewConst.createPromptModalTitle)
         await baseAssertion.assertElementState(
           promptModalDialog.getFieldAsterisk(EditPromptFormFields.name),
           'visible',
@@ -95,8 +103,12 @@ dialTest(
     );
 
     await dialTest.step(
-      'Clear Name field and verify error message is shown, field has red border, Save button is disabled',
+      'Set Description field, clear Name field and verify error message is shown, field has red border, Save button is disabled',
       async () => {
+        await promptModalDialog.setField(
+          promptModalDialog.description,
+          newDescr,
+        );
         await promptModalDialog.setField(promptModalDialog.name, '');
         await promptModalDialog.description.click();
         await promptModalAssertion.assertNameFieldIsInvalid(
@@ -194,18 +206,21 @@ dialTest(
     );
 
     await dialTest.step(
-      'Set Description field value, click Save and verify prompt is created, prompt view modal is opened',
+      'Click Save and verify prompt is created, prompt view modal is opened',
       async () => {
-        await promptModalDialog.setField(
-          promptModalDialog.description,
-          newDescr,
-        );
         await promptModalDialog.saveButton.click();
         await promptPreviewModalAssertion.assertElementState(
           promptPreviewModal,
           'visible',
         );
         await promptAssertion.assertEntityState({ name: newName }, 'visible');
+        await promptPreviewModalAssertion.assertElementState(
+          promptPreviewModal,
+          'visible',
+        );
+        await promptPreviewModalAssertion.assertPromptName(newName);
+        await promptPreviewModalAssertion.assertPromptDescription(newDescr);
+        await promptPreviewModalAssertion.assertPromptContent(newValue);
         await promptPreviewModalAssertion.assertElementActionabilityState(
           promptPreviewModal.usePromptButton,
           'enabled',
@@ -213,6 +228,10 @@ dialTest(
         await promptPreviewModalAssertion.assertElementBackgroundColors(
           promptPreviewModal.usePromptButton,
           ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgAccentPrimary),
+        );
+        await promptPreviewModalAssertion.assertElementTextWrap(
+          promptPreviewModal.promptName,
+          Overflow.breakWord,
         );
       },
     );
