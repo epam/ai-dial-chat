@@ -6,7 +6,8 @@ import GoogleProvider from 'next-auth/providers/google';
 import KeycloakProvider from 'next-auth/providers/keycloak';
 import OktaProvider from 'next-auth/providers/okta';
 
-import { parseCommaSeparatedList } from '../app/common';
+import { parseCommaSeparatedList } from '@/src/utils/app/common';
+
 import { tokenConfig } from './auth-callbacks';
 import { GitLab } from './custom-gitlab';
 import PingId from './ping-identity';

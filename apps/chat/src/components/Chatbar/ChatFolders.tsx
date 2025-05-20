@@ -50,8 +50,8 @@ import {
 
 import { ApproveRequiredSection } from '@/src/components/Chat/Publish/ApproveRequiredSection';
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
-import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
-import Folder from '@/src/components/Folder/Folder';
+import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
+import { Folder } from '@/src/components/Folder/Folder';
 import { BetweenFoldersLine } from '@/src/components/Sidebar/BetweenFoldersLine';
 
 import { ConversationComponent } from './Conversation';

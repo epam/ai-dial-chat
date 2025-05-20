@@ -3,9 +3,9 @@ import { ReactNode, useCallback, useState } from 'react';
 
 import classNames from 'classnames';
 
-import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
+import { CaretIconComponent } from '@/src/components/Common/CaretIconComponent';
 
-import Tooltip from './Tooltip';
+import { Tooltip } from './Tooltip';
 
 interface CollapsibleSectionProps {
   name: string;
@@ -24,7 +24,7 @@ interface CollapsibleSectionProps {
   onToggle?: (isOpen: boolean) => void;
 }
 
-export default function CollapsibleSection({
+export function CollapsibleSection({
   name,
   openByDefault = true,
   isHighlighted = false,

@@ -9,7 +9,7 @@ interface CaretIconComponentProps {
   showOnHoverOnly?: boolean;
 }
 
-export default function CaretIconComponent({
+export function CaretIconComponent({
   isOpen,
   size = 10,
   hidden,

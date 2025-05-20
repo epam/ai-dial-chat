@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { render, screen } from '@testing-library/react';
 
-import { PlaybackAttachments } from '../Playback/PlaybackAttachments';
+import { PlaybackAttachments } from '@/src/components/Chat/Playback/PlaybackAttachments';
 
 import { Attachment } from '@epam/ai-dial-shared';
 
