@@ -30,7 +30,7 @@ import {
 
 import { MarketplaceTabs } from '@/src/constants/marketplace';
 
-import ContextMenu from '@/src/components/Common/ContextMenu';
+import { ContextMenu } from '@/src/components/Common/ContextMenu';
 
 import { ViewToggler } from './ViewToggler';
 

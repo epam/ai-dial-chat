@@ -1,7 +1,7 @@
 import { IconFile, IconTrashX } from '@tabler/icons-react';
 import { FC } from 'react';
 
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 interface Props {
   document: string;

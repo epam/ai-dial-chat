@@ -9,7 +9,7 @@ import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
+import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { ApplicationRow } from '@/src/components/Common/ReplaceConfirmationModal/Components';
 
