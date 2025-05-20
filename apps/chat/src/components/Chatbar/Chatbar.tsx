@@ -10,15 +10,14 @@ import { FeatureType } from '@/src/types/common';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { ConversationsActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import { ConversationsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { CONVERSATIONS_DATE_SECTIONS } from '@/src/constants/sections';
 
-import Sidebar from '../Sidebar';
+import Sidebar from '@/src/components/Sidebar';
+
 import { ChatFolders } from './ChatFolders';
 import { ChatbarSettings } from './ChatbarSettings';
 import { Conversations } from './Conversations';

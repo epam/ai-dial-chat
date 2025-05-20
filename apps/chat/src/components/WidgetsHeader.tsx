@@ -5,11 +5,9 @@ import { useRouter } from 'next/router';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
-import { ApplicationActions } from '@/src/store/actions';
+import { ApplicationActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { Routes } from '@/src/constants/routes';
 

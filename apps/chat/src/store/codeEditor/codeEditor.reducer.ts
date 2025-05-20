@@ -102,6 +102,4 @@ export const codeEditorSlice = createSlice({
   },
 });
 
-export { CodeEditorSelectors } from './codeEditor.selectors';
-
 export const CodeEditorActions = codeEditorSlice.actions;

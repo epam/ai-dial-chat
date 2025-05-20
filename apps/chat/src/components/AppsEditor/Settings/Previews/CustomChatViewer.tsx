@@ -4,11 +4,9 @@ import { useRouter } from 'next/router';
 
 import { Conversation } from '@/src/types/chat';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions, ModelsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsActions } from '@/src/store/models/models.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { Routes } from '@/src/constants/routes';
 

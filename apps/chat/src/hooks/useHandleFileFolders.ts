@@ -11,7 +11,7 @@ import { getFileRootId } from '@/src/utils/app/id';
 import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
-import { FilesActions } from '@/src/store/files/files.reducers';
+import { FilesActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
 import { UploadStatus } from '@epam/ai-dial-shared';

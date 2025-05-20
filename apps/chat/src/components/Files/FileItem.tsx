@@ -24,12 +24,13 @@ import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
+import { ShareActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
-import { ShareActions } from '@/src/store/share/share.reducers';
 
-import { ConfirmDialog } from '../Common/ConfirmDialog';
-import ShareIcon from '../Common/ShareIcon';
-import Tooltip from '../Common/Tooltip';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import ShareIcon from '@/src/components/Common/ShareIcon';
+import Tooltip from '@/src/components/Common/Tooltip';
+
 import { FileItemContextMenu } from './FileItemContextMenu';
 
 import { UploadStatus } from '@epam/ai-dial-shared';

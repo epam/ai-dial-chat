@@ -13,14 +13,14 @@ import { ModalState } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
+import { PromptsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
+import { PromptsSelectors } from '@/src/store/selectors';
 
 import { Modal } from '@/src/components/Common/Modal';
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
+import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 
-import { withRenderWhen } from '../../Common/RenderWhen';
 import { EditPrompt } from './EditPrompt';
 import { ViewPrompt } from './ViewPrompt';
 

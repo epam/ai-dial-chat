@@ -8,9 +8,11 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 import { Conversation } from '@/src/types/chat';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  ModelsSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { AssistantMessage } from '@/src/components/Chat/ChatMessage/ChatMessageContent/AssistantMessage';
 import { UserMessage } from '@/src/components/Chat/ChatMessage/ChatMessageContent/UserMessage';

@@ -13,17 +13,17 @@ import { FeatureType, ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
+import { ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { ShareActions } from '@/src/store/share/share.reducers';
+import { SettingsSelectors } from '@/src/store/selectors';
 
 import { HeaderIconSizes } from '@/src/constants/marketplace';
 
+import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
+import ShareIcon from '@/src/components/Common/ShareIcon';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
+import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 
-import { ModelIcon } from '../../Chatbar/ModelIcon';
-import ShareIcon from '../../Common/ShareIcon';
-import { TopicsList } from '../TopicsList';
 import { ApplicationCopyLink } from './ApplicationCopyLink';
 
 import { Feature } from '@epam/ai-dial-shared';

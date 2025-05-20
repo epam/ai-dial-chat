@@ -14,21 +14,25 @@ import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { PublicationResource } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
-import { FilesActions } from '@/src/store/files/files.reducers';
-import { FilesSelectors } from '@/src/store/files/files.selectors';
+import {
+  ConversationsActions,
+  FilesActions,
+  PromptsActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  ConversationsSelectors,
+  FilesSelectors,
+  ModelsSelectors,
+  PromptsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { NA_VERSION } from '@/src/constants/public';
 
-import { PromptComponent } from '../../Promptbar/components/Prompt';
+import { ConversationComponent } from '@/src/components/Chatbar/Conversation';
+import { PromptComponent } from '@/src/components/Promptbar/components/Prompt';
 
-import { ConversationComponent } from '../../Chatbar/Conversation';
 import {
   ApplicationRow,
   ConversationRow,

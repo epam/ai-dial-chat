@@ -24,7 +24,8 @@ import { SearchFilters } from '@/src/types/search';
 import { LastConversationSettings } from '@/src/types/settings';
 import { RootState } from '@/src/types/store';
 
-import { ConversationsSelectors } from './conversations.selectors';
+import { ConversationsSelectors } from '@/src/store/selectors';
+
 import { ConversationsState } from './conversations.types';
 
 import {

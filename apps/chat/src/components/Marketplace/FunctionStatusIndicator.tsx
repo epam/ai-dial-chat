@@ -5,7 +5,7 @@ import classNames from 'classnames';
 import { ApplicationStatus } from '@/src/types/applications';
 import { DialAIEntityModel } from '@/src/types/models';
 
-import Tooltip from '../Common/Tooltip';
+import Tooltip from '@/src/components/Common/Tooltip';
 
 interface FunctionStatusIndicatorProps {
   entity: DialAIEntityModel;
