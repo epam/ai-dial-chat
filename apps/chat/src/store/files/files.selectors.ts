@@ -8,14 +8,14 @@ import {
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 
+import { DialFile } from '@/src/types/files';
+import { FolderInterface } from '@/src/types/folder';
 import { EntityFilters } from '@/src/types/search';
 import { RootState } from '@/src/types/store';
 
-import { FilesState } from './files.types';
-
 import { UploadStatus } from '@epam/ai-dial-shared';
 
-const rootSelector = (state: RootState): FilesState => state.files;
+const rootSelector = (state: RootState) => state.files;
 
 const _selectFiles = (state: RootState) => rootSelector(state).files;
 
@@ -23,7 +23,7 @@ const selectFiles = createSelector([_selectFiles], (files) => {
   return sortByName([...files]);
 });
 
-export const selectFilteredFiles = createSelector(
+const selectFilteredFiles = createSelector(
   [
     selectFiles,
     (_state, filters: EntityFilters) => filters,
@@ -83,19 +83,19 @@ const selectFilteredFolders = createSelector(
 );
 const selectSelectedFiles = createSelector(
   [selectSelectedFilesIds, selectFiles],
-  (selectedFilesIds, files): FilesState['files'] => {
+  (selectedFilesIds, files): DialFile[] => {
     return selectedFilesIds
       .map((fileId) => files.find((file) => file.id === fileId))
-      .filter(Boolean) as FilesState['files'];
+      .filter(Boolean) as DialFile[];
   },
 );
 
 const selectSelectedFolders = createSelector(
   [selectSelectedFilesIds, selectFolders],
-  (selectedFilesIds, folders): FilesState['folders'] => {
+  (selectedFilesIds, folders): FolderInterface[] => {
     return selectedFilesIds
       .map((fileId) => folders.find((folder) => `${folder.id}/` === fileId))
-      .filter(Boolean) as FilesState['folders'];
+      .filter(Boolean) as FolderInterface[];
   },
 );
 const selectIsUploadingFilePresent = createSelector(

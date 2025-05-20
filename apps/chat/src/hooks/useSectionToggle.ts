@@ -2,9 +2,9 @@ import { useCallback, useMemo } from 'react';
 
 import { FeatureType } from '@/src/types/common';
 
+import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import { UISelectors } from '@/src/store/selectors';
 
 import uniq from 'lodash-es/uniq';
 

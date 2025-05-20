@@ -5,9 +5,9 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
+import { ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ShareActions } from '@/src/store/share/share.reducers';
-import { ShareSelectors } from '@/src/store/share/share.selectors';
+import { ShareSelectors } from '@/src/store/selectors';
 
 import { ConfirmDialog } from './ConfirmDialog';
 import { withRenderWhen } from './RenderWhen';

@@ -3,8 +3,8 @@ import { isMyApplication } from '@/src/utils/app/id';
 
 import { DialAIEntityModel } from '@/src/types/models';
 
-import { AuthSelectors } from '@/src/store/auth/auth.selectors';
 import { useAppSelector } from '@/src/store/hooks';
+import { AuthSelectors } from '@/src/store/selectors';
 
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 

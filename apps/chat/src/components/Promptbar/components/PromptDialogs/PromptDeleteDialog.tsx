@@ -7,7 +7,7 @@ import { Translation } from '@/src/types/translation';
 
 import { PromptsActions, ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
+import { PromptsSelectors } from '@/src/store/selectors';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';

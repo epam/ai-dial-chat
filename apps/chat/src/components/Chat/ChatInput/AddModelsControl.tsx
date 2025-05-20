@@ -4,12 +4,11 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { ModelsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsActions } from '@/src/store/models/models.reducers';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { ConversationsSelectors, ModelsSelectors } from '@/src/store/selectors';
 
-import { ScrollDownButton } from '../../Common/ScrollDownButton';
+import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
 interface Props {
   showScrollDownButton: boolean;

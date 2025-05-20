@@ -20,10 +20,8 @@ import { DataService } from '@/src/utils/app/data/data-service';
 import { DialAIEntityAddon } from '@/src/types/models';
 import { AppEpic } from '@/src/types/store';
 
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-
-import { AddonsActions } from './addons.reducers';
-import { AddonsSelectors } from './addons.selectors';
+import { AddonsActions } from '@/src/store/actions';
+import { AddonsSelectors, SettingsSelectors } from '@/src/store/selectors';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(

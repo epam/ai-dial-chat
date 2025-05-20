@@ -19,16 +19,15 @@ import { FeatureType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
+import { ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { ShareActions } from '@/src/store/share/share.reducers';
-import { ShareSelectors } from '@/src/store/share/share.selectors';
+import { ModelsSelectors, ShareSelectors } from '@/src/store/selectors';
 
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
-import { Modal } from '../Common/Modal';
-import { withRenderWhen } from '../Common/RenderWhen';
-import Tooltip from '../Common/Tooltip';
+import { Modal } from '@/src/components/Common/Modal';
+import { withRenderWhen } from '@/src/components/Common/RenderWhen';
+import Tooltip from '@/src/components/Common/Tooltip';
 
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { SharePermission } from '@epam/ai-dial-shared';

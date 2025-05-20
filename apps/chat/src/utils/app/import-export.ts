@@ -24,10 +24,12 @@ import {
 import { Prompt } from '@/src/types/prompt';
 import { AppAction } from '@/src/types/store';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import {
+  ConversationsActions,
+  PromptsActions,
+  UIActions,
+} from '@/src/store/actions';
 import { UploadedAttachment } from '@/src/store/import-export/importExport.reducers';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { PLOTLY_CONTENT_TYPE } from '@/src/constants/chat';
 import { successMessages } from '@/src/constants/successMessages';

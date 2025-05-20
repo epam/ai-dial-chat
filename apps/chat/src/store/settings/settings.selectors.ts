@@ -8,19 +8,18 @@ import { FeatureType } from '@/src/types/common';
 import { MappedVisualizers } from '@/src/types/custom-visualizers';
 import { RootState } from '@/src/types/store';
 
+import { AuthSelectors } from '@/src/store/auth/auth.selectors';
+
 import {
   DEFAULT_QUICK_APPS_HOST,
   DEFAULT_QUICK_APPS_MODEL,
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
 
-import { AuthSelectors } from '../auth/auth.selectors';
-import { SettingsState } from './settings.types';
-
 import { Feature } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
-const rootSelector = (state: RootState): SettingsState => state.settings;
+const rootSelector = (state: RootState) => state.settings;
 
 const selectAppName = (state: RootState) => rootSelector(state).appName;
 
@@ -29,11 +28,14 @@ const selectIsOverlay = (state: RootState) => rootSelector(state).isOverlay;
 const selectFooterHtmlMessage = (state: RootState) =>
   rootSelector(state).footerHtmlMessage;
 
+const _selectEnabledFeatures = (state: RootState) =>
+  rootSelector(state).enabledFeatures;
+
 const selectEnabledFeatures = createSelector(
-  [rootSelector, AuthSelectors.selectSessionData],
-  (state, session) => {
+  [_selectEnabledFeatures, AuthSelectors.selectSessionData],
+  (enabledFeatures, session) => {
     return new Set(
-      state.enabledFeatures.filter((feature) =>
+      enabledFeatures.filter((feature: Feature) =>
         canUserUseFeature(session, feature),
       ),
     );
@@ -216,8 +218,11 @@ const selectInitialDataStatus = (state: RootState) =>
 
 const selectProviderId = (state: RootState) => rootSelector(state).providerId;
 
-const _selectWidgetsSchemaIds = (state: RootState) =>
+const selectWidgetsSchemaIds = (state: RootState) =>
   rootSelector(state).widgetsSchemaIds;
+
+const selectIsAuthDisabled = (state: RootState) =>
+  rootSelector(state).isAuthDisabled;
 
 export const SettingsSelectors = {
   selectAppName,
@@ -250,5 +255,6 @@ export const SettingsSelectors = {
   selectDefaults,
   selectInitialDataStatus,
   selectProviderId,
-  _selectWidgetsSchemaIds,
+  selectWidgetsSchemaIds,
+  selectIsAuthDisabled,
 };

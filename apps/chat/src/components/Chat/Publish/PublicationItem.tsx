@@ -19,7 +19,7 @@ import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
+import { PublicationSelectors } from '@/src/store/selectors';
 
 import { DEFAULT_VERSION, PUBLIC_URL_PREFIX } from '@/src/constants/public';
 

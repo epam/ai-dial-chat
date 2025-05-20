@@ -37,11 +37,9 @@ import { FolderInterface } from '@/src/types/folder';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
-import { FilesActions } from '@/src/store/files/files.reducers';
-import { FilesSelectors } from '@/src/store/files/files.selectors';
+import { FilesActions, ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ShareActions } from '@/src/store/share/share.reducers';
+import { ConversationsSelectors, FilesSelectors } from '@/src/store/selectors';
 
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 import {
@@ -49,16 +47,16 @@ import {
   SHARED_WITH_ME_SECTION_NAME,
 } from '@/src/constants/sections';
 
+import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { Modal } from '@/src/components/Common/Modal';
+import { NoData } from '@/src/components/Common/NoData';
+import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
+import { Spinner } from '@/src/components/Common/Spinner';
+import Tooltip from '@/src/components/Common/Tooltip';
+import Folder from '@/src/components/Folder/Folder';
 
-import CollapsibleSection from '../Common/CollapsibleSection';
-import { ConfirmDialog } from '../Common/ConfirmDialog';
-import { ErrorMessage } from '../Common/ErrorMessage';
-import { NoData } from '../Common/NoData';
-import { NoResultsFound } from '../Common/NoResultsFound';
-import { Spinner } from '../Common/Spinner';
-import Tooltip from '../Common/Tooltip';
-import Folder from '../Folder/Folder';
 import { FileItem, FileItemEventIds } from './FileItem';
 import { PreUploadDialog } from './PreUploadModal';
 

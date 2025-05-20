@@ -17,14 +17,15 @@ import {
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
+import { ImportExportActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
-import { ImportExportSelectors } from '@/src/store/import-export/importExport.selectors';
+import { ImportExportSelectors } from '@/src/store/selectors';
 
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
-import { Modal } from '../Modal';
-import { withRenderWhen } from '../RenderWhen';
+import { Modal } from '@/src/components/Common/Modal';
+import { withRenderWhen } from '@/src/components/Common/RenderWhen';
+
 import { ReplaceSelector } from './Components';
 import { ConversationsList } from './ConversationsList';
 import { FilesList } from './FilesList';
