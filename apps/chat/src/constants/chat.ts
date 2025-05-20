@@ -1,5 +1,6 @@
-import { ImageMIMEType } from '@epam/ai-dial-shared';
 import { MouseEvent } from 'react';
+
+import { ImageMIMEType } from '@epam/ai-dial-shared';
 
 export const modelCursorSign = '▍';
 export const modelCursorSignWithBackquote = '`▍`';
