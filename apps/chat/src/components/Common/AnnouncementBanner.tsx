@@ -1,9 +1,8 @@
 import { IconSpeakerphone, IconX } from '@tabler/icons-react';
 
+import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
 export const AnnouncementsBanner = () => {
   const dispatch = useAppDispatch();

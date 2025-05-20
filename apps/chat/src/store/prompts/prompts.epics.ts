@@ -45,17 +45,17 @@ import { FeatureType } from '@/src/types/common';
 import { PromptInfo } from '@/src/types/prompt';
 import { AppAction, AppEpic } from '@/src/types/store';
 
-import { ShareActions } from '@/src/store/share/share.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  ChatActions,
+  PromptsActions,
+  PublicationActions,
+  ShareActions,
+  UIActions,
+} from '@/src/store/actions';
+import { PromptsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-ui-settings';
 import { RECENT_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
-
-import { ChatActions } from '../chat/chat.reducer';
-import { PublicationActions } from '../publication/publication.reducers';
-import { PromptsActions } from './prompts.reducers';
-import { PromptsSelectors } from './prompts.selectors';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';

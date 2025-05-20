@@ -10,16 +10,15 @@ import { getGroupModelKey } from '@/src/utils/app/models';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions, ModelsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsActions } from '@/src/store/models/models.reducers';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { WidgetsSelectors } from '@/src/store/models/widgets.selectors';
+import { ModelsSelectors, WidgetsSelectors } from '@/src/store/selectors';
 
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
-import { Modal } from '../../Common/Modal';
+import { Modal } from '@/src/components/Common/Modal';
+
 import { ApplicationDetailsContent } from './ApplicationContent';
 import { ApplicationDetailsFooter } from './ApplicationFooter';
 import { ApplicationDetailsHeader } from './ApplicationHeader';

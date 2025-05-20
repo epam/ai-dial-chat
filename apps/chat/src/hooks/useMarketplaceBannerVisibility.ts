@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 
+import { MarketplaceActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
-import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
 
 import throttle from 'lodash/throttle';
 

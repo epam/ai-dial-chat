@@ -11,14 +11,14 @@ import { signInInOverlay } from '@/src/utils/auth/auth-overlay';
 
 import { Translation } from '@/src/types/translation';
 
-import { AuthActions } from '@/src/store/auth/auth.reducers';
-import { AuthSelectors } from '@/src/store/auth/auth.selectors';
+import { AuthActions, SettingsActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
-import { SettingsActions } from '@/src/store/settings/settings.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import {
+  AuthSelectors,
+  MarketplaceSelectors,
+  SettingsSelectors,
+} from '@/src/store/selectors';
 import { SettingsState } from '@/src/store/settings/settings.types';
-import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { NavigationWrapper } from '@/src/components/Navigation/NavigationWrapper';
 

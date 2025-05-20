@@ -8,17 +8,18 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { MarketplaceFilters } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
+import { MarketplaceActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
-import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  MarketplaceSelectors,
+  ModelsSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { ENTITY_TYPES, FilterTypes } from '@/src/constants/marketplace';
 
-import { CloseSidebarButton } from '../Buttons/CloseSidebarButton';
+import { CloseSidebarButton } from '@/src/components/Buttons/CloseSidebarButton';
 
 import { capitalize } from 'lodash';
 

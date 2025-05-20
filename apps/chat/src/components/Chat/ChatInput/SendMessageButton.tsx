@@ -10,14 +10,15 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import {
+  ConversationsSelectors,
+  ModelsSelectors,
+  SettingsSelectors,
+} from '@/src/store/selectors';
 
+import { Spinner } from '@/src/components/Common/Spinner';
 import Tooltip from '@/src/components/Common/Tooltip';
-
-import { Spinner } from '../../Common/Spinner';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 

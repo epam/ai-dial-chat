@@ -3,14 +3,12 @@ import { createSelector } from '@reduxjs/toolkit';
 import { FeatureType } from '@/src/types/common';
 import { RootState } from '@/src/types/store';
 
+import { WidgetsSelectors } from '@/src/store/models/widgets.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-
-import { WidgetsSelectors } from '../models/widgets.selectors';
-import { UIState } from './ui.types';
 
 import { Feature } from '@epam/ai-dial-shared';
 
-const rootSelector = (state: RootState): UIState => state.ui;
+const rootSelector = (state: RootState) => state.ui;
 
 const selectThemeState = (state: RootState) => rootSelector(state).theme;
 

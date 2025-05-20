@@ -23,23 +23,28 @@ import { FeatureType } from '@/src/types/common';
 import { Publication, PublicationRule } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
-import { FilesSelectors } from '@/src/store/files/files.selectors';
+import {
+  ApplicationActions,
+  ConversationsActions,
+  PromptsActions,
+  PublicationActions,
+  UIActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
-import { PublicationActions } from '@/src/store/publication/publication.reducers';
-import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import {
+  ConversationsSelectors,
+  FilesSelectors,
+  ModelsSelectors,
+  PromptsSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
 import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
-import CollapsibleSection from '../../Common/CollapsibleSection';
-import { Spinner } from '../../Common/Spinner';
-import Tooltip from '../../Common/Tooltip';
+import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
+import { Spinner } from '@/src/components/Common/Spinner';
+import Tooltip from '@/src/components/Common/Tooltip';
+
 import { CompareRulesModal } from './CompareRulesModal';
 import {
   ApplicationPublicationResources,

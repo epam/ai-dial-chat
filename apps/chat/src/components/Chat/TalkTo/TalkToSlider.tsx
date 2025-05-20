@@ -29,7 +29,7 @@ import { CardType } from '@/src/types/talkTo';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { ModelsSelectors } from '@/src/store/selectors';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { ChangeAgentTabs, MarketplaceTabs } from '@/src/constants/marketplace';
@@ -232,6 +232,11 @@ export const TalkToSlider = ({
 
   // Should calculate height before render
   useLayoutEffect(() => {
+    handleResize();
+  }, [handleResize]);
+
+  // Fallback for useLayoutEffect (ex. if mobile keyboard is open)
+  useEffect(() => {
     handleResize();
   }, [handleResize]);
 

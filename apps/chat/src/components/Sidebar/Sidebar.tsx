@@ -24,10 +24,9 @@ import { FolderInterface } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
+import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { CENTRAL_CHAT_MIN_WIDTH } from '@/src/constants/chat';
 import {
@@ -35,15 +34,16 @@ import {
   SIDEBAR_MIN_WIDTH,
 } from '@/src/constants/default-ui-settings';
 
-import { CloseSidebarButton } from '../Buttons/CloseSidebarButton';
-import Loader from '../Common/Loader';
-import { NoData } from '../Common/NoData';
-import { NoResultsFound } from '../Common/NoResultsFound';
+import { CloseSidebarButton } from '@/src/components/Buttons/CloseSidebarButton';
+import Loader from '@/src/components/Common/Loader';
+import { NoData } from '@/src/components/Common/NoData';
+import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
 import {
   CreateNewConversation,
   CreateNewPrompt,
-} from '../Header/CreateNewEntity';
-import Search from '../Search';
+} from '@/src/components/Header/CreateNewEntity';
+import Search from '@/src/components/Search';
+
 import { LeftSideResizeIcon, RightSideResizeIcon } from './ResizeIcons';
 
 import trimEnd from 'lodash-es/trimEnd';

@@ -6,7 +6,7 @@ import { ScreenState } from '@/src/types/common';
 
 import { MarketplaceActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
+import { MarketplaceSelectors } from '@/src/store/selectors';
 
 import { TableColumnSortKeys } from '@/src/constants/marketplace';
 

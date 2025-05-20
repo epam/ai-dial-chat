@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { SettingsSelectors } from '@/src/store/selectors';
 
 import { Logo } from './Logo';
 

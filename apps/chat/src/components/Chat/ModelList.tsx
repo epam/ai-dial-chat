@@ -30,19 +30,22 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { ApplicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import {
+  ConversationsSelectors,
+  ModelsSelectors,
+  SettingsSelectors,
+} from '@/src/store/selectors';
 
 import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
 
-import { ModelIcon } from '../Chatbar/ModelIcon';
-import { ConfirmDialog } from '../Common/ConfirmDialog';
-import ContextMenu from '../Common/ContextMenu';
-import { DisableOverlay } from '../Common/DisableOverlay';
-import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
+import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import ContextMenu from '@/src/components/Common/ContextMenu';
+import { DisableOverlay } from '@/src/components/Common/DisableOverlay';
+import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
+
 import { ModelVersionSelect } from './ModelVersionSelect';
 import { PublishModal } from './Publish/PublishWizard';
 

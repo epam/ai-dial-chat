@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { BucketService } from '@/src/utils/app/data/bucket-service';
+import { getConversationRootId } from '@/src/utils/app/id';
 import {
   cleanData,
   isExportFormatV1,
@@ -24,9 +26,6 @@ import {
   DEFAULT_TEMPERATURE,
   FALLBACK_MODEL_ID,
 } from '@/src/constants/default-ui-settings';
-
-import { BucketService } from '../data/bucket-service';
-import { getConversationRootId } from '../id';
 
 import { Message, Role } from '@epam/ai-dial-shared';
 
