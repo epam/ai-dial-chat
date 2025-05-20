@@ -8,7 +8,7 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip, topicToOption } from '@/src/utils/app/application';
-import { isSmallScreenOrTouchable } from '@/src/utils/app/mobile';
+import { isMobile } from '@/src/utils/app/mobile';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { getRouteForSlug } from '@/src/utils/app/route';
 
@@ -318,7 +318,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
                 placeholder={t('Select one or more topics')}
                 onChange={(v) => field.onChange(v.map((o) => o.value))}
                 id="topics-dropdown"
-                isSearchable={!isSmallScreenOrTouchable()}
+                isSearchable={!isMobile()}
                 isMulti
                 isClearable
                 menuPlacement="top"
