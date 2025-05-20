@@ -75,7 +75,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
     );
 
     handleDisplayInformation(JSON.stringify(convObject, null, 2));
-  }, [conversationIdInputValue]);
+  }, [conversationIdInputValue, handleDisplayInformation]);
 
   const handleImportConversation = useCallback(async () => {
     let parsedImportedConversation;
@@ -90,7 +90,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
     );
 
     handleDisplayInformation(JSON.stringify(convObject, null, 2));
-  }, [conversationIdInputValue]);
+  }, [handleDisplayInformation, importedConversation]);
 
   const handleRenameConversation = useCallback(async () => {
     const replayResult = await overlay.current?.renameConversation(
