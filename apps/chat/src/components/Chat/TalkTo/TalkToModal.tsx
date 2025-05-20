@@ -159,39 +159,42 @@ const TalkToModalView = ({
       return orderBy(entities, 'version', 'desc')[0];
     });
 
-    if (isPlayback) {
-      orderedModels.unshift({
-        id: PseudoModel.Playback,
-        name: t('Playback'),
-        reference: PseudoModel.Playback,
-        type: EntityType.Model,
-        isDefault: false,
-      });
-    } else if (isReplay) {
-      orderedModels.unshift({
-        id: REPLAY_AS_IS_MODEL,
-        name: t('Replay as is'),
-        description: t(
-          'This mode replicates user requests from the original conversation including settings set in each message.',
-        ),
-        reference: REPLAY_AS_IS_MODEL,
-        type: EntityType.Model,
-        isDefault: false,
-      });
-    } else if (!modelsMap[conversation.model.id]) {
-      orderedModels.unshift({
-        id: conversation.model.id,
-        name: conversation.model.id,
-        reference: conversation.model.id,
-        description: t('chat.error.incorrect-selected', {
-          context: EntityType.Model,
-        }),
-        type: EntityType.Model,
-        isDefault: false,
-      });
-    }
-    if (searchTerm.length > 0 && isMyWorkspace && orderedModels.length > 0) {
-      orderedModels.push(SuggestedCard);
+    if (isMyWorkspace) {
+      if (isPlayback) {
+        orderedModels.unshift({
+          id: PseudoModel.Playback,
+          name: t('Playback'),
+          reference: PseudoModel.Playback,
+          type: EntityType.Model,
+          isDefault: false,
+        });
+      } else if (isReplay) {
+        orderedModels.unshift({
+          id: REPLAY_AS_IS_MODEL,
+          name: t('Replay as is'),
+          description: t(
+            'This mode replicates user requests from the original conversation including settings set in each message.',
+          ),
+          reference: REPLAY_AS_IS_MODEL,
+          type: EntityType.Model,
+          isDefault: false,
+        });
+      } else if (!modelsMap[conversation.model.id]) {
+        orderedModels.unshift({
+          id: conversation.model.id,
+          name: conversation.model.id,
+          reference: conversation.model.id,
+          description: t('chat.error.incorrect-selected', {
+            context: EntityType.Model,
+          }),
+          type: EntityType.Model,
+          isDefault: false,
+        });
+      }
+
+      if (searchTerm.length > 0 && orderedModels.length > 0) {
+        orderedModels.push(SuggestedCard);
+      }
     }
 
     return orderedModels;
