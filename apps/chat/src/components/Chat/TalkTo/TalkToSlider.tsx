@@ -237,9 +237,11 @@ export const TalkToSlider = ({
 
   // Fallback for useLayoutEffect (ex. if mobile keyboard is open)
   useEffect(() => {
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       handleResize();
     }, 100);
+
+    return () => clearTimeout(timeoutId);
   }, [handleResize]);
 
   const maxChunksCountConfig = getSliderChunksConfig(screenState);

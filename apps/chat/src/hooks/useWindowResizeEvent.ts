@@ -44,8 +44,9 @@ export const useWindowResizeEvent = (handleResize: ResizeHandler) => {
       }
     };
 
+    let timeoutId: NodeJS.Timeout;
     const handleTouchEnd = () => {
-      setTimeout(() => {
+      timeoutId = setTimeout(() => {
         isRefreshing.current = false;
       }, 100);
     };
@@ -62,6 +63,10 @@ export const useWindowResizeEvent = (handleResize: ResizeHandler) => {
     window.addEventListener('resize', handleResizeEvent);
 
     return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleTouchEnd);
