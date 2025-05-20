@@ -1,6 +1,7 @@
 import { Observable, map } from 'rxjs';
 
 import { DataService } from '@/src/utils/app/data/data-service';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import {
   ApiKeys,
@@ -18,7 +19,6 @@ import { HTTPMethod } from '@/src/types/http';
 
 import { CLIENTDATA_PATH } from '@/src/constants/client-data';
 
-import { ApiUtils } from '../../server/api';
 import { constructPath } from '../file';
 import { getFileRootId } from '../id';
 

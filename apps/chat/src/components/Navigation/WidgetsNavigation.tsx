@@ -20,7 +20,7 @@ import {
 import { Routes } from '@/src/constants/routes';
 
 import { ModelIcon, ModelTooltip } from '@/src/components/Chatbar/ModelIcon';
-import Loader from '@/src/components/Common/Loader';
+import { Loader } from '@/src/components/Common/Loader';
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 
 import { NavigationButton } from './NavigationButton';

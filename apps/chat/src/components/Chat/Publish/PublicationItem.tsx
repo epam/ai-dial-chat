@@ -23,7 +23,7 @@ import { PublicationSelectors } from '@/src/store/selectors';
 
 import { DEFAULT_VERSION, PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { PublicVersionSelector } from './PublicVersionSelector';
 

@@ -1,6 +1,7 @@
 import { EMPTY, Observable, map, of } from 'rxjs';
 
 import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
 import {
@@ -34,7 +35,6 @@ import { UploadedAttachment } from '@/src/store/import-export/importExport.reduc
 import { PLOTLY_CONTENT_TYPE } from '@/src/constants/chat';
 import { successMessages } from '@/src/constants/successMessages';
 
-import { ApiUtils } from '../server/api';
 import { cleanConversationHistory } from './clean';
 import { isImportEntityNameOnSameLevelUnique } from './common';
 import { ConversationService } from './data/conversation-service';
