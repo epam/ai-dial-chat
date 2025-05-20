@@ -14,12 +14,6 @@ import {
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
-import {
-  ExportFormatV1,
-  ExportFormatV2,
-  ExportFormatV4,
-  PromptsHistory,
-} from '@/src/types/import-export';
 
 import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-server-settings';
 import {
@@ -27,7 +21,14 @@ import {
   FALLBACK_MODEL_ID,
 } from '@/src/constants/default-ui-settings';
 
-import { Message, Role } from '@epam/ai-dial-shared';
+import {
+  ExportFormatV1,
+  ExportFormatV2,
+  ExportFormatV4,
+  Message,
+  PromptsHistory,
+  Role,
+} from '@epam/ai-dial-shared';
 
 const bucket = '123';
 beforeAll(() => {

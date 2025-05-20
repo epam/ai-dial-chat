@@ -1,6 +1,10 @@
 import { ChatOverlay } from './ChatOverlay';
 
-import { ChatOverlayOptions, setStyles } from '@epam/ai-dial-shared';
+import {
+  ChatOverlayOptions,
+  LatestExportConversationsFormat,
+  setStyles,
+} from '@epam/ai-dial-shared';
 
 export type OverlayPosition =
   | 'left-bottom'
@@ -438,6 +442,12 @@ export class ChatOverlayManager {
     return overlay.getConversations();
   }
 
+  public async getSelectedConversations(id: string) {
+    const { overlay } = this.getOverlay(id);
+
+    return overlay.getSelectedConversations();
+  }
+
   public async createConversation(id: string, parentPath?: string | null) {
     const { overlay } = this.getOverlay(id);
 
@@ -482,6 +492,15 @@ export class ChatOverlayManager {
     const { overlay } = this.getOverlay(id);
 
     return overlay.exportConversation(conversationId);
+  }
+
+  public async importConversation(
+    id: string,
+    importedConversation: LatestExportConversationsFormat,
+  ) {
+    const { overlay } = this.getOverlay(id);
+
+    return overlay.importConversation(importedConversation);
   }
 
   public subscribe(

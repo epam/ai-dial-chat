@@ -10,7 +10,7 @@ import {
 } from '@/src/utils/app/form-schema';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
-import { Conversation, Replay } from '@/src/types/chat';
+import { Conversation } from '@/src/types/chat';
 import { EntityType, PartialBy } from '@/src/types/common';
 import { AddonsMap, DialAIEntityModel, ModelsMap } from '@/src/types/models';
 
@@ -26,6 +26,7 @@ import {
   ConversationInfo,
   Message,
   MessageSettings,
+  Replay,
   Role,
   UploadStatus,
 } from '@epam/ai-dial-shared';

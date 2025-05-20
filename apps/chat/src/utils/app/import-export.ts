@@ -10,17 +10,6 @@ import {
 } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
-import {
-  ExportFormatV1,
-  ExportFormatV2,
-  ExportFormatV3,
-  ExportFormatV4,
-  ExportFormatV5,
-  LatestExportConversationsFormat,
-  LatestExportFormat,
-  PromptsHistory,
-  SupportedExportFormats,
-} from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 import { AppAction } from '@/src/types/store';
 
@@ -44,9 +33,18 @@ import { translate } from './translation';
 
 import {
   Attachment,
+  ExportFormatV1,
+  ExportFormatV2,
+  ExportFormatV3,
+  ExportFormatV4,
+  ExportFormatV5,
+  LatestExportConversationsFormat,
+  LatestExportFormat,
   Message,
+  PromptsHistory,
   ShareInterface,
   Stage,
+  SupportedExportFormats,
 } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
 
@@ -224,16 +222,25 @@ const triggerDownloadPrompt = (data: PromptsHistory, appName?: string) => {
   downloadChatPromptData(data, 'prompt', appName);
 };
 
-export const exportConversation = (
+export const getExportConversationInfo = (
   conversation: Conversation,
   folders: FolderInterface[],
-  appName?: string,
 ) => {
   const data: LatestExportConversationsFormat = {
     version: 5,
     history: [excludePublicationInfo(conversation)],
     folders: folders,
   };
+
+  return data;
+};
+
+export const triggerExportConversation = (
+  conversation: Conversation,
+  folders: FolderInterface[],
+  appName?: string,
+) => {
+  const data = getExportConversationInfo(conversation, folders);
 
   triggerDownloadConversation(data, appName);
 };

@@ -1,17 +1,12 @@
 import { SharePermission, UploadStatus } from '@epam/ai-dial-shared';
 
+export { FeatureType } from '@epam/ai-dial-shared';
+
 export enum EntityType {
   Model = 'model',
   Application = 'application',
   Assistant = 'assistant',
   Addon = 'addon',
-}
-
-export enum FeatureType {
-  Chat = 'chat',
-  Prompt = 'prompt',
-  File = 'file',
-  Application = 'application',
 }
 
 export enum BackendDataNodeType {

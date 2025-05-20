@@ -14,7 +14,6 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { getConversationRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
-import { SupportedExportFormats } from '@/src/types/import-export';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
@@ -39,7 +38,7 @@ import { FileManagerModal } from '@/src/components/Files/FileManagerModal';
 import { Import } from '@/src/components/Settings/Import';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
-import { Feature } from '@epam/ai-dial-shared';
+import { Feature, SupportedExportFormats } from '@epam/ai-dial-shared';
 
 export const ChatbarSettings = () => {
   const { t } = useTranslation(Translation.SideBar);

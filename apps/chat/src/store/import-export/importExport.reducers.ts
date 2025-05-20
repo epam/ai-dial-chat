@@ -3,16 +3,16 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, MappedReplaceActions } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import {
-  Operation,
-  PromptsHistory,
-  SupportedExportFormats,
-} from '@/src/types/import-export';
+import { Operation } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 
 import { ImportExportState } from './importExport.types';
 
-import { UploadStatus } from '@epam/ai-dial-shared';
+import {
+  PromptsHistory,
+  SupportedExportFormats,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 
 export type UploadedAttachment = Partial<DialFile> & {
   oldRelativePath: string;
