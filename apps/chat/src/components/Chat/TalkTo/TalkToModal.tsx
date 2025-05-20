@@ -2,6 +2,8 @@ import { IconSearch } from '@tabler/icons-react';
 import { MouseEvent, useCallback, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
+
+
 import Link from 'next/link';
 
 import classNames from 'classnames';
@@ -14,7 +16,7 @@ import {
   isReplayAsIsConversation,
   isReplayConversation,
 } from '@/src/utils/app/conversation';
-import { isMobile } from '@/src/utils/app/mobile';
+import { isSmallScreenOrTouchable } from '@/src/utils/app/mobile';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { PseudoModel } from '@/src/utils/server/api';
@@ -100,6 +102,8 @@ const TalkToModalView = ({
   const widgetsSchemaIds = useAppSelector(
     WidgetsSelectors.selectWidgetsSchemaIds,
   );
+
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -278,7 +282,7 @@ const TalkToModalView = ({
             placeholder={t('Search')}
             className="input-form peer m-0 pl-[38px]"
             data-qa="search-agents"
-            autoFocus={!isMobile()}
+            autoFocus={isOverlay || !isSmallScreenOrTouchable()}
           />
         </div>
         <div className="flex gap-2">

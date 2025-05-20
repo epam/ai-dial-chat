@@ -1,14 +1,8 @@
 import { ScreenState } from '@/src/types/common';
+import { isMobile as isMobileValue, isTablet } from 'react-device-detect';
 
-export const isMobile = () => {
-  const userAgent =
-    typeof window === 'undefined' || typeof window.navigator === 'undefined'
-      ? ''
-      : navigator.userAgent;
-  const mobileRegex =
-    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS/i;
-  return mobileRegex.test(userAgent);
-};
+export const isMobile = () => isMobileValue;
+export const isTouchable = () => isMobileValue || isTablet;
 
 const isScreenSize = (maxWidth: number): boolean =>
   typeof window !== 'undefined' && window.innerWidth < maxWidth;
@@ -19,6 +13,7 @@ export const is3XLScreen = () => isScreenSize(ScreenState.XL3);
 export const is4XLScreen = () => isScreenSize(ScreenState.XL4);
 
 export const isTabletScreenOrMobile = () => isTabletScreen() || isMobile();
+export const isSmallScreenOrTouchable = () => isSmallScreen() || isTouchable();
 
 export const getScreenState = () => {
   const screenMappings = [
