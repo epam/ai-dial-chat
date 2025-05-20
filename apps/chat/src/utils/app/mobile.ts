@@ -1,5 +1,6 @@
-import { ScreenState } from '@/src/types/common';
 import { isMobile as isMobileValue, isTablet } from 'react-device-detect';
+
+import { ScreenState } from '@/src/types/common';
 
 export const isMobile = () => isMobileValue;
 export const isTouchable = () => isMobileValue || isTablet;
