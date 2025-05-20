@@ -43,14 +43,18 @@ import {
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { ApplicationSelectors } from '@/src/store/application/application.selectors';
-import { AuthSelectors } from '@/src/store/auth/auth.selectors';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import {
+  ApplicationActions,
+  PublicationActions,
+  UIActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PublicationActions } from '@/src/store/publication/publication.reducers';
-import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import {
+  ApplicationSelectors,
+  AuthSelectors,
+  ConversationsSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
 import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 import { ORGANIZATION_SECTION_NAME } from '@/src/constants/sections';

@@ -44,22 +44,25 @@ import { signInInOverlay } from '@/src/utils/auth/auth-overlay';
 import { FeatureType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
-import { ModelsActions } from '@/src/store/models/models.reducers';
-import { SettingsActions } from '@/src/store/settings/settings.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { ShareActions } from '@/src/store/share/share.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  ConversationsActions,
+  ImportExportActions,
+  ModelsActions,
+  OverlayActions,
+  SettingsActions,
+  ShareActions,
+  UIActions,
+} from '@/src/store/actions';
+import {
+  AuthSelectors,
+  ConversationsSelectors,
+  ModelsSelectors,
+  OverlaySelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
-
-import { ImportExportActions } from '../actions';
-import { AuthSelectors } from '../auth/auth.selectors';
-import { ModelsSelectors } from '../models/models.selectors';
-import { OverlayActions } from './overlay.reducers';
-import { OverlaySelectors } from './overlay.selectors';
 
 import {
   ChatOverlayOptions,

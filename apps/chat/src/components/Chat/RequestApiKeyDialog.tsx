@@ -19,16 +19,12 @@ import { onBlur } from '@/src/utils/app/style-helpers';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
+import { ServiceActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  ServiceActions,
-  ServiceSelectors,
-} from '@/src/store/service/service.reducer';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import { ServiceSelectors } from '@/src/store/selectors';
 
+import EmptyRequiredInputMessage from '@/src/components/Common/EmptyRequiredInputMessage';
 import { Modal } from '@/src/components/Common/Modal';
-
-import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
 
 function transformDateString(dateString: string): string {
   const dateParts = dateString.split('-');

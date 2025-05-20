@@ -2,9 +2,9 @@ import { useEffect, useRef } from 'react';
 
 import classNames from 'classnames';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ConversationsSelectors } from '@/src/store/selectors';
 
 import { FormSchemaButtonOption, MessageFormValue } from '@epam/ai-dial-shared';
 

@@ -13,14 +13,16 @@ import { FeatureType } from '@/src/types/common';
 import { FolderSectionProps } from '@/src/types/folder';
 import { Publication, PublicationInfo } from '@/src/types/publication';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { ConversationsActions, PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PublicationActions } from '@/src/store/publication/publication.reducers';
-import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
+import {
+  ConversationsSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
-import CaretIconComponent from '../../Common/CaretIconComponent';
-import CollapsibleSection from '../../Common/CollapsibleSection';
+import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
+import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
+
 import {
   ConversationPublicationResources,
   PromptPublicationResources,

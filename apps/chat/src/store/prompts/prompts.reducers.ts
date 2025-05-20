@@ -18,7 +18,8 @@ import { SearchFilters } from '@/src/types/search';
 import '@/src/types/share';
 import { RootState } from '@/src/types/store';
 
-import { PromptsSelectors } from './prompts.selectors';
+import { PromptsSelectors } from '@/src/store/selectors';
+
 import { PromptsState } from './prompts.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';

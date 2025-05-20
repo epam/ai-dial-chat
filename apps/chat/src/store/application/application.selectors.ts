@@ -2,11 +2,9 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import { RootState } from '@/src/types/store';
 
-import { ApplicationState } from './applications.types';
-
 import { UploadStatus } from '@epam/ai-dial-shared';
 
-const rootSelector = (state: RootState): ApplicationState => state.application;
+const rootSelector = (state: RootState) => state.application;
 
 const selectAppLoading = (state: RootState) => rootSelector(state).appLoading;
 

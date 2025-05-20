@@ -19,15 +19,14 @@ import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { ConversationsActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import { ConversationsSelectors } from '@/src/store/selectors';
 
 import { DISALLOW_INTERACTIONS } from '@/src/constants/modal';
 
-import { Modal } from '../Common/Modal';
-import { withRenderWhen } from '../Common/RenderWhen';
+import { Modal } from '@/src/components/Common/Modal';
+import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 
 function RenameConversationView() {
   const { t } = useTranslation(Translation.Chat);

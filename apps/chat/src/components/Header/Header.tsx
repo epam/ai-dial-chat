@@ -5,10 +5,9 @@ import { useWindowResizeEvent } from '@/src/hooks/useWindowResizeEvent';
 import { isSmallScreen, isTabletScreen } from '@/src/utils/app/mobile';
 import { centralChatWidth, getNewSidebarWidth } from '@/src/utils/app/sidebar';
 
+import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { CENTRAL_CHAT_MIN_WIDTH } from '@/src/constants/chat';
 import {
@@ -16,7 +15,7 @@ import {
   OVERLAY_HEADER_ICON_SIZE,
 } from '@/src/constants/default-ui-settings';
 
-import { ToggleSidebarButton } from '../Common/Buttons/ToggleSidebarButtor';
+import { ToggleSidebarButton } from '../Common/Buttons/ToggleSidebarButton';
 import { SettingDialog } from '../Settings/SettingDialog';
 import { BaseHeader } from './BaseHeader';
 import { CreateNewConversation } from './CreateNewEntity';

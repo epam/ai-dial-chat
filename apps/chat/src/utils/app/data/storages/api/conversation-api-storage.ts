@@ -28,7 +28,7 @@ import { ApiKeys } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { RootState } from '@/src/types/store';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { ConversationsSelectors } from '@/src/store/selectors';
 
 import { ConversationInfo, UploadStatus } from '@epam/ai-dial-shared';
 

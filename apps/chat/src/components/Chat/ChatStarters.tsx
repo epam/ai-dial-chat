@@ -4,11 +4,13 @@ import classNames from 'classnames';
 
 import { removeDescriptionsFromSchema } from '@/src/utils/app/form-schema';
 
-import { ChatActions } from '@/src/store/chat/chat.reducer';
-import { ChatSelectors } from '@/src/store/chat/chat.selectors';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { ChatActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  ChatSelectors,
+  ConversationsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { FormSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/FormSchema';
 

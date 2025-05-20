@@ -35,13 +35,14 @@ import {
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { PromptsActions, PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
-import { PublicationActions } from '@/src/store/publication/publication.reducers';
-import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
+import {
+  ConversationsSelectors,
+  ModelsSelectors,
+  PromptsSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
 import { stopBubbling } from '@/src/constants/chat';
 

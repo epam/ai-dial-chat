@@ -11,8 +11,7 @@ import { Translation } from '@/src/types/translation';
 
 import { PromptsActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import { PromptsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { PINNED_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 

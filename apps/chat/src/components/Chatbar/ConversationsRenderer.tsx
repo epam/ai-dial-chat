@@ -5,10 +5,11 @@ import { useSectionToggle } from '@/src/hooks/useSectionToggle';
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppSelector } from '@/src/store/hooks';
+import { ConversationsSelectors } from '@/src/store/selectors';
 
-import CollapsibleSection from '../Common/CollapsibleSection';
+import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
+
 import { ConversationComponent } from './Conversation';
 
 interface ConversationsRendererProps {

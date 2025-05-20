@@ -8,11 +8,9 @@ import { FolderInterface } from '@/src/types/folder';
 import { Publication, PublicationResource } from '@/src/types/publication';
 import { RootState } from '@/src/types/store';
 
-import { PublicationState } from './publication.types';
-
 import { ShareEntity, UploadStatus } from '@epam/ai-dial-shared';
 
-const rootSelector = (state: RootState): PublicationState => state.publication;
+const rootSelector = (state: RootState) => state.publication;
 
 const selectPublications = (state: RootState) =>
   rootSelector(state).publications;

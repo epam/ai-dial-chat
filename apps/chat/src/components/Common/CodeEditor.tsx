@@ -34,13 +34,9 @@ import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
-import {
-  CodeEditorActions,
-  CodeEditorSelectors,
-} from '@/src/store/codeEditor/codeEditor.reducer';
-import { FilesActions } from '@/src/store/files/files.reducers';
-import { FilesSelectors } from '@/src/store/files/files.selectors';
+import { CodeEditorActions, FilesActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { CodeEditorSelectors, FilesSelectors } from '@/src/store/selectors';
 
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 

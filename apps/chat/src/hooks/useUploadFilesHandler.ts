@@ -17,8 +17,8 @@ import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { Translation } from '@/src/types/translation';
 
 import { FilesActions, UIActions } from '@/src/store/actions';
-import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { FilesSelectors } from '@/src/store/selectors';
 
 const validateFiles = (
   files: File[],

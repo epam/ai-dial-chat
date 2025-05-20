@@ -26,16 +26,20 @@ import { DialFile, DialLink } from '@/src/types/files';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import { ChatActions } from '@/src/store/chat/chat.reducer';
-import { ChatSelectors } from '@/src/store/chat/chat.selectors';
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
-import { FilesActions } from '@/src/store/files/files.reducers';
-import { FilesSelectors } from '@/src/store/files/files.selectors';
+import {
+  ChatActions,
+  ConversationsActions,
+  FilesActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  ChatSelectors,
+  ConversationsSelectors,
+  FilesSelectors,
+  ModelsSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { errorsMessages } from '@/src/constants/errors';
 
