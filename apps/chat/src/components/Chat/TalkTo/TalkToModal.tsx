@@ -116,13 +116,10 @@ const TalkToModalView = ({
     const recentInstalledModels = recentModelIds
       .filter((id) => installedModelIdsSet.has(id) && modelsMap[id])
       .map((id) => modelsMap[id]) as DialAIEntityModel[];
-    const installedModels = isMyWorkspace
-      ? allModels.filter(
-          (model) =>
-            installedModelIdsSet.has(model.reference) &&
-            modelsMap[model.reference],
-        )
-      : allModels;
+    const installedModels = allModels.filter(
+      (model) =>
+        installedModelIdsSet.has(model.reference) && modelsMap[model.reference],
+    );
     return [
       ...(currentModel &&
       (installedModelIdsSet.has(currentModel.reference) || !isReplay)
