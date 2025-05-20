@@ -4,7 +4,7 @@ import { ImageMIMEType } from '@epam/ai-dial-shared';
 
 export const modelCursorSign = '▍';
 export const modelCursorSignWithBackquote = '`▍`';
-export const RECENT_MODELS_COUNT = 5;
+export const RECENT_MODELS_COUNT = 100;
 
 export const stopBubbling = <T>(e: MouseEvent<T>) => {
   e.stopPropagation();

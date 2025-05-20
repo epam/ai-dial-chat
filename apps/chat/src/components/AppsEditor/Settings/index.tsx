@@ -53,8 +53,9 @@ import {
 import { DEFAULT_QUICK_APPS_SCHEMA_ID } from '@/src/constants/quick-apps';
 import { Routes } from '@/src/constants/routes';
 
-import { TabButton } from '../../Buttons/TabButton';
-import Tooltip from '../../Common/Tooltip';
+import { TabButton } from '@/src/components/Buttons/TabButton';
+import { Tooltip } from '@/src/components/Common/Tooltip';
+
 import { ApplicationView } from './ApplicationView';
 import { CodeAppView } from './CodeAppView';
 import { CustomApplicationEditorView } from './CustomApplicationEditorView';

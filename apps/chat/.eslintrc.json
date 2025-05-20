@@ -30,7 +30,13 @@
         "tailwindcss/no-custom-classname": "error",
         // "tailwindcss/no-multiple-whitespace": "error", // waiting https://github.com/francoismassart/eslint-plugin-tailwindcss/pull/370
         "tailwindcss/no-contradicting-classname": "error",
-        "no-restricted-imports": ["error", { "paths": ["react-i18next"] }],
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": ["react-i18next"],
+            "patterns": ["../../**", "../../*", "../**", "!../*"]
+          }
+        ],
         "no-restricted-globals": [
           "error",
           {

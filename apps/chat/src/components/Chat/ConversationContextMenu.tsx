@@ -47,7 +47,7 @@ import { PINNED_CONVERSATIONS_SECTION_NAME } from '@/src/constants/sections';
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import { ExportModal } from '@/src/components/Chatbar/ExportModal';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
-import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
+import { ItemContextMenu } from '@/src/components/Common/ItemContextMenu';
 import { MoveToDialog } from '@/src/components/Common/MoveToDialog';
 
 import {

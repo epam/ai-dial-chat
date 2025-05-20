@@ -9,6 +9,10 @@ import {
   isConversationWithFormSchema,
 } from '@/src/utils/app/form-schema';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
+import {
+  getConversationApiKey,
+  parseConversationApiKey,
+} from '@/src/utils/server/api';
 
 import { Conversation, Replay } from '@/src/types/chat';
 import { EntityType, PartialBy } from '@/src/types/common';
@@ -17,7 +21,6 @@ import { AddonsMap, DialAIEntityModel, ModelsMap } from '@/src/types/models';
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
-import { getConversationApiKey, parseConversationApiKey } from '../server/api';
 import { DefaultsService } from './data/defaults-service';
 import { constructPath } from './file';
 import { getConversationRootId, getFileRootId, isEntityIdLocal } from './id';

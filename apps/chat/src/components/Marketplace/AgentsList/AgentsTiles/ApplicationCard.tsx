@@ -16,7 +16,7 @@ import { CardIconSizes } from '@/src/constants/marketplace';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
-import ShareIcon from '@/src/components/Common/ShareIcon';
+import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
 import { AgentContextMenu } from '@/src/components/Marketplace/AgentContextMenu';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';

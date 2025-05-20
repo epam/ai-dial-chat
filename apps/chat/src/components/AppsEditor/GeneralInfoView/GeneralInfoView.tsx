@@ -24,7 +24,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors, SettingsSelectors } from '@/src/store/selectors';
 
 import { TabButton } from '@/src/components/Buttons/TabButton';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { GeneralInfoEditor } from './GeneralInfoEditor';
 import { GeneralInfoPreview } from './GeneralInfoPreview';

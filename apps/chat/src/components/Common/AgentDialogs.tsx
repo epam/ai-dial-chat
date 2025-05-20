@@ -1,4 +1,4 @@
-import { ApplicationLogs } from '../Marketplace/ApplicationLogs';
+import { ApplicationLogs } from './ApplicationLogs';
 import { ConfirmAgentDeleteDialog } from './ConfirmAgentDeleteDialog';
 import { PublishAgentDialog } from './PublishAgentDialog';
 

@@ -20,7 +20,7 @@ interface Props {
   onScrollDownClick: () => void;
 }
 
-export default function ChatExternalControls({
+export function ChatExternalControls({
   conversations,
   showScrollDownButton,
   onScrollDownClick,

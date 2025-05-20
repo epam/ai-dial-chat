@@ -26,8 +26,8 @@ import {
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
 import { Spinner } from '@/src/components/Common/Spinner';
-import Tooltip from '@/src/components/Common/Tooltip';
-import ChatMDComponent from '@/src/components/Markdown/ChatMDComponent';
+import { Tooltip } from '@/src/components/Common/Tooltip';
+import { ChatMDComponent } from '@/src/components/Markdown/ChatMDComponent';
 import { PlotlyComponent } from '@/src/components/Plotly/Plotly';
 import { VisualizerRenderer } from '@/src/components/VisualalizerRenderer/VisualizerRenderer';
 

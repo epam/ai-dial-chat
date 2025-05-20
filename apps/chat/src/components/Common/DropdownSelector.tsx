@@ -8,7 +8,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { DropdownSelectorOption } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import Tooltip from './Tooltip';
+import { Tooltip } from './Tooltip';
 
 interface Props {
   values: DropdownSelectorOption[];

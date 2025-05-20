@@ -315,7 +315,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
                 };
 
                 newOptions.theme = 'light';
-                newOptions.modelId = 'stability.stable-diffusion-xl';
+                newOptions.modelId = 'dall-e-3';
 
                 overlay.current?.setOverlayOptions(newOptions);
               }}

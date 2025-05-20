@@ -18,7 +18,12 @@ interface Props {
   defaultIdx?: number;
 }
 
-const FullScreenImages = ({ images, alt, onClose, defaultIdx }: Props) => {
+export const FullScreenImages = ({
+  images,
+  alt,
+  onClose,
+  defaultIdx,
+}: Props) => {
   const [currentImage, setCurrentImage] = useState(defaultIdx ?? 0);
 
   const swipeHandlers = useSwipe({
@@ -99,5 +104,3 @@ const FullScreenImages = ({ images, alt, onClose, defaultIdx }: Props) => {
     </Modal>
   );
 };
-
-export default FullScreenImages;

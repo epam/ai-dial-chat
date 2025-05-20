@@ -11,18 +11,19 @@ import { Routes } from '@/src/constants/routes';
 
 import { getLayout } from '@/src/pages/_app';
 
-import Loader from '@/src/components/Common/Loader';
+import { Loader } from '@/src/components/Common/Loader';
 import { Marketplace as MarketplaceView } from '@/src/components/Marketplace/Marketplace';
 import { MarketplaceHeader } from '@/src/components/Marketplace/MarketplaceHeader';
 
 import { Feature } from '@epam/ai-dial-shared';
 
 function Marketplace() {
+  const router = useRouter();
+
   const isMarketplaceEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
   );
 
-  const router = useRouter();
   useEffect(() => {
     if (!isMarketplaceEnabled) {
       router.push(Routes.NotFound);
