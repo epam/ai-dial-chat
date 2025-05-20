@@ -30,7 +30,7 @@ import {
   isApplicationType,
   regenerateApplicationId,
 } from '@/src/utils/app/application';
-import { encodeSlug } from '@/src/utils/app/application-type-schema';
+import { cleanSchemaId } from '@/src/utils/app/application-type-schema';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
@@ -44,22 +44,25 @@ import {
 } from '@/src/types/applications';
 import { AppAction, AppEpic } from '@/src/types/store';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
-import { ModelsActions } from '@/src/store/models/models.reducers';
-import { ShareActions } from '@/src/store/share/share.reducers';
-import { ShareSelectors } from '@/src/store/share/share.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import {
+  ApplicationActions,
+  ApplicationTypesSchemasActions,
+  ConversationsActions,
+  ModelsActions,
+  ShareActions,
+  UIActions,
+} from '@/src/store/actions';
+import {
+  ApplicationSelectors,
+  AuthSelectors,
+  ConversationsSelectors,
+  ModelsSelectors,
+  ShareSelectors,
+} from '@/src/store/selectors';
 
 import { errorsMessages } from '@/src/constants/errors';
 import { DeleteType, MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
-
-import { ApplicationActions } from '../application/application.reducers';
-import { ApplicationTypesSchemasActions } from '../applicationTypeSchemas/applicationTypeSchemas.reducers';
-import { AuthSelectors } from '../auth/auth.selectors';
-import { ModelsSelectors } from '../models/models.selectors';
-import { ApplicationSelectors } from './application.selectors';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -648,7 +651,7 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
             pathname: Routes.AppsEditorSettings,
             query: {
               id: encodeURIComponent(entity.reference),
-              slug: encodeSlug(applicationType),
+              slug: cleanSchemaId(applicationType),
             },
           });
         }),

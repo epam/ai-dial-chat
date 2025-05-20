@@ -17,8 +17,8 @@ import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { Translation } from '@/src/types/translation';
 
 import { FilesActions, UIActions } from '@/src/store/actions';
-import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { FilesSelectors } from '@/src/store/selectors';
 
 const validateFiles = (
   files: File[],
@@ -86,16 +86,21 @@ export const useUploadFilesHandler = (
       if (errorMsg) dispatch(UIActions.showErrorToast(errorMsg));
       if (!validFiles?.length) return;
 
-      const attachmentsSameLevelNames = allFiles
-        .filter((file) => file.folderId === folderId)
-        .map((file) => prepareFileName(file.name));
+      const sameLevelFiles = allFiles.filter(
+        (file) => file.folderId === folderId,
+      );
+      const sameLevelFileNames = new Set(
+        sameLevelFiles.map((file) => prepareFileName(file.name)),
+      );
 
       const preparedFiles = validFiles.map((file) => {
-        const name = prepareFileName(
-          attachmentsSameLevelNames.includes(prepareFileName(file.name))
-            ? getNextFileName(file.name, allFiles)
-            : file.name,
-        );
+        let name = prepareFileName(file.name);
+
+        if (sameLevelFileNames.has(name)) {
+          name = getNextFileName(name, sameLevelFiles, 0, true);
+          sameLevelFileNames.add(name);
+        }
+
         return {
           name,
           fileContent: file,

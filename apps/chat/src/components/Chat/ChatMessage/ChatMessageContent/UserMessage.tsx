@@ -31,12 +31,14 @@ import { DialFile, DialLink, FileFolderInterface } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
-import { FilesActions } from '@/src/store/files/files.reducers';
-import { FilesSelectors } from '@/src/store/files/files.selectors';
+import { FilesActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  ConversationsSelectors,
+  FilesSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
@@ -433,13 +435,14 @@ export const UserMessage = memo(function UserMessage({
 
   const handleUploadPastedFiles = useCallback(
     (files: File[]) => {
+      if (!canAttachFiles) return;
       uploadPastedFiles(files)?.then((newFiles) => {
         setNewEditableAttachmentsIds((ids) =>
           uniq(ids.concat(newFiles.map(({ id }) => id))),
         );
       });
     },
-    [uploadPastedFiles],
+    [uploadPastedFiles, canAttachFiles],
   );
 
   useFilePaste(textareaRef, handleUploadPastedFiles);

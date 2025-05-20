@@ -18,12 +18,13 @@ import {
 } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { ApplicationSelectors } from '@/src/store/application/application.selectors';
-import { FilesSelectors } from '@/src/store/files/files.selectors';
+import { ApplicationActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import {
+  ApplicationSelectors,
+  FilesSelectors,
+  SettingsSelectors,
+} from '@/src/store/selectors';
 
 import { CONFIRM_ICON_FILE_VALUES } from '@/src/constants/applications';
 import { IMAGE_TYPES } from '@/src/constants/chat';
@@ -227,7 +228,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
         className="flex size-full flex-col"
         data-qa="app-general-form"
       >
-        <div className="grow space-y-4 divide-tertiary overflow-y-auto px-5 py-4 xl:p-5">
+        <div className="grow space-y-4 divide-tertiary overflow-y-auto px-3 py-4 md:px-5 xl:py-5">
           <Field
             {...register('name', validators['name'])}
             label={t('Name')}
@@ -323,7 +324,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
 
         <div
           className={classNames(
-            'mt-auto flex gap-2 border-t border-tertiary p-4 md:px-6',
+            'mt-auto flex gap-2 border-t border-tertiary px-3 py-4 md:px-5 xl:px-6',
             'justify-end',
           )}
         >

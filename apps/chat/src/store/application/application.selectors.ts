@@ -2,11 +2,9 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import { RootState } from '@/src/types/store';
 
-import { ApplicationState } from './applications.types';
-
 import { UploadStatus } from '@epam/ai-dial-shared';
 
-const rootSelector = (state: RootState): ApplicationState => state.application;
+const rootSelector = (state: RootState) => state.application;
 
 const selectAppLoading = (state: RootState) => rootSelector(state).appLoading;
 
@@ -19,12 +17,14 @@ const selectIsLogsLoading = (state: RootState) =>
 const selectApplicationDetail = (state: RootState) =>
   rootSelector(state).appDetails;
 
-const selectApplicationLogs = createSelector([rootSelector], (state) => {
+const _selectAppLogs = (state: RootState) => rootSelector(state).appLogs;
+
+const selectApplicationLogs = createSelector([_selectAppLogs], (appLogs) => {
   const ansiRegex = new RegExp(String.fromCharCode(27) + '\\[[0-9;]*[mK]', 'g');
   const errorLogRegex =
     /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) \| .+ \| .+ \| (.+)$/;
 
-  return state.appLogs?.logs[0]?.content
+  return appLogs?.logs[0]?.content
     .split('\n')
     .map((line) => {
       const cleanedLine = line.replace(ansiRegex, '');

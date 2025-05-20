@@ -33,12 +33,12 @@ import { FeatureType } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
-import { FilesSelectors } from '@/src/store/files/files.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
-
-import { PublicationActions } from '../publication/publication.reducers';
-import { FilesActions } from './files.reducers';
+import {
+  FilesActions,
+  PublicationActions,
+  UIActions,
+} from '@/src/store/actions';
+import { FilesSelectors, UISelectors } from '@/src/store/selectors';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 
@@ -107,14 +107,13 @@ const uploadFilesSuccessEpic: AppEpic = (action$) =>
     ofType(FilesActions.uploadFileSuccess.type),
     switchMap(({ payload }) => {
       if (payload.showSuccessMessage) {
-        const { parentPath, name } = splitEntityId(payload.apiResult.id);
+        const { parentPath } = splitEntityId(payload.apiResult.id);
 
         return of(
           UIActions.showSuccessToast(
             translate(
-              'The file "{{name}}" has been uploaded successfully to "{{parentPath}}"',
+              'The file has been uploaded successfully to "{{parentPath}}"',
               {
-                name,
                 parentPath,
               },
             ),

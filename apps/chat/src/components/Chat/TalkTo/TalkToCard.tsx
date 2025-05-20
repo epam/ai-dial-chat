@@ -20,7 +20,7 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { ModelsSelectors } from '@/src/store/selectors';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { CardIconSizes } from '@/src/constants/marketplace';
@@ -43,6 +43,7 @@ interface ApplicationCardProps {
   isUnavailableModel: boolean;
   onClick: (entity: DialAIEntityModel) => void;
   onSelectVersion: (entity: DialAIEntityModel) => void;
+  isMyWorkspace: boolean;
 }
 
 const disabledActions = {
@@ -58,6 +59,7 @@ export const TalkToCard = ({
   isUnavailableModel,
   onClick,
   onSelectVersion,
+  isMyWorkspace,
 }: ApplicationCardProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -77,10 +79,11 @@ export const TalkToCard = ({
       (model) =>
         getGroupModelKey(entity) === getGroupModelKey(model) &&
         entity.version &&
-        (installedModelIds.has(model.reference) ||
+        (!isMyWorkspace ||
+          installedModelIds.has(model.reference) ||
           (isSelected && entity.reference === model.reference)),
     );
-  }, [allModels, entity, installedModelIds, isSelected]);
+  }, [allModels, entity, installedModelIds, isMyWorkspace, isSelected]);
 
   const handleSelectVersion = useCallback(
     (model: DialAIEntityModel) => {

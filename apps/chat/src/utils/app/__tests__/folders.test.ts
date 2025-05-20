@@ -1,5 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { updateMovedEntityId, updateMovedFolderId } from '../folders';
+import {
+  updateMovedEntityId,
+  updateMovedFolderId,
+} from '@/src/utils/app/folders';
 
 describe.skip('Folder utility methods', () => {
   it.each([

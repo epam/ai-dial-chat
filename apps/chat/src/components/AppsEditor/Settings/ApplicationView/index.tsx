@@ -18,10 +18,9 @@ import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { CustomApplicationModel } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { ApplicationSelectors } from '@/src/store/application/application.selectors';
+import { ApplicationActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import { ApplicationSelectors } from '@/src/store/selectors';
 
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/code-apps';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
@@ -206,8 +205,6 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
     shouldSaveApplication,
     exitAfterSave,
     isValid,
-    submitWrapper,
-    handleSubmit,
     dispatch,
     router,
     t,
@@ -222,7 +219,7 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
       className="flex h-full flex-col bg-layer-2"
       data-qa="app-view-form"
     >
-      <div className="grow space-y-4 divide-tertiary overflow-y-auto px-5 py-4 xl:p-5">
+      <div className="grow space-y-4 divide-tertiary overflow-y-auto px-3 py-4 md:px-5 xl:py-5">
         <FieldTextArea
           {...register('features', validators['features'])}
           label={t('Features data')}

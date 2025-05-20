@@ -3,11 +3,9 @@ import { createSelector } from '@reduxjs/toolkit';
 import { ModalState } from '@/src/types/modal';
 import { RootState } from '@/src/types/store';
 
-import { ChatState } from './chat.types';
-
 import { DialSchemaProperties } from '@epam/ai-dial-shared';
 
-const rootSelector = (state: RootState): ChatState => state.chat;
+const rootSelector = (state: RootState) => state.chat;
 
 const selectInputContent = (state: RootState) =>
   rootSelector(state).inputContent;
@@ -21,11 +19,10 @@ const selectIsConfigurationSchemaLoading = (state: RootState) =>
   rootSelector(state).isConfigurationSchemaLoading;
 
 const selectIsConfigurationBlocksInput = createSelector(
-  [rootSelector],
-  (state) =>
-    state.configurationSchema?.[
-      DialSchemaProperties.DialChatMessageInputDisabled
-    ] ?? false,
+  [selectConfigurationSchema],
+  (configurationSchema) =>
+    configurationSchema?.[DialSchemaProperties.DialChatMessageInputDisabled] ??
+    false,
 );
 
 const selectShouldFocusAndScroll = (state: RootState) =>

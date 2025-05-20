@@ -39,26 +39,30 @@ import {
   sendPMResponse,
 } from '@/src/utils/app/overlay';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { signInInOverlay } from '@/src/utils/auth/auth-overlay';
 
 import { FeatureType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
-import { ModelsActions } from '@/src/store/models/models.reducers';
-import { SettingsActions } from '@/src/store/settings/settings.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { ShareActions } from '@/src/store/share/share.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  ConversationsActions,
+  ImportExportActions,
+  ModelsActions,
+  OverlayActions,
+  SettingsActions,
+  ShareActions,
+  UIActions,
+} from '@/src/store/actions';
+import {
+  AuthSelectors,
+  ConversationsSelectors,
+  ModelsSelectors,
+  OverlaySelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
-
-import { ImportExportActions } from '../actions';
-import { AuthSelectors } from '../auth/auth.selectors';
-import { ModelsSelectors } from '../models/models.selectors';
-import { OverlayActions } from './overlay.reducers';
-import { OverlaySelectors } from './overlay.selectors';
 
 import {
   ChatOverlayOptions,
@@ -794,8 +798,20 @@ const signInOptionsSet: AppEpic = (action$, state$) =>
     tap(({ payload: { signInOptions } }) => {
       const isShouldLogin = AuthSelectors.selectIsShouldLogin(state$.value);
 
-      if (isShouldLogin && signInOptions?.autoSignIn) {
-        signIn(signInOptions?.signInProvider);
+      if (
+        isShouldLogin &&
+        signInOptions?.autoSignIn &&
+        signInOptions?.signInProvider
+      ) {
+        if (signInOptions?.signInInNewWindow) {
+          //will open '/auth/signin?provider=' in a new page
+          signInInOverlay(
+            `/auth/signin?provider=${signInOptions.signInProvider}`,
+          );
+        } else {
+          //will try to signin in the iframe
+          signIn(signInOptions?.signInProvider);
+        }
       }
     }),
     ignoreElements(),

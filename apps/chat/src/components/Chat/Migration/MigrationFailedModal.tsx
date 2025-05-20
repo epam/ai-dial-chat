@@ -13,6 +13,7 @@ import { useRouter } from 'next/router';
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
+import { useWindowResizeEvent } from '@/src/hooks/useWindowResizeEvent';
 
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { isSmallScreen } from '@/src/utils/app/mobile';
@@ -22,13 +23,17 @@ import { Prompt } from '@/src/types/prompt';
 import { MigrationStorageKeys } from '@/src/types/storage';
 import { Translation } from '@/src/types/translation';
 
+import {
+  ImportExportActions,
+  MigrationActions,
+  UIActions,
+} from '@/src/store/actions';
 import { useAppSelector } from '@/src/store/hooks';
-import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
-import { MigrationActions } from '@/src/store/migration/migration.reducers';
-import { MigrationSelectors } from '@/src/store/migration/migration.selectors';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import {
+  MigrationSelectors,
+  ModelsSelectors,
+  SettingsSelectors,
+} from '@/src/store/selectors';
 
 import { ReportIssueDialog } from '@/src/components/Chat/ReportIssueDialog';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
@@ -181,12 +186,10 @@ export const MigrationFailedWindow = ({
     MigrationSelectors.selectIsChatsBackedUp,
   );
 
-  useEffect(() => {
-    const handleResize = () => setIsScreenSmall(isSmallScreen());
-    window.addEventListener('resize', handleResize);
-
-    return () => window.removeEventListener('resize', handleResize);
+  const handleResize = useCallback(() => {
+    setIsScreenSmall(isSmallScreen());
   }, []);
+  useWindowResizeEvent(handleResize);
 
   useEffect(() => {
     setConversationsToRetryIds(

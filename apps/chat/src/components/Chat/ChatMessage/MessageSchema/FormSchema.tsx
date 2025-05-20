@@ -10,8 +10,8 @@ import { getFormButtonType } from '@/src/utils/app/form-schema';
 import { FormButtonType } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppSelector } from '@/src/store/hooks';
+import { ConversationsSelectors } from '@/src/store/selectors';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { withErrorBoundary } from '@/src/components/Common/ErrorBoundary';

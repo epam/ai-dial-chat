@@ -19,14 +19,15 @@ import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
+import { MarketplaceSelectors } from '@/src/store/selectors';
 
 import { TableColumnSortKeys } from '@/src/constants/marketplace';
 
-import { AgentsListWrapper } from '../AgentsListWrapper';
-import { SuggestedMessage } from '../SuggestedMessage';
-import { AgentsListProps } from '../view-props';
-import { AgentsTableHeader } from './AgentsTableHeader';
+import { AgentsListWrapper } from '@/src/components/Marketplace/AgentsList/AgentsListWrapper';
+import { AgentsTableHeader } from '@/src/components/Marketplace/AgentsList/AgentsTable/AgentsTableHeader';
+import { SuggestedMessage } from '@/src/components/Marketplace/AgentsList/SuggestedMessage';
+import { AgentsListProps } from '@/src/components/Marketplace/AgentsList/view-props';
+
 import { AgentsTableLeftSideRow } from './AgentsTableLeftSideRow';
 import { AgentsTableRightSideRow } from './AgentsTableRightSideRow';
 

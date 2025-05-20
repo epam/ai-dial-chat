@@ -4,10 +4,10 @@ import { useState } from 'react';
 import classNames from 'classnames';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { SettingsSelectors } from '@/src/store/selectors';
 
-import { Menu, MenuItem } from '../../DropdownMenu';
-import Tooltip from '../../Tooltip';
+import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
+import Tooltip from '@/src/components/Common/Tooltip';
 
 interface Props {
   value?: string;

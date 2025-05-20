@@ -51,14 +51,12 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
 import { RootState } from '@/src/types/store';
 
+import { ChatSelectors } from '@/src/store/chat/chat.selectors';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
-
-import { ChatSelectors } from '../chat/chat.selectors';
-import { ConversationsState } from './conversations.types';
 
 import {
   ConversationInfo,
@@ -69,8 +67,7 @@ import {
 import cloneDeep from 'lodash-es/cloneDeep';
 import uniqBy from 'lodash-es/uniqBy';
 
-const rootSelector = (state: RootState): ConversationsState =>
-  state.conversations;
+const rootSelector = (state: RootState) => state.conversations;
 
 const selectConversations = (state: RootState): ConversationInfo[] =>
   rootSelector(state).conversations;
@@ -103,10 +100,7 @@ const selectFilteredConversations = (
   }>,
 ) =>
   createSelector(
-    [
-      selectConversations,
-      (state) => PublicationSelectors.selectPublicVersionGroups(state),
-    ],
+    [selectConversations, PublicationSelectors.selectPublicVersionGroups],
     (conversations, versionGroups) => {
       return conversations.filter(
         (conversation) =>
@@ -127,13 +121,24 @@ const selectFilteredConversations = (
     },
   );
 
-const selectFolders = (state: RootState) => rootSelector(state).folders || [];
+const selectFolders = (state: RootState) => rootSelector(state).folders;
 
-export const selectMyFolders = createSelector([selectFolders], (folders) => {
+const selectMyFolders = createSelector([selectFolders], (folders) => {
   return folders.filter((folder) =>
     folder.id.startsWith(`${getConversationRootId()}/`),
   );
 });
+
+const selectMyFoldersWithSearchTerm = createSelector(
+  [selectMyFolders, (_state, searchTerm: string) => searchTerm],
+  (folders, searchTerm) => {
+    const filtered = folders.filter((folder) =>
+      folder.name.includes(searchTerm.toLowerCase()),
+    );
+
+    return getParentAndChildFolders(folders, filtered);
+  },
+);
 
 const selectFolderById = createSelector(
   [selectFolders, (_state, id: string) => id],
@@ -216,11 +221,17 @@ const selectSelectedConversations = createSelector(
   },
 );
 
-const selectLoadedCharts = createSelector([rootSelector], (state) => {
-  // cloneDeep because of Plot component doesn't work with redux-toolkit maintained state slices which disallow, or guard, against state mutations.
-  // PlotReactState had some additional "state" properties that were never declared or updated.
-  return cloneDeep(state.loadedCharts);
-});
+const _selectLoadedCharts = (state: RootState) =>
+  rootSelector(state).loadedCharts;
+
+const selectLoadedCharts = createSelector(
+  [_selectLoadedCharts],
+  (loadedCharts) => {
+    // cloneDeep because of Plot component doesn't work with redux-toolkit maintained state slices which disallow, or guard, against state mutations.
+    // PlotReactState had some additional "state" properties that were never declared or updated.
+    return cloneDeep(loadedCharts);
+  },
+);
 
 const selectChartLoading = (state: RootState) =>
   rootSelector(state).chartLoading;
@@ -333,7 +344,7 @@ const selectAreSelectedConversationsExternal = createSelector(
 const selectDoesAnyMyItemExist = createSelector(
   [selectFolders, selectConversations],
   (folders, conversations) => {
-    const conversationRootId = getConversationRootId();
+    const conversationRootId = `${getConversationRootId()}/`;
     return (
       conversations.some((conv) => conv.id.startsWith(conversationRootId)) ||
       folders.some((folder) => folder.id.startsWith(conversationRootId))
@@ -419,7 +430,7 @@ const selectAvailableAttachmentsTypes = createSelector(
     // Assume that we have only 2 selected models available
     const availableModelsAttachmentTypes = (
       modelsAttachmentsTypes[0] || []
-    ).filter((value) => (modelsAttachmentsTypes[1] || []).includes(value));
+    ).filter((value) => (modelsAttachmentsTypes[1] ?? []).includes(value));
 
     return availableModelsAttachmentTypes.length === 0
       ? undefined
@@ -486,6 +497,17 @@ const selectCanAttachFile = createSelector(
 
 const selectTemporaryFolders = (state: RootState) =>
   rootSelector(state).temporaryFolders;
+
+const selectTemporaryFoldersWithSearchTerm = createSelector(
+  [selectTemporaryFolders, (_state, searchTerm: string) => searchTerm],
+  (folders, searchTerm) => {
+    const filtered = folders.filter((folder) =>
+      folder.name.includes(searchTerm.toLowerCase()),
+    );
+
+    return getParentAndChildFolders(folders, filtered);
+  },
+);
 
 const selectPublishedWithMeFolders = createSelector(
   [selectFolders],
@@ -752,7 +774,7 @@ const selectIsSelectedConversationsWithSchema = createSelector(
   (conversations) => conversations.some(isConversationWithFormSchema),
 );
 
-export const selectAction = (state: RootState) =>
+const selectAction = (state: RootState) =>
   rootSelector(state).preselectedAction;
 
 export const ConversationsSelectors = {
@@ -761,6 +783,7 @@ export const ConversationsSelectors = {
   selectFilteredConversations,
   selectFolders,
   selectMyFolders,
+  selectMyFoldersWithSearchTerm,
   selectFolderById,
   selectFoldersByFolderId,
   selectEmptyFolderIds,
@@ -802,6 +825,7 @@ export const ConversationsSelectors = {
   selectCanAttachFolders,
   selectCanAttachFile,
   selectTemporaryFolders,
+  selectTemporaryFoldersWithSearchTerm,
   selectTemporaryAndPublishedFolders,
   selectNewAddedFolderId,
   selectLoadingFolderIds,

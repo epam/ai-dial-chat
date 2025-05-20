@@ -8,12 +8,13 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { AddonsMap } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { AddonsSelectors } from '@/src/store/addons/addons.selectors';
 import { useAppSelector } from '@/src/store/hooks';
+import { AddonsSelectors } from '@/src/store/selectors';
 
-import { ModelIcon } from '../../Chatbar/ModelIcon';
-import { EntityMarkdownDescription } from '../../Common/MarkdownDescription';
-import Tooltip from '../../Common/Tooltip';
+import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
+import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
+import Tooltip from '@/src/components/Common/Tooltip';
+
 import { AddonsDialog } from './AddonsDialog';
 
 interface AddonProps {

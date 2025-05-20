@@ -13,15 +13,14 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
+import { ModelsSelectors, PromptsSelectors } from '@/src/store/selectors';
 
 import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 import { MOUSE_OUTSIDE_PRESS_EVENT } from '@/src/constants/modal';
 
+import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Modal } from '@/src/components/Common/Modal';
 
-import { ModelIcon } from '../../Chatbar/ModelIcon';
 import { ConversationSettings } from './ConversationSettings';
 
 interface ChatSettingsViewProps {

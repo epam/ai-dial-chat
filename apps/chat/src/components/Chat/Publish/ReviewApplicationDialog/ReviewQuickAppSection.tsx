@@ -16,7 +16,7 @@ import { QuickAppConfig } from '@/src/types/quick-apps';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { ModelsSelectors } from '@/src/store/selectors';
 
 import { MonacoEditor } from '@/src/components/Common/MonacoEditor';
 import Tooltip from '@/src/components/Common/Tooltip';
