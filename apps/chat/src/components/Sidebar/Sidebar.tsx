@@ -42,7 +42,7 @@ import {
   CreateNewConversation,
   CreateNewPrompt,
 } from '@/src/components/Header/CreateNewEntity';
-import { Search } from '@/src/components/Search';
+import { Search } from '@/src/components/Search/Search';
 
 import { LeftSideResizeIcon, RightSideResizeIcon } from './ResizeIcons';
 
