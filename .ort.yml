@@ -52,3 +52,7 @@ resolutions:
         the ScanCode 'copyleft' categorized license GPL-2\\.0-only\\."
       reason: 'CANT_FIX_EXCEPTION'
       comment: 'The dependency has GPL-2.0 license in github repo'
+    - message: "No license information is available for dependency \
+        'NPM::rslog:1\\.2\\.3'\\."
+      reason: 'CANT_FIX_EXCEPTION'
+      comment: 'The dependency has MIT license in github repo'

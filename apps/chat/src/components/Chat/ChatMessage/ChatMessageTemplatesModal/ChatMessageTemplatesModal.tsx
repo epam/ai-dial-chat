@@ -14,14 +14,14 @@ import { Conversation } from '@/src/types/chat';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
 import { PROMPT_VARIABLE_REGEX_TEST } from '@/src/constants/folders';
 
+import { TabButton } from '@/src/components/Buttons/TabButton';
 import { Modal } from '@/src/components/Common/Modal';
 
-import { TabButton } from '../../../Buttons/TabButton';
 import { TemplateRenderer } from './TemplateRenderer';
 import { TemplateRow } from './TemplateRow';
 

@@ -10,20 +10,22 @@ import { useWidgets } from '@/src/hooks/useWidgets';
 import { ScreenState } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import { WidgetsSelectors } from '../../store/models/widgets.selectors';
-import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import {
+  ApplicationSelectors,
+  ModelsSelectors,
+  WidgetsSelectors,
+} from '@/src/store/selectors';
 
 import { Routes } from '@/src/constants/routes';
 
 import { ModelIcon, ModelTooltip } from '@/src/components/Chatbar/ModelIcon';
 import Loader from '@/src/components/Common/Loader';
+import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 
-import { withRenderWhen } from '../Common/RenderWhen';
 import { NavigationButton } from './NavigationButton';
 
-const WidgetBarIcon: React.FC<IconProps> = ({ height }) => {
+const WidgetBarIcon: React.FC<IconProps> = ({ height, ...rest }) => {
   const { widgetModels } = useWidgets();
 
   const isApplicationsInitialized = useAppSelector(
@@ -52,7 +54,7 @@ const WidgetBarIcon: React.FC<IconProps> = ({ height }) => {
       size={height as number}
     />
   ) : (
-    <IconBrowser height={height} />
+    <IconBrowser height={height} {...rest} />
   );
 };
 

@@ -23,11 +23,13 @@ import { FeatureType } from '@/src/types/common';
 import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { ApplicationSelectors } from '@/src/store/application/application.selectors';
+import {
+  ApplicationActions,
+  ShareActions,
+  UIActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ShareActions } from '@/src/store/share/share.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import { ApplicationSelectors } from '@/src/store/selectors';
 
 import { CONFIRM_DOCUMENT_VALUES } from '@/src/constants/applications';
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/code-apps';
@@ -118,42 +120,47 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
 
   const handleSubmit = useCallback(
     (data: QuickAppFormData) => {
-      if (
-        !isEqual(data, lastSubmittedValuesRef.current) &&
-        shouldSaveApplication
-      ) {
-        const applicationData = getQuickAppData(data);
-        const arrAreNotTheSameAndShared =
-          isShared &&
-          !arraysHaveSameElements(
-            getQuickAppDocumentUrl(applicationData as CustomApplicationModel),
-            getQuickAppDocumentUrl(oldApplication),
-          );
+      const hasChanged = !isEqual(data, lastSubmittedValuesRef.current);
 
-        if (arrAreNotTheSameAndShared) {
+      if (shouldSaveApplication) {
+        if (hasChanged) {
+          const applicationData = getQuickAppData(data);
+
+          const arrAreNotTheSameAndShared =
+            isShared &&
+            !arraysHaveSameElements(
+              getQuickAppDocumentUrl(applicationData as CustomApplicationModel),
+              getQuickAppDocumentUrl(oldApplication),
+            );
+
+          if (arrAreNotTheSameAndShared) {
+            dispatch(
+              ShareActions.revokeAccess({
+                resourceId: oldApplication.id,
+                featureType: FeatureType.Application,
+              }),
+            );
+          }
+
           dispatch(
-            ShareActions.revokeAccess({
-              resourceId: oldApplication.id,
-              featureType: FeatureType.Application,
+            ApplicationActions.update({
+              oldApplication,
+              applicationData: {
+                ...oldApplication,
+                ...applicationData,
+                isShared: arrAreNotTheSameAndShared ? false : isShared,
+              },
+              schema: schema ?? undefined,
             }),
           );
+
+          lastSubmittedValuesRef.current = data;
         }
 
-        dispatch(
-          ApplicationActions.update({
-            oldApplication,
-            applicationData: {
-              ...oldApplication,
-              ...applicationData,
-              isShared: arrAreNotTheSameAndShared ? false : isShared,
-            },
-            schema: schema ?? undefined,
-          }),
-        );
-        lastSubmittedValuesRef.current = data;
-      } else if (shouldSaveApplication && exitAfterSave) {
-        dispatch(ApplicationActions.exitEditor({}));
-      } else {
+        if (exitAfterSave) {
+          dispatch(ApplicationActions.exitEditor({}));
+        }
+
         dispatch(ApplicationActions.setShouldSaveApplication(false));
         dispatch(ApplicationActions.setExitAfterSave(false));
       }
@@ -173,7 +180,8 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
   }, [submitWrapper, handleSubmit]);
 
   useEffect(() => {
-    if (!shouldSaveApplication && !exitAfterSave) return;
+    const isTriggered = shouldSaveApplication || exitAfterSave;
+    if (!isTriggered) return;
 
     if (!isValid) {
       dispatch(ApplicationActions.setShouldSaveApplication(false));
@@ -188,11 +196,11 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
       autoSaveHandler();
     }
   }, [
-    shouldSaveApplication,
-    exitAfterSave,
-    isValid,
     autoSaveHandler,
     dispatch,
+    exitAfterSave,
+    isValid,
+    shouldSaveApplication,
     router,
     t,
   ]);

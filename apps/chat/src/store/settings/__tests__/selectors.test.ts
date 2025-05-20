@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { FeatureType } from '@/src/types/common';
 import { CustomVisualizer } from '@/src/types/custom-visualizers';
 
-import { SettingsSelectors } from '../settings.selectors';
+import { SettingsSelectors } from '@/src/store/selectors';
 
 import { Feature } from '@epam/ai-dial-shared';
 

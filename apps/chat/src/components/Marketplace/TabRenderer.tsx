@@ -14,12 +14,13 @@ import {
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.selectors';
+import { MarketplaceActions, ModelsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
-import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
-import { ModelsActions } from '@/src/store/models/models.reducers';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import {
+  ApplicationTypesSchemasSelectors,
+  MarketplaceSelectors,
+  ModelsSelectors,
+} from '@/src/store/selectors';
 
 import {
   DeleteType,
@@ -28,12 +29,12 @@ import {
   ViewTypes,
 } from '@/src/constants/marketplace';
 
+import { AgentDialogs } from '@/src/components/Common/AgentDialogs';
 import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
 import { ApplicationDetails } from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
 import { MarketplaceBanner } from '@/src/components/Marketplace/MarketplaceBanner';
 import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
 
-import { AgentDialogs } from '../Common/AgentDialogs';
 import { AgentsTable } from './AgentsList/AgentsTable/AgentsTable';
 import { AgentsTiles } from './AgentsList/AgentsTiles/AgentsTiles';
 

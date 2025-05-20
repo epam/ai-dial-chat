@@ -4,7 +4,7 @@ import classNames from 'classnames';
 
 import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
 
-import { MemoizedReactMarkdown } from '../Markdown/MemoizedReactMarkdown';
+import { MemoizedReactMarkdown } from '@/src/components/Markdown/MemoizedReactMarkdown';
 
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';

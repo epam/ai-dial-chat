@@ -16,9 +16,11 @@ import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsActions, PromptsActions } from '@/src/store/actions';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
+import {
+  ConversationsSelectors,
+  PromptsSelectors,
+} from '@/src/store/selectors';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import {
@@ -55,10 +57,6 @@ export const MoveToDialog: React.FC<Props> = ({
       ? { selectors: ConversationsSelectors, actions: ConversationsActions }
       : { selectors: PromptsSelectors, actions: PromptsActions };
 
-  const myFolders = useAppSelector(selectors.selectMyFolders);
-  const tempFolders = useAppSelector(selectors.selectTemporaryFolders);
-  const newFolderId = useAppSelector(selectors.selectNewAddedFolderId);
-
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
     entity.folderId,
@@ -66,7 +64,21 @@ export const MoveToDialog: React.FC<Props> = ({
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState<string>();
 
+  const myFilteredFolders = useAppSelector((state) =>
+    selectors.selectMyFoldersWithSearchTerm(state, searchQuery),
+  );
+  const myFolders = useAppSelector(selectors.selectFolders);
+  const tempFilteredFolders = useAppSelector((state) =>
+    selectors.selectTemporaryFoldersWithSearchTerm(state, searchQuery),
+  );
+  const tempFolders = useAppSelector(selectors.selectTemporaryFolders);
+  const newFolderId = useAppSelector(selectors.selectNewAddedFolderId);
+
   const rootFolderId = getRootId({ featureType });
+  const filteredFolders = useMemo(
+    () => [...myFilteredFolders, ...tempFilteredFolders],
+    [myFilteredFolders, tempFilteredFolders],
+  );
   const folders = useMemo(
     () => [...myFolders, ...tempFolders],
     [myFolders, tempFolders],
@@ -232,7 +244,7 @@ export const MoveToDialog: React.FC<Props> = ({
         <SelectFolderList
           disableSectionToggle
           searchTerm={searchQuery}
-          allFolders={folders}
+          allFolders={filteredFolders}
           isInitialRenameEnabled
           openedFoldersIds={openedFoldersIds}
           newAddedFolderId={newFolderId}
@@ -252,13 +264,13 @@ export const MoveToDialog: React.FC<Props> = ({
           rootFolderId={rootFolderId}
           showAllRootFolders
           onShowError={setErrorMessage}
-          editOnlyTemporary
-          deleteOnlyTemporary
+          canManageOnlyTemporaryFolders
         />
       </SelectFolderHeader>
       <SelectFolderFooter
         onCreateNewFolder={handleAddFolder}
         onSelectFolderClick={handleSelect}
+        selectBtnText="Move"
       />
     </SelectFolder>
   );

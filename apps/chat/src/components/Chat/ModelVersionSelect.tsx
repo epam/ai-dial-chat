@@ -9,9 +9,8 @@ import { Translation } from '@/src/types/translation';
 
 import { stopBubbling } from '@/src/constants/chat';
 
+import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
-
-import { ModelIcon } from '../Chatbar/ModelIcon';
 
 import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
 

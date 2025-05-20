@@ -11,7 +11,7 @@ import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { Translation } from '@/src/types/translation';
 
-import { FilesActions } from '@/src/store/files/files.reducers';
+import { FilesActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
 import { FEATURES_ENDPOINTS_NAMES } from '@/src/constants/applications';

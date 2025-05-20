@@ -9,8 +9,7 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { AppAction } from '@/src/types/store';
 import { CardType } from '@/src/types/talkTo';
 
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { ModelsSelectors, SettingsSelectors } from '@/src/store/selectors';
 
 import { SuggestedCard } from '@/src/constants/talkTo';
 
@@ -49,31 +48,18 @@ vi.mock('@/src/store/hooks', async () => {
   };
 });
 
-vi.mock('@/src/store/models/models.selectors', async () => {
-  const actual = await vi.importActual('@/src/store/models/models.selectors');
-  return {
-    ...actual,
-    ModelsSelectors: {
-      selectModelsMap: vi.fn(),
-      selectInstalledModelIds: vi.fn(),
-      selectModels: vi.fn(),
-    },
-  };
-});
-
-vi.mock('@/src/store/settings/settings.selectors', async () => {
-  const actual = await vi.importActual(
-    '@/src/store/settings/settings.selectors',
-  );
-  return {
-    ...actual,
-    SettingsSelectors: {
-      selectEnabledFeatures: vi.fn(),
-      isSharingEnabled: vi.fn(),
-      selectIsPublishingEnabled: vi.fn(),
-    },
-  };
-});
+vi.mock('@/src/store/selectors', () => ({
+  ModelsSelectors: {
+    selectModelsMap: vi.fn(),
+    selectInstalledModelIds: vi.fn(),
+    selectModels: vi.fn(),
+  },
+  SettingsSelectors: {
+    selectEnabledFeatures: vi.fn(),
+    isSharingEnabled: vi.fn(),
+    selectIsPublishingEnabled: vi.fn(),
+  },
+}));
 
 vi.mock('@/src/hooks/useTranslation', () => ({
   useTranslation: () => ({

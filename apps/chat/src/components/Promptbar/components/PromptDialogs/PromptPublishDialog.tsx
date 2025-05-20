@@ -2,9 +2,9 @@ import { useCallback } from 'react';
 
 import { SharingType } from '@/src/types/share';
 
+import { PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PublicationActions } from '@/src/store/publication/publication.reducers';
-import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
+import { PublicationSelectors } from '@/src/store/selectors';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';

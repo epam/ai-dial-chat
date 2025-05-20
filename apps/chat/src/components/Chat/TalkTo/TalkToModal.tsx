@@ -14,6 +14,7 @@ import {
   isReplayAsIsConversation,
   isReplayConversation,
 } from '@/src/utils/app/conversation';
+import { isMobile } from '@/src/utils/app/mobile';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { PseudoModel } from '@/src/utils/server/api';
@@ -25,13 +26,14 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { CardType } from '@/src/types/talkTo';
 import { Translation } from '@/src/types/translation';
 
-import { ModelsActions } from '@/src/store/actions';
-import { AddonsSelectors } from '@/src/store/addons/addons.selectors';
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions, ModelsActions } from '@/src/store/actions';
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { WidgetsSelectors } from '@/src/store/models/widgets.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import {
+  AddonsSelectors,
+  ModelsSelectors,
+  SettingsSelectors,
+  WidgetsSelectors,
+} from '@/src/store/selectors';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import {
@@ -276,7 +278,7 @@ const TalkToModalView = ({
             placeholder={t('Search')}
             className="input-form peer m-0 pl-[38px]"
             data-qa="search-agents"
-            autoFocus
+            autoFocus={!isMobile()}
           />
         </div>
         <div className="flex gap-2">

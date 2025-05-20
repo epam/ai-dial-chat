@@ -21,11 +21,11 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { ModelsSelectors, SettingsSelectors } from '@/src/store/selectors';
 
-import { TabButton } from '../../Buttons/TabButton';
-import Tooltip from '../../Common/Tooltip';
+import { TabButton } from '@/src/components/Buttons/TabButton';
+import Tooltip from '@/src/components/Common/Tooltip';
+
 import { GeneralInfoEditor } from './GeneralInfoEditor';
 import { GeneralInfoPreview } from './GeneralInfoPreview';
 import { ApplicationGeneralInfoFormData, getDefaultValues } from './form';
@@ -109,7 +109,7 @@ export const GeneralInfoView: React.FC<Props> = ({
           onClick={() => handlePreviewModeChange(PreviewMode.closed)}
           className="w-full"
         >
-          {t('Settings')}
+          {t('Info')}
         </TabButton>
         <TabButton
           selected={isPreviewFull}
