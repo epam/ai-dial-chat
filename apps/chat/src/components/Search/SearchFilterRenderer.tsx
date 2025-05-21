@@ -5,7 +5,7 @@ import classNames from 'classnames';
 
 import { CustomTriggerMenuRendererProps } from '@/src/types/menu';
 
-export default function SearchFilterRenderer({
+export function SearchFilterRenderer({
   customTriggerData: isSelected,
   onClick,
   dataQa,

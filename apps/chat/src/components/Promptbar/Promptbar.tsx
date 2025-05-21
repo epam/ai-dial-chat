@@ -20,7 +20,7 @@ import { RECENT_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 import { PromptFolders } from './components/PromptFolders';
 import { PromptbarSettings } from './components/PromptbarSettings';
 import { Prompts } from './components/Prompts';
-import Sidebar from '@/src/components/Sidebar';
+import { Sidebar } from '@/src/components/Sidebar/Sidebar';
 
 export const Promptbar = () => {
   const { t } = useTranslation(Translation.PromptBar);

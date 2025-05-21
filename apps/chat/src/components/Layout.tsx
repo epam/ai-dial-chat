@@ -22,12 +22,12 @@ import { SettingsState } from '@/src/store/settings/settings.types';
 
 import { NavigationWrapper } from '@/src/components/Navigation/NavigationWrapper';
 
-import Loader from './Common/Loader';
+import { Loader } from './Common/Loader';
 import { Title } from './Title';
 
 const removeQueryString = (url: string) => url.split('?')[0];
 
-export default function Layout({
+export function Layout({
   children,
   settings,
 }: {

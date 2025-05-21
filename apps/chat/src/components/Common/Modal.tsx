@@ -24,7 +24,7 @@ import classNames from 'classnames';
 import { ModalState } from '@/src/types/modal';
 
 import { Spinner } from './Spinner';
-import Tooltip from './Tooltip';
+import { Tooltip } from './Tooltip';
 
 export interface Props extends FormHTMLAttributes<HTMLFormElement> {
   children: ReactNode | ReactNode[];

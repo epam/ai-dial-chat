@@ -60,11 +60,11 @@ import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 import { ORGANIZATION_SECTION_NAME } from '@/src/constants/sections';
 
 import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
+import { Field } from '@/src/components/Common/Forms/Field';
 import { Modal } from '@/src/components/Common/Modal';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Spinner } from '@/src/components/Common/Spinner';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { Field } from '../../Common/Forms/Field';
-import { Spinner } from '../../Common/Spinner';
 import { PublicationItemsList } from './PublicationItemsList';
 import { PublicationInfoSection } from './PublishWizardComponents';
 import { RuleListItem } from './RuleListItem';

@@ -1,6 +1,7 @@
 import { DialFile, DialLink, FileFolderInterface } from '@/src/types/files';
 
-import Tooltip from '../../Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
+
 import { ChatInputFileAttachment } from './ChatInputFileAttachment';
 import { ChatInputFolderAttachment } from './ChatInputFolderAttachment';
 import { ChatInputLinkAttachment } from './ChatInputLinkAttachment';
