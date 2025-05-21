@@ -83,11 +83,9 @@ export const addToModelsMap = (
 };
 
 export const deleteFromModelsMap = (modelsMap: ModelsMap, ...ids: string[]) => {
-  ids.forEach((id) => {
-    const model = modelsMap[id];
-    if (model) {
-      omit(modelsMap, model.reference, model.id);
-    }
-  });
+  const model = ids.map((id) => modelsMap[id]).filter(Boolean)[0];
+  if (model) {
+    return omit(modelsMap, model.reference, model.id);
+  }
   return modelsMap;
 };
