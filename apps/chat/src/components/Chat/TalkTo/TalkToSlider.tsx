@@ -269,11 +269,9 @@ export const TalkToSlider = ({
         : activeSlide + 1,
     );
   }, [activeSlide, sliderGroups, handleSetActiveSlide]);
-
   const handleSwipedLeft = useCallback(() => {
     handleSetActiveSlide(activeSlide === 0 ? 0 : activeSlide - 1);
   }, [activeSlide, handleSetActiveSlide]);
-
   const swipeHandlers = useSwipe(handleSwipedRight, handleSwipedLeft);
 
   useEffect(() => {

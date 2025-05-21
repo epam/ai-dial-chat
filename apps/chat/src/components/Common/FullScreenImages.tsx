@@ -31,13 +31,11 @@ export const FullScreenImages = ({
       setCurrentImage((idx) => idx + 1);
     }
   }, [currentImage, images]);
-
   const handleSwipedRight = useCallback(() => {
     if (currentImage !== 0) {
       setCurrentImage((idx) => idx - 1);
     }
   }, [currentImage]);
-
   const swipeHandlers = useSwipe(handleSwipedLeft, handleSwipedRight);
 
   return (
