@@ -1,10 +1,11 @@
 import { Account, CallbacksOptions, Profile, Session } from 'next-auth';
 import { TokenEndpointHandler } from 'next-auth/providers';
 
+import { parseCommaSeparatedList } from '@/src/utils/app/common';
+import { logger } from '@/src/utils/server/logger';
+
 import { Token } from '@/src/types/auth';
 
-import { parseCommaSeparatedList } from '../app/common';
-import { logger } from '../server/logger';
 import NextClient, { RefreshToken } from './nextauth-client';
 
 import { Feature } from '@epam/ai-dial-shared';

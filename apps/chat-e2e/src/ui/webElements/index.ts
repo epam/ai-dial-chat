@@ -63,3 +63,4 @@ export * from './appEditor/appEditorGeneralInfoAgentPreview';
 export * from './appEditor/appEditorAppSettingsAgentPreview';
 export * from './appEditor/appEditorViewForm';
 export * from './notFound';
+export * from './informationModal';

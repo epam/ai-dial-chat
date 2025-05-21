@@ -40,14 +40,14 @@ import { CodeEditorSelectors, FilesSelectors } from '@/src/store/selectors';
 
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 
-import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
+import { SidebarActionButton } from '@/src/components/Buttons/SidebarActionButton';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
-import Loader from '@/src/components/Common/Loader';
+import { Loader } from '@/src/components/Common/Loader';
 import { MonacoEditor } from '@/src/components/Common/MonacoEditor';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 import { FileItem } from '@/src/components/Files/FileItem';
 import { PreUploadDialog } from '@/src/components/Files/PreUploadModal';
-import Folder from '@/src/components/Folder/Folder';
+import { Folder } from '@/src/components/Folder/Folder';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
 import MoveLeftIcon from '@/public/images/icons/move-left.svg';

@@ -15,7 +15,7 @@ import {
 } from '@/src/store/selectors';
 
 import { SendMessageButton } from '@/src/components/Chat/ChatInput/SendMessageButton';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import RefreshCW from '@/public/images/icons/refresh-cw.svg';
 

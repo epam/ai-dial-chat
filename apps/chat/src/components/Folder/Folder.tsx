@@ -69,14 +69,14 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors, SettingsSelectors } from '@/src/store/selectors';
 
-import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
+import { SidebarActionButton } from '@/src/components/Buttons/SidebarActionButton';
 import { ReviewDot } from '@/src/components/Chat/Publish/ReviewDot';
-import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
+import { CaretIconComponent } from '@/src/components/Common/CaretIconComponent';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { FolderContextMenu } from '@/src/components/Common/FolderContextMenu';
-import ShareIcon from '@/src/components/Common/ShareIcon';
+import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { Spinner } from '@/src/components/Common/Spinner';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import {
   ConversationInfo,
@@ -141,7 +141,7 @@ export interface FolderProps<T, P = unknown> {
   }: PublicationFolderPayload) => void;
 }
 
-const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
+export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   currentFolder,
   searchTerm,
   itemComponent,
@@ -1432,5 +1432,3 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     </div>
   );
 };
-
-export default Folder;

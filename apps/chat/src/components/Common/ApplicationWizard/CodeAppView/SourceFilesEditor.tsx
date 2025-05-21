@@ -18,7 +18,7 @@ import { useAppDispatch } from '@/src/store/hooks';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { FieldErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 import { SelectFolderModal } from '@/src/components/Files/SelectFolderModal';
 
 interface SourceFilesEditorProps {

@@ -12,10 +12,10 @@ import { Prompt } from '@/src/types/prompt';
 
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 
-import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
+import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 import { NoData } from '@/src/components/Common/NoData';
 import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
-import Folder, { FolderProps } from '@/src/components/Folder/Folder';
+import { Folder, FolderProps } from '@/src/components/Folder/Folder';
 
 interface Props<T, P = unknown>
   extends Omit<FolderProps<T, P>, 'currentFolder' | 'featureType'> {

@@ -1,3 +1,5 @@
+import { LatestExportConversationsFormat } from '../import-export';
+
 export interface SendMessageRequest {
   content: string;
 }
@@ -22,4 +24,7 @@ export interface CreatePlaybackConversationRequest {
 }
 export interface ExportConversationRequest {
   id: string;
+}
+export interface ImportConversationRequest {
+  importConversation: LatestExportConversationsFormat;
 }

@@ -6,7 +6,7 @@ import {
 } from '@/src/types/applications';
 import { EntityType, ScreenState } from '@/src/types/common';
 
-import Loader from '../components/Common/Loader';
+import { Loader } from '@/src/components/Common/Loader';
 
 import LoaderIcon from '@/public/images/icons/loader.svg';
 
