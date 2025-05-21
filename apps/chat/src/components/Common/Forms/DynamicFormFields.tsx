@@ -102,20 +102,20 @@ export const DynamicFormFields = <
         {fields.map((field, i) => (
           <div
             key={field.label}
-            className="flex w-full flex-wrap items-center gap-3 rounded border border-tertiary bg-layer-3 p-[11px] sm:flex-nowrap sm:p-2"
+            className="flex w-full flex-wrap items-center gap-3 rounded border border-tertiary bg-layer-3 p-[11px] md:flex-nowrap md:p-2"
           >
-            <div className="flex grow flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+            <div className="flex grow flex-col gap-2 md:flex-row md:items-center md:gap-3">
               {!field.editableKey ? (
-                <div className="w-full px-2 py-[5px] text-sm text-primary sm:w-[127px] sm:py-1">
+                <div className="w-full px-2 py-[5px] text-sm text-primary md:w-[127px] md:py-1">
                   {field.visibleName ?? field.label}
                 </div>
               ) : (
-                <div className="w-full sm:w-[127px]">
+                <div className="w-full md:w-[127px]">
                   <input
                     {...register(`${name}.${i}.label` as Path<T>, keyOptions)}
                     disabled={disabled}
                     className={classNames(
-                      'w-full border-b border-primary bg-transparent px-2 pb-[4px] pt-[5px] text-sm text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none sm:py-1',
+                      'w-full border-b border-primary bg-transparent px-2 pb-[4px] pt-[5px] text-sm text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none md:py-1',
                       errors?.[i]?.label && '!border-error',
                       disabled
                         ? 'cursor-not-allowed'
@@ -135,7 +135,7 @@ export const DynamicFormFields = <
                   {...register(`${name}.${i}.value` as Path<T>, valueOptions)}
                   disabled={disabled}
                   className={classNames(
-                    'w-full border-b border-primary bg-transparent px-2 pb-[4px] pt-[5px] text-sm text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none sm:py-1',
+                    'w-full border-b border-primary bg-transparent px-2 pb-[4px] pt-[5px] text-sm text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none md:py-1',
                     errors?.[i]?.value && '!border-error',
                     disabled
                       ? 'cursor-not-allowed'
