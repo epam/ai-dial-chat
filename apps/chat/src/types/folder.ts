@@ -3,7 +3,7 @@ import { EntityFilters } from './search';
 
 import { ConversationInfo, FolderInterface } from '@epam/ai-dial-shared';
 
-export type { FolderInterface } from '@epam/ai-dial-shared';
+export type { FolderInterface };
 
 export interface FoldersAndEntities<T> {
   folders: FolderInterface[];

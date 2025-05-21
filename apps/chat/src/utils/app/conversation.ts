@@ -14,7 +14,6 @@ import {
   parseConversationApiKey,
 } from '@/src/utils/server/api';
 
-import { Conversation } from '@/src/types/chat';
 import { EntityType, PartialBy } from '@/src/types/common';
 import { AddonsMap, DialAIEntityModel, ModelsMap } from '@/src/types/models';
 
@@ -26,6 +25,7 @@ import { constructPath } from './file';
 import { getConversationRootId, getFileRootId, isEntityIdLocal } from './id';
 
 import {
+  Conversation,
   ConversationInfo,
   Message,
   MessageSettings,

@@ -12,7 +12,6 @@ import {
   isPromptsFormat,
 } from '@/src/utils/app/import-export';
 
-import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 
 import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-server-settings';
@@ -22,6 +21,7 @@ import {
 } from '@/src/constants/default-ui-settings';
 
 import {
+  Conversation,
   ExportFormatV1,
   ExportFormatV2,
   ExportFormatV4,
