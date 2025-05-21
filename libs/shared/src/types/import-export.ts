@@ -38,6 +38,7 @@ export interface ExportFormatV3 {
   folders: FolderInterface[];
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////
 export interface ExportFormatV4 {
   version: 4;
   history: Conversation[];
@@ -45,30 +46,30 @@ export interface ExportFormatV4 {
   prompts: Prompt[];
 }
 
-export interface ExportFormatV5 {
-  version: 5;
-  history: Conversation[];
-  folders: FolderInterface[];
-  prompts: Prompt[];
-}
-/////////////////////////////////////////////////////////////////////////////////////////////
 export interface ExportConversationsFormatV4 {
   version: 4;
   history: Conversation[];
   folders: FolderInterface[];
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////
+
+export interface ExportFormatV5 {
+  version: 5;
+  history: Conversation[];
+  folders: FolderInterface[];
+  prompts: Prompt[];
+}
+
 export type ExportConversationsFormatV5 = Omit<
   ExportConversationsFormatV4,
   'version'
 > & {
   version: 5;
 };
-
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-export interface PromptsHistory {
+export interface ExportPromptsFormat {
   prompts: Prompt[];
   folders: FolderInterface[];
 }

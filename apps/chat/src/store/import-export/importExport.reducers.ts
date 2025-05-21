@@ -9,7 +9,7 @@ import { Prompt } from '@/src/types/prompt';
 import { ImportExportState } from './importExport.types';
 
 import {
-  PromptsHistory,
+  ExportPromptsFormat,
   SupportedExportFormats,
   UploadStatus,
 } from '@epam/ai-dial-shared';
@@ -138,7 +138,7 @@ export const importExportSlice = createSlice({
     ) => state,
     importPrompts: (
       state,
-      _action: PayloadAction<{ promptsHistory: PromptsHistory }>,
+      _action: PayloadAction<{ promptsHistory: ExportPromptsFormat }>,
     ) => {
       state.status = UploadStatus.LOADING;
       state.operation = Operation.Importing;

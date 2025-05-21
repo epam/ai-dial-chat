@@ -38,10 +38,10 @@ import {
   ExportFormatV3,
   ExportFormatV4,
   ExportFormatV5,
+  ExportPromptsFormat,
   LatestExportConversationsFormat,
   LatestExportFormat,
   Message,
-  PromptsHistory,
   ShareInterface,
   Stage,
   SupportedExportFormats,
@@ -73,7 +73,7 @@ export function isExportFormatV5(obj: any): obj is ExportFormatV5 {
   return 'version' in obj && obj.version === 5;
 }
 
-export function isPromptsFormat(obj: PromptsHistory) {
+export function isPromptsFormat(obj: ExportPromptsFormat) {
   return Object.prototype.hasOwnProperty.call(obj, 'prompts');
 }
 
@@ -171,7 +171,7 @@ export const getDownloadFileName = (fileName?: string): string =>
   !fileName ? 'ai_dial' : fileName.toLowerCase().replaceAll(' ', '_');
 
 function downloadChatPromptData(
-  data: LatestExportConversationsFormat | Prompt[] | PromptsHistory,
+  data: LatestExportConversationsFormat | Prompt[] | ExportPromptsFormat,
   exportType: ExportType,
   fileName?: string,
 ) {
@@ -212,13 +212,13 @@ const triggerDownloadConversationsHistory = (
 };
 
 const triggerDownloadPromptsHistory = (
-  data: PromptsHistory,
+  data: ExportPromptsFormat,
   appName?: string,
 ) => {
   downloadChatPromptData(data, 'prompts_history', appName);
 };
 
-const triggerDownloadPrompt = (data: PromptsHistory, appName?: string) => {
+const triggerDownloadPrompt = (data: ExportPromptsFormat, appName?: string) => {
   downloadChatPromptData(data, 'prompt', appName);
 };
 
@@ -297,7 +297,7 @@ export const exportPrompt = (
 ) => {
   const promptsToExport: Prompt[] = [excludePublicationInfo(prompt)];
 
-  const data: PromptsHistory = {
+  const data: ExportPromptsFormat = {
     prompts: promptsToExport,
     folders,
   };

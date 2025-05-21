@@ -30,7 +30,7 @@ import SidebarMenu from '@/src/components/Common/SidebarMenu';
 import { Import } from '@/src/components/Settings/Import';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
-import { PromptsHistory } from '@epam/ai-dial-shared';
+import { ExportPromptsFormat } from '@epam/ai-dial-shared';
 
 export function PromptbarSettings() {
   const { t } = useTranslation(Translation.PromptBar);
@@ -100,7 +100,7 @@ export function PromptbarSettings() {
           const typedJson = promptsJSON as { content: unknown };
           dispatch(
             ImportExportActions.importPrompts({
-              promptsHistory: typedJson.content as PromptsHistory,
+              promptsHistory: typedJson.content as ExportPromptsFormat,
             }),
           );
         },
