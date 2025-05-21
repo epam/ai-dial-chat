@@ -1,4 +1,5 @@
 import { Message } from '../chat';
+import { LatestExportConversationsFormat } from '../import-export';
 import { OverlayConversation } from './conversation';
 
 export type SendMessageResponse = void;
@@ -10,6 +11,10 @@ export interface GetMessagesResponse {
 }
 
 export interface GetConversationsResponse {
+  conversations: OverlayConversation[];
+}
+
+export interface GetSelectedConversationsResponse {
   conversations: OverlayConversation[];
 }
 
@@ -30,5 +35,9 @@ export interface CreatePlaybackConversationResponse {
 }
 
 export interface ExportConversationResponse {
+  exportConversation: LatestExportConversationsFormat;
+}
+
+export interface ImportConversationResponse {
   conversation: OverlayConversation;
 }

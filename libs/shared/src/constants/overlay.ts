@@ -6,12 +6,14 @@ export enum OverlayRequests {
   setSystemPrompt = 'SET_SYSTEM_PROMPT',
   setOverlayOptions = 'SET_OVERLAY_OPTIONS',
   getConversations = 'GET_CONVERSATIONS',
+  getSelectedConversations = 'GET_SELECTED_CONVERSATIONS',
   selectConversation = 'SELECT_CONVERSATION',
   createConversation = 'CREATE_CONVERSATION',
   deleteConversation = 'DELETE_CONVERSATION',
   renameConversation = 'RENAME_CONVERSATION',
   createPlaybackConversation = 'CREATE_PLAYBACK_CONVERSATION',
   exportConversation = 'EXPORT_CONVERSATION',
+  importConversation = 'IMPORT_CONVERSATION',
 }
 
 export enum OverlayEvents {
@@ -47,6 +49,10 @@ export enum OverlayEvents {
    * Chat dispatch this event when user end receiving message from assistant
    */
   gptEndGenerating = 'GPT_END_GENERATING',
+  /**
+   * Chat dispatch this event when any of conversations updated, added or removed
+   */
+  conversationsUpdated = 'CONVERSATIONS_UPDATED',
 }
 
 export const overlayLibName = 'ChatOverlay';

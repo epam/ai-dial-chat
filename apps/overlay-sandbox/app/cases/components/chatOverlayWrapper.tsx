@@ -6,6 +6,7 @@ import {
   ChatOverlay,
   ChatOverlayOptions,
   OverlayConversation,
+  OverlayEvents,
 } from '@epam/ai-dial-overlay';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -32,6 +33,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
   const [dialogInfo, setDialogInfo] = useState('');
   const [conversationIdInputValue, setConversationIdInputValue] = useState('');
   const [conversationNewName, setConversationNewName] = useState('');
+  const [importedConversation, setImportedConversation] = useState('');
 
   const handleDisplayInformation = useCallback((textToShow: string) => {
     dialogRef.current?.showModal();
@@ -68,8 +70,27 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
   }, [conversationIdInputValue, handleDisplayInformation]);
 
   const handleExportConversation = useCallback(async () => {
-    await overlay.current?.exportConversation(conversationIdInputValue);
-  }, [conversationIdInputValue]);
+    const convObject = await overlay.current?.exportConversation(
+      conversationIdInputValue,
+    );
+
+    handleDisplayInformation(JSON.stringify(convObject, null, 2));
+  }, [conversationIdInputValue, handleDisplayInformation]);
+
+  const handleImportConversation = useCallback(async () => {
+    let parsedImportedConversation;
+    try {
+      parsedImportedConversation = JSON.parse(importedConversation);
+    } catch (e) {
+      console.warn('Invalid imported conversation', e);
+      return;
+    }
+    const convObject = await overlay.current?.importConversation(
+      parsedImportedConversation,
+    );
+
+    handleDisplayInformation(JSON.stringify(convObject, null, 2));
+  }, [handleDisplayInformation, importedConversation]);
 
   const handleRenameConversation = useCallback(async () => {
     const replayResult = await overlay.current?.renameConversation(
@@ -107,6 +128,12 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
         console.info('messages', messages);
 
         console.info(JSON.stringify(info, null, 2));
+      },
+    );
+    overlay.current?.subscribe(
+      `@DIAL_OVERLAY/${OverlayEvents.conversationsUpdated}`,
+      async () => {
+        console.info('Conversations updated');
       },
     );
 
@@ -197,6 +224,21 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
               <button
                 className="button"
                 onClick={async () => {
+                  const conversations =
+                    await overlay.current?.getSelectedConversations();
+
+                  handleDisplayInformation(
+                    JSON.stringify(conversations, null, 2),
+                  );
+                }}
+                data-qa="get-selected-conversations"
+              >
+                Get selected conversations
+              </button>
+
+              <button
+                className="button"
+                onClick={async () => {
                   const conversation =
                     await overlay.current?.createConversation();
 
@@ -225,6 +267,24 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
               >
                 Create conversation in inner folder
               </button>
+
+              <div className="flex flex-col gap-1 border p-1">
+                <button
+                  className="button"
+                  onClick={handleImportConversation}
+                  data-qa="import-conversation"
+                >
+                  Import conversation
+                </button>
+
+                <input
+                  className="border"
+                  placeholder="Imported conversation object"
+                  value={importedConversation}
+                  onChange={(e) => setImportedConversation(e.target.value)}
+                  data-qa="imported-conversation"
+                />
+              </div>
             </div>
 
             <div className="flex flex-col gap-1 border p-1">
