@@ -285,7 +285,9 @@ export const AddApplicationGeneralInfoFormSelector = {
 export const AddApplicationAppSettingsFormSelector = {
   featuresLabel: '[for="features"]',
   attachmentsTypesLabel: '[for="attachmentTypes"]',
+  attachmentsTypesInput: '[data-qa=attachment-types-field]',
   chatCompletionUrl: '#completionUrl',
   addButton: '[data-qa="add-application"]',
   appViewFormContainer: '[data-qa="app-view-form"]',
+  maxAttachmentNumberField: '[data-qa="max-attachment-number-field"]',
 };

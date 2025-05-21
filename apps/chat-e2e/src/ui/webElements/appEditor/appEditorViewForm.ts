@@ -22,12 +22,19 @@ export class AppEditorViewForm extends AppEditorForm {
   public attachmentsTypesLabel = this.getChildElementBySelector(
     AddApplicationAppSettingsFormSelector.attachmentsTypesLabel,
   );
+  public attachmentTypesInput = this.getChildElementBySelector(
+    AddApplicationAppSettingsFormSelector.attachmentsTypesInput,
+  ).getChildElementBySelector(Tags.input);
 
   public featuresDataHintIcon = this.featuresLabel.getChildElementBySelector(
     Tags.svg,
   );
   public attachmentTypesHintIcon =
     this.attachmentsTypesLabel.getChildElementBySelector(Tags.svg);
+
+  public maxAttachmentsInput = this.getChildElementBySelector(
+    AddApplicationAppSettingsFormSelector.maxAttachmentNumberField,
+  );
 
   public async fillInAppFields(options?: { chatCompletionUrl?: string }) {
     const chatCompletionUrl =

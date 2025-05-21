@@ -11,8 +11,13 @@ import {
   ExpectedMessages,
   MenuOptions,
   MockedChatApiResponseBodies,
+  UploadMenuOptions,
 } from '@/src/testData';
-import { AppEditSteps, BaseElement } from '@/src/ui/webElements';
+import {
+  AppEditSteps,
+  BaseElement,
+  FileModalSection,
+} from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 
 dialTest(
@@ -1000,6 +1005,157 @@ dialTest(
         await baseAssertion.assertEntityIcon(
           agentDetailsModal.icon,
           expectedNewIconUrl,
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  '[Custom app]: Attachments type not empty and Max attachments empty then Max Attachments field treated as without limits',
+  async ({
+    marketplacePage,
+    marketplaceHeader,
+    appEditorPage,
+    appEditorGeneralForm,
+    appEditorViewForm,
+    appEditorHeader,
+    marketplaceAgentsSection,
+    agentDetailsModal,
+    setTestIds,
+    baseAssertion,
+    dialHomePage,
+    localStorageManager,
+    agentInfoAssertion,
+    sendMessage,
+    attachmentDropdownMenu,
+    attachFilesModal,
+    fileApiHelper,
+    sendMessageInputAttachmentsAssertions,
+  }) => {
+    setTestIds('EPMRTC-4131');
+    const appName = GeneratorUtil.randomApplicationName();
+    const appVersion = GeneratorUtil.randomApplicationVersion();
+    const completionUrl = `http://${GeneratorUtil.randomString(6)}.com`;
+    const appEntity = {
+      name: appName,
+      version: appVersion,
+    } as DialAIEntityModel;
+    const attachmentType = 'application/pdf';
+    const pdfFilesToUpload = [
+      `${GeneratorUtil.randomString(5)}_${Attachment.pdfName}`,
+      `${GeneratorUtil.randomString(5)}_${Attachment.pdfName}`,
+      `${GeneratorUtil.randomString(5)}_${Attachment.pdfName}`,
+    ];
+    await localStorageManager.setShowSideBarPanels();
+
+    await dialTest.step(
+      'Upload dummy PDF files to be available for selection',
+      async () => {
+        for (const pdfFile of pdfFilesToUpload) {
+          // Create unique content for each dummy file to avoid potential conflicts if backend dedupes
+          await fileApiHelper.putStringAsFile(
+            pdfFile,
+            `Dummy PDF content for ${pdfFile}`,
+          );
+        }
+      },
+    );
+
+    await dialTest.step('Open create custom app page', async () => {
+      await marketplacePage.openCreateCustomAppPage();
+      await appEditorPage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'Input all required fields on General Info step',
+      async () => {
+        await appEditorGeneralForm.fillInAppFields({
+          name: appEntity.name,
+          version: appEntity.version,
+        });
+        await appEditorGeneralForm.goNext();
+        await baseAssertion.assertElementState(appEditorViewForm, 'visible');
+      },
+    );
+
+    await dialTest.step(
+      'Input Attachment type, leave Max Attachments empty, and save app',
+      async () => {
+        await appEditorViewForm.fillInAppFields({
+          chatCompletionUrl: completionUrl,
+        });
+        await appEditorViewForm.attachmentTypesInput.fillInInput(
+          attachmentType,
+        );
+        await appEditorViewForm.maxAttachmentsInput.typeInInput('');
+        await appEditorHeader.saveAndExitButton.click();
+        await marketplacePage.waitForPageLoaded();
+      },
+    );
+
+    await dialTest.step('Find and use the created application', async () => {
+      await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+      const agentElement =
+        await marketplaceAgentsSection.findAgentElement(appEntity);
+      await agentElement.click();
+      await agentDetailsModal.clickUseButton({
+        isInstalledDeploymentsUpdated: false,
+      });
+      await dialHomePage.waitForPageLoaded();
+      await agentInfoAssertion.assertAgentName(appEntity.name);
+      await baseAssertion.assertElementState(
+        sendMessage.attachmentMenuTrigger,
+        'visible',
+      );
+    });
+
+    await dialTest.step(
+      'Click on clip icon and review file restrictions in header',
+      async () => {
+        await sendMessage.attachmentMenuTrigger.click();
+        await attachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
+        );
+        const modalHeaderText = await attachFilesModal
+          .getModalHeader()
+          .getElementInnerContent();
+        baseAssertion.assertStringIncludes(
+          modalHeaderText,
+          attachmentType,
+          `Header should contain attachment type: ${attachmentType}`,
+        );
+        baseAssertion.assertStringNotIncludes(
+          modalHeaderText,
+          'Up to ',
+          'Header should not mention max number of attachments',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Select several files with correct type and click attach',
+      async () => {
+        for (const pdfFile of pdfFilesToUpload) {
+          await attachFilesModal.checkAttachedFile(
+            pdfFile,
+            FileModalSection.AllFiles,
+          );
+        }
+        await attachFilesModal.attachFiles();
+        for (const pdfFile of pdfFilesToUpload) {
+          await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
+            pdfFile,
+            'visible',
+          );
+        }
+        const attachedCount = await sendMessage
+          .getInputAttachments()
+          .inputAttachments.getElementsCount();
+        baseAssertion.assertValue(
+          attachedCount,
+          pdfFilesToUpload.length,
+          `Expected ${pdfFilesToUpload.length} files to be attached`,
         );
       },
     );

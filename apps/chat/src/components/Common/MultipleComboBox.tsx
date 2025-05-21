@@ -77,6 +77,7 @@ interface Props<T> {
   onChangeSelectedItems: (value: T[]) => void;
   handleError?: () => void;
   handleClearError?: () => void;
+  dataQa?: string;
 }
 
 export function MultipleComboBox<T>({
@@ -99,6 +100,7 @@ export function MultipleComboBox<T>({
   onChangeSelectedItems,
   handleError,
   handleClearError,
+  dataQa,
 }: Props<T>) {
   const { t } = useTranslation(Translation.Common);
   const [inputValue, setInputValue] = useState<string | undefined>('');
@@ -239,7 +241,7 @@ export function MultipleComboBox<T>({
           disabled && 'cursor-not-allowed',
           className,
         )}
-        data-qa="multiple-combobox"
+        data-qa={dataQa}
       >
         <div className="flex w-full flex-col gap-1">
           <div

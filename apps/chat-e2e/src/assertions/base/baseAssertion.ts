@@ -349,6 +349,26 @@ export class BaseAssertion {
     expect.soft(actualValue, expectedMessage ?? '').toBe(expectedValue);
   }
 
+  public assertStringIncludes(
+    actualValue: string,
+    expectedValue: string,
+    expectedMessage?: string,
+  ) {
+    expect
+      .soft(actualValue.includes(expectedValue), expectedMessage ?? '')
+      .toBe(true);
+  }
+
+  public assertStringNotIncludes(
+    actualValue: string,
+    expectedValue: string,
+    expectedMessage?: string,
+  ) {
+    expect
+      .soft(actualValue.includes(expectedValue), expectedMessage ?? '')
+      .toBe(false);
+  }
+
   public async assertElementInnerText(
     element: BaseElement | Locator,
     expectedInnerText: string[],
