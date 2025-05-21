@@ -14,7 +14,6 @@ import {
   parseConversationApiKey,
 } from '@/src/utils/server/api';
 
-import { Conversation, Replay } from '@/src/types/chat';
 import { EntityType, PartialBy } from '@/src/types/common';
 import { AddonsMap, DialAIEntityModel, ModelsMap } from '@/src/types/models';
 
@@ -26,9 +25,11 @@ import { constructPath } from './file';
 import { getConversationRootId, getFileRootId, isEntityIdLocal } from './id';
 
 import {
+  Conversation,
   ConversationInfo,
   Message,
   MessageSettings,
+  Replay,
   Role,
   UploadStatus,
 } from '@epam/ai-dial-shared';

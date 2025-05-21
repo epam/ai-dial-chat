@@ -12,7 +12,6 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { getPromptRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
-import { PromptsHistory } from '@/src/types/import-export';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
@@ -31,6 +30,7 @@ import { SidebarMenu } from '@/src/components/Common/SidebarMenu';
 import { Import } from '@/src/components/Settings/Import';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
+import { ExportPromptsFormat } from '@epam/ai-dial-shared';
 
 export function PromptbarSettings() {
   const { t } = useTranslation(Translation.PromptBar);
@@ -100,7 +100,7 @@ export function PromptbarSettings() {
           const typedJson = promptsJSON as { content: unknown };
           dispatch(
             ImportExportActions.importPrompts({
-              promptsHistory: typedJson.content as PromptsHistory,
+              promptsHistory: typedJson.content as ExportPromptsFormat,
             }),
           );
         },
