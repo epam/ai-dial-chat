@@ -4,8 +4,7 @@ import classNames from 'classnames';
 
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { withLabel } from '@/src/components/Common/Forms/Label';
-
-import Tooltip from '../Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: boolean | string;

@@ -62,6 +62,7 @@ import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAss
 import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
 import { AgentDetailsModalAssertion } from '@/src/assertions/agentDetailsModalAssertion';
 import { AppEditorHeaderAssertion } from '@/src/assertions/appEditorHeaderAssertion';
+import { InformationModalAssertion } from '@/src/assertions/informationModalAssertion';
 import { LocalStorageAssertion } from '@/src/assertions/localStorageAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
 import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateModalAssertion';
@@ -282,6 +283,7 @@ const dialTest = test.extend<{
   adminPublicationApiHelper: PublicationApiHelper;
   publishingRules: PublishingRules;
   informationModal: InformationModal;
+  informationModalAssertion: InformationModalAssertion;
   conversationAssertion: ConversationAssertion;
   chatBarFolderAssertion: FolderAssertion<FolderConversations>;
   allFilesFolderAssertion: FolderAssertion<Folders>;
@@ -982,6 +984,12 @@ const dialTest = test.extend<{
   informationModal: async ({ page }, use) => {
     const informationModal = new InformationModal(page);
     await use(informationModal);
+  },
+  informationModalAssertion: async ({ informationModal }, use) => {
+    const informationModalAssertion = new InformationModalAssertion(
+      informationModal,
+    );
+    await use(informationModalAssertion);
   },
   conversationAssertion: async ({ conversations }, use) => {
     const conversationAssertion = new ConversationAssertion(conversations);

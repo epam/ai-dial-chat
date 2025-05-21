@@ -16,7 +16,13 @@ import {
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { DialHomePage } from '@/src/ui/pages';
-import { DateUtil, GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
+import {
+  DateUtil,
+  GeneratorUtil,
+  ItemUtil,
+  ModelsUtil,
+  UserUtil,
+} from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Role } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
@@ -1118,6 +1124,7 @@ dialSharedWithMeTest(
       additionalShareUserSharedWithMeConversations,
       additionalShareUserSharedWithMeConversationDropdownMenu,
       additionalShareUserInformationModal,
+      additionalShareUserInformationModalAssertion,
       additionalShareUserPlaybackControl,
       setTestIds,
       additionalShareUserLocalStorageManager,
@@ -1130,9 +1137,7 @@ dialSharedWithMeTest(
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
     const currentDate = DateUtil.getCurrentLocalDate();
-    const username =
-      process.env.E2E_USERNAME!.split(',')[testInfo.parallelIndex];
-    const author = username.substring(0, username.indexOf('@'));
+    const author = UserUtil.getE2EUsername(testInfo.parallelIndex);
 
     await dialSharedWithMeTest.step('Prepare shared conversation', async () => {
       conversation = conversationData.prepareDefaultConversation();
@@ -1161,38 +1166,11 @@ dialSharedWithMeTest(
           MenuOptions.info,
           { triggeredHttpMethod: 'GET' },
         );
-        await baseAssertion.assertElementState(
-          additionalShareUserInformationModal,
-          'visible',
-        );
-        await baseAssertion.assertElementText(
-          additionalShareUserInformationModal.title,
-          ExpectedConstants.informationModalTitle,
-        );
-        await baseAssertion.assertElementText(
-          additionalShareUserInformationModal.lastUpdatedLabel,
-          ExpectedConstants.informationModalLastUpdatedLabel,
-        );
-        await baseAssertion.assertElementText(
-          additionalShareUserInformationModal.createdDateLabel,
-          ExpectedConstants.informationModalCreatedDateLabel,
-        );
-        await baseAssertion.assertElementText(
-          additionalShareUserInformationModal.authorLabel,
-          ExpectedConstants.informationModalAuthorLabel,
-        );
-        await baseAssertion.assertElementText(
-          additionalShareUserInformationModal.lastUpdatedValue,
-          currentDate,
-        );
-        await baseAssertion.assertElementText(
-          additionalShareUserInformationModal.createdDateValue,
-          currentDate,
-        );
-        await baseAssertion.assertElementText(
-          additionalShareUserInformationModal.authorValue,
-          author,
-        );
+        await additionalShareUserInformationModalAssertion.assertFields({
+          createdDate: currentDate,
+          lastUpdatedDate: currentDate,
+          author: author,
+        });
         await additionalShareUserInformationModal.cancelButton.click();
       },
     );

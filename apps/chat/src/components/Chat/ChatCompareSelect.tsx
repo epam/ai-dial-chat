@@ -18,7 +18,7 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
-import Loader from '@/src/components/Common/Loader';
+import { Loader } from '@/src/components/Common/Loader';
 
 import { ConversationCompareItem } from './ConversationCompareItem';
 

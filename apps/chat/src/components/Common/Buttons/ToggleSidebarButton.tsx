@@ -8,7 +8,7 @@ import { dispatchMouseLeaveEvent } from '@/src/utils/app/common';
 
 import { Translation } from '@/src/types/translation';
 
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import MoveLeftIcon from '@/public/images/icons/move-left.svg';
 import MoveRightIcon from '@/public/images/icons/move-right.svg';

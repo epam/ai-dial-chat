@@ -10,7 +10,7 @@ import { getApplicationLink } from '@/src/utils/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 interface ApplicationCopyLinkProps {
   entity: DialAIEntityModel;

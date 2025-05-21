@@ -43,6 +43,7 @@ import {
 import { AgentSettingAssertion } from '@/src/assertions/agentSettingAssertion';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
+import { InformationModalAssertion } from '@/src/assertions/informationModalAssertion';
 import { MenuAssertion } from '@/src/assertions/menuAssertion';
 import { PromptAssertion } from '@/src/assertions/promptAssertion';
 import { PromptListAssertion } from '@/src/assertions/promptListAssertion';
@@ -128,6 +129,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserConversationDropdownMenu: DropdownMenu;
   additionalShareUserPublishingRequestModal: PublishingRequestModal;
   additionalShareUserInformationModal: InformationModal;
+  additionalShareUserInformationModalAssertion: InformationModalAssertion;
   additionalShareUserSharedFolderPromptsAssertions: FolderAssertion<FolderPrompts>;
   additionalShareUserPromptsDropdownMenuAssertion: MenuAssertion;
   additionalShareUserFolderDropdownMenuAssertion: MenuAssertion;
@@ -471,6 +473,14 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserPage,
     );
     await use(additionalShareUserInformationModal);
+  },
+  additionalShareUserInformationModalAssertion: async (
+    { additionalShareUserInformationModal },
+    use,
+  ) => {
+    const additionalShareUserInformationModalAssertion =
+      new InformationModalAssertion(additionalShareUserInformationModal);
+    await use(additionalShareUserInformationModalAssertion);
   },
   additionalShareUserSharedWithMePromptDropdownMenu: async (
     { additionalShareUserSharedWithMePrompts },

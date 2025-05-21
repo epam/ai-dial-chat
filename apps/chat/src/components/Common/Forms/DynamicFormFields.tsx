@@ -22,8 +22,7 @@ import { Translation } from '@/src/types/translation';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 import { FieldErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
-
-import Tooltip from '../Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 export interface DynamicField extends SelectOption<string, string> {
   editableKey?: boolean;

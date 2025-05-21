@@ -16,7 +16,7 @@ import { ApplicationSelectors } from '@/src/store/selectors';
 import { Modal } from '@/src/components/Common/Modal';
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 import { Spinner } from '@/src/components/Common/Spinner';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 const LogsHeader = () => {
   const { t } = useTranslation(Translation.Marketplace);

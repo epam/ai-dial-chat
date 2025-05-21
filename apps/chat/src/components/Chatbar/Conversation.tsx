@@ -36,8 +36,8 @@ import { ConversationContextMenu } from '@/src/components/Chat/ConversationConte
 import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
 import { ReviewDot } from '@/src/components/Chat/Publish/ReviewDot';
 import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
-import ShareIcon from '@/src/components/Common/ShareIcon';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { ShareIcon } from '@/src/components/Common/ShareIcon';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ModelIcon } from './ModelIcon';
 

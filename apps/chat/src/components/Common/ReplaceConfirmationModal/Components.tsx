@@ -34,8 +34,8 @@ import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
 import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Select, SelectOption } from '@/src/components/Common/Select';
-import ShareIcon from '@/src/components/Common/ShareIcon';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { ShareIcon } from '@/src/components/Common/ShareIcon';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import {
   ConversationInfo,

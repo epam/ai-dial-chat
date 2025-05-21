@@ -18,7 +18,7 @@ import {
 } from '@/src/store/selectors';
 
 import { Spinner } from '@/src/components/Common/Spinner';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 

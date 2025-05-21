@@ -1,8 +1,7 @@
 import { DocumentProps, Head, Html, Main, NextScript } from 'next/document';
 import Script from 'next/script';
 
-import i18nextConfig from '../../next-i18next.config';
-
+import i18nextConfig from '@/next-i18next.config';
 import { documentWithJss } from '@epam/ai-dial-modulify-ui';
 
 type Props = DocumentProps & {

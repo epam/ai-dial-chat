@@ -1,6 +1,11 @@
 import { Observable, map } from 'rxjs';
 
 import { splitEntityId } from '@/src/utils/app/shared-utils';
+import {
+  ApiUtils,
+  parseApplicationApiKey,
+  parseConversationApiKey,
+} from '@/src/utils/server/api';
 
 import { ApplicationInfo } from '@/src/types/applications';
 import {
@@ -25,11 +30,6 @@ import {
   ShareRevokeRequestModel,
 } from '@/src/types/share';
 
-import {
-  ApiUtils,
-  parseApplicationApiKey,
-  parseConversationApiKey,
-} from '../../server/api';
 import { constructPath } from '../file';
 import { EnumMapper } from '../mappers';
 

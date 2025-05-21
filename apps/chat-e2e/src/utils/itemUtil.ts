@@ -53,4 +53,25 @@ export class ItemUtil {
       .join(ItemUtil.urlSeparator);
     return itemId.replace(itemId, encodedItemId);
   }
+
+  // Helper function to extract relative path from URL
+  public static extractRelativePath(url: string): string {
+    const pathParts = url.split('/');
+    let relativePath = '';
+    const publicSegmentIndex = pathParts.indexOf('public');
+
+    if (
+      publicSegmentIndex !== -1 &&
+      publicSegmentIndex < pathParts.length - 2
+    ) {
+      relativePath =
+        pathParts.slice(publicSegmentIndex + 1, -1).join('/') + '/';
+    } else if (
+      publicSegmentIndex !== -1 &&
+      publicSegmentIndex === pathParts.length - 2
+    ) {
+      relativePath = '';
+    }
+    return relativePath;
+  }
 }

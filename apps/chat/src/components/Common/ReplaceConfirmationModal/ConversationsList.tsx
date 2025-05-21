@@ -5,7 +5,8 @@ import { FeatureType, MappedReplaceActions } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { OnItemEvent } from '@/src/types/modal';
 
-import Folder from '../../Folder/Folder';
+import { Folder } from '@/src/components/Folder/Folder';
+
 import { ConversationRow } from './Components';
 
 interface Props {
