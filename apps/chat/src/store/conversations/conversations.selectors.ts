@@ -65,6 +65,7 @@ import {
   ShareEntity,
 } from '@epam/ai-dial-shared';
 import cloneDeep from 'lodash-es/cloneDeep';
+import isNil from 'lodash-es/isNil';
 import uniqBy from 'lodash-es/uniqBy';
 
 const rootSelector = (state: RootState) => state.conversations;
@@ -375,9 +376,7 @@ const selectIsMessagesError = createSelector(
   [selectSelectedConversations],
   (conversations) => {
     return conversations.some((conv) =>
-      conv.messages.some(
-        (message) => typeof message.errorMessage !== 'undefined',
-      ),
+      conv.messages.some((message) => !isNil(message.errorMessage)),
     );
   },
 );
