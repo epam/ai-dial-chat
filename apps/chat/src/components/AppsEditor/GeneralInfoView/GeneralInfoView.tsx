@@ -126,7 +126,7 @@ export const GeneralInfoView: React.FC<Props> = ({
             {
               'grow opacity-100': isPreviewClosed,
               'size-full': isPreviewHalf,
-              'w-0 opacity-0': isPreviewFull,
+              'size-0 opacity-0': isPreviewFull,
             },
           )}
         >
