@@ -264,14 +264,14 @@ export const TalkToSlider = ({
 
   const swipeHandlers = useSwipe({
     onSwipedLeft: () => {
-      setPrevActiveSlide(activeSlide);
-      setActiveSlide((slide) =>
-        slide >= sliderGroups.length - 1 ? sliderGroups.length - 1 : slide + 1,
+      handleSetActiveSlide(
+        activeSlide >= sliderGroups.length - 1
+          ? sliderGroups.length - 1
+          : activeSlide + 1,
       );
     },
     onSwipedRight: () => {
-      setPrevActiveSlide(activeSlide);
-      setActiveSlide((slide) => (slide === 0 ? 0 : slide - 1));
+      handleSetActiveSlide(activeSlide === 0 ? 0 : activeSlide - 1);
     },
   });
 
