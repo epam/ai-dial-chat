@@ -133,7 +133,7 @@ const selectMyFoldersWithSearchTerm = createSelector(
   [selectMyFolders, (_state, searchTerm: string) => searchTerm],
   (folders, searchTerm) => {
     const filtered = folders.filter((folder) =>
-      folder.name.includes(searchTerm.toLowerCase()),
+      doesEntityContainSearchTerm(folder, searchTerm),
     );
 
     return getParentAndChildFolders(folders, filtered);
@@ -502,7 +502,7 @@ const selectTemporaryFoldersWithSearchTerm = createSelector(
   [selectTemporaryFolders, (_state, searchTerm: string) => searchTerm],
   (folders, searchTerm) => {
     const filtered = folders.filter((folder) =>
-      folder.name.includes(searchTerm.toLowerCase()),
+      doesEntityContainSearchTerm(folder, searchTerm),
     );
 
     return getParentAndChildFolders(folders, filtered);
