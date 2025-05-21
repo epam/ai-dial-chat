@@ -1,4 +1,4 @@
-import { FilterTypes } from '../constants/marketplace';
+import { FilterTypes } from '@/src/constants/marketplace';
 
 export interface MarketplaceFilters {
   [FilterTypes.ENTITY_TYPE]: string[];

@@ -17,8 +17,7 @@ import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Combobox } from '@/src/components/Common/Combobox';
 import { DisableOverlay } from '@/src/components/Common/DisableOverlay';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
-
-import Tooltip from './Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 interface ModelSelectRowProps {
   item: DialAIEntityModel;

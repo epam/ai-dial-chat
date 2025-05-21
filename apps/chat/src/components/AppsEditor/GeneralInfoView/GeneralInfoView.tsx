@@ -24,7 +24,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors, SettingsSelectors } from '@/src/store/selectors';
 
 import { TabButton } from '@/src/components/Buttons/TabButton';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { GeneralInfoEditor } from './GeneralInfoEditor';
 import { GeneralInfoPreview } from './GeneralInfoPreview';
@@ -126,7 +126,7 @@ export const GeneralInfoView: React.FC<Props> = ({
             {
               'grow opacity-100': isPreviewClosed,
               'size-full': isPreviewHalf,
-              'w-0 opacity-0': isPreviewFull,
+              'size-0 opacity-0': isPreviewFull,
             },
           )}
         >

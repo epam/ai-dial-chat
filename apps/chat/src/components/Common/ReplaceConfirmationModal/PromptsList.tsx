@@ -5,7 +5,8 @@ import { FolderInterface } from '@/src/types/folder';
 import { OnItemEvent } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
 
-import Folder from '../../Folder/Folder';
+import { Folder } from '@/src/components/Folder/Folder';
+
 import { PromptsRow } from './Components';
 
 interface Props {
