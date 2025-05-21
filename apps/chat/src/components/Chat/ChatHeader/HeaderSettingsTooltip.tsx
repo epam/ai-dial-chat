@@ -7,7 +7,7 @@ import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
 import { DialAIEntityAddon, DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { ModelIcon } from '../../Chatbar/ModelIcon';
+import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 
 interface Props {
   subModel: DialAIEntityModel | undefined;

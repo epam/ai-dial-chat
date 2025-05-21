@@ -1,3 +1,5 @@
+import { getModelIdWithoutVersion } from '@/src/utils/server/api';
+
 import { EntityType } from '@/src/types/common';
 import {
   DialAIEntity,
@@ -6,7 +8,6 @@ import {
   ModelsMap,
 } from '@/src/types/models';
 
-import { getModelIdWithoutVersion } from '../server/api';
 import { constructPath } from './file';
 
 import groupBy from 'lodash-es/groupBy';
@@ -82,11 +83,9 @@ export const addToModelsMap = (
 };
 
 export const deleteFromModelsMap = (modelsMap: ModelsMap, ...ids: string[]) => {
-  ids.forEach((id) => {
-    const model = modelsMap[id];
-    if (model) {
-      omit(modelsMap, model.reference, model.id);
-    }
-  });
+  const model = ids.map((id) => modelsMap[id]).filter(Boolean)[0];
+  if (model) {
+    return omit(modelsMap, model.reference, model.id);
+  }
   return modelsMap;
 };

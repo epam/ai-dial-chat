@@ -1,5 +1,7 @@
 import { Observable, map } from 'rxjs';
 
+import { ApiUtils } from '@/src/utils/server/api';
+
 import { BackendDataNodeType, FeatureType } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
 import {
@@ -15,7 +17,6 @@ import {
 
 import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
-import { ApiUtils } from '../../server/api';
 import { constructPath } from '../file';
 import { EnumMapper } from '../mappers';
 import { BucketService } from './bucket-service';

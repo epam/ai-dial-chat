@@ -2,6 +2,7 @@ import type { MouseEvent } from 'react';
 
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
 import { Conversation, PrepareNameOptions } from '@/src/types/chat';
 import {
@@ -12,8 +13,6 @@ import { EntityFilters } from '@/src/types/search';
 
 import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
 import { NA_VERSION } from '@/src/constants/public';
-
-import { getPublicItemIdWithoutVersion } from '../server/api';
 
 import {
   Entity,

@@ -30,7 +30,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { FilesSelectors, SettingsSelectors } from '@/src/store/selectors';
 
-import ContextMenu from './ContextMenu';
+import { ContextMenu } from './ContextMenu';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';

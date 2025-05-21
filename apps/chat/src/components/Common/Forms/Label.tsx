@@ -3,7 +3,7 @@ import { ComponentType, FC, forwardRef } from 'react';
 
 import { DefaultTFuncReturn } from 'i18next';
 
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import omit from 'lodash-es/omit';
 
