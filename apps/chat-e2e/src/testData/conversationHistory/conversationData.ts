@@ -458,7 +458,7 @@ export class ConversationData extends FolderData {
 
   public prepareLastWeekConversation(model?: DialAIEntityModel, name?: string) {
     const conversation = this.prepareDefaultConversation(model, name);
-    conversation.updatedAt = DateUtil.getLastWeekDate();
+    conversation.updatedAt = DateUtil.getLastSevenDaysDate();
     return conversation;
   }
 
@@ -467,7 +467,7 @@ export class ConversationData extends FolderData {
     name?: string,
   ) {
     const conversation = this.prepareDefaultConversation(model, name);
-    conversation.updatedAt = DateUtil.getLastMonthDate();
+    conversation.updatedAt = DateUtil.getLastThirtyDaysDate();
     return conversation;
   }
 

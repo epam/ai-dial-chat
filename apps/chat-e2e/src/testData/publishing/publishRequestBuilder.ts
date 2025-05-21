@@ -41,8 +41,8 @@ export class PublishRequestBuilder {
     return this;
   }
 
-  withDisplayAuthor(author: string): PublishRequestBuilder {
-    this.publishRequest.displayAuthor = author;
+  withDisplayAuthor(displayAuthor: string): PublishRequestBuilder {
+    this.publishRequest.displayAuthor = displayAuthor;
     return this;
   }
 

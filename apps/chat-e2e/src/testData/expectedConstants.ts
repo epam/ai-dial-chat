@@ -247,6 +247,10 @@ export const ExpectedConstants = {
   notFoundHeader: '404',
   notFoundTitle: 'Page not found',
   notFoundDescription: `It seems like the page you're looking for doesn't exist or you don't have access.`,
+  informationModalTitle: 'Information',
+  informationModalLastUpdatedLabel: 'Last updated:',
+  informationModalCreatedDateLabel: 'Creation date:',
+  informationModalAuthorLabel: 'Author:',
 };
 
 export enum Types {
