@@ -8,14 +8,17 @@ import {
 
 import { useRouter } from 'next/router';
 
+import { useBeforeRedirect } from '@/src/hooks/useBeforeRedirect';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip } from '@/src/utils/app/application';
 import { castToString } from '@/src/utils/app/common';
+import { getValidFormFields } from '@/src/utils/app/forms';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import {
   ApplicationStatus,
+  ApplicationType,
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
@@ -39,6 +42,7 @@ import {
   PUBLIC_APP_TOOLTIP,
 } from '@/src/constants/code-apps';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
+import { Routes } from '@/src/constants/routes';
 
 import { FormCodeEditor } from '@/src/components/Common/ApplicationWizard/CodeAppView/FormCodeEditor';
 import { RuntimeVersionSelector } from '@/src/components/Common/ApplicationWizard/CodeAppView/RuntimeVersionSelector';
@@ -135,6 +139,8 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     formState: { errors, defaultValues, isValid },
     watch,
     register,
+    getValues,
+    getFieldState,
   } = useFormContext<CodeAppFormData>();
 
   const lastSubmittedValuesRef = useRef<CodeAppFormData | undefined>(
@@ -158,7 +164,6 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     (data: CodeAppFormData) => {
       if (
         oldApplication.reference &&
-        shouldSaveApplication &&
         !isEqual(data, lastSubmittedValuesRef.current)
       ) {
         const preparedData = getCodeAppData(data);
@@ -219,6 +224,23 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
   const autoSaveHandler = useCallback(() => {
     submitWrapper(handleEdit)();
   }, [submitWrapper, handleEdit]);
+
+  const savePartialForm = useCallback(() => {
+    const data = getValues();
+    if (!isValid && lastSubmittedValuesRef.current) {
+      handleEdit({
+        ...lastSubmittedValuesRef.current,
+        ...getValidFormFields(data, getFieldState),
+      });
+    } else if (isValid) {
+      handleEdit(data);
+    }
+  }, [getFieldState, getValues, handleEdit, isValid]);
+
+  useBeforeRedirect(
+    savePartialForm,
+    Routes.AppsEditorGeneralInfo.replace('[slug]', ApplicationType.CODE_APP),
+  );
 
   useEffect(() => {
     const isTriggered = shouldSaveApplication || exitAfterSave;

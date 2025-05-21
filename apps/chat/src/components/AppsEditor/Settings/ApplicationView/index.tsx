@@ -10,12 +10,17 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
+import { useBeforeRedirect } from '@/src/hooks/useBeforeRedirect';
 import { usePreventSpaceHandlers } from '@/src/hooks/usePreventSpaceHandlers';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { getValidFormFields } from '@/src/utils/app/forms';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
-import { CustomApplicationModel } from '@/src/types/applications';
+import {
+  ApplicationType,
+  CustomApplicationModel,
+} from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions, UIActions } from '@/src/store/actions';
@@ -24,6 +29,7 @@ import { ApplicationSelectors } from '@/src/store/selectors';
 
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/code-apps';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
+import { Routes } from '@/src/constants/routes';
 
 import { withController } from '@/src/components/Common/Forms/ControlledFormField';
 import { Field } from '@/src/components/Common/Forms/Field';
@@ -137,6 +143,8 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
     formState: { errors, defaultValues, isValid },
     setError,
     clearErrors,
+    getValues,
+    getFieldState,
   } = useFormContext<CustomApplicationFormData>();
   const lastSubmittedValuesRef = useRef<CustomApplicationFormData | undefined>(
     defaultValues as CustomApplicationFormData,
@@ -156,10 +164,7 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
 
   const handleSubmit = useCallback(
     (data: CustomApplicationFormData) => {
-      if (
-        !isEqual(data, lastSubmittedValuesRef.current) &&
-        shouldSaveApplication
-      ) {
+      if (!isEqual(data, lastSubmittedValuesRef.current)) {
         const applicationData = getCustomApplicationData(data);
         dispatch(
           ApplicationActions.update({
@@ -178,12 +183,29 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
         dispatch(ApplicationActions.setExitAfterSave(false));
       }
     },
-    [exitAfterSave, shouldSaveApplication, dispatch, oldApplication],
+    [shouldSaveApplication, exitAfterSave, dispatch, oldApplication],
   );
 
   const autoSaveHandler = useCallback(() => {
     submitWrapper(handleSubmit)();
   }, [submitWrapper, handleSubmit]);
+
+  const savePartialForm = useCallback(() => {
+    const data = getValues();
+    if (!isValid && lastSubmittedValuesRef.current) {
+      handleSubmit({
+        ...lastSubmittedValuesRef.current,
+        ...getValidFormFields(data, getFieldState),
+      });
+    } else if (isValid) {
+      handleSubmit(data);
+    }
+  }, [getFieldState, getValues, handleSubmit, isValid]);
+
+  useBeforeRedirect(
+    savePartialForm,
+    Routes.AppsEditorGeneralInfo.replace('[slug]', ApplicationType.CUSTOM_APP),
+  );
 
   useEffect(() => {
     const isTriggered = shouldSaveApplication || exitAfterSave;
