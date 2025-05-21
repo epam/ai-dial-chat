@@ -262,18 +262,19 @@ export const TalkToSlider = ({
     return chunk(items, sliderRowsCount * maxChunksCountConfig.cols);
   }, [items, maxChunksCountConfig.cols, sliderRowsCount]);
 
-  const swipeHandlers = useSwipe({
-    onSwipedLeft: () => {
-      handleSetActiveSlide(
-        activeSlide >= sliderGroups.length - 1
-          ? sliderGroups.length - 1
-          : activeSlide + 1,
-      );
-    },
-    onSwipedRight: () => {
-      handleSetActiveSlide(activeSlide === 0 ? 0 : activeSlide - 1);
-    },
-  });
+  const handleSwipedRight = useCallback(() => {
+    handleSetActiveSlide(
+      activeSlide >= sliderGroups.length - 1
+        ? sliderGroups.length - 1
+        : activeSlide + 1,
+    );
+  }, [activeSlide, sliderGroups, handleSetActiveSlide]);
+
+  const handleSwipedLeft = useCallback(() => {
+    handleSetActiveSlide(activeSlide === 0 ? 0 : activeSlide - 1);
+  }, [activeSlide, handleSetActiveSlide]);
+
+  const swipeHandlers = useSwipe(handleSwipedRight, handleSwipedLeft);
 
   useEffect(() => {
     if (!sliderGroups.length) {
