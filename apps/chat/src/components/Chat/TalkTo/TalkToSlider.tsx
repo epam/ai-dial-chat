@@ -201,13 +201,13 @@ interface Props {
 }
 
 const shouldRenderSlide = (
-  idx: number,
+  index: number,
   activeSlide: number,
   prevActiveSlide: number,
 ) => {
-  const minIdx = Math.min(activeSlide, prevActiveSlide);
-  const maxIdx = Math.max(activeSlide, prevActiveSlide);
-  return idx >= minIdx - 1 && idx <= maxIdx + 1;
+  const minIndex = Math.min(activeSlide, prevActiveSlide);
+  const maxIndex = Math.max(activeSlide, prevActiveSlide);
+  return index >= minIndex - 1 && index <= maxIndex + 1;
 };
 
 export const TalkToSlider = ({
@@ -221,6 +221,7 @@ export const TalkToSlider = ({
   const { t } = useTranslation(Translation.Chat);
 
   const sliderRef = useRef<HTMLDivElement>(null);
+
   const [activeSlide, setActiveSlide] = useState(0);
   const [prevActiveSlide, setPrevActiveSlide] = useState(0);
   const [sliderRowsCount, setSliderRowsCount] = useState(1);
@@ -320,13 +321,13 @@ export const TalkToSlider = ({
           }}
         >
           {sliderGroups.length ? (
-            sliderGroups.map((modelsGroup, idx) => (
+            sliderGroups.map((modelsGroup, index) => (
               <section
                 key={modelsGroup.map((model) => model.id).join('.')}
                 className="h-full min-w-full"
                 data-qa="agents-section"
               >
-                {shouldRenderSlide(idx, activeSlide, prevActiveSlide) && (
+                {shouldRenderSlide(index, activeSlide, prevActiveSlide) && (
                   <SliderModelsGroup
                     modelsGroup={modelsGroup}
                     conversation={conversation}
