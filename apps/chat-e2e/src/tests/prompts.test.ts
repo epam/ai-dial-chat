@@ -277,8 +277,8 @@ dialTest(
     localStorageManager,
     promptDropdownMenu,
     informationModal,
+    informationModalAssertion,
     promptDropdownMenuAssertion,
-    baseAssertion,
   }) => {
     setTestIds('EPMRTC-952', 'EPMRTC-5562', 'EPMRTC-5564', 'EPMRTC-5566');
     const currentDate = DateUtil.getCurrentLocalDate();
@@ -318,27 +318,10 @@ dialTest(
         await promptDropdownMenu.selectMenuOption(MenuOptions.info, {
           triggeredHttpMethod: 'GET',
         });
-        await baseAssertion.assertElementState(informationModal, 'visible');
-        await baseAssertion.assertElementText(
-          informationModal.title,
-          ExpectedConstants.informationModalTitle,
-        );
-        await baseAssertion.assertElementText(
-          informationModal.lastUpdatedLabel,
-          ExpectedConstants.informationModalLastUpdatedLabel,
-        );
-        await baseAssertion.assertElementText(
-          informationModal.createdDateLabel,
-          ExpectedConstants.informationModalCreatedDateLabel,
-        );
-        await baseAssertion.assertElementText(
-          informationModal.lastUpdatedValue,
-          currentDate,
-        );
-        await baseAssertion.assertElementText(
-          informationModal.createdDateValue,
-          currentDate,
-        );
+        await informationModalAssertion.assertFields({
+          createdDate: currentDate,
+          lastUpdatedDate: currentDate,
+        });
         await informationModal.cancelButton.click();
       },
     );

@@ -1,4 +1,3 @@
-import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import {
   CollapsedSections,
