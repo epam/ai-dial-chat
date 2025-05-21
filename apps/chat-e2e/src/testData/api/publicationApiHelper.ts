@@ -7,9 +7,9 @@ import {
   PublicationsListModel,
   PublishedList,
 } from '@/chat/types/publication';
-import { API, ExpectedConstants } from '@/src/testData';
+import { API, ExpectedConstants, PublishRequestBuilder } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
-import { GeneratorUtil, ItemUtil } from '@/src/utils';
+import { GeneratorUtil, ItemUtil, unpublishRequestPrefix } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 
@@ -172,5 +172,22 @@ export class PublicationApiHelper extends BaseApiHelper {
     expect(responseJson.url).toBeDefined();
     expect(responseJson.status).toBe(PublicationStatus.PENDING);
     return responseJson;
+  }
+
+  public async unpublishEntity(
+    name: string,
+    relativePath: string,
+    publishRequestBuilder: PublishRequestBuilder,
+    resourceBuilder: (request: PublishRequestBuilder) => PublishRequestBuilder,
+  ) {
+    const unpublishRequest = publishRequestBuilder
+      .withName(unpublishRequestPrefix + name)
+      .withTargetFolder(relativePath);
+
+    resourceBuilder(unpublishRequest);
+
+    const builtRequest = unpublishRequest.build();
+    const unpublishResponse = await this.createUnpublishRequest(builtRequest);
+    await this.approveRequest(unpublishResponse);
   }
 }
