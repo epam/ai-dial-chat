@@ -268,7 +268,7 @@ dialAdminTest(
     const maxNestedLevel = 4;
     const maxNameLength = 160;
     const requestName = GeneratorUtil.randomPublicationRequestName();
-    const newFolderName = GeneratorUtil.randomString(maxNameLength * 1.5);
+    const newFolderName = 'a' + GeneratorUtil.randomString(maxNameLength * 1.5);
     const cutNewFolderName = newFolderName.substring(0, maxNameLength);
     const defaultFolderName = ExpectedConstants.newFolderWithIndexTitle(1);
     const publicationPath = `${PublishPath.Organization}/${cutNewFolderName}/${defaultFolderName}/${defaultFolderName}`;
@@ -409,10 +409,6 @@ dialAdminTest(
         await selectFoldersAssertion.assertFolderSelectedState(
           { name: defaultFolderName, index: 1 },
           true,
-        );
-        //TODO: remove next line when fixed https://github.com/epam/ai-dial-chat/issues/2294
-        await selectFolders.renameEmptyFolderWithTick(
-          GeneratorUtil.randomString(5),
         );
         await selectFolders
           .getNestedFolder(defaultFolderName, defaultFolderName)
