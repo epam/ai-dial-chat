@@ -20,7 +20,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ConversationsSelectors, ModelsSelectors } from '@/src/store/selectors';
 
-import ContextMenu from '@/src/components/Common/ContextMenu';
+import { ContextMenu } from '@/src/components/Common/ContextMenu';
 
 import { AttachLinkDialog } from './AttachLinkDialog';
 import { FileManagerModal } from './FileManagerModal';

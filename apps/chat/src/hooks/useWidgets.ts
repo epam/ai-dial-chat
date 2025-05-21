@@ -6,7 +6,7 @@ import { ApplicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ApplicationSelectors, WidgetsSelectors } from '@/src/store/selectors';
 
-import { Routes } from '../constants/routes';
+import { Routes } from '@/src/constants/routes';
 
 export const useWidgets = () => {
   const router = useRouter();

@@ -25,13 +25,13 @@ import {
 } from '@/src/store/selectors';
 
 import { ApplicationPublishItems } from '@/src/components/Chat/Publish/ApplicationPublishItems';
-import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
+import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 import {
   ConversationRow,
   FilesRow,
   PromptsRow,
 } from '@/src/components/Common/ReplaceConfirmationModal/Components';
-import Folder from '@/src/components/Folder/Folder';
+import { Folder } from '@/src/components/Folder/Folder';
 
 import { PublicationItem } from './PublicationItem';
 

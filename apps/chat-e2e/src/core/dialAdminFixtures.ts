@@ -27,6 +27,7 @@ import {
   VariableModalAssertion,
 } from '@/src/assertions';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
+import { InformationModalAssertion } from '@/src/assertions/informationModalAssertion';
 import { PublishedPromptPreviewModalAssertion } from '@/src/assertions/publishing/publishedPromptPreviewModalAssertion';
 import { PublishingApprovalModalAssertion } from '@/src/assertions/publishing/publishingApprovalModalAssertion';
 import { SideBarConversationAssertion } from '@/src/assertions/sideBarConversationAssertion';
@@ -102,6 +103,7 @@ const dialAdminTest = dialTest.extend<{
   adminVariableModal: VariableModalDialog;
   adminConversationDropdownMenu: DropdownMenu;
   adminInformationModal: InformationModal;
+  adminInformationModalAssertion: InformationModalAssertion;
   adminChatHeaderAssertion: ChatHeaderAssertion<ChatHeader>;
   adminChatMessagesAssertion: ChatMessagesAssertion;
   adminOrganizationFolderDropdownMenuAssertion: MenuAssertion;
@@ -283,6 +285,12 @@ const dialAdminTest = dialTest.extend<{
   adminInformationModal: async ({ adminPage }, use) => {
     const adminInformationModal = new InformationModal(adminPage);
     await use(adminInformationModal);
+  },
+  adminInformationModalAssertion: async ({ adminInformationModal }, use) => {
+    const adminInformationModalAssertion = new InformationModalAssertion(
+      adminInformationModal,
+    );
+    await use(adminInformationModalAssertion);
   },
   adminChatHeaderAssertion: async ({ adminChatHeader }, use) => {
     const adminChatHeaderAssertion = new ChatHeaderAssertion(adminChatHeader);

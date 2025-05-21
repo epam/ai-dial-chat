@@ -2,6 +2,7 @@
 import { Observable, map } from 'rxjs';
 
 import { isTabletScreenOrMobile } from '@/src/utils/app/mobile';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { LastConversationSettings } from '@/src/types/settings';
 import { DialStorage, StorageType, UIStorageKeys } from '@/src/types/storage';
@@ -9,7 +10,6 @@ import { Theme } from '@/src/types/themes';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
 
-import { ApiUtils } from '../../server/api';
 import { ApiStorage } from './storages/api-storage';
 import { BrowserStorage } from './storages/browser-storage';
 

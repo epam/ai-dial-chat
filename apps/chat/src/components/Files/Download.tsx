@@ -4,7 +4,7 @@ import { ApiUtils } from '@/src/utils/server/api';
 import { DialFile } from '@/src/types/files';
 import { CustomTriggerMenuRendererProps } from '@/src/types/menu';
 
-export default function DownloadRenderer({
+export function DownloadRenderer({
   customTriggerData,
   onClick,
   className,
@@ -13,6 +13,7 @@ export default function DownloadRenderer({
 }: CustomTriggerMenuRendererProps) {
   const file = customTriggerData as DialFile;
   const filePath = getDownloadPath(file);
+
   return (
     <a
       download={file.name}

@@ -1,7 +1,7 @@
 import { ScreenState } from '@/src/types/common';
 
-import { FooterMessage } from '../../Common/FooterMessage';
-import { withRenderForScreen } from '../../Common/ScreenRender';
+import { FooterMessage } from '@/src/components/Common/FooterMessage';
+import { withRenderForScreen } from '@/src/components/Common/ScreenRender';
 
 function ChatInputFooterView() {
   return (

@@ -10,7 +10,7 @@ import {
   PublishPath,
 } from '@/src/testData';
 import { UploadDownloadData } from '@/src/ui/pages';
-import { DateUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { DateUtil, GeneratorUtil, ModelsUtil, UserUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
@@ -52,6 +52,7 @@ dialAdminTest(
       adminPublicationReviewControl,
       adminApproveRequiredConversationDropdownMenu,
       adminInformationModal,
+      adminInformationModalAssertion,
       organizationConversationAssertion,
       adminApproveRequiredConversationsAssertion,
       adminOrganizationConversationAssertion,
@@ -99,9 +100,7 @@ dialAdminTest(
       response: Publication;
     };
     const currentDate = DateUtil.getCurrentLocalDate();
-    const username =
-      process.env.E2E_USERNAME!.split(',')[testInfo.parallelIndex];
-    const author = username.substring(0, username.indexOf('@'));
+    const author = UserUtil.getE2EUsername(testInfo.parallelIndex);
 
     await dialTest.step('Prepare a new conversation', async () => {
       conversation = conversationData.prepareDefaultConversation();
@@ -231,38 +230,11 @@ dialAdminTest(
           MenuOptions.info,
           { triggeredHttpMethod: 'GET' },
         );
-        await baseAssertion.assertElementState(
-          adminInformationModal,
-          'visible',
-        );
-        await baseAssertion.assertElementText(
-          adminInformationModal.title,
-          ExpectedConstants.informationModalTitle,
-        );
-        await baseAssertion.assertElementText(
-          adminInformationModal.lastUpdatedLabel,
-          ExpectedConstants.informationModalLastUpdatedLabel,
-        );
-        await baseAssertion.assertElementText(
-          adminInformationModal.createdDateLabel,
-          ExpectedConstants.informationModalCreatedDateLabel,
-        );
-        await baseAssertion.assertElementText(
-          adminInformationModal.authorLabel,
-          ExpectedConstants.informationModalAuthorLabel,
-        );
-        await baseAssertion.assertElementText(
-          adminInformationModal.lastUpdatedValue,
-          currentDate,
-        );
-        await baseAssertion.assertElementText(
-          adminInformationModal.createdDateValue,
-          currentDate,
-        );
-        await baseAssertion.assertElementText(
-          adminInformationModal.authorValue,
-          author,
-        );
+        await adminInformationModalAssertion.assertFields({
+          createdDate: currentDate,
+          lastUpdatedDate: currentDate,
+          author: author,
+        });
         await adminInformationModal.cancelButton.click();
       },
     );
@@ -580,8 +552,8 @@ dialTest(
     chatHeaderDropdownMenu,
     chatHeaderVersionDropdownMenu,
     informationModal,
+    informationModalAssertion,
     setTestIds,
-    baseAssertion,
     adminPublicationApiHelper,
     publishRequestBuilder,
   }) => {
@@ -630,35 +602,10 @@ dialTest(
         await conversationDropdownMenu.selectMenuOption(MenuOptions.info, {
           triggeredHttpMethod: 'GET',
         });
-        await baseAssertion.assertElementState(informationModal, 'visible');
-        await baseAssertion.assertElementText(
-          informationModal.title,
-          ExpectedConstants.informationModalTitle,
-        );
-        await baseAssertion.assertElementState(
-          informationModal.lastUpdatedLabel,
-          'hidden',
-        );
-        await baseAssertion.assertElementText(
-          informationModal.createdDateLabel,
-          ExpectedConstants.informationModalCreatedDateLabel,
-        );
-        await baseAssertion.assertElementText(
-          informationModal.authorLabel,
-          ExpectedConstants.informationModalAuthorLabel,
-        );
-        await baseAssertion.assertElementState(
-          informationModal.lastUpdatedValue,
-          'hidden',
-        );
-        await baseAssertion.assertElementText(
-          informationModal.createdDateValue,
-          currentDate,
-        );
-        await baseAssertion.assertElementText(
-          informationModal.authorValue,
-          author,
-        );
+        await informationModalAssertion.assertFields({
+          createdDate: currentDate,
+          author: author,
+        });
         await informationModal.cancelButton.click();
       },
     );
@@ -675,35 +622,10 @@ dialTest(
         await chatHeaderDropdownMenu.selectMenuOption(MenuOptions.info, {
           triggeredHttpMethod: 'GET',
         });
-        await baseAssertion.assertElementState(informationModal, 'visible');
-        await baseAssertion.assertElementText(
-          informationModal.title,
-          ExpectedConstants.informationModalTitle,
-        );
-        await baseAssertion.assertElementState(
-          informationModal.lastUpdatedLabel,
-          'hidden',
-        );
-        await baseAssertion.assertElementText(
-          informationModal.createdDateLabel,
-          ExpectedConstants.informationModalCreatedDateLabel,
-        );
-        await baseAssertion.assertElementText(
-          informationModal.authorLabel,
-          ExpectedConstants.informationModalAuthorLabel,
-        );
-        await baseAssertion.assertElementState(
-          informationModal.lastUpdatedValue,
-          'hidden',
-        );
-        await baseAssertion.assertElementText(
-          informationModal.createdDateValue,
-          currentDate,
-        );
-        await baseAssertion.assertElementText(
-          informationModal.authorValue,
-          author,
-        );
+        await informationModalAssertion.assertFields({
+          createdDate: currentDate,
+          author: author,
+        });
         await informationModal.cancelButton.click();
       },
     );
@@ -719,31 +641,10 @@ dialTest(
         });
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.info);
-        await baseAssertion.assertElementState(informationModal, 'visible');
-        await baseAssertion.assertElementText(
-          informationModal.lastUpdatedLabel,
-          ExpectedConstants.informationModalLastUpdatedLabel,
-        );
-        await baseAssertion.assertElementText(
-          informationModal.createdDateLabel,
-          ExpectedConstants.informationModalCreatedDateLabel,
-        );
-        await baseAssertion.assertElementState(
-          informationModal.authorLabel,
-          'hidden',
-        );
-        await baseAssertion.assertElementText(
-          informationModal.lastUpdatedValue,
-          currentDate,
-        );
-        await baseAssertion.assertElementText(
-          informationModal.createdDateValue,
-          currentDate,
-        );
-        await baseAssertion.assertElementState(
-          informationModal.authorValue,
-          'hidden',
-        );
+        await informationModalAssertion.assertFields({
+          createdDate: currentDate,
+          lastUpdatedDate: currentDate,
+        });
       },
     );
   },

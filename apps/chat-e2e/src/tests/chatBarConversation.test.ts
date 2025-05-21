@@ -361,6 +361,7 @@ dialTest(
     localStorageManager,
     conversationDropdownMenu,
     informationModal,
+    informationModalAssertion,
     conversationDropdownMenuAssertion,
     baseAssertion,
   }) => {
@@ -409,27 +410,10 @@ dialTest(
         await conversationDropdownMenu.selectMenuOption(MenuOptions.info, {
           triggeredHttpMethod: 'GET',
         });
-        await baseAssertion.assertElementState(informationModal, 'visible');
-        await baseAssertion.assertElementText(
-          informationModal.title,
-          ExpectedConstants.informationModalTitle,
-        );
-        await baseAssertion.assertElementText(
-          informationModal.lastUpdatedLabel,
-          ExpectedConstants.informationModalLastUpdatedLabel,
-        );
-        await baseAssertion.assertElementText(
-          informationModal.createdDateLabel,
-          ExpectedConstants.informationModalCreatedDateLabel,
-        );
-        await baseAssertion.assertElementText(
-          informationModal.lastUpdatedValue,
-          currentDate,
-        );
-        await baseAssertion.assertElementText(
-          informationModal.createdDateValue,
-          currentDate,
-        );
+        await informationModalAssertion.assertFields({
+          createdDate: currentDate,
+          lastUpdatedDate: currentDate,
+        });
         await informationModal.cancelButton.click();
       },
     );

@@ -1,6 +1,5 @@
 // eslint-disable-next-line @nx/enforce-module-boundaries
-import pkg from '../../../package.json';
-
+import pkg from '@/../../package.json';
 import { OTLPLogExporter as OTLPLogExporterHTTP } from '@opentelemetry/exporter-logs-otlp-http';
 import { OTLPMetricExporter as OTLPMetricExporterHTTP } from '@opentelemetry/exporter-metrics-otlp-http';
 import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';

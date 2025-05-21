@@ -18,10 +18,10 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
-import ContextMenu from '@/src/components/Common/ContextMenu';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { ContextMenu } from '@/src/components/Common/ContextMenu';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import SearchFilterRenderer from './SearchFilterRenderer';
+import { SearchFilterRenderer } from './SearchFilterRenderer';
 
 import { Feature } from '@epam/ai-dial-shared';
 
@@ -31,7 +31,7 @@ interface Props {
   featureType: FeatureType;
 }
 
-export default function SearchFiltersView({
+export function SearchFiltersView({
   onSearchFiltersChanged,
   searchFilters,
   featureType,

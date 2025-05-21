@@ -49,7 +49,6 @@ import {
 import { getFileRootId } from '@/src/utils/app/id';
 import {
   cleanData,
-  exportConversation,
   exportConversations,
   exportPrompt,
   exportPrompts,
@@ -58,6 +57,7 @@ import {
   getPromptActions,
   getToastAction,
   isPromptsFormat,
+  triggerExportConversation,
   updateMessageAttachments,
 } from '@/src/utils/app/import-export';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
@@ -74,7 +74,6 @@ import { Conversation } from '@/src/types/chat';
 import { FeatureType, ReplaceOptions } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { HTTPMethod } from '@/src/types/http';
-import { LatestExportFormat } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 import { AppAction, AppEpic } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
@@ -102,7 +101,11 @@ import {
 import { errorsMessages } from '@/src/constants/errors';
 import { successMessages } from '@/src/constants/successMessages';
 
-import { Message, UploadStatus } from '@epam/ai-dial-shared';
+import {
+  LatestExportFormat,
+  Message,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
 
@@ -131,7 +134,7 @@ const exportConversationEpic: AppEpic = (action$, state$) =>
       const appName = SettingsSelectors.selectAppName(state$.value);
 
       if (!withAttachments) {
-        exportConversation(conversation, parentFolders, appName);
+        triggerExportConversation(conversation, parentFolders, appName);
 
         return of(ImportExportActions.exportConversationSuccess());
       }

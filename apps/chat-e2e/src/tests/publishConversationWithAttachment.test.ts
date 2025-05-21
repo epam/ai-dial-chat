@@ -14,7 +14,13 @@ import {
   MockedChatApiResponseBodies,
 } from '@/src/testData';
 import { FileModalSection } from '@/src/ui/webElements';
-import { FileUtil, GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
+import {
+  DateUtil,
+  FileUtil,
+  GeneratorUtil,
+  ItemUtil,
+  ModelsUtil,
+} from '@/src/utils';
 import { expect } from '@playwright/test';
 
 let modelWithInputAttachments: DialAIEntityModel;
@@ -73,6 +79,7 @@ dialAdminTest(
     setTestIds,
     localStorageManager,
     adminLocalStorageManager,
+    informationModalAssertion,
   }) => {
     dialAdminTest.slow();
     setTestIds(
@@ -335,17 +342,17 @@ dialAdminTest(
     await dialAdminTest.step(
       'Open conversation dropdown menu, select "Info" option and verify modal data',
       async () => {
+        const currentDate = DateUtil.getCurrentLocalDate();
         await organizationConversations.openEntityDropdownMenu(
           conversation.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.info, {
           triggeredHttpMethod: 'GET',
         });
-        await baseAssertion.assertElementState(informationModal, 'visible');
-        await baseAssertion.assertElementText(
-          informationModal.authorValue,
-          author,
-        );
+        await informationModalAssertion.assertFields({
+          createdDate: currentDate,
+          author: author,
+        });
         await informationModal.cancelButton.click();
       },
     );

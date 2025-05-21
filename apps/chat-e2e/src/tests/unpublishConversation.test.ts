@@ -10,7 +10,7 @@ import {
 } from '@/src/testData';
 import { PublicationProps } from '@/src/testData/api';
 import { ThemeColorAttributes } from '@/src/ui/domData';
-import { DateUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { DateUtil, GeneratorUtil, ModelsUtil, UserUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -40,6 +40,7 @@ dialAdminTest(
       adminApproveRequiredConversations,
       adminApproveRequiredConversationDropdownMenu,
       adminInformationModal,
+      adminInformationModalAssertion,
       adminPublishingApprovalModal,
       adminChatMessagesAssertion,
       adminPublicationReviewControl,
@@ -70,9 +71,7 @@ dialAdminTest(
       ThemeColorAttributes.textError,
     );
     const currentDate = DateUtil.getCurrentLocalDate();
-    const username =
-      process.env.E2E_USERNAME!.split(',')[testInfo.parallelIndex];
-    const author = username.substring(0, username.indexOf('@'));
+    const author = UserUtil.getE2EUsername(testInfo.parallelIndex);
 
     await dialTest.step(
       'Create and approve single conversation publishing',
@@ -224,38 +223,10 @@ dialAdminTest(
           MenuOptions.info,
           { triggeredHttpMethod: 'GET' },
         );
-        await baseAssertion.assertElementState(
-          adminInformationModal,
-          'visible',
-        );
-        await baseAssertion.assertElementText(
-          adminInformationModal.title,
-          ExpectedConstants.informationModalTitle,
-        );
-        await baseAssertion.assertElementState(
-          adminInformationModal.lastUpdatedLabel,
-          'hidden',
-        );
-        await baseAssertion.assertElementText(
-          adminInformationModal.createdDateLabel,
-          ExpectedConstants.informationModalCreatedDateLabel,
-        );
-        await baseAssertion.assertElementText(
-          adminInformationModal.authorLabel,
-          ExpectedConstants.informationModalAuthorLabel,
-        );
-        await baseAssertion.assertElementState(
-          adminInformationModal.lastUpdatedValue,
-          'hidden',
-        );
-        await baseAssertion.assertElementText(
-          adminInformationModal.createdDateValue,
-          currentDate,
-        );
-        await baseAssertion.assertElementText(
-          adminInformationModal.authorValue,
-          author,
-        );
+        await adminInformationModalAssertion.assertFields({
+          createdDate: currentDate,
+          author: author,
+        });
         await adminInformationModal.cancelButton.click();
       },
     );
