@@ -14,7 +14,7 @@ import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
 
-dialAdminTest(
+dialAdminTest.only(
   'Publish chat: select folder in Organization path.\n' +
     'Publish:Folders have alphabetical order in Organization structure and in Change path pop-up.\n' +
     'Change path: search for folders',

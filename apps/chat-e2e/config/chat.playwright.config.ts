@@ -35,7 +35,7 @@ export default defineConfig({
     actionTimeout: 20000,
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: process.env.E2E_HOST ?? 'http://localhost:3000',
-    video: 'retry-with-video',
+    video: 'on',
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'retry-with-trace',
     screenshot: 'only-on-failure',
