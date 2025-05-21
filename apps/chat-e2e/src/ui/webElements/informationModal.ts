@@ -10,18 +10,24 @@ export class InformationModal extends BaseElement {
   public title = this.getChildElementBySelector(
     InformationModalSelectors.title,
   );
-  public lastUpdatedLabel = this.getChildElementBySelector(
+  public lastUpdatedContainer = this.getChildElementBySelector(
     InformationModalSelectors.lastUpdatedContainer,
-  ).getChildElementBySelector(InformationModalSelectors.lastUpdatedLabel);
-  public lastUpdatedValue = this.getChildElementBySelector(
-    InformationModalSelectors.lastUpdatedContainer,
-  ).getChildElementBySelector(InformationModalSelectors.lastUpdatedValue);
-  public createdDateLabel = this.getChildElementBySelector(
+  );
+  public lastUpdatedLabel = this.lastUpdatedContainer.getChildElementBySelector(
+    InformationModalSelectors.lastUpdatedLabel,
+  );
+  public lastUpdatedValue = this.lastUpdatedContainer.getChildElementBySelector(
+    InformationModalSelectors.lastUpdatedValue,
+  );
+  public createdDateContainer = this.getChildElementBySelector(
     InformationModalSelectors.createdDateContainer,
-  ).getChildElementBySelector(InformationModalSelectors.createdDateLabel);
-  public createdDateValue = this.getChildElementBySelector(
-    InformationModalSelectors.createdDateContainer,
-  ).getChildElementBySelector(InformationModalSelectors.createdDateValue);
+  );
+  public createdDateLabel = this.createdDateContainer.getChildElementBySelector(
+    InformationModalSelectors.createdDateLabel,
+  );
+  public createdDateValue = this.createdDateContainer.getChildElementBySelector(
+    InformationModalSelectors.createdDateValue,
+  );
   public authorLabel = this.getChildElementBySelector(
     InformationModalSelectors.authorContainer,
   ).getChildElementBySelector(InformationModalSelectors.authorLabel);

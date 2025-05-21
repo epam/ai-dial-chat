@@ -24,8 +24,7 @@ dialTest(
     localStorageManager,
     conversationAssertion,
     chatMessagesAssertion,
-    baseAssertion,
-    informationModal,
+    informationModalAssertion,
   }) => {
     setTestIds('EPMRTC-3000', 'EPMRTC-3056', 'EPMRTC-6103');
     let conversation: Conversation;
@@ -82,35 +81,10 @@ dialTest(
           ExpectedConstants.entityWithIndexTitle(conversation.name, 1),
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.info);
-        await baseAssertion.assertElementState(informationModal, 'visible');
-        await baseAssertion.assertElementText(
-          informationModal.title,
-          ExpectedConstants.informationModalTitle,
-        );
-        await baseAssertion.assertElementText(
-          informationModal.lastUpdatedLabel,
-          ExpectedConstants.informationModalLastUpdatedLabel,
-        );
-        await baseAssertion.assertElementText(
-          informationModal.createdDateLabel,
-          ExpectedConstants.informationModalCreatedDateLabel,
-        );
-        await baseAssertion.assertElementState(
-          informationModal.authorLabel,
-          'hidden',
-        );
-        await baseAssertion.assertElementText(
-          informationModal.lastUpdatedValue,
-          currentDate,
-        );
-        await baseAssertion.assertElementText(
-          informationModal.createdDateValue,
-          currentDate,
-        );
-        await baseAssertion.assertElementState(
-          informationModal.authorValue,
-          'hidden',
-        );
+        await informationModalAssertion.assertFields({
+          createdDate: currentDate,
+          lastUpdatedDate: currentDate,
+        });
       },
     );
   },

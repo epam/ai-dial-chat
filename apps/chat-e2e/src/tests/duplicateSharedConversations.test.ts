@@ -4,7 +4,6 @@ import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialTest from '@/src/core/dialFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
-  ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
   MenuOptions,
@@ -33,6 +32,7 @@ dialSharedWithMeTest(
     additionalShareUserConversations,
     additionalShareUserConversationDropdownMenu,
     additionalShareUserInformationModal,
+    additionalShareUserInformationModalAssertion,
     additionalShareUserSharedWithMeConversations,
     additionalShareUserSharedWithMeConversationDropdownMenu,
     additionalShareUserChatMessages,
@@ -87,34 +87,10 @@ dialSharedWithMeTest(
         await additionalShareUserConversationDropdownMenu.selectMenuOption(
           MenuOptions.info,
         );
-        await baseAssertion.assertElementState(
-          additionalShareUserInformationModal,
-          'visible',
-        );
-        await baseAssertion.assertElementText(
-          additionalShareUserInformationModal.lastUpdatedLabel,
-          ExpectedConstants.informationModalLastUpdatedLabel,
-        );
-        await baseAssertion.assertElementText(
-          additionalShareUserInformationModal.createdDateLabel,
-          ExpectedConstants.informationModalCreatedDateLabel,
-        );
-        await baseAssertion.assertElementState(
-          additionalShareUserInformationModal.authorLabel,
-          'hidden',
-        );
-        await baseAssertion.assertElementText(
-          additionalShareUserInformationModal.lastUpdatedValue,
-          currentDate,
-        );
-        await baseAssertion.assertElementText(
-          additionalShareUserInformationModal.createdDateValue,
-          currentDate,
-        );
-        await baseAssertion.assertElementState(
-          additionalShareUserInformationModal.authorValue,
-          'hidden',
-        );
+        await additionalShareUserInformationModalAssertion.assertFields({
+          createdDate: currentDate,
+          lastUpdatedDate: currentDate,
+        });
         await additionalShareUserInformationModal.cancelButton.click();
       },
     );
