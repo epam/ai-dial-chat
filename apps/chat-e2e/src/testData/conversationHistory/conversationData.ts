@@ -70,7 +70,7 @@ export class ConversationData extends FolderData {
       conversationName = name;
       conversationId = `${modelToUse.id}${ItemUtil.entityIdSeparator}${name}`;
     } else {
-      conversationName = GeneratorUtil.randomString(10);
+      conversationName = GeneratorUtil.randomConversationName();
       conversationId = `${modelToUse.id}${ItemUtil.entityIdSeparator}${conversationName}`;
     }
     return this.conversationBuilder
