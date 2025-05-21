@@ -10,7 +10,7 @@ import {
   PublishPath,
 } from '@/src/testData';
 import { UploadDownloadData } from '@/src/ui/pages';
-import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { DateUtil, GeneratorUtil, ModelsUtil, UserUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
@@ -22,6 +22,7 @@ dialAdminTest(
     'Publication request name can not be blank.\n' +
     'File section displayed when no files in request.\n' +
     'Publish admin: review chat.\n' +
+    'Metadata for chat inside publication request in Approve required section.\n' +
     'Admin area: Publish request details.\n' +
     'Context menu for approve required section ( not playback mode)' +
     'Publish admin: Approve singe chat.\n' +
@@ -29,43 +30,49 @@ dialAdminTest(
     'Publish chat: context menu options available for published chats.\n' +
     'Organization section with chats stay when Delete all conversations button click.\n' +
     'Organization section is not exported when export  all conversations',
-  async ({
-    dialHomePage,
-    conversationData,
-    dataInjector,
-    conversations,
-    organizationConversations,
-    conversationDropdownMenu,
-    publishingRequestModal,
-    conversationsToPublishTree,
-    publishingRequestModalAssertion,
-    iconApiHelper,
-    tooltipAssertion,
-    adminDialHomePage,
-    adminApproveRequiredConversations,
-    chatBar,
-    chat,
-    confirmationDialog,
-    adminPublishingApprovalModal,
-    adminPublicationReviewControl,
-    organizationConversationAssertion,
-    adminApproveRequiredConversationsAssertion,
-    adminOrganizationConversationAssertion,
-    adminPublishingApprovalModalAssertion,
-    adminConversationToApproveAssertion,
-    conversationDropdownMenuAssertion,
-    toastAssertion,
-    downloadAssertion,
-    adminTooltip,
-    adminChatHeaderAssertion,
-    adminChatMessagesAssertion,
-    adminApproveRequiredConversationDropdownMenuAssertion,
-    adminTooltipAssertion,
-    baseAssertion,
-    setTestIds,
-    localStorageManager,
-    adminLocalStorageManager,
-  }) => {
+  async (
+    {
+      dialHomePage,
+      conversationData,
+      dataInjector,
+      conversations,
+      organizationConversations,
+      conversationDropdownMenu,
+      publishingRequestModal,
+      conversationsToPublishTree,
+      publishingRequestModalAssertion,
+      iconApiHelper,
+      tooltipAssertion,
+      adminDialHomePage,
+      adminApproveRequiredConversations,
+      chatBar,
+      chat,
+      confirmationDialog,
+      adminPublishingApprovalModal,
+      adminPublicationReviewControl,
+      adminApproveRequiredConversationDropdownMenu,
+      adminInformationModal,
+      adminInformationModalAssertion,
+      organizationConversationAssertion,
+      adminApproveRequiredConversationsAssertion,
+      adminOrganizationConversationAssertion,
+      adminPublishingApprovalModalAssertion,
+      adminConversationToApproveAssertion,
+      conversationDropdownMenuAssertion,
+      toastAssertion,
+      downloadAssertion,
+      adminTooltip,
+      adminChatHeaderAssertion,
+      adminChatMessagesAssertion,
+      adminApproveRequiredConversationDropdownMenuAssertion,
+      adminTooltipAssertion,
+      baseAssertion,
+      setTestIds,
+      localStorageManager,
+      adminLocalStorageManager,
+    },
+    testInfo,
+  ) => {
     dialAdminTest.slow();
     setTestIds(
       'EPMRTC-3270',
@@ -74,6 +81,7 @@ dialAdminTest(
       'EPMRTC-3578',
       'EPMRTC-3928',
       'EPMRTC-3228',
+      'EPMRTC-5558',
       'EPMRTC-4189',
       'EPMRTC-3503',
       'EPMRTC-3224',
@@ -91,6 +99,8 @@ dialAdminTest(
       request: PublicationRequestModel;
       response: Publication;
     };
+    const currentDate = DateUtil.getCurrentLocalDate();
+    const author = UserUtil.getE2EUsername(testInfo.parallelIndex);
 
     await dialTest.step('Prepare a new conversation', async () => {
       conversation = conversationData.prepareDefaultConversation();
@@ -210,6 +220,22 @@ dialAdminTest(
             MenuOptions.info,
           ],
         );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Select "Info" option and verify modal data',
+      async () => {
+        await adminApproveRequiredConversationDropdownMenu.selectMenuOption(
+          MenuOptions.info,
+          { triggeredHttpMethod: 'GET' },
+        );
+        await adminInformationModalAssertion.assertFields({
+          createdDate: currentDate,
+          lastUpdatedDate: currentDate,
+          author: author,
+        });
+        await adminInformationModal.cancelButton.click();
       },
     );
 
@@ -347,7 +373,7 @@ dialAdminTest(
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
         await publishingRequestModal.requestName.fillInInput(requestName);
         await conversationsToPublishTree
-          .getEntityVersion(conversation.name)
+          .getEntityVersionInput(conversation.name)
           .fill(ExpectedConstants.defaultAppVersion);
         await publishingRequestModal.sendRequestButton.click();
         await toastAssertion.assertToastIsVisible();
@@ -505,6 +531,120 @@ dialAdminTest(
           [conversations[requestIndex].name],
           ExpectedMessages.conversationsToCompareOptionsValid,
         );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Metadata for chat from Organization section.\n' +
+    'Metadata for chat with several versions from Organization section.\n' +
+    'Metadata for chat duplicated from chat from Organization',
+  async ({
+    conversationData,
+    adminUserItemApiHelper,
+    localStorageManager,
+    dialHomePage,
+    conversations,
+    organizationConversations,
+    conversationDropdownMenu,
+    chatHeader,
+    chatHeaderDropdownMenu,
+    chatHeaderVersionDropdownMenu,
+    informationModal,
+    informationModalAssertion,
+    setTestIds,
+    adminPublicationApiHelper,
+    publishRequestBuilder,
+  }) => {
+    setTestIds('EPMRTC-5555', 'EPMRTC-5557', 'EPMRTC-6100');
+    let conversation: Conversation;
+    const firstVersion = ExpectedConstants.defaultAppVersion;
+    const secondVersion = '0.0.2';
+    const currentDate = DateUtil.getCurrentLocalDate();
+    const author = GeneratorUtil.randomString(10);
+
+    await dialTest.step(
+      'Publish a conversation with two versions',
+      async () => {
+        conversation = conversationData.prepareDefaultConversation();
+        await adminUserItemApiHelper.createConversations([conversation]);
+
+        for (const version of [firstVersion, secondVersion]) {
+          const publishRequest = publishRequestBuilder
+            .withName(GeneratorUtil.randomPublicationRequestName())
+            .withDisplayAuthor(author)
+            .withConversationResource(
+              conversation,
+              PublishActions.ADD_IF_ABSENT,
+              version,
+            )
+            .build();
+          const publication =
+            await adminPublicationApiHelper.createPublishRequest(
+              publishRequest,
+            );
+          publicationsToUnpublish.push(publication);
+          await adminPublicationApiHelper.approveRequest(publication);
+        }
+        await localStorageManager.setShowSideBarPanels();
+      },
+    );
+
+    await dialTest.step(
+      'Select "Info" option for published conversation from dropdown menu and verify modal data',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await organizationConversations.openEntityDropdownMenu(
+          conversation.name,
+        );
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.info, {
+          triggeredHttpMethod: 'GET',
+        });
+        await informationModalAssertion.assertFields({
+          createdDate: currentDate,
+          author: author,
+        });
+        await informationModal.cancelButton.click();
+      },
+    );
+
+    await dialTest.step(
+      'Select first conversation version, select "Info" option from header dropdown menu and verify modal data',
+      async () => {
+        await organizationConversations.selectConversation(conversation.name);
+        await chatHeader.version.click();
+        await chatHeaderVersionDropdownMenu.selectMenuOption(firstVersion, {
+          triggeredHttpMethod: 'GET',
+        });
+        await chatHeader.dotsMenu.click();
+        await chatHeaderDropdownMenu.selectMenuOption(MenuOptions.info, {
+          triggeredHttpMethod: 'GET',
+        });
+        await informationModalAssertion.assertFields({
+          createdDate: currentDate,
+          author: author,
+        });
+        await informationModal.cancelButton.click();
+      },
+    );
+
+    await dialTest.step(
+      'Duplicate published conversation, select "Info" option from dropdown menu and verify modal data',
+      async () => {
+        await organizationConversations.openEntityDropdownMenu(
+          conversation.name,
+        );
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.duplicate, {
+          triggeredHttpMethod: 'POST',
+        });
+        await conversations.openEntityDropdownMenu(conversation.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.info);
+        await informationModalAssertion.assertFields({
+          createdDate: currentDate,
+          lastUpdatedDate: currentDate,
+        });
       },
     );
   },

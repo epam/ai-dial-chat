@@ -80,6 +80,7 @@ export const ChatHeaderSelectors = {
   leavePlayback: '[data-qa="cancel-playback-mode"]',
   deleteFromCompareIcon: '[data-qa="delete-from-compare"]',
   version: '[data-qa="version"]',
+  dotsMenu: '[data-qa="dots-menu"]',
 };
 
 export const CompareSelectors = {
