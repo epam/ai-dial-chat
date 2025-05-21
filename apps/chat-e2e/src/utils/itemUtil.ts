@@ -1,6 +1,5 @@
 import { Conversation } from '@/chat/types/chat';
 import { Prompt } from '@/chat/types/prompt';
-import { PublishedItem } from '@/chat/types/publication';
 import { BucketUtil } from '@/src/utils/bucketUtil';
 
 export class ItemUtil {
@@ -55,10 +54,12 @@ export class ItemUtil {
     return itemId.replace(itemId, encodedItemId);
   }
 
-  public static getPublishedItemRelativePath(item: PublishedItem) {
-    const pathParts = item.url.split('/');
+  // Helper function to extract relative path from URL
+  public static extractRelativePath(url: string): string {
+    const pathParts = url.split('/');
     let relativePath = '';
     const publicSegmentIndex = pathParts.indexOf('public');
+
     if (
       publicSegmentIndex !== -1 &&
       publicSegmentIndex < pathParts.length - 2
