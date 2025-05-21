@@ -19,7 +19,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/selectors';
 
 import { MonacoEditor } from '@/src/components/Common/MonacoEditor';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 interface DocumentFieldProps {
   url?: string;

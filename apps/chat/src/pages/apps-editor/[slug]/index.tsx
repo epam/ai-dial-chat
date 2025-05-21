@@ -21,11 +21,11 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
+import { getLayout } from '@/src/pages/_app';
+
 import { AppsEditorHeader } from '@/src/components/AppsEditor/AppsEditorHeader';
 import { GeneralInfoView } from '@/src/components/AppsEditor/GeneralInfoView/GeneralInfoView';
 import { Spinner } from '@/src/components/Common/Spinner';
-
-import { getLayout } from '../../_app';
 
 import { Feature, UploadStatus } from '@epam/ai-dial-shared';
 

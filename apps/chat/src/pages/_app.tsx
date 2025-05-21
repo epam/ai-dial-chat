@@ -12,8 +12,8 @@ import { getThemeIconUrl } from '@/src/utils/app/themes';
 
 import { SettingsState } from '@/src/store/settings/settings.types';
 
-import Layout from '../components/Layout';
-import { Toasts } from '../components/Toasts/Toasts';
+import { Layout } from '@/src/components/Layout';
+import { Toasts } from '@/src/components/Toasts/Toasts';
 
 import { HomeProps } from '.';
 

@@ -1,10 +1,10 @@
+import { InfoModal } from '@/src/components/Common/InfoModal';
+import { ReplaceConfirmationModal } from '@/src/components/Common/ReplaceConfirmationModal/ReplaceConfirmationModal';
 import { SystemDialogs } from '@/src/components/Common/SystemDialogs';
+import { UnshareDialog } from '@/src/components/Common/UnshareDialog';
+import { UserMobile } from '@/src/components/Header/User/UserMobile';
 import { PromptModal } from '@/src/components/Promptbar/components/PromptModal';
 
-import { InfoModal } from '../Common/InfoModal';
-import { ReplaceConfirmationModal } from '../Common/ReplaceConfirmationModal/ReplaceConfirmationModal';
-import { UnshareDialog } from '../Common/UnshareDialog';
-import { UserMobile } from '../Header/User/UserMobile';
 import { PromptVariablesForApplyDialog } from './ChatInput/PromptVariablesForApplyDialog';
 import { RenameConversationModal } from './RenameConversationModal';
 import { ShareModal } from './ShareModal';

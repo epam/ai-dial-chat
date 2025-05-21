@@ -9,9 +9,9 @@ import { ConfirmDialogValueTypes } from '@/src/types/common';
 import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
-import { ConfirmDialog } from '../Common/ConfirmDialog';
-import Tooltip from '../Common/Tooltip';
-import { FileManagerModal } from '../Files/FileManagerModal';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { Tooltip } from '@/src/components/Common/Tooltip';
+import { FileManagerModal } from '@/src/components/Files/FileManagerModal';
 
 interface CustomLogoSelectProps {
   localLogo?: string;
