@@ -32,9 +32,9 @@ dialSharedWithMeTest(
       additionalShareUserPrompts,
       additionalShareUserPromptDropdownMenu,
       additionalShareUserInformationModal,
+      additionalShareUserInformationModalAssertion,
       additionalShareUserSharedWithMePromptAssertion,
       additionalShareUserSharedPromptPreviewModalAssertion,
-      baseAssertion,
       setTestIds,
     },
     testInfo,
@@ -140,38 +140,11 @@ dialSharedWithMeTest(
           MenuOptions.info,
           { triggeredHttpMethod: 'GET' },
         );
-        await baseAssertion.assertElementState(
-          additionalShareUserInformationModal,
-          'visible',
-        );
-        await baseAssertion.assertElementText(
-          additionalShareUserInformationModal.title,
-          ExpectedConstants.informationModalTitle,
-        );
-        await baseAssertion.assertElementText(
-          additionalShareUserInformationModal.lastUpdatedLabel,
-          ExpectedConstants.informationModalLastUpdatedLabel,
-        );
-        await baseAssertion.assertElementText(
-          additionalShareUserInformationModal.createdDateLabel,
-          ExpectedConstants.informationModalCreatedDateLabel,
-        );
-        await baseAssertion.assertElementText(
-          additionalShareUserInformationModal.authorLabel,
-          ExpectedConstants.informationModalAuthorLabel,
-        );
-        await baseAssertion.assertElementText(
-          additionalShareUserInformationModal.lastUpdatedValue,
-          currentDate,
-        );
-        await baseAssertion.assertElementText(
-          additionalShareUserInformationModal.createdDateValue,
-          currentDate,
-        );
-        await baseAssertion.assertElementText(
-          additionalShareUserInformationModal.authorValue,
-          author,
-        );
+        await additionalShareUserInformationModalAssertion.assertFields({
+          createdDate: currentDate,
+          lastUpdatedDate: currentDate,
+          author: author,
+        });
         await additionalShareUserInformationModal.cancelButton.click();
       },
     );
@@ -190,38 +163,10 @@ dialSharedWithMeTest(
         await additionalShareUserPromptDropdownMenu.selectMenuOption(
           MenuOptions.info,
         );
-        await baseAssertion.assertElementState(
-          additionalShareUserInformationModal,
-          'visible',
-        );
-        await baseAssertion.assertElementText(
-          additionalShareUserInformationModal.title,
-          ExpectedConstants.informationModalTitle,
-        );
-        await baseAssertion.assertElementText(
-          additionalShareUserInformationModal.lastUpdatedLabel,
-          ExpectedConstants.informationModalLastUpdatedLabel,
-        );
-        await baseAssertion.assertElementText(
-          additionalShareUserInformationModal.createdDateLabel,
-          ExpectedConstants.informationModalCreatedDateLabel,
-        );
-        await baseAssertion.assertElementState(
-          additionalShareUserInformationModal.authorLabel,
-          'hidden',
-        );
-        await baseAssertion.assertElementText(
-          additionalShareUserInformationModal.lastUpdatedValue,
-          currentDate,
-        );
-        await baseAssertion.assertElementText(
-          additionalShareUserInformationModal.createdDateValue,
-          currentDate,
-        );
-        await baseAssertion.assertElementState(
-          additionalShareUserInformationModal.authorValue,
-          'hidden',
-        );
+        await additionalShareUserInformationModalAssertion.assertFields({
+          createdDate: currentDate,
+          lastUpdatedDate: currentDate,
+        });
       },
     );
   },
