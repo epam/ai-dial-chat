@@ -201,13 +201,13 @@ interface Props {
 }
 
 const shouldRenderSlide = (
-  currentSlideIndex: number,
+  slideIndex: number,
   activeSlide: number,
   prevActiveSlide: number,
 ) => {
   const minIndex = Math.min(activeSlide, prevActiveSlide);
   const maxIndex = Math.max(activeSlide, prevActiveSlide);
-  return currentSlideIndex >= minIndex - 1 && currentSlideIndex <= maxIndex + 1;
+  return slideIndex >= minIndex - 1 && slideIndex <= maxIndex + 1;
 };
 
 export const TalkToSlider = ({
