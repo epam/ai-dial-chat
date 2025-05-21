@@ -2,12 +2,12 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
-import { getApiHeaders } from '../../utils/server/get-headers';
 import { validateServerSession } from '@/src/utils/auth/session';
+import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { getSortedEntities } from '@/src/utils/server/get-sorted-entities';
 import { logger } from '@/src/utils/server/logger';
 
-import { RateBody } from '../../types/chat';
+import { RateBody } from '@/src/types/chat';
 import { HTTPMethod } from '@/src/types/http';
 
 import { DIAL_API_HOST } from '@/src/constants/default-server-settings';

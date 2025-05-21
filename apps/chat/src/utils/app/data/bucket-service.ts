@@ -1,8 +1,8 @@
 import { Observable } from 'rxjs';
 
-import { HTTPMethod } from '@/src/types/http';
+import { ApiUtils } from '@/src/utils/server/api';
 
-import { ApiUtils } from '../../server/api';
+import { HTTPMethod } from '@/src/types/http';
 
 export class BucketService {
   private static bucket: string;

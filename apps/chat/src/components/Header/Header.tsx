@@ -15,8 +15,9 @@ import {
   OVERLAY_HEADER_ICON_SIZE,
 } from '@/src/constants/default-ui-settings';
 
-import { ToggleSidebarButton } from '../Common/Buttons/ToggleSidebarButton';
-import { SettingDialog } from '../Settings/SettingDialog';
+import { ToggleSidebarButton } from '@/src/components/Common/Buttons/ToggleSidebarButton';
+import { SettingDialog } from '@/src/components/Settings/SettingDialog';
+
 import { BaseHeader } from './BaseHeader';
 import { CreateNewConversation } from './CreateNewEntity';
 import { User } from './User/User';
@@ -24,7 +25,7 @@ import { User } from './User/User';
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature } from '@epam/ai-dial-shared';
 
-const Header = Inversify.register('Header', () => {
+export const Header = Inversify.register('Header', () => {
   const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
   const showPromptbar = useAppSelector(UISelectors.selectShowPromptbar);
   const isUserSettingsOpen = useAppSelector(
@@ -162,4 +163,3 @@ const Header = Inversify.register('Header', () => {
     />
   );
 });
-export default Header;

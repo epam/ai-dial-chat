@@ -4,7 +4,8 @@ import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
 
-import { ConversationRow } from '../Common/ReplaceConfirmationModal/Components';
+import { ConversationRow } from '@/src/components/Common/ReplaceConfirmationModal/Components';
+
 import { PublicVersionSelector } from './Publish/PublicVersionSelector';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';

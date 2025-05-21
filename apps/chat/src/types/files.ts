@@ -4,7 +4,7 @@ import {
   BaseDialEntity,
 } from '@/src/types/common';
 
-import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '../constants/folders';
+import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
 import { FolderInterface } from './folder';
 

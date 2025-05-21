@@ -10,7 +10,7 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 interface NavigationButtonProps {
   onClick: () => void;

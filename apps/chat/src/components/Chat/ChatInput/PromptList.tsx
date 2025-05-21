@@ -7,7 +7,7 @@ import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
 import { Prompt } from '@/src/types/prompt';
 
-import { PublicVersionSelector } from '../Publish/PublicVersionSelector';
+import { PublicVersionSelector } from '@/src/components/Chat/Publish/PublicVersionSelector';
 
 interface ListItemProps {
   prompt: Prompt;

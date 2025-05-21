@@ -27,7 +27,7 @@ import { PromptsSelectors, UISelectors } from '@/src/store/selectors';
 import { PINNED_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
-import SidebarMenu from '@/src/components/Common/SidebarMenu';
+import { SidebarMenu } from '@/src/components/Common/SidebarMenu';
 import { Import } from '@/src/components/Settings/Import';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';

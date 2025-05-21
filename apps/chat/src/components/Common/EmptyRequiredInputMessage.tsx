@@ -11,7 +11,7 @@ interface Props {
   isShown?: boolean;
 }
 
-const EmptyRequiredInputMessage = ({
+export const EmptyRequiredInputMessage = ({
   text = 'Please fill in all required fields',
   useDisplay = false,
   className,
@@ -34,4 +34,3 @@ const EmptyRequiredInputMessage = ({
     </div>
   );
 };
-export default EmptyRequiredInputMessage;

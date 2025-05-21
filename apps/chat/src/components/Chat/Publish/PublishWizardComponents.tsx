@@ -1,7 +1,7 @@
 import { IconHelp } from '@tabler/icons-react';
 import { ReactNode } from 'react';
 
-import Tooltip from '../../Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 interface Props {
   labelDataQa: string;

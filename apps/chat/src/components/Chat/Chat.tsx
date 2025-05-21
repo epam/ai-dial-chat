@@ -55,12 +55,12 @@ import {
 
 import { Routes } from '@/src/constants/routes';
 
+import { CustomChatViewer } from '@/src/components/AppsEditor/Settings/Previews/CustomChatViewer';
 import { ChatDropArea } from '@/src/components/Chat/ChatDropArea';
 import { ChatStarters } from '@/src/components/Chat/ChatStarters';
+import { Loader } from '@/src/components/Common/Loader';
+import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 
-import { CustomChatViewer } from '../AppsEditor/Settings/Previews/CustomChatViewer';
-import Loader from '../Common/Loader';
-import { NotFoundEntity } from '../Common/NotFoundEntity';
 import { ChatCompareRotate } from './ChatCompareRotate';
 import { ChatCompareSelect } from './ChatCompareSelect';
 import { ChatHeader } from './ChatHeader/Header';

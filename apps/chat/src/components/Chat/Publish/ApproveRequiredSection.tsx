@@ -20,8 +20,8 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
-import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
-import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
+import { CaretIconComponent } from '@/src/components/Common/CaretIconComponent';
+import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 
 import {
   ConversationPublicationResources,

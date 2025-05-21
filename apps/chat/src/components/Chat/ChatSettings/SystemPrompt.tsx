@@ -18,13 +18,12 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
+import { PromptList } from '@/src/components/Chat/ChatInput/PromptList';
+import { PromptVariablesDialog } from '@/src/components/Chat/ChatInput/PromptVariablesDialog';
+import { AdjustedTextarea } from '@/src/components/Chat/ChatMessage/AdjustedTextarea';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { DisableOverlay } from '@/src/components/Common/DisableOverlay';
 import { Spinner } from '@/src/components/Common/Spinner';
-
-import { DisableOverlay } from '../../Common/DisableOverlay';
-import { PromptList } from '../ChatInput/PromptList';
-import { PromptVariablesDialog } from '../ChatInput/PromptVariablesDialog';
-import { AdjustedTextarea } from '../ChatMessage/AdjustedTextarea';
 
 interface Props {
   maxTokensLength: number;
