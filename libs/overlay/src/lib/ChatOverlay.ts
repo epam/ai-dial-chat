@@ -9,6 +9,10 @@ import {
   ExportConversationResponse,
   GetConversationsResponse,
   GetMessagesResponse,
+  GetSelectedConversationsResponse,
+  ImportConversationRequest,
+  ImportConversationResponse,
+  LatestExportConversationsFormat,
   OverlayEvents,
   OverlayRequest,
   OverlayRequests,
@@ -373,6 +377,16 @@ export class ChatOverlay {
   }
 
   /**
+   * Get all selected conversations
+   * @returns {OverlayConversation[]} all selected conversations visible in chat
+   */
+  public async getSelectedConversations(): Promise<GetSelectedConversationsResponse> {
+    return this.send(
+      OverlayRequests.getSelectedConversations,
+    ) as Promise<GetSelectedConversationsResponse>;
+  }
+
+  /**
    * Select conversation
    * @param {string} id - id of conversation to select
    * @returns Returns selected conversation info
@@ -447,7 +461,7 @@ export class ChatOverlay {
   /**
    * Export conversation
    * @param {string} id - id of conversation to export
-   * @returns Returns export conversation info
+   * @returns Returns exported conversation object
    */
   public async exportConversation(
     id: string,
@@ -460,6 +474,24 @@ export class ChatOverlay {
       OverlayRequests.exportConversation,
       request,
     ) as Promise<ExportConversationResponse>;
+  }
+
+  /**
+   * Import conversation
+   * @param {LatestExportConversationsFormat} importedConversation - conversation object to import
+   * @returns Returns imported conversation info
+   */
+  public async importConversation(
+    importedConversation: LatestExportConversationsFormat,
+  ): Promise<ImportConversationResponse> {
+    const request: ImportConversationRequest = {
+      importConversation: importedConversation,
+    };
+
+    return this.send(
+      OverlayRequests.importConversation,
+      request,
+    ) as Promise<ImportConversationResponse>;
   }
 
   /**

@@ -13,6 +13,7 @@ import {
   CreatePlaybackConversationRequest,
   DeleteConversationRequest,
   ExportConversationRequest,
+  ImportConversationRequest,
   OverlayEvents,
   OverlayRequests,
   RenameConversationRequest,
@@ -39,6 +40,10 @@ export const overlaySlice = createSlice({
       state,
     getConversations: (state, _action: PayloadAction<WithRequestId<object>>) =>
       state,
+    getSelectedConversations: (
+      state,
+      _action: PayloadAction<WithRequestId<object>>,
+    ) => state,
     setSystemPrompt: (
       state,
       { payload }: PayloadAction<WithRequestId<SetSystemPromptRequest>>,
@@ -72,6 +77,14 @@ export const overlaySlice = createSlice({
     exportConversation: (
       state,
       _action: PayloadAction<WithRequestId<ExportConversationRequest>>,
+    ) => state,
+    importConversation: (
+      state,
+      _action: PayloadAction<WithRequestId<ImportConversationRequest>>,
+    ) => state,
+    importConversationEffect: (
+      state,
+      _action: PayloadAction<WithRequestId<ImportConversationRequest>>,
     ) => state,
     createConversation: (
       state,
