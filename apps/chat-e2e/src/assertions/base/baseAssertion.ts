@@ -354,9 +354,7 @@ export class BaseAssertion {
     expectedValue: string,
     expectedMessage?: string,
   ) {
-    expect
-      .soft(actualValue.includes(expectedValue), expectedMessage ?? '')
-      .toBe(true);
+    expect.soft(actualValue, expectedMessage ?? '').toContain(expectedValue);
   }
 
   public assertStringNotIncludes(
@@ -365,8 +363,8 @@ export class BaseAssertion {
     expectedMessage?: string,
   ) {
     expect
-      .soft(actualValue.includes(expectedValue), expectedMessage ?? '')
-      .toBe(false);
+      .soft(actualValue, expectedMessage ?? '')
+      .not.toContain(expectedValue);
   }
 
   public async assertElementInnerText(

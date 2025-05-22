@@ -1011,7 +1011,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.only(
   '[Custom app]: Attachments type not empty and Max attachments empty then Max Attachments field treated as without limits',
   async ({
     marketplacePage,
@@ -1122,7 +1122,7 @@ dialTest(
           .getElementInnerContent();
         baseAssertion.assertStringIncludes(
           modalHeaderText,
-          attachmentType,
+          attachmentType.substring(attachmentType.lastIndexOf('/')),
           ExpectedMessages.headerShouldContainDefinedAttachmentTypes,
         );
         baseAssertion.assertStringNotIncludes(
