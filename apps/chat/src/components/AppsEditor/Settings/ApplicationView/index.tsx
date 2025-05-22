@@ -164,7 +164,9 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
 
   const handleSubmit = useCallback(
     (data: CustomApplicationFormData) => {
-      if (!isEqual(data, lastSubmittedValuesRef.current)) {
+      const hasChanged = !isEqual(data, lastSubmittedValuesRef.current);
+
+      if (hasChanged) {
         const applicationData = getCustomApplicationData(data);
         dispatch(
           ApplicationActions.update({
@@ -176,14 +178,15 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
           }),
         );
         lastSubmittedValuesRef.current = data;
-      } else if (shouldSaveApplication && exitAfterSave) {
-        dispatch(ApplicationActions.exitEditor({}));
-      } else {
-        dispatch(ApplicationActions.setShouldSaveApplication(false));
-        dispatch(ApplicationActions.setExitAfterSave(false));
       }
+      if (exitAfterSave) {
+        dispatch(ApplicationActions.exitEditor({}));
+      }
+
+      dispatch(ApplicationActions.setShouldSaveApplication(false));
+      dispatch(ApplicationActions.setExitAfterSave(false));
     },
-    [shouldSaveApplication, exitAfterSave, dispatch, oldApplication],
+    [exitAfterSave, dispatch, oldApplication],
   );
 
   const autoSaveHandler = useCallback(() => {

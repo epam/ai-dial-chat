@@ -162,17 +162,18 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
 
   const handleEdit = useCallback(
     (data: CodeAppFormData) => {
-      if (
-        oldApplication.reference &&
-        !isEqual(data, lastSubmittedValuesRef.current)
-      ) {
+      const hasChanged = !isEqual(data, lastSubmittedValuesRef.current);
+
+      if (oldApplication.reference && hasChanged) {
         const preparedData = getCodeAppData(data);
+
         const areNotTheSameAndShared =
           isShared &&
           preparedData.function?.sourceFolder !==
-            oldApplication.function?.sourceFolder;
+          oldApplication.function?.sourceFolder;
 
         preparedData.functionStatus = applicationStatus;
+
         const applicationData: CustomApplicationModel = {
           ...oldApplication,
           ...preparedData,
@@ -194,22 +195,18 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
             applicationData,
           }),
         );
+
         lastSubmittedValuesRef.current = data;
-      } else if (shouldSaveApplication && exitAfterSave) {
-        dispatch(ApplicationActions.exitEditor({}));
-      } else {
-        dispatch(ApplicationActions.setShouldSaveApplication(false));
-        dispatch(ApplicationActions.setExitAfterSave(false));
       }
+
+      if (exitAfterSave) {
+        dispatch(ApplicationActions.exitEditor({}));
+      }
+
+      dispatch(ApplicationActions.setShouldSaveApplication(false));
+      dispatch(ApplicationActions.setExitAfterSave(false));
     },
-    [
-      oldApplication,
-      shouldSaveApplication,
-      exitAfterSave,
-      applicationStatus,
-      isShared,
-      dispatch,
-    ],
+    [oldApplication, exitAfterSave, applicationStatus, isShared, dispatch],
   );
 
   register('sourceFiles', validators['sourceFiles']);
