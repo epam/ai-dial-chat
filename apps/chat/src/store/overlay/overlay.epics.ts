@@ -133,6 +133,13 @@ export const postMessageMapperEpic: AppEpic = (_, state$) =>
                 }),
               );
             }
+            case OverlayRequests.createLocalConversation: {
+              return of(
+                OverlayActions.createLocalConversation({
+                  requestId,
+                }),
+              );
+            }
             case OverlayRequests.selectConversation: {
               const options = payload as SelectConversationRequest;
 
@@ -372,22 +379,39 @@ const createConversationEpic: AppEpic = (action$) =>
     }),
   );
 
+const createLocalConversationEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(OverlayActions.createLocalConversation.type),
+    switchMap(({ payload: { requestId } }) => {
+      const actions: Observable<AppAction>[] = [];
+
+      return concat(
+        ...actions,
+        of(
+          ConversationsActions.createNewConversations({
+            names: [DEFAULT_CONVERSATION_NAME],
+            folderId: getConversationRootId(LOCAL_BUCKET),
+          }),
+        ),
+        of(
+          OverlayActions.createLocalConversationEffect({
+            requestId,
+          }),
+        ),
+      );
+    }),
+  );
+
 const createConversationEffectEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(OverlayActions.createConversationEffect.type),
-    switchMap(({ payload: { requestId, local } }) => {
+    switchMap(({ payload: { requestId } }) => {
       return action$.pipe(
-        ofType(
-          local
-            ? ConversationsActions.addConversations.type
-            : ConversationsActions.createNotLocalConversationsSuccess.type,
-        ),
+        ofType(ConversationsActions.createNotLocalConversationsSuccess.type),
         takeUntil(timer(10000)),
         filter(Boolean),
         mergeMap(({ payload }) => {
-          const conversations = Array.isArray(payload)
-            ? payload
-            : payload.conversations;
+          const conversations = payload;
           const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
 
           const conversation = conversations[0];
@@ -403,6 +427,46 @@ const createConversationEffectEpic: AppEpic = (action$, state$) =>
             of(
               OverlayActions.sendPMResponse({
                 type: OverlayRequests.createConversation,
+                requestParams: {
+                  requestId,
+                  hostDomain,
+                  payload: {
+                    conversation: resultConversation,
+                  } as CreateConversationResponse,
+                },
+              }),
+            ),
+          );
+        }),
+      );
+    }),
+  );
+
+const createLocalConversationEffectEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.createLocalConversationEffect.type),
+    switchMap(({ payload: { requestId } }) => {
+      return action$.pipe(
+        ofType(ConversationsActions.addConversations.type),
+        takeUntil(timer(10000)),
+        filter(Boolean),
+        mergeMap(({ payload }) => {
+          const conversations = payload.conversations;
+          const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+
+          const conversation = conversations[0];
+          const { bucket, parentPath } = splitEntityId(conversation.id);
+          const resultConversation = {
+            ...conversation,
+            bucket,
+            parentPath,
+          };
+
+          return concat(
+            of(UIActions.setScrollToEntityId(conversation.id)),
+            of(
+              OverlayActions.sendPMResponse({
+                type: OverlayRequests.createLocalConversation,
                 requestParams: {
                   requestId,
                   hostDomain,
@@ -1149,6 +1213,8 @@ export const OverlayEpics = combineEpics(
   getSelectedConversationsEpic,
   createConversationEpic,
   createConversationEffectEpic,
+  createLocalConversationEpic,
+  createLocalConversationEffectEpic,
   selectConversationEpic,
   deleteConversationEpic,
   createPlaybackConversationEpic,

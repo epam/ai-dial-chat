@@ -2,6 +2,7 @@ import {
   ChatOverlayOptions,
   CreateConversationRequest,
   CreateConversationResponse,
+  CreateLocalConversationResponse,
   CreatePlaybackConversationRequest,
   CreatePlaybackConversationResponse,
   DeferredRequest,
@@ -497,7 +498,6 @@ export class ChatOverlay {
   /**
    * Create conversation
    * @param {string} parentPath - path to create conversation in. If not defined or null conversation will be created in user Root
-   * @param {string} local - is conversation will be created in local bucket before any message appeared
    * @returns Returns created conversation info
    */
   public async createConversation(
@@ -513,6 +513,16 @@ export class ChatOverlay {
       OverlayRequests.createConversation,
       request,
     ) as Promise<CreateConversationResponse>;
+  }
+
+  /**
+   * Create local conversation which will be not visible before first assistant message
+   * @returns Returns created local conversation info
+   */
+  public async createLocalConversation(): Promise<CreateLocalConversationResponse> {
+    return this.send(
+      OverlayRequests.createLocalConversation,
+    ) as Promise<CreateLocalConversationResponse>;
   }
 
   /**
