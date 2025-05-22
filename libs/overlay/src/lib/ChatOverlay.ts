@@ -2,6 +2,7 @@ import {
   ChatOverlayOptions,
   CreateConversationRequest,
   CreateConversationResponse,
+  CreateLocalConversationResponse,
   CreatePlaybackConversationRequest,
   CreatePlaybackConversationResponse,
   DeferredRequest,
@@ -501,15 +502,27 @@ export class ChatOverlay {
    */
   public async createConversation(
     parentPath?: string | null,
+    local?: boolean | null,
   ): Promise<CreateConversationResponse> {
     const request: CreateConversationRequest = {
       parentPath,
+      local,
     };
 
     return this.send(
       OverlayRequests.createConversation,
       request,
     ) as Promise<CreateConversationResponse>;
+  }
+
+  /**
+   * Create local conversation which will be not visible before first assistant message
+   * @returns Returns created local conversation info
+   */
+  public async createLocalConversation(): Promise<CreateLocalConversationResponse> {
+    return this.send(
+      OverlayRequests.createLocalConversation,
+    ) as Promise<CreateLocalConversationResponse>;
   }
 
   /**
