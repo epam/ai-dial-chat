@@ -759,7 +759,6 @@ dialAdminTest(
         });
         await informationModalAssertion.assertFields({
           createdDate: currentDate,
-          lastUpdatedDate: currentDate,
           author: author,
         });
         await baseAssertion.assertElementState(informationModal, 'visible');
@@ -792,6 +791,7 @@ dialAdminTest(
     promptDropdownMenu,
     informationModal,
     informationModalAssertion,
+    adminInformationModalAssertion,
     setTestIds,
     adminPublicationApiHelper,
     publishRequestBuilder,
@@ -868,10 +868,9 @@ dialAdminTest(
         await adminPromptDropdownMenu.selectMenuOption(MenuOptions.info, {
           triggeredHttpMethod: 'GET',
         });
-        await informationModalAssertion.assertFields({
+        await adminInformationModalAssertion.assertFields({
           createdDate: currentDate,
           lastUpdatedDate: currentDate,
-          author: author,
         });
       },
     );
