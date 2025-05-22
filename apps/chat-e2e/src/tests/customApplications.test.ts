@@ -1123,12 +1123,12 @@ dialTest(
         baseAssertion.assertStringIncludes(
           modalHeaderText,
           attachmentType,
-          `Header should contain attachment type: ${attachmentType}`,
+          ExpectedMessages.headerShouldContainDefinedAttachmentTypes,
         );
         baseAssertion.assertStringNotIncludes(
           modalHeaderText,
           'Up to ',
-          'Header should not mention max number of attachments',
+          ExpectedMessages.headerMaxNumberOfAttacmentsNotMentioned,
         );
       },
     );
@@ -1155,7 +1155,7 @@ dialTest(
         baseAssertion.assertValue(
           attachedCount,
           pdfFilesToUpload.length,
-          `Expected ${pdfFilesToUpload.length} files to be attached`,
+          ExpectedMessages.allowedNumberOfAttachedFiles,
         );
       },
     );

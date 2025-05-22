@@ -379,6 +379,9 @@ export enum ExpectedMessages {
   FormFieldShouldRetainUpdatedValue = 'Chat Completion URL should retain updated value',
   dropdownMenuIsHidden = 'The dropdown menu is hidden',
   dropdownMenuIsVisible = 'The dropdown menu is visible',
+  allowedNumberOfAttachedFiles = 'Expected number of files to be attached is correct',
+  headerMaxNumberOfAttacmentsNotMentioned = 'Header should not mention max number of attachments',
+  headerShouldContainDefinedAttachmentTypes = 'Header should contain defined attachment types',
 }
 
 export enum PublishingExpectedMessages {
