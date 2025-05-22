@@ -41,7 +41,6 @@ interface ApplicationCardProps {
   isSelected: boolean;
   disabled: boolean;
   isUnavailableModel: boolean;
-  isMyWorkspace: boolean;
   onClick: (entity: DialAIEntityModel) => void;
   onSelectVersion: (entity: DialAIEntityModel) => void;
 }
@@ -57,7 +56,6 @@ export const TalkToCard = ({
   isSelected,
   disabled,
   isUnavailableModel,
-  isMyWorkspace,
   onClick,
   onSelectVersion,
 }: ApplicationCardProps) => {
