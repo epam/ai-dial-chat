@@ -497,13 +497,16 @@ export class ChatOverlay {
   /**
    * Create conversation
    * @param {string} parentPath - path to create conversation in. If not defined or null conversation will be created in user Root
+   * @param {string} local - is conversation will be created in local bucket before any message appeared
    * @returns Returns created conversation info
    */
   public async createConversation(
     parentPath?: string | null,
+    local?: boolean | null,
   ): Promise<CreateConversationResponse> {
     const request: CreateConversationRequest = {
       parentPath,
+      local,
     };
 
     return this.send(

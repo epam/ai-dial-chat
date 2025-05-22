@@ -65,6 +65,7 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
+import { LOCAL_BUCKET } from '@/src/constants/chat';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
 import {
@@ -128,6 +129,7 @@ export const postMessageMapperEpic: AppEpic = (_, state$) =>
                 OverlayActions.createConversation({
                   requestId,
                   parentPath: options.parentPath,
+                  local: options.local,
                 }),
               );
             }
@@ -333,9 +335,9 @@ const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
 const createConversationEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(OverlayActions.createConversation.type),
-    switchMap(({ payload: { requestId, parentPath } }) => {
+    switchMap(({ payload: { requestId, parentPath, local } }) => {
       const conversationFolderId = constructPath(
-        getConversationRootId(),
+        getConversationRootId(local ? LOCAL_BUCKET : undefined),
         parentPath,
       );
 
@@ -363,6 +365,7 @@ const createConversationEpic: AppEpic = (action$) =>
           OverlayActions.createConversationEffect({
             requestId,
             parentPath,
+            local,
           }),
         ),
       );
@@ -374,10 +377,10 @@ const createConversationEffectEpic: AppEpic = (action$, state$) =>
     ofType(OverlayActions.createConversationEffect.type),
     switchMap(({ payload: { requestId } }) => {
       return action$.pipe(
-        ofType(ConversationsActions.createNotLocalConversationsSuccess.type),
+        ofType(ConversationsActions.addConversations.type),
         takeUntil(timer(10000)),
         filter(Boolean),
-        mergeMap(({ payload: conversations }) => {
+        mergeMap(({ payload: { conversations } }) => {
           const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
 
           const conversation = conversations[0];

@@ -453,10 +453,11 @@ export class ChatOverlayManager {
   public async createConversation(
     overlayId: string,
     parentPath?: string | null,
+    local?: boolean | null,
   ) {
     const { overlay } = this.getOverlay(overlayId);
 
-    return overlay.createConversation(parentPath);
+    return overlay.createConversation(parentPath, local);
   }
 
   public async selectConversation(overlayId: string, conversationId: string) {
