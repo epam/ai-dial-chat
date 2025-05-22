@@ -29,7 +29,7 @@ import {
   DEFAULT_QUICK_APPS_MODEL,
 } from '@/src/constants/quick-apps';
 
-import { DynamicField } from '../../Common/Forms/DynamicFormFields';
+import { DynamicField } from '@/src/components/Common/Forms/DynamicFormFields';
 
 const getToolsetStr = (config: QuickAppConfig) => {
   try {

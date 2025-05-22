@@ -12,24 +12,25 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { getPromptRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
-import { PromptsHistory } from '@/src/types/import-export';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
+import {
+  ImportExportActions,
+  PromptsActions,
+  UIActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import { PromptsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { PINNED_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
-import SidebarMenu from '@/src/components/Common/SidebarMenu';
+import { SidebarMenu } from '@/src/components/Common/SidebarMenu';
 import { Import } from '@/src/components/Settings/Import';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
+import { ExportPromptsFormat } from '@epam/ai-dial-shared';
 
 export function PromptbarSettings() {
   const { t } = useTranslation(Translation.PromptBar);
@@ -99,7 +100,7 @@ export function PromptbarSettings() {
           const typedJson = promptsJSON as { content: unknown };
           dispatch(
             ImportExportActions.importPrompts({
-              promptsHistory: typedJson.content as PromptsHistory,
+              promptsHistory: typedJson.content as ExportPromptsFormat,
             }),
           );
         },

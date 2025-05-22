@@ -10,7 +10,7 @@ import {
   MockedChatApiResponseBodies,
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
-import { BucketUtil, ModelsUtil } from '@/src/utils';
+import { BucketUtil, DateUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 let defaultModel: DialAIEntityModel;
@@ -21,13 +21,18 @@ dialTest.beforeAll(async () => {
 
 dialSharedWithMeTest(
   'Shared with me. Duplicate chat from chat menu.\n' +
-    'Shared with me. Duplicated chat can be moved to new folder, renamed, model changed',
+    'Shared with me. Duplicated chat can be moved to new folder, renamed, model changed.\n' +
+    'Metadata for chat duplicated from chat from Shared with me',
   async ({
     conversationData,
     dataInjector,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     additionalShareUserDialHomePage,
+    additionalShareUserConversations,
+    additionalShareUserConversationDropdownMenu,
+    additionalShareUserInformationModal,
+    additionalShareUserInformationModalAssertion,
     additionalShareUserSharedWithMeConversations,
     additionalShareUserSharedWithMeConversationDropdownMenu,
     additionalShareUserChatMessages,
@@ -37,9 +42,10 @@ dialSharedWithMeTest(
     additionalShareUserLocalStorageManager,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-1845', 'EPMRTC-2768');
+    setTestIds('EPMRTC-1845', 'EPMRTC-2768', 'EPMRTC-6102');
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
+    const currentDate = DateUtil.getCurrentLocalDate();
 
     await dialSharedWithMeTest.step('Prepare shared conversation', async () => {
       conversation = conversationData.prepareDefaultConversation();
@@ -69,6 +75,23 @@ dialSharedWithMeTest(
           { name: conversation.name },
           'visible',
         );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Select "Info" option for duplicated conversation from dropdown menu and verify modal data',
+      async () => {
+        await additionalShareUserConversations.openEntityDropdownMenu(
+          conversation.name,
+        );
+        await additionalShareUserConversationDropdownMenu.selectMenuOption(
+          MenuOptions.info,
+        );
+        await additionalShareUserInformationModalAssertion.assertFields({
+          createdDate: currentDate,
+          lastUpdatedDate: currentDate,
+        });
+        await additionalShareUserInformationModal.cancelButton.click();
       },
     );
 

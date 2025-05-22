@@ -16,26 +16,25 @@ import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { ApplicationTypesSchemasActions } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
-import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.selectors';
+import {
+  ApplicationActions,
+  ApplicationTypesSchemasActions,
+  MarketplaceActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
-import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import {
+  ApplicationTypesSchemasSelectors,
+  MarketplaceSelectors,
+  SettingsSelectors,
+} from '@/src/store/selectors';
 
 import { MarketplaceTabs } from '@/src/constants/marketplace';
 
-import ContextMenu from '@/src/components/Common/ContextMenu';
+import { ContextMenu } from '@/src/components/Common/ContextMenu';
 
 import { ViewToggler } from './ViewToggler';
 
 import { Feature } from '@epam/ai-dial-shared';
-
-// const countLabel = {
-//   [MarketplaceTabs.HOME]: 'DIAL Marketplace',
-//   [MarketplaceTabs.MY_APPLICATIONS]: 'My workspace',
-// };
 
 interface AddAppButtonProps {
   menuItems: DisplayMenuItemProps[];

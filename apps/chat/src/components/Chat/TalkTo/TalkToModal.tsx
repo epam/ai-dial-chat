@@ -14,6 +14,7 @@ import {
   isReplayAsIsConversation,
   isReplayConversation,
 } from '@/src/utils/app/conversation';
+import { isSmallScreenOrTouchable } from '@/src/utils/app/mobile';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { PseudoModel } from '@/src/utils/server/api';
@@ -25,13 +26,14 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { CardType } from '@/src/types/talkTo';
 import { Translation } from '@/src/types/translation';
 
-import { ModelsActions } from '@/src/store/actions';
-import { AddonsSelectors } from '@/src/store/addons/addons.selectors';
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions, ModelsActions } from '@/src/store/actions';
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { WidgetsSelectors } from '@/src/store/models/widgets.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import {
+  AddonsSelectors,
+  ModelsSelectors,
+  SettingsSelectors,
+  WidgetsSelectors,
+} from '@/src/store/selectors';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import {
@@ -99,25 +101,26 @@ const TalkToModalView = ({
     WidgetsSelectors.selectWidgetsSchemaIds,
   );
 
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+
   const [searchTerm, setSearchTerm] = useState('');
 
   const isPlayback = isPlaybackConversation(conversation);
   const isReplay = isReplayConversation(conversation);
 
-  const displayedModels = useMemo(() => {
+  const sortedModels = useMemo(() => {
+    if (!isMyWorkspace) {
+      return allModels;
+    }
     const currentModel = modelsMap[conversation.model.id];
     const recentInstalledModels = recentModelIds
       .filter((id) => installedModelIdsSet.has(id) && modelsMap[id])
       .map((id) => modelsMap[id]) as DialAIEntityModel[];
-    const installedModels =
-      tab !== MarketplaceTabs.HOME
-        ? allModels.filter(
-            (model) =>
-              installedModelIdsSet.has(model.reference) &&
-              modelsMap[model.reference],
-          )
-        : allModels;
-    const sortedModels = [
+    const installedModels = allModels.filter(
+      (model) =>
+        installedModelIdsSet.has(model.reference) && modelsMap[model.reference],
+    );
+    return [
       ...(currentModel &&
       (installedModelIdsSet.has(currentModel.reference) || !isReplay)
         ? [currentModel]
@@ -125,6 +128,17 @@ const TalkToModalView = ({
       ...recentInstalledModels,
       ...installedModels,
     ];
+  }, [
+    allModels,
+    conversation.model.id,
+    installedModelIdsSet,
+    isMyWorkspace,
+    isReplay,
+    modelsMap,
+    recentModelIds,
+  ]);
+
+  const displayedModels = useMemo(() => {
     const filteredModels = sortedModels.filter(
       (entity) =>
         !widgetsSchemaIds.has(entity.applicationTypeSchemaId as string) &&
@@ -145,55 +159,55 @@ const TalkToModalView = ({
       return orderBy(entities, 'version', 'desc')[0];
     });
 
-    if (isPlayback) {
-      orderedModels.unshift({
-        id: PseudoModel.Playback,
-        name: t('Playback'),
-        reference: PseudoModel.Playback,
-        type: EntityType.Model,
-        isDefault: false,
-      });
-    } else if (isReplay) {
-      orderedModels.unshift({
-        id: REPLAY_AS_IS_MODEL,
-        name: t('Replay as is'),
-        description: t(
-          'This mode replicates user requests from the original conversation including settings set in each message.',
-        ),
-        reference: REPLAY_AS_IS_MODEL,
-        type: EntityType.Model,
-        isDefault: false,
-      });
-    } else if (!modelsMap[conversation.model.id]) {
-      orderedModels.unshift({
-        id: conversation.model.id,
-        name: conversation.model.id,
-        reference: conversation.model.id,
-        description: t('chat.error.incorrect-selected', {
-          context: EntityType.Model,
-        }),
-        type: EntityType.Model,
-        isDefault: false,
-      });
-    }
-    if (searchTerm.length > 0 && isMyWorkspace && orderedModels.length > 0) {
-      orderedModels.push(SuggestedCard);
+    if (isMyWorkspace) {
+      if (isPlayback) {
+        orderedModels.unshift({
+          id: PseudoModel.Playback,
+          name: t('Playback'),
+          reference: PseudoModel.Playback,
+          type: EntityType.Model,
+          isDefault: false,
+        });
+      } else if (isReplay) {
+        orderedModels.unshift({
+          id: REPLAY_AS_IS_MODEL,
+          name: t('Replay as is'),
+          description: t(
+            'This mode replicates user requests from the original conversation including settings set in each message.',
+          ),
+          reference: REPLAY_AS_IS_MODEL,
+          type: EntityType.Model,
+          isDefault: false,
+        });
+      } else if (!modelsMap[conversation.model.id]) {
+        orderedModels.unshift({
+          id: conversation.model.id,
+          name: conversation.model.id,
+          reference: conversation.model.id,
+          description: t('chat.error.incorrect-selected', {
+            context: EntityType.Model,
+          }),
+          type: EntityType.Model,
+          isDefault: false,
+        });
+      }
+
+      if (searchTerm.length > 0 && orderedModels.length > 0) {
+        orderedModels.push(SuggestedCard);
+      }
     }
 
     return orderedModels;
   }, [
-    isMyWorkspace,
-    allModels,
-    conversation.model.id,
-    installedModelIdsSet,
+    sortedModels,
     isPlayback,
     isReplay,
     modelsMap,
-    recentModelIds,
+    conversation.model.id,
     searchTerm,
-    t,
-    tab,
+    isMyWorkspace,
     widgetsSchemaIds,
+    t,
   ]);
 
   const handleSelectModel = useCallback(
@@ -276,7 +290,7 @@ const TalkToModalView = ({
             placeholder={t('Search')}
             className="input-form peer m-0 pl-[38px]"
             data-qa="search-agents"
-            autoFocus
+            autoFocus={isOverlay || !isSmallScreenOrTouchable()}
           />
         </div>
         <div className="flex gap-2">

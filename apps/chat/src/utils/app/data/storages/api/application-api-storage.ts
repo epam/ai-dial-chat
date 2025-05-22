@@ -1,5 +1,9 @@
 import { Observable, throwError } from 'rxjs';
 
+import {
+  convertApplicationFromApi,
+  convertApplicationToApi,
+} from '@/src/utils/app/application';
 import { constructPath } from '@/src/utils/app/file';
 import {
   ApiUtils,
@@ -19,10 +23,6 @@ import {
 import { ApiKeys, CoreApiKeys } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
 
-import {
-  convertApplicationFromApi,
-  convertApplicationToApi,
-} from '../../../application';
 import { ApiEntityStorage } from './api-entity-storage';
 
 import { Entity, MessageFormSchema } from '@epam/ai-dial-shared';

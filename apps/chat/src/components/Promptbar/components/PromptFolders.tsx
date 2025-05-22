@@ -26,14 +26,14 @@ import { PublicationFolderPayload } from '@/src/types/modal';
 import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
+import { PromptsActions, ShareActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
-import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { ShareActions } from '@/src/store/share/share.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  PromptsSelectors,
+  PublicationSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 import {
@@ -45,8 +45,8 @@ import {
 
 import { ApproveRequiredSection } from '@/src/components/Chat/Publish/ApproveRequiredSection';
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
-import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
-import Folder from '@/src/components/Folder/Folder';
+import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
+import { Folder } from '@/src/components/Folder/Folder';
 import { BetweenFoldersLine } from '@/src/components/Sidebar/BetweenFoldersLine';
 
 import { PromptComponent } from './Prompt';
@@ -338,7 +338,7 @@ const PromptFolderTemplate = ({
   );
 };
 
-const _PromptSection = ({
+const PromptSectionView = ({
   name,
   filters,
   hideIfEmpty = true,
@@ -466,7 +466,7 @@ const _PromptSection = ({
   );
 };
 
-export const PromptSection = memo(_PromptSection);
+export const PromptSection = memo(PromptSectionView);
 
 export function PromptFolders() {
   const isFilterEmpty = useAppSelector(

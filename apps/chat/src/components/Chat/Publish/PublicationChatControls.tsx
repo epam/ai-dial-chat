@@ -12,14 +12,16 @@ import { PromptInfo } from '@/src/types/prompt';
 import { ResourceToReview } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import {
+  ApplicationActions,
+  ConversationsActions,
+  PromptsActions,
+  PublicationActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { PublicationActions } from '@/src/store/publication/publication.reducers';
-import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
+import { PublicationSelectors } from '@/src/store/selectors';
 
-import { ScrollDownButton } from '../../Common/ScrollDownButton';
+import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
 

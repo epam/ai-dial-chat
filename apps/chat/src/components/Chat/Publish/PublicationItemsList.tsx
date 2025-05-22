@@ -16,20 +16,22 @@ import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
-import { PublicationActions } from '@/src/store/publication/publication.reducers';
-import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
+import {
+  ConversationsSelectors,
+  PromptsSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
 import { ApplicationPublishItems } from '@/src/components/Chat/Publish/ApplicationPublishItems';
-import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
+import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 import {
   ConversationRow,
   FilesRow,
   PromptsRow,
 } from '@/src/components/Common/ReplaceConfirmationModal/Components';
-import Folder from '@/src/components/Folder/Folder';
+import { Folder } from '@/src/components/Folder/Folder';
 
 import { PublicationItem } from './PublicationItem';
 

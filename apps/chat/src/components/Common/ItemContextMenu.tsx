@@ -32,9 +32,9 @@ import { ContextMenuProps, DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { SettingsSelectors } from '@/src/store/selectors';
 
-import ContextMenu from './ContextMenu';
+import { ContextMenu } from './ContextMenu';
 
 import InsertPromptIcon from '@/public/images/icons/insert-prompt.svg';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
@@ -69,7 +69,7 @@ interface ItemContextMenuProps {
   onShowInfo?: () => void;
 }
 
-export default function ItemContextMenu({
+export function ItemContextMenu({
   entity,
   featureType,
   isEmptyConversation,

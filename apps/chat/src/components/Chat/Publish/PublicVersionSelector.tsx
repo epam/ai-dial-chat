@@ -10,11 +10,11 @@ import { groupAllVersions } from '@/src/utils/app/common';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
+import { PublicationSelectors } from '@/src/store/selectors';
 
 import { stopBubbling } from '@/src/constants/chat';
 
-import { Menu, MenuItem } from '../../Common/DropdownMenu';
+import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
 interface Props {
   publicVersionGroupId: string;
@@ -125,6 +125,7 @@ export function PublicVersionSelector({
             btnClassNames,
             readonly && 'text-xs text-secondary',
           )}
+          data-qa="version"
         >
           {textBeforeSelector ? textBeforeSelector : t('v. ')}
           {currentVersionGroup.selectedVersion.version}

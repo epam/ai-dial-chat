@@ -8,12 +8,14 @@ interface Props {
   onCreateNewFolder: () => void;
   onSelectFolderClick: () => void;
   disableSelect?: boolean;
+  selectBtnText?: string;
 }
 
 export const SelectFolderFooter = ({
   onCreateNewFolder,
   onSelectFolderClick,
   disableSelect,
+  selectBtnText = 'Select folder',
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -35,7 +37,7 @@ export const SelectFolderFooter = ({
           data-qa="select-folder"
           disabled={disableSelect}
         >
-          {t('Select folder')}
+          {t(selectBtnText)}
         </button>
       </div>
     </div>

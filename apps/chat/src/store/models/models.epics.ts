@@ -35,18 +35,21 @@ import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel, InstalledModel } from '@/src/types/models';
 import { AppAction, AppEpic } from '@/src/types/store';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { SettingsActions } from '@/src/store/settings/settings.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import {
+  ApplicationActions,
+  MarketplaceActions,
+  ModelsActions,
+  PublicationActions,
+  SettingsActions,
+  UIActions,
+} from '@/src/store/actions';
+import {
+  AuthSelectors,
+  ModelsSelectors,
+  SettingsSelectors,
+} from '@/src/store/selectors';
 
 import { DeleteType } from '@/src/constants/marketplace';
-
-import { AuthSelectors } from '../auth/auth.selectors';
-import { MarketplaceActions } from '../marketplace/marketplace.reducers';
-import { PublicationActions } from '../publication/publication.reducers';
-import { ModelsActions } from './models.reducers';
-import { ModelsSelectors } from './models.selectors';
 
 import { Feature } from '@epam/ai-dial-shared';
 import uniqBy from 'lodash-es/uniqBy';
@@ -78,14 +81,14 @@ const initRecentModelsEpic: AppEpic = (action$, state$) =>
         })),
         switchMap(({ models, recentModelsIds, defaultRecentModelsIds }) => {
           const filteredRecentModels = recentModelsIds?.filter(
-            (resentModelId) =>
+            (resentModelId: string) =>
               models.some(
                 ({ reference, id }) =>
                   resentModelId === reference || resentModelId === id,
               ),
           );
           const filteredDefaultRecentModelsIds = defaultRecentModelsIds.filter(
-            (resentModelId) =>
+            (resentModelId: string) =>
               models.some(
                 ({ reference, id }) =>
                   resentModelId === reference || resentModelId === id,

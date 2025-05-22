@@ -5,10 +5,9 @@ import { useWindowResizeEvent } from '@/src/hooks/useWindowResizeEvent';
 import { isSmallScreen, isTabletScreen } from '@/src/utils/app/mobile';
 import { centralChatWidth, getNewSidebarWidth } from '@/src/utils/app/sidebar';
 
+import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { CENTRAL_CHAT_MIN_WIDTH } from '@/src/constants/chat';
 import {
@@ -16,8 +15,9 @@ import {
   OVERLAY_HEADER_ICON_SIZE,
 } from '@/src/constants/default-ui-settings';
 
-import { ToggleSidebarButton } from '../Common/Buttons/ToggleSidebarButtor';
-import { SettingDialog } from '../Settings/SettingDialog';
+import { ToggleSidebarButton } from '@/src/components/Common/Buttons/ToggleSidebarButton';
+import { SettingDialog } from '@/src/components/Settings/SettingDialog';
+
 import { BaseHeader } from './BaseHeader';
 import { CreateNewConversation } from './CreateNewEntity';
 import { User } from './User/User';
@@ -25,7 +25,7 @@ import { User } from './User/User';
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature } from '@epam/ai-dial-shared';
 
-const Header = Inversify.register('Header', () => {
+export const Header = Inversify.register('Header', () => {
   const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
   const showPromptbar = useAppSelector(UISelectors.selectShowPromptbar);
   const isUserSettingsOpen = useAppSelector(
@@ -163,4 +163,3 @@ const Header = Inversify.register('Header', () => {
     />
   );
 });
-export default Header;

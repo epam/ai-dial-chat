@@ -12,15 +12,14 @@ import { preprocessLaTeX } from '@/src/utils/app/latex';
 import { ScreenState } from '@/src/types/common';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
 import {
   modelCursorSign,
   modelCursorSignWithBackquote,
 } from '@/src/constants/chat';
 
-import BlinkingCursor from '@/src/components/Chat/BlinkingCursor';
+import { BlinkingCursor } from '@/src/components/Chat/BlinkingCursor';
 import { Table } from '@/src/components/Markdown/Table';
 
 import { CodeBlock } from './CodeBlock';
@@ -123,7 +122,7 @@ const rehypePlugins = [
   [rehypeKatex, { output: 'mathml', strict: false }],
 ] as PluggableList;
 
-const ChatMDComponent = memo(
+export const ChatMDComponent = memo(
   ({
     isShowResponseLoader,
     content,
@@ -159,5 +158,3 @@ const ChatMDComponent = memo(
   },
 );
 ChatMDComponent.displayName = 'ChatMDComponent';
-
-export default ChatMDComponent;

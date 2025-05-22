@@ -1,8 +1,6 @@
 import { RootState } from '@/src/types/store';
 
-import { AddonsState } from './addons.types';
-
-const rootSelector = (state: RootState): AddonsState => state.addons;
+const rootSelector = (state: RootState) => state.addons;
 
 const selectAddons = (state: RootState) => rootSelector(state).addons;
 

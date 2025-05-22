@@ -6,7 +6,11 @@ interface Props {
   dataQA?: string;
 }
 
-const SidebarActionButton = ({ handleClick, children, dataQA }: Props) => (
+export const SidebarActionButton = ({
+  handleClick,
+  children,
+  dataQA,
+}: Props) => (
   <button
     className="min-w-[20px] p-1 text-secondary"
     onClick={handleClick}
@@ -16,5 +20,3 @@ const SidebarActionButton = ({ handleClick, children, dataQA }: Props) => (
     {children}
   </button>
 );
-
-export default SidebarActionButton;

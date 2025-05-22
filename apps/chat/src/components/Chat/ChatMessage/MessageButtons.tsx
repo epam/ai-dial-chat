@@ -18,12 +18,14 @@ import { getMessageCustomContent } from '@/src/utils/server/chat';
 
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import {
+  ConversationsSelectors,
+  SettingsSelectors,
+} from '@/src/store/selectors';
 
 import { MenuItem } from '@/src/components/Common/DropdownMenu';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { LikeState, Message, Role } from '@epam/ai-dial-shared';
 

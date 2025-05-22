@@ -2,12 +2,11 @@ import { useCallback, useEffect } from 'react';
 
 import { useRouter } from 'next/router';
 
-import { WidgetsSelectors } from '../store/models/widgets.selectors';
 import { ApplicationActions } from '@/src/store/actions';
-import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ApplicationSelectors, WidgetsSelectors } from '@/src/store/selectors';
 
-import { Routes } from '../constants/routes';
+import { Routes } from '@/src/constants/routes';
 
 export const useWidgets = () => {
   const router = useRouter();

@@ -7,14 +7,14 @@ import { useResetSelectedWidget } from '@/src/hooks/useWidgets';
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { ModelsSelectors } from '@/src/store/selectors';
 
 import { Routes } from '@/src/constants/routes';
 
 import { getLayout } from '@/src/pages/_app';
 
 import { WidgetView } from '@/src/components/Chat/WidgetView';
-import Loader from '@/src/components/Common/Loader';
+import { Loader } from '@/src/components/Common/Loader';
 import { WidgetsHeader } from '@/src/components/WidgetsHeader';
 
 function SelectedWidgetPage() {
