@@ -123,9 +123,11 @@ export const ApplicationSettings: React.FC<Props> = ({
     setPreviewMode(mode);
   };
 
-  const handleHalfModeClick = () => {
+  const handleOpenPreview = () => {
     if (screenState > ScreenState.MD) {
       handlePreviewModeChange(PreviewMode.half);
+    } else {
+      handlePreviewModeChange(PreviewMode.full);
     }
   };
 
@@ -442,7 +444,7 @@ export const ApplicationSettings: React.FC<Props> = ({
         {isPreviewClosed && (
           <div
             className="flex h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-4 transition-all duration-300 ease-in-out hover:cursor-pointer max-md:hidden xl:pt-5"
-            onClick={handleHalfModeClick}
+            onClick={handleOpenPreview}
           >
             <button
               className="text-secondary hover:text-accent-primary"

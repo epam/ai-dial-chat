@@ -129,68 +129,62 @@ const SliderModelsGroup = memo(
     const maxChunksCountConfig = getSliderChunksConfig(screenState);
 
     return (
-      <section
-        key={modelsGroup.map((model) => model.reference).join('.')}
-        className="h-full min-w-full"
-        data-qa="agents-section"
+      <div
+        className="grid"
+        style={{
+          gridTemplateColumns: `repeat(${maxChunksCountConfig.cols}, minmax(0, 1fr))`,
+          gridTemplateRows: `repeat(${rowsCount}, ${maxChunksCountConfig.cardHeight}px)`,
+          gap: getGridGap(screenState),
+        }}
       >
-        <div
-          className="grid"
-          style={{
-            gridTemplateColumns: `repeat(${maxChunksCountConfig.cols}, minmax(0, 1fr))`,
-            gridTemplateRows: `repeat(${rowsCount}, ${maxChunksCountConfig.cardHeight}px)`,
-            gap: getGridGap(screenState),
-          }}
-        >
-          {modelsGroup.map((model) => {
-            const isNotPseudoModelSelected =
-              model.reference === conversation.model.id &&
-              !isPlaybackConversation(conversation) &&
-              !isReplayAsIsConversation(conversation);
-            const isPseudoModelSelected =
-              model.reference === PseudoModel.Playback ||
-              (model.reference === REPLAY_AS_IS_MODEL &&
-                isReplayAsIsConversation(conversation));
+        {modelsGroup.map((model) => {
+          const isNotPseudoModelSelected =
+            model.reference === conversation.model.id &&
+            !isPlaybackConversation(conversation) &&
+            !isReplayAsIsConversation(conversation);
+          const isPseudoModelSelected =
+            model.reference === PseudoModel.Playback ||
+            (model.reference === REPLAY_AS_IS_MODEL &&
+              isReplayAsIsConversation(conversation));
 
-            if (model === SuggestedCard) {
-              return (
-                <div
-                  className="flex size-full cursor-pointer flex-col items-center justify-center gap-3 rounded-md border border-primary hover:bg-layer-3"
-                  onClick={onOpenMarketplaceTab}
-                  key={SuggestedCard.id}
-                >
-                  <h3 className="text-base">
-                    {t("Couldn't find what you need?")}
-                  </h3>
-                  <SuggestionButton />
-                </div>
-              );
-            }
-
+          if (model === SuggestedCard) {
             return (
-              <TalkToCard
-                isSelected={isNotPseudoModelSelected || isPseudoModelSelected}
-                conversation={conversation}
-                isUnavailableModel={
-                  !modelsMap[model.reference] &&
-                  !isPseudoModel(model.id) &&
-                  model.reference !== REPLAY_AS_IS_MODEL
-                }
-                disabled={
-                  isPlaybackConversation(conversation) &&
-                  model.reference !== PseudoModel.Playback
-                }
-                key={model.id}
-                entity={model as DialAIEntityModel}
-                onClick={onSelectModel}
-                onSelectVersion={onSelectModel}
-                isMyWorkspace={isMyWorkspace}
-                {...restProps}
-              />
+              <div
+                className="flex size-full cursor-pointer flex-col items-center justify-center gap-3 rounded-md border border-primary hover:bg-layer-3"
+                onClick={onOpenMarketplaceTab}
+                key={SuggestedCard.id}
+              >
+                <h3 className="text-base">
+                  {t("Couldn't find what you need?")}
+                </h3>
+                <SuggestionButton />
+              </div>
             );
-          })}
-        </div>
-      </section>
+          }
+
+          return (
+            <TalkToCard
+              isSelected={isNotPseudoModelSelected || isPseudoModelSelected}
+              conversation={conversation}
+              isUnavailableModel={
+                !modelsMap[model.reference] &&
+                !isPseudoModel(model.id) &&
+                model.reference !== REPLAY_AS_IS_MODEL
+              }
+              disabled={
+                isPlaybackConversation(conversation) &&
+                model.reference !== PseudoModel.Playback
+              }
+              key={model.id}
+              entity={model as DialAIEntityModel}
+              onClick={onSelectModel}
+              onSelectVersion={onSelectModel}
+              isMyWorkspace={isMyWorkspace}
+              {...restProps}
+            />
+          );
+        })}
+      </div>
     );
   },
 );
@@ -206,6 +200,16 @@ interface Props {
   onOpenMarketplaceTab: () => void;
 }
 
+const shouldRenderSlide = (
+  slideIndex: number,
+  activeSlide: number,
+  prevActiveSlide: number,
+) => {
+  const minIndex = Math.min(activeSlide, prevActiveSlide);
+  const maxIndex = Math.max(activeSlide, prevActiveSlide);
+  return slideIndex >= minIndex - 1 && slideIndex <= maxIndex + 1;
+};
+
 export const TalkToSlider = ({
   conversation,
   items,
@@ -219,6 +223,7 @@ export const TalkToSlider = ({
   const sliderRef = useRef<HTMLDivElement>(null);
 
   const [activeSlide, setActiveSlide] = useState(0);
+  const [prevActiveSlide, setPrevActiveSlide] = useState(0);
   const [sliderRowsCount, setSliderRowsCount] = useState(1);
   const [resizeTime, setResizeTime] = useState(Date.now());
 
@@ -229,6 +234,14 @@ export const TalkToSlider = ({
     setResizeTime(Date.now());
   }, []);
   useWindowResizeEvent(handleResize);
+
+  const handleSetActiveSlide = useCallback(
+    (slide: number) => {
+      setPrevActiveSlide(activeSlide);
+      setActiveSlide(slide);
+    },
+    [activeSlide],
+  );
 
   // Should calculate height before render
   useLayoutEffect(() => {
@@ -250,27 +263,31 @@ export const TalkToSlider = ({
     return chunk(items, sliderRowsCount * maxChunksCountConfig.cols);
   }, [items, maxChunksCountConfig.cols, sliderRowsCount]);
 
-  const swipeHandlers = useSwipe({
-    onSwipedLeft: () => {
-      setActiveSlide((slide) =>
-        slide >= sliderGroups.length - 1 ? sliderGroups.length - 1 : slide + 1,
-      );
-    },
-    onSwipedRight: () => {
-      setActiveSlide((slide) => (slide === 0 ? 0 : slide - 1));
-    },
-  });
+  const handleSwipedRight = useCallback(() => {
+    handleSetActiveSlide(
+      activeSlide >= sliderGroups.length - 1
+        ? sliderGroups.length - 1
+        : activeSlide + 1,
+    );
+  }, [activeSlide, sliderGroups, handleSetActiveSlide]);
+  const handleSwipedLeft = useCallback(() => {
+    handleSetActiveSlide(activeSlide === 0 ? 0 : activeSlide - 1);
+  }, [activeSlide, handleSetActiveSlide]);
+  const swipeHandlers = useSwipe(handleSwipedRight, handleSwipedLeft);
 
   useEffect(() => {
     if (!sliderGroups.length) {
       setActiveSlide(0);
+      setPrevActiveSlide(0);
     } else if (activeSlide !== 0 && activeSlide > sliderGroups.length - 1) {
       setActiveSlide(sliderGroups.length - 1);
+      setPrevActiveSlide(sliderGroups.length - 1);
     }
   }, [activeSlide, sliderGroups]);
 
   useEffect(() => {
     setActiveSlide(0);
+    setPrevActiveSlide(0);
   }, [searchTerm, isMyWorkspace]);
 
   const gridGap = getGridGap(screenState);
@@ -304,16 +321,23 @@ export const TalkToSlider = ({
           }}
         >
           {sliderGroups.length ? (
-            sliderGroups.map((modelsGroup) => (
-              <SliderModelsGroup
+            sliderGroups.map((modelsGroup, index) => (
+              <section
                 key={modelsGroup.map((model) => model.id).join('.')}
-                modelsGroup={modelsGroup}
-                conversation={conversation}
-                rowsCount={sliderRowsCount}
-                isMyWorkspace={isMyWorkspace}
-                onOpenMarketplaceTab={onOpenMarketplaceTab}
-                {...restProps}
-              />
+                className="h-full min-w-full"
+                data-qa="agents-section"
+              >
+                {shouldRenderSlide(index, activeSlide, prevActiveSlide) && (
+                  <SliderModelsGroup
+                    modelsGroup={modelsGroup}
+                    conversation={conversation}
+                    rowsCount={sliderRowsCount}
+                    isMyWorkspace={isMyWorkspace}
+                    onOpenMarketplaceTab={onOpenMarketplaceTab}
+                    {...restProps}
+                  />
+                )}
+              </section>
             ))
           ) : (
             <div className="flex size-full items-center justify-center">
@@ -335,7 +359,7 @@ export const TalkToSlider = ({
       <SliderDots
         activeSlide={activeSlide}
         slidesCount={sliderGroups.length}
-        onSetActiveSlide={setActiveSlide}
+        onSetActiveSlide={handleSetActiveSlide}
       />
     </>
   );
