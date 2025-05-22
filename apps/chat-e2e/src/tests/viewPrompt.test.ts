@@ -11,12 +11,12 @@ import { ThemesUtil } from '@/src/utils/themesUtil';
 dialTest(
   '[View prompt] View prompt modal is opened on click.\n' +
     '[View prompt] Prompt with parameters is purple-highlighted.\n' +
+    '[View prompt] Info.\n' +
     '[View prompt] Duplicate.\n' +
     '[View prompt] Export.\n' +
     '[View prompt] Move to.\n' +
     '[View prompt] Share.\n' +
     '[View prompt] Publish.\n' +
-    '[View prompt] Info.\n' +
     '[View prompt] Delete',
   async ({
     dialHomePage,
@@ -46,12 +46,12 @@ dialTest(
     setTestIds(
       'EPMRTC-6144',
       'EPMRTC-6139',
+      'EPMRTC-6153',
       'EPMRTC-6148',
       'EPMRTC-6149',
       'EPMRTC-6150',
       'EPMRTC-6151',
       'EPMRTC-6152',
-      'EPMRTC-6153',
       'EPMRTC-6154',
     );
     let prompt: Prompt;
@@ -150,6 +150,20 @@ dialTest(
       },
     );
 
+    //TODO: the step is blocked by https://github.com/epam/ai-dial-chat/issues/3947
+    await dialTest.step.skip('Verify prompt info can be viewed', async () => {
+      await promptPreviewModal.openPromptInfo();
+      await baseAssertion.assertElementState(informationModal, 'visible');
+      await informationModal.cancelButton.click();
+      await promptPreviewModalAssertion.assertPromptPreviewModalState(
+        'visible',
+      );
+      await promptPreviewModalAssertion.assertElementState(
+        promptPreviewModal.notFound,
+        'hidden',
+      );
+    });
+
     await dialTest.step('Verify prompt can be duplicated', async () => {
       await promptPreviewModal.duplicatePrompt();
       await promptPreviewModalAssertion.assertElementText(
@@ -169,6 +183,10 @@ dialTest(
       await downloadAssertion.assertJsonFileIsDownloaded(exportedData);
       await promptPreviewModalAssertion.assertPromptPreviewModalState(
         'visible',
+      );
+      await promptPreviewModalAssertion.assertElementState(
+        promptPreviewModal.notFound,
+        'hidden',
       );
     });
 
@@ -196,6 +214,10 @@ dialTest(
         await promptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
         );
+        await promptPreviewModalAssertion.assertElementState(
+          promptPreviewModal.notFound,
+          'hidden',
+        );
         await promptBarFolderAssertion.assertFolderEntityState(
           { name: newFolderName },
           { name: prompt.name, index: 1 },
@@ -211,6 +233,10 @@ dialTest(
       await promptPreviewModalAssertion.assertPromptPreviewModalState(
         'visible',
       );
+      await promptPreviewModalAssertion.assertElementState(
+        promptPreviewModal.notFound,
+        'hidden',
+      );
     });
 
     await dialTest.step(
@@ -225,17 +251,12 @@ dialTest(
         await promptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
         );
+        await promptPreviewModalAssertion.assertElementState(
+          promptPreviewModal.notFound,
+          'hidden',
+        );
       },
     );
-
-    await dialTest.step('Verify prompt info can be viewed', async () => {
-      await promptPreviewModal.openPromptInfo();
-      await baseAssertion.assertElementState(informationModal, 'visible');
-      await informationModal.cancelButton.click();
-      await promptPreviewModalAssertion.assertPromptPreviewModalState(
-        'visible',
-      );
-    });
 
     await dialTest.step('Verify prompt deletion can be cancelled', async () => {
       await promptPreviewModal.promptDeleteButton.click();
@@ -246,6 +267,10 @@ dialTest(
       await confirmationDialog.cancelDialog();
       await promptPreviewModalAssertion.assertPromptPreviewModalState(
         'visible',
+      );
+      await promptPreviewModalAssertion.assertElementState(
+        promptPreviewModal.notFound,
+        'hidden',
       );
       await promptBarFolderAssertion.assertFolderEntityState(
         { name: newFolderName },

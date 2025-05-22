@@ -68,6 +68,9 @@ export class PromptPreviewModalWindow extends BaseElement {
   public version = this.getChildElementBySelector(
     PromptPreviewModal.promptPreviewVersion,
   );
+  public notFound = this.getChildElementBySelector(
+    PromptPreviewModal.promptNotFound,
+  );
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
 
   public async openPromptInfo(options?: { isHttpMethodTriggered?: boolean }) {

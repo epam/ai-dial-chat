@@ -41,6 +41,7 @@ export const PromptPreviewModal = {
   promptInfoButton: '[data-qa="info-prompt"]',
   usePromptButton: '[data-qa="use-prompt"]',
   promptPreviewVersion: '[data-qa="version"]',
+  promptNotFound: '[data-qa="not-found"]',
 };
 
 export const VariableModal = {
