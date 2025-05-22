@@ -43,7 +43,6 @@ interface ApplicationCardProps {
   isUnavailableModel: boolean;
   onClick: (entity: DialAIEntityModel) => void;
   onSelectVersion: (entity: DialAIEntityModel) => void;
-  isMyWorkspace: boolean;
 }
 
 const disabledActions = {
@@ -59,13 +58,9 @@ export const TalkToCard = ({
   isUnavailableModel,
   onClick,
   onSelectVersion,
-  isMyWorkspace,
 }: ApplicationCardProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
-  const installedModelIds = useAppSelector(
-    ModelsSelectors.selectInstalledModelIds,
-  );
   const allModels = useAppSelector(ModelsSelectors.selectModels);
 
   const isMyEntity = isMyApplication(entity);
@@ -77,13 +72,9 @@ export const TalkToCard = ({
   const versionsToSelect = useMemo(() => {
     return allModels.filter(
       (model) =>
-        getGroupModelKey(entity) === getGroupModelKey(model) &&
-        entity.version &&
-        (!isMyWorkspace ||
-          installedModelIds.has(model.reference) ||
-          (isSelected && entity.reference === model.reference)),
+        getGroupModelKey(entity) === getGroupModelKey(model) && entity.version,
     );
-  }, [allModels, entity, installedModelIds, isMyWorkspace, isSelected]);
+  }, [allModels, entity]);
 
   const handleSelectVersion = useCallback(
     (model: DialAIEntityModel) => {
