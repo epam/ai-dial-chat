@@ -1122,7 +1122,7 @@ dialTest.only(
           .getElementInnerContent();
         baseAssertion.assertStringIncludes(
           modalHeaderText,
-          attachmentType.substring(attachmentType.lastIndexOf('/')),
+          attachmentType.substring(attachmentType.lastIndexOf('/') + 1),
           ExpectedMessages.headerShouldContainDefinedAttachmentTypes,
         );
         baseAssertion.assertStringNotIncludes(
