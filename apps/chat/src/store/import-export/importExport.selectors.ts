@@ -1,11 +1,8 @@
 import { RootState } from '@/src/types/store';
 
-import { ImportExportState } from './importExport.types';
-
 import { UploadStatus } from '@epam/ai-dial-shared';
 
-const rootSelector = (state: RootState): ImportExportState =>
-  state.importExport;
+const rootSelector = (state: RootState) => state.importExport;
 
 const selectAttachmentsIdsToUpload = (state: RootState) =>
   rootSelector(state).attachmentsIdsToUpload;

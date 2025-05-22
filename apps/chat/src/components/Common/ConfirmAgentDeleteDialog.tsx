@@ -7,10 +7,13 @@ import { translate } from '@/src/utils/app/translation';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions, ModelsActions } from '@/src/store/actions';
+import {
+  ApplicationActions,
+  MarketplaceActions,
+  ModelsActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
-import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
+import { MarketplaceSelectors } from '@/src/store/selectors';
 
 import { DeleteType } from '@/src/constants/marketplace';
 

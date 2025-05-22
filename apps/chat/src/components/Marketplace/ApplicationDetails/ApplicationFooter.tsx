@@ -19,12 +19,12 @@ import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { AuthSelectors } from '@/src/store/auth/auth.selectors';
 import { useAppSelector } from '@/src/store/hooks';
+import { AuthSelectors } from '@/src/store/selectors';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { IconButton } from '@/src/components/Common/IconButton';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
 import { AgentContextMenu } from '@/src/components/Marketplace/AgentContextMenu';
 

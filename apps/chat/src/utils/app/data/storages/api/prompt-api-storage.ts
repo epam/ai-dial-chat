@@ -8,7 +8,7 @@ import { ApiKeys } from '@/src/types/common';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { RootState } from '@/src/types/store';
 
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
+import { PromptsSelectors } from '@/src/store/selectors';
 
 import { ApiEntityStorage } from './api-entity-storage';
 

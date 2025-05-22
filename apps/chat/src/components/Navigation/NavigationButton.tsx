@@ -3,12 +3,14 @@ import { ReactNode } from 'react';
 
 import classNames from 'classnames';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import {
+  ConversationsSelectors,
+  ModelsSelectors,
+  SettingsSelectors,
+} from '@/src/store/selectors';
 
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 interface NavigationButtonProps {
   onClick: () => void;
@@ -63,17 +65,15 @@ export const NavigationButton = ({
           !isOverlay ? (rounded ? 'md:p-[9px]' : 'md:p-[10px]') : 'md:p-1',
         )}
       >
-        {Icon && (
-          <Icon
-            className={classNames(
-              'min-h-[24px] min-w-[24px]',
-              selected ? 'text-accent-primary' : 'text-secondary',
-            )}
-            width={24}
-            height={24}
-            size={24}
-          />
-        )}
+        <Icon
+          className={classNames(
+            'min-h-[24px] min-w-[24px]',
+            selected ? 'text-accent-primary' : 'text-secondary',
+          )}
+          width={24}
+          height={24}
+          size={24}
+        />
 
         {!isOverlay && (
           <span

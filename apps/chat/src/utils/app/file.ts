@@ -1,6 +1,7 @@
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -18,7 +19,6 @@ import {
   METADATA_PREFIX,
 } from '@/src/constants/folders';
 
-import { ApiUtils } from '../server/api';
 import { doesHaveDotsInTheEnd } from './common';
 import { isFolderId } from './shared-utils';
 

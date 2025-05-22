@@ -13,17 +13,19 @@ import { canUserUseFeature } from '@/src/utils/session';
 import { ApplicationTypeSchemaProperties } from '@/src/types/application-type-schema';
 import { ApplicationType } from '@/src/types/applications';
 
-import { ApplicationSelectors } from '@/src/store/application/application.selectors';
-import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.selectors';
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import {
+  ApplicationSelectors,
+  ApplicationTypesSchemasSelectors,
+  ModelsSelectors,
+  SettingsSelectors,
+} from '@/src/store/selectors';
+
+import { getLayout } from '@/src/pages/_app';
 
 import { AppsEditorHeader } from '@/src/components/AppsEditor/AppsEditorHeader';
 import { GeneralInfoView } from '@/src/components/AppsEditor/GeneralInfoView/GeneralInfoView';
 import { Spinner } from '@/src/components/Common/Spinner';
-
-import { getLayout } from '../../_app';
 
 import { Feature, UploadStatus } from '@epam/ai-dial-shared';
 

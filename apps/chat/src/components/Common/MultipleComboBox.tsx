@@ -22,7 +22,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import Tooltip from './Tooltip';
+import { Tooltip } from './Tooltip';
 
 import { useCombobox, useMultipleSelection } from 'downshift';
 

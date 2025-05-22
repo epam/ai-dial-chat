@@ -49,7 +49,6 @@ import {
 import { getFileRootId } from '@/src/utils/app/id';
 import {
   cleanData,
-  exportConversation,
   exportConversations,
   exportPrompt,
   exportPrompts,
@@ -58,6 +57,7 @@ import {
   getPromptActions,
   getToastAction,
   isPromptsFormat,
+  triggerExportConversation,
   updateMessageAttachments,
 } from '@/src/utils/app/import-export';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
@@ -74,17 +74,25 @@ import { Conversation } from '@/src/types/chat';
 import { FeatureType, ReplaceOptions } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { HTTPMethod } from '@/src/types/http';
-import { LatestExportFormat } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 import { AppAction, AppEpic } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  ConversationsActions,
+  FilesActions,
+  ImportExportActions,
+  MigrationActions,
+  PromptsActions,
+  UIActions,
+} from '@/src/store/actions';
+import {
+  ConversationsSelectors,
+  ImportExportSelectors,
+  PromptsSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import {
   DEFAULT_CONVERSATION_NAME,
@@ -93,13 +101,11 @@ import {
 import { errorsMessages } from '@/src/constants/errors';
 import { successMessages } from '@/src/constants/successMessages';
 
-import { ConversationsSelectors } from '../conversations/conversations.selectors';
-import { FilesActions } from '../files/files.reducers';
-import { MigrationActions } from '../migration/migration.reducers';
-import { ImportExportActions } from './importExport.reducers';
-import { ImportExportSelectors } from './importExport.selectors';
-
-import { Message, UploadStatus } from '@epam/ai-dial-shared';
+import {
+  LatestExportFormat,
+  Message,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
 
@@ -128,7 +134,7 @@ const exportConversationEpic: AppEpic = (action$, state$) =>
       const appName = SettingsSelectors.selectAppName(state$.value);
 
       if (!withAttachments) {
-        exportConversation(conversation, parentFolders, appName);
+        triggerExportConversation(conversation, parentFolders, appName);
 
         return of(ImportExportActions.exportConversationSuccess());
       }

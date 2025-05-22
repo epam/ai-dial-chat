@@ -34,25 +34,28 @@ import { ScreenState } from '@/src/types/common';
 import { PreviewMode } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
-import { ModelsActions } from '@/src/store/actions';
-import { ApplicationActions } from '@/src/store/application/application.reducers';
 import {
+  ApplicationActions,
   CodeEditorActions,
-  CodeEditorSelectors,
-} from '@/src/store/codeEditor/codeEditor.reducer';
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+  ConversationsActions,
+  ModelsActions,
+  UIActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  CodeEditorSelectors,
+  ConversationsSelectors,
+  ModelsSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { DEFAULT_QUICK_APPS_SCHEMA_ID } from '@/src/constants/quick-apps';
 import { Routes } from '@/src/constants/routes';
 
-import { TabButton } from '../../Buttons/TabButton';
-import Tooltip from '../../Common/Tooltip';
+import { TabButton } from '@/src/components/Buttons/TabButton';
+import { Tooltip } from '@/src/components/Common/Tooltip';
+
 import { ApplicationView } from './ApplicationView';
 import { CodeAppView } from './CodeAppView';
 import { CustomApplicationEditorView } from './CustomApplicationEditorView';

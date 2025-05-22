@@ -5,10 +5,12 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { ApplicationStatus, ApplicationType } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { ApplicationSelectors } from '@/src/store/application/application.selectors';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { ApplicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import {
+  ApplicationSelectors,
+  ConversationsSelectors,
+} from '@/src/store/selectors';
 
 import { Chat } from '@/src/components/Chat/Chat';
 import { Spinner } from '@/src/components/Common/Spinner';

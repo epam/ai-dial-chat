@@ -11,14 +11,14 @@ import { Conversation } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { SettingsSelectors } from '@/src/store/selectors';
 
 import { MessageAssistantButtons } from '@/src/components/Chat/ChatMessage/MessageButtons';
 import { AssistantSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/MessageSchema';
 import { MessageAttachments } from '@/src/components/Chat/MessageAttachments';
 import { MessageStages } from '@/src/components/Chat/MessageStages';
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
-import ChatMDComponent from '@/src/components/Markdown/ChatMDComponent';
+import { ChatMDComponent } from '@/src/components/Markdown/ChatMDComponent';
 
 import { LikeState, Message } from '@epam/ai-dial-shared';
 

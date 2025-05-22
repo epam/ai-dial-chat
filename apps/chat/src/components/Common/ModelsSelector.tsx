@@ -11,14 +11,13 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { ModelsSelectors } from '@/src/store/selectors';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Combobox } from '@/src/components/Common/Combobox';
 import { DisableOverlay } from '@/src/components/Common/DisableOverlay';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
-
-import Tooltip from './Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 interface ModelSelectRowProps {
   item: DialAIEntityModel;

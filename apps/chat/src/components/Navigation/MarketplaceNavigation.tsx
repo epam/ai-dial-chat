@@ -7,9 +7,9 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { MarketplaceActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
-import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
+import { MarketplaceSelectors } from '@/src/store/selectors';
 
 import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';

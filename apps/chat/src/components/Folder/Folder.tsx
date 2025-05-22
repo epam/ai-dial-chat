@@ -60,23 +60,23 @@ import { PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { FilesActions } from '@/src/store/files/files.reducers';
+import {
+  ConversationsActions,
+  FilesActions,
+  ShareActions,
+  UIActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { ShareActions } from '@/src/store/share/share.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import { PublicationSelectors, SettingsSelectors } from '@/src/store/selectors';
 
-import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
-import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
-
-import { ReviewDot } from '../Chat/Publish/ReviewDot';
-import { ConfirmDialog } from '../Common/ConfirmDialog';
-import { FolderContextMenu } from '../Common/FolderContextMenu';
-import ShareIcon from '../Common/ShareIcon';
-import { Spinner } from '../Common/Spinner';
-import Tooltip from '../Common/Tooltip';
+import { SidebarActionButton } from '@/src/components/Buttons/SidebarActionButton';
+import { ReviewDot } from '@/src/components/Chat/Publish/ReviewDot';
+import { CaretIconComponent } from '@/src/components/Common/CaretIconComponent';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { FolderContextMenu } from '@/src/components/Common/FolderContextMenu';
+import { ShareIcon } from '@/src/components/Common/ShareIcon';
+import { Spinner } from '@/src/components/Common/Spinner';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import {
   ConversationInfo,
@@ -131,6 +131,7 @@ export interface FolderProps<T, P = unknown> {
   isSelectAlwaysVisible?: boolean;
   isUnpublishing?: boolean;
   showTooltip?: boolean;
+  canManageOnlyTemporaryFolders?: boolean;
   onShowError?: (error: string) => void;
   onPublication?: ({
     entity,
@@ -140,7 +141,7 @@ export interface FolderProps<T, P = unknown> {
   }: PublicationFolderPayload) => void;
 }
 
-const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
+export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   currentFolder,
   searchTerm,
   itemComponent,
@@ -177,6 +178,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   isSelectAlwaysVisible = false,
   isUnpublishing = false,
   showTooltip,
+  canManageOnlyTemporaryFolders = false,
   onShowError,
   onPublication,
 }: FolderProps<T>) => {
@@ -1219,10 +1221,20 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     onRename={
                       (onRenameFolder &&
                         !currentFolder.serverSynced &&
+                        ((canManageOnlyTemporaryFolders &&
+                          currentFolder.temporary) ||
+                          !canManageOnlyTemporaryFolders) &&
                         onRename) ||
                       undefined
                     }
-                    onDelete={onDeleteFolder && onDelete}
+                    onDelete={
+                      (onDeleteFolder &&
+                        ((canManageOnlyTemporaryFolders &&
+                          currentFolder.temporary) ||
+                          !canManageOnlyTemporaryFolders) &&
+                        onDelete) ||
+                      undefined
+                    }
                     onAddFolder={onAddFolder && onAdd}
                     onShare={handleShare}
                     onUnshare={handleUnshare}
@@ -1317,6 +1329,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     showTooltip={showTooltip}
                     onSelectFolder={onSelectFolder}
                     onShowError={onShowError}
+                    canManageOnlyTemporaryFolders={
+                      canManageOnlyTemporaryFolders
+                    }
                   />
                 </Fragment>
               );
@@ -1417,5 +1432,3 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     </div>
   );
 };
-
-export default Folder;

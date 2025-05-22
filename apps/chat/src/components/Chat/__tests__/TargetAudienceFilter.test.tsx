@@ -7,7 +7,7 @@ import userEvent from '@testing-library/user-event';
 import { PublicationFunctions } from '@/src/types/publication';
 import { AppAction } from '@/src/types/store';
 
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { SettingsSelectors } from '@/src/store/selectors';
 
 import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/TargetAudienceFilterComponent';
 
@@ -18,10 +18,8 @@ vi.mock('@/src/store/hooks', async () => {
   };
 });
 
-vi.mock('@/src/store/settings/settings.selectors', async () => {
-  const actual: any = await vi.importActual(
-    '@/src/store/settings/settings.selectors',
-  );
+vi.mock('@/src/store/selectors', async () => {
+  const actual: any = await vi.importActual('@/src/store/selectors');
   return {
     ...actual,
     SettingsSelectors: {

@@ -21,12 +21,14 @@ import {
 import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { ApplicationSelectors } from '@/src/store/application/application.selectors';
+import {
+  ApplicationActions,
+  ShareActions,
+  UIActions,
+} from '@/src/store/actions';
 import { CodeEditorActions } from '@/src/store/codeEditor/codeEditor.reducer';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ShareActions } from '@/src/store/share/share.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import { ApplicationSelectors } from '@/src/store/selectors';
 
 import {
   CODEAPPS_REQUIRED_FILES,
@@ -154,43 +156,48 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
 
   const handleEdit = useCallback(
     (data: CodeAppFormData) => {
-      if (
-        oldApplication.reference &&
-        shouldSaveApplication &&
-        !isEqual(data, lastSubmittedValuesRef.current)
-      ) {
-        const preparedData = getCodeAppData(data);
-        const areNotTheSameAndShared =
-          isShared &&
-          preparedData.function?.sourceFolder !==
-            oldApplication.function?.sourceFolder;
+      const hasChanged = !isEqual(data, lastSubmittedValuesRef.current);
 
-        preparedData.functionStatus = applicationStatus;
-        const applicationData: CustomApplicationModel = {
-          ...oldApplication,
-          ...preparedData,
-          isShared: areNotTheSameAndShared ? false : isShared,
-        };
+      if (shouldSaveApplication) {
+        if (oldApplication.reference && hasChanged) {
+          const preparedData = getCodeAppData(data);
 
-        if (areNotTheSameAndShared) {
+          const areNotTheSameAndShared =
+            isShared &&
+            preparedData.function?.sourceFolder !==
+              oldApplication.function?.sourceFolder;
+
+          preparedData.functionStatus = applicationStatus;
+
+          const applicationData: CustomApplicationModel = {
+            ...oldApplication,
+            ...preparedData,
+            isShared: areNotTheSameAndShared ? false : isShared,
+          };
+
+          if (areNotTheSameAndShared) {
+            dispatch(
+              ShareActions.revokeAccess({
+                resourceId: oldApplication.id,
+                featureType: FeatureType.Application,
+              }),
+            );
+          }
+
           dispatch(
-            ShareActions.revokeAccess({
-              resourceId: oldApplication.id,
-              featureType: FeatureType.Application,
+            ApplicationActions.update({
+              oldApplication,
+              applicationData,
             }),
           );
+
+          lastSubmittedValuesRef.current = data;
         }
 
-        dispatch(
-          ApplicationActions.update({
-            oldApplication,
-            applicationData,
-          }),
-        );
-        lastSubmittedValuesRef.current = data;
-      } else if (shouldSaveApplication && exitAfterSave) {
-        dispatch(ApplicationActions.exitEditor({}));
-      } else {
+        if (exitAfterSave) {
+          dispatch(ApplicationActions.exitEditor({}));
+        }
+
         dispatch(ApplicationActions.setShouldSaveApplication(false));
         dispatch(ApplicationActions.setExitAfterSave(false));
       }
@@ -214,6 +221,10 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     };
   }, [dispatch]);
 
+  const autoSaveHandler = useCallback(() => {
+    submitWrapper(handleEdit)();
+  }, [submitWrapper, handleEdit]);
+
   useEffect(() => {
     const isTriggered = shouldSaveApplication || exitAfterSave;
     if (!isTriggered) return;
@@ -228,17 +239,16 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     }
 
     if (shouldSaveApplication) {
-      submitWrapper(handleEdit)();
+      autoSaveHandler();
     }
   }, [
     exitAfterSave,
     router,
-    submitWrapper,
     shouldSaveApplication,
-    handleEdit,
     isValid,
     dispatch,
     t,
+    autoSaveHandler,
   ]);
 
   const isAppPublic = isEntityIdPublic(oldApplication);

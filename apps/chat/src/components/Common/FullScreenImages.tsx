@@ -1,5 +1,5 @@
 import { IconChevronLeft, IconChevronRight, IconX } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -18,21 +18,25 @@ interface Props {
   defaultIdx?: number;
 }
 
-const FullScreenImages = ({ images, alt, onClose, defaultIdx }: Props) => {
+export const FullScreenImages = ({
+  images,
+  alt,
+  onClose,
+  defaultIdx,
+}: Props) => {
   const [currentImage, setCurrentImage] = useState(defaultIdx ?? 0);
 
-  const swipeHandlers = useSwipe({
-    onSwipedLeft: () => {
-      if (currentImage + 1 < images.length) {
-        setCurrentImage((idx) => idx + 1);
-      }
-    },
-    onSwipedRight: () => {
-      if (currentImage !== 0) {
-        setCurrentImage((idx) => idx - 1);
-      }
-    },
-  });
+  const handleSwipedLeft = useCallback(() => {
+    if (currentImage + 1 < images.length) {
+      setCurrentImage((idx) => idx + 1);
+    }
+  }, [currentImage, images]);
+  const handleSwipedRight = useCallback(() => {
+    if (currentImage !== 0) {
+      setCurrentImage((idx) => idx - 1);
+    }
+  }, [currentImage]);
+  const swipeHandlers = useSwipe(handleSwipedLeft, handleSwipedRight);
 
   return (
     <Modal
@@ -99,5 +103,3 @@ const FullScreenImages = ({ images, alt, onClose, defaultIdx }: Props) => {
     </Modal>
   );
 };
-
-export default FullScreenImages;

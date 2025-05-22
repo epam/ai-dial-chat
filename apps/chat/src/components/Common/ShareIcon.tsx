@@ -9,9 +9,9 @@ import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { SettingsSelectors } from '@/src/store/selectors';
 
-import Tooltip from './Tooltip';
+import { Tooltip } from './Tooltip';
 
 import ArrowUpRight from '@/public/images/icons/arrow-up-right.svg';
 import World from '@/public/images/icons/world.svg';
@@ -28,7 +28,7 @@ interface ShareIconProps extends ShareInterface {
   isMyEntity?: boolean;
 }
 
-export default function ShareIcon({
+export function ShareIcon({
   isShared,
   isPublished,
   isHighlighted,

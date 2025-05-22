@@ -18,10 +18,9 @@ import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { CustomApplicationModel } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { ApplicationSelectors } from '@/src/store/application/application.selectors';
+import { ApplicationActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import { ApplicationSelectors } from '@/src/store/selectors';
 
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/code-apps';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
@@ -157,29 +156,34 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
 
   const handleSubmit = useCallback(
     (data: CustomApplicationFormData) => {
-      if (
-        !isEqual(data, lastSubmittedValuesRef.current) &&
-        shouldSaveApplication
-      ) {
-        const applicationData = getCustomApplicationData(data);
-        dispatch(
-          ApplicationActions.update({
-            oldApplication,
-            applicationData: {
-              ...oldApplication,
-              ...applicationData,
-            },
-          }),
-        );
-        lastSubmittedValuesRef.current = data;
-      } else if (shouldSaveApplication && exitAfterSave) {
-        dispatch(ApplicationActions.exitEditor({}));
-      } else {
+      const hasChanged = !isEqual(data, lastSubmittedValuesRef.current);
+
+      if (shouldSaveApplication) {
+        if (hasChanged) {
+          const applicationData = getCustomApplicationData(data);
+
+          dispatch(
+            ApplicationActions.update({
+              oldApplication,
+              applicationData: {
+                ...oldApplication,
+                ...applicationData,
+              },
+            }),
+          );
+
+          lastSubmittedValuesRef.current = data;
+        }
+
+        if (exitAfterSave) {
+          dispatch(ApplicationActions.exitEditor({}));
+        }
+
         dispatch(ApplicationActions.setShouldSaveApplication(false));
         dispatch(ApplicationActions.setExitAfterSave(false));
       }
     },
-    [exitAfterSave, shouldSaveApplication, dispatch, oldApplication],
+    [shouldSaveApplication, exitAfterSave, oldApplication, dispatch],
   );
 
   const autoSaveHandler = useCallback(() => {
@@ -206,8 +210,6 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
     shouldSaveApplication,
     exitAfterSave,
     isValid,
-    submitWrapper,
-    handleSubmit,
     dispatch,
     router,
     t,

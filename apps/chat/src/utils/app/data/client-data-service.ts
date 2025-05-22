@@ -1,5 +1,7 @@
 import { Observable, catchError, filter, map, of, throwError } from 'rxjs';
 
+import { ApiUtils } from '@/src/utils/server/api';
+
 import { HTTPMethod } from '@/src/types/http';
 import { InstalledModel } from '@/src/types/models';
 
@@ -8,7 +10,6 @@ import {
   INSTALLED_DEPLOYMENTS,
 } from '@/src/constants/client-data';
 
-import { ApiUtils } from '../../server/api';
 import { constructPath } from '../file';
 import { getFileRootId } from '../id';
 import { FileService } from './file-service';
