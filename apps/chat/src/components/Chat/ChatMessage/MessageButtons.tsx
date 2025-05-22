@@ -12,6 +12,7 @@ import { ButtonHTMLAttributes, FC } from 'react';
 
 import classNames from 'classnames';
 
+import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getMessageCustomContent } from '@/src/utils/server/chat';
@@ -74,6 +75,11 @@ export const MessageUserButtons = ({
   const isConversationsWithSchema = useAppSelector(
     ConversationsSelectors.selectIsSelectedConversationsWithSchema,
   );
+  const selectedConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedConversations,
+  );
+
+  const { isReviewEntity } = usePublicVersionGroupId(selectedConversations[0]);
 
   return (
     <div
@@ -98,7 +104,7 @@ export const MessageUserButtons = ({
               </button>
             </Tooltip>
           )}
-          {isEditAvailable && !editDisabled && (
+          {((isEditAvailable && !editDisabled) || isReviewEntity) && (
             <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
               <button
                 className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
@@ -142,6 +148,11 @@ export const MessageAssistantButtons = ({
   const { t } = useTranslation(Translation.Chat);
 
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+  const selectedConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedConversations,
+  );
+
+  const { isReviewEntity } = usePublicVersionGroupId(selectedConversations[0]);
 
   return (
     <div
@@ -179,7 +190,7 @@ export const MessageAssistantButtons = ({
           </Tooltip>
         ))}
       <div className="flex flex-row gap-2">
-        {isLikesEnabled &&
+        {(isLikesEnabled || isReviewEntity) &&
           (message.content.trim() || !!getMessageCustomContent(message)) && (
             <>
               {message.like !== LikeState.Disliked && (

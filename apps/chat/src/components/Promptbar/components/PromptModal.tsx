@@ -78,13 +78,7 @@ const PromptModalContent: React.FC<PromptModalViewProps> = ({
   }, [onToggleEditMode]);
 
   if (isViewMode && !isNewPromptCreating) {
-    return (
-      <ViewPrompt
-        prompt={prompt}
-        onEditMode={handleGoToEditMode}
-        onClose={onClose}
-      />
-    );
+    return <ViewPrompt prompt={prompt} onEditMode={handleGoToEditMode} />;
   }
 
   return <EditPrompt onEdit={handleEdit} onClose={onClose} prompt={prompt} />;

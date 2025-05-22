@@ -12,6 +12,7 @@ import {
 import { useMemo } from 'react';
 
 import { usePromptActions } from '@/src/hooks/usePromptActions';
+import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { isMyEntity } from '@/src/utils/app/id';
@@ -54,6 +55,8 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
     SettingsSelectors.isSharingEnabled(state, FeatureType.Prompt),
   );
 
+  const { isReviewEntity } = usePublicVersionGroupId(prompt);
+
   const screenState = useScreenState();
   const isPublic = isEntityIdPublic(prompt);
   const isMyPrompt = isMyEntity(prompt, FeatureType.Prompt);
@@ -62,7 +65,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
     () => [
       {
         name: editBtnName,
-        display: isMyPrompt,
+        display: isMyPrompt || isReviewEntity,
         dataQa: 'edit-prompt',
         Icon: IconPencilMinus,
         onClick: onEditMode,
@@ -97,7 +100,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
       },
       {
         name: 'Publish',
-        display: !isPublic && isPublishingEnabled,
+        display: isMyPrompt && isPublishingEnabled,
         dataQa: 'publish-prompt',
         Icon: IconWorldShare,
         onClick: handlePublish,
@@ -138,6 +141,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
       isMyPrompt,
       isPublic,
       isPublishingEnabled,
+      isReviewEntity,
       isSharingEnabled,
       onEditMode,
       prompt.sharedWithMe,

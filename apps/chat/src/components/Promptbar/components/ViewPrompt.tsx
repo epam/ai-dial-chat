@@ -20,7 +20,7 @@ import {
 
 import { TemplateRenderer } from '@/src/components/Chat/ChatMessage/ChatMessageTemplatesModal/TemplateRenderer';
 import { PublicVersionSelector } from '@/src/components/Chat/Publish/PublicVersionSelector';
-import { PublicationControls } from '@/src/components/Chat/Publish/PublicationChatControls';
+import { PublicationControls } from '@/src/components/Chat/Publish/PublicationControls/PublicationControls';
 
 import { ViewPromptButtons } from './ViewPromptButtons';
 
@@ -63,7 +63,6 @@ const PromptField: React.FC<PromptFieldProps> = ({
 interface Props {
   prompt: Prompt;
   onEditMode: () => void;
-  onClose: () => void;
 }
 
 export const ViewPrompt = ({ prompt, onEditMode }: Props) => {

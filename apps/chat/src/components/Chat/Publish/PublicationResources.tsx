@@ -1,5 +1,5 @@
 import { IconDownload } from '@tabler/icons-react';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import classNames from 'classnames';
 
@@ -111,11 +111,18 @@ export const PromptPublicationResources = ({
   const { rootFolders, itemsToDisplay, folderItemsToDisplay } =
     usePublicationResources(allFolders, resources, prompts);
 
+  const handleRenameFolder = useCallback(
+    (name: string, folderId: string) => {
+      dispatch(PromptsActions.updateFolder({ folderId, values: { name } }));
+    },
+    [dispatch],
+  );
+
   return (
     <div className={classNames(!isOpen && 'hidden')}>
       {rootFolders.map((f) => (
         <Folder
-          readonly
+          readonly={readonly}
           key={f.id}
           noCaretIcon={!!readonly}
           level={readonly ? 0 : 1}
@@ -176,6 +183,7 @@ export const PromptPublicationResources = ({
               );
             }
           }}
+          onRenameFolder={handleRenameFolder}
           featureType={FeatureType.Prompt}
           highlightedFolders={
             !isSelectedPromptApproveRequiredResource || readonly
@@ -256,11 +264,20 @@ export const ConversationPublicationResources = ({
   const { rootFolders, itemsToDisplay, folderItemsToDisplay } =
     usePublicationResources(allFolders, resources, conversations);
 
+  const handleRenameFolder = useCallback(
+    (name: string, folderId: string) => {
+      dispatch(
+        ConversationsActions.updateFolder({ folderId, values: { name } }),
+      );
+    },
+    [dispatch],
+  );
+
   return (
     <div className={classNames(!isOpen && 'hidden')}>
       {rootFolders.map((f) => (
         <Folder
-          readonly
+          readonly={readonly}
           key={f.id}
           noCaretIcon={!!readonly}
           level={readonly ? 0 : 1}
@@ -321,6 +338,7 @@ export const ConversationPublicationResources = ({
               );
             }
           }}
+          onRenameFolder={handleRenameFolder}
           featureType={FeatureType.Chat}
           highlightedFolders={readonly ? undefined : highlightedFolders}
           folderClassName={classNames(readonly && 'h-[38px]')}

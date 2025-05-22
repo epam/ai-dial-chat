@@ -21,28 +21,26 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/selectors';
 
-import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
-
 import { ConversationInfo } from '@epam/ai-dial-shared';
 
-interface Props<
-  T extends PromptInfo | ConversationInfo | CustomApplicationModel,
-> {
-  entity: T;
-  showScrollDownButton?: boolean;
-  onScrollDownClick?: () => void;
+type TEntity = PromptInfo | ConversationInfo | CustomApplicationModel;
+
+interface Props<TEntity> {
+  entity: TEntity;
+  children?: React.ReactNode;
   controlsClassNames?: string;
 }
 
-export function PublicationControlsView<
-  T extends PromptInfo | ConversationInfo | CustomApplicationModel,
->({
+interface ViewProps extends Props<TEntity> {
+  resourceToReview: ResourceToReview;
+}
+
+function PublicationControlsView({
   entity,
   resourceToReview,
-  showScrollDownButton,
-  onScrollDownClick,
+  children,
   controlsClassNames,
-}: Props<T> & { resourceToReview: ResourceToReview }) {
+}: ViewProps) {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -53,6 +51,7 @@ export function PublicationControlsView<
       resourceToReview.publicationUrl,
     ),
   );
+
   const publicationIdx = resourcesToReview.findIndex(
     (res) => res.reviewUrl === resourceToReview.reviewUrl,
   );
@@ -89,26 +88,22 @@ export function PublicationControlsView<
 
   const toggleResource = useCallback(
     (offset: number) => {
-      if (
-        isConversationId(resourcesToReview[publicationIdx + offset].reviewUrl)
-      ) {
+      const reviewUrl = resourcesToReview[publicationIdx + offset].reviewUrl;
+
+      if (isConversationId(reviewUrl)) {
         unselectPrompt();
         unselectApplication();
         dispatch(
           ConversationsActions.selectConversations({
-            conversationIds: [
-              resourcesToReview[publicationIdx + offset].reviewUrl,
-            ],
+            conversationIds: [reviewUrl],
           }),
         );
-      } else if (
-        isPromptId(resourcesToReview[publicationIdx + offset].reviewUrl)
-      ) {
+      } else if (isPromptId(reviewUrl)) {
         unselectConversation();
         unselectApplication();
         dispatch(
           PromptsActions.selectPrompt({
-            promptId: resourcesToReview[publicationIdx + offset].reviewUrl,
+            promptId: reviewUrl,
             isApproveRequiredResource: true,
           }),
         );
@@ -118,7 +113,7 @@ export function PublicationControlsView<
         unselectPrompt();
         dispatch(
           ApplicationActions.get({
-            applicationId: resourcesToReview[publicationIdx + offset].reviewUrl,
+            applicationId: reviewUrl,
           }),
         );
         dispatch(PublicationActions.setIsApplicationReview(true));
@@ -201,19 +196,15 @@ export function PublicationControlsView<
       >
         {t('Back to publication request')}
       </button>
-      {showScrollDownButton && onScrollDownClick && (
-        <ScrollDownButton
-          className="-top-16 right-0 md:-top-20"
-          onScrollDownClick={onScrollDownClick}
-        />
-      )}
+      {children}
     </div>
   );
 }
 
-export function PublicationControls<
-  T extends PromptInfo | ConversationInfo | CustomApplicationModel,
->({ entity, ...props }: Props<T>) {
+export function PublicationControls<T extends TEntity>({
+  entity,
+  ...props
+}: Props<T>) {
   const resourceToReview = useAppSelector((state) =>
     PublicationSelectors.selectResourceToReviewByReviewUrl(state, entity.id),
   );

@@ -746,24 +746,37 @@ const selectTalkToConversationId = (state: RootState) =>
 const selectIsSelectedConversationBlocksInput = createSelector(
   [
     selectSelectedConversations,
+    PublicationSelectors.selectResourcesToReview,
     ChatSelectors.selectIsConfigurationBlocksInput,
     ChatSelectors.selectNotAvailableEntityType,
   ],
-  (conversations, isConfigurationBlocksInput, notAvailableEntityType) =>
-    conversations.some(
+  (
+    conversations,
+    resourcesToReview,
+    isConfigurationBlocksInput,
+    notAvailableEntityType,
+  ) => {
+    const isReviewEntity = conversations.some((conversation) =>
+      resourcesToReview.some(
+        (resource) => resource.reviewUrl === conversation.id,
+      ),
+    );
+
+    return conversations.some(
       (conversation) =>
         conversation.sharedWithMe ||
         (!conversation.messages?.length &&
           (isConfigurationBlocksInput || isReplayConversation(conversation))) ||
         notAvailableEntityType ||
         isPlaybackConversation(conversation) ||
-        isEntityIdExternal(conversation) ||
+        (isEntityIdExternal(conversation) && !isReviewEntity) ||
         !conversation.messages ||
         isMessageInputDisabled(
           conversation.messages.length,
           conversation.messages,
         ),
-    ),
+    );
+  },
 );
 
 const selectPreviewConversationId = (state: RootState) =>

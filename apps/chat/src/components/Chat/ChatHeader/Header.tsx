@@ -170,9 +170,12 @@ export const ChatHeader = Inversify.register(
       screenState === ScreenState.SM && conversationSelectedAddons.length > 2;
     const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
-    const disallowChangeAgent = isChangeAgentDisallowed || isExternal;
+    const disallowChangeAgent =
+      isChangeAgentDisallowed || (isExternal && !isReviewEntity);
     const disallowChangeSettings =
-      isReplayAsIsConversation(conversation) || isPlayback || isExternal;
+      isReplayAsIsConversation(conversation) ||
+      isPlayback ||
+      (isExternal && !isReviewEntity);
 
     return (
       <>

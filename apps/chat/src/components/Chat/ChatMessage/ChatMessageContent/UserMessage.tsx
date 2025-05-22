@@ -5,6 +5,7 @@ import classNames from 'classnames';
 
 import { useChatUploadFiles } from '@/src/hooks/useChatUploadFiles';
 import { useFilePaste } from '@/src/hooks/useFilePaste';
+import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
@@ -135,8 +136,14 @@ export const UserMessage = memo(function UserMessage({
   const [shouldScroll, setShouldScroll] = useState(false);
   const [selectedDialLinks, setSelectedDialLinks] = useState<DialLink[]>([]);
 
+  const { isReviewEntity } = usePublicVersionGroupId(conversation);
+
   const showUserButtons =
-    !isReplay && !isPlayback && !isEditing && !isExternal && withButtons;
+    !isReplay &&
+    !isPlayback &&
+    !isEditing &&
+    (!isExternal || isReviewEntity) &&
+    withButtons;
 
   const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 

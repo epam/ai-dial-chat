@@ -37,10 +37,11 @@ export const usePublicVersionGroupId = (entity: ShareEntity) => {
             ),
           )
         : undefined,
-    isReviewEntity:
+    isReviewEntity: !!(
       resourceToReview &&
       selectedPublication?.resources.some(
         (resource) => resource.reviewUrl === resourceToReview.reviewUrl,
-      ),
+      )
+    ),
   };
 };
