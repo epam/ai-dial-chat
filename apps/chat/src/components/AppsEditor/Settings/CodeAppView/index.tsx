@@ -170,7 +170,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
         const areNotTheSameAndShared =
           isShared &&
           preparedData.function?.sourceFolder !==
-          oldApplication.function?.sourceFolder;
+            oldApplication.function?.sourceFolder;
 
         preparedData.functionStatus = applicationStatus;
 
