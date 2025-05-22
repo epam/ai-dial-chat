@@ -375,12 +375,19 @@ const createConversationEpic: AppEpic = (action$) =>
 const createConversationEffectEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(OverlayActions.createConversationEffect.type),
-    switchMap(({ payload: { requestId } }) => {
+    switchMap(({ payload: { requestId, local } }) => {
       return action$.pipe(
-        ofType(ConversationsActions.addConversations.type),
+        ofType(
+          local
+            ? ConversationsActions.addConversations.type
+            : ConversationsActions.createNotLocalConversationsSuccess.type,
+        ),
         takeUntil(timer(10000)),
         filter(Boolean),
-        mergeMap(({ payload: { conversations } }) => {
+        mergeMap(({ payload }) => {
+          const conversations = Array.isArray(payload)
+            ? payload
+            : payload.conversations;
           const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
 
           const conversation = conversations[0];
