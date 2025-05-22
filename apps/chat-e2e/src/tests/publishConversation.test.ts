@@ -15,7 +15,7 @@ import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
 
-dialAdminTest.only(
+dialAdminTest(
   'Publish single chat without attachments.\n' +
     'Publication request name: spaces in the middle of request name stay.\n' +
     'Publish: Send request button tooltips.\n' +
