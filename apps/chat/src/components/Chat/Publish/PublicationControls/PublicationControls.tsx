@@ -7,8 +7,6 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isConversationId, isPromptId } from '@/src/utils/app/id';
 
-import { CustomApplicationModel } from '@/src/types/applications';
-import { PromptInfo } from '@/src/types/prompt';
 import { ResourceToReview } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
@@ -21,9 +19,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/selectors';
 
-import { ConversationInfo } from '@epam/ai-dial-shared';
-
-type TEntity = PromptInfo | ConversationInfo | CustomApplicationModel;
+import { TEntity } from './view-props';
 
 interface Props<TEntity> {
   entity: TEntity;
