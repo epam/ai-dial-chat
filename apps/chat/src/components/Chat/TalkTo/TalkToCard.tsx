@@ -41,9 +41,9 @@ interface ApplicationCardProps {
   isSelected: boolean;
   disabled: boolean;
   isUnavailableModel: boolean;
+  isMyWorkspace: boolean;
   onClick: (entity: DialAIEntityModel) => void;
   onSelectVersion: (entity: DialAIEntityModel) => void;
-  isMyWorkspace: boolean;
 }
 
 const disabledActions = {
@@ -57,9 +57,9 @@ export const TalkToCard = ({
   isSelected,
   disabled,
   isUnavailableModel,
+  isMyWorkspace,
   onClick,
   onSelectVersion,
-  isMyWorkspace,
 }: ApplicationCardProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 

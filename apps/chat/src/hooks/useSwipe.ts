@@ -2,13 +2,12 @@ import { useCallback, useState } from 'react';
 
 import isNumber from 'lodash-es/isNumber';
 
-export const useSwipe = ({
-  onSwipedLeft,
-  onSwipedRight,
-}: {
-  onSwipedLeft: () => void;
-  onSwipedRight: () => void;
-}) => {
+type SwipeHandler = () => void;
+
+export const useSwipe = (
+  onSwipedLeft: SwipeHandler,
+  onSwipedRight: SwipeHandler,
+) => {
   const [startX, setStartX] = useState<number>();
 
   const onStart = useCallback((e: React.TouchEvent) => {

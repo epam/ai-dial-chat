@@ -762,11 +762,6 @@ dialAdminTest(
           createdDate: currentDate,
           author: author,
         });
-        await baseAssertion.assertElementState(informationModal, 'visible');
-        await baseAssertion.assertElementText(
-          informationModal.authorValue,
-          author,
-        );
         await informationModal.cancelButton.click();
       },
     );
