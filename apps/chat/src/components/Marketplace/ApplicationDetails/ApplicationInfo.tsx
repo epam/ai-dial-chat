@@ -4,7 +4,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { DateRenderer } from '../../Common/DateRenderer';
+import { DateRenderer } from '@/src/components/Common/DateRenderer';
 
 interface infoColumnProps {
   dataQa: string;

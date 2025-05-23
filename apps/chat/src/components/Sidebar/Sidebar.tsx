@@ -35,14 +35,14 @@ import {
 } from '@/src/constants/default-ui-settings';
 
 import { CloseSidebarButton } from '@/src/components/Buttons/CloseSidebarButton';
-import Loader from '@/src/components/Common/Loader';
+import { Loader } from '@/src/components/Common/Loader';
 import { NoData } from '@/src/components/Common/NoData';
 import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
 import {
   CreateNewConversation,
   CreateNewPrompt,
 } from '@/src/components/Header/CreateNewEntity';
-import Search from '@/src/components/Search';
+import { Search } from '@/src/components/Search/Search';
 
 import { LeftSideResizeIcon, RightSideResizeIcon } from './ResizeIcons';
 
@@ -67,7 +67,7 @@ interface Props<T> {
   areEntitiesUploaded: boolean;
 }
 
-const Sidebar = <T,>({
+export const Sidebar = <T,>({
   isOpen,
   side,
   filteredItems,
@@ -436,5 +436,3 @@ const Sidebar = <T,>({
     </Resizable>
   );
 };
-
-export default Sidebar;

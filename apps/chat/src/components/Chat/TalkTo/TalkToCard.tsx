@@ -30,7 +30,7 @@ import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
 import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
-import ShareIcon from '@/src/components/Common/ShareIcon';
+import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { AgentContextMenu } from '@/src/components/Marketplace/AgentContextMenu';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
@@ -41,9 +41,9 @@ interface ApplicationCardProps {
   isSelected: boolean;
   disabled: boolean;
   isUnavailableModel: boolean;
+  isMyWorkspace: boolean;
   onClick: (entity: DialAIEntityModel) => void;
   onSelectVersion: (entity: DialAIEntityModel) => void;
-  isMyWorkspace: boolean;
 }
 
 const disabledActions = {
@@ -57,9 +57,9 @@ export const TalkToCard = ({
   isSelected,
   disabled,
   isUnavailableModel,
+  isMyWorkspace,
   onClick,
   onSelectVersion,
-  isMyWorkspace,
 }: ApplicationCardProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 

@@ -18,7 +18,7 @@ import { AssistantSchema } from '@/src/components/Chat/ChatMessage/MessageSchema
 import { MessageAttachments } from '@/src/components/Chat/MessageAttachments';
 import { MessageStages } from '@/src/components/Chat/MessageStages';
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
-import ChatMDComponent from '@/src/components/Markdown/ChatMDComponent';
+import { ChatMDComponent } from '@/src/components/Markdown/ChatMDComponent';
 
 import { LikeState, Message } from '@epam/ai-dial-shared';
 

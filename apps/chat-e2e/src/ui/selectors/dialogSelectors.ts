@@ -150,6 +150,7 @@ export const AccountSettingsModalSelector = {
 export const PublishingModalSelectors = {
   modalContainer: '[data-qa="publish-modal"]',
   requestName: '[data-qa="request-name"]',
+  author: '#publicationAuthor',
   publishTo: '[data-qa="change-path-container"]',
   unpublishFromLabel: '[data-qa="unpublish-from-label"]',
   unpublishFromPath: '[data-qa="unpublish-from-path"]',
@@ -288,4 +289,18 @@ export const AddApplicationAppSettingsFormSelector = {
   chatCompletionUrl: '#completionUrl',
   addButton: '[data-qa="add-application"]',
   appViewFormContainer: '[data-qa="app-view-form"]',
+};
+
+export const InformationModalSelectors = {
+  container: '[data-qa="info-modal"]',
+  title: '[data-qa="modal-entity-name"]',
+  lastUpdatedContainer: '[data-qa="updated-at"]',
+  createdDateContainer: '[data-qa="created-at"]',
+  authorContainer: '[data-qa="author"]',
+  lastUpdatedLabel: '[data-qa="updated-at-label"]',
+  lastUpdatedValue: '[data-qa="updated-at-value"]',
+  createdDateLabel: '[data-qa="created-at-label"]',
+  createdDateValue: '[data-qa="created-at-value"]',
+  authorLabel: '[data-qa="author-label"]',
+  authorValue: '[data-qa="author-value"]',
 };

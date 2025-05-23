@@ -2,6 +2,7 @@ import {
   ChatOverlayOptions,
   CreateConversationRequest,
   CreateConversationResponse,
+  CreateLocalConversationResponse,
   CreatePlaybackConversationRequest,
   CreatePlaybackConversationResponse,
   DeferredRequest,
@@ -9,6 +10,10 @@ import {
   ExportConversationResponse,
   GetConversationsResponse,
   GetMessagesResponse,
+  GetSelectedConversationsResponse,
+  ImportConversationRequest,
+  ImportConversationResponse,
+  LatestExportConversationsFormat,
   OverlayEvents,
   OverlayRequest,
   OverlayRequests,
@@ -373,6 +378,16 @@ export class ChatOverlay {
   }
 
   /**
+   * Get all selected conversations
+   * @returns {OverlayConversation[]} all selected conversations visible in chat
+   */
+  public async getSelectedConversations(): Promise<GetSelectedConversationsResponse> {
+    return this.send(
+      OverlayRequests.getSelectedConversations,
+    ) as Promise<GetSelectedConversationsResponse>;
+  }
+
+  /**
    * Select conversation
    * @param {string} id - id of conversation to select
    * @returns Returns selected conversation info
@@ -447,7 +462,7 @@ export class ChatOverlay {
   /**
    * Export conversation
    * @param {string} id - id of conversation to export
-   * @returns Returns export conversation info
+   * @returns Returns exported conversation object
    */
   public async exportConversation(
     id: string,
@@ -463,21 +478,51 @@ export class ChatOverlay {
   }
 
   /**
+   * Import conversation
+   * @param {LatestExportConversationsFormat} importedConversation - conversation object to import
+   * @returns Returns imported conversation info
+   */
+  public async importConversation(
+    importedConversation: LatestExportConversationsFormat,
+  ): Promise<ImportConversationResponse> {
+    const request: ImportConversationRequest = {
+      importConversation: importedConversation,
+    };
+
+    return this.send(
+      OverlayRequests.importConversation,
+      request,
+    ) as Promise<ImportConversationResponse>;
+  }
+
+  /**
    * Create conversation
    * @param {string} parentPath - path to create conversation in. If not defined or null conversation will be created in user Root
    * @returns Returns created conversation info
    */
   public async createConversation(
     parentPath?: string | null,
+    local?: boolean | null,
   ): Promise<CreateConversationResponse> {
     const request: CreateConversationRequest = {
       parentPath,
+      local,
     };
 
     return this.send(
       OverlayRequests.createConversation,
       request,
     ) as Promise<CreateConversationResponse>;
+  }
+
+  /**
+   * Create local conversation which will be not visible before first assistant message
+   * @returns Returns created local conversation info
+   */
+  public async createLocalConversation(): Promise<CreateLocalConversationResponse> {
+    return this.send(
+      OverlayRequests.createLocalConversation,
+    ) as Promise<CreateLocalConversationResponse>;
   }
 
   /**

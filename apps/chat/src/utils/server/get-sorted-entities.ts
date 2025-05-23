@@ -1,5 +1,7 @@
 import { JWT } from 'next-auth/jwt';
 
+import { isAbsoluteUrl } from '@/src/utils/app/file';
+
 import { EntityType } from '@/src/types/common';
 import {
   CoreAIEntity,
@@ -13,7 +15,6 @@ import {
   MAX_PROMPT_TOKENS_DEFAULT_VALUE,
 } from '@/src/constants/default-server-settings';
 
-import { isAbsoluteUrl } from '../app/file';
 import { ApiUtils } from './api';
 import { getEntities } from './get-entities';
 import { logger } from './logger';

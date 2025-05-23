@@ -11,6 +11,8 @@ import {
   throwError,
 } from 'rxjs';
 
+import { cleanConversationHistory } from '@/src/utils/app/clean';
+
 import {
   ApplicationInfo,
   ApplicationLogsType,
@@ -27,8 +29,6 @@ import {
 } from '@/src/types/storage';
 
 import { errorsMessages } from '@/src/constants/errors';
-
-import { cleanConversationHistory } from '../../clean';
 
 import {
   ConversationInfo,
