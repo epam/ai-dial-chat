@@ -12,7 +12,6 @@ import {
 import { useMemo } from 'react';
 
 import { usePromptActions } from '@/src/hooks/usePromptActions';
-import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { isMyEntity } from '@/src/utils/app/id';
@@ -22,7 +21,7 @@ import { FeatureType, ScreenState } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/selectors';
+import { PublicationSelectors, SettingsSelectors } from '@/src/store/selectors';
 
 import { ContextMenu } from '@/src/components/Common/ContextMenu';
 import { IconButton } from '@/src/components/Common/IconButton';
@@ -55,7 +54,12 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
     SettingsSelectors.isSharingEnabled(state, FeatureType.Prompt),
   );
 
-  const { isReviewEntity } = usePublicVersionGroupId(prompt);
+  const isApproveRequiredEntitySelected = useAppSelector((state) =>
+    PublicationSelectors.selectIsApproveRequiredEntitySelected(
+      state,
+      prompt.id,
+    ),
+  );
 
   const screenState = useScreenState();
   const isPublic = isEntityIdPublic(prompt);
@@ -65,7 +69,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
     () => [
       {
         name: editBtnName,
-        display: isMyPrompt || isReviewEntity,
+        display: isMyPrompt || isApproveRequiredEntitySelected,
         dataQa: 'edit-prompt',
         Icon: IconPencilMinus,
         onClick: onEditMode,
@@ -141,7 +145,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
       isMyPrompt,
       isPublic,
       isPublishingEnabled,
-      isReviewEntity,
+      isApproveRequiredEntitySelected,
       isSharingEnabled,
       onEditMode,
       prompt.sharedWithMe,

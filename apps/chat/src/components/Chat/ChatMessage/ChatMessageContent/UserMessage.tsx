@@ -5,7 +5,6 @@ import classNames from 'classnames';
 
 import { useChatUploadFiles } from '@/src/hooks/useChatUploadFiles';
 import { useFilePaste } from '@/src/hooks/useFilePaste';
-import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
@@ -37,6 +36,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ConversationsSelectors,
   FilesSelectors,
+  PublicationSelectors,
   SettingsSelectors,
   UISelectors,
 } from '@/src/store/selectors';
@@ -119,6 +119,12 @@ export const UserMessage = memo(function UserMessage({
   const isMessageTemplatesEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.MessageTemplates),
   );
+  const isApproveRequiredEntitySelected = useAppSelector((state) =>
+    PublicationSelectors.selectIsApproveRequiredEntitySelected(
+      state,
+      conversation.id,
+    ),
+  );
 
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
 
@@ -136,13 +142,11 @@ export const UserMessage = memo(function UserMessage({
   const [shouldScroll, setShouldScroll] = useState(false);
   const [selectedDialLinks, setSelectedDialLinks] = useState<DialLink[]>([]);
 
-  const { isReviewEntity } = usePublicVersionGroupId(conversation);
-
   const showUserButtons =
     !isReplay &&
     !isPlayback &&
     !isEditing &&
-    (!isExternal || isReviewEntity) &&
+    (!isExternal || isApproveRequiredEntitySelected) &&
     withButtons;
 
   const isConversationInvalid = isEntityNameOrPathInvalid(conversation);

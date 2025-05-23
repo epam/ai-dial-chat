@@ -12,7 +12,6 @@ import { ButtonHTMLAttributes, FC } from 'react';
 
 import classNames from 'classnames';
 
-import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getMessageCustomContent } from '@/src/utils/server/chat';
@@ -22,6 +21,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import {
   ConversationsSelectors,
+  PublicationSelectors,
   SettingsSelectors,
 } from '@/src/store/selectors';
 
@@ -78,8 +78,12 @@ export const MessageUserButtons = ({
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
   );
-
-  const { isReviewEntity } = usePublicVersionGroupId(selectedConversations[0]);
+  const isApproveRequiredEntitySelected = useAppSelector((state) =>
+    PublicationSelectors.selectIsApproveRequiredEntitySelected(
+      state,
+      selectedConversations[0].id,
+    ),
+  );
 
   return (
     <div
@@ -104,7 +108,8 @@ export const MessageUserButtons = ({
               </button>
             </Tooltip>
           )}
-          {((isEditAvailable && !editDisabled) || isReviewEntity) && (
+          {((isEditAvailable && !editDisabled) ||
+            isApproveRequiredEntitySelected) && (
             <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
               <button
                 className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
@@ -151,8 +156,12 @@ export const MessageAssistantButtons = ({
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
   );
-
-  const { isReviewEntity } = usePublicVersionGroupId(selectedConversations[0]);
+  const isApproveRequiredEntitySelected = useAppSelector((state) =>
+    PublicationSelectors.selectIsApproveRequiredEntitySelected(
+      state,
+      selectedConversations[0].id,
+    ),
+  );
 
   return (
     <div
@@ -190,7 +199,7 @@ export const MessageAssistantButtons = ({
           </Tooltip>
         ))}
       <div className="flex flex-row gap-2">
-        {(isLikesEnabled || isReviewEntity) &&
+        {(isLikesEnabled || isApproveRequiredEntitySelected) &&
           (message.content.trim() || !!getMessageCustomContent(message)) && (
             <>
               {message.like !== LikeState.Disliked && (

@@ -58,7 +58,7 @@ const PublicationResourcesVersionGroup = ({
 }: PublicationResourcesVersionGroupInterface) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const { publicVersionGroupId } = usePublicVersionGroupId(entity);
+  const publicVersionGroupId = usePublicVersionGroupId(entity);
 
   if (!publicVersionGroupId) {
     return null;

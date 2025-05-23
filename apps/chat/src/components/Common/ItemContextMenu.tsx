@@ -16,7 +16,6 @@ import {
 } from '@tabler/icons-react';
 import { MouseEventHandler, useMemo } from 'react';
 
-import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -33,7 +32,7 @@ import { ContextMenuProps, DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/selectors';
+import { PublicationSelectors, SettingsSelectors } from '@/src/store/selectors';
 
 import { ContextMenu } from './ContextMenu';
 
@@ -106,8 +105,9 @@ export function ItemContextMenu({
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
-
-  const { isReviewEntity } = usePublicVersionGroupId(entity);
+  const isApproveRequiredEntity = useAppSelector((state) =>
+    PublicationSelectors.selectIsApproveRequiredEntity(state, entity.id),
+  );
 
   const isExternal = isEntityIdExternal(entity);
   const isNameInvalid = isEntityNameInvalid(entity.name);
@@ -144,7 +144,7 @@ export function ItemContextMenu({
       },
       {
         name: t(featureType === FeatureType.Chat ? 'Rename' : 'Edit'),
-        display: (!isExternal || isReviewEntity) && !!onRename,
+        display: (!isExternal || isApproveRequiredEntity) && !!onRename,
         dataQa: 'rename',
         Icon: IconPencilMinus,
         onClick: onRename,
@@ -287,7 +287,7 @@ export function ItemContextMenu({
       isFormSchemaConversation,
       isNameInvalid,
       isPublishingEnabled,
-      isReviewEntity,
+      isApproveRequiredEntity,
       isSharingEnabled,
       onCompare,
       onDelete,

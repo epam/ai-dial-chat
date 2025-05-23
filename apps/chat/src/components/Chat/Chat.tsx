@@ -13,7 +13,6 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
-import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -152,9 +151,11 @@ const ChatView = memo(() => {
   const configurationSchema = useAppSelector(
     ChatSelectors.selectConfigurationSchema,
   );
-
-  const { isReviewEntity } = usePublicVersionGroupId(
-    selectedConversations[0] ?? { id: '' },
+  const isApproveRequiredEntity = useAppSelector((state) =>
+    PublicationSelectors.selectIsApproveRequiredEntity(
+      state,
+      selectedConversationsIds[0] ?? '',
+    ),
   );
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
@@ -164,7 +165,7 @@ const ChatView = memo(() => {
   const [isLastMessageError, setIsLastMessageError] = useState(false);
   const [prevSelectedIds, setPrevSelectedIds] = useState<string[]>([]);
   const [inputHeight, setInputHeight] = useState(142);
-  const [isReviewInputOpen, setIsReviewInputOpen] = useState(false);
+  const [isApproveRequiredInput, setIsApproveRequiredInput] = useState(false);
   const [isWideLayout, setIsWideLayout] = useState(
     checkIsWideLayout(mergedMessages.length, isCompareMode),
   );
@@ -532,14 +533,14 @@ const ChatView = memo(() => {
     handleTalkToConversationId(null);
   }, [handleTalkToConversationId]);
 
-  const handleToggleReviewInput = useCallback(() => {
-    setIsReviewInputOpen(!isReviewInputOpen);
-  }, [isReviewInputOpen]);
+  const handleToggleApproveRequiredInput = useCallback(() => {
+    setIsApproveRequiredInput(!isApproveRequiredInput);
+  }, [isApproveRequiredInput]);
 
   const showLastMessageRegenerate =
     !isReplay &&
     !isPlayback &&
-    (!isExternal || isReviewEntity) &&
+    (!isExternal || isApproveRequiredEntity) &&
     !messageIsStreaming &&
     !isLastMessageError &&
     !notAvailableEntityType;
@@ -567,7 +568,7 @@ const ChatView = memo(() => {
 
   const isInputVisible =
     (!isReplay || isNotEmptyConversations) &&
-    (!isExternal || isReviewInputOpen) &&
+    (!isExternal || isApproveRequiredInput) &&
     (areModelsInstalled || isReplay || isIsolatedView) &&
     !(isConversationWithSchema && selectedConversations.length > 1);
 
@@ -609,14 +610,14 @@ const ChatView = memo(() => {
   }, [enabledFeatures]);
 
   useEffect(() => {
-    setIsReviewInputOpen(false);
+    setIsApproveRequiredInput(false);
   }, [selectedConversationsIds]);
 
   useEffect(() => {
     handleScroll();
-  }, [isReviewInputOpen, handleScroll]);
+  }, [isApproveRequiredInput, handleScroll]);
 
-  const isScrollDownButton = showScrollDownButton && !isReviewInputOpen;
+  const isScrollDownButton = showScrollDownButton && !isApproveRequiredInput;
 
   return (
     <ChatDropArea isSettingsModalOpen={isShowChatSettings}>
@@ -875,7 +876,7 @@ const ChatView = memo(() => {
                             showScrollDownButton={showScrollDownButton}
                             entity={selectedConversations[0]}
                             onScrollDownClick={handleScrollDown}
-                            onToggleInput={handleToggleReviewInput}
+                            onToggleInput={handleToggleApproveRequiredInput}
                           />
                         )}
 

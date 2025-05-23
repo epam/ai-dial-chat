@@ -82,9 +82,15 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
   const selectedPublication = useAppSelector(
     PublicationSelectors.selectSelectedPublication,
   );
+  const isApproveRequiredEntitySelected = useAppSelector((state) =>
+    PublicationSelectors.selectIsApproveRequiredEntitySelected(
+      state,
+      prompt.id,
+    ),
+  );
 
-  const { publicVersionGroupId, isReviewEntity } =
-    usePublicVersionGroupId(prompt);
+  const publicVersionGroupId = usePublicVersionGroupId(prompt);
+
   const { handleUse } = usePromptActions(prompt);
 
   const handleChangeSelectedVersion = useCallback(
@@ -130,7 +136,7 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
       <div className="flex items-center justify-between border-t border-t-tertiary px-3 pt-4 md:px-6">
         <ViewPromptButtons prompt={prompt} onEditMode={onEditMode} />
         <div className="flex items-center gap-4">
-          {isReviewEntity ? (
+          {isApproveRequiredEntitySelected ? (
             <>
               <p
                 className={classNames(
