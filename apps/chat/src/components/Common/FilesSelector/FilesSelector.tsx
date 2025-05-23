@@ -9,7 +9,7 @@ import { ConfirmDialogValueTypes } from '@/src/types/common';
 import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 import { FileManagerModal } from '@/src/components/Files/FileManagerModal';
 
 import { ConfirmDialog } from '../ConfirmDialog';

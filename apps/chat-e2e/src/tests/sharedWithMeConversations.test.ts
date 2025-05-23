@@ -11,11 +11,18 @@ import {
   ExpectedMessages,
   FolderConversation,
   MenuOptions,
+  MockedChatApiResponseBodies,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { DialHomePage } from '@/src/ui/pages';
-import { GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
+import {
+  DateUtil,
+  GeneratorUtil,
+  ItemUtil,
+  ModelsUtil,
+  UserUtil,
+} from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Role } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
@@ -1092,6 +1099,9 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Click on Replay button and verify request is sent',
       async () => {
+        await additionalShareUserDialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         const replayRequest = await additionalShareUserChat.startReplay();
         expect
           .soft(replayRequest, ExpectedMessages.chatRequestIsSent)
@@ -1102,23 +1112,32 @@ dialSharedWithMeTest(
 );
 
 dialSharedWithMeTest(
-  'Shared with me. Playback chat',
-  async ({
-    conversationData,
-    dataInjector,
-    mainUserShareApiHelper,
-    additionalUserShareApiHelper,
-    additionalShareUserDialHomePage,
-    additionalShareUserSharedWithMeConversations,
-    additionalShareUserSharedWithMeConversationDropdownMenu,
-    additionalShareUserConversations,
-    additionalShareUserPlaybackControl,
-    setTestIds,
-    additionalShareUserLocalStorageManager,
-  }) => {
-    setTestIds('EPMRTC-1847');
+  'Metadata for chat from Shared with me section.\n' +
+    'Shared with me. Playback chat',
+  async (
+    {
+      conversationData,
+      dataInjector,
+      mainUserShareApiHelper,
+      additionalUserShareApiHelper,
+      additionalShareUserDialHomePage,
+      additionalShareUserSharedWithMeConversations,
+      additionalShareUserSharedWithMeConversationDropdownMenu,
+      additionalShareUserInformationModal,
+      additionalShareUserInformationModalAssertion,
+      additionalShareUserPlaybackControl,
+      setTestIds,
+      additionalShareUserLocalStorageManager,
+      baseAssertion,
+      additionalShareUserConversationAssertion,
+    },
+    testInfo,
+  ) => {
+    setTestIds('EPMRTC-5553', 'EPMRTC-1847');
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
+    const currentDate = DateUtil.getCurrentLocalDate();
+    const author = UserUtil.getE2EUsername(testInfo.parallelIndex);
 
     await dialSharedWithMeTest.step('Prepare shared conversation', async () => {
       conversation = conversationData.prepareDefaultConversation();
@@ -1131,7 +1150,7 @@ dialSharedWithMeTest(
     });
 
     await dialSharedWithMeTest.step(
-      'Open app by another user and verify Playback conversation creation for shared chat via dropdown menu',
+      'Open app by another user, select "Info" option from the dropdown menu and verify modal data',
       async () => {
         await additionalShareUserDialHomePage.openHomePage({
           iconsToBeLoaded: [defaultModel!.iconUrl],
@@ -1144,23 +1163,37 @@ dialSharedWithMeTest(
           conversation.name,
         );
         await additionalShareUserSharedWithMeConversationDropdownMenu.selectMenuOption(
+          MenuOptions.info,
+          { triggeredHttpMethod: 'GET' },
+        );
+        await additionalShareUserInformationModalAssertion.assertFields({
+          createdDate: currentDate,
+          lastUpdatedDate: currentDate,
+          author: author,
+        });
+        await additionalShareUserInformationModal.cancelButton.click();
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Verify Playback conversation creation for shared chat via dropdown menu',
+      async () => {
+        await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
+          conversation.name,
+        );
+        await additionalShareUserSharedWithMeConversationDropdownMenu.selectMenuOption(
           MenuOptions.playback,
           { triggeredHttpMethod: 'POST' },
         );
-        await expect
-          .soft(
-            additionalShareUserConversations.getEntityByName(
-              ExpectedConstants.playbackConversation + conversation.name,
-            ),
-            ExpectedMessages.conversationIsShared,
-          )
-          .toBeVisible();
-        await expect
-          .soft(
-            additionalShareUserPlaybackControl.getElementLocator(),
-            ExpectedMessages.playbackMessageIsInViewport,
-          )
-          .toBeVisible();
+        await additionalShareUserConversationAssertion.assertEntityState(
+          { name: ExpectedConstants.playbackConversation + conversation.name },
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          additionalShareUserPlaybackControl,
+          'visible',
+          ExpectedMessages.playbackMessageIsInViewport,
+        );
       },
     );
   },

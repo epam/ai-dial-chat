@@ -16,6 +16,8 @@ import { expect } from '@playwright/test';
 dialTest(
   'Isolated view: new conversation is opened based on exact model set in URL.\n' +
     'Isolated view: application description is shown on the first screen.\n' +
+    'Isolated view: Prompt and Conversation panels are not available.\n' +
+    'Isolated view: navigation panel with DIAL marketplace and My workspace buttons is not available.\n' +
     'Isolated view: new conversation is opened based on exact model with spec chars in id.\n' +
     'Isolated view: if to refresh or re-login the new chat is created, so, history is not stored in isolated view, though you can find the chat in main DIAL',
   async ({
@@ -25,6 +27,9 @@ dialTest(
     chat,
     chatBar,
     promptBar,
+    header,
+    baseAssertion,
+    navigationPanel,
     chatHeader,
     chatMessages,
     modelInfoTooltip,
@@ -32,7 +37,14 @@ dialTest(
     localStorageManager,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-2962', 'EPMRTC-2974', 'EPMRTC-2973', 'EPMRTC-4891');
+    setTestIds(
+      'EPMRTC-2962',
+      'EPMRTC-2974',
+      'EPMRTC-6265',
+      'EPMRTC-6264',
+      'EPMRTC-2973',
+      'EPMRTC-4891',
+    );
     const expectedModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getModels().filter((m) => m.iconUrl !== undefined),
     )!;
@@ -61,6 +73,21 @@ dialTest(
           .toBe(expectedShortDescription);
 
         await agentInfoAssertion.assertAgentIcon(expectedModelIcon);
+      },
+    );
+
+    await dialTest.step(
+      'Verify navigation panel and conversation/prompt panel toggles are not available',
+      async () => {
+        await baseAssertion.assertElementState(
+          header.rightPanelToggle,
+          'hidden',
+        );
+        await baseAssertion.assertElementState(
+          header.leftPanelToggle,
+          'hidden',
+        );
+        await baseAssertion.assertElementState(navigationPanel, 'hidden');
       },
     );
 

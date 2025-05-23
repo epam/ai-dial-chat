@@ -7,7 +7,7 @@ import { SchemaCompareWarning } from '@/src/components/Chat/ChatInput/SchemaComp
 import { StartReplayButton } from '@/src/components/Chat/StartReplayButton';
 
 import { AddModelsControl } from './AddModelsControl';
-import ChatExternalControls from './ChatExternalControls';
+import { ChatExternalControls } from './ChatExternalControls';
 
 interface Props {
   isNotEmptyConversations: boolean;

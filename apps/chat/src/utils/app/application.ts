@@ -1,5 +1,6 @@
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { getTopicColors } from '@/src/utils/app/style-helpers';
+import { ApiUtils, getApplicationApiKey } from '@/src/utils/server/api';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
@@ -29,7 +30,6 @@ import {
 
 import { ApplicationGeneralInfoFormData } from '@/src/components/AppsEditor/GeneralInfoView/form';
 
-import { ApiUtils, getApplicationApiKey } from '../server/api';
 import { constructPath } from './file';
 import { getFolderIdFromEntityId } from './folders';
 import { getApplicationRootId } from './id';

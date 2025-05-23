@@ -41,9 +41,9 @@ import {
 
 import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
-import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
+import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 import { Spinner } from '@/src/components/Common/Spinner';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { CompareRulesModal } from './CompareRulesModal';
 import {

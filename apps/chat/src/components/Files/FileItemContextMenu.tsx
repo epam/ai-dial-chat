@@ -27,9 +27,9 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
-import ContextMenu from '@/src/components/Common/ContextMenu';
+import { ContextMenu } from '@/src/components/Common/ContextMenu';
 
-import DownloadRenderer from './Download';
+import { DownloadRenderer } from './Download';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';

@@ -31,16 +31,16 @@ import {
 import { NA_VERSION } from '@/src/constants/public';
 
 import { ConversationComponent } from '@/src/components/Chatbar/Conversation';
-import { PromptComponent } from '@/src/components/Promptbar/components/Prompt';
-
 import {
   ApplicationRow,
   ConversationRow,
   FilesRow,
   PromptsRow,
-} from '../../Common/ReplaceConfirmationModal/Components';
-import { FileItem } from '../../Files/FileItem';
-import Folder from '../../Folder/Folder';
+} from '@/src/components/Common/ReplaceConfirmationModal/Components';
+import { FileItem } from '@/src/components/Files/FileItem';
+import { Folder } from '@/src/components/Folder/Folder';
+import { PromptComponent } from '@/src/components/Promptbar/components/Prompt';
+
 import { PublicVersionSelector } from './PublicVersionSelector';
 
 import {
