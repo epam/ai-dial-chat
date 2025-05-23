@@ -16,10 +16,7 @@ import {
   CONVERSATION_QUERY_PARAM,
   ISOLATED_MODEL_QUERY_PARAM,
 } from '@/src/constants/chat';
-import {
-  FALLBACK_ASSISTANT_SUBMODEL_ID,
-  FALLBACK_MODEL_ID,
-} from '@/src/constants/default-ui-settings';
+import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 import {
   DEFAULT_QUICK_APPS_HOST,
   DEFAULT_QUICK_APPS_MODEL,
@@ -34,6 +31,7 @@ import { parseCommaSeparatedList } from '../app/common';
 
 import { Feature } from '@epam/ai-dial-shared';
 import { URL, URLSearchParams } from 'url';
+import { DEFAULT_MODEL_ID } from '@/src/constants/default-server-settings';
 
 const disabledFeaturesForIsolatedView = new Set([
   Feature.ConversationsSection,
@@ -113,7 +111,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
     defaultRecentAddonsIds: parseCommaSeparatedList(
       process.env.RECENT_ADDONS_IDS,
     ),
-    defaultModelId: process.env.DEFAULT_MODEL ?? FALLBACK_MODEL_ID,
+    defaultModelReference: DEFAULT_MODEL_ID,
     defaultAssistantSubmodelId:
       process.env.NEXT_PUBLIC_DEFAULT_ASSISTANT_SUB_MODEL ??
       FALLBACK_ASSISTANT_SUBMODEL_ID,
@@ -153,7 +151,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
     allowVisualizerSendMessages: !!process.env.ALLOW_VISUALIZER_SEND_MESSAGES,
     topics: parseCommaSeparatedList(
       process.env.TOPICS ??
-        'Business,Development,User Experience,Analysis,SQL,SDLC,Talk-To-Your-Data,RAG,Text Generation,Image Generation,Image Recognition',
+      'Business,Development,User Experience,Analysis,SQL,SDLC,Talk-To-Your-Data,RAG,Text Generation,Image Generation,Image Recognition',
     ),
     quickAppsHost: process.env.QUICK_APPS_HOST || DEFAULT_QUICK_APPS_HOST,
     quickAppsModel: process.env.QUICK_APPS_MODEL || DEFAULT_QUICK_APPS_MODEL,

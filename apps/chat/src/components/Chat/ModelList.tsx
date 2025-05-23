@@ -108,7 +108,9 @@ const ModelGroup = ({
     // find latest used version
     const minIndex = Math.min(
       ...recentModelsIds
-        .map((rid) => entities.findIndex((e) => e.id === rid))
+        .map((rid) =>
+          entities.findIndex((e) => e.id === rid || e.reference === rid),
+        )
         .filter((ind) => ind !== -1),
       Number.MAX_SAFE_INTEGER,
     );
