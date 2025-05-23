@@ -436,7 +436,6 @@ export const ChatOverlayManagerWrapper: React.FC<
 
                 newOptions.theme = 'dark';
                 newOptions.modelId = 'stability.stable-diffusion-xl';
-                newOptions.newConversationsFolderId = 'new-folder';
 
                 overlayManager.current?.setOverlayOptions(
                   overlayManagerOptions.id,
