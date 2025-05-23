@@ -507,7 +507,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'Delete custom app from "Select an agent for conversation" form\n' + // EPMRTC-4105
     'Delete custom app from application card pop-up\n' + // EPMRTC-4103
     '[Custom app]: Delete specific not published version' + // EPMRTC-4285
@@ -1034,11 +1034,13 @@ dialTest(
   },
 );
 
-dialTest(
-  '[Custom app]: Attachments type not empty and Max attachments empty then Max Attachments field treated as without limits',
+dialTest.only(
+  '[Custom app]: Attachments type not empty and Max attachments empty then Max Attachments field treated as without limits.\n' + // EPMRTC-4131
+    '[Custom app + Marketplace]: tooltips for icons on application modal window', // EPMRTC-4290
   async ({
     marketplacePage,
     marketplaceHeader,
+    addAppDropdownMenu, // Needed for EPMRTC-4131 if creating app via UI, but this test creates via API for EPMRTC-4290 part
     appEditorPage,
     appEditorGeneralForm,
     appEditorViewForm,
@@ -1055,14 +1057,20 @@ dialTest(
     attachFilesModal,
     fileApiHelper,
     sendMessageInputAttachmentsAssertions,
+    page, // Added page fixture
+    tooltipAssertion, // Added for EPMRTC-4290
+    customApplicationBuilder, // Added for EPMRTC-4290 app creation
+    applicationApiHelper, // Added for EPMRTC-4290 app creation
+    agentDetailsModalAssertion, // Added for EPMRTC-4290
   }) => {
-    setTestIds('EPMRTC-4131');
+    setTestIds('EPMRTC-4131', 'EPMRTC-4290');
     const appName = GeneratorUtil.randomApplicationName();
     const appVersion = GeneratorUtil.randomApplicationVersion();
     const completionUrl = `http://${GeneratorUtil.randomString(6)}.com`;
     const appEntity = {
       name: appName,
       version: appVersion,
+      description: GeneratorUtil.randomShortDescription(), // Added description for EPMRTC-4290
     } as DialAIEntityModel;
     const attachmentType = 'application/pdf';
     const pdfFilesToUpload = [
@@ -1117,11 +1125,26 @@ dialTest(
       },
     );
 
-    await dialTest.step('Find and use the created application', async () => {
-      await marketplaceHeader.searchInput.fillInInput(appEntity.name);
-      const agentElement =
-        await marketplaceAgentsSection.findAgentElement(appEntity);
-      await agentElement.click();
+    await dialTest.step(
+      'Find the created application and verify tooltips',
+      async () => {
+        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        const agentElement =
+          await marketplaceAgentsSection.findAgentElement(appEntity);
+        await agentElement.click();
+
+        await agentDetailsModal.deleteButton.hoverOver();
+        await tooltipAssertion.assertTooltipContent(MenuOptions.delete);
+
+        await agentDetailsModal.editButton.hoverOver();
+        await tooltipAssertion.assertTooltipContent(MenuOptions.edit);
+
+        await agentDetailsModal.publishButton.hoverOver();
+        await tooltipAssertion.assertTooltipContent(MenuOptions.publish);
+      },
+    );
+
+    await dialTest.step('Use the created application', async () => {
       await agentDetailsModal.clickUseButton({
         isInstalledDeploymentsUpdated: false,
       });
