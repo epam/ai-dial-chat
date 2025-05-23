@@ -46,14 +46,14 @@ import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { CompareRulesModal } from './CompareRulesModal';
+import { PublicationInfoSection } from './PublishWizardComponents';
+import { ReviewApplicationDialog } from './ReviewApplicationDialog/ReviewApplicationDialog';
 import {
   ApplicationPublicationResources,
   ConversationPublicationResources,
   FilePublicationResources,
   PromptPublicationResources,
-} from './PublicationResources';
-import { PublicationInfoSection } from './PublishWizardComponents';
-import { ReviewApplicationDialog } from './ReviewApplicationDialog/ReviewApplicationDialog';
+} from './ReviewResources';
 import { RuleListItem } from './RuleListItem';
 
 import isEqual from 'lodash-es/isEqual';
@@ -345,28 +345,24 @@ export function PublicationHandler({ publication }: Props) {
       sectionName: t('Conversations'),
       dataQa: 'conversations-to-approve',
       Component: ConversationPublicationResources,
-      showTooltip: true,
     },
     {
       featureType: FeatureType.Prompt,
       sectionName: t('Prompts'),
       dataQa: 'prompts-to-approve',
       Component: PromptPublicationResources,
-      showTooltip: true,
     },
     {
       featureType: FeatureType.Application,
       sectionName: t('Applications'),
       dataQa: 'applications-to-approve',
       Component: ApplicationPublicationResources,
-      showTooltip: true,
     },
     {
       featureType: FeatureType.File,
       sectionName: t('Files'),
       dataQa: 'files-to-approve',
       Component: FilePublicationResources,
-      showTooltip: true,
     },
   ];
 
@@ -379,6 +375,11 @@ export function PublicationHandler({ publication }: Props) {
   const isOnlyFilesPublication = publication.resources.every((resource) =>
     isFileId(resource.reviewUrl),
   );
+  const publicationName = publication.name || getPublicationId(publication.url);
+  const areRulesChanged =
+    !isRulesLoading &&
+    publication.rules &&
+    !isEqual(publication.rules, rules[publication.targetFolder] || []);
 
   return (
     <div className="flex size-full flex-col items-center overflow-y-auto p-0 md:px-5 md:pt-5">
@@ -388,7 +389,7 @@ export function PublicationHandler({ publication }: Props) {
       >
         <div className="flex w-full items-center rounded-t bg-layer-2 px-3 py-4 md:px-5">
           <Tooltip
-            tooltip={publication.name || getPublicationId(publication.url)}
+            tooltip={publicationName}
             contentClassName="max-w-[400px] break-all"
             triggerClassName="truncate"
           >
@@ -396,7 +397,7 @@ export function PublicationHandler({ publication }: Props) {
               data-qa="publish-name"
               className="truncate whitespace-pre break-all text-base font-semibold"
             >
-              {publication.name || getPublicationId(publication.url)}
+              {publicationName}
             </h4>
           </Tooltip>
         </div>
@@ -406,9 +407,9 @@ export function PublicationHandler({ publication }: Props) {
               <div className="flex flex-col px-3 pb-4 md:px-5">
                 <h2 className="mb-4 font-semibold">{t('General info')}</h2>
                 <PublicationInfoSection
-                  labelDataQa={'publish-to-label'}
+                  labelDataQa="publish-to-label"
                   label={t('Publish to')}
-                  valueDataQa={'publish-to-path'}
+                  valueDataQa="publish-to-path"
                   valueToDisplay={publishToUrl}
                   tooltip={
                     <div className="flex break-words">{publishToUrl}</div>
@@ -416,17 +417,17 @@ export function PublicationHandler({ publication }: Props) {
                 />
 
                 <PublicationInfoSection
-                  labelDataQa={'publication-author-label'}
+                  labelDataQa="publication-author-label"
                   label={t('Author: ')}
-                  valueDataQa={'publication-author'}
+                  valueDataQa="publication-author"
                   valueToDisplay={publicationAuthor}
                 />
 
                 {/*TODO remove publicationAuthor when publication.displayAuthor will be ready at the core side */}
                 <PublicationInfoSection
-                  labelDataQa={'publication-display-author-label'}
-                  label={t(`Author's public name: `)}
-                  valueDataQa={'publication-display-author'}
+                  labelDataQa="publication-display-author-label"
+                  label={t("Author's public name: ")}
+                  valueDataQa="publication-display-author"
                   valueToDisplay={
                     publication.displayAuthor ?? publicationAuthor
                   }
@@ -436,9 +437,9 @@ export function PublicationHandler({ publication }: Props) {
                 />
 
                 <PublicationInfoSection
-                  labelDataQa={'creation-date-label'}
+                  labelDataQa="creation-date-label"
                   label={t('Request created: ')}
-                  valueDataQa={'creation-date'}
+                  valueDataQa="creation-date"
                   valueToDisplay={formatDate(publication.createdAt)}
                 />
               </div>
@@ -448,26 +449,21 @@ export function PublicationHandler({ publication }: Props) {
                     <p data-qa="allow-access-label">
                       {t('Allow access if all match')}
                     </p>
-                    {!isRulesLoading &&
-                      (publication.rules &&
-                      !isEqual(
-                        publication.rules,
-                        rules[publication.targetFolder] || [],
-                      ) ? (
-                        <span
-                          onClick={() => setIsCompareModalOpened(true)}
-                          className="cursor-pointer text-accent-primary"
-                        >
-                          {t('See changes')}
-                        </span>
-                      ) : (
-                        <span
-                          className="text-secondary"
-                          data-qa="no-changes-label"
-                        >
-                          {t('No changes')}
-                        </span>
-                      ))}
+                    {areRulesChanged ? (
+                      <span
+                        onClick={() => setIsCompareModalOpened(true)}
+                        className="cursor-pointer text-accent-primary"
+                      >
+                        {t('See changes')}
+                      </span>
+                    ) : (
+                      <span
+                        className="text-secondary"
+                        data-qa="no-changes-label"
+                      >
+                        {t('No changes')}
+                      </span>
+                    )}
                   </div>
                 </h2>
                 <FiltersComponent
@@ -481,13 +477,7 @@ export function PublicationHandler({ publication }: Props) {
             <div className="overflow-y-auto bg-layer-2 px-3 pb-4 pt-1 md:px-5">
               {publication.resources.length ? (
                 sections.map(
-                  ({
-                    dataQa,
-                    sectionName,
-                    Component,
-                    featureType,
-                    showTooltip,
-                  }) =>
+                  ({ dataQa, sectionName, Component, featureType }) =>
                     publication.resourceTypes.includes(
                       EnumMapper.getBackendResourceTypeByFeatureType(
                         featureType,
@@ -503,16 +493,13 @@ export function PublicationHandler({ publication }: Props) {
                           <>
                             {t('Publish')},
                             <span className="text-error">
-                              {t(' Unpublish')}
+                              {' '}
+                              {t('Unpublish')}
                             </span>
                           </>
                         }
                       >
-                        <Component
-                          resources={publication.resources}
-                          readonly
-                          showTooltip={showTooltip}
-                        />
+                        <Component resources={publication.resources} />
                       </CollapsibleSection>
                     ),
                 )
@@ -560,9 +547,11 @@ export function PublicationHandler({ publication }: Props) {
                 onClick={handlePublicationReview}
                 data-qa="go-to-review"
               >
-                {resourcesToReview.some((r) => r.reviewed)
-                  ? t('Continue review')
-                  : t('Go to a review')}
+                {t(
+                  resourcesToReview.some((r) => r.reviewed)
+                    ? 'Continue review'
+                    : 'Go to a review',
+                )}
               </button>
             )
           )}
@@ -582,13 +571,11 @@ export function PublicationHandler({ publication }: Props) {
             </button>
             <Tooltip
               hideTooltip={resourcesToReview.every((r) => r.reviewed)}
-              tooltip={
+              tooltip={t(
                 invalidEntities.length
-                  ? t(
-                      "Request can't be approved as some conversations are unpublished",
-                    )
-                  : t("It's required to review all resources")
-              }
+                  ? "Request can't be approved as some conversations are unpublished"
+                  : "It's required to review all resources",
+              )}
             >
               <button
                 className="button button-primary disabled:cursor-not-allowed disabled:text-controls-disable"
