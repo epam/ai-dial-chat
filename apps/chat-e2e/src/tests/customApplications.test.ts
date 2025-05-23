@@ -18,7 +18,7 @@ import {
   BaseElement,
   FileModalSection,
 } from '@/src/ui/webElements';
-import { GeneratorUtil } from '@/src/utils';
+import { GeneratorUtil, SortingUtil } from '@/src/utils';
 
 dialTest(
   'Create custom app with required fields only.\n' + // EPMRTC-5130
@@ -507,10 +507,11 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.only(
   'Delete custom app from "Select an agent for conversation" form\n' + // EPMRTC-4105
     'Delete custom app from application card pop-up\n' + // EPMRTC-4103
-    '[Custom app]: Delete specific not published version', // EPMRTC-4285
+    '[Custom app]: Delete specific not published version' + // EPMRTC-4285
+    '[Custom app]: add 2 applications with the same name and different versions - not published applications grouped by name', //EPMRTC-4279
   async ({
     marketplacePage,
     marketplaceAgentsSection,
@@ -529,8 +530,9 @@ dialTest(
     marketplaceContainer,
     agentDetailsModalAssertion,
     marketplaceAgents,
+    agentVersionsDropdownMenuAssertion,
   }) => {
-    setTestIds('EPMRTC-4105', 'EPMRTC-4103', 'EPMRTC-4285');
+    setTestIds('EPMRTC-4105', 'EPMRTC-4103', 'EPMRTC-4285', 'EPMRTC-4279');
     let agentElementInDialog: BaseElement;
     let agentElement1: BaseElement;
     let agentElement2: BaseElement;
@@ -659,17 +661,28 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open "My workspace", find App 2 and click on the second app card',
+      'Open "My workspace", verify that the only one card for App2 is found, find App 2 and click on the second app card',
       async () => {
         await marketplaceContainer.getNavigationPanel().goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appEntity2_v2.name);
+        const allAgents = await marketplaceAgentsSection.getAllAgents();
+        const workspaceAgentsWithName = allAgents.filter(
+          (agent) =>
+            agent.isWorkspaceAgent && agent.name === appEntity2_v2.name,
+        ); //TODO workspaceAgentsWithName
+        baseAssertion.assertValue(
+          workspaceAgentsWithName.length,
+          1,
+          ExpectedMessages.onlyOneEntityCardFoundInSearch('application'),
+        );
         agentElement2 =
           await marketplaceAgentsSection.findAgentElement(appEntity2_v2);
         await baseAssertion.assertElementState(agentElement2, 'visible');
         await baseAssertion.assertElementText(
           marketplaceAgents.getAgentVersion(agentElement2),
           appEntity2_v2.version!,
+          ExpectedMessages.cardShouldDisplayTheLatestVersion,
         );
       },
     );
@@ -679,10 +692,20 @@ dialTest(
       async () => {
         await agentElement2.click();
         await baseAssertion.assertElementState(agentDetailsModal, 'visible');
+        await agentDetailsModalAssertion.assertApplicationName(
+          appEntity2_v2.name,
+        );
         await agentDetailsModalAssertion.assertApplicationVersion(
           appEntity2_v2.version!,
         );
         await agentDetailsModal.versionMenuTrigger.click();
+        const expectedVersionsInDropdown = SortingUtil.sortVersionsArray([
+          appEntity2_v1.version!,
+          appEntity2_v2.version!,
+        ]);
+        await agentVersionsDropdownMenuAssertion.assertMenuOptions(
+          expectedVersionsInDropdown,
+        );
         await agentDetailsModal
           .getVersionDropdownMenu()
           .selectMenuOption(appEntity2_v1.version!);
@@ -1011,7 +1034,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   '[Custom app]: Attachments type not empty and Max attachments empty then Max Attachments field treated as without limits',
   async ({
     marketplacePage,
