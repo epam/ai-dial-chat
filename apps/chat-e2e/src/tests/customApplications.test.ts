@@ -511,7 +511,8 @@ dialTest(
   'Delete custom app from "Select an agent for conversation" form\n' + // EPMRTC-4105
     'Delete custom app from application card pop-up\n' + // EPMRTC-4103
     '[Custom app]: Delete specific not published version' + // EPMRTC-4285
-    '[Custom app]: add 2 applications with the same name and different versions - not published applications grouped by name', //EPMRTC-4279
+    '[Custom app]: add 2 applications with the same name and different versions - not published applications grouped by name\n' + //EPMRTC-4279
+    '[Custom app]: group versions of custom app by name', //EPMRTC-4312
   async ({
     marketplacePage,
     marketplaceAgentsSection,
@@ -532,7 +533,13 @@ dialTest(
     marketplaceAgents,
     agentVersionsDropdownMenuAssertion,
   }) => {
-    setTestIds('EPMRTC-4105', 'EPMRTC-4103', 'EPMRTC-4285', 'EPMRTC-4279');
+    setTestIds(
+      'EPMRTC-4105',
+      'EPMRTC-4103',
+      'EPMRTC-4285',
+      'EPMRTC-4279',
+      'EPMRTC-4312',
+    );
     let agentElementInDialog: BaseElement;
     let agentElement1: BaseElement;
     let agentElement2: BaseElement;
