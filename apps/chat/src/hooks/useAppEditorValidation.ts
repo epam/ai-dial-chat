@@ -8,6 +8,8 @@ import { isMyApplication } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
+import { DialAIEntityModel } from '@/src/types/models';
+
 import { ApplicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -21,7 +23,7 @@ import { Routes } from '@/src/constants/routes';
 export const useAppEditorValidation = (isIdRequired: boolean) => {
   const router = useRouter();
   const {
-    query: { id = '', slug = '' },
+    query: { id = '', slug = '', isApplicationOnReview = false },
   } = router;
 
   const dispatch = useAppDispatch();
@@ -32,6 +34,9 @@ export const useAppEditorValidation = (isIdRequired: boolean) => {
 
   const applicationData = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
+  );
+  const isApplicationLoading = useAppSelector(
+    ApplicationSelectors.selectIsApplicationLoading,
   );
 
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
@@ -54,10 +59,29 @@ export const useAppEditorValidation = (isIdRequired: boolean) => {
       applicationId && isEntityIdPublic({ id: applicationId });
 
     if (
-      !applicationId ||
-      (!isAdmin && isAppPublic) || // check if the application is public
+      (application || applicationData) &&
       decodeURIComponent(slug.toString()) !==
-        cleanSchemaId(getApplicationType(application)) // if slug is not equal to application type
+        cleanSchemaId(
+          getApplicationType(
+            (application ?? applicationData) as DialAIEntityModel,
+          ),
+        )
+    ) {
+      // if slug is not equal to application type)
+      router.push(Routes.NotFound);
+      return;
+    }
+
+    if (
+      isAdmin &&
+      (application || applicationData || isApplicationLoading) &&
+      isApplicationOnReview
+    )
+      return; // skip permissions check if user is admin
+
+    if (
+      !applicationId ||
+      (!isAdmin && isAppPublic) // check if the application is public
     ) {
       router.push(Routes.NotFound);
       return;
@@ -86,5 +110,7 @@ export const useAppEditorValidation = (isIdRequired: boolean) => {
     isIdRequired,
     isAdmin,
     slug,
+    isApplicationLoading,
+    isApplicationOnReview,
   ]);
 };

@@ -125,9 +125,13 @@ const getItemLabel = (item: unknown): string => item as string;
 
 interface Props {
   oldApplication: CustomApplicationModel;
+  isApplicationOnReview?: boolean;
 }
 
-export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
+export const ApplicationView: React.FC<Props> = ({
+  oldApplication,
+  isApplicationOnReview,
+}) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
   const {
@@ -165,6 +169,7 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
           dispatch(
             ApplicationActions.update({
               oldApplication,
+              isApplicationOnReview,
               applicationData: {
                 ...oldApplication,
                 ...applicationData,
@@ -183,7 +188,13 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
         dispatch(ApplicationActions.setExitAfterSave(false));
       }
     },
-    [shouldSaveApplication, exitAfterSave, oldApplication, dispatch],
+    [
+      shouldSaveApplication,
+      exitAfterSave,
+      dispatch,
+      oldApplication,
+      isApplicationOnReview,
+    ],
   );
 
   const autoSaveHandler = useCallback(() => {

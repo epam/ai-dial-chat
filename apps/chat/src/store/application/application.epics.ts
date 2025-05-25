@@ -34,7 +34,11 @@ import { cleanSchemaId } from '@/src/utils/app/application-type-schema';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
-import { isEntityIdExternal, isEntityIdLocal } from '@/src/utils/app/id';
+import {
+  getEntityBucket,
+  isEntityIdExternal,
+  isEntityIdLocal,
+} from '@/src/utils/app/id';
 import { translate } from '@/src/utils/app/translation';
 import { parseApplicationApiKey } from '@/src/utils/server/api';
 
@@ -210,6 +214,9 @@ const updateApplicationEpic: AppEpic = (action$, state$) =>
 
       const updatedCustomApplication = regenerateApplicationId(
         payload.applicationData,
+        payload.isApplicationOnReview
+          ? getEntityBucket(payload.applicationData)
+          : undefined,
       ) as CustomApplicationModel;
 
       const isMoved = payload.oldApplication.id !== updatedCustomApplication.id;
@@ -652,6 +659,7 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
             query: {
               id: encodeURIComponent(entity.reference),
               slug: cleanSchemaId(applicationType),
+              isApplicationOnReview: payload.isApplicationOnReview,
             },
           });
         }),

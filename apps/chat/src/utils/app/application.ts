@@ -54,17 +54,19 @@ export const safeStringifyApplicationFeatures = (
 
 export const getGeneratedApplicationId = (
   application: Omit<ApplicationInfo, 'id'>,
+  bucket?: string,
 ): string => {
   return constructPath(
-    getApplicationRootId(),
+    getApplicationRootId(bucket),
     getApplicationApiKey(application),
   );
 };
 
 export const regenerateApplicationId = <T extends ApplicationInfo>(
   application: PartialBy<T, 'id'>,
+  bucket?: string,
 ): T => {
-  const newId = getGeneratedApplicationId(application);
+  const newId = getGeneratedApplicationId(application, bucket);
   if (!application.id || newId !== application.id) {
     return {
       ...application,

@@ -124,7 +124,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
         return;
       }
 
-      const { slug } = router.query;
+      const { slug, isApplicationOnReview = false } = router.query;
       if (!slug) return;
 
       const slugStr = slug.toString();
@@ -151,6 +151,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
                 ? getRouteForSlug(Routes.AppsEditorSettings, slugStr)
                 : undefined,
               schema: schema ?? undefined,
+              isApplicationOnReview: !!isApplicationOnReview,
             }),
           );
         }

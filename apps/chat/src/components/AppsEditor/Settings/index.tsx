@@ -181,6 +181,8 @@ export const ApplicationSettings: React.FC<Props> = ({
   );
 
   const getFormView = (type: string) => {
+    const isApplicationOnReview = Boolean(router.query.isApplicationOnReview);
+
     if (DEFAULT_QUICK_APPS_SCHEMA_ID.endsWith(type)) {
       return (
         <QuickAppView
@@ -188,13 +190,19 @@ export const ApplicationSettings: React.FC<Props> = ({
           isSharedWithMe={modelFromState?.sharedWithMe ?? false}
           oldApplication={applicationData}
           isShared={modelFromState?.isShared ?? false}
+          isApplicationOnReview={isApplicationOnReview}
         />
       );
     }
 
     switch (type) {
       case ApplicationType.CUSTOM_APP:
-        return <ApplicationView oldApplication={applicationData} />;
+        return (
+          <ApplicationView
+            oldApplication={applicationData}
+            isApplicationOnReview={isApplicationOnReview}
+          />
+        );
       case ApplicationType.CODE_APP:
         return (
           <CodeAppView
@@ -202,6 +210,7 @@ export const ApplicationSettings: React.FC<Props> = ({
             oldApplication={applicationData}
             isShared={modelFromState?.isShared ?? false}
             applicationStatus={modelFromState?.functionStatus}
+            isApplicationOnReview={isApplicationOnReview}
           />
         );
       default:

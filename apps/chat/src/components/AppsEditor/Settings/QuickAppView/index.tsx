@@ -82,6 +82,7 @@ interface QuickAppViewProps {
   isSharedWithMe: boolean;
   oldApplication: CustomApplicationModel;
   isShared?: boolean;
+  isApplicationOnReview?: boolean;
 }
 
 export const QuickAppView: React.FC<QuickAppViewProps> = ({
@@ -89,6 +90,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
   isSharedWithMe,
   oldApplication,
   isShared,
+  isApplicationOnReview,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -151,6 +153,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
                 isShared: arrAreNotTheSameAndShared ? false : isShared,
               },
               schema: schema ?? undefined,
+              isApplicationOnReview,
             }),
           );
 
@@ -168,10 +171,11 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
     [
       shouldSaveApplication,
       exitAfterSave,
+      dispatch,
       isShared,
       oldApplication,
-      dispatch,
       schema,
+      isApplicationOnReview,
     ],
   );
 
