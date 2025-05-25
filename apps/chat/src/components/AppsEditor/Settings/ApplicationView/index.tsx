@@ -17,10 +17,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { getValidFormFields } from '@/src/utils/app/forms';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
-import {
-  ApplicationType,
-  CustomApplicationModel,
-} from '@/src/types/applications';
+import { CustomApplicationModel } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions, UIActions } from '@/src/store/actions';
@@ -29,7 +26,6 @@ import { ApplicationSelectors } from '@/src/store/selectors';
 
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/code-apps';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
-import { Routes } from '@/src/constants/routes';
 
 import { withController } from '@/src/components/Common/Forms/ControlledFormField';
 import { Field } from '@/src/components/Common/Forms/Field';
@@ -205,10 +201,7 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
     }
   }, [getFieldState, getValues, handleSubmit, isValid]);
 
-  useBeforeRedirect(
-    savePartialForm,
-    Routes.AppsEditorGeneralInfo.replace('[slug]', ApplicationType.CUSTOM_APP),
-  );
+  useBeforeRedirect(savePartialForm);
 
   useEffect(() => {
     const isTriggered = shouldSaveApplication || exitAfterSave;

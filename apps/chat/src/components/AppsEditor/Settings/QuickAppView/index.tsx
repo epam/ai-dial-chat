@@ -35,7 +35,6 @@ import { ApplicationSelectors } from '@/src/store/selectors';
 
 import { CONFIRM_DOCUMENT_VALUES } from '@/src/constants/applications';
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/code-apps';
-import { Routes } from '@/src/constants/routes';
 
 import { TemperatureSlider } from '@/src/components/Chat/ChatSettings/Temperature';
 import { FilesSelector } from '@/src/components/Common/FilesSelector/FilesSelector';
@@ -187,12 +186,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
     }
   }, [getFieldState, getValues, handleSubmit, isValid]);
 
-  const type = decodeURIComponent(router.query.slug?.toString() ?? '');
-
-  useBeforeRedirect(
-    savePartialForm,
-    Routes.AppsEditorGeneralInfo.replace('[slug]', type),
-  );
+  useBeforeRedirect(savePartialForm);
 
   useEffect(() => {
     const isTriggered = shouldSaveApplication || exitAfterSave;

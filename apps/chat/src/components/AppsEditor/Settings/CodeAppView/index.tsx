@@ -18,7 +18,6 @@ import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import {
   ApplicationStatus,
-  ApplicationType,
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
@@ -42,7 +41,6 @@ import {
   PUBLIC_APP_TOOLTIP,
 } from '@/src/constants/code-apps';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
-import { Routes } from '@/src/constants/routes';
 
 import { FormCodeEditor } from '@/src/components/Common/ApplicationWizard/CodeAppView/FormCodeEditor';
 import { RuntimeVersionSelector } from '@/src/components/Common/ApplicationWizard/CodeAppView/RuntimeVersionSelector';
@@ -234,10 +232,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     }
   }, [getFieldState, getValues, handleEdit, isValid]);
 
-  useBeforeRedirect(
-    savePartialForm,
-    Routes.AppsEditorGeneralInfo.replace('[slug]', ApplicationType.CODE_APP),
-  );
+  useBeforeRedirect(savePartialForm);
 
   useEffect(() => {
     const isTriggered = shouldSaveApplication || exitAfterSave;
