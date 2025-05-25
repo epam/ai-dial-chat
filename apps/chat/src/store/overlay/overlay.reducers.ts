@@ -94,6 +94,14 @@ export const overlaySlice = createSlice({
       state,
       _action: PayloadAction<WithRequestId<CreateConversationRequest>>,
     ) => state,
+    createLocalConversation: (
+      state,
+      _action: PayloadAction<WithRequestId<object>>,
+    ) => state,
+    createLocalConversationEffect: (
+      state,
+      _action: PayloadAction<WithRequestId<object>>,
+    ) => state,
     setOverlayOptions: (
       state,
       { payload }: PayloadAction<WithRequestId<ChatOverlayOptions>>,
