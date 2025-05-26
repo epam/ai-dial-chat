@@ -44,9 +44,7 @@ export class FileApiHelper extends BaseApiHelper {
     ).toBe(200);
     const responseText = await response.text();
     const body = JSON.parse(responseText) as BackendFile & { url: string };
-    const part1 = body.url.substring(0, body.url.lastIndexOf('/') + 1);
-    const part2 = body.url.substring(body.url.lastIndexOf('/') + 1);
-    return decodeURIComponent(part1) + part2;
+    return decodeURIComponent(body.url);
   }
 
   public async putFile(filename: string, parentPath?: string) {

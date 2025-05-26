@@ -936,6 +936,14 @@ dialTest(
     const newIconFileName = `${ExpectedConstants.allowedSpecialChars}.svg`;
     let agentElement: BaseElement;
     const expectedNewIconUrl = `/api/${await fileApiHelper.putFileWithCustomName(`${ExpectedConstants.allowedSpecialChars}.svg`, Attachment.dialIconSvg)}`;
+    const part1 = expectedNewIconUrl.substring(
+      0,
+      expectedNewIconUrl.lastIndexOf('/') + 1,
+    );
+    const part2 = expectedNewIconUrl.substring(
+      expectedNewIconUrl.lastIndexOf('/') + 1,
+    );
+    const expectedEncodedIconUrl = part1 + encodeURIComponent(part2);
 
     await dialTest.step(
       'Precondition: Create custom application via API',
@@ -985,7 +993,10 @@ dialTest(
       'Verify the updated icon is displayed in the preview on the "General info" step',
       async () => {
         const previewIcon = appEditorGeneralInfoAgentPreview.previewIcon;
-        await baseAssertion.assertEntityIcon(previewIcon, expectedNewIconUrl);
+        await baseAssertion.assertEntityIcon(
+          previewIcon,
+          expectedEncodedIconUrl,
+        );
       },
     );
 
@@ -998,7 +1009,7 @@ dialTest(
         //TODO double URL encode in the icon
         await baseAssertion.assertEntityIcon(
           previewChatIconAppSettings,
-          expectedNewIconUrl,
+          expectedEncodedIconUrl,
         );
       },
     );
@@ -1018,7 +1029,7 @@ dialTest(
         );
         await baseAssertion.assertEntityIcon(
           cardIconElement,
-          expectedNewIconUrl,
+          expectedEncodedIconUrl,
         );
       },
     );
@@ -1030,7 +1041,7 @@ dialTest(
         await agentDetailsModal.waitForState();
         await baseAssertion.assertEntityIcon(
           agentDetailsModal.icon,
-          expectedNewIconUrl,
+          expectedEncodedIconUrl,
         );
       },
     );
