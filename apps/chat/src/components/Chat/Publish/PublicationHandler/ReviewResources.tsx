@@ -14,7 +14,8 @@ import {
   isFileId,
   isPromptId,
 } from '@/src/utils/app/id';
-import { getVersionFromId } from '@/src/utils/server/api';
+import { constructPath } from '@/src/utils/app/shared-utils';
+import { ApiUtils, getVersionFromId } from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
@@ -69,8 +70,8 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   if (isFileId(item.id)) {
     return (
       <a
-        download={props.item.name}
-        href={constructPath('/api', ApiUtils.encodeApiUrl(props.item.id))}
+        download={item.name}
+        href={constructPath('/api', ApiUtils.encodeApiUrl(item.id))}
         data-qa="download"
       >
         <IconDownload
