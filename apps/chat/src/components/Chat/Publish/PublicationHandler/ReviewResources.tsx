@@ -68,10 +68,16 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
 
   if (isFileId(item.id)) {
     return (
-      <IconDownload
-        className="shrink-0 text-secondary hover:text-accent-primary"
-        size={18}
-      />
+      <a
+        download={props.item.name}
+        href={constructPath('/api', ApiUtils.encodeApiUrl(props.item.id))}
+        data-qa="download"
+      >
+        <IconDownload
+          className="shrink-0 text-secondary hover:text-accent-primary"
+          size={18}
+        />
+      </a>
     );
   }
 
