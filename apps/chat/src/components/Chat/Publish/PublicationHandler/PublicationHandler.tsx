@@ -17,20 +17,20 @@ import { PublicationSelectors } from '@/src/store/selectors';
 
 import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
-import { ReviewApplicationDialog } from '@/src/components/Chat/Publish/ReviewApplicationDialog/ReviewApplicationDialog';
 import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { CompareRulesModal } from '../CompareRulesModal';
 import { PublicationInfoSection } from '../PublishWizardComponents';
+import { CompareRulesModal } from './CompareRulesModal';
+import { PublicationFilters } from './PublicationFilters';
+import { PublicationHandlerFooter } from './PublicationHandlerFooter';
+import { ReviewApplicationDialog } from './ReviewApplicationDialog/ReviewApplicationDialog';
 import {
   ApplicationPublicationResources,
   ConversationPublicationResources,
   FilePublicationResources,
   PromptPublicationResources,
-} from '../ReviewResources';
-import { PublicationFilters } from './PublicationFilters';
-import { PublicationHandlerFooter } from './PublicationHandlerFooter';
+} from './ReviewResources';
 
 import isEqual from 'lodash-es/isEqual';
 
