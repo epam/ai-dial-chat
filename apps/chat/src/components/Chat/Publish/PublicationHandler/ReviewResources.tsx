@@ -51,38 +51,14 @@ import {
 
 type ItemType = ShareEntity | Prompt | ConversationInfo | DialFile;
 
-interface PublicationResourceItemProps {
-  item: ItemType;
-}
-
-const renderRowComponent = (
-  item: ItemType,
-  commonProps: {
-    featureContainerClassNames: string;
-    itemComponentClassNames: string;
-  },
-) => {
-  if (isApplicationId(item.id)) {
-    return <ApplicationRow {...commonProps} item={item as ShareEntity} />;
-  }
-
-  if (isConversationId(item.id)) {
-    return <ConversationRow {...commonProps} item={item as ConversationInfo} />;
-  }
-
-  if (isPromptId(item.id)) {
-    return <PromptsRow {...commonProps} item={item as Prompt} />;
-  }
-
-  return <FilesRow {...commonProps} item={item as DialFile} />;
-};
-
-const PublicationVersionInfo = ({
-  item,
-  publicVersionGroupId,
-}: {
+interface PublicationVersionInfoProps {
   item: ItemType;
   publicVersionGroupId?: string;
+}
+
+const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
+  item,
+  publicVersionGroupId,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -120,6 +96,32 @@ const PublicationVersionInfo = ({
       </span>
     </>
   );
+};
+
+interface PublicationResourceItemProps {
+  item: ItemType;
+}
+
+const renderRowComponent = (
+  item: ItemType,
+  commonProps: {
+    featureContainerClassNames: string;
+    itemComponentClassNames: string;
+  },
+) => {
+  if (isApplicationId(item.id)) {
+    return <ApplicationRow {...commonProps} item={item as ShareEntity} />;
+  }
+
+  if (isConversationId(item.id)) {
+    return <ConversationRow {...commonProps} item={item as ConversationInfo} />;
+  }
+
+  if (isPromptId(item.id)) {
+    return <PromptsRow {...commonProps} item={item as Prompt} />;
+  }
+
+  return <FilesRow {...commonProps} item={item as DialFile} />;
 };
 
 const PublicationResourceItem = ({
