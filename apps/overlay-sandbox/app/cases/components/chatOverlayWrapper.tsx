@@ -328,6 +328,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
                   Refresh
                 </button>
               </div>
+
               <div className="flex flex-col gap-1 border p-1">
                 <button
                   className="button"
