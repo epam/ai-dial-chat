@@ -18,9 +18,14 @@ import {
 } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { getPublicationId } from '@/src/utils/app/publications';
+import { translate } from '@/src/utils/app/translation';
 
 import { FeatureType } from '@/src/types/common';
-import { Publication, PublicationRule } from '@/src/types/publication';
+import {
+  Publication,
+  PublicationRule,
+  ResourceToReview,
+} from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -82,24 +87,26 @@ function FiltersComponent({
     );
   }
 
+  const isNoRulesToDisplay =
+    (!filteredRuleEntries.length ||
+      filteredRuleEntries.every(([_, rules]) => !rules.length)) &&
+    !publication.rules?.length;
+  const oldRules = filteredRuleEntries.filter(([_, rules]) => rules.length);
+  const isNewRules = !!publication.rules?.length && !!publication.targetFolder;
+
   return (
     <>
-      {(!filteredRuleEntries.length ||
-        filteredRuleEntries.every(([_, rules]) => !rules.length)) &&
-        !publication.rules?.length && (
-          <p className="text-sm text-secondary" data-qa="availability-label">
-            {t(
-              'This publication will be available to all users in the organization',
-            )}
-          </p>
-        )}
-      {filteredRuleEntries
-        .filter(([_, rules]) => rules.length)
-        .map(([path, rules]) => (
-          <RuleListItem key={path} path={path} rules={rules} />
-        ))}
-
-      {!!publication.rules?.length && !!publication.targetFolder && (
+      {isNoRulesToDisplay && (
+        <p className="text-sm text-secondary" data-qa="availability-label">
+          {t(
+            'This publication will be available to all users in the organization',
+          )}
+        </p>
+      )}
+      {oldRules.map(([path, rules]) => (
+        <RuleListItem key={path} path={path} rules={rules} />
+      ))}
+      {isNewRules && (
         <RuleListItem path={publication.targetFolder} rules={newRules} />
       )}
     </>
@@ -109,6 +116,60 @@ function FiltersComponent({
 interface Props {
   publication: Publication;
 }
+
+const sections = [
+  {
+    featureType: FeatureType.Chat,
+    sectionName: translate('Conversations'),
+    dataQa: 'conversations-to-approve',
+    Component: ConversationPublicationResources,
+  },
+  {
+    featureType: FeatureType.Prompt,
+    sectionName: translate('Prompts'),
+    dataQa: 'prompts-to-approve',
+    Component: PromptPublicationResources,
+  },
+  {
+    featureType: FeatureType.Application,
+    sectionName: translate('Applications'),
+    dataQa: 'applications-to-approve',
+    Component: ApplicationPublicationResources,
+  },
+  {
+    featureType: FeatureType.File,
+    sectionName: translate('Files'),
+    dataQa: 'files-to-approve',
+    Component: FilePublicationResources,
+  },
+];
+
+const getFirstReviewUrl = (
+  resourcesToReview: ResourceToReview[],
+  reviewedResources: ResourceToReview[],
+) => {
+  return resourcesToReview.length
+    ? resourcesToReview[0].reviewUrl
+    : reviewedResources[0].reviewUrl;
+};
+
+const getReviewItems = (
+  publication: Publication,
+  resourcesToReview: ResourceToReview[],
+  isItemId: (id: string) => boolean,
+) => {
+  const toReview = resourcesToReview.filter(
+    (r) =>
+      !r.reviewed &&
+      r.publicationUrl === publication.url &&
+      isItemId(r.reviewUrl),
+  );
+  const reviewed = resourcesToReview.filter(
+    (r) => r.publicationUrl === publication.url && isItemId(r.reviewUrl),
+  );
+
+  return { toReview, reviewed };
+};
 
 export function PublicationHandler({ publication }: Props) {
   const dispatch = useAppDispatch();
@@ -122,7 +183,7 @@ export function PublicationHandler({ publication }: Props) {
   const conversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );
-  const publishRequestModels = useAppSelector(
+  const applications = useAppSelector(
     ModelsSelectors.selectPublishRequestModels,
   );
   const resourcesToReview = useAppSelector((state) =>
@@ -143,10 +204,10 @@ export function PublicationHandler({ publication }: Props) {
 
   const notExistEntities = useMemo(
     () =>
-      [...files, ...conversations, ...prompts, ...publishRequestModels].filter(
+      [...files, ...conversations, ...prompts, ...applications].filter(
         (entity) => entity.publicationInfo?.isNotExist,
       ),
-    [conversations, files, prompts, publishRequestModels],
+    [conversations, files, prompts, applications],
   );
 
   const publicationAuthor = useMemo(() => {
@@ -163,18 +224,20 @@ export function PublicationHandler({ publication }: Props) {
     }
   }, [dispatch, publication.targetFolder]);
 
-  const filteredRuleEntries = !publication.rules
-    ? Object.entries(rules)
-    : Object.entries(rules).filter(
-        ([path]) => path !== publication.targetFolder,
-      );
+  const filteredRuleEntries = useMemo(() => {
+    const rulesEntries = Object.entries(rules);
+    return !publication.rules
+      ? rulesEntries
+      : rulesEntries.filter(([path]) => path !== publication.targetFolder);
+  }, [publication.rules, rules, publication.targetFolder]);
+
   const newRules: PublicationRule[] = useMemo(
     () =>
       publication.rules?.map((rule) => ({
         source: rule.source,
         function: rule.function,
         targets: rule.targets,
-      })) || [],
+      })) ?? [],
     [publication.rules],
   );
 
@@ -194,9 +257,9 @@ export function PublicationHandler({ publication }: Props) {
     if (!isSomeResourceNotExist) {
       dispatch(
         PublicationActions.setPublicationsToReview({
-          items: resourcesToReview.map((r) => ({
+          items: resourcesToReview.map((resource) => ({
             reviewed: false,
-            reviewUrl: r.reviewUrl,
+            reviewUrl: resource.reviewUrl,
             publicationUrl: publication.url,
           })),
         }),
@@ -204,177 +267,127 @@ export function PublicationHandler({ publication }: Props) {
     }
   }, [dispatch, notExistEntities, publication.resources, publication.url]);
 
-  const handlePublicationReview = useCallback(() => {
-    const conversationsToReviewIds = resourcesToReview.filter(
-      (r) =>
-        !r.reviewed &&
-        r.publicationUrl === publication.url &&
-        isConversationId(r.reviewUrl),
-    );
-    const reviewedConversationsIds = resourcesToReview.filter(
-      (r) =>
-        r.publicationUrl === publication.url && isConversationId(r.reviewUrl),
-    );
-
-    const promptsToReviewIds = resourcesToReview.filter(
-      (r) =>
-        !r.reviewed &&
-        r.publicationUrl === publication.url &&
-        isPromptId(r.reviewUrl),
-    );
-    const reviewedPromptsIds = resourcesToReview.filter(
-      (r) => r.publicationUrl === publication.url && isPromptId(r.reviewUrl),
-    );
-
-    const applicationsToReviewIds = resourcesToReview.filter(
-      (r) =>
-        !r.reviewed &&
-        r.publicationUrl === publication.url &&
-        isApplicationId(r.reviewUrl),
-    );
-    const reviewedApplicationsIds = resourcesToReview.filter(
-      (r) =>
-        r.publicationUrl === publication.url && isApplicationId(r.reviewUrl),
-    );
-
-    const expandFolders = () => {
-      const conversationPaths = uniq(
-        [...conversationsToReviewIds, ...reviewedConversationsIds].flatMap(
-          (p) =>
-            getParentFolderIdsFromEntityId(
-              getFolderIdFromEntityId(p.reviewUrl),
-            ).filter((id) => id !== p.reviewUrl),
-        ),
-      );
-
-      if (conversationPaths.length) {
-        dispatch(
-          UIActions.setOpenedFoldersIds({
-            openedFolderIds: conversationPaths,
-            featureType: FeatureType.Chat,
-          }),
-        );
-      }
-
-      const promptPaths = uniq(
-        [...promptsToReviewIds, ...reviewedPromptsIds].flatMap((p) =>
+  const expandFoldersByFeatureType = useCallback(
+    (
+      toReview: ResourceToReview[],
+      reviewed: ResourceToReview[],
+      featureType: FeatureType,
+    ) => {
+      const paths = uniq(
+        [...toReview, ...reviewed].flatMap((resource) =>
           getParentFolderIdsFromEntityId(
-            getFolderIdFromEntityId(p.reviewUrl),
-          ).filter((id) => id !== p.reviewUrl),
+            getFolderIdFromEntityId(resource.reviewUrl),
+          ).filter((id) => id !== resource.reviewUrl),
         ),
       );
 
-      if (promptPaths.length) {
-        dispatch(UIActions.setShowPromptbar(true));
+      if (paths.length) {
         dispatch(
           UIActions.setOpenedFoldersIds({
-            openedFolderIds: promptPaths,
-            featureType: FeatureType.Prompt,
+            openedFolderIds: paths,
+            featureType,
           }),
         );
       }
-    };
+    },
+    [dispatch],
+  );
+
+  const handlePublicationReview = useCallback(() => {
+    const { toReview: conversationsToReview, reviewed: reviewedConversations } =
+      getReviewItems(publication, resourcesToReview, isConversationId);
+    const { toReview: promptsToReview, reviewed: reviewedPrompts } =
+      getReviewItems(publication, resourcesToReview, isPromptId);
+    const { toReview: applicationsToReview, reviewed: reviewedApplications } =
+      getReviewItems(publication, resourcesToReview, isApplicationId);
 
     const startConversationsReview = () => {
-      expandFolders();
+      expandFoldersByFeatureType(
+        conversationsToReview,
+        reviewedConversations,
+        FeatureType.Chat,
+      );
       dispatch(
         ConversationsActions.selectConversations({
           conversationIds: [
-            conversationsToReviewIds.length
-              ? conversationsToReviewIds[0].reviewUrl
-              : reviewedConversationsIds[0].reviewUrl,
+            getFirstReviewUrl(conversationsToReview, reviewedConversations),
           ],
         }),
       );
     };
 
     const startApplicationsReview = () => {
-      const applicationId = applicationsToReviewIds.length
-        ? applicationsToReviewIds[0].reviewUrl
-        : reviewedApplicationsIds[0].reviewUrl;
+      const applicationId = getFirstReviewUrl(
+        applicationsToReview,
+        reviewedApplications,
+      );
       dispatch(ApplicationActions.get({ applicationId }));
       dispatch(PublicationActions.setIsApplicationReview(true));
     };
 
     const startPromptsReview = () => {
-      expandFolders();
+      expandFoldersByFeatureType(
+        promptsToReview,
+        reviewedPrompts,
+        FeatureType.Prompt,
+      );
+      const firstReviewPromptId = getFirstReviewUrl(
+        promptsToReview,
+        reviewedPrompts,
+      );
       dispatch(
         PromptsActions.uploadPrompt({
-          promptId: promptsToReviewIds.length
-            ? promptsToReviewIds[0].reviewUrl
-            : reviewedPromptsIds[0].reviewUrl,
+          promptId: firstReviewPromptId,
         }),
       );
       dispatch(
         PromptsActions.selectPrompt({
-          promptId: promptsToReviewIds.length
-            ? promptsToReviewIds[0].reviewUrl
-            : reviewedPromptsIds[0].reviewUrl,
+          promptId: firstReviewPromptId,
           isApproveRequiredResource: true,
         }),
       );
     };
 
-    if (conversationsToReviewIds.length) {
+    if (conversationsToReview.length) {
       startConversationsReview();
       return;
     }
 
-    if (promptsToReviewIds.length) {
+    if (promptsToReview.length) {
       startPromptsReview();
       return;
     }
 
-    if (applicationsToReviewIds.length) {
+    if (applicationsToReview.length) {
       startApplicationsReview();
       return;
     }
 
-    if (reviewedConversationsIds.length) {
+    if (reviewedConversations.length) {
       startConversationsReview();
-    } else if (reviewedPromptsIds.length) {
+    } else if (reviewedPrompts.length) {
       startPromptsReview();
     } else {
       startApplicationsReview();
     }
-  }, [dispatch, publication.url, resourcesToReview]);
+  }, [dispatch, expandFoldersByFeatureType, publication, resourcesToReview]);
 
-  const sections = [
-    {
-      featureType: FeatureType.Chat,
-      sectionName: t('Conversations'),
-      dataQa: 'conversations-to-approve',
-      Component: ConversationPublicationResources,
-    },
-    {
-      featureType: FeatureType.Prompt,
-      sectionName: t('Prompts'),
-      dataQa: 'prompts-to-approve',
-      Component: PromptPublicationResources,
-    },
-    {
-      featureType: FeatureType.Application,
-      sectionName: t('Applications'),
-      dataQa: 'applications-to-approve',
-      Component: ApplicationPublicationResources,
-    },
-    {
-      featureType: FeatureType.File,
-      sectionName: t('Files'),
-      dataQa: 'files-to-approve',
-      Component: FilePublicationResources,
-    },
-  ];
-
-  const publishToUrl = publication.targetFolder
-    ? publication.targetFolder.replace(/^[^/]+/, 'Organization')
-    : '';
-  const invalidEntities = notExistEntities.filter((entity) =>
-    publication.resources.some((r) => r.reviewUrl === entity.id),
+  const invalidEntities = useMemo(
+    () =>
+      notExistEntities.filter((entity) =>
+        publication.resources.some(
+          (resource) => resource.reviewUrl === entity.id,
+        ),
+      ),
+    [notExistEntities, publication.resources],
   );
+
   const isOnlyFilesPublication = publication.resources.every((resource) =>
     isFileId(resource.reviewUrl),
   );
+  const publishToUrl = publication.targetFolder
+    ? publication.targetFolder.replace(/^[^/]+/, 'Organization')
+    : '';
   const publicationName = publication.name || getPublicationId(publication.url);
   const areRulesChanged =
     !isRulesLoading &&
