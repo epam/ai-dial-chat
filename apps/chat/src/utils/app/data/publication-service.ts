@@ -23,29 +23,44 @@ import { BucketService } from './bucket-service';
 
 import mapKeys from 'lodash-es/mapKeys';
 
+const preparePublicationData = (publicationData: PublicationRequestModel) => {
+  const encodedTargetFolder = ApiUtils.encodeApiUrl(
+    publicationData.targetFolder,
+  );
+  const targetFolderSuffix = publicationData.targetFolder ? '/' : '';
+
+  return {
+    name: publicationData.name,
+    displayAuthor: publicationData.displayAuthor,
+    targetFolder: `${encodedTargetFolder}${targetFolderSuffix}`,
+    resources: publicationData.resources.map((r) => ({
+      action: r.action,
+      sourceUrl: r.sourceUrl ? ApiUtils.encodeApiUrl(r.sourceUrl) : undefined,
+      targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
+    })),
+    rules: publicationData.rules,
+  };
+};
+
 export class PublicationService {
   public static createPublicationRequest(
     publicationData: PublicationRequestModel,
   ): Observable<Publication> {
-    const encodedTargetFolder = ApiUtils.encodeApiUrl(
-      publicationData.targetFolder,
-    );
-    const targetFolderSuffix = publicationData.targetFolder ? '/' : '';
-
     return ApiUtils.request('/api/publication/create', {
       method: HTTPMethod.POST,
+      body: JSON.stringify(preparePublicationData(publicationData)),
+    });
+  }
+
+  public static updatePublicationRequest(
+    publicationData: PublicationRequestModel,
+    url: string,
+  ): Observable<Publication> {
+    return ApiUtils.request('/api/publication/update', {
+      method: HTTPMethod.POST,
       body: JSON.stringify({
-        name: publicationData.name,
-        displayAuthor: publicationData.displayAuthor,
-        targetFolder: `${encodedTargetFolder}${targetFolderSuffix}`,
-        resources: publicationData.resources.map((r) => ({
-          action: r.action,
-          sourceUrl: r.sourceUrl
-            ? ApiUtils.encodeApiUrl(r.sourceUrl)
-            : undefined,
-          targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
-        })),
-        rules: publicationData.rules,
+        ...preparePublicationData(publicationData),
+        url: ApiUtils.encodeApiUrl(url),
       }),
     });
   }
