@@ -424,7 +424,7 @@ export const Attachment = {
   heartImageName: 'heart.webp',
   flowerImageName: 'flower.jpg',
   longImageName: 'attachmentWithVeryVeryVeryVeryVeryLongTitleDescription.jpg',
-  specialSymbolsName: "special (`~!@#$^-_+[]'.).jpg",
+  specialSymbolsName: `special ${ExpectedConstants.allowedSpecialChars}.jpg`,
   textName: 'text.txt',
   allTypesExtension: '*/*',
   allTypesLabel: 'all',
@@ -438,6 +438,7 @@ export const Attachment = {
   fileWithoutExtension: 'withoutExtension',
   plotlyName: 'plotly.json',
   pdfName: 'pdf_attachment.pdf',
+  dialIconSvg: 'DIAL_icon.svg',
 };
 
 export enum Side {

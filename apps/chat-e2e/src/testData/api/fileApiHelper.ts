@@ -44,11 +44,21 @@ export class FileApiHelper extends BaseApiHelper {
     ).toBe(200);
     const responseText = await response.text();
     const body = JSON.parse(responseText) as BackendFile & { url: string };
-    return decodeURIComponent(body.url);
+    const part1 = body.url.substring(0, body.url.lastIndexOf('/') + 1);
+    const part2 = body.url.substring(body.url.lastIndexOf('/') + 1);
+    return decodeURIComponent(part1) + part2;
   }
 
   public async putFile(filename: string, parentPath?: string) {
-    const filePath = path.join(Attachment.attachmentPath, filename);
+    await this.putFileWithCustomName(filename, filename, parentPath);
+  }
+
+  public async putFileWithCustomName(
+    filename: string,
+    file: string,
+    parentPath?: string,
+  ) {
+    const filePath = path.join(Attachment.attachmentPath, file);
     const buffer = fs.readFileSync(filePath);
     return this.putFileGeneric(buffer, filename, parentPath);
   }
@@ -148,6 +158,8 @@ export class FileApiHelper extends BaseApiHelper {
           return 'application/vnd.plotly.v1+json';
         case 'pdf':
           return 'application/pdf';
+        case 'svg':
+          return 'image/svg+xml';
         default:
           return 'text/plain';
       }

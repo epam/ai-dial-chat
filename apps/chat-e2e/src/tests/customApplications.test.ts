@@ -2,7 +2,6 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import { Publication } from '@/chat/types/publication';
 import dialTest from '@/src/core/dialFixtures';
 import {
-  API,
   AddAppMenuOptions,
   AppEditorGeneralFormFields,
   AppEditorViewFormFields,
@@ -19,12 +18,8 @@ import {
   BaseElement,
   FileModalSection,
 } from '@/src/ui/webElements';
-import {
-  GeneratorUtil,
-  SortingUtil,
-} from '@/src/utils';
+import { GeneratorUtil, SortingUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
-import {BackendEntity} from "@/chat/types/common";
 
 const publicationsToUnpublish: Publication[] = [];
 
@@ -915,7 +910,8 @@ dialTest(
 );
 
 dialTest(
-  'Edit Custom app: Update icon of custom app',
+  'Edit Custom app: Update icon of custom app\n' + //EPMRTC-4109
+    '[Custom app]: Icon is shown on the custom application card if the svg contains some special chars', // EPMRTC-5538
   async ({
     marketplacePage,
     marketplaceAgentsSection,
@@ -928,18 +924,18 @@ dialTest(
     appEditorAppSettingsAgentPreview,
     customApplicationBuilder,
     applicationApiHelper,
-    uploadFromDeviceModal,
     baseAssertion,
     setTestIds,
+    fileApiHelper,
   }) => {
-    setTestIds('EPMRTC-4109');
+    setTestIds('EPMRTC-4109', 'EPMRTC-5538');
     const appEntity = {
       name: GeneratorUtil.randomApplicationName(),
       version: GeneratorUtil.randomApplicationVersion(),
     } as DialAIEntityModel;
-    const newIconFileName = Attachment.sunImageName;
+    const newIconFileName = `${ExpectedConstants.allowedSpecialChars}.svg`;
     let agentElement: BaseElement;
-    let expectedNewIconUrl: string;
+    const expectedNewIconUrl = `/api/${await fileApiHelper.putFileWithCustomName(`${ExpectedConstants.allowedSpecialChars}.svg`, Attachment.dialIconSvg)}`;
 
     await dialTest.step(
       'Precondition: Create custom application via API',
@@ -948,10 +944,7 @@ dialTest(
           .withDisplayName(appEntity.name)
           .withDisplayVersion(appEntity.version!)
           .build();
-        const createdApp =
-          await applicationApiHelper.createApplication(applicationModel);
-
-        expectedNewIconUrl = `${API.fileHost}/${createdApp.bucket}/${newIconFileName}`;
+        await applicationApiHelper.createApplication(applicationModel);
       },
     );
 
@@ -977,12 +970,13 @@ dialTest(
       async () => {
         await appEditorHeader.goOnGeneralInfoStep({
           isHttpMethodTriggered: false,
-        }); // Navigate back if needed
+        });
         await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');
         await appEditorGeneralForm.addIconButton.click();
-        await attachFilesModal.uploadFromDevice();
-        await uploadFromDeviceModal.addMoreFilesToUpload(newIconFileName);
-        await uploadFromDeviceModal.uploadFiles();
+        await attachFilesModal.checkAttachedFile(
+          newIconFileName,
+          FileModalSection.AllFiles,
+        );
         await attachFilesModal.attachFiles();
       },
     );
@@ -1001,6 +995,7 @@ dialTest(
         await appEditorGeneralForm.goNext({ waitForResponses: false });
         const previewChatIconAppSettings =
           appEditorAppSettingsAgentPreview.previewChatIcon;
+        //TODO double URL encode in the icon
         await baseAssertion.assertEntityIcon(
           previewChatIconAppSettings,
           expectedNewIconUrl,
@@ -1211,7 +1206,7 @@ dialTest(
 );
 
 dialTest(
-  'check icons of chats with published custom app',
+  'Check icons of chats with published custom app', //EPMRTC-4303
   async ({
     dialHomePage,
     marketplacePage,
@@ -1244,7 +1239,7 @@ dialTest(
     let createdAppBackendEntity;
 
     await dialTest.step(
-      'Precondition: Create a custom application with an icon, publish it, and approve it',
+      'Precondition: Create a custom application with an icon, publish it, and approve it', // EPMRTC-4303
       async () => {
         const iconUploadResponse = await fileApiHelper.putFile(iconFilename);
         expectedIconUrl = iconUploadResponse;
