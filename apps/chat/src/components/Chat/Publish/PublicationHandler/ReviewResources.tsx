@@ -1,3 +1,4 @@
+import { IconDownload } from '@tabler/icons-react';
 import { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -10,8 +11,10 @@ import { usePublicationResources } from '@/src/hooks/usePublicationResources';
 import {
   isApplicationId,
   isConversationId,
+  isFileId,
   isPromptId,
 } from '@/src/utils/app/id';
+import { getVersionFromId } from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
@@ -28,15 +31,15 @@ import {
 
 import { NA_VERSION } from '@/src/constants/public';
 
+import { FolderRow } from '@/src/components/Common/FolderRow';
 import {
   ApplicationRow,
   ConversationRow,
   FilesRow,
   PromptsRow,
 } from '@/src/components/Common/ReplaceConfirmationModal/Components';
-import { Folder } from '@/src/components/Folder/Folder';
 
-import { PublicVersionSelector } from './PublicVersionSelector';
+import { PublicVersionSelector } from '../PublicVersionSelector';
 
 import {
   ConversationInfo,
@@ -46,70 +49,99 @@ import {
   ShareEntity,
 } from '@epam/ai-dial-shared';
 
+type ItemType = ShareEntity | Prompt | ConversationInfo | DialFile;
+
 interface PublicationResourceItemProps {
-  item: ShareEntity | Prompt | ConversationInfo | DialFile;
+  item: ItemType;
 }
+
+const renderRowComponent = (
+  item: ItemType,
+  commonProps: {
+    featureContainerClassNames: string;
+    itemComponentClassNames: string;
+  },
+) => {
+  if (isApplicationId(item.id)) {
+    return <ApplicationRow {...commonProps} item={item as ShareEntity} />;
+  }
+
+  if (isConversationId(item.id)) {
+    return <ConversationRow {...commonProps} item={item as ConversationInfo} />;
+  }
+
+  if (isPromptId(item.id)) {
+    return <PromptsRow {...commonProps} item={item as Prompt} />;
+  }
+
+  return <FilesRow {...commonProps} item={item as DialFile} />;
+};
+
+const PublicationVersionInfo = ({
+  item,
+  publicVersionGroupId,
+}: {
+  item: ItemType;
+  publicVersionGroupId?: string;
+}) => {
+  const { t } = useTranslation(Translation.Chat);
+
+  if (isApplicationId(item.id)) {
+    return getVersionFromId(item.id);
+  }
+
+  if (isFileId(item.id)) {
+    return (
+      <IconDownload
+        className="shrink-0 text-secondary hover:text-accent-primary"
+        size={18}
+      />
+    );
+  }
+
+  const isDeleteAction = item.publicationInfo?.action === PublishActions.DELETE;
+
+  return (
+    <>
+      {!isDeleteAction && publicVersionGroupId && (
+        <PublicVersionSelector
+          publicVersionGroupId={publicVersionGroupId}
+          textBeforeSelector={t('Last: ')}
+          btnClassNames="shrink-0"
+          groupVersions
+          readonly
+        />
+      )}
+      <span
+        className={classNames('text-xs', isDeleteAction && 'text-error')}
+        data-qa="version"
+      >
+        {item.publicationInfo?.version || NA_VERSION}
+      </span>
+    </>
+  );
+};
 
 const PublicationResourceItem = ({
   item,
   ...props
 }: PublicationResourceItemProps & Record<string, unknown>) => {
-  const { t } = useTranslation(Translation.Chat);
-
   const { publicVersionGroupId } = usePublicVersionGroupId(item);
+
+  const commonProps = {
+    ...props,
+    featureContainerClassNames: 'w-full',
+    itemComponentClassNames: 'w-full truncate cursor-pointer',
+  };
 
   return (
     <div className="flex items-center justify-between gap-4">
-      {isApplicationId(item.id) ? (
-        <ApplicationRow
-          {...props}
-          item={item as ShareEntity}
-          featureContainerClassNames="w-full"
-          itemComponentClassNames="w-full truncate cursor-pointer"
-        />
-      ) : isConversationId(item.id) ? (
-        <ConversationRow
-          {...props}
-          item={item as ConversationInfo}
-          featureContainerClassNames="w-full"
-          itemComponentClassNames="w-full truncate cursor-pointer"
-        />
-      ) : isPromptId(item.id) ? (
-        <PromptsRow
-          {...props}
-          item={item as Prompt}
-          featureContainerClassNames="w-full"
-          itemComponentClassNames="w-full truncate cursor-pointer"
-        />
-      ) : (
-        <FilesRow
-          {...props}
-          item={item as DialFile}
-          featureContainerClassNames="w-full"
-          itemComponentClassNames="w-full truncate cursor-pointer"
-        />
-      )}
+      {renderRowComponent(item, commonProps)}
       <div className="flex shrink-0 items-center gap-2">
-        {item.publicationInfo?.action !== PublishActions.DELETE &&
-          publicVersionGroupId && (
-            <PublicVersionSelector
-              publicVersionGroupId={publicVersionGroupId}
-              textBeforeSelector={t('Last: ')}
-              btnClassNames="shrink-0"
-              groupVersions
-              readonly
-            />
-          )}
-        <span
-          className={classNames(
-            'text-xs',
-            item.publicationInfo?.action === PublishActions.DELETE &&
-              'text-error',
-          )}
-          data-qa="version"
-        >
-          {item.publicationInfo?.version || NA_VERSION}
-        </span>
+        <PublicationVersionInfo
+          item={item}
+          publicVersionGroupId={publicVersionGroupId}
+        />
       </div>
     </div>
   );
@@ -139,18 +171,15 @@ const BasePublicationResources = ({
   return (
     <>
       {rootPublicationFolders.map((folder) => (
-        <Folder
-          readonly
+        <FolderRow
           key={folder.id}
-          noCaretIcon
           currentFolder={folder}
           allFolders={allPublicationFolders}
           openedFoldersIds={allPublicationFoldersIds}
           allItems={folderItemsToDisplay}
           itemComponent={PublicationResourceItem}
           featureType={featureType}
-          folderClassName="h-[38px]"
-          showTooltip
+          level={0}
         />
       ))}
       {itemsToDisplay.map((item) => (
