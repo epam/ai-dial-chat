@@ -102,57 +102,59 @@ export const DynamicFormFields = <
         {fields.map((field, i) => (
           <div
             key={field.label}
-            className="flex gap-3 rounded border border-tertiary bg-layer-3 px-3 py-2"
+            className="flex w-full flex-wrap items-center gap-3 rounded border border-tertiary bg-layer-3 p-[11px] md:flex-nowrap md:p-2"
           >
-            {!field.editableKey ? (
-              <div className="w-[127px] px-2 py-1 text-sm text-primary">
-                {field.visibleName ?? field.label}
-              </div>
-            ) : (
-              <div className="w-[127px]">
+            <div className="flex grow flex-col gap-2 md:flex-row md:items-center md:gap-3">
+              {!field.editableKey ? (
+                <div className="w-full px-2 py-[5px] text-sm text-primary md:w-[127px] md:py-1">
+                  {field.visibleName ?? field.label}
+                </div>
+              ) : (
+                <div className="w-full md:w-[127px]">
+                  <input
+                    {...register(`${name}.${i}.label` as Path<T>, keyOptions)}
+                    disabled={disabled}
+                    className={classNames(
+                      'w-full border-b border-primary bg-transparent px-2 pb-[4px] pt-[5px] text-sm text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none md:py-1',
+                      errors?.[i]?.label && '!border-error',
+                      disabled
+                        ? 'cursor-not-allowed'
+                        : 'hover:border-accent-primary',
+                    )}
+                    placeholder={`Enter ${keyLabel?.toLowerCase()}`}
+                  />
+                  <FieldErrorMessage
+                    className="!mb-0"
+                    error={errors?.[i]?.label?.message}
+                  />
+                </div>
+              )}
+
+              <div className="w-full grow">
                 <input
-                  {...register(`${name}.${i}.label` as Path<T>, keyOptions)}
+                  {...register(`${name}.${i}.value` as Path<T>, valueOptions)}
                   disabled={disabled}
                   className={classNames(
-                    'w-full border-b border-primary bg-transparent px-2 py-1 text-sm text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none',
-                    errors?.[i]?.label && '!border-error',
+                    'w-full border-b border-primary bg-transparent px-2 pb-[4px] pt-[5px] text-sm text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none md:py-1',
+                    errors?.[i]?.value && '!border-error',
                     disabled
                       ? 'cursor-not-allowed'
                       : 'hover:border-accent-primary',
                   )}
-                  placeholder={`Enter ${keyLabel?.toLowerCase()}`}
+                  placeholder={`Enter ${valueLabel?.toLowerCase()}`}
                 />
                 <FieldErrorMessage
                   className="!mb-0"
-                  error={errors?.[i]?.label?.message}
+                  error={errors?.[i]?.value?.message}
                 />
               </div>
-            )}
-
-            <div className="grow">
-              <input
-                {...register(`${name}.${i}.value` as Path<T>, valueOptions)}
-                disabled={disabled}
-                className={classNames(
-                  'w-full border-b border-primary bg-transparent px-2 py-1 text-sm text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none',
-                  errors?.[i]?.value && '!border-error',
-                  disabled
-                    ? 'cursor-not-allowed'
-                    : 'hover:border-accent-primary',
-                )}
-                placeholder={`Enter ${valueLabel?.toLowerCase()}`}
-              />
-              <FieldErrorMessage
-                className="!mb-0"
-                error={errors?.[i]?.value?.message}
-              />
             </div>
 
             <button
               type="button"
               disabled={field.static || disabled}
               className={classNames(
-                'flex items-start rounded border border-transparent pt-1 text-secondary outline-none',
+                'flex items-center self-center rounded border border-transparent text-secondary outline-none',
                 field.static && 'invisible',
                 disabled ? 'cursor-not-allowed' : 'hover:text-accent-primary',
               )}
@@ -181,7 +183,6 @@ export const DynamicFormFields = <
                 }
               >
                 <IconPlus size={18} />
-
                 {t(addLabel ?? 'Add')}
               </button>
             }
