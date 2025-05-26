@@ -352,6 +352,7 @@ export const Chronology = {
 };
 
 export const API = {
+  api: '/api',
   modelsHost: '/api/models',
   addonsHost: '/api/addons',
   chatHost: '/api/chat',

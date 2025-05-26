@@ -1,4 +1,5 @@
 import { DialAIEntityModel } from '@/chat/types/models';
+import { Publication } from '@/chat/types/publication';
 import dialTest from '@/src/core/dialFixtures';
 import {
   API,
@@ -18,7 +19,14 @@ import {
   BaseElement,
   FileModalSection,
 } from '@/src/ui/webElements';
-import { GeneratorUtil, SortingUtil } from '@/src/utils';
+import {
+  GeneratorUtil,
+  SortingUtil,
+} from '@/src/utils';
+import { PublishActions } from '@epam/ai-dial-shared';
+import {BackendEntity} from "@/chat/types/common";
+
+const publicationsToUnpublish: Publication[] = [];
 
 dialTest(
   'Create custom app with required fields only.\n' + // EPMRTC-5130
@@ -511,8 +519,7 @@ dialTest(
   'Delete custom app from "Select an agent for conversation" form\n' + // EPMRTC-4105
     'Delete custom app from application card pop-up\n' + // EPMRTC-4103
     '[Custom app]: Delete specific not published version' + // EPMRTC-4285
-    '[Custom app]: add 2 applications with the same name and different versions - not published applications grouped by name\n' + //EPMRTC-4279
-    '[Custom app]: group versions of custom app by name', //EPMRTC-4312
+    '[Custom app]: add 2 applications with the same name and different versions - not published applications grouped by name\n', //EPMRTC-4279
   async ({
     marketplacePage,
     marketplaceAgentsSection,
@@ -533,13 +540,7 @@ dialTest(
     marketplaceAgents,
     agentVersionsDropdownMenuAssertion,
   }) => {
-    setTestIds(
-      'EPMRTC-4105',
-      'EPMRTC-4103',
-      'EPMRTC-4285',
-      'EPMRTC-4279',
-      'EPMRTC-4312',
-    );
+    setTestIds('EPMRTC-4105', 'EPMRTC-4103', 'EPMRTC-4285', 'EPMRTC-4279');
     let agentElementInDialog: BaseElement;
     let agentElement1: BaseElement;
     let agentElement2: BaseElement;
@@ -1041,13 +1042,12 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   '[Custom app]: Attachments type not empty and Max attachments empty then Max Attachments field treated as without limits.\n' + // EPMRTC-4131
     '[Custom app + Marketplace]: tooltips for icons on application modal window', // EPMRTC-4290
   async ({
     marketplacePage,
     marketplaceHeader,
-    addAppDropdownMenu, // Needed for EPMRTC-4131 if creating app via UI, but this test creates via API for EPMRTC-4290 part
     appEditorPage,
     appEditorGeneralForm,
     appEditorViewForm,
@@ -1064,11 +1064,7 @@ dialTest.only(
     attachFilesModal,
     fileApiHelper,
     sendMessageInputAttachmentsAssertions,
-    page, // Added page fixture
-    tooltipAssertion, // Added for EPMRTC-4290
-    customApplicationBuilder, // Added for EPMRTC-4290 app creation
-    applicationApiHelper, // Added for EPMRTC-4290 app creation
-    agentDetailsModalAssertion, // Added for EPMRTC-4290
+    tooltipAssertion,
   }) => {
     setTestIds('EPMRTC-4131', 'EPMRTC-4290');
     const appName = GeneratorUtil.randomApplicationName();
@@ -1077,7 +1073,7 @@ dialTest.only(
     const appEntity = {
       name: appName,
       version: appVersion,
-      description: GeneratorUtil.randomShortDescription(), // Added description for EPMRTC-4290
+      description: GeneratorUtil.randomShortDescription(),
     } as DialAIEntityModel;
     const attachmentType = 'application/pdf';
     const pdfFilesToUpload = [
@@ -1091,7 +1087,6 @@ dialTest.only(
       'Upload dummy PDF files to be available for selection',
       async () => {
         for (const pdfFile of pdfFilesToUpload) {
-          // Create unique content for each dummy file to avoid potential conflicts if backend dedupes
           await fileApiHelper.putStringAsFile(
             pdfFile,
             `Dummy PDF content for ${pdfFile}`,
@@ -1212,5 +1207,130 @@ dialTest.only(
         );
       },
     );
+  },
+);
+
+dialTest.only(
+  'check icons of chats with published custom app',
+  async ({
+    dialHomePage,
+    marketplacePage,
+    marketplaceHeader,
+    marketplaceAgentsSection,
+    agentDetailsModal,
+    chat,
+    chatHeaderAssertion,
+    conversationAssertion,
+    customApplicationBuilder,
+    applicationApiHelper,
+    fileApiHelper,
+    publishRequestBuilder,
+    publicationApiHelper,
+    adminPublicationApiHelper,
+    iconApiHelper,
+    localStorageManager,
+    setTestIds,
+    itemApiHelper,
+    baseAssertion,
+    agentInfoAssertion,
+  }) => {
+    setTestIds('EPMRTC-4303');
+    const appName = GeneratorUtil.randomApplicationName();
+    const appVersion = GeneratorUtil.randomApplicationVersion();
+    const iconFilename = Attachment.sunImageName;
+    let appEntity: DialAIEntityModel;
+    let expectedIconUrl: string;
+    let agentElement: BaseElement;
+    let createdAppBackendEntity;
+
+    await dialTest.step(
+      'Precondition: Create a custom application with an icon, publish it, and approve it',
+      async () => {
+        const iconUploadResponse = await fileApiHelper.putFile(iconFilename);
+        expectedIconUrl = iconUploadResponse;
+
+        const applicationModel = customApplicationBuilder
+          .withDisplayName(appName)
+          .withDisplayVersion(appVersion)
+          .withIconUrl(expectedIconUrl)
+          .build();
+
+        createdAppBackendEntity =
+          await applicationApiHelper.createApplication(applicationModel);
+
+        appEntity = {
+          name: appName,
+          version: appVersion,
+          iconUrl: expectedIconUrl,
+        } as DialAIEntityModel;
+
+        const publishRequest = publishRequestBuilder
+          .withName(GeneratorUtil.randomPublicationRequestName())
+          .withApplicationResource(createdAppBackendEntity, PublishActions.ADD)
+          .build();
+        const appPublication =
+          await publicationApiHelper.createPublishRequest(publishRequest);
+        publicationsToUnpublish.push(appPublication);
+        await adminPublicationApiHelper.approveRequest(appPublication);
+        await itemApiHelper.deleteBackendItem(createdAppBackendEntity);
+        await localStorageManager.setShowSideBarPanels();
+      },
+    );
+
+    await dialTest.step(
+      'Open DIAL Marketplace and find custom app',
+      async () => {
+        await marketplacePage.openMarketplacePage();
+        await marketplacePage.waitForPageLoaded();
+        await marketplaceHeader.searchInput.fillInInput(appName);
+        agentElement =
+          await marketplaceAgentsSection.findAgentElement(appEntity);
+        await baseAssertion.assertElementState(agentElement, 'visible');
+      },
+    );
+
+    await dialTest.step("Click on app's card", async () => {
+      await agentElement.click();
+      await baseAssertion.assertElementState(agentDetailsModal, 'visible');
+    });
+
+    await dialTest.step(
+      'Click "Use application" button - New conversation screen with custom app is displayed',
+      async () => {
+        await agentDetailsModal.clickUseButton({
+          isInstalledDeploymentsUpdated: false,
+        });
+        await dialHomePage.waitForPageLoaded();
+        const fullExpectedIconUrl = iconApiHelper.getCustomIcon(appEntity);
+        await agentInfoAssertion.assertAgentIcon(fullExpectedIconUrl);
+      },
+    );
+
+    await dialTest.step(
+      'Send any message and get response, correct icons are displayed',
+      async () => {
+        const message = 'Hello';
+        const fullExpectedIconUrl = iconApiHelper.getCustomIcon(appEntity);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chat.sendRequestWithButton(message);
+        await conversationAssertion.assertTreeEntityIcon(
+          { name: message },
+          fullExpectedIconUrl,
+        );
+        await chatHeaderAssertion.assertHeaderIcon(fullExpectedIconUrl);
+      },
+    );
+  },
+);
+
+dialTest.afterAll(
+  async ({ publicationApiHelper, adminPublicationApiHelper }) => {
+    for (const publication of publicationsToUnpublish) {
+      const unpublishResponse =
+        await publicationApiHelper.createUnpublishRequest(publication);
+      await adminPublicationApiHelper.approveRequest(unpublishResponse);
+    }
   },
 );
