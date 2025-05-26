@@ -517,6 +517,8 @@ export class ChatOverlay {
 
   /**
    * Create local conversation which will be not visible before first assistant message
+   *
+   * Note: after first assistant message local conversation will be saved in `newConversationsFolderId` option path, or in user Root if it's not defined or null
    * @returns Returns created local conversation info
    */
   public async createLocalConversation(): Promise<CreateLocalConversationResponse> {
