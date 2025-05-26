@@ -1210,7 +1210,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'check icons of chats with published custom app',
   async ({
     dialHomePage,
