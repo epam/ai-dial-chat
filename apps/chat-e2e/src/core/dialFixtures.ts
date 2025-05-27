@@ -342,6 +342,7 @@ const dialTest = test.extend<{
   sharedWithMeConversationAssertion: SideBarConversationAssertion<SharedWithMeConversationsTree>;
   localStorageAssertion: LocalStorageAssertion;
   promptPreviewModal: PromptPreviewModalWindow;
+  promptPreviewVersionDropdownMenu: DropdownMenu;
   promptPreviewModalAssertion: PromptPreviewModalAssertion;
   agentDetailsModalAssertion: AgentDetailsModalAssertion;
   attachAllFilesTreeAssertion: EntityTreeAssertion<AttachFilesTree>;
@@ -1291,6 +1292,10 @@ const dialTest = test.extend<{
   promptPreviewModal: async ({ page }, use) => {
     const promptPreviewModalWindow = new PromptPreviewModalWindow(page);
     await use(promptPreviewModalWindow);
+  },
+  promptPreviewVersionDropdownMenu: async ({ page }, use) => {
+    const promptPreviewVersionDropdownMenu = new DropdownMenu(page);
+    await use(promptPreviewVersionDropdownMenu);
   },
   promptPreviewModalAssertion: async ({ promptPreviewModal }, use) => {
     const promptPreviewModalAssertion = new PromptPreviewModalAssertion(

@@ -77,7 +77,7 @@ dialTest(
         await chat.getSendMessage().waitForState({ state: 'attached' });
         await chat.changeAgentButton.waitForState();
         await chat.configureSettingsButton.waitForState();
-        await conversationAssertion.assertNoConversationIsSelected();
+        await conversationAssertion.assertNoEntityIsSelected();
       },
     );
 
@@ -97,7 +97,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.waitForState();
         await chat.configureSettingsButton.waitForState();
-        await conversationAssertion.assertNoConversationIsSelected();
+        await conversationAssertion.assertNoEntityIsSelected();
       },
     );
 
@@ -119,9 +119,7 @@ dialTest(
     });
 
     await dialTest.step('Verify chat stays selected', async () => {
-      await conversationAssertion.assertSelectedConversation(
-        initialConversationName,
-      );
+      await conversationAssertion.assertSelectedEntity(initialConversationName);
       await chatMessagesAssertion.assertMessageContent(
         1,
         initialConversationName,
@@ -143,7 +141,7 @@ dialTest(
         );
         await chatMessagesAssertion.assertMessageContent(2, 'Response');
         await conversationAssertion.assertEntitiesCount(1);
-        await conversationAssertion.assertSelectedConversation(
+        await conversationAssertion.assertSelectedEntity(
           initialConversationName,
         );
       },
@@ -156,7 +154,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.waitForState();
         await chat.configureSettingsButton.waitForState();
-        await conversationAssertion.assertNoConversationIsSelected();
+        await conversationAssertion.assertNoEntityIsSelected();
         await baseAssertion.assertIsElementFocused(
           sendMessage.messageInput,
           true,
@@ -165,7 +163,7 @@ dialTest(
     );
 
     await dialTest.step('Clear the history', async () => {
-      await conversations.selectConversation(initialConversationName);
+      await conversations.selectEntity(initialConversationName);
       await chatHeader.clearConversation.click();
       await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
     });
@@ -174,9 +172,7 @@ dialTest(
       await dialHomePage.waitForPageLoaded();
       await chat.changeAgentButton.waitForState();
       await chat.configureSettingsButton.waitForState();
-      await conversationAssertion.assertSelectedConversation(
-        initialConversationName,
-      );
+      await conversationAssertion.assertSelectedEntity(initialConversationName);
       await chat.getSendMessage().waitForState({ state: 'attached' });
     });
 
@@ -187,7 +183,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.waitForState();
         await chat.configureSettingsButton.waitForState();
-        await conversationAssertion.assertSelectedConversation(
+        await conversationAssertion.assertSelectedEntity(
           initialConversationName,
         );
         await conversationAssertion.assertEntitiesCount(1);
@@ -214,7 +210,7 @@ dialTest(
           updatedConversationIds[0],
           `conversations/local/${models[0].id}${ItemUtil.entityIdSeparator}${ExpectedConstants.newConversationWithIndexTitle(1)}`,
         );
-        await conversationAssertion.assertNoConversationIsSelected();
+        await conversationAssertion.assertNoEntityIsSelected();
       },
     );
   },
@@ -291,7 +287,7 @@ dialTest(
         await chat.getSendMessage().waitForState({ state: 'attached' });
         await chat.changeAgentButton.waitForState();
         await chat.configureSettingsButton.waitForState();
-        await conversationAssertion.assertNoConversationIsSelected();
+        await conversationAssertion.assertNoEntityIsSelected();
       },
     );
 
@@ -314,35 +310,35 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.waitForState();
         await chat.configureSettingsButton.waitForState();
-        await conversationAssertion.assertNoConversationIsSelected();
+        await conversationAssertion.assertNoEntityIsSelected();
       },
     );
 
     await dialTest.step(
       'Select playback conversation, refresh the page and verify new conversation is created after the playback mode',
       async () => {
-        await conversations.selectConversation(playbackConversation.name);
+        await conversations.selectEntity(playbackConversation.name);
         await appContainer.waitForAppLoaded(loadingTimeout);
         await chat.changeAgentButton.hoverOver();
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.waitForState();
         await chat.configureSettingsButton.waitForState();
-        await conversationAssertion.assertNoConversationIsSelected();
+        await conversationAssertion.assertNoEntityIsSelected();
       },
     );
 
     await dialTest.step(
       'Select replay conversation, refresh the page and verify new conversation is created after the playback mode',
       async () => {
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         await appContainer.waitForAppLoaded(loadingTimeout);
         await chat.changeAgentButton.hoverOver();
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.waitForState();
         await chat.configureSettingsButton.waitForState();
-        await conversationAssertion.assertNoConversationIsSelected();
+        await conversationAssertion.assertNoEntityIsSelected();
       },
     );
   },
@@ -404,10 +400,8 @@ dialAdminTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await organizationConversations.selectConversation(
-          adminConversation.name,
-        );
-        await organizationConversationAssertion.assertSelectedConversation(
+        await organizationConversations.selectEntity(adminConversation.name);
+        await organizationConversationAssertion.assertSelectedEntity(
           adminConversation.name,
         );
         await accountSettings.logout();
@@ -420,16 +414,14 @@ dialAdminTest(
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.waitForState();
         await chat.configureSettingsButton.waitForState();
-        await organizationConversationAssertion.assertNoConversationIsSelected();
+        await organizationConversationAssertion.assertNoEntityIsSelected();
       },
     );
 
     await dialTest.step(
       'Select shared conversation, re-login and verify new conversation is created, no conversation is selected',
       async () => {
-        await sharedWithMeConversations.selectConversation(
-          adminConversation.name,
-        );
+        await sharedWithMeConversations.selectEntity(adminConversation.name);
         await accountSettings.logout();
         await providerLogin.login(
           testInfo,
@@ -440,7 +432,7 @@ dialAdminTest(
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.waitForState();
         await chat.configureSettingsButton.waitForState();
-        await sharedWithMeConversationAssertion.assertNoConversationIsSelected();
+        await sharedWithMeConversationAssertion.assertNoEntityIsSelected();
       },
     );
   },

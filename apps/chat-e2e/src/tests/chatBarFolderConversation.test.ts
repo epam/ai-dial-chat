@@ -825,7 +825,7 @@ dialTest(
 
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await conversations.selectConversation(firstConversation.name);
+      await conversations.selectEntity(firstConversation.name);
       // Create folders
       for (let i = 1; i <= 4; i++) {
         await chatBar.createNewFolder();
@@ -979,7 +979,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
       },
     );
 
