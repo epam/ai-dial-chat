@@ -1218,10 +1218,15 @@ dialTest(
 );
 
 dialAdminTest(
-  'Check icons of chats with published custom app\n' + //EPMRTC-4303
-    'Check icons of chats with published custom app. icon has special symbols in name', //EPMRTC-6345
+  'Check icons of chats with published custom app.\n' + //EPMRTC-4303
+    'Check icons of chats with published custom app. icon has special symbols in name.\n' + //EPMRTC-6345
+    'Icon for custom app is displayed in publish request if file name for icon contain special symbols', //EPMRTC-4302
   async ({
     dialHomePage,
+    adminDialHomePage,
+    adminApproveRequiredConversations, // Assuming this list can show app publication requests if UI is identical
+    adminPublishingApprovalModal,
+    adminPublicationReviewControl,
     marketplacePage,
     marketplaceHeader,
     marketplaceAgentsSection,
@@ -1234,19 +1239,22 @@ dialAdminTest(
     fileApiHelper,
     publishRequestBuilder,
     publicationApiHelper,
-    adminPublicationApiHelper,
     localStorageManager,
     setTestIds,
     itemApiHelper,
     baseAssertion,
     agentInfoAssertion,
+           adminConversationToApproveAssertion,
+    // adminAgentInfoAssertion, // Added for admin view
+    iconApiHelper,
   }) => {
-    setTestIds('EPMRTC-4303', 'EPMRTC-6345');
+    setTestIds('EPMRTC-4303', 'EPMRTC-6345', 'EPMRTC-4302');
     const appName = GeneratorUtil.randomApplicationName();
     const appVersion = GeneratorUtil.randomApplicationVersion();
     let appEntity: DialAIEntityModel;
     let agentElement: BaseElement;
     let createdAppBackendEntity;
+    let appPublication: Publication;
 
     const filename = `${ExpectedConstants.allowedSpecialChars}.svg`;
     const expectedNewIconUrl = await fileApiHelper.putFileWithCustomName(
@@ -1259,7 +1267,7 @@ dialAdminTest(
     const encodedIconUrl = `/api/${encodedFileUrl}`;
 
     await dialTest.step(
-      'Precondition: Create a custom application with an icon, publish it, and approve it',
+      'Precondition: Create a custom application with an icon, create a publish request for it, and delete the original app',
       async () => {
         const applicationModel = customApplicationBuilder
           .withDisplayName(appName)
@@ -1281,12 +1289,52 @@ dialAdminTest(
           .withApplicationResource(createdAppBackendEntity, PublishActions.ADD)
           .build();
 
-        const appPublication =
+        appPublication =
           await publicationApiHelper.createPublishRequest(publishRequest);
         publicationsToUnpublish.push(appPublication);
-        await adminPublicationApiHelper.approveRequest(appPublication);
+        // Admin approval via API is removed.
         await itemApiHelper.deleteBackendItem(createdAppBackendEntity);
         await localStorageManager.setShowSideBarPanels();
+      },
+    );
+
+    await dialTest.step(
+      'Admin navigates to publication requests, selects the app request, and verifies icon in the modal list',
+      async () => {
+        await adminDialHomePage.openHomePage();
+        await adminDialHomePage.waitForPageLoaded();
+        await adminApproveRequiredConversations.expandApproveRequiredFolder(
+          appPublication.name!,
+        );
+        await adminApproveRequiredConversations.selectFolderEntity(
+          appPublication.name!,
+          appName,
+        );
+        await adminPublishingApprovalModal.waitForState();
+
+        // Assert icon within the modal's list of items to approve
+        const applicationsToApproveTree =
+          adminPublishingApprovalModal.getApplicationsToApproveTree();
+        await adminConversationToApproveAssertion.assertTreeEntityIcon(
+          { name: appName },
+          encodedIconUrl,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Admin clicks "Go to a review", checks icon in the detailed view, then approves the request',
+      async () => {
+        await adminPublishingApprovalModal.goToEntityReview({
+          isHttpMethodTriggered: false,
+        });
+        // Assuming adminAgentInfo shows the app details in the review view
+        await adminAgentInfoAssertion.assertAgentIcon(encodedIconUrl);
+
+        // Navigate back and approve
+        await adminPublicationReviewControl.backToPublicationRequestButton.click();
+        await adminPublishingApprovalModal.approveButton.click();
+        await adminPublishingApprovalModal.waitForState({ state: 'hidden' });
       },
     );
 

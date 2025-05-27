@@ -60,6 +60,11 @@ export const ModelDialog = {
   applicationsTab: '[data-qa="applications-tab"]',
 };
 
+export const ReviewApplicationDialog = {
+  reviewDialog: '[data-qa="models-dialog"]',
+  entityIcon: '[data-qa="entity-icon"]',
+}
+
 export const AddonDialog = {
   addonsDialog: '[data-qa="addons-dialog"]',
   addonSearchResults: '[data-qa="addon-search-results"]',
