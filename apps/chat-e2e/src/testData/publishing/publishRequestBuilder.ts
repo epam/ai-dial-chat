@@ -63,7 +63,8 @@ export class PublishRequestBuilder {
     action: PublishActions,
     version?: string,
   ): PublishRequestBuilder {
-    const targetResource = conversation.id.split('/').slice(2).join('/');
+    const split = conversation.id.split('/');
+    const targetResource = split[split.length - 1];
     const targetUrl = `conversations/${this.getPublishRequest().targetFolder}${targetResource}__${version ?? ExpectedConstants.defaultAppVersion}`;
     let resource: PublicationResource = {
       action: action,

@@ -152,7 +152,10 @@ export class PublicationApiHelper extends BaseApiHelper {
       });
     }
     const data: PublicationRequestModel = {
-      displayAuthor: '',
+      displayAuthor:
+        publicationRequest.displayAuthor === undefined
+          ? ''
+          : publicationRequest.displayAuthor,
       name: GeneratorUtil.randomUnpublishRequestName(),
       targetFolder: publicationRequest.targetFolder,
       resources: unpublishResources,
