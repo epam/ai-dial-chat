@@ -113,7 +113,7 @@ dialAdminTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
         await baseAssertion.assertElementState(
@@ -613,7 +613,7 @@ dialTest(
     await dialTest.step(
       'Select first conversation version, select "Info" option from header dropdown menu and verify modal data',
       async () => {
-        await organizationConversations.selectConversation(conversation.name);
+        await organizationConversations.selectEntity(conversation.name);
         await chatHeader.version.click();
         await chatHeaderVersionDropdownMenu.selectMenuOption(firstVersion, {
           triggeredHttpMethod: 'GET',

@@ -223,7 +223,7 @@ dialTest(
     await dialTest.step(
       'Select a conversation with a model not in My Workspace',
       async () => {
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await chatAssertion.assertAddAgentButtonState('visible');
       },
     );
@@ -361,7 +361,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Click Regenerate button and check recentModelIds state',
       async () => {
-        await conversations.selectConversation(conversation1.name);
+        await conversations.selectEntity(conversation1.name);
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -388,7 +388,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Type a new message in the duplicated chat and get a response and verify recentModelIds is updated',
       async () => {
-        await conversations.selectConversation(conversation2.name); // Select the duplicated conversation
+        await conversations.selectEntity(conversation2.name); // Select the duplicated conversation
         await chat.sendRequestWithButton(GeneratorUtil.randomString(5));
         await localStorageAssertion.assertRecentModels([
           secondModel.id,
@@ -486,7 +486,7 @@ dialTest(
     await dialTest.step(
       'Duplicate previously existed chat, verify recentModelsIds in local storage is unchanged',
       async () => {
-        await conversations.selectConversation(conversation1Api.name);
+        await conversations.selectEntity(conversation1Api.name);
         await conversations.openEntityDropdownMenu(conversation1Api.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.duplicate, {
           triggeredHttpMethod: 'POST',
@@ -547,7 +547,7 @@ dialTest(
     await dialTest.step(
       'Type new message to imported chat and verify recentModelsIds is updated',
       async () => {
-        await conversations.selectConversation(conversation2Export1.name);
+        await conversations.selectEntity(conversation2Export1.name);
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -573,7 +573,7 @@ dialTest(
         await dialHomePage.importFile(exportedConversation2, () =>
           chatBar.importButton.click(),
         );
-        await conversations.selectConversation(conversation2Export2.name);
+        await conversations.selectEntity(conversation2Export2.name);
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -754,7 +754,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Select Duplicated shared chat, send a message, and verify recentModelsIds is changed',
       async () => {
-        await conversations.selectConversation(sharedConversation1.name);
+        await conversations.selectEntity(sharedConversation1.name);
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -777,7 +777,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Select another duplicated shared chat, regenerate a message, and verify recentModelsIds is changed',
       async () => {
-        await conversations.selectConversation(sharedConversation2.name);
+        await conversations.selectEntity(sharedConversation2.name);
         await chatMessages.regenerateResponse();
         await localStorageAssertion.assertRecentModels([
           initialModel1.id,
