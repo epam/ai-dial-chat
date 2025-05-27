@@ -389,7 +389,7 @@ export const API = {
   publicationRequestRejection: '/api/publication/reject',
   publicationRequestApproval: '/api/publication/approve',
   publicationRequestDetails: '/api/publication/details',
-  publicationRulesList: '/api/publication/rulesList',
+  publicationRulesList: '/api/publication/rules-list',
   multipleListingHost: () => `${API.listingHost}/multiple?recursive=true`,
   pendingPublicationsListing: '/api/publication/listing',
   publishedConversations: '/api/publication/conversations/public',
