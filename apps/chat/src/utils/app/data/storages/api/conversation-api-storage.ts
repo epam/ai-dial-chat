@@ -6,6 +6,7 @@ import {
   prepareEntityName,
 } from '@/src/utils/app/common';
 import {
+  getConversationInfoFromId,
   getGeneratedConversationId,
   regenerateConversationId,
 } from '@/src/utils/app/conversation';
@@ -15,6 +16,7 @@ import { constructPath } from '@/src/utils/app/file';
 import { getPathToFolderById } from '@/src/utils/app/folders';
 import {
   getConversationRootId,
+  isEntityIdExternal,
   isEntityIdLocal,
   isRootConversationsId,
 } from '@/src/utils/app/id';
@@ -70,10 +72,14 @@ export const getOrUploadConversation = <T extends { id: string }>(
   payload: T;
   wasUploaded: boolean;
 }> => {
-  const conversation = ConversationsSelectors.selectConversation(
+  let conversation = ConversationsSelectors.selectConversation(
     state,
     payload.id,
   );
+
+  if (!conversation && isEntityIdExternal({ id: payload.id })) {
+    conversation = getConversationInfoFromId(payload.id);
+  }
 
   if (
     conversation &&
