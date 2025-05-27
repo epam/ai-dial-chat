@@ -20,6 +20,7 @@ import {
 } from '@/src/ui/webElements';
 import { GeneratorUtil, SortingUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
+import dialAdminTest from "@/src/core/dialAdminFixtures";
 
 const publicationsToUnpublish: Publication[] = [];
 
@@ -1216,8 +1217,9 @@ dialTest(
   },
 );
 
-dialTest(
-  'Check icons of chats with published custom app', //EPMRTC-4303
+dialAdminTest(
+  'Check icons of chats with published custom app\n' + //EPMRTC-4303
+  'Check icons of chats with published custom app. icon has special symbols in name', //EPMRTC-6345
   async ({
     dialHomePage,
     marketplacePage,
@@ -1239,7 +1241,7 @@ dialTest(
     baseAssertion,
     agentInfoAssertion,
   }) => {
-    setTestIds('EPMRTC-4303');
+    setTestIds('EPMRTC-4303', 'EPMRTC-6345');
     const appName = GeneratorUtil.randomApplicationName();
     const appVersion = GeneratorUtil.randomApplicationVersion();
     let appEntity: DialAIEntityModel;
@@ -1257,7 +1259,7 @@ dialTest(
     const encodedIconUrl = `/api/${encodedFileUrl}`;
 
     await dialTest.step(
-      'Precondition: Create a custom application with an icon, publish it, and approve it', // EPMRTC-4303
+      'Precondition: Create a custom application with an icon, publish it, and approve it',
       async () => {
         const applicationModel = customApplicationBuilder
           .withDisplayName(appName)
