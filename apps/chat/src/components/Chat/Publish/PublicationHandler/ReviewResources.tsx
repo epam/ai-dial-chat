@@ -95,7 +95,7 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   }
 
   return (
-    <>
+    <div className="flex shrink-0 items-center gap-2">
       {!isDeleteAction && publicVersionGroupId && (
         <PublicVersionSelector
           publicVersionGroupId={publicVersionGroupId}
@@ -111,7 +111,7 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
       >
         {item.publicationInfo?.version || NA_VERSION}
       </span>
-    </>
+    </div>
   );
 };
 
@@ -156,12 +156,10 @@ const PublicationResourceItem = ({
   return (
     <div className="flex items-center justify-between gap-4">
       {renderRowComponent(item, commonProps)}
-      <div className="flex shrink-0 items-center gap-2">
-        <PublicationVersionInfo
-          item={item}
-          publicVersionGroupId={publicVersionGroupId}
-        />
-      </div>
+      <PublicationVersionInfo
+        item={item}
+        publicVersionGroupId={publicVersionGroupId}
+      />
     </div>
   );
 };
