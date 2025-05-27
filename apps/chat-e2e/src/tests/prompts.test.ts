@@ -9,6 +9,7 @@ import {
   MenuOptions,
 } from '@/src/testData';
 import { Cursors, ThemeColorAttributes } from '@/src/ui/domData';
+import { DateUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
@@ -244,41 +245,67 @@ dialTest(
 );
 
 dialTest(
-  'Prompt menu',
+  'Prompt menu.\n' +
+    'Info option in context menu in side panel.\n' +
+    'Metadata for Created by me prompt from Recent section.\n' +
+    'Date format depends on local settings',
   async ({
     dialHomePage,
     promptData,
     prompts,
     dataInjector,
-    promptDropdownMenu,
     setTestIds,
     localStorageManager,
+    promptDropdownMenu,
+    informationModal,
+    informationModalAssertion,
+    promptDropdownMenuAssertion,
   }) => {
-    setTestIds('EPMRTC-952');
-    const prompt = promptData.prepareDefaultPrompt();
-    await dataInjector.createPrompts([prompt]);
-    await localStorageManager.setShowSideBarPanels();
+    setTestIds('EPMRTC-952', 'EPMRTC-5562', 'EPMRTC-5564', 'EPMRTC-5566');
+    const currentDate = DateUtil.getCurrentLocalDate();
+    let prompt: Prompt;
 
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded();
-    await prompts.openEntityDropdownMenu(prompt.name);
+    await dialTest.step('Create a new prompt', async () => {
+      prompt = promptData.prepareDefaultPrompt();
+      await dataInjector.createPrompts([prompt]);
+      await localStorageManager.setShowSideBarPanels();
+    });
 
-    const menuOptions = await promptDropdownMenu.getAllMenuOptions();
-    expect
-      .soft(menuOptions, ExpectedMessages.contextMenuOptionsValid)
-      .toEqual([
-        MenuOptions.use,
-        MenuOptions.view,
-        MenuOptions.select,
-        MenuOptions.edit,
-        MenuOptions.duplicate,
-        MenuOptions.export,
-        MenuOptions.moveTo,
-        MenuOptions.share,
-        MenuOptions.publish,
-        MenuOptions.info,
-        MenuOptions.delete,
-      ]);
+    await dialTest.step(
+      'Open prompt dropdown menu and verify available options',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenuAssertion.assertMenuOptions([
+          MenuOptions.use,
+          MenuOptions.view,
+          MenuOptions.select,
+          MenuOptions.edit,
+          MenuOptions.duplicate,
+          MenuOptions.export,
+          MenuOptions.moveTo,
+          MenuOptions.share,
+          MenuOptions.publish,
+          MenuOptions.info,
+          MenuOptions.delete,
+        ]);
+      },
+    );
+
+    await dialTest.step(
+      'Select "Info" option and verify modal data',
+      async () => {
+        await promptDropdownMenu.selectMenuOption(MenuOptions.info, {
+          triggeredHttpMethod: 'GET',
+        });
+        await informationModalAssertion.assertFields({
+          createdDate: currentDate,
+          lastUpdatedDate: currentDate,
+        });
+        await informationModal.cancelButton.click();
+      },
+    );
   },
 );
 

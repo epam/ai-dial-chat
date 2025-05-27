@@ -46,7 +46,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         for (let i = 1; i <= 2; i++) {
           await conversations.openEntityDropdownMenu(conversation.name, {
             exactMatch: true,

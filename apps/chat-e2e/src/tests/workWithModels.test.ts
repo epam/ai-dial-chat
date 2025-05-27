@@ -57,7 +57,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         const receivedPartialContent =
           await chatMessages.getGeneratedChatContent(
             conversation.messages.length,
@@ -202,7 +202,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await chatMessages.openEditMessageMode(userRequests[1]);
         await chatMessages.fillEditData(userRequests[1], editData);
         await chatMessages.cancel.click();
@@ -293,7 +293,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await chatMessages.openDeleteMessageDialog(userRequests[1]);
         await confirmationDialog.cancelDialog();
         const messagesCount =

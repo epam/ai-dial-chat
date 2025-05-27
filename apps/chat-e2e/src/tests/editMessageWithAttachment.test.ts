@@ -61,7 +61,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await chatMessages.openEditMessageMode(1);
         await chatMessages.selectEditTextareaContent(
           conversation.messages[0].content,
@@ -182,7 +182,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await chatMessages.openEditMessageMode(1);
         await expect
           .soft(
@@ -305,7 +305,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await chatMessages.openEditMessageMode(1);
         await chatMessages.getChatMessageClipIcon(1).click();
         await attachmentDropdownMenu.selectMenuOption(
@@ -416,7 +416,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         for (const file of allAttachedFiles.slice(0, 3)) {
           await expect
             .soft(
@@ -442,7 +442,7 @@ dialTest(
         await dataInjector.updateConversations([conversation]);
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await expect
           .soft(
             chatMessages.getChatMessageAttachmentsGroup(1),
