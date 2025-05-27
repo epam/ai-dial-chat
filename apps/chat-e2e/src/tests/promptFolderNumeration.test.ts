@@ -1,4 +1,3 @@
-import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import {
   CollapsedSections,
@@ -38,70 +37,6 @@ dialTest(
         }
       },
     );
-  },
-);
-
-//TODO: test is not actual after implementing of https://github.com/epam/ai-dial-chat/issues/3802
-dialTest.skip(
-  'Prompt folder: folder created from Move to is counted into default numeration',
-  async ({
-    dialHomePage,
-    promptData,
-    dataInjector,
-    prompts,
-    promptBar,
-    folderPrompts,
-    promptDropdownMenu,
-    setTestIds,
-    localStorageManager,
-    promptBarFolderAssertion,
-  }) => {
-    setTestIds('EPMRTC-1623');
-    let prompt: Prompt;
-    const folderNumber = 1;
-
-    await dialTest.step('Preparation', async () => {
-      prompt = promptData.prepareDefaultPrompt();
-      await dataInjector.createPrompts([prompt]);
-      await localStorageManager.setShowSideBarPanels();
-    });
-
-    await dialTest.step('Create a new folder', async () => {
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded();
-      await promptBar.createNewFolder();
-      await promptBarFolderAssertion.assertFolderState(
-        { name: ExpectedConstants.newPromptFolderWithIndexTitle(folderNumber) },
-        'visible',
-      );
-    });
-
-    await dialTest.step('Move the prompt to the new folder', async () => {
-      await prompts.openEntityDropdownMenu(prompt.name);
-      await promptDropdownMenu.selectMenuOption(MenuOptions.moveTo);
-      await promptDropdownMenu.selectMenuOption(
-        ExpectedConstants.newFolderTitle,
-        { triggeredHttpMethod: 'PUT' },
-      );
-      await promptBarFolderAssertion.assertFolderState(
-        {
-          name: ExpectedConstants.newFolderWithIndexTitle(folderNumber),
-          index: 1,
-        },
-        'visible',
-      );
-
-      await folderPrompts.expandFolder(
-        ExpectedConstants.newPromptFolderWithIndexTitle(folderNumber + 1),
-      );
-      await promptBarFolderAssertion.assertFolderEntityState(
-        {
-          name: ExpectedConstants.newFolderWithIndexTitle(folderNumber + 1),
-        },
-        { name: prompt.name },
-        'visible',
-      );
-    });
   },
 );
 

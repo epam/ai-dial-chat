@@ -159,7 +159,7 @@ dialAdminTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(secondConversation.name);
+        await conversations.selectEntity(secondConversation.name);
         await sendMessage.messageInput.fillInInput(inputMessage);
       },
     );
@@ -167,7 +167,7 @@ dialAdminTest(
     await dialTest.step(
       'Select first conversation and verify input message is preserved',
       async () => {
-        await conversations.selectConversation(
+        await conversations.selectEntity(
           firstConversation.name,
           { isHttpMethodTriggered: false },
           { exactMatch: true },
@@ -217,7 +217,7 @@ dialAdminTest(
     await dialTest.step(
       'Go to the Marketplace, back to chat and verify input message is preserved',
       async () => {
-        await conversations.selectConversation(
+        await conversations.selectEntity(
           firstConversation.name,
           { isHttpMethodTriggered: false },
           { exactMatch: true },
@@ -233,7 +233,7 @@ dialAdminTest(
     await dialTest.step(
       'Select replay conversation and verify input message is preserved',
       async () => {
-        await conversations.selectConversation(
+        await conversations.selectEntity(
           replayConversation.name,
           { isHttpMethodTriggered: false },
           { exactMatch: true },
@@ -246,13 +246,11 @@ dialAdminTest(
     await dialTest.step(
       'Select conversation with not workspace agent, back to previous one and verify input message is preserved',
       async () => {
-        await conversations.selectConversation(secondConversation.name);
+        await conversations.selectEntity(secondConversation.name);
         await chatMessages.getChatMessage(1).waitFor();
-        await conversations.selectConversation(
-          notWorkspaceAgentConversation.name,
-        );
+        await conversations.selectEntity(notWorkspaceAgentConversation.name);
         await chatMessages.getChatMessage(1).waitFor();
-        await conversations.selectConversation(secondConversation.name);
+        await conversations.selectEntity(secondConversation.name);
         await sendMessageAssertion.assertMessageValue(inputMessage);
       },
     );
@@ -260,11 +258,9 @@ dialAdminTest(
     await dialTest.step(
       'Select conversation with not available agent, back to previous one and verify input message is preserved',
       async () => {
-        await conversations.selectConversation(
-          notAvailableAgentConversation.name,
-        );
+        await conversations.selectEntity(notAvailableAgentConversation.name);
         await chatMessages.getChatMessage(1).waitFor();
-        await conversations.selectConversation(secondConversation.name);
+        await conversations.selectEntity(secondConversation.name);
         await sendMessageAssertion.assertMessageValue(inputMessage);
       },
     );
@@ -272,11 +268,9 @@ dialAdminTest(
     await dialTest.step(
       'Select shared conversation, back to previous one and verify input message is preserved',
       async () => {
-        await sharedWithMeConversations.selectConversation(
-          sharedConversation.name,
-        );
+        await sharedWithMeConversations.selectEntity(sharedConversation.name);
         await chatMessages.getChatMessage(1).waitFor();
-        await conversations.selectConversation(secondConversation.name);
+        await conversations.selectEntity(secondConversation.name);
         await sendMessageAssertion.assertMessageValue(inputMessage);
       },
     );
@@ -284,11 +278,11 @@ dialAdminTest(
     await dialTest.step(
       'Select published conversation, back to previous one and verify input message is preserved',
       async () => {
-        await organizationConversations.selectConversation(
+        await organizationConversations.selectEntity(
           publishedConversation.name,
         );
         await chatMessages.getChatMessage(1).waitFor();
-        await conversations.selectConversation(secondConversation.name);
+        await conversations.selectEntity(secondConversation.name);
         await sendMessageAssertion.assertMessageValue(inputMessage);
       },
     );
@@ -296,7 +290,7 @@ dialAdminTest(
     await dialTest.step(
       'Select playback conversation and verify input message field is empty',
       async () => {
-        await conversations.selectConversation(playbackConversation.name);
+        await conversations.selectEntity(playbackConversation.name);
         await playbackControl.waitForState();
         await playbackAssertion.assertPlaybackMessageContent(
           ExpectedConstants.emptyPlaybackMessage,

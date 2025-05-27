@@ -65,9 +65,7 @@ dialOverlayTest(
         );
         await overlayHomePage.waitForPageLoaded();
         await overlayHeader.leftPanelToggle.click();
-        await overlayConversations.selectConversation(
-          attachmentConversation.name,
-        );
+        await overlayConversations.selectEntity(attachmentConversation.name);
         await overlayChat.addModelToWorkspace();
         await overlayToast.closeToast();
         await overlayBaseAssertion.assertElementState(
@@ -160,9 +158,7 @@ dialOverlayTest(
         );
         await overlayHomePage.waitForPageLoaded();
         await overlayHeader.leftPanelToggle.click();
-        await overlayConversations.selectConversation(
-          attachmentConversation.name,
-        );
+        await overlayConversations.selectEntity(attachmentConversation.name);
         await overlayChat.addModelToWorkspace();
         await overlayBaseAssertion.assertElementState(
           overlaySendMessage.attachmentMenuTrigger,

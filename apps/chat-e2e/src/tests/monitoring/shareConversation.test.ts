@@ -33,7 +33,7 @@ dialSharedWithMeTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await conversations.openEntityDropdownMenu(conversation.name);
         const firstShareRequestResponse =
           await conversationDropdownMenu.selectShareMenuOption();
@@ -59,7 +59,7 @@ dialSharedWithMeTest(
         });
         await expect
           .soft(
-            additionalShareUserSharedWithMeConversations.selectedConversation(
+            additionalShareUserSharedWithMeConversations.selectedEntity(
               conversation.name,
             ),
             ExpectedMessages.conversationIsVisible,
