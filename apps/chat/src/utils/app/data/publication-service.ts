@@ -52,10 +52,13 @@ export class PublicationService {
     });
   }
 
-  public static updatePublicationRequest(
-    publicationData: PublicationRequestModel,
-    url: string,
-  ): Observable<Publication> {
+  public static updatePublicationRequest({
+    publicationData,
+    url,
+  }: {
+    publicationData: PublicationRequestModel;
+    url: string;
+  }): Observable<Publication> {
     return ApiUtils.request('/api/publication/update', {
       method: HTTPMethod.POST,
       body: JSON.stringify({
