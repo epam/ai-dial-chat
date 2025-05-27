@@ -200,7 +200,7 @@ dialOverlayTest(
       'Open "Select an agent" modal for the previous conversation and verify random model is selected',
       async () => {
         await overlayHeader.leftPanelToggle.click();
-        await overlayConversations.selectConversation(randomAgentRequest);
+        await overlayConversations.selectEntity(randomAgentRequest);
         await overlayChatHeader.chatModelIcon.click();
         await overlayTalkToAgentDialogAssertion.assertAgentIsSelected(
           randomModel.name,
