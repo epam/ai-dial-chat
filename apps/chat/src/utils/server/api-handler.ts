@@ -43,6 +43,7 @@ export const createApiHandler = ({
       if (!proxyRes.ok) {
         const errorMessage =
           await ServerUtils.getErrorMessageFromResponse(proxyRes);
+
         throw new DialAIError(
           (typeof errorMessage === 'string' && errorMessage) ||
             proxyRes.statusText,

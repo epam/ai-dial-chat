@@ -192,7 +192,7 @@ export class PublicationService {
   public static getRules(
     path: string,
   ): Observable<Record<string, PublicationRule[]>> {
-    return ApiUtils.request('/api/publication/rulesList', {
+    return ApiUtils.request('/api/publication/rules-list', {
       method: HTTPMethod.POST,
       body: JSON.stringify({
         url: `${ApiUtils.encodeApiUrl(
