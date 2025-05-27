@@ -17,9 +17,11 @@ import {
 import { constructPath } from '@/src/utils/app/shared-utils';
 import { ApiUtils, getVersionFromId } from '@/src/utils/server/api';
 
-import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { PublicationResource } from '@/src/types/publication';
+import {
+  PublicationResource,
+  PublicationReviewItem,
+} from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -32,7 +34,6 @@ import {
 
 import { NA_VERSION } from '@/src/constants/public';
 
-import { FolderRow } from '@/src/components/Common/FolderRow';
 import {
   ApplicationRow,
   ConversationRow,
@@ -41,6 +42,7 @@ import {
 } from '@/src/components/Common/ReplaceConfirmationModal/Components';
 
 import { PublicVersionSelector } from '../PublicVersionSelector';
+import { FolderRow } from './ReviewRowItems/FolderRow';
 
 import {
   ConversationInfo,
@@ -50,10 +52,8 @@ import {
   ShareEntity,
 } from '@epam/ai-dial-shared';
 
-type ItemType = ShareEntity | Prompt | ConversationInfo | DialFile;
-
 interface PublicationVersionInfoProps {
-  item: ItemType;
+  item: PublicationReviewItem;
   publicVersionGroupId?: string;
 }
 
@@ -63,8 +63,20 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
+  const isDeleteAction = item.publicationInfo?.action === PublishActions.DELETE;
+
   if (isApplicationId(item.id)) {
-    return getVersionFromId(item.id);
+    return (
+      <span
+        className={classNames(
+          'shrink-0 text-xs',
+          isDeleteAction && 'text-error',
+        )}
+        data-qa="version"
+      >
+        {getVersionFromId(item.id)}
+      </span>
+    );
   }
 
   if (isFileId(item.id)) {
@@ -81,8 +93,6 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
       </a>
     );
   }
-
-  const isDeleteAction = item.publicationInfo?.action === PublishActions.DELETE;
 
   return (
     <>
@@ -106,11 +116,11 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
 };
 
 interface PublicationResourceItemProps {
-  item: ItemType;
+  item: PublicationReviewItem;
 }
 
 const renderRowComponent = (
-  item: ItemType,
+  item: PublicationReviewItem,
   commonProps: {
     featureContainerClassNames: string;
     itemComponentClassNames: string;
@@ -157,22 +167,21 @@ const PublicationResourceItem = ({
 };
 
 interface BasePublicationResources {
-  featureType: FeatureType;
   resources: PublicationResource[];
   entities: ShareEntity[] | Prompt[] | ConversationInfo[] | DialFile[];
   folders: FolderInterface[];
+  isEditMode: boolean;
 }
 
 const BasePublicationResources = ({
-  featureType,
   resources,
   entities,
   folders,
+  isEditMode,
 }: BasePublicationResources) => {
   const {
     rootPublicationFolders,
     allPublicationFolders,
-    allPublicationFoldersIds,
     itemsToDisplay,
     folderItemsToDisplay,
   } = usePublicationResources(folders, resources, entities);
@@ -184,11 +193,15 @@ const BasePublicationResources = ({
           key={folder.id}
           currentFolder={folder}
           allFolders={allPublicationFolders}
-          openedFoldersIds={allPublicationFoldersIds}
           allItems={folderItemsToDisplay}
           itemComponent={PublicationResourceItem}
-          featureType={featureType}
           level={0}
+          isEditable={isEditMode}
+          editedName={folder.name}
+          onEdit={() => {
+            // eslint-disable-next-line no-console
+            console.log('edit');
+          }}
         />
       ))}
       {itemsToDisplay.map((item) => (
@@ -200,23 +213,30 @@ const BasePublicationResources = ({
 
 interface Props {
   resources: PublicationResource[];
+  isEditMode: boolean;
 }
 
-export const PromptPublicationResources = ({ resources }: Props) => {
+export const PromptPublicationResources = ({
+  resources,
+  isEditMode,
+}: Props) => {
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
   const allFolders = useAppSelector(PromptsSelectors.selectFolders);
 
   return (
     <BasePublicationResources
-      featureType={FeatureType.Prompt}
       resources={resources}
       entities={prompts}
       folders={allFolders}
+      isEditMode={isEditMode}
     />
   );
 };
 
-export const ConversationPublicationResources = ({ resources }: Props) => {
+export const ConversationPublicationResources = ({
+  resources,
+  isEditMode,
+}: Props) => {
   const conversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );
@@ -224,10 +244,10 @@ export const ConversationPublicationResources = ({ resources }: Props) => {
 
   return (
     <BasePublicationResources
-      featureType={FeatureType.Chat}
       resources={resources}
       entities={conversations}
       folders={allFolders}
+      isEditMode={isEditMode}
     />
   );
 };
@@ -238,10 +258,10 @@ export const FilePublicationResources = ({ resources }: Props) => {
 
   return (
     <BasePublicationResources
-      featureType={FeatureType.File}
       resources={resources}
       entities={files}
       folders={allFolders}
+      isEditMode={false}
     />
   );
 };

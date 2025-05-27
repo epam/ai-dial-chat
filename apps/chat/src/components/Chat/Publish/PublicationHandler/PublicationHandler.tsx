@@ -71,6 +71,7 @@ export function PublicationHandler({ publication }: Props) {
   const { t } = useTranslation(Translation.Chat);
 
   const [isCompareModalOpened, setIsCompareModalOpened] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const rules = useAppSelector((state) =>
     PublicationSelectors.selectRulesByPath(state, publication.targetFolder),
@@ -81,8 +82,6 @@ export function PublicationHandler({ publication }: Props) {
   const isApplicationReview = useAppSelector(
     PublicationSelectors.selectIsApplicationReview,
   );
-
-  const [isEditMode, setIsEditMode] = useState(false);
 
   const publicationAuthor = useMemo(() => {
     return extractNameFromEmail(publication.author) ?? t('Unknown');
@@ -246,7 +245,10 @@ export function PublicationHandler({ publication }: Props) {
                           </>
                         }
                       >
-                        <Component resources={publication.resources} />
+                        <Component
+                          resources={publication.resources}
+                          isEditMode={isEditMode}
+                        />
                       </CollapsibleSection>
                     ),
                 )

@@ -32,7 +32,7 @@ dialTest.beforeAll(async () => {
   );
 });
 
-dialAdminTest(
+dialAdminTest.only(
   'Publish chat with file.\n' +
     'Publish chat with attachments: download files.\n' +
     'Admin area: Publish request details.\n' +

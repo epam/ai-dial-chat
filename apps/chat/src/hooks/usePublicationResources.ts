@@ -59,16 +59,10 @@ export const usePublicationResources = <
     [allFolders, folderItemsToDisplay],
   );
 
-  const allPublicationFoldersIds = useMemo(
-    () => allPublicationFolders.map((f) => f.id),
-    [allPublicationFolders],
-  );
-
   return {
     itemsToDisplay,
     folderItemsToDisplay,
     rootPublicationFolders,
     allPublicationFolders,
-    allPublicationFoldersIds,
   };
 };
