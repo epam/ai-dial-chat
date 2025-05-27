@@ -22,6 +22,10 @@ export interface CreateConversationResponse {
   conversation: OverlayConversation;
 }
 
+export interface CreateLocalConversationResponse {
+  conversation: OverlayConversation;
+}
+
 export interface SelectConversationResponse {
   conversation: OverlayConversation;
 }
