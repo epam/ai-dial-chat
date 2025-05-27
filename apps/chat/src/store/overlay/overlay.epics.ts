@@ -65,6 +65,7 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
+import { LOCAL_BUCKET } from '@/src/constants/chat';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
 import {
@@ -128,6 +129,14 @@ export const postMessageMapperEpic: AppEpic = (_, state$) =>
                 OverlayActions.createConversation({
                   requestId,
                   parentPath: options.parentPath,
+                  local: options.local,
+                }),
+              );
+            }
+            case OverlayRequests.createLocalConversation: {
+              return of(
+                OverlayActions.createLocalConversation({
+                  requestId,
                 }),
               );
             }
@@ -333,9 +342,9 @@ const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
 const createConversationEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(OverlayActions.createConversation.type),
-    switchMap(({ payload: { requestId, parentPath } }) => {
+    switchMap(({ payload: { requestId, parentPath, local } }) => {
       const conversationFolderId = constructPath(
-        getConversationRootId(),
+        getConversationRootId(local ? LOCAL_BUCKET : undefined),
         parentPath,
       );
 
@@ -363,6 +372,30 @@ const createConversationEpic: AppEpic = (action$) =>
           OverlayActions.createConversationEffect({
             requestId,
             parentPath,
+            local,
+          }),
+        ),
+      );
+    }),
+  );
+
+const createLocalConversationEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(OverlayActions.createLocalConversation.type),
+    switchMap(({ payload: { requestId } }) => {
+      const actions: Observable<AppAction>[] = [];
+
+      return concat(
+        ...actions,
+        of(
+          ConversationsActions.createNewConversations({
+            names: [DEFAULT_CONVERSATION_NAME],
+            folderId: getConversationRootId(LOCAL_BUCKET),
+          }),
+        ),
+        of(
+          OverlayActions.createLocalConversationEffect({
+            requestId,
           }),
         ),
       );
@@ -377,7 +410,8 @@ const createConversationEffectEpic: AppEpic = (action$, state$) =>
         ofType(ConversationsActions.createNotLocalConversationsSuccess.type),
         takeUntil(timer(10000)),
         filter(Boolean),
-        mergeMap(({ payload: conversations }) => {
+        mergeMap(({ payload }) => {
+          const conversations = payload;
           const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
 
           const conversation = conversations[0];
@@ -393,6 +427,46 @@ const createConversationEffectEpic: AppEpic = (action$, state$) =>
             of(
               OverlayActions.sendPMResponse({
                 type: OverlayRequests.createConversation,
+                requestParams: {
+                  requestId,
+                  hostDomain,
+                  payload: {
+                    conversation: resultConversation,
+                  } as CreateConversationResponse,
+                },
+              }),
+            ),
+          );
+        }),
+      );
+    }),
+  );
+
+const createLocalConversationEffectEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.createLocalConversationEffect.type),
+    switchMap(({ payload: { requestId } }) => {
+      return action$.pipe(
+        ofType(ConversationsActions.addConversations.type),
+        takeUntil(timer(10000)),
+        filter(Boolean),
+        mergeMap(({ payload }) => {
+          const conversations = payload.conversations;
+          const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+
+          const conversation = conversations[0];
+          const { bucket, parentPath } = splitEntityId(conversation.id);
+          const resultConversation = {
+            ...conversation,
+            bucket,
+            parentPath,
+          };
+
+          return concat(
+            of(UIActions.setScrollToEntityId(conversation.id)),
+            of(
+              OverlayActions.sendPMResponse({
+                type: OverlayRequests.createLocalConversation,
                 requestParams: {
                   requestId,
                   hostDomain,
@@ -1139,6 +1213,8 @@ export const OverlayEpics = combineEpics(
   getSelectedConversationsEpic,
   createConversationEpic,
   createConversationEffectEpic,
+  createLocalConversationEpic,
+  createLocalConversationEffectEpic,
   selectConversationEpic,
   deleteConversationEpic,
   createPlaybackConversationEpic,

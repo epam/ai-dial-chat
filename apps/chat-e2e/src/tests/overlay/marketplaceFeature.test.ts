@@ -69,7 +69,7 @@ dialOverlayTest(
       'Select created conversation, click on model icon in the header and verify there is "Search" field available',
       async () => {
         await overlayHeader.leftPanelToggle.click();
-        await overlayConversations.selectConversation(conversation.name);
+        await overlayConversations.selectEntity(conversation.name);
         await overlayChatHeader.chatModelIcon.click();
         await overlayTalkToAgentDialogAssertion.assertElementState(
           overlayTalkToAgentDialog.searchAgentInput,
@@ -154,7 +154,7 @@ dialOverlayTest(
       'Select created conversation, click on model icon in the header and verify there is no "Go to My workspace" button',
       async () => {
         await overlayHeader.leftPanelToggle.click();
-        await overlayConversations.selectConversation(conversation.name);
+        await overlayConversations.selectEntity(conversation.name);
         await overlayChatHeader.chatModelIcon.click();
         await overlayTalkToAgentDialogAssertion.assertElementState(
           overlayTalkToAgentDialog.goToMyWorkspaceButton,

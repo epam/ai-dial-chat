@@ -459,6 +459,12 @@ export class ChatOverlayManager {
     return overlay.createConversation(parentPath);
   }
 
+  public async createLocalConversation(overlayId: string) {
+    const { overlay } = this.getOverlay(overlayId);
+
+    return overlay.createLocalConversation();
+  }
+
   public async selectConversation(overlayId: string, conversationId: string) {
     const { overlay } = this.getOverlay(overlayId);
 
@@ -490,7 +496,10 @@ export class ChatOverlayManager {
     return overlay.deleteConversation(conversationId);
   }
 
-  public async replayConversation(overlayId: string, conversationId: string) {
+  public async createPlaybackConversation(
+    overlayId: string,
+    conversationId: string,
+  ) {
     const { overlay } = this.getOverlay(overlayId);
 
     return overlay.createPlaybackConversation(conversationId);

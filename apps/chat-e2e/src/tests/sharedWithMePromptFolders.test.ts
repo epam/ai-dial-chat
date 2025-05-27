@@ -8,7 +8,7 @@ import {
   FolderPrompt,
   MenuOptions,
 } from '@/src/testData';
-import { GeneratorUtil, ItemUtil } from '@/src/utils';
+import { DateUtil, GeneratorUtil, ItemUtil } from '@/src/utils';
 import { Entity } from '@epam/ai-dial-shared';
 
 const nestedLevels = 4;
@@ -16,24 +16,45 @@ const nestedLevels = 4;
 dialSharedWithMeTest(
   'Shared with me. Share prompt in Folder.\n' +
     'Shared with me. Share single prompt and share prompt folder separately. Created two different structures.\n' +
-    'Shared with me. Prompt folder with special chars in the name',
-  async ({
-    additionalShareUserDialHomePage,
-    promptData,
-    dataInjector,
-    mainUserShareApiHelper,
-    additionalShareUserSharedFolderPromptsAssertions,
-    additionalShareUserPromptPreviewModal,
-    additionalShareUserSharedWithMePromptAssertion,
-    additionalShareUserSharedPromptPreviewModalAssertion,
-    setTestIds,
-  }) => {
-    setTestIds('EPMRTC-1858', 'EPMRTC-1861', 'EPMRTC-3182');
+    'Shared with me. Prompt folder with special chars in the name.\n' +
+    'Metadata for prompt from Shared with me section.\n' +
+    'Metadata for prompt duplicated from Shared with me',
+  async (
+    {
+      additionalShareUserDialHomePage,
+      promptData,
+      dataInjector,
+      mainUserShareApiHelper,
+      additionalShareUserSharedFolderPromptsAssertions,
+      additionalShareUserPromptPreviewModal,
+      additionalShareUserSharedWithMePrompts,
+      additionalShareUserSharedWithMePromptDropdownMenu,
+      additionalShareUserPrompts,
+      additionalShareUserPromptDropdownMenu,
+      additionalShareUserInformationModal,
+      additionalShareUserInformationModalAssertion,
+      additionalShareUserSharedWithMePromptAssertion,
+      additionalShareUserSharedPromptPreviewModalAssertion,
+      setTestIds,
+    },
+    testInfo,
+  ) => {
+    setTestIds(
+      'EPMRTC-1858',
+      'EPMRTC-1861',
+      'EPMRTC-3182',
+      'EPMRTC-5567',
+      'EPMRTC-6105',
+    );
     let folderPrompt: FolderPrompt;
     let sharePromptByLinkResponse: ShareByLinkResponseModel;
     let shareFolderByLinkResponse: ShareByLinkResponseModel;
     const promptName = GeneratorUtil.randomString(5);
     const folderName = `Folder ${ExpectedConstants.allowedSpecialChars}`;
+    const currentDate = DateUtil.getCurrentLocalDate();
+    const username =
+      process.env.E2E_USERNAME!.split(',')[testInfo.parallelIndex];
+    const author = username.substring(0, username.indexOf('@'));
 
     await dialSharedWithMeTest.step(
       'Prepare folder with special charts in the name and put prompt inside',
@@ -106,6 +127,46 @@ dialSharedWithMeTest(
           { name: promptName },
           'visible',
         );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Select "Info" option from the shared prompt dropdown menu and verify modal data',
+      async () => {
+        await additionalShareUserSharedWithMePrompts.openEntityDropdownMenu(
+          promptName,
+        );
+        await additionalShareUserSharedWithMePromptDropdownMenu.selectMenuOption(
+          MenuOptions.info,
+          { triggeredHttpMethod: 'GET' },
+        );
+        await additionalShareUserInformationModalAssertion.assertFields({
+          createdDate: currentDate,
+          lastUpdatedDate: currentDate,
+          author: author,
+        });
+        await additionalShareUserInformationModal.cancelButton.click();
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Duplicate shared prompt, select "Info" option from the duplicated prompt dropdown menu and verify modal data',
+      async () => {
+        await additionalShareUserSharedWithMePrompts.openEntityDropdownMenu(
+          promptName,
+        );
+        await additionalShareUserSharedWithMePromptDropdownMenu.selectMenuOption(
+          MenuOptions.duplicate,
+          { triggeredHttpMethod: 'POST' },
+        );
+        await additionalShareUserPrompts.openEntityDropdownMenu(promptName);
+        await additionalShareUserPromptDropdownMenu.selectMenuOption(
+          MenuOptions.info,
+        );
+        await additionalShareUserInformationModalAssertion.assertFields({
+          createdDate: currentDate,
+          lastUpdatedDate: currentDate,
+        });
       },
     );
   },

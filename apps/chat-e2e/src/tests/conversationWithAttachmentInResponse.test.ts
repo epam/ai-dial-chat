@@ -57,7 +57,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(responseImageConversation.name);
+        await conversations.selectEntity(responseImageConversation.name);
         await chatBar.openManageAttachmentsModal();
 
         for (const segment of imagePathSegments) {

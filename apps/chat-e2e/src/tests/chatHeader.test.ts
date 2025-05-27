@@ -60,7 +60,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await dialHomePage.throttleAPIResponse(
           API.chatHost,
           responseThrottlingTimeout * 2,
@@ -196,7 +196,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await chatHeader.clearConversation.click();
         await confirmationDialog.cancelDialog();
 

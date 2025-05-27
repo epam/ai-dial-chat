@@ -110,7 +110,7 @@ dialOverlayTest(
         //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/2929
         // await overlayHeader.leftPanelToggle.click();
         // await overlayBaseAssertion.assertElementState(
-        //   overlayOrganizationConversations.selectedConversation(
+        //   overlayOrganizationConversations.selectedEntity(
         //     ExpectedConstants.playbackConversation.concat(conversationName),
         //   ),
         //   'visible',
@@ -168,7 +168,7 @@ dialOverlayTest(
         //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/2929
         // await overlayHeader.leftPanelToggle.click();
         // await overlayBaseAssertion.assertElementState(
-        //   overlayOrganizationConversations.selectedConversation(
+        //   overlayOrganizationConversations.selectedEntity(
         //     ExpectedConstants.playbackConversation.concat(conversationName),
         //   ),
         //   'visible',

@@ -374,7 +374,7 @@ export const ApplicationSettings: React.FC<Props> = ({
           )}
           data-qa="app-preview-settings"
         >
-          <div className="flex max-w-full items-center justify-between px-0 py-3 max-md:self-end md:px-5 md:py-4 xl:p-2">
+          <div className="flex max-w-full items-center justify-between px-0 py-3 max-md:self-end md:px-5 md:py-4 xl:px-5 xl:py-4">
             <div className="mr-2 hidden min-w-0 shrink grow gap-2 text-primary md:flex">
               <span>{t('Preview')}:</span>
               <span
@@ -443,7 +443,7 @@ export const ApplicationSettings: React.FC<Props> = ({
         </div>
         {isPreviewClosed && (
           <div
-            className="flex h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-4 transition-all duration-300 ease-in-out hover:cursor-pointer max-md:hidden xl:pt-5"
+            className="flex h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-4 transition-all duration-300 ease-in-out hover:cursor-pointer max-md:hidden xl:pt-4"
             onClick={handleOpenPreview}
           >
             <button
