@@ -1,5 +1,6 @@
 import { DialAIEntityModel } from '@/chat/types/models';
 import { Publication } from '@/chat/types/publication';
+import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import {
   AddAppMenuOptions,
@@ -20,7 +21,6 @@ import {
 } from '@/src/ui/webElements';
 import { GeneratorUtil, SortingUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
-import dialAdminTest from "@/src/core/dialAdminFixtures";
 
 const publicationsToUnpublish: Publication[] = [];
 
@@ -1219,7 +1219,7 @@ dialTest(
 
 dialAdminTest(
   'Check icons of chats with published custom app\n' + //EPMRTC-4303
-  'Check icons of chats with published custom app. icon has special symbols in name', //EPMRTC-6345
+    'Check icons of chats with published custom app. icon has special symbols in name', //EPMRTC-6345
   async ({
     dialHomePage,
     marketplacePage,
