@@ -53,7 +53,7 @@ const ModelIconTemplate = memo(
     );
 
     const schemaApplicationFallbackUrl = useMemo(() => {
-      const iconUrl = applicationTypeSchemas.find(
+      const iconUrl = applicationTypeSchemas?.find(
         (schema) => schema.id === entity?.applicationTypeSchemaId,
       )?.iconUrl;
       if (!iconUrl) return null;
