@@ -4,6 +4,7 @@ export enum ApplicationTypeSchemaProperties {
   applicationTypeDisplayName = 'dial:applicationTypeDisplayName',
   applicationTypeEditorUrl = 'dial:applicationTypeEditorUrl',
   applicationTypeViewerUrl = 'dial:applicationTypeViewerUrl',
+  applicationTypeIconUrl = 'dial:applicationTypeIconUrl',
 }
 
 export interface ApiApplicationTypeSchema {
@@ -11,6 +12,7 @@ export interface ApiApplicationTypeSchema {
   [ApplicationTypeSchemaProperties.applicationTypeDisplayName]: string;
   [ApplicationTypeSchemaProperties.applicationTypeEditorUrl]?: string;
   [ApplicationTypeSchemaProperties.applicationTypeViewerUrl]?: string;
+  [ApplicationTypeSchemaProperties.applicationTypeIconUrl]?: string;
 }
 
 export interface ApplicationTypeSchema {
@@ -18,6 +20,7 @@ export interface ApplicationTypeSchema {
   displayName: string;
   editorUrl?: string;
   viewerUrl?: string;
+  iconUrl?: string;
 }
 
 export interface ApiDetailedApplicationTypeSchema extends JSONSchema7 {
