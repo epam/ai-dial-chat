@@ -615,7 +615,7 @@ dialTest(
     await dialTest.step(
       'Send new request in imported "New Conversation" and verify it was moved into Today section',
       async () => {
-        await conversations.selectConversation(
+        await conversations.selectEntity(
           ExpectedConstants.newConversationTitle,
         );
         await agentInfo.waitForState();

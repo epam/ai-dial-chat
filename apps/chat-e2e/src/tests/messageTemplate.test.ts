@@ -90,7 +90,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await chatMessages.openMessageTemplateModal(1);
         await messageTemplateModalAssertion.assertElementText(
           messageTemplateModal.title,
@@ -252,7 +252,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await chatMessages.openMessageTemplateModal(1);
         for (const [key, value] of rowsMap.entries()) {
           const index = Array.from(rowsMap.keys()).indexOf(key);
@@ -390,7 +390,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await chatMessages.openEditMessageMode(1);
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
@@ -487,7 +487,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await chatMessages.openMessageTemplateModal(1);
         await messageTemplateModal.getTemplateRowContent(1).click();
         await dialHomePage.copyToClipboard(firstRowMismatchContent);
@@ -1021,7 +1021,7 @@ dialTest(
     await dialTest.step(
       'Start replaying the main conversation and verify modal variable is displayed for the second conversation request',
       async () => {
-        await conversations.selectConversation(
+        await conversations.selectEntity(
           replayName,
           { isHttpMethodTriggered: false },
           {
@@ -1147,7 +1147,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           conversation.name,
         );
         await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
