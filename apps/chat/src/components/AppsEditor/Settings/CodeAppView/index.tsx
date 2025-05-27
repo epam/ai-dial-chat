@@ -64,6 +64,9 @@ import {
 
 import isEqual from 'lodash-es/isEqual';
 
+const cleanFormData = (data: CodeAppFormData) =>
+  JSON.parse(JSON.stringify(data)) as CodeAppFormData;
+
 type Options<T extends Path<CodeAppFormData>> = Omit<
   RegisterOptions<CodeAppFormData, T>,
   'disabled' | 'valueAsNumber' | 'valueAsDate'
@@ -221,7 +224,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
   }, [submitWrapper, handleEdit]);
 
   const savePartialForm = useCallback(() => {
-    const data = getValues();
+    const data = cleanFormData(getValues());
     if (!isValid && lastSubmittedValuesRef.current) {
       handleEdit({
         ...lastSubmittedValuesRef.current,
@@ -320,7 +323,6 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           }
           confirmDialogValues={confirmSourceFolderValues}
         />
-
         {sources && (
           <FormCodeEditor disabled={isAppPublic} sourcesFolderId={sources} />
         )}
