@@ -78,7 +78,7 @@ dialTest(
         playbackConversationName = `[${MenuOptions.playback}] ${conversation.name}`;
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.playback);
         await agentInfo.waitForState();
@@ -444,7 +444,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(playbackConversation.name);
+        await conversations.selectEntity(playbackConversation.name);
         await playbackAssertion.assertElementState(playbackControl, 'visible');
 
         for (let i = 0; i < playNextKeys.length; i++) {
@@ -628,7 +628,7 @@ dialTest(
           iconsToBeLoaded: [defaultModel!.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(playbackConversation.name);
+        await conversations.selectEntity(playbackConversation.name);
         await chatHeader.leavePlaybackMode.click();
         await expect
           .soft(
@@ -702,7 +702,7 @@ dialTest(
     await dialTest.step('Verify playback next message has scroll', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await conversations.selectConversation(playbackConversation.name);
+      await conversations.selectEntity(playbackConversation.name);
       await chat.playNextChatMessage();
       const isPlaybackNextMessageScrollable = await playbackControl
         .getPlaybackMessage()
