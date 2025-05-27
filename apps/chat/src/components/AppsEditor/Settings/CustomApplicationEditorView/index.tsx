@@ -6,7 +6,7 @@ import { convertApplicationFromApi } from '@/src/utils/app/application';
 
 import { ApiApplicationResponse } from '@/src/types/applications';
 
-import { ApplicationActions } from '@/src/store/actions';
+import { ApplicationActions, ModelsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ApplicationSelectors, SettingsSelectors } from '@/src/store/selectors';
 
@@ -57,13 +57,11 @@ export const CustomApplicationEditorView: React.FC<Props> = ({
         if (application && applicationData) {
           const convertedApplication = convertApplicationFromApi(application);
 
+          dispatch(ApplicationActions.updateSuccess(convertedApplication));
           dispatch(
-            ApplicationActions.update({
-              oldApplication: applicationData,
-              applicationData: {
-                ...applicationData,
-                ...convertedApplication,
-              },
+            ModelsActions.updateModel({
+              model: convertedApplication,
+              oldApplicationId: applicationData.id,
             }),
           );
         }
