@@ -333,9 +333,7 @@ dialSharedWithMeTest(
           ExpectedMessages.sharingWithAttachmentNotFromAllFilesFailed,
         );
         await toast.closeToast();
-        await conversations.selectConversation(
-          conversationWithTwoResponses.name,
-        );
+        await conversations.selectEntity(conversationWithTwoResponses.name);
       },
     );
 
@@ -415,9 +413,7 @@ dialSharedWithMeTest(
       async () => {
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(
-          conversationWithSpecialChars.name,
-        );
+        await conversations.selectEntity(conversationWithSpecialChars.name);
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
@@ -447,9 +443,7 @@ dialSharedWithMeTest(
       async () => {
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(
-          conversationWithSpecialChars.name,
-        );
+        await conversations.selectEntity(conversationWithSpecialChars.name);
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
@@ -667,7 +661,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           conversationWithTwoRequestsWithAttachments.name,
           { isHttpMethodTriggered: true },
         );
@@ -697,7 +691,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'User2 opens the file in the shared chat and verifies the picture is shown in responses',
       async () => {
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           conversationWithTwoResponsesWithAttachments.name,
           { isHttpMethodTriggered: true },
         );
@@ -737,7 +731,7 @@ dialSharedWithMeTest(
           user1FolderName,
         );
 
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           user1ConversationInFolder.name,
           { isHttpMethodTriggered: true },
         );
@@ -774,7 +768,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'User2 opens Manage attachments',
       async () => {
-        await additionalShareUserConversations.selectConversation(
+        await additionalShareUserConversations.selectEntity(
           secondUserEmptyConversation.name,
         );
         await additionalShareUserSendMessage.attachmentMenuTrigger.click();

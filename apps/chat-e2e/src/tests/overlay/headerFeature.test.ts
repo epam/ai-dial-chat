@@ -278,7 +278,7 @@ dialOverlayTest(
     await dialTest.step(
       'Verify new conversation is not create if to click on app logo',
       async () => {
-        await overlayConversations.selectConversation(
+        await overlayConversations.selectEntity(
           conversation.name,
           { isHttpMethodTriggered: false },
           { exactMatch: true },

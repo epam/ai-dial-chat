@@ -4,6 +4,8 @@ import {
   SideBarSelectors,
 } from '../../../selectors';
 
+import { isApiStorageType } from '@/src/hooks/global-setup';
+import { Colors } from '@/src/ui/domData';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { EditInput } from '@/src/ui/webElements/editInput';
 import { EditInputActions } from '@/src/ui/webElements/editInputActions';
@@ -80,5 +82,53 @@ export class SideBarEntitiesTree extends EntitiesTree {
     const input = this.getEditEntityInput();
     await input.editValue(newName);
     return input;
+  }
+
+  public async selectEntity(
+    name: string,
+    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
+    indexOrOptions?: number | { exactMatch: boolean; index?: number },
+  ) {
+    const entityToSelect = this.getTreeEntity(name, indexOrOptions);
+    if (isApiStorageType && isHttpMethodTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'GET',
+      );
+      await entityToSelect.click();
+      return respPromise;
+    }
+    await entityToSelect.click();
+  }
+
+  public selectedEntity(name: string, index?: number) {
+    if (index) {
+      return this.getEntityByName(name, index).locator(
+        SideBarSelectors.selectedEntity,
+      );
+    } else {
+      return this.getEntityByExactName(name).locator(
+        SideBarSelectors.selectedEntity,
+      );
+    }
+  }
+
+  public async getSelectedEntities(): Promise<
+    { name: string; index?: number }[]
+  > {
+    const allNames = await this.getAllTreeEntitiesNames();
+    const selectedEntities = [];
+
+    for (const name of allNames) {
+      const hasSelectedClass = (await this.selectedEntity(name).count()) > 0;
+      const backgroundColor = await this.getEntityBackgroundColor(name);
+
+      if (
+        hasSelectedClass ||
+        backgroundColor === Colors.backgroundAccentSecondary
+      ) {
+        selectedEntities.push({ name });
+      }
+    }
+    return selectedEntities;
   }
 }
