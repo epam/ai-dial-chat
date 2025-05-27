@@ -41,7 +41,13 @@ export class PromptModalDialog extends BaseElement {
     await this.description.click();
     await this.page.keyboard.press(keys.ctrlPlusA);
     if (description !== undefined) {
-      await this.description.typeInInput(description);
+      const descrLines = description.split('\n');
+      for (let i = 0; i < descrLines.length; i++) {
+        await this.description.typeInInput(descrLines[i]);
+        if (i !== descrLines.length - 1) {
+          await this.page.keyboard.press(keys.shiftPlusEnter);
+        }
+      }
     }
     if (value !== undefined) {
       await this.prompt.click();
