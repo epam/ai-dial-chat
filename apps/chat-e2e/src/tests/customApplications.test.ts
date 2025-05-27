@@ -935,15 +935,16 @@ dialTest(
     } as DialAIEntityModel;
     const newIconFileName = `${ExpectedConstants.allowedSpecialChars}.svg`;
     let agentElement: BaseElement;
-    const expectedNewIconUrl = `/api/${await fileApiHelper.putFileWithCustomName(`${ExpectedConstants.allowedSpecialChars}.svg`, Attachment.dialIconSvg)}`;
-    const part1 = expectedNewIconUrl.substring(
+    const expectedNewIconUrl = await fileApiHelper.putFileWithCustomName(
+      newIconFileName,
+      Attachment.dialIconSvg,
+    );
+    const uploadedIconFilePath = `/api/${expectedNewIconUrl.substring(
       0,
       expectedNewIconUrl.lastIndexOf('/') + 1,
-    );
-    const part2 = expectedNewIconUrl.substring(
-      expectedNewIconUrl.lastIndexOf('/') + 1,
-    );
-    const expectedEncodedIconUrl = part1 + encodeURIComponent(part2);
+    )}`;
+    const expectedEncodedIconUrl =
+      uploadedIconFilePath + encodeURIComponent(newIconFileName);
 
     await dialTest.step(
       'Precondition: Create custom application via API',
@@ -1006,7 +1007,6 @@ dialTest(
         await appEditorGeneralForm.goNext({ waitForResponses: false });
         const previewChatIconAppSettings =
           appEditorAppSettingsAgentPreview.previewChatIcon;
-        //TODO double URL encode in the icon
         await baseAssertion.assertEntityIcon(
           previewChatIconAppSettings,
           expectedEncodedIconUrl,
@@ -1233,7 +1233,6 @@ dialTest(
     publishRequestBuilder,
     publicationApiHelper,
     adminPublicationApiHelper,
-    iconApiHelper,
     localStorageManager,
     setTestIds,
     itemApiHelper,
@@ -1243,22 +1242,27 @@ dialTest(
     setTestIds('EPMRTC-4303');
     const appName = GeneratorUtil.randomApplicationName();
     const appVersion = GeneratorUtil.randomApplicationVersion();
-    const iconFilename = Attachment.sunImageName;
     let appEntity: DialAIEntityModel;
-    let expectedIconUrl: string;
     let agentElement: BaseElement;
     let createdAppBackendEntity;
+
+    const filename = `${ExpectedConstants.allowedSpecialChars}.svg`;
+    const expectedNewIconUrl = await fileApiHelper.putFileWithCustomName(
+      filename,
+      Attachment.dialIconSvg,
+    );
+    const encodedFileUrl =
+      expectedNewIconUrl.substring(0, expectedNewIconUrl.lastIndexOf('/') + 1) +
+      encodeURIComponent(filename);
+    const encodedIconUrl = `/api/${encodedFileUrl}`;
 
     await dialTest.step(
       'Precondition: Create a custom application with an icon, publish it, and approve it', // EPMRTC-4303
       async () => {
-        const iconUploadResponse = await fileApiHelper.putFile(iconFilename);
-        expectedIconUrl = iconUploadResponse;
-
         const applicationModel = customApplicationBuilder
           .withDisplayName(appName)
           .withDisplayVersion(appVersion)
-          .withIconUrl(expectedIconUrl)
+          .withIconUrl(encodedFileUrl)
           .build();
 
         createdAppBackendEntity =
@@ -1267,13 +1271,14 @@ dialTest(
         appEntity = {
           name: appName,
           version: appVersion,
-          iconUrl: expectedIconUrl,
+          iconUrl: encodedFileUrl,
         } as DialAIEntityModel;
 
         const publishRequest = publishRequestBuilder
           .withName(GeneratorUtil.randomPublicationRequestName())
           .withApplicationResource(createdAppBackendEntity, PublishActions.ADD)
           .build();
+
         const appPublication =
           await publicationApiHelper.createPublishRequest(publishRequest);
         publicationsToUnpublish.push(appPublication);
@@ -1307,8 +1312,7 @@ dialTest(
           isInstalledDeploymentsUpdated: false,
         });
         await dialHomePage.waitForPageLoaded();
-        const fullExpectedIconUrl = iconApiHelper.getCustomIcon(appEntity);
-        await agentInfoAssertion.assertAgentIcon(fullExpectedIconUrl);
+        await agentInfoAssertion.assertAgentIcon(encodedIconUrl);
       },
     );
 
@@ -1316,16 +1320,15 @@ dialTest(
       'Send any message and get response, correct icons are displayed',
       async () => {
         const message = 'Hello';
-        const fullExpectedIconUrl = iconApiHelper.getCustomIcon(appEntity);
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
         await chat.sendRequestWithButton(message);
         await conversationAssertion.assertTreeEntityIcon(
           { name: message },
-          fullExpectedIconUrl,
+          encodedIconUrl,
         );
-        await chatHeaderAssertion.assertHeaderIcon(fullExpectedIconUrl);
+        await chatHeaderAssertion.assertHeaderIcon(encodedIconUrl);
       },
     );
   },
