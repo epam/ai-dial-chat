@@ -33,7 +33,7 @@ dialTest.beforeAll(async ({ iconApiHelper }) => {
   );
 });
 
-dialAdminTest.only(
+dialAdminTest(
   'Unpublish chat inside folder.\n' +
     'Unpublish request for folder structure where one chat was already unpublished.\n' +
     'Unpublish all chats from folder: folder is deleted from Organization',
