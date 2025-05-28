@@ -28,7 +28,7 @@ export interface BackendDataEntity {
   bucket: string;
   parentPath?: string | null;
   url: string;
-  permissions: SharePermission[];
+  permissions?: SharePermission[];
 }
 
 export interface BackendEntity extends BackendDataEntity {

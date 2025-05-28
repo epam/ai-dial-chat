@@ -27,9 +27,9 @@ import {
   isConversationWithFormSchema,
   isFormSchemaValid,
 } from '@/src/utils/app/form-schema';
-import { isEntityIdExternal } from '@/src/utils/app/id';
 import { is4XLScreen } from '@/src/utils/app/mobile';
 import { doesModelHaveConfiguration } from '@/src/utils/app/models';
+import { isEntityReadOnly } from '@/src/utils/app/permissions';
 
 import { ApplicationStatus } from '@/src/types/applications';
 import {
@@ -807,7 +807,7 @@ const ChatView = memo(() => {
                                             isLikesEnabled={
                                               enabledFeatures.has(
                                                 Feature.Likes,
-                                              ) && !isEntityIdExternal(conv)
+                                              ) && !isEntityReadOnly(conv)
                                             }
                                             editDisabled={
                                               !!notAvailableEntityType ||

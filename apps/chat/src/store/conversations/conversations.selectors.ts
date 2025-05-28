@@ -35,6 +35,7 @@ import {
   isEntityIdLocal,
   isRootId,
 } from '@/src/utils/app/id';
+import { isEntityReadOnly } from '@/src/utils/app/permissions';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import {
   PublishedWithMeFilter,
@@ -63,7 +64,6 @@ import {
   Feature,
   Role,
   ShareEntity,
-  SharePermission,
 } from '@epam/ai-dial-shared';
 import cloneDeep from 'lodash-es/cloneDeep';
 import uniqBy from 'lodash-es/uniqBy';
@@ -345,9 +345,7 @@ const selectAreSelectedConversationsExternal = createSelector(
 const selectAreSelectedConversationsReadOnly = createSelector(
   [selectSelectedConversations],
   (conversations) => {
-    return conversations.some(
-      (conv) => !conv.permissions?.includes(SharePermission.WRITE),
-    );
+    return conversations.some((conv) => isEntityReadOnly(conv));
   },
 );
 
@@ -758,8 +756,14 @@ const selectIsSelectedConversationBlocksInput = createSelector(
     selectSelectedConversations,
     ChatSelectors.selectIsConfigurationBlocksInput,
     ChatSelectors.selectNotAvailableEntityType,
+    selectAreSelectedConversationsReadOnly,
   ],
-  (conversations, isConfigurationBlocksInput, notAvailableEntityType) =>
+  (
+    conversations,
+    isConfigurationBlocksInput,
+    notAvailableEntityType,
+    isReadOnly,
+  ) =>
     conversations.some(
       (conversation) =>
         conversation.sharedWithMe ||
@@ -767,7 +771,7 @@ const selectIsSelectedConversationBlocksInput = createSelector(
           (isConfigurationBlocksInput || isReplayConversation(conversation))) ||
         notAvailableEntityType ||
         isPlaybackConversation(conversation) ||
-        isEntityIdExternal(conversation) ||
+        isReadOnly ||
         !conversation.messages ||
         isMessageInputDisabled(
           conversation.messages.length,

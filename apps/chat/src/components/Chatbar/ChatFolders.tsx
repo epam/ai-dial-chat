@@ -8,9 +8,9 @@ import { getFoldersDepth, sortByName } from '@/src/utils/app/folders';
 import {
   getConversationRootId,
   getIdWithoutRootPathSegments,
-  isEntityIdExternal,
   isRootId,
 } from '@/src/utils/app/id';
+import { isEntityReadOnly } from '@/src/utils/app/permissions';
 import { getPublishFolderResources } from '@/src/utils/app/publications';
 import {
   PublishedWithMeFilter,
@@ -298,7 +298,7 @@ const ChatFolderTemplate = ({
   }, []);
 
   const shouldDenyDrop =
-    isEntityIdExternal(folder) || isSelectMode || isConversationsStreaming;
+    isEntityReadOnly(folder) || isSelectMode || isConversationsStreaming;
 
   const publishConversations = useMemo(() => {
     if (!publication) return [];

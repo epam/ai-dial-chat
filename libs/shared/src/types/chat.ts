@@ -99,7 +99,7 @@ export interface Entity extends EntityDates {
   folderId: string;
   status?: UploadStatus;
   author?: string;
-  permissions: SharePermission[];
+  permissions?: SharePermission[];
 }
 
 export enum PublishActions {
