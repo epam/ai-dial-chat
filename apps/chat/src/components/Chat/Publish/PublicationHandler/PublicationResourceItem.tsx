@@ -1,5 +1,5 @@
 import { IconDownload } from '@tabler/icons-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -22,11 +22,10 @@ import { Translation } from '@/src/types/translation';
 
 import { NA_VERSION } from '@/src/constants/public';
 
-import { FilesRow } from '@/src/components/Common/ReplaceConfirmationModal/Components';
-
 import { PublicVersionSelector } from '../PublicVersionSelector';
 import { PublicationApplicationRow } from './ReviewRowItems/PublicationApplicationRow';
 import { PublicationConversationRow } from './ReviewRowItems/PublicationConversationRow';
+import { PublicationFileRow } from './ReviewRowItems/PublicationFileRow';
 import { PublicationPromptRow } from './ReviewRowItems/PublicationPromptRow';
 
 import {
@@ -128,21 +127,15 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
 interface PublicationRowRendererProps {
   item: PublicationReviewItem;
   level: number;
-  commonProps: {
-    featureContainerClassNames: string;
-    itemComponentClassNames: string;
-  };
 }
 
 const PublicationRowRenderer: React.FC<PublicationRowRendererProps> = ({
   item,
   level,
-  commonProps,
 }) => {
   if (isApplicationId(item.id)) {
     return (
       <PublicationApplicationRow
-        {...commonProps}
         level={level}
         application={item as ShareEntity}
       />
@@ -152,7 +145,6 @@ const PublicationRowRenderer: React.FC<PublicationRowRendererProps> = ({
   if (isConversationId(item.id)) {
     return (
       <PublicationConversationRow
-        {...commonProps}
         level={level}
         conversation={item as ConversationInfo}
       />
@@ -160,16 +152,10 @@ const PublicationRowRenderer: React.FC<PublicationRowRendererProps> = ({
   }
 
   if (isPromptId(item.id)) {
-    return (
-      <PublicationPromptRow
-        {...commonProps}
-        level={level}
-        prompt={item as Prompt}
-      />
-    );
+    return <PublicationPromptRow level={level} prompt={item as Prompt} />;
   }
 
-  return <FilesRow {...commonProps} item={item as DialFile} />;
+  return <PublicationFileRow level={level} file={item as DialFile} />;
 };
 
 interface PublicationResourceItemProps {
@@ -180,20 +166,10 @@ interface PublicationResourceItemProps {
 export const PublicationResourceItem = ({
   item,
   level,
-  ...props
 }: PublicationResourceItemProps & Record<string, unknown>) => {
   const [isFocused, setIsFocused] = useState(false);
 
   const { publicVersionGroupId } = usePublicVersionGroupId(item);
-
-  const commonProps = useMemo(
-    () => ({
-      ...props,
-      featureContainerClassNames: 'w-full',
-      itemComponentClassNames: 'w-full truncate cursor-pointer',
-    }),
-    [props],
-  );
 
   return (
     <div
@@ -204,11 +180,7 @@ export const PublicationResourceItem = ({
       onFocus={() => setIsFocused(true)}
       onBlur={() => setIsFocused(false)}
     >
-      <PublicationRowRenderer
-        item={item}
-        level={level}
-        commonProps={commonProps}
-      />
+      <PublicationRowRenderer item={item} level={level} />
       <PublicationVersionInfo
         item={item}
         publicVersionGroupId={publicVersionGroupId}
