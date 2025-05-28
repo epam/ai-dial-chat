@@ -16,9 +16,8 @@ import { constructPath } from '@/src/utils/app/file';
 import { getPathToFolderById } from '@/src/utils/app/folders';
 import {
   getConversationRootId,
-  isEntityIdExternal,
   isEntityIdLocal,
-  isRootConversationsId,
+  isRootConversationsId
 } from '@/src/utils/app/id';
 import {
   getConversationApiKey,
@@ -77,7 +76,7 @@ export const getOrUploadConversation = <T extends { id: string }>(
     payload.id,
   );
 
-  if (!conversation && isEntityIdExternal({ id: payload.id })) {
+  if (!conversation) {
     conversation = getConversationInfoFromId(payload.id);
   }
 
