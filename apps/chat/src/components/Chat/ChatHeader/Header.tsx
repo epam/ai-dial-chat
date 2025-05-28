@@ -93,8 +93,8 @@ export const ChatHeader = Inversify.register(
     const isPlayback = useAppSelector(
       ConversationsSelectors.selectIsPlaybackSelectedConversations,
     );
-    const isExternal = useAppSelector(
-      ConversationsSelectors.selectAreSelectedConversationsExternal,
+    const isReadOnly = useAppSelector(
+      ConversationsSelectors.selectAreSelectedConversationsReadOnly,
     );
     const isSelectMode = useAppSelector(
       ConversationsSelectors.selectIsSelectMode,
@@ -170,9 +170,9 @@ export const ChatHeader = Inversify.register(
       screenState === ScreenState.SM && conversationSelectedAddons.length > 2;
     const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
-    const disallowChangeAgent = isChangeAgentDisallowed || isExternal;
+    const disallowChangeAgent = isChangeAgentDisallowed || isReadOnly;
     const disallowChangeSettings =
-      isReplayAsIsConversation(conversation) || isPlayback || isExternal;
+      isReplayAsIsConversation(conversation) || isPlayback || isReadOnly;
 
     return (
       <>
@@ -412,7 +412,7 @@ export const ChatHeader = Inversify.register(
                 />
               )}
 
-              {isPlayback && !isExternal && (
+              {isPlayback && !isReadOnly && (
                 <button
                   className="cursor-pointer text-accent-primary"
                   onClick={onCancelPlaybackMode}

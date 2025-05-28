@@ -63,6 +63,7 @@ import {
   Feature,
   Role,
   ShareEntity,
+  SharePermission,
 } from '@epam/ai-dial-shared';
 import cloneDeep from 'lodash-es/cloneDeep';
 import uniqBy from 'lodash-es/uniqBy';
@@ -338,6 +339,17 @@ const selectAreSelectedConversationsExternal = createSelector(
   [selectSelectedConversations],
   (conversations) => {
     return conversations.some((conv) => isEntityIdExternal(conv));
+  },
+);
+
+const selectAreSelectedConversationsReadOnly = createSelector(
+  [selectSelectedConversations],
+  (conversations) => {
+    return conversations.some(
+      (conv) =>
+        conv.permissions?.includes(SharePermission.READ) &&
+        !conv.permissions?.includes(SharePermission.WRITE),
+    );
   },
 );
 
@@ -811,6 +823,7 @@ export const ConversationsSelectors = {
   selectIsReplaySelectedConversations,
   selectIsPlaybackSelectedConversations,
   selectAreSelectedConversationsExternal,
+  selectAreSelectedConversationsReadOnly,
   selectDoesAnyMyItemExist,
   selectPlaybackActiveIndex,
   selectIsErrorReplayConversations,
