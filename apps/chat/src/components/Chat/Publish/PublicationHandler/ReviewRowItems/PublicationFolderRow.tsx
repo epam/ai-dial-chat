@@ -23,10 +23,17 @@ interface Props<T extends PublicationReviewItem> {
 
   isEditable: boolean;
   editedName: string;
-  onEdit: (oldId: string, newId: string) => void;
 }
 
-export const FolderRow = <T extends PublicationReviewItem>({
+const filteredItems = <T extends PublicationReviewItem | FolderInterface>(
+  allItems: T[],
+  currentFolderId: string,
+) =>
+  sortByName(
+    allItems.filter((item) => item.folderId === currentFolderId) as T[],
+  );
+
+export const PublicationFolderRow = <T extends PublicationReviewItem>({
   currentFolder,
   allFolders,
   allItems,
@@ -34,32 +41,27 @@ export const FolderRow = <T extends PublicationReviewItem>({
   itemComponent,
   isEditable,
   editedName,
-  onEdit,
 }: Props<T>) => {
   const [isFocused, setIsFocused] = useState(false);
 
   const filteredChildFolders = useMemo(() => {
-    return sortByName(
-      allFolders.filter((folder) => folder.folderId === currentFolder.id),
-    );
-  }, [currentFolder.id, allFolders]);
+    return filteredItems(allFolders, currentFolder.id);
+  }, [allFolders, currentFolder.id]);
 
   const filteredChildItems = useMemo(() => {
-    return sortByName(
-      allItems.filter((item) => item.folderId === currentFolder.id),
-    );
+    return filteredItems(allItems, currentFolder.id);
   }, [allItems, currentFolder.id]);
 
   return (
     <>
       <div
         className={classNames(
-          'group/button group/folder-item group relative flex min-h-[34px] w-full flex-1 cursor-pointer items-center rounded pl-4 hover:bg-accent-primary-alpha',
+          'relative flex min-h-[34px] w-full flex-1 cursor-pointer items-center rounded pl-4 hover:bg-accent-primary-alpha',
           isFocused && 'bg-accent-primary-alpha',
         )}
       >
         <div
-          className="group/folder-item flex h-[34px] w-full items-center gap-1 py-[5px] pr-3"
+          className="flex h-[34px] w-full items-center gap-2 py-[5px] pr-3"
           style={{
             paddingLeft: `${level * 24}px`,
           }}
@@ -76,7 +78,8 @@ export const FolderRow = <T extends PublicationReviewItem>({
                   onBlur={() => setIsFocused(false)}
                   className="h-[24px] w-full border-b border-primary bg-layer-2 px-1 py-[2px] text-sm text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none"
                   value={editedName}
-                  onChange={(e) => onEdit(currentFolder.id, e.target.value)}
+                  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
+                  onChange={(e) => {}}
                 />
               </div>
             ) : (
@@ -95,7 +98,7 @@ export const FolderRow = <T extends PublicationReviewItem>({
       <div className="flex flex-col gap-1">
         <div className="flex flex-col">
           {filteredChildFolders.map((item) => (
-            <FolderRow
+            <PublicationFolderRow
               key={item.id}
               level={level + 1}
               currentFolder={item}
@@ -104,7 +107,6 @@ export const FolderRow = <T extends PublicationReviewItem>({
               allFolders={allFolders}
               isEditable={isEditable}
               editedName={editedName}
-              onEdit={onEdit}
             />
           ))}
         </div>

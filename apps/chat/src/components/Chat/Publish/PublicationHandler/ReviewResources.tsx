@@ -1,5 +1,5 @@
 import { IconDownload } from '@tabler/icons-react';
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -34,15 +34,13 @@ import {
 
 import { NA_VERSION } from '@/src/constants/public';
 
-import {
-  ApplicationRow,
-  ConversationRow,
-  FilesRow,
-  PromptsRow,
-} from '@/src/components/Common/ReplaceConfirmationModal/Components';
+import { FilesRow } from '@/src/components/Common/ReplaceConfirmationModal/Components';
 
 import { PublicVersionSelector } from '../PublicVersionSelector';
-import { FolderRow } from './ReviewRowItems/FolderRow';
+import { PublicationApplicationRow } from './ReviewRowItems/PublicationApplicationRow';
+import { PublicationConversationRow } from './ReviewRowItems/PublicationConversationRow';
+import { PublicationFolderRow } from './ReviewRowItems/PublicationFolderRow';
+import { PublicationPromptRow } from './ReviewRowItems/PublicationPromptRow';
 
 import {
   ConversationInfo,
@@ -54,11 +52,13 @@ import {
 
 interface PublicationVersionInfoProps {
   item: PublicationReviewItem;
-  publicVersionGroupId?: string;
+  isEditable: boolean;
+  publicVersionGroupId: string | undefined;
 }
 
 const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   item,
+  isEditable,
   publicVersionGroupId,
 }) => {
   const { t } = useTranslation(Translation.Chat);
@@ -74,7 +74,16 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
         )}
         data-qa="version"
       >
-        {getVersionFromId(item.id)}
+        {isEditable ? (
+          <input
+            className="h-[24px] w-[35px] border-b border-primary bg-layer-2 px-1 py-[2px] text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none"
+            value={getVersionFromId(item.id)}
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
+            onChange={() => {}}
+          />
+        ) : (
+          getVersionFromId(item.id)
+        )}
       </span>
     );
   }
@@ -106,10 +115,21 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
         />
       )}
       <span
-        className={classNames('text-xs', isDeleteAction && 'text-error')}
+        className={classNames('pr-2 text-xs', isDeleteAction && 'text-error')}
         data-qa="version"
       >
-        {item.publicationInfo?.version || NA_VERSION}
+        {isEditable ? (
+          <input
+            className="h-[24px] w-[35px] border-b border-primary bg-layer-2 px-1 py-[2px] text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none"
+            value={item.publicationInfo?.version || NA_VERSION}
+            onChange={() => {
+              // eslint-disable-next-line no-console
+              console.log('edit');
+            }}
+          />
+        ) : (
+          item.publicationInfo?.version || NA_VERSION
+        )}
       </span>
     </div>
   );
@@ -117,25 +137,55 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
 
 interface PublicationResourceItemProps {
   item: PublicationReviewItem;
+  editedName: string | undefined;
+  level: number;
+  isEditMode: boolean;
 }
 
 const renderRowComponent = (
   item: PublicationReviewItem,
+  editedName: string | undefined,
+  isEditMode: boolean,
+  level: number,
   commonProps: {
     featureContainerClassNames: string;
     itemComponentClassNames: string;
   },
 ) => {
   if (isApplicationId(item.id)) {
-    return <ApplicationRow {...commonProps} item={item as ShareEntity} />;
+    return (
+      <PublicationApplicationRow
+        {...commonProps}
+        level={level}
+        isEditable={isEditMode}
+        editedName={editedName ?? item.name}
+        application={item as ShareEntity}
+      />
+    );
   }
 
   if (isConversationId(item.id)) {
-    return <ConversationRow {...commonProps} item={item as ConversationInfo} />;
+    return (
+      <PublicationConversationRow
+        {...commonProps}
+        level={level}
+        isEditable={isEditMode}
+        editedName={editedName ?? item.name}
+        conversation={item as ConversationInfo}
+      />
+    );
   }
 
   if (isPromptId(item.id)) {
-    return <PromptsRow {...commonProps} item={item as Prompt} />;
+    return (
+      <PublicationPromptRow
+        {...commonProps}
+        level={level}
+        isEditable={isEditMode}
+        editedName={editedName ?? item.name}
+        prompt={item as Prompt}
+      />
+    );
   }
 
   return <FilesRow {...commonProps} item={item as DialFile} />;
@@ -143,69 +193,45 @@ const renderRowComponent = (
 
 const PublicationResourceItem = ({
   item,
+  editedName,
+  isEditMode,
+  level,
   ...props
 }: PublicationResourceItemProps & Record<string, unknown>) => {
+  const [isFocused, setIsFocused] = useState(false);
+
   const { publicVersionGroupId } = usePublicVersionGroupId(item);
 
-  const commonProps = {
-    ...props,
-    featureContainerClassNames: 'w-full',
-    itemComponentClassNames: 'w-full truncate cursor-pointer',
-  };
+  const commonProps = useMemo(
+    () => ({
+      ...props,
+      featureContainerClassNames: 'w-full',
+      itemComponentClassNames: 'w-full truncate cursor-pointer',
+    }),
+    [props],
+  );
+
+  const rowComponent = useMemo(
+    () => renderRowComponent(item, editedName, isEditMode, level, commonProps),
+    [item, editedName, isEditMode, level, commonProps],
+  );
 
   return (
-    <div className="flex items-center justify-between gap-4">
-      {renderRowComponent(item, commonProps)}
+    <div
+      className={classNames(
+        'flex items-center justify-between gap-2 rounded hover:bg-accent-primary-alpha',
+        isFocused && 'bg-accent-primary-alpha',
+      )}
+      onFocus={() => setIsFocused(true)}
+      onBlur={() => setIsFocused(false)}
+    >
+      {rowComponent}
       <PublicationVersionInfo
         item={item}
+        isEditable={isEditMode}
         publicVersionGroupId={publicVersionGroupId}
       />
     </div>
-  );
-};
-
-interface BasePublicationResources {
-  resources: PublicationResource[];
-  entities: ShareEntity[] | Prompt[] | ConversationInfo[] | DialFile[];
-  folders: FolderInterface[];
-  isEditMode: boolean;
-}
-
-const BasePublicationResources = ({
-  resources,
-  entities,
-  folders,
-  isEditMode,
-}: BasePublicationResources) => {
-  const {
-    rootPublicationFolders,
-    allPublicationFolders,
-    itemsToDisplay,
-    folderItemsToDisplay,
-  } = usePublicationResources(folders, resources, entities);
-
-  return (
-    <>
-      {rootPublicationFolders.map((folder) => (
-        <FolderRow
-          key={folder.id}
-          currentFolder={folder}
-          allFolders={allPublicationFolders}
-          allItems={folderItemsToDisplay}
-          itemComponent={PublicationResourceItem}
-          level={0}
-          isEditable={isEditMode}
-          editedName={folder.name}
-          onEdit={() => {
-            // eslint-disable-next-line no-console
-            console.log('edit');
-          }}
-        />
-      ))}
-      {itemsToDisplay.map((item) => (
-        <PublicationResourceItem key={item.id} item={item} level={0} />
-      ))}
-    </>
   );
 };
 
@@ -213,6 +239,62 @@ interface Props {
   resources: PublicationResource[];
   isEditMode: boolean;
 }
+
+interface BasePublicationResources extends Props {
+  entities: ShareEntity[] | Prompt[] | ConversationInfo[] | DialFile[];
+  folders: FolderInterface[];
+}
+
+const BasePublicationResources: React.FC<BasePublicationResources> = ({
+  resources,
+  entities,
+  folders,
+  isEditMode,
+}) => {
+  const {
+    rootPublicationFolders,
+    allPublicationFolders,
+    itemsToDisplay,
+    folderItemsToDisplay,
+  } = usePublicationResources(folders, resources, entities);
+
+  const itemComponent = useCallback(
+    (props: { item: PublicationReviewItem; level: number }) => (
+      <PublicationResourceItem
+        {...props}
+        editedName={props.item.name}
+        isEditMode={isEditMode}
+      />
+    ),
+    [isEditMode],
+  );
+
+  return (
+    <>
+      {rootPublicationFolders.map((folder) => (
+        <PublicationFolderRow
+          key={folder.id}
+          currentFolder={folder}
+          allFolders={allPublicationFolders}
+          allItems={folderItemsToDisplay}
+          itemComponent={itemComponent}
+          level={0}
+          isEditable={isEditMode}
+          editedName={folder.name}
+        />
+      ))}
+      {itemsToDisplay.map((item) => (
+        <PublicationResourceItem
+          key={item.id}
+          isEditMode={isEditMode}
+          editedName={item.name}
+          item={item}
+          level={0}
+        />
+      ))}
+    </>
+  );
+};
 
 export const PromptPublicationResources = ({
   resources,
@@ -264,7 +346,10 @@ export const FilePublicationResources = ({ resources }: Props) => {
   );
 };
 
-export const ApplicationPublicationResources = ({ resources }: Props) => {
+export const ApplicationPublicationResources = ({
+  resources,
+  isEditMode,
+}: Props) => {
   const publishRequestModels = useAppSelector(
     ModelsSelectors.selectPublishRequestModels,
   );
@@ -284,6 +369,8 @@ export const ApplicationPublicationResources = ({ resources }: Props) => {
           key={application.id}
           item={application}
           level={0}
+          isEditMode={isEditMode}
+          editedName={application.name}
         />
       ))}
     </>
