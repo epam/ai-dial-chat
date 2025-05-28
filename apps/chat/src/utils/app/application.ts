@@ -2,7 +2,10 @@ import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { getTopicColors } from '@/src/utils/app/style-helpers';
 import { ApiUtils, getApplicationApiKey } from '@/src/utils/server/api';
 
-import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
+import {
+  ApiDetailedApplicationTypeSchema,
+  ApplicationTypeSchemaProperties,
+} from '@/src/types/application-type-schema';
 import {
   ApiApplicationModel,
   ApiApplicationModelBase,
@@ -34,6 +37,7 @@ import { constructPath } from './file';
 import { getFolderIdFromEntityId } from './folders';
 import { getApplicationRootId } from './id';
 import { isEntityIdPublic } from './publications';
+import { getThemeIconUrl } from './themes';
 import { translate } from './translation';
 
 import isObject from 'lodash-es/isObject';
@@ -334,6 +338,7 @@ export const getPlayerCaption = (entity: DialAIEntityModel) => {
 export const getApplicationEntityFields = (
   data: ApplicationGeneralInfoFormData,
   applicationData?: DialAIEntityModel,
+  schema?: ApiDetailedApplicationTypeSchema | null,
 ): Omit<CustomApplicationModel, 'folderId'> => {
   return {
     name: data.name ?? '',
@@ -349,5 +354,6 @@ export const getApplicationEntityFields = (
     isDefault: true,
     owner: applicationData?.owner,
     createdAt: applicationData?.createdAt,
+    applicationTypeSchemaId: schema?.$id ?? '',
   };
 };
