@@ -291,7 +291,7 @@ dialAdminTest(
         for (const conversation of [conversation1, conversation2]) {
           const publishRequest = publishRequestBuilder
             .withName(GeneratorUtil.randomPublicationRequestName())
-            .withConversationResource(conversation, PublishActions.ADD)
+            .withConversationInFolderResource(conversation, PublishActions.ADD)
             .build();
           const publication =
             await publicationApiHelper.createPublishRequest(publishRequest);
