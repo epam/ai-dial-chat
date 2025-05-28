@@ -55,19 +55,8 @@ export enum SourceType {
   Public = 'Public',
   SharedWithMe = 'Shared with me',
   MyCustomApps = 'My Custom apps',
-  MyQuickApps = 'My Quick apps',
   MyCodeApps = 'My Code apps',
-  MyMindMaps = 'My Mindmaps',
 }
-
-export const SourceTypeFilterOrder = {
-  [SourceType.MyCodeApps]: 1,
-  [SourceType.MyCustomApps]: 2,
-  [SourceType.MyMindMaps]: 3,
-  [SourceType.MyQuickApps]: 4,
-  [SourceType.Public]: 5,
-  [SourceType.SharedWithMe]: 6,
-};
 
 export const ApplicationTypeToSourceType = {
   [ApplicationType.CODE_APP]: SourceType.MyCodeApps,
