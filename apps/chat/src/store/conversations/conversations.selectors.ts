@@ -346,9 +346,7 @@ const selectAreSelectedConversationsReadOnly = createSelector(
   [selectSelectedConversations],
   (conversations) => {
     return conversations.some(
-      (conv) =>
-        conv.permissions?.includes(SharePermission.READ) &&
-        !conv.permissions?.includes(SharePermission.WRITE),
+      (conv) => !conv.permissions?.includes(SharePermission.WRITE),
     );
   },
 );
