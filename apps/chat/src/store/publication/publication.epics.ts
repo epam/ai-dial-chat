@@ -16,9 +16,7 @@ import {
 
 import { combineEpics, ofType } from 'redux-observable';
 
-import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
-import { FileService } from '@/src/utils/app/data/file-service';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
 import { constructPath } from '@/src/utils/app/file';
@@ -42,6 +40,7 @@ import {
   getItemsIdsToRemoveAndHide,
   isEntityIdPublic,
   mapPublishedItems,
+  processPublicationResources,
 } from '@/src/utils/app/publications';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
@@ -118,46 +117,8 @@ const initEpic: AppEpic = (action$, state$) =>
 const publishEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PublicationActions.publish.type),
-    switchMap(({ payload }) =>
-      forkJoin({
-        payload: of(payload),
-        publicFiles: payload.resources.find((r) => isFileId(r.sourceUrl))
-          ? FileService.getMultipleFoldersFiles(
-              payload.resources
-                .filter((r) => isFileId(r.sourceUrl))
-                .map((r) => getFolderIdFromEntityId(r.targetUrl)),
-            )
-          : of([]),
-      }),
-    ),
-    switchMap(({ payload, publicFiles }) => {
-      const fileIds = payload.resources
-        .map(({ sourceUrl }) => sourceUrl)
-        .filter((id) => id && isFileId(id));
-
-      const publicFileIds = publicFiles.map((file) => file.id);
-      const userBucket = BucketService.getBucket();
-
-      const isPublishingExternalFiles = fileIds.some((id) => {
-        const { bucket: fileBucket } = splitEntityId(id as string);
-
-        return fileBucket !== userBucket;
-      });
-
-      const resources = payload.resources.map((resource) => {
-        if (
-          publicFileIds.includes(resource.targetUrl) &&
-          resource.action === PublishActions.ADD
-        ) {
-          return {
-            ...resource,
-            action: PublishActions.ADD_IF_ABSENT,
-          };
-        }
-
-        return resource;
-      });
-
+    switchMap(({ payload }) => processPublicationResources(payload)),
+    switchMap(({ publicationData, isPublishingExternalFiles }) => {
       if (isPublishingExternalFiles) {
         return of(
           PublicationActions.publishFail(
@@ -167,8 +128,7 @@ const publishEpic: AppEpic = (action$) =>
       }
 
       return PublicationService.createPublicationRequest({
-        ...payload,
-        resources,
+        ...publicationData,
       }).pipe(
         switchMap(() => EMPTY),
         catchError((err) => {
@@ -1388,6 +1348,38 @@ const uploadAllPublishedWithMeItemsFailEpic: AppEpic = (action$) =>
     ),
   );
 
+const updatePublicationRequestEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(PublicationActions.updatePublicationRequest.type),
+    switchMap(({ payload }) =>
+      forkJoin({
+        payload: processPublicationResources(payload.dataToUpdate),
+        url: payload.url,
+      }),
+    ),
+    switchMap(({ payload, url }) => {
+      const { publicationData, isPublishingExternalFiles } = payload;
+      if (isPublishingExternalFiles) {
+        return of(
+          PublicationActions.publishFail(
+            errorsMessages.publicationWithExternalFilesFailed,
+          ),
+        );
+      }
+
+      return PublicationService.updatePublicationRequest({
+        publicationData,
+        url,
+      }).pipe(
+        switchMap(() => EMPTY),
+        catchError((err) => {
+          console.error(err);
+          return of(PublicationActions.publishFail(err.message));
+        }),
+      );
+    }),
+  );
+
 export const PublicationEpics = combineEpics(
   // init
   initEpic,
@@ -1419,4 +1411,7 @@ export const PublicationEpics = combineEpics(
   // upload rules
   uploadRulesEpic,
   uploadRulesFailEpic,
+
+  // update publication request
+  updatePublicationRequestEpic,
 );

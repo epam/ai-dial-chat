@@ -32,5 +32,19 @@ export class PromptPreviewModalWindow extends BaseElement {
   public usePromptButton = this.getChildElementBySelector(
     PromptPreviewModal.usePromptButton,
   );
+  public promptInfoButton = this.getChildElementBySelector(
+    PromptPreviewModal.promptInfoButton,
+  );
+  public version = this.getChildElementBySelector(
+    PromptPreviewModal.promptPreviewVersion,
+  );
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
+
+  public async openPromptInfo() {
+    const respPromise = this.page.waitForResponse(
+      (r) => r.request().method() === 'GET' && r.status() === 200,
+    );
+    await this.promptInfoButton.click();
+    await respPromise;
+  }
 }

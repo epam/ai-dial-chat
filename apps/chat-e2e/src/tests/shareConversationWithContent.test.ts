@@ -149,7 +149,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           responseImageConversation.name,
         );
 
@@ -177,7 +177,7 @@ dialSharedWithMeTest(
             .toBe(200);
         }
 
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           requestImageConversation.name,
         );
         await additionalShareUserChatMessages
@@ -209,7 +209,7 @@ dialSharedWithMeTest(
             .toBe(200);
         }
 
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           stageConversation.name,
         );
         await additionalShareUserChatMessages
@@ -222,7 +222,7 @@ dialSharedWithMeTest(
           )
           .toBeVisible();
 
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           codeConversation.name,
         );
         await additionalShareUserChatMessages
@@ -687,7 +687,7 @@ dialSharedWithMeTest(
         await additionalShareUserLocalStorageManager.setShowSideBarPanels();
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserConversations.selectConversation(
+        await additionalShareUserConversations.selectEntity(
           secondUserEmptyConversation.name,
         );
         await additionalShareUserSendMessage.attachmentMenuTrigger.click();
@@ -726,7 +726,7 @@ dialSharedWithMeTest(
       'User2 opens the file in the shared chat and verifies the picture is shown in requests',
       async () => {
         await additionalShareUserAttachFilesModal.closeButton.click();
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           imageConversation.name,
         );
 
@@ -746,7 +746,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'User 2 open the attach modal and verifies that the file is not visible',
       async () => {
-        await additionalShareUserConversations.selectConversation(
+        await additionalShareUserConversations.selectEntity(
           secondUserEmptyConversation.name,
         );
         await additionalShareUserSendMessage.attachmentMenuTrigger.click();
@@ -929,7 +929,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           playbackConversation.name,
         );
         await expect
@@ -1089,7 +1089,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           plotlyConversation.name,
         );
         await additionalShareUserChatMessages
@@ -1165,7 +1165,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           attachmentLinkConversation.name,
         );
         for (let i = 1; i <= chatResponseIndex; i++) {

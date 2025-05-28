@@ -160,7 +160,7 @@ dialTest(
           modelConversationInFolder.folders.name,
           thirdModelConversation.name,
         );
-        // await conversations.selectConversation(thirdModelConversation.name);
+        // await conversations.selectEntity(thirdModelConversation.name);
         await folderConversations.openFolderEntityDropdownMenu(
           modelConversationInFolder.folders.name,
           thirdModelConversation.name,
@@ -270,7 +270,7 @@ dialTest(
           iconsToBeLoaded: [defaultModel.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(
+        await conversations.selectEntity(
           modelConversation.name,
           { isHttpMethodTriggered: false },
           {
@@ -298,7 +298,7 @@ dialTest(
     await dialTest.step(
       'Open another conversation and verify compare mode is closed',
       async () => {
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         await expect
           .soft(compare.getElementLocator(), ExpectedMessages.compareModeClosed)
           .toBeHidden();
@@ -460,7 +460,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(firstConversation.name);
+        await conversations.selectEntity(firstConversation.name);
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
 
@@ -631,7 +631,7 @@ dialTest(
           .soft(isComparedMessageRated, ExpectedMessages.chatMessageIsRated)
           .toBeTruthy();
 
-        await conversations.selectConversation(firstConversation.name);
+        await conversations.selectEntity(firstConversation.name);
         await chatMessages.getChatMessageRate(2, rate).waitFor();
       },
     );
@@ -1124,7 +1124,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(firstConversation.name);
+        await conversations.selectEntity(firstConversation.name);
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
         await compareConversation.checkShowAllConversations();
@@ -1407,7 +1407,7 @@ dialTest(
     await dialTest.step(
       'Switch to comparing conversation and verify Compare mode is closed',
       async () => {
-        await conversations.selectConversation(firstConversation.name);
+        await conversations.selectEntity(firstConversation.name);
         await conversationToCompareAssertion.assertElementState(
           compare,
           'hidden',
