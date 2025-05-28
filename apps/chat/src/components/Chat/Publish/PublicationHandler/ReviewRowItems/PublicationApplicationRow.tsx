@@ -40,6 +40,7 @@ export const PublicationApplicationRow: React.FC<Props> = ({
       name={application.name}
       Icon={<ModelIcon entity={entity} entityId={application.id} size={18} />}
       publicationInfo={application.publicationInfo}
+      dataQa="application"
     />
   );
 };

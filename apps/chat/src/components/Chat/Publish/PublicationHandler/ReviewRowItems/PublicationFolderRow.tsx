@@ -59,6 +59,7 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
           'relative flex min-h-[34px] w-full flex-1 cursor-pointer items-center rounded pl-4 hover:bg-accent-primary-alpha',
           isFocused && 'bg-accent-primary-alpha',
         )}
+        data-qa="folder"
       >
         <div
           className="flex h-[34px] w-full items-center gap-2 py-[5px] pr-3"

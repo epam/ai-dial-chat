@@ -11,11 +11,10 @@ import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
 import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
-import { ShareIcon } from '@/src/components/Common/ShareIcon';
 
 import { PublicationItemRow } from './PublicationItemRow';
 
-import { ConversationInfo, FeatureType } from '@epam/ai-dial-shared';
+import { ConversationInfo } from '@epam/ai-dial-shared';
 
 interface Props {
   conversation: ConversationInfo;
@@ -56,21 +55,14 @@ export const PublicationConversationRow: React.FC<Props> = ({
   }, [isReplay, isPlayback, conversation.model.id, modelsMap]);
 
   return (
-    <ShareIcon
-      featureType={FeatureType.Chat}
-      isHighlighted={false}
-      iconClassName="bg-layer-2"
-      iconWrapperClassName="!bg-layer-2"
-      {...conversation}
-    >
-      <PublicationItemRow
-        level={level}
-        isEditable={isEditable}
-        editedName={editedName}
-        name={conversation.name}
-        Icon={Icon}
-        publicationInfo={conversation.publicationInfo}
-      />
-    </ShareIcon>
+    <PublicationItemRow
+      level={level}
+      isEditable={isEditable}
+      editedName={editedName}
+      name={conversation.name}
+      Icon={Icon}
+      publicationInfo={conversation.publicationInfo}
+      dataQa="conversation"
+    />
   );
 };

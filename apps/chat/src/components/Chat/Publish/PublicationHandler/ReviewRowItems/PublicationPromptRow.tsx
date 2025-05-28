@@ -25,6 +25,7 @@ export const PublicationPromptRow: React.FC<Props> = ({
       name={prompt.name}
       Icon={<IconBulb size={18} className="text-secondary" />}
       publicationInfo={prompt.publicationInfo}
+      dataQa="prompt"
     />
   );
 };

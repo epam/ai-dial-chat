@@ -16,6 +16,7 @@ interface PublicationRowProps {
     isNotExist?: boolean;
     action?: PublishActions;
   };
+  dataQa: string;
 }
 
 export const PublicationItemRow: React.FC<PublicationRowProps> = ({
@@ -25,6 +26,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   name,
   Icon,
   publicationInfo,
+  dataQa,
 }) => {
   const handleChange = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
@@ -38,6 +40,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
       style={{
         paddingLeft: `${level * 24 + 16}px`,
       }}
+      data-qa={dataQa}
     >
       <span className="flex shrink-0">{Icon}</span>
       {isEditable ? (
