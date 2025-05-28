@@ -9,7 +9,7 @@ import { PublishActions } from '@epam/ai-dial-shared';
 interface PublicationRowProps {
   level: number;
   editedName: string;
-  isEditable: boolean;
+  isEditMode: boolean;
   name: string;
   Icon: ReactNode;
   publicationInfo?: {
@@ -21,7 +21,7 @@ interface PublicationRowProps {
 
 export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   level,
-  isEditable,
+  isEditMode,
   editedName,
   name,
   Icon,
@@ -43,7 +43,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
       data-qa={dataQa}
     >
       <span className="flex shrink-0">{Icon}</span>
-      {isEditable ? (
+      {isEditMode ? (
         <div className="block flex-1 truncate whitespace-pre break-all text-left text-primary">
           <input
             className="h-[24px] w-full border-b border-primary bg-layer-2 px-1 py-[2px] text-sm text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none"

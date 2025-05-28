@@ -43,8 +43,6 @@ import { uniq } from 'lodash-es';
 
 interface Props {
   publication: Publication;
-  isEditMode: boolean;
-  handleToggleEditMode: () => void;
 }
 
 const getFirstReviewUrl = (
@@ -74,11 +72,9 @@ const getReviewItems = (
   return { toReview, reviewed };
 };
 
-export function PublicationHandlerFooter({
-  publication,
-  isEditMode,
-  handleToggleEditMode,
-}: Props) {
+const isEditMode = false;
+
+export function PublicationHandlerFooter({ publication }: Props) {
   const { t } = useTranslation(Translation.Chat);
 
   const files = useAppSelector(FilesSelectors.selectFiles);
@@ -236,6 +232,11 @@ export function PublicationHandlerFooter({
       startApplicationsReview();
     }
   }, [dispatch, expandFoldersByFeatureType, publication, resourcesToReview]);
+
+  const handleToggleEditMode = useCallback(() => {
+    // eslint-disable-next-line no-console
+    console.log('edit');
+  }, []);
 
   const invalidEntities = useMemo(
     () =>

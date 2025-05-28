@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -103,7 +103,6 @@ export function PublicationHandler({ publication }: Props) {
   const { t } = useTranslation(Translation.Chat);
 
   const [isCompareModalOpened, setIsCompareModalOpened] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
 
   const rules = useAppSelector((state) =>
     PublicationSelectors.selectRulesByPath(state, publication.targetFolder),
@@ -145,14 +144,6 @@ export function PublicationHandler({ publication }: Props) {
       })) ?? [],
     [publication.rules],
   );
-
-  // useEffect(() => {
-  //   setAllEditEntities(getDefaultAllEditEntities(publication.resources));
-  // }, [publication]);
-
-  const handleToggleEditMode = useCallback(() => {
-    setIsEditMode((prev) => !prev);
-  }, []);
 
   const publishToUrl = publication.targetFolder
     ? publication.targetFolder.replace(/^[^/]+/, 'Organization')
@@ -281,10 +272,7 @@ export function PublicationHandler({ publication }: Props) {
                           </>
                         }
                       >
-                        <Component
-                          resources={publication.resources}
-                          isEditMode={isEditMode}
-                        />
+                        <Component resources={publication.resources} />
                       </CollapsibleSection>
                     ),
                 )
@@ -294,11 +282,7 @@ export function PublicationHandler({ publication }: Props) {
             </div>
           </div>
         </div>
-        <PublicationHandlerFooter
-          publication={publication}
-          handleToggleEditMode={handleToggleEditMode}
-          isEditMode={isEditMode}
-        />
+        <PublicationHandlerFooter publication={publication} />
       </div>
       {isCompareModalOpened && publication.targetFolder && (
         <CompareRulesModal

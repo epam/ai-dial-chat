@@ -19,15 +19,11 @@ import { ConversationInfo } from '@epam/ai-dial-shared';
 interface Props {
   conversation: ConversationInfo;
   level: number;
-  isEditable: boolean;
-  editedName: string;
 }
 
 export const PublicationConversationRow: React.FC<Props> = ({
   conversation,
   level,
-  isEditable,
-  editedName,
 }) => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const isReplay = isReplayConversation(conversation);
@@ -57,8 +53,8 @@ export const PublicationConversationRow: React.FC<Props> = ({
   return (
     <PublicationItemRow
       level={level}
-      isEditable={isEditable}
-      editedName={editedName}
+      isEditMode={false}
+      editedName={conversation.name}
       name={conversation.name}
       Icon={Icon}
       publicationInfo={conversation.publicationInfo}

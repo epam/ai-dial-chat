@@ -13,15 +13,11 @@ import { ShareEntity } from '@epam/ai-dial-shared';
 interface Props {
   application: ShareEntity;
   level: number;
-  isEditable: boolean;
-  editedName: string;
 }
 
 export const PublicationApplicationRow: React.FC<Props> = ({
   application,
   level,
-  isEditable,
-  editedName,
 }) => {
   const entity = useMemo(
     () => ({
@@ -35,12 +31,12 @@ export const PublicationApplicationRow: React.FC<Props> = ({
   return (
     <PublicationItemRow
       level={level}
-      isEditable={isEditable}
-      editedName={editedName}
       name={application.name}
       Icon={<ModelIcon entity={entity} entityId={application.id} size={18} />}
       publicationInfo={application.publicationInfo}
       dataQa="application"
+      editedName={application.name}
+      isEditMode={false}
     />
   );
 };
