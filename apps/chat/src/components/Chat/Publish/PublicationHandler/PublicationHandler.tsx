@@ -3,30 +3,19 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { extractNameFromEmail, formatDate } from '@/src/utils/app/common';
-import { isApplicationId, isConversationId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { getPublicationId } from '@/src/utils/app/publications';
 import { translate } from '@/src/utils/app/translation';
-import {
-  getVersionFromId,
-  parseApplicationApiKey,
-  parseConversationApiKey,
-  parsePromptApiKey,
-} from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
-import {
-  Publication,
-  PublicationResource,
-  PublicationRule,
-} from '@/src/types/publication';
+import { Publication, PublicationRule } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/selectors';
 
-import { NA_VERSION, PUBLIC_URL_PREFIX } from '@/src/constants/public';
+import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 import { Tooltip } from '@/src/components/Common/Tooltip';
