@@ -21,7 +21,7 @@ import { logger } from './logger';
 
 import { TiktokenEncoding } from 'tiktoken';
 
-const getTiktokenEncoding = (
+export const getTiktokenEncoding = (
   tokenizerModel: TokenizerModel,
 ): TiktokenEncoding | undefined => {
   switch (tokenizerModel) {
@@ -33,7 +33,7 @@ const getTiktokenEncoding = (
   }
 };
 
-const getTokensPerMessage = (
+export const getTokensPerMessage = (
   tokenizerModel: TokenizerModel,
 ): number | undefined => {
   switch (tokenizerModel) {
@@ -46,7 +46,7 @@ const getTokensPerMessage = (
   }
 };
 
-async function getAllEntities(accessToken: string, jobTitle: string) {
+export async function getAllEntities(accessToken: string, jobTitle: string) {
   const [modelsResult, applicationsResult, assistantsResult] =
     await Promise.allSettled([
       getEntities<CoreAIEntity<EntityType.Model>[]>(
@@ -84,7 +84,8 @@ async function getAllEntities(accessToken: string, jobTitle: string) {
   return { models, applications, assistants };
 }
 
-const fixDate = (date: number) => (date === 1672534800 ? 1740006000000 : date); // 1/20/1970 -> 2/20/2025
+export const fixDate = (date: number) =>
+  date === 1672534800 ? 1740006000000 : date; // 1/20/1970 -> 2/20/2025
 
 export const getSortedEntities = async (token: JWT | null) => {
   const entities: DialAIEntityModel[] = [];
