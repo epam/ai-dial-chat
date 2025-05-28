@@ -108,7 +108,7 @@ export const FileDropArea = ({
                   {t('Attach files')}
                 </h5>
                 <p className="text-sm text-primary">
-                  {t('Drop files here to attach them to message')}
+                  {t('Drop files here to attach them to the message')}
                 </p>
               </>
             ) : (
@@ -118,7 +118,7 @@ export const FileDropArea = ({
                   {t('No attachments allowed')}
                 </h5>
                 <p className="text-sm text-primary">
-                  {t("Attachments can't be added to conversation")}
+                  {t("Attachments can't be added to the message")}
                 </p>
               </>
             )}
