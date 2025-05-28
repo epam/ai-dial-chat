@@ -17,7 +17,7 @@ import { getPathToFolderById } from '@/src/utils/app/folders';
 import {
   getConversationRootId,
   isEntityIdLocal,
-  isRootConversationsId
+  isRootConversationsId,
 } from '@/src/utils/app/id';
 import {
   getConversationApiKey,
