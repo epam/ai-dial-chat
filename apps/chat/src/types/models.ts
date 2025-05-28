@@ -86,6 +86,7 @@ export interface DialAIEntity {
     encoding?: TiktokenEncoding;
     tokensPerMessage?: number;
   };
+  applicationTypeSchemaId?: string;
 }
 
 export interface DialAIEntityModel
