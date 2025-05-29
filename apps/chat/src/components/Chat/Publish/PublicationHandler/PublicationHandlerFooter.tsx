@@ -15,8 +15,21 @@ import {
   isFileId,
   isPromptId,
 } from '@/src/utils/app/id';
+import { constructPath, splitEntityId } from '@/src/utils/app/shared-utils';
+import {
+  getVersionFromId,
+  parseApplicationApiKey,
+  parseConversationApiKey,
+  parseFileApiKey,
+  parsePromptApiKey,
+  pathKeySeparator,
+} from '@/src/utils/server/api';
 
-import { Publication, ResourceToReview } from '@/src/types/publication';
+import {
+  Publication,
+  PublicationResource,
+  ResourceToReview,
+} from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -35,11 +48,13 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
+import { NA_VERSION } from '@/src/constants/public';
+
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { FeatureType } from '@epam/ai-dial-shared';
-import { uniq } from 'lodash-es';
+import uniq from 'lodash-es/uniq';
 
 interface Props {
   publication: Publication;
@@ -72,7 +87,42 @@ const getReviewItems = (
   return { toReview, reviewed };
 };
 
-const isEditMode = false;
+const getDefaultAllEditEntities = (resources: PublicationResource[]) => {
+  const allEditEntitiesMap: Record<
+    string,
+    {
+      name: string;
+      version: string;
+    }
+  > = {};
+
+  resources.forEach((item) => {
+    const isConversation = isConversationId(item.reviewUrl);
+    const isApplication = isApplicationId(item.reviewUrl);
+    const isFile = isFileId(item.reviewUrl);
+    const apiKey = splitEntityId(item.reviewUrl).name;
+
+    const parseFunction = isConversation
+      ? parseConversationApiKey
+      : isApplication
+        ? parseApplicationApiKey
+        : isFile
+          ? parseFileApiKey
+          : parsePromptApiKey;
+    const parsedApiKey = parseFunction(apiKey, {
+      parseVersion: true,
+    });
+
+    allEditEntitiesMap[item.reviewUrl] = {
+      name: parsedApiKey.name,
+      version: isApplication
+        ? getVersionFromId(item.reviewUrl)
+        : (parsedApiKey.publicationInfo?.version ?? NA_VERSION),
+    };
+  });
+
+  return allEditEntitiesMap;
+};
 
 export function PublicationHandlerFooter({ publication }: Props) {
   const { t } = useTranslation(Translation.Chat);
@@ -91,8 +141,23 @@ export function PublicationHandlerFooter({ publication }: Props) {
       publication.url,
     ),
   );
+  const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
+  const editState = useAppSelector(PublicationSelectors.selectEditState);
 
   const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    // reset edit mode state when publication changes
+    dispatch(PublicationActions.setIsEditMode(false));
+  }, [dispatch, publication.url]);
+
+  useEffect(() => {
+    dispatch(
+      PublicationActions.setEditModeState({
+        editState: getDefaultAllEditEntities(publication.resources),
+      }),
+    );
+  }, [dispatch, publication.resources, isEditMode]);
 
   const notExistEntities = useMemo(
     () =>
@@ -234,9 +299,51 @@ export function PublicationHandlerFooter({ publication }: Props) {
   }, [dispatch, expandFoldersByFeatureType, publication, resourcesToReview]);
 
   const handleToggleEditMode = useCallback(() => {
-    // eslint-disable-next-line no-console
-    console.log('edit');
-  }, []);
+    dispatch(PublicationActions.setIsEditMode(!isEditMode));
+  }, [dispatch, isEditMode]);
+
+  const handleUpdateRequest = useCallback(() => {
+    dispatch(
+      PublicationActions.updatePublicationRequest({
+        url: publication.url,
+        dataToUpdate: {
+          name: publication.name ?? '',
+          targetFolder: publication.targetFolder,
+          rules: publication.rules,
+          resources: publication.resources.map((resource) => {
+            const { name, version } = editState[resource.reviewUrl];
+            const modelName = splitEntityId(resource.reviewUrl).name;
+            const parsedModelReference =
+              parseConversationApiKey(modelName).model.id;
+            const newApiKey = isConversationId(resource.reviewUrl)
+              ? [parsedModelReference, name, version].join(pathKeySeparator)
+              : isFileId(resource.reviewUrl)
+                ? [name].join(pathKeySeparator)
+                : [name, version].join(pathKeySeparator);
+
+            return {
+              action: resource.action,
+              sourceUrl: resource.sourceUrl ?? '',
+              targetUrl: constructPath(
+                getFolderIdFromEntityId(resource.targetUrl),
+                newApiKey,
+              ),
+            };
+          }),
+        },
+      }),
+    );
+    handleToggleEditMode();
+  }, [
+    dispatch,
+    editState,
+    handleToggleEditMode,
+    publication.name,
+    publication.resources,
+    publication.rules,
+    publication.targetFolder,
+    publication.url,
+  ]);
 
   const invalidEntities = useMemo(
     () =>
@@ -251,6 +358,7 @@ export function PublicationHandlerFooter({ publication }: Props) {
   const isOnlyFilesPublication = publication.resources.every((resource) =>
     isFileId(resource.reviewUrl),
   );
+  const isAllResourcesReviewed = resourcesToReview.every((r) => r.reviewed);
 
   return (
     <div
@@ -319,7 +427,7 @@ export function PublicationHandlerFooter({ publication }: Props) {
               {t('Reject')}
             </button>
             <Tooltip
-              hideTooltip={resourcesToReview.every((r) => r.reviewed)}
+              hideTooltip={isAllResourcesReviewed}
               tooltip={t(
                 invalidEntities.length
                   ? "Request can't be approved as some conversations are unpublished"
@@ -328,10 +436,7 @@ export function PublicationHandlerFooter({ publication }: Props) {
             >
               <button
                 className="button button-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-                disabled={
-                  !resourcesToReview.every((r) => r.reviewed) ||
-                  !!invalidEntities.length
-                }
+                disabled={!isAllResourcesReviewed || !!invalidEntities.length}
                 onClick={() =>
                   dispatch(
                     PublicationActions.approvePublication({
@@ -364,7 +469,7 @@ export function PublicationHandlerFooter({ publication }: Props) {
             >
               <button
                 className="button button-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-                onClick={handleToggleEditMode}
+                onClick={handleUpdateRequest}
                 data-qa="update"
               >
                 {t('Update request')}

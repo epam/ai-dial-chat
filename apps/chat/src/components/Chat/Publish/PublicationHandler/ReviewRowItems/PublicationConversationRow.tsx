@@ -17,17 +17,17 @@ import { PublicationItemRow } from './PublicationItemRow';
 import { ConversationInfo } from '@epam/ai-dial-shared';
 
 interface Props {
-  conversation: ConversationInfo;
+  item: ConversationInfo;
   level: number;
 }
 
 export const PublicationConversationRow: React.FC<Props> = ({
-  conversation,
+  item,
   level,
 }) => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const isReplay = isReplayConversation(conversation);
-  const isPlayback = isPlaybackConversation(conversation);
+  const isReplay = isReplayConversation(item);
+  const isPlayback = isPlaybackConversation(item);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
   const handleEdit = useCallback((newName: string) => {}, []);
@@ -44,20 +44,17 @@ export const PublicationConversationRow: React.FC<Props> = ({
     return (
       <ModelIcon
         size={18}
-        entityId={conversation.model.id}
-        entity={modelsMap[conversation.model.id]}
+        entityId={item.model.id}
+        entity={modelsMap[item.model.id]}
       />
     );
-  }, [isReplay, isPlayback, conversation.model.id, modelsMap]);
+  }, [isReplay, isPlayback, item.model.id, modelsMap]);
 
   return (
     <PublicationItemRow
       level={level}
-      isEditMode={false}
-      editedName={conversation.name}
-      name={conversation.name}
       Icon={Icon}
-      publicationInfo={conversation.publicationInfo}
+      item={item}
       dataQa="conversation"
     />
   );

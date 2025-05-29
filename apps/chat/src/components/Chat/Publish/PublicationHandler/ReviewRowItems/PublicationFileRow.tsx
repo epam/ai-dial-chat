@@ -5,20 +5,17 @@ import { DialFile } from '@/src/types/files';
 import { PublicationItemRow } from './PublicationItemRow';
 
 interface Props {
-  file: DialFile;
+  item: DialFile;
   level: number;
 }
 
-export const PublicationFileRow: React.FC<Props> = ({ file, level }) => {
+export const PublicationFileRow: React.FC<Props> = ({ item, level }) => {
   return (
     <PublicationItemRow
       level={level}
-      name={file.name}
       Icon={<IconFile size={18} className="text-secondary" />}
-      publicationInfo={file.publicationInfo}
+      item={item}
       dataQa="file"
-      editedName={file.name}
-      isEditMode={false}
     />
   );
 };

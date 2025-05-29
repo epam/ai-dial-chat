@@ -223,6 +223,17 @@ const selectPublicVersionGroupById = (
 const selectPublishModel = (state: RootState) =>
   rootSelector(state).publishModel;
 
+const selectIsEditMode = (state: RootState) => rootSelector(state).isEditMode;
+
+const selectEditState = (state: RootState) => rootSelector(state).editState;
+
+const selectEditStateByReviewUrl = createSelector(
+  [selectEditState, (_state, reviewUrl: string) => reviewUrl],
+  (editState, reviewUrl): { name: string; version: string } | null => {
+    return editState[reviewUrl] ?? null;
+  },
+);
+
 export const PublicationSelectors = {
   selectPublications,
   selectFilteredPublications,
@@ -245,4 +256,7 @@ export const PublicationSelectors = {
   selectPublicVersionGroups,
   selectPublicVersionGroupById,
   selectPublishModel,
+  selectIsEditMode,
+  selectEditState,
+  selectEditStateByReviewUrl,
 };

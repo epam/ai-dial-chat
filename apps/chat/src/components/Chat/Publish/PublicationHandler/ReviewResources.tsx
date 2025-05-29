@@ -2,8 +2,10 @@ import { useMemo } from 'react';
 
 import { usePublicationResources } from '@/src/hooks/usePublicationResources';
 
-import { DialFile } from '@/src/types/files';
-import { PublicationResource } from '@/src/types/publication';
+import {
+  PublicationResource,
+  PublicationReviewItem,
+} from '@/src/types/publication';
 
 import { useAppSelector } from '@/src/store/hooks';
 import {
@@ -13,30 +15,31 @@ import {
   PromptsSelectors,
 } from '@/src/store/selectors';
 
-import { PublicationResourceItem } from './PublicationResourceItem';
+import { PublicationApplicationRow } from './ReviewRowItems/PublicationApplicationRow';
+import { PublicationConversationRow } from './ReviewRowItems/PublicationConversationRow';
+import { PublicationFileRow } from './ReviewRowItems/PublicationFileRow';
 import { PublicationFolderRow } from './ReviewRowItems/PublicationFolderRow';
+import { PublicationPromptRow } from './ReviewRowItems/PublicationPromptRow';
 
-import {
-  ConversationInfo,
-  FolderInterface,
-  Prompt,
-  ShareEntity,
-} from '@epam/ai-dial-shared';
+import { FolderInterface } from '@epam/ai-dial-shared';
 
 interface Props {
   resources: PublicationResource[];
 }
 
-interface BasePublicationResources extends Props {
-  entities: ShareEntity[] | Prompt[] | ConversationInfo[] | DialFile[];
+interface BasePublicationResources<T extends PublicationReviewItem>
+  extends Props {
+  entities: T[];
   folders: FolderInterface[];
+  ItemComponent: React.FC<{ item: T; level: number }>;
 }
 
-const BasePublicationResources: React.FC<BasePublicationResources> = ({
+const BasePublicationResources = <T extends PublicationReviewItem>({
   resources,
   entities,
   folders,
-}) => {
+  ItemComponent,
+}: BasePublicationResources<T>) => {
   const {
     rootPublicationFolders,
     allPublicationFolders,
@@ -52,13 +55,13 @@ const BasePublicationResources: React.FC<BasePublicationResources> = ({
           currentFolder={folder}
           allFolders={allPublicationFolders}
           allItems={folderItemsToDisplay}
-          itemComponent={PublicationResourceItem}
+          ItemComponent={ItemComponent}
           level={0}
         />
       ))}
-      {itemsToDisplay.map((item) => (
-        <PublicationResourceItem key={item.id} item={item} level={0} />
-      ))}
+      {itemsToDisplay.map((item) => {
+        return <ItemComponent key={item.id} item={item} level={0} />;
+      })}
     </>
   );
 };
@@ -72,6 +75,7 @@ export const PromptPublicationResources = ({ resources }: Props) => {
       resources={resources}
       entities={prompts}
       folders={allFolders}
+      ItemComponent={PublicationPromptRow}
     />
   );
 };
@@ -87,6 +91,7 @@ export const ConversationPublicationResources = ({ resources }: Props) => {
       resources={resources}
       entities={conversations}
       folders={allFolders}
+      ItemComponent={PublicationConversationRow}
     />
   );
 };
@@ -100,6 +105,7 @@ export const FilePublicationResources = ({ resources }: Props) => {
       resources={resources}
       entities={files}
       folders={allFolders}
+      ItemComponent={PublicationFileRow}
     />
   );
 };
@@ -120,7 +126,7 @@ export const ApplicationPublicationResources = ({ resources }: Props) => {
   return (
     <>
       {filteredApps.map((application) => (
-        <PublicationResourceItem
+        <PublicationApplicationRow
           key={application.id}
           item={application}
           level={0}

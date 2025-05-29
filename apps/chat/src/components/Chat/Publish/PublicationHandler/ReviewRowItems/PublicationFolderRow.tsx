@@ -1,5 +1,5 @@
 import { IconFolder } from '@tabler/icons-react';
-import { createElement, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -16,7 +16,7 @@ interface Props<T extends PublicationReviewItem> {
   allFolders: FolderInterface[];
   allItems: T[];
   level: number;
-  itemComponent?: React.FC<{
+  ItemComponent: React.FC<{
     item: T;
     level: number;
   }>;
@@ -25,10 +25,7 @@ interface Props<T extends PublicationReviewItem> {
 const filteredItems = <T extends PublicationReviewItem | FolderInterface>(
   allItems: T[],
   currentFolderId: string,
-) =>
-  sortByName(
-    allItems.filter((item) => item.folderId === currentFolderId) as T[],
-  );
+) => sortByName(allItems.filter((item) => item.folderId === currentFolderId));
 
 const isEditMode = false;
 
@@ -37,17 +34,16 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
   allFolders,
   allItems,
   level,
-  itemComponent,
+  ItemComponent,
 }: Props<T>) => {
   const [isFocused, setIsFocused] = useState(false);
 
-  const filteredChildFolders = useMemo(() => {
-    return filteredItems(allFolders, currentFolder.id);
-  }, [allFolders, currentFolder.id]);
-
-  const filteredChildItems = useMemo(() => {
-    return filteredItems(allItems, currentFolder.id);
-  }, [allItems, currentFolder.id]);
+  const { folders, items } = useMemo(() => {
+    return {
+      folders: filteredItems(allFolders, currentFolder.id),
+      items: filteredItems(allItems, currentFolder.id),
+    };
+  }, [allFolders, allItems, currentFolder.id]);
 
   return (
     <>
@@ -95,26 +91,22 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
       </div>
       <div className="flex flex-col gap-1">
         <div className="flex flex-col">
-          {filteredChildFolders.map((item) => (
+          {folders.map((item) => (
             <PublicationFolderRow
               key={item.id}
               level={level + 1}
               currentFolder={item}
-              itemComponent={itemComponent}
+              ItemComponent={ItemComponent}
               allItems={allItems}
               allFolders={allFolders}
             />
           ))}
         </div>
-        {itemComponent &&
-          filteredChildItems.map((item) => (
-            <div key={item.id}>
-              {createElement(itemComponent, {
-                item,
-                level: level + 1,
-              })}
-            </div>
-          ))}
+        {items.map((item: T) => (
+          <div key={item.id}>
+            <ItemComponent item={item} level={level + 1} />
+          </div>
+        ))}
       </div>
     </>
   );

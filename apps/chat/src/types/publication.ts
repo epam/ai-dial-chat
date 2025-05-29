@@ -27,7 +27,7 @@ export interface PublicationRule {
 
 export interface PublicationRequestModel {
   name: string;
-  displayAuthor: string;
+  displayAuthor?: string;
   targetFolder: string;
   resources: {
     action: PublishActions;

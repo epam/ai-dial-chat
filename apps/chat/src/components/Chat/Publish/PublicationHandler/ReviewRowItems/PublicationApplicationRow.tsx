@@ -11,32 +11,26 @@ import { PublicationItemRow } from './PublicationItemRow';
 import { ShareEntity } from '@epam/ai-dial-shared';
 
 interface Props {
-  application: ShareEntity;
+  item: ShareEntity;
   level: number;
 }
 
-export const PublicationApplicationRow: React.FC<Props> = ({
-  application,
-  level,
-}) => {
+export const PublicationApplicationRow: React.FC<Props> = ({ item, level }) => {
   const entity = useMemo(
     () => ({
-      ...application,
-      folderId: getFolderIdFromEntityId(application.name),
+      ...item,
+      folderId: getFolderIdFromEntityId(item.name),
       type: EntityType.Application,
     }),
-    [application],
+    [item],
   );
 
   return (
     <PublicationItemRow
       level={level}
-      name={application.name}
-      Icon={<ModelIcon entity={entity} entityId={application.id} size={18} />}
-      publicationInfo={application.publicationInfo}
+      Icon={<ModelIcon entity={entity} entityId={item.id} size={18} />}
+      item={item}
       dataQa="application"
-      editedName={application.name}
-      isEditMode={false}
     />
   );
 };

@@ -165,6 +165,15 @@ export const parseApplicationApiKey = (
   };
 };
 
+export const parseFileApiKey = (
+  apiKey: string,
+): { name: string; publicationInfo: { version: string } } => {
+  return {
+    name: apiKey,
+    publicationInfo: { version: NA_VERSION },
+  };
+};
+
 export class ApiUtils {
   static safeEncodeURIComponent = (urlComponent: string) =>
     // eslint-disable-next-line no-misleading-character-class

@@ -65,38 +65,6 @@ const sections = [
   },
 ];
 
-// const getDefaultAllEditEntities = (resources: PublicationResource[]) => {
-//   const allEditEntitiesMap: Record<
-//     string,
-//     {
-//       name: string;
-//       version: string;
-//     }
-//   > = {};
-
-//   resources.forEach((item) => {
-//     const isConversation = isConversationId(item.reviewUrl);
-//     const isApplication = isApplicationId(item.reviewUrl);
-//     const parseFunction = isConversation
-//       ? parseConversationApiKey
-//       : isApplication
-//         ? parseApplicationApiKey
-//         : parsePromptApiKey;
-//     const parsedApiKey = parseFunction(item.reviewUrl, {
-//       parseVersion: true,
-//     });
-
-//     allEditEntitiesMap[item.reviewUrl] = {
-//       name: parsedApiKey.name,
-//       version: isApplication
-//         ? getVersionFromId(item.reviewUrl)
-//         : (parsedApiKey.publicationInfo?.version ?? NA_VERSION),
-//     };
-//   });
-
-//   return allEditEntitiesMap;
-// };
-
 export function PublicationHandler({ publication }: Props) {
   const dispatch = useAppDispatch();
 
