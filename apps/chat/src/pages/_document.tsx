@@ -28,6 +28,7 @@ function Document(props: Props) {
         {!!process.env.THEMES_CONFIG_HOST && (
           <link rel="stylesheet" href={'/api/themes/styles'} />
         )}
+        <link rel="manifest" href="/api/manifest" />
       </Head>
       <body>
         <Script id="theme-script" strategy="beforeInteractive">
