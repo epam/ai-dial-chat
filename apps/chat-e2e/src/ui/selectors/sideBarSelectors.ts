@@ -23,6 +23,7 @@ export const SideBarSelectors = {
   noData: '[data-qa="no-data-placeholder"]',
   noDataIcon: '[data-qa="no-data-icon"]',
   closeSidebar: '[data-qa="close-sidebar"]',
+  selectedEntity: '[name="selected-entity"]',
 };
 
 export const ChatBarSelectors = {
@@ -30,7 +31,6 @@ export const ChatBarSelectors = {
   compare: '[data-qa="compare"]',
   attachments: '[data-qa="attachments"]',
   conversations: '[data-qa="conversations"]',
-  selectedEntity: '[data-qa="selected"]',
   chatFolders: '[data-qa="chat-folders"]',
   exportConversations: '[data-qa="export-conversations"]',
   exportPrompts: '[data-qa="export-prompts"]',

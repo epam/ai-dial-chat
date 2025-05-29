@@ -1,8 +1,11 @@
+import { Conversation } from '@/chat/types/chat';
 import { BackendEntity } from '@/chat/types/common';
 import dialTest from '@/src/core/dialFixtures';
 import {
   BucketUtil,
+  ItemUtil,
   applicationNamePrefix,
+  conversationNamePrefix,
   publicationRequestPrefix,
   unpublishRequestPrefix,
 } from '@/src/utils';
@@ -12,6 +15,9 @@ dialTest(
   'Cleanup admin data',
   async ({ adminUserItemApiHelper, adminPublicationApiHelper }) => {
     await adminUserItemApiHelper.deleteAllData(BucketUtil.getAdminUserBucket());
+
+    const publishedConversations =
+      await adminPublicationApiHelper.listPublishedConversations();
 
     //list pending requests
     const publicationRequests =
@@ -23,15 +29,18 @@ dialTest(
           await adminPublicationApiHelper.getPublicationRequestDetails(
             publicationRequest.url,
           );
+
         //reject if the request has already been unpublished
-        if (
-          publicationDetails.resources.every(
-            (resource) => resource.sourceUrl === null,
-          )
-        ) {
-          await adminPublicationApiHelper.rejectRequest(publicationRequest);
-        } else {
-          await adminPublicationApiHelper.approveRequest(publicationRequest);
+        if (publishedConversations.items !== undefined) {
+          if (
+            publishedConversations.items.some(
+              (item) => item.url === publicationDetails.resources[0].targetUrl,
+            )
+          ) {
+            await adminPublicationApiHelper.approveRequest(publicationRequest);
+          } else {
+            await adminPublicationApiHelper.rejectRequest(publicationRequest);
+          }
         }
       }
       //if the request is pending publication
@@ -45,49 +54,60 @@ dialTest(
 );
 
 dialTest(
-  'Cleanup published E2E apps',
+  'Cleanup published E2E entities (apps and conversations)',
   async ({ adminPublicationApiHelper, publishRequestBuilder }) => {
+    // Cleanup published E2E apps
     const publishedApps = await adminPublicationApiHelper.listPublishedApps();
-    const publishedE2EApps = publishedApps.items?.filter((a) =>
-      a.name.includes(applicationNamePrefix),
+    const publishedE2EApps = publishedApps.items?.filter((app) =>
+      app.name.includes(applicationNamePrefix),
     );
 
-    for (const app of publishedE2EApps!) {
-      const pathParts = app.url.split('/');
-      let relativePath = '';
-      const publicSegmentIndex = pathParts.indexOf('public');
+    for (const app of publishedE2EApps || []) {
+      const relativePath = ItemUtil.extractRelativePath(app.url);
 
-      if (
-        publicSegmentIndex !== -1 &&
-        publicSegmentIndex < pathParts.length - 2
-      ) {
-        relativePath =
-          pathParts.slice(publicSegmentIndex + 1, -1).join('/') + '/';
-      } else if (
-        publicSegmentIndex !== -1 &&
-        publicSegmentIndex === pathParts.length - 2
-      ) {
-        relativePath = '';
-      }
+      await adminPublicationApiHelper.unpublishEntity(
+        app.name,
+        relativePath,
+        publishRequestBuilder,
+        (request) => {
+          return request.withApplicationResource(
+            {
+              url: app.url,
+              name: app.name,
+              bucket: app.bucket,
+            } as BackendEntity,
+            PublishActions.DELETE,
+          );
+        },
+      );
+    }
 
-      const unpublishRequest = publishRequestBuilder
-        .withName(unpublishRequestPrefix + app.name)
-        .withTargetFolder(relativePath)
-        .withApplicationResource(
-          {
-            url: app.url,
-            name: app.name,
-            bucket: app.bucket,
-          } as BackendEntity,
-          PublishActions.DELETE,
-        )
-        .build();
+    // Cleanup published E2E conversations
+    const publishedConversations =
+      await adminPublicationApiHelper.listPublishedConversations();
+    const publishedE2EConversations = publishedConversations.items?.filter(
+      (conversation) => conversation.name.includes(conversationNamePrefix),
+    );
 
-      const unpublishResponse =
-        await adminPublicationApiHelper.createUnpublishRequest(
-          unpublishRequest,
-        );
-      await adminPublicationApiHelper.approveRequest(unpublishResponse);
+    for (const conversation of publishedE2EConversations || []) {
+      const relativePath = ItemUtil.extractRelativePath(conversation.url);
+
+      await adminPublicationApiHelper.unpublishEntity(
+        conversation.name,
+        relativePath,
+        publishRequestBuilder,
+        (request) => {
+          return request.withConversationResource(
+            {
+              id: conversation.url.substring(
+                0,
+                conversation.url.lastIndexOf('__'),
+              ),
+            } as Conversation,
+            PublishActions.DELETE,
+          );
+        },
+      );
     }
   },
 );

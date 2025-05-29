@@ -60,7 +60,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(cancelExportConversation.name);
+        await conversations.selectEntity(cancelExportConversation.name);
         await dialHomePage.throttleAPIResponse('**/*');
         await conversations.openEntityDropdownMenu(
           cancelExportConversation.name,
@@ -199,7 +199,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(historyConversation.name);
+        await conversations.selectEntity(historyConversation.name);
         await conversations.openEntityDropdownMenu(historyConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
         exportedData = await dialHomePage.downloadData(() =>
@@ -439,7 +439,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(playbackConversation.name);
+        await conversations.selectEntity(playbackConversation.name);
         await conversations.openEntityDropdownMenu(playbackConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
         exportedData = await dialHomePage.downloadData(
@@ -466,7 +466,7 @@ dialTest(
           { name: playbackConversation.name },
           'visible',
         );
-        await conversationAssertion.assertSelectedConversation(
+        await conversationAssertion.assertSelectedEntity(
           playbackConversation.name,
         );
         await agentInfoAssertion.assertElementState(agentInfo, 'visible');
@@ -595,7 +595,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
         exportedData = await dialHomePage.downloadData(
@@ -735,7 +735,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
         exportedData = await dialHomePage.downloadData(

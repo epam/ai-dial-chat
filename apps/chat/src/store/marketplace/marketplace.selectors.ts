@@ -18,7 +18,6 @@ import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import {
   ApplicationTypeToSourceType,
   SourceType,
-  SourceTypeFilterOrder,
 } from '@/src/constants/marketplace';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
@@ -85,9 +84,7 @@ const selectSourceTypes = createSelector(
       }
     });
 
-    return Array.from(sourceTypes).sort(
-      (a, b) => SourceTypeFilterOrder[a] - SourceTypeFilterOrder[b],
-    );
+    return Array.from(sourceTypes).sort();
   },
 );
 

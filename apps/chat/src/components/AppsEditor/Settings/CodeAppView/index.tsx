@@ -156,43 +156,48 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
 
   const handleEdit = useCallback(
     (data: CodeAppFormData) => {
-      if (
-        oldApplication.reference &&
-        shouldSaveApplication &&
-        !isEqual(data, lastSubmittedValuesRef.current)
-      ) {
-        const preparedData = getCodeAppData(data);
-        const areNotTheSameAndShared =
-          isShared &&
-          preparedData.function?.sourceFolder !==
-            oldApplication.function?.sourceFolder;
+      const hasChanged = !isEqual(data, lastSubmittedValuesRef.current);
 
-        preparedData.functionStatus = applicationStatus;
-        const applicationData: CustomApplicationModel = {
-          ...oldApplication,
-          ...preparedData,
-          isShared: areNotTheSameAndShared ? false : isShared,
-        };
+      if (shouldSaveApplication) {
+        if (oldApplication.reference && hasChanged) {
+          const preparedData = getCodeAppData(data);
 
-        if (areNotTheSameAndShared) {
+          const areNotTheSameAndShared =
+            isShared &&
+            preparedData.function?.sourceFolder !==
+              oldApplication.function?.sourceFolder;
+
+          preparedData.functionStatus = applicationStatus;
+
+          const applicationData: CustomApplicationModel = {
+            ...oldApplication,
+            ...preparedData,
+            isShared: areNotTheSameAndShared ? false : isShared,
+          };
+
+          if (areNotTheSameAndShared) {
+            dispatch(
+              ShareActions.revokeAccess({
+                resourceId: oldApplication.id,
+                featureType: FeatureType.Application,
+              }),
+            );
+          }
+
           dispatch(
-            ShareActions.revokeAccess({
-              resourceId: oldApplication.id,
-              featureType: FeatureType.Application,
+            ApplicationActions.update({
+              oldApplication,
+              applicationData,
             }),
           );
+
+          lastSubmittedValuesRef.current = data;
         }
 
-        dispatch(
-          ApplicationActions.update({
-            oldApplication,
-            applicationData,
-          }),
-        );
-        lastSubmittedValuesRef.current = data;
-      } else if (shouldSaveApplication && exitAfterSave) {
-        dispatch(ApplicationActions.exitEditor({}));
-      } else {
+        if (exitAfterSave) {
+          dispatch(ApplicationActions.exitEditor({}));
+        }
+
         dispatch(ApplicationActions.setShouldSaveApplication(false));
         dispatch(ApplicationActions.setExitAfterSave(false));
       }

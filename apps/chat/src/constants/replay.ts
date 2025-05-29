@@ -1,4 +1,4 @@
-import { Replay } from '@/src/types/chat';
+import { Replay } from '@epam/ai-dial-shared';
 
 export const defaultReplay: Replay = {
   isReplay: false,

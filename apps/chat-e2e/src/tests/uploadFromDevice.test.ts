@@ -338,10 +338,8 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
-        await conversationAssertion.assertSelectedConversation(
-          conversation.name,
-        );
+        await conversations.selectEntity(conversation.name);
+        await conversationAssertion.assertSelectedEntity(conversation.name);
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(randomMenuItem);
         if (randomMenuItem === UploadMenuOptions.attachUploadedFiles) {
@@ -584,7 +582,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await chatBar.openManageAttachmentsModal();
         await manageAttachmentsAssertion.assertElementState(
           attachFilesModal,
