@@ -1,3 +1,5 @@
+import { Observable, forkJoin, of, switchMap } from 'rxjs';
+
 import {
   isPlaybackConversation,
   isReplayConversation,
@@ -21,6 +23,7 @@ import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import { PromptInfo } from '@/src/types/prompt';
 import {
   PublicVersionGroups,
+  PublicationRequestModel,
   PublicationResource,
   ResourceToReview,
 } from '@/src/types/publication';
@@ -33,6 +36,8 @@ import {
 } from '@/src/constants/public';
 
 import { isVersionValid } from './common';
+import { BucketService } from './data/bucket-service';
+import { FileService } from './data/file-service';
 import { constructPath } from './file';
 import { getFolderIdFromEntityId, sortByName } from './folders';
 import {
@@ -40,6 +45,7 @@ import {
   getRootId,
   isConversationId,
   isEntityIdExternal,
+  isFileId,
   isRootId,
 } from './id';
 import { EnumMapper } from './mappers';
@@ -357,4 +363,58 @@ export const getVersionGroupFromId = (id: string) => {
     versionGroupId: getIdWithoutVersionFromApiKey(id, parseMethod),
     currentVersion: getVersionFromId(id),
   };
+};
+
+/**
+ * Process publication resources and handle file validation
+ */
+export const processPublicationResources = (
+  payload: PublicationRequestModel,
+): Observable<{
+  publicationData: PublicationRequestModel;
+  isPublishingExternalFiles: boolean;
+}> => {
+  return forkJoin({
+    payload: of(payload),
+    publicFiles: payload.resources.find((r) => isFileId(r.sourceUrl))
+      ? FileService.getMultipleFoldersFiles(
+          payload.resources
+            .filter((r) => isFileId(r.sourceUrl))
+            .map((r) => getFolderIdFromEntityId(r.targetUrl)),
+        )
+      : of([]),
+  }).pipe(
+    switchMap(({ payload, publicFiles }) => {
+      const fileIds = payload.resources
+        .map(({ sourceUrl }) => sourceUrl)
+        .filter((id) => id && isFileId(id));
+
+      const publicFileIds = publicFiles.map((file) => file.id);
+      const userBucket = BucketService.getBucket();
+
+      const isPublishingExternalFiles = fileIds.some((id) => {
+        const { bucket: fileBucket } = splitEntityId(id as string);
+        return fileBucket !== userBucket;
+      });
+
+      const resources = payload.resources.map((resource) => {
+        if (
+          publicFileIds.includes(resource.targetUrl) &&
+          resource.action === PublishActions.ADD
+        ) {
+          return {
+            ...resource,
+            action: PublishActions.ADD_IF_ABSENT,
+          };
+        }
+        return resource;
+      });
+
+      const publicationData: PublicationRequestModel = {
+        ...payload,
+        resources,
+      };
+      return of({ publicationData, isPublishingExternalFiles });
+    }),
+  );
 };

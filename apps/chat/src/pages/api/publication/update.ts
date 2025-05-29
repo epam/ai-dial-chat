@@ -1,5 +1,6 @@
 import { createApiHandler } from '@/src/utils/server/api-handler';
 
 export default createApiHandler({
-  endpoint: '/v1/ops/publication/reject',
+  endpoint: '/v1/ops/publication/update',
+  returnOriginalResponse: true,
 });
