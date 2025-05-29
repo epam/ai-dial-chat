@@ -58,12 +58,42 @@ export class PublishRequestBuilder {
     return this;
   }
 
-  withConversationResource(
+  withConversationWithoutFolderResource(
+    conversation: Conversation,
+    action: PublishActions,
+    version?: string,
+  ): PublishRequestBuilder {
+    const conversationIdSegments = conversation.id.split('/');
+    const targetResource =
+      conversationIdSegments[conversationIdSegments.length - 1];
+    return this.withConversationResource(
+      conversation,
+      action,
+      targetResource,
+      version,
+    );
+  }
+
+  withConversationInFolderResource(
     conversation: Conversation,
     action: PublishActions,
     version?: string,
   ): PublishRequestBuilder {
     const targetResource = conversation.id.split('/').slice(2).join('/');
+    return this.withConversationResource(
+      conversation,
+      action,
+      targetResource,
+      version,
+    );
+  }
+
+  withConversationResource(
+    conversation: Conversation,
+    action: PublishActions,
+    targetResource: string,
+    version?: string,
+  ): PublishRequestBuilder {
     const targetUrl = `conversations/${this.getPublishRequest().targetFolder}${targetResource}__${version ?? ExpectedConstants.defaultAppVersion}`;
     let resource: PublicationResource = {
       action: action,
