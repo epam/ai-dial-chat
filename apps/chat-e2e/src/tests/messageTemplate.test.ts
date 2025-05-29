@@ -1229,7 +1229,7 @@ dialAdminTest(
       async () => {
         const publishRequest = publishRequestBuilder
           .withName(publicationRequestName)
-          .withConversationResource(conversation, PublishActions.ADD)
+          .withConversationInFolderResource(conversation, PublishActions.ADD)
           .build();
         publication =
           await publicationApiHelper.createPublishRequest(publishRequest);
