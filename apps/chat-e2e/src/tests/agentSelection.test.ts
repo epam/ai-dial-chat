@@ -72,7 +72,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open Dial and verify the first model is selected',
+      'Open DIAL and verify the first model is selected',
       async () => {
         await dialHomePage.openHomePage({
           iconsToBeLoaded: [initialModel1.iconUrl],
@@ -465,7 +465,7 @@ dialTest(
     const exportedConversation2 =
       ImportConversation.prepareConversationFile(conversation2Export2);
 
-    await dialTest.step('Open the Dial', async () => {
+    await dialTest.step('Open the DIAL', async () => {
       await dialHomePage.openHomePage({
         iconsToBeLoaded: [initialModel1.iconUrl],
       });
@@ -622,7 +622,7 @@ dialTest(
     await localStorageManager.setRecentModelsIdsOnce(...models);
     await localStorageManager.setShowSideBarPanels();
 
-    await dialTest.step('Open Dial', async () => {
+    await dialTest.step('Open DIAL', async () => {
       await dialHomePage.openHomePage({
         iconsToBeLoaded: [firstModel.iconUrl],
       });
@@ -705,7 +705,7 @@ dialSharedWithMeTest(
     await localStorageManager.setRecentModelsIdsOnce(...models);
     await localStorageManager.setShowSideBarPanels();
 
-    await dialSharedWithMeTest.step('Open Dial by the main user', async () => {
+    await dialSharedWithMeTest.step('Open DIAL by the main user', async () => {
       await dialHomePage.openHomePage({
         iconsToBeLoaded: [initialModel1.iconUrl],
       });

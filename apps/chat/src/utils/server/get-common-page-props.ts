@@ -103,7 +103,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
   const isPreselectedAction = params?.has(ACTION_QUERY_PARAM);
 
   const settings: SettingsState = {
-    appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'AI Dial',
+    appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'AI DIAL',
     codeWarning: process.env.CODE_GENERATION_WARNING ?? '',
     defaultRecentModelsIds: parseCommaSeparatedList(
       process.env.RECENT_MODELS_IDS,
