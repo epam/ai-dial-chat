@@ -380,7 +380,10 @@ dialAdminTest(
         //publish it
         const publishRequest = publishRequestBuilder
           .withName(GeneratorUtil.randomPublicationRequestName())
-          .withConversationResource(adminConversation, PublishActions.ADD)
+          .withConversationInFolderResource(
+            adminConversation,
+            PublishActions.ADD,
+          )
           .build();
         const appPublication =
           await adminPublicationApiHelper.createPublishRequest(publishRequest);

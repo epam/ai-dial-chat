@@ -78,7 +78,7 @@ dialAdminTest(
           const publishRequest = publishRequestBuilder
             .withName(GeneratorUtil.randomPublicationRequestName())
             .withTargetFolder(organizationFolderNames[i - 1])
-            .withConversationResource(
+            .withConversationInFolderResource(
               publishRequestConversations[i - 1],
               PublishActions.ADD,
             )
