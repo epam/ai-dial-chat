@@ -241,8 +241,8 @@ dialSharedWithMeTest(
     await dialTest.step(
       'Select conversation with history and verify it is highlighted, its content is displayed, no new conversation is created',
       async () => {
-        await conversations.selectConversation(firstConversation.name);
-        await conversationAssertion.assertSelectedConversation(
+        await conversations.selectEntity(firstConversation.name);
+        await conversationAssertion.assertSelectedEntity(
           firstConversation.name,
         );
         await chatMessagesAssertion.assertElementState(
@@ -280,7 +280,7 @@ dialSharedWithMeTest(
           { name: firstConversation.name },
           'visible',
         );
-        await conversationAssertion.assertNoConversationIsSelected();
+        await conversationAssertion.assertNoEntityIsSelected();
         await conversationAssertion.assertEntitiesCount(2);
       },
     );
@@ -312,7 +312,7 @@ dialSharedWithMeTest(
           { name: firstConversation.name },
           'hidden',
         );
-        await conversationAssertion.assertNoConversationIsSelected();
+        await conversationAssertion.assertNoEntityIsSelected();
         await conversationAssertion.assertEntitiesCount(1);
       },
     );
@@ -339,9 +339,7 @@ dialSharedWithMeTest(
     await dialTest.step(
       'Open shared conversation by another user, select Delete and confirm',
       async () => {
-        await sharedWithMeConversations.selectConversation(
-          sharedConversation.name,
-        );
+        await sharedWithMeConversations.selectEntity(sharedConversation.name);
         await sharedWithMeConversations.openEntityDropdownMenu(
           sharedConversation.name,
         );
@@ -442,7 +440,7 @@ dialTest(
     await dialTest.step('Open Dial, navigate to Marketplace', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await conversations.selectConversation(conversation.name);
+      await conversations.selectEntity(conversation.name);
       await dialHomePage.goToMarketplace();
       await marketplacePage.waitForPageLoaded();
     });

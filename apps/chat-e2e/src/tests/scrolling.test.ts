@@ -50,7 +50,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await expect
           .soft(
             sendMessage.scrollDownButton.getElementLocator(),
@@ -160,7 +160,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await chat.goToContentPosition(ScrollState.top);
         await sendMessage.scrollDownButton.click();
         await expect
@@ -227,9 +227,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(firstConversation.name);
+        await conversations.selectEntity(firstConversation.name);
         await chat.goToContentPosition(ScrollState.top);
-        await conversations.selectConversation(secondConversation.name);
+        await conversations.selectEntity(secondConversation.name);
         await expect
           .soft(
             sendMessage.scrollDownButton.getElementLocator(),
@@ -242,7 +242,7 @@ dialTest(
     await dialTest.step(
       'Back to the first conversation, create new conversation and verify no "Scroll down" button is visible',
       async () => {
-        await conversations.selectConversation(firstConversation.name);
+        await conversations.selectEntity(firstConversation.name);
         await chatBar.createNewEntity();
         await expect
           .soft(
@@ -256,7 +256,7 @@ dialTest(
     await dialTest.step(
       'Create Replay conversation based on the first one and verify it is selected and highlighted',
       async () => {
-        await conversations.selectConversation(firstConversation.name);
+        await conversations.selectEntity(firstConversation.name);
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.replay, {
           triggeredHttpMethod: 'POST',
@@ -360,7 +360,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(
+        await conversations.selectEntity(
           firstConversation.name,
           { isHttpMethodTriggered: false },
           {
@@ -415,7 +415,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(stageConversation.name);
+        await conversations.selectEntity(stageConversation.name);
         await chatMessages.openMessageStage(2, 1);
         await expect
           .soft(
@@ -477,7 +477,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(imageConversation.name);
+        await conversations.selectEntity(imageConversation.name);
         await chatMessages.getCollapsedChatMessageAttachment(2).waitFor();
         await chatMessages.expandChatMessageAttachment(
           2,
@@ -538,7 +538,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
 
         const lastChatMessage = chatMessages.getChatMessage(
           userRequests.length * 2,

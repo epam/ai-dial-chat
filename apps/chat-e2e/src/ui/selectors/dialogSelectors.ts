@@ -38,6 +38,7 @@ export const PromptPreviewModal = {
   deletePromptButton: '[data-qa="delete-prompt"]',
   promptInfoButton: '[data-qa="info-prompt"]',
   usePromptButton: '[data-qa="use-prompt"]',
+  promptPreviewVersion: '[data-qa="version"]',
 };
 
 export const VariableModal = {

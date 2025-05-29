@@ -103,8 +103,14 @@ dialAdminTest(
 
         const publishRequest = publishRequestBuilder
           .withName(GeneratorUtil.randomPublicationRequestName())
-          .withConversationResource(firstConversation, PublishActions.ADD)
-          .withConversationResource(secondConversation, PublishActions.ADD)
+          .withConversationInFolderResource(
+            firstConversation,
+            PublishActions.ADD,
+          )
+          .withConversationInFolderResource(
+            secondConversation,
+            PublishActions.ADD,
+          )
           .build();
         folderPublicationRequest =
           await publicationApiHelper.createPublishRequest(publishRequest);
@@ -213,8 +219,14 @@ dialAdminTest(
       'Create one more unpublish request for the whole folder',
       async () => {
         const unpublishFolderRequestModel = publishRequestBuilder
-          .withConversationResource(firstConversation, PublishActions.DELETE)
-          .withConversationResource(secondConversation, PublishActions.DELETE)
+          .withConversationInFolderResource(
+            firstConversation,
+            PublishActions.DELETE,
+          )
+          .withConversationInFolderResource(
+            secondConversation,
+            PublishActions.DELETE,
+          )
           .build();
         unpublishFolderResponse =
           await publicationApiHelper.createUnpublishRequest(
@@ -496,8 +508,14 @@ dialAdminTest(
 
         const publishRequest = publishRequestBuilder
           .withName(GeneratorUtil.randomPublicationRequestName())
-          .withConversationResource(firstConversation, PublishActions.ADD)
-          .withConversationResource(secondConversation, PublishActions.ADD)
+          .withConversationInFolderResource(
+            firstConversation,
+            PublishActions.ADD,
+          )
+          .withConversationInFolderResource(
+            secondConversation,
+            PublishActions.ADD,
+          )
           .build();
         folderPublicationRequest =
           await publicationApiHelper.createPublishRequest(publishRequest);
@@ -822,8 +840,14 @@ dialAdminTest(
 
         const publishRequest = publishRequestBuilder
           .withName(GeneratorUtil.randomPublicationRequestName())
-          .withConversationResource(nestedConversations[0], PublishActions.ADD)
-          .withConversationResource(nestedConversations[1], PublishActions.ADD)
+          .withConversationInFolderResource(
+            nestedConversations[0],
+            PublishActions.ADD,
+          )
+          .withConversationInFolderResource(
+            nestedConversations[1],
+            PublishActions.ADD,
+          )
           .build();
         const folderPublicationRequest =
           await publicationApiHelper.createPublishRequest(publishRequest);
@@ -1103,7 +1127,7 @@ dialTest.afterAll(
     publishRequestBuilder,
   }) => {
     const publishRequest = publishRequestBuilder
-      .withConversationResource(
+      .withConversationInFolderResource(
         folderConversationToUnpublish,
         PublishActions.DELETE,
       )

@@ -16,6 +16,10 @@ export class InformationModalAssertion extends BaseAssertion {
     lastUpdatedDate?: string;
   }) {
     await this.assertElementState(this.informationModal, 'visible');
+    await this.assertElementText(
+      this.informationModal.title,
+      ExpectedConstants.informationModalTitle,
+    );
     if (options?.lastUpdatedDate) {
       await this.assertElementText(
         this.informationModal.lastUpdatedLabel,
