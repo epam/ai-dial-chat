@@ -17,11 +17,6 @@ dialTest(
   async ({ adminUserItemApiHelper, adminPublicationApiHelper }) => {
     await adminUserItemApiHelper.deleteAllData(BucketUtil.getAdminUserBucket());
 
-    const publishedConversations =
-      await adminPublicationApiHelper.listPublishedResources(
-        BackendResourceType.CONVERSATION,
-      );
-
     //list pending requests
     const publicationRequests =
       await adminPublicationApiHelper.listPublicationRequests();
