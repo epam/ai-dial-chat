@@ -66,6 +66,7 @@ import {
   ShareEntity,
 } from '@epam/ai-dial-shared';
 import cloneDeep from 'lodash-es/cloneDeep';
+import isNil from 'lodash-es/isNil';
 import uniqBy from 'lodash-es/uniqBy';
 
 const rootSelector = (state: RootState) => state.conversations;
@@ -134,7 +135,7 @@ const selectMyFoldersWithSearchTerm = createSelector(
   [selectMyFolders, (_state, searchTerm: string) => searchTerm],
   (folders, searchTerm) => {
     const filtered = folders.filter((folder) =>
-      folder.name.includes(searchTerm.toLowerCase()),
+      doesEntityContainSearchTerm(folder, searchTerm),
     );
 
     return getParentAndChildFolders(folders, filtered);
@@ -385,9 +386,7 @@ const selectIsMessagesError = createSelector(
   [selectSelectedConversations],
   (conversations) => {
     return conversations.some((conv) =>
-      conv.messages.some(
-        (message) => typeof message.errorMessage !== 'undefined',
-      ),
+      conv.messages.some((message) => !isNil(message.errorMessage)),
     );
   },
 );
@@ -512,7 +511,7 @@ const selectTemporaryFoldersWithSearchTerm = createSelector(
   [selectTemporaryFolders, (_state, searchTerm: string) => searchTerm],
   (folders, searchTerm) => {
     const filtered = folders.filter((folder) =>
-      folder.name.includes(searchTerm.toLowerCase()),
+      doesEntityContainSearchTerm(folder, searchTerm),
     );
 
     return getParentAndChildFolders(folders, filtered);
