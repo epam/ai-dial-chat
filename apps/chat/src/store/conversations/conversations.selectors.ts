@@ -345,7 +345,9 @@ const selectAreSelectedConversationsExternal = createSelector(
 const selectAreSelectedConversationsReadOnly = createSelector(
   [selectSelectedConversations],
   (conversations) => {
-    return conversations.some((conv) => isEntityReadOnly(conv));
+    return conversations.some(
+      (conv) => isEntityReadOnly(conv) && isEntityIdExternal(conv),
+    );
   },
 );
 
