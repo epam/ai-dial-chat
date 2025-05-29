@@ -334,6 +334,7 @@ export const getPlayerCaption = (entity: DialAIEntityModel) => {
 export const getApplicationEntityFields = (
   data: ApplicationGeneralInfoFormData,
   applicationData?: DialAIEntityModel,
+  schema?: ApiDetailedApplicationTypeSchema | null,
 ): Omit<CustomApplicationModel, 'folderId'> => {
   return {
     name: data.name ?? '',
@@ -349,5 +350,6 @@ export const getApplicationEntityFields = (
     isDefault: true,
     owner: applicationData?.owner,
     createdAt: applicationData?.createdAt,
+    applicationTypeSchemaId: schema?.$id ?? '',
   };
 };

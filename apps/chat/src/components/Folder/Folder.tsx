@@ -63,6 +63,7 @@ import { Translation } from '@/src/types/translation';
 import {
   ConversationsActions,
   FilesActions,
+  PromptsActions,
   ShareActions,
   UIActions,
 } from '@/src/store/actions';
@@ -446,6 +447,8 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const handleNewFolderRename = useCallback(() => {
     if (newAddedFolderId === currentFolder.id) {
       dispatch(FilesActions.resetNewFolderId());
+      dispatch(PromptsActions.resetNewFolderId());
+      dispatch(ConversationsActions.resetNewFolderId());
     }
   }, [newAddedFolderId, dispatch, currentFolder]);
 
