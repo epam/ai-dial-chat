@@ -76,7 +76,10 @@ dialOverlayTest(
       }
       const publishRequest = publishRequestBuilder
         .withName(GeneratorUtil.randomPublicationRequestName())
-        .withConversationResource(playbackConversation, PublishActions.ADD)
+        .withConversationInFolderResource(
+          playbackConversation,
+          PublishActions.ADD,
+        )
         .withFileResource(attachment!, PublishActions.ADD_IF_ABSENT)
         .build();
       const publication =
@@ -110,7 +113,7 @@ dialOverlayTest(
         //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/2929
         // await overlayHeader.leftPanelToggle.click();
         // await overlayBaseAssertion.assertElementState(
-        //   overlayOrganizationConversations.selectedConversation(
+        //   overlayOrganizationConversations.selectedEntity(
         //     ExpectedConstants.playbackConversation.concat(conversationName),
         //   ),
         //   'visible',
@@ -168,7 +171,7 @@ dialOverlayTest(
         //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/2929
         // await overlayHeader.leftPanelToggle.click();
         // await overlayBaseAssertion.assertElementState(
-        //   overlayOrganizationConversations.selectedConversation(
+        //   overlayOrganizationConversations.selectedEntity(
         //     ExpectedConstants.playbackConversation.concat(conversationName),
         //   ),
         //   'visible',

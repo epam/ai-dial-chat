@@ -186,7 +186,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Click once again "Duplicate the conversation to be able to edit it" button and verify conversation with index 1 is duplicated in Today section',
       async () => {
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           conversationName,
         );
         await additionalShareUserChat.duplicateConversation();
@@ -269,7 +269,7 @@ dialSharedWithMeTest(
           iconsToBeLoaded: [defaultModel!.iconUrl],
         });
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           firstComparedConversation.name,
         );
         await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
