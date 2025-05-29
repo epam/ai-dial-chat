@@ -10,7 +10,7 @@ import { SettingsState } from './settings.types';
 import { UploadStatus } from '@epam/ai-dial-shared';
 
 const initialState: SettingsState = {
-  appName: 'AI Dial',
+  appName: 'AI DIAL',
   isOverlay: false,
   isAuthDisabled: false,
   footerHtmlMessage: '',

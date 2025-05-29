@@ -35,6 +35,7 @@ import {
   isEntityIdLocal,
   isRootId,
 } from '@/src/utils/app/id';
+import { isEntityReadOnly } from '@/src/utils/app/permissions';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import {
   PublishedWithMeFilter,
@@ -339,6 +340,15 @@ const selectAreSelectedConversationsExternal = createSelector(
   [selectSelectedConversations],
   (conversations) => {
     return conversations.some((conv) => isEntityIdExternal(conv));
+  },
+);
+
+const selectAreSelectedConversationsReadOnly = createSelector(
+  [selectSelectedConversations],
+  (conversations) => {
+    return conversations.some(
+      (conv) => isEntityReadOnly(conv) && isEntityIdExternal(conv),
+    );
   },
 );
 
@@ -747,8 +757,14 @@ const selectIsSelectedConversationBlocksInput = createSelector(
     selectSelectedConversations,
     ChatSelectors.selectIsConfigurationBlocksInput,
     ChatSelectors.selectNotAvailableEntityType,
+    selectAreSelectedConversationsReadOnly,
   ],
-  (conversations, isConfigurationBlocksInput, notAvailableEntityType) =>
+  (
+    conversations,
+    isConfigurationBlocksInput,
+    notAvailableEntityType,
+    isReadOnly,
+  ) =>
     conversations.some(
       (conversation) =>
         conversation.sharedWithMe ||
@@ -756,7 +772,7 @@ const selectIsSelectedConversationBlocksInput = createSelector(
           (isConfigurationBlocksInput || isReplayConversation(conversation))) ||
         notAvailableEntityType ||
         isPlaybackConversation(conversation) ||
-        isEntityIdExternal(conversation) ||
+        isReadOnly ||
         !conversation.messages ||
         isMessageInputDisabled(
           conversation.messages.length,
@@ -810,6 +826,7 @@ export const ConversationsSelectors = {
   selectIsReplaySelectedConversations,
   selectIsPlaybackSelectedConversations,
   selectAreSelectedConversationsExternal,
+  selectAreSelectedConversationsReadOnly,
   selectDoesAnyMyItemExist,
   selectPlaybackActiveIndex,
   selectIsErrorReplayConversations,

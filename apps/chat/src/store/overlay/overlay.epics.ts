@@ -78,6 +78,7 @@ import {
   ExportConversationRequest,
   ExportConversationResponse,
   Feature,
+  FolderInterface,
   GetConversationsResponse,
   GetMessagesResponse,
   ImportConversationRequest,
@@ -719,10 +720,40 @@ const exportConversationEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const importConversationEpic: AppEpic = (action$) =>
+const importConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(OverlayActions.importConversation.type),
     switchMap(({ payload: { importConversation, requestId } }) => {
+      if (state$.value.overlay.newConversationsFolder) {
+        const parentIds = getParentFolderIdsFromFolderId(
+          state$.value.overlay.newConversationsFolder,
+        );
+
+        if (!importConversation.history?.length) return EMPTY;
+
+        const convIdLastItem = importConversation.history[0].id
+          .split('/')
+          .pop();
+        importConversation.history[0].folderId =
+          state$.value.overlay.newConversationsFolder;
+        importConversation.history[0].id = constructPath(
+          state$.value.overlay.newConversationsFolder,
+          convIdLastItem,
+        );
+        importConversation.folders = parentIds.map((item): FolderInterface => {
+          const splittedEntityId = item.split('/');
+          const name = splittedEntityId.pop();
+          const folderId = splittedEntityId.join('/');
+
+          return {
+            id: item,
+            name: name!,
+            folderId,
+            type: FeatureType.Chat,
+          };
+        });
+      }
+
       return concat(
         of(
           ImportExportActions.importConversations({ data: importConversation }),

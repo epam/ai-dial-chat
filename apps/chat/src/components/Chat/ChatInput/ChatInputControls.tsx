@@ -31,8 +31,8 @@ export const ChatInputControls = ({
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
   );
-  const isExternal = useAppSelector(
-    ConversationsSelectors.selectAreSelectedConversationsExternal,
+  const isReadOnly = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsReadOnly,
   );
 
   if (isConversationWithSchema && selectedConversations.length > 1) {
@@ -51,7 +51,7 @@ export const ChatInputControls = ({
     );
   }
 
-  if (isExternal) {
+  if (isReadOnly) {
     return (
       <ChatExternalControls
         conversations={selectedConversations}
