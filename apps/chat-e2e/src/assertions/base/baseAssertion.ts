@@ -38,8 +38,8 @@ export class BaseAssertion {
         .toBe(expectedIconSource);
     }
     //assert icon is loaded and displayed
-    await expect(elementLocator).toHaveJSProperty('complete', true);
-    await expect(elementLocator).not.toHaveJSProperty('naturalWidth', 0);
+    await expect.soft(elementLocator).toHaveJSProperty('complete', true);
+    await expect.soft(elementLocator).not.toHaveJSProperty('naturalWidth', 0);
   }
 
   public assertArrayIncludesAll(

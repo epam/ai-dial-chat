@@ -62,9 +62,9 @@ export const ModelDialog = {
 };
 
 export const ReviewApplicationDialog = {
-  reviewDialog: '[data-qa="models-dialog"]',
+  reviewDialog: '[data-qa="review-application-dialog"]',
   entityIcon: '[data-qa="entity-icon"]',
-}
+};
 
 export const AddonDialog = {
   addonsDialog: '[data-qa="addons-dialog"]',

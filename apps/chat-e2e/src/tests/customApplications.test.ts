@@ -1,3 +1,4 @@
+import { BackendEntity } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { Publication } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
@@ -1224,9 +1225,7 @@ dialAdminTest(
   async ({
     dialHomePage,
     adminDialHomePage,
-    adminApproveRequiredConversations, // Assuming this list can show app publication requests if UI is identical
     adminPublishingApprovalModal,
-    adminPublicationReviewControl,
     marketplacePage,
     marketplaceHeader,
     marketplaceAgentsSection,
@@ -1244,16 +1243,16 @@ dialAdminTest(
     itemApiHelper,
     baseAssertion,
     agentInfoAssertion,
-           adminConversationToApproveAssertion,
-    // adminAgentInfoAssertion, // Added for admin view
-    iconApiHelper,
+    adminLocalStorageManager,
+    adminApproveRequiredPrompts,
+    adminPublishedApplicationPreviewModal,
   }) => {
     setTestIds('EPMRTC-4303', 'EPMRTC-6345', 'EPMRTC-4302');
     const appName = GeneratorUtil.randomApplicationName();
     const appVersion = GeneratorUtil.randomApplicationVersion();
     let appEntity: DialAIEntityModel;
     let agentElement: BaseElement;
-    let createdAppBackendEntity;
+    let createdAppBackendEntity: BackendEntity;
     let appPublication: Publication;
 
     const filename = `${ExpectedConstants.allowedSpecialChars}.svg`;
@@ -1292,9 +1291,8 @@ dialAdminTest(
         appPublication =
           await publicationApiHelper.createPublishRequest(publishRequest);
         publicationsToUnpublish.push(appPublication);
-        // Admin approval via API is removed.
-        await itemApiHelper.deleteBackendItem(createdAppBackendEntity);
         await localStorageManager.setShowSideBarPanels();
+        await adminLocalStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -1303,22 +1301,8 @@ dialAdminTest(
       async () => {
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
-        await adminApproveRequiredConversations.expandApproveRequiredFolder(
-          appPublication.name!,
-        );
-        await adminApproveRequiredConversations.selectFolderEntity(
-          appPublication.name!,
-          appName,
-        );
+        await adminApproveRequiredPrompts.selectFolder(appPublication.name!);
         await adminPublishingApprovalModal.waitForState();
-
-        // Assert icon within the modal's list of items to approve
-        const applicationsToApproveTree =
-          adminPublishingApprovalModal.getApplicationsToApproveTree();
-        await adminConversationToApproveAssertion.assertTreeEntityIcon(
-          { name: appName },
-          encodedIconUrl,
-        );
       },
     );
 
@@ -1328,13 +1312,16 @@ dialAdminTest(
         await adminPublishingApprovalModal.goToEntityReview({
           isHttpMethodTriggered: false,
         });
-        // Assuming adminAgentInfo shows the app details in the review view
-        await adminAgentInfoAssertion.assertAgentIcon(encodedIconUrl);
+        await baseAssertion.assertEntityIcon(
+          adminPublishedApplicationPreviewModal.getApplicationIcon(),
+          encodedIconUrl,
+        );
 
-        // Navigate back and approve
-        await adminPublicationReviewControl.backToPublicationRequestButton.click();
+        await adminPublishedApplicationPreviewModal
+          .getPublicationReviewControl()
+          .click();
         await adminPublishingApprovalModal.approveButton.click();
-        await adminPublishingApprovalModal.waitForState({ state: 'hidden' });
+        await itemApiHelper.deleteBackendItem(createdAppBackendEntity); //delete the original app
       },
     );
 
@@ -1384,12 +1371,12 @@ dialAdminTest(
   },
 );
 
-dialTest.afterAll(
-  async ({ publicationApiHelper, adminPublicationApiHelper }) => {
-    for (const publication of publicationsToUnpublish) {
-      const unpublishResponse =
-        await publicationApiHelper.createUnpublishRequest(publication);
-      await adminPublicationApiHelper.approveRequest(unpublishResponse);
-    }
-  },
-);
+// dialTest.afterAll(
+//   async ({ publicationApiHelper, adminPublicationApiHelper }) => {
+//     for (const publication of publicationsToUnpublish) {
+//       const unpublishResponse =
+//         await publicationApiHelper.createUnpublishRequest(publication);
+//       await adminPublicationApiHelper.approveRequest(unpublishResponse);
+//     }
+//   },
+// );

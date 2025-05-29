@@ -1,10 +1,12 @@
-import { PromptPreviewModalWindow } from '@/src/ui/webElements/promptPreviewModalWindow';
+import { Tags } from '@/src/ui/domData';
+import { ReviewApplicationDialog } from '@/src/ui/selectors';
+import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { PublicationReviewControl } from '@/src/ui/webElements/publicationReviewControl';
 import { Page } from 'playwright-chromium';
 
-export class PublishedPromptPreviewModal extends PromptPreviewModalWindow {
+export class PublishedApplicationPreviewModal extends BaseElement {
   constructor(page: Page) {
-    super(page);
+    super(page, ReviewApplicationDialog.reviewDialog);
   }
 
   private publicationReviewControl: PublicationReviewControl | undefined;
@@ -17,5 +19,11 @@ export class PublishedPromptPreviewModal extends PromptPreviewModalWindow {
       );
     }
     return this.publicationReviewControl;
+  }
+
+  public getApplicationIcon(): BaseElement {
+    return this.getChildElementBySelector(
+      ReviewApplicationDialog.entityIcon,
+    ).getChildElementBySelector(Tags.img);
   }
 }
