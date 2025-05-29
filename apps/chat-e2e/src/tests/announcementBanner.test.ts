@@ -47,7 +47,7 @@ dialTest(
         await baseAssertion.assertElementInnerText(
           banner.bannerMessage,
           [
-            'Welcome to AI Dial! Unified AI Access for Enterprises. Secure, scalable and customizable enterprise-grade AI ecosystem that seamlessly integrates with your data and workflows, tailored to achieve your unique business objectives.',
+            'Welcome to AI DIAL! Unified AI Access for Enterprises. Secure, scalable and customizable enterprise-grade AI ecosystem that seamlessly integrates with your data and workflows, tailored to achieve your unique business objectives.',
           ],
           ExpectedMessages.bannerMessageIsValid,
         );

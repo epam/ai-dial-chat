@@ -65,6 +65,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const searchParams = new URLSearchParams();
   searchParams.set('recursive', recursive);
   searchParams.set('limit', limit);
+  searchParams.set('permissions', 'true');
 
   try {
     const proxyRes = await fetch(`${sanitizeUri(url)}/?${searchParams}`, {
