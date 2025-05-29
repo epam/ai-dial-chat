@@ -1,7 +1,7 @@
 /* eslint-disable jsx-a11y/alt-text */
 
 /* eslint-disable @next/next/no-img-element */
-import { memo, useCallback, useRef } from 'react';
+import { memo, useCallback, useMemo, useRef } from 'react';
 
 import classNames from 'classnames';
 
@@ -13,6 +13,9 @@ import { ApiUtils } from '@/src/utils/server/api';
 
 import { EntityType } from '@/src/types/common';
 import { DialAIEntity } from '@/src/types/models';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { ApplicationTypesSchemasSelectors } from '@/src/store/selectors';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
@@ -45,9 +48,20 @@ const ModelIconTemplate = memo(
         ? getThemeIconUrl('default-addon')
         : getThemeIconUrl('default-model');
     const description = entity ? getOpenAIEntityFullName(entity) : entityId;
+    const applicationTypeSchemas = useAppSelector(
+      ApplicationTypesSchemasSelectors.selectAllSchemas,
+    );
+
+    const schemaApplicationFallbackUrl = useMemo(() => {
+      const iconUrl = applicationTypeSchemas?.find(
+        (schema) => schema.id === entity?.applicationTypeSchemaId,
+      )?.iconUrl;
+      if (!iconUrl) return null;
+      return getThemeIconUrl(iconUrl);
+    }, [applicationTypeSchemas, entity?.applicationTypeSchemaId]);
 
     const getIconUrl = (entity: DialAIEntity | undefined) => {
-      if (!entity?.iconUrl) return fallbackUrl;
+      if (!entity?.iconUrl) return schemaApplicationFallbackUrl ?? fallbackUrl;
 
       if (isApplicationId(entity.id)) {
         return constructPath('/api', ApiUtils.encodeApiUrl(entity.iconUrl));

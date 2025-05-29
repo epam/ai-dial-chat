@@ -183,7 +183,7 @@ dialTest(
     await dialTest.step(
       'Use prompt from context menu and input parameter value',
       async () => {
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await sendMessage.messageInput.fillInInput(initialMessage);
         await prompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.use, {
@@ -248,7 +248,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         await chatAssertion.assertReplayButtonState('visible');
       },
     );
@@ -267,9 +267,7 @@ dialTest(
     await dialTest.step(
       'Select partially replayed chat and verify "Continue replay" screen',
       async () => {
-        await conversations.selectConversation(
-          partiallyReplayedConversation.name,
-        );
+        await conversations.selectEntity(partiallyReplayedConversation.name);
         await sendMessageAssertion.assertContinueReplayButtonState('visible');
       },
     );
@@ -288,7 +286,7 @@ dialTest(
     await dialTest.step(
       'Select playback chat and verify "Use" option is disabled',
       async () => {
-        await conversations.selectConversation(playbackConversation.name);
+        await conversations.selectEntity(playbackConversation.name);
         await prompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenuAssertion.assertMenuOptionActionabilityState(
           MenuOptions.use,
@@ -365,7 +363,10 @@ dialAdminTest(
     await dialAdminTest.step('Publish and approve a conversation', async () => {
       const publishRequest = publishRequestBuilder
         .withName(GeneratorUtil.randomPublicationRequestName())
-        .withConversationResource(conversationForApproval1, PublishActions.ADD)
+        .withConversationInFolderResource(
+          conversationForApproval1,
+          PublishActions.ADD,
+        )
         .build();
       approvedPublication =
         await publicationApiHelper.createPublishRequest(publishRequest);
@@ -376,7 +377,10 @@ dialAdminTest(
     await dialAdminTest.step('Publish a conversation', async () => {
       const publishRequest = publishRequestBuilder
         .withName(GeneratorUtil.randomPublicationRequestName())
-        .withConversationResource(conversationToPublish, PublishActions.ADD)
+        .withConversationInFolderResource(
+          conversationToPublish,
+          PublishActions.ADD,
+        )
         .build();
       notApprovedPublication =
         await publicationApiHelper.createPublishRequest(publishRequest);
@@ -387,7 +391,7 @@ dialAdminTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await organizationConversations.selectConversation(
+        await organizationConversations.selectEntity(
           conversationForApproval1.name,
         );
         await prompts.openEntityDropdownMenu(prompt.name);
@@ -522,9 +526,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(
-          conversationWithNonExistentApp.name,
-        );
+        await conversations.selectEntity(conversationWithNonExistentApp.name);
         await chatAssertion.assertNotAllowedModelLabelContent(); // Assert error message
       },
     );
@@ -543,9 +545,7 @@ dialTest(
     await dialTest.step(
       'Open dial and select conversation, open My workspace, remove agent, and go back',
       async () => {
-        await conversations.selectConversation(
-          conversationWithAModelToDelete.name,
-        );
+        await conversations.selectEntity(conversationWithAModelToDelete.name);
         await chatHeader.chatModelIcon.click();
         await talkToAgentDialog.goToMyWorkspace();
         const agentElement =
@@ -571,9 +571,7 @@ dialTest(
     await dialTest.step(
       'Select conversation with non-existent addon and verify "Use" prompt option is disabled',
       async () => {
-        await conversations.selectConversation(
-          conversationWithNonExistentAddon.name,
-        );
+        await conversations.selectEntity(conversationWithNonExistentAddon.name);
         await prompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenuAssertion.assertMenuOptionActionabilityState(
           MenuOptions.use,
@@ -638,7 +636,7 @@ dialSharedWithMeTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await sharedWithMeConversations.selectConversation(conversation.name);
+        await sharedWithMeConversations.selectEntity(conversation.name);
         await prompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenuAssertion.assertMenuOptionActionabilityState(
           MenuOptions.use,

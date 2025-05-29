@@ -37,6 +37,7 @@ import {
 } from '@/src/store/selectors';
 
 import {
+  PlayerContextButtonClasses,
   PlayerContextIconClasses,
   PlayerContextIcons,
 } from '@/src/constants/marketplace';
@@ -124,6 +125,7 @@ export const useAgentMenuItems = ({
         display:
           isExecutable && isCodeAppsEnabled && disabledActions.deploy !== true,
         Icon: PlayerContextIcons[playerStatus],
+        className: PlayerContextButtonClasses[playerStatus],
         iconClassName: PlayerContextIconClasses[playerStatus],
         onClick: handleUpdateFunctionStatus,
       },
