@@ -28,4 +28,5 @@ export interface ApiDetailedApplicationTypeSchema extends JSONSchema7 {
   [ApplicationTypeSchemaProperties.applicationTypeDisplayName]: string;
   [ApplicationTypeSchemaProperties.applicationTypeEditorUrl]?: string;
   [ApplicationTypeSchemaProperties.applicationTypeViewerUrl]?: string;
+  [ApplicationTypeSchemaProperties.applicationTypeIconUrl]?: string;
 }
