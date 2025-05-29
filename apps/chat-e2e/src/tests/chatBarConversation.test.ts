@@ -14,7 +14,7 @@ import {
 } from '@/src/testData';
 import { Overflow, Styles, ThemeColorAttributes } from '@/src/ui/domData';
 import { ChatBarSelectors } from '@/src/ui/selectors';
-import { GeneratorUtil } from '@/src/utils';
+import { DateUtil, GeneratorUtil } from '@/src/utils';
 import { ModelsUtil } from '@/src/utils/modelsUtil';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
@@ -133,7 +133,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         const chatNameOverflow = await conversations
           .getEntityName(conversationName)
           .getComputedStyleProperty(Styles.text_overflow);
@@ -303,7 +303,7 @@ dialTest(
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await conversations.selectConversation(conversation.name);
+    await conversations.selectEntity(conversation.name);
     await conversations.openEntityDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
     await renameConversationModal.editConversationNameWithEnter(
@@ -342,37 +342,94 @@ dialTest(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Menu for New conversation.\n' +
-    'Duplicate item is not available for chat without history',
+    'Duplicate item is not available for chat without history.\n' +
+    'Info option in context menu in side panel.\n' +
+    'Metadata for Created by me chat from Today.\n' +
+    'Date format depends on local settings.\n' +
+    `Info option in context menu in chat's header`,
   async ({
     dialHomePage,
     conversations,
-    conversationDropdownMenu,
+    chat,
+    chatHeader,
+    chatHeaderDropdownMenu,
     conversationData,
     dataInjector,
     setTestIds,
     localStorageManager,
+    conversationDropdownMenu,
+    informationModal,
+    informationModalAssertion,
+    conversationDropdownMenuAssertion,
+    baseAssertion,
   }) => {
-    setTestIds('EPMRTC-594', 'EPMRTC-3054');
-    const conversation = conversationData.prepareDefaultConversation();
-    await dataInjector.createConversations([conversation]);
-    await localStorageManager.setShowSideBarPanels();
+    setTestIds(
+      'EPMRTC-594',
+      'EPMRTC-3054',
+      'EPMRTC-5548',
+      'EPMRTC-5550',
+      'EPMRTC-5552',
+      'EPMRTC-5549',
+    );
+    let conversation: Conversation;
+    const currentDate = DateUtil.getCurrentLocalDate();
 
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded();
-    await conversations.openEntityDropdownMenu(conversation.name);
-    const menuOptions = await conversationDropdownMenu.getAllMenuOptions();
-    expect
-      .soft(menuOptions, ExpectedMessages.contextMenuOptionsValid)
-      .toEqual([
-        MenuOptions.select,
-        MenuOptions.rename,
-        MenuOptions.compare,
-        MenuOptions.moveTo,
-        MenuOptions.info,
-        MenuOptions.delete,
-      ]);
+    await dialTest.step('Prepare empty conversation', async () => {
+      conversation = conversationData.prepareEmptyConversation();
+      await dataInjector.createConversations([conversation]);
+      await localStorageManager.setShowSideBarPanels();
+    });
+
+    await dialTest.step(
+      'Open conversation dropdown menu and verify the options',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.openEntityDropdownMenu(conversation.name);
+        await conversationDropdownMenuAssertion.assertMenuIncludesOptions(
+          MenuOptions.select,
+          MenuOptions.rename,
+          MenuOptions.compare,
+          MenuOptions.moveTo,
+          MenuOptions.info,
+          MenuOptions.delete,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Send the request, select "Info" menu option and verify information is correct on the modal',
+      async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chat.sendRequestWithButton('test');
+        await conversations.openEntityDropdownMenu(conversation.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.info, {
+          triggeredHttpMethod: 'GET',
+        });
+        await informationModalAssertion.assertFields({
+          createdDate: currentDate,
+          lastUpdatedDate: currentDate,
+        });
+        await informationModal.cancelButton.click();
+      },
+    );
+
+    await dialTest.step(
+      'Verify chat header menu contains "Info" option',
+      async () => {
+        await chatHeader.dotsMenu.click();
+        const allMenuOptions = await chatHeaderDropdownMenu.getAllMenuOptions();
+        baseAssertion.assertArrayIncludesAll(
+          allMenuOptions,
+          [MenuOptions.info],
+          ExpectedMessages.contextMenuOptionIsAvailable,
+        );
+      },
+    );
   },
 );
 
@@ -576,7 +633,7 @@ dialTest(
       iconsToBeLoaded: [defaultModel.iconUrl],
     });
     await dialHomePage.waitForPageLoaded();
-    await conversations.selectConversation(conversation.name);
+    await conversations.selectEntity(conversation.name);
     await conversations.openEntityDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
     await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
@@ -636,7 +693,7 @@ dialTest.skip(
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await conversations.selectConversation(yesterdayConversation.name);
+    await conversations.selectEntity(yesterdayConversation.name);
     const yesterdayConversations =
       await conversations.getYesterdayConversations();
     expect
@@ -671,7 +728,7 @@ dialTest.skip(
       .toBe(1);
 
     const messageToEdit = lastWeekConversation.messages[0].content;
-    await conversations.selectConversation(lastWeekConversation.name);
+    await conversations.selectEntity(lastWeekConversation.name);
     await chatMessages.openEditMessageMode(messageToEdit);
     await chatMessages.editMessage(messageToEdit, 'updated message');
     todayConversations = await conversations.getTodayConversations();
@@ -679,7 +736,7 @@ dialTest.skip(
       .soft(todayConversations.length, ExpectedMessages.conversationOfToday)
       .toBe(2);
 
-    await conversations.selectConversation(lastMonthConversation.name);
+    await conversations.selectEntity(lastMonthConversation.name);
     await dialHomePage.mockChatTextResponse(
       MockedChatApiResponseBodies.simpleTextBody,
     );
@@ -718,7 +775,7 @@ dialTest(
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await conversations.selectConversation(conversation.name);
+    await conversations.selectEntity(conversation.name);
     await conversations.openEntityDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.moveTo);
     await selectFolderModalAssertion.assertElementState(
@@ -789,7 +846,7 @@ dialTest(
     await dialTest.step('Create a new folder with random name', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await conversations.selectConversation(conversation.name);
+      await conversations.selectEntity(conversation.name);
       await chatBar.createNewFolder();
       await folderConversations.openFolderDropdownMenu(
         ExpectedConstants.newFolderWithIndexTitle(1),
@@ -1391,7 +1448,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         await renameConversationModal.editConversationNameWithSaveButton(
@@ -1512,7 +1569,7 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await chatMessages.openEditMessageMode(1);
         await chatMessages.editFirstMessage(updatedRequest);
         await chatMessagesAssertion.assertElementText(

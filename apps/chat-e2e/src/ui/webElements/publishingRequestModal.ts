@@ -124,6 +124,9 @@ export class PublishingRequestModal extends BaseElement {
   public requestName = this.getChildElementBySelector(
     PublishingModalSelectors.requestName,
   );
+  public author = this.getChildElementBySelector(
+    PublishingModalSelectors.author,
+  );
   public sendRequestButton = this.getChildElementBySelector(
     PublishingModalSelectors.sendButton,
   );

@@ -78,7 +78,7 @@ dialAdminTest(
           const publishRequest = publishRequestBuilder
             .withName(GeneratorUtil.randomPublicationRequestName())
             .withTargetFolder(organizationFolderNames[i - 1])
-            .withConversationResource(
+            .withConversationInFolderResource(
               publishRequestConversations[i - 1],
               PublishActions.ADD,
             )
@@ -102,7 +102,7 @@ dialAdminTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversationToPublish.name);
+        await conversations.selectEntity(conversationToPublish.name);
         await conversations.openEntityDropdownMenu(conversationToPublish.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
         await publishingRequestModal
@@ -284,7 +284,7 @@ dialAdminTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversationToPublish.name);
+        await conversations.selectEntity(conversationToPublish.name);
         await conversations.openEntityDropdownMenu(conversationToPublish.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
         await publishingRequestModal

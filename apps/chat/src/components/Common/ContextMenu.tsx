@@ -37,7 +37,8 @@ function ContextMenuItemRenderer({
         <Icon
           className={classNames(
             'shrink-0',
-            disabled ? 'text-controls-disable' : iconClassName,
+            iconClassName,
+            disabled && '!text-controls-disable',
           )}
           size={18}
           height={18}

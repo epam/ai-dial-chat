@@ -462,7 +462,7 @@ dialAdminTest(
 
         const publishRequest = publishRequestBuilder
           .withName(GeneratorUtil.randomPublicationRequestName())
-          .withConversationResource(
+          .withConversationInFolderResource(
             publishedFolderConversation.conversations[0],
             PublishActions.ADD,
           )

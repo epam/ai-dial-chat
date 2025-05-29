@@ -8,6 +8,7 @@ export interface SetSystemPromptRequest {
 }
 export interface CreateConversationRequest {
   parentPath?: string | null;
+  local?: boolean | null;
 }
 export interface SelectConversationRequest {
   id: string;
