@@ -1,5 +1,5 @@
 import { IconFolder } from '@tabler/icons-react';
-import { createElement, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -16,7 +16,7 @@ interface Props<T extends PublicationReviewItem> {
   allFolders: FolderInterface[];
   allItems: T[];
   level: number;
-  itemComponent?: React.FC<{
+  ItemComponent: React.FC<{
     item: T;
     level: number;
   }>;
@@ -25,10 +25,7 @@ interface Props<T extends PublicationReviewItem> {
 const filteredItems = <T extends PublicationReviewItem | FolderInterface>(
   allItems: T[],
   currentFolderId: string,
-) =>
-  sortByName(
-    allItems.filter((item) => item.folderId === currentFolderId) as T[],
-  );
+) => sortByName(allItems.filter((item) => item.folderId === currentFolderId));
 
 const isEditMode = false;
 
@@ -37,7 +34,7 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
   allFolders,
   allItems,
   level,
-  itemComponent,
+  ItemComponent,
 }: Props<T>) => {
   const [isFocused, setIsFocused] = useState(false);
 
@@ -100,19 +97,16 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
               key={item.id}
               level={level + 1}
               currentFolder={item}
-              itemComponent={itemComponent}
+              ItemComponent={ItemComponent}
               allItems={allItems}
               allFolders={allFolders}
             />
           ))}
         </div>
-        {itemComponent &&
-          filteredChildItems.map((item) => (
+        {ItemComponent &&
+          filteredChildItems.map((item: T) => (
             <div key={item.id}>
-              {createElement(itemComponent, {
-                item,
-                level: level + 1,
-              })}
+              <ItemComponent item={item} level={level + 1} />
             </div>
           ))}
       </div>

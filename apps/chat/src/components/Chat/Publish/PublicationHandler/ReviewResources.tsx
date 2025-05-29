@@ -55,7 +55,7 @@ const BasePublicationResources = <T extends PublicationReviewItem>({
           currentFolder={folder}
           allFolders={allPublicationFolders}
           allItems={folderItemsToDisplay}
-          itemComponent={ItemComponent}
+          ItemComponent={ItemComponent}
           level={0}
         />
       ))}
