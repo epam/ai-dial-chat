@@ -248,7 +248,10 @@ dialOverlayTest(
         //publish conversation by admin
         const publishRequest = publishRequestBuilder
           .withName(GeneratorUtil.randomPublicationRequestName())
-          .withConversationResource(publishedConversation, PublishActions.ADD)
+          .withConversationInFolderResource(
+            publishedConversation,
+            PublishActions.ADD,
+          )
           .build();
         const publication =
           await adminPublicationApiHelper.createPublishRequest(publishRequest);

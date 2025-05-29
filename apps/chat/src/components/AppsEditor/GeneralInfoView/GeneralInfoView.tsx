@@ -152,6 +152,7 @@ export const GeneralInfoView: React.FC<Props> = ({
             entity={getApplicationEntityFields(
               formData,
               modelFromState as DialAIEntityModel,
+              schema,
             )}
             onClosePreview={() => handlePreviewModeChange(PreviewMode.closed)}
           />

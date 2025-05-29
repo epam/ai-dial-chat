@@ -363,7 +363,10 @@ dialAdminTest(
     await dialAdminTest.step('Publish and approve a conversation', async () => {
       const publishRequest = publishRequestBuilder
         .withName(GeneratorUtil.randomPublicationRequestName())
-        .withConversationResource(conversationForApproval1, PublishActions.ADD)
+        .withConversationInFolderResource(
+          conversationForApproval1,
+          PublishActions.ADD,
+        )
         .build();
       approvedPublication =
         await publicationApiHelper.createPublishRequest(publishRequest);
@@ -374,7 +377,10 @@ dialAdminTest(
     await dialAdminTest.step('Publish a conversation', async () => {
       const publishRequest = publishRequestBuilder
         .withName(GeneratorUtil.randomPublicationRequestName())
-        .withConversationResource(conversationToPublish, PublishActions.ADD)
+        .withConversationInFolderResource(
+          conversationToPublish,
+          PublishActions.ADD,
+        )
         .build();
       notApprovedPublication =
         await publicationApiHelper.createPublishRequest(publishRequest);
