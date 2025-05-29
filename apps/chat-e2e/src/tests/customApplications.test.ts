@@ -30,7 +30,8 @@ dialTest(
     'Edit option for custom app is available from card pop-up form.\n' + // EPMRTC-5939
     'Custom app with permitted spec symbols in Name.\n' + // EPMRTC-4838
     'Delete custom app from context menu\n' + // EPMRTC-4094
-    'Custom app: Description field displayed in New conversation , card view, app view', //EPMRTC-4099
+    'Custom app: Description field displayed in New conversation , card view, app view\n' + // EPMRTC-4099
+    'App Editor open and Exit of first step - app is not saved', // EPMRTC-5746
   async ({
     marketplacePage,
     marketplaceHeader,
@@ -53,6 +54,7 @@ dialTest(
     agentInfoAssertion,
     agentDetailsModalAssertion,
     marketplaceContainer,
+    marketplace,
   }) => {
     setTestIds(
       'EPMRTC-5130',
@@ -60,6 +62,7 @@ dialTest(
       'EPMRTC-4838',
       'EPMRTC-4094',
       'EPMRTC-4099',
+      'EPMRTC-5746',
     );
     const shortDescription = GeneratorUtil.randomShortDescription();
     const longDescription = GeneratorUtil.randomLongDescription();
@@ -116,6 +119,42 @@ dialTest(
         await appEditorHeaderAssertion.assertStepIsCompleted(
           appSettingsStep,
           false,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Input name, click Exit, verify no custom app is created',
+      async () => {
+        await appEditorGeneralForm.fillInAppFields({
+          name: appEntity.name,
+        });
+        await appEditorHeader.exitLink.click();
+        await baseAssertion.assertElementState(appEditorViewForm, 'hidden');
+        await marketplacePage.waitForPageLoaded();
+        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        await baseAssertion.assertElementText(
+          marketplace.noResultsFound,
+          ExpectedConstants.noResults,
+        );
+        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        baseAssertion.assertValue(
+          actualAgents.length,
+          0,
+          ExpectedMessages.elementsCountIsValid,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click Add app and select Custom app in drop down',
+      async () => {
+        await marketplaceHeader.addAppButton.click();
+        await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
+        await appEditorPage.waitForPageLoaded();
+
+        await appEditorHeaderAssertion.assertActionTitle(
+          `${AppMenuActions.add(AddAppMenuOptions.customApp)}`,
         );
       },
     );
