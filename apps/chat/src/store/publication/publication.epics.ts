@@ -1354,24 +1354,17 @@ const updatePublicationRequestEpic: AppEpic = (action$) =>
     switchMap(({ payload }) =>
       forkJoin({
         payload: processPublicationResources(payload.dataToUpdate),
-        url: payload.url,
+        url: of(payload.url),
       }),
     ),
     switchMap(({ payload, url }) => {
-      const { publicationData, isPublishingExternalFiles } = payload;
-      if (isPublishingExternalFiles) {
-        return of(
-          PublicationActions.publishFail(
-            errorsMessages.publicationWithExternalFilesFailed,
-          ),
-        );
-      }
+      const { publicationData } = payload;
 
       return PublicationService.updatePublicationRequest({
         publicationData,
         url,
       }).pipe(
-        switchMap(() => EMPTY),
+        switchMap(() => of(PublicationActions.uploadPublication({ url }))),
         catchError((err) => {
           console.error(err);
           return of(PublicationActions.publishFail(err.message));

@@ -38,13 +38,12 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
 }: Props<T>) => {
   const [isFocused, setIsFocused] = useState(false);
 
-  const filteredChildFolders = useMemo(() => {
-    return filteredItems(allFolders, currentFolder.id);
-  }, [allFolders, currentFolder.id]);
-
-  const filteredChildItems = useMemo(() => {
-    return filteredItems(allItems, currentFolder.id);
-  }, [allItems, currentFolder.id]);
+  const { folders, items } = useMemo(() => {
+    return {
+      folders: filteredItems(allFolders, currentFolder.id),
+      items: filteredItems(allItems, currentFolder.id),
+    };
+  }, [allFolders, allItems, currentFolder.id]);
 
   return (
     <>
@@ -92,7 +91,7 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
       </div>
       <div className="flex flex-col gap-1">
         <div className="flex flex-col">
-          {filteredChildFolders.map((item) => (
+          {folders.map((item) => (
             <PublicationFolderRow
               key={item.id}
               level={level + 1}
@@ -103,12 +102,11 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
             />
           ))}
         </div>
-        {ItemComponent &&
-          filteredChildItems.map((item: T) => (
-            <div key={item.id}>
-              <ItemComponent item={item} level={level + 1} />
-            </div>
-          ))}
+        {items.map((item: T) => (
+          <div key={item.id}>
+            <ItemComponent item={item} level={level + 1} />
+          </div>
+        ))}
       </div>
     </>
   );

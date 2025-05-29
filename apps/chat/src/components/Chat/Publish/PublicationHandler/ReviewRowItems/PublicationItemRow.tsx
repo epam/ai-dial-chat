@@ -14,9 +14,14 @@ import { ApiUtils, getVersionFromId } from '@/src/utils/server/api';
 import { PublicationReviewItem } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { PublicationActions } from '@/src/store/publication/publication.reducers';
+import { PublicationSelectors } from '@/src/store/selectors';
+
 import { NA_VERSION } from '@/src/constants/public';
 
 import { PublicVersionSelector } from '@/src/components/Chat/Publish/PublicVersionSelector';
+import { EditableField } from '@/src/components/Common/EditableField';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { PublishActions } from '@epam/ai-dial-shared';
@@ -25,41 +30,32 @@ interface PublicationVersionInfoProps {
   item: PublicationReviewItem;
 }
 
-const isEditMode = false;
-
 const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   item,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
+  const dispatch = useAppDispatch();
+
+  const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
+  const editState = useAppSelector((state) =>
+    PublicationSelectors.selectEditStateByReviewUrl(state, item.id),
+  );
+
+  const handleChangeVersion = useCallback(
+    (version: string) => {
+      dispatch(
+        PublicationActions.setEditStateByReviewUrl({
+          reviewUrl: item.id,
+          name: editState?.name ?? item.name,
+          version,
+        }),
+      );
+    },
+    [dispatch, item.id, item.name, editState?.name],
+  );
+
   const { publicVersionGroupId } = usePublicVersionGroupId(item);
-
-  const isDeleteAction = item.publicationInfo?.action === PublishActions.DELETE;
-
-  if (isApplicationId(item.id)) {
-    const appVersion = getVersionFromId(item.id);
-
-    return (
-      <span
-        className={classNames(
-          'shrink-0 text-xs',
-          isDeleteAction && 'text-error',
-        )}
-        data-qa="version"
-      >
-        {isEditMode ? (
-          <input
-            className="h-[24px] w-[35px] border-b border-primary bg-layer-2 py-[2px] text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none"
-            value={appVersion}
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
-            onChange={() => {}}
-          />
-        ) : (
-          appVersion
-        )}
-      </span>
-    );
-  }
 
   if (isFileId(item.id)) {
     return (
@@ -76,11 +72,15 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
     );
   }
 
-  const version = item.publicationInfo?.version || NA_VERSION;
+  const isApplication = isApplicationId(item.id);
+  const version = isApplication
+    ? getVersionFromId(item.id)
+    : (editState?.version ?? item.publicationInfo?.version ?? NA_VERSION);
+  const isDeleteAction = item.publicationInfo?.action === PublishActions.DELETE;
 
   return (
     <div className="flex shrink-0 items-center gap-2">
-      {!isDeleteAction && publicVersionGroupId && (
+      {!isDeleteAction && publicVersionGroupId && !isApplication && (
         <PublicVersionSelector
           publicVersionGroupId={publicVersionGroupId}
           textBeforeSelector={t('Last: ')}
@@ -90,21 +90,18 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
         />
       )}
       <span
-        className={classNames('text-xs', isDeleteAction && 'text-error')}
+        className={classNames(
+          'shrink-0 text-xs',
+          isDeleteAction && 'text-error',
+        )}
         data-qa="version"
       >
-        {isEditMode ? (
-          <input
-            className="h-[24px] w-[35px] border-b border-primary bg-layer-2 py-[2px] text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none"
-            value={version}
-            onChange={() => {
-              // eslint-disable-next-line no-console
-              console.log('edit');
-            }}
-          />
-        ) : (
-          version
-        )}
+        <EditableField
+          value={version}
+          isEditMode={isEditMode}
+          onChange={handleChangeVersion}
+          inputClassName="w-[34px] text-xs"
+        />
       </span>
     </div>
   );
@@ -115,7 +112,6 @@ interface PublicationRowProps {
   Icon: ReactNode;
   item: PublicationReviewItem;
   dataQa: string;
-  onEdit: (name: string) => void;
 }
 
 export const PublicationItemRow: React.FC<PublicationRowProps> = ({
@@ -123,16 +119,31 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   Icon,
   item,
   dataQa,
-  onEdit,
 }) => {
+  const dispatch = useAppDispatch();
+
+  const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
+  const editState = useAppSelector((state) =>
+    PublicationSelectors.selectEditStateByReviewUrl(state, item.id),
+  );
+
   const [isFocused, setIsFocused] = useState(false);
 
-  const handleChange = useCallback(
+  const handleChangeName = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      onEdit(e.target.value);
+      dispatch(
+        PublicationActions.setEditStateByReviewUrl({
+          reviewUrl: item.id,
+          name: e.target.value,
+          version:
+            editState?.version ?? item.publicationInfo?.version ?? NA_VERSION,
+        }),
+      );
     },
-    [onEdit],
+    [dispatch, item.id, editState?.version, item.publicationInfo?.version],
   );
+
+  const editName = editState?.name ?? item.name;
 
   return (
     <div
@@ -152,11 +163,11 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
       >
         <span className="flex">{Icon}</span>
         {isEditMode ? (
-          <div className="block truncate whitespace-pre break-all text-left text-primary">
+          <div className="w-full truncate whitespace-pre break-all text-left text-primary">
             <input
               className="h-[24px] w-full border-b border-primary bg-layer-2 px-1 py-[2px] text-sm text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none"
-              value={item.name}
-              onChange={handleChange}
+              value={editName}
+              onChange={handleChangeName}
             />
           </div>
         ) : (

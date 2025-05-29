@@ -31,8 +31,6 @@ export const PublicationApplicationRow: React.FC<Props> = ({ item, level }) => {
       Icon={<ModelIcon entity={entity} entityId={item.id} size={18} />}
       item={item}
       dataQa="application"
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      onEdit={() => {}}
     />
   );
 };

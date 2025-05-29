@@ -16,8 +16,6 @@ export const PublicationFileRow: React.FC<Props> = ({ item, level }) => {
       Icon={<IconFile size={18} className="text-secondary" />}
       item={item}
       dataQa="file"
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      onEdit={() => {}}
     />
   );
 };

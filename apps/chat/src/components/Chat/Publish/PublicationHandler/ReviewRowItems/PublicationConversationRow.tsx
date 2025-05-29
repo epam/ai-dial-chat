@@ -56,7 +56,6 @@ export const PublicationConversationRow: React.FC<Props> = ({
       Icon={Icon}
       item={item}
       dataQa="conversation"
-      onEdit={handleEdit}
     />
   );
 };

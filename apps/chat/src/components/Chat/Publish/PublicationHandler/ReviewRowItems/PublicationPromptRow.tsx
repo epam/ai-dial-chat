@@ -16,8 +16,6 @@ export const PublicationPromptRow: React.FC<Props> = ({ item, level }) => {
       Icon={<IconBulb size={18} className="text-secondary" />}
       item={item}
       dataQa="prompt"
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      onEdit={() => {}}
     />
   );
 };

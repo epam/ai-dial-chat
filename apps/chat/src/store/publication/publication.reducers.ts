@@ -43,6 +43,10 @@ const initialState: PublicationState = {
   isApplicationReview: false,
   publicVersionGroups: {},
   publishModel: undefined,
+
+  // Review edit mode
+  isEditMode: false,
+  editState: {},
 };
 
 export const publicationSlice = createSlice({
@@ -71,7 +75,7 @@ export const publicationSlice = createSlice({
     ) => {
       state.publications = state.publications.map((p) =>
         p.url === payload.publication.url
-          ? { ...payload.publication, ...p, uploadStatus: UploadStatus.LOADED }
+          ? { ...p, ...payload.publication, uploadStatus: UploadStatus.LOADED }
           : p,
       );
     },
@@ -342,6 +346,34 @@ export const publicationSlice = createSlice({
         url: string;
       }>,
     ) => state,
+    setIsEditMode: (state, { payload }: PayloadAction<boolean>) => {
+      state.isEditMode = payload;
+    },
+    setEditModeState: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        editState: Record<string, { name: string; version: string }>;
+      }>,
+    ) => {
+      state.editState = payload.editState;
+    },
+    setEditStateByReviewUrl: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        reviewUrl: string;
+        name: string;
+        version: string;
+      }>,
+    ) => {
+      state.editState[payload.reviewUrl] = {
+        name: payload.name,
+        version: payload.version,
+      };
+    },
   },
 });
 
