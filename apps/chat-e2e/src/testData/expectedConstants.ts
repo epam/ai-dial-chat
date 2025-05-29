@@ -392,7 +392,7 @@ export const API = {
   publicationRulesList: '/api/ops/publication/rule/list',
   multipleListingHost: () => `${API.listingHost}/multiple?recursive=true`,
   pendingPublicationsListing: '/api/ops/publication/list',
-  publishedConversations: '/api/ops/publication/conversations/public',
+  publishedConversations: '/api/publication/conversations/public',
   applicationCreateHost: '/api/applications',
   publishedApplicationsHost:
     'api/publication/applications/public?recursive=true',
