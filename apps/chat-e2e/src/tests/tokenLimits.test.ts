@@ -57,7 +57,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await sendMessage.fillRequestData(exceededTokensLengthRequest);
         await confirmationDialogAssertion.assertConfirmationDialogTitle(
           ExpectedConstants.promptLimitExceededTitle,

@@ -240,6 +240,21 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
                 className="button"
                 onClick={async () => {
                   const conversation =
+                    await overlay.current?.createLocalConversation();
+
+                  handleDisplayInformation(
+                    JSON.stringify(conversation, null, 2),
+                  );
+                }}
+                data-qa="create-local-conversation"
+              >
+                Create local conversation
+              </button>
+
+              <button
+                className="button"
+                onClick={async () => {
+                  const conversation =
                     await overlay.current?.createConversation();
 
                   handleDisplayInformation(
@@ -313,6 +328,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
                   Refresh
                 </button>
               </div>
+
               <div className="flex flex-col gap-1 border p-1">
                 <button
                   className="button"

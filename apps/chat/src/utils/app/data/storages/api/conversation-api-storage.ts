@@ -6,6 +6,7 @@ import {
   prepareEntityName,
 } from '@/src/utils/app/common';
 import {
+  getConversationInfoFromId,
   getGeneratedConversationId,
   regenerateConversationId,
 } from '@/src/utils/app/conversation';
@@ -70,10 +71,14 @@ export const getOrUploadConversation = <T extends { id: string }>(
   payload: T;
   wasUploaded: boolean;
 }> => {
-  const conversation = ConversationsSelectors.selectConversation(
+  let conversation = ConversationsSelectors.selectConversation(
     state,
     payload.id,
   );
+
+  if (!conversation) {
+    conversation = getConversationInfoFromId(payload.id);
+  }
 
   if (
     conversation &&
