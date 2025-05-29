@@ -77,7 +77,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(tableConversation.name);
+        await conversations.selectEntity(tableConversation.name);
         await expect
           .soft(
             chatMessages.getChatMessageTable(expectedChatMessageIndex),
@@ -223,7 +223,7 @@ dialTest.fixme(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(tableConversation.name);
+        await conversations.selectEntity(tableConversation.name);
         await chat.sendRequestWithButton(
           'Create md table with european countries, its capitals and population',
           false,
