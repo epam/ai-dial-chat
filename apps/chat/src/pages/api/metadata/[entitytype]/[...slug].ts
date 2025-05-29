@@ -38,7 +38,7 @@ const getEntityUrlFromSlugs = (
       'metadata',
       entityType,
       ServerUtils.encodeSlugs(slugs),
-    ) + `/?permissions=true`
+    ) + `?permissions=true`
   );
 };
 
