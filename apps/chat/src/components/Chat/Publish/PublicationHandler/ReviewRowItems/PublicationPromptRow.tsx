@@ -5,20 +5,19 @@ import { PublicationItemRow } from './PublicationItemRow';
 import { PromptInfo } from '@epam/ai-dial-shared';
 
 interface Props {
-  prompt: PromptInfo;
+  item: PromptInfo;
   level: number;
 }
 
-export const PublicationPromptRow: React.FC<Props> = ({ prompt, level }) => {
+export const PublicationPromptRow: React.FC<Props> = ({ item, level }) => {
   return (
     <PublicationItemRow
       level={level}
-      name={prompt.name}
       Icon={<IconBulb size={18} className="text-secondary" />}
-      publicationInfo={prompt.publicationInfo}
+      item={item}
       dataQa="prompt"
-      editedName={prompt.name}
-      isEditMode={false}
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      onEdit={() => {}}
     />
   );
 };
