@@ -981,15 +981,29 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
 
         if (!shouldLogIn) {
           if (modelId) {
-            actions.push(of(ModelsActions.updateRecentModels({ modelId })));
+            const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+            const overlayDefaultModel = modelsMap[modelId];
 
-            actions.push(
-              of(
-                SettingsActions.setOverlayDefaultModelId({
-                  overlayDefaultModelId: modelId,
-                }),
-              ),
-            );
+            if (overlayDefaultModel) {
+              actions.push(
+                of(
+                  ModelsActions.updateRecentModels({
+                    modelId: overlayDefaultModel.reference,
+                  }),
+                ),
+              );
+              actions.push(
+                of(
+                  SettingsActions.setOverlayDefaultModelReference({
+                    overlayDefaultModelReference: overlayDefaultModel.reference,
+                  }),
+                ),
+              );
+            } else {
+              console.warn(
+                `[Overlay](ModelId) No such model: ${modelId}.\nModelId isn't available.`,
+              );
+            }
           }
           if (overlayConversationId) {
             actions.push(
