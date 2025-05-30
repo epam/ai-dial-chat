@@ -8,7 +8,7 @@ DIAL Chat Visualizer Connector is a library for connecting custom visualizers - 
 
 ## Prerequisites
 
-For security reason your Dial Chat application should configure sources where your custom visualizers hosted:
+For security reason your DIAL Chat application should configure sources where your custom visualizers hosted:
 
 - `ALLOWED_IFRAME_SOURCES` - list of allowed iframe sources in `<source> <source>` format.
 
@@ -62,7 +62,7 @@ export interface CustomVisualizerData {
 }
 ```
 
-## To integrate **Visualizer** with _DIAL CHAT_.
+## To integrate **Visualizer** with _DIAL CHAT_
 
 1. Install library
 
@@ -174,7 +174,7 @@ data.visualizerData as { dataToRender: string; layout: YourVisualizerLayout };
 <div>{typedVisualizerData.dataToRender}</div>
 ```
 
-### Full React code example to connect your custom visualizer:
+### Full React code example to connect your custom visualizer
 
 `Module.tsx`
 

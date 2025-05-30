@@ -533,7 +533,7 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Open Dial home page and verify shared folder is not duplicated',
+      'Open DIAL home page and verify shared folder is not duplicated',
       async () => {
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();

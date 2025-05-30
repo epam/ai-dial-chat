@@ -298,7 +298,7 @@ dialTest(
       MarketplaceFilterTypes.topics,
     ];
 
-    await dialTest.step('Open Dial Marketplace', async () => {
+    await dialTest.step('Open DIAL Marketplace', async () => {
       await marketplacePage.openMarketplacePage();
       await marketplacePage.waitForPageLoaded();
     });

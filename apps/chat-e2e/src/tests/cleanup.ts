@@ -16,36 +16,13 @@ dialTest(
   async ({ adminUserItemApiHelper, adminPublicationApiHelper }) => {
     await adminUserItemApiHelper.deleteAllData(BucketUtil.getAdminUserBucket());
 
-    const publishedConversations =
-      await adminPublicationApiHelper.listPublishedConversations();
-
     //list pending requests
     const publicationRequests =
       await adminPublicationApiHelper.listPublicationRequests();
     for (const publicationRequest of publicationRequests.publications) {
-      //if the request is pending un-publication
-      if (publicationRequest.name?.trim()?.startsWith(unpublishRequestPrefix)) {
-        const publicationDetails =
-          await adminPublicationApiHelper.getPublicationRequestDetails(
-            publicationRequest.url,
-          );
-
-        //reject if the request has already been unpublished
-        if (publishedConversations.items !== undefined) {
-          if (
-            publishedConversations.items.some(
-              (item) => item.url === publicationDetails.resources[0].targetUrl,
-            )
-          ) {
-            await adminPublicationApiHelper.approveRequest(publicationRequest);
-          } else {
-            await adminPublicationApiHelper.rejectRequest(publicationRequest);
-          }
-        }
-      }
-      //if the request is pending publication
-      else if (
-        publicationRequest.name?.trim().startsWith(publicationRequestPrefix)
+      if (
+        publicationRequest.name?.startsWith(unpublishRequestPrefix) ||
+        publicationRequest.name?.startsWith(publicationRequestPrefix)
       ) {
         await adminPublicationApiHelper.rejectRequest(publicationRequest);
       }
@@ -97,7 +74,7 @@ dialTest(
         relativePath,
         publishRequestBuilder,
         (request) => {
-          return request.withConversationResource(
+          return request.withConversationWithoutFolderResource(
             {
               id: conversation.url.substring(
                 0,

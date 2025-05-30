@@ -489,7 +489,10 @@ dialAdminTest(
         for (let i = 0; i < publicationNames.length; i++) {
           const publishRequest = publishRequestBuilder
             .withName(publicationNames[i])
-            .withConversationResource(conversations[i], PublishActions.ADD)
+            .withConversationInFolderResource(
+              conversations[i],
+              PublishActions.ADD,
+            )
             .build();
           await publicationApiHelper.createPublishRequest(publishRequest);
         }
@@ -574,7 +577,7 @@ dialTest(
           const publishRequest = publishRequestBuilder
             .withName(GeneratorUtil.randomPublicationRequestName())
             .withDisplayAuthor(author)
-            .withConversationResource(
+            .withConversationInFolderResource(
               conversation,
               PublishActions.ADD_IF_ABSENT,
               version,

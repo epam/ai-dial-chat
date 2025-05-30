@@ -248,7 +248,10 @@ dialOverlayTest(
         //publish conversation by admin
         const publishRequest = publishRequestBuilder
           .withName(GeneratorUtil.randomPublicationRequestName())
-          .withConversationResource(publishedConversation, PublishActions.ADD)
+          .withConversationInFolderResource(
+            publishedConversation,
+            PublishActions.ADD,
+          )
           .build();
         const publication =
           await adminPublicationApiHelper.createPublishRequest(publishRequest);
@@ -290,6 +293,7 @@ dialOverlayTest(
         //     await overlayPublicationApiHelper.getPublishedConversation(
         //       actualPublishedConversation.url,
         //     );
+        //   const permissions = conversation.permissions;
         //   const isPlayback = conversation.playback?.isPlayback;
         //   const isReplay = conversation.replay?.isReplay;
         //   const parentPath = actualPublishedConversation.parentPath;
@@ -315,6 +319,7 @@ dialOverlayTest(
         //     updatedAt: actualPublishedConversation.updatedAt,
         //     bucket: actualPublishedConversation.bucket,
         //     ...(parentPath && { parentPath }),
+        //    ...(permissions && { permissions }),
         //   });
         // }
 
@@ -334,6 +339,7 @@ dialOverlayTest(
           );
           const actualConversation = actualConversationsList[i];
           const parentPath = actualConversation.parentPath;
+          const permissions = actualConversation.permissions;
           const isPlayback = conversation.playback?.isPlayback;
           const isReplay = conversation.replay?.isReplay;
           const shortConversation: ConversationInfo = {
@@ -352,8 +358,13 @@ dialOverlayTest(
 
           //save expectedSelectedConversation for the next test step if it is not last listed one
           if (shortConversation.id === todayConversation.id) {
+            const expectedSelectedOverlayConversation = {
+              ...shortConversation,
+              ...(permissions && { permissions }),
+            };
             expectedSelectedConversation = {
-              conversation: shortConversation as OverlayConversation,
+              conversation:
+                expectedSelectedOverlayConversation as OverlayConversation,
             };
           }
 
@@ -374,6 +385,7 @@ dialOverlayTest(
               ...fullConversation,
               bucket: actualConversation.bucket,
               ...(parentPath && { parentPath }),
+              ...(permissions && { permissions }),
             };
 
             //save expectedSelectedConversation for the next test step if it is the last listed one
@@ -390,6 +402,7 @@ dialOverlayTest(
               ...shortConversation,
               bucket: actualConversation.bucket,
               ...(parentPath && { parentPath }),
+              ...(permissions && { permissions }),
             };
           }
           expectedConversationsArray.push(expectedConversation);
@@ -402,6 +415,7 @@ dialOverlayTest(
           const conversation = await overlayItemApiHelper.getItem(
             actualSharedConversation.url,
           );
+          const permissions = conversation.permissions;
           const isPlayback = conversation.playback?.isPlayback;
           const isReplay = conversation.replay?.isReplay;
           expectedConversationsArray.push({
@@ -417,6 +431,7 @@ dialOverlayTest(
             folderId: conversation.folderId,
             sharedWithMe: true,
             bucket: actualSharedConversation.bucket,
+            ...(permissions && { permissions }),
           });
         }
 
