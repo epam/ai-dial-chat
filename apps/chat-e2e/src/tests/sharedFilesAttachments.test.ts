@@ -1098,7 +1098,7 @@ dialSharedWithMeTest(
       await localStorageManager.setShowSideBarPanels();
     });
 
-    await dialTest.step('Open Dial by additional user', async () => {
+    await dialTest.step('Open DIAL by additional user', async () => {
       await additionalShareUserLocalStorageManager.setShowSideBarPanels();
       await additionalShareUserDialHomePage.openHomePage();
       await additionalShareUserDialHomePage.waitForPageLoaded();

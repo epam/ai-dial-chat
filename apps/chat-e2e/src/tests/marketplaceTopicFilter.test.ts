@@ -107,7 +107,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open Dial Marketplace and verify Topics filter with added options are displayed, topics are sorted alphabetically',
+      'Open DIAL Marketplace and verify Topics filter with added options are displayed, topics are sorted alphabetically',
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();

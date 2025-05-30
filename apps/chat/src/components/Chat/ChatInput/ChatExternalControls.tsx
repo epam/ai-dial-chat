@@ -3,6 +3,7 @@ import { IconCopy } from '@tabler/icons-react';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityIdExternal } from '@/src/utils/app/id';
+import { isEntityReadOnly } from '@/src/utils/app/permissions';
 
 import { Translation } from '@/src/types/translation';
 
@@ -36,8 +37,8 @@ export function ChatExternalControls({
     SettingsSelectors.selectOverlayConversationId,
   );
 
-  const conversationsToDuplicate = conversations.filter((conv) =>
-    isEntityIdExternal(conv),
+  const conversationsToDuplicate = conversations.filter(
+    (conv) => isEntityReadOnly(conv) && isEntityIdExternal(conv),
   );
 
   const handleDuplicate = () => {
