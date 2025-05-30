@@ -32,4 +32,5 @@ export interface PublicationState {
   // Review edit mode
   isEditMode: boolean;
   editState: Record<string, { name: string; version: string }>;
+  isPublicationUpdating: boolean;
 }

@@ -232,6 +232,9 @@ const selectEditStateByReviewUrl = createSelector(
   },
 );
 
+const selectIsPublicationUpdating = (state: RootState) =>
+  rootSelector(state).isPublicationUpdating;
+
 export const PublicationSelectors = {
   selectPublications,
   selectFilteredPublications,
@@ -257,4 +260,5 @@ export const PublicationSelectors = {
   selectIsEditMode,
   selectEditState,
   selectEditStateByReviewUrl,
+  selectIsPublicationUpdating,
 };

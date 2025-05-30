@@ -18,6 +18,7 @@ import { PublicationSelectors } from '@/src/store/selectors';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
+import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { PublicationInfoSection } from '../PublishWizardComponents';
@@ -81,6 +82,9 @@ export function PublicationHandler({ publication }: Props) {
   const isApplicationReview = useAppSelector(
     PublicationSelectors.selectIsApplicationReview,
   );
+  const isPublicationUpdating = useAppSelector(
+    PublicationSelectors.selectIsPublicationUpdating,
+  );
 
   const publicationAuthor = useMemo(() => {
     return extractNameFromEmail(publication.author) ?? t('Unknown');
@@ -123,11 +127,16 @@ export function PublicationHandler({ publication }: Props) {
     !isEqual(publication.rules, rules[publication.targetFolder] || []);
 
   return (
-    <div className="flex size-full flex-col items-center overflow-y-auto p-0 md:px-5 md:pt-5">
+    <div className="size-full justify-center overflow-y-auto p-0 md:px-5 md:pt-5">
       <div
-        className="flex size-full flex-col items-center gap-px rounded 2xl:max-w-[1000px]"
+        className="relative flex size-full flex-col justify-center gap-px rounded 2xl:max-w-[1000px]"
         data-qa="publish-approval-modal"
       >
+        {isPublicationUpdating && (
+          <div className="absolute inset-0 z-30 flex size-full items-center justify-center bg-layer-1 opacity-50">
+            <Spinner size={32} />
+          </div>
+        )}
         <div className="flex w-full items-center rounded-t bg-layer-2 px-3 py-4 md:px-5">
           <Tooltip
             tooltip={publicationName}
