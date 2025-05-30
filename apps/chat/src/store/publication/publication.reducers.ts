@@ -335,6 +335,13 @@ export const publicationSlice = createSlice({
         state.publishModel = undefined;
       }
     },
+    updatePublicationRequest: (
+      state,
+      _action: PayloadAction<{
+        dataToUpdate: PublicationRequestModel;
+        url: string;
+      }>,
+    ) => state,
   },
 });
 

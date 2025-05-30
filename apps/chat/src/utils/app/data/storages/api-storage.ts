@@ -30,6 +30,7 @@ import {
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
+import { ServerSlugs } from '@/src/types/slugs-types';
 import { DialStorage } from '@/src/types/storage';
 
 import {
@@ -269,7 +270,7 @@ export class ApiStorage implements DialStorage {
   }
 
   move(data: MoveModel): Observable<MoveModel> {
-    return ApiUtils.request('/api/ops/resource/move', {
+    return ApiUtils.request(`/api/ops/${ServerSlugs.RESOURCE_MOVE}`, {
       method: HTTPMethod.POST,
       body: JSON.stringify({
         sourceUrl: ApiUtils.encodeApiUrl(data.sourceUrl),
