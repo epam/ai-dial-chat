@@ -8,10 +8,12 @@ import {
 
 import { useRouter } from 'next/router';
 
+import { useBeforeRedirect } from '@/src/hooks/useBeforeRedirect';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip } from '@/src/utils/app/application';
 import { castToString } from '@/src/utils/app/common';
+import { getValidFormFields } from '@/src/utils/app/forms';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import {
@@ -61,6 +63,9 @@ import {
 } from '../form';
 
 import isEqual from 'lodash-es/isEqual';
+
+const cleanFormData = (data: CodeAppFormData) =>
+  JSON.parse(JSON.stringify(data)) as CodeAppFormData;
 
 type Options<T extends Path<CodeAppFormData>> = Omit<
   RegisterOptions<CodeAppFormData, T>,
@@ -135,6 +140,8 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     formState: { errors, defaultValues, isValid },
     watch,
     register,
+    getValues,
+    getFieldState,
   } = useFormContext<CodeAppFormData>();
 
   const lastSubmittedValuesRef = useRef<CodeAppFormData | undefined>(
@@ -158,58 +165,49 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     (data: CodeAppFormData) => {
       const hasChanged = !isEqual(data, lastSubmittedValuesRef.current);
 
-      if (shouldSaveApplication) {
-        if (oldApplication.reference && hasChanged) {
-          const preparedData = getCodeAppData(data);
+      if (oldApplication.reference && hasChanged) {
+        const preparedData = getCodeAppData(data);
 
-          const areNotTheSameAndShared =
-            isShared &&
-            preparedData.function?.sourceFolder !==
-              oldApplication.function?.sourceFolder;
+        const areNotTheSameAndShared =
+          isShared &&
+          preparedData.function?.sourceFolder !==
+            oldApplication.function?.sourceFolder;
 
-          preparedData.functionStatus = applicationStatus;
+        preparedData.functionStatus = applicationStatus;
 
-          const applicationData: CustomApplicationModel = {
-            ...oldApplication,
-            ...preparedData,
-            isShared: areNotTheSameAndShared ? false : isShared,
-          };
+        const applicationData: CustomApplicationModel = {
+          ...oldApplication,
+          ...preparedData,
+          isShared: areNotTheSameAndShared ? false : isShared,
+        };
 
-          if (areNotTheSameAndShared) {
-            dispatch(
-              ShareActions.revokeAccess({
-                resourceId: oldApplication.id,
-                featureType: FeatureType.Application,
-              }),
-            );
-          }
-
+        if (areNotTheSameAndShared) {
           dispatch(
-            ApplicationActions.update({
-              oldApplication,
-              applicationData,
+            ShareActions.revokeAccess({
+              resourceId: oldApplication.id,
+              featureType: FeatureType.Application,
             }),
           );
-
-          lastSubmittedValuesRef.current = data;
         }
 
-        if (exitAfterSave) {
-          dispatch(ApplicationActions.exitEditor({}));
-        }
+        dispatch(
+          ApplicationActions.update({
+            oldApplication,
+            applicationData,
+          }),
+        );
 
-        dispatch(ApplicationActions.setShouldSaveApplication(false));
-        dispatch(ApplicationActions.setExitAfterSave(false));
+        lastSubmittedValuesRef.current = data;
       }
+
+      if (exitAfterSave) {
+        dispatch(ApplicationActions.exitEditor({}));
+      }
+
+      dispatch(ApplicationActions.setShouldSaveApplication(false));
+      dispatch(ApplicationActions.setExitAfterSave(false));
     },
-    [
-      oldApplication,
-      shouldSaveApplication,
-      exitAfterSave,
-      applicationStatus,
-      isShared,
-      dispatch,
-    ],
+    [oldApplication, exitAfterSave, applicationStatus, isShared, dispatch],
   );
 
   register('sourceFiles', validators['sourceFiles']);
@@ -224,6 +222,20 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
   const autoSaveHandler = useCallback(() => {
     submitWrapper(handleEdit)();
   }, [submitWrapper, handleEdit]);
+
+  const savePartialForm = useCallback(() => {
+    const data = cleanFormData(getValues());
+    if (!isValid && lastSubmittedValuesRef.current) {
+      handleEdit({
+        ...lastSubmittedValuesRef.current,
+        ...getValidFormFields(data, getFieldState),
+      });
+    } else if (isValid) {
+      handleEdit(data);
+    }
+  }, [getFieldState, getValues, handleEdit, isValid]);
+
+  useBeforeRedirect(savePartialForm);
 
   useEffect(() => {
     const isTriggered = shouldSaveApplication || exitAfterSave;
@@ -311,7 +323,6 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
           }
           confirmDialogValues={confirmSourceFolderValues}
         />
-
         {sources && (
           <FormCodeEditor disabled={isAppPublic} sourcesFolderId={sources} />
         )}
