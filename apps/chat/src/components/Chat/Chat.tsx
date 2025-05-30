@@ -30,6 +30,7 @@ import {
 import { isEntityIdExternal } from '@/src/utils/app/id';
 import { is4XLScreen } from '@/src/utils/app/mobile';
 import { doesModelHaveConfiguration } from '@/src/utils/app/models';
+import { isEntityReadOnly } from '@/src/utils/app/permissions';
 
 import { ApplicationStatus } from '@/src/types/applications';
 import {
@@ -128,6 +129,9 @@ const ChatView = memo(() => {
   );
   const isExternal = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsExternal,
+  );
+  const isReadOnly = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsReadOnly,
   );
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
@@ -530,7 +534,7 @@ const ChatView = memo(() => {
   const showLastMessageRegenerate =
     !isReplay &&
     !isPlayback &&
-    !isExternal &&
+    !isReadOnly &&
     !messageIsStreaming &&
     !isLastMessageError &&
     !notAvailableEntityType;
@@ -558,7 +562,7 @@ const ChatView = memo(() => {
 
   const isInputVisible =
     (!isReplay || isNotEmptyConversations) &&
-    !isExternal &&
+    !isReadOnly &&
     (areModelsInstalled || isReplay || isIsolatedView) &&
     !(isConversationWithSchema && selectedConversations.length > 1);
 
@@ -673,7 +677,7 @@ const ChatView = memo(() => {
                                     ) &&
                                     !isPlayback &&
                                     !isReplay &&
-                                    !isExternal
+                                    !isReadOnly
                                   }
                                   isShowSettings={isShowChatSettings}
                                   setShowSettings={setIsShowChatSettings}
@@ -804,11 +808,13 @@ const ChatView = memo(() => {
                                             isLikesEnabled={
                                               enabledFeatures.has(
                                                 Feature.Likes,
-                                              ) && !isEntityIdExternal(conv)
+                                              ) &&
+                                              (!isEntityReadOnly(conv) ||
+                                                !isEntityIdExternal(conv))
                                             }
                                             editDisabled={
                                               !!notAvailableEntityType ||
-                                              isExternal ||
+                                              isReadOnly ||
                                               isReplay ||
                                               isPlayback
                                             }

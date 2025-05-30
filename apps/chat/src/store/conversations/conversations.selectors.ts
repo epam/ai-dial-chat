@@ -35,6 +35,7 @@ import {
   isEntityIdLocal,
   isRootId,
 } from '@/src/utils/app/id';
+import { isEntityReadOnly } from '@/src/utils/app/permissions';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import {
   PublishedWithMeFilter,
@@ -65,6 +66,7 @@ import {
   ShareEntity,
 } from '@epam/ai-dial-shared';
 import cloneDeep from 'lodash-es/cloneDeep';
+import isNil from 'lodash-es/isNil';
 import uniqBy from 'lodash-es/uniqBy';
 
 const rootSelector = (state: RootState) => state.conversations;
@@ -133,7 +135,7 @@ const selectMyFoldersWithSearchTerm = createSelector(
   [selectMyFolders, (_state, searchTerm: string) => searchTerm],
   (folders, searchTerm) => {
     const filtered = folders.filter((folder) =>
-      folder.name.includes(searchTerm.toLowerCase()),
+      doesEntityContainSearchTerm(folder, searchTerm),
     );
 
     return getParentAndChildFolders(folders, filtered);
@@ -341,6 +343,15 @@ const selectAreSelectedConversationsExternal = createSelector(
   },
 );
 
+const selectAreSelectedConversationsReadOnly = createSelector(
+  [selectSelectedConversations],
+  (conversations) => {
+    return conversations.some(
+      (conv) => isEntityReadOnly(conv) && isEntityIdExternal(conv),
+    );
+  },
+);
+
 const selectDoesAnyMyItemExist = createSelector(
   [selectFolders, selectConversations],
   (folders, conversations) => {
@@ -375,9 +386,7 @@ const selectIsMessagesError = createSelector(
   [selectSelectedConversations],
   (conversations) => {
     return conversations.some((conv) =>
-      conv.messages.some(
-        (message) => typeof message.errorMessage !== 'undefined',
-      ),
+      conv.messages.some((message) => !isNil(message.errorMessage)),
     );
   },
 );
@@ -502,7 +511,7 @@ const selectTemporaryFoldersWithSearchTerm = createSelector(
   [selectTemporaryFolders, (_state, searchTerm: string) => searchTerm],
   (folders, searchTerm) => {
     const filtered = folders.filter((folder) =>
-      folder.name.includes(searchTerm.toLowerCase()),
+      doesEntityContainSearchTerm(folder, searchTerm),
     );
 
     return getParentAndChildFolders(folders, filtered);
@@ -748,8 +757,14 @@ const selectIsSelectedConversationBlocksInput = createSelector(
     selectSelectedConversations,
     ChatSelectors.selectIsConfigurationBlocksInput,
     ChatSelectors.selectNotAvailableEntityType,
+    selectAreSelectedConversationsReadOnly,
   ],
-  (conversations, isConfigurationBlocksInput, notAvailableEntityType) =>
+  (
+    conversations,
+    isConfigurationBlocksInput,
+    notAvailableEntityType,
+    isReadOnly,
+  ) =>
     conversations.some(
       (conversation) =>
         conversation.sharedWithMe ||
@@ -757,7 +772,7 @@ const selectIsSelectedConversationBlocksInput = createSelector(
           (isConfigurationBlocksInput || isReplayConversation(conversation))) ||
         notAvailableEntityType ||
         isPlaybackConversation(conversation) ||
-        isEntityIdExternal(conversation) ||
+        isReadOnly ||
         !conversation.messages ||
         isMessageInputDisabled(
           conversation.messages.length,
@@ -811,6 +826,7 @@ export const ConversationsSelectors = {
   selectIsReplaySelectedConversations,
   selectIsPlaybackSelectedConversations,
   selectAreSelectedConversationsExternal,
+  selectAreSelectedConversationsReadOnly,
   selectDoesAnyMyItemExist,
   selectPlaybackActiveIndex,
   selectIsErrorReplayConversations,
