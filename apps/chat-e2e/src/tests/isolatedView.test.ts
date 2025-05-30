@@ -517,7 +517,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Reload into regular Dial and verify conversation exists',
+      'Reload into regular DIAL and verify conversation exists',
       async () => {
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
