@@ -47,6 +47,7 @@ const initialState: PublicationState = {
   // Review edit mode
   isEditMode: false,
   editState: {},
+  isPublicationUpdating: false,
 };
 
 export const publicationSlice = createSlice({
@@ -58,7 +59,9 @@ export const publicationSlice = createSlice({
       state.initialized = true;
     },
     publish: (state, _action: PayloadAction<PublicationRequestModel>) => state,
-    publishFail: (state, _action: PayloadAction<string | undefined>) => state,
+    publishFail: (state, _action: PayloadAction<string | undefined>) => {
+      state.isPublicationUpdating = false;
+    },
     uploadPublications: (state) => state,
     uploadPublicationsSuccess: (
       state,
@@ -78,6 +81,7 @@ export const publicationSlice = createSlice({
           ? { ...p, ...payload.publication, uploadStatus: UploadStatus.LOADED }
           : p,
       );
+      state.isPublicationUpdating = false;
     },
     uploadPublicationFail: (state) => state,
     uploadPublishedWithMeItems: (
@@ -345,7 +349,9 @@ export const publicationSlice = createSlice({
         dataToUpdate: PublicationRequestModel;
         url: string;
       }>,
-    ) => state,
+    ) => {
+      state.isPublicationUpdating = true;
+    },
     setIsEditMode: (state, { payload }: PayloadAction<boolean>) => {
       state.isEditMode = payload;
     },
