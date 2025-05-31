@@ -154,10 +154,11 @@ export function PublicationHandlerFooter({ publication }: Props) {
   useEffect(() => {
     dispatch(
       PublicationActions.setEditModeState({
-        editState: getDefaultAllEditEntities(publication.resources),
+        resources: getDefaultAllEditEntities(publication.resources),
+        rules: publication.rules,
       }),
     );
-  }, [dispatch, publication.resources, isEditMode]);
+  }, [dispatch, publication.resources, isEditMode, publication.rules]);
 
   const notExistEntities = useMemo(
     () =>
@@ -309,9 +310,9 @@ export function PublicationHandlerFooter({ publication }: Props) {
         dataToUpdate: {
           name: publication.name ?? '',
           targetFolder: publication.targetFolder,
-          rules: publication.rules,
+          rules: editState.rules,
           resources: publication.resources.map((resource) => {
-            const { name, version } = editState[resource.reviewUrl];
+            const { name, version } = editState.resources[resource.reviewUrl];
             const modelName = splitEntityId(resource.reviewUrl).name;
             const parsedModelReference =
               parseConversationApiKey(modelName).model.id;

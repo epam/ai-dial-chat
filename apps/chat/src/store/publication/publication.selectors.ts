@@ -230,7 +230,7 @@ const selectEditState = (state: RootState) => rootSelector(state).editState;
 const selectEditStateByReviewUrl = createSelector(
   [selectEditState, (_state, reviewUrl: string) => reviewUrl],
   (editState, reviewUrl): { name: string; version: string } | null => {
-    return editState[reviewUrl] ?? null;
+    return editState.resources[reviewUrl] ?? null;
   },
 );
 

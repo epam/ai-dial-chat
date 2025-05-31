@@ -46,7 +46,10 @@ const initialState: PublicationState = {
 
   // Review edit mode
   isEditMode: false,
-  editState: {},
+  editState: {
+    resources: {},
+    rules: [],
+  },
   isPublicationUpdating: false,
 };
 
@@ -360,10 +363,11 @@ export const publicationSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        editState: Record<string, { name: string; version: string }>;
+        resources: Record<string, { name: string; version: string }>;
+        rules?: PublicationRule[];
       }>,
     ) => {
-      state.editState = payload.editState;
+      state.editState = payload;
     },
     setEditStateByReviewUrl: (
       state,
@@ -375,9 +379,24 @@ export const publicationSlice = createSlice({
         version: string;
       }>,
     ) => {
-      state.editState[payload.reviewUrl] = {
-        name: payload.name,
-        version: payload.version,
+      state.editState = {
+        ...state.editState,
+        resources: {
+          ...state.editState.resources,
+          [payload.reviewUrl]: {
+            name: payload.name,
+            version: payload.version,
+          },
+        },
+      };
+    },
+    setEditStateRules: (
+      state,
+      { payload }: PayloadAction<PublicationRule[]>,
+    ) => {
+      state.editState = {
+        ...state.editState,
+        rules: payload,
       };
     },
   },
