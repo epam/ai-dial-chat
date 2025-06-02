@@ -73,7 +73,7 @@ export const createDialApiSlugsHandler = (
     ],
     dialApiHost = process.env.DIAL_API_HOST,
     timeout = 30000, // 30 seconds default
-    generalErrorMessage = errorsMessages.generalServer,
+    generalErrorMessage,
     pathParameter,
   } = options;
 
@@ -112,7 +112,16 @@ export const createDialApiSlugsHandler = (
       });
 
       if (!fetchResult.ok) {
-        throw new DialAIError(generalErrorMessage, fetchResult.status, req);
+        const errorMessage =
+          await ServerUtils.getErrorMessageFromResponse(fetchResult);
+
+        throw new DialAIError(
+          (typeof errorMessage === 'string' && errorMessage) ||
+            generalErrorMessage ||
+            fetchResult.statusText,
+          fetchResult.status,
+          req,
+        );
       }
 
       let responseData = {};

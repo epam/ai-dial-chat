@@ -123,7 +123,7 @@ export const SearchHeader = () => {
           name: t('Custom app'),
           type: ApplicationType.CUSTOM_APP,
           dataQa: 'add-custom-app',
-          display: isCustomApplicationsEnabled,
+          display: true,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
             dispatch(ApplicationActions.setShouldSaveApplication(false));
@@ -162,7 +162,6 @@ export const SearchHeader = () => {
       ].sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1)),
     [
       t,
-      isCustomApplicationsEnabled,
       isCodeAppsEnabled,
       applicationTypeSchemas,
       router,
@@ -192,9 +191,8 @@ export const SearchHeader = () => {
         />
       </div>
       {enabledFeatures.has(Feature.MarketplaceTableView) && <ViewToggler />}
-      {selectedTab === MarketplaceTabs.MY_WORKSPACE && (
-        <AddAppButton menuItems={menuItems} />
-      )}
+      {selectedTab === MarketplaceTabs.MY_WORKSPACE &&
+        isCustomApplicationsEnabled && <AddAppButton menuItems={menuItems} />}
     </div>
   );
 };

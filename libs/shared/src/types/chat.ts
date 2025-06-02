@@ -88,12 +88,18 @@ export interface EntityDates {
   updatedAt?: number;
 }
 
+export enum SharePermission {
+  READ = 'READ',
+  WRITE = 'WRITE',
+}
+
 export interface Entity extends EntityDates {
   id: string;
   name: string;
   folderId: string;
   status?: UploadStatus;
   author?: string;
+  permissions?: SharePermission[];
 }
 
 export enum PublishActions {
@@ -107,11 +113,6 @@ export interface EntityPublicationInfo {
   isNotExist?: boolean;
   version?: string;
   versionGroup?: string;
-}
-
-export enum SharePermission {
-  READ = 'READ',
-  WRITE = 'WRITE',
 }
 
 export enum FeatureType {
@@ -128,8 +129,6 @@ export interface ShareInterface {
   isPublished?: boolean;
   publishedWithMe?: boolean;
   publicationInfo?: EntityPublicationInfo;
-
-  permissions?: SharePermission[];
 }
 
 export interface ShareEntity extends Entity, ShareInterface {}
