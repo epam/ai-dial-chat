@@ -132,9 +132,9 @@ export function PublicationHandler({ publication }: Props) {
         dataToUpdate: {
           name: publication.name ?? '',
           targetFolder: publication.targetFolder,
-          rules: publication.rules,
+          rules: editState.rules,
           resources: publication.resources.map((resource) => {
-            const { name, version } = editState[resource.reviewUrl];
+            const { name, version } = editState.resources[resource.reviewUrl];
             const modelName = splitEntityId(resource.reviewUrl).name;
             const parsedModelReference =
               parseConversationApiKey(modelName).model.id;
