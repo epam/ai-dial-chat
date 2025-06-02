@@ -382,6 +382,8 @@ export enum ExpectedMessages {
   FormFieldShouldRetainUpdatedValue = 'Chat Completion URL should retain updated value',
   dropdownMenuIsHidden = 'The dropdown menu is hidden',
   dropdownMenuIsVisible = 'The dropdown menu is visible',
+  myAgentsListIsValid = 'My Agents list is valid',
+  allAgentsListIsValid = 'All Agents list is valid',
 }
 
 export enum PublishingExpectedMessages {

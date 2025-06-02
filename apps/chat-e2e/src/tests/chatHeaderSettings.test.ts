@@ -20,7 +20,6 @@ dialTest(
     temperatureSlider,
     addons,
     talkToAgentDialog,
-    marketplacePage,
     setTestIds,
     conversationData,
     localStorageManager,
@@ -51,7 +50,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversation.name);
         await chatHeader.chatAgent.click();
-        await talkToAgentDialog.selectAgent(randomModel, marketplacePage);
+        await talkToAgentDialog.selectAgent(randomModel);
       },
     );
 

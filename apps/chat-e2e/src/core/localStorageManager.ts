@@ -148,10 +148,12 @@ export class LocalStorageManager {
     );
   }
 
-  async setRecentModelsIds(...models: DialAIEntityModel[]) {
+  async setRecentModelsIds(...models: (DialAIEntityModel | string)[]) {
     await this.page.addInitScript(
       this.setRecentModelsIdsKey(),
-      JSON.stringify(models.map((m) => m.reference)),
+      JSON.stringify(
+        models.map((m) => (typeof m === 'string' ? m : m.reference)),
+      ),
     );
   }
 

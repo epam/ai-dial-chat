@@ -64,6 +64,7 @@ export const NavigationButton = ({
           disabled ? 'cursor-not-allowed' : 'cursor-pointer',
           !isOverlay ? (rounded ? 'md:p-[9px]' : 'md:p-[10px]') : 'md:p-1',
         )}
+        aria-selected={selected}
       >
         <Icon
           className={classNames(

@@ -25,7 +25,6 @@ dialTest(
     addons,
     setTestIds,
     talkToAgentDialog,
-    marketplacePage,
     chat,
     localStorageManager,
   }) => {
@@ -53,7 +52,7 @@ dialTest(
     await conversationSettingsModal.applyChangesButton.click();
 
     await chat.changeAgentButton.click();
-    await talkToAgentDialog.selectAgent(randomModel, marketplacePage);
+    await talkToAgentDialog.selectAgent(randomModel);
 
     await chat.configureSettingsButton.click();
     if (ModelsUtil.doesModelAllowSystemPrompt(defaultModel)) {

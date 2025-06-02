@@ -427,7 +427,7 @@ dialAdminTest(
           { name: secondConversationUnpublishingRequestName },
           'hidden',
         );
-        //TODO: enable when the issue is fixed https://github.com/epam/ai-dial-chat/issues/2727
+        //TODO: enable when the issue is fixed https://github.com/epam/ai-dial-chat/issues/3992
         // await adminOrganizationFolderConversationAssertions.assertFolderState(
         //   { name: publishedFolderName },
         //   'hidden',
