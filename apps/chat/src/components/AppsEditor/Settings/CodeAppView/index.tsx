@@ -229,21 +229,23 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     };
   }, [dispatch]);
 
+  const isAppPublic = isEntityIdPublic(oldApplication);
+
   const autoSaveHandler = useCallback(() => {
     submitWrapper(handleEdit)();
   }, [submitWrapper, handleEdit]);
 
   const savePartialForm = useCallback(() => {
     const data = cleanFormData(getValues());
-    if (!isValid && lastSubmittedValuesRef.current) {
+    if (!isValid && lastSubmittedValuesRef.current && !isAppPublic) {
       handleEdit({
         ...lastSubmittedValuesRef.current,
         ...getValidFormFields(data, getFieldState),
       });
-    } else if (isValid) {
+    } else if (isValid && !isAppPublic) {
       handleEdit(data);
     }
-  }, [getFieldState, getValues, handleEdit, isValid]);
+  }, [getFieldState, getValues, handleEdit, isValid, isAppPublic]);
 
   useBeforeRedirect(savePartialForm);
 
@@ -272,8 +274,6 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     t,
     autoSaveHandler,
   ]);
-
-  const isAppPublic = isEntityIdPublic(oldApplication);
 
   return (
     <form

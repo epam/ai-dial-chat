@@ -180,21 +180,23 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
     ],
   );
 
+  const isAppPublic = isEntityIdPublic(oldApplication);
+
   const autoSaveHandler = useCallback(() => {
     submitWrapper(handleSubmit)();
   }, [submitWrapper, handleSubmit]);
 
   const savePartialForm = useCallback(() => {
     const data = getValues();
-    if (!isValid && lastSubmittedValuesRef.current) {
+    if (!isValid && lastSubmittedValuesRef.current && !isAppPublic) {
       handleSubmit({
         ...lastSubmittedValuesRef.current,
         ...getValidFormFields(data, getFieldState),
       });
-    } else if (isValid) {
+    } else if (isValid && !isAppPublic) {
       handleSubmit(data);
     }
-  }, [getFieldState, getValues, handleSubmit, isValid]);
+  }, [getFieldState, getValues, handleSubmit, isValid, isAppPublic]);
 
   useBeforeRedirect(savePartialForm);
 
@@ -224,7 +226,6 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
     t,
   ]);
 
-  const isAppPublic = isEntityIdPublic(oldApplication);
   const editorOptions = useMemo(
     () => ({
       readOnly: isAppPublic,
