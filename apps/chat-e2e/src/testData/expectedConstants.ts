@@ -20,7 +20,6 @@ export const ExpectedConstants = {
     `${ExpectedConstants.newFolderTitle} ${index}`,
   newPromptFolderWithIndexTitle: (index: number) =>
     `${ExpectedConstants.newFolderTitle} ${index}`,
-  promptViewModalTitle: 'View prompt',
   renameConversationModalTitle: 'Rename conversation',
   emptyString: '',
   defaultTemperature: '1',
@@ -515,3 +514,17 @@ export enum PseudoModel {
   replay = 'replay',
   playback = 'playback',
 }
+
+export const ExpectedPromptModalConst = {
+  promptViewModalTitle: 'View prompt',
+  createPromptModalTitle: 'Create prompt',
+  editButtonTooltip: 'Edit',
+  duplicateButtonTooltip: 'Duplicate',
+  exportButtonTooltip: 'Export',
+  moveToButtonTooltip: 'Move to',
+  shareButtonTooltip: 'Share',
+  publishButtonTooltip: 'Publish',
+  unpublishButtonTooltip: 'Unpublish',
+  infoButtonTooltip: 'Info',
+  deleteButtonTooltip: 'Delete',
+};
