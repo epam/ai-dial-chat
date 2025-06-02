@@ -70,11 +70,25 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
     onFolderSelect(rootFolderId);
   }, [onFolderSelect, rootFolderId]);
 
-  const noFolders = !allFolders.length;
+  const filteredFolders = useMemo(() => {
+    if (!searchTerm) return allFolders;
+
+    return allFolders.filter((folder) =>
+      folder.name
+        ?.trim()
+        .toLowerCase()
+        .includes(searchTerm.trim().toLowerCase()),
+    );
+  }, [searchTerm, allFolders]);
+
+  const noFolders = !filteredFolders.length;
   const isSearching = !!searchTerm;
 
   return (
-    <div className="flex min-h-[350px] flex-col" data-qa="select-folders">
+    <div
+      className="flex min-h-[350px] flex-col overflow-auto"
+      data-qa="select-folders"
+    >
       <CollapsibleSection
         onToggle={handleToggleSection}
         name={rootFolderName}
@@ -88,13 +102,13 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
             ? 'border-accent-primary bg-accent-primary-alpha'
             : 'border-transparent',
         )}
-        className="!px-0"
+        className="grow !px-0"
       >
         {isAllEntitiesOpened && (
           <div className="flex grow flex-col gap-0.5">
             {!noFolders ? (
               <div className="flex flex-col gap-1" data-qa="all-folders">
-                {allFolders.map((folder) => {
+                {filteredFolders.map((folder) => {
                   if (
                     !showAllRootFolders &&
                     (folder.folderId !== rootFolderId ||
