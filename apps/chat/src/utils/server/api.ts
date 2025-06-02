@@ -14,6 +14,7 @@ import { Conversation } from '@/src/types/chat';
 import { ApiKeys, CoreApiKeys } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
 import { PromptInfo } from '@/src/types/prompt';
+import { ServerSlugs } from '@/src/types/slugs-types';
 
 import { EMPTY_MODEL_ID } from '@/src/constants/default-ui-settings';
 import { NA_VERSION } from '@/src/constants/public';
@@ -329,3 +330,6 @@ export const getVersionFromId = (id: string) => {
 
   return version && validVersionRegEx.test(version) ? version : NA_VERSION;
 };
+
+export const getOpsApiUrl = (slug: ServerSlugs, ...params: string[]): string =>
+  constructPath('/api/ops', slug, ...params);
