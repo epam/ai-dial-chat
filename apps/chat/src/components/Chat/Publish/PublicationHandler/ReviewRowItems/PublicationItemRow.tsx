@@ -7,6 +7,7 @@ import classNames from 'classnames';
 
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 
+import { isVersionValid } from '@/src/utils/app/common';
 import { isApplicationId, isFileId } from '@/src/utils/app/id';
 import { constructPath } from '@/src/utils/app/shared-utils';
 import { ApiUtils, getVersionFromId } from '@/src/utils/server/api';
@@ -22,7 +23,6 @@ import { NA_VERSION } from '@/src/constants/public';
 
 import { PublicVersionSelector } from '@/src/components/Chat/Publish/PublicVersionSelector';
 import { EditableField } from '@/src/components/Common/EditableField';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -98,9 +98,13 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
       >
         <EditableField
           value={version}
-          isEditMode={isEditMode}
+          isEditMode={isDeleteAction ? false : isEditMode}
           onChange={handleChangeVersion}
-          inputClassName="w-[34px] text-xs"
+          inputClassName={classNames(
+            'w-[34px] text-xs',
+            (!isVersionValid(version) || version === NA_VERSION) &&
+              '!border-b-error',
+          )}
         />
       </span>
     </div>
@@ -130,11 +134,11 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   const [isFocused, setIsFocused] = useState(false);
 
   const handleChangeName = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (name: string) => {
       dispatch(
         PublicationActions.setEditStateByReviewUrl({
           reviewUrl: item.id,
-          name: e.target.value,
+          name,
           version:
             editState?.version ?? item.publicationInfo?.version ?? NA_VERSION,
         }),
@@ -144,6 +148,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   );
 
   const editName = editState?.name ?? item.name;
+  const isDeleteAction = item.publicationInfo?.action === PublishActions.DELETE;
 
   return (
     <div
@@ -162,29 +167,17 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
         data-qa={dataQa}
       >
         <span className="flex">{Icon}</span>
-        {isEditMode ? (
-          <div className="w-full truncate whitespace-pre break-all text-left text-primary">
-            <input
-              className="h-[24px] w-full border-b border-primary bg-layer-2 px-1 py-[2px] text-sm text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none"
-              value={editName}
-              onChange={handleChangeName}
-            />
-          </div>
-        ) : (
-          <Tooltip
-            tooltip={item.name}
-            contentClassName="max-w-[400px] break-all"
-            triggerClassName={classNames(
-              'truncate whitespace-pre',
-              item.publicationInfo?.isNotExist && 'text-secondary',
-              item.publicationInfo?.action === PublishActions.DELETE &&
-                'text-error',
-            )}
-            dataQa="entity-name"
-          >
-            {item.name}
-          </Tooltip>
-        )}
+        <EditableField
+          value={editName}
+          isEditMode={isDeleteAction ? false : isEditMode}
+          onChange={handleChangeName}
+          inputClassName={classNames('w-full', !editName && '!border-b-error')}
+          className={classNames(
+            item.publicationInfo?.isNotExist && 'text-secondary',
+            item.publicationInfo?.action === PublishActions.DELETE &&
+              'text-error',
+          )}
+        />
       </span>
       <PublicationVersionInfo item={item} />
     </div>

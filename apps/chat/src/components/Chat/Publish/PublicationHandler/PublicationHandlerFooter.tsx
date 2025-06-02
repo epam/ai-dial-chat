@@ -5,6 +5,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { isVersionValid } from '@/src/utils/app/common';
 import {
   getFolderIdFromEntityId,
   getParentFolderIdsFromEntityId,
@@ -52,7 +53,7 @@ import { NA_VERSION } from '@/src/constants/public';
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { FeatureType } from '@epam/ai-dial-shared';
+import { FeatureType, PublishActions } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 interface Props {
@@ -145,6 +146,7 @@ export const PublicationHandlerFooter = ({
     ),
   );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
+  const editState = useAppSelector(PublicationSelectors.selectEditState);
 
   const dispatch = useAppDispatch();
 
@@ -318,6 +320,12 @@ export const PublicationHandlerFooter = ({
     isFileId(resource.reviewUrl),
   );
   const isAllResourcesReviewed = resourcesToReview.every((r) => r.reviewed);
+  const isEditDisabled = Object.values(editState).some(({ version, name }) => {
+    return !name || (!isVersionValid(version) && version !== NA_VERSION);
+  });
+  const isEveryResourceForUnpublish = publication.resources.every(
+    (resource) => resource.action === PublishActions.DELETE,
+  );
 
   return (
     <div
@@ -366,12 +374,14 @@ export const PublicationHandlerFooter = ({
       <div className="flex items-center gap-3">
         {!isEditMode ? (
           <>
-            <IconButton
-              name={t('Edit')}
-              dataQa="edit"
-              onClick={handleToggleEditMode}
-              Icon={IconPencil}
-            />
+            {!isEveryResourceForUnpublish && (
+              <IconButton
+                name={t('Edit')}
+                dataQa="edit"
+                onClick={handleToggleEditMode}
+                Icon={IconPencil}
+              />
+            )}
             <button
               className="button button-secondary"
               onClick={() =>
@@ -419,16 +429,15 @@ export const PublicationHandlerFooter = ({
               {t('Cancel')}
             </button>
             <Tooltip
-              hideTooltip={resourcesToReview.every((r) => r.reviewed)}
+              hideTooltip={!isEditDisabled}
               tooltip={t(
-                invalidEntities.length
-                  ? "Request can't be approved as some conversations are unpublished"
-                  : "It's required to review all resources",
+                'Request can not be updated as some resources are invalid',
               )}
             >
               <button
                 className="button button-primary disabled:cursor-not-allowed disabled:text-controls-disable"
                 onClick={onUpdateRequest}
+                disabled={isEditDisabled}
                 data-qa="update"
               >
                 {t('Update request')}

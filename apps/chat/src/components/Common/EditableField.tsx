@@ -1,5 +1,7 @@
 import classNames from 'classnames';
 
+import { Tooltip } from './Tooltip';
+
 interface Props {
   value: string;
   isEditMode: boolean;
@@ -31,5 +33,14 @@ export const EditableField: React.FC<Props> = ({
     );
   }
 
-  return <span className={className}>{value}</span>;
+  return (
+    <Tooltip
+      tooltip={value}
+      contentClassName="max-w-[400px] break-all"
+      triggerClassName={classNames('w-full truncate whitespace-pre', className)}
+      dataQa="entity-name"
+    >
+      {value}
+    </Tooltip>
+  );
 };
