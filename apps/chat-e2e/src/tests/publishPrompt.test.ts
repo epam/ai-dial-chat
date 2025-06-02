@@ -6,6 +6,7 @@ import {
   API,
   ExpectedConstants,
   ExpectedMessages,
+  ExpectedPromptModalConst,
   MenuOptions,
   PublishPath,
 } from '@/src/testData';
@@ -299,7 +300,7 @@ dialAdminTest(
           'visible',
         );
         await adminPublishedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
-          ExpectedConstants.promptViewModalTitle,
+          ExpectedPromptModalConst.promptViewModalTitle,
         );
         await adminPublishedPromptPreviewModalAssertion.assertPromptName(
           prompt1.name,
@@ -455,7 +456,7 @@ dialAdminTest(
           'visible',
         );
         await adminPublishedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
-          ExpectedConstants.promptViewModalTitle,
+          ExpectedPromptModalConst.promptViewModalTitle,
         );
         await adminPublishedPromptPreviewModalAssertion.assertPromptName(
           prompt2.name,
@@ -709,7 +710,7 @@ dialAdminTest(
           'visible',
         );
         await adminPublishedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
-          ExpectedConstants.promptViewModalTitle,
+          ExpectedPromptModalConst.promptViewModalTitle,
         );
         await adminPublishedPromptPreviewModalAssertion.assertPromptName(
           prompt1.name,
@@ -770,6 +771,8 @@ dialAdminTest(
 dialAdminTest(
   'Metadata for prompt from Organization section.\n' +
     'Metadata for prompt with several versions from Organization section.\n' +
+    `[View prompt] 'View prompt' opened for 'Published' prompt.\n` +
+    '[View prompt] Unpublish.\n' +
     'Metadata for prompt duplicated from chat from Organization',
   async ({
     promptData,
@@ -777,7 +780,12 @@ dialAdminTest(
     localStorageManager,
     dialHomePage,
     organizationPrompts,
+    promptPreviewModalAssertion,
+    promptToPublishAssertion,
     promptPreviewModal,
+    publishingRequestModal,
+    publishingRequestModalAssertion,
+    tooltipAssertion,
     promptPreviewVersionDropdownMenu,
     adminDialHomePage,
     adminLocalStorageManager,
@@ -791,7 +799,13 @@ dialAdminTest(
     adminPublicationApiHelper,
     publishRequestBuilder,
   }) => {
-    setTestIds('EPMRTC-5569', 'EPMRTC-5570', 'EPMRTC-6104');
+    setTestIds(
+      'EPMRTC-5569',
+      'EPMRTC-5570',
+      'EPMRTC-6156',
+      'EPMRTC-6178',
+      'EPMRTC-6104',
+    );
     let prompt: Prompt;
     const firstVersion = ExpectedConstants.defaultAppVersion;
     const secondVersion = '0.0.2';
@@ -834,11 +848,76 @@ dialAdminTest(
     );
 
     await dialTest.step(
-      'Select the prompt, switch the version, click on "Info" button and verify modal data',
+      'Select the prompt, and verify "Prompt View" modal with restricted buttons is opened switch the version, click on "Info" button and verify modal data',
       async () => {
         await organizationPrompts.selectEntity(prompt.name, {
           isHttpMethodTriggered: true,
         });
+        await promptPreviewModalAssertion.assertPromptPreviewModalState(
+          'visible',
+        );
+        for (const availableButton of [
+          promptPreviewModal.promptDuplicateButton,
+          promptPreviewModal.promptExportButton,
+          promptPreviewModal.promptUnpublishButton,
+          promptPreviewModal.promptInfoButton,
+        ]) {
+          await promptPreviewModalAssertion.assertElementState(
+            availableButton,
+            'visible',
+          );
+        }
+        for (const notAvailableButton of [
+          promptPreviewModal.editPromptButton,
+          promptPreviewModal.promptMoveToButton,
+          promptPreviewModal.promptShareButton,
+          promptPreviewModal.promptPublishButton,
+          promptPreviewModal.promptDeleteButton,
+        ]) {
+          await promptPreviewModalAssertion.assertElementState(
+            notAvailableButton,
+            'hidden',
+          );
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Hover over "Unpublish" button and verify it is highlighted and tooltip is shown',
+      async () => {
+        await promptPreviewModal.promptUnpublishButton.hoverOver();
+        await promptPreviewModalAssertion.assertElementColor(
+          promptPreviewModal.promptUnpublishButton,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+        );
+        await tooltipAssertion.assertTooltipContent(
+          ExpectedPromptModalConst.unpublishButtonTooltip,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify unpublish request modal is opened on click the button',
+      async () => {
+        await promptPreviewModal.promptUnpublishButton.click();
+        await publishingRequestModalAssertion.assertElementState(
+          publishingRequestModal,
+          'visible',
+        );
+        await promptToPublishAssertion.assertEntityColor(
+          { name: prompt.name },
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textError),
+        );
+        await publishingRequestModal.cancelButton.click();
+        await promptPreviewModalAssertion.assertPromptPreviewModalState(
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Switch the version, click on "Info" button and verify modal data',
+      async () => {
         await promptPreviewModal.version.click();
         await promptPreviewVersionDropdownMenu.selectMenuOption(firstVersion, {
           triggeredHttpMethod: 'GET',

@@ -2,8 +2,8 @@ import { BasePage, UploadDownloadData, apiTimeout } from './basePage';
 
 import config from '@/config/chat.playwright.config';
 import { API } from '@/src/testData';
-import { SharedPromptPreviewModal } from '@/src/ui/webElements';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
+import { PromptPreviewModalWindow } from '@/src/ui/webElements/promptPreviewModalWindow';
 import { Request } from 'playwright-chromium';
 import { PageFunction } from 'playwright-core/types/structs';
 
@@ -78,7 +78,7 @@ export class DialHomePage extends BasePage {
       await sharedFolderConversation.waitFor({ state: 'attached' });
       await chat.getChatHeader().waitForState();
     } else if (options?.isPromptShared) {
-      const promptPreviewModal = new SharedPromptPreviewModal(this.page);
+      const promptPreviewModal = new PromptPreviewModalWindow(this.page);
       await promptPreviewModal.waitForState();
       await promptPreviewModal.promptName.waitForState();
     } else {

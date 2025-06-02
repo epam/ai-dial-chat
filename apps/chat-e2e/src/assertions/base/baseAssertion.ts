@@ -383,6 +383,17 @@ export class BaseAssertion {
       .toEqual(expectedInnerText);
   }
 
+  public async assertElementTextWrap(
+    element: BaseElement | Locator,
+    expectedWrap: Overflow,
+  ) {
+    const elementLocator = this.getElementLocator(element);
+    await expect(
+      elementLocator,
+      ExpectedMessages.elementTextWrapIsValid,
+    ).toHaveCSS(Styles.overflow_wrap, expectedWrap);
+  }
+
   public async assertElementTextIsTruncated(
     element: BaseElement | Locator,
     expectedMessage?: string,
