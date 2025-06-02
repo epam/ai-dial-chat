@@ -2,7 +2,7 @@ import { Prompt } from '@/chat/types/prompt';
 import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialTest from '@/src/core/dialFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
-import { ExpectedConstants } from '@/src/testData';
+import { ExpectedConstants, ExpectedPromptModalConst } from '@/src/testData';
 
 dialSharedWithMeTest(
   'Share prompt',
@@ -11,7 +11,7 @@ dialSharedWithMeTest(
     promptData,
     dataInjector,
     additionalShareUserSharedWithMePromptAssertion,
-    additionalShareUserSharedPromptPreviewModalAssertion,
+    additionalShareUserPromptPreviewModalAssertion,
     dialHomePage,
     prompts,
     promptDropdownMenu,
@@ -57,19 +57,19 @@ dialSharedWithMeTest(
           'visible',
         );
 
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalState(
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
-          ExpectedConstants.promptViewModalTitle,
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
+          ExpectedPromptModalConst.promptViewModalTitle,
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptName(
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptName(
           prompt.name,
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptDescription(
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptDescription(
           prompt.description,
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptContent(
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptContent(
           prompt.content!,
         );
       },

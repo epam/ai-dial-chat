@@ -2,7 +2,11 @@ import { Prompt } from '@/chat/types/prompt';
 import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialTest from '@/src/core/dialFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
-import { ExpectedConstants, MenuOptions } from '@/src/testData';
+import {
+  ExpectedConstants,
+  ExpectedPromptModalConst,
+  MenuOptions,
+} from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 
 dialSharedWithMeTest(
@@ -21,7 +25,7 @@ dialSharedWithMeTest(
     additionalShareUserPromptPreviewModal,
     additionalShareUserVariableModalDialog,
     additionalShareUserSharedWithMePromptAssertion,
-    additionalShareUserSharedPromptPreviewModalAssertion,
+    additionalShareUserPromptPreviewModalAssertion,
     additionalShareUserVariableModalAssertion,
     additionalShareUserSendMessageAssertion,
     setTestIds,
@@ -65,19 +69,19 @@ dialSharedWithMeTest(
           { name: prompt.name },
           Colors.backgroundAccentTertiaryAlphaDark,
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalState(
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
-          ExpectedConstants.promptViewModalTitle,
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
+          ExpectedPromptModalConst.promptViewModalTitle,
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptName(
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptName(
           prompt.name,
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptDescription(
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptDescription(
           promptDescription,
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptContent(
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptContent(
           promptContent,
         );
       },
