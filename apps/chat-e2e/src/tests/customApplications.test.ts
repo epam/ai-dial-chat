@@ -55,6 +55,7 @@ dialTest(
     agentDetailsModalAssertion,
     marketplaceContainer,
     marketplace,
+    header,
   }) => {
     setTestIds(
       'EPMRTC-5130',
@@ -387,7 +388,8 @@ dialTest(
 
 dialTest(
   'Edit custom application\n' + //EPMRTC-5131
-    'Edit version for custom app', //EPMRTC-4305
+    'Edit version for custom app\n' + //EPMRTC-4305
+    'DIAL logo click on second step in AppEditor saves app ( decided on daily to leave for now)', // EPMRTC-5747
   async ({
     marketplacePage,
     marketplaceAgentsSection,
@@ -400,8 +402,13 @@ dialTest(
     customApplicationBuilder,
     applicationApiHelper,
     appEditorHeaderAssertion,
+    navigationPanel,
+    dialHomePage,
+    toastAssertion,
+    agentInfo,
+    localStorageManager,
   }) => {
-    setTestIds('EPMRTC-5131', 'EPMRTC-4305');
+    setTestIds('EPMRTC-5131', 'EPMRTC-4305', 'EPMRTC-5747');
     const updatedDescription = GeneratorUtil.randomString(25);
     const updatedCompletionUrl = `http://updated-${GeneratorUtil.randomString(6)}.com`;
     const appEntity = {
@@ -409,6 +416,7 @@ dialTest(
       version: '1.1.1',
       description: GeneratorUtil.randomString(20),
     } as DialAIEntityModel;
+    await localStorageManager.setShowSideBarPanels();
 
     await dialTest.step(
       'Precondition: Create custom application via API',
@@ -426,6 +434,7 @@ dialTest(
       await marketplacePage.openMyWorkspacePage({
         updateInstalledDeployments: false,
       });
+      await marketplacePage.waitForPageLoaded();
     });
 
     await dialTest.step(
@@ -473,7 +482,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Update any field on step "General info" and click Save and exit link',
+      'Update any field on step "General info", close the app editor by clicking on the header logo, then go back to the marketplace',
       async () => {
         await appEditorHeader.goOnGeneralInfoStep();
         await baseAssertion.assertElementState(appEditorGeneralForm);
@@ -494,8 +503,12 @@ dialTest(
           description: appEntity.description,
         });
         await appEditorHeader.focusOn();
-        await appEditorHeader.saveAndExitButton.click();
+        await appEditorHeader.logo.click();
+        await dialHomePage.waitForPageLoaded();
+        await baseAssertion.assertElementState(agentInfo, 'visible');// Assert no validation error appeared
+        await toastAssertion.assertToastIsHidden();
         await baseAssertion.assertElementState(appEditorGeneralForm, 'hidden');
+        await navigationPanel.goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
       },
     );
@@ -521,7 +534,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Check that updated field values from steps 4, 5 are still displayed',
+      'Check that updated field values are still displayed',
       async () => {
         await baseAssertion.assertElementState(appEditorViewForm);
 
