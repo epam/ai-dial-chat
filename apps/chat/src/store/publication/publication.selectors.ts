@@ -98,11 +98,13 @@ const selectResourcesToReviewByPublicationUrl = createSelector(
   },
 );
 
+const _selectRules = (state: RootState) => rootSelector(state).rules;
+
 const selectRulesByPath = createSelector(
-  [rootSelector, (_state, path: string) => path],
-  (state, path) => {
+  [_selectRules, (_state, path: string) => path],
+  (rules, path) => {
     return Object.fromEntries(
-      Object.entries(state.rules).filter(
+      Object.entries(rules).filter(
         ([key]) => path.startsWith(key) && key.split('/').length !== 1,
       ),
     );

@@ -6,7 +6,13 @@ import {
   Sorting,
 } from '@/src/testData';
 import { IconApiHelper } from '@/src/testData/api';
-import { Attributes, Colors, Cursors, Styles } from '@/src/ui/domData';
+import {
+  Attributes,
+  Colors,
+  Cursors,
+  Overflow,
+  Styles,
+} from '@/src/ui/domData';
 import { BaseElement } from '@/src/ui/webElements';
 import { SortingUtil } from '@/src/utils/sortingUtil';
 import { Locator, expect } from '@playwright/test';
@@ -361,6 +367,17 @@ export class BaseAssertion {
         expectedMessage ?? ExpectedMessages.elementTextIsValid,
       )
       .toEqual(expectedInnerText);
+  }
+
+  public async assertElementTextWrap(
+    element: BaseElement | Locator,
+    expectedWrap: Overflow,
+  ) {
+    const elementLocator = this.getElementLocator(element);
+    await expect(
+      elementLocator,
+      ExpectedMessages.elementTextWrapIsValid,
+    ).toHaveCSS(Styles.overflow_wrap, expectedWrap);
   }
 
   private getElementLocator(element: BaseElement | Locator) {

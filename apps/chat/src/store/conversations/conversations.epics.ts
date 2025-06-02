@@ -429,15 +429,15 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                   !widgetModelsRefs.includes(reference),
               );
 
-            const overlayDefaultModel =
-              SettingsSelectors.selectOverlayDefaultModelId(state);
+            const overlayDefaultModelReference =
+              SettingsSelectors.selectOverlayDefaultModelReference(state);
             const isOverlay = SettingsSelectors.selectIsOverlay(state);
 
-            if (isOverlay && overlayDefaultModel) {
+            if (isOverlay && overlayDefaultModelReference) {
               return getDefaultModelReference({
                 recentModelReferences,
                 modelReferences,
-                defaultModelId: overlayDefaultModel,
+                defaultModelReference: overlayDefaultModelReference,
               });
             }
 
@@ -645,11 +645,17 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
       }
 
       const state = state$.value;
+      const isOverlay = SettingsSelectors.selectIsOverlay(state);
+      const overlayNewConversationsFolder =
+        state.overlay.newConversationsFolder;
       const conversations = ConversationsSelectors.selectConversations(state);
 
-      const folderId = isEntityIdExternal(conversation)
-        ? getConversationRootId()
-        : conversation.folderId;
+      const folderId =
+        isOverlay && overlayNewConversationsFolder
+          ? overlayNewConversationsFolder
+          : isEntityIdExternal(conversation)
+            ? getConversationRootId()
+            : conversation.folderId;
 
       const newConversationName = getNextDefaultName(
         `[Playback] ${conversation.name}`,
@@ -700,9 +706,15 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
       const conversations = ConversationsSelectors.selectConversations(
         state$.value,
       );
-      const conversationFolderId = isEntityIdExternal(conversation)
-        ? getConversationRootId() // duplicate external entities in the root only
-        : conversation.folderId;
+      const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
+      const overlayNewConversationsFolder =
+        state$.value.overlay.newConversationsFolder;
+      const conversationFolderId =
+        isOverlay && overlayNewConversationsFolder
+          ? overlayNewConversationsFolder
+          : isEntityIdExternal(conversation)
+            ? getConversationRootId() // duplicate external entities in the root only
+            : conversation.folderId;
 
       const newConversation: Conversation = regenerateConversationId({
         ...omit(conversation, ['publicationInfo']),

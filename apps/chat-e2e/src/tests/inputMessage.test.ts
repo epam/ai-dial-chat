@@ -146,7 +146,10 @@ dialAdminTest(
       await dataInjector.createConversations([publishedConversation]);
       const publishRequest = publishRequestBuilder
         .withName(GeneratorUtil.randomPublicationRequestName())
-        .withConversationResource(publishedConversation, PublishActions.ADD)
+        .withConversationInFolderResource(
+          publishedConversation,
+          PublishActions.ADD,
+        )
         .build();
       const publication =
         await publicationApiHelper.createPublishRequest(publishRequest);

@@ -8,6 +8,7 @@ import {
 dialTest(
   'Error message appears if to add a dot to the end of prompt name.\n' +
     'Prompt name: allowed special characters.\n' +
+    '[View prompt] Edit.\n' +
     'Prompt name: restricted special characters are not allowed to be entered while renaming.\n' +
     'Prompt name: restricted special characters are removed from prompt name if to copy-paste.\n' +
     'Prompt name: smiles, hieroglyph, specific letters in name.\n' +
@@ -31,6 +32,7 @@ dialTest(
     setTestIds(
       'EPMRTC-2991',
       'EPMRTC-1278',
+      'EPMRTC-6147',
       'EPMRTC-2993',
       'EPMRTC-2994',
       'EPMRTC-2997',
@@ -132,6 +134,9 @@ dialTest(
         );
         await promptModalDialog.saveButton.click();
         prompt.name = ExpectedConstants.allowedSpecialSymbolsInName();
+        await promptPreviewModalAssertion.assertPromptPreviewModalState(
+          'visible',
+        );
       },
     );
 

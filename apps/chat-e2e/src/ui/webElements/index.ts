@@ -38,7 +38,6 @@ export * from './filesModalHeader';
 export * from './selectFolderModal';
 export * from './editInputActions';
 export * from './playbackMessage';
-export * from './sharedPromptPreviewModal';
 export * from './azureAD';
 export * from './keycloak';
 export * from './publishingRequestModal';

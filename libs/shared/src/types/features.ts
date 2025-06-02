@@ -48,8 +48,8 @@ export enum Feature {
   CustomLogo = 'custom-logo', // Enable setting for custom logo feature
 
   // Applications
-  CustomApplications = 'custom-applications', // custom applications
-  CodeApps = 'code-apps', // Enable Code apps
+  CustomApplications = 'custom-applications', // Enable creating of applications ('Add app' button/menu)
+  CodeApps = 'code-apps', // Enable creating of Code apps (into the 'Add app' menu)
 
   // Marketplace
   Marketplace = 'marketplace', // Enable Marketplace

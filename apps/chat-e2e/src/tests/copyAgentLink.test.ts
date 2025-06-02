@@ -89,7 +89,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open "Dial Marketplace", open created app card and select non-default version',
+      'Open "DIAL Marketplace", open created app card and select non-default version',
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();

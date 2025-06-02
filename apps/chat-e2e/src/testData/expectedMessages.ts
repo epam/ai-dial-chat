@@ -315,6 +315,7 @@ export enum ExpectedMessages {
   selectFolderAreaIsScrollable = 'Select folder area is scrollable vertically',
   borderColorsAreValid = 'Element border colors are valid',
   elementCursorIsValid = 'Element cursor is valid',
+  elementTextWrapIsValid = 'Element text wrap is valid',
   uploadToPathIsValid = 'Upload to path is valid',
   uploadToPathIsTruncated = 'Upload to path is truncated',
   folderCheckboxIsNotVisible = 'Folder check-box is not visible',

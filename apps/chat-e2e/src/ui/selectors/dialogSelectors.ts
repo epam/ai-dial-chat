@@ -12,6 +12,7 @@ export const Popup = {
 };
 
 export const PromptModal = {
+  title: '[data-qa="modal-entity-name"]',
   promptModalDialog: '[data-qa="prompt-modal"]',
   promptName: '[data-qa="prompt-name"]',
   promptDescription: '[data-qa="prompt-descr"]',
@@ -35,10 +36,12 @@ export const PromptPreviewModal = {
   movePromptButton: '[data-qa="move-prompt"]',
   sharePromptButton: '[data-qa="share-prompt"]',
   publishPromptButton: '[data-qa="publish-prompt"]',
+  unpublishPromptButton: '[data-qa="unpublish-prompt"]',
   deletePromptButton: '[data-qa="delete-prompt"]',
   promptInfoButton: '[data-qa="info-prompt"]',
   usePromptButton: '[data-qa="use-prompt"]',
   promptPreviewVersion: '[data-qa="version"]',
+  promptNotFound: '[data-qa="not-found"]',
 };
 
 export const VariableModal = {
