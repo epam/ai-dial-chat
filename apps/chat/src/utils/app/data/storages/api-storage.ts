@@ -12,7 +12,11 @@ import { regenerateConversationId } from '@/src/utils/app/conversation';
 import { ApiEntityStorage } from '@/src/utils/app/data/storages/api/api-entity-storage';
 import { generateNextName } from '@/src/utils/app/folders';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
-import { ApiUtils, getOpsApiUrl, parseApplicationApiKey } from '@/src/utils/server/api';
+import {
+  ApiUtils,
+  getOpsApiUrl,
+  parseApplicationApiKey,
+} from '@/src/utils/server/api';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {

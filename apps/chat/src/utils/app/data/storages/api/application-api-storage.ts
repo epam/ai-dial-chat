@@ -68,15 +68,12 @@ export class ApplicationApiStorage extends ApiEntityStorage<
       | SimpleApplicationStatus.REDEPLOY,
   ): Observable<void> {
     try {
-      return ApiUtils.request(
-        getOpsApiUrl(ServerSlugs.APPLICATION, status),
-        {
-          method: HTTPMethod.POST,
-          body: JSON.stringify({
-            url: ApiUtils.encodeApiUrl(applicationId),
-          }),
-        },
-      );
+      return ApiUtils.request(getOpsApiUrl(ServerSlugs.APPLICATION, status), {
+        method: HTTPMethod.POST,
+        body: JSON.stringify({
+          url: ApiUtils.encodeApiUrl(applicationId),
+        }),
+      });
     } catch (error) {
       return throwError(() => error);
     }
