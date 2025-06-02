@@ -411,6 +411,7 @@ const createConversationEffectEpic: AppEpic = (action$, state$) =>
         ofType(ConversationsActions.createNotLocalConversationsSuccess.type),
         takeUntil(timer(10000)),
         filter(Boolean),
+        first(({ payload }) => payload.length > 0),
         mergeMap(({ payload }) => {
           const conversations = payload;
           const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
@@ -451,6 +452,7 @@ const createLocalConversationEffectEpic: AppEpic = (action$, state$) =>
         ofType(ConversationsActions.addConversations.type),
         takeUntil(timer(10000)),
         filter(Boolean),
+        first(({ payload }) => payload.conversations.length > 0),
         mergeMap(({ payload }) => {
           const conversations = payload.conversations;
           const hostDomain = OverlaySelectors.selectHostDomain(state$.value);

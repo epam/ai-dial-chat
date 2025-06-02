@@ -23,7 +23,6 @@ export * from './publishing/publishingApprovalModalAssertion';
 export * from './publishing/publishingRequestModalAssertion';
 export * from './talkToAgentDialogAssertion';
 export * from './sendMessageAssertion';
-export * from './sharedPromptPreviewModalAssertion';
 export * from './sharedWithMePromptsAssertion';
 export * from './shareModalAssertion';
 export * from './sideBarAssertion';
