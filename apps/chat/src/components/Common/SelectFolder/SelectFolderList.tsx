@@ -3,6 +3,7 @@ import { useCallback, useMemo } from 'react';
 import classNames from 'classnames';
 
 import { isConversationId, isFileId, isRootId } from '@/src/utils/app/id';
+import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
 import { AdditionalItemData, FeatureType } from '@/src/types/common';
@@ -74,10 +75,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
     if (!searchTerm) return allFolders;
 
     return allFolders.filter((folder) =>
-      folder.name
-        ?.trim()
-        .toLowerCase()
-        .includes(searchTerm.trim().toLowerCase()),
+      doesEntityContainSearchTerm(folder, searchTerm),
     );
   }, [searchTerm, allFolders]);
 
