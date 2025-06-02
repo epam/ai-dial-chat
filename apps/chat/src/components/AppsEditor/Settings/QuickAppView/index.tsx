@@ -170,7 +170,14 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
       dispatch(ApplicationActions.setShouldSaveApplication(false));
       dispatch(ApplicationActions.setExitAfterSave(false));
     },
-    [exitAfterSave, dispatch, isShared, oldApplication, schema, isApplicationOnReview],
+    [
+      exitAfterSave,
+      dispatch,
+      isShared,
+      oldApplication,
+      schema,
+      isApplicationOnReview,
+    ],
   );
 
   const autoSaveHandler = useCallback(() => {

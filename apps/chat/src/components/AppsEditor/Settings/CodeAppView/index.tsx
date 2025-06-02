@@ -210,7 +210,14 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
       dispatch(ApplicationActions.setShouldSaveApplication(false));
       dispatch(ApplicationActions.setExitAfterSave(false));
     },
-    [oldApplication, exitAfterSave, applicationStatus, isShared, dispatch, isApplicationOnReview],
+    [
+      oldApplication,
+      exitAfterSave,
+      applicationStatus,
+      isShared,
+      dispatch,
+      isApplicationOnReview,
+    ],
   );
 
   register('sourceFiles', validators['sourceFiles']);
