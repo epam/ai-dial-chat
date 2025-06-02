@@ -1,11 +1,18 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { extractNameFromEmail, formatDate } from '@/src/utils/app/common';
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { isConversationId, isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { getPublicationId } from '@/src/utils/app/publications';
+import { constructPath, splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
+import {
+  parseConversationApiKey,
+  pathKeySeparator,
+} from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
 import { Publication, PublicationRule } from '@/src/types/publication';
@@ -85,6 +92,7 @@ export function PublicationHandler({ publication }: Props) {
   const isPublicationUpdating = useAppSelector(
     PublicationSelectors.selectIsPublicationUpdating,
   );
+  const editState = useAppSelector(PublicationSelectors.selectEditState);
 
   const publicationAuthor = useMemo(() => {
     return extractNameFromEmail(publication.author) ?? t('Unknown');
@@ -116,6 +124,48 @@ export function PublicationHandler({ publication }: Props) {
       })) ?? [],
     [publication.rules],
   );
+
+  const handleUpdateRequest = useCallback(() => {
+    dispatch(
+      PublicationActions.updatePublicationRequest({
+        url: publication.url,
+        dataToUpdate: {
+          name: publication.name ?? '',
+          targetFolder: publication.targetFolder,
+          rules: publication.rules,
+          resources: publication.resources.map((resource) => {
+            const { name, version } = editState[resource.reviewUrl];
+            const modelName = splitEntityId(resource.reviewUrl).name;
+            const parsedModelReference =
+              parseConversationApiKey(modelName).model.id;
+            const newApiKey = isConversationId(resource.reviewUrl)
+              ? [parsedModelReference, name, version].join(pathKeySeparator)
+              : isFileId(resource.reviewUrl)
+                ? [name].join(pathKeySeparator)
+                : [name, version].join(pathKeySeparator);
+
+            return {
+              action: resource.action,
+              sourceUrl: resource.sourceUrl ?? '',
+              targetUrl: constructPath(
+                getFolderIdFromEntityId(resource.targetUrl),
+                newApiKey,
+              ),
+            };
+          }),
+        },
+      }),
+    );
+    dispatch(PublicationActions.setIsEditMode(false));
+  }, [
+    dispatch,
+    editState,
+    publication.name,
+    publication.resources,
+    publication.rules,
+    publication.targetFolder,
+    publication.url,
+  ]);
 
   const publishToUrl = publication.targetFolder
     ? publication.targetFolder.replace(/^[^/]+/, 'Organization')
@@ -259,7 +309,10 @@ export function PublicationHandler({ publication }: Props) {
             </div>
           </div>
         </div>
-        <PublicationHandlerFooter publication={publication} />
+        <PublicationHandlerFooter
+          onUpdateRequest={handleUpdateRequest}
+          publication={publication}
+        />
       </div>
       {isCompareModalOpened && publication.targetFolder && (
         <CompareRulesModal
