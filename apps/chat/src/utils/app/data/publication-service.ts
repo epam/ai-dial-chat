@@ -1,6 +1,6 @@
 import { Observable, map } from 'rxjs';
 
-import { ApiUtils } from '@/src/utils/server/api';
+import { ApiUtils, getOpsApiUrl } from '@/src/utils/server/api';
 
 import { BackendDataNodeType, FeatureType } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
@@ -45,7 +45,7 @@ export class PublicationService {
   public static createPublicationRequest(
     publicationData: PublicationRequestModel,
   ): Observable<Publication> {
-    return ApiUtils.request(`/api/ops/${ServerSlugs.PUBLICATION_CREATE}`, {
+    return ApiUtils.request(getOpsApiUrl(ServerSlugs.PUBLICATION_CREATE), {
       method: HTTPMethod.POST,
       body: JSON.stringify(preparePublicationData(publicationData)),
     });
@@ -58,7 +58,7 @@ export class PublicationService {
     publicationData: PublicationRequestModel;
     url: string;
   }): Observable<Publication> {
-    return ApiUtils.request(`/api/ops/${ServerSlugs.PUBLICATION_UPDATE}`, {
+    return ApiUtils.request(getOpsApiUrl(ServerSlugs.PUBLICATION_UPDATE), {
       method: HTTPMethod.POST,
       body: JSON.stringify({
         ...preparePublicationData(publicationData),
@@ -68,7 +68,7 @@ export class PublicationService {
   }
 
   public static publicationList(): Observable<PublicationInfo[]> {
-    return ApiUtils.request(`/api/ops/${ServerSlugs.PUBLICATION_LIST}`, {
+    return ApiUtils.request(getOpsApiUrl(ServerSlugs.PUBLICATION_LIST), {
       method: HTTPMethod.POST,
       body: JSON.stringify({
         url: 'publications/public/',
@@ -88,7 +88,7 @@ export class PublicationService {
   }
 
   public static getPublication(url: string): Observable<Publication> {
-    return ApiUtils.request(`/api/ops/${ServerSlugs.PUBLICATION_GET}`, {
+    return ApiUtils.request(getOpsApiUrl(ServerSlugs.PUBLICATION_GET), {
       method: HTTPMethod.POST,
       body: JSON.stringify({ url: ApiUtils.encodeApiUrl(url) }),
     }).pipe(
@@ -167,14 +167,14 @@ export class PublicationService {
   }
 
   public static approvePublication(url: string): Observable<Publication> {
-    return ApiUtils.request(`/api/ops/${ServerSlugs.PUBLICATION_APPROVE}`, {
+    return ApiUtils.request(getOpsApiUrl(ServerSlugs.PUBLICATION_APPROVE), {
       method: HTTPMethod.POST,
       body: JSON.stringify({ url: ApiUtils.encodeApiUrl(url) }),
     });
   }
 
   public static rejectPublication(url: string): Observable<Publication> {
-    return ApiUtils.request(`/api/ops/${ServerSlugs.PUBLICATION_REJECT}`, {
+    return ApiUtils.request(getOpsApiUrl(ServerSlugs.PUBLICATION_REJECT), {
       method: HTTPMethod.POST,
       body: JSON.stringify({ url: ApiUtils.encodeApiUrl(url) }),
     });
@@ -183,7 +183,7 @@ export class PublicationService {
   public static getRules(
     path: string,
   ): Observable<Record<string, PublicationRule[]>> {
-    return ApiUtils.request(`/api/ops/${ServerSlugs.PUBLICATION_RULE_LIST}`, {
+    return ApiUtils.request(getOpsApiUrl(ServerSlugs.PUBLICATION_RULE_LIST), {
       method: HTTPMethod.POST,
       body: JSON.stringify({
         url: `${ApiUtils.encodeApiUrl(

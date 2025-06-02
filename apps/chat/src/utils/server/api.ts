@@ -20,6 +20,7 @@ import { NA_VERSION } from '@/src/constants/public';
 import { validVersionRegEx } from '@/src/constants/versions';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
+import { ServerSlugs } from '@/src/types/slugs-types';
 
 export const pathKeySeparator = '__';
 const encodedKeySeparator = '%5F%5F';
@@ -320,3 +321,5 @@ export const getVersionFromId = (id: string) => {
 
   return version && validVersionRegEx.test(version) ? version : NA_VERSION;
 };
+
+export const getOpsApiUrl = (slug: ServerSlugs, ...params: string[]): string => constructPath('/api/ops', slug, ...params);

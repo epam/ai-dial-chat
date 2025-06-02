@@ -8,6 +8,7 @@ import { constructPath } from '@/src/utils/app/file';
 import {
   ApiUtils,
   getApplicationApiKey,
+  getOpsApiUrl,
   parseApplicationApiKey,
 } from '@/src/utils/server/api';
 
@@ -68,7 +69,7 @@ export class ApplicationApiStorage extends ApiEntityStorage<
   ): Observable<void> {
     try {
       return ApiUtils.request(
-        constructPath(`/api/ops/${ServerSlugs.APPLICATION}`, status),
+        getOpsApiUrl(ServerSlugs.APPLICATION, status),
         {
           method: HTTPMethod.POST,
           body: JSON.stringify({
@@ -83,7 +84,7 @@ export class ApplicationApiStorage extends ApiEntityStorage<
 
   getLogs(path: string): Observable<ApplicationLogsType> {
     try {
-      return ApiUtils.request(`/api/ops/${ServerSlugs.APPLICATION_LOGS}`, {
+      return ApiUtils.request(getOpsApiUrl(ServerSlugs.APPLICATION_LOGS), {
         method: HTTPMethod.POST,
         body: JSON.stringify({
           url: ApiUtils.encodeApiUrl(path),
