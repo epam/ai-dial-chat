@@ -1,5 +1,10 @@
 import { RefObject } from 'react';
-import { FieldErrors, FieldValues } from 'react-hook-form';
+import {
+  FieldErrors,
+  FieldValues,
+  Path,
+  UseFormGetFieldState,
+} from 'react-hook-form';
 
 import classNames from 'classnames';
 
@@ -74,3 +79,18 @@ export const FormValidations = {
 
 export const getNameReg = (maxLength = 160, minLength = 2) =>
   new RegExp(`^[^${notAllowedSymbols}]{${minLength},${maxLength}}$`);
+
+export const getValidFormFields = <T extends object>(
+  data: T,
+  getFieldState: UseFormGetFieldState<T>,
+): Partial<T> => {
+  const validValues: Partial<T> = {};
+
+  Object.keys(data).forEach((key) => {
+    if (!getFieldState(key as Path<T>).invalid) {
+      validValues[key as keyof T] = data[key as keyof T];
+    }
+  });
+
+  return validValues;
+};

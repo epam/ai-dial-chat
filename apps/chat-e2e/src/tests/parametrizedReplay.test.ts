@@ -101,7 +101,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         await chat.replay.click();
         await variableModalAssertion.assertVariableModalState('visible');
       },
@@ -257,7 +257,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         await chat.changeAgentButton.click();
         await talkToAgentDialog.selectAgent(randomModel, marketplacePage);
         await chat.replay.click();
@@ -267,7 +267,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Export conversation and then delete all Dial entities',
+      'Export conversation and then delete all DIAL entities',
       async () => {
         await conversations.openEntityDropdownMenu(conversation.name, {
           exactMatch: true,
@@ -372,7 +372,7 @@ dialSharedWithMeTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         await chat.proceedReplaying();
         await variableModalAssertion.assertVariableModalState('hidden');
       },
@@ -383,7 +383,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           conversation.name,
         );
         await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
@@ -511,7 +511,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );

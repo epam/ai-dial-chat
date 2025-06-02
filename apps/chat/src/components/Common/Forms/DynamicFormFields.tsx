@@ -102,15 +102,15 @@ export const DynamicFormFields = <
         {fields.map((field, i) => (
           <div
             key={field.label}
-            className="flex w-full flex-wrap items-center gap-3 rounded border border-tertiary bg-layer-3 p-[11px] md:flex-nowrap md:p-2"
+            className="flex w-full flex-wrap items-center gap-3 rounded border border-tertiary bg-layer-3 p-[11px] md:flex-nowrap md:py-[7px]"
           >
             <div className="flex grow flex-col gap-2 md:flex-row md:items-center md:gap-3">
               {!field.editableKey ? (
-                <div className="w-full px-2 py-[5px] text-sm text-primary md:w-[127px] md:py-1">
+                <div className="w-full px-2 py-[5px] text-sm text-primary md:w-[127px] md:shrink-0 md:py-1">
                   {field.visibleName ?? field.label}
                 </div>
               ) : (
-                <div className="w-full md:w-[127px]">
+                <div className="w-full md:w-[127px] md:shrink-0">
                   <input
                     {...register(`${name}.${i}.label` as Path<T>, keyOptions)}
                     disabled={disabled}

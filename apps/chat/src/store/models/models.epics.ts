@@ -73,13 +73,8 @@ const initRecentModelsEpic: AppEpic = (action$, state$) =>
         map((state) => ModelsSelectors.selectModels(state)),
         filter((models) => models && models.length > 0),
         take(1),
-        map((models) => ({
-          models,
-          recentModelsIds,
-          defaultRecentModelsIds:
-            SettingsSelectors.selectDefaultRecentModelsIds(state$.value),
-        })),
-        switchMap(({ models, recentModelsIds, defaultRecentModelsIds }) => {
+        switchMap((models) => {
+          const state = state$.value;
           const filteredRecentModels = recentModelsIds?.filter(
             (resentModelId: string) =>
               models.some(
@@ -87,22 +82,28 @@ const initRecentModelsEpic: AppEpic = (action$, state$) =>
                   resentModelId === reference || resentModelId === id,
               ),
           );
-          const filteredDefaultRecentModelsIds = defaultRecentModelsIds.filter(
-            (resentModelId: string) =>
-              models.some(
-                ({ reference, id }) =>
-                  resentModelId === reference || resentModelId === id,
-              ),
-          );
 
-          return of(
-            ModelsActions.initRecentModels({
-              defaultRecentModelsIds: filteredDefaultRecentModelsIds,
-              localStorageRecentModelsIds: filteredRecentModels,
-              defaultModelId: SettingsSelectors.selectDefaultModelId(
-                state$.value,
+          const defaultRecentModelsIds =
+            SettingsSelectors.selectDefaultRecentModelsIds(state);
+          const modelsMap = ModelsSelectors.selectModelsMap(state);
+          const filteredDefaultRecentModelsReferences = defaultRecentModelsIds
+            .map((id) => modelsMap[id]?.reference)
+            .filter(Boolean) as string[];
+
+          return concat(
+            of(
+              SettingsActions.setDefaultRecentModelsIds(
+                filteredDefaultRecentModelsReferences,
               ),
-            }),
+            ),
+            of(
+              ModelsActions.initRecentModels({
+                defaultRecentModelsIds: filteredDefaultRecentModelsReferences,
+                localStorageRecentModelsIds: filteredRecentModels,
+                defaultModelReference:
+                  SettingsSelectors.selectDefaultModelReference(state),
+              }),
+            ),
           );
         }),
       );
@@ -205,7 +206,7 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
 
           const actions: Observable<AppAction>[] = [];
 
-          const recentModelIds = ModelsSelectors.selectRecentModelsIds(
+          const recentModelsIds = ModelsSelectors.selectRecentModelsIds(
             state$.value,
           );
 
@@ -215,7 +216,7 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
 
           const references = [
             ...installedModelIds,
-            ...recentModelIds,
+            ...recentModelsIds,
             ...myAppIds,
           ];
           const modelKeys = ModelsSelectors.selectAllGroupModelKeySet(
@@ -261,9 +262,8 @@ const getInstalledModelIdsFailEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ModelsActions.getInstalledModelIdsFail.type),
     switchMap(({ payload: myAppIds }) => {
-      const defaultModelIds = SettingsSelectors.selectDefaultRecentModelsIds(
-        state$.value,
-      );
+      const defaultRecentModelIds =
+        SettingsSelectors.selectDefaultRecentModelsIds(state$.value);
       const recentModelIds = ModelsSelectors.selectRecentModelsIds(
         state$.value,
       );
@@ -274,7 +274,7 @@ const getInstalledModelIdsFailEpic: AppEpic = (action$, state$) =>
 
       const modelsToInstall = recentModelIds.length
         ? recentModelIds
-        : defaultModelIds;
+        : defaultRecentModelIds;
 
       const installCandidates = [...myAppIds, ...modelsToInstall];
       const agentsToInstall = installCandidates.length
@@ -453,16 +453,16 @@ const getModelsSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ModelsActions.getModelsSuccess.type),
     switchMap(({ payload }) => {
-      const overlayDefaultModelId =
-        SettingsSelectors.selectOverlayDefaultModelId(state$.value);
+      const overlayDefaultModelReference =
+        SettingsSelectors.selectOverlayDefaultModelReference(state$.value);
 
-      const defaultModelId = overlayDefaultModelId
+      const defaultModeReference = overlayDefaultModelReference
         ? undefined
-        : payload.models.find((model) => model.isDefault)?.id;
+        : payload.models.find((model) => model.isDefault)?.reference;
 
-      if (defaultModelId) {
+      if (defaultModeReference) {
         return concat(
-          of(SettingsActions.setDefaultModelId({ defaultModelId })),
+          of(SettingsActions.setDefaultModeReference({ defaultModeReference })),
           of(ModelsActions.getInstalledModelIds()),
         );
       }

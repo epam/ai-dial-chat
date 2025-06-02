@@ -37,6 +37,7 @@ export abstract class ApiEntityStorage<
       name: folder.name,
       folderId: constructPath(apiKey, bucket, parentPath),
       type: EnumMapper.getFeatureTypeByApiKey(this.getStorageKey()),
+      permissions: folder.permissions,
     };
   }
 
@@ -50,6 +51,7 @@ export abstract class ApiEntityStorage<
       id,
       updatedAt: entity.updatedAt,
       folderId: constructPath(apiKey, bucket, parentPath),
+      permissions: entity.permissions,
     } as unknown as TEntityInfo;
   }
 

@@ -159,6 +159,19 @@ const getApplicationGeneralDefaultValues = (app: CustomApplicationModel) => {
   };
 };
 
+export const getFormSourceFolder = (sourceFolder?: string) => {
+  const bucket = BucketService.getBucket();
+
+  return sourceFolder && sourceFolder !== `files/${bucket}`
+    ? ApiUtils.decodeApiUrl(sourceFolder)
+    : '';
+};
+const getActualSourceFolder = (formSources?: string) => {
+  const bucket = BucketService.getBucket();
+
+  return formSources || `files/${bucket}`;
+};
+
 export const getCodeAppDefaultValues = ({
   app,
   runtime,
@@ -166,7 +179,6 @@ export const getCodeAppDefaultValues = ({
   app: CustomApplicationModel;
   runtime?: string;
 }): CodeAppFormData => {
-  const bucket = BucketService.getBucket();
   return {
     ...getApplicationGeneralDefaultValues(app),
     id: decodeURIComponent(app.name),
@@ -174,11 +186,7 @@ export const getCodeAppDefaultValues = ({
     completionUrl: app.completionUrl ?? '',
     inputAttachmentTypes: app.inputAttachmentTypes ?? [],
     maxInputAttachments: app.maxInputAttachments,
-    sources:
-      app.function?.sourceFolder &&
-      app.function?.sourceFolder !== `files/${bucket}`
-        ? ApiUtils.decodeApiUrl(app.function.sourceFolder)
-        : '',
+    sources: getFormSourceFolder(app.function?.sourceFolder),
     runtime: app?.function?.runtime ?? runtime ?? 'python3.11',
     endpoints: app?.function?.mapping
       ? Object.entries(app.function.mapping).map(([key, value]) => ({
@@ -278,7 +286,7 @@ export const getCodeAppData = (
       ? Number(formData.maxInputAttachments)
       : undefined,
     function: {
-      sourceFolder: formData.sources,
+      sourceFolder: getActualSourceFolder(formData.sources),
       mapping: formData.endpoints.reduce(
         (acc, option) => ({
           ...acc,
