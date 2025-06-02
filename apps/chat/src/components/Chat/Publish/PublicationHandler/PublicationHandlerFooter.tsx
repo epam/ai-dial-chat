@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { isVersionValid } from '@/src/utils/app/common';
+import { isVersionValid, prepareEntityName } from '@/src/utils/app/common';
 import {
   getFolderIdFromEntityId,
   getParentFolderIdsFromEntityId,
@@ -321,7 +321,10 @@ export const PublicationHandlerFooter = ({
   );
   const isAllResourcesReviewed = resourcesToReview.every((r) => r.reviewed);
   const isEditDisabled = Object.values(editState).some(({ version, name }) => {
-    return !name || (!isVersionValid(version) && version !== NA_VERSION);
+    return (
+      !prepareEntityName(name) ||
+      (!isVersionValid(version) && version !== NA_VERSION)
+    );
   });
   const isEveryResourceForUnpublish = publication.resources.every(
     (resource) => resource.action === PublishActions.DELETE,

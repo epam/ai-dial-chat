@@ -2,7 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { extractNameFromEmail, formatDate } from '@/src/utils/app/common';
+import {
+  extractNameFromEmail,
+  formatDate,
+  prepareEntityName,
+} from '@/src/utils/app/common';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { isConversationId, isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
@@ -135,14 +139,18 @@ export function PublicationHandler({ publication }: Props) {
           rules: publication.rules,
           resources: publication.resources.map((resource) => {
             const { name, version } = editState[resource.reviewUrl];
+
+            const preparedName = prepareEntityName(name);
             const modelName = splitEntityId(resource.reviewUrl).name;
             const parsedModelReference =
               parseConversationApiKey(modelName).model.id;
             const newApiKey = isConversationId(resource.reviewUrl)
-              ? [parsedModelReference, name, version].join(pathKeySeparator)
+              ? [parsedModelReference, preparedName, version].join(
+                  pathKeySeparator,
+                )
               : isFileId(resource.reviewUrl)
-                ? [name].join(pathKeySeparator)
-                : [name, version].join(pathKeySeparator);
+                ? [preparedName].join(pathKeySeparator)
+                : [preparedName, version].join(pathKeySeparator);
 
             return {
               action: resource.action,
