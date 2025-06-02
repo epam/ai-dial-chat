@@ -82,9 +82,11 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     register,
     control,
     handleSubmit: submitWrapper,
-    formState: { errors, isValid, dirtyFields },
+    formState: { errors, isValid, dirtyFields, touchedFields },
     reset,
   } = useFormContext<ApplicationGeneralInfoFormData>();
+
+  const hasBeenTouched = Object.keys(touchedFields).length > 0;
 
   const getLogoId = useCallback(
     (filesIds: string[]) => files.find((f) => f.id === filesIds[0])?.id,
@@ -195,9 +197,11 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     if (!isValid) {
       dispatch(ApplicationActions.setShouldSaveApplication(false));
       dispatch(ApplicationActions.setExitAfterSave(false));
-      dispatch(
-        UIActions.showErrorToast(t('Please fill in all mandatory fields')),
-      );
+      if (hasBeenTouched) {
+        dispatch(
+          UIActions.showErrorToast(t('Please fill in all mandatory fields')),
+        );
+      }
       return;
     }
 
@@ -207,12 +211,13 @@ export const GeneralInfoEditor: React.FC<Props> = ({
   }, [
     shouldSaveApplication,
     exitAfterSave,
-    isValid,
     dispatch,
     t,
     submitWrapper,
     handleSubmit,
     router,
+    isValid,
+    hasBeenTouched,
   ]);
 
   return (
