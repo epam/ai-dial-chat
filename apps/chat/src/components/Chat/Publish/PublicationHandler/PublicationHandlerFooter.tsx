@@ -15,14 +15,13 @@ import {
   isFileId,
   isPromptId,
 } from '@/src/utils/app/id';
-import { constructPath, splitEntityId } from '@/src/utils/app/shared-utils';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 import {
   getVersionFromId,
   parseApplicationApiKey,
   parseConversationApiKey,
   parseFileApiKey,
   parsePromptApiKey,
-  pathKeySeparator,
 } from '@/src/utils/server/api';
 
 import {
@@ -58,6 +57,7 @@ import uniq from 'lodash-es/uniq';
 
 interface Props {
   publication: Publication;
+  onUpdateRequest: () => void;
 }
 
 const getFirstReviewUrl = (
@@ -124,7 +124,10 @@ const getDefaultAllEditEntities = (resources: PublicationResource[]) => {
   return allEditEntitiesMap;
 };
 
-export function PublicationHandlerFooter({ publication }: Props) {
+export const PublicationHandlerFooter = ({
+  publication,
+  onUpdateRequest,
+}: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   const files = useAppSelector(FilesSelectors.selectFiles);
@@ -142,7 +145,6 @@ export function PublicationHandlerFooter({ publication }: Props) {
     ),
   );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
-  const editState = useAppSelector(PublicationSelectors.selectEditState);
 
   const dispatch = useAppDispatch();
 
@@ -303,49 +305,6 @@ export function PublicationHandlerFooter({ publication }: Props) {
     dispatch(PublicationActions.setIsEditMode(!isEditMode));
   }, [dispatch, isEditMode]);
 
-  const handleUpdateRequest = useCallback(() => {
-    dispatch(
-      PublicationActions.updatePublicationRequest({
-        url: publication.url,
-        dataToUpdate: {
-          name: publication.name ?? '',
-          targetFolder: publication.targetFolder,
-          rules: editState.rules,
-          resources: publication.resources.map((resource) => {
-            const { name, version } = editState.resources[resource.reviewUrl];
-            const modelName = splitEntityId(resource.reviewUrl).name;
-            const parsedModelReference =
-              parseConversationApiKey(modelName).model.id;
-            const newApiKey = isConversationId(resource.reviewUrl)
-              ? [parsedModelReference, name, version].join(pathKeySeparator)
-              : isFileId(resource.reviewUrl)
-                ? [name].join(pathKeySeparator)
-                : [name, version].join(pathKeySeparator);
-
-            return {
-              action: resource.action,
-              sourceUrl: resource.sourceUrl ?? '',
-              targetUrl: constructPath(
-                getFolderIdFromEntityId(resource.targetUrl),
-                newApiKey,
-              ),
-            };
-          }),
-        },
-      }),
-    );
-    handleToggleEditMode();
-  }, [
-    dispatch,
-    editState,
-    handleToggleEditMode,
-    publication.name,
-    publication.resources,
-    publication.rules,
-    publication.targetFolder,
-    publication.url,
-  ]);
-
   const invalidEntities = useMemo(
     () =>
       notExistEntities.filter((entity) =>
@@ -470,7 +429,7 @@ export function PublicationHandlerFooter({ publication }: Props) {
             >
               <button
                 className="button button-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-                onClick={handleUpdateRequest}
+                onClick={onUpdateRequest}
                 data-qa="update"
               >
                 {t('Update request')}
@@ -481,4 +440,4 @@ export function PublicationHandlerFooter({ publication }: Props) {
       </div>
     </div>
   );
-}
+};

@@ -47,7 +47,7 @@ dialTest(
     await localStorageManager.setLastConversationSettings('');
     await localStorageManager.setShowSideBarPanels();
 
-    await dialTest.step('Open Dial', async () => {
+    await dialTest.step('Open DIAL', async () => {
       await dialHomePage.openHomePage({
         iconsToBeLoaded: [models[0].iconUrl!],
       });
@@ -437,7 +437,7 @@ dialTest(
     await localStorageManager.setRecentModelsIdsOnce(...models);
     await localStorageManager.setShowSideBarPanels();
 
-    await dialTest.step('Open Dial, navigate to Marketplace', async () => {
+    await dialTest.step('Open DIAL, navigate to Marketplace', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await conversations.selectEntity(conversation.name);
@@ -512,7 +512,7 @@ dialTest(
     let initialConversationIds: string | undefined;
 
     await dialTest.step(
-      'Open Dial and verify the correct model is selected',
+      'Open DIAL and verify the correct model is selected',
       async () => {
         await dialHomePage.openHomePage({
           iconsToBeLoaded: [model.iconUrl!],
@@ -599,7 +599,7 @@ dialTest(
     let notFoundElement: NotFound;
 
     await dialTest.step(
-      'Open Dial non existent page and verify messages and "New Conversation" btn is available',
+      'Open DIAL non existent page and verify messages and "New Conversation" btn is available',
       async () => {
         await localStorageManager.setShowSideBarPanels();
         await dialErrorPage.navigateToUrl('/errorpage');

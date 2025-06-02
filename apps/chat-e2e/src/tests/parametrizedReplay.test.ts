@@ -267,7 +267,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Export conversation and then delete all Dial entities',
+      'Export conversation and then delete all DIAL entities',
       async () => {
         await conversations.openEntityDropdownMenu(conversation.name, {
           exactMatch: true,

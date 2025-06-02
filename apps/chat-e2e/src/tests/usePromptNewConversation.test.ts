@@ -57,7 +57,7 @@ dialTest(
     await localStorageManager.setShowSideBarPanels();
     await fileApiHelper.putFile(Attachment.sunImageName);
 
-    await dialTest.step('Open the Dial', async () => {
+    await dialTest.step('Open the DIAL', async () => {
       await dialHomePage.openHomePage({
         iconsToBeLoaded: [modelWithAttachment.iconUrl],
       });
@@ -175,7 +175,7 @@ dialTest(
     const initialMessage = GeneratorUtil.randomString(10);
     await localStorageManager.setShowSideBarPanels();
 
-    await dialTest.step('Open Dial', async () => {
+    await dialTest.step('Open DIAL', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
     });
@@ -727,7 +727,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'Open Dial, type message, and use prompt from Organization',
+      'Open DIAL, type message, and use prompt from Organization',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();

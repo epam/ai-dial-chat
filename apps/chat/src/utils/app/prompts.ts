@@ -25,10 +25,14 @@ export const regeneratePromptId = (prompt: PartialBy<Prompt, 'id'>): Prompt => {
   return prompt as Prompt;
 };
 
-export const getPromptInfoFromId = (id: string): PromptInfo => {
+export const getPromptInfoFromId = (
+  id: string,
+  options?: Partial<{ parseVersion: boolean }>,
+): PromptInfo => {
   const { apiKey, bucket, name, parentPath } = splitEntityId(id);
+
   return regeneratePromptId({
-    ...parsePromptApiKey(name),
+    ...parsePromptApiKey(name, options),
     folderId: constructPath(apiKey, bucket, parentPath),
   });
 };

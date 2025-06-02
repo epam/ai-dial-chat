@@ -33,7 +33,7 @@ dialOverlayTest(
     });
 
     await dialTest.step(
-      'Verify "Dial Marketplace" buttons are available at the bottom panel, buttons do not have titles',
+      'Verify "DIAL Marketplace" buttons are available at the bottom panel, buttons do not have titles',
       async () => {
         await overlayHomePage.navigateToUrl(
           OverlaySandboxUrls.enableMarketplaceUrl,
@@ -121,7 +121,7 @@ dialOverlayTest(
     });
 
     await dialTest.step(
-      'Verify "Dial Marketplace" button is not available on the right side panel',
+      'Verify "DIAL Marketplace" button is not available on the right side panel',
       async () => {
         await overlayHomePage.navigateToUrl(
           OverlaySandboxUrls.disableMarketplaceUrl,

@@ -59,6 +59,13 @@ const selectSelectedPublication = createSelector(
   },
 );
 
+const selectPublicationByUrl = createSelector(
+  [selectPublications, (_state, url: string) => url],
+  (publications, url) => {
+    return publications.find((publication) => publication.url === url);
+  },
+);
+
 const selectResourcesToReview = (state: RootState) =>
   rootSelector(state).resourcesToReview;
 
@@ -243,6 +250,7 @@ export const PublicationSelectors = {
   selectFilteredPublicationResources,
   selectSelectedPublicationUrl,
   selectSelectedPublication,
+  selectPublicationByUrl,
   selectResourcesToReview,
   selectResourceToReviewByReviewUrl,
   selectResourceToReviewByReviewAndPublicationUrls,

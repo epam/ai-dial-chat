@@ -51,7 +51,7 @@ const run = async () => {
     domain: 'https://your-hosted-overlay-domain.com',
     // optional, theme, 'light' | 'dark'
     theme: 'light',
-    // optional, name of model that could be by default
+    // optional, specifies the 'reference' or 'id' of the agent to be used as the default.
     modelId: 'gpt-4',
     // optional, if DIAL doesn't respond in requestTimeout ms, overlay will throw an exception
     requestTimeout: 20000,

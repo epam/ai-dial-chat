@@ -16,6 +16,8 @@ import {
 
 import { combineEpics, ofType } from 'redux-observable';
 
+import { getConversationInfoFromId } from '@/src/utils/app/conversation';
+import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
@@ -35,6 +37,7 @@ import {
   isPromptId,
   isRootId,
 } from '@/src/utils/app/id';
+import { getPromptInfoFromId } from '@/src/utils/app/prompts';
 import {
   getFilesFromPublicResources,
   getItemsIdsToRemoveAndHide,
@@ -47,16 +50,20 @@ import { translate } from '@/src/utils/app/translation';
 import {
   ApiUtils,
   getIdWithoutVersionFromApiKey,
+  getVersionFromId,
+  parseApplicationApiKey,
   parseConversationApiKey,
   parsePromptApiKey,
 } from '@/src/utils/server/api';
 
+import { CustomApplicationModel } from '@/src/types/applications';
 import { EntityType, FeatureType } from '@/src/types/common';
 import { PromptInfo } from '@/src/types/prompt';
 import { PublishedFileItem } from '@/src/types/publication';
 import { AppAction, AppEpic } from '@/src/types/store';
 
 import {
+  ApplicationActions,
   ConversationsActions,
   FilesActions,
   ModelsActions,
@@ -77,8 +84,10 @@ import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
 import {
+  Conversation,
   ConversationInfo,
   Feature,
+  Prompt,
   PublishActions,
   UploadStatus,
 } from '@epam/ai-dial-shared';
@@ -1348,7 +1357,7 @@ const uploadAllPublishedWithMeItemsFailEpic: AppEpic = (action$) =>
     ),
   );
 
-const updatePublicationRequestEpic: AppEpic = (action$) =>
+const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(PublicationActions.updatePublicationRequest.type),
     switchMap(({ payload }) =>
@@ -1364,7 +1373,166 @@ const updatePublicationRequestEpic: AppEpic = (action$) =>
         publicationData,
         url,
       }).pipe(
-        switchMap(() => of(PublicationActions.uploadPublication({ url }))),
+        switchMap((response) => {
+          const oldPublicationResources =
+            PublicationSelectors.selectPublicationByUrl(state$.value, url)
+              ?.resources ?? [];
+          const newPublicationResources = response.resources.map(
+            (resource) => ({
+              ...resource,
+              sourceUrl: ApiUtils.decodeApiUrl(resource.sourceUrl ?? ''),
+              targetUrl: ApiUtils.decodeApiUrl(resource.targetUrl),
+              reviewUrl: ApiUtils.decodeApiUrl(resource.reviewUrl),
+            }),
+          );
+
+          const resourcesRequiresUpdate = newPublicationResources.filter(
+            (newResource) => {
+              const match = oldPublicationResources.find(
+                (oldResource) =>
+                  oldResource?.sourceUrl === newResource.sourceUrl,
+              );
+
+              return match && match.targetUrl !== newResource.targetUrl;
+            },
+          );
+
+          const resourcesRequiresUpdateIds = resourcesRequiresUpdate.map(
+            (resource) => resource.reviewUrl,
+          );
+          const conversationsRequiresUpdate = resourcesRequiresUpdateIds.filter(
+            (id) => isConversationId(id),
+          );
+          const promptsRequiresUpdate = resourcesRequiresUpdateIds.filter(
+            (id) => isPromptId(id),
+          );
+          const applicationsRequiresUpdate = resourcesRequiresUpdateIds.filter(
+            (id) => isApplicationId(id),
+          );
+
+          // if only files are updated, we just need to upload the publication, since they are not "JSON objects"
+          if (
+            !conversationsRequiresUpdate.length &&
+            !promptsRequiresUpdate.length &&
+            !applicationsRequiresUpdate.length
+          ) {
+            return of(PublicationActions.uploadPublication({ url }));
+          }
+
+          const observables: {
+            conversations: Observable<(Conversation | null)[]>;
+            prompts: Observable<(Prompt | null)[]>;
+            applications: Observable<(CustomApplicationModel | null)[]>;
+          } = {
+            conversations: of([]),
+            prompts: of([]),
+            applications: of([]),
+          };
+
+          if (conversationsRequiresUpdate.length) {
+            observables.conversations = forkJoin(
+              conversationsRequiresUpdate.map((id) => {
+                return ConversationService.getConversation(
+                  getConversationInfoFromId(id, { parseVersion: true }),
+                );
+              }),
+            );
+          }
+
+          if (promptsRequiresUpdate.length) {
+            observables.prompts = forkJoin(
+              promptsRequiresUpdate.map((id) =>
+                PromptService.getPrompt(
+                  getPromptInfoFromId(id, { parseVersion: true }),
+                ),
+              ),
+            );
+          }
+
+          if (applicationsRequiresUpdate.length) {
+            observables.applications = forkJoin(
+              applicationsRequiresUpdate.map((id) =>
+                ApplicationService.get(id),
+              ),
+            );
+          }
+
+          return forkJoin(observables).pipe(
+            switchMap((results) => {
+              const updateActions: Observable<AppAction>[] = [];
+
+              const conversations = results.conversations.filter(
+                Boolean,
+              ) as Conversation[];
+              const prompts = results.prompts.filter(Boolean) as Prompt[];
+              const applications = results.applications.filter(
+                Boolean,
+              ) as CustomApplicationModel[];
+
+              if (conversations.length) {
+                updateActions.push(
+                  ...conversations.map((conversation) =>
+                    of(
+                      ConversationsActions.updateConversation({
+                        id: conversation.id,
+                        values: {
+                          name: conversation.name,
+                          publicationInfo: {
+                            version: getVersionFromId(conversation.id),
+                          },
+                        },
+                      }),
+                    ),
+                  ),
+                );
+              }
+
+              if (prompts.length) {
+                updateActions.push(
+                  ...prompts.map((prompt) =>
+                    of(
+                      PromptsActions.updatePrompt({
+                        id: prompt.id,
+                        values: {
+                          name: prompt.name,
+                          publicationInfo: {
+                            version: getVersionFromId(prompt.id),
+                          },
+                        },
+                      }),
+                    ),
+                  ),
+                );
+              }
+
+              if (applications.length) {
+                updateActions.push(
+                  ...applications.map((application) => {
+                    const newApplication = {
+                      ...application,
+                      name: parseApplicationApiKey(
+                        splitEntityId(application.id).name,
+                      ).name,
+                      version: getVersionFromId(application.id),
+                    };
+
+                    return of(
+                      ApplicationActions.update({
+                        oldApplication: application,
+                        applicationData: newApplication,
+                      }),
+                    );
+                  }),
+                );
+              }
+
+              return concat(
+                ...updateActions,
+                of(PublicationActions.uploadPublication({ url })),
+              );
+            }),
+          );
+        }),
         catchError((err) => {
           console.error(err);
           return of(PublicationActions.publishFail(err.message));

@@ -17,10 +17,8 @@ import {
   CONVERSATION_QUERY_PARAM,
   ISOLATED_MODEL_QUERY_PARAM,
 } from '@/src/constants/chat';
-import {
-  FALLBACK_ASSISTANT_SUBMODEL_ID,
-  FALLBACK_MODEL_ID,
-} from '@/src/constants/default-ui-settings';
+import { DEFAULT_MODEL_ID } from '@/src/constants/default-server-settings';
+import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 import {
   DEFAULT_QUICK_APPS_HOST,
   DEFAULT_QUICK_APPS_MODEL,
@@ -103,7 +101,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
   const isPreselectedAction = params?.has(ACTION_QUERY_PARAM);
 
   const settings: SettingsState = {
-    appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'AI Dial',
+    appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'AI DIAL',
     codeWarning: process.env.CODE_GENERATION_WARNING ?? '',
     defaultRecentModelsIds: parseCommaSeparatedList(
       process.env.RECENT_MODELS_IDS,
@@ -111,7 +109,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
     defaultRecentAddonsIds: parseCommaSeparatedList(
       process.env.RECENT_ADDONS_IDS,
     ),
-    defaultModelId: process.env.DEFAULT_MODEL ?? FALLBACK_MODEL_ID,
+    defaultModelReference: DEFAULT_MODEL_ID,
     defaultAssistantSubmodelId:
       process.env.NEXT_PUBLIC_DEFAULT_ASSISTANT_SUB_MODEL ??
       FALLBACK_ASSISTANT_SUBMODEL_ID,
