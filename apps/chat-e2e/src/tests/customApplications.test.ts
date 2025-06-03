@@ -1091,7 +1091,10 @@ dialTest(
           'Number of topics in preview is correct',
         );
         const previewAppIcon = appEditorGeneralInfoAgentPreview.previewIcon;
-        await baseAssertion.assertEntityIcon(previewAppIcon, expectedIconUrl);
+        await baseAssertion.assertEntityIcon(
+          previewAppIcon,
+          `/api/${expectedIconUrl}`,
+        );
       },
     );
 
