@@ -116,13 +116,13 @@ export const prepareEntityName = (
           notAllowedSymbolsRegex,
           options?.replaceWithSpacesForRenaming ? ' ' : '',
         )
-        .replace(/\s+/g, ' ')
+        .replace(/ /g, '_')
         .trim()
     : (name
         .replace(/\r\n|\r/gm, '\n')
         .split('\n')
         .map((s) =>
-          s.replace(notAllowedSymbolsRegex, ' ').replace(/\s+/g, ' ').trim(),
+          s.replace(notAllowedSymbolsRegex, ' ').replace(/ /g, '_').trim(),
         )
         .filter(Boolean)[0] ?? '');
 
