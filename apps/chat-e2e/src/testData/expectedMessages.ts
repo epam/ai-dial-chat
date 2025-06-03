@@ -104,7 +104,7 @@ export enum ExpectedMessages {
   headerIconsCountIsValid = 'Chat header icons number is valid',
   headerCleanConversationIconVisible = 'Chat header Clean Conversation icon is visible',
   chatInfoModelIsValid = 'Chat info model is valid',
-  chatInfoVersionIsValid = 'Chat info version is valid',
+  agentVersionIsValid = 'Agent version is valid',
   chatInfoModelIconIsValid = 'Chat info model icon is valid',
   chatInfoAppIsValid = 'Chat info application is valid',
   chatInfoAppIconIsValid = 'Chat info application icon is valid',

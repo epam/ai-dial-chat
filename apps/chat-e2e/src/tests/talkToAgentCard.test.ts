@@ -87,7 +87,6 @@ dialTest(
     let actualIcon: Locator;
     let actualNameElement: BaseElement;
     let actualDescriptionElement: BaseElement;
-    let actualVersionElement: BaseElement;
     let firstVersionMenuOptionElement: Locator;
 
     await dialTest.step('Upload svg image to the root path', async () => {
@@ -156,7 +155,6 @@ dialTest(
         actualNameElement = talkToAgents.getAgentName(agentElement);
         actualDescriptionElement =
           talkToAgents.getAgentDescription(agentElement);
-        actualVersionElement = talkToAgents.getAgentVersion(agentElement);
         await marketplaceAgentsAssertion.assertElementText(
           actualNameElement,
           appName,
@@ -177,6 +175,7 @@ dialTest(
         await talkToAgentDialogAssertion.assertElementTextIsTruncated(
           talkToAgents.getAgentDescriptionContainer(agentElement),
         );
+        const actualVersionElement = talkToAgents.getAgentVersion(agentElement);
         await talkToAgentDialogAssertion.assertElementTextIsTruncated(
           actualVersionElement,
         );
@@ -316,6 +315,7 @@ dialTest(
     customApplicationBuilder,
     adminPublicationApiHelper,
     applicationApiHelper,
+    itemApiHelper,
     publicationApiHelper,
     publishRequestBuilder,
     localStorageManager,
@@ -661,7 +661,7 @@ dialTest(
       const unpublishResponse =
         await adminPublicationApiHelper.createUnpublishRequest(appPublication);
       await adminPublicationApiHelper.approveRequest(unpublishResponse);
-      await applicationApiHelper.deleteApplication(app);
+      await itemApiHelper.deleteBackendItem(app);
     });
 
     await dialTest.step(

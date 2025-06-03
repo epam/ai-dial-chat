@@ -23,7 +23,7 @@ export class TooltipAssertion extends BaseAssertion {
   public async assertTooltipStyle(property: string, value: string) {
     await expect(
       this.tooltip.getElementLocator(),
-      ExpectedMessages.borderColorsAreValid,
+      `Element style property: ${property} is valid`,
     ).toHaveCSS(property, value);
   }
 }
