@@ -392,6 +392,7 @@ export const ExpectedMessages = {
   noConversationIsSelected: 'No conversation is selected',
   noData: 'No data in the conversation section',
   agentNameIsValid: 'Agent name is valid',
+  agentVersionIsValid: 'Agent version is valid',
   agentIsVisible: 'Agent is visible',
   applicationFormFieldShouldHaveAsterisk:
     'Application form field should be marked as required',
@@ -407,6 +408,9 @@ export const ExpectedMessages = {
     'Header should contain defined attachment types',
   cardShouldDisplayTheLatestVersion:
     'Card for should display the latest version',
+  authorIsValid: 'Author in preview is valid',
+  selectedTopicsAreValid: 'Selected topics are displayed in preview',
+
   onlyOneEntityCardFoundInSearch: (entityType: string) =>
     `Only one ${entityType} card found in the search`,
 };

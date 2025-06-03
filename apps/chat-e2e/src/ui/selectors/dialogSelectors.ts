@@ -256,6 +256,8 @@ export const ApplicationEditorHeader = {
 };
 
 export const AppEditorGeneralInfoPreviewSelectors = {
+  fullContainer: '[data-qa="app-preview-general-info-full-container"]',
+  detailedSwitch: '[data-qa="toggle-switch"]',
   containerGeneralInfo: '[data-qa="app-preview-general-info"]',
   previewIconContainer: '[data-qa="entity-icon"]',
   previewAgentName: '[data-qa="agent-name"]',
@@ -263,6 +265,8 @@ export const AppEditorGeneralInfoPreviewSelectors = {
   previewInformationSection: '[data-qa="application-information"]',
   previewAuthorContainer: '[data-qa="author-container"]',
   previewAuthorValue: '[data-qa="author"]',
+  description: '[data-qa="application-description"]',
+  version: '[data-qa="version"]',
 };
 
 export const AppEditorAppSettingsPreviewSelectors = {

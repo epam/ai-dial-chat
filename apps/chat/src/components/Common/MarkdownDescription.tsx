@@ -14,12 +14,14 @@ interface Props {
   children: string;
   isShortDescription?: boolean;
   className?: string;
+  dataQa?: string;
 }
 
 export const EntityMarkdownDescription = ({
   children,
   isShortDescription,
   className,
+  dataQa,
 }: Props) => {
   const transformedChildren = useMemo(() => {
     if (isShortDescription && children) {
@@ -36,6 +38,7 @@ export const EntityMarkdownDescription = ({
   return (
     <MemoizedReactMarkdown
       className={classNames(className, 'prose-sm text-xs prose-a:underline')}
+      data-qa={dataQa}
       linkTarget="_blank"
       remarkPlugins={[remarkGfm]}
       rehypePlugins={[

@@ -2,7 +2,7 @@ import { ApiApplicationModelRegular } from '@/chat/types/applications';
 import { BackendEntity } from '@/chat/types/common';
 import config from '@/config/chat.playwright.config';
 import { API } from '@/src/testData';
-import {ApplicationEditorHeader, HeaderSelectors} from '@/src/ui/selectors';
+import { ApplicationEditorHeader, HeaderSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
 import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';

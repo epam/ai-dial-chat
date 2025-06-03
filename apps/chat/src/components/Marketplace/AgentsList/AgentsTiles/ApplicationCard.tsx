@@ -31,7 +31,7 @@ interface CardFooterProps {
 const CardFooter = ({ entity }: CardFooterProps) => {
   return (
     <>
-      <EntityMarkdownDescription className="mt-3 hidden text-ellipsis text-sm leading-[18px] text-secondary md:line-clamp-2 xl:hidden">
+      <EntityMarkdownDescription className="mt-3 hidden text-ellipsis text-sm leading-[18px] text-secondary md:line-clamp-2 xl:hidden" data-qa="application-description">
         {getModelShortDescription(entity)}
       </EntityMarkdownDescription>
       <div className="flex flex-col gap-2 pt-3 md:pt-4">
@@ -147,7 +147,7 @@ export const ApplicationCard = memo(
                   <FunctionStatusIndicator entity={entity} />
                 </div>
               </div>
-              <EntityMarkdownDescription className="hidden text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
+              <EntityMarkdownDescription className="hidden text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2" data-qa="application-description">
                 {getModelShortDescription(entity)}
               </EntityMarkdownDescription>
             </div>

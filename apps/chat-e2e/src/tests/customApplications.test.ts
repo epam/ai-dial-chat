@@ -20,7 +20,7 @@ import {
   BaseElement,
   FileModalSection,
 } from '@/src/ui/webElements';
-import { GeneratorUtil, SortingUtil } from '@/src/utils';
+import { GeneratorUtil, SortingUtil, UserUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
@@ -55,7 +55,6 @@ dialTest(
     agentDetailsModalAssertion,
     marketplaceContainer,
     marketplace,
-    header,
   }) => {
     setTestIds(
       'EPMRTC-5130',
@@ -129,6 +128,8 @@ dialTest(
       async () => {
         await appEditorGeneralForm.fillInAppFields({
           name: appEntity.name,
+          version: appEntity.version,
+          description: appEntity.description,
         });
         await appEditorHeader.exitLink.click();
         await baseAssertion.assertElementState(appEditorViewForm, 'hidden');
@@ -505,7 +506,7 @@ dialTest(
         await appEditorHeader.focusOn();
         await appEditorHeader.logo.click();
         await dialHomePage.waitForPageLoaded();
-        await baseAssertion.assertElementState(agentInfo, 'visible');// Assert no validation error appeared
+        await baseAssertion.assertElementState(agentInfo, 'visible'); // Assert no validation error appeared
         await toastAssertion.assertToastIsHidden();
         await baseAssertion.assertElementState(appEditorGeneralForm, 'hidden');
         await navigationPanel.goToMyWorkspace();
@@ -809,20 +810,37 @@ dialTest(
 );
 
 dialTest(
-  'Custom app Topic dropdown select. +\n' + '[Custom app]: Hints on for fields',
-  async ({
-    marketplacePage,
-    appEditorPage,
-    appEditorGeneralForm,
-    setTestIds,
-    baseAssertion,
-    tooltipAssertion,
-    appEditorViewForm,
-  }) => {
-    setTestIds('EPMRTC-4374', 'EPMRTC-4278');
+  'Custom app Topic dropdown select.\n' + // EPMRTC-4374
+    '[Custom app]: Hints on for fields\n' + // EPMRTC-4278
+    'Preview on step "General info"', // EPMRTC-5749
+  async (
+    {
+      marketplacePage,
+      appEditorPage,
+      appEditorGeneralForm,
+      setTestIds,
+      baseAssertion,
+      tooltipAssertion,
+      appEditorViewForm,
+      attachFilesModal,
+      appEditorGeneralInfoAgentPreview,
+      fileApiHelper,
+    },
+    testInfo,
+  ) => {
+    setTestIds('EPMRTC-4374', 'EPMRTC-4278', 'EPMRTC-5749');
     let numberOfTopicsToSelect: number;
     let allTopics: string[] = [];
     let topicsToSelect: string[] = [];
+
+    const appEntity = {
+      name: GeneratorUtil.randomApplicationName(),
+      version: GeneratorUtil.randomApplicationVersion(),
+      description: GeneratorUtil.randomShortAndLongDescription(),
+    } as DialAIEntityModel;
+    const expectedIconUrl = await fileApiHelper.putFile(
+      Attachment.sunImageName,
+    );
 
     await dialTest.step('Open create a custom app page', async () => {
       await marketplacePage.openCreateCustomAppPage();
@@ -938,18 +956,150 @@ dialTest(
       },
     );
 
-    await dialTest.step('Click Next button to go to App Settings', async () => {
+    await dialTest.step('Fill in the data for the App', async () => {
       await appEditorGeneralForm.fillInAppFields({
-        name: GeneratorUtil.randomApplicationName(),
-        version: GeneratorUtil.randomApplicationVersion(),
+        name: appEntity.name,
+        version: appEntity.version,
+        description: appEntity.description,
       });
-      await appEditorGeneralForm.goNext({ waitForResponses: false });
-      await baseAssertion.assertElementState(appEditorViewForm, 'visible');
+      await appEditorGeneralForm.topicsDropdownToggle.click();
+      topicsToSelect = allTopics
+        .sort((a, b) => a.length - b.length)
+        .slice(0, 2);
+      for (const topic of topicsToSelect) {
+        await appEditorGeneralForm.selectTopicOption(topic);
+      }
+      await appEditorGeneralForm.addIconButton.click();
+      await attachFilesModal.checkAttachedFile(
+        Attachment.sunImageName,
+        FileModalSection.AllFiles,
+      );
+      await attachFilesModal.attachFiles();
     });
 
     await dialTest.step(
-      'Hover over question icons for Features data and Attachment types and verify hints',
+      "Verify preview of app's pop-up form on right side of screen",
       async () => {
+        await baseAssertion.assertElementState(
+          appEditorGeneralInfoAgentPreview,
+          'visible',
+        );
+
+        await baseAssertion.assertElementText(
+          appEditorGeneralInfoAgentPreview.previewName,
+          appEntity.name,
+          ExpectedMessages.agentNameIsValid,
+        );
+
+        // await baseAssertion.assertElementText(
+        //   appEditorGeneralInfoAgentPreview.version,
+        //   appEntity.version!,
+        //   ExpectedMessages.agentNameIsValid,
+        // );
+
+        const [expectedShortDesc, expectedLongDesc] =
+          appEntity.description!.split('\n\n');
+        const actualShortDescElement =
+          appEditorGeneralInfoAgentPreview.getShortDescriptionDetailedViewElement();
+        const actualLongDescElement =
+          appEditorGeneralInfoAgentPreview.getLongDescriptionDetailedViewElement();
+
+        await baseAssertion.assertElementText(
+          actualShortDescElement,
+          expectedShortDesc,
+          ExpectedMessages.agentDescriptionIsValid,
+        );
+        await baseAssertion.assertElementText(
+          actualLongDescElement,
+          expectedLongDesc,
+          ExpectedMessages.agentDescriptionIsValid,
+        );
+
+        const displayedTopics =
+          await appEditorGeneralInfoAgentPreview.topicElements.getElementsInnerContent();
+        baseAssertion.assertArrayIncludesAll(
+          displayedTopics,
+          topicsToSelect,
+          ExpectedMessages.selectedTopicsAreValid,
+        );
+        baseAssertion.assertValue(
+          displayedTopics.length,
+          topicsToSelect.length,
+          'Number of topics in preview is correct',
+        );
+
+        await baseAssertion.assertElementState(
+          appEditorGeneralInfoAgentPreview.previewInformationSection,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          appEditorGeneralInfoAgentPreview.previewAuthorContainer,
+          'visible',
+        );
+
+        const currentUsername = UserUtil.getE2EUsername(testInfo.parallelIndex);
+        await baseAssertion.assertElementText(
+          appEditorGeneralInfoAgentPreview.previewAuthorValue,
+          currentUsername,
+          ExpectedMessages.authorIsValid,
+        );
+
+        const previewAppIcon = appEditorGeneralInfoAgentPreview.previewIcon;
+        await baseAssertion.assertEntityIcon(
+          previewAppIcon,
+          `/api/${expectedIconUrl}`,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Turn off the detailed view and assert details',
+      async () => {
+        await appEditorGeneralInfoAgentPreview.detailedSwitch.click();
+        await baseAssertion.assertElementText(
+          appEditorGeneralInfoAgentPreview.previewName,
+          appEntity.name,
+          ExpectedMessages.agentNameIsValid,
+        );
+
+        await baseAssertion.assertElementText(
+          appEditorGeneralInfoAgentPreview.version,
+          appEntity.version!,
+          ExpectedMessages.agentVersionIsValid,
+        );
+
+        const expectedShortDesc = appEntity.description!.split('\n\n')[0];
+        const actualShortDescElement =
+          appEditorGeneralInfoAgentPreview.getShortDescriptionDetailedViewElement();
+
+        await baseAssertion.assertElementText(
+          actualShortDescElement,
+          expectedShortDesc,
+          ExpectedMessages.agentDescriptionIsValid,
+        );
+
+        const displayedTopics =
+          await appEditorGeneralInfoAgentPreview.topicElements.getElementsInnerContent();
+        baseAssertion.assertArrayIncludesAll(
+          displayedTopics,
+          topicsToSelect,
+          ExpectedMessages.selectedTopicsAreValid,
+        );
+        baseAssertion.assertValue(
+          displayedTopics.length,
+          topicsToSelect.length,
+          'Number of topics in preview is correct',
+        );
+        const previewAppIcon = appEditorGeneralInfoAgentPreview.previewIcon;
+        await baseAssertion.assertEntityIcon(previewAppIcon, expectedIconUrl);
+      },
+    );
+
+    await dialTest.step(
+      'Click Next button to go to App Settings, hover over question icons for Features data and Attachment types and verify hints',
+      async () => {
+        await appEditorGeneralForm.goNext({ waitForResponses: false });
+        await baseAssertion.assertElementState(appEditorViewForm, 'visible');
         await appEditorViewForm.featuresDataHintIcon.hoverOver();
         await tooltipAssertion.assertTooltipContent(
           ExpectedConstants.customApplicationFeaturesTooltip,

@@ -48,7 +48,7 @@ export class FileApiHelper extends BaseApiHelper {
   }
 
   public async putFile(filename: string, parentPath?: string) {
-    await this.putFileWithCustomName(filename, filename, parentPath);
+    return this.putFileWithCustomName(filename, filename, parentPath);
   }
 
   public async putFileWithCustomName(
