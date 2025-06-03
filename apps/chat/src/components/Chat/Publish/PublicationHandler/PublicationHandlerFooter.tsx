@@ -16,20 +16,13 @@ import {
   isFileId,
   isPromptId,
 } from '@/src/utils/app/id';
-import { splitEntityId } from '@/src/utils/app/shared-utils';
 import {
-  getVersionFromId,
-  parseApplicationApiKey,
-  parseConversationApiKey,
-  parseFileApiKey,
-  parsePromptApiKey,
-} from '@/src/utils/server/api';
+  getDefaultAllEditEntities,
+  getFirstReviewUrl,
+  getReviewItems,
+} from '@/src/utils/app/publications';
 
-import {
-  Publication,
-  PublicationResource,
-  ResourceToReview,
-} from '@/src/types/publication';
+import { Publication, ResourceToReview } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -60,70 +53,6 @@ interface Props {
   publication: Publication;
   onUpdateRequest: () => void;
 }
-
-const getFirstReviewUrl = (
-  resourcesToReview: ResourceToReview[],
-  reviewedResources: ResourceToReview[],
-) => {
-  return resourcesToReview.length
-    ? resourcesToReview[0].reviewUrl
-    : reviewedResources[0].reviewUrl;
-};
-
-const getReviewItems = (
-  publication: Publication,
-  resourcesToReview: ResourceToReview[],
-  isItemId: (id: string) => boolean,
-) => {
-  const toReview = resourcesToReview.filter(
-    (r) =>
-      !r.reviewed &&
-      r.publicationUrl === publication.url &&
-      isItemId(r.reviewUrl),
-  );
-  const reviewed = resourcesToReview.filter(
-    (r) => r.publicationUrl === publication.url && isItemId(r.reviewUrl),
-  );
-
-  return { toReview, reviewed };
-};
-
-const getDefaultAllEditEntities = (resources: PublicationResource[]) => {
-  const allEditEntitiesMap: Record<
-    string,
-    {
-      name: string;
-      version: string;
-    }
-  > = {};
-
-  resources.forEach((item) => {
-    const isConversation = isConversationId(item.reviewUrl);
-    const isApplication = isApplicationId(item.reviewUrl);
-    const isFile = isFileId(item.reviewUrl);
-    const apiKey = splitEntityId(item.reviewUrl).name;
-
-    const parseFunction = isConversation
-      ? parseConversationApiKey
-      : isApplication
-        ? parseApplicationApiKey
-        : isFile
-          ? parseFileApiKey
-          : parsePromptApiKey;
-    const parsedApiKey = parseFunction(apiKey, {
-      parseVersion: true,
-    });
-
-    allEditEntitiesMap[item.reviewUrl] = {
-      name: parsedApiKey.name,
-      version: isApplication
-        ? getVersionFromId(item.reviewUrl)
-        : (parsedApiKey.publicationInfo?.version ?? NA_VERSION),
-    };
-  });
-
-  return allEditEntitiesMap;
-};
 
 export const PublicationHandlerFooter = ({
   publication,

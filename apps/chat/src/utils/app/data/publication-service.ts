@@ -75,12 +75,12 @@ export class PublicationService {
       }),
     }).pipe(
       map(({ publications }: PublicationsListModel) => {
-        return publications.map((p) => {
-          if (!p.targetFolder) return p;
+        return publications.map((publication) => {
+          if (!publication.targetFolder) return publication;
 
           return {
-            ...p,
-            targetFolder: ApiUtils.decodeApiUrl(p.targetFolder),
+            ...publication,
+            targetFolder: ApiUtils.decodeApiUrl(publication.targetFolder),
           };
         });
       }),

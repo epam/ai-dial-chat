@@ -154,7 +154,8 @@ export function PublicationHandler({ publication }: Props) {
 
             return {
               action: resource.action,
-              sourceUrl: resource.sourceUrl ?? '',
+              sourceUrl:
+                resource.sourceUrl ?? `New request by ${publication.author}`,
               targetUrl: constructPath(
                 getFolderIdFromEntityId(resource.targetUrl),
                 newApiKey,
@@ -168,6 +169,7 @@ export function PublicationHandler({ publication }: Props) {
   }, [
     dispatch,
     editState,
+    publication.author,
     publication.name,
     publication.resources,
     publication.rules,

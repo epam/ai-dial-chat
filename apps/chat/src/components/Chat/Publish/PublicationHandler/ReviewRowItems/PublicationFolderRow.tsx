@@ -72,8 +72,6 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
                   onBlur={() => setIsFocused(false)}
                   className="h-[24px] w-full border-b border-primary bg-layer-2 px-1 py-[2px] text-sm text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none"
                   value={currentFolder.name}
-                  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
-                  onChange={(e) => {}}
                 />
               </div>
             ) : (

@@ -76,10 +76,14 @@ export const publicationSlice = createSlice({
       state,
       { payload }: PayloadAction<{ publication: Publication }>,
     ) => {
-      state.publications = state.publications.map((p) =>
-        p.url === payload.publication.url
-          ? { ...p, ...payload.publication, uploadStatus: UploadStatus.LOADED }
-          : p,
+      state.publications = state.publications.map((publication) =>
+        publication.url === payload.publication.url
+          ? {
+              ...publication,
+              ...payload.publication,
+              uploadStatus: UploadStatus.LOADED,
+            }
+          : publication,
       );
       state.isPublicationUpdating = false;
     },

@@ -1,16 +1,17 @@
 import { IconDownload } from '@tabler/icons-react';
-import { ReactNode, useCallback, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { useDebouncedInput } from '@/src/hooks/useDebounceInput';
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 
 import { isVersionValid } from '@/src/utils/app/common';
 import { isApplicationId, isFileId } from '@/src/utils/app/id';
 import { constructPath } from '@/src/utils/app/shared-utils';
-import { ApiUtils, getVersionFromId } from '@/src/utils/server/api';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { PublicationReviewItem } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
@@ -55,6 +56,17 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
     [dispatch, item.id, item.name, editState?.name],
   );
 
+  const initialVersion = item.publicationInfo?.version ?? NA_VERSION;
+
+  const [inputVersion, handleDebouncedChangeVersion] = useDebouncedInput(
+    initialVersion,
+    handleChangeVersion,
+  );
+
+  useEffect(() => {
+    handleDebouncedChangeVersion(initialVersion);
+  }, [handleDebouncedChangeVersion, isEditMode, initialVersion]);
+
   const { publicVersionGroupId } = usePublicVersionGroupId(item);
 
   if (isFileId(item.id)) {
@@ -73,9 +85,6 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   }
 
   const isApplication = isApplicationId(item.id);
-  const version = isApplication
-    ? getVersionFromId(item.id)
-    : (editState?.version ?? item.publicationInfo?.version ?? NA_VERSION);
   const isDeleteAction = item.publicationInfo?.action === PublishActions.DELETE;
 
   return (
@@ -97,12 +106,12 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
         data-qa="version"
       >
         <EditableField
-          value={version}
+          value={inputVersion}
           isEditMode={isDeleteAction ? false : isEditMode}
-          onChange={handleChangeVersion}
+          onChange={handleDebouncedChangeVersion}
           inputClassName={classNames(
             'w-[34px] text-xs',
-            (!isVersionValid(version) || version === NA_VERSION) &&
+            (!isVersionValid(inputVersion) || inputVersion === NA_VERSION) &&
               '!border-b-error',
           )}
         />
@@ -147,7 +156,15 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
     [dispatch, item.id, editState?.version, item.publicationInfo?.version],
   );
 
-  const editName = editState?.name ?? item.name;
+  const [inputName, handleDebouncedChangeName] = useDebouncedInput(
+    item.name,
+    handleChangeName,
+  );
+
+  useEffect(() => {
+    handleDebouncedChangeName(item.name);
+  }, [handleDebouncedChangeName, isEditMode, item.name]);
+
   const isDeleteAction = item.publicationInfo?.action === PublishActions.DELETE;
 
   return (
@@ -168,10 +185,10 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
       >
         <span className="flex">{Icon}</span>
         <EditableField
-          value={editName}
+          value={inputName}
           isEditMode={isDeleteAction ? false : isEditMode}
-          onChange={handleChangeName}
-          inputClassName={classNames('w-full', !editName && '!border-b-error')}
+          onChange={handleDebouncedChangeName}
+          inputClassName={classNames('w-full', !inputName && '!border-b-error')}
           className={classNames(
             item.publicationInfo?.isNotExist && 'text-secondary',
             item.publicationInfo?.action === PublishActions.DELETE &&
