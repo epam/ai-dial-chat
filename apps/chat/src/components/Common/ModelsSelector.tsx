@@ -61,6 +61,8 @@ interface ModelsSelectorProps {
   disabled?: boolean;
   tooltip?: string;
   onChange: (modelId: string) => void;
+  models?: DialAIEntityModel[];
+  additionalModelsMap?: Partial<Record<string, DialAIEntityModel>>;
 }
 
 export const ModelsSelector = memo(function ModelsSelector({
@@ -68,18 +70,24 @@ export const ModelsSelector = memo(function ModelsSelector({
   disabled,
   tooltip,
   onChange,
+  models,
+  additionalModelsMap,
 }: ModelsSelectorProps) {
   const onlyModels = useAppSelector(ModelsSelectors.selectModelsOnly);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const displayedModels = models ?? onlyModels;
 
-  const model = useMemo(() => modelsMap[value], [value, modelsMap]);
+  const model = useMemo(
+    () => modelsMap[value] || additionalModelsMap?.[value],
+    [modelsMap, value, additionalModelsMap],
+  );
 
   return (
     <Tooltip triggerClassName="w-full" tooltip={tooltip}>
       <div className="relative">
         {disabled && <DisableOverlay />}
         <Combobox
-          items={onlyModels}
+          items={displayedModels}
           initialSelectedItem={
             model || {
               name: value,

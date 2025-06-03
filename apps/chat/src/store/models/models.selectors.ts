@@ -103,6 +103,9 @@ const selectAllGroupModelKeySet = (state: RootState, references: string[]) => {
   );
 };
 
+const selectDefaultModelReference = (state: RootState) =>
+  rootSelector(state).defaultModelReference;
+
 export const ModelsSelectors = {
   selectModels,
   selectModelsMap,
@@ -121,4 +124,5 @@ export const ModelsSelectors = {
   selectInitialized,
   selectAllGroupModelKeySet,
   selectIsRecentModelsLoaded,
+  selectDefaultModelReference,
 };

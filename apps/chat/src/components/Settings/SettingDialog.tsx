@@ -23,6 +23,7 @@ import { Modal } from '@/src/components/Common/Modal';
 import { ToggleSwitchLabeled } from '@/src/components/Common/ToggleSwitch/ToggleSwitchLabeled';
 
 import { CustomLogoSelect } from './CustomLogoSelect';
+import { DefaultModelSelect } from './DefaultModelSelect';
 import { ThemeSelect } from './ThemeSelect';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -155,6 +156,9 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
             title={t('Custom logo')}
           />
         )}
+
+        <DefaultModelSelect />
+
         {!isSmallScreen() && (
           <ToggleSwitchLabeled
             isOn={isChatFullWidthLocal}
