@@ -411,6 +411,7 @@ const createConversationEffectEpic: AppEpic = (action$, state$) =>
         ofType(ConversationsActions.createNotLocalConversationsSuccess.type),
         takeUntil(timer(10000)),
         filter(Boolean),
+        first(({ payload }) => payload.length > 0),
         mergeMap(({ payload }) => {
           const conversations = payload;
           const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
@@ -451,6 +452,7 @@ const createLocalConversationEffectEpic: AppEpic = (action$, state$) =>
         ofType(ConversationsActions.addConversations.type),
         takeUntil(timer(10000)),
         filter(Boolean),
+        first(({ payload }) => payload.conversations.length > 0),
         mergeMap(({ payload }) => {
           const conversations = payload.conversations;
           const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
@@ -981,15 +983,29 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
 
         if (!shouldLogIn) {
           if (modelId) {
-            actions.push(of(ModelsActions.updateRecentModels({ modelId })));
+            const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+            const overlayDefaultModel = modelsMap[modelId];
 
-            actions.push(
-              of(
-                SettingsActions.setOverlayDefaultModelId({
-                  overlayDefaultModelId: modelId,
-                }),
-              ),
-            );
+            if (overlayDefaultModel) {
+              actions.push(
+                of(
+                  ModelsActions.updateRecentModels({
+                    modelId: overlayDefaultModel.reference,
+                  }),
+                ),
+              );
+              actions.push(
+                of(
+                  SettingsActions.setOverlayDefaultModelReference({
+                    overlayDefaultModelReference: overlayDefaultModel.reference,
+                  }),
+                ),
+              );
+            } else {
+              console.warn(
+                `[Overlay](ModelId) No such model: ${modelId}.\nModelId isn't available.`,
+              );
+            }
           }
           if (overlayConversationId) {
             actions.push(

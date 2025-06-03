@@ -17,7 +17,10 @@ export const doesEntityContainSearchTerm = (
   entity: { name: string },
   searchTerm: string,
 ) => {
-  return entity.name.toLowerCase().includes(searchTerm.toLowerCase());
+  return entity.name
+    .toLowerCase()
+    .trim()
+    .includes(searchTerm.toLowerCase().trim());
 };
 
 export const isSearchTermMatched = (entity: ShareEntity, searchTerm?: string) =>

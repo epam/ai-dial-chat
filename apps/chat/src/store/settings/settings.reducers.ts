@@ -18,7 +18,7 @@ const initialState: SettingsState = {
   publicationFilters: [],
   codeWarning: '',
   announcement: '',
-  defaultModelId: undefined,
+  defaultModelReference: undefined,
   defaultRecentModelsIds: [],
   defaultRecentAddonsIds: [],
   storageType: StorageType.BrowserStorage,
@@ -42,17 +42,19 @@ export const settingsSlice = createSlice({
     ) => {
       state.enabledFeatures = payload;
     },
-    setDefaultModelId: (
+    setDefaultModeReference: (
       state,
-      { payload }: PayloadAction<{ defaultModelId: string }>,
+      { payload }: PayloadAction<{ defaultModeReference: string }>,
     ) => {
-      state.defaultModelId = payload.defaultModelId;
+      state.defaultModelReference = payload.defaultModeReference;
     },
-    setOverlayDefaultModelId: (
+    setOverlayDefaultModelReference: (
       state,
-      { payload }: PayloadAction<{ overlayDefaultModelId: string | undefined }>,
+      {
+        payload,
+      }: PayloadAction<{ overlayDefaultModelReference: string | undefined }>,
     ) => {
-      state.overlayDefaultModelId = payload.overlayDefaultModelId;
+      state.overlayDefaultModelReference = payload.overlayDefaultModelReference;
     },
     setOverlayConversationId: (state, { payload }: PayloadAction<string>) => {
       state.overlayConversationId = payload;
@@ -65,6 +67,12 @@ export const settingsSlice = createSlice({
     },
     initComplete: (state) => {
       state.initialDataStatus = UploadStatus.LOADED;
+    },
+    setDefaultRecentModelsIds: (
+      state,
+      { payload }: PayloadAction<string[]>,
+    ) => {
+      state.defaultRecentModelsIds = payload;
     },
   },
 });

@@ -731,7 +731,8 @@ dialSharedWithMeTest(
 );
 
 dialTest(
-  `View prompt: on 'Use prompt' button click the prompt parameters modal is opened. Prompt contains parameters.`,
+  `View prompt: on 'Use prompt' button click the prompt parameters modal is opened. Prompt contains parameters.\n` +
+    '[View prompt] View prompt modal is opened via context menu',
   async ({
     dialHomePage,
     promptData,
@@ -742,10 +743,11 @@ dialTest(
     prompts,
     promptDropdownMenu,
     promptPreviewModal,
+    promptPreviewModalAssertion,
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-6108');
+    setTestIds('EPMRTC-6108', 'EPMRTC-6146');
     let prompt: Prompt;
     const aVar = 'a';
     const aVarDefaultValue = '5';
@@ -772,6 +774,9 @@ dialTest(
         await promptDropdownMenu.selectMenuOption(MenuOptions.view, {
           triggeredHttpMethod: 'GET',
         });
+        await promptPreviewModalAssertion.assertPromptPreviewModalState(
+          'visible',
+        );
         await promptPreviewModal.usePromptButton.click();
         await variableModalAssertion.assertVariableModalState('visible');
         await variableModalAssertion.assertPromptVariableValue(

@@ -15,6 +15,7 @@ export * from './sidebar/sharedWithMePromptsTree';
 export * from './sidebar/approveRequiredConversationsTree';
 export * from './sidebar/approveRequiredPrompts';
 export * from './sidebar/organizationConversationsTree';
+export * from './sidebar/organizationPromptsTree';
 
 export * from './attachment/attachFilesTree';
 

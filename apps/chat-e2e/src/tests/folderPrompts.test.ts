@@ -38,39 +38,67 @@ dialTest(
 );
 
 dialTest(
-  'Prompt folder can expand and collapse',
+  'Prompt folder can expand and collapse.\n' +
+    '[View prompt] View prompt modal is opened on click',
   async ({
     dialHomePage,
     promptData,
-    folderPrompts,
+    promptPreviewModal,
+    promptBarFolderAssertion,
+    promptPreviewModalAssertion,
     dataInjector,
     setTestIds,
     localStorageManager,
+    folderPrompts,
   }) => {
-    setTestIds('EPMRTC-946');
-    const promptInFolder = promptData.prepareDefaultPromptInFolder();
-    await dataInjector.createPrompts(
-      promptInFolder.prompts,
-      promptInFolder.folders,
-    );
-    const folderName = promptInFolder.folders.name;
-    await localStorageManager.setShowSideBarPanels();
+    setTestIds('EPMRTC-946', 'EPMRTC-6144');
+    let promptInFolder: FolderPrompt;
+    let folderName: string;
+    let promptName: string;
 
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded();
-    await folderPrompts.expandFolder(folderName);
-    let isPromptVisible = await folderPrompts.isFolderEntityVisible(
-      folderName,
-      promptInFolder.prompts[0].name,
-    );
-    expect.soft(isPromptVisible, ExpectedMessages.folderExpanded).toBeTruthy();
+    await dialTest.step('Prepare a prompt inside folder', async () => {
+      promptInFolder = promptData.prepareDefaultPromptInFolder();
+      await dataInjector.createPrompts(
+        promptInFolder.prompts,
+        promptInFolder.folders,
+      );
+      folderName = promptInFolder.folders.name;
+      promptName = promptInFolder.prompts[0].name;
+      await localStorageManager.setShowSideBarPanels();
+    });
 
-    await folderPrompts.expandCollapseFolder(folderName);
-    isPromptVisible = await folderPrompts.isFolderEntityVisible(
-      folderName,
-      promptInFolder.prompts[0].name,
+    await dialTest.step('Verify prompt folder can be expanded', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded();
+      await folderPrompts.expandFolder(folderName);
+      await promptBarFolderAssertion.assertFolderEntityState(
+        { name: folderName },
+        { name: promptName },
+        'visible',
+      );
+    });
+
+    await dialTest.step(
+      'Select the prompt and verify "Prompt View" modal is opened',
+      async () => {
+        await folderPrompts.selectFolderEntity(folderName, promptName, {
+          isHttpMethodTriggered: true,
+        });
+        await promptPreviewModalAssertion.assertPromptPreviewModalState(
+          'visible',
+        );
+        await promptPreviewModal.closeButton.click();
+      },
     );
-    expect.soft(isPromptVisible, ExpectedMessages.folderCollapsed).toBeFalsy();
+
+    await dialTest.step('Verify prompt folder can be collapsed', async () => {
+      await folderPrompts.expandCollapseFolder(folderName);
+      await promptBarFolderAssertion.assertFolderEntityState(
+        { name: folderName },
+        { name: promptName },
+        'hidden',
+      );
+    });
   },
 );
 

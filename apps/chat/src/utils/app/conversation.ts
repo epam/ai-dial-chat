@@ -332,14 +332,16 @@ export const getSystemMessageContent = (
 export const getDefaultModelReference = ({
   recentModelReferences,
   modelReferences,
-  defaultModelId,
+  defaultModelReference,
 }: {
   recentModelReferences: string[];
   modelReferences: string[];
-  defaultModelId: string;
+  defaultModelReference: string;
 }) => {
   return [
-    ...modelReferences.filter((reference) => reference === defaultModelId),
+    ...modelReferences.filter(
+      (reference) => reference === defaultModelReference,
+    ),
     ...recentModelReferences,
     ...modelReferences,
   ][0];

@@ -8,6 +8,7 @@ import {
 
 import { useRouter } from 'next/router';
 
+import { useBeforeRedirect } from '@/src/hooks/useBeforeRedirect';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -15,6 +16,7 @@ import {
   getSharedTooltip,
 } from '@/src/utils/app/application';
 import { arraysHaveSameElements } from '@/src/utils/app/common';
+import { getValidFormFields } from '@/src/utils/app/forms';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
@@ -99,6 +101,8 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
     control,
     handleSubmit: submitWrapper,
     formState: { errors, defaultValues, isValid },
+    getFieldState,
+    getValues,
   } = useFormContext<QuickAppFormData>();
 
   const lastSubmittedValuesRef = useRef<QuickAppFormData | undefined>(
@@ -122,62 +126,67 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
     (data: QuickAppFormData) => {
       const hasChanged = !isEqual(data, lastSubmittedValuesRef.current);
 
-      if (shouldSaveApplication) {
-        if (hasChanged) {
-          const applicationData = getQuickAppData(data);
+      if (hasChanged) {
+        const applicationData = getQuickAppData(data);
 
-          const arrAreNotTheSameAndShared =
-            isShared &&
-            !arraysHaveSameElements(
-              getQuickAppDocumentUrl(applicationData as CustomApplicationModel),
-              getQuickAppDocumentUrl(oldApplication),
-            );
-
-          if (arrAreNotTheSameAndShared) {
-            dispatch(
-              ShareActions.revokeAccess({
-                resourceId: oldApplication.id,
-                featureType: FeatureType.Application,
-              }),
-            );
-          }
-
-          dispatch(
-            ApplicationActions.update({
-              oldApplication,
-              applicationData: {
-                ...oldApplication,
-                ...applicationData,
-                isShared: arrAreNotTheSameAndShared ? false : isShared,
-              },
-              schema: schema ?? undefined,
-            }),
+        const arrAreNotTheSameAndShared =
+          isShared &&
+          !arraysHaveSameElements(
+            getQuickAppDocumentUrl(applicationData as CustomApplicationModel),
+            getQuickAppDocumentUrl(oldApplication),
           );
 
-          lastSubmittedValuesRef.current = data;
+        if (arrAreNotTheSameAndShared) {
+          dispatch(
+            ShareActions.revokeAccess({
+              resourceId: oldApplication.id,
+              featureType: FeatureType.Application,
+            }),
+          );
         }
 
-        if (exitAfterSave) {
-          dispatch(ApplicationActions.exitEditor({}));
-        }
+        dispatch(
+          ApplicationActions.update({
+            oldApplication,
+            applicationData: {
+              ...oldApplication,
+              ...applicationData,
+              isShared: arrAreNotTheSameAndShared ? false : isShared,
+            },
+            schema: schema ?? undefined,
+          }),
+        );
 
-        dispatch(ApplicationActions.setShouldSaveApplication(false));
-        dispatch(ApplicationActions.setExitAfterSave(false));
+        lastSubmittedValuesRef.current = data;
       }
+
+      if (exitAfterSave) {
+        dispatch(ApplicationActions.exitEditor({}));
+      }
+
+      dispatch(ApplicationActions.setShouldSaveApplication(false));
+      dispatch(ApplicationActions.setExitAfterSave(false));
     },
-    [
-      shouldSaveApplication,
-      exitAfterSave,
-      isShared,
-      oldApplication,
-      dispatch,
-      schema,
-    ],
+    [exitAfterSave, dispatch, isShared, oldApplication, schema],
   );
 
   const autoSaveHandler = useCallback(() => {
     submitWrapper(handleSubmit)();
   }, [submitWrapper, handleSubmit]);
+
+  const savePartialForm = useCallback(() => {
+    const data = getValues();
+    if (!isValid && lastSubmittedValuesRef.current) {
+      handleSubmit({
+        ...lastSubmittedValuesRef.current,
+        ...getValidFormFields(data, getFieldState),
+      });
+    } else if (isValid) {
+      handleSubmit(data);
+    }
+  }, [getFieldState, getValues, handleSubmit, isValid]);
+
+  useBeforeRedirect(savePartialForm);
 
   useEffect(() => {
     const isTriggered = shouldSaveApplication || exitAfterSave;
