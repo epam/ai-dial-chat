@@ -115,6 +115,7 @@ export const ChangePathDialog = ({
   useEffect(() => {
     if (!isOpen) {
       setSearchQuery('');
+      setErrorMessage(undefined);
       dispatch(actions.resetNewFolderId());
     }
   }, [actions, dispatch, isOpen]);
