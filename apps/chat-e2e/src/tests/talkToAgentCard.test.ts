@@ -213,7 +213,7 @@ dialTest(
       async () => {
         await actualIcon.hover();
         await tooltipAssertion.assertTooltipContent(
-          appName + '\n' + `v. ${appSecondVersion}`,
+          ExpectedConstants.agentIconTooltip(appName, appSecondVersion),
         );
         await talkToAgentDialogAssertion.assertElementState(
           talkToAgents.getAgentElementDotsMenu(agentElement),

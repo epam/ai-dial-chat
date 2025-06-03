@@ -250,6 +250,8 @@ export const ExpectedConstants = {
   informationModalLastUpdatedLabel: 'Last updated:',
   informationModalCreatedDateLabel: 'Creation date:',
   informationModalAuthorLabel: 'Author:',
+  agentIconTooltip: (appName: string, appVersion: string) =>
+    `${appName}\nv. ${appVersion}`,
 };
 
 export enum Types {
