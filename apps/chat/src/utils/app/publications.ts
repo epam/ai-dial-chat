@@ -36,7 +36,7 @@ import {
   DEFAULT_VERSION,
   NA_VERSION,
   PUBLIC_URL_PREFIX,
-} from '@/src/constants/public';
+} from '@/src/constants/publication';
 
 import { isVersionValid } from './common';
 import { BucketService } from './data/bucket-service';

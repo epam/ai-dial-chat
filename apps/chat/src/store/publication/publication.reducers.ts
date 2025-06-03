@@ -347,6 +347,9 @@ export const publicationSlice = createSlice({
         state.publishModel = undefined;
       }
     },
+    setIsPublicationUpdating: (state, { payload }: PayloadAction<boolean>) => {
+      state.isPublicationUpdating = payload;
+    },
     updatePublicationRequest: (
       state,
       _action: PayloadAction<{

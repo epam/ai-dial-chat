@@ -41,7 +41,7 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
-import { NA_VERSION } from '@/src/constants/public';
+import { NA_VERSION } from '@/src/constants/publication';
 
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';

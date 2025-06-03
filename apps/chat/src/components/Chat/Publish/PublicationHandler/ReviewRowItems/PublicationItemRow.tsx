@@ -20,7 +20,10 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { PublicationSelectors } from '@/src/store/selectors';
 
-import { NA_VERSION } from '@/src/constants/public';
+import {
+  NA_VERSION,
+  PUBLICATION_REVIEW_UPDATING_DELAY,
+} from '@/src/constants/publication';
 
 import { PublicVersionSelector } from '@/src/components/Chat/Publish/PublicVersionSelector';
 import { EditableField } from '@/src/components/Common/EditableField';
@@ -61,6 +64,7 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   const [inputVersion, handleDebouncedChangeVersion] = useDebouncedInput(
     initialVersion,
     handleChangeVersion,
+    PUBLICATION_REVIEW_UPDATING_DELAY,
   );
 
   useEffect(() => {
@@ -159,6 +163,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   const [inputName, handleDebouncedChangeName] = useDebouncedInput(
     item.name,
     handleChangeName,
+    PUBLICATION_REVIEW_UPDATING_DELAY,
   );
 
   useEffect(() => {

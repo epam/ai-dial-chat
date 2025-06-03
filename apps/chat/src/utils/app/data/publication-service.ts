@@ -15,7 +15,7 @@ import {
 } from '@/src/types/publication';
 import { ServerSlugs } from '@/src/types/slugs-types';
 
-import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
+import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { constructPath } from '../file';
 import { EnumMapper } from '../mappers';

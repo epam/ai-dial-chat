@@ -26,7 +26,10 @@ import { PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/selectors';
 
-import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
+import {
+  PUBLICATION_REVIEW_UPDATING_DELAY,
+  PUBLIC_URL_PREFIX,
+} from '@/src/constants/publication';
 
 import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -44,6 +47,7 @@ import {
   PromptPublicationResources,
 } from './ReviewResources';
 
+import { debounce } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 
 interface Props {
@@ -130,41 +134,44 @@ export function PublicationHandler({ publication }: Props) {
   );
 
   const handleUpdateRequest = useCallback(() => {
-    dispatch(
-      PublicationActions.updatePublicationRequest({
-        url: publication.url,
-        dataToUpdate: {
-          name: publication.name ?? '',
-          targetFolder: publication.targetFolder,
-          rules: publication.rules,
-          resources: publication.resources.map((resource) => {
-            const { name, version } = editState[resource.reviewUrl];
+    debounce(() => {
+      dispatch(
+        PublicationActions.updatePublicationRequest({
+          url: publication.url,
+          dataToUpdate: {
+            name: publication.name ?? '',
+            targetFolder: publication.targetFolder,
+            rules: publication.rules,
+            resources: publication.resources.map((resource) => {
+              const { name, version } = editState[resource.reviewUrl];
 
-            const preparedName = prepareEntityName(name);
-            const modelName = splitEntityId(resource.reviewUrl).name;
-            const parsedModelReference =
-              parseConversationApiKey(modelName).model.id;
-            const newApiKey = isConversationId(resource.reviewUrl)
-              ? [parsedModelReference, preparedName, version].join(
-                  pathKeySeparator,
-                )
-              : isFileId(resource.reviewUrl)
-                ? [preparedName].join(pathKeySeparator)
-                : [preparedName, version].join(pathKeySeparator);
+              const preparedName = prepareEntityName(name);
+              const modelName = splitEntityId(resource.reviewUrl).name;
+              const parsedModelReference =
+                parseConversationApiKey(modelName).model.id;
+              const newApiKey = isConversationId(resource.reviewUrl)
+                ? [parsedModelReference, preparedName, version].join(
+                    pathKeySeparator,
+                  )
+                : isFileId(resource.reviewUrl)
+                  ? [preparedName].join(pathKeySeparator)
+                  : [preparedName, version].join(pathKeySeparator);
 
-            return {
-              action: resource.action,
-              sourceUrl:
-                resource.sourceUrl ?? `New request by ${publication.author}`,
-              targetUrl: constructPath(
-                getFolderIdFromEntityId(resource.targetUrl),
-                newApiKey,
-              ),
-            };
-          }),
-        },
-      }),
-    );
+              return {
+                action: resource.action,
+                sourceUrl:
+                  resource.sourceUrl ?? `New request by ${publication.author}`,
+                targetUrl: constructPath(
+                  getFolderIdFromEntityId(resource.targetUrl),
+                  newApiKey,
+                ),
+              };
+            }),
+          },
+        }),
+      );
+    }, PUBLICATION_REVIEW_UPDATING_DELAY)();
+    dispatch(PublicationActions.setIsPublicationUpdating(true));
     dispatch(PublicationActions.setIsEditMode(false));
   }, [
     dispatch,
