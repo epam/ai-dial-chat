@@ -19,7 +19,7 @@ import {
   METADATA_PREFIX,
 } from '@/src/constants/folders';
 
-import { doesHaveDotsInTheEnd } from './common';
+import { doesHaveDotsInTheEnd, prepareEntityName } from './common';
 import { isFolderId } from './shared-utils';
 
 import { Attachment, UploadStatus } from '@epam/ai-dial-shared';
@@ -367,7 +367,7 @@ export const getNextFileName = (
 };
 
 export const prepareFileName = (filename: string) =>
-  `${getFileNameWithoutExtension(filename)}${getFileNameExtension(filename)}`;
+  `${prepareEntityName(getFileNameWithoutExtension(filename))}${getFileNameExtension(filename)}`;
 
 export const isAbsoluteUrl = (url: string): boolean => {
   const urlLower = url.toLowerCase();

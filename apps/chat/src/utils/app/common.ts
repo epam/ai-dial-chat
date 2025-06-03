@@ -116,11 +116,14 @@ export const prepareEntityName = (
           notAllowedSymbolsRegex,
           options?.replaceWithSpacesForRenaming ? ' ' : '',
         )
+        .replace(/\s+/g, ' ')
         .trim()
     : (name
         .replace(/\r\n|\r/gm, '\n')
         .split('\n')
-        .map((s) => s.replace(notAllowedSymbolsRegex, ' ').trim())
+        .map((s) =>
+          s.replace(notAllowedSymbolsRegex, ' ').replace(/\s+/g, ' ').trim(),
+        )
         .filter(Boolean)[0] ?? '');
 
   const maxEntityLength = options?.maxNameLength ?? MAX_ENTITY_LENGTH;
