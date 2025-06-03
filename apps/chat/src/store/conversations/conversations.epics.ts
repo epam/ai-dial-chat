@@ -1173,6 +1173,7 @@ const sendMessagesEpic: AppEpic = (action$) =>
               message: payload.message,
               deleteCount: payload.deleteCount,
               activeReplayIndex: payload.activeReplayIndex,
+              skipRecentModelsUpdate: payload.skipRecentModelsUpdate,
             }),
           );
         }),
@@ -1298,6 +1299,15 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
             ),
           );
         }
+        if (!payload.skipRecentModelsUpdate) {
+          actions.push(
+            of(
+              ModelsActions.updateRecentModels({
+                modelId: updatedConversation.model.id,
+              }),
+            ),
+          );
+        }
 
         return concat(
           ...actions,
@@ -1305,11 +1315,6 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
             ConversationsActions.updateConversation({
               id: payload.conversation.id,
               values: updatedConversation,
-            }),
-          ),
-          of(
-            ModelsActions.updateRecentModels({
-              modelId: updatedConversation.model.id,
             }),
           ),
           of(

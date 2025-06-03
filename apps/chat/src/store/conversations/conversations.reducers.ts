@@ -531,6 +531,7 @@ export const conversationsSlice = createSlice({
         message: Message;
         deleteCount: number;
         activeReplayIndex: number;
+        skipRecentModelsUpdate?: boolean;
       }>,
     ) => state,
     sendMessage: (
@@ -540,6 +541,7 @@ export const conversationsSlice = createSlice({
         message: Message;
         deleteCount: number;
         activeReplayIndex: number;
+        skipRecentModelsUpdate?: boolean;
       }>,
     ) => state,
     streamMessage: (
