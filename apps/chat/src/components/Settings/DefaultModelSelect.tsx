@@ -45,6 +45,7 @@ export const DefaultModelSelect = () => {
           onChange={onChangeHandler}
           models={allModels}
           additionalModelsMap={SPECIAL_DEFAULT_MODEL_DIC}
+          useReference
         />
       </div>
     </div>

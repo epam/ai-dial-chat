@@ -63,6 +63,7 @@ interface ModelsSelectorProps {
   onChange: (modelId: string) => void;
   models?: DialAIEntityModel[];
   additionalModelsMap?: Partial<Record<string, DialAIEntityModel>>;
+  useReference?: boolean;
 }
 
 export const ModelsSelector = memo(function ModelsSelector({
@@ -72,6 +73,7 @@ export const ModelsSelector = memo(function ModelsSelector({
   onChange,
   models,
   additionalModelsMap,
+  useReference,
 }: ModelsSelectorProps) {
   const onlyModels = useAppSelector(ModelsSelectors.selectModelsOnly);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -100,7 +102,9 @@ export const ModelsSelector = memo(function ModelsSelector({
           getItemLabel={(model: DialAIEntityModel) =>
             getOpenAIEntityFullName(model)
           }
-          getItemValue={(model: DialAIEntityModel) => model.id}
+          getItemValue={(model: DialAIEntityModel) =>
+            useReference ? model.reference : model.id
+          }
           itemRow={({ item }) => (
             <ModelSelectRow
               item={item}
