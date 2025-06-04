@@ -234,10 +234,12 @@ const selectIsEditMode = (state: RootState) => rootSelector(state).isEditMode;
 
 const selectEditState = (state: RootState) => rootSelector(state).editState;
 
+const selectRulesOnEdit = (state: RootState) => rootSelector(state).rulesOnEdit;
+
 const selectEditStateByReviewUrl = createSelector(
   [selectEditState, (_state, reviewUrl: string) => reviewUrl],
   (editState, reviewUrl): { name: string; version: string } | null => {
-    return editState.resources[reviewUrl] ?? null;
+    return editState[reviewUrl] ?? null;
   },
 );
 
@@ -269,6 +271,7 @@ export const PublicationSelectors = {
   selectPublishModel,
   selectIsEditMode,
   selectEditState,
+  selectRulesOnEdit,
   selectEditStateByReviewUrl,
   selectIsPublicationUpdating,
 };

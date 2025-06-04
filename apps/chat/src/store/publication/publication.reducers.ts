@@ -46,10 +46,7 @@ const initialState: PublicationState = {
 
   // Review edit mode
   isEditMode: false,
-  editState: {
-    resources: {},
-    rules: [],
-  },
+  editState: {},
   isPublicationUpdating: false,
 };
 
@@ -79,10 +76,14 @@ export const publicationSlice = createSlice({
       state,
       { payload }: PayloadAction<{ publication: Publication }>,
     ) => {
-      state.publications = state.publications.map((p) =>
-        p.url === payload.publication.url
-          ? { ...p, ...payload.publication, uploadStatus: UploadStatus.LOADED }
-          : p,
+      state.publications = state.publications.map((publication) =>
+        publication.url === payload.publication.url
+          ? {
+              ...publication,
+              ...payload.publication,
+              uploadStatus: UploadStatus.LOADED,
+            }
+          : publication,
       );
       state.isPublicationUpdating = false;
     },
@@ -346,6 +347,9 @@ export const publicationSlice = createSlice({
         state.publishModel = undefined;
       }
     },
+    setIsPublicationUpdating: (state, { payload }: PayloadAction<boolean>) => {
+      state.isPublicationUpdating = payload;
+    },
     updatePublicationRequest: (
       state,
       _action: PayloadAction<{
@@ -363,11 +367,12 @@ export const publicationSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        resources: Record<string, { name: string; version: string }>;
+        editState: Record<string, { name: string; version: string }>;
         rules?: PublicationRule[];
       }>,
     ) => {
-      state.editState = payload;
+      state.editState = payload.editState;
+      state.rulesOnEdit = payload.rules;
     },
     setEditStateByReviewUrl: (
       state,
@@ -379,25 +384,13 @@ export const publicationSlice = createSlice({
         version: string;
       }>,
     ) => {
-      state.editState = {
-        ...state.editState,
-        resources: {
-          ...state.editState.resources,
-          [payload.reviewUrl]: {
-            name: payload.name,
-            version: payload.version,
-          },
-        },
+      state.editState[payload.reviewUrl] = {
+        name: payload.name,
+        version: payload.version,
       };
     },
-    setEditStateRules: (
-      state,
-      { payload }: PayloadAction<PublicationRule[]>,
-    ) => {
-      state.editState = {
-        ...state.editState,
-        rules: payload,
-      };
+    setRulesOnEdit: (state, { payload }: PayloadAction<PublicationRule[]>) => {
+      state.rulesOnEdit = payload;
     },
   },
 });

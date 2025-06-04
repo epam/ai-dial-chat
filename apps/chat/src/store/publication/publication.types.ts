@@ -31,9 +31,7 @@ export interface PublicationState {
 
   // Review edit mode
   isEditMode: boolean;
-  editState: {
-    resources: Record<string, { name: string; version: string }>;
-    rules?: PublicationRule[];
-  };
+  editState: Record<string, { name: string; version: string }>;
+  rulesOnEdit?: PublicationRule[];
   isPublicationUpdating: boolean;
 }

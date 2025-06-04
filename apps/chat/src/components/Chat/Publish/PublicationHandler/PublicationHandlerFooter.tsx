@@ -156,7 +156,7 @@ export const PublicationHandlerFooter = ({
   useEffect(() => {
     dispatch(
       PublicationActions.setEditModeState({
-        resources: getDefaultAllEditEntities(publication.resources),
+        editState: getDefaultAllEditEntities(publication.resources),
         rules: publication.rules,
       }),
     );

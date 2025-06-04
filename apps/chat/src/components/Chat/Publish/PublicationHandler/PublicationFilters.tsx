@@ -37,19 +37,19 @@ export function PublicationFilters({
   const dispatch = useAppDispatch();
 
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
-  const editState = useAppSelector(PublicationSelectors.selectEditState);
+  const rulesOnEdit = useAppSelector(PublicationSelectors.selectRulesOnEdit);
 
   const [isRulesSetterVisible, setIsRulesSetterVisible] = useState(false);
 
   const filters = useMemo(
-    () => editState.rules?.map(mapRuleToFilter) ?? [],
-    [editState.rules],
+    () => rulesOnEdit?.map(mapRuleToFilter) ?? [],
+    [rulesOnEdit],
   );
 
   const handleFilterUpdate = useCallback(
     (newFilters: TargetAudienceFilter[]) => {
       dispatch(
-        PublicationActions.setEditStateRules(newFilters.map(mapFilterToRule)),
+        PublicationActions.setRulesOnEdit(newFilters.map(mapFilterToRule)),
       );
     },
     [dispatch],
