@@ -28,8 +28,8 @@ import {
   Publication,
   PublicationRequestModel,
   PublicationResource,
-  ResourceToReview,
   PublicationRule,
+  ResourceToReview,
   TargetAudienceFilter,
 } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';

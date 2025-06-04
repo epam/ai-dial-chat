@@ -173,7 +173,16 @@ export function PublicationHandler({ publication }: Props) {
     }, PUBLICATION_REVIEW_UPDATING_DELAY)();
     dispatch(PublicationActions.setIsPublicationUpdating(true));
     dispatch(PublicationActions.setIsEditMode(false));
-  }, [dispatch, editState, publication.author, publication.name, publication.resources, publication.targetFolder, publication.url, rulesOnEdit]);
+  }, [
+    dispatch,
+    editState,
+    publication.author,
+    publication.name,
+    publication.resources,
+    publication.targetFolder,
+    publication.url,
+    rulesOnEdit,
+  ]);
 
   const publishToUrl = publication.targetFolder
     ? publication.targetFolder.replace(/^[^/]+/, 'Organization')
