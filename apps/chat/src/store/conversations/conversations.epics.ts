@@ -115,7 +115,12 @@ import {
   WidgetsSelectors,
 } from '@/src/store/selectors';
 
-import { LOCAL_BUCKET } from '@/src/constants/chat';
+import {
+  DEFAULT_AGENT,
+  LAST_USED_AGENT,
+  LOCAL_BUCKET,
+} from '@/src/constants/chat';
+import { DEFAULT_MODEL_ID } from '@/src/constants/default-server-settings';
 import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_TEMPERATURE,
@@ -438,6 +443,17 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 recentModelReferences,
                 modelReferences,
                 defaultModelReference: overlayDefaultModelReference,
+              });
+            }
+
+            const defaultModelReference =
+              ModelsSelectors.selectDefaultModelReference(state);
+
+            if (defaultModelReference) {
+              return getDefaultModelReference({
+                recentModelReferences,
+                modelReferences,
+                defaultModelReference,
               });
             }
 

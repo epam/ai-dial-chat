@@ -9,6 +9,8 @@ import {
 import { EntityType } from '@/src/types/common';
 import { RootState } from '@/src/types/store';
 
+import { DEFAULT_AGENT, LAST_USED_AGENT } from '@/src/constants/chat';
+
 import { UploadStatus } from '@epam/ai-dial-shared';
 import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
@@ -103,8 +105,21 @@ const selectAllGroupModelKeySet = (state: RootState, references: string[]) => {
   );
 };
 
-const selectDefaultModelReference = (state: RootState) =>
+const selectDefaultModelOption = (state: RootState) =>
   rootSelector(state).defaultModelReference;
+
+const selectDefaultModelReference = createSelector(
+  [selectDefaultModelOption, selectModels],
+  (defaultModelReference, allModels) => {
+    if (defaultModelReference === LAST_USED_AGENT) {
+      return undefined;
+    }
+    if (defaultModelReference === DEFAULT_AGENT) {
+      return allModels.find((model) => model.isDefault)?.reference;
+    }
+    return defaultModelReference;
+  },
+);
 
 export const ModelsSelectors = {
   selectModels,
@@ -124,5 +139,6 @@ export const ModelsSelectors = {
   selectInitialized,
   selectAllGroupModelKeySet,
   selectIsRecentModelsLoaded,
+  selectDefaultModelOption,
   selectDefaultModelReference,
 };

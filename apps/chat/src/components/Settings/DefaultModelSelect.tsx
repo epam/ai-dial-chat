@@ -20,7 +20,7 @@ export const DefaultModelSelect = () => {
   const dispatch = useAppDispatch();
 
   const { t } = useTranslation(Translation.Settings);
-  const model = useAppSelector(ModelsSelectors.selectDefaultModelReference);
+  const model = useAppSelector(ModelsSelectors.selectDefaultModelOption);
   const models = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
