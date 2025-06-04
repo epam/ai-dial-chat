@@ -57,7 +57,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const searchParams = new URLSearchParams();
     searchParams.set('limit', limit);
     searchParams.set('recursive', recursive);
-    //searchParams.set('permissions', 'true'); // until resolved https://github.com/epam/ai-dial-chat/issues/4003
+    searchParams.set('permissions', 'true');
 
     const url = `${sanitizeUri(path)}/?${searchParams}`;
 
