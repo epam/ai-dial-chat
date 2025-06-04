@@ -88,9 +88,10 @@ export const PublicationHandlerFooter = ({
     dispatch(
       PublicationActions.setEditModeState({
         editState: getDefaultAllEditEntities(publication.resources),
+        rules: publication.rules,
       }),
     );
-  }, [dispatch, publication.resources, isEditMode]);
+  }, [dispatch, publication.resources, isEditMode, publication.rules]);
 
   const notExistEntities = useMemo(
     () =>

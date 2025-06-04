@@ -112,7 +112,7 @@ export const TalkToCard = ({
           className="xl:invisible group-hover:xl:visible"
         />
       </div>
-      <div className="flex items-center gap-4 overflow-hidden">
+      <div className="flex items-end gap-4 overflow-hidden">
         <div className="flex shrink-0 items-center justify-center xl:my-[3px]">
           {entity.reference === PseudoModel.Playback && (
             <span
@@ -146,7 +146,7 @@ export const TalkToCard = ({
               </ShareIcon>
             )}
         </div>
-        <div className="flex grow flex-col justify-center gap-2 overflow-hidden leading-4">
+        <div className="flex grow flex-col justify-center gap-1 overflow-hidden leading-4 md:gap-2">
           {!!versionsToSelect.length && (
             <div className="flex items-center">
               <p className="mr-1 text-xs text-secondary">{t('Version')}: </p>

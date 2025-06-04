@@ -101,6 +101,7 @@ export function PublicationHandler({ publication }: Props) {
     PublicationSelectors.selectIsPublicationUpdating,
   );
   const editState = useAppSelector(PublicationSelectors.selectEditState);
+  const rulesOnEdit = useAppSelector(PublicationSelectors.selectRulesOnEdit);
 
   const publicationAuthor = useMemo(() => {
     return extractNameFromEmail(publication.author) ?? t('Unknown');
@@ -141,7 +142,7 @@ export function PublicationHandler({ publication }: Props) {
           dataToUpdate: {
             name: publication.name ?? '',
             targetFolder: publication.targetFolder,
-            rules: publication.rules,
+            rules: rulesOnEdit,
             resources: publication.resources.map((resource) => {
               const { name, version } = editState[resource.reviewUrl];
 
@@ -178,9 +179,9 @@ export function PublicationHandler({ publication }: Props) {
     publication.author,
     publication.name,
     publication.resources,
-    publication.rules,
     publication.targetFolder,
     publication.url,
+    rulesOnEdit,
   ]);
 
   const publishToUrl = publication.targetFolder

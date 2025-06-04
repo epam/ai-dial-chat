@@ -28,7 +28,9 @@ import {
   Publication,
   PublicationRequestModel,
   PublicationResource,
+  PublicationRule,
   ResourceToReview,
+  TargetAudienceFilter,
 } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 
@@ -486,3 +488,19 @@ export const getDefaultAllEditEntities = (resources: PublicationResource[]) => {
 
   return allEditEntitiesMap;
 };
+
+export const mapRuleToFilter = (
+  rule: PublicationRule,
+): TargetAudienceFilter => ({
+  filterFunction: rule.function,
+  filterParams: rule.targets,
+  id: rule.source,
+});
+
+export const mapFilterToRule = (
+  filter: TargetAudienceFilter,
+): PublicationRule => ({
+  function: filter.filterFunction,
+  source: filter.id,
+  targets: filter.filterParams,
+});
