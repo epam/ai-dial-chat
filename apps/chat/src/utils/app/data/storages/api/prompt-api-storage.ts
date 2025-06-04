@@ -2,6 +2,7 @@ import { Observable, catchError, forkJoin, of } from 'rxjs';
 
 import { cleanPrompt } from '@/src/utils/app/clean';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
+import { getPromptInfoFromId } from '@/src/utils/app/prompts';
 import { getPromptApiKey, parsePromptApiKey } from '@/src/utils/server/api';
 
 import { ApiKeys } from '@/src/types/common';
@@ -43,7 +44,11 @@ export const getOrUploadPrompt = <T extends { id: string }>(
   payload: T;
   wasUploaded: boolean;
 }> => {
-  const prompt = PromptsSelectors.selectPrompt(state, payload.id);
+  let prompt = PromptsSelectors.selectPrompt(state, payload.id);
+
+  if (!prompt) {
+    prompt = getPromptInfoFromId(payload.id);
+  }
 
   if (prompt && prompt?.status !== UploadStatus.LOADED) {
     return forkJoin({

@@ -99,7 +99,7 @@ export interface FolderProps<T, P = unknown> {
   allFolders: FolderInterface[];
   level?: number;
   highlightedFolders?: string[];
-  searchTerm: string;
+  searchTerm?: string;
   openedFoldersIds: string[];
   isInitialRenameEnabled?: boolean;
   newAddedFolderId?: string;

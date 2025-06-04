@@ -17,7 +17,7 @@ import { PromptInfo } from '@/src/types/prompt';
 import { ServerSlugs } from '@/src/types/slugs-types';
 
 import { EMPTY_MODEL_ID } from '@/src/constants/default-ui-settings';
-import { NA_VERSION } from '@/src/constants/public';
+import { NA_VERSION } from '@/src/constants/publication';
 import { validVersionRegEx } from '@/src/constants/versions';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
@@ -163,6 +163,15 @@ export const parseApplicationApiKey = (
   return {
     name,
     version,
+  };
+};
+
+export const parseFileApiKey = (
+  apiKey: string,
+): { name: string; publicationInfo: { version: string } } => {
+  return {
+    name: apiKey,
+    publicationInfo: { version: NA_VERSION },
   };
 };
 

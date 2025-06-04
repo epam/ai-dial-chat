@@ -1,6 +1,14 @@
 import { BackendDataNodeType, BackendResourceType } from './common';
+import { DialFile } from './files';
 
-import { MIMEType, PublishActions, UploadStatus } from '@epam/ai-dial-shared';
+import {
+  ConversationInfo,
+  MIMEType,
+  PromptInfo,
+  PublishActions,
+  ShareEntity,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 
 export enum PublicationFunctions {
   Equal = 'Equal',
@@ -19,7 +27,7 @@ export interface PublicationRule {
 
 export interface PublicationRequestModel {
   name: string;
-  displayAuthor: string;
+  displayAuthor?: string;
   targetFolder: string;
   resources: {
     action: PublishActions;
@@ -135,3 +143,9 @@ export type PublicVersionGroups = Record<
   string,
   PublicVersionGroup | undefined
 >;
+
+export type PublicationReviewItem =
+  | ShareEntity
+  | PromptInfo
+  | ConversationInfo
+  | DialFile;

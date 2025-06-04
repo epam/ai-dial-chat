@@ -15,7 +15,7 @@ import {
 } from '@/src/types/publication';
 import { ServerSlugs } from '@/src/types/slugs-types';
 
-import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
+import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { constructPath } from '../file';
 import { EnumMapper } from '../mappers';
@@ -75,12 +75,12 @@ export class PublicationService {
       }),
     }).pipe(
       map(({ publications }: PublicationsListModel) => {
-        return publications.map((p) => {
-          if (!p.targetFolder) return p;
+        return publications.map((publication) => {
+          if (!publication.targetFolder) return publication;
 
           return {
-            ...p,
-            targetFolder: ApiUtils.decodeApiUrl(p.targetFolder),
+            ...publication,
+            targetFolder: ApiUtils.decodeApiUrl(publication.targetFolder),
           };
         });
       }),

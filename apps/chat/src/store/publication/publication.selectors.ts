@@ -59,6 +59,13 @@ const selectSelectedPublication = createSelector(
   },
 );
 
+const selectPublicationByUrl = createSelector(
+  [selectPublications, (_state, url: string) => url],
+  (publications, url) => {
+    return publications.find((publication) => publication.url === url);
+  },
+);
+
 const selectResourcesToReview = (state: RootState) =>
   rootSelector(state).resourcesToReview;
 
@@ -223,12 +230,27 @@ const selectPublicVersionGroupById = (
 const selectPublishModel = (state: RootState) =>
   rootSelector(state).publishModel;
 
+const selectIsEditMode = (state: RootState) => rootSelector(state).isEditMode;
+
+const selectEditState = (state: RootState) => rootSelector(state).editState;
+
+const selectEditStateByReviewUrl = createSelector(
+  [selectEditState, (_state, reviewUrl: string) => reviewUrl],
+  (editState, reviewUrl): { name: string; version: string } | null => {
+    return editState[reviewUrl] ?? null;
+  },
+);
+
+const selectIsPublicationUpdating = (state: RootState) =>
+  rootSelector(state).isPublicationUpdating;
+
 export const PublicationSelectors = {
   selectPublications,
   selectFilteredPublications,
   selectFilteredPublicationResources,
   selectSelectedPublicationUrl,
   selectSelectedPublication,
+  selectPublicationByUrl,
   selectResourcesToReview,
   selectResourceToReviewByReviewUrl,
   selectResourceToReviewByReviewAndPublicationUrls,
@@ -245,4 +267,8 @@ export const PublicationSelectors = {
   selectPublicVersionGroups,
   selectPublicVersionGroupById,
   selectPublishModel,
+  selectIsEditMode,
+  selectEditState,
+  selectEditStateByReviewUrl,
+  selectIsPublicationUpdating,
 };
