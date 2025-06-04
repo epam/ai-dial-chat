@@ -137,7 +137,7 @@ export function PublicationHandler({ publication }: Props) {
     debounce(() => {
       dispatch(
         PublicationActions.updatePublicationRequest({
-          url: publication.url,
+          url: publication.url ?? `New request by ${publication.author}`,
           dataToUpdate: {
             name: publication.name ?? '',
             targetFolder: publication.targetFolder,
@@ -159,8 +159,7 @@ export function PublicationHandler({ publication }: Props) {
 
               return {
                 action: resource.action,
-                sourceUrl:
-                  resource.sourceUrl ?? `New request by ${publication.author}`,
+                sourceUrl: resource.sourceUrl ?? '',
                 targetUrl: constructPath(
                   getFolderIdFromEntityId(resource.targetUrl),
                   newApiKey,
