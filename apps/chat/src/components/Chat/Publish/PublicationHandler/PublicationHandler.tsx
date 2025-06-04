@@ -2,7 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { extractNameFromEmail, formatDate } from '@/src/utils/app/common';
+import {
+  extractNameFromEmail,
+  formatDate,
+  prepareEntityName,
+} from '@/src/utils/app/common';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { isConversationId, isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
@@ -22,7 +26,10 @@ import { PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/selectors';
 
-import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
+import {
+  PUBLICATION_REVIEW_UPDATING_DELAY,
+  PUBLIC_URL_PREFIX,
+} from '@/src/constants/publication';
 
 import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -40,6 +47,7 @@ import {
   PromptPublicationResources,
 } from './ReviewResources';
 
+import { debounce } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 
 interface Props {
@@ -127,46 +135,45 @@ export function PublicationHandler({ publication }: Props) {
   );
 
   const handleUpdateRequest = useCallback(() => {
-    dispatch(
-      PublicationActions.updatePublicationRequest({
-        url: publication.url,
-        dataToUpdate: {
-          name: publication.name ?? '',
-          targetFolder: publication.targetFolder,
-          rules: rulesOnEdit,
-          resources: publication.resources.map((resource) => {
-            const { name, version } = editState[resource.reviewUrl];
-            const modelName = splitEntityId(resource.reviewUrl).name;
-            const parsedModelReference =
-              parseConversationApiKey(modelName).model.id;
-            const newApiKey = isConversationId(resource.reviewUrl)
-              ? [parsedModelReference, name, version].join(pathKeySeparator)
-              : isFileId(resource.reviewUrl)
-                ? [name].join(pathKeySeparator)
-                : [name, version].join(pathKeySeparator);
+    debounce(() => {
+      dispatch(
+        PublicationActions.updatePublicationRequest({
+          url: publication.url ?? `New request by ${publication.author}`,
+          dataToUpdate: {
+            name: publication.name ?? '',
+            targetFolder: publication.targetFolder,
+            rules: rulesOnEdit,
+            resources: publication.resources.map((resource) => {
+              const { name, version } = editState[resource.reviewUrl];
 
-            return {
-              action: resource.action,
-              sourceUrl: resource.sourceUrl ?? '',
-              targetUrl: constructPath(
-                getFolderIdFromEntityId(resource.targetUrl),
-                newApiKey,
-              ),
-            };
-          }),
-        },
-      }),
-    );
+              const preparedName = prepareEntityName(name);
+              const modelName = splitEntityId(resource.reviewUrl).name;
+              const parsedModelReference =
+                parseConversationApiKey(modelName).model.id;
+              const newApiKey = isConversationId(resource.reviewUrl)
+                ? [parsedModelReference, preparedName, version].join(
+                    pathKeySeparator,
+                  )
+                : isFileId(resource.reviewUrl)
+                  ? [preparedName].join(pathKeySeparator)
+                  : [preparedName, version].join(pathKeySeparator);
+
+              return {
+                action: resource.action,
+                sourceUrl: resource.sourceUrl ?? '',
+                targetUrl: constructPath(
+                  getFolderIdFromEntityId(resource.targetUrl),
+                  newApiKey,
+                ),
+              };
+            }),
+          },
+        }),
+      );
+    }, PUBLICATION_REVIEW_UPDATING_DELAY)();
+    dispatch(PublicationActions.setIsPublicationUpdating(true));
     dispatch(PublicationActions.setIsEditMode(false));
-  }, [
-    dispatch,
-    editState,
-    publication.name,
-    publication.resources,
-    publication.targetFolder,
-    publication.url,
-    rulesOnEdit,
-  ]);
+  }, [dispatch, editState, publication.author, publication.name, publication.resources, publication.targetFolder, publication.url, rulesOnEdit]);
 
   const publishToUrl = publication.targetFolder
     ? publication.targetFolder.replace(/^[^/]+/, 'Organization')

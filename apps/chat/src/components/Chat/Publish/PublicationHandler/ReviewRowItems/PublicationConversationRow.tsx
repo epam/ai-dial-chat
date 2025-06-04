@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import {
   isPlaybackConversation,
@@ -28,9 +28,6 @@ export const PublicationConversationRow: React.FC<Props> = ({
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const isReplay = isReplayConversation(item);
   const isPlayback = isPlaybackConversation(item);
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
-  const handleEdit = useCallback((newName: string) => {}, []);
 
   const Icon = useMemo(() => {
     if (isReplay) {

@@ -5,6 +5,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { isVersionValid, prepareEntityName } from '@/src/utils/app/common';
 import {
   getFolderIdFromEntityId,
   getParentFolderIdsFromEntityId,
@@ -15,20 +16,13 @@ import {
   isFileId,
   isPromptId,
 } from '@/src/utils/app/id';
-import { splitEntityId } from '@/src/utils/app/shared-utils';
 import {
-  getVersionFromId,
-  parseApplicationApiKey,
-  parseConversationApiKey,
-  parseFileApiKey,
-  parsePromptApiKey,
-} from '@/src/utils/server/api';
+  getDefaultAllEditEntities,
+  getFirstReviewUrl,
+  getReviewItems,
+} from '@/src/utils/app/publications';
 
-import {
-  Publication,
-  PublicationResource,
-  ResourceToReview,
-} from '@/src/types/publication';
+import { Publication, ResourceToReview } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -47,82 +41,18 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
-import { NA_VERSION } from '@/src/constants/public';
+import { NA_VERSION } from '@/src/constants/publication';
 
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { FeatureType } from '@epam/ai-dial-shared';
+import { FeatureType, PublishActions } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 interface Props {
   publication: Publication;
   onUpdateRequest: () => void;
 }
-
-const getFirstReviewUrl = (
-  resourcesToReview: ResourceToReview[],
-  reviewedResources: ResourceToReview[],
-) => {
-  return resourcesToReview.length
-    ? resourcesToReview[0].reviewUrl
-    : reviewedResources[0].reviewUrl;
-};
-
-const getReviewItems = (
-  publication: Publication,
-  resourcesToReview: ResourceToReview[],
-  isItemId: (id: string) => boolean,
-) => {
-  const toReview = resourcesToReview.filter(
-    (r) =>
-      !r.reviewed &&
-      r.publicationUrl === publication.url &&
-      isItemId(r.reviewUrl),
-  );
-  const reviewed = resourcesToReview.filter(
-    (r) => r.publicationUrl === publication.url && isItemId(r.reviewUrl),
-  );
-
-  return { toReview, reviewed };
-};
-
-const getDefaultAllEditEntities = (resources: PublicationResource[]) => {
-  const allEditEntitiesMap: Record<
-    string,
-    {
-      name: string;
-      version: string;
-    }
-  > = {};
-
-  resources.forEach((item) => {
-    const isConversation = isConversationId(item.reviewUrl);
-    const isApplication = isApplicationId(item.reviewUrl);
-    const isFile = isFileId(item.reviewUrl);
-    const apiKey = splitEntityId(item.reviewUrl).name;
-
-    const parseFunction = isConversation
-      ? parseConversationApiKey
-      : isApplication
-        ? parseApplicationApiKey
-        : isFile
-          ? parseFileApiKey
-          : parsePromptApiKey;
-    const parsedApiKey = parseFunction(apiKey, {
-      parseVersion: true,
-    });
-
-    allEditEntitiesMap[item.reviewUrl] = {
-      name: parsedApiKey.name,
-      version: isApplication
-        ? getVersionFromId(item.reviewUrl)
-        : (parsedApiKey.publicationInfo?.version ?? NA_VERSION),
-    };
-  });
-
-  return allEditEntitiesMap;
-};
 
 export const PublicationHandlerFooter = ({
   publication,
@@ -145,6 +75,7 @@ export const PublicationHandlerFooter = ({
     ),
   );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
+  const editState = useAppSelector(PublicationSelectors.selectEditState);
 
   const dispatch = useAppDispatch();
 
@@ -319,6 +250,15 @@ export const PublicationHandlerFooter = ({
     isFileId(resource.reviewUrl),
   );
   const isAllResourcesReviewed = resourcesToReview.every((r) => r.reviewed);
+  const isEditDisabled = Object.values(editState).some(({ version, name }) => {
+    return (
+      !prepareEntityName(name) ||
+      (!isVersionValid(version) && version !== NA_VERSION)
+    );
+  });
+  const isEveryResourceForUnpublish = publication.resources.every(
+    (resource) => resource.action === PublishActions.DELETE,
+  );
 
   return (
     <div
@@ -367,12 +307,14 @@ export const PublicationHandlerFooter = ({
       <div className="flex items-center gap-3">
         {!isEditMode ? (
           <>
-            <IconButton
-              name={t('Edit')}
-              dataQa="edit"
-              onClick={handleToggleEditMode}
-              Icon={IconPencil}
-            />
+            {!isEveryResourceForUnpublish && (
+              <IconButton
+                name={t('Edit')}
+                dataQa="edit"
+                onClick={handleToggleEditMode}
+                Icon={IconPencil}
+              />
+            )}
             <button
               className="button button-secondary"
               onClick={() =>
@@ -420,16 +362,15 @@ export const PublicationHandlerFooter = ({
               {t('Cancel')}
             </button>
             <Tooltip
-              hideTooltip={resourcesToReview.every((r) => r.reviewed)}
+              hideTooltip={!isEditDisabled}
               tooltip={t(
-                invalidEntities.length
-                  ? "Request can't be approved as some conversations are unpublished"
-                  : "It's required to review all resources",
+                'Request can not be updated as some resources are invalid',
               )}
             >
               <button
                 className="button button-primary disabled:cursor-not-allowed disabled:text-controls-disable"
                 onClick={onUpdateRequest}
+                disabled={isEditDisabled}
                 data-qa="update"
               >
                 {t('Update request')}

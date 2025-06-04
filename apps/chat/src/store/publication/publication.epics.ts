@@ -31,6 +31,7 @@ import {
   getRootFolderIdFromEntityId,
 } from '@/src/utils/app/folders';
 import {
+  filterIdsByFeatureType,
   isApplicationId,
   isConversationId,
   isFileId,
@@ -1400,15 +1401,25 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
           const resourcesRequiresUpdateIds = resourcesRequiresUpdate.map(
             (resource) => resource.reviewUrl,
           );
-          const conversationsRequiresUpdate = resourcesRequiresUpdateIds.filter(
-            (id) => isConversationId(id),
-          );
-          const promptsRequiresUpdate = resourcesRequiresUpdateIds.filter(
-            (id) => isPromptId(id),
-          );
-          const applicationsRequiresUpdate = resourcesRequiresUpdateIds.filter(
-            (id) => isApplicationId(id),
-          );
+
+          const {
+            conversationsRequiresUpdate = [],
+            promptsRequiresUpdate = [],
+            applicationsRequiresUpdate = [],
+          } = {
+            conversationsRequiresUpdate: filterIdsByFeatureType(
+              resourcesRequiresUpdateIds,
+              FeatureType.Chat,
+            ),
+            promptsRequiresUpdate: filterIdsByFeatureType(
+              resourcesRequiresUpdateIds,
+              FeatureType.Prompt,
+            ),
+            applicationsRequiresUpdate: filterIdsByFeatureType(
+              resourcesRequiresUpdateIds,
+              FeatureType.Application,
+            ),
+          };
 
           // if only files are updated, we just need to upload the publication, since they are not "JSON objects"
           if (

@@ -1,15 +1,17 @@
 import { IconDownload } from '@tabler/icons-react';
-import { ReactNode, useCallback, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { useDebouncedInput } from '@/src/hooks/useDebounceInput';
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 
+import { isVersionValid } from '@/src/utils/app/common';
 import { isApplicationId, isFileId } from '@/src/utils/app/id';
 import { constructPath } from '@/src/utils/app/shared-utils';
-import { ApiUtils, getVersionFromId } from '@/src/utils/server/api';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { PublicationReviewItem } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
@@ -18,11 +20,13 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { PublicationSelectors } from '@/src/store/selectors';
 
-import { NA_VERSION } from '@/src/constants/public';
+import {
+  NA_VERSION,
+  PUBLICATION_REVIEW_UPDATING_DELAY,
+} from '@/src/constants/publication';
 
 import { PublicVersionSelector } from '@/src/components/Chat/Publish/PublicVersionSelector';
 import { EditableField } from '@/src/components/Common/EditableField';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -55,6 +59,18 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
     [dispatch, item.id, item.name, editState?.name],
   );
 
+  const initialVersion = item.publicationInfo?.version ?? NA_VERSION;
+
+  const [inputVersion, handleDebouncedChangeVersion] = useDebouncedInput(
+    initialVersion,
+    handleChangeVersion,
+    PUBLICATION_REVIEW_UPDATING_DELAY,
+  );
+
+  useEffect(() => {
+    handleDebouncedChangeVersion(initialVersion);
+  }, [handleDebouncedChangeVersion, isEditMode, initialVersion]);
+
   const { publicVersionGroupId } = usePublicVersionGroupId(item);
 
   if (isFileId(item.id)) {
@@ -73,9 +89,6 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   }
 
   const isApplication = isApplicationId(item.id);
-  const version = isApplication
-    ? getVersionFromId(item.id)
-    : (editState?.version ?? item.publicationInfo?.version ?? NA_VERSION);
   const isDeleteAction = item.publicationInfo?.action === PublishActions.DELETE;
 
   return (
@@ -97,10 +110,14 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
         data-qa="version"
       >
         <EditableField
-          value={version}
-          isEditMode={isEditMode}
-          onChange={handleChangeVersion}
-          inputClassName="w-[34px] text-xs"
+          value={inputVersion}
+          isEditMode={isDeleteAction ? false : isEditMode}
+          onChange={handleDebouncedChangeVersion}
+          inputClassName={classNames(
+            'w-[34px] text-xs',
+            (!isVersionValid(inputVersion) || inputVersion === NA_VERSION) &&
+              '!border-b-error',
+          )}
         />
       </span>
     </div>
@@ -130,11 +147,11 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   const [isFocused, setIsFocused] = useState(false);
 
   const handleChangeName = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (name: string) => {
       dispatch(
         PublicationActions.setEditStateByReviewUrl({
           reviewUrl: item.id,
-          name: e.target.value,
+          name,
           version:
             editState?.version ?? item.publicationInfo?.version ?? NA_VERSION,
         }),
@@ -143,7 +160,17 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
     [dispatch, item.id, editState?.version, item.publicationInfo?.version],
   );
 
-  const editName = editState?.name ?? item.name;
+  const [inputName, handleDebouncedChangeName] = useDebouncedInput(
+    item.name,
+    handleChangeName,
+    PUBLICATION_REVIEW_UPDATING_DELAY,
+  );
+
+  useEffect(() => {
+    handleDebouncedChangeName(item.name);
+  }, [handleDebouncedChangeName, isEditMode, item.name]);
+
+  const isDeleteAction = item.publicationInfo?.action === PublishActions.DELETE;
 
   return (
     <div
@@ -162,29 +189,17 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
         data-qa={dataQa}
       >
         <span className="flex">{Icon}</span>
-        {isEditMode ? (
-          <div className="w-full truncate whitespace-pre break-all text-left text-primary">
-            <input
-              className="h-[24px] w-full border-b border-primary bg-layer-2 px-1 py-[2px] text-sm text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none"
-              value={editName}
-              onChange={handleChangeName}
-            />
-          </div>
-        ) : (
-          <Tooltip
-            tooltip={item.name}
-            contentClassName="max-w-[400px] break-all"
-            triggerClassName={classNames(
-              'truncate whitespace-pre',
-              item.publicationInfo?.isNotExist && 'text-secondary',
-              item.publicationInfo?.action === PublishActions.DELETE &&
-                'text-error',
-            )}
-            dataQa="entity-name"
-          >
-            {item.name}
-          </Tooltip>
-        )}
+        <EditableField
+          value={inputName}
+          isEditMode={isDeleteAction ? false : isEditMode}
+          onChange={handleDebouncedChangeName}
+          inputClassName={classNames('w-full', !inputName && '!border-b-error')}
+          className={classNames(
+            item.publicationInfo?.isNotExist && 'text-secondary',
+            item.publicationInfo?.action === PublishActions.DELETE &&
+              'text-error',
+          )}
+        />
       </span>
       <PublicationVersionInfo item={item} />
     </div>
