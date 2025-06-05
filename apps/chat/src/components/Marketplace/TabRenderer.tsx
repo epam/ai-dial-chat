@@ -26,6 +26,7 @@ import {
   MarketplaceTabs,
   ViewTypes,
 } from '@/src/constants/marketplace';
+import { MODELS_SEARCH_OPTIONS } from '@/src/constants/search';
 
 import { AgentDialogs } from '@/src/components/Common/AgentDialogs';
 import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
@@ -35,15 +36,6 @@ import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
 
 import { AgentsTable } from './AgentsList/AgentsTable/AgentsTable';
 import { AgentsTiles } from './AgentsList/AgentsTiles/AgentsTiles';
-
-const fuseSearchOptions = {
-  keys: ['name', 'version'],
-  includeScore: false,
-  threshold: 0.2,
-  distance: 100,
-  minMatchCharLength: 1,
-  useExtendedSearch: false,
-};
 
 interface NoAgentsFoundProps {
   children: React.ReactNode;
@@ -176,7 +168,7 @@ export const TabRenderer = () => {
   const searchedModels = useFuseSearch(
     allModels,
     searchTerm,
-    fuseSearchOptions,
+    MODELS_SEARCH_OPTIONS,
   );
 
   const displayedEntities = useMemo(() => {
