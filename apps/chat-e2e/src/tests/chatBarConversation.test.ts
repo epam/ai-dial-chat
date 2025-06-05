@@ -52,7 +52,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-583', 'EPMRTC-776', 'EPMRTC-2894', 'EPMRTC-2957');
     const messageToSend = `.Hi${ExpectedConstants.restrictedNameChars}...`;
-    const expectedConversationName = '.Hi';
+    const expectedConversationName = `.Hi${'_'.repeat(ExpectedConstants.restrictedNameChars.length + 3)}`;
 
     await dialTest.step(
       'Send request with prohibited symbols and verify they are not displayed in conversation name',
@@ -293,10 +293,9 @@ dialTest(
       'EPMRTC-3188',
     );
     const newLongNameWithMiddleSpacesEndDot = `${GeneratorUtil.randomString(80)}${' '.repeat(3)}${GeneratorUtil.randomString(77)}.`;
-    const expectedName = newLongNameWithMiddleSpacesEndDot.substring(
-      0,
-      ExpectedConstants.maxEntityNameLength,
-    );
+    const expectedName = newLongNameWithMiddleSpacesEndDot
+      .replace(' ', '_')
+      .substring(0, ExpectedConstants.maxEntityNameLength);
     const conversation = conversationData.prepareDefaultConversation();
     await dataInjector.createConversations([conversation]);
     await localStorageManager.setShowSideBarPanels();
@@ -1485,7 +1484,7 @@ const longRequest =
 const testRequestMap = new Map([
   [
     `how${GeneratorUtil.randomArrayElement(ExpectedConstants.controlChars.split(''))}are you`,
-    'how are you',
+    'how_are you',
   ],
   ['first\nsecond\nthird', 'first'],
   [

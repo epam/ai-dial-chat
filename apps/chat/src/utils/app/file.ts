@@ -481,7 +481,7 @@ const getIncorrectNamesError = (names: string[]) => {
 
   if (isThereNotAllowedSymbols)
     return translate(
-      'The symbols {{notAllowedSymbols}} are not allowed in file name. Please rename or delete them from uploading files list: {{fileNames}}',
+      'The symbols {{notAllowedSymbols}} are not allowed in file names. Please rename the files or remove them from your upload list: {{fileNames}}',
       { notAllowedSymbols, fileNames },
     );
 
