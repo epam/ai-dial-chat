@@ -101,6 +101,7 @@ dialTest(
       ExpectedConstants.restrictedNameChars.split(''),
     );
     const notAllowedFilename = `${restrictedChar}${Attachment.sunImageName}`;
+    const notAllowedFilenameWithReplacedChars = `_${Attachment.sunImageName}`;
 
     await dialTest.step('Upload file through chat bar dots menu', async () => {
       await localStorageManager.setShowSideBarPanels();
@@ -115,29 +116,40 @@ dialTest(
     });
 
     await dialTest.step(
-      'Add restricted symbol to file name, click Upload and verify error is shown',
+      'Add restricted symbol to file name, click Upload and observe restricted symbols are replaced, file is renamed',
       async () => {
         await uploadFromDeviceModal.typeInUploadedFilename(
           Attachment.sunImageName,
           restrictedChar,
         );
         await uploadFromDeviceModal.uploadButton.click();
-        const error = uploadFromDeviceModal.getModalError();
-        await baseAssertion.assertElementState(error, 'visible');
-        await baseAssertion.assertElementText(
-          error.errorMessage,
-          ExpectedConstants.notAllowedFilenameError(notAllowedFilename),
-          ExpectedMessages.errorMessageContentIsValid,
-        );
+        await expect
+          .soft(
+            attachFilesModal
+              .getAllFilesTree()
+              .getEntityByName(notAllowedFilenameWithReplacedChars),
+            ExpectedMessages.fileIsUploaded,
+          )
+          .toBeVisible();
+        const attachmentNameColor = await attachFilesModal
+          .getAllFilesTree()
+          .getEntityName(notAllowedFilenameWithReplacedChars)
+          .getComputedStyleProperty(Styles.color);
+        expect
+          .soft(
+            attachmentNameColor[0],
+            ExpectedMessages.attachmentNameColorIsValid,
+          )
+          .toBe(Colors.controlsBackgroundAccent);
       },
     );
 
     await dialTest.step(
-      'Remove restricted symbol, click Upload and verify file is uploaded and had blue color name',
+      'Upload a file without a restricted symbol, click Upload and verify file is uploaded and had blue color name',
       async () => {
-        await uploadFromDeviceModal.setUploadedFilename(
-          notAllowedFilename,
-          Attachment.sunImageName.split('.')[0],
+        await dialHomePage.uploadData(
+          { path: Attachment.sunImageName, dataType: 'upload' },
+          () => attachFilesModal.uploadFromDevice(),
         );
         await uploadFromDeviceModal.uploadButton.click();
         await expect
@@ -204,14 +216,15 @@ dialTest(
           Attachment.cloudImageName,
           Attachment.cloudImageName,
         );
-        for (const file of [
-          Attachment.sunImageName,
-          Attachment.restrictedSemicolonCharFilename,
-          Attachment.restrictedEqualCharFilename,
-          Attachment.cloudImageName,
+        for (const fileConfig of [
+          { name: Attachment.sunImageName, index: 0 },
+          { name: Attachment.restrictedSemicolonCharFilename, index: 0 },
+          { name: Attachment.restrictedEqualCharFilename, index: 1 },
+          { name: Attachment.cloudImageName, index: 0 },
+          { name: Attachment.cloudImageName, index: 1 },
         ]) {
           await baseAssertion.assertElementState(
-            uploadFromDeviceModal.getUploadedFile(file).nth(0),
+            uploadFromDeviceModal.getUploadedFile(fileConfig.name.replace(/[=;]/g, '_')).nth(fileConfig.index),
             'visible',
           );
         }
@@ -219,20 +232,14 @@ dialTest(
       },
     );
 
-    await dialTest.step('Verify 3 error messages are shown', async () => {
+    await dialTest.step('Verify 2 error messages are shown', async () => {
       const error = uploadFromDeviceModal.getModalError();
       await baseAssertion.assertElementState(error, 'visible');
       const errorText = await error.errorMessage.getElementContent();
       baseAssertion.assertValue(
         errorText?.replaceAll('\n', ''),
-        ExpectedConstants.notAllowedFilenameError(
-          [
-            Attachment.restrictedSemicolonCharFilename,
-            Attachment.restrictedEqualCharFilename,
-          ].join(', '),
-        ) +
           ExpectedConstants.duplicatedFilenameError(Attachment.sunImageName) +
-          ExpectedConstants.sameFilenamesError(Attachment.cloudImageName),
+          ExpectedConstants.sameFilenamesError(`${Attachment.restrictedEqualCharFilename.replace('=','_')}, ${Attachment.cloudImageName}`),
         ExpectedMessages.errorMessageContentIsValid,
       );
     });
