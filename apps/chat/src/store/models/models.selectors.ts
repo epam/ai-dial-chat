@@ -105,17 +105,21 @@ const selectAllGroupModelKeySet = (state: RootState, references: string[]) => {
   );
 };
 
+const selectDefaultModel = createSelector([selectModels], (models) =>
+  models.find((model) => model.isDefault),
+);
+
 const selectDefaultModelOption = (state: RootState) =>
   rootSelector(state).defaultModelReference;
 
 const selectDefaultModelReference = createSelector(
-  [selectDefaultModelOption, selectModels],
-  (defaultModelReference, allModels) => {
+  [selectDefaultModelOption, selectDefaultModel],
+  (defaultModelReference, defaultModel) => {
     if (defaultModelReference === LAST_USED_AGENT) {
       return undefined;
     }
     if (defaultModelReference === DEFAULT_AGENT) {
-      return allModels.find((model) => model.isDefault)?.reference;
+      return defaultModel?.reference;
     }
     return defaultModelReference;
   },
