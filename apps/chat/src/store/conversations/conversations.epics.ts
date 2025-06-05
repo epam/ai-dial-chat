@@ -774,12 +774,19 @@ const saveNewConversationEpic: AppEpic = (action$) =>
             createdAt: conversationInfo?.createdAt,
             updatedAt: conversationInfo?.updatedAt,
           };
-          return of(
-            ConversationsActions.saveNewConversationSuccess({
-              newConversation,
-              selectedIdToReplaceWithNewOne:
-                payload.selectedIdToReplaceWithNewOne,
-            }),
+          return concat(
+            of(
+              ConversationsActions.saveNewConversationSuccess({
+                newConversation,
+                selectedIdToReplaceWithNewOne:
+                  payload.selectedIdToReplaceWithNewOne,
+              }),
+            ),
+            of(
+              ConversationsActions.getConversationMetadata({
+                conversationId: newConversation.id,
+              }),
+            ),
           );
         }),
         catchError((err) => {
@@ -2546,6 +2553,11 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
         ),
         of(successAction),
         of(ConversationsActions.saveConversation(newConversation)),
+        of(
+          ConversationsActions.getConversationMetadata({
+            conversationId: newConversation.id,
+          }),
+        ),
       );
     }),
   );
@@ -3256,13 +3268,17 @@ const getConversationMetadataEpic: AppEpic = (action$) =>
           }
 
           return concat(
-            of(
-              ChatActions.getEntityInfoSuccess({
-                entityInfo: {
-                  id: payload.conversationId,
-                  ...conversationMetadata,
-                },
-              }),
+            iif(
+              () => !!payload.withModal,
+              of(
+                ChatActions.getEntityInfoSuccess({
+                  entityInfo: {
+                    id: payload.conversationId,
+                    ...conversationMetadata,
+                  },
+                }),
+              ),
+              EMPTY,
             ),
 
             of(
@@ -3272,6 +3288,7 @@ const getConversationMetadataEpic: AppEpic = (action$) =>
                   updatedAt: conversationMetadata.updatedAt,
                   createdAt: conversationMetadata.createdAt,
                   author: conversationMetadata.author,
+                  permissions: conversationMetadata.permissions,
                 },
               }),
             ),
