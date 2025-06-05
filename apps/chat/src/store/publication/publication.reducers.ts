@@ -368,9 +368,11 @@ export const publicationSlice = createSlice({
         payload,
       }: PayloadAction<{
         editState: Record<string, { name: string; version: string }>;
+        rules?: PublicationRule[];
       }>,
     ) => {
       state.editState = payload.editState;
+      state.rulesOnEdit = payload.rules;
     },
     setEditStateByReviewUrl: (
       state,
@@ -389,6 +391,9 @@ export const publicationSlice = createSlice({
     },
 
     updateAndApprovePublicationRequest: (state) => state,
+    setRulesOnEdit: (state, { payload }: PayloadAction<PublicationRule[]>) => {
+      state.rulesOnEdit = payload;
+    },
   },
 });
 

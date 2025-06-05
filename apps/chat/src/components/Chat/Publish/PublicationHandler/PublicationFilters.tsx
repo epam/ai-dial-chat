@@ -1,8 +1,21 @@
+import { useCallback, useMemo, useState } from 'react';
+
 import { useTranslation } from 'next-i18next';
 
-import { Publication, PublicationRule } from '@/src/types/publication';
+import { mapFilterToRule, mapRuleToFilter } from '@/src/utils/app/publications';
+
+import {
+  Publication,
+  PublicationRule,
+  TargetAudienceFilter,
+} from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
+import { PublicationActions } from '@/src/store/actions';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
+
+import { RulesInput } from '@/src/components/Chat/Publish/RulesInput';
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import { RuleListItem } from '../RuleListItem';
@@ -21,6 +34,26 @@ export function PublicationFilters({
   isRulesLoading,
 }: FilterComponentProps) {
   const { t } = useTranslation(Translation.Chat);
+  const dispatch = useAppDispatch();
+
+  const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
+  const rulesOnEdit = useAppSelector(PublicationSelectors.selectRulesOnEdit);
+
+  const [isRulesSetterVisible, setIsRulesSetterVisible] = useState(false);
+
+  const filters = useMemo(
+    () => rulesOnEdit?.map(mapRuleToFilter) ?? [],
+    [rulesOnEdit],
+  );
+
+  const handleFilterUpdate = useCallback(
+    (newFilters: TargetAudienceFilter[]) => {
+      dispatch(
+        PublicationActions.setRulesOnEdit(newFilters.map(mapFilterToRule)),
+      );
+    },
+    [dispatch],
+  );
 
   if (isRulesLoading) {
     return (
@@ -49,8 +82,16 @@ export function PublicationFilters({
       {oldRules.map(([path, rules]) => (
         <RuleListItem key={path} path={path} rules={rules} />
       ))}
-      {isNewRules && (
+      {isNewRules && !isEditMode && (
         <RuleListItem path={publication.targetFolder} rules={newRules} />
+      )}
+      {isNewRules && isEditMode && (
+        <RulesInput
+          isOpen={isRulesSetterVisible}
+          filters={filters}
+          setFilters={handleFilterUpdate}
+          onSwitchRulesSetter={setIsRulesSetterVisible}
+        />
       )}
     </>
   );
