@@ -7,7 +7,7 @@ export class PublishedPromptPreviewModal extends PromptPreviewModalWindow {
     super(page);
   }
 
-  private publicationReviewControl: PublicationReviewControl | undefined;
+  private publicationReviewControl?: PublicationReviewControl;
 
   getPublicationReviewControl(): PublicationReviewControl {
     if (!this.publicationReviewControl) {

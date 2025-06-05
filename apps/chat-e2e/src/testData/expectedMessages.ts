@@ -411,6 +411,8 @@ export const ExpectedMessages = {
     'Card for should display the latest version',
   authorIsValid: 'Author in preview is valid',
   selectedTopicsAreValid: 'Selected topics are displayed in preview',
+  numberOfTopicsIsCorrect: 'Number of topics in preview is correct',
+
   onlyOneEntityCardFoundInSearch: (entityType: string) =>
     `Only one ${entityType} card found in the search`,
 };

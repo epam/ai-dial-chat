@@ -23,8 +23,6 @@ import {
 import { GeneratorUtil, SortingUtil, UserUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
-const publicationsToUnpublish: Publication[] = [];
-
 dialTest(
   'Create custom app with required fields only.\n' + // EPMRTC-5130
     'Edit option for custom app is available from card pop-up form.\n' + // EPMRTC-5939
@@ -728,7 +726,7 @@ dialTest(
         const workspaceAgentsWithName = allAgents.filter(
           (agent) =>
             agent.isWorkspaceAgent && agent.name === appEntity2_v2.name,
-        ); //TODO workspaceAgentsWithName
+        );
         baseAssertion.assertValue(
           workspaceAgentsWithName.length,
           1,
@@ -833,14 +831,16 @@ dialTest(
     let allTopics: string[] = [];
     let topicsToSelect: string[] = [];
 
+    const shortAppDescription = GeneratorUtil.randomShortDescription();
+    const longAppDescription = GeneratorUtil.randomLongDescription();
     const appEntity = {
       name: GeneratorUtil.randomApplicationName(),
       version: GeneratorUtil.randomApplicationVersion(),
-      description: GeneratorUtil.randomShortAndLongDescription(),
+      description: `${shortAppDescription}\n\n${longAppDescription}`,
     } as DialAIEntityModel;
-    const expectedIconUrl = await fileApiHelper.putFile(
+    const expectedIconUrl = `/api/${await fileApiHelper.putFile(
       Attachment.sunImageName,
-    );
+    )}`;
 
     await dialTest.step('Open create a custom app page', async () => {
       await marketplacePage.openCreateCustomAppPage();
@@ -991,14 +991,6 @@ dialTest(
           ExpectedMessages.agentNameIsValid,
         );
 
-        // await baseAssertion.assertElementText(
-        //   appEditorGeneralInfoAgentPreview.version,
-        //   appEntity.version!,
-        //   ExpectedMessages.agentNameIsValid,
-        // );
-
-        const [expectedShortDesc, expectedLongDesc] =
-          appEntity.description!.split('\n\n');
         const actualShortDescElement =
           appEditorGeneralInfoAgentPreview.getShortDescriptionDetailedViewElement();
         const actualLongDescElement =
@@ -1006,12 +998,12 @@ dialTest(
 
         await baseAssertion.assertElementText(
           actualShortDescElement,
-          expectedShortDesc,
+          shortAppDescription,
           ExpectedMessages.agentDescriptionIsValid,
         );
         await baseAssertion.assertElementText(
           actualLongDescElement,
-          expectedLongDesc,
+          longAppDescription,
           ExpectedMessages.agentDescriptionIsValid,
         );
 
@@ -1025,7 +1017,7 @@ dialTest(
         baseAssertion.assertValue(
           displayedTopics.length,
           topicsToSelect.length,
-          'Number of topics in preview is correct',
+          ExpectedMessages.numberOfTopicsIsCorrect,
         );
 
         await baseAssertion.assertElementState(
@@ -1045,10 +1037,7 @@ dialTest(
         );
 
         const previewAppIcon = appEditorGeneralInfoAgentPreview.previewIcon;
-        await baseAssertion.assertEntityIcon(
-          previewAppIcon,
-          `/api/${expectedIconUrl}`,
-        );
+        await baseAssertion.assertEntityIcon(previewAppIcon, expectedIconUrl);
       },
     );
 
@@ -1068,13 +1057,12 @@ dialTest(
           ExpectedMessages.agentVersionIsValid,
         );
 
-        const expectedShortDesc = appEntity.description!.split('\n\n')[0];
         const actualShortDescElement =
           appEditorGeneralInfoAgentPreview.getShortDescriptionDetailedViewElement();
 
         await baseAssertion.assertElementText(
           actualShortDescElement,
-          expectedShortDesc,
+          shortAppDescription,
           ExpectedMessages.agentDescriptionIsValid,
         );
 
@@ -1088,13 +1076,10 @@ dialTest(
         baseAssertion.assertValue(
           displayedTopics.length,
           topicsToSelect.length,
-          'Number of topics in preview is correct',
+          ExpectedMessages.numberOfTopicsIsCorrect,
         );
         const previewAppIcon = appEditorGeneralInfoAgentPreview.previewIcon;
-        await baseAssertion.assertEntityIcon(
-          previewAppIcon,
-          `/api/${expectedIconUrl}`,
-        );
+        await baseAssertion.assertEntityIcon(previewAppIcon, expectedIconUrl);
       },
     );
 
@@ -1450,7 +1435,7 @@ dialAdminTest(
     agentInfoAssertion,
     adminLocalStorageManager,
     adminApproveRequiredPrompts,
-    adminPublishedApplicationPreviewModal,
+    adminPublishedApplicationReviewModal,
   }) => {
     setTestIds('EPMRTC-4303', 'EPMRTC-6345', 'EPMRTC-4302');
     const appName = GeneratorUtil.randomApplicationName();
@@ -1495,7 +1480,6 @@ dialAdminTest(
 
         appPublication =
           await publicationApiHelper.createPublishRequest(publishRequest);
-        publicationsToUnpublish.push(appPublication);
         await localStorageManager.setShowSideBarPanels();
         await adminLocalStorageManager.setShowSideBarPanels();
       },
@@ -1518,11 +1502,11 @@ dialAdminTest(
           isHttpMethodTriggered: false,
         });
         await baseAssertion.assertEntityIcon(
-          adminPublishedApplicationPreviewModal.getApplicationIcon(),
+          adminPublishedApplicationReviewModal.getApplicationIcon(),
           encodedIconUrl,
         );
 
-        await adminPublishedApplicationPreviewModal
+        await adminPublishedApplicationReviewModal
           .getPublicationReviewControl()
           .click();
         await adminPublishingApprovalModal.approveButton.click();
@@ -1575,13 +1559,3 @@ dialAdminTest(
     );
   },
 );
-
-// dialTest.afterAll(
-//   async ({ publicationApiHelper, adminPublicationApiHelper }) => {
-//     for (const publication of publicationsToUnpublish) {
-//       const unpublishResponse =
-//         await publicationApiHelper.createUnpublishRequest(publication);
-//       await adminPublicationApiHelper.approveRequest(unpublishResponse);
-//     }
-//   },
-// );

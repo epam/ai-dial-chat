@@ -1,15 +1,15 @@
-import { Tags } from '@/src/ui/domData';
 import { ReviewApplicationDialog } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { PublicationReviewControl } from '@/src/ui/webElements/publicationReviewControl';
+import { Locator } from '@playwright/test';
 import { Page } from 'playwright-chromium';
 
-export class PublishedApplicationPreviewModal extends BaseElement {
+export class PublishedApplicationReviewModal extends BaseElement {
   constructor(page: Page) {
     super(page, ReviewApplicationDialog.reviewDialog);
   }
 
-  private publicationReviewControl: PublicationReviewControl | undefined;
+  private publicationReviewControl?: PublicationReviewControl;
 
   getPublicationReviewControl(): PublicationReviewControl {
     if (!this.publicationReviewControl) {
@@ -21,9 +21,7 @@ export class PublishedApplicationPreviewModal extends BaseElement {
     return this.publicationReviewControl;
   }
 
-  public getApplicationIcon(): BaseElement {
-    return this.getChildElementBySelector(
-      ReviewApplicationDialog.entityIcon,
-    ).getChildElementBySelector(Tags.img);
+  public getApplicationIcon(): Locator {
+    return this.getElementIcon(this.rootLocator);
   }
 }
