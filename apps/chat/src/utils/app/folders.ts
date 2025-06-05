@@ -648,7 +648,7 @@ export const isFolderPartialSelected = ({
   return !isSelected && (partialSelectedFolderIds ?? []).includes(currentId);
 };
 
-export const getEntitiesByFolderId = <
+export const getSelectedEntitiesByFolderId = <
   T extends Conversation | ShareEntity | PublishRequestDialAIEntityModel,
 >({
   entities,

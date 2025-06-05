@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import classNames from 'classnames';
 
 import {
-  getEntitiesByFolderId,
+  getSelectedEntitiesByFolderId,
   isFolderPartialSelected,
   isParentFolderSelected,
   sortByName,
@@ -69,7 +69,7 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
   }, [allFolders, allItems, currentFolder.id]);
 
   const handleSelectFolder = useCallback(() => {
-    const entitiesToSelect = getEntitiesByFolderId({
+    const entitiesToSelect = getSelectedEntitiesByFolderId({
       entities: allItems,
       folderId: `${currentFolder.id}/`,
       partialChosenFolderIds: partialSelectedFolderIds,
