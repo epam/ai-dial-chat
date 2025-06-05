@@ -87,7 +87,10 @@ export const conversationsSlice = createSlice({
     },
     saveConversation: (
       state,
-      _action: PayloadAction<Conversation | [Conversation, boolean]>, // [conversation, requestMetadataAfter]
+      _action: PayloadAction<{
+        conversation: Conversation;
+        requestMetadataAfter?: boolean;
+      }>,
     ) => state,
     saveConversationSuccess: (state) => {
       if (state.isMessageSending) {

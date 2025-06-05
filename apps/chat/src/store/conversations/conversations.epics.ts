@@ -2329,14 +2329,10 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
 const saveConversationEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ConversationsActions.saveConversation.type),
-    filter((action) =>
-      Array.isArray(action.payload)
-        ? !action.payload[0].isMessageStreaming
-        : !action.payload.isMessageStreaming,
-    ), // shouldn't save during streaming
+    filter((action) => !action.payload.conversation.isMessageStreaming), // shouldn't save during streaming
     concatMap(({ payload }) => {
-      const newConversation = Array.isArray(payload) ? payload[0] : payload;
-      const requestMetadata = Array.isArray(payload) ? payload[1] : false;
+      const newConversation = payload.conversation;
+      const requestMetadata = !!payload.requestMetadataAfter;
 
       if (isEntityIdLocal(newConversation)) {
         return of(ConversationsActions.saveConversationSuccess());
@@ -2412,7 +2408,9 @@ const moveConversationEpic: AppEpic = (action$) =>
       }).pipe(
         switchMap(() => {
           return of(
-            ConversationsActions.saveConversation(payload.newConversation),
+            ConversationsActions.saveConversation({
+              conversation: payload.newConversation,
+            }),
           );
         }),
         catchError(() => {
@@ -2456,7 +2454,11 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
           ),
           iif(
             () => !newConversation.isPlayback,
-            of(ConversationsActions.saveConversation(newConversation)),
+            of(
+              ConversationsActions.saveConversation({
+                conversation: newConversation,
+              }),
+            ),
             EMPTY,
           ),
         ),
@@ -2557,7 +2559,12 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
           }),
         ),
         of(successAction),
-        of(ConversationsActions.saveConversation([newConversation, true])),
+        of(
+          ConversationsActions.saveConversation({
+            conversation: newConversation,
+            requestMetadataAfter: true,
+          }),
+        ),
       );
     }),
   );
