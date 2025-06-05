@@ -37,6 +37,8 @@ export const DefaultModelSelect = ({
     [modelReference, modelsMap],
   );
 
+  const selected = modelsMap[modelReference];
+
   const allModels = useMemo(() => {
     const selected = modelsMap[modelReference];
     const list = [DefaultModel, LastUsedModel, ...models];
@@ -55,6 +57,7 @@ export const DefaultModelSelect = ({
           value={selectedModel.id}
           onChange={onModelChange}
           models={allModels}
+          indexSeparator={selected ? 2 : 1}
           additionalModelsMap={SPECIAL_DEFAULT_MODEL_DIC}
           useReference
           inputClassName="focus-within:!border-primary"

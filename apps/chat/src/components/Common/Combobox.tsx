@@ -37,6 +37,7 @@ interface Props<T> {
   onSelectItem: (value: string) => void;
   inputClassName?: string;
   panelClassName?: string;
+  indexSeparator?: number;
 }
 
 export const Combobox = <T,>({
@@ -52,6 +53,7 @@ export const Combobox = <T,>({
   onSelectItem,
   inputClassName,
   panelClassName,
+  indexSeparator,
 }: Props<T>) => {
   const { t } = useTranslation(Translation.Common);
 
@@ -205,6 +207,9 @@ export const Combobox = <T,>({
                   'group flex h-[34px] cursor-pointer flex-col justify-center px-3',
                   highlightedIndex === index && 'bg-accent-primary-alpha',
                   selectedItem === item && 'bg-accent-primary-alpha',
+                  indexSeparator &&
+                    index === indexSeparator &&
+                    'border-b border-secondary',
                 )}
                 key={`${getItemValue(item)}${index}`}
                 {...getItemProps({ item, index })}

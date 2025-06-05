@@ -66,6 +66,7 @@ interface ModelsSelectorProps {
   useReference?: boolean;
   inputClassName?: string;
   panelClassName?: string;
+  indexSeparator?: number;
 }
 
 export const ModelsSelector = memo(function ModelsSelector({
@@ -78,6 +79,7 @@ export const ModelsSelector = memo(function ModelsSelector({
   useReference,
   inputClassName,
   panelClassName,
+  indexSeparator,
 }: ModelsSelectorProps) {
   const onlyModels = useAppSelector(ModelsSelectors.selectModelsOnly);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -95,6 +97,7 @@ export const ModelsSelector = memo(function ModelsSelector({
         <Combobox
           inputClassName={inputClassName}
           panelClassName={panelClassName}
+          indexSeparator={indexSeparator}
           items={displayedModels}
           initialSelectedItem={
             model || {
