@@ -95,12 +95,12 @@ dialTest(
     uploadFromDeviceModal,
     baseAssertion,
     localStorageManager,
+    attachAllFilesTreeAssertion,
   }) => {
     setTestIds('EPMRTC-1780', 'EPMRTC-1802');
     const restrictedChar = GeneratorUtil.randomArrayElement(
       ExpectedConstants.restrictedNameChars.split(''),
     );
-    const notAllowedFilename = `${restrictedChar}${Attachment.sunImageName}`;
     const notAllowedFilenameWithReplacedChars = `_${Attachment.sunImageName}`;
 
     await dialTest.step('Upload file through chat bar dots menu', async () => {
@@ -123,24 +123,18 @@ dialTest(
           restrictedChar,
         );
         await uploadFromDeviceModal.uploadButton.click();
-        await expect
-          .soft(
-            attachFilesModal
-              .getAllFilesTree()
-              .getEntityByName(notAllowedFilenameWithReplacedChars),
-            ExpectedMessages.fileIsUploaded,
-          )
-          .toBeVisible();
-        const attachmentNameColor = await attachFilesModal
-          .getAllFilesTree()
-          .getEntityName(notAllowedFilenameWithReplacedChars)
-          .getComputedStyleProperty(Styles.color);
-        expect
-          .soft(
-            attachmentNameColor[0],
-            ExpectedMessages.attachmentNameColorIsValid,
-          )
-          .toBe(Colors.controlsBackgroundAccent);
+        await attachAllFilesTreeAssertion.assertEntityState(
+          {
+            name: notAllowedFilenameWithReplacedChars,
+          },
+          'visible',
+        );
+        await attachAllFilesTreeAssertion.assertEntityColor(
+          {
+            name: notAllowedFilenameWithReplacedChars,
+          },
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+        );
       },
     );
 
@@ -224,7 +218,9 @@ dialTest(
           { name: Attachment.cloudImageName, index: 1 },
         ]) {
           await baseAssertion.assertElementState(
-            uploadFromDeviceModal.getUploadedFile(fileConfig.name.replace(/[=;]/g, '_')).nth(fileConfig.index),
+            uploadFromDeviceModal
+              .getUploadedFile(fileConfig.name.replace(/[=;]/g, '_'))
+              .nth(fileConfig.index),
             'visible',
           );
         }
@@ -238,8 +234,10 @@ dialTest(
       const errorText = await error.errorMessage.getElementContent();
       baseAssertion.assertValue(
         errorText?.replaceAll('\n', ''),
-          ExpectedConstants.duplicatedFilenameError(Attachment.sunImageName) +
-          ExpectedConstants.sameFilenamesError(`${Attachment.restrictedEqualCharFilename.replace('=','_')}, ${Attachment.cloudImageName}`),
+        ExpectedConstants.duplicatedFilenameError(Attachment.sunImageName) +
+          ExpectedConstants.sameFilenamesError(
+            `${Attachment.restrictedEqualCharFilename.replace('=', '_')}, ${Attachment.cloudImageName}`,
+          ),
         ExpectedMessages.errorMessageContentIsValid,
       );
     });

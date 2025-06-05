@@ -184,10 +184,14 @@ dialTest(
       ExpectedConstants.newFolderWithIndexTitle(randomFolderIndex),
     );
     await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-    await folderConversations.renameEmptyFolderWithEnter(newNameWithSpaces.replace(' ', '_'));
+    await folderConversations.renameEmptyFolderWithEnter(
+      newNameWithSpaces.replace(' ', '_'),
+    );
     await expect
       .soft(
-        folderConversations.getFolderByName(newNameWithSpaces.replace(' ', '_')),
+        folderConversations.getFolderByName(
+          newNameWithSpaces.replace(' ', '_'),
+        ),
         ExpectedMessages.folderNameUpdated,
       )
       .toBeVisible();
