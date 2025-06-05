@@ -4,8 +4,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { ModelsActions } from '@/src/store/actions';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/selectors';
 
 import {
@@ -16,11 +15,17 @@ import {
 
 import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
 
-export const DefaultModelSelect = () => {
-  const dispatch = useAppDispatch();
+interface DefaultModelSelectProps {
+  modelReference: string;
+  onModelChange: (modelReference: string) => void;
+}
 
+export const DefaultModelSelect = ({
+  modelReference,
+  onModelChange,
+}: DefaultModelSelectProps) => {
   const { t } = useTranslation(Translation.Settings);
-  const model = useAppSelector(ModelsSelectors.selectDefaultModelOption);
+
   const models = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
@@ -30,11 +35,9 @@ export const DefaultModelSelect = () => {
   );
 
   const selectedModel =
-    modelsMap[model] ?? SPECIAL_DEFAULT_MODEL_DIC[model] ?? DefaultModel;
-
-  const onChangeHandler = (modelId: string) => {
-    dispatch(ModelsActions.setDefaultModelReference(modelId));
-  };
+    modelsMap[modelReference] ??
+    SPECIAL_DEFAULT_MODEL_DIC[modelReference] ??
+    DefaultModel;
 
   return (
     <div className="flex items-center gap-5" data-qa="default-model">
@@ -42,7 +45,7 @@ export const DefaultModelSelect = () => {
       <div className="flex h-[38px] max-w-[331px] grow basis-2/3 items-center gap-8 overflow-hidden rounded border border-primary focus-within:!border-primary focus:!border-primary md:basis-3/4">
         <ModelsSelector
           value={selectedModel.id}
-          onChange={onChangeHandler}
+          onChange={onModelChange}
           models={allModels}
           additionalModelsMap={SPECIAL_DEFAULT_MODEL_DIC}
           useReference

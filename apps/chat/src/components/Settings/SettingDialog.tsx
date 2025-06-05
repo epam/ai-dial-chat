@@ -9,10 +9,11 @@ import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
-import { UIActions } from '@/src/store/actions';
+import { ModelsActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   FilesSelectors,
+  ModelsSelectors,
   SettingsSelectors,
   UISelectors,
 } from '@/src/store/selectors';
@@ -45,6 +46,13 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     SettingsSelectors.isFeatureEnabled(state, Feature.CustomLogo),
   );
 
+  const savedDefaultModelReference = useAppSelector(
+    ModelsSelectors.selectDefaultModelOption,
+  );
+  const [defaultModelReference, setDefaultModelReference] = useState<string>(
+    savedDefaultModelReference,
+  );
+
   const customLogoLocalStoreName = useMemo(() => {
     return getCustomLogoLocalStoreName(customLogoId);
   }, [customLogoId]);
@@ -72,8 +80,9 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     setIsChatFullWidthLocal(isChatFullWidth);
     setLocalLogoFile(undefined);
     setDeleteLogo(false);
+    setDefaultModelReference(savedDefaultModelReference);
     onClose();
-  }, [onClose, isChatFullWidth, theme]);
+  }, [theme, isChatFullWidth, defaultModelReference, onClose]);
 
   useEffect(() => {
     setLocalTheme(theme);
@@ -102,6 +111,13 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     setDeleteLogo(true);
   };
 
+  const onModelChange = useCallback(
+    (modelReference: string) => {
+      setDefaultModelReference(modelReference);
+    },
+    [setDefaultModelReference],
+  );
+
   const handleSave = useCallback(() => {
     dispatch(UIActions.setTheme(localTheme));
     dispatch(UIActions.setIsChatFullWidth(isChatFullWidthLocal));
@@ -111,20 +127,22 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     if (deleteLogo) {
       dispatch(UIActions.deleteCustomLogo());
     }
+    dispatch(ModelsActions.setDefaultModelReference(defaultModelReference));
 
     setLocalLogoFile(undefined);
     onClose();
   }, [
     dispatch,
     localTheme,
-    onClose,
     isChatFullWidthLocal,
     localLogoFile,
     deleteLogo,
+    defaultModelReference,
+    onClose,
   ]);
 
   if (!open) {
-    return <></>;
+    return null;
   }
 
   return (
@@ -157,7 +175,10 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
           />
         )}
 
-        <DefaultModelSelect />
+        <DefaultModelSelect
+          modelReference={defaultModelReference}
+          onModelChange={onModelChange}
+        />
 
         {!isSmallScreen() && (
           <ToggleSwitchLabeled
