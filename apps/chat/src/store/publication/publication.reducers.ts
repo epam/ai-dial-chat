@@ -372,12 +372,16 @@ export const publicationSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        entities: Record<string, { name: string; version: string }>;
-        folders: FolderEditTree;
+        editState: {
+          entities: Record<string, { name: string; version: string }>;
+          folders: FolderEditTree;
+        };
+        rules?: PublicationRule[];
       }>,
     ) => {
-      state.entitiesEditState = payload.entities;
-      state.foldersEditState = payload.folders;
+      state.entitiesEditState = payload.editState.entities;
+      state.foldersEditState = payload.editState.folders;
+      state.rulesOnEdit = payload.rules;
     },
     setEntityEditStateByReviewUrl: (
       state,
@@ -412,6 +416,9 @@ export const publicationSlice = createSlice({
       });
 
       currentFolder.name = payload.name;
+    },
+    setRulesOnEdit: (state, { payload }: PayloadAction<PublicationRule[]>) => {
+      state.rulesOnEdit = payload;
     },
   },
 });

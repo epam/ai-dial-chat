@@ -245,6 +245,8 @@ const selectEntityEditStateByReviewUrl = createSelector(
   },
 );
 
+const selectRulesOnEdit = (state: RootState) => rootSelector(state).rulesOnEdit;
+
 const selectIsPublicationUpdating = (state: RootState) =>
   rootSelector(state).isPublicationUpdating;
 
@@ -275,5 +277,6 @@ export const PublicationSelectors = {
   selectEntitiesEditState,
   selectFoldersEditState,
   selectEntityEditStateByReviewUrl,
+  selectRulesOnEdit,
   selectIsPublicationUpdating,
 };

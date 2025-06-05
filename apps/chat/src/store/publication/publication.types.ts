@@ -40,5 +40,6 @@ export interface PublicationState {
   isEditMode: boolean;
   entitiesEditState: Record<string, { name: string; version: string }>;
   foldersEditState: FolderEditTree;
+  rulesOnEdit?: PublicationRule[];
   isPublicationUpdating: boolean;
 }

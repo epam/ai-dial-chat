@@ -106,6 +106,7 @@ export function PublicationHandler({ publication }: Props) {
   const foldersEditState = useAppSelector(
     PublicationSelectors.selectFoldersEditState,
   );
+  const rulesOnEdit = useAppSelector(PublicationSelectors.selectRulesOnEdit);
 
   // use refs to get the latest state inside the setTimeout
   const entitiesEditStateRef = useRef(entitiesEditState);
@@ -158,7 +159,7 @@ export function PublicationHandler({ publication }: Props) {
           dataToUpdate: {
             name: publication.name ?? `New request by ${publication.author}`,
             targetFolder: publication.targetFolder,
-            rules: publication.rules,
+            rules: rulesOnEdit,
             resources: publication.resources.map(
               ({ sourceUrl, reviewUrl, action }) => {
                 const { name, version } =
@@ -211,9 +212,9 @@ export function PublicationHandler({ publication }: Props) {
     publication.author,
     publication.name,
     publication.resources,
-    publication.rules,
     publication.targetFolder,
     publication.url,
+    rulesOnEdit,
   ]);
 
   const publishToUrl = publication.targetFolder
