@@ -2329,8 +2329,15 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
 const saveConversationEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ConversationsActions.saveConversation.type),
-    filter((action) => !action.payload.isMessageStreaming), // shouldn't save during streaming
-    concatMap(({ payload: newConversation }) => {
+    filter((action) =>
+      Array.isArray(action.payload)
+        ? !action.payload[0].isMessageStreaming
+        : !action.payload.isMessageStreaming,
+    ), // shouldn't save during streaming
+    concatMap(({ payload }) => {
+      const newConversation = Array.isArray(payload) ? payload[0] : payload;
+      const requestMetadata = Array.isArray(payload) ? payload[1] : false;
+
       if (isEntityIdLocal(newConversation)) {
         return of(ConversationsActions.saveConversationSuccess());
       }
@@ -2352,6 +2359,15 @@ const saveConversationEpic: AppEpic = (action$) =>
               }),
             ),
             of(ConversationsActions.saveConversationSuccess()),
+            iif(
+              () => requestMetadata,
+              of(
+                ConversationsActions.getConversationMetadata({
+                  conversationId: newConversation.id,
+                }),
+              ),
+              EMPTY,
+            ),
           );
         }),
         catchError((err) => {
@@ -2541,12 +2557,7 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
           }),
         ),
         of(successAction),
-        of(ConversationsActions.saveConversation(newConversation)),
-        of(
-          ConversationsActions.getConversationMetadata({
-            conversationId: newConversation.id,
-          }),
-        ),
+        of(ConversationsActions.saveConversation([newConversation, true])),
       );
     }),
   );

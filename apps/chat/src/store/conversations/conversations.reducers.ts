@@ -85,7 +85,10 @@ export const conversationsSlice = createSlice({
     initFoldersAndConversationsSuccess: (state) => {
       state.conversationsLoaded = true;
     },
-    saveConversation: (state, _action: PayloadAction<Conversation>) => state,
+    saveConversation: (
+      state,
+      _action: PayloadAction<Conversation | [Conversation, boolean]>, // [conversation, requestMetadataAfter]
+    ) => state,
     saveConversationSuccess: (state) => {
       if (state.isMessageSending) {
         state.isMessageSending = false;
