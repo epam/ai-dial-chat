@@ -875,7 +875,7 @@ export const conversationsSlice = createSlice({
     },
     getConversationMetadata: (
       state,
-      _action: PayloadAction<{ conversationId: string }>,
+      _action: PayloadAction<{ conversationId: string; withModal?: boolean }>,
     ) => state,
     selectAction: (state, { payload }: PayloadAction<string | null>) => {
       state.preselectedAction = payload;
