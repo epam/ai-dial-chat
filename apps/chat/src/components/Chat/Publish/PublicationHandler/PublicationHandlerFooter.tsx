@@ -75,7 +75,9 @@ export const PublicationHandlerFooter = ({
     ),
   );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
-  const editState = useAppSelector(PublicationSelectors.selectEditState);
+  const entitiesEditState = useAppSelector(
+    PublicationSelectors.selectEntitiesEditState,
+  );
 
   const dispatch = useAppDispatch();
 
@@ -86,9 +88,9 @@ export const PublicationHandlerFooter = ({
 
   useEffect(() => {
     dispatch(
-      PublicationActions.setEditModeState({
-        editState: getDefaultAllEditEntities(publication.resources),
-      }),
+      PublicationActions.setEditModeState(
+        getDefaultAllEditEntities(publication.resources),
+      ),
     );
   }, [dispatch, publication.resources, isEditMode]);
 
@@ -249,12 +251,14 @@ export const PublicationHandlerFooter = ({
     isFileId(resource.reviewUrl),
   );
   const isAllResourcesReviewed = resourcesToReview.every((r) => r.reviewed);
-  const isEditDisabled = Object.values(editState).some(({ version, name }) => {
-    return (
-      !prepareEntityName(name) ||
-      (!isVersionValid(version) && version !== NA_VERSION)
-    );
-  });
+  const isEditDisabled = Object.values(entitiesEditState).some(
+    ({ version, name }) => {
+      return (
+        !prepareEntityName(name) ||
+        (!isVersionValid(version) && version !== NA_VERSION)
+      );
+    },
+  );
   const isEveryResourceForUnpublish = publication.resources.every(
     (resource) => resource.action === PublishActions.DELETE,
   );

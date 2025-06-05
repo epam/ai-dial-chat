@@ -232,12 +232,16 @@ const selectPublishModel = (state: RootState) =>
 
 const selectIsEditMode = (state: RootState) => rootSelector(state).isEditMode;
 
-const selectEditState = (state: RootState) => rootSelector(state).editState;
+const selectEntitiesEditState = (state: RootState) =>
+  rootSelector(state).entitiesEditState;
 
-const selectEditStateByReviewUrl = createSelector(
-  [selectEditState, (_state, reviewUrl: string) => reviewUrl],
-  (editState, reviewUrl): { name: string; version: string } | null => {
-    return editState[reviewUrl] ?? null;
+const selectFoldersEditState = (state: RootState) =>
+  rootSelector(state).foldersEditState;
+
+const selectEntityEditStateByReviewUrl = createSelector(
+  [selectEntitiesEditState, (_state, reviewUrl: string) => reviewUrl],
+  (entitiesEditState, reviewUrl): { name: string; version: string } | null => {
+    return entitiesEditState[reviewUrl] ?? null;
   },
 );
 
@@ -268,7 +272,8 @@ export const PublicationSelectors = {
   selectPublicVersionGroupById,
   selectPublishModel,
   selectIsEditMode,
-  selectEditState,
-  selectEditStateByReviewUrl,
+  selectEntitiesEditState,
+  selectFoldersEditState,
+  selectEntityEditStateByReviewUrl,
   selectIsPublicationUpdating,
 };

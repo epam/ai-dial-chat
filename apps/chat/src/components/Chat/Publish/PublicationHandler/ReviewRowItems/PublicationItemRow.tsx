@@ -32,10 +32,12 @@ import { PublishActions } from '@epam/ai-dial-shared';
 
 interface PublicationVersionInfoProps {
   item: PublicationReviewItem;
+  isEditDisabled?: boolean;
 }
 
 const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   item,
+  isEditDisabled,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -43,13 +45,13 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
 
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
   const editState = useAppSelector((state) =>
-    PublicationSelectors.selectEditStateByReviewUrl(state, item.id),
+    PublicationSelectors.selectEntityEditStateByReviewUrl(state, item.id),
   );
 
   const handleChangeVersion = useCallback(
     (version: string) => {
       dispatch(
-        PublicationActions.setEditStateByReviewUrl({
+        PublicationActions.setEntityEditStateByReviewUrl({
           reviewUrl: item.id,
           name: editState?.name ?? item.name,
           version,
@@ -111,7 +113,7 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
       >
         <EditableField
           value={inputVersion}
-          isEditMode={isDeleteAction ? false : isEditMode}
+          isEditMode={isDeleteAction || isEditDisabled ? false : isEditMode}
           onChange={handleDebouncedChangeVersion}
           inputClassName={classNames(
             'w-[34px] text-xs',
@@ -129,6 +131,7 @@ interface PublicationRowProps {
   Icon: ReactNode;
   item: PublicationReviewItem;
   dataQa: string;
+  isEditDisabled?: boolean;
 }
 
 export const PublicationItemRow: React.FC<PublicationRowProps> = ({
@@ -136,12 +139,13 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   Icon,
   item,
   dataQa,
+  isEditDisabled,
 }) => {
   const dispatch = useAppDispatch();
 
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
   const editState = useAppSelector((state) =>
-    PublicationSelectors.selectEditStateByReviewUrl(state, item.id),
+    PublicationSelectors.selectEntityEditStateByReviewUrl(state, item.id),
   );
 
   const [isFocused, setIsFocused] = useState(false);
@@ -149,7 +153,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   const handleChangeName = useCallback(
     (name: string) => {
       dispatch(
-        PublicationActions.setEditStateByReviewUrl({
+        PublicationActions.setEntityEditStateByReviewUrl({
           reviewUrl: item.id,
           name,
           version:
@@ -191,7 +195,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
         <span className="flex">{Icon}</span>
         <EditableField
           value={inputName}
-          isEditMode={isDeleteAction ? false : isEditMode}
+          isEditMode={isEditDisabled || isDeleteAction ? false : isEditMode}
           onChange={handleDebouncedChangeName}
           inputClassName={classNames('w-full', !inputName && '!border-b-error')}
           className={classNames(
@@ -201,7 +205,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
           )}
         />
       </span>
-      <PublicationVersionInfo item={item} />
+      <PublicationVersionInfo item={item} isEditDisabled={isEditDisabled} />
     </div>
   );
 };

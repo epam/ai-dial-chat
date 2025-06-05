@@ -1,15 +1,25 @@
 import { IconFolder } from '@tabler/icons-react';
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
+import { useDebouncedInput } from '@/src/hooks/useDebounceInput';
+
 import { sortByName } from '@/src/utils/app/folders';
+import { isFileId } from '@/src/utils/app/id';
+import { EnumMapper } from '@/src/utils/app/mappers';
 
 import { PublicationReviewItem } from '@/src/types/publication';
 
-import { Tooltip } from '@/src/components/Common/Tooltip';
+import { PublicationActions } from '@/src/store/actions';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 
-import { FolderInterface } from '@epam/ai-dial-shared';
+import { PUBLICATION_REVIEW_UPDATING_DELAY } from '@/src/constants/publication';
+
+import { EditableField } from '@/src/components/Common/EditableField';
+
+import { FeatureType, FolderInterface } from '@epam/ai-dial-shared';
 
 interface Props<T extends PublicationReviewItem> {
   currentFolder: FolderInterface;
@@ -27,8 +37,6 @@ const filteredItems = <T extends PublicationReviewItem | FolderInterface>(
   currentFolderId: string,
 ) => sortByName(allItems.filter((item) => item.folderId === currentFolderId));
 
-const isEditMode = false;
-
 export const PublicationFolderRow = <T extends PublicationReviewItem>({
   currentFolder,
   allFolders,
@@ -38,12 +46,46 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
 }: Props<T>) => {
   const [isFocused, setIsFocused] = useState(false);
 
+  const dispatch = useAppDispatch();
+
+  const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
+  const selectedPublication = useAppSelector(
+    PublicationSelectors.selectSelectedPublication,
+  );
+
+  const handleChangeName = useCallback(
+    (name: string) => {
+      dispatch(
+        PublicationActions.setEditFolderStateByFolderId({
+          folderId: currentFolder.id,
+          name,
+        }),
+      );
+    },
+    [dispatch, currentFolder.id],
+  );
+
+  const [inputName, handleDebouncedChangeName] = useDebouncedInput(
+    currentFolder.name,
+    handleChangeName,
+    PUBLICATION_REVIEW_UPDATING_DELAY,
+  );
+
+  useEffect(() => {
+    handleDebouncedChangeName(currentFolder.name);
+  }, [handleDebouncedChangeName, isEditMode, currentFolder.name]);
+
   const { folders, items } = useMemo(() => {
     return {
       folders: filteredItems(allFolders, currentFolder.id),
       items: filteredItems(allItems, currentFolder.id),
     };
   }, [allFolders, allItems, currentFolder.id]);
+
+  const isEditDisabled =
+    selectedPublication?.resourceTypes.includes(
+      EnumMapper.getBackendResourceTypeByFeatureType(FeatureType.Application),
+    ) && isFileId(currentFolder.id);
 
   return (
     <>
@@ -64,26 +106,18 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
           <div
             className="relative flex-1 select-none truncate text-left"
             data-qa="folder-name"
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
           >
-            {isEditMode ? (
-              <div className="block flex-1 truncate whitespace-pre break-all text-left text-primary">
-                <input
-                  onFocus={() => setIsFocused(true)}
-                  onBlur={() => setIsFocused(false)}
-                  className="h-[24px] w-full border-b border-primary bg-layer-2 px-1 py-[2px] text-sm text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none"
-                  value={currentFolder.name}
-                />
-              </div>
-            ) : (
-              <Tooltip
-                tooltip={currentFolder.name}
-                contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
-                isTriggerClickable
-                triggerClassName="block max-h-5 flex-1 truncate whitespace-pre break-all text-left text-primary"
-              >
-                {currentFolder.name}
-              </Tooltip>
-            )}
+            <EditableField
+              value={inputName}
+              isEditMode={isEditDisabled ? false : isEditMode}
+              onChange={handleDebouncedChangeName}
+              inputClassName={classNames(
+                'w-full',
+                !inputName && '!border-b-error',
+              )}
+            />
           </div>
         </div>
       </div>

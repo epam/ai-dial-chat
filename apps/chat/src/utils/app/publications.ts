@@ -32,6 +32,8 @@ import {
 } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 
+import { FolderEditTree } from '@/src/store/publication/publication.types';
+
 import {
   DEFAULT_VERSION,
   NA_VERSION,
@@ -450,7 +452,12 @@ export const getReviewItems = (
   return { toReview, reviewed };
 };
 
-export const getDefaultAllEditEntities = (resources: PublicationResource[]) => {
+export const getDefaultAllEditEntities = (
+  resources: PublicationResource[],
+): {
+  entities: Record<string, { name: string; version: string }>;
+  folders: FolderEditTree;
+} => {
   const allEditEntitiesMap: Record<
     string,
     {
@@ -484,5 +491,22 @@ export const getDefaultAllEditEntities = (resources: PublicationResource[]) => {
     };
   });
 
-  return allEditEntitiesMap;
+  const allFoldersStructure: FolderEditTree = {};
+  resources.forEach(({ reviewUrl }) => {
+    const folderSegments = getFolderIdFromEntityId(reviewUrl).split('/');
+    let currentLevel = allFoldersStructure;
+
+    folderSegments.forEach((segment) => {
+      if (!currentLevel[segment]) {
+        currentLevel[segment] = { name: segment };
+      }
+
+      currentLevel = currentLevel[segment] as FolderEditTree;
+    });
+  });
+
+  return {
+    entities: allEditEntitiesMap,
+    folders: allFoldersStructure,
+  };
 };

@@ -15,7 +15,11 @@ import {
   ResourceToReview,
 } from '@/src/types/publication';
 
-import { PublicationState } from './publication.types';
+import {
+  FolderEditTree,
+  FolderNode,
+  PublicationState,
+} from './publication.types';
 
 import {
   PublishActions,
@@ -46,7 +50,8 @@ const initialState: PublicationState = {
 
   // Review edit mode
   isEditMode: false,
-  editState: {},
+  entitiesEditState: {},
+  foldersEditState: {},
   isPublicationUpdating: false,
 };
 
@@ -367,12 +372,14 @@ export const publicationSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        editState: Record<string, { name: string; version: string }>;
+        entities: Record<string, { name: string; version: string }>;
+        folders: FolderEditTree;
       }>,
     ) => {
-      state.editState = payload.editState;
+      state.entitiesEditState = payload.entities;
+      state.foldersEditState = payload.folders;
     },
-    setEditStateByReviewUrl: (
+    setEntityEditStateByReviewUrl: (
       state,
       {
         payload,
@@ -382,10 +389,29 @@ export const publicationSlice = createSlice({
         version: string;
       }>,
     ) => {
-      state.editState[payload.reviewUrl] = {
+      state.entitiesEditState[payload.reviewUrl] = {
         name: payload.name,
         version: payload.version,
       };
+    },
+    setEditFolderStateByFolderId: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        folderId: string;
+        name: string;
+      }>,
+    ) => {
+      const folderSegments = payload.folderId.split('/');
+
+      let currentFolder = state.foldersEditState as FolderNode;
+
+      folderSegments.forEach((segment) => {
+        currentFolder = currentFolder[segment] as FolderNode;
+      });
+
+      currentFolder.name = payload.name;
     },
   },
 });

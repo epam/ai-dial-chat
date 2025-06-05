@@ -9,6 +9,13 @@ import {
 
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 
+export interface FolderNode {
+  name: string;
+  [folderName: string]: FolderNode | string;
+}
+
+export type FolderEditTree = Record<string, FolderNode>;
+
 export interface PublicationState {
   initialized: boolean;
   publications: (PublicationInfo & Partial<Publication>)[];
@@ -31,6 +38,7 @@ export interface PublicationState {
 
   // Review edit mode
   isEditMode: boolean;
-  editState: Record<string, { name: string; version: string }>;
+  entitiesEditState: Record<string, { name: string; version: string }>;
+  foldersEditState: FolderEditTree;
   isPublicationUpdating: boolean;
 }
