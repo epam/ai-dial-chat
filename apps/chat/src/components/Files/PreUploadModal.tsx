@@ -147,6 +147,7 @@ export const PreUploadDialog = ({
 
   const handleUpload = useCallback(() => {
     const errors = [];
+
     if (attachments.length + selectedFiles.length > maximumAttachmentsAmount) {
       errors.push(
         t(
@@ -160,16 +161,12 @@ export const PreUploadDialog = ({
       );
     }
 
-    const { errorMsg, validFiles, invalidFiles } =
-      validateUploadFiles(selectedFiles);
-
-    const filesToUpload = [...validFiles, ...invalidFiles];
-
-    if (errorMsg) errors.push(errorMsg);
+    const { validFiles: filesToUpload } = validateUploadFiles(selectedFiles);
 
     const attachmentsSameLevelNames = files
       .filter((file) => file.folderId === selectedFolderId)
       .map((file) => prepareFileName(file.name));
+
     const localIncorrectSameNameFiles = filesToUpload
       .filter((file) =>
         attachmentsSameLevelNames.includes(prepareFileName(file.name)),
@@ -188,6 +185,7 @@ export const PreUploadDialog = ({
     const duplicateNames = filesToUpload
       .map((file) => file.name)
       .filter((value, index, self) => self.indexOf(value) !== index);
+
     if (duplicateNames.length) {
       errors.push(
         t(
@@ -205,7 +203,6 @@ export const PreUploadDialog = ({
     }
 
     onUploadFiles(filesToUpload, folderPath);
-
     onClose(true);
   }, [
     attachments.length,
