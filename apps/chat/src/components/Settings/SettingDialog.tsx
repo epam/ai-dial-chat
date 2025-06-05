@@ -82,7 +82,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     setDeleteLogo(false);
     setDefaultModelReference(savedDefaultModelReference);
     onClose();
-  }, [theme, isChatFullWidth, defaultModelReference, onClose]);
+  }, [theme, isChatFullWidth, onClose, savedDefaultModelReference]);
 
   useEffect(() => {
     setLocalTheme(theme);
