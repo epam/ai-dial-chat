@@ -76,6 +76,9 @@ export const PublicationHandlerFooter = ({
   );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
   const editState = useAppSelector(PublicationSelectors.selectEditState);
+  const itemsToPublish = useAppSelector(
+    PublicationSelectors.selectSelectedItemsToPublish,
+  );
 
   const dispatch = useAppDispatch();
 
@@ -245,6 +248,23 @@ export const PublicationHandlerFooter = ({
     [notExistEntities, publication.resources],
   );
 
+  const handleApprovePublication = useCallback(() => {
+    if (itemsToPublish.length !== publication.resources.length) {
+      dispatch(PublicationActions.updateAndApprovePublicationRequest());
+    } else {
+      dispatch(
+        PublicationActions.approvePublication({
+          url: publication.url,
+        }),
+      );
+    }
+  }, [
+    dispatch,
+    itemsToPublish.length,
+    publication.resources.length,
+    publication.url,
+  ]);
+
   const isOnlyFilesPublication = publication.resources.every((resource) =>
     isFileId(resource.reviewUrl),
   );
@@ -338,13 +358,7 @@ export const PublicationHandlerFooter = ({
               <button
                 className="button button-primary disabled:cursor-not-allowed disabled:text-controls-disable"
                 disabled={!isAllResourcesReviewed || !!invalidEntities.length}
-                onClick={() =>
-                  dispatch(
-                    PublicationActions.approvePublication({
-                      url: publication.url,
-                    }),
-                  )
-                }
+                onClick={handleApprovePublication}
                 data-qa="approve"
               >
                 {t('Approve')}

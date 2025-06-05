@@ -56,7 +56,10 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
-import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
+import {
+  PUBLICATION_REQUEST_NAME_STARTING,
+  PUBLIC_URL_PREFIX,
+} from '@/src/constants/publication';
 import { ORGANIZATION_SECTION_NAME } from '@/src/constants/sections';
 
 import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
@@ -182,7 +185,7 @@ export function PublishModal<
     getValues,
   } = useForm<PublicationRequestFormData>({
     defaultValues: {
-      publishRequestName: `New request by ${userName}`,
+      publishRequestName: `${PUBLICATION_REQUEST_NAME_STARTING} ${userName}`,
       publicationAuthor: userName ?? '',
     },
     mode: 'onChange',

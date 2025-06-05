@@ -33,7 +33,8 @@ import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
   getFoldersDepth,
-  getParentFolderIdsFromFolderId,
+  isFolderPartialSelected,
+  isParentFolderSelected,
   sortByName,
 } from '@/src/utils/app/folders';
 import { isEntityIdExternal, isRootId } from '@/src/utils/app/id';
@@ -259,22 +260,21 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   );
 
   useEffect(() => {
-    const parentFolderIds = getParentFolderIdsFromFolderId(currentFolder.id);
-
-    const isParentSelected = parentFolderIds.some((id) =>
-      (additionalItemData?.selectedFolderIds ?? []).includes(`${id}/`),
-    );
+    const isParentSelected = isParentFolderSelected({
+      currentFolderId: currentFolder.id,
+      selectedFolderIds: additionalItemData?.selectedFolderIds,
+    });
 
     setIsSelected(isParentSelected);
   }, [additionalItemData?.selectedFolderIds, currentFolder.id, dispatch]);
 
   useEffect(() => {
-    const currentId = `${currentFolder.id}/`;
     setIsPartialSelected(
-      !isSelected &&
-        (additionalItemData?.partialSelectedFolderIds ?? []).includes(
-          currentId,
-        ),
+      isFolderPartialSelected({
+        currentFolderId: currentFolder.id,
+        partialSelectedFolderIds: additionalItemData?.partialSelectedFolderIds,
+        isSelected,
+      }),
     );
   }, [
     additionalItemData?.partialSelectedFolderIds,
@@ -1020,6 +1020,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       )}
                       data-item-checkbox
                     >
+                      {/* TODO change to use `Checkbox` component */}
                       <input
                         className={classNames(
                           'checkbox peer size-[18px] bg-layer-3',
@@ -1095,6 +1096,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       )}
                       data-item-checkbox
                     >
+                      {/* TODO change to use `Checkbox` component */}
                       <input
                         className={classNames(
                           'checkbox peer size-[18px] bg-layer-3',

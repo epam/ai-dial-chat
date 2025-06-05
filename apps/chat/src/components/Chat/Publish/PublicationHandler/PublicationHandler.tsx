@@ -27,6 +27,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/selectors';
 
 import {
+  PUBLICATION_REQUEST_NAME_STARTING,
   PUBLICATION_REVIEW_UPDATING_DELAY,
   PUBLIC_URL_PREFIX,
 } from '@/src/constants/publication';
@@ -137,7 +138,9 @@ export function PublicationHandler({ publication }: Props) {
     debounce(() => {
       dispatch(
         PublicationActions.updatePublicationRequest({
-          url: publication.url ?? `New request by ${publication.author}`,
+          url:
+            publication.url ??
+            `${PUBLICATION_REQUEST_NAME_STARTING} ${publication.author}`,
           dataToUpdate: {
             name: publication.name ?? '',
             targetFolder: publication.targetFolder,
@@ -239,14 +242,11 @@ export function PublicationHandler({ publication }: Props) {
                   valueToDisplay={publicationAuthor}
                 />
 
-                {/*TODO remove publicationAuthor when publication.displayAuthor will be ready at the core side */}
                 <PublicationInfoSection
                   labelDataQa="publication-display-author-label"
                   label={t("Author's public name: ")}
                   valueDataQa="publication-display-author"
-                  valueToDisplay={
-                    publication.displayAuthor ?? publicationAuthor
-                  }
+                  valueToDisplay={publication.displayAuthor}
                   infoTooltip={t(
                     'The name will be displayed instead of the author name for this publication.',
                   )}

@@ -1,5 +1,5 @@
 import { IconDownload } from '@tabler/icons-react';
-import { ReactNode, useCallback, useEffect, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -26,6 +26,7 @@ import {
 } from '@/src/constants/publication';
 
 import { PublicVersionSelector } from '@/src/components/Chat/Publish/PublicVersionSelector';
+import { Checkbox } from '@/src/components/Common/Checkbox';
 import { EditableField } from '@/src/components/Common/EditableField';
 
 import { PublishActions } from '@epam/ai-dial-shared';
@@ -143,6 +144,14 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   const editState = useAppSelector((state) =>
     PublicationSelectors.selectEditStateByReviewUrl(state, item.id),
   );
+  const selectedPublicationResources = useAppSelector(
+    PublicationSelectors.selectSelectedItemsToPublish,
+  );
+
+  const isSelected = useMemo(
+    () => selectedPublicationResources.includes(item.id),
+    [item.id, selectedPublicationResources],
+  );
 
   const [isFocused, setIsFocused] = useState(false);
 
@@ -159,6 +168,14 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
     },
     [dispatch, item.id, editState?.version, item.publicationInfo?.version],
   );
+
+  const onSelect = useCallback(() => {
+    dispatch(
+      PublicationActions.selectItemsToPublish({
+        ids: [item.id],
+      }),
+    );
+  }, [dispatch, item.id]);
 
   const [inputName, handleDebouncedChangeName] = useDebouncedInput(
     item.name,
@@ -188,6 +205,12 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
         }}
         data-qa={dataQa}
       >
+        <Checkbox
+          isSelected={isSelected}
+          onChange={onSelect}
+          className="mr-0"
+        />
+
         <span className="flex">{Icon}</span>
         <EditableField
           value={inputName}

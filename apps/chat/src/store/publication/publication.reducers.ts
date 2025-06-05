@@ -387,6 +387,8 @@ export const publicationSlice = createSlice({
         version: payload.version,
       };
     },
+
+    updateAndApprovePublicationRequest: (state) => state,
   },
 });
 
