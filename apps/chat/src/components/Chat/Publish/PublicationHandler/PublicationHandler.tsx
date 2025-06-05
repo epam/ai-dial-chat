@@ -8,15 +8,13 @@ import {
   prepareEntityName,
 } from '@/src/utils/app/common';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { isConversationId, isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
-import { getPublicationId } from '@/src/utils/app/publications';
-import { constructPath, splitEntityId } from '@/src/utils/app/shared-utils';
-import { translate } from '@/src/utils/app/translation';
 import {
-  parseConversationApiKey,
-  pathKeySeparator,
-} from '@/src/utils/server/api';
+  getPublicationId,
+  regenerateApiKeyNameAndVersionParts,
+} from '@/src/utils/app/publications';
+import { constructPath } from '@/src/utils/app/shared-utils';
+import { translate } from '@/src/utils/app/translation';
 
 import { FeatureType } from '@/src/types/common';
 import { Publication, PublicationRule } from '@/src/types/publication';
@@ -182,17 +180,12 @@ export function PublicationHandler({ publication }: Props) {
                 newFolderSegments[1] = PUBLIC_URL_PREFIX;
                 const newFolderId = newFolderSegments.join('/');
 
-                const preparedName = prepareEntityName(name);
-                const modelName = splitEntityId(reviewUrl).name;
-                const parsedModelReference =
-                  parseConversationApiKey(modelName).model.id;
-                const newApiKey = isConversationId(reviewUrl)
-                  ? [parsedModelReference, preparedName, version].join(
-                      pathKeySeparator,
-                    )
-                  : isFileId(reviewUrl)
-                    ? [preparedName].join(pathKeySeparator)
-                    : [preparedName, version].join(pathKeySeparator);
+                // get new api key
+                const newApiKey = regenerateApiKeyNameAndVersionParts(
+                  reviewUrl,
+                  name,
+                  version,
+                );
 
                 return {
                   action,

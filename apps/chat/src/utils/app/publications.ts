@@ -15,6 +15,7 @@ import {
   parseConversationApiKey,
   parseFileApiKey,
   parsePromptApiKey,
+  pathKeySeparator,
 } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -42,7 +43,7 @@ import {
   PUBLIC_URL_PREFIX,
 } from '@/src/constants/publication';
 
-import { isVersionValid } from './common';
+import { isVersionValid, prepareEntityName } from './common';
 import { BucketService } from './data/bucket-service';
 import { FileService } from './data/file-service';
 import { constructPath } from './file';
@@ -528,3 +529,23 @@ export const mapFilterToRule = (
   source: filter.id,
   targets: filter.filterParams,
 });
+
+export const regenerateApiKeyNameAndVersionParts = (
+  entityId: string,
+  name: string,
+  version: string,
+): string => {
+  const preparedName = prepareEntityName(name);
+
+  if (isConversationId(entityId)) {
+    const modelName = splitEntityId(entityId).name;
+    const parsedModelReference = parseConversationApiKey(modelName).model.id;
+    return [parsedModelReference, preparedName, version].join(pathKeySeparator);
+  }
+
+  if (isFileId(entityId)) {
+    return preparedName;
+  }
+
+  return [preparedName, version].join(pathKeySeparator);
+};
