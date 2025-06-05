@@ -17,6 +17,7 @@ import {
   getFileNameWithoutExtension,
   getRelativePath,
   getShortExtensionsListFromMimeType,
+  notAllowedSymbolsRegex,
   prepareFileName,
   validatePreUploadFiles,
   validateUploadFiles,
@@ -220,14 +221,19 @@ export const PreUploadDialog = ({
 
   const handleRenameFile = useCallback(
     (changedFileIndex: number) => {
-      return (e: ChangeEvent<HTMLInputElement>) =>
+      return (e: ChangeEvent<HTMLInputElement>) => {
+        const sanitizedInput = e.target.value.replace(
+          notAllowedSymbolsRegex,
+          '',
+        );
         setSelectedFiles(
           selectedFiles.map((file, index) => {
             if (index === changedFileIndex) {
               const indexDot = file.name.lastIndexOf('.');
               const formatFile =
                 indexDot !== -1 ? file.name.slice(indexDot) : '';
-              const fileName = prepareFileName(e.target.value + formatFile);
+              const fileName = prepareFileName(sanitizedInput + formatFile);
+
               return {
                 ...file,
                 name: fileName,
@@ -238,6 +244,7 @@ export const PreUploadDialog = ({
             return file;
           }),
         );
+      };
     },
     [folderPath, selectedFiles],
   );
@@ -373,9 +380,10 @@ export const PreUploadDialog = ({
                       <input
                         type="text"
                         value={getFileNameWithoutExtension(file.name)}
-                        className="grow text-ellipsis rounded border border-primary bg-transparent py-2 pl-8 pr-12 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
                         onChange={handleRenameFile(index)}
+                        className="grow text-ellipsis rounded border border-primary bg-transparent py-2 pl-8 pr-12 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
                       />
+
                       <span
                         className="absolute right-2"
                         data-qa="file-extension"

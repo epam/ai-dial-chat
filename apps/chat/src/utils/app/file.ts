@@ -367,7 +367,9 @@ export const getNextFileName = (
 };
 
 export const prepareFileName = (filename: string) =>
-  `${prepareEntityName(getFileNameWithoutExtension(filename))}${getFileNameExtension(filename)}`;
+  prepareEntityName(
+    getFileNameWithoutExtension(filename) + getFileNameExtension(filename),
+  );
 
 export const isAbsoluteUrl = (url: string): boolean => {
   const urlLower = url.toLowerCase();
