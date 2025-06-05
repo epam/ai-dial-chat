@@ -2542,6 +2542,11 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
         ),
         of(successAction),
         of(ConversationsActions.saveConversation(newConversation)),
+        of(
+          ConversationsActions.getConversationMetadata({
+            conversationId: newConversation.id,
+          }),
+        ),
       );
     }),
   );
