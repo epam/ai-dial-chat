@@ -151,6 +151,7 @@ const getEntityInfoEpic: AppEpic = (action$) =>
         return of(
           ConversationsActions.getConversationMetadata({
             conversationId: payload.entityInfo.id,
+            withModal: true,
           }),
         );
       }

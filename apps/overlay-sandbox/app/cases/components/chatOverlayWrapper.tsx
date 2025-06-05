@@ -319,7 +319,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
                   }
                 >
                   {conversations.map((conv) => (
-                    <option className="truncate" key={conv.id}>
+                    <option className="truncate" key={conv.id} value={conv.id}>
                       {conv.id}
                     </option>
                   ))}
