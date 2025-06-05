@@ -29,26 +29,36 @@ export const DefaultModelSelect = ({
   const models = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
-  const allModels = useMemo(
-    () => [DefaultModel, LastUsedModel, ...models],
-    [models],
+  const selectedModel = useMemo(
+    () =>
+      modelsMap[modelReference] ??
+      SPECIAL_DEFAULT_MODEL_DIC[modelReference] ??
+      DefaultModel,
+    [modelReference, modelsMap],
   );
 
-  const selectedModel =
-    modelsMap[modelReference] ??
-    SPECIAL_DEFAULT_MODEL_DIC[modelReference] ??
-    DefaultModel;
+  const allModels = useMemo(() => {
+    const selected = modelsMap[modelReference];
+    const list = [DefaultModel, LastUsedModel, ...models];
+    if (!selected) return list;
+    const filteredModels = models.filter(
+      (mod) => !selected || mod.reference !== selected.reference,
+    );
+    return [DefaultModel, LastUsedModel, selected, ...filteredModels];
+  }, [modelReference, models, modelsMap]);
 
   return (
     <div className="flex items-center gap-5" data-qa="default-model">
       <span className="basis-1/3 md:basis-1/4">{t('Start chat with')}</span>
-      <div className="flex h-[38px] max-w-[331px] grow basis-2/3 items-center gap-8 overflow-hidden rounded border border-primary focus-within:!border-primary focus:!border-primary md:basis-3/4">
+      <div className="flex h-[38px] max-w-[331px] grow basis-2/3 items-center gap-8 overflow-hidden rounded border-y border-primary md:basis-3/4">
         <ModelsSelector
           value={selectedModel.id}
           onChange={onModelChange}
           models={allModels}
           additionalModelsMap={SPECIAL_DEFAULT_MODEL_DIC}
           useReference
+          inputClassName="focus-within:!border-primary"
+          panelClassName="!bg-layer-0"
         />
       </div>
     </div>

@@ -64,6 +64,8 @@ interface ModelsSelectorProps {
   models?: DialAIEntityModel[];
   additionalModelsMap?: Partial<Record<string, DialAIEntityModel>>;
   useReference?: boolean;
+  inputClassName?: string;
+  panelClassName?: string;
 }
 
 export const ModelsSelector = memo(function ModelsSelector({
@@ -74,6 +76,8 @@ export const ModelsSelector = memo(function ModelsSelector({
   models,
   additionalModelsMap,
   useReference,
+  inputClassName,
+  panelClassName,
 }: ModelsSelectorProps) {
   const onlyModels = useAppSelector(ModelsSelectors.selectModelsOnly);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -89,6 +93,8 @@ export const ModelsSelector = memo(function ModelsSelector({
       <div className="relative">
         {disabled && <DisableOverlay />}
         <Combobox
+          inputClassName={inputClassName}
+          panelClassName={panelClassName}
           items={displayedModels}
           initialSelectedItem={
             model || {

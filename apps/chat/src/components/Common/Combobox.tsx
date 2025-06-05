@@ -35,6 +35,8 @@ interface Props<T> {
   getItemLabel: (item: T) => string;
   getItemValue: (item: T) => string;
   onSelectItem: (value: string) => void;
+  inputClassName?: string;
+  panelClassName?: string;
 }
 
 export const Combobox = <T,>({
@@ -48,6 +50,8 @@ export const Combobox = <T,>({
   getItemLabel,
   getItemValue,
   onSelectItem,
+  inputClassName,
+  panelClassName,
 }: Props<T>) => {
   const { t } = useTranslation(Translation.Common);
 
@@ -134,7 +138,12 @@ export const Combobox = <T,>({
             {label}
           </label>
         )}
-        <div className="flex rounded border border-primary py-2.5 focus-within:border-accent-primary">
+        <div
+          className={classNames(
+            'flex rounded border border-primary py-2.5 focus-within:border-accent-primary',
+            inputClassName,
+          )}
+        >
           <div className="relative w-full">
             <input
               disabled={disabled}
@@ -174,6 +183,7 @@ export const Combobox = <T,>({
       <ul
         className={classNames(
           'z-10 max-h-80 overflow-auto rounded bg-layer-3',
+          panelClassName,
           !isOpen && 'hidden',
         )}
         {...getMenuProps(
