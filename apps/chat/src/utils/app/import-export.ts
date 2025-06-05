@@ -427,7 +427,7 @@ export const getConversationActions = (
   }
 
   return [
-    of(ConversationsActions.saveConversation(conversation)),
+    of(ConversationsActions.saveConversation({ conversation })),
     of(
       ConversationsActions.updateConversationSuccess({
         id: conversation.id,
