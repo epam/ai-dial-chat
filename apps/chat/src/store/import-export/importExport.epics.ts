@@ -509,6 +509,13 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
                     folders: conversationsFolders,
                   }),
                 ),
+                ...uploadedConversations.map((conv) =>
+                  of(
+                    ConversationsActions.getConversationMetadata({
+                      conversationId: conv.id,
+                    }),
+                  ),
+                ),
                 of(
                   ConversationsActions.selectConversations({
                     conversationIds: [firstImportedConversation.id],
