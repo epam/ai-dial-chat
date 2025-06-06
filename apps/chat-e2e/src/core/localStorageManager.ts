@@ -45,6 +45,10 @@ export class LocalStorageManager {
     window.localStorage.setItem('recentModelsIds', modelIds);
   };
 
+  setDefaultModelReference = () => (defaultModelReference: string) => {
+    window.localStorage.setItem('defaultModelReference', defaultModelReference);
+  };
+
   setRecentAddonsIdsKey = () => (addonIds: string) => {
     window.localStorage.setItem('recentAddonsIds', addonIds);
   };
@@ -152,6 +156,11 @@ export class LocalStorageManager {
     await this.page.addInitScript(
       this.setRecentModelsIdsKey(),
       JSON.stringify(models.map((m) => m.reference)),
+    );
+
+    await this.page.addInitScript(
+      this.setDefaultModelReference(),
+      'last-used-agent',
     );
   }
 
