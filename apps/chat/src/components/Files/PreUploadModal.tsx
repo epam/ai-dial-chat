@@ -176,7 +176,7 @@ export const PreUploadDialog = ({
     if (localIncorrectSameNameFiles.length > 0) {
       errors.push(
         t(
-          `${errors.length ? '\n' : ''}The files you're trying to upload already exist in the selected folder. Please rename them or remove them from your upload list {{fileNames}}`,
+          `${errors.length ? '\n' : ''}The files you're trying to upload already exist in the selected folder. Please rename them or remove them from your upload list: {{fileNames}}`,
           { fileNames: localIncorrectSameNameFiles.join(', ') },
         ),
       );
