@@ -16,6 +16,7 @@ import {
 } from '@/src/types/publication';
 
 import {
+  EDITED_FOLDER_NAME_KEY,
   FolderEditTree,
   FolderNode,
   PublicationState,
@@ -352,9 +353,6 @@ export const publicationSlice = createSlice({
         state.publishModel = undefined;
       }
     },
-    setIsPublicationUpdating: (state, { payload }: PayloadAction<boolean>) => {
-      state.isPublicationUpdating = payload;
-    },
     updatePublicationRequest: (
       state,
       _action: PayloadAction<{
@@ -415,7 +413,7 @@ export const publicationSlice = createSlice({
         currentFolder = currentFolder[segment] as FolderNode;
       });
 
-      currentFolder.name = payload.name;
+      currentFolder[EDITED_FOLDER_NAME_KEY] = payload.name;
     },
     setRulesOnEdit: (state, { payload }: PayloadAction<PublicationRule[]>) => {
       state.rulesOnEdit = payload;

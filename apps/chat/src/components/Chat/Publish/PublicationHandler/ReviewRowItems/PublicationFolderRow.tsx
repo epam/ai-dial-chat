@@ -3,8 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
-import { useDebouncedInput } from '@/src/hooks/useDebounceInput';
-
+import { prepareEntityName } from '@/src/utils/app/common';
 import { sortByName } from '@/src/utils/app/folders';
 import { isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
@@ -14,8 +13,6 @@ import { PublicationReviewItem } from '@/src/types/publication';
 import { PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
-
-import { PUBLICATION_REVIEW_UPDATING_DELAY } from '@/src/constants/publication';
 
 import { EditableField } from '@/src/components/Common/EditableField';
 
@@ -53,8 +50,15 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
     PublicationSelectors.selectSelectedPublication,
   );
 
+  const [inputName, setInputName] = useState(currentFolder.name);
+
+  useEffect(() => {
+    setInputName(currentFolder.name);
+  }, [currentFolder.name, isEditMode]);
+
   const handleChangeName = useCallback(
     (name: string) => {
+      setInputName(name);
       dispatch(
         PublicationActions.setEditFolderStateByFolderId({
           folderId: currentFolder.id,
@@ -64,16 +68,6 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
     },
     [dispatch, currentFolder.id],
   );
-
-  const [inputName, handleDebouncedChangeName] = useDebouncedInput(
-    currentFolder.name,
-    handleChangeName,
-    PUBLICATION_REVIEW_UPDATING_DELAY,
-  );
-
-  useEffect(() => {
-    handleDebouncedChangeName(currentFolder.name);
-  }, [handleDebouncedChangeName, isEditMode, currentFolder.name]);
 
   const { folders, items } = useMemo(() => {
     return {
@@ -112,10 +106,10 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
             <EditableField
               value={inputName}
               isEditMode={isEditDisabled ? false : isEditMode}
-              onChange={handleDebouncedChangeName}
+              onChange={handleChangeName}
               inputClassName={classNames(
                 'w-full',
-                !inputName && '!border-b-error',
+                !prepareEntityName(inputName).trim() && '!border-b-error',
               )}
             />
           </div>

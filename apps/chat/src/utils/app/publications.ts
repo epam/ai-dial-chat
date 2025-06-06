@@ -35,7 +35,10 @@ import {
 } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 
-import { FolderEditTree } from '@/src/store/publication/publication.types';
+import {
+  EDITED_FOLDER_NAME_KEY,
+  FolderEditTree,
+} from '@/src/store/publication/publication.types';
 
 import {
   DEFAULT_VERSION,
@@ -501,7 +504,7 @@ export const getDefaultAllEditEntities = (
 
     folderSegments.forEach((segment) => {
       if (!currentLevel[segment]) {
-        currentLevel[segment] = { name: segment };
+        currentLevel[segment] = { [EDITED_FOLDER_NAME_KEY]: segment };
       }
 
       currentLevel = currentLevel[segment] as FolderEditTree;

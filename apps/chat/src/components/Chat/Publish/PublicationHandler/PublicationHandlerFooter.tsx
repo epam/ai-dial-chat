@@ -35,6 +35,7 @@ import {
 import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { EDITED_FOLDER_NAME_KEY } from '@/src/store/publication/publication.types';
 import {
   ConversationsSelectors,
   PromptsSelectors,
@@ -49,6 +50,28 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 import { FeatureType, PublishActions } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
+export const allEditedFoldersAreValid = (obj: unknown) => {
+  for (const key in obj as Record<string, string>) {
+    const value = (obj as Record<string, string>)[key];
+
+    if (typeof value === 'object' && value !== null) {
+      if (
+        EDITED_FOLDER_NAME_KEY in value &&
+        (!value[EDITED_FOLDER_NAME_KEY] ||
+          prepareEntityName(value[EDITED_FOLDER_NAME_KEY] as string).trim() ===
+            '')
+      ) {
+        return false;
+      }
+
+      if (!allEditedFoldersAreValid(value)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+};
 interface Props {
   publication: Publication;
   onUpdateRequest: () => void;
@@ -77,6 +100,9 @@ export const PublicationHandlerFooter = ({
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
   const entitiesEditState = useAppSelector(
     PublicationSelectors.selectEntitiesEditState,
+  );
+  const foldersEditState = useAppSelector(
+    PublicationSelectors.selectFoldersEditState,
   );
 
   const dispatch = useAppDispatch();
@@ -252,7 +278,7 @@ export const PublicationHandlerFooter = ({
     isFileId(resource.reviewUrl),
   );
   const isAllResourcesReviewed = resourcesToReview.every((r) => r.reviewed);
-  const isEditDisabled = Object.values(entitiesEditState).some(
+  const isNamesOrVersionsInvalid = Object.values(entitiesEditState).some(
     ({ version, name }) => {
       return (
         !prepareEntityName(name) ||
@@ -260,6 +286,8 @@ export const PublicationHandlerFooter = ({
       );
     },
   );
+  const isFoldersInvalid = !allEditedFoldersAreValid(foldersEditState);
+  const isEditDisabled = isNamesOrVersionsInvalid || isFoldersInvalid;
   const isEveryResourceForUnpublish = publication.resources.every(
     (resource) => resource.action === PublishActions.DELETE,
   );

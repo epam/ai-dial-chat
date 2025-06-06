@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -22,13 +22,13 @@ import { Translation } from '@/src/types/translation';
 
 import { PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { FolderNode } from '@/src/store/publication/publication.types';
+import {
+  EDITED_FOLDER_NAME_KEY,
+  FolderNode,
+} from '@/src/store/publication/publication.types';
 import { PublicationSelectors } from '@/src/store/selectors';
 
-import {
-  PUBLICATION_REVIEW_UPDATING_DELAY,
-  PUBLIC_URL_PREFIX,
-} from '@/src/constants/publication';
+import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -106,16 +106,6 @@ export function PublicationHandler({ publication }: Props) {
   );
   const rulesOnEdit = useAppSelector(PublicationSelectors.selectRulesOnEdit);
 
-  // use refs to get the latest state inside the setTimeout
-  const entitiesEditStateRef = useRef(entitiesEditState);
-  const foldersEditStateRef = useRef(foldersEditState);
-  useEffect(() => {
-    entitiesEditStateRef.current = entitiesEditState;
-  }, [entitiesEditState]);
-  useEffect(() => {
-    foldersEditStateRef.current = foldersEditState;
-  }, [foldersEditState]);
-
   const publicationAuthor = useMemo(() => {
     return extractNameFromEmail(publication.author) ?? t('Unknown');
   }, [publication.author, t]);
@@ -148,60 +138,56 @@ export function PublicationHandler({ publication }: Props) {
   );
 
   const handleUpdateRequest = useCallback(() => {
-    dispatch(PublicationActions.setIsPublicationUpdating(true));
+    dispatch(
+      PublicationActions.updatePublicationRequest({
+        url: publication.url,
+        dataToUpdate: {
+          name: publication.name ?? `New request by ${publication.author}`,
+          targetFolder: publication.targetFolder,
+          rules: rulesOnEdit,
+          resources: publication.resources.map(
+            ({ sourceUrl, reviewUrl, action }) => {
+              const { name, version } = entitiesEditState[reviewUrl];
 
-    setTimeout(() => {
-      dispatch(
-        PublicationActions.updatePublicationRequest({
-          url: publication.url,
-          dataToUpdate: {
-            name: publication.name ?? `New request by ${publication.author}`,
-            targetFolder: publication.targetFolder,
-            rules: rulesOnEdit,
-            resources: publication.resources.map(
-              ({ sourceUrl, reviewUrl, action }) => {
-                const { name, version } =
-                  entitiesEditStateRef.current[reviewUrl];
-
-                // calculate new folderId
-                const folderSegments =
-                  getFolderIdFromEntityId(reviewUrl).split('/');
-                const newFolderSegments: string[] = [];
-                let currentFolder = foldersEditStateRef.current as FolderNode;
-                folderSegments.forEach((segment, i) => {
-                  currentFolder = currentFolder[segment] as FolderNode;
-                  newFolderSegments.push(
-                    // prepare name if it's not root path segments
-                    i > 1
-                      ? prepareEntityName(currentFolder.name)
-                      : currentFolder.name,
-                  );
-                });
-                newFolderSegments[1] = PUBLIC_URL_PREFIX;
-                const newFolderId = newFolderSegments.join('/');
-
-                // get new api key
-                const newApiKey = regenerateApiKeyNameAndVersionParts(
-                  reviewUrl,
-                  name,
-                  version,
+              // calculate new folderId
+              const folderSegments =
+                getFolderIdFromEntityId(reviewUrl).split('/');
+              const newFolderSegments: string[] = [];
+              let currentFolder = foldersEditState as FolderNode;
+              folderSegments.forEach((segment, i) => {
+                currentFolder = currentFolder[segment] as FolderNode;
+                newFolderSegments.push(
+                  // prepare name if it's not root path segments
+                  i > 1
+                    ? prepareEntityName(currentFolder[EDITED_FOLDER_NAME_KEY])
+                    : currentFolder[EDITED_FOLDER_NAME_KEY],
                 );
+              });
+              newFolderSegments[1] = PUBLIC_URL_PREFIX;
+              const newFolderId = newFolderSegments.join('/');
 
-                return {
-                  action,
-                  sourceUrl: sourceUrl ?? '',
-                  targetUrl: constructPath(newFolderId, newApiKey),
-                };
-              },
-            ),
-          },
-        }),
-      );
+              // get new api key
+              const newApiKey = regenerateApiKeyNameAndVersionParts(
+                reviewUrl,
+                name,
+                version,
+              );
 
-      dispatch(PublicationActions.setIsEditMode(false));
-    }, PUBLICATION_REVIEW_UPDATING_DELAY);
+              return {
+                action,
+                sourceUrl: sourceUrl ?? '',
+                targetUrl: constructPath(newFolderId, newApiKey),
+              };
+            },
+          ),
+        },
+      }),
+    );
+    dispatch(PublicationActions.setIsEditMode(false));
   }, [
     dispatch,
+    entitiesEditState,
+    foldersEditState,
     publication.author,
     publication.name,
     publication.resources,
