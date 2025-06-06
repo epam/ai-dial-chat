@@ -429,7 +429,7 @@ export const Attachment = {
   heartImageName: 'heart.webp',
   flowerImageName: 'flower.jpg',
   longImageName: 'attachmentWithVeryVeryVeryVeryVeryLongTitleDescription.jpg',
-  specialSymbolsName: `special ${ExpectedConstants.allowedSpecialChars}.jpg`,
+  specialSymbolsName: "special (`~!@#$^-_+[]'.).jpg",
   textName: 'text.txt',
   allTypesExtension: '*/*',
   allTypesLabel: 'all',

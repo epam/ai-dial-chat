@@ -4,6 +4,7 @@ import { Publication } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
   AddAppMenuOptions,
   AppEditorGeneralFormFields,
   AppEditorViewFormFields,
@@ -1127,7 +1128,7 @@ dialTest(
     } as DialAIEntityModel;
     const newIconFileName = `${ExpectedConstants.allowedSpecialChars}.svg`;
     let agentElement: BaseElement;
-    const expectedNewIconUrl = await fileApiHelper.putFileWithCustomName(
+    let expectedNewIconUrl = await fileApiHelper.putFileWithCustomName(
       newIconFileName,
       Attachment.dialIconSvg,
     );
