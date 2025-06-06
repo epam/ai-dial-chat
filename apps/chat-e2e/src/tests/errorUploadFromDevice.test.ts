@@ -101,7 +101,6 @@ dialTest(
     const restrictedChar = GeneratorUtil.randomArrayElement(
       ExpectedConstants.restrictedNameChars.split(''),
     );
-    const notAllowedFilenameWithReplacedChars = `_${Attachment.sunImageName}`;
 
     await dialTest.step('Upload file through chat bar dots menu', async () => {
       await localStorageManager.setShowSideBarPanels();
@@ -116,7 +115,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'Add restricted symbol to file name, click Upload and observe restricted symbols are replaced, file is renamed',
+      'Add restricted symbol to file name, click Upload and observe restricted symbols are restricted, file is not renamed',
       async () => {
         await uploadFromDeviceModal.typeInUploadedFilename(
           Attachment.sunImageName,
@@ -125,13 +124,13 @@ dialTest(
         await uploadFromDeviceModal.uploadButton.click();
         await attachAllFilesTreeAssertion.assertEntityState(
           {
-            name: notAllowedFilenameWithReplacedChars,
+            name: Attachment.sunImageName,
           },
           'visible',
         );
         await attachAllFilesTreeAssertion.assertEntityColor(
           {
-            name: notAllowedFilenameWithReplacedChars,
+            name: Attachment.sunImageName,
           },
           ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
         );
@@ -142,7 +141,7 @@ dialTest(
       'Upload a file without a restricted symbol, click Upload and verify file is uploaded and had blue color name',
       async () => {
         await dialHomePage.uploadData(
-          { path: Attachment.sunImageName, dataType: 'upload' },
+          { path: Attachment.heartImageName, dataType: 'upload' },
           () => attachFilesModal.uploadFromDevice(),
         );
         await uploadFromDeviceModal.uploadButton.click();
@@ -150,7 +149,7 @@ dialTest(
           .soft(
             attachFilesModal
               .getAllFilesTree()
-              .getEntityByName(Attachment.sunImageName),
+              .getEntityByName(Attachment.heartImageName),
             ExpectedMessages.fileIsUploaded,
           )
           .toBeVisible();
@@ -253,7 +252,6 @@ dialTest(
     attachFilesModal,
     chatBar,
     uploadFromDeviceModal,
-    baseAssertion,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-3216', 'EPMRTC-3113');
@@ -274,7 +272,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Add dot at the end of file name and verify error message is shown',
+      'Add dot at the end of file name and verify file is uploaded',
       async () => {
         await uploadFromDeviceModal
           .getUploadedFilenameInput(Attachment.fileWithoutExtension)
@@ -282,28 +280,6 @@ dialTest(
         await uploadFromDeviceModal.typeInUploadedFilename(
           Attachment.fileWithoutExtension,
           dot,
-        );
-        await uploadFromDeviceModal.uploadButton.click();
-        const error = uploadFromDeviceModal.getModalError();
-        await baseAssertion.assertElementState(error, 'visible');
-        await baseAssertion.assertElementText(
-          error.errorMessage,
-          ExpectedConstants.endDotFilenameError(
-            Attachment.fileWithoutExtension + dot,
-          ),
-          ExpectedMessages.errorMessageContentIsValid,
-        );
-      },
-    );
-
-    await dialTest.step(
-      'Remove end dot and verify file is successfully uploaded',
-      async () => {
-        await uploadFromDeviceModal
-          .getDeleteUploadedFileIcon(Attachment.fileWithoutExtension)
-          .click();
-        await uploadFromDeviceModal.addMoreFilesToUpload(
-          Attachment.fileWithoutExtension,
         );
         const uploadedFileExtension = await uploadFromDeviceModal
           .getUploadedFileExtension(Attachment.fileWithoutExtension)
