@@ -12,9 +12,11 @@ export const ExpectedMessages = {
   contextMenuOptionIsNotAvailable: 'Context menu option is not available',
   conversationIsVisible: 'Conversation is visible in chat bar',
   conversationIsNotVisible: 'Conversation is not visible in chat bar',
-  sendMessageButtonIsNotVisible: 'Send message button is not visible in chat input',
+  sendMessageButtonIsNotVisible:
+    'Send message button is not visible in chat input',
   conversationsCountIsValid: 'Conversations count is valid',
-  notAllowedToMoveParentToChild: "It's not allowed to move parent folder in child folder",
+  notAllowedToMoveParentToChild:
+    "It's not allowed to move parent folder in child folder",
   folderIsNotVisible: 'Folder is not visible in chat bar',
   folderIsVisible: 'Folder is visible',
   newFolderCreated: 'New folder is created',
@@ -102,7 +104,8 @@ export const ExpectedMessages = {
   headerTitleIsValid: 'Chat header title is valid',
   headerTitleIsFullyVisible: 'Chat header title is fully visible on tooltip',
   headerIconsCountIsValid: 'Chat header icons number is valid',
-  headerCleanConversationIconVisible: 'Chat header Clean Conversation icon is visible',
+  headerCleanConversationIconVisible:
+    'Chat header Clean Conversation icon is visible',
   chatInfoModelIsValid: 'Chat info model is valid',
   agentVersionIsValid: 'Agent version is valid',
   chatInfoVersionIsValid: 'Chat info version is valid',
@@ -121,20 +124,24 @@ export const ExpectedMessages = {
   proceedReplayIsVisible: 'Proceed replay button is visible',
   replayContinuesFromReceivedContent: 'Replay continued from received content',
   replayRegeneratesStages: 'Replay regenerates all stages',
-  allStagesRegenerated: 'All stages are regenerated on Regenerate Response button click',
+  allStagesRegenerated:
+    'All stages are regenerated on Regenerate Response button click',
   errorReceivedOnReplay: 'Error message is received during chat replay',
   compareModeOpened: 'Compare mode is opened',
   compareModeClosed: 'Compare mode is closed',
   conversationToCompareVisible: 'Conversation to compare selector is visible',
   conversationToCompareIsHidden: 'Conversation to compare selector is hidden',
-  conversationsToCompareOptionsValid: 'Conversation to compare options are valid',
+  conversationsToCompareOptionsValid:
+    'Conversation to compare options are valid',
   noConversationsAvailable: 'No conversations are available for comparison',
-  responseReceivedForComparedConversations: 'Response is received by both conversations in compare mode',
+  responseReceivedForComparedConversations:
+    'Response is received by both conversations in compare mode',
   requestModeIdIsValid: 'Request modelId is valid in API request',
   requestPromptIsValid: 'Request prompt is valid in API request',
   requestTempIsValid: 'Request temperature is valid in API request',
   requestSelectedAddonsAreValid: 'Request addons are valid in API request',
-  requestAssistantModelIdIsValid: 'Request assistant modelId is valid in API request',
+  requestAssistantModelIdIsValid:
+    'Request assistant modelId is valid in API request',
   requestCustomContentIsValid: 'Request custom content is valid in API request',
   regenerateNotAvailable: 'Regenerate button is not available',
   regenerateIsAvailable: 'Regenerate button is available',
@@ -143,7 +150,8 @@ export const ExpectedMessages = {
   chatBarConversationIconIsDefault: 'Chat bar conversation icon is default',
   chatBarConversationIconIsPlayback: 'Chat bar conversation icon is Playback',
   chatBarConversationIconIsReplay: 'Chat bar conversation icon is Replay',
-  chatBarConversationIconIsNotReplay: 'Chat bar conversation icon is not Replay',
+  chatBarConversationIconIsNotReplay:
+    'Chat bar conversation icon is not Replay',
   playbackIconIsSelected: 'Playback icon is selected on Talk to list',
   playbackIconIsHidden: 'Playback icon is hidden on Talk to list',
   responseLoadingStopped: 'Conversation response stopped',
@@ -170,7 +178,8 @@ export const ExpectedMessages = {
   folderNameColorIsValid: 'Folder name color is valid',
   modalDialogTitleIsValid: 'Modal dialog title is valid',
   confirmationMessageIsValid: 'Confirmation dialog message is valid',
-  chronologyMessageCountIsCorrect: 'Chat bar chronology messages count is correct',
+  chronologyMessageCountIsCorrect:
+    'Chat bar chronology messages count is correct',
   fieldIsRequired: 'Field is required',
   fieldValueIsValid: 'Field value is valid',
   fieldInnerHtmlIsValid: 'Field inner html content is valid',
@@ -200,9 +209,11 @@ export const ExpectedMessages = {
   searchResultCountIsValid: 'Search results count is valid',
   searchResultsAreCorrect: 'Search results are correct',
   noResultsFound: 'No results found is displayed',
-  notAllowedModelErrorDisplayed: 'Not allowed model selected error is displayed',
+  notAllowedModelErrorDisplayed:
+    'Not allowed model selected error is displayed',
   replayAsIsDescriptionIsVisible: 'Replay as is description is visible',
-  replayOldVersionWarningIsVisible: 'Replay old version of DIAL conversation warning is displayed',
+  replayOldVersionWarningIsVisible:
+    'Replay old version of DIAL conversation warning is displayed',
   warningLabelColorIsValid: 'Warning label color is valid',
   compareButtonIsDisabled: 'Chat bar Compare button is disabled',
   closeChatIconIsNotVisible: 'Close chat icon is not visible',
@@ -220,8 +231,10 @@ export const ExpectedMessages = {
   sharedModalTextIsValid: 'Shared models dialog text is valid',
   sharedInvitationLinkIsUnique: 'Shared invitation link is unique',
   shareConversationLinkIsValid: 'Share conversation link is valid',
-  shareInviteAcceptanceErrorShown: 'Share invite acceptance error toast is shown',
-  sharingWithAttachmentNotFromAllFilesFailed: 'Share with attachments not from all files error toast is shown',
+  shareInviteAcceptanceErrorShown:
+    'Share invite acceptance error toast is shown',
+  sharingWithAttachmentNotFromAllFilesFailed:
+    'Share with attachments not from all files error toast is shown',
   entityIsNotShared: 'Entity is not shared',
   entityIsShared: 'Entity is shared',
   conversationIsNotShared: 'Conversation is not shared',
@@ -254,9 +267,11 @@ export const ExpectedMessages = {
   addonIsAvailable: 'Addon is returned in API response',
   responseCodeIsValid: 'Response code is valid for model: ',
   responseTextIsValid: 'Response text is valid for model: ',
-  imageUrlReturnedInResponse: 'Image url is returned in the response for model: ',
+  imageUrlReturnedInResponse:
+    'Image url is returned in the response for model: ',
   attachmentUrlIsValid: 'Conversation attachment url is valid',
-  attachmentIsSuccessfullyDownloaded: 'Conversation attachment is successfully downloaded',
+  attachmentIsSuccessfullyDownloaded:
+    'Conversation attachment is successfully downloaded',
   attachmentIsExpanded: 'Conversation attachment is expanded',
   attachmentIsCollapsed: 'Conversation attachment is collapsed',
   attachmentNameColorIsValid: 'Attachment name color is valid',
@@ -282,8 +297,10 @@ export const ExpectedMessages = {
   elementPositionIsCorrect: 'Element position is correct',
   clipIconNotAvailable: 'Clip icon is not available for the model',
   clipIconIsAvailable: 'Clip icon is available for the model',
-  attachmentLoadingIndicatorNotVisible: 'Attachment loading indicator is not visible',
-  attachmentLoadingIndicatorIsVisible: 'Attachment loading indicator is visible',
+  attachmentLoadingIndicatorNotVisible:
+    'Attachment loading indicator is not visible',
+  attachmentLoadingIndicatorIsVisible:
+    'Attachment loading indicator is visible',
   attachmentNameIsTruncated: 'Attachment name is truncated',
   attachmentNameIsFullyVisible: 'Attachment name is fully visible',
   attachmentFileIsChecked: 'Attachment file is checked',
@@ -365,7 +382,8 @@ export const ExpectedMessages = {
   promptNameIsTruncated: 'Prompt name is truncated',
   promptDescriptionIsFullyVisible: 'Prompt description is fully visible',
   promptVarLabelIsFullyVisible: 'Prompt variable label is fully visible',
-  promptVarPlaceholderIsFullyVisible: 'Prompt variable placeholder is fully visible',
+  promptVarPlaceholderIsFullyVisible:
+    'Prompt variable placeholder is fully visible',
   horizontalScrollIsVisible: 'Horizontal scroll is visible',
   horizontalScrollIsNotVisible: 'Horizontal scroll is not visible',
   elementsOrderIsCorrect: 'Elements order is correct',
@@ -380,8 +398,10 @@ export const ExpectedMessages = {
   agentNameIsValid: 'Agent name is valid',
   agentVersionIsValid: 'Agent version is valid',
   agentIsVisible: 'Agent is visible',
-  applicationFormFieldShouldHaveAsterisk: 'Application form field should be marked as required',
-  FormFieldShouldRetainUpdatedValue: 'Chat Completion URL should retain updated value',
+  applicationFormFieldShouldHaveAsterisk:
+    'Application form field should be marked as required',
+  FormFieldShouldRetainUpdatedValue:
+    'Chat Completion URL should retain updated value',
   dropdownMenuIsHidden: 'The dropdown menu is hidden',
   dropdownMenuIsVisible: 'The dropdown menu is visible',
   allowedNumberOfAttachedFiles:
@@ -395,7 +415,8 @@ export const ExpectedMessages = {
   authorIsValid: 'Author in preview is valid',
   selectedTopicsAreValid: 'Selected topics are displayed in preview',
   numberOfTopicsIsCorrect: 'Number of topics in preview is correct',
-  onlyOneEntityCardFoundInSearch: (entityType: string) => `Only one ${entityType} card found in the search`,
+  onlyOneEntityCardFoundInSearch: (entityType: string) =>
+    `Only one ${entityType} card found in the search`,
 };
 
 export enum PublishingExpectedMessages {
