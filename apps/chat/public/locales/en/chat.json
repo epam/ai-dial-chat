@@ -1,4 +1,5 @@
 {
     "chat.error.incorrect-selected_addon": "Not allowed addon selected. Please, change the addon to proceed",
-    "chat.error.incorrect-selected_model": "Not available agent selected. Please, change the agent to proceed"
+    "chat.error.incorrect-selected_model": "Not available agent selected. Please, change the agent to proceed",
+    "chat.error.agent-not-available": "Agent {{agentId}} is not available. Please, {{click}} to proceed."
 }

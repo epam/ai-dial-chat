@@ -851,7 +851,8 @@ const ChatView = memo(() => {
                       <NotAllowedModel
                         showScrollDownButton={showScrollDownButton}
                         onScrollDownClick={handleScrollDown}
-                        type={notAvailableEntityType}
+                        conversation={selectedConversations[0]}
+                        onShowChangeModel={handleTalkToConversationId}
                       />
                     ) : (
                       <>
