@@ -915,7 +915,7 @@ dialTest(
         const createdApp =
           await applicationApiHelper.createApplication(applicationModel);
 
-        expectedNewIconUrl = `${API.fileHost}/${createdApp.bucket}/${newIconFileName}`;
+        expectedNewIconUrl = `${API.fileHost()}/${createdApp.bucket}/${newIconFileName}`;
       },
     );
 

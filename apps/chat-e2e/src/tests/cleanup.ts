@@ -1,6 +1,7 @@
 import { Conversation } from '@/chat/types/chat';
-import { BackendEntity } from '@/chat/types/common';
+import { BackendEntity, BackendResourceType } from '@/chat/types/common';
 import dialTest from '@/src/core/dialFixtures';
+import { Attachment } from '@/src/testData';
 import {
   BucketUtil,
   ItemUtil,
@@ -31,10 +32,13 @@ dialTest(
 );
 
 dialTest(
-  'Cleanup published E2E entities (apps and conversations)',
+  'Cleanup published E2E entities (apps, conversations, files)',
   async ({ adminPublicationApiHelper, publishRequestBuilder }) => {
     // Cleanup published E2E apps
-    const publishedApps = await adminPublicationApiHelper.listPublishedApps();
+    const publishedApps =
+      await adminPublicationApiHelper.listPublishedResources(
+        BackendResourceType.APPLICATION,
+      );
     const publishedE2EApps = publishedApps.items?.filter((app) =>
       app.name.includes(applicationNamePrefix),
     );
@@ -61,7 +65,9 @@ dialTest(
 
     // Cleanup published E2E conversations
     const publishedConversations =
-      await adminPublicationApiHelper.listPublishedConversations();
+      await adminPublicationApiHelper.listPublishedResources(
+        BackendResourceType.CONVERSATION,
+      );
     const publishedE2EConversations = publishedConversations.items?.filter(
       (conversation) => conversation.name.includes(conversationNamePrefix),
     );
@@ -83,6 +89,26 @@ dialTest(
             } as Conversation,
             PublishActions.DELETE,
           );
+        },
+      );
+    }
+
+    // Cleanup published E2E files
+    const publishedFiles =
+      await adminPublicationApiHelper.listPublishedResources(
+        BackendResourceType.FILE,
+      );
+    const publishedE2EFiles = publishedFiles.items?.filter((item) =>
+      Object.values(Attachment).includes(item.name),
+    );
+    for (const file of publishedE2EFiles || []) {
+      const relativePath = ItemUtil.extractRelativePath(file.url);
+      await adminPublicationApiHelper.unpublishEntity(
+        file.name,
+        relativePath,
+        publishRequestBuilder,
+        (request) => {
+          return request.withFileResource(file.url, PublishActions.DELETE);
         },
       );
     }

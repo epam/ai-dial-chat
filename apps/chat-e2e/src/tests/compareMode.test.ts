@@ -897,7 +897,7 @@ dialTest(
           .toBe(secondUpdatedRandomModel.name);
         const rightModelVersionInfo = await modelInfoTooltip.getVersionInfo();
         expect
-          .soft(rightModelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
+          .soft(rightModelVersionInfo, ExpectedMessages.agentVersionIsValid)
           .toBe(secondUpdatedRandomModel.version);
 
         await rightChatHeader.hoverOverChatSettings();
@@ -923,7 +923,7 @@ dialTest(
 
         const leftModelVersionInfo = await modelInfoTooltip.getVersionInfo();
         expect
-          .soft(leftModelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
+          .soft(leftModelVersionInfo, ExpectedMessages.agentVersionIsValid)
           .toBe(firstUpdatedRandomModel.version);
 
         await leftChatHeader.hoverOverChatSettings();

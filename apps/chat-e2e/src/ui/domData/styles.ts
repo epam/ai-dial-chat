@@ -20,6 +20,8 @@ export enum Styles {
   italic = 'italic',
   breakAll = 'break-all',
   wordBreak = 'word-break',
+  textWrapMode = 'text-wrap-mode',
+  wrap = 'wrap',
 }
 
 export enum Cursors {

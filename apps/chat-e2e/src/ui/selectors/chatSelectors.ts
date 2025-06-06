@@ -27,6 +27,7 @@ export const ChatSettingsSelectors = {
   agentName: '[data-qa="agent-name"]',
   agentDescription: '[data-qa="agent-descr"]',
   agentVersion: '[data-qa="version"]',
+  agentVersionMenuTrigger: '[data-qa="agent-version-select-trigger"]',
   playbackButton: '[data-qa="Playback"]',
   replayAsIsButton: '[data-qa="Replay as is"]',
   configureSettingsButton: '[data-qa="configure-settings"]',
