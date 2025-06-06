@@ -217,7 +217,7 @@ export const ExpectedConstants = {
   requestApiKeyLink: 'this form',
   reportAnIssueLink: 'report an issue',
   publishedAttachmentDownloadPath: (name: string) =>
-    `${API.fileHost}/public/${name}`,
+    `${API.fileHost()}/public/${name}`,
   attachmentPublishErrorMessage:
     'Publishing failed. You are only allowed to publish conversations with attachments from "All files"',
   marketplacePath: '/marketplace',
@@ -250,6 +250,8 @@ export const ExpectedConstants = {
   informationModalLastUpdatedLabel: 'Last updated:',
   informationModalCreatedDateLabel: 'Creation date:',
   informationModalAuthorLabel: 'Author:',
+  agentIconTooltip: (appName: string, appVersion: string) =>
+    `${appName}\nv. ${appVersion}`,
 };
 
 export enum Types {
@@ -364,12 +366,13 @@ export const API = {
   conversationsHost: () => `${API.listingHost}/conversations`,
   promptsHost: () => `${API.listingHost}/prompts`,
   appsHost: () => `${API.listingHost}/applications`,
-  filesListingHost: () => `${API.listingHost}/files`,
-  fileHost: '/api/files',
+  filesHostSegment: 'files',
+  filesListingHost: () => `${API.listingHost}/${API.filesHostSegment}`,
+  fileHost: () => `/api/${API.filesHostSegment}`,
   conversationHost: '/api/conversations',
   promptHost: '/api/prompts',
   moveHost: '/api/ops/resource/move',
-  importFileRootPath: (bucket: string) => `files/${bucket}`,
+  importFileRootPath: (bucket: string) => `${API.filesHostSegment}/${bucket}`,
   modelFilePath: (modelId: string) => `appdata/${modelId}/images`,
   importFilePath: (bucket: string, modelId: string) =>
     `${API.importFileRootPath(bucket)}/${API.modelFilePath(modelId)}`,
@@ -392,10 +395,13 @@ export const API = {
   multipleListingHost: () => `${API.listingHost}/multiple?recursive=true`,
   pendingPublicationsListing: '/api/publication/listing',
   publishedConversations: '/api/publication/conversations/public',
+  publishedPrompts: '/api/publication/prompts/public',
+  publishedApplications: '/api/publication/applications/public',
+  publishedFiles: () => `/api/publication/${API.filesHostSegment}/public`,
   applicationCreateHost: '/api/applications',
   publishedApplicationsHost:
     'api/publication/applications/public?recursive=true',
-  pagePropsHost: 'development/en.json',
+  pagePropsHost: '/en.json',
 };
 
 export const Import = {
@@ -436,6 +442,7 @@ export const Attachment = {
   fileWithoutExtension: 'withoutExtension',
   plotlyName: 'plotly.json',
   pdfName: 'pdf_attachment.pdf',
+  appIcon: 'appIcon.svg',
 };
 
 export enum Side {

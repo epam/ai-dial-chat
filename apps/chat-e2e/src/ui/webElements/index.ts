@@ -61,5 +61,6 @@ export * from './appEditor/appEditorGeneralForm';
 export * from './appEditor/appEditorGeneralInfoAgentPreview';
 export * from './appEditor/appEditorAppSettingsAgentPreview';
 export * from './appEditor/appEditorViewForm';
+export * from './topicsTooltip';
 export * from './notFound';
 export * from './informationModal';

@@ -33,4 +33,15 @@ export class AgentInfoAssertion extends BaseAssertion {
       ExpectedMessages.agentNameIsValid,
     );
   }
+
+  public async assertAgentVersion(expectedVersion: string | undefined) {
+    const versionElement = this.agentInfo.agentVersion;
+    expectedVersion
+      ? await this.assertElementText(
+          this.agentInfo.agentVersion,
+          expectedVersion,
+          ExpectedMessages.agentVersionIsValid,
+        )
+      : await this.assertElementState(versionElement, 'hidden');
+  }
 }
