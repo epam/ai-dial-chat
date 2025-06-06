@@ -2,6 +2,7 @@ import { ChatSettingsSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { Tags } from '@/src/ui/domData';
+import { DropdownButtonMenu } from '@/src/ui/webElements/dropdownButtonMenu';
 import { Locator, Page } from '@playwright/test';
 
 export class AgentInfo extends BaseElement {
@@ -13,6 +14,16 @@ export class AgentInfo extends BaseElement {
     ).getNthElement(index ?? 1);
     super(page, '', elementLocator);
   }
+
+  public agentVersionsDropdownMenu!: DropdownButtonMenu;
+
+  public getAgentVersionsDropdownMenu() {
+    if (!this.agentVersionsDropdownMenu) {
+      this.agentVersionsDropdownMenu = new DropdownButtonMenu(this.page);
+    }
+    return this.agentVersionsDropdownMenu;
+  }
+
   public agentInfo = this.getChildElementBySelector(
     ChatSettingsSelectors.agentInfo,
   );
@@ -24,6 +35,9 @@ export class AgentInfo extends BaseElement {
   );
   public agentVersion = this.getChildElementBySelector(
     ChatSettingsSelectors.agentVersion,
+  );
+  public agentVersionMenuTrigger = this.getChildElementBySelector(
+    ChatSettingsSelectors.agentVersionMenuTrigger,
   );
   public agentIcon = this.getChildElementBySelector(Tags.img);
 

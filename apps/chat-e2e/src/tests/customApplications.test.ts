@@ -1145,7 +1145,9 @@ dialTest(
           .withDisplayName(appEntity.name)
           .withDisplayVersion(appEntity.version!)
           .build();
-        await applicationApiHelper.createApplication(applicationModel);
+        const createdApp =
+          await applicationApiHelper.createApplication(applicationModel);
+        expectedNewIconUrl = `${API.fileHost()}/${createdApp.bucket}/${newIconFileName}`;
       },
     );
 

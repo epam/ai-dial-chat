@@ -19,7 +19,7 @@ export class FileApiHelper extends BaseApiHelper {
       ? ItemUtil.getEncodedItemId(parentPath)
       : undefined;
 
-    const baseUrl = `${API.fileHost}/${this.userBucket ?? BucketUtil.getBucket()}`;
+    const baseUrl = `${API.fileHost()}/${this.userBucket ?? BucketUtil.getBucket()}`;
     const url = parentPath
       ? `${baseUrl}/${encodedParentPath}/${encodedFilename}`
       : `${baseUrl}/${encodedFilename}`;
@@ -83,7 +83,7 @@ export class FileApiHelper extends BaseApiHelper {
   }
 
   public async getFile(filePath: string) {
-    const baseUrl = `${API.fileHost}/${this.userBucket ?? BucketUtil.getBucket()}`;
+    const baseUrl = `${API.fileHost()}/${this.userBucket ?? BucketUtil.getBucket()}`;
     const url = `${baseUrl}/${filePath}`;
     const response = await this.request.get(this.getHost(url));
     expect(response.status()).toBe(200);

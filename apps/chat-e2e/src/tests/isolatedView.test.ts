@@ -120,7 +120,7 @@ dialTest(
           .toBe(expectedModelName);
         const modelVersionInfo = await modelInfoTooltip.getVersionInfo();
         expect
-          .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
+          .soft(modelVersionInfo, ExpectedMessages.agentVersionIsValid)
           .toBe(expectedModel.version);
       },
     );
