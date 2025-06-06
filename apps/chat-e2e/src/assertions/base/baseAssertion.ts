@@ -136,6 +136,20 @@ export class BaseAssertion {
       .toHaveText(expectedText);
   }
 
+  public async assertElementInnerHtml(
+    element: BaseElement | Locator,
+    expectedHtml: string | RegExp,
+    expectedMessage?: string,
+  ) {
+    const elementLocator = this.getElementLocator(element);
+    expect
+      .soft(
+        await elementLocator.innerHTML(),
+        expectedMessage ?? ExpectedMessages.fieldInnerHtmlIsValid,
+      )
+      .toBe(expectedHtml);
+  }
+
   public async assertInputValue(
     element: BaseElement | Locator,
     expectedValue: string,
@@ -378,6 +392,17 @@ export class BaseAssertion {
       elementLocator,
       ExpectedMessages.elementTextWrapIsValid,
     ).toHaveCSS(Styles.overflow_wrap, expectedWrap);
+  }
+
+  public async assertElementTextIsTruncated(
+    element: BaseElement | Locator,
+    expectedMessage?: string,
+  ) {
+    const elementLocator = this.getElementLocator(element);
+    await expect(
+      elementLocator,
+      expectedMessage ?? ExpectedMessages.elementTextIsTruncated,
+    ).toHaveCSS(Styles.text_overflow, Overflow.ellipsis);
   }
 
   private getElementLocator(element: BaseElement | Locator) {
