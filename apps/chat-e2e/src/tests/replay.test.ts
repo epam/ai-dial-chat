@@ -756,7 +756,7 @@ dialTest(
         );
         //TODO: add conversation screen verification when fixed https://github.com/epam/ai-dial-chat/issues/2697
         await chatAssertion.assertReplayButtonState('hidden');
-        await chatAssertion.assertNotAllowedModelLabelContent();
+        await chatAssertion.assertNotAllowedModelLabelContent(notAllowedModel);
       },
     );
 
