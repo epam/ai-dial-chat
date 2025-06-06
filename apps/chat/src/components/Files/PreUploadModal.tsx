@@ -219,28 +219,35 @@ export const PreUploadDialog = ({
   const handleRenameFile = useCallback(
     (changedFileIndex: number) => {
       return (e: ChangeEvent<HTMLInputElement>) => {
-        const sanitizedInput = e.target.value.replace(
-          notAllowedSymbolsRegex,
-          '',
-        );
-        setSelectedFiles(
-          selectedFiles.map((file, index) => {
-            if (index === changedFileIndex) {
-              const indexDot = file.name.lastIndexOf('.');
-              const formatFile =
-                indexDot !== -1 ? file.name.slice(indexDot) : '';
-              const fileName = prepareFileName(sanitizedInput + formatFile);
+        const input = e.target;
+        const rawValue = input.value;
+        const cursor = input.selectionStart ?? rawValue.length;
 
-              return {
-                ...file,
-                name: fileName,
-                id: constructPath(getFileRootId(), folderPath, fileName),
-              };
-            }
+        const sanitized = rawValue.replace(notAllowedSymbolsRegex, '');
+        const diff = rawValue.length - sanitized.length;
 
-            return file;
-          }),
+        const { name: oldName } = selectedFiles[changedFileIndex];
+        const ext = oldName.includes('.')
+          ? oldName.slice(oldName.lastIndexOf('.'))
+          : '';
+
+        const newName = prepareFileName(sanitized + ext);
+
+        setSelectedFiles((files) =>
+          files.map((file, i) =>
+            i === changedFileIndex
+              ? {
+                  ...file,
+                  name: newName,
+                  id: constructPath(getFileRootId(), folderPath, newName),
+                }
+              : file,
+          ),
         );
+
+        requestAnimationFrame(() => {
+          input.setSelectionRange(cursor - diff, cursor - diff);
+        });
       };
     },
     [folderPath, selectedFiles],
