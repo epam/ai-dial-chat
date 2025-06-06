@@ -90,7 +90,7 @@ dialTest(
     let firstVersionMenuOptionElement: Locator;
 
     await dialTest.step('Upload svg image to the root path', async () => {
-      imageUrl = await adminFileApiHelper.putFile(Attachment.appIcon);
+      imageUrl = await adminFileApiHelper.putFile(Attachment.appIconSvg);
     });
 
     await dialTest.step(

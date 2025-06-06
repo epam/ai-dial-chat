@@ -1130,7 +1130,7 @@ dialTest(
     let agentElement: BaseElement;
     let expectedNewIconUrl = await fileApiHelper.putFileWithCustomName(
       newIconFileName,
-      Attachment.dialIconSvg,
+      Attachment.appIconSvg,
     );
     const uploadedIconFilePath = `/api/${expectedNewIconUrl.substring(
       0,
@@ -1451,7 +1451,7 @@ dialAdminTest(
     const filename = `${ExpectedConstants.allowedSpecialChars}.svg`;
     const expectedNewIconUrl = await fileApiHelper.putFileWithCustomName(
       filename,
-      Attachment.dialIconSvg,
+      Attachment.appIconSvg,
     );
     const encodedFileUrl =
       expectedNewIconUrl.substring(0, expectedNewIconUrl.lastIndexOf('/') + 1) +

@@ -443,8 +443,7 @@ export const Attachment = {
   fileWithoutExtension: 'withoutExtension',
   plotlyName: 'plotly.json',
   pdfName: 'pdf_attachment.pdf',
-  dialIconSvg: 'DIAL_icon.svg',
-  appIcon: 'appIcon.svg',
+  appIconSvg: 'appIcon.svg',
 };
 
 export enum Side {
