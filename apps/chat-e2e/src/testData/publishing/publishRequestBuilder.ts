@@ -150,17 +150,21 @@ export class PublishRequestBuilder {
   }
 
   withFileResource(
-    attachment: Attachment,
+    attachment: Attachment | string,
     action: PublishActions,
   ): PublishRequestBuilder {
+    const title =
+      typeof attachment === 'string'
+        ? attachment.substring(attachment.lastIndexOf('/') + 1)
+        : attachment.title;
     let resource: PublicationResource = {
       action: action,
-      targetUrl: `files/${this.getPublishRequest().targetFolder}${attachment.title}`,
+      targetUrl: `files/${this.getPublishRequest().targetFolder}${title}`,
     };
     if (action === 'ADD' || action === 'ADD_IF_ABSENT') {
       resource = {
         ...resource,
-        sourceUrl: attachment.url,
+        sourceUrl: typeof attachment === 'string' ? attachment : attachment.url,
       };
     }
     this.publishRequest.resources.push(resource);

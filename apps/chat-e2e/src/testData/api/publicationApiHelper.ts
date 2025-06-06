@@ -1,4 +1,5 @@
 import { Conversation } from '@/chat/types/chat';
+import { BackendResourceType } from '@/chat/types/common';
 import {
   Publication,
   PublicationInfo,
@@ -33,15 +34,27 @@ export class PublicationApiHelper extends BaseApiHelper {
     return (await response.json()) as PublicationsListModel;
   }
 
-  public async listPublishedConversations() {
-    const response = await this.request.get(
-      this.getHost(API.publishedConversations),
-      {
-        params: {
-          recursive: true,
-        },
+  public async listPublishedResources(resourceType: BackendResourceType) {
+    let host: string;
+    switch (resourceType) {
+      case BackendResourceType.CONVERSATION:
+        host = API.publishedConversations;
+        break;
+      case BackendResourceType.PROMPT:
+        host = API.publishedPrompts;
+        break;
+      case BackendResourceType.APPLICATION:
+        host = API.publishedApplications;
+        break;
+      case BackendResourceType.FILE:
+        host = API.publishedFiles();
+        break;
+    }
+    const response = await this.request.get(this.getHost(host), {
+      params: {
+        recursive: true,
       },
-    );
+    });
     const statusCode = response.status();
     expect(
       statusCode,
