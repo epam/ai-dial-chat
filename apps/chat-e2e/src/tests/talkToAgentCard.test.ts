@@ -670,7 +670,9 @@ dialTest(
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversation.name);
-        await chatAssertion.assertNotAllowedModelLabelContent(conversation.model.id);
+        await chatAssertion.assertNotAllowedModelLabelContent(
+          conversation.model.id,
+        );
       },
     );
 
