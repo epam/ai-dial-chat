@@ -1611,7 +1611,7 @@ const onSelectPublicationEffectEpic: AppEpic = (action$, state$) =>
         state$.value,
       );
       const resources = publication?.resources;
-      
+
       return of(
         PublicationActions.setItemsToPublish({
           ids: resources?.map(({ reviewUrl }) => reviewUrl) ?? [],
