@@ -3,13 +3,11 @@ import { memo, useCallback, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
+import { useFuseSearch } from '@/src/hooks/useFuseSearch';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
-import {
-  doesApplicationMatchFilters,
-  doesApplicationMatchSearchTerm,
-} from '@/src/utils/marketplace';
+import { doesApplicationMatchFilters } from '@/src/utils/marketplace';
 
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -28,6 +26,7 @@ import {
   MarketplaceTabs,
   ViewTypes,
 } from '@/src/constants/marketplace';
+import { MODELS_SEARCH_OPTIONS } from '@/src/constants/search';
 
 import { AgentDialogs } from '@/src/components/Common/AgentDialogs';
 import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
@@ -166,15 +165,19 @@ export const TabRenderer = () => {
     !selectedFilters[FilterTypes.TOPICS].length &&
     !selectedFilters[FilterTypes.SOURCES].length;
 
+  const searchedModels = useFuseSearch(
+    allModels,
+    searchTerm,
+    MODELS_SEARCH_OPTIONS,
+  );
+
   const displayedEntities = useMemo(() => {
-    const filteredEntities = allModels.filter(
-      (entity) =>
-        doesApplicationMatchSearchTerm(entity, searchTerm) &&
-        doesApplicationMatchFilters(
-          entity,
-          selectedFilters,
-          applicationTypeSchemas,
-        ),
+    const filteredEntities = searchedModels.filter((entity) =>
+      doesApplicationMatchFilters(
+        entity,
+        selectedFilters,
+        applicationTypeSchemas,
+      ),
     );
 
     const isInstalledModel = (entity: DialAIEntityModel) =>
@@ -220,11 +223,10 @@ export const TabRenderer = () => {
 
     return orderedEntities;
   }, [
-    allModels,
+    searchedModels,
     selectedTab,
     selectedViewType,
     isSomeFilterNotEmpty,
-    searchTerm,
     selectedFilters,
     installedModelIds,
     applicationTypeSchemas,
