@@ -404,7 +404,9 @@ dialTest(
               )
             : undefined;
         if (randomModel !== undefined) {
-          await localStorageManager.setRecentModelsIdsAndUseLastModel(randomModel);
+          await localStorageManager.setRecentModelsIdsAndUseLastModel(
+            randomModel,
+          );
         }
         await localStorageManager.setShowSideBarPanels();
       },

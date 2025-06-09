@@ -55,7 +55,9 @@ dialTest(
     await dialTest.step(
       'Open isolated view for a model and verify model name, description and icon are displayed',
       async () => {
-        await localStorageManager.setRecentModelsIdsAndUseLastModel(expectedModel);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          expectedModel,
+        );
         await dialHomePage.navigateToUrl(
           ExpectedConstants.isolatedUrl(expectedModel.id),
         );
@@ -159,7 +161,9 @@ dialTest(
     });
 
     await dialTest.step('Open isolated view for the model', async () => {
-      await localStorageManager.setRecentModelsIdsAndUseLastModel(expectedModel);
+      await localStorageManager.setRecentModelsIdsAndUseLastModel(
+        expectedModel,
+      );
       await dialHomePage.navigateToUrl(
         ExpectedConstants.isolatedUrl(expectedModel.id),
       );

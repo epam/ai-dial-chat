@@ -3,7 +3,7 @@ import { FolderInterface } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { Prompt } from '@/chat/types/prompt';
 import { Settings } from '@/chat/types/settings';
-import {CollapsedSections, DefaultModelReference} from '@/src/testData';
+import { CollapsedSections, DefaultModelReference } from '@/src/testData';
 import { Page } from '@playwright/test';
 
 export class LocalStorageManager {
@@ -251,10 +251,7 @@ export class LocalStorageManager {
   };
 
   async setDefaultModelReference(option: DefaultModelReference) {
-    await this.page.addInitScript(
-      this.setDefaultModelReferenceKey(),
-      option,
-    );
+    await this.page.addInitScript(this.setDefaultModelReferenceKey(), option);
   }
 
   async setRecentModelsIdsAndUseLastModel(...models: DialAIEntityModel[]) {

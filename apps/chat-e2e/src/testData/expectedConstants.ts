@@ -537,6 +537,6 @@ export const ExpectedPromptModalConst = {
 };
 
 export enum DefaultModelReference {
-  defaultAgent = '\"default-agent\"',
-  lastUsedModel = '\"last-used-agent\"'
+  defaultAgent = '"default-agent"',
+  lastUsedModel = '"last-used-agent"',
 }

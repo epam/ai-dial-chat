@@ -384,7 +384,9 @@ dialSharedWithMeTest(
           ),
         );
         await localStorageManager.setRecentAddonsIds(randomAddon);
-        await localStorageManager.setRecentModelsIdsAndUseLastModel(randomModel);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          randomModel,
+        );
         await localStorageManager.setShowSideBarPanels();
       },
     );

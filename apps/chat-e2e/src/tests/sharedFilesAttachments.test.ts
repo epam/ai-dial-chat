@@ -160,7 +160,9 @@ dialSharedWithMeTest(
             true,
             specialCharsImageUrl,
           );
-        await localStorageManager.setRecentModelsIdsAndUseLastModel(defaultModel);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          defaultModel,
+        );
 
         //TODO EPMRTC-4135 blocked by the #1076
         // conversationData.resetData();
@@ -622,7 +624,9 @@ dialSharedWithMeTest(
           attachmentModel,
         );
         await additionalShareUserLocalStorageManager.setShowSideBarPanels();
-        await localStorageManager.setRecentModelsIdsAndUseLastModel(attachmentModel);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          attachmentModel,
+        );
       },
     );
 

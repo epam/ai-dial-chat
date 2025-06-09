@@ -247,7 +247,9 @@ dialTest(
           conversation,
           replayConversation,
         ]);
-        await localStorageManager.setRecentModelsIdsAndUseLastModel(randomModel);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          randomModel,
+        );
         await localStorageManager.setShowSideBarPanels();
       },
     );

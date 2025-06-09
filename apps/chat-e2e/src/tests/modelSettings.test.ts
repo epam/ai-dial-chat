@@ -38,7 +38,10 @@ dialTest(
           ModelsUtil.doesModelAllowTemperature(m),
       ),
     );
-    await localStorageManager.setRecentModelsIdsAndUseLastModel(defaultModel, randomModel);
+    await localStorageManager.setRecentModelsIdsAndUseLastModel(
+      defaultModel,
+      randomModel,
+    );
     await localStorageManager.setShowSideBarPanels();
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();

@@ -227,7 +227,9 @@ dialTest(
     await dialTest.step(
       'Verify Send button is disabled if no request message set and tooltip is shown on button hover',
       async () => {
-        await localStorageManager.setRecentModelsIdsAndUseLastModel(nonDefaultModel);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          nonDefaultModel,
+        );
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
@@ -393,7 +395,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'Recent "Talk to" list is updated',
   async ({
     customApplicationBuilder,
@@ -424,7 +426,9 @@ dialTest.only(
       const configModels = await modelApiHelper.getModels();
       configApp = configModels.find((m) => m.name === appName)!;
       await localStorageManager.setShowSideBarPanels();
-      await localStorageManager.setDefaultModelReference(DefaultModelReference.lastUsedModel);
+      await localStorageManager.setDefaultModelReference(
+        DefaultModelReference.lastUsedModel,
+      );
     });
 
     await dialTest.step(
