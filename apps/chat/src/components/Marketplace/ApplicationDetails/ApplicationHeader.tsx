@@ -117,7 +117,7 @@ export const ApplicationDetailsHeader = ({ entity, isPreview }: Props) => {
             <span>{t('Share')}</span>
           </button>
         )}
-      {isPublicApp && screenState !== ScreenState.SM && (
+      {isPublicApp && screenState !== ScreenState.SM && !isPreview && (
         <ApplicationCopyLink entity={entity} withText />
       )}
     </header>

@@ -7,7 +7,7 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { ScreenState } from '@/src/types/common';
 
-import { MarketplaceActions } from '@/src/store/actions';
+import { MarketplaceActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MarketplaceSelectors,
@@ -42,6 +42,10 @@ export const Marketplace = () => {
     (isFilterbarOpen || isProfileOpen) &&
     (screenState === ScreenState.SM || screenState === ScreenState.MD);
 
+  const handleCloseOverlay = () => {
+    dispatch(UIActions.closeAllPanels());
+  };
+
   useEffect(() => {
     if (applyModelStatus === UploadStatus.LOADED) {
       dispatch(
@@ -63,7 +67,12 @@ export const Marketplace = () => {
       ) : (
         <>
           <TabRenderer />
-          {showOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
+          {showOverlay && (
+            <FloatingOverlay
+              className="z-30 bg-blackout"
+              onClick={handleCloseOverlay}
+            />
+          )}
         </>
       )}
     </div>

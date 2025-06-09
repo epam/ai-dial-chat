@@ -6,6 +6,7 @@ import Link from 'next/link';
 
 import classNames from 'classnames';
 
+import { useFuseSearch } from '@/src/hooks/useFuseSearch';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -16,7 +17,6 @@ import {
 } from '@/src/utils/app/conversation';
 import { isSmallScreenOrTouchable } from '@/src/utils/app/mobile';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
-import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { PseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -41,6 +41,7 @@ import {
   MarketplaceQueryParams,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
+import { MODELS_SEARCH_OPTIONS } from '@/src/constants/search';
 import { SuggestedCard } from '@/src/constants/talkTo';
 
 import { TabButton } from '@/src/components/Buttons/TabButton';
@@ -108,15 +109,21 @@ const TalkToModalView = ({
   const isPlayback = isPlaybackConversation(conversation);
   const isReplay = isReplayConversation(conversation);
 
+  const searchedModels = useFuseSearch(
+    allModels,
+    searchTerm,
+    MODELS_SEARCH_OPTIONS,
+  );
+
   const sortedModels = useMemo(() => {
     if (!isMyWorkspace) {
-      return allModels;
+      return searchedModels;
     }
     const currentModel = modelsMap[conversation.model.id];
     const recentInstalledModels = recentModelIds
       .filter((id) => installedModelIdsSet.has(id) && modelsMap[id])
       .map((id) => modelsMap[id]) as DialAIEntityModel[];
-    const installedModels = allModels.filter(
+    const installedModels = searchedModels.filter(
       (model) =>
         installedModelIdsSet.has(model.reference) && modelsMap[model.reference],
     );
@@ -129,7 +136,7 @@ const TalkToModalView = ({
       ...installedModels,
     ];
   }, [
-    allModels,
+    searchedModels,
     conversation.model.id,
     installedModelIdsSet,
     isMyWorkspace,
@@ -141,10 +148,7 @@ const TalkToModalView = ({
   const displayedModels = useMemo(() => {
     const filteredModels = sortedModels.filter(
       (entity) =>
-        !widgetsSchemaIds.has(entity.applicationTypeSchemaId as string) &&
-        (doesEntityContainSearchTerm(entity, searchTerm) ||
-          (entity.version &&
-            doesEntityContainSearchTerm({ name: entity.version }, searchTerm))),
+        !widgetsSchemaIds.has(entity.applicationTypeSchemaId as string),
     );
     const groupedModels = groupModelsAndSaveOrder(filteredModels);
     const orderedModels: CardType[] = groupedModels.map(({ entities }) => {
