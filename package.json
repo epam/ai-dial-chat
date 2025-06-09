@@ -56,6 +56,7 @@
     "css.escape": "^1.5.1",
     "downshift": "^8.1.0",
     "eventsource-parser": "^0.1.0",
+    "fuse.js": "^7.1.0",
     "i18next": "^22.4.13",
     "isomorphic-dompurify": "^1.8.0",
     "jszip": "^3.10.1",
