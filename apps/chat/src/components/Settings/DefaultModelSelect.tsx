@@ -41,8 +41,7 @@ export const DefaultModelSelect = ({
 
   const allModels = useMemo(() => {
     const selected = modelsMap[modelReference];
-    const list = [DefaultModel, LastUsedModel, ...models];
-    if (!selected) return list;
+    if (!selected) return [DefaultModel, LastUsedModel, ...models];
     const filteredModels = models.filter(
       (mod) => !selected || mod.reference !== selected.reference,
     );
