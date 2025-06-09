@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { prepareEntityName } from '@/src/utils/app/common';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import {
   constructPath,
@@ -26,12 +27,12 @@ const validateFiles = (
 ): { validFiles: File[]; errorMsg: string } => {
   const { validFiles: preUploadValidFiles, errorMsg: preUploadErrorMsg } =
     validatePreUploadFiles(files, allowedTypes);
-  const { validFiles, errorMsg: uploadErrorMsg } =
-    validateUploadFiles(preUploadValidFiles);
+
+  const { validFiles } = validateUploadFiles(preUploadValidFiles);
 
   return {
     validFiles,
-    errorMsg: [preUploadErrorMsg, uploadErrorMsg].join('\n').trim(),
+    errorMsg: preUploadErrorMsg.trim(),
   };
 };
 
@@ -81,7 +82,20 @@ export const useUploadFilesHandler = (
         return;
       }
 
-      const { validFiles, errorMsg } = validateFiles(files, allowedTypes);
+      const sanitizedFiles = files.map((file) => {
+        const cleanName = prepareEntityName(file.name);
+        return file.name === cleanName
+          ? file
+          : new File([file], cleanName, {
+              type: file.type,
+              lastModified: file.lastModified,
+            });
+      });
+
+      const { validFiles, errorMsg } = validateFiles(
+        sanitizedFiles,
+        allowedTypes,
+      );
 
       if (errorMsg) dispatch(UIActions.showErrorToast(errorMsg));
       if (!validFiles?.length) return;
@@ -129,16 +143,16 @@ export const useUploadFilesHandler = (
       return Promise.resolve(preparedFiles);
     },
     [
-      allFiles,
-      allowedTypes,
       selectedAttachmentsAmount,
-      bucket,
-      dispatch,
-      folderId,
-      folderPath,
       maximumAttachmentsAmount,
-      t,
+      allowedTypes,
+      dispatch,
+      allFiles,
       skipSelect,
+      t,
+      folderId,
+      bucket,
+      folderPath,
     ],
   );
 

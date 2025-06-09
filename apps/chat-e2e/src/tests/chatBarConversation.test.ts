@@ -52,7 +52,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-583', 'EPMRTC-776', 'EPMRTC-2894', 'EPMRTC-2957');
     const messageToSend = `.Hi${ExpectedConstants.restrictedNameChars}...`;
-    const expectedConversationName = '.Hi';
+    const expectedConversationName = `.Hi${'_'.repeat(ExpectedConstants.restrictedNameChars.length)}`;
 
     await dialTest.step(
       'Send request with prohibited symbols and verify they are not displayed in conversation name',
@@ -1485,7 +1485,7 @@ const longRequest =
 const testRequestMap = new Map([
   [
     `how${GeneratorUtil.randomArrayElement(ExpectedConstants.controlChars.split(''))}are you`,
-    'how are you',
+    'how_are you',
   ],
   ['first\nsecond\nthird', 'first'],
   [
@@ -1552,7 +1552,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-2958');
     const updatedRequest = `Chat${ExpectedConstants.restrictedNameChars}name.....`;
-    const expectedConversationName = `Chat${' '.repeat(ExpectedConstants.restrictedNameChars.length)}name`;
+    const expectedConversationName = `Chat${'_'.repeat(ExpectedConstants.restrictedNameChars.length)}name`;
     let conversation: Conversation;
 
     await dialTest.step('Prepare new conversation', async () => {
