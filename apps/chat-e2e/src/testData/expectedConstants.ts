@@ -152,12 +152,12 @@ export const ExpectedConstants = {
     `Test ${ExpectedConstants.allowedSpecialChars}`,
   winAllowedSpecialSymbolsInName: "Test (`~!@#$^_-_+[]'___._)",
   duplicatedFilenameError: (filename: string) =>
-    `Files which you trying to upload already presented in selected folder. Please rename or delete them from uploading files list: ${filename}`,
+    `The files you're trying to upload already exist in the selected folder. Please rename them or remove them from your upload list: ${filename}`,
   sameFilenamesError: (filename: string) =>
-    `Files which you trying to upload have same names. Please rename or delete them from uploading files list: ${filename}`,
+    `The files you're trying to upload have the same names. Please rename or remove them from your upload list: ${filename}`,
   restrictedNameChars: ':;,=/{}%&\\"',
   notAllowedFilenameError: (filename: string) =>
-    `The symbols ${ExpectedConstants.restrictedNameChars} are not allowed in file name. Please rename or delete them from uploading files list: ${filename}`,
+    `The symbols ${ExpectedConstants.restrictedNameChars} are not allowed in file names. Please rename the file or remove it from your upload list: ${filename}`,
   endDotFilenameError: (filename: string) =>
     `Using a dot at the end of a name is not permitted. Please rename or delete them from uploading files list: ${filename}`,
   allFilesRoot: 'All files',
