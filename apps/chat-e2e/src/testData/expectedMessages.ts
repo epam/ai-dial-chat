@@ -378,7 +378,7 @@ export enum ExpectedMessages {
   applicationFormFieldShouldHaveAsterisk = 'Application form field should be marked as required',
   FormFieldShouldRetainUpdatedValue = 'Chat Completion URL should retain updated value',
   dropdownMenuIsHidden = 'The dropdown menu is hidden',
-  dropdownMenuIsVisible = 'The dropdown menu is visible',
+  listboxMenuIsVisible = 'The listbox menu is visible',
 }
 
 export enum PublishingExpectedMessages {

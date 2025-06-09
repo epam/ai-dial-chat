@@ -729,6 +729,7 @@ dialTest(
     marketplacePage,
     appEditorPage,
     appEditorGeneralForm,
+    listboxMenu,
     setTestIds,
     baseAssertion,
     tooltipAssertion,
@@ -759,11 +760,11 @@ dialTest(
       async () => {
         await appEditorGeneralForm.topicsDropdownToggle.click();
         await baseAssertion.assertElementState(
-          appEditorGeneralForm.topicsDropdownMenuElement,
+          listboxMenu,
           'visible',
-          ExpectedMessages.dropdownMenuIsVisible,
+          ExpectedMessages.listboxMenuIsVisible,
         );
-        allTopics = await appEditorGeneralForm.getAllTopicsOptions();
+        allTopics = await listboxMenu.getAllOptions();
         numberOfTopicsToSelect = allTopics.length - 1;
         baseAssertion.assertNumberIsGreaterThan(allTopics.length, 0);
       },
@@ -779,7 +780,7 @@ dialTest(
       const initialHeight = topicsInputControlBox1!.height;
 
       for (let i = 0; i < numberOfTopicsToSelect; i++) {
-        await appEditorGeneralForm.selectTopicOption(topicsToSelect[i]);
+        await listboxMenu.selectOption(topicsToSelect[i]);
       }
       const topicsInputControlBoxAll =
         await appEditorGeneralForm.topicsDropdownContainer.getElementBoundingBox();
