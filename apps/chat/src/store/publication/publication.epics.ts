@@ -1611,12 +1611,10 @@ const onSelectPublicationEffectEpic: AppEpic = (action$, state$) =>
         state$.value,
       );
       const resources = publication?.resources;
-      if (!resources || !resources.length) {
-        return of(PublicationActions.setItemsToPublish({ ids: [] }));
-      }
+      
       return of(
         PublicationActions.setItemsToPublish({
-          ids: resources.map(({ reviewUrl }) => reviewUrl),
+          ids: resources?.map(({ reviewUrl }) => reviewUrl) ?? [],
         }),
       );
     }),
