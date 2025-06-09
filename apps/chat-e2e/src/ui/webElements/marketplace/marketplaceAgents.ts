@@ -92,16 +92,34 @@ export class MarketplaceAgents extends BaseElement {
   };
 
   public getAgentDescription(entity: DialAIEntityModel | string | BaseElement) {
+    return this.getAgentDescriptionContainer(entity).getChildElementBySelector(
+      Tags.p,
+    );
+  }
+
+  public getAgentDescriptionContainer(
+    entity: DialAIEntityModel | string | BaseElement,
+  ) {
     const element =
       entity instanceof BaseElement ? entity : this.getAgent(entity);
-    return element
-      .getChildElementBySelector(MarketplaceAgentSelectors.description)
-      .getChildElementBySelector(`${Attributes.visible}=true`);
+    return this.createElementFromLocator(
+      element
+        .getChildElementBySelector(MarketplaceAgentSelectors.description)
+        .getChildElementBySelector(`${Attributes.visible}=true`)
+        .getElementLocator()
+        .filter({ has: this.page.locator(Tags.p) }),
+    );
   }
 
   public getAgentVersion(agentElement: BaseElement) {
     return agentElement.getChildElementBySelector(
       MarketplaceAgentSelectors.version,
+    );
+  }
+
+  public getAgentName(agentElement: BaseElement) {
+    return agentElement.getChildElementBySelector(
+      MarketplaceAgentSelectors.agentName,
     );
   }
 
@@ -116,20 +134,26 @@ export class MarketplaceAgents extends BaseElement {
     });
   }
 
-  public getAgentElementTopics(agentElement: BaseElement) {
+  public getAgentTopicsContainer(agentElement: BaseElement) {
     return agentElement.getChildElementBySelector(
-      MarketplaceAgentSelectors.topics,
+      MarketplaceAgentSelectors.topicsContainer,
     );
   }
 
-  public getAgentDotsMenu(entity: DialAIEntityModel | string) {
-    return this.getAgent(entity).getChildElementBySelector(
-      MenuSelectors.dotsMenu,
+  public getAgentVisibleTopics(agentElement: BaseElement) {
+    return this.getAgentTopicsContainer(agentElement).getChildElementBySelector(
+      MarketplaceAgentSelectors.topic,
+    );
+  }
+
+  public getAgentHiddenTopics(agentElement: BaseElement) {
+    return this.getAgentTopicsContainer(agentElement).getChildElementBySelector(
+      MarketplaceAgentSelectors.hiddenTopics,
     );
   }
 
   public getAgentElementDotsMenu(agentElement: BaseElement) {
-    return agentElement.getChildElementBySelector(MenuSelectors.dotsMenu);
+    return agentElement.getChildElementBySelector(MenuSelectors.menuTrigger);
   }
 
   public getAgentElementAddBookmarkIcon(agentElement: BaseElement) {
@@ -161,12 +185,21 @@ export class MarketplaceAgents extends BaseElement {
       .getChildElementBySelector(Tags.svg);
   }
 
+  public getNotAvailableAgentElement = (reference: string) => {
+    const agent = this.rootLocator.filter({ has: this.agentName(reference) });
+    return this.createElementFromLocator(agent);
+  };
+
   public async getAgentNames() {
     return this.agentNames.getElementsInnerContent();
   }
 
   public async getAgentsIcons() {
     return this.getElementIcons(this);
+  }
+
+  public async getAgentIcon(agentElement: BaseElement) {
+    return this.getElementIcon(agentElement.getElementLocator());
   }
 
   public async addAgentToWorkspace(agentElement: BaseElement) {

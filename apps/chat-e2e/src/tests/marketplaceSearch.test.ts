@@ -553,7 +553,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open "Dial Marketplace", check Type="Applications", Source="My Custom app" filter options and verify three apps are filtered',
+      'Open "DIAL Marketplace", check Type="Applications", Source="My Custom app" filter options and verify three apps are filtered',
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();

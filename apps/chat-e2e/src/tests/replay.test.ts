@@ -359,7 +359,7 @@ dialTest(
 
         const modelVersionInfo = await modelInfoTooltip.getVersionInfo();
         expect
-          .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
+          .soft(modelVersionInfo, ExpectedMessages.agentVersionIsValid)
           .toBe(replayModel.version);
 
         //TODO: add setting verification when clarified where to display (TBD: Do we need to show settings icon for replay as is?)
@@ -470,7 +470,7 @@ dialTest(
         baseAssertion.assertValue(
           modelVersionInfo,
           defaultModel.version!,
-          ExpectedMessages.chatInfoVersionIsValid,
+          ExpectedMessages.agentVersionIsValid,
         );
       },
     );

@@ -24,7 +24,6 @@ import {
   PublishingRequestModal,
   SelectFolderModal,
   SendMessage,
-  SharedPromptPreviewModal,
   TalkToAgentDialog,
   Toast,
   VariableModalDialog,
@@ -49,8 +48,8 @@ import { MenuAssertion } from '@/src/assertions/menuAssertion';
 import { PromptAssertion } from '@/src/assertions/promptAssertion';
 import { PromptListAssertion } from '@/src/assertions/promptListAssertion';
 import { PromptModalAssertion } from '@/src/assertions/promptModalAssertion';
+import { PromptPreviewModalAssertion } from '@/src/assertions/promptPreviewModalAssertion';
 import { SendMessageAssertion } from '@/src/assertions/sendMessageAssertion';
-import { SharedPromptPreviewModalAssertion } from '@/src/assertions/sharedPromptPreviewModalAssertion';
 import { SharedWithMePromptsAssertion } from '@/src/assertions/sharedWithMePromptsAssertion';
 import { SideBarConversationAssertion } from '@/src/assertions/sideBarConversationAssertion';
 import { VariableModalAssertion } from '@/src/assertions/variableModalAssertion';
@@ -75,6 +74,7 @@ import { SharedWithMePromptsTree } from '@/src/ui/webElements/entityTree/sidebar
 import { MarketplaceAgentsSection } from '@/src/ui/webElements/marketplace/marketplaceAgentsSection';
 import { NavigationPanel } from '@/src/ui/webElements/navigationPanel';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
+import { PromptPreviewModalWindow } from '@/src/ui/webElements/promptPreviewModalWindow';
 import { BucketUtil } from '@/src/utils';
 import { Page } from '@playwright/test';
 
@@ -113,7 +113,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserConfirmationDialog: ConfirmationDialog;
   additionalShareUserPlaybackControl: PlaybackControl;
   additionalShareUserToast: Toast;
-  additionalShareUserPromptPreviewModal: SharedPromptPreviewModal;
+  additionalShareUserPromptPreviewModal: PromptPreviewModalWindow;
   additionalShareUserVariableModalDialog: VariableModalDialog;
   additionalShareUserPromptDropdownMenu: DropdownMenu;
   additionalShareUserBrowserStorageInjector: BrowserStorageInjector;
@@ -123,7 +123,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserPromptModalDialog: PromptModalDialog;
   additionalShareUserSharedWithMePromptAssertion: SharedWithMePromptsAssertion;
   additionalShareUserSharedWithMeConversationAssertion: SideBarConversationAssertion<SharedWithMeConversationsTree>;
-  additionalShareUserSharedPromptPreviewModalAssertion: SharedPromptPreviewModalAssertion;
+  additionalShareUserPromptPreviewModalAssertion: PromptPreviewModalAssertion;
   additionalShareUserSendMessageAssertion: SendMessageAssertion;
   additionalShareUserVariableModalAssertion: VariableModalAssertion;
   additionalShareUserConversationDropdownMenu: DropdownMenu;
@@ -548,7 +548,7 @@ const dialSharedWithMeTest = dialTest.extend<{
     { additionalShareUserPage },
     use,
   ) => {
-    const additionalShareUserPromptPreviewModal = new SharedPromptPreviewModal(
+    const additionalShareUserPromptPreviewModal = new PromptPreviewModalWindow(
       additionalShareUserPage,
     );
     await use(additionalShareUserPromptPreviewModal);
@@ -597,15 +597,13 @@ const dialSharedWithMeTest = dialTest.extend<{
       );
     await use(additionalShareUserSharedWithMeConversationAssertion);
   },
-  additionalShareUserSharedPromptPreviewModalAssertion: async (
+  additionalShareUserPromptPreviewModalAssertion: async (
     { additionalShareUserPromptPreviewModal },
     use,
   ) => {
-    const additionalShareUserSharedPromptPreviewModalAssertion =
-      new SharedPromptPreviewModalAssertion(
-        additionalShareUserPromptPreviewModal,
-      );
-    await use(additionalShareUserSharedPromptPreviewModalAssertion);
+    const additionalShareUserPromptPreviewModalAssertion =
+      new PromptPreviewModalAssertion(additionalShareUserPromptPreviewModal);
+    await use(additionalShareUserPromptPreviewModalAssertion);
   },
   additionalShareUserVariableModalAssertion: async (
     { additionalShareUserVariableModalDialog },

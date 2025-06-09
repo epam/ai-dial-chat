@@ -85,7 +85,13 @@ export const conversationsSlice = createSlice({
     initFoldersAndConversationsSuccess: (state) => {
       state.conversationsLoaded = true;
     },
-    saveConversation: (state, _action: PayloadAction<Conversation>) => state,
+    saveConversation: (
+      state,
+      _action: PayloadAction<{
+        conversation: Conversation;
+        requestMetadataAfter?: boolean;
+      }>,
+    ) => state,
     saveConversationSuccess: (state) => {
       if (state.isMessageSending) {
         state.isMessageSending = false;
@@ -531,6 +537,7 @@ export const conversationsSlice = createSlice({
         message: Message;
         deleteCount: number;
         activeReplayIndex: number;
+        skipRecentModelsUpdate?: boolean;
       }>,
     ) => state,
     sendMessage: (
@@ -540,6 +547,7 @@ export const conversationsSlice = createSlice({
         message: Message;
         deleteCount: number;
         activeReplayIndex: number;
+        skipRecentModelsUpdate?: boolean;
       }>,
     ) => state,
     streamMessage: (
@@ -875,7 +883,7 @@ export const conversationsSlice = createSlice({
     },
     getConversationMetadata: (
       state,
-      _action: PayloadAction<{ conversationId: string }>,
+      _action: PayloadAction<{ conversationId: string; withModal?: boolean }>,
     ) => state,
     selectAction: (state, { payload }: PayloadAction<string | null>) => {
       state.preselectedAction = payload;

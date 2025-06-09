@@ -51,7 +51,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'Open Dial Marketplace, check Types=Model filter and verify all available models are displayed',
+      'Open DIAL Marketplace, check Types=Model filter and verify all available models are displayed',
       async () => {
         await marketplacePage.openMarketplacePage({
           updateInstalledDeployments: false,
@@ -203,7 +203,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'Open Dial Marketplace, check Types=Applications filter and verify all available applications are displayed',
+      'Open DIAL Marketplace, check Types=Applications filter and verify all available applications are displayed',
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();

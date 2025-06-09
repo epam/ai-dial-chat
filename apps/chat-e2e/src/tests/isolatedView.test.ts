@@ -120,7 +120,7 @@ dialTest(
           .toBe(expectedModelName);
         const modelVersionInfo = await modelInfoTooltip.getVersionInfo();
         expect
-          .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
+          .soft(modelVersionInfo, ExpectedMessages.agentVersionIsValid)
           .toBe(expectedModel.version);
       },
     );
@@ -517,7 +517,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Reload into regular Dial and verify conversation exists',
+      'Reload into regular DIAL and verify conversation exists',
       async () => {
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
