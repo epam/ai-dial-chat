@@ -43,6 +43,16 @@ export class CustomApplicationBuilder {
     return this;
   }
 
+  withDescription(description: string): CustomApplicationBuilder {
+    this.customApplication.description = description;
+    return this;
+  }
+
+  withIconUrl(iconUrl: string): CustomApplicationBuilder {
+    this.customApplication.icon_url = iconUrl;
+    return this;
+  }
+
   build(): ApiApplicationModelRegular {
     const customApplication = { ...this.customApplication };
     this.reset();
