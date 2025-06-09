@@ -114,7 +114,7 @@ export function ConversationView({
       >
         <Checkbox
           className={additionalItemData?.isSidePanelItem && 'mr-0'}
-          isSelected={isChosen}
+          checked={isChosen}
           onChange={handleToggle}
         />
       </div>

@@ -183,7 +183,7 @@ const ConversationView = ({
           className="relative flex size-[18px] shrink-0"
           data-qa={isChosen ? 'selected' : null}
         >
-          <Checkbox isSelected={isChosen} onChange={handleOnSelect} />
+          <Checkbox checked={isChosen} onChange={handleOnSelect} />
         </div>
       )}
       <ShareIcon

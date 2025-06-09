@@ -3,4 +3,3 @@ export const NA_VERSION = 'N/A';
 export const DEFAULT_VERSION = '0.0.1';
 
 export const PUBLICATION_REVIEW_UPDATING_DELAY = 500;
-export const PUBLICATION_REQUEST_NAME_STARTING = 'New request by';

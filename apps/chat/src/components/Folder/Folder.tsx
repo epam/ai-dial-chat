@@ -74,6 +74,7 @@ import { PublicationSelectors, SettingsSelectors } from '@/src/store/selectors';
 import { SidebarActionButton } from '@/src/components/Buttons/SidebarActionButton';
 import { ReviewDot } from '@/src/components/Chat/Publish/ReviewDot';
 import { CaretIconComponent } from '@/src/components/Common/CaretIconComponent';
+import { Checkbox } from '@/src/components/Common/Checkbox';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { FolderContextMenu } from '@/src/components/Common/FolderContextMenu';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
@@ -1020,16 +1021,14 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       )}
                       data-item-checkbox
                     >
-                      {/* TODO change to use `Checkbox` component */}
-                      <input
-                        className={classNames(
-                          'checkbox peer size-[18px] bg-layer-3',
-                          additionalItemData?.isSidePanelItem && 'mr-0',
-                        )}
-                        type="checkbox"
+                      <Checkbox
                         checked={isSelected}
                         onChange={handleToggleFolder}
+                        className={
+                          additionalItemData?.isSidePanelItem && 'mr-0'
+                        }
                       />
+
                       <IconCheck
                         size={18}
                         className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
@@ -1096,24 +1095,15 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       )}
                       data-item-checkbox
                     >
-                      {/* TODO change to use `Checkbox` component */}
-                      <input
-                        className={classNames(
-                          'checkbox peer size-[18px] bg-layer-3',
-                          additionalItemData?.isSidePanelItem && 'mr-0',
-                        )}
-                        type="checkbox"
+                      <Checkbox
                         checked={isSelected}
                         onChange={handleToggleFolder}
-                        ref={checkboxRef}
-                        data-qa={
-                          isSelected
-                            ? 'checked'
-                            : isPartialSelected
-                              ? 'partiallyChecked'
-                              : 'unchecked'
+                        className={
+                          additionalItemData?.isSidePanelItem && 'mr-0'
                         }
+                        ref={checkboxRef}
                       />
+
                       {isSelected && (
                         <IconCheck
                           size={18}

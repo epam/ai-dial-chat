@@ -124,8 +124,8 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
           }}
         >
           <Checkbox
-            isSelected={isSelected}
-            isPartialSelected={isPartialSelected}
+            checked={isSelected}
+            isPartialChecked={isPartialSelected}
             onChange={handleSelectFolder}
             className="mr-0"
           />

@@ -42,6 +42,7 @@ import { getPromptInfoFromId } from '@/src/utils/app/prompts';
 import {
   getFilesFromPublicResources,
   getItemsIdsToRemoveAndHide,
+  getPublicationDefaultName,
   isEntityIdPublic,
   mapPublishedItems,
   processPublicationResources,
@@ -83,7 +84,6 @@ import {
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
-import { PUBLICATION_REQUEST_NAME_STARTING } from '@/src/constants/publication';
 
 import {
   Conversation,
@@ -1579,7 +1579,9 @@ const updateAndApprovePublicationRequestEpic: AppEpic = (action$, state$) =>
           ...selectedPublication,
           name:
             selectedPublication.name ??
-            `${PUBLICATION_REQUEST_NAME_STARTING} ${selectedPublication.author}`,
+            getPublicationDefaultName(
+              selectedPublication.author ?? 'Unknown Author',
+            ),
           resources: filteredResources,
         },
       }).pipe(
@@ -1610,7 +1612,7 @@ const onSelectPublicationEffectEpic: AppEpic = (action$, state$) =>
       );
       const resources = publication?.resources;
       if (!resources || !resources.length) {
-        return EMPTY;
+        return of(PublicationActions.setItemsToPublish({ ids: [] }));
       }
       return of(
         PublicationActions.setItemsToPublish({

@@ -5,17 +5,15 @@ import classNames from 'classnames';
 
 interface CheckboxProps {
   className?: string | boolean;
-  isSelected: boolean | undefined;
-  isPartialSelected?: boolean;
+  checked: boolean | undefined;
+  isPartialChecked?: boolean;
   ref?: RefObject<HTMLInputElement>;
-  onChange:
-    | (() => void)
-    | ((event: React.ChangeEvent<HTMLInputElement>) => void);
+  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 export function Checkbox({
   className,
-  isSelected,
-  isPartialSelected,
+  checked,
+  isPartialChecked,
   ref,
   onChange,
 }: CheckboxProps) {
@@ -27,25 +25,25 @@ export function Checkbox({
           className,
         )}
         type="checkbox"
-        checked={isSelected}
+        checked={checked}
         onChange={onChange}
         ref={ref}
         data-qa={
-          isSelected
+          checked
             ? 'checked'
-            : isPartialSelected
+            : isPartialChecked
               ? 'partiallyChecked'
               : 'unchecked'
         }
       />
-      {isSelected && (
+      {checked && (
         <IconCheck
           size={18}
           className="pointer-events-none absolute text-accent-primary "
         />
       )}
 
-      {isPartialSelected && (
+      {isPartialChecked && (
         <IconMinus
           size={18}
           className="pointer-events-none absolute text-accent-primary"

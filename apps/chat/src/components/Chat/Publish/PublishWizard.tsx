@@ -25,6 +25,7 @@ import { EnumMapper } from '@/src/utils/app/mappers';
 import {
   createTargetUrl,
   getApplicationPublishResources,
+  getPublicationDefaultName,
   isEntityIdPublic,
   mapFilterToRule,
   mapRuleToFilter,
@@ -56,10 +57,7 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
-import {
-  PUBLICATION_REQUEST_NAME_STARTING,
-  PUBLIC_URL_PREFIX,
-} from '@/src/constants/publication';
+import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 import { ORGANIZATION_SECTION_NAME } from '@/src/constants/sections';
 
 import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
@@ -183,7 +181,7 @@ export function PublishModal<
     getValues,
   } = useForm<PublicationRequestFormData>({
     defaultValues: {
-      publishRequestName: `${PUBLICATION_REQUEST_NAME_STARTING} ${userName}`,
+      publishRequestName: getPublicationDefaultName(userName),
       publicationAuthor: userName ?? '',
     },
     mode: 'onChange',

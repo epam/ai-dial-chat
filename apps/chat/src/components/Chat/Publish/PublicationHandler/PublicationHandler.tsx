@@ -10,7 +10,10 @@ import {
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { isConversationId, isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
-import { getPublicationId } from '@/src/utils/app/publications';
+import {
+  getPublicationDefaultName,
+  getPublicationId,
+} from '@/src/utils/app/publications';
 import { constructPath, splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 import {
@@ -27,7 +30,6 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/selectors';
 
 import {
-  PUBLICATION_REQUEST_NAME_STARTING,
   PUBLICATION_REVIEW_UPDATING_DELAY,
   PUBLIC_URL_PREFIX,
 } from '@/src/constants/publication';
@@ -143,7 +145,7 @@ export function PublicationHandler({ publication }: Props) {
           dataToUpdate: {
             name:
               publication.name ??
-              `${PUBLICATION_REQUEST_NAME_STARTING} ${publication.author}`,
+              getPublicationDefaultName(publication.author ?? 'Unknown Author'),
             targetFolder: publication.targetFolder,
             rules: rulesOnEdit,
             resources: publication.resources.map((resource) => {

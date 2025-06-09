@@ -169,7 +169,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
     [dispatch, item.id, editState?.version, item.publicationInfo?.version],
   );
 
-  const onSelect = useCallback(() => {
+  const handleSelect = useCallback(() => {
     dispatch(
       PublicationActions.selectItemsToPublish({
         ids: [item.id],
@@ -206,8 +206,8 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
         data-qa={dataQa}
       >
         <Checkbox
-          isSelected={isSelected}
-          onChange={onSelect}
+          checked={isSelected}
+          onChange={handleSelect}
           className="mr-0"
         />
 

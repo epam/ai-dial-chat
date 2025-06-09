@@ -504,3 +504,6 @@ export const mapFilterToRule = (
   source: filter.id,
   targets: filter.filterParams,
 });
+
+export const getPublicationDefaultName = (userName: string) =>
+  `New request by ${userName}`;
