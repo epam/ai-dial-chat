@@ -106,7 +106,7 @@ const PromptModalView = () => {
     !isNewPromptCreating && !isPromptInitModeEdit,
   );
 
-  const headingKey = isViewMode
+  const promptModalTitle = isViewMode
     ? 'View prompt'
     : isNewPromptCreating
       ? 'Create prompt'
@@ -138,7 +138,7 @@ const PromptModalView = () => {
           'text-error',
       )}
       state={isLoading ? ModalState.LOADING : ModalState.OPENED}
-      heading={t(headingKey)}
+      heading={t(promptModalTitle)}
       hideClose={!isViewMode}
       onClose={handleClose}
     >
