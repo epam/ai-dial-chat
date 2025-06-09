@@ -1,6 +1,7 @@
 import { Conversation } from '@/chat/types/chat';
-import { BackendEntity } from '@/chat/types/common';
+import { BackendEntity, BackendResourceType } from '@/chat/types/common';
 import dialTest from '@/src/core/dialFixtures';
+import { Attachment } from '@/src/testData';
 import {
   BucketUtil,
   ItemUtil,
@@ -16,36 +17,13 @@ dialTest(
   async ({ adminUserItemApiHelper, adminPublicationApiHelper }) => {
     await adminUserItemApiHelper.deleteAllData(BucketUtil.getAdminUserBucket());
 
-    const publishedConversations =
-      await adminPublicationApiHelper.listPublishedConversations();
-
     //list pending requests
     const publicationRequests =
       await adminPublicationApiHelper.listPublicationRequests();
     for (const publicationRequest of publicationRequests.publications) {
-      //if the request is pending un-publication
-      if (publicationRequest.name?.trim()?.startsWith(unpublishRequestPrefix)) {
-        const publicationDetails =
-          await adminPublicationApiHelper.getPublicationRequestDetails(
-            publicationRequest.url,
-          );
-
-        //reject if the request has already been unpublished
-        if (publishedConversations.items !== undefined) {
-          if (
-            publishedConversations.items.some(
-              (item) => item.url === publicationDetails.resources[0].targetUrl,
-            )
-          ) {
-            await adminPublicationApiHelper.approveRequest(publicationRequest);
-          } else {
-            await adminPublicationApiHelper.rejectRequest(publicationRequest);
-          }
-        }
-      }
-      //if the request is pending publication
-      else if (
-        publicationRequest.name?.trim().startsWith(publicationRequestPrefix)
+      if (
+        publicationRequest.name?.startsWith(unpublishRequestPrefix) ||
+        publicationRequest.name?.startsWith(publicationRequestPrefix)
       ) {
         await adminPublicationApiHelper.rejectRequest(publicationRequest);
       }
@@ -54,10 +32,13 @@ dialTest(
 );
 
 dialTest(
-  'Cleanup published E2E entities (apps and conversations)',
+  'Cleanup published E2E entities (apps, conversations, files)',
   async ({ adminPublicationApiHelper, publishRequestBuilder }) => {
     // Cleanup published E2E apps
-    const publishedApps = await adminPublicationApiHelper.listPublishedApps();
+    const publishedApps =
+      await adminPublicationApiHelper.listPublishedResources(
+        BackendResourceType.APPLICATION,
+      );
     const publishedE2EApps = publishedApps.items?.filter((app) =>
       app.name.includes(applicationNamePrefix),
     );
@@ -84,7 +65,9 @@ dialTest(
 
     // Cleanup published E2E conversations
     const publishedConversations =
-      await adminPublicationApiHelper.listPublishedConversations();
+      await adminPublicationApiHelper.listPublishedResources(
+        BackendResourceType.CONVERSATION,
+      );
     const publishedE2EConversations = publishedConversations.items?.filter(
       (conversation) => conversation.name.includes(conversationNamePrefix),
     );
@@ -97,7 +80,7 @@ dialTest(
         relativePath,
         publishRequestBuilder,
         (request) => {
-          return request.withConversationResource(
+          return request.withConversationWithoutFolderResource(
             {
               id: conversation.url.substring(
                 0,
@@ -106,6 +89,26 @@ dialTest(
             } as Conversation,
             PublishActions.DELETE,
           );
+        },
+      );
+    }
+
+    // Cleanup published E2E files
+    const publishedFiles =
+      await adminPublicationApiHelper.listPublishedResources(
+        BackendResourceType.FILE,
+      );
+    const publishedE2EFiles = publishedFiles.items?.filter((item) =>
+      Object.values(Attachment).includes(item.name),
+    );
+    for (const file of publishedE2EFiles || []) {
+      const relativePath = ItemUtil.extractRelativePath(file.url);
+      await adminPublicationApiHelper.unpublishEntity(
+        file.name,
+        relativePath,
+        publishRequestBuilder,
+        (request) => {
+          return request.withFileResource(file.url, PublishActions.DELETE);
         },
       );
     }

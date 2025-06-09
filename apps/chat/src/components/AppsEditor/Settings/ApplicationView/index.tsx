@@ -10,9 +10,11 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
+import { useBeforeRedirect } from '@/src/hooks/useBeforeRedirect';
 import { usePreventSpaceHandlers } from '@/src/hooks/usePreventSpaceHandlers';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { getValidFormFields } from '@/src/utils/app/forms';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { CustomApplicationModel } from '@/src/types/applications';
@@ -137,6 +139,8 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
     formState: { errors, defaultValues, isValid },
     setError,
     clearErrors,
+    getValues,
+    getFieldState,
   } = useFormContext<CustomApplicationFormData>();
   const lastSubmittedValuesRef = useRef<CustomApplicationFormData | undefined>(
     defaultValues as CustomApplicationFormData,
@@ -158,37 +162,49 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
     (data: CustomApplicationFormData) => {
       const hasChanged = !isEqual(data, lastSubmittedValuesRef.current);
 
-      if (shouldSaveApplication) {
-        if (hasChanged) {
-          const applicationData = getCustomApplicationData(data);
-
-          dispatch(
-            ApplicationActions.update({
-              oldApplication,
-              applicationData: {
-                ...oldApplication,
-                ...applicationData,
-              },
-            }),
-          );
-
-          lastSubmittedValuesRef.current = data;
-        }
-
-        if (exitAfterSave) {
-          dispatch(ApplicationActions.exitEditor({}));
-        }
-
-        dispatch(ApplicationActions.setShouldSaveApplication(false));
-        dispatch(ApplicationActions.setExitAfterSave(false));
+      if (hasChanged) {
+        const applicationData = getCustomApplicationData(data);
+        dispatch(
+          ApplicationActions.update({
+            oldApplication,
+            applicationData: {
+              ...oldApplication,
+              ...applicationData,
+            },
+          }),
+        );
+        lastSubmittedValuesRef.current = data;
       }
+      if (exitAfterSave) {
+        dispatch(ApplicationActions.exitEditor({}));
+      }
+
+      dispatch(ApplicationActions.setShouldSaveApplication(false));
+      dispatch(ApplicationActions.setExitAfterSave(false));
     },
-    [shouldSaveApplication, exitAfterSave, oldApplication, dispatch],
+    [exitAfterSave, dispatch, oldApplication],
   );
 
   const autoSaveHandler = useCallback(() => {
     submitWrapper(handleSubmit)();
   }, [submitWrapper, handleSubmit]);
+
+  const isAppPublic = isEntityIdPublic(oldApplication);
+
+  const savePartialForm = useCallback(() => {
+    if (isAppPublic) return;
+    const data = getValues();
+    if (!isValid && lastSubmittedValuesRef.current) {
+      handleSubmit({
+        ...lastSubmittedValuesRef.current,
+        ...getValidFormFields(data, getFieldState),
+      });
+    } else if (isValid) {
+      handleSubmit(data);
+    }
+  }, [getFieldState, getValues, handleSubmit, isValid, isAppPublic]);
+
+  useBeforeRedirect(savePartialForm);
 
   useEffect(() => {
     const isTriggered = shouldSaveApplication || exitAfterSave;
@@ -215,8 +231,6 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
     t,
     autoSaveHandler,
   ]);
-
-  const isAppPublic = isEntityIdPublic(oldApplication);
 
   return (
     <form

@@ -107,7 +107,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open Dial Marketplace and verify Topics filter with added options are displayed, topics are sorted alphabetically',
+      'Open DIAL Marketplace and verify Topics filter with added options are displayed, topics are sorted alphabetically',
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
@@ -579,7 +579,7 @@ dialTest(
           firstVersion,
         );
         await baseAssertion.assertElementInnerText(
-          marketplaceAgents.getAgentElementTopics(agentElement),
+          marketplaceAgents.getAgentTopicsContainer(agentElement),
           [firstAppTopic],
         );
       },
@@ -624,7 +624,7 @@ dialTest(
           'visible',
         );
         await baseAssertion.assertElementInnerText(
-          marketplaceAgents.getAgentElementTopics(agentElement),
+          marketplaceAgents.getAgentTopicsContainer(agentElement),
           [secondAppTopic],
         );
         await baseAssertion.assertElementState(
@@ -687,7 +687,7 @@ dialTest(
           'visible',
         );
         await baseAssertion.assertElementInnerText(
-          marketplaceAgents.getAgentElementTopics(agentElement),
+          marketplaceAgents.getAgentTopicsContainer(agentElement),
           [firstAppTopic],
         );
       },
@@ -725,7 +725,7 @@ dialTest(
           'visible',
         );
         await baseAssertion.assertElementInnerText(
-          marketplaceAgents.getAgentElementTopics(agentElement),
+          marketplaceAgents.getAgentTopicsContainer(agentElement),
           [secondAppTopic],
         );
         await baseAssertion.assertElementState(

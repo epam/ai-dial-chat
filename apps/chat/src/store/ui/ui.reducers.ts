@@ -90,6 +90,13 @@ export const uiSlice = createSlice({
     ) => {
       state.isProfileOpen = payload;
     },
+    closeAllPanels: (state) => {
+      state.showChatbar = false;
+      state.showPromptbar = false;
+      state.showMarketplaceFilterbar = false;
+      state.isUserSettingsOpen = false;
+      state.isProfileOpen = false;
+    },
     setIsCompareMode: (
       state,
       { payload }: PayloadAction<UIState['isCompareMode']>,

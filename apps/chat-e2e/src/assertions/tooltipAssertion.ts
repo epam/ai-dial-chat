@@ -21,9 +21,9 @@ export class TooltipAssertion extends BaseAssertion {
   }
 
   public async assertTooltipStyle(property: string, value: string) {
-    const tooltipStyle = await this.tooltip.getComputedStyleProperty(property);
-    expect
-      .soft(tooltipStyle[0], ExpectedMessages.promptVarLabelIsFullyVisible)
-      .toBe(value);
+    await expect(
+      this.tooltip.getElementLocator(),
+      `Element style property: ${property} is valid`,
+    ).toHaveCSS(property, value);
   }
 }

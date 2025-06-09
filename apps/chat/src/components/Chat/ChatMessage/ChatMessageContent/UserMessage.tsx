@@ -97,8 +97,8 @@ export const UserMessage = memo(function UserMessage({
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
   );
-  const isExternal = useAppSelector(
-    ConversationsSelectors.selectAreSelectedConversationsExternal,
+  const isReadOnly = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsReadOnly,
   );
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
@@ -136,7 +136,7 @@ export const UserMessage = memo(function UserMessage({
   const [selectedDialLinks, setSelectedDialLinks] = useState<DialLink[]>([]);
 
   const showUserButtons =
-    !isReplay && !isPlayback && !isEditing && !isExternal && withButtons;
+    !isReplay && !isPlayback && !isEditing && !isReadOnly && withButtons;
 
   const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
@@ -599,7 +599,7 @@ export const UserMessage = memo(function UserMessage({
           editDisabled={editDisabled}
           onDelete={() => onDelete?.()}
           toggleEditing={handleToggleEditing}
-          isEditTemplatesAvailable={!isExternal && isMessageTemplatesEnabled}
+          isEditTemplatesAvailable={!isReadOnly && isMessageTemplatesEnabled}
           onToggleTemplatesEditing={handleToggleEditingTemplates}
         />
       )}
