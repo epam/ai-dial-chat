@@ -207,11 +207,14 @@ export function PublicationHandler({ publication }: Props) {
 
   const handleChangeDisplayAuthor = useCallback(
     (value: string) => {
-      if (value.length <= MAX_PUBLICATION_AUTHOR_LENGTH) {
+      if (
+        value.length <= MAX_PUBLICATION_AUTHOR_LENGTH ||
+        value.length < displayAuthorEditState.length
+      ) {
         dispatch(PublicationActions.setDisplayAuthorEditState(value));
       }
     },
-    [dispatch],
+    [dispatch, displayAuthorEditState.length],
   );
 
   const publishToUrl = publication.targetFolder
