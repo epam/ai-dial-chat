@@ -127,7 +127,7 @@ dialTest(
 
         const modelVersionInfo = await modelInfoTooltip.getVersionInfo();
         expect
-          .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
+          .soft(modelVersionInfo, ExpectedMessages.agentVersionIsValid)
           .toBe(defaultModel.version);
 
         await chatHeader.hoverOverChatSettings();
