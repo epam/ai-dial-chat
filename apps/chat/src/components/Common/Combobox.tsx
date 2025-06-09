@@ -101,7 +101,7 @@ export const Combobox = <T,>({
       );
     },
     items: displayedItems,
-    defaultSelectedItem: initialSelectedItem,
+    selectedItem: initialSelectedItem,
     itemToString: (item: T | null) => (item ? getItemLabel(item) : 'null item'),
     onSelectedItemChange: ({ selectedItem: newSelectedItem }) => {
       if (!newSelectedItem) {

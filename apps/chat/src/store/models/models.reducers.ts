@@ -17,8 +17,7 @@ import {
 } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { RECENT_MODELS_COUNT } from '@/src/constants/chat';
-import { DEFAULT_MODEL_ID } from '@/src/constants/default-server-settings';
+import { DEFAULT_AGENT, RECENT_MODELS_COUNT } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
 import { DeleteType } from '@/src/constants/marketplace';
 
@@ -40,7 +39,7 @@ const initialState: ModelsState = {
   isInstalledModelsInitialized: false,
   publishRequestModels: [],
   publishedApplicationIds: [],
-  defaultModelReference: DEFAULT_MODEL_ID,
+  defaultModelReference: DEFAULT_AGENT,
 };
 
 export const modelsSlice = createSlice({

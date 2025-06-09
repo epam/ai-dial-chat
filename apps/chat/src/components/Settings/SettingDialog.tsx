@@ -49,9 +49,14 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   const savedDefaultModelReference = useAppSelector(
     ModelsSelectors.selectDefaultModelOption,
   );
+
   const [defaultModelReference, setDefaultModelReference] = useState<string>(
     savedDefaultModelReference,
   );
+
+  useEffect(() => {
+    setDefaultModelReference(savedDefaultModelReference);
+  }, [savedDefaultModelReference]);
 
   const customLogoLocalStoreName = useMemo(() => {
     return getCustomLogoLocalStoreName(customLogoId);

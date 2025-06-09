@@ -50,7 +50,7 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
-import { DEFAULT_MODEL_ID } from '@/src/constants/default-server-settings';
+import { DEFAULT_AGENT } from '@/src/constants/chat';
 import { DeleteType } from '@/src/constants/marketplace';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -491,7 +491,7 @@ const initDefaultModelReferenceEpic: AppEpic = (action$) =>
     switchMap((defaultModelReference) => {
       return of(
         ModelsActions.setDefaultModelReference(
-          defaultModelReference ?? DEFAULT_MODEL_ID,
+          defaultModelReference ?? DEFAULT_AGENT,
         ),
       );
     }),
