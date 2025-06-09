@@ -47,7 +47,7 @@ dialTest(
       async () => {
         conversation = conversationData.prepareEmptyConversation(randomModel);
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setRecentModelsIds(randomModel);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(randomModel);
         await localStorageManager.setShowSideBarPanels();
       },
     );

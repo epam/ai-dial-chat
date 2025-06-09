@@ -122,7 +122,7 @@ dialTest(
       for (const file of allAttachedFiles) {
         await fileApiHelper.putFile(file);
       }
-      await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+      await localStorageManager.setRecentModelsIdsAndUseLastModel(randomModelWithAttachment);
       await localStorageManager.setShowSideBarPanels();
     });
 

@@ -48,7 +48,7 @@ dialTest(
     const modelWithAttachment = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModelsWithAttachment(),
     );
-    await localStorageManager.setRecentModelsIds(modelWithAttachment);
+    await localStorageManager.setRecentModelsIdsAndUseLastModel(modelWithAttachment);
 
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);

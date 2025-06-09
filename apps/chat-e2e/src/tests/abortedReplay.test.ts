@@ -98,7 +98,7 @@ dialTest(
           historyConversation,
           replayConversation,
         ]);
-        await localStorageManager.setRecentModelsIds(
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
           newRandomModel,
           firstRandomModel,
           secondRandomModel,
@@ -324,7 +324,7 @@ dialTest(
           historyConversation,
           replayConversation,
         ]);
-        await localStorageManager.setRecentModelsIds(
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
           firstRandomModel,
           secondRandomModel,
           thirdRandomModel,

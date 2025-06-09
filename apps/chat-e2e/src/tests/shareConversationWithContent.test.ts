@@ -631,7 +631,7 @@ dialSharedWithMeTest(
         await additionalShareUserDataInjector.createConversations([
           secondUserEmptyConversation,
         ]);
-        await additionalShareUserLocalStorageManager.setRecentModelsIds(
+        await additionalShareUserLocalStorageManager.setRecentModelsIdsAndUseLastModel(
           attachmentModel,
         );
       },

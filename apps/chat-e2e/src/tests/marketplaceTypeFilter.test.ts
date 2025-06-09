@@ -127,7 +127,7 @@ dialTest(
       'Remove all models from "My Workspace" and recent, reload the page and verify filter state is preserved',
       async () => {
         await fileApiHelper.updateInstalledDeployments([]);
-        await localStorageManager.setRecentModelsIds();
+        await localStorageManager.setRecentModelsIdsAndUseLastModel();
         await marketplacePage.reloadPage();
         await marketplacePage.waitForPageLoaded();
         await baseAssertion.assertElementState(
