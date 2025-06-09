@@ -8,8 +8,8 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/selectors';
 
 import {
-  DefaultModel,
-  LastUsedModel,
+  DEFAULT_MODEL_OPTION,
+  LAST_USED_MODEL_OPTION,
   SPECIAL_DEFAULT_MODEL_DIC,
 } from '@/src/constants/chat';
 
@@ -33,7 +33,7 @@ export const DefaultModelSelect = ({
     () =>
       modelsMap[modelReference] ??
       SPECIAL_DEFAULT_MODEL_DIC[modelReference] ??
-      DefaultModel,
+      DEFAULT_MODEL_OPTION,
     [modelReference, modelsMap],
   );
 
@@ -41,11 +41,17 @@ export const DefaultModelSelect = ({
 
   const allModels = useMemo(() => {
     const selected = modelsMap[modelReference];
-    if (!selected) return [DefaultModel, LastUsedModel, ...models];
+    if (!selected)
+      return [DEFAULT_MODEL_OPTION, LAST_USED_MODEL_OPTION, ...models];
     const filteredModels = models.filter(
       (mod) => !selected || mod.reference !== selected.reference,
     );
-    return [DefaultModel, LastUsedModel, selected, ...filteredModels];
+    return [
+      DEFAULT_MODEL_OPTION,
+      LAST_USED_MODEL_OPTION,
+      selected,
+      ...filteredModels,
+    ];
   }, [modelReference, models, modelsMap]);
 
   return (

@@ -62,7 +62,7 @@ const selectModelsMap = (state: RootState) => rootSelector(state).modelsMap;
 const selectRecentModelsIds = (state: RootState) =>
   rootSelector(state).recentModelsIds;
 
-const selectModelsOnly = createSelector([selectModels], (models) => {
+const selectModelTypeAgents = createSelector([selectModels], (models) => {
   return models.filter((model) => model.type === EntityType.Model);
 });
 
@@ -134,7 +134,7 @@ export const ModelsSelectors = {
   selectAreModelsLoaded,
   selectIsInstalledModelsInitialized,
   selectRecentModelsIds,
-  selectModelsOnly,
+  selectModelTypeAgents,
   selectPublishRequestModels,
   selectInstalledModels,
   selectInstalledModelIds,

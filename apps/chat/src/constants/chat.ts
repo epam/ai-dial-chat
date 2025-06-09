@@ -53,7 +53,7 @@ export const LOCAL_BUCKET = 'local';
 export const DEFAULT_AGENT = 'default-agent';
 export const LAST_USED_AGENT = 'last-used-agent';
 
-export const DefaultModel: DialAIEntityModel = {
+export const DEFAULT_MODEL_OPTION: DialAIEntityModel = {
   id: DEFAULT_AGENT,
   reference: DEFAULT_AGENT,
   name: translate('Default agent'),
@@ -61,7 +61,7 @@ export const DefaultModel: DialAIEntityModel = {
   isDefault: true,
 };
 
-export const LastUsedModel: DialAIEntityModel = {
+export const LAST_USED_MODEL_OPTION: DialAIEntityModel = {
   id: LAST_USED_AGENT,
   reference: LAST_USED_AGENT,
   name: translate('Last used agent'),
@@ -70,6 +70,6 @@ export const LastUsedModel: DialAIEntityModel = {
 };
 
 export const SPECIAL_DEFAULT_MODEL_DIC: Record<string, DialAIEntityModel> = {
-  [DEFAULT_AGENT]: DefaultModel,
-  [LAST_USED_AGENT]: LastUsedModel,
+  [DEFAULT_AGENT]: DEFAULT_MODEL_OPTION,
+  [LAST_USED_AGENT]: LAST_USED_MODEL_OPTION,
 };

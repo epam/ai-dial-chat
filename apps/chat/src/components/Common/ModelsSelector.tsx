@@ -81,9 +81,9 @@ export const ModelsSelector = memo(function ModelsSelector({
   panelClassName,
   indexSeparator,
 }: ModelsSelectorProps) {
-  const onlyModels = useAppSelector(ModelsSelectors.selectModelsOnly);
+  const modelTypeAgents = useAppSelector(ModelsSelectors.selectModelTypeAgents);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const displayedModels = models ?? onlyModels;
+  const displayedModels = models ?? modelTypeAgents;
 
   const model = useMemo(
     () => modelsMap[value] || additionalModelsMap?.[value],
