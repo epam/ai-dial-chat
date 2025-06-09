@@ -28,7 +28,10 @@ import {
 } from '@/src/store/publication/publication.types';
 import { PublicationSelectors } from '@/src/store/selectors';
 
-import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
+import {
+  MAX_PUBLICATION_AUTHOR_LENGTH,
+  PUBLIC_URL_PREFIX,
+} from '@/src/constants/publication';
 
 import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -204,7 +207,9 @@ export function PublicationHandler({ publication }: Props) {
 
   const handleChangeDisplayAuthor = useCallback(
     (value: string) => {
-      dispatch(PublicationActions.setDisplayAuthorEditState(value));
+      if (value.length <= MAX_PUBLICATION_AUTHOR_LENGTH) {
+        dispatch(PublicationActions.setDisplayAuthorEditState(value));
+      }
     },
     [dispatch],
   );

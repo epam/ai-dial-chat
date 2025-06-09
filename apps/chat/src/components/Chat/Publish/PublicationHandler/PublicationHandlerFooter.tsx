@@ -42,7 +42,10 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
-import { NA_VERSION } from '@/src/constants/publication';
+import {
+  MAX_PUBLICATION_AUTHOR_LENGTH,
+  NA_VERSION,
+} from '@/src/constants/publication';
 
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -105,6 +108,9 @@ export const PublicationHandlerFooter = ({
   );
   const foldersEditState = useAppSelector(
     PublicationSelectors.selectFoldersEditState,
+  );
+  const displayAuthorEditState = useAppSelector(
+    PublicationSelectors.selectDisplayAuthorEditState,
   );
 
   const dispatch = useAppDispatch();
@@ -298,7 +304,11 @@ export const PublicationHandlerFooter = ({
     },
   );
   const isFoldersInvalid = !allEditedFoldersAreValid(foldersEditState);
-  const isEditDisabled = isNamesOrVersionsInvalid || isFoldersInvalid;
+  const isDisplayAuthorInvalid =
+    !displayAuthorEditState.trim().length ||
+    displayAuthorEditState.length > MAX_PUBLICATION_AUTHOR_LENGTH;
+  const isEditDisabled =
+    isNamesOrVersionsInvalid || isFoldersInvalid || isDisplayAuthorInvalid;
 
   return (
     <div
