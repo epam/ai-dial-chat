@@ -1,25 +1,31 @@
-import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { IconCheck, IconFolder, IconMinus, IconX } from '@tabler/icons-react';
-import {
-  ChangeEvent,
-  DragEvent,
-  FC,
-  Fragment,
-  KeyboardEvent,
-  MouseEventHandler,
-  createElement,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-
-import classNames from 'classnames';
-
+import { SidebarActionButton } from '@/src/components/Buttons/SidebarActionButton';
+import { ReviewDot } from '@/src/components/Chat/Publish/ReviewDot';
+import { CaretIconComponent } from '@/src/components/Common/CaretIconComponent';
+import { Checkbox } from '@/src/components/Common/Checkbox';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { FolderContextMenu } from '@/src/components/Common/FolderContextMenu';
+import { ShareIcon } from '@/src/components/Common/ShareIcon';
+import { Spinner } from '@/src/components/Common/Spinner';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 import { useContextMenuTrigger } from '@/src/hooks/useContextMenuTrigger';
 import { useTranslation } from '@/src/hooks/useTranslation';
-
+import {
+  ConversationsActions,
+  FilesActions,
+  PromptsActions,
+  ShareActions,
+  UIActions,
+} from '@/src/store/actions';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { PublicationSelectors, SettingsSelectors } from '@/src/store/selectors';
+import { Conversation } from '@/src/types/chat';
+import { AdditionalItemData, FeatureType } from '@/src/types/common';
+import { DialFile } from '@/src/types/files';
+import { DraggedInterface, FolderInterface } from '@/src/types/folder';
+import { PublicationFolderPayload } from '@/src/types/modal';
+import { PromptInfo } from '@/src/types/prompt';
+import { SharingType } from '@/src/types/share';
+import { Translation } from '@/src/types/translation';
 import {
   doesHaveDotsInTheEnd,
   hasInvalidNameInPath,
@@ -51,42 +57,29 @@ import {
 } from '@/src/utils/app/move';
 import { getPublishFolderResources } from '@/src/utils/app/publications';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
-
-import { Conversation } from '@/src/types/chat';
-import { AdditionalItemData, FeatureType } from '@/src/types/common';
-import { DialFile } from '@/src/types/files';
-import { DraggedInterface, FolderInterface } from '@/src/types/folder';
-import { PublicationFolderPayload } from '@/src/types/modal';
-import { PromptInfo } from '@/src/types/prompt';
-import { SharingType } from '@/src/types/share';
-import { Translation } from '@/src/types/translation';
-
-import {
-  ConversationsActions,
-  FilesActions,
-  PromptsActions,
-  ShareActions,
-  UIActions,
-} from '@/src/store/actions';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors, SettingsSelectors } from '@/src/store/selectors';
-
-import { SidebarActionButton } from '@/src/components/Buttons/SidebarActionButton';
-import { ReviewDot } from '@/src/components/Chat/Publish/ReviewDot';
-import { CaretIconComponent } from '@/src/components/Common/CaretIconComponent';
-import { Checkbox } from '@/src/components/Common/Checkbox';
-import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
-import { FolderContextMenu } from '@/src/components/Common/FolderContextMenu';
-import { ShareIcon } from '@/src/components/Common/ShareIcon';
-import { Spinner } from '@/src/components/Common/Spinner';
-import { Tooltip } from '@/src/components/Common/Tooltip';
-
 import {
   ConversationInfo,
   PublishActions,
   ShareEntity,
   UploadStatus,
 } from '@epam/ai-dial-shared';
+import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
+import { IconCheck, IconFolder, IconMinus, IconX } from '@tabler/icons-react';
+import classNames from 'classnames';
+import {
+  ChangeEvent,
+  DragEvent,
+  FC,
+  Fragment,
+  KeyboardEvent,
+  MouseEventHandler,
+  createElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 export interface FolderProps<T, P = unknown> {
   currentFolder: FolderInterface;
@@ -1097,6 +1090,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     >
                       <Checkbox
                         checked={isSelected}
+                        isPartialChecked={isPartialSelected}
                         onChange={handleToggleFolder}
                         className={
                           additionalItemData?.isSidePanelItem && 'mr-0'
