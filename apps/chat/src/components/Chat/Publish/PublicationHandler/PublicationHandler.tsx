@@ -34,7 +34,7 @@ import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { PublicationInfoSection } from '../PublishWizardComponents';
+import { PublicationInfoSection } from '../PublicationInfoSection';
 import { CompareRulesModal } from './CompareRulesModal';
 import { PublicationFilters } from './PublicationFilters';
 import { PublicationHandlerFooter } from './PublicationHandlerFooter';
@@ -105,6 +105,10 @@ export function PublicationHandler({ publication }: Props) {
     PublicationSelectors.selectFoldersEditState,
   );
   const rulesOnEdit = useAppSelector(PublicationSelectors.selectRulesOnEdit);
+  const displayAuthorEditState = useAppSelector(
+    PublicationSelectors.selectDisplayAuthorEditState,
+  );
+  const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
 
   const publicationAuthor = useMemo(() => {
     return extractNameFromEmail(publication.author) ?? t('Unknown');
@@ -145,6 +149,7 @@ export function PublicationHandler({ publication }: Props) {
           name: publication.name ?? `New request by ${publication.author}`,
           targetFolder: publication.targetFolder,
           rules: rulesOnEdit,
+          displayAuthor: displayAuthorEditState,
           resources: publication.resources.map(
             ({ sourceUrl, reviewUrl, action }) => {
               const { name, version } = entitiesEditState[reviewUrl];
@@ -186,6 +191,7 @@ export function PublicationHandler({ publication }: Props) {
     dispatch(PublicationActions.setIsEditMode(false));
   }, [
     dispatch,
+    displayAuthorEditState,
     entitiesEditState,
     foldersEditState,
     publication.author,
@@ -195,6 +201,13 @@ export function PublicationHandler({ publication }: Props) {
     publication.url,
     rulesOnEdit,
   ]);
+
+  const handleChangeDisplayAuthor = useCallback(
+    (value: string) => {
+      dispatch(PublicationActions.setDisplayAuthorEditState(value));
+    },
+    [dispatch],
+  );
 
   const publishToUrl = publication.targetFolder
     ? publication.targetFolder.replace(/^[^/]+/, 'Organization')
@@ -263,6 +276,12 @@ export function PublicationHandler({ publication }: Props) {
                   infoTooltip={t(
                     'The name will be displayed instead of the author name for this publication.',
                   )}
+                  editValue={displayAuthorEditState}
+                  onChangeValue={handleChangeDisplayAuthor}
+                  inputClassName={
+                    !displayAuthorEditState ? 'border-b-error' : ''
+                  }
+                  isEditMode={isEditMode}
                 />
 
                 <PublicationInfoSection
@@ -340,6 +359,7 @@ export function PublicationHandler({ publication }: Props) {
         </div>
         <PublicationHandlerFooter
           onUpdateRequest={handleUpdateRequest}
+          publicationAuthor={publicationAuthor}
           publication={publication}
         />
       </div>

@@ -40,4 +40,5 @@ export interface PublicationState {
   foldersEditState: FolderEditTree;
   rulesOnEdit?: PublicationRule[];
   isPublicationUpdating: boolean;
+  displayAuthorEditState: string;
 }

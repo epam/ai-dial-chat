@@ -66,8 +66,8 @@ import { Modal } from '@/src/components/Common/Modal';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
+import { PublicationInfoSection } from './PublicationInfoSection';
 import { PublicationItemsList } from './PublicationItemsList';
-import { PublicationInfoSection } from './PublishWizardComponents';
 import { RuleListItem } from './RuleListItem';
 import { PublicationRequestFormData, validators } from './form';
 

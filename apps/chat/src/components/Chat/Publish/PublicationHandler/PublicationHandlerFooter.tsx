@@ -47,10 +47,10 @@ import { NA_VERSION } from '@/src/constants/publication';
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { FeatureType, PublishActions } from '@epam/ai-dial-shared';
+import { FeatureType } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
-export const allEditedFoldersAreValid = (obj: unknown) => {
+const allEditedFoldersAreValid = (obj: unknown) => {
   for (const key in obj as Record<string, string>) {
     const value = (obj as Record<string, string>)[key];
 
@@ -74,11 +74,13 @@ export const allEditedFoldersAreValid = (obj: unknown) => {
 };
 interface Props {
   publication: Publication;
+  publicationAuthor: string;
   onUpdateRequest: () => void;
 }
 
 export const PublicationHandlerFooter = ({
   publication,
+  publicationAuthor,
   onUpdateRequest,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
@@ -117,9 +119,18 @@ export const PublicationHandlerFooter = ({
       PublicationActions.setEditModeState({
         editState: getDefaultAllEditEntities(publication.resources),
         rules: publication.rules,
+        displayAuthor: publication.displayAuthor ?? publicationAuthor,
       }),
     );
-  }, [dispatch, publication.resources, isEditMode, publication.rules]);
+  }, [
+    dispatch,
+    publication.resources,
+    isEditMode,
+    publication.rules,
+    publication.displayAuthor,
+    publication.author,
+    publicationAuthor,
+  ]);
 
   const notExistEntities = useMemo(
     () =>
@@ -288,9 +299,6 @@ export const PublicationHandlerFooter = ({
   );
   const isFoldersInvalid = !allEditedFoldersAreValid(foldersEditState);
   const isEditDisabled = isNamesOrVersionsInvalid || isFoldersInvalid;
-  const isEveryResourceForUnpublish = publication.resources.every(
-    (resource) => resource.action === PublishActions.DELETE,
-  );
 
   return (
     <div
@@ -339,7 +347,7 @@ export const PublicationHandlerFooter = ({
       <div className="flex items-center gap-3">
         {!isEditMode ? (
           <>
-            {!isEveryResourceForUnpublish && (
+            {!invalidEntities.length && (
               <IconButton
                 name={t('Edit')}
                 dataQa="edit"

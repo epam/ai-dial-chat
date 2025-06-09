@@ -16,7 +16,11 @@ import { PublicationSelectors } from '@/src/store/publication/publication.select
 
 import { EditableField } from '@/src/components/Common/EditableField';
 
-import { FeatureType, FolderInterface } from '@epam/ai-dial-shared';
+import {
+  FeatureType,
+  FolderInterface,
+  PublishActions,
+} from '@epam/ai-dial-shared';
 
 interface Props<T extends PublicationReviewItem> {
   currentFolder: FolderInterface;
@@ -76,10 +80,15 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
     };
   }, [allFolders, allItems, currentFolder.id]);
 
-  const isEditDisabled =
+  const isAllChildResourcesForUnpublish = selectedPublication?.resources
+    .filter((resource) => `${resource.reviewUrl.startsWith(currentFolder.id)}/`)
+    .every((resource) => resource.action === PublishActions.DELETE);
+  const isFileFolderAndApplicationResourceExists =
     selectedPublication?.resourceTypes.includes(
       EnumMapper.getBackendResourceTypeByFeatureType(FeatureType.Application),
     ) && isFileId(currentFolder.id);
+  const isEditDisabled =
+    isFileFolderAndApplicationResourceExists || isAllChildResourcesForUnpublish;
 
   return (
     <>

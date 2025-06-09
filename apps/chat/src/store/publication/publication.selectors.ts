@@ -250,6 +250,9 @@ const selectRulesOnEdit = (state: RootState) => rootSelector(state).rulesOnEdit;
 const selectIsPublicationUpdating = (state: RootState) =>
   rootSelector(state).isPublicationUpdating;
 
+const selectDisplayAuthorEditState = (state: RootState) =>
+  rootSelector(state).displayAuthorEditState;
+
 export const PublicationSelectors = {
   selectPublications,
   selectFilteredPublications,
@@ -279,4 +282,5 @@ export const PublicationSelectors = {
   selectEntityEditStateByReviewUrl,
   selectRulesOnEdit,
   selectIsPublicationUpdating,
+  selectDisplayAuthorEditState,
 };

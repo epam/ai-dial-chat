@@ -54,6 +54,7 @@ const initialState: PublicationState = {
   entitiesEditState: {},
   foldersEditState: {},
   isPublicationUpdating: false,
+  displayAuthorEditState: '',
 };
 
 export const publicationSlice = createSlice({
@@ -374,12 +375,14 @@ export const publicationSlice = createSlice({
           entities: Record<string, { name: string; version: string }>;
           folders: FolderEditTree;
         };
+        displayAuthor: string;
         rules?: PublicationRule[];
       }>,
     ) => {
       state.entitiesEditState = payload.editState.entities;
       state.foldersEditState = payload.editState.folders;
       state.rulesOnEdit = payload.rules;
+      state.displayAuthorEditState = payload.displayAuthor;
     },
     setEntityEditStateByReviewUrl: (
       state,
@@ -417,6 +420,9 @@ export const publicationSlice = createSlice({
     },
     setRulesOnEdit: (state, { payload }: PayloadAction<PublicationRule[]>) => {
       state.rulesOnEdit = payload;
+    },
+    setDisplayAuthorEditState: (state, { payload }: PayloadAction<string>) => {
+      state.displayAuthorEditState = payload;
     },
   },
 });
