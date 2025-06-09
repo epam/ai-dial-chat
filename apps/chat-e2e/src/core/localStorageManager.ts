@@ -160,7 +160,7 @@ export class LocalStorageManager {
 
     await this.page.addInitScript(
       this.setDefaultModelReference(),
-      '\"last-used-agent\"',
+      '"last-used-agent"',
     );
   }
 
