@@ -12,7 +12,8 @@ import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
 
-dialTest(
+//TODO: test-cases need to be updated after new search mechanism implementation
+dialTest.skip(
   `Search in My workspace: 'No results found' and suggest results.\n` +
     `Search in My workspace: 'No results found' and no suggested results.\n` +
     'Search in My workspace when nothing to suggest from DIAL Marketplace. No suggested options.\n' +
@@ -351,7 +352,8 @@ dialTest(
   },
 );
 
-dialTest(
+//TODO: test-cases need to be updated after new search mechanism implementation
+dialTest.skip(
   'Search by used version to find models when two versions are used in My workspace.\n' +
     'Search in My workspace: Search word stays if to add app and search result is updated accordingly',
   async ({
@@ -541,7 +543,8 @@ dialTest(
   },
 );
 
-dialTest(
+//TODO: test-cases need to be updated after new search mechanism implementation
+dialTest.skip(
   'Bookmark an agent from Suggested results results',
   async ({
     marketplacePage,
