@@ -572,7 +572,7 @@ dialTest(
           .build();
         await applicationApiHelper.createApplication(applicationModel2_v2);
 
-        await localStorageManager.setRecentModelsIdsOnce(
+        await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
           appEntity1,
           appEntity2_v2,
         );

@@ -515,7 +515,7 @@ dialTest(
       conversationWithAModelToDelete,
       conversationWithNonExistentAddon,
     ]);
-    await localStorageManager.setRecentModelsIdsOnce(
+    await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
       initialModel,
       modelWithAddons,
     );
@@ -628,7 +628,9 @@ dialSharedWithMeTest(
     ]);
     await additionalUserShareApiHelper.acceptInvite(sharePromptLink);
 
-    await localStorageManager.setRecentModelsIdsOnce(model);
+    await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+      model,
+    );
     await localStorageManager.setShowSideBarPanels();
 
     await dialSharedWithMeTest.step(

@@ -20,7 +20,7 @@ let recentModelIds: string[];
 let allEntities: DialAIEntityModel[];
 
 dialTest.beforeAll(async () => {
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
   nonDefaultModel = GeneratorUtil.randomArrayElement(
     ModelsUtil.getModels().filter((m) => m.id !== defaultModel.id),
   );

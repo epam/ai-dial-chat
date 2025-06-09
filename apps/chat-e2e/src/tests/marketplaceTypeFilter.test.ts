@@ -47,7 +47,9 @@ dialTest(
         randomModelNames.includes(m.name),
       );
       await fileApiHelper.updateInstalledDeployments(randomModels);
-      await localStorageManager.setRecentModelsIdsOnce(...randomModels);
+      await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+        ...randomModels,
+      );
     });
 
     await dialTest.step(

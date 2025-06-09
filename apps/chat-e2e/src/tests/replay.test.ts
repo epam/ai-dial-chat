@@ -24,7 +24,7 @@ dialTest.beforeAll(async () => {
   allModels = ModelsUtil.getLatestModels().filter(
     (m) => m.iconUrl != undefined,
   );
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
   aModel = GeneratorUtil.randomArrayElement(
     allModels.filter(
       (m) => m.id !== defaultModel.id && (m as DialAIEntity).features?.addons,

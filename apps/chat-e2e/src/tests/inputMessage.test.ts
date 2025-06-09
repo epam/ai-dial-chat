@@ -75,7 +75,7 @@ dialAdminTest(
     const recentAgents =
       (await localStorageManager.getRecentModelsIds()) as string[];
     const randomAgentId = GeneratorUtil.randomArrayElement(
-      recentAgents.filter((a) => a !== ModelsUtil.getDefaultModel()!.id),
+      recentAgents.filter((a) => a !== ModelsUtil.getDefaultAgent()!.id),
     );
     await localStorageManager.setShowSideBarPanels();
 

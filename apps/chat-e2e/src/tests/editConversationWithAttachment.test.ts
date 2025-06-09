@@ -64,7 +64,7 @@ dialTest(
         await conversations.selectEntity(conversation.name);
         await chatHeader.chatAgent.click();
         await talkToAgentDialog.selectAgent(
-          ModelsUtil.getDefaultModel()!,
+          ModelsUtil.getDefaultAgent()!,
           marketplacePage,
         );
       },

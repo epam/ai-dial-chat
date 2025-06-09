@@ -170,10 +170,31 @@ export class LocalStorageManager {
     });
   }
 
-  async setRecentModelsIdsOnce(...models: DialAIEntityModel[]) {
+  async setRecentModelsIdsOnceWithPermanentLastUsedModel(
+    ...models: DialAIEntityModel[]
+  ) {
     await this.setLocalStorageItemOnce(
       'recentModelsIds',
       models.map((m) => m.id),
+    );
+
+    await this.page.addInitScript(
+      this.setDefaultModelReference(),
+      '"last-used-agent"',
+    );
+  }
+
+  async setRecentModelsIdsOnceWithTemporaryLastUsedModel(
+    ...models: DialAIEntityModel[]
+  ) {
+    await this.setLocalStorageItemOnce(
+      'recentModelsIds',
+      models.map((m) => m.id),
+    );
+
+    await this.setLocalStorageItemOnce(
+      'defaultModelReference',
+      '"last-used-agent"',
     );
   }
 

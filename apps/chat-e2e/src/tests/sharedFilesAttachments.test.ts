@@ -1068,7 +1068,7 @@ dialSharedWithMeTest(
     let imageUrl: string;
     let shareByLinkResponse: ShareByLinkResponseModel;
     let conversation: Conversation;
-    const defaultModel = ModelsUtil.getDefaultModel()!;
+    const defaultModel = ModelsUtil.getDefaultAgent()!;
 
     await localStorageManager.setChatCollapsedSection(
       CollapsedSections.Organization,

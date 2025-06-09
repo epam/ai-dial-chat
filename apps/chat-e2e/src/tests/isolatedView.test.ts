@@ -324,7 +324,9 @@ dialTest(
           )
           .filter((model) => model !== undefined) as DialAIEntityModel[];
 
-        await localStorageManager.setRecentModelsIdsOnce(...recentModelsToAdd);
+        await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+          ...recentModelsToAdd,
+        );
       },
     );
 

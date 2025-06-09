@@ -36,9 +36,9 @@ let defaultModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
   allModels = ModelsUtil.getLatestModels();
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
   randomModel = GeneratorUtil.randomArrayElement(
-    allModels.filter((m) => m.id !== ModelsUtil.getDefaultModel()!.id),
+    allModels.filter((m) => m.id !== ModelsUtil.getDefaultAgent()!.id),
   );
 });
 
