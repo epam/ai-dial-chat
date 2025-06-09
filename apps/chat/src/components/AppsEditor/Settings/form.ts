@@ -16,6 +16,7 @@ import { ApiUtils } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
+import { ModelsMap } from '@/src/types/models';
 import { QuickAppConfig } from '@/src/types/quick-apps';
 
 import {
@@ -329,6 +330,7 @@ export const getCustomApplicationData = (
 
 export const getQuickAppData = (
   formData: QuickAppFormData,
+  modelsMap: ModelsMap,
 ): Omit<CustomApplicationModel, 'id' | 'reference'> => {
   return {
     ...getGeneralApplicationData(formData),
@@ -336,7 +338,7 @@ export const getQuickAppData = (
       instructions: formData.instructions,
       temperature: formData.temperature,
       web_api_toolset: JSON.parse(formData.toolset),
-      model: formData.model,
+      model: modelsMap[formData.model]?.id ?? formData.model,
       document_relative_url: formData.documentRelativeUrl,
     },
     completionUrl: constructPath(

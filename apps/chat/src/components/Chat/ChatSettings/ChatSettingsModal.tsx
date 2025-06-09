@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+
+
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -46,11 +48,15 @@ const ChatSettingsView = ({
   const [currentTemperature, setCurrentTemperature] = useState(
     conversation.temperature,
   );
-  const [currentAssistantModelId, setCurrentAssistantModelId] = useState(
-    conversation.assistantModelId ??
-      DefaultsService.get('assistantSubmodelId') ??
-      FALLBACK_ASSISTANT_SUBMODEL_ID,
-  );
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const [currentAssistantModelReference, setCurrentAssistantModelReference] =
+    useState(
+      modelsMap[
+        conversation.assistantModelId ??
+          DefaultsService.get('assistantSubmodelId') ??
+          FALLBACK_ASSISTANT_SUBMODEL_ID
+      ]?.reference ?? FALLBACK_ASSISTANT_SUBMODEL_ID,
+    );
   const [currentSelectedAddonsIds, setCurrentSelectedAddonsIds] = useState(
     conversation.selectedAddons || [],
   );
@@ -69,7 +75,7 @@ const ChatSettingsView = ({
 
   const handleChangeSettings = useCallback(() => {
     onChangeSettings(conversation, {
-      currentAssistantModelId,
+      currentAssistantModelId: currentAssistantModelReference,
       modelId: conversation.model.id,
       prompt: currentPrompt,
       temperature: currentTemperature,
@@ -78,7 +84,7 @@ const ChatSettingsView = ({
     });
   }, [
     conversation,
-    currentAssistantModelId,
+    currentAssistantModelReference,
     currentPrompt,
     currentSelectedAddonsIds,
     currentTemperature,
@@ -93,13 +99,13 @@ const ChatSettingsView = ({
     <ConversationSettings
       conversation={conversation}
       prompts={prompts}
-      assistantModelId={currentAssistantModelId}
+      assistantModelId={currentAssistantModelReference}
       prompt={currentPrompt}
       selectedAddons={currentSelectedAddonsIds}
       temperature={currentTemperature}
       onChangePrompt={setCurrentPrompt}
       onChangeTemperature={setCurrentTemperature}
-      onSelectAssistantSubModel={setCurrentAssistantModelId}
+      onSelectAssistantSubModel={setCurrentAssistantModelReference}
       onChangeAddon={handleOnChangeAddon}
       onApplyAddons={setCurrentSelectedAddonsIds}
     />
