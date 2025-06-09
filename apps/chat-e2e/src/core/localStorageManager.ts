@@ -273,7 +273,7 @@ export class LocalStorageManager {
     );
   }
 
-  async setRecentModelsIdsOnce(...models: DialAIEntityModel[]) {
+  async setRecentModelsIdsOnceWithPermanentLastUsedModel(...models: DialAIEntityModel[]) {
     await this.setLocalStorageItemOnce(
       'recentModelsIds',
       models.map((m) => m.id),
