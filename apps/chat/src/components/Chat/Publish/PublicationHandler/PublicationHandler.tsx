@@ -10,7 +10,10 @@ import {
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { isConversationId, isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
-import { getPublicationId } from '@/src/utils/app/publications';
+import {
+  getPublicationDefaultName,
+  getPublicationId,
+} from '@/src/utils/app/publications';
 import { constructPath, splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 import {
@@ -138,9 +141,11 @@ export function PublicationHandler({ publication }: Props) {
     debounce(() => {
       dispatch(
         PublicationActions.updatePublicationRequest({
-          url: publication.url ?? `New request by ${publication.author}`,
+          url: publication.url,
           dataToUpdate: {
-            name: publication.name ?? '',
+            name:
+              publication.name ??
+              getPublicationDefaultName(publication.author ?? 'Unknown Author'),
             targetFolder: publication.targetFolder,
             rules: rulesOnEdit,
             resources: publication.resources.map((resource) => {
@@ -240,14 +245,11 @@ export function PublicationHandler({ publication }: Props) {
                   valueToDisplay={publicationAuthor}
                 />
 
-                {/*TODO remove publicationAuthor when publication.displayAuthor will be ready at the core side */}
                 <PublicationInfoSection
                   labelDataQa="publication-display-author-label"
                   label={t("Author's public name: ")}
                   valueDataQa="publication-display-author"
-                  valueToDisplay={
-                    publication.displayAuthor ?? publicationAuthor
-                  }
+                  valueToDisplay={publication.displayAuthor}
                   infoTooltip={t(
                     'The name will be displayed instead of the author name for this publication.',
                   )}

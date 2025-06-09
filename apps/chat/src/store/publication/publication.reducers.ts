@@ -87,7 +87,9 @@ export const publicationSlice = createSlice({
       );
       state.isPublicationUpdating = false;
     },
-    uploadPublicationFail: (state) => state,
+    uploadPublicationFail: (state) => {
+      state.isPublicationUpdating = false;
+    },
     uploadPublishedWithMeItems: (
       state,
       _action: PayloadAction<{ featureType: FeatureType }>,
@@ -388,6 +390,10 @@ export const publicationSlice = createSlice({
         name: payload.name,
         version: payload.version,
       };
+    },
+
+    updateAndApprovePublicationRequest: (state) => {
+      state.isPublicationUpdating = true;
     },
     setRulesOnEdit: (state, { payload }: PayloadAction<PublicationRule[]>) => {
       state.rulesOnEdit = payload;

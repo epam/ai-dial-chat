@@ -25,6 +25,7 @@ import { EnumMapper } from '@/src/utils/app/mappers';
 import {
   createTargetUrl,
   getApplicationPublishResources,
+  getPublicationDefaultName,
   isEntityIdPublic,
   mapFilterToRule,
   mapRuleToFilter,
@@ -180,7 +181,7 @@ export function PublishModal<
     getValues,
   } = useForm<PublicationRequestFormData>({
     defaultValues: {
-      publishRequestName: `New request by ${userName}`,
+      publishRequestName: getPublicationDefaultName(userName),
       publicationAuthor: userName ?? '',
     },
     mode: 'onChange',

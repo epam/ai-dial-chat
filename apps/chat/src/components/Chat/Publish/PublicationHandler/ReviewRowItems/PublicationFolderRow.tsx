@@ -1,12 +1,22 @@
 import { IconFolder } from '@tabler/icons-react';
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
-import { sortByName } from '@/src/utils/app/folders';
+import {
+  getSelectedEntitiesByFolderId,
+  isFolderPartialSelected,
+  isParentFolderSelected,
+  sortByName,
+} from '@/src/utils/app/folders';
 
 import { PublicationReviewItem } from '@/src/types/publication';
 
+import { PublicationActions } from '@/src/store/actions';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { PublicationSelectors } from '@/src/store/selectors';
+
+import { Checkbox } from '@/src/components/Common/Checkbox';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { FolderInterface } from '@epam/ai-dial-shared';
@@ -36,7 +46,20 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
   level,
   ItemComponent,
 }: Props<T>) => {
+  const dispatch = useAppDispatch();
+  const {
+    fullyChosenFolderIds: selectedFolderIds,
+    partialChosenFolderIds: partialSelectedFolderIds,
+  } = useAppSelector((state) =>
+    PublicationSelectors.selectChosenFolderIds(state, allFolders, allItems),
+  );
+  const chosenItemsIds = useAppSelector(
+    PublicationSelectors.selectSelectedItemsToPublish,
+  );
+
   const [isFocused, setIsFocused] = useState(false);
+  const [isSelected, setIsSelected] = useState(false);
+  const [isPartialSelected, setIsPartialSelected] = useState(false);
 
   const { folders, items } = useMemo(() => {
     return {
@@ -44,6 +67,46 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
       items: filteredItems(allItems, currentFolder.id),
     };
   }, [allFolders, allItems, currentFolder.id]);
+
+  const handleSelectFolder = useCallback(() => {
+    const entitiesToSelect = getSelectedEntitiesByFolderId({
+      entities: allItems,
+      folderId: `${currentFolder.id}/`,
+      partialChosenFolderIds: partialSelectedFolderIds,
+      chosenItemsIds,
+    });
+
+    dispatch(
+      PublicationActions.selectItemsToPublish({
+        ids: entitiesToSelect,
+      }),
+    );
+  }, [
+    allItems,
+    chosenItemsIds,
+    currentFolder.id,
+    dispatch,
+    partialSelectedFolderIds,
+  ]);
+
+  useEffect(() => {
+    const isParentSelected = isParentFolderSelected({
+      currentFolderId: currentFolder.id,
+      selectedFolderIds: selectedFolderIds,
+    });
+
+    setIsSelected(isParentSelected);
+  }, [currentFolder.id, selectedFolderIds]);
+
+  useEffect(() => {
+    setIsPartialSelected(
+      isFolderPartialSelected({
+        currentFolderId: currentFolder.id,
+        partialSelectedFolderIds,
+        isSelected,
+      }),
+    );
+  }, [currentFolder.id, isSelected, partialSelectedFolderIds]);
 
   return (
     <>
@@ -60,6 +123,12 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
             paddingLeft: `${level * 24}px`,
           }}
         >
+          <Checkbox
+            checked={isSelected}
+            isPartialChecked={isPartialSelected}
+            onChange={handleSelectFolder}
+            className="mr-0"
+          />
           <IconFolder size={18} className="mr-1 text-secondary" />
           <div
             className="relative flex-1 select-none truncate text-left"
