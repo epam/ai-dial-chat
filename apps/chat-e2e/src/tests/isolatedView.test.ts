@@ -55,7 +55,9 @@ dialTest(
     await dialTest.step(
       'Open isolated view for a model and verify model name, description and icon are displayed',
       async () => {
-        await localStorageManager.setRecentModelsIds(expectedModel);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          expectedModel,
+        );
         await dialHomePage.navigateToUrl(
           ExpectedConstants.isolatedUrl(expectedModel.id),
         );
@@ -120,7 +122,7 @@ dialTest(
           .toBe(expectedModelName);
         const modelVersionInfo = await modelInfoTooltip.getVersionInfo();
         expect
-          .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
+          .soft(modelVersionInfo, ExpectedMessages.agentVersionIsValid)
           .toBe(expectedModel.version);
       },
     );
@@ -159,7 +161,9 @@ dialTest(
     });
 
     await dialTest.step('Open isolated view for the model', async () => {
-      await localStorageManager.setRecentModelsIds(expectedModel);
+      await localStorageManager.setRecentModelsIdsAndUseLastModel(
+        expectedModel,
+      );
       await dialHomePage.navigateToUrl(
         ExpectedConstants.isolatedUrl(expectedModel.id),
       );
@@ -324,7 +328,9 @@ dialTest(
           )
           .filter((model) => model !== undefined) as DialAIEntityModel[];
 
-        await localStorageManager.setRecentModelsIdsOnce(...recentModelsToAdd);
+        await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+          ...recentModelsToAdd,
+        );
       },
     );
 
@@ -517,7 +523,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Reload into regular Dial and verify conversation exists',
+      'Reload into regular DIAL and verify conversation exists',
       async () => {
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();

@@ -62,6 +62,7 @@ export const chatSlice = createSlice({
     },
     getConfigurationSchemaFailed: (state) => {
       state.isConfigurationSchemaLoading = false;
+      state.configurationSchema = undefined;
     },
     resetConfigurationSchema: (state) => {
       state.configurationSchema = undefined;

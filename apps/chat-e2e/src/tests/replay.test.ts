@@ -24,7 +24,7 @@ dialTest.beforeAll(async () => {
   allModels = ModelsUtil.getLatestModels().filter(
     (m) => m.iconUrl != undefined,
   );
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
   aModel = GeneratorUtil.randomArrayElement(
     allModels.filter(
       (m) => m.id !== defaultModel.id && (m as DialAIEntity).features?.addons,
@@ -290,7 +290,7 @@ dialTest(
         conversation,
         replayConversation,
       ]);
-      await localStorageManager.setRecentModelsIds(replayModel);
+      await localStorageManager.setRecentModelsIdsAndUseLastModel(replayModel);
       await localStorageManager.setShowSideBarPanels();
     });
 
@@ -302,7 +302,7 @@ dialTest(
           iconsToBeLoaded: [defaultModel.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         await chat.changeAgentButton.click();
         await talkToAgentDialog.selectAgent(replayModel, marketplacePage);
         await chat.configureSettingsButton.click();
@@ -359,7 +359,7 @@ dialTest(
 
         const modelVersionInfo = await modelInfoTooltip.getVersionInfo();
         expect
-          .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
+          .soft(modelVersionInfo, ExpectedMessages.agentVersionIsValid)
           .toBe(replayModel.version);
 
         //TODO: add setting verification when clarified where to display (TBD: Do we need to show settings icon for replay as is?)
@@ -431,7 +431,7 @@ dialTest(
           iconsToBeLoaded: [defaultModel.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -470,7 +470,7 @@ dialTest(
         baseAssertion.assertValue(
           modelVersionInfo,
           defaultModel.version!,
-          ExpectedMessages.chatInfoVersionIsValid,
+          ExpectedMessages.agentVersionIsValid,
         );
       },
     );
@@ -544,7 +544,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -637,7 +637,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
 
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
@@ -749,7 +749,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         await agentInfoAssertion.assertElementText(
           agentInfo.agentName,
           ExpectedConstants.replayAsIsLabel,
@@ -821,7 +821,7 @@ dialTest(
     await dialTest.step(
       'Import conversation from old app version and send two new messages based on Titan and gpt-4 models',
       async () => {
-        await localStorageManager.setRecentModelsIds(
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
           ...newModels.map((m) => ModelsUtil.getModel(m)!),
         );
         await localStorageManager.setShowSideBarPanels();
@@ -909,7 +909,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await conversations.openEntityDropdownMenu(conversation!.name);
         const menuOptions = await conversationDropdownMenu.getAllMenuOptions();
         expect

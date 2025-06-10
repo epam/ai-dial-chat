@@ -105,7 +105,6 @@ interface SliderModelsGroupProps {
   modelsGroup: CardType[];
   conversation: Conversation;
   rowsCount: number;
-  isMyWorkspace: boolean;
   onSelectModel: (entity: DialAIEntityModel) => void;
   onOpenMarketplaceTab: () => void;
 }
@@ -115,7 +114,6 @@ const SliderModelsGroup = memo(
     modelsGroup,
     conversation,
     rowsCount,
-    isMyWorkspace,
     onSelectModel,
     onOpenMarketplaceTab,
     ...restProps
@@ -179,7 +177,6 @@ const SliderModelsGroup = memo(
               entity={model as DialAIEntityModel}
               onClick={onSelectModel}
               onSelectVersion={onSelectModel}
-              isMyWorkspace={isMyWorkspace}
               {...restProps}
             />
           );
@@ -332,7 +329,6 @@ export const TalkToSlider = ({
                     modelsGroup={modelsGroup}
                     conversation={conversation}
                     rowsCount={sliderRowsCount}
-                    isMyWorkspace={isMyWorkspace}
                     onOpenMarketplaceTab={onOpenMarketplaceTab}
                     {...restProps}
                   />

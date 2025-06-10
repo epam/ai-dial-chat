@@ -12,18 +12,18 @@ import { Modal } from '@/src/components/Common/Modal';
 
 interface Props {
   isOpen: boolean;
-  onClose: () => void;
   modalDataQa: string;
   title: string;
   children: ReactNode;
+  onClose: () => void;
 }
 
 export const SelectFolder = ({
   isOpen,
   modalDataQa,
-  onClose,
   title,
   children,
+  onClose,
 }: Props) => {
   const headingId = useId();
   const { t } = useTranslation(Translation.Chat);

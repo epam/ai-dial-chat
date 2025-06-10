@@ -5,17 +5,15 @@ import { Page } from 'playwright-chromium';
 export class PublishedPromptPreviewModal extends PromptPreviewModalWindow {
   constructor(page: Page) {
     super(page);
+    this.publicationReviewControl = new PublicationReviewControl(
+      this.page,
+      this.rootLocator,
+    );
   }
 
-  private publicationReviewControl: PublicationReviewControl;
+  private readonly publicationReviewControl: PublicationReviewControl;
 
   getPublicationReviewControl(): PublicationReviewControl {
-    if (!this.publicationReviewControl) {
-      this.publicationReviewControl = new PublicationReviewControl(
-        this.page,
-        this.rootLocator,
-      );
-    }
     return this.publicationReviewControl;
   }
 }

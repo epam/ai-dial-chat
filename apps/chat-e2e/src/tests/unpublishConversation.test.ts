@@ -65,7 +65,7 @@ dialAdminTest(
     };
     let secondUnpublishResponse: PublicationProps;
     const expectedConversationIcon = iconApiHelper.getEntityIcon(
-      ModelsUtil.getDefaultModel()!,
+      ModelsUtil.getDefaultAgent()!,
     );
     const expectedErrorColor = ThemesUtil.getRgbColorByKey(
       ThemeColorAttributes.textError,
@@ -82,7 +82,10 @@ dialAdminTest(
         const publishRequest = publishRequestBuilder
           .withName(GeneratorUtil.randomPublicationRequestName())
           .withDisplayAuthor(author)
-          .withConversationResource(publishedConversation, PublishActions.ADD)
+          .withConversationInFolderResource(
+            publishedConversation,
+            PublishActions.ADD,
+          )
           .build();
         const publication =
           await publicationApiHelper.createPublishRequest(publishRequest);

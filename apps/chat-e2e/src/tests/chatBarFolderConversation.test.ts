@@ -184,10 +184,14 @@ dialTest(
       ExpectedConstants.newFolderWithIndexTitle(randomFolderIndex),
     );
     await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-    await folderConversations.renameEmptyFolderWithEnter(newNameWithSpaces);
+    await folderConversations.renameEmptyFolderWithEnter(
+      newNameWithSpaces.replace(' ', '_'),
+    );
     await expect
       .soft(
-        folderConversations.getFolderByName(newNameWithSpaces.trim()),
+        folderConversations.getFolderByName(
+          newNameWithSpaces.replace(' ', '_'),
+        ),
         ExpectedMessages.folderNameUpdated,
       )
       .toBeVisible();
@@ -825,7 +829,7 @@ dialTest(
 
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await conversations.selectConversation(firstConversation.name);
+      await conversations.selectEntity(firstConversation.name);
       // Create folders
       for (let i = 1; i <= 4; i++) {
         await chatBar.createNewFolder();
@@ -979,7 +983,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
       },
     );
 

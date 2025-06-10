@@ -31,7 +31,7 @@ const specialSymbolsName = () => {
 };
 
 dialTest.beforeAll(async () => {
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
 });
 
 dialTest(
@@ -52,7 +52,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-583', 'EPMRTC-776', 'EPMRTC-2894', 'EPMRTC-2957');
     const messageToSend = `.Hi${ExpectedConstants.restrictedNameChars}...`;
-    const expectedConversationName = '.Hi';
+    const expectedConversationName = `.Hi${'_'.repeat(ExpectedConstants.restrictedNameChars.length)}`;
 
     await dialTest.step(
       'Send request with prohibited symbols and verify they are not displayed in conversation name',
@@ -133,7 +133,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         const chatNameOverflow = await conversations
           .getEntityName(conversationName)
           .getComputedStyleProperty(Styles.text_overflow);
@@ -303,7 +303,7 @@ dialTest(
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await conversations.selectConversation(conversation.name);
+    await conversations.selectEntity(conversation.name);
     await conversations.openEntityDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
     await renameConversationModal.editConversationNameWithEnter(
@@ -633,7 +633,7 @@ dialTest(
       iconsToBeLoaded: [defaultModel.iconUrl],
     });
     await dialHomePage.waitForPageLoaded();
-    await conversations.selectConversation(conversation.name);
+    await conversations.selectEntity(conversation.name);
     await conversations.openEntityDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
     await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
@@ -693,7 +693,7 @@ dialTest.skip(
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await conversations.selectConversation(yesterdayConversation.name);
+    await conversations.selectEntity(yesterdayConversation.name);
     const yesterdayConversations =
       await conversations.getYesterdayConversations();
     expect
@@ -728,7 +728,7 @@ dialTest.skip(
       .toBe(1);
 
     const messageToEdit = lastWeekConversation.messages[0].content;
-    await conversations.selectConversation(lastWeekConversation.name);
+    await conversations.selectEntity(lastWeekConversation.name);
     await chatMessages.openEditMessageMode(messageToEdit);
     await chatMessages.editMessage(messageToEdit, 'updated message');
     todayConversations = await conversations.getTodayConversations();
@@ -736,7 +736,7 @@ dialTest.skip(
       .soft(todayConversations.length, ExpectedMessages.conversationOfToday)
       .toBe(2);
 
-    await conversations.selectConversation(lastMonthConversation.name);
+    await conversations.selectEntity(lastMonthConversation.name);
     await dialHomePage.mockChatTextResponse(
       MockedChatApiResponseBodies.simpleTextBody,
     );
@@ -775,7 +775,7 @@ dialTest(
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await conversations.selectConversation(conversation.name);
+    await conversations.selectEntity(conversation.name);
     await conversations.openEntityDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.moveTo);
     await selectFolderModalAssertion.assertElementState(
@@ -846,7 +846,7 @@ dialTest(
     await dialTest.step('Create a new folder with random name', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await conversations.selectConversation(conversation.name);
+      await conversations.selectEntity(conversation.name);
       await chatBar.createNewFolder();
       await folderConversations.openFolderDropdownMenu(
         ExpectedConstants.newFolderWithIndexTitle(1),
@@ -1448,7 +1448,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         await renameConversationModal.editConversationNameWithSaveButton(
@@ -1485,7 +1485,7 @@ const longRequest =
 const testRequestMap = new Map([
   [
     `how${GeneratorUtil.randomArrayElement(ExpectedConstants.controlChars.split(''))}are you`,
-    'how are you',
+    'how_are you',
   ],
   ['first\nsecond\nthird', 'first'],
   [
@@ -1552,7 +1552,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-2958');
     const updatedRequest = `Chat${ExpectedConstants.restrictedNameChars}name.....`;
-    const expectedConversationName = `Chat${' '.repeat(ExpectedConstants.restrictedNameChars.length)}name`;
+    const expectedConversationName = `Chat${'_'.repeat(ExpectedConstants.restrictedNameChars.length)}name`;
     let conversation: Conversation;
 
     await dialTest.step('Prepare new conversation', async () => {
@@ -1569,7 +1569,7 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await chatMessages.openEditMessageMode(1);
         await chatMessages.editFirstMessage(updatedRequest);
         await chatMessagesAssertion.assertElementText(

@@ -93,7 +93,7 @@ dialAdminTest(
     let conversation: Conversation;
     const requestName = `${GeneratorUtil.randomPublicationRequestName()}  ${GeneratorUtil.randomPublicationRequestName()}`;
     const expectedConversationIcon = iconApiHelper.getEntityIcon(
-      ModelsUtil.getDefaultModel()!,
+      ModelsUtil.getDefaultAgent()!,
     );
     let publishApiModels: {
       request: PublicationRequestModel;
@@ -113,7 +113,7 @@ dialAdminTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
         await baseAssertion.assertElementState(
@@ -490,7 +490,10 @@ dialAdminTest(
         for (let i = 0; i < publicationNames.length; i++) {
           const publishRequest = publishRequestBuilder
             .withName(publicationNames[i])
-            .withConversationResource(conversations[i], PublishActions.ADD)
+            .withConversationInFolderResource(
+              conversations[i],
+              PublishActions.ADD,
+            )
             .build();
           await publicationApiHelper.createPublishRequest(publishRequest);
         }
@@ -575,7 +578,7 @@ dialTest(
           const publishRequest = publishRequestBuilder
             .withName(GeneratorUtil.randomPublicationRequestName())
             .withDisplayAuthor(author)
-            .withConversationResource(
+            .withConversationInFolderResource(
               conversation,
               PublishActions.ADD_IF_ABSENT,
               version,
@@ -614,7 +617,7 @@ dialTest(
     await dialTest.step(
       'Select first conversation version, select "Info" option from header dropdown menu and verify modal data',
       async () => {
-        await organizationConversations.selectConversation(conversation.name);
+        await organizationConversations.selectEntity(conversation.name);
         await chatHeader.version.click();
         await chatHeaderVersionDropdownMenu.selectMenuOption(firstVersion, {
           triggeredHttpMethod: 'GET',

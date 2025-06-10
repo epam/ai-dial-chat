@@ -9,6 +9,8 @@ import {
 import { EntityType } from '@/src/types/common';
 import { RootState } from '@/src/types/store';
 
+import { DEFAULT_AGENT, LAST_USED_AGENT } from '@/src/constants/chat';
+
 import { UploadStatus } from '@epam/ai-dial-shared';
 import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
@@ -60,7 +62,7 @@ const selectModelsMap = (state: RootState) => rootSelector(state).modelsMap;
 const selectRecentModelsIds = (state: RootState) =>
   rootSelector(state).recentModelsIds;
 
-const selectModelsOnly = createSelector([selectModels], (models) => {
+const selectModelTypeAgents = createSelector([selectModels], (models) => {
   return models.filter((model) => model.type === EntityType.Model);
 });
 
@@ -103,6 +105,26 @@ const selectAllGroupModelKeySet = (state: RootState, references: string[]) => {
   );
 };
 
+const selectDefaultModel = createSelector([selectModels], (models) =>
+  models.find((model) => model.isDefault),
+);
+
+const selectDefaultModelOption = (state: RootState) =>
+  rootSelector(state).defaultModelReference;
+
+const selectDefaultModelReference = createSelector(
+  [selectDefaultModelOption, selectDefaultModel],
+  (defaultModelReference, defaultModel) => {
+    if (defaultModelReference === LAST_USED_AGENT) {
+      return undefined;
+    }
+    if (defaultModelReference === DEFAULT_AGENT) {
+      return defaultModel?.reference;
+    }
+    return defaultModelReference;
+  },
+);
+
 export const ModelsSelectors = {
   selectModels,
   selectModelsMap,
@@ -112,7 +134,7 @@ export const ModelsSelectors = {
   selectAreModelsLoaded,
   selectIsInstalledModelsInitialized,
   selectRecentModelsIds,
-  selectModelsOnly,
+  selectModelTypeAgents,
   selectPublishRequestModels,
   selectInstalledModels,
   selectInstalledModelIds,
@@ -121,4 +143,6 @@ export const ModelsSelectors = {
   selectInitialized,
   selectAllGroupModelKeySet,
   selectIsRecentModelsLoaded,
+  selectDefaultModelOption,
+  selectDefaultModelReference,
 };

@@ -12,6 +12,7 @@ export const Popup = {
 };
 
 export const PromptModal = {
+  title: '[data-qa="modal-entity-name"]',
   promptModalDialog: '[data-qa="prompt-modal"]',
   promptName: '[data-qa="prompt-name"]',
   promptDescription: '[data-qa="prompt-descr"]',
@@ -35,9 +36,12 @@ export const PromptPreviewModal = {
   movePromptButton: '[data-qa="move-prompt"]',
   sharePromptButton: '[data-qa="share-prompt"]',
   publishPromptButton: '[data-qa="publish-prompt"]',
+  unpublishPromptButton: '[data-qa="unpublish-prompt"]',
   deletePromptButton: '[data-qa="delete-prompt"]',
   promptInfoButton: '[data-qa="info-prompt"]',
   usePromptButton: '[data-qa="use-prompt"]',
+  promptPreviewVersion: '[data-qa="version"]',
+  promptNotFound: '[data-qa="not-found"]',
 };
 
 export const VariableModal = {
@@ -58,6 +62,11 @@ export const ModelDialog = {
   modelsTab: '[data-qa="models-tab"]',
   assistantsTab: '[data-qa="assistants-tab"]',
   applicationsTab: '[data-qa="applications-tab"]',
+};
+
+export const ReviewApplicationDialog = {
+  reviewDialog: '[data-qa="review-application-dialog"]',
+  entityIcon: '[data-qa="entity-icon"]',
 };
 
 export const AddonDialog = {
@@ -250,6 +259,8 @@ export const ApplicationEditorHeader = {
 };
 
 export const AppEditorGeneralInfoPreviewSelectors = {
+  fullContainer: '[data-qa="app-preview-general-info-full-container"]',
+  detailedSwitch: '[data-qa="toggle-switch"]',
   containerGeneralInfo: '[data-qa="app-preview-general-info"]',
   previewIconContainer: '[data-qa="entity-icon"]',
   previewAgentName: '[data-qa="agent-name"]',
@@ -257,6 +268,8 @@ export const AppEditorGeneralInfoPreviewSelectors = {
   previewInformationSection: '[data-qa="application-information"]',
   previewAuthorContainer: '[data-qa="author-container"]',
   previewAuthorValue: '[data-qa="author"]',
+  description: '[data-qa="application-description"]',
+  version: '[data-qa="version"]',
 };
 
 export const AppEditorAppSettingsPreviewSelectors = {
@@ -286,9 +299,11 @@ export const AddApplicationGeneralInfoFormSelector = {
 export const AddApplicationAppSettingsFormSelector = {
   featuresLabel: '[for="features"]',
   attachmentsTypesLabel: '[for="attachmentTypes"]',
+  attachmentsTypesInput: '[data-qa=attachment-types-field]',
   chatCompletionUrl: '#completionUrl',
   addButton: '[data-qa="add-application"]',
   appViewFormContainer: '[data-qa="app-view-form"]',
+  maxAttachmentNumberField: '[data-qa="max-attachment-number-field"]',
 };
 
 export const InformationModalSelectors = {

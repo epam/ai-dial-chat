@@ -5,7 +5,6 @@ export * from './publishEntitiesTree';
 export * from './publishFolder';
 
 export * from './sidebar/sideBarEntitiesTree';
-export * from './sidebar/baseSideBarConversationTree';
 export * from './sidebar/conversationsTree';
 export * from './sidebar/sharedWithMeConversationsTree';
 export * from './sidebar/promptsTree';
@@ -16,6 +15,7 @@ export * from './sidebar/sharedWithMePromptsTree';
 export * from './sidebar/approveRequiredConversationsTree';
 export * from './sidebar/approveRequiredPrompts';
 export * from './sidebar/organizationConversationsTree';
+export * from './sidebar/organizationPromptsTree';
 
 export * from './attachment/attachFilesTree';
 

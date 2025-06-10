@@ -98,8 +98,8 @@ export const UserMessage = memo(function UserMessage({
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
   );
-  const isExternal = useAppSelector(
-    ConversationsSelectors.selectAreSelectedConversationsExternal,
+  const isReadOnly = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsReadOnly,
   );
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
@@ -147,8 +147,8 @@ export const UserMessage = memo(function UserMessage({
     !isPlayback &&
     !isEditing &&
     (!isExternal || isApproveRequiredEntitySelected) &&
-    withButtons;
-
+    withButtons &&
+    !isReadOnly;  
   const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
   const mappedUserEditableAttachments = useMemo(() => {
@@ -610,7 +610,7 @@ export const UserMessage = memo(function UserMessage({
           editDisabled={editDisabled}
           onDelete={() => onDelete?.()}
           toggleEditing={handleToggleEditing}
-          isEditTemplatesAvailable={!isExternal && isMessageTemplatesEnabled}
+          isEditTemplatesAvailable={!isReadOnly && isMessageTemplatesEnabled}
           onToggleTemplatesEditing={handleToggleEditingTemplates}
         />
       )}
