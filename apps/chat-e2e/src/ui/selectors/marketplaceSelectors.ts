@@ -44,6 +44,7 @@ export const MarketplaceDetailsModal = {
   // deleteButton: '[data-qa="application-delete"]',
   editButton: '[data-qa="edit"]',
   deleteButton: '[data-qa="delete"]',
+  publishButton: '[data-qa="publish"]',
 };
 
 export const MarketplaceSideBarSelectors = {

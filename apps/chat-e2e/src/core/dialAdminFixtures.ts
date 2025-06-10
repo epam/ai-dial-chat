@@ -52,6 +52,7 @@ import {
   PromptsToApproveTree,
   PromptsTree,
 } from '@/src/ui/webElements/entityTree';
+import { PublishedApplicationReviewModal } from '@/src/ui/webElements/publishedApplicationReviewModal';
 import { PublishedPromptPreviewModal } from '@/src/ui/webElements/publishedPromptPreviewModal';
 import { ShareModal } from '@/src/ui/webElements/shareModal';
 import { Tooltip } from '@/src/ui/webElements/tooltip';
@@ -115,6 +116,7 @@ const dialAdminTest = dialTest.extend<{
   adminConversationAssertion: ConversationAssertion;
   adminConversationsToPublishTree: ConversationsToPublishTree;
   adminConversationToPublishAssertion: PublishEntityAssertion<ConversationsToPublishTree>;
+  adminPublishedApplicationReviewModal: PublishedApplicationReviewModal;
 }>({
   adminPromptDropdownMenuAssertion: async (
     { adminPromptDropdownMenu },
@@ -138,6 +140,11 @@ const dialAdminTest = dialTest.extend<{
         adminPublishedPromptPreviewModal,
       );
     await use(adminPublishedPromptPreviewModalAssertion);
+  },
+  adminPublishedApplicationReviewModal: async ({ adminPage }, use) => {
+    const adminPublishedApplicationReviewModal =
+      new PublishedApplicationReviewModal(adminPage);
+    await use(adminPublishedApplicationReviewModal);
   },
   adminPublishedPromptPreviewModal: async ({ adminPage }, use) => {
     const publishedPromptPreviewModal = new PublishedPromptPreviewModal(

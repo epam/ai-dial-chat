@@ -353,6 +353,7 @@ export const Chronology = {
 };
 
 export const API = {
+  api: '/api',
   modelsHost: '/api/models',
   addonsHost: '/api/addons',
   chatHost: '/api/chat',
@@ -442,7 +443,7 @@ export const Attachment = {
   fileWithoutExtension: 'withoutExtension',
   plotlyName: 'plotly.json',
   pdfName: 'pdf_attachment.pdf',
-  appIcon: 'appIcon.svg',
+  appIconSvg: 'appIcon.svg',
 };
 
 export enum Side {
@@ -535,3 +536,8 @@ export const ExpectedPromptModalConst = {
   infoButtonTooltip: 'Info',
   deleteButtonTooltip: 'Delete',
 };
+
+export enum DefaultModelReference {
+  defaultAgent = '"default-agent"',
+  lastUsedModel = '"last-used-agent"',
+}

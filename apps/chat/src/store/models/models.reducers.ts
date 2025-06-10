@@ -17,7 +17,7 @@ import {
 } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { RECENT_MODELS_COUNT } from '@/src/constants/chat';
+import { DEFAULT_AGENT, RECENT_MODELS_COUNT } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
 import { DeleteType } from '@/src/constants/marketplace';
 
@@ -39,6 +39,7 @@ const initialState: ModelsState = {
   isInstalledModelsInitialized: false,
   publishRequestModels: [],
   publishedApplicationIds: [],
+  defaultModelReference: DEFAULT_AGENT,
 };
 
 export const modelsSlice = createSlice({
@@ -323,6 +324,9 @@ export const modelsSlice = createSlice({
           });
         }
       });
+    },
+    setDefaultModelReference: (state, { payload }: PayloadAction<string>) => {
+      state.defaultModelReference = payload;
     },
   },
 });

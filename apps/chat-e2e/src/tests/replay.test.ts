@@ -24,7 +24,7 @@ dialTest.beforeAll(async () => {
   allModels = ModelsUtil.getLatestModels().filter(
     (m) => m.iconUrl != undefined,
   );
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
   aModel = GeneratorUtil.randomArrayElement(
     allModels.filter(
       (m) => m.id !== defaultModel.id && (m as DialAIEntity).features?.addons,
@@ -290,7 +290,7 @@ dialTest(
         conversation,
         replayConversation,
       ]);
-      await localStorageManager.setRecentModelsIds(replayModel);
+      await localStorageManager.setRecentModelsIdsAndUseLastModel(replayModel);
       await localStorageManager.setShowSideBarPanels();
     });
 
@@ -821,7 +821,7 @@ dialTest(
     await dialTest.step(
       'Import conversation from old app version and send two new messages based on Titan and gpt-4 models',
       async () => {
-        await localStorageManager.setRecentModelsIds(
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
           ...newModels.map((m) => ModelsUtil.getModel(m)!),
         );
         await localStorageManager.setShowSideBarPanels();
