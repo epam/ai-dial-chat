@@ -125,6 +125,9 @@ export const UserMessage = memo(function UserMessage({
       conversation.id,
     ),
   );
+  const isExternal = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsExternal,
+  );
 
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
 
@@ -148,7 +151,7 @@ export const UserMessage = memo(function UserMessage({
     !isEditing &&
     (!isExternal || isApproveRequiredEntitySelected) &&
     withButtons &&
-    !isReadOnly;  
+    !isReadOnly;
   const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
   const mappedUserEditableAttachments = useMemo(() => {
