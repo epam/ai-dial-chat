@@ -35,27 +35,55 @@ import {
 import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { EDITED_FOLDER_NAME_KEY } from '@/src/store/publication/publication.types';
 import {
   ConversationsSelectors,
   PromptsSelectors,
   PublicationSelectors,
 } from '@/src/store/selectors';
 
-import { NA_VERSION } from '@/src/constants/publication';
+import {
+  MAX_PUBLICATION_AUTHOR_LENGTH,
+  NA_VERSION,
+} from '@/src/constants/publication';
 
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { FeatureType, PublishActions } from '@epam/ai-dial-shared';
+import { FeatureType } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
+const allEditedFoldersAreValid = (obj: unknown) => {
+  for (const key in obj as Record<string, string>) {
+    const value = (obj as Record<string, string>)[key];
+
+    if (typeof value === 'object' && value !== null) {
+      if (
+        EDITED_FOLDER_NAME_KEY in value &&
+        (!value[EDITED_FOLDER_NAME_KEY] ||
+          prepareEntityName(value[EDITED_FOLDER_NAME_KEY] as string).trim() ===
+            '')
+      ) {
+        return false;
+      }
+
+      if (!allEditedFoldersAreValid(value)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+};
 interface Props {
   publication: Publication;
+  publicationAuthor: string;
   onUpdateRequest: () => void;
 }
 
 export const PublicationHandlerFooter = ({
   publication,
+  publicationAuthor,
   onUpdateRequest,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
@@ -75,7 +103,15 @@ export const PublicationHandlerFooter = ({
     ),
   );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
-  const editState = useAppSelector(PublicationSelectors.selectEditState);
+  const entitiesEditState = useAppSelector(
+    PublicationSelectors.selectEntitiesEditState,
+  );
+  const foldersEditState = useAppSelector(
+    PublicationSelectors.selectFoldersEditState,
+  );
+  const displayAuthorEditState = useAppSelector(
+    PublicationSelectors.selectDisplayAuthorEditState,
+  );
   const itemsToPublish = useAppSelector(
     PublicationSelectors.selectSelectedItemsToPublish,
   );
@@ -92,9 +128,18 @@ export const PublicationHandlerFooter = ({
       PublicationActions.setEditModeState({
         editState: getDefaultAllEditEntities(publication.resources),
         rules: publication.rules,
+        displayAuthor: publication.displayAuthor ?? publicationAuthor,
       }),
     );
-  }, [dispatch, publication.resources, isEditMode, publication.rules]);
+  }, [
+    dispatch,
+    publication.resources,
+    isEditMode,
+    publication.rules,
+    publication.displayAuthor,
+    publication.author,
+    publicationAuthor,
+  ]);
 
   const notExistEntities = useMemo(
     () =>
@@ -270,15 +315,20 @@ export const PublicationHandlerFooter = ({
     isFileId(resource.reviewUrl),
   );
   const isAllResourcesReviewed = resourcesToReview.every((r) => r.reviewed);
-  const isEditDisabled = Object.values(editState).some(({ version, name }) => {
-    return (
-      !prepareEntityName(name) ||
-      (!isVersionValid(version) && version !== NA_VERSION)
-    );
-  });
-  const isEveryResourceForUnpublish = publication.resources.every(
-    (resource) => resource.action === PublishActions.DELETE,
+  const isNamesOrVersionsInvalid = Object.values(entitiesEditState).some(
+    ({ version, name }) => {
+      return (
+        !prepareEntityName(name) ||
+        (!isVersionValid(version) && version !== NA_VERSION)
+      );
+    },
   );
+  const isFoldersInvalid = !allEditedFoldersAreValid(foldersEditState);
+  const isDisplayAuthorInvalid =
+    !displayAuthorEditState.trim().length ||
+    displayAuthorEditState.length > MAX_PUBLICATION_AUTHOR_LENGTH;
+  const isEditDisabled =
+    isNamesOrVersionsInvalid || isFoldersInvalid || isDisplayAuthorInvalid;
 
   return (
     <div
@@ -327,7 +377,7 @@ export const PublicationHandlerFooter = ({
       <div className="flex items-center gap-3">
         {!isEditMode ? (
           <>
-            {!isEveryResourceForUnpublish && (
+            {!invalidEntities.length && (
               <IconButton
                 name={t('Edit')}
                 dataQa="edit"

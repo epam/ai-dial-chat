@@ -8,18 +8,14 @@ import {
   prepareEntityName,
 } from '@/src/utils/app/common';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { isConversationId, isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
   getPublicationDefaultName,
   getPublicationId,
+  regenerateApiKeyNameAndVersionParts,
 } from '@/src/utils/app/publications';
-import { constructPath, splitEntityId } from '@/src/utils/app/shared-utils';
+import { constructPath } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
-import {
-  parseConversationApiKey,
-  pathKeySeparator,
-} from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
 import { Publication, PublicationRule } from '@/src/types/publication';
@@ -27,10 +23,14 @@ import { Translation } from '@/src/types/translation';
 
 import { PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import {
+  EDITED_FOLDER_NAME_KEY,
+  FolderNode,
+} from '@/src/store/publication/publication.types';
 import { PublicationSelectors } from '@/src/store/selectors';
 
 import {
-  PUBLICATION_REVIEW_UPDATING_DELAY,
+  MAX_PUBLICATION_AUTHOR_LENGTH,
   PUBLIC_URL_PREFIX,
 } from '@/src/constants/publication';
 
@@ -38,7 +38,7 @@ import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { PublicationInfoSection } from '../PublishWizardComponents';
+import { PublicationInfoSection } from '../PublicationInfoSection';
 import { CompareRulesModal } from './CompareRulesModal';
 import { PublicationFilters } from './PublicationFilters';
 import { PublicationHandlerFooter } from './PublicationHandlerFooter';
@@ -50,7 +50,6 @@ import {
   PromptPublicationResources,
 } from './ReviewResources';
 
-import { debounce } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 
 interface Props {
@@ -103,8 +102,17 @@ export function PublicationHandler({ publication }: Props) {
   const isPublicationUpdating = useAppSelector(
     PublicationSelectors.selectIsPublicationUpdating,
   );
-  const editState = useAppSelector(PublicationSelectors.selectEditState);
+  const entitiesEditState = useAppSelector(
+    PublicationSelectors.selectEntitiesEditState,
+  );
+  const foldersEditState = useAppSelector(
+    PublicationSelectors.selectFoldersEditState,
+  );
   const rulesOnEdit = useAppSelector(PublicationSelectors.selectRulesOnEdit);
+  const displayAuthorEditState = useAppSelector(
+    PublicationSelectors.selectDisplayAuthorEditState,
+  );
+  const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
 
   const publicationAuthor = useMemo(() => {
     return extractNameFromEmail(publication.author) ?? t('Unknown');
@@ -138,49 +146,60 @@ export function PublicationHandler({ publication }: Props) {
   );
 
   const handleUpdateRequest = useCallback(() => {
-    debounce(() => {
-      dispatch(
-        PublicationActions.updatePublicationRequest({
-          url: publication.url,
-          dataToUpdate: {
-            name:
-              publication.name ??
-              getPublicationDefaultName(publication.author ?? 'Unknown Author'),
-            targetFolder: publication.targetFolder,
-            rules: rulesOnEdit,
-            resources: publication.resources.map((resource) => {
-              const { name, version } = editState[resource.reviewUrl];
+    dispatch(
+      PublicationActions.updatePublicationRequest({
+        url: publication.url,
+        dataToUpdate: {
+          name:
+            publication.name ??
+            getPublicationDefaultName(publication.author ?? 'Unknown Author'),
+          targetFolder: publication.targetFolder,
+          rules: rulesOnEdit,
+          displayAuthor: displayAuthorEditState,
+          resources: publication.resources.map(
+            ({ sourceUrl, reviewUrl, action }) => {
+              const { name, version } = entitiesEditState[reviewUrl];
 
-              const preparedName = prepareEntityName(name);
-              const modelName = splitEntityId(resource.reviewUrl).name;
-              const parsedModelReference =
-                parseConversationApiKey(modelName).model.id;
-              const newApiKey = isConversationId(resource.reviewUrl)
-                ? [parsedModelReference, preparedName, version].join(
-                    pathKeySeparator,
-                  )
-                : isFileId(resource.reviewUrl)
-                  ? [preparedName].join(pathKeySeparator)
-                  : [preparedName, version].join(pathKeySeparator);
+              // calculate new folderId
+              const folderSegments =
+                getFolderIdFromEntityId(reviewUrl).split('/');
+              const newFolderSegments: string[] = [];
+              let currentFolder = foldersEditState as FolderNode;
+              folderSegments.forEach((segment, i) => {
+                currentFolder = currentFolder[segment] as FolderNode;
+                newFolderSegments.push(
+                  // prepare name if it's not root path segments
+                  i > 1
+                    ? prepareEntityName(currentFolder[EDITED_FOLDER_NAME_KEY])
+                    : currentFolder[EDITED_FOLDER_NAME_KEY],
+                );
+              });
+              newFolderSegments[1] = PUBLIC_URL_PREFIX;
+              const newFolderId = newFolderSegments.join('/');
+
+              // get new api key
+              const newApiKey = regenerateApiKeyNameAndVersionParts(
+                reviewUrl,
+                name,
+                version,
+              );
 
               return {
-                action: resource.action,
-                sourceUrl: resource.sourceUrl ?? '',
-                targetUrl: constructPath(
-                  getFolderIdFromEntityId(resource.targetUrl),
-                  newApiKey,
-                ),
+                action,
+                sourceUrl: sourceUrl ?? '',
+                targetUrl: constructPath(newFolderId, newApiKey),
               };
-            }),
-          },
-        }),
-      );
-    }, PUBLICATION_REVIEW_UPDATING_DELAY)();
-    dispatch(PublicationActions.setIsPublicationUpdating(true));
+            },
+          ),
+        },
+      }),
+    );
     dispatch(PublicationActions.setIsEditMode(false));
   }, [
     dispatch,
-    editState,
+    displayAuthorEditState,
+    entitiesEditState,
+    foldersEditState,
     publication.author,
     publication.name,
     publication.resources,
@@ -188,6 +207,18 @@ export function PublicationHandler({ publication }: Props) {
     publication.url,
     rulesOnEdit,
   ]);
+
+  const handleChangeDisplayAuthor = useCallback(
+    (value: string) => {
+      if (
+        value.length <= MAX_PUBLICATION_AUTHOR_LENGTH ||
+        value.length < displayAuthorEditState.length
+      ) {
+        dispatch(PublicationActions.setDisplayAuthorEditState(value));
+      }
+    },
+    [dispatch, displayAuthorEditState.length],
+  );
 
   const publishToUrl = publication.targetFolder
     ? publication.targetFolder.replace(/^[^/]+/, 'Organization')
@@ -253,6 +284,12 @@ export function PublicationHandler({ publication }: Props) {
                   infoTooltip={t(
                     'The name will be displayed instead of the author name for this publication.',
                   )}
+                  editValue={displayAuthorEditState}
+                  onChangeValue={handleChangeDisplayAuthor}
+                  inputClassName={
+                    !displayAuthorEditState ? 'border-b-error' : ''
+                  }
+                  isEditMode={isEditMode}
                 />
 
                 <PublicationInfoSection
@@ -330,6 +367,7 @@ export function PublicationHandler({ publication }: Props) {
         </div>
         <PublicationHandlerFooter
           onUpdateRequest={handleUpdateRequest}
+          publicationAuthor={publicationAuthor}
           publication={publication}
         />
       </div>

@@ -15,6 +15,7 @@ import {
   parseConversationApiKey,
   parseFileApiKey,
   parsePromptApiKey,
+  pathKeySeparator,
 } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -35,12 +36,17 @@ import {
 import { SharingType } from '@/src/types/share';
 
 import {
+  EDITED_FOLDER_NAME_KEY,
+  FolderEditTree,
+} from '@/src/store/publication/publication.types';
+
+import {
   DEFAULT_VERSION,
   NA_VERSION,
   PUBLIC_URL_PREFIX,
 } from '@/src/constants/publication';
 
-import { isVersionValid } from './common';
+import { isVersionValid, prepareEntityName } from './common';
 import { BucketService } from './data/bucket-service';
 import { FileService } from './data/file-service';
 import { constructPath } from './file';
@@ -452,7 +458,12 @@ export const getReviewItems = (
   return { toReview, reviewed };
 };
 
-export const getDefaultAllEditEntities = (resources: PublicationResource[]) => {
+export const getDefaultAllEditEntities = (
+  resources: PublicationResource[],
+): {
+  entities: Record<string, { name: string; version: string }>;
+  folders: FolderEditTree;
+} => {
   const allEditEntitiesMap: Record<
     string,
     {
@@ -486,7 +497,24 @@ export const getDefaultAllEditEntities = (resources: PublicationResource[]) => {
     };
   });
 
-  return allEditEntitiesMap;
+  const allFoldersStructure: FolderEditTree = {};
+  resources.forEach(({ reviewUrl }) => {
+    const folderSegments = getFolderIdFromEntityId(reviewUrl).split('/');
+    let currentLevel = allFoldersStructure;
+
+    folderSegments.forEach((segment) => {
+      if (!currentLevel[segment]) {
+        currentLevel[segment] = { [EDITED_FOLDER_NAME_KEY]: segment };
+      }
+
+      currentLevel = currentLevel[segment] as FolderEditTree;
+    });
+  });
+
+  return {
+    entities: allEditEntitiesMap,
+    folders: allFoldersStructure,
+  };
 };
 
 export const mapRuleToFilter = (
@@ -504,6 +532,26 @@ export const mapFilterToRule = (
   source: filter.id,
   targets: filter.filterParams,
 });
+
+export const regenerateApiKeyNameAndVersionParts = (
+  entityId: string,
+  name: string,
+  version: string,
+): string => {
+  const preparedName = prepareEntityName(name);
+
+  if (isConversationId(entityId)) {
+    const modelName = splitEntityId(entityId).name;
+    const parsedModelReference = parseConversationApiKey(modelName).model.id;
+    return [parsedModelReference, preparedName, version].join(pathKeySeparator);
+  }
+
+  if (isFileId(entityId)) {
+    return preparedName;
+  }
+
+  return [preparedName, version].join(pathKeySeparator);
+};
 
 export const getPublicationDefaultName = (userName: string) =>
   `New request by ${userName}`;

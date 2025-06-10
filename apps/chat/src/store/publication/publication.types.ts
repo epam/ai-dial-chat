@@ -9,6 +9,16 @@ import {
 
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 
+// key/editedName is a special key for the folder node, because it handles collisions with children node keys, since folder name can't contain '/'
+export const EDITED_FOLDER_NAME_KEY = 'key/editedName';
+
+export interface FolderNode {
+  [EDITED_FOLDER_NAME_KEY]: string;
+  [folderName: string]: FolderNode | string;
+}
+
+export type FolderEditTree = Record<string, FolderNode>;
+
 export interface PublicationState {
   initialized: boolean;
   publications: (PublicationInfo & Partial<Publication>)[];
@@ -16,12 +26,7 @@ export interface PublicationState {
   resourcesToReview: ResourceToReview[];
   rules: Record<string, PublicationRule[]>;
   isRulesLoading: boolean;
-  allPublishedWithMeItemsUploaded: {
-    [FeatureType.Chat]: boolean;
-    [FeatureType.Prompt]: boolean;
-    [FeatureType.File]: boolean;
-    [FeatureType.Application]: boolean;
-  };
+  allPublishedWithMeItemsUploaded: Record<FeatureType, boolean>;
   selectedItemsToPublish: string[];
   isApplicationReview: boolean;
   publicVersionGroups: PublicVersionGroups;
@@ -31,7 +36,9 @@ export interface PublicationState {
 
   // Review edit mode
   isEditMode: boolean;
-  editState: Record<string, { name: string; version: string }>;
+  entitiesEditState: Record<string, { name: string; version: string }>;
+  foldersEditState: FolderEditTree;
   rulesOnEdit?: PublicationRule[];
   isPublicationUpdating: boolean;
+  displayAuthorEditState: string;
 }

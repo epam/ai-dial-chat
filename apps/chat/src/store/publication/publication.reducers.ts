@@ -15,7 +15,12 @@ import {
   ResourceToReview,
 } from '@/src/types/publication';
 
-import { PublicationState } from './publication.types';
+import {
+  EDITED_FOLDER_NAME_KEY,
+  FolderEditTree,
+  FolderNode,
+  PublicationState,
+} from './publication.types';
 
 import {
   PublishActions,
@@ -46,8 +51,10 @@ const initialState: PublicationState = {
 
   // Review edit mode
   isEditMode: false,
-  editState: {},
+  entitiesEditState: {},
+  foldersEditState: {},
   isPublicationUpdating: false,
+  displayAuthorEditState: '',
 };
 
 export const publicationSlice = createSlice({
@@ -349,9 +356,6 @@ export const publicationSlice = createSlice({
         state.publishModel = undefined;
       }
     },
-    setIsPublicationUpdating: (state, { payload }: PayloadAction<boolean>) => {
-      state.isPublicationUpdating = payload;
-    },
     updatePublicationRequest: (
       state,
       _action: PayloadAction<{
@@ -369,14 +373,20 @@ export const publicationSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        editState: Record<string, { name: string; version: string }>;
+        editState: {
+          entities: Record<string, { name: string; version: string }>;
+          folders: FolderEditTree;
+        };
+        displayAuthor: string;
         rules?: PublicationRule[];
       }>,
     ) => {
-      state.editState = payload.editState;
+      state.entitiesEditState = payload.editState.entities;
+      state.foldersEditState = payload.editState.folders;
       state.rulesOnEdit = payload.rules;
+      state.displayAuthorEditState = payload.displayAuthor;
     },
-    setEditStateByReviewUrl: (
+    setEntityEditStateByReviewUrl: (
       state,
       {
         payload,
@@ -386,17 +396,38 @@ export const publicationSlice = createSlice({
         version: string;
       }>,
     ) => {
-      state.editState[payload.reviewUrl] = {
+      state.entitiesEditState[payload.reviewUrl] = {
         name: payload.name,
         version: payload.version,
       };
     },
+    setEditFolderStateByFolderId: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        folderId: string;
+        name: string;
+      }>,
+    ) => {
+      const folderSegments = payload.folderId.split('/');
 
+      let currentFolder = state.foldersEditState as FolderNode;
+
+      folderSegments.forEach((segment) => {
+        currentFolder = currentFolder[segment] as FolderNode;
+      });
+
+      currentFolder[EDITED_FOLDER_NAME_KEY] = payload.name;
+    },
     updateAndApprovePublicationRequest: (state) => {
       state.isPublicationUpdating = true;
     },
     setRulesOnEdit: (state, { payload }: PayloadAction<PublicationRule[]>) => {
       state.rulesOnEdit = payload;
+    },
+    setDisplayAuthorEditState: (state, { payload }: PayloadAction<string>) => {
+      state.displayAuthorEditState = payload;
     },
   },
 });
