@@ -27,7 +27,10 @@ export class ItemApiHelper extends BaseApiHelper {
     );
   }
 
-  public async listItems(url: string, bucket?: string) {
+  public async listItems(
+    url: string,
+    bucket?: string,
+  ): Promise<BackendChatEntity[]> {
     const bucketToUse = this.userBucket ?? bucket;
     return this.getItems(`${url}/${bucketToUse ?? BucketUtil.getBucket()}`);
   }
@@ -72,12 +75,13 @@ export class ItemApiHelper extends BaseApiHelper {
     }
   }
 
-  public async deleteEntity(entity: Entity) {
-    const url = `/api/${entity.id}`;
+  public async deleteEntity(entity: Entity | string) {
+    const url =
+      typeof entity === 'string' ? `/api/${entity}` : `/api/${entity.id}`;
     const response = await this.request.delete(this.getHost(url));
     expect(
       response.status(),
-      `Entity with id: ${entity.name} was successfully deleted`,
+      `Entity with name: ${typeof entity === 'string' ? entity : entity.name} was successfully deleted`,
     ).toBe(200);
   }
 

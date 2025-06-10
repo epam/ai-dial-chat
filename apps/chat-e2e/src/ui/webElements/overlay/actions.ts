@@ -23,6 +23,9 @@ export class Actions extends BaseElement {
   public getConversationsButton = this.getChildElementBySelector(
     EventSelectors.getConversationsButton,
   );
+  public getSelectedConversationsButton = this.getChildElementBySelector(
+    EventSelectors.getSelectedConversationsButton,
+  );
   public createConversationButton = this.getChildElementBySelector(
     EventSelectors.createConversationButton,
   );
@@ -35,6 +38,30 @@ export class Actions extends BaseElement {
   public conversationIdField = this.getChildElementBySelector(
     EventSelectors.conversationIdField,
   );
+  public newConversationNameField = this.getChildElementBySelector(
+    EventSelectors.newConversationNameField,
+  );
+  public createLocalConversationButton = this.getChildElementBySelector(
+    EventSelectors.createLocalConversationButton,
+  );
+  public deleteConversationByIdButton = this.getChildElementBySelector(
+    EventSelectors.deleteConversationByIdButton,
+  );
+  public playbackConversationByIdButton = this.getChildElementBySelector(
+    EventSelectors.playbackConversationByIdButton,
+  );
+  public renameConversationByIdButton = this.getChildElementBySelector(
+    EventSelectors.renameConversationByIdButton,
+  );
+  public exportConversationByIdButton = this.getChildElementBySelector(
+    EventSelectors.exportConversationByIdButton,
+  );
+  public importedConversationField = this.getChildElementBySelector(
+    EventSelectors.importedConversationField,
+  );
+  public importConversationButton = this.getChildElementBySelector(
+    EventSelectors.importConversationButton,
+  );
 
   public async clickSendMessage() {
     const requestPromise = this.page.waitForRequest(
@@ -45,14 +72,55 @@ export class Actions extends BaseElement {
     return request.postDataJSON();
   }
 
+  public async clickDeleteConversationById() {
+    const respPromise = this.page.waitForResponse(
+      (response) =>
+        response.request().method() === 'DELETE' && response.status() === 200,
+    );
+    await this.deleteConversationByIdButton.click();
+    await respPromise;
+  }
+
+  public async clickRenameConversationById() {
+    const respPromise = this.page.waitForResponse(
+      (response) =>
+        response.request().method() === 'PUT' && response.status() === 200,
+    );
+    await this.renameConversationByIdButton.click();
+    const response = await respPromise;
+    const responseBody = (await response.json()) as BackendChatEntity;
+    return {
+      request: response.request().postDataJSON() as Conversation,
+      response: responseBody,
+    };
+  }
+
+  public async clickImportConversation(conversationId: string) {
+    const respPromise = this.page.waitForResponse(
+      (response) =>
+        response.url().includes(conversationId) &&
+        response.request().method() === 'GET' &&
+        response.status() === 200,
+    );
+    await this.importConversationButton.click();
+    await respPromise;
+  }
+
   public async clickCreateConversation() {
     return this.clickCreateConversationButton(() =>
       this.createConversationButton.click(),
     );
   }
+
   public async clickCreateConversationInInnerFolder() {
     return this.clickCreateConversationButton(() =>
       this.createConversationInFolderButton.click(),
+    );
+  }
+
+  public async clickPlaybackConversationById() {
+    return this.clickCreateConversationButton(() =>
+      this.playbackConversationByIdButton.click(),
     );
   }
 

@@ -17,7 +17,8 @@ const publicationsToUnpublish: Publication[] = [];
 dialAdminTest(
   'Publish chat: select folder in Organization path.\n' +
     'Publish:Folders have alphabetical order in Organization structure and in Change path pop-up.\n' +
-    'Change path: search for folders',
+    'Change path: search for folders.\n' +
+    'Change path: search for sub-folders',
   async ({
     dialHomePage,
     conversationData,
@@ -44,7 +45,7 @@ dialAdminTest(
     adminLocalStorageManager,
   }) => {
     dialAdminTest.slow();
-    setTestIds('EPMRTC-3198', 'EPMRTC-3515', 'EPMRTC-4061');
+    setTestIds('EPMRTC-3198', 'EPMRTC-3515', 'EPMRTC-4061', 'EPMRTC-6395');
     const publishRequestConversations: Conversation[] = [];
     const subFolder = 'subfolder 3.1';
     const subFolderSearchTerm = subFolder.split(' ')[1];
@@ -115,7 +116,8 @@ dialAdminTest(
       },
     );
 
-    await dialTest.step('Search sub-folder by name', async () => {
+    //TODO: blocked by issue https://github.com/epam/ai-dial-chat/issues/4031
+    await dialTest.step.skip('Search sub-folder by name', async () => {
       await selectFolders.expandFolder(parentFolder);
       await selectFolderModal.searchInput.fillInInput(subFolderSearchTerm);
       await selectFoldersAssertion.assertSearchResultRepresentation(

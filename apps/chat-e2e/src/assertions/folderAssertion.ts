@@ -413,9 +413,11 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
     const foundFolders = await this.folder.getFolderNames();
     let index = 0;
     //check if each path element is sequentially included in the search results
-    const isHierarchyIncludedIntoResults = foundFolders.every(
-      (item) => (index = searchFolderHierarchyArray.indexOf(item, index) + 1),
-    );
+    const isHierarchyIncludedIntoResults =
+      foundFolders.length === searchFolderHierarchyArray.length &&
+      foundFolders.every(
+        (item) => (index = searchFolderHierarchyArray.indexOf(item, index) + 1),
+      );
     expect
       .soft(
         isHierarchyIncludedIntoResults,

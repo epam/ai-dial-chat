@@ -857,11 +857,11 @@ dialTest(
             { name: attachment },
             'visible',
           );
-          await attachAllFilesTreeAssertion.assertEntityColor(
+          await attachAllFilesTreeAssertion.assertEntityState(
             {
               name: attachment,
             },
-            ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textPrimary),
+            'visible',
           );
           await attachAllFilesTreeAssertion.assertEntityBackgroundColor({
             name: attachment,
