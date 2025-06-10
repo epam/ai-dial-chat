@@ -1,5 +1,5 @@
 import { IconDownload } from '@tabler/icons-react';
-import { ReactNode, useCallback, useEffect, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -22,6 +22,7 @@ import { PublicationSelectors } from '@/src/store/selectors';
 import { NA_VERSION } from '@/src/constants/publication';
 
 import { PublicVersionSelector } from '@/src/components/Chat/Publish/PublicVersionSelector';
+import { Checkbox } from '@/src/components/Common/Checkbox';
 import { EditableField } from '@/src/components/Common/EditableField';
 
 import { PublishActions } from '@epam/ai-dial-shared';
@@ -137,8 +138,16 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   const dispatch = useAppDispatch();
 
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
-  const editState = useAppSelector((state) =>
+  const entityEditState = useAppSelector((state) =>
     PublicationSelectors.selectEntityEditStateByReviewUrl(state, item.id),
+  );
+  const selectedPublicationResources = useAppSelector(
+    PublicationSelectors.selectSelectedItemsToPublish,
+  );
+
+  const isSelected = useMemo(
+    () => selectedPublicationResources.includes(item.id),
+    [item.id, selectedPublicationResources],
   );
 
   const [inputName, setInputName] = useState(item.name);
@@ -156,12 +165,27 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
           reviewUrl: item.id,
           name,
           version:
-            editState?.version ?? item.publicationInfo?.version ?? NA_VERSION,
+            entityEditState?.version ??
+            item.publicationInfo?.version ??
+            NA_VERSION,
         }),
       );
     },
-    [dispatch, item.id, editState?.version, item.publicationInfo?.version],
+    [
+      dispatch,
+      item.id,
+      entityEditState?.version,
+      item.publicationInfo?.version,
+    ],
   );
+
+  const handleSelect = useCallback(() => {
+    dispatch(
+      PublicationActions.selectItemsToPublish({
+        ids: [item.id],
+      }),
+    );
+  }, [dispatch, item.id]);
 
   const isDeleteAction = item.publicationInfo?.action === PublishActions.DELETE;
 
@@ -181,6 +205,11 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
         }}
         data-qa={dataQa}
       >
+        <Checkbox
+          checked={isSelected}
+          onChange={handleSelect}
+          className="mr-0"
+        />
         <span className="flex">{Icon}</span>
         <EditableField
           value={inputName}

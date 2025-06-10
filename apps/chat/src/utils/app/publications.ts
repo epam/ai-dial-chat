@@ -552,3 +552,6 @@ export const regenerateApiKeyNameAndVersionParts = (
 
   return [preparedName, version].join(pathKeySeparator);
 };
+
+export const getPublicationDefaultName = (userName: string) =>
+  `New request by ${userName}`;

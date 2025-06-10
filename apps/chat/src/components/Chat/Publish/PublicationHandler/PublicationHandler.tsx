@@ -10,6 +10,7 @@ import {
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
+  getPublicationDefaultName,
   getPublicationId,
   regenerateApiKeyNameAndVersionParts,
 } from '@/src/utils/app/publications';
@@ -149,7 +150,9 @@ export function PublicationHandler({ publication }: Props) {
       PublicationActions.updatePublicationRequest({
         url: publication.url,
         dataToUpdate: {
-          name: publication.name ?? `New request by ${publication.author}`,
+          name:
+            publication.name ??
+            getPublicationDefaultName(publication.author ?? 'Unknown Author'),
           targetFolder: publication.targetFolder,
           rules: rulesOnEdit,
           displayAuthor: displayAuthorEditState,
@@ -273,14 +276,11 @@ export function PublicationHandler({ publication }: Props) {
                   valueToDisplay={publicationAuthor}
                 />
 
-                {/*TODO remove publicationAuthor when publication.displayAuthor will be ready at the core side */}
                 <PublicationInfoSection
                   labelDataQa="publication-display-author-label"
                   label={t("Author's public name: ")}
                   valueDataQa="publication-display-author"
-                  valueToDisplay={
-                    publication.displayAuthor ?? publicationAuthor
-                  }
+                  valueToDisplay={publication.displayAuthor}
                   infoTooltip={t(
                     'The name will be displayed instead of the author name for this publication.',
                   )}

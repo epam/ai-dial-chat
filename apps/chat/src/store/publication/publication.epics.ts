@@ -42,6 +42,7 @@ import { getPromptInfoFromId } from '@/src/utils/app/prompts';
 import {
   getFilesFromPublicResources,
   getItemsIdsToRemoveAndHide,
+  getPublicationDefaultName,
   isEntityIdPublic,
   mapPublishedItems,
   processPublicationResources,
@@ -1551,6 +1552,73 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
       );
     }),
   );
+const updateAndApprovePublicationRequestEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(PublicationActions.updateAndApprovePublicationRequest.type),
+    switchMap(() => {
+      const state = state$.value;
+      const selectedPublication =
+        PublicationSelectors.selectSelectedPublication(state);
+      if (!selectedPublication) {
+        return of(PublicationActions.approvePublicationFail());
+      }
+      const resourcesToApproveIds =
+        PublicationSelectors.selectSelectedItemsToPublish(state);
+      const filteredResources = selectedPublication.resources
+        .filter((resource) =>
+          resourcesToApproveIds.includes(resource.reviewUrl),
+        )
+        .map((resource) => ({
+          action: resource.action,
+          sourceUrl: resource.sourceUrl ?? undefined,
+          targetUrl: resource.targetUrl,
+        }));
+      return PublicationService.updatePublicationRequest({
+        url: selectedPublication.url,
+        publicationData: {
+          ...selectedPublication,
+          name:
+            selectedPublication.name ??
+            getPublicationDefaultName(
+              selectedPublication.author ?? 'Unknown Author',
+            ),
+          resources: filteredResources,
+        },
+      }).pipe(
+        switchMap((response) => {
+          return concat(
+            of(PublicationActions.uploadPublication({ url: response.url })),
+            of(
+              PublicationActions.approvePublication({
+                url: response.url,
+              }),
+            ),
+          );
+        }),
+        catchError((err) => {
+          console.error(err);
+          return of(PublicationActions.publishFail(err.message));
+        }),
+      );
+    }),
+  );
+
+const onSelectPublicationEffectEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(PublicationActions.selectPublication.type),
+    switchMap(() => {
+      const publication = PublicationSelectors.selectSelectedPublication(
+        state$.value,
+      );
+      const resources = publication?.resources;
+
+      return of(
+        PublicationActions.setItemsToPublish({
+          ids: resources?.map(({ reviewUrl }) => reviewUrl) ?? [],
+        }),
+      );
+    }),
+  );
 
 export const PublicationEpics = combineEpics(
   // init
@@ -1586,4 +1654,8 @@ export const PublicationEpics = combineEpics(
 
   // update publication request
   updatePublicationRequestEpic,
+  updateAndApprovePublicationRequestEpic,
+
+  // on select publication
+  onSelectPublicationEffectEpic,
 );

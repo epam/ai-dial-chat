@@ -94,7 +94,9 @@ export const publicationSlice = createSlice({
       );
       state.isPublicationUpdating = false;
     },
-    uploadPublicationFail: (state) => state,
+    uploadPublicationFail: (state) => {
+      state.isPublicationUpdating = false;
+    },
     uploadPublishedWithMeItems: (
       state,
       _action: PayloadAction<{ featureType: FeatureType }>,
@@ -417,6 +419,9 @@ export const publicationSlice = createSlice({
       });
 
       currentFolder[EDITED_FOLDER_NAME_KEY] = payload.name;
+    },
+    updateAndApprovePublicationRequest: (state) => {
+      state.isPublicationUpdating = true;
     },
     setRulesOnEdit: (state, { payload }: PayloadAction<PublicationRule[]>) => {
       state.rulesOnEdit = payload;
