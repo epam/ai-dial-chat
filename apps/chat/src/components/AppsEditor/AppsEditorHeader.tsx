@@ -63,7 +63,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const {
-    query: { id = '', slug = '', add },
+    query: { id = '', slug = '', add, publicationUrl },
     pathname,
     push,
   } = useRouter();
@@ -92,7 +92,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
         label: t('General info'),
         href: {
           pathname: Routes.AppsEditorGeneralInfo,
-          query: { id, slug, add },
+          query: { id, slug, add, publicationUrl },
         },
       },
       {
@@ -100,11 +100,11 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
         label: t('App settings'),
         href: {
           pathname: Routes.AppsEditorSettings,
-          query: { id, slug, add },
+          query: { id, slug, add, publicationUrl },
         },
       },
     ],
-    [t, id, slug, add],
+    [t, id, slug, add, publicationUrl],
   );
 
   const selectedTab =

@@ -20,6 +20,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
   ApplicationTypesSchemasSelectors,
+  PublicationSelectors,
 } from '@/src/store/selectors';
 
 import { PublicationControls } from '@/src/components/Chat/Publish/PublicationChatControls';
@@ -41,6 +42,9 @@ function ReviewApplicationDialogContent() {
   const detailedApplicationTypeSchema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
   );
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
+  );
 
   const isCodeApp = application && isExecutableApp(application);
 
@@ -61,10 +65,15 @@ function ReviewApplicationDialogContent() {
         entity: application,
         applicationType,
         detailedApplicationTypeSchemaId: detailedApplicationTypeSchema?.$id,
-        isApplicationOnReview: true,
+        publicationUrl: selectedPublicationUrl as string,
       }),
     );
-  }, [application, detailedApplicationTypeSchema?.$id, dispatch]);
+  }, [
+    application,
+    detailedApplicationTypeSchema?.$id,
+    dispatch,
+    selectedPublicationUrl,
+  ]);
 
   return (
     <>

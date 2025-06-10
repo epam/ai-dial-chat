@@ -120,7 +120,7 @@ interface CodeAppViewProps {
   oldApplication: CustomApplicationModel;
   isShared: boolean;
   applicationStatus?: ApplicationStatus;
-  isApplicationOnReview?: boolean;
+  publicationUrl?: string;
 }
 
 export const CodeAppView: React.FC<CodeAppViewProps> = ({
@@ -128,7 +128,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
   oldApplication,
   isShared,
   applicationStatus,
-  isApplicationOnReview,
+  publicationUrl,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -194,7 +194,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
 
         dispatch(
           ApplicationActions.update({
-            isApplicationOnReview,
+            publicationUrl,
             oldApplication,
             applicationData,
           }),
@@ -216,7 +216,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
       applicationStatus,
       isShared,
       dispatch,
-      isApplicationOnReview,
+      publicationUrl,
     ],
   );
 

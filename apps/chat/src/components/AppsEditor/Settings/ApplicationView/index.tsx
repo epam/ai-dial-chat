@@ -127,12 +127,12 @@ const getItemLabel = (item: unknown): string => item as string;
 
 interface Props {
   oldApplication: CustomApplicationModel;
-  isApplicationOnReview?: boolean;
+  publicationUrl?: string;
 }
 
 export const ApplicationView: React.FC<Props> = ({
   oldApplication,
-  isApplicationOnReview,
+  publicationUrl,
 }) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -171,7 +171,7 @@ export const ApplicationView: React.FC<Props> = ({
         dispatch(
           ApplicationActions.update({
             oldApplication,
-            isApplicationOnReview,
+            publicationUrl,
             applicationData: {
               ...oldApplication,
               ...applicationData,
@@ -187,7 +187,7 @@ export const ApplicationView: React.FC<Props> = ({
       dispatch(ApplicationActions.setShouldSaveApplication(false));
       dispatch(ApplicationActions.setExitAfterSave(false));
     },
-    [exitAfterSave, dispatch, oldApplication, isApplicationOnReview],
+    [exitAfterSave, dispatch, oldApplication, publicationUrl],
   );
 
   const isAppPublic = isEntityIdPublic(oldApplication);

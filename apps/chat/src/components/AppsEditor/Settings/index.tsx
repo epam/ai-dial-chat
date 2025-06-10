@@ -183,7 +183,9 @@ export const ApplicationSettings: React.FC<Props> = ({
   );
 
   const getFormView = (type: string) => {
-    const isApplicationOnReview = Boolean(router.query.isApplicationOnReview);
+    const publicationUrl = router.query.publicationUrl
+      ? decodeURIComponent(router.query.publicationUrl.toString())
+      : undefined;
 
     if (DEFAULT_QUICK_APPS_SCHEMA_ID.endsWith(type)) {
       return (
@@ -192,7 +194,7 @@ export const ApplicationSettings: React.FC<Props> = ({
           isSharedWithMe={modelFromState?.sharedWithMe ?? false}
           oldApplication={applicationData}
           isShared={modelFromState?.isShared ?? false}
-          isApplicationOnReview={isApplicationOnReview}
+          publicationUrl={publicationUrl}
         />
       );
     }
@@ -202,7 +204,7 @@ export const ApplicationSettings: React.FC<Props> = ({
         return (
           <ApplicationView
             oldApplication={applicationData}
-            isApplicationOnReview={isApplicationOnReview}
+            publicationUrl={publicationUrl}
           />
         );
       case ApplicationType.CODE_APP:
@@ -212,7 +214,7 @@ export const ApplicationSettings: React.FC<Props> = ({
             oldApplication={applicationData}
             isShared={modelFromState?.isShared ?? false}
             applicationStatus={modelFromState?.functionStatus}
-            isApplicationOnReview={isApplicationOnReview}
+            publicationUrl={publicationUrl}
           />
         );
       default:
