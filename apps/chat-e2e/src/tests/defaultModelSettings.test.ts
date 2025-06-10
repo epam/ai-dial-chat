@@ -1,5 +1,6 @@
 import dialTest from '../core/dialFixtures';
 import {
+  DefaultModelReference,
   ExpectedConstants,
   ExpectedMessages,
   MockedChatApiResponseBodies,
@@ -20,7 +21,7 @@ let recentModelIds: string[];
 let allEntities: DialAIEntityModel[];
 
 dialTest.beforeAll(async () => {
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
   nonDefaultModel = GeneratorUtil.randomArrayElement(
     ModelsUtil.getModels().filter((m) => m.id !== defaultModel.id),
   );
@@ -58,7 +59,7 @@ dialTest(
     await dialTest.step(
       'Verify default model is selected by default',
       async () => {
-        await localStorageManager.seLastConversationSettingsOnce();
+        await localStorageManager.useLastConversationSettingsOnce();
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
@@ -226,7 +227,9 @@ dialTest(
     await dialTest.step(
       'Verify Send button is disabled if no request message set and tooltip is shown on button hover',
       async () => {
-        await localStorageManager.setRecentModelsIds(nonDefaultModel);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          nonDefaultModel,
+        );
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
@@ -347,8 +350,8 @@ dialTest(
     const randomModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModels(),
     );
-    await localStorageManager.setRecentModelsIds(randomModel);
-    await localStorageManager.seLastConversationSettingsOnce();
+    await localStorageManager.setRecentModelsIdsAndUseLastModel(randomModel);
+    await localStorageManager.useLastConversationSettingsOnce();
     await localStorageManager.setShowSideBarPanels();
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -423,6 +426,9 @@ dialTest(
       const configModels = await modelApiHelper.getModels();
       configApp = configModels.find((m) => m.name === appName)!;
       await localStorageManager.setShowSideBarPanels();
+      await localStorageManager.setDefaultModelReference(
+        DefaultModelReference.lastUsedModel,
+      );
     });
 
     await dialTest.step(
@@ -457,7 +463,7 @@ dialTest(
         baseAssertion.assertValue(recentTalkTo[0], appName);
         baseAssertion.assertValue(
           recentTalkTo[1],
-          ModelsUtil.getModel(recentModelIds[0])!.name,
+          ModelsUtil.getOpenAIEntity(recentModelIds[0])!.name,
         );
       },
     );

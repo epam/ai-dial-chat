@@ -13,7 +13,7 @@ let defaultModel: DialAIEntityModel;
 dialTest.beforeAll(async () => {
   allAddons = ModelsUtil.getAddons();
   addonIds = allAddons.map((a) => a.id);
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
 });
 
 dialTest(

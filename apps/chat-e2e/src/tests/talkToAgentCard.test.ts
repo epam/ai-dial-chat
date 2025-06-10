@@ -123,7 +123,7 @@ dialTest(
           name: appName,
           version: appSecondVersion,
         }))!;
-        await localStorageManager.setRecentModelsIds(agent);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(agent);
       },
     );
 
@@ -404,7 +404,9 @@ dialTest(
               )
             : undefined;
         if (randomModel !== undefined) {
-          await localStorageManager.setRecentModelsIds(randomModel);
+          await localStorageManager.setRecentModelsIdsAndUseLastModel(
+            randomModel,
+          );
         }
         await localStorageManager.setShowSideBarPanels();
       },

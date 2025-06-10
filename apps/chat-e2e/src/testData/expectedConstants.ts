@@ -536,3 +536,8 @@ export const ExpectedPromptModalConst = {
   infoButtonTooltip: 'Info',
   deleteButtonTooltip: 'Delete',
 };
+
+export enum DefaultModelReference {
+  defaultAgent = '"default-agent"',
+  lastUsedModel = '"last-used-agent"',
+}
