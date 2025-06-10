@@ -765,6 +765,7 @@ const selectIsSelectedConversationBlocksInput = createSelector(
     resourcesToReview,
     isConfigurationBlocksInput,
     notAvailableEntityType,
+    areReadOnly,
   ) => {
     const isReviewEntity = conversations.some((conversation) =>
       resourcesToReview.some(
@@ -780,7 +781,7 @@ const selectIsSelectedConversationBlocksInput = createSelector(
         notAvailableEntityType ||
         isPlaybackConversation(conversation) ||
         (isEntityIdExternal(conversation) && !isReviewEntity) ||
-        isReadOnly ||
+        areReadOnly ||
         !conversation.messages ||
         isMessageInputDisabled(
           conversation.messages.length,
