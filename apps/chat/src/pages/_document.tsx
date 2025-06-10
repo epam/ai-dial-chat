@@ -20,7 +20,6 @@ function Document(props: Props) {
             href={`${process.env.APP_BASE_ORIGIN}${process.env.APP_BASE_PATH}/`}
           ></base>
         )}
-
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
           name="apple-mobile-web-app-title"
