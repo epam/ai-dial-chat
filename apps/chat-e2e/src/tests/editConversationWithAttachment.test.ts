@@ -62,7 +62,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversation.name);
         await chatHeader.chatAgent.click();
-        await talkToAgentDialog.selectAgent(ModelsUtil.getDefaultModel()!);
+        await talkToAgentDialog.selectAgent(ModelsUtil.getDefaultAgent()!);
       },
     );
 
@@ -118,7 +118,9 @@ dialTest(
       for (const file of allAttachedFiles) {
         await fileApiHelper.putFile(file);
       }
-      await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+      await localStorageManager.setRecentModelsIdsAndUseLastModel(
+        randomModelWithAttachment,
+      );
       await localStorageManager.setShowSideBarPanels();
     });
 

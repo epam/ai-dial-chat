@@ -16,7 +16,7 @@ let defaultModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
   models = ModelsUtil.getLatestModels().filter((m) => m.iconUrl != undefined);
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
 });
 
 dialTest(
@@ -97,7 +97,7 @@ dialTest(
           historyConversation,
           replayConversation,
         ]);
-        await localStorageManager.setRecentModelsIds(
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
           newRandomModel,
           firstRandomModel,
           secondRandomModel,
@@ -323,7 +323,7 @@ dialTest(
           historyConversation,
           replayConversation,
         ]);
-        await localStorageManager.setRecentModelsIds(
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
           firstRandomModel,
           secondRandomModel,
           thirdRandomModel,

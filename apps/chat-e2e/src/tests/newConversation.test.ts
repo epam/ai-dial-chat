@@ -41,7 +41,9 @@ dialTest(
       2,
     );
     const addon = GeneratorUtil.randomArrayElement(ModelsUtil.getAddons());
-    await localStorageManager.setRecentModelsIdsOnce(...models);
+    await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+      ...models,
+    );
     await localStorageManager.setRecentAddonsIds(addon);
     await localStorageManager.setLastConversationSettings('');
     await localStorageManager.setShowSideBarPanels();
@@ -433,7 +435,9 @@ dialTest(
     );
     const conversation = conversationData.prepareDefaultConversation(models[0]);
     await dataInjector.createConversations([conversation]);
-    await localStorageManager.setRecentModelsIdsOnce(...models);
+    await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+      ...models,
+    );
     await localStorageManager.setShowSideBarPanels();
 
     await dialTest.step('Open DIAL, navigate to Marketplace', async () => {
@@ -504,7 +508,9 @@ dialTest(
       ),
     );
     const addon = GeneratorUtil.randomArrayElement(ModelsUtil.getAddons());
-    await localStorageManager.setRecentModelsIdsOnce(model);
+    await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+      model,
+    );
     await localStorageManager.setRecentAddonsIds(addon);
     await localStorageManager.setLastConversationSettings('');
     await localStorageManager.setShowSideBarPanels();

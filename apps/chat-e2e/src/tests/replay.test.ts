@@ -24,7 +24,7 @@ dialTest.beforeAll(async () => {
   allModels = ModelsUtil.getLatestModels().filter(
     (m) => m.iconUrl != undefined,
   );
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
   aModel = GeneratorUtil.randomArrayElement(
     allModels.filter(
       (m) => m.id !== defaultModel.id && (m as DialAIEntity).features?.addons,
@@ -288,7 +288,7 @@ dialTest(
         conversation,
         replayConversation,
       ]);
-      await localStorageManager.setRecentModelsIds(replayModel);
+      await localStorageManager.setRecentModelsIdsAndUseLastModel(replayModel);
       await localStorageManager.setShowSideBarPanels();
     });
 
@@ -357,7 +357,7 @@ dialTest(
 
         const modelVersionInfo = await modelInfoTooltip.getVersionInfo();
         expect
-          .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
+          .soft(modelVersionInfo, ExpectedMessages.agentVersionIsValid)
           .toBe(replayModel.version);
 
         //TODO: add setting verification when clarified where to display (TBD: Do we need to show settings icon for replay as is?)
@@ -468,7 +468,7 @@ dialTest(
         baseAssertion.assertValue(
           modelVersionInfo,
           defaultModel.version!,
-          ExpectedMessages.chatInfoVersionIsValid,
+          ExpectedMessages.agentVersionIsValid,
         );
       },
     );
@@ -817,7 +817,7 @@ dialTest(
     await dialTest.step(
       'Import conversation from old app version and send two new messages based on Titan and gpt-4 models',
       async () => {
-        await localStorageManager.setRecentModelsIds(
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
           ...newModels.map((m) => ModelsUtil.getModel(m)!),
         );
         await localStorageManager.setShowSideBarPanels();

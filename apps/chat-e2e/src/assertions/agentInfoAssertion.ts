@@ -40,7 +40,7 @@ export class AgentInfoAssertion extends BaseAssertion {
       ? await this.assertElementText(
           this.agentInfo.agentVersion,
           expectedVersion,
-          ExpectedMessages.chatInfoVersionIsValid,
+          ExpectedMessages.agentVersionIsValid,
         )
       : await this.assertElementState(versionElement, 'hidden');
   }

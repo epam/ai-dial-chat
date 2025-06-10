@@ -189,7 +189,10 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
     submitWrapper(handleSubmit)();
   }, [submitWrapper, handleSubmit]);
 
+  const isAppPublic = isEntityIdPublic(oldApplication);
+
   const savePartialForm = useCallback(() => {
+    if (isAppPublic) return;
     const data = getValues();
     if (!isValid && lastSubmittedValuesRef.current) {
       handleSubmit({
@@ -199,7 +202,7 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
     } else if (isValid) {
       handleSubmit(data);
     }
-  }, [getFieldState, getValues, handleSubmit, isValid]);
+  }, [getFieldState, getValues, handleSubmit, isValid, isAppPublic]);
 
   useBeforeRedirect(savePartialForm);
 
@@ -228,8 +231,6 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
     t,
     autoSaveHandler,
   ]);
-
-  const isAppPublic = isEntityIdPublic(oldApplication);
 
   return (
     <form
@@ -276,6 +277,7 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
               error={errors.inputAttachmentTypes?.message}
               disabled={isAppPublic}
               tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
+              dataQa={'attachment-types-field'}
               {...getAttachmentTypeErrorHandlers(setError, clearErrors)}
             />
           )}
@@ -290,6 +292,7 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
           rules={validators['maxInputAttachments']}
           disabled={isAppPublic}
           tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
+          dataQa={'max-attachment-number-field'}
         />
         <Field
           {...register('completionUrl', validators['completionUrl'])}

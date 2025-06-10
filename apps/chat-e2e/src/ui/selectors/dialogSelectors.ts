@@ -64,6 +64,11 @@ export const ModelDialog = {
   applicationsTab: '[data-qa="applications-tab"]',
 };
 
+export const ReviewApplicationDialog = {
+  reviewDialog: '[data-qa="review-application-dialog"]',
+  entityIcon: '[data-qa="entity-icon"]',
+};
+
 export const AddonDialog = {
   addonsDialog: '[data-qa="addons-dialog"]',
   addonSearchResults: '[data-qa="addon-search-results"]',
@@ -259,6 +264,8 @@ export const ApplicationEditorHeader = {
 };
 
 export const AppEditorGeneralInfoPreviewSelectors = {
+  fullContainer: '[data-qa="app-preview-general-info-full-container"]',
+  detailedSwitch: '[data-qa="toggle-switch"]',
   containerGeneralInfo: '[data-qa="app-preview-general-info"]',
   previewIconContainer: '[data-qa="entity-icon"]',
   previewAgentName: '[data-qa="agent-name"]',
@@ -266,6 +273,8 @@ export const AppEditorGeneralInfoPreviewSelectors = {
   previewInformationSection: '[data-qa="application-information"]',
   previewAuthorContainer: '[data-qa="author-container"]',
   previewAuthorValue: '[data-qa="author"]',
+  description: '[data-qa="application-description"]',
+  version: '[data-qa="version"]',
 };
 
 export const AppEditorAppSettingsPreviewSelectors = {
@@ -295,9 +304,11 @@ export const AddApplicationGeneralInfoFormSelector = {
 export const AddApplicationAppSettingsFormSelector = {
   featuresLabel: '[for="features"]',
   attachmentsTypesLabel: '[for="attachmentTypes"]',
+  attachmentsTypesInput: '[data-qa=attachment-types-field]',
   chatCompletionUrl: '#completionUrl',
   addButton: '[data-qa="add-application"]',
   appViewFormContainer: '[data-qa="app-view-form"]',
+  maxAttachmentNumberField: '[data-qa="max-attachment-number-field"]',
 };
 
 export const InformationModalSelectors = {

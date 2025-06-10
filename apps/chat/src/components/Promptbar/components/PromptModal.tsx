@@ -106,6 +106,12 @@ const PromptModalView = () => {
     !isNewPromptCreating && !isPromptInitModeEdit,
   );
 
+  const promptModalTitle = isViewMode
+    ? 'View prompt'
+    : isNewPromptCreating
+      ? 'Create prompt'
+      : 'Edit prompt';
+
   const dispatch = useAppDispatch();
 
   const handleToggleEditMode = useCallback((isOpen: boolean) => {
@@ -132,7 +138,7 @@ const PromptModalView = () => {
           'text-error',
       )}
       state={isLoading ? ModalState.LOADING : ModalState.OPENED}
-      heading={t(isViewMode ? 'View prompt' : 'Edit prompt')}
+      heading={t(promptModalTitle)}
       hideClose={!isViewMode}
       onClose={handleClose}
     >

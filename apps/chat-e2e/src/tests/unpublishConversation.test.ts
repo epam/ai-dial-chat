@@ -65,7 +65,7 @@ dialAdminTest(
     };
     let secondUnpublishResponse: PublicationProps;
     const expectedConversationIcon = iconApiHelper.getEntityIcon(
-      ModelsUtil.getDefaultModel()!,
+      ModelsUtil.getDefaultAgent()!,
     );
     const expectedErrorColor = ThemesUtil.getRgbColorByKey(
       ThemeColorAttributes.textError,

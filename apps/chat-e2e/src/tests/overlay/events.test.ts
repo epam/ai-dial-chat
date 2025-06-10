@@ -165,7 +165,7 @@ dialOverlayTest(
         );
         await overlayBaseAssertion.assertElementText(
           overlayAgentInfo.agentName,
-          ModelsUtil.getDefaultModel()!.name,
+          ModelsUtil.getDefaultAgent()!.name,
         );
         const recentModels = await localStorageManager.getRecentModelsIds(
           process.env.NEXT_PUBLIC_OVERLAY_HOST,

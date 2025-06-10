@@ -100,7 +100,7 @@ dialTest(
     let firstVersionMenuOptionElement: Locator;
 
     await dialTest.step('Upload svg image to the root path', async () => {
-      imageUrl = await adminFileApiHelper.putFile(Attachment.appIcon);
+      imageUrl = await adminFileApiHelper.putFile(Attachment.appIconSvg);
     });
 
     await dialTest.step(
@@ -133,7 +133,7 @@ dialTest(
           name: appName,
           version: appSecondVersion,
         }))!;
-        await localStorageManager.setRecentModelsIds(agent);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(agent);
       },
     );
 
@@ -186,6 +186,7 @@ dialTest(
         await talkToAgentDialogAssertion.assertElementTextIsTruncated(
           talkToAgents.getAgentDescriptionContainer(agentElement),
         );
+        const actualVersionElement = talkToAgents.getAgentVersion(agentElement);
         await talkToAgentDialogAssertion.assertElementTextIsTruncated(
           actualVersionElement,
         );
@@ -223,7 +224,7 @@ dialTest(
       async () => {
         await actualIcon.hover();
         await tooltipAssertion.assertTooltipContent(
-          appName + '\n' + `v. ${appSecondVersion}`,
+          ExpectedConstants.agentIconTooltip(appName, appSecondVersion),
         );
         await talkToAgentDialogAssertion.assertElementState(
           talkToAgents.getAgentElementDotsMenu(agentElement),
@@ -325,6 +326,7 @@ dialTest(
     customApplicationBuilder,
     adminPublicationApiHelper,
     applicationApiHelper,
+    itemApiHelper,
     publicationApiHelper,
     publishRequestBuilder,
     localStorageManager,
@@ -413,7 +415,9 @@ dialTest(
               )
             : undefined;
         if (randomModel !== undefined) {
-          await localStorageManager.setRecentModelsIds(randomModel);
+          await localStorageManager.setRecentModelsIdsAndUseLastModel(
+            randomModel,
+          );
         }
         await localStorageManager.setShowSideBarPanels();
       },
@@ -670,7 +674,7 @@ dialTest(
       const unpublishResponse =
         await adminPublicationApiHelper.createUnpublishRequest(appPublication);
       await adminPublicationApiHelper.approveRequest(unpublishResponse);
-      await applicationApiHelper.deleteApplication(app);
+      await itemApiHelper.deleteBackendItem(app);
     });
 
     await dialTest.step(

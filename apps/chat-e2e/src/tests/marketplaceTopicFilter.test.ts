@@ -102,7 +102,9 @@ dialTest(
             a.name === secondAppName ||
             a.name === fourthAppName,
         );
-        await localStorageManager.setRecentModelsIdsOnce(...addedApps);
+        await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+          ...addedApps,
+        );
       },
     );
 

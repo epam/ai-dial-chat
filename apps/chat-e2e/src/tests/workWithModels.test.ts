@@ -345,7 +345,9 @@ dialTest.skip(
     await dialTest.step(
       'Set system prompt for model and send request',
       async () => {
-        await localStorageManager.setRecentModelsIds(simpleRequestModel!);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          simpleRequestModel!,
+        );
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
@@ -394,7 +396,9 @@ dialTest(
     await dialTest.step('Set random application theme', async () => {
       const theme = GeneratorUtil.randomArrayElement(Object.keys(ThemeId));
       await localStorageManager.setSettings(theme);
-      await localStorageManager.setRecentModelsIds(simpleRequestModel!);
+      await localStorageManager.setRecentModelsIdsAndUseLastModel(
+        simpleRequestModel!,
+      );
       await localStorageManager.setShowSideBarPanels();
     });
 
@@ -514,7 +518,9 @@ dialTest(
       async () => {
         const width = SIDEBAR_MIN_WIDTH + SIDEBAR_MIN_WIDTH / 3;
         await localStorageManager.setChatbarWidth(width.toFixed());
-        await localStorageManager.setRecentModelsIds(simpleRequestModel!);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          simpleRequestModel!,
+        );
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
@@ -555,7 +561,9 @@ dialTest(
     await dialTest.step('Prepare prompt with content', async () => {
       prompt = promptData.preparePrompt(promptContent);
       await dataInjector.createPrompts([prompt]);
-      await localStorageManager.setRecentModelsIds(simpleRequestModel!);
+      await localStorageManager.setRecentModelsIdsAndUseLastModel(
+        simpleRequestModel!,
+      );
       await localStorageManager.setShowSideBarPanels();
     });
 

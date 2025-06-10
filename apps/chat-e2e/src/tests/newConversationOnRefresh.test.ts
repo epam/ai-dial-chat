@@ -62,7 +62,9 @@ dialTest(
           ModelsUtil.getModels().filter((m) => m.iconUrl !== undefined),
           2,
         );
-        await localStorageManager.setRecentModelsIdsOnce(...models);
+        await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+          ...models,
+        );
         await localStorageManager.setShowSideBarPanels();
       },
     );
@@ -247,7 +249,9 @@ dialTest(
           ModelsUtil.getModels().filter((m) => m.iconUrl !== undefined),
           2,
         );
-        await localStorageManager.setRecentModelsIdsOnce(...models);
+        await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+          ...models,
+        );
         conversationToCompare = conversationData.prepareDefaultConversation(
           models[1],
         );

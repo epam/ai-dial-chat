@@ -1,5 +1,10 @@
 import { MouseEvent } from 'react';
 
+import { translate } from '@/src/utils/app/translation';
+
+import { EntityType } from '@/src/types/common';
+import { DialAIEntityModel } from '@/src/types/models';
+
 import { ImageMIMEType } from '@epam/ai-dial-shared';
 
 export const modelCursorSign = '▍';
@@ -44,3 +49,27 @@ export const IMAGE_TYPES_SET: Set<ImageMIMEType> = new Set<ImageMIMEType>(
 );
 
 export const LOCAL_BUCKET = 'local';
+
+export const DEFAULT_AGENT = 'default-agent';
+export const LAST_USED_AGENT = 'last-used-agent';
+
+export const DEFAULT_MODEL_OPTION: DialAIEntityModel = {
+  id: DEFAULT_AGENT,
+  reference: DEFAULT_AGENT,
+  name: translate('Default agent'),
+  type: EntityType.Model,
+  isDefault: true,
+};
+
+export const LAST_USED_MODEL_OPTION: DialAIEntityModel = {
+  id: LAST_USED_AGENT,
+  reference: LAST_USED_AGENT,
+  name: translate('Last used agent'),
+  type: EntityType.Model,
+  isDefault: false,
+};
+
+export const SPECIAL_DEFAULT_MODEL_DIC: Record<string, DialAIEntityModel> = {
+  [DEFAULT_AGENT]: DEFAULT_MODEL_OPTION,
+  [LAST_USED_AGENT]: LAST_USED_MODEL_OPTION,
+};

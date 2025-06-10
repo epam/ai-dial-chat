@@ -120,7 +120,7 @@ dialTest(
         const name = GeneratorUtil.randomString(170);
         conversation = conversationData.prepareModelConversationBasedOnRequests(
           [request],
-          ModelsUtil.getDefaultModel()!,
+          ModelsUtil.getDefaultAgent()!,
           name,
         );
         await dataInjector.createConversations([conversation]);

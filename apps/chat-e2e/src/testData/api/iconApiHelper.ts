@@ -9,7 +9,24 @@ export class IconApiHelper extends BaseApiHelper {
     if (iconUrl) {
       return this.isAbsoluteUrl(iconUrl)
         ? iconUrl
-        : `${API.themeUrl}/${encodeURIComponent(iconUrl)}`;
+        : `${API.themeUrl}/${iconUrl}`;
+    } else {
+      switch (entity.type) {
+        case EntityType.Model:
+        case EntityType.Application:
+          return API.defaultModelIconHost();
+        case EntityType.Addon:
+          return API.defaultAddonIconHost();
+        default:
+          return '';
+      }
+    }
+  }
+
+  public getCustomIcon(entity: DialAIEntityModel) {
+    const iconUrl = entity.iconUrl;
+    if (iconUrl) {
+      return this.isAbsoluteUrl(iconUrl) ? iconUrl : `${API.api}/${iconUrl}`;
     } else {
       switch (entity.type) {
         case EntityType.Model:

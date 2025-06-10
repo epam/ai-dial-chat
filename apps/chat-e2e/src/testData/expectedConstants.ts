@@ -152,12 +152,12 @@ export const ExpectedConstants = {
     `Test ${ExpectedConstants.allowedSpecialChars}`,
   winAllowedSpecialSymbolsInName: "Test (`~!@#$^_-_+[]'___._)",
   duplicatedFilenameError: (filename: string) =>
-    `Files which you trying to upload already presented in selected folder. Please rename or delete them from uploading files list: ${filename}`,
+    `The files you're trying to upload already exist in the selected folder. Please rename them or remove them from your upload list: ${filename}`,
   sameFilenamesError: (filename: string) =>
-    `Files which you trying to upload have same names. Please rename or delete them from uploading files list: ${filename}`,
+    `The files you're trying to upload have the same names. Please rename or remove them from your upload list: ${filename}`,
   restrictedNameChars: ':;,=/{}%&\\"',
   notAllowedFilenameError: (filename: string) =>
-    `The symbols ${ExpectedConstants.restrictedNameChars} are not allowed in file name. Please rename or delete them from uploading files list: ${filename}`,
+    `The symbols ${ExpectedConstants.restrictedNameChars} are not allowed in file names. Please rename the file or remove it from your upload list: ${filename}`,
   endDotFilenameError: (filename: string) =>
     `Using a dot at the end of a name is not permitted. Please rename or delete them from uploading files list: ${filename}`,
   allFilesRoot: 'All files',
@@ -252,6 +252,8 @@ export const ExpectedConstants = {
   informationModalLastUpdatedLabel: 'Last updated:',
   informationModalCreatedDateLabel: 'Creation date:',
   informationModalAuthorLabel: 'Author:',
+  agentIconTooltip: (appName: string, appVersion: string) =>
+    `${appName}\nv. ${appVersion}`,
   goToMyWorkspaceButtonLabel: 'Go to My workspace',
   goToDialMarketplaceButtonLabel: 'Go to DIAL Marketplace',
 };
@@ -355,6 +357,7 @@ export const Chronology = {
 };
 
 export const API = {
+  api: '/api',
   modelsHost: '/api/models',
   addonsHost: '/api/addons',
   chatHost: '/api/chat',
@@ -444,7 +447,7 @@ export const Attachment = {
   fileWithoutExtension: 'withoutExtension',
   plotlyName: 'plotly.json',
   pdfName: 'pdf_attachment.pdf',
-  appIcon: 'appIcon.svg',
+  appIconSvg: 'appIcon.svg',
 };
 
 export enum Side {
@@ -537,3 +540,8 @@ export const ExpectedPromptModalConst = {
   infoButtonTooltip: 'Info',
   deleteButtonTooltip: 'Delete',
 };
+
+export enum DefaultModelReference {
+  defaultAgent = '"default-agent"',
+  lastUsedModel = '"last-used-agent"',
+}

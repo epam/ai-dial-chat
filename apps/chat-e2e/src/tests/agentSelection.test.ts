@@ -66,7 +66,9 @@ dialTest(
     await dialTest.step(
       'Prepare models and set recent models in local storage',
       async () => {
-        await localStorageManager.setRecentModelsIdsOnce(...models);
+        await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+          ...models,
+        );
         await localStorageManager.setShowSideBarPanels();
       },
     );
@@ -283,7 +285,9 @@ dialAdminTest(
     );
 
     await dataInjector.createConversations([conversation1, conversation2]);
-    await localStorageManager.setRecentModelsIdsOnce(...models);
+    await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+      ...models,
+    );
 
     await dialAdminTest.step(
       'Create a conversation with the second model and publish it',
@@ -443,7 +447,9 @@ dialTest(
       (m) => m.id !== initialModel1.id && m.id !== initialModel2.id,
     );
     const addedModel = GeneratorUtil.randomArrayElement(availableModels);
-    await localStorageManager.setRecentModelsIdsOnce(...models);
+    await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+      ...models,
+    );
     await localStorageManager.setShowSideBarPanels();
 
     // Create conversations
@@ -619,7 +625,9 @@ dialTest(
       2,
     );
     const [firstModel, secondModel] = models;
-    await localStorageManager.setRecentModelsIdsOnce(...models);
+    await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+      ...models,
+    );
     await localStorageManager.setShowSideBarPanels();
 
     await dialTest.step('Open DIAL', async () => {
@@ -702,7 +710,9 @@ dialSharedWithMeTest(
         sharedConversation2,
       ]);
     await mainUserShareApiHelper.acceptInvite(shareByLinkResponse);
-    await localStorageManager.setRecentModelsIdsOnce(...models);
+    await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+      ...models,
+    );
     await localStorageManager.setShowSideBarPanels();
 
     await dialSharedWithMeTest.step('Open DIAL by the main user', async () => {
