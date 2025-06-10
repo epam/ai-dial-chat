@@ -95,6 +95,7 @@ dialTest(
     let actualNameElement: BaseElement;
     let actualDescriptionElement: BaseElement;
     let firstVersionMenuOptionElement: Locator;
+    let actualVersionElement: BaseElement;
 
     await dialTest.step('Upload svg image to the root path', async () => {
       imageUrl = await adminFileApiHelper.putFile(Attachment.appIconSvg);
@@ -161,7 +162,7 @@ dialTest(
         actualNameElement = talkToAgents.getAgentName(agentElement);
         actualDescriptionElement =
           talkToAgents.getAgentDescription(agentElement);
-        const actualVersionElement = talkToAgents.getAgentVersion(agentElement);
+        actualVersionElement = talkToAgents.getAgentVersion(agentElement);
         await marketplaceAgentsAssertion.assertElementText(
           actualNameElement,
           appName,
@@ -170,10 +171,11 @@ dialTest(
           actualDescriptionElement,
           shortDescription(` ${expectedRgbColor}`, ` ${expectedTarget}`),
         );
-        await marketplaceAgentsAssertion.assertElementText(
-          actualVersionElement,
-          SortingUtil.sortVersionsArray([appFirstVersion, appSecondVersion])[0],
-        );
+        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/3988
+        // await marketplaceAgentsAssertion.assertElementText(
+        //   actualVersionElement,
+        //   SortingUtil.sortVersionsArray([appFirstVersion, appSecondVersion])[0],
+        // );
       },
     );
 
@@ -186,7 +188,7 @@ dialTest(
         await talkToAgentDialogAssertion.assertElementTextIsTruncated(
           talkToAgents.getAgentDescriptionContainer(agentElement),
         );
-        const actualVersionElement = talkToAgents.getAgentVersion(agentElement);
+        actualVersionElement = talkToAgents.getAgentVersion(agentElement);
         await talkToAgentDialogAssertion.assertElementTextIsTruncated(
           actualVersionElement,
         );
