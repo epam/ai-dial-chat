@@ -256,7 +256,9 @@ export class LocalStorageManager {
     await this.page.addInitScript(this.setDefaultModelReferenceKey(), option);
   }
 
-  async setRecentModelsIdsAndUseLastModel(...models: DialAIEntityModel[]) {
+  async setRecentModelsIdsAndUseLastModel(
+    ...models: (DialAIEntityModel | string)[]
+  ) {
     await this.setRecentModelsIds(...models);
     await this.setDefaultModelReference(DefaultModelReference.lastUsedModel);
   }
