@@ -12,7 +12,11 @@ import { regenerateConversationId } from '@/src/utils/app/conversation';
 import { ApiEntityStorage } from '@/src/utils/app/data/storages/api/api-entity-storage';
 import { generateNextName } from '@/src/utils/app/folders';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
-import { ApiUtils, parseApplicationApiKey } from '@/src/utils/server/api';
+import {
+  ApiUtils,
+  getOpsApiUrl,
+  parseApplicationApiKey,
+} from '@/src/utils/server/api';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
@@ -30,6 +34,7 @@ import {
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
+import { ServerSlugs } from '@/src/types/slugs-types';
 import { DialStorage } from '@/src/types/storage';
 
 import {
@@ -269,7 +274,7 @@ export class ApiStorage implements DialStorage {
   }
 
   move(data: MoveModel): Observable<MoveModel> {
-    return ApiUtils.request('/api/ops/resource/move', {
+    return ApiUtils.request(getOpsApiUrl(ServerSlugs.RESOURCE_MOVE), {
       method: HTTPMethod.POST,
       body: JSON.stringify({
         sourceUrl: ApiUtils.encodeApiUrl(data.sourceUrl),

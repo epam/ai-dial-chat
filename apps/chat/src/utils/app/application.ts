@@ -32,7 +32,7 @@ import { ApplicationGeneralInfoFormData } from '@/src/components/AppsEditor/Gene
 
 import { constructPath } from './file';
 import { getFolderIdFromEntityId } from './folders';
-import { getApplicationRootId } from './id';
+import { getApplicationRootId, getEntityBucket } from './id';
 import { isEntityIdPublic } from './publications';
 import { translate } from './translation';
 
@@ -53,20 +53,27 @@ export const safeStringifyApplicationFeatures = (
 };
 
 export const getGeneratedApplicationId = (
-  application: Omit<ApplicationInfo, 'id'>,
-  bucket?: string,
+  application: PartialBy<ApplicationInfo, 'id'>,
 ): string => {
+  if (application.folderId) {
+    return constructPath(
+      application.folderId,
+      getApplicationApiKey(application),
+    );
+  }
+
   return constructPath(
-    getApplicationRootId(bucket),
+    getApplicationRootId(
+      application.id ? getEntityBucket({ id: application.id }) : undefined,
+    ),
     getApplicationApiKey(application),
   );
 };
 
 export const regenerateApplicationId = <T extends ApplicationInfo>(
   application: PartialBy<T, 'id'>,
-  bucket?: string,
 ): T => {
-  const newId = getGeneratedApplicationId(application, bucket);
+  const newId = getGeneratedApplicationId(application);
   if (!application.id || newId !== application.id) {
     return {
       ...application,

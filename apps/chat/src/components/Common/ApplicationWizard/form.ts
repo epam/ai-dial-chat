@@ -33,7 +33,7 @@ import {
   DEFAULT_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
-import { DEFAULT_VERSION } from '@/src/constants/public';
+import { DEFAULT_VERSION } from '@/src/constants/publication';
 import { DEFAULT_QUICK_APPS_MODEL } from '@/src/constants/quick-apps';
 
 import { DynamicField } from '@/src/components/Common/Forms/DynamicFormFields';

@@ -1,3 +1,5 @@
+import { Observable, forkJoin, of, switchMap } from 'rxjs';
+
 import {
   isPlaybackConversation,
   isReplayConversation,
@@ -9,7 +11,9 @@ import {
   getIdWithoutVersionFromApiKey,
   getPublicItemIdWithoutVersion,
   getVersionFromId,
+  parseApplicationApiKey,
   parseConversationApiKey,
+  parseFileApiKey,
   parsePromptApiKey,
 } from '@/src/utils/server/api';
 
@@ -21,8 +25,12 @@ import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import { PromptInfo } from '@/src/types/prompt';
 import {
   PublicVersionGroups,
+  Publication,
+  PublicationRequestModel,
   PublicationResource,
+  PublicationRule,
   ResourceToReview,
+  TargetAudienceFilter,
 } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 
@@ -30,16 +38,20 @@ import {
   DEFAULT_VERSION,
   NA_VERSION,
   PUBLIC_URL_PREFIX,
-} from '@/src/constants/public';
+} from '@/src/constants/publication';
 
 import { isVersionValid } from './common';
+import { BucketService } from './data/bucket-service';
+import { FileService } from './data/file-service';
 import { constructPath } from './file';
 import { getFolderIdFromEntityId, sortByName } from './folders';
 import {
   getEntityBucket,
   getRootId,
+  isApplicationId,
   isConversationId,
   isEntityIdExternal,
+  isFileId,
   isRootId,
 } from './id';
 import { EnumMapper } from './mappers';
@@ -358,3 +370,140 @@ export const getVersionGroupFromId = (id: string) => {
     currentVersion: getVersionFromId(id),
   };
 };
+
+/**
+ * Process publication resources and handle file validation
+ */
+export const processPublicationResources = (
+  payload: PublicationRequestModel,
+): Observable<{
+  publicationData: PublicationRequestModel;
+  isPublishingExternalFiles: boolean;
+}> => {
+  return forkJoin({
+    payload: of(payload),
+    publicFiles: payload.resources.find((r) => isFileId(r.sourceUrl))
+      ? FileService.getMultipleFoldersFiles(
+          payload.resources
+            .filter((r) => isFileId(r.sourceUrl))
+            .map((r) => getFolderIdFromEntityId(r.targetUrl)),
+        )
+      : of([]),
+  }).pipe(
+    switchMap(({ payload, publicFiles }) => {
+      const fileIds = payload.resources
+        .map(({ sourceUrl }) => sourceUrl)
+        .filter((id) => id && isFileId(id));
+
+      const publicFileIds = publicFiles.map((file) => file.id);
+      const userBucket = BucketService.getBucket();
+
+      const isPublishingExternalFiles = fileIds.some((id) => {
+        const { bucket: fileBucket } = splitEntityId(id as string);
+        return fileBucket !== userBucket;
+      });
+
+      const resources = payload.resources.map((resource) => {
+        if (
+          publicFileIds.includes(resource.targetUrl) &&
+          resource.action === PublishActions.ADD
+        ) {
+          return {
+            ...resource,
+            action: PublishActions.ADD_IF_ABSENT,
+          };
+        }
+        return resource;
+      });
+
+      const publicationData: PublicationRequestModel = {
+        ...payload,
+        resources,
+      };
+      return of({ publicationData, isPublishingExternalFiles });
+    }),
+  );
+};
+
+export const getFirstReviewUrl = (
+  resourcesToReview: ResourceToReview[],
+  reviewedResources: ResourceToReview[],
+) => {
+  return resourcesToReview.length
+    ? resourcesToReview[0].reviewUrl
+    : reviewedResources[0].reviewUrl;
+};
+
+export const getReviewItems = (
+  publication: Publication,
+  resourcesToReview: ResourceToReview[],
+  isItemId: (id: string) => boolean,
+) => {
+  const toReview = resourcesToReview.filter(
+    (r) =>
+      !r.reviewed &&
+      r.publicationUrl === publication.url &&
+      isItemId(r.reviewUrl),
+  );
+  const reviewed = resourcesToReview.filter(
+    (r) => r.publicationUrl === publication.url && isItemId(r.reviewUrl),
+  );
+
+  return { toReview, reviewed };
+};
+
+export const getDefaultAllEditEntities = (resources: PublicationResource[]) => {
+  const allEditEntitiesMap: Record<
+    string,
+    {
+      name: string;
+      version: string;
+    }
+  > = {};
+
+  resources.forEach((item) => {
+    const isConversation = isConversationId(item.reviewUrl);
+    const isApplication = isApplicationId(item.reviewUrl);
+    const isFile = isFileId(item.reviewUrl);
+    const apiKey = splitEntityId(item.reviewUrl).name;
+
+    const parseFunction = isConversation
+      ? parseConversationApiKey
+      : isApplication
+        ? parseApplicationApiKey
+        : isFile
+          ? parseFileApiKey
+          : parsePromptApiKey;
+    const parsedApiKey = parseFunction(apiKey, {
+      parseVersion: true,
+    });
+
+    allEditEntitiesMap[item.reviewUrl] = {
+      name: parsedApiKey.name,
+      version: isApplication
+        ? getVersionFromId(item.reviewUrl)
+        : (parsedApiKey.publicationInfo?.version ?? NA_VERSION),
+    };
+  });
+
+  return allEditEntitiesMap;
+};
+
+export const mapRuleToFilter = (
+  rule: PublicationRule,
+): TargetAudienceFilter => ({
+  filterFunction: rule.function,
+  filterParams: rule.targets,
+  id: rule.source,
+});
+
+export const mapFilterToRule = (
+  filter: TargetAudienceFilter,
+): PublicationRule => ({
+  function: filter.filterFunction,
+  source: filter.id,
+  targets: filter.filterParams,
+});
+
+export const getPublicationDefaultName = (userName: string) =>
+  `New request by ${userName}`;

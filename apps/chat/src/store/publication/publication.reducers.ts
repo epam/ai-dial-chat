@@ -43,6 +43,11 @@ const initialState: PublicationState = {
   isApplicationReview: false,
   publicVersionGroups: {},
   publishModel: undefined,
+
+  // Review edit mode
+  isEditMode: false,
+  editState: {},
+  isPublicationUpdating: false,
 };
 
 export const publicationSlice = createSlice({
@@ -54,7 +59,9 @@ export const publicationSlice = createSlice({
       state.initialized = true;
     },
     publish: (state, _action: PayloadAction<PublicationRequestModel>) => state,
-    publishFail: (state, _action: PayloadAction<string | undefined>) => state,
+    publishFail: (state, _action: PayloadAction<string | undefined>) => {
+      state.isPublicationUpdating = false;
+    },
     uploadPublications: (state) => state,
     uploadPublicationsSuccess: (
       state,
@@ -69,13 +76,20 @@ export const publicationSlice = createSlice({
       state,
       { payload }: PayloadAction<{ publication: Publication }>,
     ) => {
-      state.publications = state.publications.map((p) =>
-        p.url === payload.publication.url
-          ? { ...payload.publication, ...p, uploadStatus: UploadStatus.LOADED }
-          : p,
+      state.publications = state.publications.map((publication) =>
+        publication.url === payload.publication.url
+          ? {
+              ...publication,
+              ...payload.publication,
+              uploadStatus: UploadStatus.LOADED,
+            }
+          : publication,
       );
+      state.isPublicationUpdating = false;
     },
-    uploadPublicationFail: (state) => state,
+    uploadPublicationFail: (state) => {
+      state.isPublicationUpdating = false;
+    },
     uploadPublishedWithMeItems: (
       state,
       _action: PayloadAction<{ featureType: FeatureType }>,
@@ -334,6 +348,55 @@ export const publicationSlice = createSlice({
       } else {
         state.publishModel = undefined;
       }
+    },
+    setIsPublicationUpdating: (state, { payload }: PayloadAction<boolean>) => {
+      state.isPublicationUpdating = payload;
+    },
+    updatePublicationRequest: (
+      state,
+      _action: PayloadAction<{
+        dataToUpdate: PublicationRequestModel;
+        url: string;
+      }>,
+    ) => {
+      state.isPublicationUpdating = true;
+    },
+    setIsEditMode: (state, { payload }: PayloadAction<boolean>) => {
+      state.isEditMode = payload;
+    },
+    setEditModeState: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        editState: Record<string, { name: string; version: string }>;
+        rules?: PublicationRule[];
+      }>,
+    ) => {
+      state.editState = payload.editState;
+      state.rulesOnEdit = payload.rules;
+    },
+    setEditStateByReviewUrl: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        reviewUrl: string;
+        name: string;
+        version: string;
+      }>,
+    ) => {
+      state.editState[payload.reviewUrl] = {
+        name: payload.name,
+        version: payload.version,
+      };
+    },
+
+    updateAndApprovePublicationRequest: (state) => {
+      state.isPublicationUpdating = true;
+    },
+    setRulesOnEdit: (state, { payload }: PayloadAction<PublicationRule[]>) => {
+      state.rulesOnEdit = payload;
     },
   },
 });

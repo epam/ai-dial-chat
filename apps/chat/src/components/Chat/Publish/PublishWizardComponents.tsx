@@ -22,7 +22,7 @@ export function PublicationInfoSection({
   return (
     <section className="mb-3">
       <h3
-        className="flex flex-row gap-1 text-xs text-secondary"
+        className="flex flex-row items-center gap-1 text-xs text-secondary"
         data-qa={labelDataQa}
       >
         {label}
