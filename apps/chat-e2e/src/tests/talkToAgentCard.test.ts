@@ -21,8 +21,6 @@ import { PublishActions } from '@epam/ai-dial-shared';
 import { Locator, expect } from '@playwright/test';
 import tinycolor from 'tinycolor2';
 
-const publicationsToUnpublish: Publication[] = [];
-
 dialTest(
   '[Select an agent for conversation] Version set on the first screen is shown on the card. Custom application.\n' +
     '[Select an agent for conversation] Custom application ICON and name are shown correctly. Set SVG from Manage attachments.\n' +
@@ -96,7 +94,6 @@ dialTest(
     let actualIcon: Locator;
     let actualNameElement: BaseElement;
     let actualDescriptionElement: BaseElement;
-    let actualVersionElement: BaseElement;
     let firstVersionMenuOptionElement: Locator;
 
     await dialTest.step('Upload svg image to the root path', async () => {
@@ -126,7 +123,6 @@ dialTest(
             await adminPublicationApiHelper.createPublishRequest(
               publishRequest,
             );
-          publicationsToUnpublish.push(appPublication);
           await adminPublicationApiHelper.approveRequest(appPublication);
         }
         agent = (await modelApiHelper.getAgentByNameAndVersion({
@@ -165,7 +161,7 @@ dialTest(
         actualNameElement = talkToAgents.getAgentName(agentElement);
         actualDescriptionElement =
           talkToAgents.getAgentDescription(agentElement);
-        actualVersionElement = talkToAgents.getAgentVersion(agentElement);
+        const actualVersionElement = talkToAgents.getAgentVersion(agentElement);
         await marketplaceAgentsAssertion.assertElementText(
           actualNameElement,
           appName,
@@ -173,6 +169,10 @@ dialTest(
         await marketplaceAgentsAssertion.assertElementInnerHtml(
           actualDescriptionElement,
           shortDescription(` ${expectedRgbColor}`, ` ${expectedTarget}`),
+        );
+        await marketplaceAgentsAssertion.assertElementText(
+          actualVersionElement,
+          SortingUtil.sortVersionsArray([appFirstVersion, appSecondVersion])[0],
         );
       },
     );
@@ -784,11 +784,11 @@ dialTest(
             (a) => a.type !== EntityType.Application && a.version !== undefined,
           ),
         );
-        await localStorageManager.setShowSideBarPanels();
-        await localStorageManager.setRecentModelsIds(
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
           appModel.reference!,
           randomWorkspaceAgent.reference,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
