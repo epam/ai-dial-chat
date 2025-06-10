@@ -277,6 +277,7 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
               error={errors.inputAttachmentTypes?.message}
               disabled={isAppPublic}
               tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
+              dataQa={'attachment-types-field'}
               {...getAttachmentTypeErrorHandlers(setError, clearErrors)}
             />
           )}
@@ -291,6 +292,7 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
           rules={validators['maxInputAttachments']}
           disabled={isAppPublic}
           tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
+          dataQa={'max-attachment-number-field'}
         />
         <Field
           {...register('completionUrl', validators['completionUrl'])}

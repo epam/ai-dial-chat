@@ -23,7 +23,7 @@ export function ReviewApplicationDialog() {
 
   return (
     <Modal
-      dataQa="models-dialog"
+      dataQa="review-application-dialog"
       portalId="chat"
       onClose={handleClose}
       overlayClassName="fixed inset-0 top-[48px]"

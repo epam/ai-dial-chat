@@ -31,7 +31,7 @@ const specialSymbolsName = () => {
 };
 
 dialTest.beforeAll(async () => {
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
 });
 
 dialTest(

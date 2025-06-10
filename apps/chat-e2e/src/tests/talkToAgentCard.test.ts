@@ -90,7 +90,7 @@ dialTest(
     let firstVersionMenuOptionElement: Locator;
 
     await dialTest.step('Upload svg image to the root path', async () => {
-      imageUrl = await adminFileApiHelper.putFile(Attachment.appIcon);
+      imageUrl = await adminFileApiHelper.putFile(Attachment.appIconSvg);
     });
 
     await dialTest.step(
@@ -123,7 +123,7 @@ dialTest(
           name: appName,
           version: appSecondVersion,
         }))!;
-        await localStorageManager.setRecentModelsIds(agent);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(agent);
       },
     );
 
@@ -404,7 +404,9 @@ dialTest(
               )
             : undefined;
         if (randomModel !== undefined) {
-          await localStorageManager.setRecentModelsIds(randomModel);
+          await localStorageManager.setRecentModelsIdsAndUseLastModel(
+            randomModel,
+          );
         }
         await localStorageManager.setShowSideBarPanels();
       },
