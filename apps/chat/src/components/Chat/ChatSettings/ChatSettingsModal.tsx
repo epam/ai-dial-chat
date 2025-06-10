@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-
-
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';

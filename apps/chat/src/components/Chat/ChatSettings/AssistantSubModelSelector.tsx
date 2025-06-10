@@ -1,13 +1,8 @@
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-
-
 import { Translation } from '@/src/types/translation';
 
-
-
 import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
-
 
 interface Props {
   assistantModelReference: string;
