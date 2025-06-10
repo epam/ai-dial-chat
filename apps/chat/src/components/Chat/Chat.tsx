@@ -563,14 +563,17 @@ const ChatView = memo(() => {
     setIsApproveRequiredInput(!isApproveRequiredInput);
   }, [isApproveRequiredInput]);
 
+  const isValidApproveRequiredConversation =
+    isApproveRequiredEntity && !isReplay && !isPlayback;
   const showLastMessageRegenerate =
-    !isReplay &&
-    !isPlayback &&
-    (!isExternal || isApproveRequiredEntity) &&
-    !isReadOnly &&
-    !messageIsStreaming &&
-    !isLastMessageError &&
-    !notAvailableEntityType;
+    (!isReplay &&
+      !isPlayback &&
+      !isExternal &&
+      !isReadOnly &&
+      !messageIsStreaming &&
+      !isLastMessageError &&
+      !notAvailableEntityType) ||
+    isValidApproveRequiredConversation;
 
   const areSelectedConversationsEmpty = selectedConversations.every(
     (conv) => !conv.messages.length,
@@ -585,11 +588,12 @@ const ChatView = memo(() => {
   );
 
   const isInputVisible =
-    (!isReplay || isNotEmptyConversations) &&
-    (!isExternal || isApproveRequiredInput) &&
-    !isReadOnly &&
-    (areModelsInstalled || isAdminPreview || isReplay || isIsolatedView) &&
-    !(isConversationWithSchema && selectedConversations.length > 1);
+    ((!isReplay || isNotEmptyConversations) &&
+      !isExternal &&
+      !isReadOnly &&
+      (areModelsInstalled || isAdminPreview || isReplay || isIsolatedView) &&
+      !(isConversationWithSchema && selectedConversations.length > 1)) ||
+    (isValidApproveRequiredConversation && isApproveRequiredInput);
 
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
@@ -847,13 +851,15 @@ const ChatView = memo(() => {
                                                 Feature.Likes,
                                               ) &&
                                               (!isEntityReadOnly(conv) ||
-                                                !isEntityIdExternal(conv))
+                                                !isEntityIdExternal(conv) ||
+                                                isValidApproveRequiredConversation)
                                             }
                                             editDisabled={
-                                              !!notAvailableEntityType ||
-                                              isReadOnly ||
-                                              isReplay ||
-                                              isPlayback
+                                              (!!notAvailableEntityType ||
+                                                isReadOnly ||
+                                                isReplay ||
+                                                isPlayback) &&
+                                              !isValidApproveRequiredConversation
                                             }
                                             onEdit={onEditMessage}
                                             onLike={onLikeHandler(index, conv)}
