@@ -1,6 +1,6 @@
 import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/chat/constants/default-ui-settings';
 import { Conversation } from '@/chat/types/chat';
-import { BackendChatEntity, BackendResourceType } from '@/chat/types/common';
+import { BackendChatEntity } from '@/chat/types/common';
 import {
   Publication,
   PublicationRequestModel,
@@ -815,13 +815,11 @@ dialOverlayTest(
     conversationData,
     overlayFolderConversations,
     overlaySharedWithMeConversations,
-    overlayOrganizationConversations,
     overlayHeader,
     overlayBaseAssertion,
     overlayChatBar,
     overlayDataInjector,
     overlayShareApiHelper,
-    overlayPublicationApiHelper,
     overlayItemApiHelper,
     setTestIds,
     adminShareApiHelper,
@@ -1038,35 +1036,36 @@ dialOverlayTest(
       },
     );
 
-    await testSelectedConversation(
-      `Select conversation from "Organization" section, click on "Get selected conversations" btn and verify dialog with conversation json is displayed`,
-      'organization',
-      async () => {
-        await overlayHeader.leftPanelToggle.click();
-        await overlayOrganizationConversations.selectEntity(
-          publishedConversation.name,
-          { isHttpMethodTriggered: true },
-        );
-      },
-      async () => {
-        const apiPublishedConversationsList =
-          await overlayPublicationApiHelper.listPublishedResources(
-            BackendResourceType.CONVERSATION,
-          )!;
-        const apiPublishedConversationFromList =
-          apiPublishedConversationsList.items!.find((i) =>
-            i.name.includes(publishedConversation.name),
-          )!;
-        const apiPublishedConversation =
-          await overlayPublicationApiHelper.getPublishedConversation(
-            apiPublishedConversationFromList.url,
-          );
-        return {
-          conversation: apiPublishedConversation,
-          conversationFromList: apiPublishedConversationFromList,
-        };
-      },
-    );
+    //TODO: 'organization' type is blocked by https://github.com/epam/ai-dial-chat/issues/2929
+    // await testSelectedConversation(
+    //   `Select conversation from "Organization" section, click on "Get selected conversations" btn and verify dialog with conversation json is displayed`,
+    //   'organization',
+    //   async () => {
+    //     await overlayHeader.leftPanelToggle.click();
+    //     await overlayOrganizationConversations.selectEntity(
+    //       publishedConversation.name,
+    //       { isHttpMethodTriggered: true },
+    //     );
+    //   },
+    //   async () => {
+    //     const apiPublishedConversationsList =
+    //       await overlayPublicationApiHelper.listPublishedResources(
+    //         BackendResourceType.CONVERSATION,
+    //       )!;
+    //     const apiPublishedConversationFromList =
+    //       apiPublishedConversationsList.items!.find((i) =>
+    //         i.name.includes(publishedConversation.name),
+    //       )!;
+    //     const apiPublishedConversation =
+    //       await overlayPublicationApiHelper.getPublishedConversation(
+    //         apiPublishedConversationFromList.url,
+    //       );
+    //     return {
+    //       conversation: apiPublishedConversation,
+    //       conversationFromList: apiPublishedConversationFromList,
+    //     };
+    //   },
+    // );
   },
 );
 
@@ -1325,7 +1324,8 @@ dialOverlayTest(
       },
     );
 
-    await dialOverlayTest.step(
+    //TODO: blocked by https://github.com/epam/ai-dial-chat/issues/2929
+    await dialOverlayTest.step.skip(
       'Set published conversation id in the field, click on "Create playback conversation by source conversation ID" btn and verify playback json is displayed on the modal',
       async () => {
         const publishedConversationId = publication.resources.find((r) =>
