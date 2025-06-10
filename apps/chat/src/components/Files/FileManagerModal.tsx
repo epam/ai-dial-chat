@@ -711,7 +711,7 @@ export const FileManagerModal = ({
         {(canAttachFiles || forceShowSelectCheckBox) && (
           <p id={descriptionId} data-qa="supported-attributes">
             {t(
-              'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
+              'Maximum size: 512 MB. Supported types: {{allowedExtensions}}.',
               {
                 allowedExtensions:
                   typesLabel ||
@@ -722,7 +722,7 @@ export const FileManagerModal = ({
             &nbsp;
             {maximumAttachmentsAmount !== Number.MAX_SAFE_INTEGER &&
               !!maximumAttachmentsAmount &&
-              t('Max selected files is {{maxAttachmentsAmount}}.', {
+              t('Up to {{maxAttachmentsAmount}} files.', {
                 maxAttachmentsAmount: maximumAttachmentsAmount,
               })}
           </p>

@@ -48,7 +48,15 @@ export class FileApiHelper extends BaseApiHelper {
   }
 
   public async putFile(filename: string, parentPath?: string) {
-    const filePath = path.join(Attachment.attachmentPath, filename);
+    return this.putFileWithCustomName(filename, filename, parentPath);
+  }
+
+  public async putFileWithCustomName(
+    filename: string,
+    file: string,
+    parentPath?: string,
+  ) {
+    const filePath = path.join(Attachment.attachmentPath, file);
     const buffer = fs.readFileSync(filePath);
     return this.putFileGeneric(buffer, filename, parentPath);
   }

@@ -1,8 +1,5 @@
 import { Tags } from '@/src/ui/domData';
-import {
-  AppEditorAppSettingsPreviewSelectors,
-  AppEditorGeneralInfoPreviewSelectors,
-} from '@/src/ui/selectors';
+import { AppEditorAppSettingsPreviewSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
 
@@ -17,7 +14,7 @@ export class AppEditorAppSettingsAgentPreview extends BaseElement {
 
   public previewChatIconContainer =
     this.appEditorChatMode.getChildElementBySelector(
-      AppEditorGeneralInfoPreviewSelectors.previewIconContainer,
+      AppEditorAppSettingsPreviewSelectors.previewIconContainer,
     );
 
   public previewChatIcon =
