@@ -72,7 +72,7 @@ const nextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   // @ts-ignore
-  basePath: process.env.NODE_ENV !== 'development' ? new BasePathResolver().toString() : '',
+  basePath: process.env.NODE_ENV !== 'development' ? String(new BasePathResolver()) : '',
 
   async redirects() {
     return [
