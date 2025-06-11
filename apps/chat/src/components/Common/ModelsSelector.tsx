@@ -61,6 +61,12 @@ interface ModelsSelectorProps {
   disabled?: boolean;
   tooltip?: string;
   onChange: (modelId: string) => void;
+  models?: DialAIEntityModel[];
+  additionalModelsMap?: Partial<Record<string, DialAIEntityModel>>;
+  useReference?: boolean;
+  inputClassName?: string;
+  panelClassName?: string;
+  indexSeparator?: number;
 }
 
 export const ModelsSelector = memo(function ModelsSelector({
@@ -68,18 +74,31 @@ export const ModelsSelector = memo(function ModelsSelector({
   disabled,
   tooltip,
   onChange,
+  models,
+  additionalModelsMap,
+  useReference,
+  inputClassName,
+  panelClassName,
+  indexSeparator,
 }: ModelsSelectorProps) {
-  const onlyModels = useAppSelector(ModelsSelectors.selectModelsOnly);
+  const modelTypeAgents = useAppSelector(ModelsSelectors.selectModelTypeAgents);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const displayedModels = models ?? modelTypeAgents;
 
-  const model = useMemo(() => modelsMap[value], [value, modelsMap]);
+  const model = useMemo(
+    () => modelsMap[value] || additionalModelsMap?.[value],
+    [modelsMap, value, additionalModelsMap],
+  );
 
   return (
     <Tooltip triggerClassName="w-full" tooltip={tooltip}>
       <div className="relative">
         {disabled && <DisableOverlay />}
         <Combobox
-          items={onlyModels}
+          inputClassName={inputClassName}
+          panelClassName={panelClassName}
+          indexSeparator={indexSeparator}
+          items={displayedModels}
           initialSelectedItem={
             model || {
               name: value,
@@ -92,7 +111,9 @@ export const ModelsSelector = memo(function ModelsSelector({
           getItemLabel={(model: DialAIEntityModel) =>
             getOpenAIEntityFullName(model)
           }
-          getItemValue={(model: DialAIEntityModel) => model.id}
+          getItemValue={(model: DialAIEntityModel) =>
+            useReference ? model.reference : model.id
+          }
           itemRow={({ item }) => (
             <ModelSelectRow
               item={item}

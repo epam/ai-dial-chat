@@ -12,7 +12,7 @@ let defaultModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
   models = ModelsUtil.getLatestModels();
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
 });
 
 dialTest(
@@ -38,7 +38,10 @@ dialTest(
           ModelsUtil.doesModelAllowTemperature(m),
       ),
     );
-    await localStorageManager.setRecentModelsIds(defaultModel, randomModel);
+    await localStorageManager.setRecentModelsIdsAndUseLastModel(
+      defaultModel,
+      randomModel,
+    );
     await localStorageManager.setShowSideBarPanels();
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();

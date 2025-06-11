@@ -153,7 +153,9 @@ dialTest(
           randomModelWithAttachment,
         );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          randomModelWithAttachment,
+        );
         await localStorageManager.setShowSideBarPanels();
       },
     );
@@ -562,7 +564,9 @@ dialTest(
           randomModelWithAttachment,
         );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          randomModelWithAttachment,
+        );
         await localStorageManager.setShowSideBarPanels();
       },
     );

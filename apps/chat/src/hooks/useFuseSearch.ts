@@ -7,15 +7,29 @@ export const useFuseSearch = <T>(
   query?: string,
   fuseOptions?: IFuseOptions<T>,
 ) => {
+  const extendedQuery = useMemo(() => {
+    const tokens = query ? query.trim().split(' ') : [];
+
+    if (tokens.length < 2 || !fuseOptions?.keys) return query;
+
+    return {
+      $or: fuseOptions.keys.map((key) => ({
+        $and: tokens.map((token) => ({
+          [key as string]: token,
+        })),
+      })),
+    };
+  }, [query, fuseOptions?.keys]);
+
   const searchableCollection = useMemo(() => {
     return new Fuse(items, fuseOptions);
   }, [fuseOptions, items]);
 
   const result = useMemo(() => {
-    return query
-      ? searchableCollection.search(query).map(({ item }) => item)
+    return extendedQuery
+      ? searchableCollection.search(extendedQuery).map(({ item }) => item)
       : items;
-  }, [query, searchableCollection, items]);
+  }, [extendedQuery, searchableCollection, items]);
 
   return result;
 };

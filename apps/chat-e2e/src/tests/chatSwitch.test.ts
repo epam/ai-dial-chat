@@ -43,7 +43,7 @@ dialTest(
       'Prepare 1 empty conversation, replay conversation and 2 default conversations',
       async () => {
         firstConversation = conversationData.prepareEmptyConversation(
-          ModelsUtil.getDefaultModel()!,
+          ModelsUtil.getDefaultAgent()!,
           `z${GeneratorUtil.randomString(10)}`,
         );
         conversationData.resetData();

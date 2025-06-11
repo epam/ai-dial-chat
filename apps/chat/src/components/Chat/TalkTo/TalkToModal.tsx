@@ -121,7 +121,12 @@ const TalkToModalView = ({
     }
     const currentModel = modelsMap[conversation.model.id];
     const recentInstalledModels = recentModelIds
-      .filter((id) => installedModelIdsSet.has(id) && modelsMap[id])
+      .filter(
+        (id) =>
+          installedModelIdsSet.has(id) &&
+          modelsMap[id] &&
+          !!searchedModels.find((m) => m.reference === id),
+      )
       .map((id) => modelsMap[id]) as DialAIEntityModel[];
     const installedModels = searchedModels.filter(
       (model) =>
