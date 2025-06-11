@@ -971,6 +971,7 @@ dialTest(
       for (const topic of topicsToSelect) {
         await listboxMenu.selectOption(topic);
       }
+      await appEditorGeneralForm.topicsDropdownToggle.click();
       await appEditorGeneralForm.addIconButton.click();
       await attachFilesModal.checkAttachedFile(
         Attachment.sunImageName,
