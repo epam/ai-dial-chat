@@ -179,17 +179,15 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
     submitWrapper(handleSubmit)();
   }, [submitWrapper, handleSubmit]);
 
-  const isAppPublic = isEntityIdPublic(oldApplication);
-
   const savePartialForm = useCallback(() => {
     if (isAppPublic) return;
     const data = getValues();
-    if (!isValid && lastSubmittedValuesRef.current && !isAppPublic) {
+    if (!isValid && lastSubmittedValuesRef.current) {
       handleSubmit({
         ...lastSubmittedValuesRef.current,
         ...getValidFormFields(data, getFieldState),
       });
-    } else if (isValid && !isAppPublic) {
+    } else if (isValid) {
       handleSubmit(data);
     }
   }, [getFieldState, getValues, handleSubmit, isValid, isAppPublic]);

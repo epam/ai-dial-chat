@@ -235,17 +235,15 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     submitWrapper(handleEdit)();
   }, [submitWrapper, handleEdit]);
 
-  const isAppPublic = isEntityIdPublic(oldApplication);
-
   const savePartialForm = useCallback(() => {
     if (isAppPublic) return;
     const data = cleanFormData(getValues());
-    if (!isValid && lastSubmittedValuesRef.current && !isAppPublic) {
+    if (!isValid && lastSubmittedValuesRef.current) {
       handleEdit({
         ...lastSubmittedValuesRef.current,
         ...getValidFormFields(data, getFieldState),
       });
-    } else if (isValid && !isAppPublic) {
+    } else if (isValid) {
       handleEdit(data);
     }
   }, [getFieldState, getValues, handleEdit, isValid, isAppPublic]);
