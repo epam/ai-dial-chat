@@ -191,7 +191,6 @@ interface Props {
   conversation: Conversation;
   items: CardType[];
   isMyWorkspace: boolean;
-  isSearchMode: boolean;
   searchTerm: string;
   onSelectModel: (entity: DialAIEntityModel) => void;
   onOpenMarketplaceTab: () => void;
