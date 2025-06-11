@@ -326,7 +326,7 @@ dialTest(
           randomModelWithImageAttachment,
         );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setRecentModelsIds(
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
           randomModelWithImageAttachment,
         );
         await localStorageManager.setShowSideBarPanels();

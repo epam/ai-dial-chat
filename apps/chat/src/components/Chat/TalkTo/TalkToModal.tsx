@@ -148,7 +148,8 @@ const TalkToModalView = ({
   const displayedModels = useMemo(() => {
     const filteredModels = sortedModels.filter(
       (entity) =>
-        !widgetsSchemaIds.has(entity.applicationTypeSchemaId as string),
+        !widgetsSchemaIds.has(entity.applicationTypeSchemaId as string) &&
+        !!searchedModels.find((m) => m.reference === entity.reference),
     );
     const groupedModels = groupModelsAndSaveOrder(filteredModels);
     const orderedModels: CardType[] = groupedModels.map(({ entities }) => {
@@ -317,7 +318,6 @@ const TalkToModalView = ({
         onSelectModel={handleSelectModel}
         isMyWorkspace={isMyWorkspace}
         onOpenMarketplaceTab={() => setTab(MarketplaceTabs.HOME)}
-        isSearchMode={searchTerm.length > 0}
         searchTerm={searchTerm}
       />
 

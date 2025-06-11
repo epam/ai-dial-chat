@@ -4,10 +4,12 @@ import { IFuseOptions } from 'fuse.js';
 
 export const MODELS_SEARCH_OPTIONS: IFuseOptions<DialAIEntityModel> = {
   keys: ['name', 'version'],
-  includeScore: false,
-  threshold: 0.4,
+  threshold: 0.2,
   distance: 100,
   minMatchCharLength: 1,
+  ignoreLocation: true,
   useExtendedSearch: false,
-  findAllMatches: true,
+  findAllMatches: false,
+  isCaseSensitive: false,
+  includeScore: false,
 };

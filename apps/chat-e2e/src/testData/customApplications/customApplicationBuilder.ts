@@ -32,12 +32,10 @@ export class CustomApplicationBuilder {
     this.customApplication.display_name = displayName;
     return this;
   }
-
   withDisplayVersion(displayVersion: string): CustomApplicationBuilder {
     this.customApplication.display_version = displayVersion;
     return this;
   }
-
   withDescriptionKeywords(...keywords: string[]): CustomApplicationBuilder {
     this.customApplication.description_keywords = keywords;
     return this;

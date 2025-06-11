@@ -376,7 +376,7 @@ dialSharedWithMeTest(
             await mainUserShareApiHelper.shareEntityByLink([conversation]);
           await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
         }
-        defaultModelId = ModelsUtil.getDefaultModel()!.id;
+        defaultModelId = ModelsUtil.getDefaultAgent()!.id;
         randomAddon = GeneratorUtil.randomArrayElement(ModelsUtil.getAddons());
         randomModel = GeneratorUtil.randomArrayElement(
           ModelsUtil.getLatestModels().filter(
@@ -384,7 +384,9 @@ dialSharedWithMeTest(
           ),
         );
         await localStorageManager.setRecentAddonsIds(randomAddon);
-        await localStorageManager.setRecentModelsIds(randomModel);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          randomModel,
+        );
         await localStorageManager.setShowSideBarPanels();
       },
     );
@@ -487,7 +489,7 @@ dialTest(
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-1510', 'EPMRTC-2002');
-    const defaultModel = ModelsUtil.getDefaultModel()!;
+    const defaultModel = ModelsUtil.getDefaultAgent()!;
     let conversation: Conversation;
     let replayConversation: Conversation;
     let playbackConversation: Conversation;
@@ -731,7 +733,7 @@ dialTest(
       'Open Compare mode for shared conversation and verify shared folder and conversation have blue arrow in Compare dropdown list',
       async () => {
         await dialHomePage.openHomePage({
-          iconsToBeLoaded: [ModelsUtil.getDefaultModel()!.iconUrl],
+          iconsToBeLoaded: [ModelsUtil.getDefaultAgent()!.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
 
@@ -853,7 +855,7 @@ dialTest(
       'Open app, select "Share" menu option for folder with conversation inside and verify modal window text',
       async () => {
         await dialHomePage.openHomePage({
-          iconsToBeLoaded: [ModelsUtil.getDefaultModel()!.iconUrl],
+          iconsToBeLoaded: [ModelsUtil.getDefaultAgent()!.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
         await folderConversations.expandFolder(folderConversation.folders.name);

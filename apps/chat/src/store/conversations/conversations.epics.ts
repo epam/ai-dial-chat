@@ -441,6 +441,17 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               });
             }
 
+            const defaultModelReference =
+              ModelsSelectors.selectDefaultModelReference(state);
+
+            if (defaultModelReference) {
+              return getDefaultModelReference({
+                recentModelReferences,
+                modelReferences,
+                defaultModelReference,
+              });
+            }
+
             return [...recentModelReferences, ...modelReferences][0];
           }),
           take(1),

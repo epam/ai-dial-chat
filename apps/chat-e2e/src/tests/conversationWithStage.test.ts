@@ -24,7 +24,7 @@ dialTest(
       'Prepare conversation with 3+ stages in response',
       async () => {
         conversation = conversationData.prepareConversationWithStagesInResponse(
-          ModelsUtil.getDefaultModel()!,
+          ModelsUtil.getDefaultAgent()!,
           stagesCount,
         );
         await dataInjector.createConversations([conversation]);

@@ -79,7 +79,7 @@ dialTest(
 
     await dialTest.step('Open start page', async () => {
       await dialHomePage.openHomePage({
-        iconsToBeLoaded: [ModelsUtil.getDefaultModel()!.iconUrl!],
+        iconsToBeLoaded: [ModelsUtil.getDefaultAgent()!.iconUrl!],
       });
       await dialHomePage.waitForPageLoaded();
       await conversations.selectEntity(secondConversation.name);

@@ -48,6 +48,7 @@ export enum UIStorageKeys {
   FileCollapsedSections = 'fileCollapsedSections',
   LastConversationSettings = 'lastConversationSettings',
   SelectedWidget = 'selectedWidget',
+  DefaultModelReference = 'defaultModelReference',
 }
 
 export enum MigrationStorageKeys {
