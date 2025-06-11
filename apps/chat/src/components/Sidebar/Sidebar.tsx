@@ -143,7 +143,7 @@ export const Sidebar = <T,>({
 
   const centralChatMinWidth =
     windowWidth && isTabletScreen()
-      ? windowWidth / 12 + 48 // windowWidth / 12 = 8% of the windowWidth + widget panel width
+      ? 104 // widget panel width + close button width
       : CENTRAL_CHAT_MIN_WIDTH; // fallback min width
 
   const oppositeSidebarMinWidth = useMemo(
