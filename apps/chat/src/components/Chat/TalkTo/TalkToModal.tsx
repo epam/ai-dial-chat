@@ -121,12 +121,7 @@ const TalkToModalView = ({
     }
     const currentModel = modelsMap[conversation.model.id];
     const recentInstalledModels = recentModelIds
-      .filter(
-        (id) =>
-          installedModelIdsSet.has(id) &&
-          modelsMap[id] &&
-          !!searchedModels.find((m) => m.reference === id),
-      )
+      .filter((id) => installedModelIdsSet.has(id) && modelsMap[id])
       .map((id) => modelsMap[id]) as DialAIEntityModel[];
     const installedModels = searchedModels.filter(
       (model) =>
@@ -153,7 +148,8 @@ const TalkToModalView = ({
   const displayedModels = useMemo(() => {
     const filteredModels = sortedModels.filter(
       (entity) =>
-        !widgetsSchemaIds.has(entity.applicationTypeSchemaId as string),
+        !widgetsSchemaIds.has(entity.applicationTypeSchemaId as string) &&
+        !!searchedModels.find((m) => m.reference === entity.reference),
     );
     const groupedModels = groupModelsAndSaveOrder(filteredModels);
     const orderedModels: CardType[] = groupedModels.map(({ entities }) => {
@@ -322,7 +318,6 @@ const TalkToModalView = ({
         onSelectModel={handleSelectModel}
         isMyWorkspace={isMyWorkspace}
         onOpenMarketplaceTab={() => setTab(MarketplaceTabs.HOME)}
-        isSearchMode={searchTerm.length > 0}
         searchTerm={searchTerm}
       />
 

@@ -1,5 +1,5 @@
 import { IconX } from '@tabler/icons-react';
-import Select, { components } from 'react-select';
+import Select, { Props as SelectProps, components } from 'react-select';
 
 import classNames from 'classnames';
 
@@ -10,41 +10,25 @@ import { Translation } from '@/src/types/translation';
 
 import { Tooltip } from './Tooltip';
 
-interface Props {
-  values: DropdownSelectorOption[];
-  options: DropdownSelectorOption[];
-  placeholder: string;
-  disabled?: boolean;
+type Props = SelectProps<DropdownSelectorOption, true> & {
   tooltip?: string;
-  onChange: (options: readonly DropdownSelectorOption[]) => void;
-  id?: string;
-}
+};
 
-export function DropdownSelector({
-  options,
-  placeholder,
-  values,
-  id,
-  disabled,
-  tooltip,
-  onChange,
-}: Props) {
+export function DropdownSelector({ tooltip, ...selectProps }: Props) {
   const { t } = useTranslation(Translation.Common);
   return (
     <Tooltip
-      triggerClassName={classNames('w-full', disabled && 'cursor-not-allowed')}
+      triggerClassName={classNames(
+        'w-full',
+        selectProps.isDisabled && 'cursor-not-allowed',
+      )}
       tooltip={tooltip}
     >
       <Select
-        placeholder={placeholder}
-        isMulti
-        onChange={onChange}
+        {...selectProps}
         closeMenuOnSelect={false}
         name="colors"
-        id={id}
-        isDisabled={disabled}
-        options={options}
-        value={values}
+        menuPortalTarget={document.body}
         components={{
           ClearIndicator: (props) => (
             <button
