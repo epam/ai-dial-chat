@@ -160,7 +160,9 @@ dialSharedWithMeTest(
             true,
             specialCharsImageUrl,
           );
-        await localStorageManager.setRecentModelsIds(defaultModel);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          defaultModel,
+        );
 
         //TODO EPMRTC-4135 blocked by the #1076
         // conversationData.resetData();
@@ -294,7 +296,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'By user2 create a conversation with attachments from Shared with me section in Manage attachments',
       async () => {
-        await additionalShareUserLocalStorageManager.setRecentModelsIds(
+        await additionalShareUserLocalStorageManager.setRecentModelsIdsAndUseLastModel(
           defaultModel,
         );
         await additionalShareUserLocalStorageManager.setShowSideBarPanels();
@@ -618,11 +620,13 @@ dialSharedWithMeTest(
       'User2 accepts share invitation by another user',
       async () => {
         await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
-        await additionalShareUserLocalStorageManager.setRecentModelsIds(
+        await additionalShareUserLocalStorageManager.setRecentModelsIdsAndUseLastModel(
           attachmentModel,
         );
         await additionalShareUserLocalStorageManager.setShowSideBarPanels();
-        await localStorageManager.setRecentModelsIds(attachmentModel);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          attachmentModel,
+        );
       },
     );
 
@@ -1068,7 +1072,7 @@ dialSharedWithMeTest(
     let imageUrl: string;
     let shareByLinkResponse: ShareByLinkResponseModel;
     let conversation: Conversation;
-    const defaultModel = ModelsUtil.getDefaultModel()!;
+    const defaultModel = ModelsUtil.getDefaultAgent()!;
 
     await localStorageManager.setChatCollapsedSection(
       CollapsedSections.Organization,

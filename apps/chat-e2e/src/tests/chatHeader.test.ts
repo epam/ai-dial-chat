@@ -13,7 +13,7 @@ let defaultModel: DialAIEntityModel;
 dialTest.beforeAll(async () => {
   allAddons = ModelsUtil.getAddons();
   addonIds = allAddons.map((a) => a.id);
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
 });
 
 dialTest(
@@ -127,7 +127,7 @@ dialTest(
 
         const modelVersionInfo = await modelInfoTooltip.getVersionInfo();
         expect
-          .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
+          .soft(modelVersionInfo, ExpectedMessages.agentVersionIsValid)
           .toBe(defaultModel.version);
 
         await chatHeader.hoverOverChatSettings();

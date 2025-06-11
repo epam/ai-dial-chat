@@ -59,7 +59,7 @@ export class AgentDetailsModalAssertion extends BaseAssertion {
     await this.assertElementText(
       this.agentDetailsModal.agentVersion,
       expectedVersion,
-      ExpectedMessages.chatInfoVersionIsValid,
+      ExpectedMessages.agentVersionIsValid,
     );
   }
 }

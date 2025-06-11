@@ -412,6 +412,21 @@ export class Folders extends BaseElement {
     ).locator(SideBarSelectors.selectedEntity);
   }
 
+  public async selectFolder(
+    folderName: string,
+    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
+  ) {
+    const folderElement = this.getFolderByName(folderName);
+    if (isApiStorageType && isHttpMethodTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'GET',
+      );
+      await folderElement.click();
+      return respPromise;
+    }
+    await folderElement.click();
+  }
+
   public async selectFolderEntity(
     folderName: string,
     entityName: string,

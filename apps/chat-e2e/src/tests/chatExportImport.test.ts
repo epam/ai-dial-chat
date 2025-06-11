@@ -35,7 +35,7 @@ let defaultModel: DialAIEntityModel;
 let simpleRequestModel: DialAIEntityModel | undefined;
 
 dialTest.beforeAll(async () => {
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
   simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
 });
 

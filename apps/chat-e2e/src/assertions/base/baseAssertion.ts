@@ -44,8 +44,8 @@ export class BaseAssertion {
         .toBe(expectedIconSource);
     }
     //assert icon is loaded and displayed
-    await expect(elementLocator).toHaveJSProperty('complete', true);
-    await expect(elementLocator).not.toHaveJSProperty('naturalWidth', 0);
+    await expect.soft(elementLocator).toHaveJSProperty('complete', true);
+    await expect.soft(elementLocator).not.toHaveJSProperty('naturalWidth', 0);
   }
 
   public assertArrayIncludesAll(
@@ -134,6 +134,20 @@ export class BaseAssertion {
         expectedMessage ?? ExpectedMessages.fieldValueIsValid,
       )
       .toHaveText(expectedText);
+  }
+
+  public async assertElementInnerHtml(
+    element: BaseElement | Locator,
+    expectedHtml: string | RegExp,
+    expectedMessage?: string,
+  ) {
+    const elementLocator = this.getElementLocator(element);
+    expect
+      .soft(
+        await elementLocator.innerHTML(),
+        expectedMessage ?? ExpectedMessages.fieldInnerHtmlIsValid,
+      )
+      .toBe(expectedHtml);
   }
 
   public async assertInputValue(
@@ -355,6 +369,24 @@ export class BaseAssertion {
     expect.soft(actualValue, expectedMessage ?? '').toBe(expectedValue);
   }
 
+  public assertStringIncludes(
+    actualValue: string,
+    expectedValue: string,
+    expectedMessage?: string,
+  ) {
+    expect.soft(actualValue, expectedMessage ?? '').toContain(expectedValue);
+  }
+
+  public assertStringNotIncludes(
+    actualValue: string,
+    expectedValue: string,
+    expectedMessage?: string,
+  ) {
+    expect
+      .soft(actualValue, expectedMessage ?? '')
+      .not.toContain(expectedValue);
+  }
+
   public async assertElementInnerText(
     element: BaseElement | Locator,
     expectedInnerText: string[],
@@ -378,6 +410,17 @@ export class BaseAssertion {
       elementLocator,
       ExpectedMessages.elementTextWrapIsValid,
     ).toHaveCSS(Styles.overflow_wrap, expectedWrap);
+  }
+
+  public async assertElementTextIsTruncated(
+    element: BaseElement | Locator,
+    expectedMessage?: string,
+  ) {
+    const elementLocator = this.getElementLocator(element);
+    await expect(
+      elementLocator,
+      expectedMessage ?? ExpectedMessages.elementTextIsTruncated,
+    ).toHaveCSS(Styles.text_overflow, Overflow.ellipsis);
   }
 
   private getElementLocator(element: BaseElement | Locator) {

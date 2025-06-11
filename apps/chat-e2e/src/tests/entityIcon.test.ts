@@ -97,7 +97,9 @@ dialTest.skip(
         const conversation =
           conversationData.prepareEmptyConversation(simpleRequestModel);
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setRecentModelsIds(simpleRequestModel!);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          simpleRequestModel!,
+        );
         await localStorageManager.setShowSideBarPanels();
 
         await dialHomePage.openHomePage();

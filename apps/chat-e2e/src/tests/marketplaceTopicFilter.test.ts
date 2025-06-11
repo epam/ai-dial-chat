@@ -102,7 +102,9 @@ dialTest(
             a.name === secondAppName ||
             a.name === fourthAppName,
         );
-        await localStorageManager.setRecentModelsIdsOnce(...addedApps);
+        await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+          ...addedApps,
+        );
       },
     );
 
@@ -579,7 +581,7 @@ dialTest(
           firstVersion,
         );
         await baseAssertion.assertElementInnerText(
-          marketplaceAgents.getAgentElementTopics(agentElement),
+          marketplaceAgents.getAgentTopicsContainer(agentElement),
           [firstAppTopic],
         );
       },
@@ -624,7 +626,7 @@ dialTest(
           'visible',
         );
         await baseAssertion.assertElementInnerText(
-          marketplaceAgents.getAgentElementTopics(agentElement),
+          marketplaceAgents.getAgentTopicsContainer(agentElement),
           [secondAppTopic],
         );
         await baseAssertion.assertElementState(
@@ -687,7 +689,7 @@ dialTest(
           'visible',
         );
         await baseAssertion.assertElementInnerText(
-          marketplaceAgents.getAgentElementTopics(agentElement),
+          marketplaceAgents.getAgentTopicsContainer(agentElement),
           [firstAppTopic],
         );
       },
@@ -725,7 +727,7 @@ dialTest(
           'visible',
         );
         await baseAssertion.assertElementInnerText(
-          marketplaceAgents.getAgentElementTopics(agentElement),
+          marketplaceAgents.getAgentTopicsContainer(agentElement),
           [secondAppTopic],
         );
         await baseAssertion.assertElementState(

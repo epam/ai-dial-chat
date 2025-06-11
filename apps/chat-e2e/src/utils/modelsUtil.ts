@@ -72,8 +72,8 @@ export class ModelsUtil {
     return ModelsUtil.getModels().find((a) => a.id === modelId);
   }
 
-  public static getDefaultModel() {
-    return ModelsUtil.getModels().find((a) => a.isDefault);
+  public static getDefaultAgent() {
+    return ModelsUtil.getOpenAIEntities().find((a) => a.isDefault);
   }
 
   public static doesModelAllowSystemPrompt(

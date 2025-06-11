@@ -31,7 +31,7 @@ let defaultModel: DialAIEntityModel;
 const nestedLevel = 4;
 
 dialTest.beforeAll(async () => {
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
 });
 
 dialSharedWithMeTest(
