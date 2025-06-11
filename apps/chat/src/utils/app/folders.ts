@@ -664,7 +664,7 @@ export const getSelectedEntitiesByFolderId = <
   entities
     .filter(
       (entity) =>
-        entity.id.startsWith(`${folderId}/`) &&
+        entity.id.startsWith(folderId) &&
         (!partialChosenFolderIds.includes(folderId) ||
           !chosenItemsIds.includes(entity.id)),
     )
