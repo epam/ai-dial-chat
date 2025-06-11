@@ -8,7 +8,13 @@ export const useFuseSearch = <T>(
   fuseOptions?: IFuseOptions<T>,
 ) => {
   const extendedQuery = useMemo(() => {
-    const tokens = query ? query.trim().split(' ') : [];
+    const tokens = query
+      ? query
+          .trim()
+          .split(' ')
+          .map((t) => t.trim())
+          .filter((t) => !!t)
+      : [];
 
     if (tokens.length < 2 || !fuseOptions?.keys) return query;
 
