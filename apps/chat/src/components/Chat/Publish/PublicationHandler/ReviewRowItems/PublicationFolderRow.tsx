@@ -3,23 +3,30 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
+import { prepareEntityName } from '@/src/utils/app/common';
 import {
   getSelectedEntitiesByFolderId,
   isFolderPartialSelected,
   isParentFolderSelected,
   sortByName,
 } from '@/src/utils/app/folders';
+import { isFileId } from '@/src/utils/app/id';
+import { EnumMapper } from '@/src/utils/app/mappers';
 
 import { PublicationReviewItem } from '@/src/types/publication';
 
 import { PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors } from '@/src/store/selectors';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 
 import { Checkbox } from '@/src/components/Common/Checkbox';
-import { Tooltip } from '@/src/components/Common/Tooltip';
+import { EditableField } from '@/src/components/Common/EditableField';
 
-import { FolderInterface } from '@epam/ai-dial-shared';
+import {
+  FeatureType,
+  FolderInterface,
+  PublishActions,
+} from '@epam/ai-dial-shared';
 
 interface Props<T extends PublicationReviewItem> {
   currentFolder: FolderInterface;
@@ -37,8 +44,6 @@ const filteredItems = <T extends PublicationReviewItem | FolderInterface>(
   currentFolderId: string,
 ) => sortByName(allItems.filter((item) => item.folderId === currentFolderId));
 
-const isEditMode = false;
-
 export const PublicationFolderRow = <T extends PublicationReviewItem>({
   currentFolder,
   allFolders,
@@ -47,6 +52,16 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
   ItemComponent,
 }: Props<T>) => {
   const dispatch = useAppDispatch();
+
+  const [inputName, setInputName] = useState(currentFolder.name);
+  const [isFocused, setIsFocused] = useState(false);
+  const [isSelected, setIsSelected] = useState(false);
+  const [isPartialSelected, setIsPartialSelected] = useState(false);
+
+  const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
+  const selectedPublication = useAppSelector(
+    PublicationSelectors.selectSelectedPublication,
+  );
   const {
     fullyChosenFolderIds: selectedFolderIds,
     partialChosenFolderIds: partialSelectedFolderIds,
@@ -57,9 +72,22 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
     PublicationSelectors.selectSelectedItemsToPublish,
   );
 
-  const [isFocused, setIsFocused] = useState(false);
-  const [isSelected, setIsSelected] = useState(false);
-  const [isPartialSelected, setIsPartialSelected] = useState(false);
+  useEffect(() => {
+    setInputName(currentFolder.name);
+  }, [currentFolder.name, isEditMode]);
+
+  const handleChangeName = useCallback(
+    (name: string) => {
+      setInputName(name);
+      dispatch(
+        PublicationActions.setEditFolderStateByFolderId({
+          folderId: currentFolder.id,
+          name,
+        }),
+      );
+    },
+    [dispatch, currentFolder.id],
+  );
 
   const { folders, items } = useMemo(() => {
     return {
@@ -108,6 +136,16 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
     );
   }, [currentFolder.id, isSelected, partialSelectedFolderIds]);
 
+  const isAllChildResourcesForUnpublish = selectedPublication?.resources
+    .filter((resource) => `${resource.reviewUrl.startsWith(currentFolder.id)}/`)
+    .every((resource) => resource.action === PublishActions.DELETE);
+  const isFileFolderAndApplicationResourceExists =
+    selectedPublication?.resourceTypes.includes(
+      EnumMapper.getBackendResourceTypeByFeatureType(FeatureType.Application),
+    ) && isFileId(currentFolder.id);
+  const isEditDisabled =
+    isFileFolderAndApplicationResourceExists || isAllChildResourcesForUnpublish;
+
   return (
     <>
       <div
@@ -133,26 +171,18 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
           <div
             className="relative flex-1 select-none truncate text-left"
             data-qa="folder-name"
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
           >
-            {isEditMode ? (
-              <div className="block flex-1 truncate whitespace-pre break-all text-left text-primary">
-                <input
-                  onFocus={() => setIsFocused(true)}
-                  onBlur={() => setIsFocused(false)}
-                  className="h-[24px] w-full border-b border-primary bg-layer-2 px-1 py-[2px] text-sm text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none"
-                  value={currentFolder.name}
-                />
-              </div>
-            ) : (
-              <Tooltip
-                tooltip={currentFolder.name}
-                contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
-                isTriggerClickable
-                triggerClassName="block max-h-5 flex-1 truncate whitespace-pre break-all text-left text-primary"
-              >
-                {currentFolder.name}
-              </Tooltip>
-            )}
+            <EditableField
+              value={inputName}
+              isEditMode={isEditDisabled ? false : isEditMode}
+              onChange={handleChangeName}
+              inputClassName={classNames(
+                'w-full',
+                !prepareEntityName(inputName).trim() && '!border-b-error',
+              )}
+            />
           </div>
         </div>
       </div>

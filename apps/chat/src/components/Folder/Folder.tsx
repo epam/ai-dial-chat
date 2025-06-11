@@ -146,7 +146,7 @@ export interface FolderProps<T, P = unknown> {
 
 export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   currentFolder,
-  searchTerm,
+  searchTerm = '',
   itemComponent,
   allItems,
   allItemsWithoutFilters = undefined,

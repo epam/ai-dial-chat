@@ -342,7 +342,7 @@ dialSharedWithMeTest(
       'Open "Marketplace" and verify Sources filter contains "Shared with me", "My Custom apps", "Public" options sorted alphabetically',
       async () => {
         await additionalUserFileApiHelper.updateInstalledDeployments([]);
-        await additionalShareUserLocalStorageManager.setRecentModelsIds();
+        await additionalShareUserLocalStorageManager.setRecentModelsIdsAndUseLastModel();
         await additionalShareUserMarketplacePage.openMarketplacePage();
         await additionalShareUserMarketplacePage.waitForPageLoaded();
         const sourceFilterOptions =

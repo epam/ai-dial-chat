@@ -197,16 +197,17 @@ export const ApplicationView: React.FC<Props> = ({
   }, [submitWrapper, handleSubmit]);
 
   const savePartialForm = useCallback(() => {
+    if (isAppPublic) return;
     const data = getValues();
-    if (!isValid && lastSubmittedValuesRef.current && !isAppPublic) {
+    if (!isValid && lastSubmittedValuesRef.current) {
       handleSubmit({
         ...lastSubmittedValuesRef.current,
         ...getValidFormFields(data, getFieldState),
       });
-    } else if (isValid && !isAppPublic) {
+    } else if (isValid) {
       handleSubmit(data);
     }
-  }, [getFieldState, getValues, handleSubmit, isAppPublic, isValid]);
+  }, [getFieldState, getValues, handleSubmit, isValid, isAppPublic]);
 
   useBeforeRedirect(savePartialForm);
 
@@ -281,6 +282,7 @@ export const ApplicationView: React.FC<Props> = ({
               error={errors.inputAttachmentTypes?.message}
               disabled={isAppPublic}
               tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
+              dataQa={'attachment-types-field'}
               {...getAttachmentTypeErrorHandlers(setError, clearErrors)}
             />
           )}
@@ -295,6 +297,7 @@ export const ApplicationView: React.FC<Props> = ({
           rules={validators['maxInputAttachments']}
           disabled={isAppPublic}
           tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
+          dataQa={'max-attachment-number-field'}
         />
         <Field
           {...register('completionUrl', validators['completionUrl'])}

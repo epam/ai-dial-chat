@@ -23,7 +23,7 @@ let bModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
   allModels = ModelsUtil.getModels().filter((m) => m.iconUrl !== undefined);
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
   aModel = GeneratorUtil.randomArrayElement(
     allModels.filter(
       (m) =>
@@ -794,7 +794,7 @@ dialTest(
           firstConversation,
           secondConversation,
         ]);
-        await localStorageManager.setRecentModelsIds(
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
           initRandomModel,
           firstUpdatedRandomModel,
           secondUpdatedRandomModel,
@@ -897,7 +897,7 @@ dialTest(
           .toBe(secondUpdatedRandomModel.name);
         const rightModelVersionInfo = await modelInfoTooltip.getVersionInfo();
         expect
-          .soft(rightModelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
+          .soft(rightModelVersionInfo, ExpectedMessages.agentVersionIsValid)
           .toBe(secondUpdatedRandomModel.version);
 
         await rightChatHeader.hoverOverChatSettings();
@@ -923,7 +923,7 @@ dialTest(
 
         const leftModelVersionInfo = await modelInfoTooltip.getVersionInfo();
         expect
-          .soft(leftModelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
+          .soft(leftModelVersionInfo, ExpectedMessages.agentVersionIsValid)
           .toBe(firstUpdatedRandomModel.version);
 
         await leftChatHeader.hoverOverChatSettings();

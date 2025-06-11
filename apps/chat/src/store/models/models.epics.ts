@@ -25,6 +25,7 @@ import { combineEpics, ofType } from 'redux-observable';
 
 import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
+import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { isMyApplication } from '@/src/utils/app/id';
 import { getGroupModelKey } from '@/src/utils/app/models';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
@@ -49,6 +50,7 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
+import { DEFAULT_AGENT } from '@/src/constants/chat';
 import { DeleteType } from '@/src/constants/marketplace';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -482,6 +484,26 @@ const getModelsFailEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
+const initDefaultModelReferenceEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ModelsActions.init.type),
+    switchMap(() => BrowserStorage.getDefaultModelReference()),
+    switchMap((defaultModelReference) => {
+      return of(
+        ModelsActions.setDefaultModelReference(
+          defaultModelReference ?? DEFAULT_AGENT,
+        ),
+      );
+    }),
+  );
+
+const setDefaultModelReferenceEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ModelsActions.setDefaultModelReference.type),
+    tap(({ payload }) => BrowserStorage.setDefaultModelReference(payload)),
+    ignoreElements(),
+  );
+
 export const ModelsEpics = combineEpics(
   initEpic,
   getModelsEpic,
@@ -493,4 +515,6 @@ export const ModelsEpics = combineEpics(
   removeInstalledModelsEpic,
   updateRecentModelsEpic,
   initRecentModelsEpic,
+  initDefaultModelReferenceEpic,
+  setDefaultModelReferenceEpic,
 );

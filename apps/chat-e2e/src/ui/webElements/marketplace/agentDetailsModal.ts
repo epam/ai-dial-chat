@@ -28,7 +28,7 @@ export class AgentDetailsModal extends BaseElement {
     MarketplaceDetailsModal.agentVersion,
   );
   public agentTopics = this.getChildElementBySelector(
-    MarketplaceAgentSelectors.topics,
+    MarketplaceAgentSelectors.topicsContainer,
   );
   public useButton = this.getChildElementBySelector(
     MarketplaceDetailsModal.useButton,
@@ -38,6 +38,9 @@ export class AgentDetailsModal extends BaseElement {
   );
   public deleteButton = this.getChildElementBySelector(
     MarketplaceDetailsModal.deleteButton,
+  );
+  public publishButton = this.getChildElementBySelector(
+    MarketplaceDetailsModal.publishButton,
   );
   public versionMenuTrigger = this.getChildElementBySelector(
     MarketplaceDetailsModal.versionMenuTrigger,

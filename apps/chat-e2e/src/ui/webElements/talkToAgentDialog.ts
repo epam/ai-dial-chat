@@ -1,7 +1,7 @@
 import { DialAIEntityModel } from '@/chat/types/models';
 import config from '@/config/chat.playwright.config';
 import { API, ExpectedConstants } from '@/src/testData';
-import { Attributes } from '@/src/ui/domData';
+import { Attributes, Tags } from '@/src/ui/domData';
 import { MarketplacePage } from '@/src/ui/pages';
 import { OverlayMarketplacePage } from '@/src/ui/pages/overlay/overlayMarketplacePage';
 import {
@@ -47,6 +47,20 @@ export class TalkToAgentDialog extends BaseElement {
 
   public getTalkToAgent(entity: DialAIEntityModel | string) {
     return this.getAgents().getAgent(entity);
+  }
+
+  public getVersionMenuTrigger(agentElement: Locator | BaseElement) {
+    const agentLocator =
+      agentElement instanceof BaseElement
+        ? agentElement.getElementLocator()
+        : (agentElement as Locator);
+    return agentLocator.locator(
+      MarketplaceAgentSelectors.agentVersionMenuTrigger,
+    );
+  }
+
+  getVersionChevronIcon(agentElement: Locator | BaseElement) {
+    return this.getVersionMenuTrigger(agentElement).locator(Tags.svg);
   }
 
   public async selectAgent(
@@ -111,9 +125,7 @@ export class TalkToAgentDialog extends BaseElement {
 
   private async selectAgentVersion(agentLocator: Locator, version: string) {
     let isVersionSelected = false;
-    const menuTrigger = agentLocator.locator(
-      MarketplaceAgentSelectors.agentVersionMenuTrigger,
-    );
+    const menuTrigger = this.getVersionMenuTrigger(agentLocator);
     //check if version menu is available
     if (await menuTrigger.isVisible()) {
       await menuTrigger.click();

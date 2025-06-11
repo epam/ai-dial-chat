@@ -17,11 +17,13 @@ import {
   ConversationSettingsModal,
   ConversationToCompare,
   InformationModal,
+  ListboxMenu,
   MessageTemplateModal,
   PromptBar,
   PublishingRules,
   SelectFolderModal,
   SendMessage,
+  TopicsTooltip,
 } from '../ui/webElements';
 import { ChatSettingsTooltip } from '../ui/webElements/chatSettingsTooltip';
 
@@ -227,6 +229,7 @@ const dialTest = test.extend<{
   rightChatHeader: ChatHeader;
   leftChatHeader: ChatHeader;
   tooltip: Tooltip;
+  topicsTooltip: TopicsTooltip;
   errorPopup: ErrorPopup;
   playbackControl: PlaybackControl;
   shareModal: ShareModal;
@@ -240,6 +243,7 @@ const dialTest = test.extend<{
   iconApiHelper: IconApiHelper;
   chatApiHelper: ChatApiHelper;
   fileApiHelper: FileApiHelper;
+  adminFileApiHelper: FileApiHelper;
   additionalSecondShareUserFileApiHelper: FileApiHelper;
   itemApiHelper: ItemApiHelper;
   applicationApiHelper: ApplicationApiHelper;
@@ -283,6 +287,7 @@ const dialTest = test.extend<{
   adminPublicationApiHelper: PublicationApiHelper;
   publishingRules: PublishingRules;
   informationModal: InformationModal;
+  listboxMenu: ListboxMenu;
   informationModalAssertion: InformationModalAssertion;
   conversationAssertion: ConversationAssertion;
   chatBarFolderAssertion: FolderAssertion<FolderConversations>;
@@ -726,6 +731,10 @@ const dialTest = test.extend<{
     const tooltip = new Tooltip(page);
     await use(tooltip);
   },
+  topicsTooltip: async ({ page }, use) => {
+    const topicsTooltip = new TopicsTooltip(page);
+    await use(topicsTooltip);
+  },
   errorPopup: async ({ page }, use) => {
     const errorPopup = new ErrorPopup(page);
     await use(errorPopup);
@@ -753,6 +762,13 @@ const dialTest = test.extend<{
   fileApiHelper: async ({ request }, use) => {
     const fileApiHelper = new FileApiHelper(request);
     await use(fileApiHelper);
+  },
+  adminFileApiHelper: async ({ adminUserRequestContext }, use) => {
+    const adminFileApiHelper = new FileApiHelper(
+      adminUserRequestContext,
+      BucketUtil.getAdminUserBucket(),
+    );
+    await use(adminFileApiHelper);
   },
   additionalSecondShareUserFileApiHelper: async (
     { additionalSecondShareUserRequestContext },
@@ -984,6 +1000,10 @@ const dialTest = test.extend<{
   informationModal: async ({ page }, use) => {
     const informationModal = new InformationModal(page);
     await use(informationModal);
+  },
+  listboxMenu: async ({ page }, use) => {
+    const listboxMenu = new ListboxMenu(page);
+    await use(listboxMenu);
   },
   informationModalAssertion: async ({ informationModal }, use) => {
     const informationModalAssertion = new InformationModalAssertion(

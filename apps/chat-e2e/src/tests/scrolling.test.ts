@@ -16,7 +16,7 @@ import { expect } from '@playwright/test';
 let defaultModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
 });
 
 dialTest(

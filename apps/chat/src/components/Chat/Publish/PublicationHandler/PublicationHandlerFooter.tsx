@@ -17,6 +17,7 @@ import {
   isPromptId,
 } from '@/src/utils/app/id';
 import {
+  allEditedFoldersAreValid,
   getDefaultAllEditEntities,
   getFirstReviewUrl,
   getReviewItems,
@@ -41,12 +42,15 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
-import { NA_VERSION } from '@/src/constants/publication';
+import {
+  MAX_PUBLICATION_AUTHOR_LENGTH,
+  NA_VERSION,
+} from '@/src/constants/publication';
 
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { FeatureType, PublishActions } from '@epam/ai-dial-shared';
+import { FeatureType } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 interface Props {
@@ -75,7 +79,15 @@ export const PublicationHandlerFooter = ({
     ),
   );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
-  const editState = useAppSelector(PublicationSelectors.selectEditState);
+  const entitiesEditState = useAppSelector(
+    PublicationSelectors.selectEntitiesEditState,
+  );
+  const foldersEditState = useAppSelector(
+    PublicationSelectors.selectFoldersEditState,
+  );
+  const displayAuthorEditState = useAppSelector(
+    PublicationSelectors.selectDisplayAuthorEditState,
+  );
   const itemsToPublish = useAppSelector(
     PublicationSelectors.selectSelectedItemsToPublish,
   );
@@ -91,10 +103,18 @@ export const PublicationHandlerFooter = ({
     dispatch(
       PublicationActions.setEditModeState({
         editState: getDefaultAllEditEntities(publication.resources),
-        rules: publication.rules,
+        rules: publication.rules ?? [],
+        displayAuthor: publication.displayAuthor ?? '',
       }),
     );
-  }, [dispatch, publication.resources, isEditMode, publication.rules]);
+  }, [
+    dispatch,
+    publication.resources,
+    isEditMode,
+    publication.rules,
+    publication.displayAuthor,
+    publication.author,
+  ]);
 
   const notExistEntities = useMemo(
     () =>
@@ -270,15 +290,20 @@ export const PublicationHandlerFooter = ({
     isFileId(resource.reviewUrl),
   );
   const isAllResourcesReviewed = resourcesToReview.every((r) => r.reviewed);
-  const isEditDisabled = Object.values(editState).some(({ version, name }) => {
-    return (
-      !prepareEntityName(name) ||
-      (!isVersionValid(version) && version !== NA_VERSION)
-    );
-  });
-  const isEveryResourceForUnpublish = publication.resources.every(
-    (resource) => resource.action === PublishActions.DELETE,
+  const isNamesOrVersionsInvalid = Object.values(entitiesEditState).some(
+    ({ version, name }) => {
+      return (
+        !prepareEntityName(name) ||
+        (!isVersionValid(version) && version !== NA_VERSION)
+      );
+    },
   );
+  const isFoldersInvalid = !allEditedFoldersAreValid(foldersEditState);
+  const isDisplayAuthorInvalid =
+    !displayAuthorEditState.trim().length ||
+    displayAuthorEditState.length > MAX_PUBLICATION_AUTHOR_LENGTH;
+  const isEditDisabled =
+    isNamesOrVersionsInvalid || isFoldersInvalid || isDisplayAuthorInvalid;
 
   return (
     <div
@@ -327,7 +352,7 @@ export const PublicationHandlerFooter = ({
       <div className="flex items-center gap-3">
         {!isEditMode ? (
           <>
-            {!isEveryResourceForUnpublish && (
+            {!invalidEntities.length && (
               <IconButton
                 name={t('Edit')}
                 dataQa="edit"

@@ -23,7 +23,7 @@ let expectedErrorColor: string;
 let expectedBgDisabledColor: string;
 
 dialTest.beforeAll(async ({ iconApiHelper }) => {
-  const defaultModel = ModelsUtil.getDefaultModel()!;
+  const defaultModel = ModelsUtil.getDefaultAgent()!;
   expectedConversationIcon = iconApiHelper.getEntityIcon(defaultModel);
   expectedErrorColor = ThemesUtil.getRgbColorByKey(
     ThemeColorAttributes.textError,

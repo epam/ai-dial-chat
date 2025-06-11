@@ -4,7 +4,6 @@ import {
   isApplicationTypeKey,
 } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
-import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { PageType } from '@/src/types/common';
@@ -21,17 +20,6 @@ import {
 import { pluralizeDisplayName } from './app/application-type-schema';
 
 import intersection from 'lodash-es/intersection';
-
-export const doesApplicationMatchSearchTerm = (
-  model: DialAIEntityModel,
-  searchTerm: string,
-) => {
-  return (
-    doesEntityContainSearchTerm(model, searchTerm) ||
-    (model.version &&
-      doesEntityContainSearchTerm({ name: model.version }, searchTerm))
-  );
-};
 
 export const doesApplicationMatchFilters = (
   model: DialAIEntityModel,

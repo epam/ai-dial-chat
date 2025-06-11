@@ -23,13 +23,13 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 
 interface Props {
   resources: PublicationResource[];
-  isOpen?: boolean;
-  additionalItemData?: AdditionalItemData;
+  isOpen: boolean;
+  additionalItemData: AdditionalItemData;
 }
 
 export const PromptPublicationSidebarResources = ({
   resources,
-  isOpen = true,
+  isOpen,
   additionalItemData,
 }: Props) => {
   const dispatch = useAppDispatch();
@@ -111,7 +111,7 @@ export const PromptPublicationSidebarResources = ({
 
 export const ConversationPublicationSidebarResources = ({
   resources,
-  isOpen = true,
+  isOpen,
   additionalItemData,
 }: Props) => {
   const dispatch = useAppDispatch();
