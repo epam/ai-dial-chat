@@ -818,11 +818,11 @@ dialTest(
       appEditorPage,
       appEditorGeneralForm,
       listboxMenu,
-    setTestIds,
-    baseAssertion,
-    tooltipAssertion,
-    appEditorViewForm,
-  attachFilesModal,
+      setTestIds,
+      baseAssertion,
+      tooltipAssertion,
+      appEditorViewForm,
+      attachFilesModal,
       appEditorGeneralInfoAgentPreview,
       fileApiHelper,
     },
@@ -969,7 +969,7 @@ dialTest(
         .sort((a, b) => a.length - b.length)
         .slice(0, 2);
       for (const topic of topicsToSelect) {
-        await appEditorGeneralForm.selectTopicOption(topic);
+        await listboxMenu.selectOption(topic);
       }
       await appEditorGeneralForm.addIconButton.click();
       await attachFilesModal.checkAttachedFile(
