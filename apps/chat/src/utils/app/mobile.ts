@@ -2,7 +2,7 @@ import { isMobile as isMobileValue, isTablet } from 'react-device-detect';
 
 import { ScreenState } from '@/src/types/common';
 
-export const isMobile = () => isMobileValue;
+export const isMobile = () => isMobileValue && !isTablet;
 export const isTouchable = () => isMobileValue || isTablet;
 
 const isScreenSize = (maxWidth: number): boolean =>

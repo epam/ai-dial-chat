@@ -8,6 +8,7 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip, topicToOption } from '@/src/utils/app/application';
+import { isMobile } from '@/src/utils/app/mobile';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { getRouteForSlug } from '@/src/utils/app/route';
 
@@ -315,13 +316,17 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             render={({ field }) => (
               <TopicsSelector
                 label={t('Topics')}
-                disabled={isAppPublic}
+                isDisabled={isAppPublic}
                 tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
-                values={field.value?.map(topicToOption)}
+                value={field.value?.map(topicToOption)}
                 options={topicOptions}
                 placeholder={t('Select one or more topics')}
                 onChange={(v) => field.onChange(v.map((o) => o.value))}
                 id="topics-dropdown"
+                isSearchable={!isMobile()}
+                isMulti
+                isClearable
+                menuPlacement="top"
               />
             )}
           />
