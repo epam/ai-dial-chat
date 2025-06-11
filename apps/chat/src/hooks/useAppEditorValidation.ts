@@ -24,12 +24,7 @@ import { Routes } from '@/src/constants/routes';
 export const useAppEditorValidation = (isIdRequired: boolean) => {
   const router = useRouter();
   const {
-    query: {
-      id = '',
-      slug = '',
-      isApplicationOnReview = false,
-      publicationUrl,
-    },
+    query: { id = '', slug = '', publicationUrl },
   } = router;
 
   const dispatch = useAppDispatch();
@@ -146,7 +141,6 @@ export const useAppEditorValidation = (isIdRequired: boolean) => {
     isAdmin,
     slug,
     isApplicationLoading,
-    isApplicationOnReview,
     appPublicationUrl,
     appPublication,
     reviewApplicationId,
