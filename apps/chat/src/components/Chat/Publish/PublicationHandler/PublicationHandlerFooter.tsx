@@ -17,6 +17,7 @@ import {
   isPromptId,
 } from '@/src/utils/app/id';
 import {
+  allEditedFoldersAreValid,
   getDefaultAllEditEntities,
   getFirstReviewUrl,
   getReviewItems,
@@ -35,7 +36,6 @@ import {
 import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { EDITED_FOLDER_NAME_KEY } from '@/src/store/publication/publication.types';
 import {
   ConversationsSelectors,
   PromptsSelectors,
@@ -53,37 +53,13 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 import { FeatureType } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
-const allEditedFoldersAreValid = (obj: unknown) => {
-  for (const key in obj as Record<string, string>) {
-    const value = (obj as Record<string, string>)[key];
-
-    if (typeof value === 'object' && value !== null) {
-      if (
-        EDITED_FOLDER_NAME_KEY in value &&
-        (!value[EDITED_FOLDER_NAME_KEY] ||
-          prepareEntityName(value[EDITED_FOLDER_NAME_KEY] as string).trim() ===
-            '')
-      ) {
-        return false;
-      }
-
-      if (!allEditedFoldersAreValid(value)) {
-        return false;
-      }
-    }
-  }
-
-  return true;
-};
 interface Props {
   publication: Publication;
-  publicationAuthor: string;
   onUpdateRequest: () => void;
 }
 
 export const PublicationHandlerFooter = ({
   publication,
-  publicationAuthor,
   onUpdateRequest,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
@@ -127,8 +103,8 @@ export const PublicationHandlerFooter = ({
     dispatch(
       PublicationActions.setEditModeState({
         editState: getDefaultAllEditEntities(publication.resources),
-        rules: publication.rules,
-        displayAuthor: publication.displayAuthor ?? publicationAuthor,
+        rules: publication.rules ?? [],
+        displayAuthor: publication.displayAuthor ?? '',
       }),
     );
   }, [
@@ -138,7 +114,6 @@ export const PublicationHandlerFooter = ({
     publication.rules,
     publication.displayAuthor,
     publication.author,
-    publicationAuthor,
   ]);
 
   const notExistEntities = useMemo(

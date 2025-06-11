@@ -555,3 +555,26 @@ export const regenerateApiKeyNameAndVersionParts = (
 
 export const getPublicationDefaultName = (userName: string) =>
   `New request by ${userName}`;
+
+export const allEditedFoldersAreValid = (obj: unknown) => {
+  for (const key in obj as Record<string, string>) {
+    const value = (obj as Record<string, string>)[key];
+
+    if (typeof value === 'object' && value !== null) {
+      if (
+        EDITED_FOLDER_NAME_KEY in value &&
+        (!value[EDITED_FOLDER_NAME_KEY] ||
+          prepareEntityName(value[EDITED_FOLDER_NAME_KEY] as string).trim() ===
+            '')
+      ) {
+        return false;
+      }
+
+      if (!allEditedFoldersAreValid(value)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+};

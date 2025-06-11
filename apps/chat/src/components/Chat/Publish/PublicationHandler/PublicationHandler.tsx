@@ -280,7 +280,7 @@ export function PublicationHandler({ publication }: Props) {
                   labelDataQa="publication-display-author-label"
                   label={t("Author's public name: ")}
                   valueDataQa="publication-display-author"
-                  valueToDisplay={publication.displayAuthor}
+                  valueToDisplay={publication.displayAuthor ?? ''}
                   infoTooltip={t(
                     'The name will be displayed instead of the author name for this publication.',
                   )}
@@ -367,7 +367,6 @@ export function PublicationHandler({ publication }: Props) {
         </div>
         <PublicationHandlerFooter
           onUpdateRequest={handleUpdateRequest}
-          publicationAuthor={publicationAuthor}
           publication={publication}
         />
       </div>

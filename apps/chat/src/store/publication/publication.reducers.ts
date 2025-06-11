@@ -53,6 +53,7 @@ const initialState: PublicationState = {
   isEditMode: false,
   entitiesEditState: {},
   foldersEditState: {},
+  rulesOnEdit: [],
   isPublicationUpdating: false,
   displayAuthorEditState: '',
 };
@@ -378,7 +379,7 @@ export const publicationSlice = createSlice({
           folders: FolderEditTree;
         };
         displayAuthor: string;
-        rules?: PublicationRule[];
+        rules: PublicationRule[];
       }>,
     ) => {
       state.entitiesEditState = payload.editState.entities;
