@@ -8,7 +8,7 @@ export const MODELS_SEARCH_OPTIONS: IFuseOptions<DialAIEntityModel> = {
   distance: 100,
   minMatchCharLength: 1,
   ignoreLocation: true,
-  useExtendedSearch: true,
+  useExtendedSearch: false,
   findAllMatches: false,
   isCaseSensitive: false,
   includeScore: false,
