@@ -1,5 +1,5 @@
 export const SIDEBAR_MIN_WIDTH = 260;
-export const MOBILE_SIDEBAR_MIN_WIDTH = 320;
+export const MOBILE_SIDEBAR_MIN_WIDTH = 312;
 export const HEADER_HEIGHT = 48;
 export const DEFAULT_HEADER_ICON_SIZE = 24;
 export const OVERLAY_HEADER_ICON_SIZE = 18;
