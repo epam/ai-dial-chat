@@ -221,6 +221,8 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     hasBeenTouched,
   ]);
 
+  const isMobileView = isMobile();
+
   return (
     <div className="size-full overflow-hidden bg-layer-2">
       <form
@@ -323,10 +325,10 @@ export const GeneralInfoEditor: React.FC<Props> = ({
                 placeholder={t('Select one or more topics')}
                 onChange={(v) => field.onChange(v.map((o) => o.value))}
                 id="topics-dropdown"
-                isSearchable={!isMobile()}
+                isSearchable={!isMobileView}
                 isMulti
                 isClearable
-                menuPlacement="top"
+                menuPlacement={isMobileView ? 'top' : 'auto'}
               />
             )}
           />
