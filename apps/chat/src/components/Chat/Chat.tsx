@@ -210,42 +210,47 @@ const ChatView = memo(() => {
     installedModelIds.has(conv.model.id),
   );
 
+  const isNotAllowedModel = useCallback(
+    (conv: Conversation) => {
+      if (
+        isReplayConversation(conv) &&
+        isReplayAsIsConversation(conv) &&
+        conv.replay?.replayUserMessagesStack &&
+        conv.replay?.replayUserMessagesStack[0].model
+      ) {
+        return conv.replay.replayUserMessagesStack.some(
+          (message) =>
+            message.role === Role.User &&
+            message.model?.id &&
+            !modelsMap[message.model.id],
+        );
+      }
+
+      const model = modelsMap[conv.model.id];
+      const isNotDeployedCustomApp =
+        model &&
+        model.type === EntityType.Application &&
+        model.functionStatus &&
+        model?.functionStatus !== ApplicationStatus.DEPLOYED;
+
+      return (
+        !model ||
+        isNotDeployedCustomApp ||
+        (model.type === EntityType.Assistant &&
+          conv.assistantModelId &&
+          !modelsMap[conv.assistantModelId])
+      );
+    },
+    [modelsMap],
+  );
+
   useLayoutEffect(() => {
-    const isNotAllowedModel =
+    const isNotAllowed =
       areModelsLoaded &&
       (models.length === 0 ||
-        selectedConversations.some((conv) => {
-          if (
-            isReplayConversation(conv) &&
-            isReplayAsIsConversation(conv) &&
-            conv.replay?.replayUserMessagesStack &&
-            conv.replay?.replayUserMessagesStack[0].model
-          ) {
-            return conv.replay.replayUserMessagesStack.some(
-              (message) =>
-                message.role === Role.User &&
-                message.model?.id &&
-                !modelsMap[message.model.id],
-            );
-          }
+        selectedConversations.some((conv) => isNotAllowedModel(conv)));
 
-          const model = modelsMap[conv.model.id];
-          const isNotDeployedCustomApp =
-            model &&
-            model.type === EntityType.Application &&
-            model.functionStatus &&
-            model?.functionStatus !== ApplicationStatus.DEPLOYED;
-
-          return (
-            !model ||
-            isNotDeployedCustomApp ||
-            (model.type === EntityType.Assistant &&
-              conv.assistantModelId &&
-              !modelsMap[conv.assistantModelId])
-          );
-        }));
-
-    if (isNotAllowedModel) {
+    if (isNotAllowed) {
       dispatch(ChatActions.setNotAvailableEntityType(EntityType.Model));
     } else if (
       selectedConversations.some((conversation) =>
@@ -263,7 +268,37 @@ const ChatView = memo(() => {
     addonsMap,
     modelsMap,
     dispatch,
+    isNotAllowedModel,
   ]);
+
+  const notAllowedItemsForDisplay = useMemo((): {
+    id: string;
+    displayName: string;
+  }[] => {
+    return selectedConversations.filter(isNotAllowedModel).map(
+      (
+        conv: Conversation,
+      ): {
+        id: string;
+        displayName: string;
+      } => {
+        const modelDetails = modelsMap[conv.model.id];
+
+        if (modelDetails) {
+          return {
+            id: conv.id,
+            displayName:
+              modelDetails.name || modelDetails.reference || modelDetails.id,
+          };
+        } else {
+          return {
+            id: conv.id,
+            displayName: conv.model.id,
+          };
+        }
+      },
+    );
+  }, [selectedConversations, isNotAllowedModel, modelsMap]);
 
   const onLikeHandler = useCallback(
     (index: number, conversation: Conversation) => (rate: LikeState) => {
@@ -585,6 +620,7 @@ const ChatView = memo(() => {
 
   const customViewer = useMemo(() => {
     const model = modelsMap[selectedConversations[0]?.model?.id];
+
     if (!model) return;
     if (
       model?.applicationTypeSchemaId &&
@@ -859,12 +895,12 @@ const ChatView = memo(() => {
                       </div>
                     </div>
                     {!isPlayback &&
-                    notAvailableEntityType &&
-                    !selectedPublicationUrl ? (
+                    !selectedPublicationUrl &&
+                    notAllowedItemsForDisplay.length ? (
                       <NotAllowedModel
                         showScrollDownButton={showScrollDownButton}
                         onScrollDownClick={handleScrollDown}
-                        conversation={selectedConversations[0]}
+                        notAllowedItemsForDisplay={notAllowedItemsForDisplay}
                         onShowChangeModel={handleTalkToConversationId}
                       />
                     ) : (

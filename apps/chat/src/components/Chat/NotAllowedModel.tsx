@@ -1,5 +1,5 @@
 import { IconExclamationCircle } from '@tabler/icons-react';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import classNames from 'classnames';
 
@@ -12,37 +12,94 @@ import { UISelectors } from '@/src/store/selectors';
 
 import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
-import { Conversation } from '@epam/ai-dial-shared';
-
 interface Props {
   showScrollDownButton: boolean;
   onScrollDownClick: () => void;
   onShowChangeModel: (conversationId: string) => void;
-  conversation: Conversation;
+  notAllowedItemsForDisplay: {
+    id: string;
+    displayName: string;
+  }[];
 }
+
+const ICON_SIZE = 24;
+const BUTTON_CLASS_NAME = 'underline underline-offset-2';
+const INTERNAL_CLICK_MARKER = '__INTERNAL_CLICK_ACTION_MARKER__';
 
 export const NotAllowedModel: React.FC<Props> = ({
   showScrollDownButton,
   onScrollDownClick,
   onShowChangeModel,
-  conversation,
+  notAllowedItemsForDisplay: items,
 }) => {
   const { t } = useTranslation(Translation.Chat);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
 
-  const message = t('chat.error.agent-not-available', {
-    agentId: conversation?.model.id,
-    click: '__CLICK__',
-  });
-
-  const [prefix, suffix] = useMemo(() => {
-    return message.split('__CLICK__');
-  }, [message]);
-
-  const handleOpenChangeModel = useCallback(
-    () => onShowChangeModel(conversation.id),
-    [conversation.id, onShowChangeModel],
+  const handleShowChangeModel = useCallback(
+    (itemId: string) => {
+      onShowChangeModel(itemId);
+    },
+    [onShowChangeModel],
   );
+
+  if (!items || items.length === 0) {
+    return null;
+  }
+
+  let errorContent: JSX.Element | null = null;
+
+  if (items.length === 1 && items[0]) {
+    const agentIdWithQuotes = ` "${items[0].displayName}" `;
+
+    const messageWithMarker = t('chat.error.agent-not-available', {
+      click: INTERNAL_CLICK_MARKER,
+      agentId: agentIdWithQuotes,
+    });
+    const parts = messageWithMarker.split(INTERNAL_CLICK_MARKER);
+
+    errorContent = (
+      <>
+        {parts[0] && <span>{parts[0]}</span>}
+        <button
+          onClick={() => handleShowChangeModel(items[0].id)}
+          className={BUTTON_CLASS_NAME}
+        >
+          {t('change the agent')}
+        </button>
+        {parts[1] && <span>{parts[1]}</span>}
+      </>
+    );
+  } else if (items.length >= 2) {
+    const rawMessageWithPlaceholders = t('chat.error.agents-not-available');
+    const messageParts = rawMessageWithPlaceholders.split('{{agentId}}');
+
+    const item1 = items[0];
+    const item2 = items[1];
+
+    errorContent = (
+      <>
+        {messageParts[0] && <span>{messageParts[0]}</span>}
+        {item1 && (
+          <button
+            onClick={() => handleShowChangeModel(item1.id)}
+            className={BUTTON_CLASS_NAME}
+          >
+            {` "${item1.displayName}" `}
+          </button>
+        )}
+        {messageParts[1] && <span>{messageParts[1]}</span>}
+        {item2 && (
+          <button
+            onClick={() => handleShowChangeModel(item2.id)}
+            className={BUTTON_CLASS_NAME}
+          >
+            {` "${item2.displayName}" `}
+          </button>
+        )}
+        {messageParts[2] && <span>{messageParts[2]}</span>}
+      </>
+    );
+  }
 
   return (
     <div
@@ -59,18 +116,11 @@ export const NotAllowedModel: React.FC<Props> = ({
         data-qa="not-allowed-model-error"
       >
         <IconExclamationCircle
-          size={24}
+          size={ICON_SIZE}
           className="mt-0.5 shrink-0 text-error"
         />
         <span className="flex flex-wrap items-start gap-x-1 break-words">
-          <span>{prefix}</span>
-          <button
-            onClick={handleOpenChangeModel}
-            className="underline underline-offset-2"
-          >
-            {t('change the agent')}
-          </button>
-          <span>{suffix}</span>
+          {errorContent}
         </span>
         {showScrollDownButton && (
           <ScrollDownButton
