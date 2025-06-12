@@ -39,7 +39,7 @@ function replaceContentInNodeModule(
   console.log(`Content replaced in file: ${targetFilePath}`);
 }
 
-// Add opportunity to change basePath after build with new process.env.APP_BASE_PATH variable
+// Make it possible to change basePath after build with new process.env.APP_BASE_PATH variable
 replaceContentInNodeModule(
   'next',
   'dist/shared/lib/router/utils/path-has-prefix.js',
