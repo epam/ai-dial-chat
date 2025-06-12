@@ -4,59 +4,6 @@ const { i18n } = require('./next-i18next.config');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { composePlugins, withNx } = require('@nx/next');
 
-class BasePathResolver {
-  /**
-   * @param {'string' | 'number' | unknown} hint
-   */
-  [Symbol.toPrimitive](hint) {
-    if (hint === 'string') {
-      return this.toString();
-    }
-    if (hint === 'number') {
-      return NaN;
-    }
-    return this.valueOf();
-  }
-
-  get length() {
-    return this.valueOf().length;
-  }
-
-  valueOf() {
-    return process.env.APP_BASE_PATH || '';
-  }
-
-  toString() {
-    return this.valueOf() || '';
-  }
-
-  /**
-   * @param {string} str
-   */
-  startsWith(str) {
-    return this.valueOf().startsWith(str)
-  }
-
-  /**
-   * @param {any[]} args
-   */
-  replace(...args) {
-    // @ts-ignore
-    return this.valueOf().replace(...args);
-  }
-
-  /**
-   * @param {string} str
-   */
-  endsWith(str) {
-    return this.valueOf().endsWith(str)
-  }
-
-  toJSON() {
-    return this.toString();
-  }
-}
-
 /**
  * @type {import('@nx/next/plugins/with-nx').WithNxOptions}
  **/
@@ -72,7 +19,7 @@ const nextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   // @ts-ignore
-  basePath: process.env.NODE_ENV !== 'development' ? new BasePathResolver() : '',
+  basePath: process.env.NODE_ENV !== 'development' ? (process.env.APP_BASE_PATH ?? '') : '',
 
   async redirects() {
     return [
