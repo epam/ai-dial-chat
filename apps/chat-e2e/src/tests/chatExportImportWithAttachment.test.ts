@@ -359,7 +359,7 @@ dialTest(
             MockedChatApiResponseBodies.simpleTextBody,
           );
           await sendMessage.click();
-          await chat.sendRequestWithButton('1+2=');
+          await sendMessage.send('1+2=');
           const messagesCount =
             await chatMessages.chatMessages.getElementsCount();
           expect
