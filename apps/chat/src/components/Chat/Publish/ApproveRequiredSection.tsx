@@ -24,9 +24,9 @@ import { CaretIconComponent } from '@/src/components/Common/CaretIconComponent';
 import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 
 import {
-  ConversationPublicationResources,
-  PromptPublicationResources,
-} from './PublicationResources';
+  ConversationPublicationSidebarResources,
+  PromptPublicationSidebarResources,
+} from './PublicationSidebarResources';
 import { ReviewDot } from './ReviewDot';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
@@ -86,9 +86,9 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
   );
 
   const ResourcesComponent = featureTypes.includes(FeatureType.Chat)
-    ? ConversationPublicationResources
+    ? ConversationPublicationSidebarResources
     : featureTypes.includes(FeatureType.Prompt)
-      ? PromptPublicationResources
+      ? PromptPublicationSidebarResources
       : null;
 
   return (

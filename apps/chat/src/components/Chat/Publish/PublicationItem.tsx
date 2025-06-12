@@ -21,7 +21,10 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/selectors';
 
-import { DEFAULT_VERSION, PUBLIC_URL_PREFIX } from '@/src/constants/public';
+import {
+  DEFAULT_VERSION,
+  PUBLIC_URL_PREFIX,
+} from '@/src/constants/publication';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
 

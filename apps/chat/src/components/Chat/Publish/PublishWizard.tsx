@@ -1,7 +1,5 @@
-import { IconPlus, IconX } from '@tabler/icons-react';
 import {
   ClipboardEvent,
-  Fragment,
   MouseEvent,
   useCallback,
   useEffect,
@@ -27,7 +25,10 @@ import { EnumMapper } from '@/src/utils/app/mappers';
 import {
   createTargetUrl,
   getApplicationPublishResources,
+  getPublicationDefaultName,
   isEntityIdPublic,
+  mapFilterToRule,
+  mapRuleToFilter,
 } from '@/src/utils/app/publications';
 import { NotReplayFilter } from '@/src/utils/app/search';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -56,27 +57,25 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
-import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
+import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 import { ORGANIZATION_SECTION_NAME } from '@/src/constants/sections';
 
 import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
+import { RulesInput } from '@/src/components/Chat/Publish/RulesInput';
 import { Field } from '@/src/components/Common/Forms/Field';
 import { Modal } from '@/src/components/Common/Modal';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
+import { PublicationInfoSection } from './PublicationInfoSection';
 import { PublicationItemsList } from './PublicationItemsList';
-import { PublicationInfoSection } from './PublishWizardComponents';
 import { RuleListItem } from './RuleListItem';
-import { TargetAudienceFilterComponent } from './TargetAudienceFilterComponent';
 import { PublicationRequestFormData, validators } from './form';
 
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 import compact from 'lodash-es/compact';
 import flatMapDeep from 'lodash-es/flatMapDeep';
 import isEqual from 'lodash-es/isEqual';
-import startCase from 'lodash-es/startCase';
-import toLower from 'lodash-es/toLower';
 
 interface Props<
   T extends Conversation | ShareEntity | PublishRequestDialAIEntityModel,
@@ -182,7 +181,7 @@ export function PublishModal<
     getValues,
   } = useForm<PublicationRequestFormData>({
     defaultValues: {
-      publishRequestName: `New request by ${userName}`,
+      publishRequestName: getPublicationDefaultName(userName),
       publicationAuthor: userName ?? '',
     },
     mode: 'onChange',
@@ -202,13 +201,7 @@ export function PublishModal<
 
   useEffect(() => {
     if (currentFolderRules) {
-      setOtherTargetAudienceFilters(
-        currentFolderRules.map((rule) => ({
-          id: rule.source,
-          filterFunction: rule.function,
-          filterParams: rule.targets,
-        })),
-      );
+      setOtherTargetAudienceFilters(currentFolderRules.map(mapRuleToFilter));
     }
   }, [currentFolderRules]);
 
@@ -234,16 +227,6 @@ export function PublishModal<
       e.preventDefault();
       e.stopPropagation();
       setIsChangeFolderModalOpened(true);
-    },
-    [],
-  );
-
-  const handleOnSaveFilter = useCallback(
-    (targetFilter: TargetAudienceFilter) => {
-      setOtherTargetAudienceFilters((prev) =>
-        prev.filter(({ id }) => id !== targetFilter.id).concat(targetFilter),
-      );
-      setIsRuleSetterOpened(false);
     },
     [],
   );
@@ -387,11 +370,7 @@ export function PublishModal<
                 })
               : []),
           ],
-          rules: preparedFilters.map((filter) => ({
-            function: filter.filterFunction,
-            source: filter.id,
-            targets: filter.filterParams,
-          })),
+          rules: preparedFilters.map(mapFilterToRule),
         }),
       );
 
@@ -609,67 +588,12 @@ export function PublishModal<
                   >
                     {path.split('/').pop()}
                   </div>
-                  <div
-                    className="relative mb-2 flex h-auto min-h-[39px] w-full flex-wrap items-center gap-1 rounded border border-primary px-1 py-[3px] pr-10"
-                    data-qa="rules-list"
-                  >
-                    {otherTargetAudienceFilters.map((item) => (
-                      <div
-                        className="flex items-center gap-1"
-                        key={item.id}
-                        data-qa="rule"
-                      >
-                        <div className="flex min-h-[31px] items-center justify-center break-all rounded bg-accent-primary-alpha text-xs">
-                          <div className="flex flex-wrap gap-1 px-3 py-2 leading-3">
-                            <span className="font-semibold">
-                              {startCase(toLower(item.id))}
-                            </span>
-                            <span className="italic">
-                              {toLower(item.filterFunction)}
-                            </span>
-                            {item.filterParams.map((param, index) => (
-                              <Fragment key={index}>
-                                {index > 0 && (
-                                  <span className="italic">{t('or')}</span>
-                                )}
-                                <span className="font-semibold">{param}</span>
-                              </Fragment>
-                            ))}
-                          </div>
-                          <IconX
-                            size={18}
-                            stroke="1"
-                            onClick={() =>
-                              setOtherTargetAudienceFilters((prev) =>
-                                prev.filter(({ id }) => id !== item.id),
-                              )
-                            }
-                            className="mr-3 shrink-0 cursor-pointer text-secondary"
-                          />
-                        </div>
-                        <span className="text-xs italic text-secondary">
-                          {t('or')}
-                        </span>
-                      </div>
-                    ))}
-                    {!isRuleSetterOpened && (
-                      <button
-                        onClick={() => setIsRuleSetterOpened(true)}
-                        className="flex h-[31px] w-9 items-center justify-center rounded bg-accent-primary-alpha text-3xl font-thin text-secondary outline-none"
-                        data-qa="add-rule"
-                      >
-                        <IconPlus stroke="1" size={18} />
-                      </button>
-                    )}
-                    {!!otherTargetAudienceFilters.length && (
-                      <IconX
-                        size={18}
-                        stroke="2"
-                        onClick={() => setOtherTargetAudienceFilters([])}
-                        className="absolute right-3 top-[10.5px] cursor-pointer text-secondary"
-                      />
-                    )}
-                  </div>
+                  <RulesInput
+                    isOpen={isRuleSetterOpened}
+                    filters={otherTargetAudienceFilters}
+                    setFilters={setOtherTargetAudienceFilters}
+                    onSwitchRulesSetter={setIsRuleSetterOpened}
+                  />
                 </div>
               )}
               {!path && (
@@ -678,13 +602,6 @@ export function PublishModal<
                     'This publication will be available to all users in the organization',
                   )}
                 </p>
-              )}
-
-              {isRuleSetterOpened && path && (
-                <TargetAudienceFilterComponent
-                  onCloseFilter={() => setIsRuleSetterOpened(false)}
-                  onSaveFilter={handleOnSaveFilter}
-                />
               )}
             </section>
           </div>

@@ -16,9 +16,9 @@ import {
 
 import { combineEpics, ofType } from 'redux-observable';
 
-import { BucketService } from '@/src/utils/app/data/bucket-service';
+import { getConversationInfoFromId } from '@/src/utils/app/conversation';
+import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
-import { FileService } from '@/src/utils/app/data/file-service';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
 import { constructPath } from '@/src/utils/app/file';
@@ -31,33 +31,41 @@ import {
   getRootFolderIdFromEntityId,
 } from '@/src/utils/app/folders';
 import {
+  filterIdsByFeatureType,
   isApplicationId,
   isConversationId,
   isFileId,
   isPromptId,
   isRootId,
 } from '@/src/utils/app/id';
+import { getPromptInfoFromId } from '@/src/utils/app/prompts';
 import {
   getFilesFromPublicResources,
   getItemsIdsToRemoveAndHide,
+  getPublicationDefaultName,
   isEntityIdPublic,
   mapPublishedItems,
+  processPublicationResources,
 } from '@/src/utils/app/publications';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 import {
   ApiUtils,
   getIdWithoutVersionFromApiKey,
+  getVersionFromId,
+  parseApplicationApiKey,
   parseConversationApiKey,
   parsePromptApiKey,
 } from '@/src/utils/server/api';
 
+import { CustomApplicationModel } from '@/src/types/applications';
 import { EntityType, FeatureType } from '@/src/types/common';
 import { PromptInfo } from '@/src/types/prompt';
 import { PublishedFileItem } from '@/src/types/publication';
 import { AppAction, AppEpic } from '@/src/types/store';
 
 import {
+  ApplicationActions,
   ConversationsActions,
   FilesActions,
   ModelsActions,
@@ -78,8 +86,10 @@ import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
 import {
+  Conversation,
   ConversationInfo,
   Feature,
+  Prompt,
   PublishActions,
   UploadStatus,
 } from '@epam/ai-dial-shared';
@@ -118,46 +128,8 @@ const initEpic: AppEpic = (action$, state$) =>
 const publishEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PublicationActions.publish.type),
-    switchMap(({ payload }) =>
-      forkJoin({
-        payload: of(payload),
-        publicFiles: payload.resources.find((r) => isFileId(r.sourceUrl))
-          ? FileService.getMultipleFoldersFiles(
-              payload.resources
-                .filter((r) => isFileId(r.sourceUrl))
-                .map((r) => getFolderIdFromEntityId(r.targetUrl)),
-            )
-          : of([]),
-      }),
-    ),
-    switchMap(({ payload, publicFiles }) => {
-      const fileIds = payload.resources
-        .map(({ sourceUrl }) => sourceUrl)
-        .filter((id) => id && isFileId(id));
-
-      const publicFileIds = publicFiles.map((file) => file.id);
-      const userBucket = BucketService.getBucket();
-
-      const isPublishingExternalFiles = fileIds.some((id) => {
-        const { bucket: fileBucket } = splitEntityId(id as string);
-
-        return fileBucket !== userBucket;
-      });
-
-      const resources = payload.resources.map((resource) => {
-        if (
-          publicFileIds.includes(resource.targetUrl) &&
-          resource.action === PublishActions.ADD
-        ) {
-          return {
-            ...resource,
-            action: PublishActions.ADD_IF_ABSENT,
-          };
-        }
-
-        return resource;
-      });
-
+    switchMap(({ payload }) => processPublicationResources(payload)),
+    switchMap(({ publicationData, isPublishingExternalFiles }) => {
       if (isPublishingExternalFiles) {
         return of(
           PublicationActions.publishFail(
@@ -167,8 +139,7 @@ const publishEpic: AppEpic = (action$) =>
       }
 
       return PublicationService.createPublicationRequest({
-        ...payload,
-        resources,
+        ...publicationData,
       }).pipe(
         switchMap(() => EMPTY),
         catchError((err) => {
@@ -1388,6 +1359,267 @@ const uploadAllPublishedWithMeItemsFailEpic: AppEpic = (action$) =>
     ),
   );
 
+const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(PublicationActions.updatePublicationRequest.type),
+    switchMap(({ payload }) =>
+      forkJoin({
+        payload: processPublicationResources(payload.dataToUpdate),
+        url: of(payload.url),
+      }),
+    ),
+    switchMap(({ payload, url }) => {
+      const { publicationData } = payload;
+
+      return PublicationService.updatePublicationRequest({
+        publicationData,
+        url,
+      }).pipe(
+        switchMap((response) => {
+          const oldPublicationResources =
+            PublicationSelectors.selectPublicationByUrl(state$.value, url)
+              ?.resources ?? [];
+          const newPublicationResources = response.resources.map(
+            (resource) => ({
+              ...resource,
+              sourceUrl: ApiUtils.decodeApiUrl(resource.sourceUrl ?? ''),
+              targetUrl: ApiUtils.decodeApiUrl(resource.targetUrl),
+              reviewUrl: ApiUtils.decodeApiUrl(resource.reviewUrl),
+            }),
+          );
+
+          const resourcesRequiresUpdate = newPublicationResources.filter(
+            (newResource) => {
+              const match = oldPublicationResources.find(
+                (oldResource) =>
+                  oldResource?.sourceUrl === newResource.sourceUrl,
+              );
+
+              return match && match.targetUrl !== newResource.targetUrl;
+            },
+          );
+
+          const resourcesRequiresUpdateIds = resourcesRequiresUpdate.map(
+            (resource) => resource.reviewUrl,
+          );
+
+          const {
+            conversationsRequiresUpdate = [],
+            promptsRequiresUpdate = [],
+            applicationsRequiresUpdate = [],
+          } = {
+            conversationsRequiresUpdate: filterIdsByFeatureType(
+              resourcesRequiresUpdateIds,
+              FeatureType.Chat,
+            ),
+            promptsRequiresUpdate: filterIdsByFeatureType(
+              resourcesRequiresUpdateIds,
+              FeatureType.Prompt,
+            ),
+            applicationsRequiresUpdate: filterIdsByFeatureType(
+              resourcesRequiresUpdateIds,
+              FeatureType.Application,
+            ),
+          };
+
+          // if only files are updated, we just need to upload the publication, since they are not "JSON objects"
+          if (
+            !conversationsRequiresUpdate.length &&
+            !promptsRequiresUpdate.length &&
+            !applicationsRequiresUpdate.length
+          ) {
+            return of(PublicationActions.uploadPublication({ url }));
+          }
+
+          const observables: {
+            conversations: Observable<(Conversation | null)[]>;
+            prompts: Observable<(Prompt | null)[]>;
+            applications: Observable<(CustomApplicationModel | null)[]>;
+          } = {
+            conversations: of([]),
+            prompts: of([]),
+            applications: of([]),
+          };
+
+          if (conversationsRequiresUpdate.length) {
+            observables.conversations = forkJoin(
+              conversationsRequiresUpdate.map((id) => {
+                return ConversationService.getConversation(
+                  getConversationInfoFromId(id, { parseVersion: true }),
+                );
+              }),
+            );
+          }
+
+          if (promptsRequiresUpdate.length) {
+            observables.prompts = forkJoin(
+              promptsRequiresUpdate.map((id) =>
+                PromptService.getPrompt(
+                  getPromptInfoFromId(id, { parseVersion: true }),
+                ),
+              ),
+            );
+          }
+
+          if (applicationsRequiresUpdate.length) {
+            observables.applications = forkJoin(
+              applicationsRequiresUpdate.map((id) =>
+                ApplicationService.get(id),
+              ),
+            );
+          }
+
+          return forkJoin(observables).pipe(
+            switchMap((results) => {
+              const updateActions: Observable<AppAction>[] = [];
+
+              const conversations = results.conversations.filter(
+                Boolean,
+              ) as Conversation[];
+              const prompts = results.prompts.filter(Boolean) as Prompt[];
+              const applications = results.applications.filter(
+                Boolean,
+              ) as CustomApplicationModel[];
+
+              if (conversations.length) {
+                updateActions.push(
+                  ...conversations.map((conversation) =>
+                    of(
+                      ConversationsActions.updateConversation({
+                        id: conversation.id,
+                        values: {
+                          name: conversation.name,
+                          publicationInfo: {
+                            version: getVersionFromId(conversation.id),
+                          },
+                        },
+                      }),
+                    ),
+                  ),
+                );
+              }
+
+              if (prompts.length) {
+                updateActions.push(
+                  ...prompts.map((prompt) =>
+                    of(
+                      PromptsActions.updatePrompt({
+                        id: prompt.id,
+                        values: {
+                          name: prompt.name,
+                          publicationInfo: {
+                            version: getVersionFromId(prompt.id),
+                          },
+                        },
+                      }),
+                    ),
+                  ),
+                );
+              }
+
+              if (applications.length) {
+                updateActions.push(
+                  ...applications.map((application) => {
+                    const newApplication = {
+                      ...application,
+                      name: parseApplicationApiKey(
+                        splitEntityId(application.id).name,
+                      ).name,
+                      version: getVersionFromId(application.id),
+                    };
+
+                    return of(
+                      ApplicationActions.update({
+                        oldApplication: application,
+                        applicationData: newApplication,
+                      }),
+                    );
+                  }),
+                );
+              }
+
+              return concat(
+                ...updateActions,
+                of(PublicationActions.uploadPublication({ url })),
+              );
+            }),
+          );
+        }),
+        catchError((err) => {
+          console.error(err);
+          return of(PublicationActions.publishFail(err.message));
+        }),
+      );
+    }),
+  );
+const updateAndApprovePublicationRequestEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(PublicationActions.updateAndApprovePublicationRequest.type),
+    switchMap(() => {
+      const state = state$.value;
+      const selectedPublication =
+        PublicationSelectors.selectSelectedPublication(state);
+      if (!selectedPublication) {
+        return of(PublicationActions.approvePublicationFail());
+      }
+      const resourcesToApproveIds =
+        PublicationSelectors.selectSelectedItemsToPublish(state);
+      const filteredResources = selectedPublication.resources
+        .filter((resource) =>
+          resourcesToApproveIds.includes(resource.reviewUrl),
+        )
+        .map((resource) => ({
+          action: resource.action,
+          sourceUrl: resource.sourceUrl ?? undefined,
+          targetUrl: resource.targetUrl,
+        }));
+      return PublicationService.updatePublicationRequest({
+        url: selectedPublication.url,
+        publicationData: {
+          ...selectedPublication,
+          name:
+            selectedPublication.name ??
+            getPublicationDefaultName(
+              selectedPublication.author ?? 'Unknown Author',
+            ),
+          resources: filteredResources,
+        },
+      }).pipe(
+        switchMap((response) => {
+          return concat(
+            of(PublicationActions.uploadPublication({ url: response.url })),
+            of(
+              PublicationActions.approvePublication({
+                url: response.url,
+              }),
+            ),
+          );
+        }),
+        catchError((err) => {
+          console.error(err);
+          return of(PublicationActions.publishFail(err.message));
+        }),
+      );
+    }),
+  );
+
+const onSelectPublicationEffectEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(PublicationActions.selectPublication.type),
+    switchMap(() => {
+      const publication = PublicationSelectors.selectSelectedPublication(
+        state$.value,
+      );
+      const resources = publication?.resources;
+
+      return of(
+        PublicationActions.setItemsToPublish({
+          ids: resources?.map(({ reviewUrl }) => reviewUrl) ?? [],
+        }),
+      );
+    }),
+  );
+
 export const PublicationEpics = combineEpics(
   // init
   initEpic,
@@ -1419,4 +1651,11 @@ export const PublicationEpics = combineEpics(
   // upload rules
   uploadRulesEpic,
   uploadRulesFailEpic,
+
+  // update publication request
+  updatePublicationRequestEpic,
+  updateAndApprovePublicationRequestEpic,
+
+  // on select publication
+  onSelectPublicationEffectEpic,
 );
