@@ -70,6 +70,17 @@ const validators: Validators = {
       return true;
     },
   },
+
+  mcpToolset: {
+    validate: (v) => {
+      try {
+        JSON.parse(v ?? '');
+      } catch {
+        return 'Config is not a valid JSON object';
+      }
+      return true;
+    },
+  },
 };
 
 const FilesSelectorField = withErrorMessage(withLabel(FilesSelector));
@@ -284,6 +295,25 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
             <ToolsetEditor
               label={t('Configure toolset')}
               error={errors.toolset?.message}
+              height={200}
+              value={field.value}
+              className="m-0.5 w-full overflow-hidden rounded border border-primary"
+              language="json"
+              onChange={(v) => field.onChange(v ?? '')}
+              allowFullScreen
+              options={editorOptions}
+            />
+          )}
+        />
+
+        <Controller
+          name="mcpToolset"
+          control={control}
+          rules={validators['mcpToolset']}
+          render={({ field }) => (
+            <ToolsetEditor
+              label={t('Configure MCP toolset')}
+              error={errors.mcpToolset?.message}
               height={200}
               value={field.value}
               className="m-0.5 w-full overflow-hidden rounded border border-primary"

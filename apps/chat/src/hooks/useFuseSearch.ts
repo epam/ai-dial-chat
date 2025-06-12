@@ -16,7 +16,7 @@ export const useFuseSearch = <T>(
           .filter((t) => !!t)
       : [];
 
-    if (tokens.length < 2 || !fuseOptions?.keys) return query;
+    if (tokens.length < 2 || !fuseOptions?.keys) return query?.trim();
 
     return {
       $or: fuseOptions.keys.map((key) => ({

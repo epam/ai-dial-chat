@@ -3,8 +3,9 @@ import { IconDownload, IconFile } from '@tabler/icons-react';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
+  getMcpToolsetStr,
   getQuickAppConfig,
-  getToolsetStr,
+  getWebAPIToolsetStr,
   isQuickApp,
 } from '@/src/utils/app/application';
 import { constructPath } from '@/src/utils/app/file';
@@ -126,7 +127,22 @@ const ReviewQuickAppSectionView = ({
           </span>
           <MonacoEditor
             language="json"
-            value={getToolsetStr(config)}
+            value={getWebAPIToolsetStr(config)}
+            options={editorOptions}
+            height={400}
+            allowFullScreen
+          />
+        </div>
+      )}
+
+      {config.mcp_toolset && (
+        <div className="flex gap-4">
+          <span className="w-[122px] shrink-0 text-secondary">
+            {t('MCP toolset: ')}
+          </span>
+          <MonacoEditor
+            language="json"
+            value={getMcpToolsetStr(config)}
             options={editorOptions}
             height={400}
             allowFullScreen
