@@ -85,3 +85,20 @@ export const isMyApplication = (entity: { id: string }) =>
 export const isMyBucket = (bucket: string) => {
   return bucket === LOCAL_BUCKET || bucket === BucketService.getBucket();
 };
+
+export const filterIdsByFeatureType = (
+  ids: string[],
+  featureType: FeatureType,
+) => {
+  if (featureType === FeatureType.Chat) {
+    return ids.filter(isConversationId);
+  } else if (featureType === FeatureType.Prompt) {
+    return ids.filter(isPromptId);
+  } else if (featureType === FeatureType.Application) {
+    return ids.filter(isApplicationId);
+  } else if (featureType === FeatureType.File) {
+    return ids.filter(isFileId);
+  }
+
+  return [];
+};
