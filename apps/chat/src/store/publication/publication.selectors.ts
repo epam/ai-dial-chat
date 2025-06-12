@@ -59,6 +59,13 @@ const selectSelectedPublication = createSelector(
   },
 );
 
+const selectPublicationByUrl = createSelector(
+  [selectPublications, (_state, url: string) => url],
+  (publications, url) => {
+    return publications.find((publication) => publication.url === url);
+  },
+);
+
 const selectResourcesToReview = (state: RootState) =>
   rootSelector(state).resourcesToReview;
 
@@ -223,12 +230,36 @@ const selectPublicVersionGroupById = (
 const selectPublishModel = (state: RootState) =>
   rootSelector(state).publishModel;
 
+const selectIsEditMode = (state: RootState) => rootSelector(state).isEditMode;
+
+const selectEntitiesEditState = (state: RootState) =>
+  rootSelector(state).entitiesEditState;
+
+const selectFoldersEditState = (state: RootState) =>
+  rootSelector(state).foldersEditState;
+
+const selectEntityEditStateByReviewUrl = createSelector(
+  [selectEntitiesEditState, (_state, reviewUrl: string) => reviewUrl],
+  (entitiesEditState, reviewUrl): { name: string; version: string } | null => {
+    return entitiesEditState[reviewUrl] ?? null;
+  },
+);
+
+const selectRulesOnEdit = (state: RootState) => rootSelector(state).rulesOnEdit;
+
+const selectIsPublicationUpdating = (state: RootState) =>
+  rootSelector(state).isPublicationUpdating;
+
+const selectDisplayAuthorEditState = (state: RootState) =>
+  rootSelector(state).displayAuthorEditState;
+
 export const PublicationSelectors = {
   selectPublications,
   selectFilteredPublications,
   selectFilteredPublicationResources,
   selectSelectedPublicationUrl,
   selectSelectedPublication,
+  selectPublicationByUrl,
   selectResourcesToReview,
   selectResourceToReviewByReviewUrl,
   selectResourceToReviewByReviewAndPublicationUrls,
@@ -245,4 +276,11 @@ export const PublicationSelectors = {
   selectPublicVersionGroups,
   selectPublicVersionGroupById,
   selectPublishModel,
+  selectIsEditMode,
+  selectEntitiesEditState,
+  selectFoldersEditState,
+  selectEntityEditStateByReviewUrl,
+  selectRulesOnEdit,
+  selectIsPublicationUpdating,
+  selectDisplayAuthorEditState,
 };

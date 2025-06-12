@@ -12,6 +12,7 @@ import { Conversation, PrepareNameOptions } from '@/src/types/chat';
 import { BaseDialEntity, FeatureType, PartialBy } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
+import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 import { AppAction } from '@/src/types/store';
@@ -618,3 +619,53 @@ export const getActionsAddFoldersFromFolderId = ({
 
   return actions;
 };
+
+export const isParentFolderSelected = ({
+  currentFolderId,
+  selectedFolderIds,
+}: {
+  currentFolderId: string;
+  selectedFolderIds: string[] | undefined;
+}) => {
+  const parentFolderIds = getParentFolderIdsFromFolderId(currentFolderId);
+
+  const isParentSelected = parentFolderIds.some((id) =>
+    (selectedFolderIds ?? []).includes(`${id}/`),
+  );
+  return isParentSelected;
+};
+
+export const isFolderPartialSelected = ({
+  currentFolderId,
+  partialSelectedFolderIds,
+  isSelected,
+}: {
+  currentFolderId: string;
+  partialSelectedFolderIds: string[] | undefined;
+  isSelected: boolean;
+}) => {
+  const currentId = `${currentFolderId}/`;
+  return !isSelected && (partialSelectedFolderIds ?? []).includes(currentId);
+};
+
+export const getSelectedEntitiesByFolderId = <
+  T extends Conversation | ShareEntity | PublishRequestDialAIEntityModel,
+>({
+  entities,
+  folderId,
+  partialChosenFolderIds,
+  chosenItemsIds,
+}: {
+  entities: T[];
+  folderId: string;
+  partialChosenFolderIds: string[];
+  chosenItemsIds: string[];
+}) =>
+  entities
+    .filter(
+      (entity) =>
+        entity.id.startsWith(folderId) &&
+        (!partialChosenFolderIds.includes(folderId) ||
+          !chosenItemsIds.includes(entity.id)),
+    )
+    .map((entity) => entity.id);

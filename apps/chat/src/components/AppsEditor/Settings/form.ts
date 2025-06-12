@@ -6,7 +6,9 @@ import {
 } from 'react-hook-form';
 
 import {
+  getMcpToolsetStr,
   getQuickAppDocumentUrl,
+  getWebAPIToolsetStr,
   safeStringifyApplicationFeatures,
 } from '@/src/utils/app/application';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
@@ -31,14 +33,6 @@ import {
 } from '@/src/constants/quick-apps';
 
 import { DynamicField } from '@/src/components/Common/Forms/DynamicFormFields';
-
-const getToolsetStr = (config: QuickAppConfig) => {
-  try {
-    return JSON.stringify(config.web_api_toolset, null, 2);
-  } catch {
-    return '';
-  }
-};
 
 interface ApplicationGeneralInfo {
   name: string;
@@ -67,6 +61,7 @@ export interface QuickAppFormData extends ApplicationGeneralInfo {
   instructions: string;
   temperature: number;
   toolset: string;
+  mcpToolset?: string;
   documentRelativeUrl?: string[];
   model: string;
 }
@@ -256,8 +251,13 @@ export const getQuickAppDefaultValues = ({
         ? app.applicationProperties.temperature
         : DEFAULT_TEMPERATURE,
     toolset:
-      getToolsetStr({
+      getWebAPIToolsetStr({
         web_api_toolset: app.applicationProperties?.web_api_toolset ?? [],
+      } as QuickAppConfig) ?? '',
+
+    mcpToolset:
+      getMcpToolsetStr({
+        mcp_toolset: app.applicationProperties?.mcp_toolset ?? [],
       } as QuickAppConfig) ?? '',
   };
 };
@@ -338,6 +338,9 @@ export const getQuickAppData = (
       instructions: formData.instructions,
       temperature: formData.temperature,
       web_api_toolset: JSON.parse(formData.toolset),
+      ...(formData.mcpToolset && {
+        mcp_toolset: JSON.parse(formData.mcpToolset),
+      }),
       model: modelsMap[formData.model]?.id ?? formData.model,
       document_relative_url: formData.documentRelativeUrl,
     },

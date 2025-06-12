@@ -37,6 +37,8 @@ import { Select, SelectOption } from '@/src/components/Common/Select';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
+import { Checkbox } from '../Checkbox';
+
 import {
   ConversationInfo,
   PublishActions,
@@ -168,6 +170,12 @@ const ConversationView = ({
   const isReplay = isReplayConversation(conversation);
   const isPlayback = isPlaybackConversation(conversation);
 
+  const handleOnSelect = useCallback(() => {
+    if (onSelect) {
+      onSelect([conversation.id]);
+    }
+  }, [onSelect, conversation.id]);
+
   return (
     <FeatureContainer containerClassNames={featureContainerClassNames}>
       {onSelect && (
@@ -175,19 +183,7 @@ const ConversationView = ({
           className="relative flex size-[18px] shrink-0"
           data-qa={isChosen ? 'selected' : null}
         >
-          <input
-            className="checkbox peer size-[18px] bg-layer-3"
-            type="checkbox"
-            checked={isChosen}
-            data-qa={isChosen ? 'checked' : 'unchecked'}
-            onChange={() => {
-              onSelect([conversation.id]);
-            }}
-          />
-          <IconCheck
-            size={18}
-            className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
-          />
+          <Checkbox checked={isChosen} onChange={handleOnSelect} />
         </div>
       )}
       <ShareIcon
