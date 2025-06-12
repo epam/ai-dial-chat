@@ -20,9 +20,9 @@ const nextConfig = {
 
     return config;
   },
-  experimental: {
-    workerThreads: true
-  }
+  // experimental: {
+  //   workerThreads: true
+  // }
 };
 
 const plugins = [
