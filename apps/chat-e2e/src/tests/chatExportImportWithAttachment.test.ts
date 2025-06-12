@@ -147,6 +147,7 @@ dialTest(
     marketplacePage,
     setTestIds,
     localStorageManager,
+    toast,
   }) => {
     setTestIds(
       'EPMRTC-1975',
@@ -351,6 +352,10 @@ dialTest(
           await talkToAgentDialog.selectAgent(
             simpleRequestModel,
             marketplacePage,
+          );
+          await toast.closeToast();
+          await dialHomePage.mockChatTextResponse(
+            MockedChatApiResponseBodies.simpleTextBody,
           );
           await chat.sendRequestWithButton('1+2=');
           const messagesCount =
