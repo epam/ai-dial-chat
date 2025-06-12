@@ -230,12 +230,23 @@ export const getQuickAppDocumentUrl = (entity?: CustomApplicationModel) => {
   return entity ? getQuickAppConfig(entity).document_relative_url : undefined;
 };
 
-export const getToolsetStr = (config: QuickAppConfig) => {
+export const getToolsetStr = (
+  config: QuickAppConfig,
+  toolsetKey: keyof QuickAppConfig,
+) => {
   try {
-    return JSON.stringify(config.web_api_toolset, null, 2);
+    return JSON.stringify(config[toolsetKey], null, 2);
   } catch {
     return '';
   }
+};
+
+export const getMcpToolsetStr = (config: QuickAppConfig) => {
+  return getToolsetStr(config, 'mcp_toolset');
+};
+
+export const getWebAPIToolsetStr = (config: QuickAppConfig) => {
+  return getToolsetStr(config, 'web_api_toolset');
 };
 
 export const topicToOption = (topic: string) => ({
