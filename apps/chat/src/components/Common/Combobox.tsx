@@ -114,6 +114,10 @@ export const Combobox = <T,>({
   });
 
   useEffect(() => {
+    setInputValue('');
+  }, [isOpen, setInputValue]);
+
+  useEffect(() => {
     setDisplayedItems(
       items.filter((item) =>
         inputValue
