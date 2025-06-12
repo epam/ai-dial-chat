@@ -62,7 +62,9 @@ dialTest(
           ModelsUtil.getModels().filter((m) => m.iconUrl !== undefined),
           2,
         );
-        await localStorageManager.setRecentModelsIdsOnce(...models);
+        await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+          ...models,
+        );
         await localStorageManager.setShowSideBarPanels();
       },
     );
@@ -247,7 +249,9 @@ dialTest(
           ModelsUtil.getModels().filter((m) => m.iconUrl !== undefined),
           2,
         );
-        await localStorageManager.setRecentModelsIdsOnce(...models);
+        await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+          ...models,
+        );
         conversationToCompare = conversationData.prepareDefaultConversation(
           models[1],
         );
@@ -380,7 +384,10 @@ dialAdminTest(
         //publish it
         const publishRequest = publishRequestBuilder
           .withName(GeneratorUtil.randomPublicationRequestName())
-          .withConversationResource(adminConversation, PublishActions.ADD)
+          .withConversationInFolderResource(
+            adminConversation,
+            PublishActions.ADD,
+          )
           .build();
         const appPublication =
           await adminPublicationApiHelper.createPublishRequest(publishRequest);

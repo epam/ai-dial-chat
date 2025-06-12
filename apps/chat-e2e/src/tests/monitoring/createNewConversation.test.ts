@@ -14,7 +14,7 @@ let recentAddonIds: string[];
 let allEntities: DialAIEntityModel[];
 
 dialTest.beforeAll(async () => {
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
   recentModelIds = ModelsUtil.getRecentModelIds();
   allEntities = ModelsUtil.getOpenAIEntities();
   recentAddonIds = ModelsUtil.getRecentAddonIds();

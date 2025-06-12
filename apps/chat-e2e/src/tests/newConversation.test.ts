@@ -42,12 +42,14 @@ dialTest(
       2,
     );
     const addon = GeneratorUtil.randomArrayElement(ModelsUtil.getAddons());
-    await localStorageManager.setRecentModelsIdsOnce(...models);
+    await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+      ...models,
+    );
     await localStorageManager.setRecentAddonsIds(addon);
     await localStorageManager.setLastConversationSettings('');
     await localStorageManager.setShowSideBarPanels();
 
-    await dialTest.step('Open Dial', async () => {
+    await dialTest.step('Open DIAL', async () => {
       await dialHomePage.openHomePage({
         iconsToBeLoaded: [models[0].iconUrl!],
       });
@@ -434,10 +436,12 @@ dialTest(
     );
     const conversation = conversationData.prepareDefaultConversation(models[0]);
     await dataInjector.createConversations([conversation]);
-    await localStorageManager.setRecentModelsIdsOnce(...models);
+    await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+      ...models,
+    );
     await localStorageManager.setShowSideBarPanels();
 
-    await dialTest.step('Open Dial, navigate to Marketplace', async () => {
+    await dialTest.step('Open DIAL, navigate to Marketplace', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await conversations.selectEntity(conversation.name);
@@ -505,14 +509,16 @@ dialTest(
       ),
     );
     const addon = GeneratorUtil.randomArrayElement(ModelsUtil.getAddons());
-    await localStorageManager.setRecentModelsIdsOnce(model);
+    await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+      model,
+    );
     await localStorageManager.setRecentAddonsIds(addon);
     await localStorageManager.setLastConversationSettings('');
     await localStorageManager.setShowSideBarPanels();
     let initialConversationIds: string | undefined;
 
     await dialTest.step(
-      'Open Dial and verify the correct model is selected',
+      'Open DIAL and verify the correct model is selected',
       async () => {
         await dialHomePage.openHomePage({
           iconsToBeLoaded: [model.iconUrl!],
@@ -599,7 +605,7 @@ dialTest(
     let notFoundElement: NotFound;
 
     await dialTest.step(
-      'Open Dial non existent page and verify messages and "New Conversation" btn is available',
+      'Open DIAL non existent page and verify messages and "New Conversation" btn is available',
       async () => {
         await localStorageManager.setShowSideBarPanels();
         await dialErrorPage.navigateToUrl('/errorpage');

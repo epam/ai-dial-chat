@@ -21,6 +21,7 @@ export interface ModelsState {
   installedModels: InstalledModel[];
   publishRequestModels: PublishRequestDialAIEntityModel[];
   publishedApplicationIds: string[];
+  defaultModelReference: string;
 }
 
 export interface ModelUpdatedValues {

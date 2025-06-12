@@ -15,7 +15,12 @@ import {
   ResourceToReview,
 } from '@/src/types/publication';
 
-import { PublicationState } from './publication.types';
+import {
+  EDITED_FOLDER_NAME_KEY,
+  FolderEditTree,
+  FolderNode,
+  PublicationState,
+} from './publication.types';
 
 import {
   PublishActions,
@@ -43,6 +48,14 @@ const initialState: PublicationState = {
   isApplicationReview: false,
   publicVersionGroups: {},
   publishModel: undefined,
+
+  // Review edit mode
+  isEditMode: false,
+  entitiesEditState: {},
+  foldersEditState: {},
+  rulesOnEdit: [],
+  isPublicationUpdating: false,
+  displayAuthorEditState: '',
 };
 
 export const publicationSlice = createSlice({
@@ -54,7 +67,9 @@ export const publicationSlice = createSlice({
       state.initialized = true;
     },
     publish: (state, _action: PayloadAction<PublicationRequestModel>) => state,
-    publishFail: (state, _action: PayloadAction<string | undefined>) => state,
+    publishFail: (state, _action: PayloadAction<string | undefined>) => {
+      state.isPublicationUpdating = false;
+    },
     uploadPublications: (state) => state,
     uploadPublicationsSuccess: (
       state,
@@ -69,13 +84,20 @@ export const publicationSlice = createSlice({
       state,
       { payload }: PayloadAction<{ publication: Publication }>,
     ) => {
-      state.publications = state.publications.map((p) =>
-        p.url === payload.publication.url
-          ? { ...payload.publication, ...p, uploadStatus: UploadStatus.LOADED }
-          : p,
+      state.publications = state.publications.map((publication) =>
+        publication.url === payload.publication.url
+          ? {
+              ...publication,
+              ...payload.publication,
+              uploadStatus: UploadStatus.LOADED,
+            }
+          : publication,
       );
+      state.isPublicationUpdating = false;
     },
-    uploadPublicationFail: (state) => state,
+    uploadPublicationFail: (state) => {
+      state.isPublicationUpdating = false;
+    },
     uploadPublishedWithMeItems: (
       state,
       _action: PayloadAction<{ featureType: FeatureType }>,
@@ -334,6 +356,79 @@ export const publicationSlice = createSlice({
       } else {
         state.publishModel = undefined;
       }
+    },
+    updatePublicationRequest: (
+      state,
+      _action: PayloadAction<{
+        dataToUpdate: PublicationRequestModel;
+        url: string;
+      }>,
+    ) => {
+      state.isPublicationUpdating = true;
+    },
+    setIsEditMode: (state, { payload }: PayloadAction<boolean>) => {
+      state.isEditMode = payload;
+    },
+    setEditModeState: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        editState: {
+          entities: Record<string, { name: string; version: string }>;
+          folders: FolderEditTree;
+        };
+        displayAuthor: string;
+        rules: PublicationRule[];
+      }>,
+    ) => {
+      state.entitiesEditState = payload.editState.entities;
+      state.foldersEditState = payload.editState.folders;
+      state.rulesOnEdit = payload.rules;
+      state.displayAuthorEditState = payload.displayAuthor;
+    },
+    setEntityEditStateByReviewUrl: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        reviewUrl: string;
+        name: string;
+        version: string;
+      }>,
+    ) => {
+      state.entitiesEditState[payload.reviewUrl] = {
+        name: payload.name,
+        version: payload.version,
+      };
+    },
+    setEditFolderStateByFolderId: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        folderId: string;
+        name: string;
+      }>,
+    ) => {
+      const folderSegments = payload.folderId.split('/');
+
+      let currentFolder = state.foldersEditState as FolderNode;
+
+      folderSegments.forEach((segment) => {
+        currentFolder = currentFolder[segment] as FolderNode;
+      });
+
+      currentFolder[EDITED_FOLDER_NAME_KEY] = payload.name;
+    },
+    updateAndApprovePublicationRequest: (state) => {
+      state.isPublicationUpdating = true;
+    },
+    setRulesOnEdit: (state, { payload }: PayloadAction<PublicationRule[]>) => {
+      state.rulesOnEdit = payload;
+    },
+    setDisplayAuthorEditState: (state, { payload }: PayloadAction<string>) => {
+      state.displayAuthorEditState = payload;
     },
   },
 });

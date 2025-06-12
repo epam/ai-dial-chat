@@ -78,6 +78,7 @@ import {
   ExportConversationRequest,
   ExportConversationResponse,
   Feature,
+  FolderInterface,
   GetConversationsResponse,
   GetMessagesResponse,
   ImportConversationRequest,
@@ -410,6 +411,7 @@ const createConversationEffectEpic: AppEpic = (action$, state$) =>
         ofType(ConversationsActions.createNotLocalConversationsSuccess.type),
         takeUntil(timer(10000)),
         filter(Boolean),
+        first(({ payload }) => payload.length > 0),
         mergeMap(({ payload }) => {
           const conversations = payload;
           const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
@@ -450,6 +452,7 @@ const createLocalConversationEffectEpic: AppEpic = (action$, state$) =>
         ofType(ConversationsActions.addConversations.type),
         takeUntil(timer(10000)),
         filter(Boolean),
+        first(({ payload }) => payload.conversations.length > 0),
         mergeMap(({ payload }) => {
           const conversations = payload.conversations;
           const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
@@ -719,10 +722,40 @@ const exportConversationEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const importConversationEpic: AppEpic = (action$) =>
+const importConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(OverlayActions.importConversation.type),
     switchMap(({ payload: { importConversation, requestId } }) => {
+      if (state$.value.overlay.newConversationsFolder) {
+        const parentIds = getParentFolderIdsFromFolderId(
+          state$.value.overlay.newConversationsFolder,
+        );
+
+        if (!importConversation.history?.length) return EMPTY;
+
+        const convIdLastItem = importConversation.history[0].id
+          .split('/')
+          .pop();
+        importConversation.history[0].folderId =
+          state$.value.overlay.newConversationsFolder;
+        importConversation.history[0].id = constructPath(
+          state$.value.overlay.newConversationsFolder,
+          convIdLastItem,
+        );
+        importConversation.folders = parentIds.map((item): FolderInterface => {
+          const splittedEntityId = item.split('/');
+          const name = splittedEntityId.pop();
+          const folderId = splittedEntityId.join('/');
+
+          return {
+            id: item,
+            name: name!,
+            folderId,
+            type: FeatureType.Chat,
+          };
+        });
+      }
+
       return concat(
         of(
           ImportExportActions.importConversations({ data: importConversation }),
@@ -950,15 +983,29 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
 
         if (!shouldLogIn) {
           if (modelId) {
-            actions.push(of(ModelsActions.updateRecentModels({ modelId })));
+            const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+            const overlayDefaultModel = modelsMap[modelId];
 
-            actions.push(
-              of(
-                SettingsActions.setOverlayDefaultModelId({
-                  overlayDefaultModelId: modelId,
-                }),
-              ),
-            );
+            if (overlayDefaultModel) {
+              actions.push(
+                of(
+                  ModelsActions.updateRecentModels({
+                    modelId: overlayDefaultModel.reference,
+                  }),
+                ),
+              );
+              actions.push(
+                of(
+                  SettingsActions.setOverlayDefaultModelReference({
+                    overlayDefaultModelReference: overlayDefaultModel.reference,
+                  }),
+                ),
+              );
+            } else {
+              console.warn(
+                `[Overlay](ModelId) No such model: ${modelId}.\nModelId isn't available.`,
+              );
+            }
           }
           if (overlayConversationId) {
             actions.push(

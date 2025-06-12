@@ -15,8 +15,8 @@ export interface SettingsState {
   publicationFilters: string[];
   codeWarning: string;
   announcement: string;
-  defaultModelId: string | undefined;
-  overlayDefaultModelId?: string | undefined;
+  defaultModelReference: string | undefined;
+  overlayDefaultModelReference?: string | undefined;
   defaultAssistantSubmodelId: string;
   defaultRecentModelsIds: string[];
   defaultRecentAddonsIds: string[];

@@ -8,6 +8,7 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip, topicToOption } from '@/src/utils/app/application';
+import { isMobile } from '@/src/utils/app/mobile';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { getRouteForSlug } from '@/src/utils/app/route';
 
@@ -29,7 +30,7 @@ import {
 import { CONFIRM_ICON_FILE_VALUES } from '@/src/constants/applications';
 import { IMAGE_TYPES } from '@/src/constants/chat';
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/code-apps';
-import { DEFAULT_VERSION } from '@/src/constants/public';
+import { DEFAULT_VERSION } from '@/src/constants/publication';
 import { Routes } from '@/src/constants/routes';
 
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
@@ -82,9 +83,11 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     register,
     control,
     handleSubmit: submitWrapper,
-    formState: { errors, isValid, dirtyFields },
+    formState: { errors, isValid, dirtyFields, touchedFields },
     reset,
   } = useFormContext<ApplicationGeneralInfoFormData>();
+
+  const hasBeenTouched = Object.keys(touchedFields).length > 0;
 
   const getLogoId = useCallback(
     (filesIds: string[]) => files.find((f) => f.id === filesIds[0])?.id,
@@ -195,9 +198,11 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     if (!isValid) {
       dispatch(ApplicationActions.setShouldSaveApplication(false));
       dispatch(ApplicationActions.setExitAfterSave(false));
-      dispatch(
-        UIActions.showErrorToast(t('Please fill in all mandatory fields')),
-      );
+      if (hasBeenTouched) {
+        dispatch(
+          UIActions.showErrorToast(t('Please fill in all mandatory fields')),
+        );
+      }
       return;
     }
 
@@ -207,13 +212,16 @@ export const GeneralInfoEditor: React.FC<Props> = ({
   }, [
     shouldSaveApplication,
     exitAfterSave,
-    isValid,
     dispatch,
     t,
     submitWrapper,
     handleSubmit,
     router,
+    isValid,
+    hasBeenTouched,
   ]);
+
+  const isMobileView = isMobile();
 
   return (
     <div className="size-full overflow-hidden bg-layer-2">
@@ -310,13 +318,17 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             render={({ field }) => (
               <TopicsSelector
                 label={t('Topics')}
-                disabled={isAppPublic}
+                isDisabled={isAppPublic}
                 tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
-                values={field.value?.map(topicToOption)}
+                value={field.value?.map(topicToOption)}
                 options={topicOptions}
                 placeholder={t('Select one or more topics')}
                 onChange={(v) => field.onChange(v.map((o) => o.value))}
                 id="topics-dropdown"
+                isSearchable={!isMobileView}
+                isMulti
+                isClearable
+                menuPlacement={isMobileView ? 'top' : 'auto'}
               />
             )}
           />

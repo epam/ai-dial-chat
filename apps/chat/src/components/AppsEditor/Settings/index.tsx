@@ -43,6 +43,7 @@ import {
 } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
+  AuthSelectors,
   CodeEditorSelectors,
   ConversationsSelectors,
   ModelsSelectors,
@@ -107,6 +108,10 @@ export const ApplicationSettings: React.FC<Props> = ({
   );
   const isCodeEditorDirty = useAppSelector(CodeEditorSelectors.selectIsDirty);
   const theme = useAppSelector(UISelectors.selectThemeState);
+  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
+  const installedModelIds = useAppSelector(
+    ModelsSelectors.selectInstalledModelIds,
+  );
 
   const [previewMode, setPreviewMode] = useState<PreviewMode>(
     screenState <= ScreenState.MD ||
@@ -118,6 +123,8 @@ export const ApplicationSettings: React.FC<Props> = ({
   const isPreviewClosed = previewMode === PreviewMode.closed;
   const isPreviewHalf = previewMode === PreviewMode.half;
   const isPreviewFull = previewMode === PreviewMode.full;
+  const isModelInstalled = installedModelIds.has(applicationData.reference);
+  const isAdminPreviewMode = isAdmin && !isModelInstalled;
 
   const handlePreviewModeChange = (mode: PreviewMode) => {
     setPreviewMode(mode);
@@ -298,11 +305,13 @@ export const ApplicationSettings: React.FC<Props> = ({
       !areSelectedConversationsLoaded
     )
       return;
-    dispatch(
-      ModelsActions.updateRecentModels({
-        modelId: applicationData.reference,
-      }),
-    );
+    if (!isAdminPreviewMode) {
+      dispatch(
+        ModelsActions.updateRecentModels({
+          modelId: applicationData.reference,
+        }),
+      );
+    }
     if (previewConversationId) {
       dispatch(
         ConversationsActions.selectConversations({
@@ -324,6 +333,7 @@ export const ApplicationSettings: React.FC<Props> = ({
     dispatch,
     areSelectedConversationsLoaded,
     areSelectedConversationLoaded,
+    isAdminPreviewMode,
   ]);
 
   const showRedeployButton =

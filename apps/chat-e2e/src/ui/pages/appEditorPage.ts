@@ -21,7 +21,7 @@ export class AppEditorPage extends BasePage {
       .waitForState({ state: 'hidden' });
     await appEditorContainer.getAppEditorHeader().waitForState();
     await applicationGeneralForm.waitForState();
-    await applicationPreview.waitForState();
+    await applicationPreview.generalInfoContainer.waitForState();
   }
 
   async waitForPageLoadedForEdit() {

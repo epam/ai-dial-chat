@@ -23,7 +23,7 @@ dialTest(
     conversations,
   }) => {
     setTestIds('EPMRTC-3481');
-    const defaultModel = ModelsUtil.getDefaultModel()!;
+    const defaultModel = ModelsUtil.getDefaultAgent()!;
     let responseImageConversation: Conversation;
     const imagePath = API.modelFilePath(defaultModel.id);
     const imagePathSegments = imagePath.split('/');
@@ -47,7 +47,9 @@ dialTest(
             defaultModel,
           );
         await dataInjector.createConversations([responseImageConversation]);
-        await localStorageManager.setRecentModelsIds(updatedModel);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          updatedModel,
+        );
         await localStorageManager.setShowSideBarPanels();
       },
     );

@@ -13,7 +13,7 @@ import { FilesSelectors } from '@/src/store/selectors';
 
 import { FEATURES_ENDPOINTS_NAMES } from '@/src/constants/applications';
 
-import { ReviewApplicationPropsSection } from '@/src/components/Chat/Publish/ReviewApplicationDialog/ReviewApplicationPropsSection';
+import { ReviewApplicationPropsSection } from '@/src/components/Chat/Publish/PublicationHandler/ReviewApplicationDialog/ReviewApplicationPropsSection';
 import { CodeEditor } from '@/src/components/Common/CodeEditor';
 import { Spinner } from '@/src/components/Common/Spinner';
 

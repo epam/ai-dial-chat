@@ -22,7 +22,7 @@ let defaultModel: DialAIEntityModel;
 let randomModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
   randomModel = GeneratorUtil.randomArrayElement(
     ModelsUtil.getModels().filter((m) => m.id !== defaultModel.id),
   );
@@ -631,7 +631,7 @@ dialSharedWithMeTest(
         await additionalShareUserDataInjector.createConversations([
           secondUserEmptyConversation,
         ]);
-        await additionalShareUserLocalStorageManager.setRecentModelsIds(
+        await additionalShareUserLocalStorageManager.setRecentModelsIdsAndUseLastModel(
           attachmentModel,
         );
       },

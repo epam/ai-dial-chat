@@ -804,7 +804,7 @@ dialTest(
     const fullRequest = `${firstPromptContent(aValue, bValue)} AND ${secondPromptContent(cValue, dValue)}`;
     const conversationName = fullRequest.replace(
       new RegExp(`[${ExpectedConstants.restrictedNameChars}]`, 'g'),
-      ' ',
+      '_',
     );
     let firstPrompt: Prompt;
     let secondPrompt: Prompt;
@@ -1229,7 +1229,7 @@ dialAdminTest(
       async () => {
         const publishRequest = publishRequestBuilder
           .withName(publicationRequestName)
-          .withConversationResource(conversation, PublishActions.ADD)
+          .withConversationInFolderResource(conversation, PublishActions.ADD)
           .build();
         publication =
           await publicationApiHelper.createPublishRequest(publishRequest);

@@ -66,13 +66,15 @@ dialTest(
     await dialTest.step(
       'Prepare models and set recent models in local storage',
       async () => {
-        await localStorageManager.setRecentModelsIdsOnce(...models);
+        await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+          ...models,
+        );
         await localStorageManager.setShowSideBarPanels();
       },
     );
 
     await dialTest.step(
-      'Open Dial and verify the first model is selected',
+      'Open DIAL and verify the first model is selected',
       async () => {
         await dialHomePage.openHomePage({
           iconsToBeLoaded: [initialModel1.iconUrl],
@@ -283,7 +285,9 @@ dialAdminTest(
     );
 
     await dataInjector.createConversations([conversation1, conversation2]);
-    await localStorageManager.setRecentModelsIdsOnce(...models);
+    await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+      ...models,
+    );
 
     await dialAdminTest.step(
       'Create a conversation with the second model and publish it',
@@ -291,7 +295,7 @@ dialAdminTest(
         for (const conversation of [conversation1, conversation2]) {
           const publishRequest = publishRequestBuilder
             .withName(GeneratorUtil.randomPublicationRequestName())
-            .withConversationResource(conversation, PublishActions.ADD)
+            .withConversationInFolderResource(conversation, PublishActions.ADD)
             .build();
           const publication =
             await publicationApiHelper.createPublishRequest(publishRequest);
@@ -443,7 +447,9 @@ dialTest(
       (m) => m.id !== initialModel1.id && m.id !== initialModel2.id,
     );
     const addedModel = GeneratorUtil.randomArrayElement(availableModels);
-    await localStorageManager.setRecentModelsIdsOnce(...models);
+    await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+      ...models,
+    );
     await localStorageManager.setShowSideBarPanels();
 
     // Create conversations
@@ -465,7 +471,7 @@ dialTest(
     const exportedConversation2 =
       ImportConversation.prepareConversationFile(conversation2Export2);
 
-    await dialTest.step('Open the Dial', async () => {
+    await dialTest.step('Open the DIAL', async () => {
       await dialHomePage.openHomePage({
         iconsToBeLoaded: [initialModel1.iconUrl],
       });
@@ -619,10 +625,12 @@ dialTest(
       2,
     );
     const [firstModel, secondModel] = models;
-    await localStorageManager.setRecentModelsIdsOnce(...models);
+    await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+      ...models,
+    );
     await localStorageManager.setShowSideBarPanels();
 
-    await dialTest.step('Open Dial', async () => {
+    await dialTest.step('Open DIAL', async () => {
       await dialHomePage.openHomePage({
         iconsToBeLoaded: [firstModel.iconUrl],
       });
@@ -702,10 +710,12 @@ dialSharedWithMeTest(
         sharedConversation2,
       ]);
     await mainUserShareApiHelper.acceptInvite(shareByLinkResponse);
-    await localStorageManager.setRecentModelsIdsOnce(...models);
+    await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+      ...models,
+    );
     await localStorageManager.setShowSideBarPanels();
 
-    await dialSharedWithMeTest.step('Open Dial by the main user', async () => {
+    await dialSharedWithMeTest.step('Open DIAL by the main user', async () => {
       await dialHomePage.openHomePage({
         iconsToBeLoaded: [initialModel1.iconUrl],
       });

@@ -18,7 +18,7 @@ let nonDefaultModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
   allModels = ModelsUtil.getModels().filter((m) => m.iconUrl !== undefined);
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
   nonDefaultModel = GeneratorUtil.randomArrayElement(
     allModels.filter((m) => m.id !== defaultModel.id),
   );

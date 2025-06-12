@@ -48,7 +48,9 @@ dialTest(
     const modelWithAttachment = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModelsWithAttachment(),
     );
-    await localStorageManager.setRecentModelsIds(modelWithAttachment);
+    await localStorageManager.setRecentModelsIdsAndUseLastModel(
+      modelWithAttachment,
+    );
 
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
@@ -57,7 +59,7 @@ dialTest(
     await localStorageManager.setShowSideBarPanels();
     await fileApiHelper.putFile(Attachment.sunImageName);
 
-    await dialTest.step('Open the Dial', async () => {
+    await dialTest.step('Open the DIAL', async () => {
       await dialHomePage.openHomePage({
         iconsToBeLoaded: [modelWithAttachment.iconUrl],
       });
@@ -175,7 +177,7 @@ dialTest(
     const initialMessage = GeneratorUtil.randomString(10);
     await localStorageManager.setShowSideBarPanels();
 
-    await dialTest.step('Open Dial', async () => {
+    await dialTest.step('Open DIAL', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
     });
@@ -363,7 +365,10 @@ dialAdminTest(
     await dialAdminTest.step('Publish and approve a conversation', async () => {
       const publishRequest = publishRequestBuilder
         .withName(GeneratorUtil.randomPublicationRequestName())
-        .withConversationResource(conversationForApproval1, PublishActions.ADD)
+        .withConversationInFolderResource(
+          conversationForApproval1,
+          PublishActions.ADD,
+        )
         .build();
       approvedPublication =
         await publicationApiHelper.createPublishRequest(publishRequest);
@@ -374,7 +379,10 @@ dialAdminTest(
     await dialAdminTest.step('Publish a conversation', async () => {
       const publishRequest = publishRequestBuilder
         .withName(GeneratorUtil.randomPublicationRequestName())
-        .withConversationResource(conversationToPublish, PublishActions.ADD)
+        .withConversationInFolderResource(
+          conversationToPublish,
+          PublishActions.ADD,
+        )
         .build();
       notApprovedPublication =
         await publicationApiHelper.createPublishRequest(publishRequest);
@@ -509,7 +517,7 @@ dialTest(
       conversationWithAModelToDelete,
       conversationWithNonExistentAddon,
     ]);
-    await localStorageManager.setRecentModelsIdsOnce(
+    await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
       initialModel,
       modelWithAddons,
     );
@@ -622,7 +630,9 @@ dialSharedWithMeTest(
     ]);
     await additionalUserShareApiHelper.acceptInvite(sharePromptLink);
 
-    await localStorageManager.setRecentModelsIdsOnce(model);
+    await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+      model,
+    );
     await localStorageManager.setShowSideBarPanels();
 
     await dialSharedWithMeTest.step(
@@ -721,7 +731,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'Open Dial, type message, and use prompt from Organization',
+      'Open DIAL, type message, and use prompt from Organization',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
