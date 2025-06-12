@@ -16,4 +16,10 @@ export class MarketplaceHeader extends BaseElement {
   public addAppButton = this.getChildElementBySelector(
     MarketplaceSelectors.addApp,
   );
+  public cardViewToggle = this.getChildElementBySelector(
+    MarketplaceSelectors.cardViewToggle,
+  );
+  public tableViewToggle = this.getChildElementBySelector(
+    MarketplaceSelectors.tableViewToggle,
+  );
 }

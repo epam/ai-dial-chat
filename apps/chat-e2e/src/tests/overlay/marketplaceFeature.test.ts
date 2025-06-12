@@ -1,18 +1,29 @@
 import { Conversation } from '@/chat/types/chat';
-import dialTest from '@/src/core/dialFixtures';
 import dialOverlayTest from '@/src/core/dialOverlayFixtures';
-import { OverlaySandboxUrls } from '@/src/testData';
+import {
+  AddAppMenuOptions,
+  MarketplaceExpectedMessages,
+  MarketplaceFilterTypes,
+  MenuOptions,
+  OverlaySandboxUrls,
+  SourcesFilterOptions,
+} from '@/src/testData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
+import { BaseElement } from '@/src/ui/webElements';
+import { GeneratorUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 
 dialOverlayTest(
   '[Overlay] Navigation panel. There is no text-names for buttons. The hight of the panel is 36px.\n' +
     '[Overlay] DIAL Marketplace feature is enabled - Feature.Marketplace.\n' +
-    '[Overlay] Add app button is not available in Overlay (Mobile view).\n' +
-    '[Overlay] Add app button on My workspace is unavailable even though all the features for apps creation is on',
+    '[Overlay] Add app button is not available in Overlay (Mobile view)',
   async ({
     overlayHomePage,
     overlayChat,
     overlayChatHeader,
     overlayTalkToAgentDialog,
+    overlayMarketplace,
+    overlayMarketplaceHeader,
     overlayHeader,
     overlayConversations,
     overlayMarketplacePage,
@@ -21,18 +32,23 @@ dialOverlayTest(
     overlayTalkToAgentDialogAssertion,
     overlayDataInjector,
     overlayNavigationPanel,
+    overlayAppsDropdownMenuAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-6031', 'EPMRTC-4447', 'EPMRTC-4712', 'EPMRTC-5782');
+    setTestIds('EPMRTC-6031', 'EPMRTC-4447', 'EPMRTC-4712');
 
     let conversation: Conversation;
+    const expectedColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.textAccentPrimary,
+    );
+    let addApp: BaseElement;
 
-    await dialTest.step('Create simple conversation', async () => {
+    await dialOverlayTest.step('Create simple conversation', async () => {
       conversation = conversationData.prepareDefaultConversation();
       await overlayDataInjector.createConversations([conversation]);
     });
 
-    await dialTest.step(
+    await dialOverlayTest.step(
       'Verify "DIAL Marketplace" buttons are available at the bottom panel, buttons do not have titles',
       async () => {
         await overlayHomePage.navigateToUrl(
@@ -53,7 +69,7 @@ dialOverlayTest(
       },
     );
 
-    await dialTest.step(
+    await dialOverlayTest.step(
       'Click on "Change agent" and verify there is "Search" field available',
       async () => {
         await overlayChat.changeAgentButton.click();
@@ -65,7 +81,7 @@ dialOverlayTest(
       },
     );
 
-    await dialTest.step(
+    await dialOverlayTest.step(
       'Select created conversation, click on model icon in the header and verify there is "Search" field available',
       async () => {
         await overlayHeader.leftPanelToggle.click();
@@ -78,17 +94,71 @@ dialOverlayTest(
       },
     );
 
-    await dialTest.step(
-      'Click on "Go to my workspace" link and verify workspace page is opened, "Add app" button is visible',
+    await dialOverlayTest.step(
+      'Click on "Go to my workspace" link and verify workspace page is opened, corresponding btn is highlighted, "Add app" button is visible',
       async () => {
         await overlayTalkToAgentDialog.goToMyWorkspace();
-        const marketplace = overlayMarketplacePage
-          .getMarketplaceContainer()
-          .getMarketplace();
-        await overlayBaseAssertion.assertElementState(marketplace, 'visible');
         await overlayBaseAssertion.assertElementState(
-          marketplace.getMarketplaceHeader().addAppButton,
+          overlayMarketplace,
           'visible',
+        );
+        await overlayBaseAssertion.assertElementColor(
+          overlayNavigationPanel.myWorkspaceButtonIcon,
+          expectedColor,
+        );
+        addApp = overlayMarketplaceHeader.addAppButton;
+        await overlayBaseAssertion.assertElementState(addApp, 'visible');
+      },
+    );
+
+    await dialOverlayTest.step(
+      'Expand "Add app" button and verify only "Custom app" option is available',
+      async () => {
+        await addApp.click();
+        await overlayAppsDropdownMenuAssertion.assertMenuIncludesOptions(
+          AddAppMenuOptions.customApp,
+        );
+        await overlayAppsDropdownMenuAssertion.assertMenuExcludesOptions(
+          AddAppMenuOptions.codeApp,
+        );
+      },
+    );
+
+    await dialOverlayTest.step(
+      'Click on "Back to chat" button and verify it is highlighted',
+      async () => {
+        await overlayNavigationPanel.backToChat({
+          isHttpMethodTriggered: true,
+        });
+        await overlayBaseAssertion.assertElementColor(
+          overlayNavigationPanel.backToChatButtonIcon,
+          expectedColor,
+        );
+        await overlayChat.waitForState();
+        await overlayHeader.waitForState();
+      },
+    );
+
+    await dialOverlayTest.step(
+      'Open "Select an agent for conversation" modal, switch to "All agents" tab and verify there is "Go to DIAL Marketplace" link is available',
+      async () => {
+        await overlayChat.getChatHeader().chatModelIcon.click();
+        await overlayTalkToAgentDialog.allAgentsTab.click();
+        await overlayTalkToAgentDialogAssertion.assertElementState(
+          overlayTalkToAgentDialog.goToDialMarketplaceButton,
+          'visible',
+        );
+      },
+    );
+
+    await dialOverlayTest.step(
+      'Click on the link and verify DIAL Marketplace is opened, corresponding btn is highlighted',
+      async () => {
+        await overlayTalkToAgentDialog.goToDialMarketplaceButton.click();
+        await overlayMarketplacePage.waitForPageLoaded();
+        await overlayBaseAssertion.assertElementColor(
+          overlayNavigationPanel.marketplaceHomeButtonIcon,
+          expectedColor,
         );
       },
     );
@@ -100,28 +170,16 @@ dialOverlayTest(
   async ({
     overlayHomePage,
     overlayChat,
-    overlayChatHeader,
     overlayTalkToAgentDialog,
-    overlayHeader,
-    overlayConversations,
-    conversationData,
     overlayTalkToAgentDialogAssertion,
-    overlayDataInjector,
     overlayNavigationPanel,
     overlayBaseAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-4867');
 
-    let conversation: Conversation;
-
-    await dialTest.step('Create simple conversation', async () => {
-      conversation = conversationData.prepareDefaultConversation();
-      await overlayDataInjector.createConversations([conversation]);
-    });
-
-    await dialTest.step(
-      'Verify "DIAL Marketplace" button is not available on the right side panel',
+    await dialOverlayTest.step(
+      'Verify bottom navigation buttons are not available',
       async () => {
         await overlayHomePage.navigateToUrl(
           OverlaySandboxUrls.disableMarketplaceUrl,
@@ -135,10 +193,14 @@ dialOverlayTest(
           overlayNavigationPanel.myWorkspaceButton,
           'hidden',
         );
+        await overlayBaseAssertion.assertElementState(
+          overlayNavigationPanel.backToChatButton,
+          'hidden',
+        );
       },
     );
 
-    await dialTest.step(
+    await dialOverlayTest.step(
       'Click on "Change agent" and verify there is no "Go to My workspace" button',
       async () => {
         await overlayChat.changeAgentButton.click();
@@ -146,19 +208,274 @@ dialOverlayTest(
           overlayTalkToAgentDialog.goToMyWorkspaceButton,
           'hidden',
         );
-        await overlayTalkToAgentDialog.cancelButton.click();
       },
     );
 
-    await dialTest.step(
-      'Select created conversation, click on model icon in the header and verify there is no "Go to My workspace" button',
+    await dialOverlayTest.step(
+      'Switch to "All agents" tab and verify there is no "Go to DIAL Marketplace" button',
       async () => {
-        await overlayHeader.leftPanelToggle.click();
-        await overlayConversations.selectEntity(conversation.name);
-        await overlayChatHeader.chatModelIcon.click();
+        await overlayTalkToAgentDialog.allAgentsTab.click();
         await overlayTalkToAgentDialogAssertion.assertElementState(
-          overlayTalkToAgentDialog.goToMyWorkspaceButton,
+          overlayTalkToAgentDialog.goToDialMarketplaceButton,
           'hidden',
+        );
+        await overlayTalkToAgentDialog.cancelButton.click();
+      },
+    );
+  },
+);
+
+dialOverlayTest(
+  '[Overlay] Add button on My workspace is unavailable even though Code apps and schemas exist, but CustomApplications is disabled',
+  async ({
+    overlayHomePage,
+    overlayMarketplacePage,
+    overlayMarketplaceHeader,
+    overlayBaseAssertion,
+    overlayNavigationPanel,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-5782');
+
+    await dialOverlayTest.step(
+      'Go to "My Workspace" page and verify "Add App" button is not available',
+      async () => {
+        await overlayHomePage.navigateToUrl(
+          OverlaySandboxUrls.disabledCustomAppUrl,
+        );
+        await overlayHomePage.waitForPageLoaded();
+        await overlayNavigationPanel.myWorkspaceButton.click();
+        await overlayMarketplacePage.waitForPageLoaded();
+        const addAppBtn = overlayMarketplaceHeader.addAppButton;
+        await overlayBaseAssertion.assertElementState(addAppBtn, 'hidden');
+      },
+    );
+  },
+);
+
+dialOverlayTest(
+  '[Overlay] Add button: Code app - Feature.CodeApps.\n' +
+    '[Overlay] enable Feature.MarketplaceTableView p1,2',
+  async ({
+    overlayHomePage,
+    overlayMarketplacePage,
+    overlayMarketplaceHeader,
+    overlayBaseAssertion,
+    overlayNavigationPanel,
+    overlayAppsDropdownMenuAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-6391', 'EPMRTC-6316');
+    let addAppBtn: BaseElement;
+
+    await dialOverlayTest.step(
+      'Go to "My Workspace" page and verify "Add App" button is available, card/table view toggles are not visible',
+      async () => {
+        await overlayHomePage.navigateToUrl(
+          OverlaySandboxUrls.enabledCodeAppUrl,
+        );
+        await overlayHomePage.waitForPageLoaded();
+        await overlayNavigationPanel.myWorkspaceButton.click();
+        await overlayMarketplacePage.waitForPageLoaded();
+        addAppBtn = overlayMarketplaceHeader.addAppButton;
+        await overlayBaseAssertion.assertElementState(addAppBtn, 'visible');
+        await overlayBaseAssertion.assertElementState(
+          overlayMarketplaceHeader.cardViewToggle,
+          'hidden',
+        );
+        await overlayBaseAssertion.assertElementState(
+          overlayMarketplaceHeader.tableViewToggle,
+          'hidden',
+        );
+      },
+    );
+
+    await dialOverlayTest.step(
+      'Expand "Add app" button and verify "Custom app" and "Code app" options are available',
+      async () => {
+        await addAppBtn.click();
+        await overlayAppsDropdownMenuAssertion.assertMenuIncludesOptions(
+          AddAppMenuOptions.customApp,
+          AddAppMenuOptions.codeApp,
+        );
+      },
+    );
+  },
+);
+
+dialOverlayTest(
+  '[Overlay] enable Feature.MarketplaceTableView p. 3,4',
+  async ({
+    overlayHomePage,
+    overlayMarketplacePage,
+    overlayMarketplaceHeader,
+    overlayBaseAssertion,
+    overlayNavigationPanel,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-6316');
+
+    await dialOverlayTest.step(
+      'Go to "My Workspace" page and verify card/table view toggles are visible',
+      async () => {
+        await overlayHomePage.navigateToUrl(
+          OverlaySandboxUrls.enabledMarketplaceTableViewUrl,
+        );
+        await overlayHomePage.waitForPageLoaded();
+        await overlayNavigationPanel.myWorkspaceButton.click();
+        await overlayMarketplacePage.waitForPageLoaded();
+        await overlayBaseAssertion.assertElementState(
+          overlayMarketplaceHeader.cardViewToggle,
+          'visible',
+        );
+        await overlayBaseAssertion.assertElementState(
+          overlayMarketplaceHeader.tableViewToggle,
+          'visible',
+        );
+      },
+    );
+  },
+);
+
+dialOverlayTest(
+  '[Overlay] My application has Share option - Feature.ApplicationsSharing p. 1-3',
+  async ({
+    overlayHomePage,
+    overlayMarketplacePage,
+    overlayHeader,
+    overlayBaseAssertion,
+    overlayNavigationPanel,
+    customApplicationBuilder,
+    adminApplicationApiHelper,
+    overlayApplicationApiHelper,
+    overlayShareApiHelper,
+    adminShareApiHelper,
+    overlayMarketplaceSidebar,
+    overlayMarketplaceFilter,
+    overlayMarketplaceAgentsSection,
+    overlayMarketplaceAgents,
+    overlayAgentDropdownMenu,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-6392');
+    const sharedAppName = GeneratorUtil.randomApplicationName();
+    const customAppName = GeneratorUtil.randomApplicationName();
+
+    await dialOverlayTest.step(
+      'By admin create a custom application and share it with the main user',
+      async () => {
+        const applicationModel = customApplicationBuilder
+          .withDisplayName(sharedAppName)
+          .build();
+        const backendApp =
+          await adminApplicationApiHelper.createApplication(applicationModel);
+        const shareByLinkResponse =
+          await adminShareApiHelper.shareAppByLink(backendApp);
+        await overlayShareApiHelper.acceptInvite(shareByLinkResponse);
+      },
+    );
+
+    await dialOverlayTest.step(
+      'By main user create a custom application available in "My Workspace"',
+      async () => {
+        const applicationModel = customApplicationBuilder
+          .withDisplayName(customAppName)
+          .build();
+        await overlayApplicationApiHelper.createApplication(applicationModel);
+      },
+    );
+
+    await dialOverlayTest.step(
+      'Go to "My Workspace" page and verify "Shared with me" filter option is available',
+      async () => {
+        await overlayHomePage.navigateToUrl(
+          OverlaySandboxUrls.enableMarketplaceUrl,
+        );
+        await overlayHomePage.waitForPageLoaded();
+        await overlayNavigationPanel.myWorkspaceButton.click();
+        await overlayMarketplacePage.waitForPageLoaded();
+        await overlayHeader.leftPanelToggle.click();
+        await overlayMarketplaceSidebar.waitForState();
+        const sourceFilterOptions =
+          await overlayMarketplaceFilter.filterByPropertyOptionLabels(
+            MarketplaceFilterTypes.sources,
+          );
+        overlayBaseAssertion.assertArrayIncludesAll(
+          sourceFilterOptions,
+          [SourcesFilterOptions.sharedWithMe],
+          MarketplaceExpectedMessages.filterOptionsAreValid,
+        );
+        await overlayMarketplaceSidebar.closeButton.click();
+      },
+    );
+
+    await dialOverlayTest.step(
+      'Open dropdown menu for created app and verify "Shared" option is not available',
+      async () => {
+        const agentElement =
+          await overlayMarketplaceAgentsSection.findAgentElement(customAppName);
+        await overlayMarketplaceAgents
+          .getAgentElementDotsMenu(agentElement)
+          .click();
+        const actualMenuOptions =
+          await overlayAgentDropdownMenu.getAllMenuOptions();
+        overlayBaseAssertion.assertArrayExcludesAll(
+          actualMenuOptions,
+          [MenuOptions.share],
+          MarketplaceExpectedMessages.filterOptionsAreValid,
+        );
+      },
+    );
+  },
+);
+
+dialOverlayTest(
+  '[Overlay] My application has Share option - Feature.ApplicationsSharing p. 4-6',
+  async ({
+    overlayHomePage,
+    overlayMarketplacePage,
+    overlayBaseAssertion,
+    overlayNavigationPanel,
+    customApplicationBuilder,
+    overlayApplicationApiHelper,
+    overlayMarketplaceAgentsSection,
+    overlayMarketplaceAgents,
+    overlayAgentDropdownMenu,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-6392');
+    const customAppName = GeneratorUtil.randomApplicationName();
+
+    await dialOverlayTest.step(
+      'By main user create a custom application available in "My Workspace"',
+      async () => {
+        const applicationModel = customApplicationBuilder
+          .withDisplayName(customAppName)
+          .build();
+        await overlayApplicationApiHelper.createApplication(applicationModel);
+      },
+    );
+
+    await dialOverlayTest.step(
+      'Go to "My Workspace" page, open dropdown menu for created app and verify "Shared" option is available',
+      async () => {
+        await overlayHomePage.navigateToUrl(
+          OverlaySandboxUrls.enabledAppSharingUrl,
+        );
+        await overlayHomePage.waitForPageLoaded();
+        await overlayNavigationPanel.myWorkspaceButton.click();
+        await overlayMarketplacePage.waitForPageLoaded();
+        const agentElement =
+          await overlayMarketplaceAgentsSection.findAgentElement(customAppName);
+        await overlayMarketplaceAgents
+          .getAgentElementDotsMenu(agentElement)
+          .click();
+        const actualMenuOptions =
+          await overlayAgentDropdownMenu.getAllMenuOptions();
+        overlayBaseAssertion.assertArrayIncludesAll(
+          actualMenuOptions,
+          [MenuOptions.share],
+          MarketplaceExpectedMessages.filterOptionsAreValid,
         );
       },
     );

@@ -10,6 +10,11 @@ import {
   ConfirmationDialog,
   ConversationSettingsModal,
   DropdownMenu,
+  Marketplace,
+  MarketplaceAgents,
+  MarketplaceFilter,
+  MarketplaceHeader,
+  MarketplaceSidebar,
   ModelInfoTooltip,
   PromptBar,
   PublishingRequestModal,
@@ -26,6 +31,7 @@ import {
   ChatMessagesAssertion,
   ConversationAssertion,
   FolderAssertion,
+  MenuAssertion,
   PromptAssertion,
   TalkToAgentDialogAssertion,
 } from '@/src/assertions';
@@ -34,6 +40,7 @@ import test from '@/src/core/baseFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
+  ApplicationApiHelper,
   FileApiHelper,
   IconApiHelper,
   ItemApiHelper,
@@ -55,6 +62,7 @@ import {
 import { ReportAnIssueModal } from '@/src/ui/webElements/footer/reportAnIssueModal';
 import { RequestApiKeyModal } from '@/src/ui/webElements/footer/requestApiKeyModal';
 import { Header } from '@/src/ui/webElements/header';
+import { MarketplaceAgentsSection } from '@/src/ui/webElements/marketplace/marketplaceAgentsSection';
 import { NavigationPanel } from '@/src/ui/webElements/navigationPanel';
 import { Actions } from '@/src/ui/webElements/overlay/actions';
 import { Configuration } from '@/src/ui/webElements/overlay/configuration';
@@ -76,6 +84,8 @@ const dialOverlayTest = test.extend<{
   beforeTestCleanup: string;
   overlayHomePage: OverlayHomePage;
   overlayMarketplacePage: OverlayMarketplacePage;
+  overlayMarketplace: Marketplace;
+  overlayMarketplaceHeader: MarketplaceHeader;
   overlayChat: Chat;
   overlayAgentInfo: AgentInfo;
   overlayHeader: Header;
@@ -103,6 +113,8 @@ const dialOverlayTest = test.extend<{
   overlayPrompts: PromptsTree;
   overlayConversationDropdownMenu: DropdownMenu;
   overlayPromptDropdownMenu: DropdownMenu;
+  overlayAppsDropdownMenu: DropdownMenu;
+  overlayAppsDropdownMenuAssertion: MenuAssertion;
   overlayShareModal: ShareModal;
   overlayPublishingRequestModal: PublishingRequestModal;
   overlayAccountSettings: AccountSettings;
@@ -123,6 +135,7 @@ const dialOverlayTest = test.extend<{
   overlayPromptAssertion: PromptAssertion;
   overlayChatBarFolderAssertion: FolderAssertion<FolderConversations>;
   overlayShareApiHelper: ShareApiHelper;
+  overlayApplicationApiHelper: ApplicationApiHelper;
   adminUserRequestContext: APIRequestContext;
   adminPublicationApiHelper: PublicationApiHelper;
   adminShareApiHelper: ShareApiHelper;
@@ -132,9 +145,15 @@ const dialOverlayTest = test.extend<{
   adminPage: Page;
   adminLocalStorageManager: LocalStorageManager;
   adminDataInjector: DataInjectorInterface;
+  adminApplicationApiHelper: ApplicationApiHelper;
   overlayActions: Actions;
   overlayConfiguration: Configuration;
   overlayDialog: Dialog;
+  overlayMarketplaceSidebar: MarketplaceSidebar;
+  overlayMarketplaceFilter: MarketplaceFilter;
+  overlayMarketplaceAgentsSection: MarketplaceAgentsSection;
+  overlayMarketplaceAgents: MarketplaceAgents;
+  overlayAgentDropdownMenu: DropdownMenu;
 }>({
   // eslint-disable-next-line no-empty-pattern
   storageState: async ({}, use) => {
@@ -155,6 +174,16 @@ const dialOverlayTest = test.extend<{
   overlayMarketplacePage: async ({ page }, use) => {
     const overlayMarketplacePage = new OverlayMarketplacePage(page);
     await use(overlayMarketplacePage);
+  },
+  overlayMarketplace: async ({ overlayMarketplacePage }, use) => {
+    const overlayMarketplace = overlayMarketplacePage
+      .getOverlayContainer()
+      .getMarketplace();
+    await use(overlayMarketplace);
+  },
+  overlayMarketplaceHeader: async ({ overlayMarketplace }, use) => {
+    const overlayMarketplaceHeader = overlayMarketplace.getMarketplaceHeader();
+    await use(overlayMarketplaceHeader);
   },
   overlayChat: async ({ overlayHomePage }, use) => {
     const overlayChat = overlayHomePage.getOverlayContainer().getChat();
@@ -284,6 +313,22 @@ const dialOverlayTest = test.extend<{
     );
     await use(overlayPromptDropdownMenu);
   },
+  overlayAppsDropdownMenu: async ({ page, overlayHomePage }, use) => {
+    const overlayAppsDropdownMenu = new DropdownMenu(
+      page,
+      overlayHomePage.getOverlayContainer().getElementLocator(),
+    );
+    await use(overlayAppsDropdownMenu);
+  },
+  overlayAppsDropdownMenuAssertion: async (
+    { overlayAppsDropdownMenu },
+    use,
+  ) => {
+    const overlayDropdownMenuAssertion = new MenuAssertion(
+      overlayAppsDropdownMenu,
+    );
+    await use(overlayDropdownMenuAssertion);
+  },
   overlayShareModal: async ({ page, overlayHomePage }, use) => {
     const overlayShareModal = new ShareModal(
       page,
@@ -407,6 +452,10 @@ const dialOverlayTest = test.extend<{
     const overlayShareApiHelper = new ShareApiHelper(request);
     await use(overlayShareApiHelper);
   },
+  overlayApplicationApiHelper: async ({ request }, use) => {
+    const overlayApplicationApiHelper = new ApplicationApiHelper(request);
+    await use(overlayApplicationApiHelper);
+  },
   adminUserRequestContext: async ({ playwright }, use) => {
     const adminUserRequestContext = await playwright.request.newContext({
       storageState: overlayStateFilePath(+config.workers!),
@@ -462,6 +511,13 @@ const dialOverlayTest = test.extend<{
       : adminBrowserStorageInjector;
     await use(adminDataInjector);
   },
+  adminApplicationApiHelper: async ({ adminUserRequestContext }, use) => {
+    const adminApplicationApiHelper = new ApplicationApiHelper(
+      adminUserRequestContext,
+      BucketUtil.getAdminUserBucket(),
+    );
+    await use(adminApplicationApiHelper);
+  },
   overlayActions: async ({ overlayHomePage }, use) => {
     const overlayActions = overlayHomePage.getActions();
     await use(overlayActions);
@@ -473,6 +529,37 @@ const dialOverlayTest = test.extend<{
   overlayDialog: async ({ page }, use) => {
     const overlayDialog = new Dialog(page);
     await use(overlayDialog);
+  },
+  overlayMarketplaceSidebar: async ({ overlayMarketplacePage }, use) => {
+    const overlayMarketplaceSidebar = overlayMarketplacePage
+      .getMarketplaceContainer()
+      .getMarketplaceSidebar();
+    await use(overlayMarketplaceSidebar);
+  },
+  overlayMarketplaceFilter: async ({ overlayMarketplaceSidebar }, use) => {
+    const overlayMarketplaceFilter =
+      overlayMarketplaceSidebar.getMarketplaceFilter();
+    await use(overlayMarketplaceFilter);
+  },
+  overlayMarketplaceAgentsSection: async ({ overlayMarketplace }, use) => {
+    const overlayMarketplaceAgentsSection =
+      overlayMarketplace.getMarketplaceAgentsSection();
+    await use(overlayMarketplaceAgentsSection);
+  },
+  overlayMarketplaceAgents: async (
+    { overlayMarketplaceAgentsSection },
+    use,
+  ) => {
+    const overlayMarketplaceAgents =
+      overlayMarketplaceAgentsSection.getAgents();
+    await use(overlayMarketplaceAgents);
+  },
+  overlayAgentDropdownMenu: async ({ page, overlayMarketplacePage }, use) => {
+    const overlayAgentDropdownMenu = new DropdownMenu(
+      page,
+      overlayMarketplacePage.getOverlayContainer().getElementLocator(),
+    );
+    await use(overlayAgentDropdownMenu);
   },
 });
 

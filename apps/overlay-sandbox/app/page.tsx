@@ -23,6 +23,10 @@ enum OverlayCases {
   enabledHideUserSettingsSandboxOverlay = '/cases/overlay/enabled-hide-user-settings-sandbox',
   loaderHideEventSetSandbox = '/cases/overlay/loader-hide-event-set-sandbox',
   skipFocusSetSandbox = '/cases/overlay/skip-focus-set-sandbox',
+  disabledCustomAppOverlay = '/cases/overlay/disabled-custom-app-sandbox',
+  enabledCodeAppOverlay = '/cases/overlay/enabled-code-app-sandbox',
+  enabledMarketplaceTableViewOverlay = '/cases/overlay/enabled-marketplace-table-view-sandbox',
+  enabledAppSharingOverlay = '/cases/overlay/enabled-app-sharing-sandbox',
 }
 
 export default async function Index() {

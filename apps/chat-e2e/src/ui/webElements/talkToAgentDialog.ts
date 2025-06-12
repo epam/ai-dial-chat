@@ -24,6 +24,15 @@ export class TalkToAgentDialog extends BaseElement {
   public goToMyWorkspaceButton = this.getChildElementBySelector(
     TalkToAgentDialogSelectors.goToMyWorkspaceButton,
   );
+  public goToDialMarketplaceButton = this.getChildElementBySelector(
+    TalkToAgentDialogSelectors.goToDialMarketplaceButton,
+  );
+  public myAgentsTab = this.getChildElementBySelector(
+    TalkToAgentDialogSelectors.myAgentsTab,
+  );
+  public allAgentsTab = this.getChildElementBySelector(
+    TalkToAgentDialogSelectors.allAgentsTab,
+  );
   public searchAgentInput = this.getChildElementBySelector(
     TalkToAgentDialogSelectors.searchAgent,
   );

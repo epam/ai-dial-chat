@@ -3,6 +3,8 @@ export const marketplaceContainer = '[data-qa="marketplace"]';
 export const MarketplaceSelectors = {
   header: '[data-qa="marketplace-header"]',
   addApp: '[data-qa="add-app"]',
+  cardViewToggle: '[data-qa="card-view"]',
+  tableViewToggle: '[data-qa="table-view"]',
   noWorkspaceResultsFound: '[data-qa="no-workspace-results-found"]',
   noResultsFoundDescription: '[data-qa="no-data-description"]',
   marketplaceSuggestions: '[data-qa="marketplace-suggestions-label"]',

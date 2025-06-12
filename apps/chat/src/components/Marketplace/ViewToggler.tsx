@@ -39,6 +39,7 @@ export const ViewToggler: React.FC = () => {
               ? 'border-accent-primary text-accent-primary'
               : 'border-secondary text-secondary',
           )}
+          data-qa={view.toLowerCase().concat('-view')}
           onClick={() => handleToggleView(view)}
         >
           <Icon size={24} />
