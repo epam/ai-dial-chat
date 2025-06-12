@@ -11,7 +11,7 @@ import { ServerUtils } from '@/src/utils/server/server';
 
 import { ApplicationInfo } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
-import { ApiKeys, CoreApiKeys } from '@/src/types/common';
+import { ApiKeys, CoreApiKeys, ParseOptions } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
 import { PromptInfo } from '@/src/types/prompt';
 import { ServerSlugs } from '@/src/types/slugs-types';
@@ -77,7 +77,7 @@ export const getConversationApiKey = (
 // Format key: {modelId}__{name}
 export const parseConversationApiKey = (
   apiKey: string,
-  options?: Partial<{ parseVersion: boolean }>,
+  options?: ParseOptions,
 ): Omit<ConversationInfo, 'folderId' | 'id'> => {
   const parts = apiKey.split(pathKeySeparator);
 
@@ -121,7 +121,7 @@ export const getPromptApiKey = (prompt: Omit<PromptInfo, 'id'>) => {
 // Format key: {name}
 export const parsePromptApiKey = (
   apiKey: string,
-  options?: Partial<{ parseVersion: boolean }>,
+  options?: ParseOptions,
 ): Omit<PromptInfo, 'folderId' | 'id'> => {
   const parsedApiKey: Omit<PromptInfo, 'folderId' | 'id'> = {
     name: apiKey,

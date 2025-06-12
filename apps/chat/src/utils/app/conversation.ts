@@ -14,7 +14,7 @@ import {
   parseConversationApiKey,
 } from '@/src/utils/server/api';
 
-import { EntityType, PartialBy } from '@/src/types/common';
+import { EntityType, ParseOptions, PartialBy } from '@/src/types/common';
 import { AddonsMap, DialAIEntityModel, ModelsMap } from '@/src/types/models';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
@@ -150,7 +150,7 @@ export const regenerateConversationId = <T extends ConversationInfo>(
 
 export const getConversationInfoFromId = (
   id: string,
-  options?: Partial<{ parseVersion: boolean }>,
+  options?: ParseOptions,
 ): ConversationInfo => {
   const { apiKey, bucket, name, parentPath } = splitEntityId(id);
 
