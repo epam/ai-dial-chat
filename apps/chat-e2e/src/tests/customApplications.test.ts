@@ -16,6 +16,7 @@ import {
   MockedChatApiResponseBodies,
   UploadMenuOptions,
 } from '@/src/testData';
+import { keys } from '@/src/ui/keyboard';
 import {
   AppEditSteps,
   BaseElement,
@@ -811,7 +812,8 @@ dialTest(
 dialTest(
   'Custom app Topic dropdown select.\n' + // EPMRTC-4374
     '[Custom app]: Hints on for fields\n' + // EPMRTC-4278
-    'Preview on step "General info"', // EPMRTC-5749
+    'Preview on step "General info"\n' + // EPMRTC-5749
+    'Preview on step "App settings"', // EPMRTC-5750
   async (
     {
       marketplacePage,
@@ -825,10 +827,17 @@ dialTest(
       attachFilesModal,
       appEditorGeneralInfoAgentPreview,
       fileApiHelper,
+      appEditorHeader,
+      appEditorAppSettingsAgentPreview,
+      dialHomePage,
+      chatMessagesAssertion,
+      sendMessage,
+      chatMessages,
+      page,
     },
     testInfo,
   ) => {
-    setTestIds('EPMRTC-4374', 'EPMRTC-4278', 'EPMRTC-5749');
+    setTestIds('EPMRTC-4374', 'EPMRTC-4278', 'EPMRTC-5749', 'EPMRTC-5750');
     let numberOfTopicsToSelect: number;
     let allTopics: string[] = [];
     let topicsToSelect: string[] = [];
@@ -981,7 +990,7 @@ dialTest(
     });
 
     await dialTest.step(
-      "Verify preview of app's pop-up form on right side of screen",
+      "Verify preview of app's pop-up form on right side of General Info screen",
       async () => {
         await baseAssertion.assertElementState(
           appEditorGeneralInfoAgentPreview,
@@ -1045,7 +1054,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Turn off the detailed view and assert details',
+      'Turn off the detailed view and assert details on General Info screen',
       async () => {
         await appEditorGeneralInfoAgentPreview.detailedSwitch.click();
         await baseAssertion.assertElementText(
@@ -1098,6 +1107,77 @@ dialTest(
         await appEditorViewForm.attachmentTypesHintIcon.hoverOver();
         await tooltipAssertion.assertTooltipContent(
           ExpectedConstants.customApplicationAttachmentsTypesTooltip,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Input Chat completion URL on App Settings step',
+      async () => {
+        await appEditorViewForm.chatCompletionUrl.fillInInput(
+          'http://testurl.com',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify preview area on App Settings step shows a new conversation screen and message box is enabled',
+      async () => {
+        await baseAssertion.assertElementState(
+          appEditorAppSettingsAgentPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          appEditorAppSettingsAgentPreview.appSettingsChatMode,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          appEditorAppSettingsAgentPreview.agentInfoContainer,
+          'visible',
+        );
+        const previewChatInput = sendMessage.messageInput.getElementLocator();
+        await baseAssertion.assertElementState(previewChatInput, 'visible');
+        await baseAssertion.assertElementActionabilityState(
+          previewChatInput,
+          'enabled',
+        );
+        const previewChatIcon =
+          appEditorAppSettingsAgentPreview.previewChatIcon;
+        await baseAssertion.assertEntityIcon(previewChatIcon, expectedIconUrl);
+      },
+    );
+
+    await dialTest.step(
+      'Input a message in preview chat, send it, and verify message and response appear',
+      async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        const testMessage = 'Hello from preview';
+        await sendMessage.messageInput.fillInInput(testMessage);
+        await sendMessage.sendMessageButton.click();
+        await chatMessages.getChatMessage(1).waitFor();
+        await chatMessages.getChatMessage(2).waitFor();
+
+        await chatMessagesAssertion.assertMessageContent(1, testMessage);
+        await chatMessagesAssertion.assertMessageContent(
+          2,
+          'Response', // Mocked response content
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Add attachment type (e.g., image/png) and verify clip icon appears in preview chat message box',
+      async () => {
+        await appEditorViewForm.attachmentTypesInput.fillInInput('image/png');
+        await page.keyboard.press(keys.enter);
+        const previewChatAttachmentButton =
+          sendMessage.attachmentMenuTrigger.getElementLocator();
+        await baseAssertion.assertElementState(
+          previewChatAttachmentButton,
+          'visible',
+          'Attachment clip icon should appear in preview chat',
         );
       },
     );

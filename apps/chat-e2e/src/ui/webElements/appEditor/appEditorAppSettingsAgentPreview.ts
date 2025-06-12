@@ -8,15 +8,23 @@ export class AppEditorAppSettingsAgentPreview extends BaseElement {
     super(page, AppEditorAppSettingsPreviewSelectors.container, parentLocator);
   }
 
-  public appEditorChatMode = this.getChildElementBySelector(
-    AppEditorAppSettingsPreviewSelectors.chatPreviewContainer,
+  public appSettingsChatMode = this.getChildElementBySelector(
+    AppEditorAppSettingsPreviewSelectors.appSettingsChatModeContainer,
   );
 
   public previewChatIconContainer =
-    this.appEditorChatMode.getChildElementBySelector(
-      AppEditorAppSettingsPreviewSelectors.previewIconContainer,
+    this.appSettingsChatMode.getChildElementBySelector(
+      AppEditorAppSettingsPreviewSelectors.previewIcon,
     );
 
   public previewChatIcon =
     this.previewChatIconContainer.getChildElementBySelector(Tags.img);
+
+  public agentInfoContainer = this.appSettingsChatMode.getChildElementBySelector(
+    AppEditorAppSettingsPreviewSelectors.agentInfoContainer,
+  );
+
+  public agentInfo = this.agentInfoContainer.getChildElementBySelector(
+    AppEditorAppSettingsPreviewSelectors.agentInfo,
+  );
 }
