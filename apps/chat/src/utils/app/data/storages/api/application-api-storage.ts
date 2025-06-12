@@ -8,6 +8,7 @@ import { constructPath } from '@/src/utils/app/file';
 import {
   ApiUtils,
   getApplicationApiKey,
+  getOpsApiUrl,
   parseApplicationApiKey,
 } from '@/src/utils/server/api';
 
@@ -22,6 +23,7 @@ import {
 } from '@/src/types/applications';
 import { ApiKeys, CoreApiKeys } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
+import { ServerSlugs } from '@/src/types/slugs-types';
 
 import { ApiEntityStorage } from './api-entity-storage';
 
@@ -66,7 +68,7 @@ export class ApplicationApiStorage extends ApiEntityStorage<
       | SimpleApplicationStatus.REDEPLOY,
   ): Observable<void> {
     try {
-      return ApiUtils.request(constructPath('/api/ops/application', status), {
+      return ApiUtils.request(getOpsApiUrl(ServerSlugs.APPLICATION, status), {
         method: HTTPMethod.POST,
         body: JSON.stringify({
           url: ApiUtils.encodeApiUrl(applicationId),
@@ -79,7 +81,7 @@ export class ApplicationApiStorage extends ApiEntityStorage<
 
   getLogs(path: string): Observable<ApplicationLogsType> {
     try {
-      return ApiUtils.request('/api/ops/application/logs', {
+      return ApiUtils.request(getOpsApiUrl(ServerSlugs.APPLICATION_LOGS), {
         method: HTTPMethod.POST,
         body: JSON.stringify({
           url: ApiUtils.encodeApiUrl(path),

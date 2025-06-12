@@ -26,5 +26,6 @@ export const useChatUploadFiles = (
     maximumAttachmentsAmount,
     availableAttachmentsTypes,
     skipSelect,
+    false,
   );
 };
