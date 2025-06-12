@@ -9,7 +9,7 @@ import {
   getModelDescription,
   getQuickAppConfig,
   getQuickAppDocumentUrl,
-  getToolsetStr,
+  getWebAPIToolsetStr,
 } from '@/src/utils/app/application';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { notAllowedSymbols } from '@/src/utils/app/file';
@@ -352,7 +352,7 @@ export const getDefaultValues = ({
     // QUICK APP
     instructions: quickAppConfig?.instructions ?? '',
     temperature: quickAppConfig?.temperature ?? DEFAULT_TEMPERATURE,
-    toolset: quickAppConfig ? getToolsetStr(quickAppConfig) : '',
+    toolset: quickAppConfig ? getWebAPIToolsetStr(quickAppConfig) : '',
     model:
       quickAppConfig?.model ??
       DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),

@@ -1,7 +1,7 @@
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { getPromptApiKey, parsePromptApiKey } from '@/src/utils/server/api';
 
-import { PartialBy } from '@/src/types/common';
+import { ParseOptions, PartialBy } from '@/src/types/common';
 import { Prompt, PromptInfo, TemplateParameter } from '@/src/types/prompt';
 
 import { PROMPT_VARIABLE_REGEX_GLOBAL } from '@/src/constants/folders';
@@ -27,7 +27,7 @@ export const regeneratePromptId = (prompt: PartialBy<Prompt, 'id'>): Prompt => {
 
 export const getPromptInfoFromId = (
   id: string,
-  options?: Partial<{ parseVersion: boolean }>,
+  options?: ParseOptions,
 ): PromptInfo => {
   const { apiKey, bucket, name, parentPath } = splitEntityId(id);
 

@@ -2,9 +2,7 @@ import { BackendDataNodeType, BackendResourceType } from './common';
 import { DialFile } from './files';
 
 import {
-  ConversationInfo,
   MIMEType,
-  PromptInfo,
   PublishActions,
   ShareEntity,
   UploadStatus,
@@ -144,8 +142,4 @@ export type PublicVersionGroups = Record<
   PublicVersionGroup | undefined
 >;
 
-export type PublicationReviewItem =
-  | ShareEntity
-  | PromptInfo
-  | ConversationInfo
-  | DialFile;
+export type PublicationReviewItem = ShareEntity | DialFile;
