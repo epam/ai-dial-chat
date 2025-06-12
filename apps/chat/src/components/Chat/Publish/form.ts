@@ -3,6 +3,7 @@ import { Path, RegisterOptions } from 'react-hook-form';
 import { getNameReg } from '@/src/utils/app/forms';
 
 import { formErrors } from '@/src/constants/form-errors';
+import { MAX_PUBLICATION_AUTHOR_LENGTH } from '@/src/constants/publication';
 
 export interface PublicationRequestFormData {
   publishRequestName: string;
@@ -31,7 +32,8 @@ export const validators: Validators = {
     required: formErrors.required,
     validate: (v) => {
       return (
-        getNameReg(50).test(v.trim()) || formErrors.notValidString('Author', 50)
+        getNameReg(MAX_PUBLICATION_AUTHOR_LENGTH).test(v.trim()) ||
+        formErrors.notValidString('Author', MAX_PUBLICATION_AUTHOR_LENGTH)
       );
     },
   },
