@@ -396,14 +396,13 @@ export const ExpectedMessages = {
   noConversationIsSelected: 'No conversation is selected',
   noData: 'No data in the conversation section',
   agentNameIsValid: 'Agent name is valid',
-  agentVersionIsValid: 'Agent version is valid',
   agentIsVisible: 'Agent is visible',
   applicationFormFieldShouldHaveAsterisk:
     'Application form field should be marked as required',
   FormFieldShouldRetainUpdatedValue:
     'Chat Completion URL should retain updated value',
   dropdownMenuIsHidden: 'The dropdown menu is hidden',
-  dropdownMenuIsVisible: 'The dropdown menu is visible',
+  listboxMenuIsVisible: 'The listbox menu is visible',
   allowedNumberOfAttachedFiles:
     'Expected number of files to be attached is correct',
   headerMaxNumberOfAttacmentsNotMentioned:
