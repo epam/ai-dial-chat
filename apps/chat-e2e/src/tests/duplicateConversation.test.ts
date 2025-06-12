@@ -7,11 +7,13 @@ import {
   FolderConversation,
   MenuOptions,
 } from '@/src/testData';
+import { DateUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 dialTest(
   'Duplicate chat located in today.\n' +
-    'Duplicate chat located in today several times to check postfixes',
+    'Duplicate chat located in today several times to check postfixes.\n' +
+    'Metadata for chat duplicated from yesterday section',
   async ({
     dialHomePage,
     conversations,
@@ -22,11 +24,13 @@ dialTest(
     localStorageManager,
     conversationAssertion,
     chatMessagesAssertion,
+    informationModalAssertion,
   }) => {
-    setTestIds('EPMRTC-3000', 'EPMRTC-3056');
+    setTestIds('EPMRTC-3000', 'EPMRTC-3056', 'EPMRTC-6103');
     let conversation: Conversation;
     const firstRequest = 'first request';
     const secondRequest = 'second request';
+    const currentDate = DateUtil.getCurrentLocalDate();
 
     await dialTest.step('Prepare conversation with some history', async () => {
       conversation = conversationData.prepareModelConversationBasedOnRequests([
@@ -42,7 +46,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         for (let i = 1; i <= 2; i++) {
           await conversations.openEntityDropdownMenu(conversation.name, {
             exactMatch: true,
@@ -67,6 +71,20 @@ dialTest(
             conversation.messages.length,
           );
         }
+      },
+    );
+
+    await dialTest.step(
+      'Select "Info" option for duplicated conversation from dropdown menu and verify modal data',
+      async () => {
+        await conversations.openEntityDropdownMenu(
+          ExpectedConstants.entityWithIndexTitle(conversation.name, 1),
+        );
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.info);
+        await informationModalAssertion.assertFields({
+          createdDate: currentDate,
+          lastUpdatedDate: currentDate,
+        });
       },
     );
   },

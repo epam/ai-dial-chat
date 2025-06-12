@@ -11,6 +11,8 @@ import {
   throwError,
 } from 'rxjs';
 
+import { cleanConversationHistory } from '@/src/utils/app/clean';
+
 import {
   ApplicationInfo,
   ApplicationLogsType,
@@ -26,9 +28,8 @@ import {
   UIStorageKeys,
 } from '@/src/types/storage';
 
+import { DEFAULT_AGENT } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
-
-import { cleanConversationHistory } from '../../clean';
 
 import {
   ConversationInfo,
@@ -336,6 +337,20 @@ export class BrowserStorage implements DialStorage {
 
   public static setSelectedWidget(id: string | undefined): Observable<void> {
     return BrowserStorage.setData(UIStorageKeys.SelectedWidget, id);
+  }
+
+  public static getDefaultModelReference(): Observable<string> {
+    return BrowserStorage.getData(
+      UIStorageKeys.DefaultModelReference,
+      DEFAULT_AGENT,
+    );
+  }
+
+  public static setDefaultModelReference(reference: string): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.DefaultModelReference,
+      reference,
+    );
   }
 
   public static getData<K = undefined>(

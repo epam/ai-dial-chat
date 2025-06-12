@@ -1,6 +1,7 @@
 import { EMPTY, Observable, map, of } from 'rxjs';
 
 import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
 import {
@@ -10,17 +11,6 @@ import {
 } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
-import {
-  ExportFormatV1,
-  ExportFormatV2,
-  ExportFormatV3,
-  ExportFormatV4,
-  ExportFormatV5,
-  LatestExportConversationsFormat,
-  LatestExportFormat,
-  PromptsHistory,
-  SupportedExportFormats,
-} from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 import { AppAction } from '@/src/types/store';
 
@@ -34,7 +24,6 @@ import { UploadedAttachment } from '@/src/store/import-export/importExport.reduc
 import { PLOTLY_CONTENT_TYPE } from '@/src/constants/chat';
 import { successMessages } from '@/src/constants/successMessages';
 
-import { ApiUtils } from '../server/api';
 import { cleanConversationHistory } from './clean';
 import { isImportEntityNameOnSameLevelUnique } from './common';
 import { ConversationService } from './data/conversation-service';
@@ -44,9 +33,18 @@ import { translate } from './translation';
 
 import {
   Attachment,
+  ExportFormatV1,
+  ExportFormatV2,
+  ExportFormatV3,
+  ExportFormatV4,
+  ExportFormatV5,
+  ExportPromptsFormat,
+  LatestExportConversationsFormat,
+  LatestExportFormat,
   Message,
   ShareInterface,
   Stage,
+  SupportedExportFormats,
 } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
 
@@ -75,7 +73,7 @@ export function isExportFormatV5(obj: any): obj is ExportFormatV5 {
   return 'version' in obj && obj.version === 5;
 }
 
-export function isPromptsFormat(obj: PromptsHistory) {
+export function isPromptsFormat(obj: ExportPromptsFormat) {
   return Object.prototype.hasOwnProperty.call(obj, 'prompts');
 }
 
@@ -173,7 +171,7 @@ export const getDownloadFileName = (fileName?: string): string =>
   !fileName ? 'ai_dial' : fileName.toLowerCase().replaceAll(' ', '_');
 
 function downloadChatPromptData(
-  data: LatestExportConversationsFormat | Prompt[] | PromptsHistory,
+  data: LatestExportConversationsFormat | Prompt[] | ExportPromptsFormat,
   exportType: ExportType,
   fileName?: string,
 ) {
@@ -214,26 +212,35 @@ const triggerDownloadConversationsHistory = (
 };
 
 const triggerDownloadPromptsHistory = (
-  data: PromptsHistory,
+  data: ExportPromptsFormat,
   appName?: string,
 ) => {
   downloadChatPromptData(data, 'prompts_history', appName);
 };
 
-const triggerDownloadPrompt = (data: PromptsHistory, appName?: string) => {
+const triggerDownloadPrompt = (data: ExportPromptsFormat, appName?: string) => {
   downloadChatPromptData(data, 'prompt', appName);
 };
 
-export const exportConversation = (
+export const getExportConversationInfo = (
   conversation: Conversation,
   folders: FolderInterface[],
-  appName?: string,
 ) => {
   const data: LatestExportConversationsFormat = {
     version: 5,
     history: [excludePublicationInfo(conversation)],
     folders: folders,
   };
+
+  return data;
+};
+
+export const triggerExportConversation = (
+  conversation: Conversation,
+  folders: FolderInterface[],
+  appName?: string,
+) => {
+  const data = getExportConversationInfo(conversation, folders);
 
   triggerDownloadConversation(data, appName);
 };
@@ -290,7 +297,7 @@ export const exportPrompt = (
 ) => {
   const promptsToExport: Prompt[] = [excludePublicationInfo(prompt)];
 
-  const data: PromptsHistory = {
+  const data: ExportPromptsFormat = {
     prompts: promptsToExport,
     folders,
   };
@@ -420,7 +427,7 @@ export const getConversationActions = (
   }
 
   return [
-    of(ConversationsActions.saveConversation(conversation)),
+    of(ConversationsActions.saveConversation({ conversation })),
     of(
       ConversationsActions.updateConversationSuccess({
         id: conversation.id,

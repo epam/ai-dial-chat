@@ -4,7 +4,7 @@ import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 
 import { stopBubbling } from '@/src/constants/chat';
 
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ApplicationTopic } from './ApplicationTopic';
 
@@ -154,6 +154,7 @@ export const TopicsList = ({
               }}
               onMouseEnter={() => handleDelayShowTooltip(true)}
               onMouseLeave={() => handleDelayShowTooltip(false)}
+              data-qa="hidden-topics"
             >
               +{hiddenTopics.length}
             </span>

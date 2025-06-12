@@ -1,16 +1,18 @@
 import { Account, CallbacksOptions, Profile, Session } from 'next-auth';
 import { TokenEndpointHandler } from 'next-auth/providers';
 
+import { parseCommaSeparatedList } from '@/src/utils/app/common';
+import { logger } from '@/src/utils/server/logger';
+
 import { Token } from '@/src/types/auth';
 
-import { parseCommaSeparatedList } from '../app/common';
-import { logger } from '../server/logger';
 import NextClient, { RefreshToken } from './nextauth-client';
 
 import { Feature } from '@epam/ai-dial-shared';
 import { decodeJwt } from 'jose';
 import get from 'lodash-es/get';
 import intersection from 'lodash-es/intersection';
+import snakeCase from 'lodash-es/snakeCase';
 import { TokenSet } from 'openid-client';
 
 const waitRefreshTokenTimeout = 5;
@@ -39,12 +41,15 @@ const safeParseJSON = (jsonData: string | undefined, errorMessage: string) => {
 
 const getUser = (accessToken: string | undefined, providerId: string) => {
   const rolesFieldName =
-    process.env[`AUTH_${providerId.toUpperCase()}_DIAL_ROLES_FIELD`] ??
+    process.env[
+      `AUTH_${snakeCase(providerId).toUpperCase()}_DIAL_ROLES_FIELD`
+    ] ??
     process.env.DIAL_ROLES_FIELD ??
     'dial_roles';
   const adminRoleNames = parseCommaSeparatedList(
-    process.env[`AUTH_${providerId.toUpperCase()}_ADMIN_ROLE_NAMES`] ??
-      process.env.ADMIN_ROLE_NAMES,
+    process.env[
+      `AUTH_${snakeCase(providerId).toUpperCase()}_ADMIN_ROLE_NAMES`
+    ] ?? process.env.ADMIN_ROLE_NAMES,
     ['admin'],
   );
   const decodedPayload = accessToken ? safeDecodeJwt(accessToken) : {};

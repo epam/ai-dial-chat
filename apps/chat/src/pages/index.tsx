@@ -6,7 +6,8 @@ import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
 import { ScreenState } from '@/src/types/common';
 
-import { useAppSelector } from '@/src/store/hooks';
+import { UIActions } from '@/src/store/actions';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MigrationSelectors,
   SettingsSelectors,
@@ -16,12 +17,12 @@ import { SettingsState } from '@/src/store/settings/settings.types';
 
 import { getLayout } from '@/src/pages/_app';
 
-import { ImportExportLoader } from '../components/Chatbar/ImportExportLoader';
-import { AnnouncementsBanner } from '../components/Common/AnnouncementBanner';
 import { Chat } from '@/src/components/Chat/Chat';
 import { Migration } from '@/src/components/Chat/Migration/Migration';
 import { MigrationFailedWindow } from '@/src/components/Chat/Migration/MigrationFailedModal';
-import Header from '@/src/components/Header/Header';
+import { ImportExportLoader } from '@/src/components/Chatbar/ImportExportLoader';
+import { AnnouncementsBanner } from '@/src/components/Common/AnnouncementBanner';
+import { Header } from '@/src/components/Header/Header';
 
 import { useCustomizations } from '@/src/customizations';
 import { Feature } from '@epam/ai-dial-shared';
@@ -35,16 +36,20 @@ export interface HomeProps {
 function Home() {
   useCustomizations();
 
+  const dispatch = useAppDispatch();
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
+
   const { conversationsToMigrateCount, migratedConversationsCount } =
     useAppSelector(
       MigrationSelectors.selectConversationsToMigrateAndMigratedCount,
     );
+
   const { promptsToMigrateCount, migratedPromptsCount } = useAppSelector(
     MigrationSelectors.selectPromptsToMigrateAndMigratedCount,
   );
+
   const failedMigratedConversations = useAppSelector(
     MigrationSelectors.selectFailedMigratedConversations,
   );
@@ -59,6 +64,13 @@ function Home() {
 
   const screenState = useScreenState();
 
+  const showFloatingOverlay =
+    screenState <= ScreenState.MD && isAnyMenuOpen && !isIsolatedView;
+
+  const handleCloseOverlay = () => {
+    dispatch(UIActions.closeAllPanels());
+  };
+
   if (conversationsToMigrateCount !== 0 || promptsToMigrateCount !== 0) {
     if (
       conversationsToMigrateCount + promptsToMigrateCount ===
@@ -67,9 +79,6 @@ function Home() {
       return window.location.reload();
     }
   }
-
-  const showFloatingOverlay =
-    screenState <= ScreenState.MD && isAnyMenuOpen && !isIsolatedView;
 
   return (
     <>
@@ -93,7 +102,10 @@ function Home() {
           <div className="flex w-full grow overflow-auto">
             <div className="flex min-w-0 grow flex-col">
               {showFloatingOverlay && (
-                <FloatingOverlay className="z-30 bg-blackout" />
+                <FloatingOverlay
+                  className="z-30 bg-blackout"
+                  onClick={handleCloseOverlay}
+                />
               )}
               <AnnouncementsBanner />
               <Chat />

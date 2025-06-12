@@ -30,7 +30,7 @@ import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
 import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
-import ShareIcon from '@/src/components/Common/ShareIcon';
+import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { AgentContextMenu } from '@/src/components/Marketplace/AgentContextMenu';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
@@ -43,7 +43,6 @@ interface ApplicationCardProps {
   isUnavailableModel: boolean;
   onClick: (entity: DialAIEntityModel) => void;
   onSelectVersion: (entity: DialAIEntityModel) => void;
-  isMyWorkspace: boolean;
 }
 
 const disabledActions = {
@@ -59,13 +58,9 @@ export const TalkToCard = ({
   isUnavailableModel,
   onClick,
   onSelectVersion,
-  isMyWorkspace,
 }: ApplicationCardProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
-  const installedModelIds = useAppSelector(
-    ModelsSelectors.selectInstalledModelIds,
-  );
   const allModels = useAppSelector(ModelsSelectors.selectModels);
 
   const isMyEntity = isMyApplication(entity);
@@ -77,13 +72,9 @@ export const TalkToCard = ({
   const versionsToSelect = useMemo(() => {
     return allModels.filter(
       (model) =>
-        getGroupModelKey(entity) === getGroupModelKey(model) &&
-        entity.version &&
-        (!isMyWorkspace ||
-          installedModelIds.has(model.reference) ||
-          (isSelected && entity.reference === model.reference)),
+        getGroupModelKey(entity) === getGroupModelKey(model) && entity.version,
     );
-  }, [allModels, entity, installedModelIds, isMyWorkspace, isSelected]);
+  }, [allModels, entity]);
 
   const handleSelectVersion = useCallback(
     (model: DialAIEntityModel) => {
@@ -121,7 +112,7 @@ export const TalkToCard = ({
           className="xl:invisible group-hover:xl:visible"
         />
       </div>
-      <div className="flex items-center gap-4 overflow-hidden">
+      <div className="flex items-end gap-4 overflow-hidden">
         <div className="flex shrink-0 items-center justify-center xl:my-[3px]">
           {entity.reference === PseudoModel.Playback && (
             <span
@@ -155,7 +146,7 @@ export const TalkToCard = ({
               </ShareIcon>
             )}
         </div>
-        <div className="flex grow flex-col justify-center gap-2 overflow-hidden leading-4">
+        <div className="flex grow flex-col justify-center gap-1 overflow-hidden leading-4 md:gap-2">
           {!!versionsToSelect.length && (
             <div className="flex items-center">
               <p className="mr-1 text-xs text-secondary">{t('Version')}: </p>

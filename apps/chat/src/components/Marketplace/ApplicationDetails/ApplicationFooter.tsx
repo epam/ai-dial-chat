@@ -1,6 +1,8 @@
 import { IconPlayerPlay } from '@tabler/icons-react';
 import { useMemo } from 'react';
 
+import classNames from 'classnames';
+
 import { useAgentMenuItems } from '@/src/hooks/useAgentMenuItems';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -24,7 +26,7 @@ import { AuthSelectors } from '@/src/store/selectors';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { IconButton } from '@/src/components/Common/IconButton';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
 import { AgentContextMenu } from '@/src/components/Marketplace/AgentContextMenu';
 
@@ -91,15 +93,24 @@ export const ApplicationDetailsFooter = ({
               />
             </button>
           ) : (
-            menuItems.map(({ display, name, disabled, ...props }) =>
-              display ? (
-                <IconButton
-                  key={name}
-                  name={disabled ? getDisabledTooltip(entity, name) : name}
-                  disabled={disabled}
-                  {...props}
-                />
-              ) : null,
+            menuItems.map(
+              ({
+                display,
+                name,
+                disabled,
+                className,
+                iconClassName,
+                ...props
+              }) =>
+                display ? (
+                  <IconButton
+                    key={name}
+                    name={disabled ? getDisabledTooltip(entity, name) : name}
+                    disabled={disabled}
+                    className={classNames(iconClassName, className)}
+                    {...props}
+                  />
+                ) : null,
             )
           )}
           <AgentBookmark

@@ -1,6 +1,9 @@
 import { DialAIEntityModel } from '@/src/types/models';
 
-import { ConversationInfo, Message, ShareEntity } from '@epam/ai-dial-shared';
+import { Conversation, Message } from '@epam/ai-dial-shared';
+
+// Reexporting Conversation to not change entire codebase
+export type { Conversation } from '@epam/ai-dial-shared';
 
 export enum CopyTableType {
   MD = 'md',
@@ -25,36 +28,6 @@ export interface RateBody {
   id: string;
   value: boolean;
   reference?: string;
-}
-
-export interface Conversation extends ShareEntity, ConversationInfo {
-  messages: Message[];
-  prompt: string;
-  temperature: number;
-  reference?: string;
-  replay?: Replay;
-  playback?: Playback;
-
-  // Addons selected by user clicks
-  selectedAddons: string[];
-  assistantModelId?: string;
-
-  isMessageStreaming?: boolean;
-  isNameChanged?: boolean;
-}
-
-export interface Replay {
-  replayAsIs?: boolean;
-  isReplay: boolean;
-  replayUserMessagesStack?: Message[];
-  activeReplayIndex?: number;
-  isError?: boolean;
-}
-
-export interface Playback {
-  isPlayback?: boolean;
-  messagesStack: Message[];
-  activePlaybackIndex: number;
 }
 
 export type MergedMessages = [Conversation, Message, number, Message[]][];

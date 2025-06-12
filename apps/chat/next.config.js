@@ -71,9 +71,6 @@ const nextConfig = {
   i18n,
   poweredByHeader: false,
   reactStrictMode: true,
-  experimental: {
-    instrumentationHook: true,
-  },
   // @ts-ignore
   basePath: process.env.NODE_ENV !== 'development' ? new BasePathResolver() : '',
 

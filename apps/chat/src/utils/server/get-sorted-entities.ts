@@ -1,5 +1,7 @@
 import { JWT } from 'next-auth/jwt';
 
+import { isAbsoluteUrl } from '@/src/utils/app/file';
+
 import { EntityType } from '@/src/types/common';
 import {
   CoreAIEntity,
@@ -13,7 +15,6 @@ import {
   MAX_PROMPT_TOKENS_DEFAULT_VALUE,
 } from '@/src/constants/default-server-settings';
 
-import { isAbsoluteUrl } from '../app/file';
 import { ApiUtils } from './api';
 import { getEntities } from './get-entities';
 import { logger } from './logger';
@@ -95,9 +96,10 @@ export const getSortedEntities = async (token: JWT | null) => {
   );
 
   const preProcessedEntities = [...models, ...applications, ...assistants];
-  let defaultModelId = preProcessedEntities.find(
-    (model) => model.id === DEFAULT_MODEL_ID,
-  )?.id;
+  let defaultModelReference = preProcessedEntities.find(
+    (model) =>
+      model.reference === DEFAULT_MODEL_ID || model.id === DEFAULT_MODEL_ID,
+  )?.reference;
 
   for (const entity of [...models, ...applications, ...assistants]) {
     if (
@@ -108,12 +110,12 @@ export const getSortedEntities = async (token: JWT | null) => {
       continue;
     }
 
-    if (!defaultModelId) {
+    if (!defaultModelReference) {
       logger.warn(
         undefined,
         `Cannot find default model id("${DEFAULT_MODEL_ID}") in models listing. Recheck config for models in Core or change default model id to existing model.`,
       );
-      defaultModelId = entity.id;
+      defaultModelReference = entity.reference;
     }
 
     let maxRequestTokens;
@@ -153,7 +155,7 @@ export const getSortedEntities = async (token: JWT | null) => {
       id: ApiUtils.decodeApiUrl(entity.id),
       reference: entity.reference,
       name: entity.display_name ?? entity.id,
-      isDefault: defaultModelId === entity.id,
+      isDefault: defaultModelReference === entity.reference,
       version: entity.display_version,
       description: entity.description,
       updatedAt: fixDate(entity.updated_at),

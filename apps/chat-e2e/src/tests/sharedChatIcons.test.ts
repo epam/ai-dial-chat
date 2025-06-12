@@ -77,7 +77,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await conversations.openEntityDropdownMenu(conversation.name);
         const firstShareRequestResponse =
           await conversationDropdownMenu.selectShareMenuOption();
@@ -376,7 +376,7 @@ dialSharedWithMeTest(
             await mainUserShareApiHelper.shareEntityByLink([conversation]);
           await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
         }
-        defaultModelId = ModelsUtil.getDefaultModel()!.id;
+        defaultModelId = ModelsUtil.getDefaultAgent()!.id;
         randomAddon = GeneratorUtil.randomArrayElement(ModelsUtil.getAddons());
         randomModel = GeneratorUtil.randomArrayElement(
           ModelsUtil.getLatestModels().filter(
@@ -384,7 +384,9 @@ dialSharedWithMeTest(
           ),
         );
         await localStorageManager.setRecentAddonsIds(randomAddon);
-        await localStorageManager.setRecentModelsIds(randomModel);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          randomModel,
+        );
         await localStorageManager.setShowSideBarPanels();
       },
     );
@@ -394,7 +396,7 @@ dialSharedWithMeTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(firstConversationToShare.name);
+        await conversations.selectEntity(firstConversationToShare.name);
         await chatHeader.openConversationSettingsPopup();
         await agentSettings.setSystemPrompt(GeneratorUtil.randomString(5));
         await temperatureSlider.setTemperature(0);
@@ -416,7 +418,7 @@ dialSharedWithMeTest(
       'Update conversation name for the 2nd conversation and verify conversation is shared, shared icon is displayed',
       async () => {
         newName = GeneratorUtil.randomString(10);
-        await conversations.selectConversation(secondConversationToShare.name);
+        await conversations.selectEntity(secondConversationToShare.name);
         await conversations.openEntityDropdownMenu(
           secondConversationToShare.name,
         );
@@ -434,7 +436,7 @@ dialSharedWithMeTest(
     await dialTest.step(
       'Update model for the 3rd conversation and verify conversation is shared, shared icon is displayed',
       async () => {
-        await conversations.selectConversation(thirdConversationToShare.name);
+        await conversations.selectEntity(thirdConversationToShare.name);
         await chatHeader.chatAgent.click();
         await talkToAgentDialog.selectAgent(randomModel, marketplacePage);
         const expectedRandomModelIcon =
@@ -487,7 +489,7 @@ dialTest(
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-1510', 'EPMRTC-2002');
-    const defaultModel = ModelsUtil.getDefaultModel()!;
+    const defaultModel = ModelsUtil.getDefaultAgent()!;
     let conversation: Conversation;
     let replayConversation: Conversation;
     let playbackConversation: Conversation;
@@ -552,7 +554,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         for (const conversation of [
           replayConversation,
           playbackConversation,
@@ -613,7 +615,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(firstSharedConversation.name);
+        await conversations.selectEntity(firstSharedConversation.name);
         await conversations.openEntityDropdownMenu(
           firstSharedConversation.name,
         );
@@ -731,7 +733,7 @@ dialTest(
       'Open Compare mode for shared conversation and verify shared folder and conversation have blue arrow in Compare dropdown list',
       async () => {
         await dialHomePage.openHomePage({
-          iconsToBeLoaded: [ModelsUtil.getDefaultModel()!.iconUrl],
+          iconsToBeLoaded: [ModelsUtil.getDefaultAgent()!.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
 
@@ -853,7 +855,7 @@ dialTest(
       'Open app, select "Share" menu option for folder with conversation inside and verify modal window text',
       async () => {
         await dialHomePage.openHomePage({
-          iconsToBeLoaded: [ModelsUtil.getDefaultModel()!.iconUrl],
+          iconsToBeLoaded: [ModelsUtil.getDefaultAgent()!.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
         await folderConversations.expandFolder(folderConversation.folders.name);
@@ -1016,7 +1018,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await baseAssertion.assertElementState(
           chatHeader.chatModelArrowIcon,
           'hidden',

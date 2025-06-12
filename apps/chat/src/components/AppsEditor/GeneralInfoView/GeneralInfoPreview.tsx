@@ -9,11 +9,10 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { ToggleSwitchLabeled } from '@/src/components/Common/ToggleSwitch/ToggleSwitchLabeled';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ApplicationCard } from '@/src/components/Marketplace/AgentsList/AgentsTiles/ApplicationCard';
 import { ApplicationDetailsContent } from '@/src/components/Marketplace/ApplicationDetails/ApplicationContent';
 import { ApplicationDetailsHeader } from '@/src/components/Marketplace/ApplicationDetails/ApplicationHeader';
-
-import Tooltip from '../../Common/Tooltip';
 
 interface GeneralInfoPreviewProps {
   entity: DialAIEntityModel;
@@ -33,7 +32,10 @@ export const GeneralInfoPreview = ({
   const { t } = useTranslation(Translation.Chat);
 
   return (
-    <div className="flex h-full flex-col px-5 py-4 xl:p-6">
+    <div
+      className="flex h-full flex-col px-5 py-4 xl:p-6"
+      data-qa="app-preview-general-info-full-container"
+    >
       <div className="hidden max-w-full items-center justify-between md:flex xl:justify-end">
         <span className="mr-2 flex min-w-0 shrink grow select-none gap-2 text-primary xl:hidden">
           {t('Preview')}

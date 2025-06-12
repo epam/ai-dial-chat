@@ -2,6 +2,7 @@ import { GetServerSideProps } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 
+import { parseCommaSeparatedList } from '@/src/utils/app/common';
 import { pages } from '@/src/utils/auth/auth-pages';
 import { isAuthDisabled } from '@/src/utils/auth/auth-providers';
 import { isServerSessionValid } from '@/src/utils/auth/session';
@@ -16,10 +17,8 @@ import {
   CONVERSATION_QUERY_PARAM,
   ISOLATED_MODEL_QUERY_PARAM,
 } from '@/src/constants/chat';
-import {
-  FALLBACK_ASSISTANT_SUBMODEL_ID,
-  FALLBACK_MODEL_ID,
-} from '@/src/constants/default-ui-settings';
+import { DEFAULT_MODEL_ID } from '@/src/constants/default-server-settings';
+import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 import {
   DEFAULT_QUICK_APPS_HOST,
   DEFAULT_QUICK_APPS_MODEL,
@@ -28,10 +27,7 @@ import {
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import packageJSON from '../../../../../package.json';
-import { parseCommaSeparatedList } from '../app/common';
-
+import packageJSON from '@/../../package.json';
 import { Feature } from '@epam/ai-dial-shared';
 import { URL, URLSearchParams } from 'url';
 
@@ -105,7 +101,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
   const isPreselectedAction = params?.has(ACTION_QUERY_PARAM);
 
   const settings: SettingsState = {
-    appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'AI Dial',
+    appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'AI DIAL',
     codeWarning: process.env.CODE_GENERATION_WARNING ?? '',
     defaultRecentModelsIds: parseCommaSeparatedList(
       process.env.RECENT_MODELS_IDS,
@@ -113,7 +109,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
     defaultRecentAddonsIds: parseCommaSeparatedList(
       process.env.RECENT_ADDONS_IDS,
     ),
-    defaultModelId: process.env.DEFAULT_MODEL ?? FALLBACK_MODEL_ID,
+    defaultModelReference: DEFAULT_MODEL_ID,
     defaultAssistantSubmodelId:
       process.env.NEXT_PUBLIC_DEFAULT_ASSISTANT_SUB_MODEL ??
       FALLBACK_ASSISTANT_SUBMODEL_ID,

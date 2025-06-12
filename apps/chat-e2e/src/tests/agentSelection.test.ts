@@ -66,13 +66,15 @@ dialTest(
     await dialTest.step(
       'Prepare models and set recent models in local storage',
       async () => {
-        await localStorageManager.setRecentModelsIdsOnce(...models);
+        await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+          ...models,
+        );
         await localStorageManager.setShowSideBarPanels();
       },
     );
 
     await dialTest.step(
-      'Open Dial and verify the first model is selected',
+      'Open DIAL and verify the first model is selected',
       async () => {
         await dialHomePage.openHomePage({
           iconsToBeLoaded: [initialModel1.iconUrl],
@@ -223,7 +225,7 @@ dialTest(
     await dialTest.step(
       'Select a conversation with a model not in My Workspace',
       async () => {
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await chatAssertion.assertAddAgentButtonState('visible');
       },
     );
@@ -283,7 +285,9 @@ dialAdminTest(
     );
 
     await dataInjector.createConversations([conversation1, conversation2]);
-    await localStorageManager.setRecentModelsIdsOnce(...models);
+    await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+      ...models,
+    );
 
     await dialAdminTest.step(
       'Create a conversation with the second model and publish it',
@@ -291,7 +295,7 @@ dialAdminTest(
         for (const conversation of [conversation1, conversation2]) {
           const publishRequest = publishRequestBuilder
             .withName(GeneratorUtil.randomPublicationRequestName())
-            .withConversationResource(conversation, PublishActions.ADD)
+            .withConversationInFolderResource(conversation, PublishActions.ADD)
             .build();
           const publication =
             await publicationApiHelper.createPublishRequest(publishRequest);
@@ -361,7 +365,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Click Regenerate button and check recentModelIds state',
       async () => {
-        await conversations.selectConversation(conversation1.name);
+        await conversations.selectEntity(conversation1.name);
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -388,7 +392,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Type a new message in the duplicated chat and get a response and verify recentModelIds is updated',
       async () => {
-        await conversations.selectConversation(conversation2.name); // Select the duplicated conversation
+        await conversations.selectEntity(conversation2.name); // Select the duplicated conversation
         await chat.sendRequestWithButton(GeneratorUtil.randomString(5));
         await localStorageAssertion.assertRecentModels([
           secondModel.id,
@@ -443,7 +447,9 @@ dialTest(
       (m) => m.id !== initialModel1.id && m.id !== initialModel2.id,
     );
     const addedModel = GeneratorUtil.randomArrayElement(availableModels);
-    await localStorageManager.setRecentModelsIdsOnce(...models);
+    await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+      ...models,
+    );
     await localStorageManager.setShowSideBarPanels();
 
     // Create conversations
@@ -465,7 +471,7 @@ dialTest(
     const exportedConversation2 =
       ImportConversation.prepareConversationFile(conversation2Export2);
 
-    await dialTest.step('Open the Dial', async () => {
+    await dialTest.step('Open the DIAL', async () => {
       await dialHomePage.openHomePage({
         iconsToBeLoaded: [initialModel1.iconUrl],
       });
@@ -486,7 +492,7 @@ dialTest(
     await dialTest.step(
       'Duplicate previously existed chat, verify recentModelsIds in local storage is unchanged',
       async () => {
-        await conversations.selectConversation(conversation1Api.name);
+        await conversations.selectEntity(conversation1Api.name);
         await conversations.openEntityDropdownMenu(conversation1Api.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.duplicate, {
           triggeredHttpMethod: 'POST',
@@ -547,7 +553,7 @@ dialTest(
     await dialTest.step(
       'Type new message to imported chat and verify recentModelsIds is updated',
       async () => {
-        await conversations.selectConversation(conversation2Export1.name);
+        await conversations.selectEntity(conversation2Export1.name);
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -573,7 +579,7 @@ dialTest(
         await dialHomePage.importFile(exportedConversation2, () =>
           chatBar.importButton.click(),
         );
-        await conversations.selectConversation(conversation2Export2.name);
+        await conversations.selectEntity(conversation2Export2.name);
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -619,10 +625,12 @@ dialTest(
       2,
     );
     const [firstModel, secondModel] = models;
-    await localStorageManager.setRecentModelsIdsOnce(...models);
+    await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+      ...models,
+    );
     await localStorageManager.setShowSideBarPanels();
 
-    await dialTest.step('Open Dial', async () => {
+    await dialTest.step('Open DIAL', async () => {
       await dialHomePage.openHomePage({
         iconsToBeLoaded: [firstModel.iconUrl],
       });
@@ -702,10 +710,12 @@ dialSharedWithMeTest(
         sharedConversation2,
       ]);
     await mainUserShareApiHelper.acceptInvite(shareByLinkResponse);
-    await localStorageManager.setRecentModelsIdsOnce(...models);
+    await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+      ...models,
+    );
     await localStorageManager.setShowSideBarPanels();
 
-    await dialSharedWithMeTest.step('Open Dial by the main user', async () => {
+    await dialSharedWithMeTest.step('Open DIAL by the main user', async () => {
       await dialHomePage.openHomePage({
         iconsToBeLoaded: [initialModel1.iconUrl],
       });
@@ -754,7 +764,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Select Duplicated shared chat, send a message, and verify recentModelsIds is changed',
       async () => {
-        await conversations.selectConversation(sharedConversation1.name);
+        await conversations.selectEntity(sharedConversation1.name);
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -777,7 +787,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Select another duplicated shared chat, regenerate a message, and verify recentModelsIds is changed',
       async () => {
-        await conversations.selectConversation(sharedConversation2.name);
+        await conversations.selectEntity(sharedConversation2.name);
         await chatMessages.regenerateResponse();
         await localStorageAssertion.assertRecentModels([
           initialModel1.id,

@@ -47,15 +47,15 @@ import {
   SHARED_WITH_ME_SECTION_NAME,
 } from '@/src/constants/sections';
 
-import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
+import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { Modal } from '@/src/components/Common/Modal';
 import { NoData } from '@/src/components/Common/NoData';
 import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
 import { Spinner } from '@/src/components/Common/Spinner';
-import Tooltip from '@/src/components/Common/Tooltip';
-import Folder from '@/src/components/Folder/Folder';
+import { Tooltip } from '@/src/components/Common/Tooltip';
+import { Folder } from '@/src/components/Folder/Folder';
 
 import { FileItem, FileItemEventIds } from './FileItem';
 import { PreUploadDialog } from './PreUploadModal';
@@ -711,7 +711,7 @@ export const FileManagerModal = ({
         {(canAttachFiles || forceShowSelectCheckBox) && (
           <p id={descriptionId} data-qa="supported-attributes">
             {t(
-              'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
+              'Maximum size: 512 MB. Supported types: {{allowedExtensions}}.',
               {
                 allowedExtensions:
                   typesLabel ||
@@ -722,7 +722,7 @@ export const FileManagerModal = ({
             &nbsp;
             {maximumAttachmentsAmount !== Number.MAX_SAFE_INTEGER &&
               !!maximumAttachmentsAmount &&
-              t('Max selected files is {{maxAttachmentsAmount}}.', {
+              t('Up to {{maxAttachmentsAmount}} files.', {
                 maxAttachmentsAmount: maximumAttachmentsAmount,
               })}
           </p>

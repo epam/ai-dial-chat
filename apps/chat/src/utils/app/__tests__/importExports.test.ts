@@ -12,14 +12,7 @@ import {
   isPromptsFormat,
 } from '@/src/utils/app/import-export';
 
-import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
-import {
-  ExportFormatV1,
-  ExportFormatV2,
-  ExportFormatV4,
-  PromptsHistory,
-} from '@/src/types/import-export';
 
 import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-server-settings';
 import {
@@ -27,7 +20,15 @@ import {
   FALLBACK_MODEL_ID,
 } from '@/src/constants/default-ui-settings';
 
-import { Message, Role } from '@epam/ai-dial-shared';
+import {
+  Conversation,
+  ExportFormatV1,
+  ExportFormatV2,
+  ExportFormatV4,
+  ExportPromptsFormat,
+  Message,
+  Role,
+} from '@epam/ai-dial-shared';
 
 const bucket = '123';
 beforeAll(() => {
@@ -232,11 +233,13 @@ describe('Export helpers functions', () => {
   it('Should return false for non-prompts data', () => {
     const testData = [{ id: 1 }];
 
-    expect(isPromptsFormat(testData as unknown as PromptsHistory)).toBeFalsy();
+    expect(
+      isPromptsFormat(testData as unknown as ExportPromptsFormat),
+    ).toBeFalsy();
   });
 
   it('Should return true for prompts data', () => {
-    const testData: PromptsHistory = {
+    const testData: ExportPromptsFormat = {
       prompts: [
         {
           id: '1',

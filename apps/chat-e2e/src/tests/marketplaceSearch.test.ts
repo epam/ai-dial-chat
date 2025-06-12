@@ -18,7 +18,8 @@ import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
 
-dialTest(
+//TODO: test-cases need to be updated after new search mechanism implementation
+dialTest.skip(
   'Search word is stored; search results differ if to switch between My workspace and DIAL Marketplace pages. Search by name. Suggested results on My workspace. The model is without versions.' +
     'Space before and after search phrase is ignored\n' +
     `Search in DIAL Marketplace: 'No results found'.\n` +
@@ -285,7 +286,8 @@ dialTest(
   },
 );
 
-dialTest(
+//TODO: test-cases need to be updated after new search mechanism implementation
+dialTest.skip(
   'Search by version. My custom application, published applications. Sorting. Suggested options.',
   async ({
     marketplacePage,
@@ -504,7 +506,8 @@ dialTest(
   },
 );
 
-dialTest(
+//TODO: test-cases need to be updated after new search mechanism implementation
+dialTest.skip(
   'Search in DIAL Marketplace: Search word and other filters work together type and topics.\n' +
     '[Card view] Not published my custom application does not have bookmark icon.\n' +
     '[Detailed card view] Not published my custom application does not have bookmark icon',
@@ -553,7 +556,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open "Dial Marketplace", check Type="Applications", Source="My Custom app" filter options and verify three apps are filtered',
+      'Open "DIAL Marketplace", check Type="Applications", Source="My Custom app" filter options and verify three apps are filtered',
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();

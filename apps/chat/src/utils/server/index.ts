@@ -6,7 +6,7 @@ import { DialAIEntityModel } from '@/src/types/models';
 import {
   DIAL_API_HOST,
   DIAL_API_VERSION,
-} from '../../constants/default-server-settings';
+} from '@/src/constants/default-server-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
 import { ApiUtils } from './api';

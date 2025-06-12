@@ -1,5 +1,6 @@
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { getTopicColors } from '@/src/utils/app/style-helpers';
+import { ApiUtils, getApplicationApiKey } from '@/src/utils/server/api';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
@@ -29,10 +30,9 @@ import {
 
 import { ApplicationGeneralInfoFormData } from '@/src/components/AppsEditor/GeneralInfoView/form';
 
-import { ApiUtils, getApplicationApiKey } from '../server/api';
 import { constructPath } from './file';
 import { getFolderIdFromEntityId } from './folders';
-import { getApplicationRootId } from './id';
+import { getApplicationRootId, getEntityBucket } from './id';
 import { isEntityIdPublic } from './publications';
 import { translate } from './translation';
 
@@ -53,10 +53,19 @@ export const safeStringifyApplicationFeatures = (
 };
 
 export const getGeneratedApplicationId = (
-  application: Omit<ApplicationInfo, 'id'>,
+  application: PartialBy<ApplicationInfo, 'id'>,
 ): string => {
+  if (application.folderId) {
+    return constructPath(
+      application.folderId,
+      getApplicationApiKey(application),
+    );
+  }
+
   return constructPath(
-    getApplicationRootId(),
+    getApplicationRootId(
+      application.id ? getEntityBucket({ id: application.id }) : undefined,
+    ),
     getApplicationApiKey(application),
   );
 };
@@ -230,12 +239,23 @@ export const getQuickAppDocumentUrl = (entity?: CustomApplicationModel) => {
   return entity ? getQuickAppConfig(entity).document_relative_url : undefined;
 };
 
-export const getToolsetStr = (config: QuickAppConfig) => {
+export const getToolsetStr = (
+  config: QuickAppConfig,
+  toolsetKey: keyof QuickAppConfig,
+) => {
   try {
-    return JSON.stringify(config.web_api_toolset, null, 2);
+    return JSON.stringify(config[toolsetKey], null, 2);
   } catch {
     return '';
   }
+};
+
+export const getMcpToolsetStr = (config: QuickAppConfig) => {
+  return getToolsetStr(config, 'mcp_toolset');
+};
+
+export const getWebAPIToolsetStr = (config: QuickAppConfig) => {
+  return getToolsetStr(config, 'web_api_toolset');
 };
 
 export const topicToOption = (topic: string) => ({
@@ -334,6 +354,7 @@ export const getPlayerCaption = (entity: DialAIEntityModel) => {
 export const getApplicationEntityFields = (
   data: ApplicationGeneralInfoFormData,
   applicationData?: DialAIEntityModel,
+  schema?: ApiDetailedApplicationTypeSchema | null,
 ): Omit<CustomApplicationModel, 'folderId'> => {
   return {
     name: data.name ?? '',
@@ -349,5 +370,6 @@ export const getApplicationEntityFields = (
     isDefault: true,
     owner: applicationData?.owner,
     createdAt: applicationData?.createdAt,
+    applicationTypeSchemaId: schema?.$id ?? '',
   };
 };

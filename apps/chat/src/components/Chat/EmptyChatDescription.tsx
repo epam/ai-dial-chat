@@ -14,6 +14,7 @@ import {
 } from '@/src/utils/app/conversation';
 import { isEntityIdExternal } from '@/src/utils/app/id';
 import { getGroupModelKey } from '@/src/utils/app/models';
+import { isEntityReadOnly } from '@/src/utils/app/permissions';
 
 import { Conversation } from '@/src/types/chat';
 import { ScreenState } from '@/src/types/common';
@@ -135,6 +136,7 @@ const EmptyChatDescriptionView = ({
     Feature.EmptyChatSettings,
   );
   const incorrectModel = !model;
+  const isReadOnly = isEntityReadOnly(conversation);
   const isExternal = isEntityIdExternal(conversation);
   const modelIconSize = screenState === ScreenState.SM ? 36 : 50;
   const isOldReplay = isOldConversationReplay(conversation.replay);
@@ -239,7 +241,7 @@ const EmptyChatDescriptionView = ({
           )}
         </div>
       </div>
-      {!isExternal && (
+      {(!isReadOnly || !isExternal) && (
         <div className="flex gap-3 divide-x divide-primary leading-4">
           {!isEmptyChatChangeAgentHidden && (
             <button

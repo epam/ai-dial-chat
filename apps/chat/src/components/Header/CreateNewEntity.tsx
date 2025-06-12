@@ -18,7 +18,7 @@ import { ConversationsSelectors } from '@/src/store/selectors';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
 import { Spinner } from '@/src/components/Common/Spinner';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 interface CreateNewEntityButtonProps {
   iconSize: number;

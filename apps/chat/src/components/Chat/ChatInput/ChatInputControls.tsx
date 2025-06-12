@@ -7,7 +7,7 @@ import { SchemaCompareWarning } from '@/src/components/Chat/ChatInput/SchemaComp
 import { StartReplayButton } from '@/src/components/Chat/StartReplayButton';
 
 import { AddModelsControl } from './AddModelsControl';
-import ChatExternalControls from './ChatExternalControls';
+import { ChatExternalControls } from './ChatExternalControls';
 
 interface Props {
   isNotEmptyConversations: boolean;
@@ -31,8 +31,8 @@ export const ChatInputControls = ({
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
   );
-  const isExternal = useAppSelector(
-    ConversationsSelectors.selectAreSelectedConversationsExternal,
+  const isReadOnly = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsReadOnly,
   );
 
   if (isConversationWithSchema && selectedConversations.length > 1) {
@@ -51,7 +51,7 @@ export const ChatInputControls = ({
     );
   }
 
-  if (isExternal) {
+  if (isReadOnly) {
     return (
       <ChatExternalControls
         conversations={selectedConversations}

@@ -2,6 +2,7 @@ import type { MouseEvent } from 'react';
 
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
 import { Conversation, PrepareNameOptions } from '@/src/types/chat';
 import {
@@ -11,9 +12,7 @@ import {
 import { EntityFilters } from '@/src/types/search';
 
 import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
-import { NA_VERSION } from '@/src/constants/public';
-
-import { getPublicItemIdWithoutVersion } from '../server/api';
+import { NA_VERSION } from '@/src/constants/publication';
 
 import {
   Entity,
@@ -111,17 +110,14 @@ export const prepareEntityName = (
   name: string,
   options?: Partial<PrepareNameOptions>,
 ) => {
+  const replacementChar = options?.replaceWithSpacesForRenaming ? '_' : '';
+
   const clearName = options?.forRenaming
-    ? name
-        .replace(
-          notAllowedSymbolsRegex,
-          options?.replaceWithSpacesForRenaming ? ' ' : '',
-        )
-        .trim()
+    ? name.replace(notAllowedSymbolsRegex, replacementChar).trim()
     : (name
         .replace(/\r\n|\r/gm, '\n')
         .split('\n')
-        .map((s) => s.replace(notAllowedSymbolsRegex, ' ').trim())
+        .map((s) => s.replace(notAllowedSymbolsRegex, '_').trim())
         .filter(Boolean)[0] ?? '');
 
   const maxEntityLength = options?.maxNameLength ?? MAX_ENTITY_LENGTH;

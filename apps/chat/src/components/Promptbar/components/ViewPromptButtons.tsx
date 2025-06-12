@@ -23,7 +23,7 @@ import { Prompt } from '@/src/types/prompt';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
-import ContextMenu from '@/src/components/Common/ContextMenu';
+import { ContextMenu } from '@/src/components/Common/ContextMenu';
 import { IconButton } from '@/src/components/Common/IconButton';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
@@ -105,7 +105,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
       {
         name: 'Unpublish',
         display: isPublic && isPublishingEnabled,
-        dataQa: 'publish-prompt',
+        dataQa: 'unpublish-prompt',
         Icon: (props: IconProps) => (
           <UnpublishIcon {...props} style={{ strokeWidth: 1.1 }} />
         ),

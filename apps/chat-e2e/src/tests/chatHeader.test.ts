@@ -13,7 +13,7 @@ let defaultModel: DialAIEntityModel;
 dialTest.beforeAll(async () => {
   allAddons = ModelsUtil.getAddons();
   addonIds = allAddons.map((a) => a.id);
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
 });
 
 dialTest(
@@ -60,7 +60,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await dialHomePage.throttleAPIResponse(
           API.chatHost,
           responseThrottlingTimeout * 2,
@@ -127,7 +127,7 @@ dialTest(
 
         const modelVersionInfo = await modelInfoTooltip.getVersionInfo();
         expect
-          .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
+          .soft(modelVersionInfo, ExpectedMessages.agentVersionIsValid)
           .toBe(defaultModel.version);
 
         await chatHeader.hoverOverChatSettings();
@@ -196,7 +196,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await chatHeader.clearConversation.click();
         await confirmationDialog.cancelDialog();
 

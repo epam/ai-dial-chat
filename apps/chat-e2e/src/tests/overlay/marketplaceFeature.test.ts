@@ -33,7 +33,7 @@ dialOverlayTest(
     });
 
     await dialTest.step(
-      'Verify "Dial Marketplace" buttons are available at the bottom panel, buttons do not have titles',
+      'Verify "DIAL Marketplace" buttons are available at the bottom panel, buttons do not have titles',
       async () => {
         await overlayHomePage.navigateToUrl(
           OverlaySandboxUrls.enableMarketplaceUrl,
@@ -69,7 +69,7 @@ dialOverlayTest(
       'Select created conversation, click on model icon in the header and verify there is "Search" field available',
       async () => {
         await overlayHeader.leftPanelToggle.click();
-        await overlayConversations.selectConversation(conversation.name);
+        await overlayConversations.selectEntity(conversation.name);
         await overlayChatHeader.chatModelIcon.click();
         await overlayTalkToAgentDialogAssertion.assertElementState(
           overlayTalkToAgentDialog.searchAgentInput,
@@ -121,7 +121,7 @@ dialOverlayTest(
     });
 
     await dialTest.step(
-      'Verify "Dial Marketplace" button is not available on the right side panel',
+      'Verify "DIAL Marketplace" button is not available on the right side panel',
       async () => {
         await overlayHomePage.navigateToUrl(
           OverlaySandboxUrls.disableMarketplaceUrl,
@@ -154,7 +154,7 @@ dialOverlayTest(
       'Select created conversation, click on model icon in the header and verify there is no "Go to My workspace" button',
       async () => {
         await overlayHeader.leftPanelToggle.click();
-        await overlayConversations.selectConversation(conversation.name);
+        await overlayConversations.selectEntity(conversation.name);
         await overlayChatHeader.chatModelIcon.click();
         await overlayTalkToAgentDialogAssertion.assertElementState(
           overlayTalkToAgentDialog.goToMyWorkspaceButton,

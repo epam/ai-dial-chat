@@ -278,7 +278,7 @@ dialOverlayTest(
     await dialTest.step(
       'Verify new conversation is not create if to click on app logo',
       async () => {
-        await overlayConversations.selectConversation(
+        await overlayConversations.selectEntity(
           conversation.name,
           { isHttpMethodTriggered: false },
           { exactMatch: true },
@@ -449,7 +449,7 @@ dialOverlayTest(
         const allConversations = await overlayItemApiHelper.listItems(
           API.conversationsHost(),
         );
-        const conversationWithContent = `${ModelsUtil.getDefaultModel()!.id}${ItemUtil.entityIdSeparator}${requestContent}`;
+        const conversationWithContent = `${ModelsUtil.getDefaultAgent()!.id}${ItemUtil.entityIdSeparator}${requestContent}`;
         expect
           .soft(
             allConversations.find((c) => c.name === conversationWithContent),

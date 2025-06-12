@@ -6,7 +6,9 @@ import {
 } from 'react-hook-form';
 
 import {
+  getMcpToolsetStr,
   getQuickAppDocumentUrl,
+  getWebAPIToolsetStr,
   safeStringifyApplicationFeatures,
 } from '@/src/utils/app/application';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
@@ -29,15 +31,7 @@ import {
   DEFAULT_QUICK_APPS_MODEL,
 } from '@/src/constants/quick-apps';
 
-import { DynamicField } from '../../Common/Forms/DynamicFormFields';
-
-const getToolsetStr = (config: QuickAppConfig) => {
-  try {
-    return JSON.stringify(config.web_api_toolset, null, 2);
-  } catch {
-    return '';
-  }
-};
+import { DynamicField } from '@/src/components/Common/Forms/DynamicFormFields';
 
 interface ApplicationGeneralInfo {
   name: string;
@@ -66,6 +60,7 @@ export interface QuickAppFormData extends ApplicationGeneralInfo {
   instructions: string;
   temperature: number;
   toolset: string;
+  mcpToolset?: string;
   documentRelativeUrl?: string[];
   model: string;
 }
@@ -159,6 +154,19 @@ const getApplicationGeneralDefaultValues = (app: CustomApplicationModel) => {
   };
 };
 
+export const getFormSourceFolder = (sourceFolder?: string) => {
+  const bucket = BucketService.getBucket();
+
+  return sourceFolder && sourceFolder !== `files/${bucket}`
+    ? ApiUtils.decodeApiUrl(sourceFolder)
+    : '';
+};
+const getActualSourceFolder = (formSources?: string) => {
+  const bucket = BucketService.getBucket();
+
+  return formSources || `files/${bucket}`;
+};
+
 export const getCodeAppDefaultValues = ({
   app,
   runtime,
@@ -166,7 +174,6 @@ export const getCodeAppDefaultValues = ({
   app: CustomApplicationModel;
   runtime?: string;
 }): CodeAppFormData => {
-  const bucket = BucketService.getBucket();
   return {
     ...getApplicationGeneralDefaultValues(app),
     id: decodeURIComponent(app.name),
@@ -174,11 +181,7 @@ export const getCodeAppDefaultValues = ({
     completionUrl: app.completionUrl ?? '',
     inputAttachmentTypes: app.inputAttachmentTypes ?? [],
     maxInputAttachments: app.maxInputAttachments,
-    sources:
-      app.function?.sourceFolder &&
-      app.function?.sourceFolder !== `files/${bucket}`
-        ? ApiUtils.decodeApiUrl(app.function.sourceFolder)
-        : '',
+    sources: getFormSourceFolder(app.function?.sourceFolder),
     runtime: app?.function?.runtime ?? runtime ?? 'python3.11',
     endpoints: app?.function?.mapping
       ? Object.entries(app.function.mapping).map(([key, value]) => ({
@@ -247,8 +250,13 @@ export const getQuickAppDefaultValues = ({
         ? app.applicationProperties.temperature
         : DEFAULT_TEMPERATURE,
     toolset:
-      getToolsetStr({
+      getWebAPIToolsetStr({
         web_api_toolset: app.applicationProperties?.web_api_toolset ?? [],
+      } as QuickAppConfig) ?? '',
+
+    mcpToolset:
+      getMcpToolsetStr({
+        mcp_toolset: app.applicationProperties?.mcp_toolset ?? [],
       } as QuickAppConfig) ?? '',
   };
 };
@@ -278,7 +286,7 @@ export const getCodeAppData = (
       ? Number(formData.maxInputAttachments)
       : undefined,
     function: {
-      sourceFolder: formData.sources,
+      sourceFolder: getActualSourceFolder(formData.sources),
       mapping: formData.endpoints.reduce(
         (acc, option) => ({
           ...acc,
@@ -328,6 +336,9 @@ export const getQuickAppData = (
       instructions: formData.instructions,
       temperature: formData.temperature,
       web_api_toolset: JSON.parse(formData.toolset),
+      ...(formData.mcpToolset && {
+        mcp_toolset: JSON.parse(formData.mcpToolset),
+      }),
       model: formData.model,
       document_relative_url: formData.documentRelativeUrl,
     },

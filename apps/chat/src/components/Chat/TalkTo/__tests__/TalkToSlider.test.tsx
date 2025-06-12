@@ -43,7 +43,8 @@ const mockInstalledModelIds = new Set(['model1', 'model2']);
 vi.mock('@/src/store/hooks', async () => {
   return {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    useAppSelector: (selector: any) => selector({}),
+    useAppSelector: (selector: any) =>
+      typeof selector === 'function' ? selector() : selector,
     useAppDispatch: () => (action: AppAction) => action,
   };
 });
@@ -58,6 +59,9 @@ vi.mock('@/src/store/selectors', () => ({
     selectEnabledFeatures: vi.fn(),
     isSharingEnabled: vi.fn(),
     selectIsPublishingEnabled: vi.fn(),
+  },
+  ApplicationTypesSchemasSelectors: {
+    selectApplicationTypesSchemas: vi.fn(),
   },
 }));
 

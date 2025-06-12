@@ -20,7 +20,7 @@ import { SettingsSelectors } from '@/src/store/selectors';
 import { HeaderIconSizes } from '@/src/constants/marketplace';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
-import ShareIcon from '@/src/components/Common/ShareIcon';
+import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 
@@ -117,7 +117,7 @@ export const ApplicationDetailsHeader = ({ entity, isPreview }: Props) => {
             <span>{t('Share')}</span>
           </button>
         )}
-      {isPublicApp && screenState !== ScreenState.SM && (
+      {isPublicApp && screenState !== ScreenState.SM && !isPreview && (
         <ApplicationCopyLink entity={entity} withText />
       )}
     </header>

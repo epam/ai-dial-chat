@@ -47,9 +47,9 @@ import {
 import { stopBubbling } from '@/src/constants/chat';
 
 import { ReviewDot } from '@/src/components/Chat/Publish/ReviewDot';
-import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
-import ShareIcon from '@/src/components/Common/ShareIcon';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { ItemContextMenu } from '@/src/components/Common/ItemContextMenu';
+import { ShareIcon } from '@/src/components/Common/ShareIcon';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -262,6 +262,7 @@ export const PromptComponent = ({
             dispatch(PromptsActions.setChosenPrompts({ ids: [prompt.id] }));
           }
         }}
+        name={isSelected ? 'selected-entity' : undefined}
         style={{
           paddingLeft: (level && `${level * 30 + 16}px`) || '0.875rem',
         }}

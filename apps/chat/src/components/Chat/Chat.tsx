@@ -31,6 +31,7 @@ import {
 import { isEntityIdExternal } from '@/src/utils/app/id';
 import { is4XLScreen } from '@/src/utils/app/mobile';
 import { doesModelHaveConfiguration } from '@/src/utils/app/models';
+import { isEntityReadOnly } from '@/src/utils/app/permissions';
 
 import { ApplicationStatus } from '@/src/types/applications';
 import {
@@ -46,6 +47,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   AddonsSelectors,
   ApplicationTypesSchemasSelectors,
+  AuthSelectors,
   ChatSelectors,
   ConversationsSelectors,
   ModelsSelectors,
@@ -56,12 +58,12 @@ import {
 
 import { Routes } from '@/src/constants/routes';
 
+import { CustomChatViewer } from '@/src/components/AppsEditor/Settings/Previews/CustomChatViewer';
 import { ChatDropArea } from '@/src/components/Chat/ChatDropArea';
 import { ChatStarters } from '@/src/components/Chat/ChatStarters';
+import { Loader } from '@/src/components/Common/Loader';
+import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 
-import { CustomChatViewer } from '../AppsEditor/Settings/Previews/CustomChatViewer';
-import Loader from '../Common/Loader';
-import { NotFoundEntity } from '../Common/NotFoundEntity';
 import { ChatCompareRotate } from './ChatCompareRotate';
 import { ChatCompareSelect } from './ChatCompareSelect';
 import { ChatHeader } from './ChatHeader/Header';
@@ -75,7 +77,7 @@ import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './Playback/PlaybackControls';
 import { PublicationControls } from './Publish/PublicationChatControls';
-import { PublicationHandler } from './Publish/PublicationHandler';
+import { PublicationHandler } from './Publish/PublicationHandler/PublicationHandler';
 import { TalkToModal } from './TalkTo/TalkToModal';
 
 import {
@@ -96,6 +98,7 @@ const checkIsWideLayout = (messagesLength: number, isCompareMode: boolean) =>
 
 const ChatView = memo(() => {
   const dispatch = useAppDispatch();
+  const router = useRouter();
 
   const models = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -130,6 +133,9 @@ const ChatView = memo(() => {
   const isExternal = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsExternal,
   );
+  const isReadOnly = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsReadOnly,
+  );
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
@@ -152,6 +158,7 @@ const ChatView = memo(() => {
   const configurationSchema = useAppSelector(
     ChatSelectors.selectConfigurationSchema,
   );
+  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
   const [showScrollDownButton, setShowScrollDownButton] =
@@ -193,6 +200,16 @@ const ChatView = memo(() => {
   const isNotEmptyConversations =
     isReplayRequiresVariables ||
     selectedConversations.some((conv) => conv.messages.length > 0);
+
+  const isApplicationPreviewChat = useMemo(() => {
+    return router.pathname === Routes.AppsEditorSettings;
+  }, [router.pathname]);
+
+  const isAdminPreview = isAdmin && isApplicationPreviewChat;
+
+  const areModelsInstalled = selectedConversations.every((conv) =>
+    installedModelIds.has(conv.model.id),
+  );
 
   useLayoutEffect(() => {
     const isNotAllowedModel =
@@ -429,10 +446,11 @@ const ChatView = memo(() => {
           message,
           deleteCount: 0,
           activeReplayIndex: 0,
+          skipRecentModelsUpdate: isAdminPreview && !areModelsInstalled,
         }),
       );
     },
-    [dispatch, selectedConversations],
+    [areModelsInstalled, dispatch, isAdminPreview, selectedConversations],
   );
 
   const onRegenerateMessage = useCallback(() => {
@@ -446,6 +464,7 @@ const ChatView = memo(() => {
         deleteCount:
           selectedConversations[0].messages.length - lastUserMessageIndex,
         activeReplayIndex: 0,
+        skipRecentModelsUpdate: isAdminPreview && !areModelsInstalled,
       }),
     );
 
@@ -455,7 +474,7 @@ const ChatView = memo(() => {
         behavior: 'smooth',
       });
     }
-  }, [dispatch, selectedConversations]);
+  }, [dispatch, selectedConversations, isAdminPreview, areModelsInstalled]);
 
   const onEditMessage = useCallback(
     (editedMessage: Message, index: number) => {
@@ -466,10 +485,17 @@ const ChatView = memo(() => {
           message: editedMessage,
           deleteCount: mergedMessages.length - index,
           activeReplayIndex: 0,
+          skipRecentModelsUpdate: isAdminPreview && !areModelsInstalled,
         }),
       );
     },
-    [dispatch, mergedMessages.length, selectedConversations],
+    [
+      dispatch,
+      mergedMessages.length,
+      selectedConversations,
+      isAdminPreview,
+      areModelsInstalled,
+    ],
   );
 
   const handleApplyChatSettings = useCallback(() => {
@@ -530,13 +556,10 @@ const ChatView = memo(() => {
   const showLastMessageRegenerate =
     !isReplay &&
     !isPlayback &&
-    !isExternal &&
+    !isReadOnly &&
     !messageIsStreaming &&
     !isLastMessageError &&
     !notAvailableEntityType;
-  const areModelsInstalled = selectedConversations.every((conv) =>
-    installedModelIds.has(conv.model.id),
-  );
 
   const areSelectedConversationsEmpty = selectedConversations.every(
     (conv) => !conv.messages.length,
@@ -550,16 +573,10 @@ const ChatView = memo(() => {
       isConversationWithFormSchema(conv),
   );
 
-  const router = useRouter();
-
-  const isApplicationPreviewChat = useMemo(() => {
-    return router.pathname === Routes.AppsEditorSettings;
-  }, [router.pathname]);
-
   const isInputVisible =
     (!isReplay || isNotEmptyConversations) &&
-    !isExternal &&
-    (areModelsInstalled || isReplay || isIsolatedView) &&
+    !isReadOnly &&
+    (areModelsInstalled || isAdminPreview || isReplay || isIsolatedView) &&
     !(isConversationWithSchema && selectedConversations.length > 1);
 
   const applicationTypeSchemas = useAppSelector(
@@ -673,7 +690,7 @@ const ChatView = memo(() => {
                                     ) &&
                                     !isPlayback &&
                                     !isReplay &&
-                                    !isExternal
+                                    !isReadOnly
                                   }
                                   isShowSettings={isShowChatSettings}
                                   setShowSettings={setIsShowChatSettings}
@@ -804,11 +821,13 @@ const ChatView = memo(() => {
                                             isLikesEnabled={
                                               enabledFeatures.has(
                                                 Feature.Likes,
-                                              ) && !isEntityIdExternal(conv)
+                                              ) &&
+                                              (!isEntityReadOnly(conv) ||
+                                                !isEntityIdExternal(conv))
                                             }
                                             editDisabled={
                                               !!notAvailableEntityType ||
-                                              isExternal ||
+                                              isReadOnly ||
                                               isReplay ||
                                               isPlayback
                                             }
@@ -883,7 +902,9 @@ const ChatView = memo(() => {
                               isNotEmptyConversations={isNotEmptyConversations}
                               showReplayControls={showReplayControls}
                               areModelsInstalled={
-                                areModelsInstalled || isIsolatedView
+                                areModelsInstalled ||
+                                isIsolatedView ||
+                                isAdminPreview
                               }
                               isConversationWithSchema={
                                 isConversationWithSchema

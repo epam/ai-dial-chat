@@ -17,7 +17,7 @@ import {
 } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { RECENT_MODELS_COUNT } from '@/src/constants/chat';
+import { DEFAULT_AGENT, RECENT_MODELS_COUNT } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
 import { DeleteType } from '@/src/constants/marketplace';
 
@@ -39,6 +39,7 @@ const initialState: ModelsState = {
   isInstalledModelsInitialized: false,
   publishRequestModels: [],
   publishedApplicationIds: [],
+  defaultModelReference: DEFAULT_AGENT,
 };
 
 export const modelsSlice = createSlice({
@@ -122,21 +123,23 @@ export const modelsSlice = createSlice({
       }: PayloadAction<{
         defaultRecentModelsIds: string[];
         localStorageRecentModelsIds: string[] | undefined;
-        defaultModelId: string | undefined;
+        defaultModelReference: string | undefined;
       }>,
     ) => {
       const isDefaultModelAvailable = state.models.some(
-        ({ id }) => id === payload.defaultModelId,
+        ({ id, reference }) =>
+          reference === payload.defaultModelReference ||
+          id === payload.defaultModelReference,
       );
 
       if (payload.localStorageRecentModelsIds) {
         state.recentModelsIds = payload.localStorageRecentModelsIds;
       } else if (payload.defaultRecentModelsIds.length) {
         state.recentModelsIds = payload.defaultRecentModelsIds;
-      } else if (payload.defaultModelId && isDefaultModelAvailable) {
-        state.recentModelsIds = [payload.defaultModelId];
+      } else if (payload.defaultModelReference && isDefaultModelAvailable) {
+        state.recentModelsIds = [payload.defaultModelReference];
       } else {
-        state.recentModelsIds = [state.models[0].id];
+        state.recentModelsIds = [state.models[0].reference];
       }
       state.recentModelsIds = uniq(state.recentModelsIds).slice(
         0,
@@ -321,6 +324,9 @@ export const modelsSlice = createSlice({
           });
         }
       });
+    },
+    setDefaultModelReference: (state, { payload }: PayloadAction<string>) => {
+      state.defaultModelReference = payload;
     },
   },
 });

@@ -16,7 +16,7 @@ import { CardIconSizes } from '@/src/constants/marketplace';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
-import ShareIcon from '@/src/components/Common/ShareIcon';
+import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
 import { AgentContextMenu } from '@/src/components/Marketplace/AgentContextMenu';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
@@ -31,7 +31,10 @@ interface CardFooterProps {
 const CardFooter = ({ entity }: CardFooterProps) => {
   return (
     <>
-      <EntityMarkdownDescription className="mt-3 hidden text-ellipsis text-sm leading-[18px] text-secondary md:line-clamp-2 xl:hidden">
+      <EntityMarkdownDescription
+        className="mt-3 hidden text-ellipsis text-sm leading-[18px] text-secondary md:line-clamp-2 xl:hidden"
+        data-qa="application-description"
+      >
         {getModelShortDescription(entity)}
       </EntityMarkdownDescription>
       <div className="flex flex-col gap-2 pt-3 md:pt-4">
@@ -147,9 +150,11 @@ export const ApplicationCard = memo(
                   <FunctionStatusIndicator entity={entity} />
                 </div>
               </div>
-              <EntityMarkdownDescription className="hidden text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
-                {getModelShortDescription(entity)}
-              </EntityMarkdownDescription>
+              <div data-qa="application-description">
+                <EntityMarkdownDescription className="hidden text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
+                  {getModelShortDescription(entity)}
+                </EntityMarkdownDescription>
+              </div>
             </div>
           </div>
         </div>

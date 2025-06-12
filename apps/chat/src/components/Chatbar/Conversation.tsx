@@ -1,4 +1,3 @@
-import { IconCheck } from '@tabler/icons-react';
 import { DragEvent, useCallback, useMemo, useRef, useState } from 'react';
 
 import classNames from 'classnames';
@@ -36,8 +35,9 @@ import { ConversationContextMenu } from '@/src/components/Chat/ConversationConte
 import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
 import { ReviewDot } from '@/src/components/Chat/Publish/ReviewDot';
 import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
-import ShareIcon from '@/src/components/Common/ShareIcon';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Checkbox } from '@/src/components/Common/Checkbox';
+import { ShareIcon } from '@/src/components/Common/ShareIcon';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ModelIcon } from './ModelIcon';
 
@@ -112,19 +112,10 @@ export function ConversationView({
           isSelectMode && isChosen && !isExternal ? 'flex' : 'hidden',
         )}
       >
-        <input
-          className={classNames(
-            'checkbox peer size-[18px] bg-layer-3',
-            additionalItemData?.isSidePanelItem && 'mr-0',
-          )}
-          type="checkbox"
+        <Checkbox
+          className={additionalItemData?.isSidePanelItem && 'mr-0'}
           checked={isChosen}
           onChange={handleToggle}
-          data-qa={isChosen ? 'checked' : 'unchecked'}
-        />
-        <IconCheck
-          size={18}
-          className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
         />
       </div>
       <ShareIcon
@@ -326,7 +317,7 @@ export const ConversationComponent = ({
           }
         }}
         onDragStart={(e) => handleDragStart(e, conversation)}
-        data-qa={isSelected ? 'selected' : null}
+        name={isSelected ? 'selected-entity' : undefined}
       >
         <ConversationView
           conversation={conversation}
