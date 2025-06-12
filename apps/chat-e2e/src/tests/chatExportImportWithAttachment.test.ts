@@ -148,6 +148,7 @@ dialTest(
     setTestIds,
     localStorageManager,
     toast,
+    sendMessage,
   }) => {
     setTestIds(
       'EPMRTC-1975',
@@ -357,6 +358,7 @@ dialTest(
           await dialHomePage.mockChatTextResponse(
             MockedChatApiResponseBodies.simpleTextBody,
           );
+          await sendMessage.click();
           await chat.sendRequestWithButton('1+2=');
           const messagesCount =
             await chatMessages.chatMessages.getElementsCount();
