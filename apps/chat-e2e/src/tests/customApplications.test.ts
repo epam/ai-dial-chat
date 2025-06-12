@@ -22,7 +22,7 @@ import {
   BaseElement,
   FileModalSection,
 } from '@/src/ui/webElements';
-import { GeneratorUtil, SortingUtil, UserUtil } from '@/src/utils';
+import { DateUtil, GeneratorUtil, SortingUtil, UserUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
 dialTest(
@@ -560,6 +560,13 @@ dialTest(
           updatedDescription,
           ExpectedMessages.FormFieldShouldRetainUpdatedValue,
         );
+      },
+    );
+
+    await dialTest.step(
+      'On detailed view in section Information there is Release date field',
+      async () => {
+        await appEditorGeneralForm;
       },
     );
   },
@@ -1186,7 +1193,8 @@ dialTest(
 
 dialTest(
   'Edit Custom app: Update icon of custom app\n' + //EPMRTC-4109
-    '[Custom app]: Icon is shown on the custom application card if the svg contains some special chars', // EPMRTC-5538
+    '[Custom app]: Icon is shown on the custom application card if the svg contains some special chars\n' + // EPMRTC-5538
+    '[App editor]: Release date displayed on detailed preview on "General info" step when edit custom app', //EPMRTC-5831
   async ({
     marketplacePage,
     marketplaceAgentsSection,
@@ -1203,7 +1211,7 @@ dialTest(
     setTestIds,
     fileApiHelper,
   }) => {
-    setTestIds('EPMRTC-4109', 'EPMRTC-5538');
+    setTestIds('EPMRTC-4109', 'EPMRTC-5538', 'EPMRTC-5831');
     const appEntity = {
       name: GeneratorUtil.randomApplicationName(),
       version: GeneratorUtil.randomApplicationVersion(),
@@ -1220,6 +1228,8 @@ dialTest(
     )}`;
     const expectedEncodedIconUrl =
       uploadedIconFilePath + encodeURIComponent(newIconFileName);
+
+    const currentDate = DateUtil.getCurrentLocalDate();
 
     await dialTest.step(
       'Precondition: Create custom application via API',
@@ -1275,6 +1285,16 @@ dialTest(
           previewIcon,
           expectedEncodedIconUrl,
         );
+      },
+    );
+
+    await dialTest.step(
+      'Verify there is Release date field on the detailed view section',
+      async () => {
+        const releaseDate = appEditorGeneralInfoAgentPreview.releaseDate;
+        const releaseDateText = await releaseDate.getElementInnerContent();
+        await baseAssertion.assertElementState(releaseDate, 'visible');
+        baseAssertion.assertValue(releaseDateText, currentDate);
       },
     );
 

@@ -20,9 +20,10 @@ export class AppEditorAppSettingsAgentPreview extends BaseElement {
   public previewChatIcon =
     this.previewChatIconContainer.getChildElementBySelector(Tags.img);
 
-  public agentInfoContainer = this.appSettingsChatMode.getChildElementBySelector(
-    AppEditorAppSettingsPreviewSelectors.agentInfoContainer,
-  );
+  public agentInfoContainer =
+    this.appSettingsChatMode.getChildElementBySelector(
+      AppEditorAppSettingsPreviewSelectors.agentInfoContainer,
+    );
 
   public agentInfo = this.agentInfoContainer.getChildElementBySelector(
     AppEditorAppSettingsPreviewSelectors.agentInfo,
