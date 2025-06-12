@@ -33,7 +33,8 @@ import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
   getFoldersDepth,
-  getParentFolderIdsFromFolderId,
+  isFolderPartialSelected,
+  isParentFolderSelected,
   sortByName,
 } from '@/src/utils/app/folders';
 import { isEntityIdExternal, isRootId } from '@/src/utils/app/id';
@@ -73,6 +74,7 @@ import { PublicationSelectors, SettingsSelectors } from '@/src/store/selectors';
 import { SidebarActionButton } from '@/src/components/Buttons/SidebarActionButton';
 import { ReviewDot } from '@/src/components/Chat/Publish/ReviewDot';
 import { CaretIconComponent } from '@/src/components/Common/CaretIconComponent';
+import { Checkbox } from '@/src/components/Common/Checkbox';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { FolderContextMenu } from '@/src/components/Common/FolderContextMenu';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
@@ -99,7 +101,7 @@ export interface FolderProps<T, P = unknown> {
   allFolders: FolderInterface[];
   level?: number;
   highlightedFolders?: string[];
-  searchTerm: string;
+  searchTerm?: string;
   openedFoldersIds: string[];
   isInitialRenameEnabled?: boolean;
   newAddedFolderId?: string;
@@ -144,7 +146,7 @@ export interface FolderProps<T, P = unknown> {
 
 export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   currentFolder,
-  searchTerm,
+  searchTerm = '',
   itemComponent,
   allItems,
   allItemsWithoutFilters = undefined,
@@ -259,22 +261,21 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   );
 
   useEffect(() => {
-    const parentFolderIds = getParentFolderIdsFromFolderId(currentFolder.id);
-
-    const isParentSelected = parentFolderIds.some((id) =>
-      (additionalItemData?.selectedFolderIds ?? []).includes(`${id}/`),
-    );
+    const isParentSelected = isParentFolderSelected({
+      currentFolderId: currentFolder.id,
+      selectedFolderIds: additionalItemData?.selectedFolderIds,
+    });
 
     setIsSelected(isParentSelected);
   }, [additionalItemData?.selectedFolderIds, currentFolder.id, dispatch]);
 
   useEffect(() => {
-    const currentId = `${currentFolder.id}/`;
     setIsPartialSelected(
-      !isSelected &&
-        (additionalItemData?.partialSelectedFolderIds ?? []).includes(
-          currentId,
-        ),
+      isFolderPartialSelected({
+        currentFolderId: currentFolder.id,
+        partialSelectedFolderIds: additionalItemData?.partialSelectedFolderIds,
+        isSelected,
+      }),
     );
   }, [
     additionalItemData?.partialSelectedFolderIds,
@@ -1020,15 +1021,14 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       )}
                       data-item-checkbox
                     >
-                      <input
-                        className={classNames(
-                          'checkbox peer size-[18px] bg-layer-3',
-                          additionalItemData?.isSidePanelItem && 'mr-0',
-                        )}
-                        type="checkbox"
+                      <Checkbox
                         checked={isSelected}
                         onChange={handleToggleFolder}
+                        className={
+                          additionalItemData?.isSidePanelItem && 'mr-0'
+                        }
                       />
+
                       <IconCheck
                         size={18}
                         className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
@@ -1095,23 +1095,16 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       )}
                       data-item-checkbox
                     >
-                      <input
-                        className={classNames(
-                          'checkbox peer size-[18px] bg-layer-3',
-                          additionalItemData?.isSidePanelItem && 'mr-0',
-                        )}
-                        type="checkbox"
+                      <Checkbox
                         checked={isSelected}
+                        isPartialChecked={isPartialSelected}
                         onChange={handleToggleFolder}
-                        ref={checkboxRef}
-                        data-qa={
-                          isSelected
-                            ? 'checked'
-                            : isPartialSelected
-                              ? 'partiallyChecked'
-                              : 'unchecked'
+                        className={
+                          additionalItemData?.isSidePanelItem && 'mr-0'
                         }
+                        ref={checkboxRef}
                       />
+
                       {isSelected && (
                         <IconCheck
                           size={18}
