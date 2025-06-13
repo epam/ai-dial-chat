@@ -241,10 +241,18 @@ const ChatView = memo(() => {
     [modelsMap],
   );
 
-  const isNotAllowed =
-    areModelsLoaded &&
-    (models.length === 0 ||
-      selectedConversations.some((conv) => isNotAllowedModel(conv)));
+  const isNotAllowed = useMemo(() => {
+    if (!areModelsLoaded) return false;
+
+    if (models.length === 0) return true;
+
+    return selectedConversations.some((conv) => isNotAllowedModel(conv));
+  }, [
+    areModelsLoaded,
+    models.length,
+    selectedConversations,
+    isNotAllowedModel,
+  ]);
 
   const notAllowedItemsForDisplay = useMemo((): {
     id: string;
