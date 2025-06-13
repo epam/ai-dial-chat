@@ -6,6 +6,7 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { constructPath } from '@/src/utils/app/file';
+import { getSelectedEntitiesByFolderId } from '@/src/utils/app/folders';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { Conversation } from '@/src/types/chat';
@@ -133,14 +134,12 @@ export const PublicationItemsList = memo(
     const handleSelectFolder = useCallback(
       (folderId: string) => {
         handleSelectItems(
-          entities
-            .filter(
-              (e) =>
-                e.id.startsWith(folderId) &&
-                (!partialChosenFolderIds.includes(folderId) ||
-                  !chosenItemsIds.includes(e.id)),
-            )
-            .map((e) => e.id),
+          getSelectedEntitiesByFolderId({
+            entities,
+            folderId,
+            partialChosenFolderIds,
+            chosenItemsIds,
+          }),
         );
       },
       [chosenItemsIds, entities, handleSelectItems, partialChosenFolderIds],
