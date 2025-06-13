@@ -39,6 +39,7 @@ function replaceContentInNodeModule(
   console.log(`Content replaced in file: ${targetFilePath}`);
 }
 
+// Make it possible to change basePath after build with new process.env.APP_BASE_PATH variable
 replaceContentInNodeModule(
   'next',
   'dist/shared/lib/router/utils/path-has-prefix.js',
@@ -49,16 +50,17 @@ replaceContentInNodeModule(
 replaceContentInNodeModule(
   'next',
   'dist/server/config.js',
-  'if (typeof result.basePath !== "string")',
+  "if (typeof result.basePath !== 'string')",
   'if (false)',
 );
 
 replaceContentInNodeModule(
   'next',
   'dist/server/config.js',
-  'if (!result.basePath.startsWith("/"))',
+  "if (!result.basePath.startsWith('/'))",
   'if (false)',
 );
+
 replaceContentInNodeModule(
   'next',
   'dist/build/webpack/loaders/next-font-loader/index.js',
@@ -84,44 +86,44 @@ replaceContentInNodeModule(
 // although it has lift and subscribe methods, therefore it should be considered as an Observable
 // as a workaround, here in the code is the factual replacement of "input instanceof Observable" with one-liner of "isObservable(input)"
 replaceContentInNodeModule(
-    'rxjs',
-    'dist/esm/internal/observable/innerFrom.js',
-    'if (input instanceof Observable) {',
-    `if (!!input && (input instanceof Observable || (typeof input.lift === 'function' && typeof input.subscribe === 'function'))) {`,
+  'rxjs',
+  'dist/esm/internal/observable/innerFrom.js',
+  'if (input instanceof Observable) {',
+  `if (!!input && (input instanceof Observable || (typeof input.lift === 'function' && typeof input.subscribe === 'function'))) {`,
 );
 
 replaceContentInNodeModule(
-    'rxjs',
-    'dist/esm5/internal/observable/innerFrom.js',
-    'if (input instanceof Observable) {',
-    `if (!!input && (input instanceof Observable || (typeof input.lift === 'function' && typeof input.subscribe === 'function'))) {`,
+  'rxjs',
+  'dist/esm5/internal/observable/innerFrom.js',
+  'if (input instanceof Observable) {',
+  `if (!!input && (input instanceof Observable || (typeof input.lift === 'function' && typeof input.subscribe === 'function'))) {`,
 );
 
 replaceContentInNodeModule(
-    'rxjs',
-    'dist/cjs/internal/observable/innerFrom.js',
-    'if (input instanceof Observable_1.Observable) {',
-    `if (!!input && (input instanceof Observable_1.Observable || (typeof input.lift === 'function' && typeof input.subscribe === 'function'))) {`,
+  'rxjs',
+  'dist/cjs/internal/observable/innerFrom.js',
+  'if (input instanceof Observable_1.Observable) {',
+  `if (!!input && (input instanceof Observable_1.Observable || (typeof input.lift === 'function' && typeof input.subscribe === 'function'))) {`,
 );
 
 // Enable server-side debugging in Next.js, enable to set 0.0.0.0 as host
 replaceContentInNodeModule(
-    'next',
-    'dist/server/lib/utils.js',
-    'return debugPortStr ? parseInt(debugPortStr, 10) : 9229;',
-    'return debugPortStr ? debugPortStr : 9229;',
+  'next',
+  'dist/server/lib/utils.js',
+  'return debugPortStr ? parseInt(debugPortStr, 10) : 9229;',
+  'return debugPortStr ? debugPortStr : 9229;',
 );
 
 replaceContentInNodeModule(
-    'next',
-    'dist/esm/server/lib/utils.js',
-    'return debugPortStr ? parseInt(debugPortStr, 10) : 9229;',
-    'return debugPortStr ? debugPortStr : 9229;',
+  'next',
+  'dist/esm/server/lib/utils.js',
+  'return debugPortStr ? parseInt(debugPortStr, 10) : 9229;',
+  'return debugPortStr ? debugPortStr : 9229;',
 );
 
 replaceContentInNodeModule(
-    'next',
-    'dist/cli/next-dev.js',
-    'NODE_OPTIONS = `${NODE_OPTIONS} --${nodeDebugType}=${(0, _utils.getDebugPort)() + 1}`;',
-    "NODE_OPTIONS = `${NODE_OPTIONS} --${nodeDebugType}=${((str) => str.includes(':') ? str.replace(/(\\d+)$/, num => ++num) : ++str)(String((0, _utils.getDebugPort)()))}`;",
+  'next',
+  'dist/cli/next-dev.js',
+  'NODE_OPTIONS = `${NODE_OPTIONS} --${nodeDebugType}=${(0, _utils.getDebugPort)() + 1}`;',
+  "NODE_OPTIONS = `${NODE_OPTIONS} --${nodeDebugType}=${((str) => str.includes(':') ? str.replace(/(\\d+)$/, num => ++num) : ++str)(String((0, _utils.getDebugPort)()))}`;",
 );
