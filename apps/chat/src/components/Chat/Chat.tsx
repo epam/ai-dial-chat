@@ -76,7 +76,7 @@ import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './Playback/PlaybackControls';
 import { ChatPublicationControls } from './Publish/PublicationControls/ChatPublicationControls';
-import { PublicationHandler } from './Publish/PublicationHandler';
+import { PublicationHandler } from './Publish/PublicationHandler/PublicationHandler';
 import { TalkToModal } from './TalkTo/TalkToModal';
 
 import {

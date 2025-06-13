@@ -42,6 +42,7 @@ export const useUploadFilesHandler = (
   maximumAttachmentsAmount = 0,
   allowedTypes: string[] = [],
   skipSelect?: boolean,
+  preUploadFiles?: boolean,
 ) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -59,10 +60,10 @@ export const useUploadFilesHandler = (
   const folderPath = getRelativePath(folderId);
 
   useEffect(() => {
-    if (folderId && !isRootId(folderId)) {
+    if (folderId && !isRootId(folderId) && preUploadFiles) {
       dispatch(FilesActions.getFiles({ id: folderId }));
     }
-  }, [dispatch, folderId]);
+  }, [dispatch, folderId, preUploadFiles]);
 
   const handleUpload = useCallback(
     (files: File[]) => {

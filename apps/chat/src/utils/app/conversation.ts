@@ -14,7 +14,7 @@ import {
   parseConversationApiKey,
 } from '@/src/utils/server/api';
 
-import { EntityType, PartialBy } from '@/src/types/common';
+import { EntityType, ParseOptions, PartialBy } from '@/src/types/common';
 import { AddonsMap, DialAIEntityModel, ModelsMap } from '@/src/types/models';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
@@ -22,7 +22,12 @@ import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-setti
 
 import { DefaultsService } from './data/defaults-service';
 import { constructPath } from './file';
-import { getConversationRootId, getFileRootId, isEntityIdLocal } from './id';
+import {
+  getConversationRootId,
+  getEntityBucket,
+  getFileRootId,
+  isEntityIdLocal,
+} from './id';
 
 import {
   Conversation,
@@ -114,7 +119,7 @@ export const getNewConversationName = (
 };
 
 export const getGeneratedConversationId = (
-  conversation: Omit<ConversationInfo, 'id'>,
+  conversation: PartialBy<ConversationInfo, 'id'>,
 ): string => {
   if (conversation.folderId) {
     return constructPath(
@@ -123,7 +128,9 @@ export const getGeneratedConversationId = (
     );
   }
   return constructPath(
-    getConversationRootId(),
+    getConversationRootId(
+      conversation.id ? getEntityBucket({ id: conversation.id }) : undefined,
+    ),
     getConversationApiKey(conversation),
   );
 };
@@ -141,10 +148,14 @@ export const regenerateConversationId = <T extends ConversationInfo>(
   return conversation as T;
 };
 
-export const getConversationInfoFromId = (id: string): ConversationInfo => {
+export const getConversationInfoFromId = (
+  id: string,
+  options?: ParseOptions,
+): ConversationInfo => {
   const { apiKey, bucket, name, parentPath } = splitEntityId(id);
+
   return regenerateConversationId({
-    ...parseConversationApiKey(name),
+    ...parseConversationApiKey(name, options),
     folderId: constructPath(apiKey, bucket, parentPath),
   });
 };
