@@ -141,14 +141,14 @@ dialTest(
     chatBar,
     confirmationDialog,
     chatMessages,
+    chatMessagesAssertion,
+    toast,
     chat,
     chatHeader,
     talkToAgentDialog,
     marketplacePage,
     setTestIds,
     localStorageManager,
-    toast,
-    sendMessage,
   }) => {
     setTestIds(
       'EPMRTC-1975',
@@ -358,13 +358,8 @@ dialTest(
           await dialHomePage.mockChatTextResponse(
             MockedChatApiResponseBodies.simpleTextBody,
           );
-          await sendMessage.click();
-          await sendMessage.send('1+2=');
-          const messagesCount =
-            await chatMessages.chatMessages.getElementsCount();
-          expect
-            .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
-            .toBe(6);
+          await chat.sendRequestWithButton('1+2=');
+          await chatMessagesAssertion.assertMessagesCount(6);
         }
       },
     );
