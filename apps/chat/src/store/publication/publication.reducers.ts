@@ -23,6 +23,8 @@ import {
 } from './publication.types';
 
 import {
+  Conversation,
+  Prompt,
   PublishActions,
   ShareEntity,
   UploadStatus,
@@ -356,6 +358,16 @@ export const publicationSlice = createSlice({
       } else {
         state.publishModel = undefined;
       }
+    },
+    updatePublicationRequestAndEntity: (
+      state,
+      _action: PayloadAction<{
+        resourceToUpdateUrl: string;
+        newEntityValues: Conversation | Prompt;
+        publicationUrl: string;
+      }>,
+    ) => {
+      state.isPublicationUpdating = true;
     },
     updatePublicationRequest: (
       state,

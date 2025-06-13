@@ -150,6 +150,7 @@ export const conversationsSlice = createSlice({
       _action: PayloadAction<{
         id: string;
         values: Partial<Conversation>;
+        publicationUrl?: string;
       }>,
     ) => state,
     updateConversationSuccess: (

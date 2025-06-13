@@ -2452,16 +2452,27 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      const { id, values } = payload;
+      const { id, values, publicationUrl } = payload;
       const newConversation: Conversation = regenerateConversationId({
-        ...(conversation as Conversation),
+        ...conversation,
         ...values,
         updatedAt: Date.now(),
       });
 
+      const areIdsEqual = conversation.id === newConversation.id;
+      if (!areIdsEqual && publicationUrl) {
+        return of(
+          PublicationActions.updatePublicationRequestAndEntity({
+            resourceToUpdateUrl: id,
+            newEntityValues: newConversation,
+            publicationUrl,
+          }),
+        );
+      }
+
       return concat(
         iif(
-          () => !!conversation && conversation.id !== newConversation.id,
+          () => !areIdsEqual,
           of(
             ConversationsActions.moveConversation({
               newConversation,

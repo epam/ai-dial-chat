@@ -151,8 +151,7 @@ export function PublicationHandler({ publication }: Props) {
         url: publication.url,
         dataToUpdate: {
           name:
-            publication.name ??
-            getPublicationDefaultName(publication.author ?? 'Unknown Author'),
+            publication.name ?? getPublicationDefaultName(publication.author),
           targetFolder: publication.targetFolder,
           rules: rulesOnEdit,
           displayAuthor: displayAuthorEditState,
