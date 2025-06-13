@@ -28,9 +28,6 @@ const selectIsConfigurationBlocksInput = createSelector(
 const selectShouldFocusAndScroll = (state: RootState) =>
   rootSelector(state).shouldFocusAndScroll;
 
-const selectNotAvailableEntityType = (state: RootState) =>
-  rootSelector(state).notAvailableEntityType;
-
 const selectInfoModalState = (state: RootState) =>
   rootSelector(state).infoModalState;
 
@@ -47,7 +44,6 @@ export const ChatSelectors = {
   selectIsConfigurationSchemaLoading,
   selectIsConfigurationBlocksInput,
   selectShouldFocusAndScroll,
-  selectNotAvailableEntityType,
   selectInfoModalState,
   selectInfoModalOpened,
   selectSelectedEntityInfo,

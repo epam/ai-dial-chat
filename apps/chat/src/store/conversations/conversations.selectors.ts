@@ -756,21 +756,14 @@ const selectIsSelectedConversationBlocksInput = createSelector(
   [
     selectSelectedConversations,
     ChatSelectors.selectIsConfigurationBlocksInput,
-    ChatSelectors.selectNotAvailableEntityType,
     selectAreSelectedConversationsReadOnly,
   ],
-  (
-    conversations,
-    isConfigurationBlocksInput,
-    notAvailableEntityType,
-    isReadOnly,
-  ) =>
+  (conversations, isConfigurationBlocksInput, isReadOnly) =>
     conversations.some(
       (conversation) =>
         conversation.sharedWithMe ||
         (!conversation.messages?.length &&
           (isConfigurationBlocksInput || isReplayConversation(conversation))) ||
-        notAvailableEntityType ||
         isPlaybackConversation(conversation) ||
         isReadOnly ||
         !conversation.messages ||

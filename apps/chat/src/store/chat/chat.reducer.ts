@@ -3,7 +3,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { extractNameFromEmail } from '@/src/utils/app/common';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
-import { EntityInfo, EntityType } from '@/src/types/common';
+import { EntityInfo } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 
 import { ChatState } from './chat.types';
@@ -70,12 +70,6 @@ export const chatSlice = createSlice({
     },
     setShouldFocusAndScroll: (state, { payload }: PayloadAction<boolean>) => {
       state.shouldFocusAndScroll = payload;
-    },
-    setNotAvailableEntityType: (
-      state,
-      { payload }: PayloadAction<EntityType | undefined>,
-    ) => {
-      state.notAvailableEntityType = payload;
     },
     setInfoModalState: (state, { payload }: PayloadAction<ModalState>) => {
       state.infoModalState = payload;

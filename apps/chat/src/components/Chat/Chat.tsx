@@ -148,9 +148,6 @@ const ChatView = memo(() => {
   const selectedPublicationUrl = useAppSelector(
     PublicationSelectors.selectSelectedPublicationUrl,
   );
-  const notAvailableEntityType = useAppSelector(
-    ChatSelectors.selectNotAvailableEntityType,
-  );
   const isConfigurationSchemaLoading = useAppSelector(
     ChatSelectors.selectIsConfigurationSchemaLoading,
   );
@@ -244,32 +241,10 @@ const ChatView = memo(() => {
     [modelsMap],
   );
 
-  useLayoutEffect(() => {
-    const isNotAllowed =
-      areModelsLoaded &&
-      (models.length === 0 ||
-        selectedConversations.some((conv) => isNotAllowedModel(conv)));
-
-    if (isNotAllowed) {
-      dispatch(ChatActions.setNotAvailableEntityType(EntityType.Model));
-    } else if (
-      selectedConversations.some((conversation) =>
-        conversation.selectedAddons.some((addonId) => !addonsMap[addonId]),
-      )
-    ) {
-      dispatch(ChatActions.setNotAvailableEntityType(EntityType.Addon));
-    } else {
-      dispatch(ChatActions.setNotAvailableEntityType(undefined));
-    }
-  }, [
-    selectedConversations,
-    models,
-    areModelsLoaded,
-    addonsMap,
-    modelsMap,
-    dispatch,
-    isNotAllowedModel,
-  ]);
+  const isNotAllowed =
+    areModelsLoaded &&
+    (models.length === 0 ||
+      selectedConversations.some((conv) => isNotAllowedModel(conv)));
 
   const notAllowedItemsForDisplay = useMemo((): {
     id: string;
@@ -594,7 +569,7 @@ const ChatView = memo(() => {
     !isReadOnly &&
     !messageIsStreaming &&
     !isLastMessageError &&
-    !notAvailableEntityType;
+    !isNotAllowed;
 
   const areSelectedConversationsEmpty = selectedConversations.every(
     (conv) => !conv.messages.length,
@@ -862,7 +837,7 @@ const ChatView = memo(() => {
                                                 !isEntityIdExternal(conv))
                                             }
                                             editDisabled={
-                                              !!notAvailableEntityType ||
+                                              !!isNotAllowed ||
                                               isReadOnly ||
                                               isReplay ||
                                               isPlayback
