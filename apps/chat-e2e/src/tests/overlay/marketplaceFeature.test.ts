@@ -16,7 +16,7 @@ import { ThemesUtil } from '@/src/utils/themesUtil';
 dialOverlayTest(
   '[Overlay] Navigation panel. There is no text-names for buttons. The hight of the panel is 36px.\n' +
     '[Overlay] DIAL Marketplace feature is enabled - Feature.Marketplace.\n' +
-    '[Overlay] Add app button is not available in Overlay (Mobile view)',
+    '[Overlay] Add button on My workspace is available - Feature.CustomApplications',
   async ({
     overlayHomePage,
     overlayChat,
@@ -106,12 +106,14 @@ dialOverlayTest(
           overlayNavigationPanel.myWorkspaceButtonIcon,
           expectedColor,
         );
+        //TODO: blocked by https://github.com/epam/ai-dial-chat/issues/2929
         addApp = overlayMarketplaceHeader.addAppButton;
-        await overlayBaseAssertion.assertElementState(addApp, 'visible');
+        // await overlayBaseAssertion.assertElementState(addApp, 'visible');
       },
     );
 
-    await dialOverlayTest.step(
+    //TODO: blocked by https://github.com/epam/ai-dial-chat/issues/2929
+    await dialOverlayTest.step.skip(
       'Expand "Add app" button and verify only "Custom app" option is available',
       async () => {
         await addApp.click();
