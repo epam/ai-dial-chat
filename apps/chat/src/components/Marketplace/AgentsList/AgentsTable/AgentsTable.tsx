@@ -114,10 +114,10 @@ export const AgentsTable: React.FC<AgentsListProps> = ({
 }) => {
   const dispatch = useAppDispatch();
 
-  const wrapperRefs = useRef<{
-    parentRef: React.RefObject<HTMLDivElement>;
-    suggestedRowRef: React.RefObject<HTMLSpanElement>;
-  }>(null);
+  // const wrapperRefs = useRef<{
+  //   parentRef: React.RefObject<HTMLDivElement>;
+  //   suggestedRowRef: React.RefObject<HTMLSpanElement>;
+  // }>(null);
   const headerRefs = useRef<{
     leftColumnHeaderRef: React.RefObject<HTMLDivElement>;
     rightColumnHeaderRef: React.RefObject<HTMLDivElement>;
@@ -126,7 +126,7 @@ export const AgentsTable: React.FC<AgentsListProps> = ({
   const rightColumnDataRef = useRef<HTMLDivElement>(null);
 
   const currentParentRef = wrapperRefs.current?.parentRef.current ?? null;
-  const suggestedRowRef = wrapperRefs.current?.suggestedRowRef;
+  // const suggestedRowRef = wrapperRefs.current?.suggestedRowRef;
 
   const tableSort = useAppSelector(MarketplaceSelectors.selectTableSort);
 
@@ -139,6 +139,28 @@ export const AgentsTable: React.FC<AgentsListProps> = ({
     headerRefs.current ? headerRefs.current.rightColumnHeaderRef : null,
     rightColumnDataRef,
   );
+
+  const parentRef = useRef<HTMLDivElement>(null);
+  const suggestedRowRef = useRef<HTMLSpanElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Сохраняем рефы в объект для передачи в другие компоненты
+  const wrapperRefs = useMemo(() => ({
+    parentRef,
+    suggestedRowRef
+  }), []);
+
+  // Флаг для отслеживания сброса скролла
+  const didResetScroll = useRef(false);
+
+  // Эффект для сброса скролла при монтировании
+  useEffect(() => {
+    if (scrollContainerRef.current && !didResetScroll.current) {
+      scrollContainerRef.current.scrollTop = 0;
+      didResetScroll.current = true;
+    }
+  }, []);
+  
 
   const allEntities = useMemo(() => {
     const sortField =
