@@ -1,10 +1,11 @@
 import { IconExclamationCircle } from '@tabler/icons-react';
-import { useCallback } from 'react';
+import { FC, useCallback } from 'react';
 
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { NotAllowedItem } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -12,94 +13,101 @@ import { UISelectors } from '@/src/store/selectors';
 
 import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
-interface Props {
+const ICON_SIZE = 24;
+const BUTTON_CLASS_NAME =
+  'underline underline-offset-2 hover:text-accent-primary transition-colors';
+const INTERNAL_CLICK_MARKER = '__INTERNAL_CLICK_ACTION_MARKER__';
+
+interface NotAllowedModelProps {
   showScrollDownButton: boolean;
   onScrollDownClick: () => void;
   onShowChangeModel: (conversationId: string) => void;
-  notAllowedItemsForDisplay: {
-    id: string;
-    displayName: string;
-  }[];
+  notAllowedItemsForDisplay: NotAllowedItem[];
 }
 
-const ICON_SIZE = 24;
-const BUTTON_CLASS_NAME = 'underline underline-offset-2';
-const INTERNAL_CLICK_MARKER = '__INTERNAL_CLICK_ACTION_MARKER__';
+interface ErrorMessageContentProps {
+  items: NotAllowedItem[];
+  onChangeModel: (id: string) => void;
+}
 
-export const NotAllowedModel: React.FC<Props> = ({
-  showScrollDownButton,
-  onScrollDownClick,
-  onShowChangeModel,
-  notAllowedItemsForDisplay: items,
+const ErrorMessageContent: FC<ErrorMessageContentProps> = ({
+  items,
+  onChangeModel,
 }) => {
   const { t } = useTranslation(Translation.Chat);
-  const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
 
-  const handleShowChangeModel = useCallback(
+  const handleChangeModel = useCallback(
     (itemId: string) => {
-      onShowChangeModel(itemId);
+      onChangeModel(itemId);
     },
-    [onShowChangeModel],
+    [onChangeModel],
   );
 
-  if (!items || items.length === 0) {
-    return null;
-  }
+  if (!items?.length) return null;
 
-  let errorContent: JSX.Element | null = null;
-
-  if (items.length === 1 && items[0]) {
-    const agentIdWithQuotes = ` "${items[0].displayName}" `;
-
+  if (items.length === 1) {
+    const [item] = items;
     const messageWithMarker = t('chat.error.agent-not-available', {
       click: INTERNAL_CLICK_MARKER,
-      agentId: agentIdWithQuotes,
+      agentId: ` "${item.displayName}" `,
     });
-    const parts = messageWithMarker.split(INTERNAL_CLICK_MARKER);
+    const [beforeText, afterText] = messageWithMarker.split(
+      INTERNAL_CLICK_MARKER,
+    );
 
-    errorContent = (
+    return (
       <>
-        {parts[0] && <span>{parts[0]}</span>}
+        {beforeText && <span>{beforeText}</span>}
         <button
-          onClick={() => handleShowChangeModel(items[0].id)}
+          onClick={() => handleChangeModel(item.id)}
           className={BUTTON_CLASS_NAME}
         >
           {t('change the agent')}
         </button>
-        {parts[1] && <span>{parts[1]}</span>}
-      </>
-    );
-  } else if (items.length >= 2) {
-    const rawMessageWithPlaceholders = t('chat.error.agents-not-available');
-    const messageParts = rawMessageWithPlaceholders.split('{{agentId}}');
-
-    const item1 = items[0];
-    const item2 = items[1];
-
-    errorContent = (
-      <>
-        {messageParts[0] && <span>{messageParts[0]}</span>}
-        {item1 && (
-          <button
-            onClick={() => handleShowChangeModel(item1.id)}
-            className={BUTTON_CLASS_NAME}
-          >
-            {` "${item1.displayName}" `}
-          </button>
-        )}
-        {messageParts[1] && <span>{messageParts[1]}</span>}
-        {item2 && (
-          <button
-            onClick={() => handleShowChangeModel(item2.id)}
-            className={BUTTON_CLASS_NAME}
-          >
-            {` "${item2.displayName}" `}
-          </button>
-        )}
-        {messageParts[2] && <span>{messageParts[2]}</span>}
+        {afterText && <span>{afterText}</span>}
       </>
     );
   }
+
+  const messageParts = t('chat.error.agents-not-available').split(
+    '{{agentId}}',
+  );
+  const [firstItem, secondItem] = items;
+
+  return (
+    <>
+      {messageParts[0] && <span>{messageParts[0]}</span>}
+      <button
+        onClick={() => handleChangeModel(firstItem.id)}
+        className={BUTTON_CLASS_NAME}
+      >
+        {` "${firstItem.displayName}" `}
+      </button>
+      {messageParts[1] && <span>{messageParts[1]}</span>}
+      {items.length > 1 && (
+        <>
+          <button
+            onClick={() => handleChangeModel(secondItem.id)}
+            className={BUTTON_CLASS_NAME}
+          >
+            {` "${secondItem.displayName}" `}
+          </button>
+          {messageParts[2] && <span>{messageParts[2]}</span>}
+        </>
+      )}
+    </>
+  );
+};
+
+export const NotAllowedModel: FC<NotAllowedModelProps> = ({
+  showScrollDownButton,
+  onScrollDownClick,
+  onShowChangeModel,
+  notAllowedItemsForDisplay,
+}) => {
+  const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
+
+  if (!notAllowedItemsForDisplay?.length) return null;
 
   return (
     <div
@@ -119,9 +127,14 @@ export const NotAllowedModel: React.FC<Props> = ({
           size={ICON_SIZE}
           className="mt-0.5 shrink-0 text-error"
         />
+
         <span className="flex flex-wrap items-start gap-x-1 break-words">
-          {errorContent}
+          <ErrorMessageContent
+            items={notAllowedItemsForDisplay}
+            onChangeModel={onShowChangeModel}
+          />
         </span>
+
         {showScrollDownButton && (
           <ScrollDownButton
             className="-top-16 right-0 text-primary md:-top-20"

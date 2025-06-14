@@ -37,6 +37,7 @@ import {
   Conversation,
   ConversationsTemporarySettings,
   MergedMessages,
+  NotAllowedItem,
 } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
@@ -254,10 +255,7 @@ const ChatView = memo(() => {
     isNotAllowedModel,
   ]);
 
-  const notAllowedItemsForDisplay = useMemo((): {
-    id: string;
-    displayName: string;
-  }[] => {
+  const notAllowedItemsForDisplay = useMemo((): NotAllowedItem[] => {
     return selectedConversations.filter(isNotAllowedModel).map(
       (
         conv: Conversation,
