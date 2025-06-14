@@ -244,9 +244,7 @@ const ChatView = memo(() => {
 
   const isNotAllowed = useMemo(() => {
     if (!areModelsLoaded) return false;
-
     if (models.length === 0) return true;
-
     return selectedConversations.some((conv) => isNotAllowedModel(conv));
   }, [
     areModelsLoaded,
@@ -254,6 +252,22 @@ const ChatView = memo(() => {
     selectedConversations,
     isNotAllowedModel,
   ]);
+
+  const hasNotAllowedAddons = useMemo(() => {
+    return selectedConversations.some((conversation) =>
+      conversation.selectedAddons.some((addonId) => !addonsMap[addonId]),
+    );
+  }, [selectedConversations, addonsMap]);
+
+  useEffect(() => {
+    if (isNotAllowed) {
+      dispatch(ChatActions.setNotAvailableEntityType(EntityType.Model));
+    } else if (hasNotAllowedAddons) {
+      dispatch(ChatActions.setNotAvailableEntityType(EntityType.Addon));
+    } else {
+      dispatch(ChatActions.setNotAvailableEntityType(undefined));
+    }
+  }, [isNotAllowed, hasNotAllowedAddons, dispatch]);
 
   const notAllowedItemsForDisplay = useMemo((): NotAllowedItem[] => {
     return selectedConversations.filter(isNotAllowedModel).map(
