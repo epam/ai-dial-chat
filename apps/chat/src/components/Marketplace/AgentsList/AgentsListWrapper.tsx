@@ -23,7 +23,6 @@ interface Props {
 export interface AgentsListWrapperRef {
   parentRef: React.RefObject<HTMLDivElement>;
   suggestedRowRef: React.RefObject<HTMLSpanElement>;
-  scrollToTop: () => void;
 }
 
 export const AgentsListWrapper = forwardRef<AgentsListWrapperRef, Props>(
