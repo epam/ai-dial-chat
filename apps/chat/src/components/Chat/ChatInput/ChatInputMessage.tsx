@@ -147,6 +147,7 @@ export const ChatInputMessage = Inversify.register(
     const isChatInputDisabled = useAppSelector(
       ConversationsSelectors.selectIsSelectedConversationBlocksInput,
     );
+
     const configurationSchema = useAppSelector(
       ChatSelectors.selectConfigurationSchema,
     );
@@ -488,6 +489,11 @@ export const ChatInputMessage = Inversify.register(
       return t('Talk to your agent');
     }, [isChatInputDisabled, t]);
 
+    const isDisabled = useMemo(
+      () => isLoading || isChatInputDisabled,
+      [isLoading, isChatInputDisabled],
+    );
+
     const paddingLeftClass = canAttach
       ? isOverlay
         ? 'pl-11'
@@ -516,7 +522,7 @@ export const ChatInputMessage = Inversify.register(
             )}
             maxHeight={MAX_HEIGHT}
             placeholder={chatInputPlaceholder}
-            disabled={isLoading || isChatInputDisabled}
+            disabled={isDisabled}
             value={content}
             rows={1}
             onCompositionStart={() => setIsTyping(true)}
