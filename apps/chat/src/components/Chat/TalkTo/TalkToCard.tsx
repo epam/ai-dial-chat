@@ -153,6 +153,7 @@ export const TalkToCard = ({
               <ModelVersionSelect
                 readonly={isPlaybackConversation(conversation)}
                 className="h-max truncate text-xs"
+                fontSize="text-xs"
                 entities={versionsToSelect}
                 onSelect={handleSelectVersion}
                 currentEntity={entity}
