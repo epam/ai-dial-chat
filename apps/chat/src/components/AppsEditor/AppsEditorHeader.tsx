@@ -151,21 +151,6 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
       dispatch(ApplicationActions.setShouldSaveApplication(true));
       dispatch(ApplicationActions.setExitAfterSave(true));
     }
-
-    if (returnConversationIds?.length) {
-      dispatch(
-        ConversationsActions.selectConversations({
-          conversationIds: returnConversationIds,
-        }),
-      );
-      dispatch(ApplicationActions.setReturnConversationIds(undefined));
-    } else {
-      dispatch(
-        ConversationsActions.createNewConversations({
-          names: [DEFAULT_CONVERSATION_NAME],
-        }),
-      );
-    }
   };
 
   const agent = modelsMap[id as string];

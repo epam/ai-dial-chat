@@ -211,7 +211,8 @@ export const Combobox = <T,>({
                   'group flex h-[34px] cursor-pointer flex-col justify-center px-3',
                   highlightedIndex === index && 'bg-accent-primary-alpha',
                   selectedItem === item && 'bg-accent-primary-alpha',
-                  indexSeparator &&
+                  !inputValue &&
+                    indexSeparator &&
                     index === indexSeparator &&
                     'border-b border-secondary',
                 )}
