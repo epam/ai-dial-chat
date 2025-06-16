@@ -358,6 +358,7 @@ dialTest(
           await dialHomePage.mockChatTextResponse(
             MockedChatApiResponseBodies.simpleTextBody,
           );
+          await chat.getSendMessage().isElementEnabled({ timeout: 1000 });
           await chat.sendRequestWithButton('1+2=');
           await chatMessagesAssertion.assertMessagesCount(6);
         }
