@@ -211,8 +211,12 @@ const ChatView = memo(() => {
     installedModelIds.has(conv.model.id),
   );
 
-  const isNotAllowedModel = useCallback(
-    (conv: Conversation) => {
+  const [notAllowedItemsForDisplay, setNotAllowedItemsForDisplay] = useState<
+    NotAllowedItem[]
+  >([]);
+
+  useLayoutEffect(() => {
+    const checkIsNotAllowedModel = (conv: Conversation) => {
       if (
         isReplayConversation(conv) &&
         isReplayAsIsConversation(conv) &&
@@ -226,7 +230,6 @@ const ChatView = memo(() => {
             !modelsMap[message.model.id],
         );
       }
-
       const model = modelsMap[conv.model.id];
       const isNotDeployedCustomApp =
         model &&
@@ -237,66 +240,51 @@ const ChatView = memo(() => {
       return (
         !model ||
         isNotDeployedCustomApp ||
-        (model.type === EntityType.Assistant &&
+        (model?.type === EntityType.Assistant &&
           conv.assistantModelId &&
           !modelsMap[conv.assistantModelId])
       );
-    },
-    [modelsMap],
-  );
+    };
 
-  const isNotAllowed = useMemo(() => {
-    if (!areModelsLoaded) return false;
-    if (models.length === 0) return true;
-    return selectedConversations.some((conv) => isNotAllowedModel(conv));
-  }, [
-    areModelsLoaded,
-    models.length,
-    selectedConversations,
-    isNotAllowedModel,
-  ]);
+    const isNotAllowedModel =
+      areModelsLoaded &&
+      (models.length === 0 ||
+        selectedConversations.some(checkIsNotAllowedModel));
 
-  const hasNotAllowedAddons = useMemo(() => {
-    return selectedConversations.some((conversation) =>
-      conversation.selectedAddons.some((addonId) => !addonsMap[addonId]),
-    );
-  }, [selectedConversations, addonsMap]);
-
-  useEffect(() => {
-    if (isNotAllowed) {
+    if (isNotAllowedModel) {
       dispatch(ChatActions.setNotAvailableEntityType(EntityType.Model));
-    } else if (hasNotAllowedAddons) {
+    } else if (
+      selectedConversations.some((conversation) =>
+        conversation.selectedAddons.some((addonId) => !addonsMap[addonId]),
+      )
+    ) {
       dispatch(ChatActions.setNotAvailableEntityType(EntityType.Addon));
     } else {
       dispatch(ChatActions.setNotAvailableEntityType(undefined));
     }
-  }, [isNotAllowed, hasNotAllowedAddons, dispatch]);
-
-  const notAllowedItemsForDisplay = useMemo((): NotAllowedItem[] => {
-    return selectedConversations.filter(isNotAllowedModel).map(
-      (
-        conv: Conversation,
-      ): {
-        id: string;
-        displayName: string;
-      } => {
+    const newNotAllowedItems = selectedConversations
+      .filter(checkIsNotAllowedModel)
+      .map((conv) => {
         const modelDetails = modelsMap[conv.model.id];
+        return {
+          id: conv.id,
+          displayName:
+            modelDetails?.name ||
+            modelDetails?.reference ||
+            modelDetails?.id ||
+            conv.model.id,
+        };
+      });
 
-        if (modelDetails) {
-          return {
-            id: conv.id,
-            displayName:
-              modelDetails.name || modelDetails.reference || modelDetails.id,
-          };
-        } else {
-          return {
-            id: conv.id,
-            displayName: conv.model.id,
-          };
-        }
-      },
-    );
-  }, [selectedConversations, isNotAllowedModel, modelsMap]);
+    setNotAllowedItemsForDisplay(newNotAllowedItems);
+  }, [
+    selectedConversations,
+    models,
+    areModelsLoaded,
+    modelsMap,
+    addonsMap,
+    dispatch,
+  ]);
 
   const onLikeHandler = useCallback(
     (index: number, conversation: Conversation) => (rate: LikeState) => {
