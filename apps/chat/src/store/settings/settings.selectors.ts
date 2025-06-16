@@ -93,8 +93,8 @@ const isSharingEnabled = (state: RootState, featureType: FeatureType) => {
 
 const selectCodeWarning = (state: RootState) => rootSelector(state).codeWarning;
 
-const selectDefaultModelId = (state: RootState) =>
-  rootSelector(state).defaultModelId;
+const selectDefaultModelReference = (state: RootState) =>
+  rootSelector(state).defaultModelReference;
 
 const selectDefaultAssistantSubmodelId = (state: RootState) =>
   rootSelector(state).defaultAssistantSubmodelId;
@@ -167,8 +167,8 @@ const selectTopics = createSelector([_selectTopics], (topics) => {
 const selectCodeEditorPythonVersions = (state: RootState) =>
   rootSelector(state).codeEditorPythonVersions;
 
-const selectOverlayDefaultModelId = (state: RootState) =>
-  rootSelector(state).overlayDefaultModelId;
+const selectOverlayDefaultModelReference = (state: RootState) =>
+  rootSelector(state).overlayDefaultModelReference;
 
 const selectQuickAppsHost = (state: RootState) =>
   rootSelector(state).quickAppsHost ?? DEFAULT_QUICK_APPS_HOST;
@@ -233,7 +233,7 @@ export const SettingsSelectors = {
   selectIsPublishingEnabled,
   isSharingEnabled,
   selectCodeWarning,
-  selectDefaultModelId,
+  selectDefaultModelReference,
   selectDefaultRecentModelsIds,
   selectDefaultRecentAddonsIds,
   selectStorageType,
@@ -251,7 +251,7 @@ export const SettingsSelectors = {
   selectAllowVisualizerSendMessages,
   selectTopics,
   selectCodeEditorPythonVersions,
-  selectOverlayDefaultModelId,
+  selectOverlayDefaultModelReference,
   selectDefaults,
   selectInitialDataStatus,
   selectProviderId,

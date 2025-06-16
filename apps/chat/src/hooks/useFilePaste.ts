@@ -12,14 +12,15 @@ export function useFilePaste<T extends HTMLElement = HTMLElement>(
     if (!element) return;
 
     const pasteHandler = (e: ClipboardEvent) => {
-      const files = e.clipboardData
+      const transferFiles = e.clipboardData
         ? getFilesFromDataTransferItems(e.clipboardData.items)
         : [];
+      const files = Array.from(e.clipboardData?.files ?? []);
 
-      if (!files.length) return;
+      if (!transferFiles.length && !files.length) return;
       e.preventDefault();
 
-      onPaste(files);
+      onPaste(transferFiles.length ? transferFiles : files);
     };
 
     element.addEventListener('paste', pasteHandler);

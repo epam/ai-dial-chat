@@ -27,7 +27,7 @@ dialTest(
     await dialTest.step('Rename conversation', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await conversations.selectConversation(conversation.name);
+      await conversations.selectEntity(conversation.name);
       await conversations.openEntityDropdownMenu(conversation.name);
       await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
       await renameConversationModal.editConversationNameWithSaveButton(

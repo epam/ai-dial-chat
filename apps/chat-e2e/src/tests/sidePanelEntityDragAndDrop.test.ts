@@ -16,7 +16,7 @@ import { expect } from '@playwright/test';
 
 let gpt35Model: DialAIEntityModel;
 dialTest.beforeAll(async () => {
-  gpt35Model = ModelsUtil.getDefaultModel()!;
+  gpt35Model = ModelsUtil.getDefaultAgent()!;
 });
 
 dialTest(
@@ -137,7 +137,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         for (let i = 1; i <= 3; i++) {
           await chatBar.createNewFolder();
         }
@@ -233,7 +233,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversationToDrop.name);
+        await conversations.selectEntity(conversationToDrop.name);
         await folderConversations.expandFolder(folderConversation.folders.name);
         await chatBar.dragAndDropConversationToFolderConversation(
           folderConversation.folders.name,

@@ -19,7 +19,7 @@ export class FileApiHelper extends BaseApiHelper {
       ? ItemUtil.getEncodedItemId(parentPath)
       : undefined;
 
-    const baseUrl = `${API.fileHost}/${this.userBucket ?? BucketUtil.getBucket()}`;
+    const baseUrl = `${API.fileHost()}/${this.userBucket ?? BucketUtil.getBucket()}`;
     const url = parentPath
       ? `${baseUrl}/${encodedParentPath}/${encodedFilename}`
       : `${baseUrl}/${encodedFilename}`;
@@ -48,7 +48,15 @@ export class FileApiHelper extends BaseApiHelper {
   }
 
   public async putFile(filename: string, parentPath?: string) {
-    const filePath = path.join(Attachment.attachmentPath, filename);
+    return this.putFileWithCustomName(filename, filename, parentPath);
+  }
+
+  public async putFileWithCustomName(
+    filename: string,
+    file: string,
+    parentPath?: string,
+  ) {
+    const filePath = path.join(Attachment.attachmentPath, file);
     const buffer = fs.readFileSync(filePath);
     return this.putFileGeneric(buffer, filename, parentPath);
   }
@@ -75,7 +83,7 @@ export class FileApiHelper extends BaseApiHelper {
   }
 
   public async getFile(filePath: string) {
-    const baseUrl = `${API.fileHost}/${this.userBucket ?? BucketUtil.getBucket()}`;
+    const baseUrl = `${API.fileHost()}/${this.userBucket ?? BucketUtil.getBucket()}`;
     const url = `${baseUrl}/${filePath}`;
     const response = await this.request.get(this.getHost(url));
     expect(response.status()).toBe(200);
@@ -148,6 +156,8 @@ export class FileApiHelper extends BaseApiHelper {
           return 'application/vnd.plotly.v1+json';
         case 'pdf':
           return 'application/pdf';
+        case 'svg':
+          return 'image/svg+xml';
         default:
           return 'text/plain';
       }

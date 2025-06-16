@@ -163,6 +163,7 @@ export const TopicsList = ({
               }}
               onMouseEnter={() => handleDelayShowTooltip(true)}
               onMouseLeave={() => handleDelayShowTooltip(false)}
+              data-qa="hidden-topics"
             >
               +{hiddenTopics.length}
             </span>

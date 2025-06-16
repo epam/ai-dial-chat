@@ -37,9 +37,9 @@ dialTest(
     const folderToExport = 'folderToExport';
     const conversationToExport = 'conversationToExport';
     const updatedFolderName = `${ExpectedConstants.allowedSpecialChars}folder${ExpectedConstants.restrictedNameChars}To     Import...`;
-    const folderToImport = `${ExpectedConstants.allowedSpecialChars}folder           To     Import`;
+    const folderToImport = `${ExpectedConstants.allowedSpecialChars}folder${`_`.repeat(ExpectedConstants.restrictedNameChars.length)}To     Import`;
     const updatedConversationName = `${ExpectedConstants.allowedSpecialChars}conversation${ExpectedConstants.restrictedNameChars}To     Import...`;
-    const conversationToImport = `${ExpectedConstants.allowedSpecialChars}conversation           To     Import`;
+    const conversationToImport = `${ExpectedConstants.allowedSpecialChars}conversation${`_`.repeat(ExpectedConstants.restrictedNameChars.length)}To     Import`;
     let downloadedDataPath: string;
     const conversationInFolder =
       conversationData.prepareDefaultConversationInFolder(
@@ -155,9 +155,9 @@ dialTest(
     const promptFolderToExport = 'folderToExport';
     const promptToExport = 'promptToExport';
     const updatedPromptFolderName = `${ExpectedConstants.allowedSpecialChars}folder${ExpectedConstants.restrictedNameChars}To     Import...`;
-    const promptFolderToImport = `${ExpectedConstants.allowedSpecialChars}folder           To     Import`;
+    const promptFolderToImport = `${ExpectedConstants.allowedSpecialChars}folder${`_`.repeat(ExpectedConstants.restrictedNameChars.length)}To     Import`;
     const updatedPromptName = `${ExpectedConstants.allowedSpecialChars}prompt${ExpectedConstants.restrictedNameChars}To     Import...`;
-    const promptToImport = `${ExpectedConstants.allowedSpecialChars}prompt           To     Import`;
+    const promptToImport = `${ExpectedConstants.allowedSpecialChars}prompt${`_`.repeat(ExpectedConstants.restrictedNameChars.length)}To     Import`;
     let downloadedDataPath: string;
 
     await dialTest.step('Prepare prompt inside folder', async () => {

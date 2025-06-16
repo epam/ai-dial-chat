@@ -86,9 +86,7 @@ export const GeneralInfoView: React.FC<Props> = ({
     setPreviewMode(mode);
   };
 
-  const handleFullModeClick = (
-    e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-  ) => {
+  const handleFullModeClick = (e: React.MouseEvent<HTMLElement>) => {
     e.stopPropagation();
     handlePreviewModeChange(PreviewMode.full);
   };
@@ -154,17 +152,18 @@ export const GeneralInfoView: React.FC<Props> = ({
             entity={getApplicationEntityFields(
               formData,
               modelFromState as DialAIEntityModel,
+              schema,
             )}
             onClosePreview={() => handlePreviewModeChange(PreviewMode.closed)}
           />
         </div>
 
         {isPreviewClosed && (
-          <div className="hidden h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-4 hover:cursor-pointer md:flex">
-            <button
-              className="text-secondary hover:text-accent-primary"
-              onClick={handleFullModeClick}
-            >
+          <div
+            className="hidden h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-4 hover:cursor-pointer md:flex"
+            onClick={handleFullModeClick}
+          >
+            <button className="text-secondary hover:text-accent-primary">
               <Tooltip tooltip={t('Expand preview')}>
                 <IconArrowsMaximize size={24} />
               </Tooltip>
@@ -178,25 +177,6 @@ export const GeneralInfoView: React.FC<Props> = ({
           </div>
         )}
       </div>
-
-      {isPreviewClosed && (
-        <div className="hidden h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-4 hover:cursor-pointer xl:flex">
-          <button
-            className="text-secondary hover:text-accent-primary"
-            onClick={handleFullModeClick}
-          >
-            <Tooltip tooltip={t('Expand preview')}>
-              <IconArrowsMaximize size={24} />
-            </Tooltip>
-          </button>
-          <span
-            className="select-none text-primary"
-            style={{ writingMode: 'vertical-rl' }}
-          >
-            {t('Preview')}
-          </span>
-        </div>
-      )}
     </div>
   );
 };

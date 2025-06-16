@@ -41,8 +41,8 @@ export class PublishRequestBuilder {
     return this;
   }
 
-  withDisplayAuthor(author: string): PublishRequestBuilder {
-    this.publishRequest.displayAuthor = author;
+  withDisplayAuthor(displayAuthor: string): PublishRequestBuilder {
+    this.publishRequest.displayAuthor = displayAuthor;
     return this;
   }
 
@@ -58,12 +58,42 @@ export class PublishRequestBuilder {
     return this;
   }
 
-  withConversationResource(
+  withConversationWithoutFolderResource(
+    conversation: Conversation,
+    action: PublishActions,
+    version?: string,
+  ): PublishRequestBuilder {
+    const conversationIdSegments = conversation.id.split('/');
+    const targetResource =
+      conversationIdSegments[conversationIdSegments.length - 1];
+    return this.withConversationResource(
+      conversation,
+      action,
+      targetResource,
+      version,
+    );
+  }
+
+  withConversationInFolderResource(
     conversation: Conversation,
     action: PublishActions,
     version?: string,
   ): PublishRequestBuilder {
     const targetResource = conversation.id.split('/').slice(2).join('/');
+    return this.withConversationResource(
+      conversation,
+      action,
+      targetResource,
+      version,
+    );
+  }
+
+  withConversationResource(
+    conversation: Conversation,
+    action: PublishActions,
+    targetResource: string,
+    version?: string,
+  ): PublishRequestBuilder {
     const targetUrl = `conversations/${this.getPublishRequest().targetFolder}${targetResource}__${version ?? ExpectedConstants.defaultAppVersion}`;
     let resource: PublicationResource = {
       action: action,
@@ -120,17 +150,21 @@ export class PublishRequestBuilder {
   }
 
   withFileResource(
-    attachment: Attachment,
+    attachment: Attachment | string,
     action: PublishActions,
   ): PublishRequestBuilder {
+    const title =
+      typeof attachment === 'string'
+        ? attachment.substring(attachment.lastIndexOf('/') + 1)
+        : attachment.title;
     let resource: PublicationResource = {
       action: action,
-      targetUrl: `files/${this.getPublishRequest().targetFolder}${attachment.title}`,
+      targetUrl: `files/${this.getPublishRequest().targetFolder}${title}`,
     };
     if (action === 'ADD' || action === 'ADD_IF_ABSENT') {
       resource = {
         ...resource,
-        sourceUrl: attachment.url,
+        sourceUrl: typeof attachment === 'string' ? attachment : attachment.url,
       };
     }
     this.publishRequest.resources.push(resource);

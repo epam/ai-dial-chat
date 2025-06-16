@@ -47,11 +47,13 @@ dialTest(
         randomModelNames.includes(m.name),
       );
       await fileApiHelper.updateInstalledDeployments(randomModels);
-      await localStorageManager.setRecentModelsIdsOnce(...randomModels);
+      await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+        ...randomModels,
+      );
     });
 
     await dialTest.step(
-      'Open Dial Marketplace, check Types=Model filter and verify all available models are displayed',
+      'Open DIAL Marketplace, check Types=Model filter and verify all available models are displayed',
       async () => {
         await marketplacePage.openMarketplacePage({
           updateInstalledDeployments: false,
@@ -125,7 +127,7 @@ dialTest(
       'Remove all models from "My Workspace" and recent, reload the page and verify filter state is preserved',
       async () => {
         await fileApiHelper.updateInstalledDeployments([]);
-        await localStorageManager.setRecentModelsIds();
+        await localStorageManager.setRecentModelsIdsAndUseLastModel();
         await marketplacePage.reloadPage();
         await marketplacePage.waitForPageLoaded();
         await baseAssertion.assertElementState(
@@ -203,7 +205,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'Open Dial Marketplace, check Types=Applications filter and verify all available applications are displayed',
+      'Open DIAL Marketplace, check Types=Applications filter and verify all available applications are displayed',
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();

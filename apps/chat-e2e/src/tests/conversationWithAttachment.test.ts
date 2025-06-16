@@ -65,7 +65,9 @@ dialTest(
       for (const file of attachedFiles) {
         await fileApiHelper.putFile(file);
       }
-      await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+      await localStorageManager.setRecentModelsIdsAndUseLastModel(
+        randomModelWithAttachment,
+      );
       await localStorageManager.setShowSideBarPanels();
     });
 
@@ -189,7 +191,9 @@ dialTest(
 
     await dialTest.step('Upload file to app', async () => {
       await fileApiHelper.putFile(Attachment.sunImageName);
-      await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+      await localStorageManager.setRecentModelsIdsAndUseLastModel(
+        randomModelWithAttachment,
+      );
       await localStorageManager.setShowSideBarPanels();
     });
 
@@ -249,7 +253,9 @@ dialTest(
     await dialTest.step(
       'Create new conversation based on model with input attachments and upload attachment from device',
       async () => {
-        await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          randomModelWithAttachment,
+        );
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
@@ -326,7 +332,9 @@ dialTest(
 
     await dialTest.step('Upload file to app', async () => {
       await fileApiHelper.putFile(Attachment.longImageName);
-      await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+      await localStorageManager.setRecentModelsIdsAndUseLastModel(
+        randomModelWithAttachment,
+      );
       await localStorageManager.setShowSideBarPanels();
     });
 
@@ -487,7 +495,9 @@ dialTest(
     await dialTest.step(
       'Create new conversation based on model with input attachments and upload attachment from device in offline mode',
       async () => {
-        await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          randomModelWithAttachment,
+        );
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
@@ -595,7 +605,7 @@ dialTest(
           randomModelWithImageAttachment,
         );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setRecentModelsIds(
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
           randomModelWithImageAttachment,
         );
         await localStorageManager.setShowSideBarPanels();
@@ -607,7 +617,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
@@ -682,7 +692,7 @@ dialTest(
           randomModelWithoutFolderLinkAttachments,
         );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setRecentModelsIds(
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
           randomModelWithoutFolderLinkAttachments,
         );
         await localStorageManager.setShowSideBarPanels();
@@ -694,7 +704,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await chatMessages.openEditMessageMode(1);
         await chatMessages.getChatMessageClipIcon(1).click();
         const editMessageAttachMenuOptions =

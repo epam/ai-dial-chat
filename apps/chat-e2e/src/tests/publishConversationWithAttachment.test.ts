@@ -14,7 +14,13 @@ import {
   MockedChatApiResponseBodies,
 } from '@/src/testData';
 import { FileModalSection } from '@/src/ui/webElements';
-import { FileUtil, GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
+import {
+  DateUtil,
+  FileUtil,
+  GeneratorUtil,
+  ItemUtil,
+  ModelsUtil,
+} from '@/src/utils';
 import { expect } from '@playwright/test';
 
 let modelWithInputAttachments: DialAIEntityModel;
@@ -34,7 +40,8 @@ dialAdminTest(
     `Link 'Go to a review' change to 'Continue review" when admin started review with click on chat .\n` +
     'Publish request for chat with already published file.\n' +
     'Publish chat with file, file is from Organization section.\n' +
-    'Publish request toooltips',
+    'Publish request toooltips.\n' +
+    `Author's public name displayed in metadata for chats from Organization`,
   async ({
     dialHomePage,
     conversationData,
@@ -59,6 +66,7 @@ dialAdminTest(
     adminPublicationReviewControl,
     adminFilesToApprove,
     adminChatMessages,
+    informationModal,
     organizationConversationAssertion,
     downloadAssertion,
     adminApproveRequiredConversationsAssertion,
@@ -71,6 +79,7 @@ dialAdminTest(
     setTestIds,
     localStorageManager,
     adminLocalStorageManager,
+    informationModalAssertion,
   }) => {
     dialAdminTest.slow();
     setTestIds(
@@ -82,6 +91,7 @@ dialAdminTest(
       'EPMRTC-4080',
       'EPMRTC-4704',
       'EPMRTC-3457',
+      'EPMRTC-5652',
     );
     let imageUrl: string;
     const filePath = API.modelFilePath(modelWithInputAttachments.id);
@@ -93,6 +103,7 @@ dialAdminTest(
       response: Publication;
     };
     const updatedConversationName = GeneratorUtil.randomString(5);
+    const author = GeneratorUtil.randomString(10);
 
     await dialSharedWithMeTest.step(
       'Prepare conversation with attachment in the request',
@@ -118,7 +129,7 @@ dialAdminTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
         await baseAssertion.assertElementState(
@@ -177,9 +188,10 @@ dialAdminTest(
     );
 
     await dialTest.step(
-      'Set publication request name and submit the request',
+      'Set publication request name, update author and submit the request',
       async () => {
         await publishingRequestModal.requestName.fillInInput(requestName);
+        await publishingRequestModal.author.fillInInput(author);
         publishApiModels =
           await publishingRequestModal.sendPublicationRequest();
         await baseAssertion.assertElementState(
@@ -317,13 +329,31 @@ dialAdminTest(
     await dialAdminTest.step(
       'Select published conversation and verify it contains attachment',
       async () => {
-        await organizationConversations.selectConversation(conversation.name);
+        await organizationConversations.selectEntity(conversation.name);
         await chatMessagesAssertion.assertMessageDownloadUrl(
           1,
           ExpectedConstants.publishedAttachmentDownloadPath(
             Attachment.cloudImageName,
           ),
         );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Open conversation dropdown menu, select "Info" option and verify modal data',
+      async () => {
+        const currentDate = DateUtil.getCurrentLocalDate();
+        await organizationConversations.openEntityDropdownMenu(
+          conversation.name,
+        );
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.info, {
+          triggeredHttpMethod: 'GET',
+        });
+        await informationModalAssertion.assertFields({
+          createdDate: currentDate,
+          author: author,
+        });
+        await informationModal.cancelButton.click();
       },
     );
 
@@ -465,7 +495,7 @@ dialAdminTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(plotlyConversation.name);
+        await conversations.selectEntity(plotlyConversation.name);
         await conversations.openEntityDropdownMenu(plotlyConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
         await baseAssertion.assertElementState(
@@ -556,7 +586,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Open published conversation and verify plotly graph is shown on expand attachment',
       async () => {
-        await adminOrganizationConversations.selectConversation(
+        await adminOrganizationConversations.selectEntity(
           plotlyConversation.name,
         );
         await adminChatMessages
@@ -589,7 +619,7 @@ dialAdminTest(
           { name: plotlyConversation.name },
           'visible',
         );
-        await adminConversationAssertion.assertSelectedConversation(
+        await adminConversationAssertion.assertSelectedEntity(
           plotlyConversation.name,
         );
         await adminChatMessages
@@ -640,9 +670,7 @@ dialAdminTest(
           { name: playbackName },
           'visible',
         );
-        await adminConversationAssertion.assertSelectedConversation(
-          playbackName,
-        );
+        await adminConversationAssertion.assertSelectedEntity(playbackName);
         for (let i = 1; i <= chatResponseIndex; i++) {
           await adminChat.playNextChatMessage();
         }
@@ -677,7 +705,7 @@ dialAdminTest(
           { name: replayName },
           'visible',
         );
-        await adminConversationAssertion.assertSelectedConversation(replayName);
+        await adminConversationAssertion.assertSelectedEntity(replayName);
         await adminDialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );

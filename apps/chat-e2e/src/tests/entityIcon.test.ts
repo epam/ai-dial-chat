@@ -97,12 +97,14 @@ dialTest.skip(
         const conversation =
           conversationData.prepareEmptyConversation(simpleRequestModel);
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setRecentModelsIds(simpleRequestModel!);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          simpleRequestModel!,
+        );
         await localStorageManager.setShowSideBarPanels();
 
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await dialHomePage.throttleAPIResponse(API.chatHost);
         await chat.sendRequestWithButton('write down 15 adjectives', false);
       },

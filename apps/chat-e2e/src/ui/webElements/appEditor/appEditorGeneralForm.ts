@@ -39,10 +39,6 @@ export class AppEditorGeneralForm extends AppEditorForm {
     this.topicsDropdownContainer.getChildElementBySelector(
       AddApplicationGeneralInfoFormSelector.topicsDropdownToggle,
     );
-  public topicsDropdownMenuElement =
-    this.topicsDropdownContainer.getChildElementBySelector(
-      AddApplicationGeneralInfoFormSelector.topicsDropdownMenu,
-    );
 
   public selectedTopicPills =
     this.topicsDropdownContainer.getChildElementBySelector(
@@ -55,29 +51,8 @@ export class AppEditorGeneralForm extends AppEditorForm {
   public iconInputElement = this.getChildElementBySelector(
     AddApplicationGeneralInfoFormSelector.iconField,
   );
-  public topicsOptions =
-    this.topicsDropdownMenuElement.getChildElementBySelector(
-      AddApplicationGeneralInfoFormSelector.topicsDropdownOption,
-    );
+
   public addIconButton = this.iconInputElement.getChildButtonElement();
-
-  // Method to get all available topic options from the dropdown
-  public async getAllTopicsOptions(): Promise<string[]> {
-    return this.topicsOptions.getElementsInnerContent();
-  }
-
-  // Method to select a topic option by its text
-  public async selectTopicOption(topicName: string) {
-    const escapedTopicName = RegexUtil.escapeRegexChars(topicName);
-    const exactMatchRegex = new RegExp(`^${escapedTopicName}$`);
-    const optionElement = this.topicsDropdownMenuElement
-      .getChildElementBySelector(
-        AddApplicationGeneralInfoFormSelector.topicsDropdownOption,
-      )
-      .getElementLocator()
-      .filter({ hasText: exactMatchRegex });
-    await optionElement.click();
-  }
 
   // Method to get selected topics text
   public async getSelectedTopics(): Promise<string[]> {

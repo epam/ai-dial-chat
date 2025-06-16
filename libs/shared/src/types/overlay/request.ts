@@ -1,3 +1,5 @@
+import { LatestExportConversationsFormat } from '../import-export';
+
 export interface SendMessageRequest {
   content: string;
 }
@@ -6,6 +8,7 @@ export interface SetSystemPromptRequest {
 }
 export interface CreateConversationRequest {
   parentPath?: string | null;
+  local?: boolean | null;
 }
 export interface SelectConversationRequest {
   id: string;
@@ -22,4 +25,7 @@ export interface CreatePlaybackConversationRequest {
 }
 export interface ExportConversationRequest {
   id: string;
+}
+export interface ImportConversationRequest {
+  importConversation: LatestExportConversationsFormat;
 }

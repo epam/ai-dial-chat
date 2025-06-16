@@ -16,7 +16,7 @@ let defaultModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
   models = ModelsUtil.getLatestModels().filter((m) => m.iconUrl != undefined);
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
 });
 
 dialTest(
@@ -98,7 +98,7 @@ dialTest(
           historyConversation,
           replayConversation,
         ]);
-        await localStorageManager.setRecentModelsIds(
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
           newRandomModel,
           firstRandomModel,
           secondRandomModel,
@@ -117,7 +117,7 @@ dialTest(
           iconsToBeLoaded: [secondRandomModel.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         await conversations.getEntityByName(replayConversation.name).waitFor();
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenuAssertion.assertMenuExcludesOptions(
@@ -324,7 +324,7 @@ dialTest(
           historyConversation,
           replayConversation,
         ]);
-        await localStorageManager.setRecentModelsIds(
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
           firstRandomModel,
           secondRandomModel,
           thirdRandomModel,
@@ -342,7 +342,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         await conversations.getEntityByName(replayConversation.name).waitFor();
         await chatHeader.chatAgent.click();
         await talkToAgentDialogAssertion.assertAgentIsSelected(newRandomModel);
@@ -412,7 +412,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
       },
     );
 
@@ -492,7 +492,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         await context.setOffline(true);
         await chat.replay.click();
       },
@@ -567,7 +567,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         const isStartReplayEnabled = await chat.replay.isElementEnabled();
         expect
           .soft(isStartReplayEnabled, ExpectedMessages.startReplayVisible)

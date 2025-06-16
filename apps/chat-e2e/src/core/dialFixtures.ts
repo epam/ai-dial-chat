@@ -16,11 +16,14 @@ import {
   ChatNotFound,
   ConversationSettingsModal,
   ConversationToCompare,
+  InformationModal,
+  ListboxMenu,
   MessageTemplateModal,
   PromptBar,
   PublishingRules,
   SelectFolderModal,
   SendMessage,
+  TopicsTooltip,
 } from '../ui/webElements';
 import { ChatSettingsTooltip } from '../ui/webElements/chatSettingsTooltip';
 
@@ -61,6 +64,7 @@ import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAss
 import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
 import { AgentDetailsModalAssertion } from '@/src/assertions/agentDetailsModalAssertion';
 import { AppEditorHeaderAssertion } from '@/src/assertions/appEditorHeaderAssertion';
+import { InformationModalAssertion } from '@/src/assertions/informationModalAssertion';
 import { LocalStorageAssertion } from '@/src/assertions/localStorageAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
 import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateModalAssertion';
@@ -216,6 +220,8 @@ const dialTest = test.extend<{
   renameConversationModalAssertion: RenameConversationModalAssertion;
   variableModalDialog: VariableModalDialog;
   chatHeader: ChatHeader;
+  chatHeaderVersionDropdownMenu: DropdownMenu;
+  chatHeaderDropdownMenu: DropdownMenu;
   modelInfoTooltip: ModelInfoTooltip;
   chatSettingsTooltip: ChatSettingsTooltip;
   compare: Compare;
@@ -223,6 +229,7 @@ const dialTest = test.extend<{
   rightChatHeader: ChatHeader;
   leftChatHeader: ChatHeader;
   tooltip: Tooltip;
+  topicsTooltip: TopicsTooltip;
   errorPopup: ErrorPopup;
   playbackControl: PlaybackControl;
   shareModal: ShareModal;
@@ -236,6 +243,7 @@ const dialTest = test.extend<{
   iconApiHelper: IconApiHelper;
   chatApiHelper: ChatApiHelper;
   fileApiHelper: FileApiHelper;
+  adminFileApiHelper: FileApiHelper;
   additionalSecondShareUserFileApiHelper: FileApiHelper;
   itemApiHelper: ItemApiHelper;
   applicationApiHelper: ApplicationApiHelper;
@@ -278,6 +286,9 @@ const dialTest = test.extend<{
   publicationApiHelper: PublicationApiHelper;
   adminPublicationApiHelper: PublicationApiHelper;
   publishingRules: PublishingRules;
+  informationModal: InformationModal;
+  listboxMenu: ListboxMenu;
+  informationModalAssertion: InformationModalAssertion;
   conversationAssertion: ConversationAssertion;
   chatBarFolderAssertion: FolderAssertion<FolderConversations>;
   allFilesFolderAssertion: FolderAssertion<Folders>;
@@ -333,6 +344,7 @@ const dialTest = test.extend<{
   sharedWithMeConversationAssertion: SideBarConversationAssertion<SharedWithMeConversationsTree>;
   localStorageAssertion: LocalStorageAssertion;
   promptPreviewModal: PromptPreviewModalWindow;
+  promptPreviewVersionDropdownMenu: DropdownMenu;
   promptPreviewModalAssertion: PromptPreviewModalAssertion;
   agentDetailsModalAssertion: AgentDetailsModalAssertion;
   attachAllFilesTreeAssertion: EntityTreeAssertion<AttachFilesTree>;
@@ -683,6 +695,14 @@ const dialTest = test.extend<{
     const chatHeader = chat.getChatHeader();
     await use(chatHeader);
   },
+  chatHeaderVersionDropdownMenu: async ({ page }, use) => {
+    const chatHeaderVersionDropdownMenu = new DropdownMenu(page);
+    await use(chatHeaderVersionDropdownMenu);
+  },
+  chatHeaderDropdownMenu: async ({ page }, use) => {
+    const chatHeaderDropdownMenu = new DropdownMenu(page);
+    await use(chatHeaderDropdownMenu);
+  },
   modelInfoTooltip: async ({ page }, use) => {
     const modelInfoTooltip = new ModelInfoTooltip(page);
     await use(modelInfoTooltip);
@@ -711,6 +731,10 @@ const dialTest = test.extend<{
     const tooltip = new Tooltip(page);
     await use(tooltip);
   },
+  topicsTooltip: async ({ page }, use) => {
+    const topicsTooltip = new TopicsTooltip(page);
+    await use(topicsTooltip);
+  },
   errorPopup: async ({ page }, use) => {
     const errorPopup = new ErrorPopup(page);
     await use(errorPopup);
@@ -738,6 +762,13 @@ const dialTest = test.extend<{
   fileApiHelper: async ({ request }, use) => {
     const fileApiHelper = new FileApiHelper(request);
     await use(fileApiHelper);
+  },
+  adminFileApiHelper: async ({ adminUserRequestContext }, use) => {
+    const adminFileApiHelper = new FileApiHelper(
+      adminUserRequestContext,
+      BucketUtil.getAdminUserBucket(),
+    );
+    await use(adminFileApiHelper);
   },
   additionalSecondShareUserFileApiHelper: async (
     { additionalSecondShareUserRequestContext },
@@ -965,6 +996,20 @@ const dialTest = test.extend<{
   publishingRules: async ({ publishingRequestModal }, use) => {
     const publishingRules = publishingRequestModal.getPublishingRules();
     await use(publishingRules);
+  },
+  informationModal: async ({ page }, use) => {
+    const informationModal = new InformationModal(page);
+    await use(informationModal);
+  },
+  listboxMenu: async ({ page }, use) => {
+    const listboxMenu = new ListboxMenu(page);
+    await use(listboxMenu);
+  },
+  informationModalAssertion: async ({ informationModal }, use) => {
+    const informationModalAssertion = new InformationModalAssertion(
+      informationModal,
+    );
+    await use(informationModalAssertion);
   },
   conversationAssertion: async ({ conversations }, use) => {
     const conversationAssertion = new ConversationAssertion(conversations);
@@ -1253,6 +1298,10 @@ const dialTest = test.extend<{
   promptPreviewModal: async ({ page }, use) => {
     const promptPreviewModalWindow = new PromptPreviewModalWindow(page);
     await use(promptPreviewModalWindow);
+  },
+  promptPreviewVersionDropdownMenu: async ({ page }, use) => {
+    const promptPreviewVersionDropdownMenu = new DropdownMenu(page);
+    await use(promptPreviewVersionDropdownMenu);
   },
   promptPreviewModalAssertion: async ({ promptPreviewModal }, use) => {
     const promptPreviewModalAssertion = new PromptPreviewModalAssertion(

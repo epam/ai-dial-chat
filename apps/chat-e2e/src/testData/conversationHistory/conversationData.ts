@@ -43,7 +43,7 @@ export class ConversationData extends FolderData {
   ) {
     const conversation = this.conversationBuilder.getConversation();
     const modelToUse = model
-      ? { id: typeof model === 'string' ? model : model.id }
+      ? { id: typeof model === 'string' ? model : model.reference }
       : conversation.model;
     const settings: MessageSettings = {
       prompt: conversation.prompt,
@@ -70,7 +70,7 @@ export class ConversationData extends FolderData {
       conversationName = name;
       conversationId = `${modelToUse.id}${ItemUtil.entityIdSeparator}${name}`;
     } else {
-      conversationName = GeneratorUtil.randomString(10);
+      conversationName = GeneratorUtil.randomConversationName();
       conversationId = `${modelToUse.id}${ItemUtil.entityIdSeparator}${conversationName}`;
     }
     return this.conversationBuilder
@@ -458,7 +458,7 @@ export class ConversationData extends FolderData {
 
   public prepareLastWeekConversation(model?: DialAIEntityModel, name?: string) {
     const conversation = this.prepareDefaultConversation(model, name);
-    conversation.updatedAt = DateUtil.getLastWeekDate();
+    conversation.updatedAt = DateUtil.getLastSevenDaysDate();
     return conversation;
   }
 
@@ -467,7 +467,7 @@ export class ConversationData extends FolderData {
     name?: string,
   ) {
     const conversation = this.prepareDefaultConversation(model, name);
-    conversation.updatedAt = DateUtil.getLastMonthDate();
+    conversation.updatedAt = DateUtil.getLastThirtyDaysDate();
     return conversation;
   }
 

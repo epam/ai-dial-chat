@@ -27,6 +27,7 @@ export const ChatSettingsSelectors = {
   agentName: '[data-qa="agent-name"]',
   agentDescription: '[data-qa="agent-descr"]',
   agentVersion: '[data-qa="version"]',
+  agentVersionMenuTrigger: '[data-qa="agent-version-select-trigger"]',
   playbackButton: '[data-qa="Playback"]',
   replayAsIsButton: '[data-qa="Replay as is"]',
   configureSettingsButton: '[data-qa="configure-settings"]',
@@ -80,6 +81,7 @@ export const ChatHeaderSelectors = {
   leavePlayback: '[data-qa="cancel-playback-mode"]',
   deleteFromCompareIcon: '[data-qa="delete-from-compare"]',
   version: '[data-qa="version"]',
+  dotsMenu: '[data-qa="dots-menu"]',
 };
 
 export const CompareSelectors = {

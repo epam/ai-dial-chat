@@ -88,12 +88,18 @@ export interface EntityDates {
   updatedAt?: number;
 }
 
+export enum SharePermission {
+  READ = 'READ',
+  WRITE = 'WRITE',
+}
+
 export interface Entity extends EntityDates {
   id: string;
   name: string;
   folderId: string;
   status?: UploadStatus;
   author?: string;
+  permissions?: SharePermission[];
 }
 
 export enum PublishActions {
@@ -109,9 +115,11 @@ export interface EntityPublicationInfo {
   versionGroup?: string;
 }
 
-export enum SharePermission {
-  READ = 'READ',
-  WRITE = 'WRITE',
+export enum FeatureType {
+  Chat = 'chat',
+  Prompt = 'prompt',
+  File = 'file',
+  Application = 'application',
 }
 
 export interface ShareInterface {
@@ -121,11 +129,16 @@ export interface ShareInterface {
   isPublished?: boolean;
   publishedWithMe?: boolean;
   publicationInfo?: EntityPublicationInfo;
-
-  permissions?: SharePermission[];
 }
 
 export interface ShareEntity extends Entity, ShareInterface {}
+
+export interface FolderInterface extends ShareEntity {
+  type: FeatureType;
+  temporary?: boolean;
+  serverSynced?: boolean;
+  isPublicationFolder?: boolean;
+}
 
 export interface ConversationInfo extends ShareEntity {
   model: ConversationEntityModel;
@@ -134,3 +147,33 @@ export interface ConversationInfo extends ShareEntity {
 }
 
 export type TemplateMapping = [string, string];
+
+export interface Replay {
+  replayAsIs?: boolean;
+  isReplay: boolean;
+  replayUserMessagesStack?: Message[];
+  activeReplayIndex?: number;
+  isError?: boolean;
+}
+
+export interface Playback {
+  isPlayback?: boolean;
+  messagesStack: Message[];
+  activePlaybackIndex: number;
+}
+
+export interface Conversation extends ShareEntity, ConversationInfo {
+  messages: Message[];
+  prompt: string;
+  temperature: number;
+  reference?: string;
+  replay?: Replay;
+  playback?: Playback;
+
+  // Addons selected by user clicks
+  selectedAddons: string[];
+  assistantModelId?: string;
+
+  isMessageStreaming?: boolean;
+  isNameChanged?: boolean;
+}

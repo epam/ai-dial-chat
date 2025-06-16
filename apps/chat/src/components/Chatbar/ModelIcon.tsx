@@ -1,7 +1,8 @@
 /* eslint-disable jsx-a11y/alt-text */
 
 /* eslint-disable @next/next/no-img-element */
-import { memo, useCallback, useRef } from 'react';
+import { IconHistoryToggle, IconMessage2 } from '@tabler/icons-react';
+import { memo, useCallback, useMemo, useRef } from 'react';
 
 import classNames from 'classnames';
 
@@ -13,6 +14,11 @@ import { ApiUtils } from '@/src/utils/server/api';
 
 import { EntityType } from '@/src/types/common';
 import { DialAIEntity } from '@/src/types/models';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { ApplicationTypesSchemasSelectors } from '@/src/store/selectors';
+
+import { DEFAULT_AGENT, LAST_USED_AGENT } from '@/src/constants/chat';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
@@ -45,16 +51,17 @@ const ModelIconTemplate = memo(
         ? getThemeIconUrl('default-addon')
         : getThemeIconUrl('default-model');
     const description = entity ? getOpenAIEntityFullName(entity) : entityId;
+    const applicationTypeSchemas = useAppSelector(
+      ApplicationTypesSchemasSelectors.selectAllSchemas,
+    );
 
-    const getIconUrl = (entity: DialAIEntity | undefined) => {
-      if (!entity?.iconUrl) return fallbackUrl;
-
-      if (isApplicationId(entity.id)) {
-        return constructPath('/api', ApiUtils.encodeApiUrl(entity.iconUrl));
-      }
-
-      return `${getThemeIconUrl(entity.iconUrl)}?v2`;
-    };
+    const schemaApplicationFallbackUrl = useMemo(() => {
+      const iconUrl = applicationTypeSchemas?.find(
+        (schema) => schema.id === entity?.applicationTypeSchemaId,
+      )?.iconUrl;
+      if (!iconUrl) return null;
+      return getThemeIconUrl(iconUrl);
+    }, [applicationTypeSchemas, entity?.applicationTypeSchemaId]);
 
     const handleError = useCallback(() => {
       if (ref.current) {
@@ -62,6 +69,24 @@ const ModelIconTemplate = memo(
         ref.current.onerror = null;
       }
     }, [fallbackUrl]);
+
+    if (entity?.id === LAST_USED_AGENT) {
+      return <IconHistoryToggle size={size} className="text-secondary" />;
+    }
+
+    if (entity?.id === DEFAULT_AGENT) {
+      return <IconMessage2 size={size} className="text-secondary" />;
+    }
+
+    const getIconUrl = (entity: DialAIEntity | undefined) => {
+      if (!entity?.iconUrl) return schemaApplicationFallbackUrl ?? fallbackUrl;
+
+      if (isApplicationId(entity.id)) {
+        return constructPath('/api', ApiUtils.encodeApiUrl(entity.iconUrl));
+      }
+
+      return `${getThemeIconUrl(entity.iconUrl)}?v2`;
+    };
 
     return (
       <span

@@ -31,14 +31,11 @@ export class ChatAssertion extends BaseAssertion {
   }
 
   public async assertNotAllowedModelLabelContent() {
-    const notAllowedModelError =
-      await this.chat.notAllowedModelLabel.getElementContent();
-    expect
-      .soft(
-        notAllowedModelError!.trim(),
-        ExpectedMessages.notAllowedModelErrorDisplayed,
-      )
-      .toBe(ExpectedConstants.notAllowedModelError);
+    await this.assertElementText(
+      this.chat.notAllowedModelLabel,
+      ExpectedConstants.notAllowedModelError,
+      ExpectedMessages.notAllowedModelErrorDisplayed,
+    );
   }
 
   public async assertDuplicateButtonState(expectedState: ElementState) {

@@ -35,7 +35,7 @@ let defaultModel: DialAIEntityModel;
 let simpleRequestModel: DialAIEntityModel | undefined;
 
 dialTest.beforeAll(async () => {
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
   simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
 });
 
@@ -615,7 +615,7 @@ dialTest(
     await dialTest.step(
       'Send new request in imported "New Conversation" and verify it was moved into Today section',
       async () => {
-        await conversations.selectConversation(
+        await conversations.selectEntity(
           ExpectedConstants.newConversationTitle,
         );
         await agentInfo.waitForState();

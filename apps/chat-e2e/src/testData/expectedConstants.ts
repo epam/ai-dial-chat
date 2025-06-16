@@ -20,7 +20,6 @@ export const ExpectedConstants = {
     `${ExpectedConstants.newFolderTitle} ${index}`,
   newPromptFolderWithIndexTitle: (index: number) =>
     `${ExpectedConstants.newFolderTitle} ${index}`,
-  promptViewModalTitle: 'View prompt',
   renameConversationModalTitle: 'Rename conversation',
   emptyString: '',
   defaultTemperature: '1',
@@ -153,12 +152,12 @@ export const ExpectedConstants = {
     `Test ${ExpectedConstants.allowedSpecialChars}`,
   winAllowedSpecialSymbolsInName: "Test (`~!@#$^_-_+[]'___._)",
   duplicatedFilenameError: (filename: string) =>
-    `Files which you trying to upload already presented in selected folder. Please rename or delete them from uploading files list: ${filename}`,
+    `The files you're trying to upload already exist in the selected folder. Please rename them or remove them from your upload list: ${filename}`,
   sameFilenamesError: (filename: string) =>
-    `Files which you trying to upload have same names. Please rename or delete them from uploading files list: ${filename}`,
+    `The files you're trying to upload have the same names. Please rename or remove them from your upload list: ${filename}`,
   restrictedNameChars: ':;,=/{}%&\\"',
   notAllowedFilenameError: (filename: string) =>
-    `The symbols ${ExpectedConstants.restrictedNameChars} are not allowed in file name. Please rename or delete them from uploading files list: ${filename}`,
+    `The symbols ${ExpectedConstants.restrictedNameChars} are not allowed in file names. Please rename the file or remove it from your upload list: ${filename}`,
   endDotFilenameError: (filename: string) =>
     `Using a dot at the end of a name is not permitted. Please rename or delete them from uploading files list: ${filename}`,
   allFilesRoot: 'All files',
@@ -218,7 +217,7 @@ export const ExpectedConstants = {
   requestApiKeyLink: 'this form',
   reportAnIssueLink: 'report an issue',
   publishedAttachmentDownloadPath: (name: string) =>
-    `${API.fileHost}/public/${name}`,
+    `${API.fileHost()}/public/${name}`,
   attachmentPublishErrorMessage:
     'Publishing failed. You are only allowed to publish conversations with attachments from "All files"',
   marketplacePath: '/marketplace',
@@ -247,6 +246,12 @@ export const ExpectedConstants = {
   notFoundHeader: '404',
   notFoundTitle: 'Page not found',
   notFoundDescription: `It seems like the page you're looking for doesn't exist or you don't have access.`,
+  informationModalTitle: 'Information',
+  informationModalLastUpdatedLabel: 'Last updated:',
+  informationModalCreatedDateLabel: 'Creation date:',
+  informationModalAuthorLabel: 'Author:',
+  agentIconTooltip: (appName: string, appVersion: string) =>
+    `${appName}\nv. ${appVersion}`,
 };
 
 export enum Types {
@@ -348,6 +353,7 @@ export const Chronology = {
 };
 
 export const API = {
+  api: '/api',
   modelsHost: '/api/models',
   addonsHost: '/api/addons',
   chatHost: '/api/chat',
@@ -361,12 +367,13 @@ export const API = {
   conversationsHost: () => `${API.listingHost}/conversations`,
   promptsHost: () => `${API.listingHost}/prompts`,
   appsHost: () => `${API.listingHost}/applications`,
-  filesListingHost: () => `${API.listingHost}/files`,
-  fileHost: '/api/files',
+  filesHostSegment: 'files',
+  filesListingHost: () => `${API.listingHost}/${API.filesHostSegment}`,
+  fileHost: () => `/api/${API.filesHostSegment}`,
   conversationHost: '/api/conversations',
   promptHost: '/api/prompts',
   moveHost: '/api/ops/resource/move',
-  importFileRootPath: (bucket: string) => `files/${bucket}`,
+  importFileRootPath: (bucket: string) => `${API.filesHostSegment}/${bucket}`,
   modelFilePath: (modelId: string) => `appdata/${modelId}/images`,
   importFilePath: (bucket: string, modelId: string) =>
     `${API.importFileRootPath(bucket)}/${API.modelFilePath(modelId)}`,
@@ -380,19 +387,22 @@ export const API = {
     `${API.installedDeploymentsFolder}/${API.installedDeploymentsFile}`,
   configurationHost: '/configuration',
   marketplaceHost: 'marketplace.json',
-  publicationRequestHost: '/api/publication/create',
-  publicationRequestCreate: '/api/publication/create',
-  publicationRequestRejection: '/api/publication/reject',
-  publicationRequestApproval: '/api/publication/approve',
-  publicationRequestDetails: '/api/publication/details',
-  publicationRulesList: '/api/publication/rulesList',
+  publicationRequestHost: '/api/ops/publication/create',
+  publicationRequestCreate: '/api/ops/publication/create',
+  publicationRequestRejection: '/api/ops/publication/reject',
+  publicationRequestApproval: '/api/ops/publication/approve',
+  publicationRequestDetails: '/api/ops/publication/get',
+  publicationRulesList: '/api/ops/publication/rule/list',
   multipleListingHost: () => `${API.listingHost}/multiple?recursive=true`,
-  pendingPublicationsListing: '/api/publication/listing',
+  pendingPublicationsListing: '/api/ops/publication/list',
   publishedConversations: '/api/publication/conversations/public',
+  publishedPrompts: '/api/publication/prompts/public',
+  publishedApplications: '/api/publication/applications/public',
+  publishedFiles: () => `/api/publication/${API.filesHostSegment}/public`,
   applicationCreateHost: '/api/applications',
   publishedApplicationsHost:
     'api/publication/applications/public?recursive=true',
-  pagePropsHost: 'development/en.json',
+  pagePropsHost: '/en.json',
 };
 
 export const Import = {
@@ -433,6 +443,7 @@ export const Attachment = {
   fileWithoutExtension: 'withoutExtension',
   plotlyName: 'plotly.json',
   pdfName: 'pdf_attachment.pdf',
+  appIconSvg: 'appIcon.svg',
 };
 
 export enum Side {
@@ -510,4 +521,23 @@ export enum AttachFilesFolders {
 export enum PseudoModel {
   replay = 'replay',
   playback = 'playback',
+}
+
+export const ExpectedPromptModalConst = {
+  promptViewModalTitle: 'View prompt',
+  createPromptModalTitle: 'Create prompt',
+  editButtonTooltip: 'Edit',
+  duplicateButtonTooltip: 'Duplicate',
+  exportButtonTooltip: 'Export',
+  moveToButtonTooltip: 'Move to',
+  shareButtonTooltip: 'Share',
+  publishButtonTooltip: 'Publish',
+  unpublishButtonTooltip: 'Unpublish',
+  infoButtonTooltip: 'Info',
+  deleteButtonTooltip: 'Delete',
+};
+
+export enum DefaultModelReference {
+  defaultAgent = '"default-agent"',
+  lastUsedModel = '"last-used-agent"',
 }
