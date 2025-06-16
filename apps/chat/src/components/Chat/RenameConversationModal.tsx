@@ -21,7 +21,10 @@ import { Translation } from '@/src/types/translation';
 
 import { ConversationsActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ConversationsSelectors } from '@/src/store/selectors';
+import {
+  ConversationsSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
 import { DISALLOW_INTERACTIONS } from '@/src/constants/modal';
 
@@ -38,6 +41,9 @@ function RenameConversationView() {
   );
   const renamingConversation = useAppSelector(
     ConversationsSelectors.selectRenamingConversation,
+  );
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
   );
 
   const [newConversationName, setNewConversationName] = useState('');
@@ -103,11 +109,19 @@ function RenameConversationView() {
         ConversationsActions.updateConversation({
           id: renamingConversation.id,
           values: { name: newName, isNameChanged: true },
+          publicationUrl: selectedPublicationUrl,
         }),
       );
       dispatch(ConversationsActions.setRenamingConversationId(null));
     }
-  }, [newName, renamingConversation, allConversations, dispatch, t]);
+  }, [
+    renamingConversation,
+    newName,
+    allConversations,
+    dispatch,
+    t,
+    selectedPublicationUrl,
+  ]);
 
   const handleEnterDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {

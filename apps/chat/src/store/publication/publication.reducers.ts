@@ -24,6 +24,7 @@ import {
 
 import {
   Conversation,
+  FolderInterface,
   Prompt,
   PublishActions,
   ShareEntity,
@@ -363,8 +364,18 @@ export const publicationSlice = createSlice({
       state,
       _action: PayloadAction<{
         resourceToUpdateUrl: string;
-        newEntityValues: Conversation | Prompt;
+        newEntity: Conversation | Prompt;
         publicationUrl: string;
+      }>,
+    ) => {
+      state.isPublicationUpdating = true;
+    },
+    updatePublicationRequestAndFolder: (
+      state,
+      _action: PayloadAction<{
+        publicationUrl: string;
+        folderIdToUpdate: string;
+        newFolder: FolderInterface;
       }>,
     ) => {
       state.isPublicationUpdating = true;

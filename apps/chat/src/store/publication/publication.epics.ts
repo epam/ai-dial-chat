@@ -1372,10 +1372,14 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
         payload.publicationUrl,
       );
 
+      const isConversation = isConversationId(payload.newEntity.id);
+
       if (!publication) {
         return of(
           UIActions.showErrorToast(
-            translate('Cannot update conversation, publication not found'),
+            translate(
+              `Cannot update ${isConversation ? 'conversation' : 'prompt'}, publication not found`,
+            ),
           ),
         );
       }
@@ -1384,7 +1388,7 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
         return of(
           UIActions.showErrorToast(
             translate(
-              'Cannot update conversation, publication has no resources',
+              `Cannot update ${isConversation ? 'conversation' : 'prompt'}, publication has no resources`,
             ),
           ),
         );
@@ -1395,10 +1399,14 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
         name: publication.name ?? getPublicationDefaultName(publication.author),
         resources: publication.resources.map((resource) => {
           if (resource.reviewUrl === payload.resourceToUpdateUrl) {
+            const newTargetUrlSegments = payload.newEntity.id.split('/');
+            newTargetUrlSegments[1] = publication.targetFolder;
+            const newTargetUrl = newTargetUrlSegments.join('/');
+
             return {
               ...resource,
               sourceUrl: resource.sourceUrl ?? undefined,
-              targetUrl: payload.newEntityValues.id,
+              targetUrl: newTargetUrl,
             };
           }
 
@@ -1414,20 +1422,113 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
         url: payload.publicationUrl,
       }).pipe(
         switchMap(() => {
-          if (isConversationId(payload.newEntityValues.id)) {
-            return of(
-              ConversationsActions.updateConversation({
-                id: payload.newEntityValues.id,
-                values: payload.newEntityValues,
+          const updateEntityPayload = {
+            id: payload.newEntity.id,
+            values: payload.newEntity,
+          };
+
+          const updateEntityAction$ = of(
+            isConversationId(payload.newEntity.id)
+              ? ConversationsActions.updateConversation(updateEntityPayload)
+              : PromptsActions.updatePrompt(updateEntityPayload),
+          );
+
+          return concat(
+            updateEntityAction$,
+            of(
+              PublicationActions.uploadPublication({
+                url: payload.publicationUrl,
               }),
-            );
+            ),
+          );
+        }),
+        catchError((err) => {
+          return of(PublicationActions.publishFail(err.message));
+        }),
+      );
+    }),
+  );
+
+const updatePublicationRequestAndFolderEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(PublicationActions.updatePublicationRequestAndFolder.type),
+    switchMap(({ payload }) => {
+      const state = state$.value;
+      const publication = PublicationSelectors.selectPublicationByUrl(
+        state,
+        payload.publicationUrl,
+      );
+
+      if (!publication) {
+        return of(
+          UIActions.showErrorToast(
+            translate('Cannot update folder, publication not found'),
+          ),
+        );
+      }
+
+      if (!publication.resources) {
+        return of(
+          UIActions.showErrorToast(
+            translate('Cannot update folder, publication has no resources'),
+          ),
+        );
+      }
+
+      const publicationData: PublicationRequestModel = {
+        ...publication,
+        name: publication.name ?? getPublicationDefaultName(publication.author),
+        resources: publication.resources.map((resource) => {
+          if (resource.reviewUrl.startsWith(`${payload.folderIdToUpdate}/`)) {
+            const folderIdToUpdateSegments =
+              payload.folderIdToUpdate.split('/');
+            folderIdToUpdateSegments[1] = publication.targetFolder;
+            const targetFolderIdToUpdate = folderIdToUpdateSegments.join('/');
+
+            const newFolderIdSegments = payload.newFolder.id.split('/');
+            newFolderIdSegments[1] = publication.targetFolder;
+            const newTargetFolderId = newFolderIdSegments.join('/');
+
+            return {
+              ...resource,
+              sourceUrl: resource.sourceUrl ?? undefined,
+              targetUrl: resource.targetUrl.replace(
+                `${targetFolderIdToUpdate}/`,
+                `${newTargetFolderId}/`,
+              ),
+            };
           }
 
-          return of(
-            PromptsActions.updatePrompt({
-              id: payload.newEntityValues.id,
-              values: payload.newEntityValues,
-            }),
+          return {
+            ...resource,
+            sourceUrl: resource.sourceUrl ?? undefined,
+          };
+        }),
+      };
+
+      return PublicationService.updatePublicationRequest({
+        publicationData,
+        url: payload.publicationUrl,
+      }).pipe(
+        switchMap(() => {
+          const updateFolderPayload = {
+            folderId: payload.newFolder.id,
+            values: payload.newFolder,
+          };
+
+          const updateFolderAction$ = of(
+            isConversationId(payload.folderIdToUpdate)
+              ? ConversationsActions.updateFolder(updateFolderPayload)
+              : PromptsActions.updateFolder(updateFolderPayload),
+          );
+
+          return concat(
+            updateFolderAction$,
+            of(
+              PublicationActions.uploadPublication({
+                url: payload.publicationUrl,
+              }),
+            ),
           );
         }),
         catchError((err) => {
@@ -1454,8 +1555,10 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
         url,
       }).pipe(
         switchMap((response) => {
+          const state = state$.value;
+
           const oldPublicationResources =
-            PublicationSelectors.selectPublicationByUrl(state$.value, url)
+            PublicationSelectors.selectPublicationByUrl(state, url)
               ?.resources ?? [];
           const newPublicationResources = response.resources.map(
             (resource) => ({
@@ -1630,6 +1733,7 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
       );
     }),
   );
+
 const updateAndApprovePublicationRequestEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(PublicationActions.updateAndApprovePublicationRequest.type),
@@ -1662,13 +1766,10 @@ const updateAndApprovePublicationRequestEpic: AppEpic = (action$, state$) =>
         },
       }).pipe(
         switchMap((response) => {
-          return concat(
-            of(PublicationActions.uploadPublication({ url: response.url })),
-            of(
-              PublicationActions.approvePublication({
-                url: response.url,
-              }),
-            ),
+          return of(
+            PublicationActions.approvePublication({
+              url: response.url,
+            }),
           );
         }),
         catchError((err) => {
@@ -1732,6 +1833,7 @@ export const PublicationEpics = combineEpics(
   updatePublicationRequestEpic,
   updateAndApprovePublicationRequestEpic,
   updatePublicationRequestAndEntityEpic,
+  updatePublicationRequestAndFolderEpic,
 
   // on select publication
   onSelectPublicationEffectEpic,

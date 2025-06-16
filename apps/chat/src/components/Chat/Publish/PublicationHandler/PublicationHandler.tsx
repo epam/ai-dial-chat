@@ -173,7 +173,7 @@ export function PublicationHandler({ publication }: Props) {
                     : currentFolder[EDITED_FOLDER_NAME_KEY],
                 );
               });
-              newFolderSegments[1] = PUBLIC_URL_PREFIX;
+              newFolderSegments[1] = publication.targetFolder;
               const newFolderId = newFolderSegments.join('/');
 
               // get new api key

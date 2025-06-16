@@ -278,7 +278,7 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
         return of(
           PublicationActions.updatePublicationRequestAndEntity({
             resourceToUpdateUrl: id,
-            newEntityValues: newPrompt,
+            newEntity: newPrompt,
             publicationUrl,
           }),
         );
@@ -387,6 +387,16 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
         return of(
           PromptsActions.updateFoldersSuccess({
             folders: [{ oldId: payload.folderId, newFolder }],
+          }),
+        );
+      }
+
+      if (payload.publicationUrl) {
+        return of(
+          PublicationActions.updatePublicationRequestAndFolder({
+            folderIdToUpdate: payload.folderId,
+            newFolder,
+            publicationUrl: payload.publicationUrl,
           }),
         );
       }

@@ -15,7 +15,7 @@ import { Translation } from '@/src/types/translation';
 
 import { PromptsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PromptsSelectors } from '@/src/store/selectors';
+import { PromptsSelectors, PublicationSelectors } from '@/src/store/selectors';
 
 import { Modal } from '@/src/components/Common/Modal';
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
@@ -42,6 +42,9 @@ const PromptModalContent: React.FC<PromptModalViewProps> = ({
   const isNewPromptCreating = useAppSelector(
     PromptsSelectors.selectIsNewPromptCreating,
   );
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
+  );
 
   const dispatch = useAppDispatch();
 
@@ -63,6 +66,7 @@ const PromptModalContent: React.FC<PromptModalViewProps> = ({
             PromptsActions.updatePrompt({
               id: prompt.id,
               values: editedPrompt,
+              publicationUrl: selectedPublicationUrl,
             }),
           );
         }
@@ -70,7 +74,13 @@ const PromptModalContent: React.FC<PromptModalViewProps> = ({
 
       onToggleEditMode(true);
     },
-    [dispatch, isNewPromptCreating, onToggleEditMode, prompt],
+    [
+      dispatch,
+      isNewPromptCreating,
+      onToggleEditMode,
+      prompt,
+      selectedPublicationUrl,
+    ],
   );
 
   const handleGoToEditMode = useCallback(() => {

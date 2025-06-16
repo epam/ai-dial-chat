@@ -31,6 +31,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import {
   AddonsSelectors,
   ModelsSelectors,
+  PublicationSelectors,
   SettingsSelectors,
   WidgetsSelectors,
 } from '@/src/store/selectors';
@@ -100,6 +101,9 @@ const TalkToModalView = ({
   const recentModelIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
   const widgetsSchemaIds = useAppSelector(
     WidgetsSelectors.selectWidgetsSchemaIds,
+  );
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
   );
 
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
@@ -205,13 +209,14 @@ const TalkToModalView = ({
     return orderedModels;
   }, [
     sortedModels,
+    isMyWorkspace,
+    widgetsSchemaIds,
+    searchedModels,
+    conversation.model.id,
     isPlayback,
     isReplay,
     modelsMap,
-    conversation.model.id,
-    searchTerm,
-    isMyWorkspace,
-    widgetsSchemaIds,
+    searchTerm.length,
     t,
   ]);
 
@@ -235,6 +240,7 @@ const TalkToModalView = ({
                 addonsMap,
               ),
             },
+            publicationUrl: selectedPublicationUrl,
           }),
         );
       }
@@ -262,6 +268,7 @@ const TalkToModalView = ({
       installedModelIdsSet,
       modelsMap,
       onClose,
+      selectedPublicationUrl,
     ],
   );
 

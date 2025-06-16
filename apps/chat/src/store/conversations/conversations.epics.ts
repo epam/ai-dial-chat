@@ -110,6 +110,7 @@ import {
   MarketplaceSelectors,
   ModelsSelectors,
   OverlaySelectors,
+  PublicationSelectors,
   SettingsSelectors,
   UISelectors,
   WidgetsSelectors,
@@ -863,6 +864,16 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
         return of(
           ConversationsActions.updateFoldersSuccess({
             folders: [{ oldId: payload.folderId, newFolder }],
+          }),
+        );
+      }
+
+      if (payload.publicationUrl) {
+        return of(
+          PublicationActions.updatePublicationRequestAndFolder({
+            publicationUrl: payload.publicationUrl,
+            newFolder: newFolder,
+            folderIdToUpdate: payload.folderId,
           }),
         );
       }
@@ -2464,7 +2475,7 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         return of(
           PublicationActions.updatePublicationRequestAndEntity({
             resourceToUpdateUrl: id,
-            newEntityValues: newConversation,
+            newEntity: newConversation,
             publicationUrl,
           }),
         );
@@ -3114,6 +3125,9 @@ const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
             MarketplaceActions.setApplyModelStatus(UploadStatus.FAILED),
           );
 
+        const selectedPublicationUrl =
+          PublicationSelectors.selectSelectedPublicationUrl(state$.value);
+
         return concat(
           of(MarketplaceActions.setDetailsModel()),
           of(MarketplaceActions.setApplyModelStatus(UploadStatus.LOADING)),
@@ -3141,6 +3155,7 @@ const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
                       )
                     : {}),
                 },
+                publicationUrl: selectedPublicationUrl,
               }),
             ),
             of(
