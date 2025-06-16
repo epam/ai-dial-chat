@@ -6,6 +6,7 @@ import {
   canEditSharedFolderOrParent,
   generateNextName,
   getChildAndCurrentFoldersById,
+  getFilteredFolders,
   getFolderFromId,
   getFolderIdFromEntityId,
   getFoldersDepth,
@@ -35,7 +36,12 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import * as commonUtils from '../common';
 
-import { Entity, SharePermission } from '@epam/ai-dial-shared';
+import {
+  Conversation,
+  Entity,
+  ShareEntity,
+  SharePermission,
+} from '@epam/ai-dial-shared';
 
 describe('Folder utility methods', () => {
   // Test data setup
@@ -43,11 +49,13 @@ describe('Folder utility methods', () => {
     name: string,
     folderId?: string,
     type: FeatureType = FeatureType.Chat,
+    sharedWithMe?: boolean,
   ): FolderInterface => ({
     id: `${folderId ? `${folderId}/` : ''}${name}`,
     name,
     folderId: folderId || '',
     type,
+    ...(sharedWithMe ? { sharedWithMe } : {}),
   });
 
   describe('getFoldersDepth', () => {
@@ -714,6 +722,115 @@ describe('Folder utility methods', () => {
       });
 
       expect(result).toEqual(['folder/entity2']);
+    });
+  });
+
+  describe('getFilteredFolders', () => {
+    // Sample test data
+    const folder1 = createFolder('folder 1', 'entity/bucket');
+    const folder2 = createFolder('folder 2', 'entity/bucket/folder 1');
+    const folder3 = createFolder('folder 3', 'entity/bucket/folder 1/folder 2');
+    const folder4 = createFolder(
+      'folder 4',
+      'entity/bucket/folder 1/folder 2/folder 3',
+    );
+    const folder5 = createFolder(
+      'folder 5',
+      'entity/bucket/folder 1/folder 2/folder 3/folder 4',
+    );
+    const sharedFolder1 = createFolder(
+      'folder 1',
+      'entity/bucket2',
+      FeatureType.Chat,
+      true,
+    );
+    const sharedFolder2 = createFolder(
+      'folder 2',
+      'entity/bucket2/folder 1',
+      FeatureType.Chat,
+      true,
+    );
+    const userFolders: FolderInterface[] = [
+      folder1,
+      folder2,
+      folder3,
+      folder4,
+      folder5,
+    ];
+
+    const sharedFolders: FolderInterface[] = [sharedFolder1, sharedFolder2];
+    const mockFolders: FolderInterface[] = [...userFolders, ...sharedFolders];
+
+    const mockConversations: Conversation[] = [
+      { id: 'conv1', folderId: folder1.id } as Conversation,
+      { id: 'conv2', folderId: folder3.id } as Conversation,
+    ];
+
+    it('should apply section filter when provided', () => {
+      // Set up section filter that only includes folder1
+      const sectionFilter = vi.fn((folder: ShareEntity) => {
+        return !!folder.sharedWithMe;
+      });
+
+      const result = getFilteredFolders({
+        allFolders: mockFolders,
+        emptyFolderIds: [],
+        filters: { sectionFilter },
+        entities: [],
+      });
+
+      // Verify filter was called for each folder
+      expect(sectionFilter).toHaveBeenCalledTimes(mockFolders.length);
+      expect(result).toEqual(sharedFolders);
+    });
+
+    it('should apply search filter when provided', () => {
+      // Set up search filter that matches folder1
+      const searchFilter = vi.fn((folder: ShareEntity) =>
+        folder.name.includes('1'),
+      );
+
+      // Execute
+      getFilteredFolders({
+        allFolders: mockFolders,
+        emptyFolderIds: [],
+        filters: { searchFilter },
+        entities: [],
+        searchTerm: '1',
+      });
+
+      // Verify search filter was applied
+      expect(searchFilter).toHaveBeenCalled();
+    });
+
+    it('should ignore filtered folders when search term is provided', () => {
+      // Setup a search filter
+      const sectionFilter = vi.fn(
+        (folder: ShareEntity) => !!folder.sharedWithMe,
+      );
+
+      // Execute with search term
+      const result = getFilteredFolders({
+        allFolders: mockFolders,
+        emptyFolderIds: [],
+        filters: { sectionFilter },
+        entities: mockConversations,
+        searchTerm: 'searchTerm',
+      });
+
+      expect(result).toEqual([]);
+    });
+
+    it('should sort the final result using sortByName', () => {
+      const result = getFilteredFolders({
+        allFolders: userFolders.toReversed(),
+        emptyFolderIds: [],
+        filters: {},
+        entities: [],
+      });
+
+      // Should return the sorted result
+      expect(result).toEqual(userFolders);
     });
   });
 });
