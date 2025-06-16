@@ -40,7 +40,7 @@ vi.mock('../api', () => ({
 }));
 
 vi.mock('../app/file', () => ({
-  isAbsoluteUrl: vi.fn((url) => url.startsWith('http')),
+  isAbsoluteUrl: vi.fn((url) => url.startsWith('https')),
 }));
 
 describe('getTiktokenEncoding', () => {
@@ -256,7 +256,7 @@ describe('getSortedEntities', () => {
         id: DEFAULT_MODEL_ID,
         object: EntityType.Model,
         capabilities: { chat_completion: true },
-        icon_url: 'http://example.com/icon.png',
+        icon_url: 'https://example.com/icon.png',
       },
     ];
 
@@ -265,10 +265,10 @@ describe('getSortedEntities', () => {
       return Promise.resolve([]);
     });
 
-    const token = { access_token: 'token123', jobTitle: 'Developer' } as any;
+    const token = { access_token: 'token123', jobTitle: 'Developer' } as JWT;
     const result = await getSortedEntities(token);
 
-    expect(result[0].iconUrl).toBe('http://example.com/icon.png');
+    expect(result[0].iconUrl).toBe('https://example.com/icon.png');
   });
 
   it('should filter out entities with embeddings capability or without chat_completion', async () => {
