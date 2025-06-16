@@ -230,7 +230,6 @@ export const ChatbarSettings = () => {
           }}
           headerLabel={t('Manage attachments')}
           forceShowSelectCheckBox
-          forceHideSelectFolders
           showTooltip
         />
       )}
