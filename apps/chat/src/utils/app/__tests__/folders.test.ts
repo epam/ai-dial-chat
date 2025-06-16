@@ -316,7 +316,7 @@ describe('Folder utility methods', () => {
     });
   });
 
-  describe.only('updateMovedFolderId', () => {
+  describe('updateMovedFolderId', () => {
     it('should update folder ID when it matches old parent ID', () => {
       const result1 = updateMovedFolderId(
         'oldParent',
