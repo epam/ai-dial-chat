@@ -21,6 +21,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { Tooltip } from './Tooltip';
+
 import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import { useCombobox } from 'downshift';
 
@@ -211,16 +213,19 @@ export const Combobox = <T,>({
                   'group flex h-[34px] cursor-pointer flex-col justify-center px-3',
                   highlightedIndex === index && 'bg-accent-primary-alpha',
                   selectedItem === item && 'bg-accent-primary-alpha',
-                  indexSeparator &&
+                  !inputValue &&
+                    indexSeparator &&
                     index === indexSeparator &&
                     'border-b border-secondary',
                 )}
                 key={`${getItemValue(item)}${index}`}
                 {...getItemProps({ item, index })}
               >
-                {itemRow
-                  ? createElement(itemRow, { item })
-                  : getItemLabel(item)}
+                <Tooltip tooltip={getItemLabel(item)} triggerClassName="w-full">
+                  {itemRow
+                    ? createElement(itemRow, { item })
+                    : getItemLabel(item)}
+                </Tooltip>
               </li>
             ))
           ) : (
