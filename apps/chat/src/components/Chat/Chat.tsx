@@ -149,6 +149,9 @@ const ChatView = memo(() => {
   const selectedPublicationUrl = useAppSelector(
     PublicationSelectors.selectSelectedPublicationUrl,
   );
+  const notAvailableEntityType = useAppSelector(
+    ChatSelectors.selectNotAvailableEntityType,
+  );
   const isConfigurationSchemaLoading = useAppSelector(
     ChatSelectors.selectIsConfigurationSchemaLoading,
   );
@@ -589,7 +592,7 @@ const ChatView = memo(() => {
     !isReadOnly &&
     !messageIsStreaming &&
     !isLastMessageError &&
-    !isNotAllowed;
+    !notAvailableEntityType;
 
   const areSelectedConversationsEmpty = selectedConversations.every(
     (conv) => !conv.messages.length,
@@ -857,7 +860,7 @@ const ChatView = memo(() => {
                                                 !isEntityIdExternal(conv))
                                             }
                                             editDisabled={
-                                              !!isNotAllowed ||
+                                              !!notAvailableEntityType ||
                                               isReadOnly ||
                                               isReplay ||
                                               isPlayback
@@ -891,6 +894,7 @@ const ChatView = memo(() => {
                     </div>
                     {!isPlayback &&
                     !selectedPublicationUrl &&
+                    notAvailableEntityType &&
                     notAllowedItemsForDisplay.length ? (
                       <NotAllowedModel
                         showScrollDownButton={showScrollDownButton}
