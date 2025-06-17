@@ -424,6 +424,7 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
                             !allModels.some(
                               (model) => model.id === r.reviewUrl,
                             ),
+                          publicationUrl: payload.url,
                         },
                         owner: r.author ?? 'Unknown',
                       };
@@ -835,6 +836,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                       publicationInfo: {
                         ...conv.publicationInfo,
                         isNotExist: true,
+                        publicationUrl: payload.url,
                       },
                       publishedWithMe: false,
                     })),
@@ -987,6 +989,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                       publicationInfo: {
                         ...prompt.publicationInfo,
                         isNotExist: true,
+                        publicationUrl: payload.url,
                       },
                       publishedWithMe: false,
                     })),
@@ -1084,7 +1087,10 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                 of(
                   ModelsActions.updateModelPublicationInfo({
                     reference: r.reviewUrl,
-                    updatedValues: { isNotExist: true },
+                    updatedValues: {
+                      isNotExist: true,
+                      publicationUrl: payload.url,
+                    },
                   }),
                 ),
               );
@@ -1672,6 +1678,7 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
                           name: conversation.name,
                           publicationInfo: {
                             version: getVersionFromId(conversation.id),
+                            publicationUrl: url,
                           },
                         },
                       }),
@@ -1690,6 +1697,7 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
                           name: prompt.name,
                           publicationInfo: {
                             version: getVersionFromId(prompt.id),
+                            publicationUrl: url,
                           },
                         },
                       }),

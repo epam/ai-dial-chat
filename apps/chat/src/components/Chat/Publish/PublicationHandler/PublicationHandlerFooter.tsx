@@ -143,8 +143,8 @@ export const PublicationHandlerFooter = ({
           items: resourcesToReview.map((resource) => ({
             reviewed: false,
             reviewUrl: resource.reviewUrl,
-            publicationUrl: publication.url,
           })),
+          publicationUrl: publication.url,
         }),
       );
     }

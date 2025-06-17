@@ -113,6 +113,7 @@ export interface EntityPublicationInfo {
   isNotExist?: boolean;
   version?: string;
   versionGroup?: string;
+  publicationUrl: string;
 }
 
 export enum FeatureType {
