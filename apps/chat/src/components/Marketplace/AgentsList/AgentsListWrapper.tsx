@@ -33,7 +33,6 @@ export const AgentsListWrapper = forwardRef<AgentsListWrapperRef, Props>(
     //
     // parentRef: Provides a reference to the virtual list container that manages scrolling.
     // suggestedRowRef: Provides a reference to the element representing the row text (separator).
-
     useImperativeHandle(ref, () => ({
       parentRef,
       suggestedRowRef,
