@@ -1,10 +1,4 @@
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-} from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 
 import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
@@ -29,8 +23,14 @@ export const AgentsListWrapper = forwardRef<AgentsListWrapperRef, Props>(
   ({ children, separatorRowId, rowsHeight, className }, ref) => {
     const { t } = useTranslation(Translation.Marketplace);
     const router = useRouter();
+
     const parentRef = useRef<HTMLDivElement>(null);
     const suggestedRowRef = useRef<HTMLSpanElement>(null);
+
+    useImperativeHandle(ref, () => ({
+      parentRef,
+      suggestedRowRef,
+    }));
 
     // Using useImperativeHandle to expose internal refs (parentRef and suggestedRowRef)
     // to the parent component. This allows the parent to control scrolling and positioning
@@ -39,33 +39,19 @@ export const AgentsListWrapper = forwardRef<AgentsListWrapperRef, Props>(
     // parentRef: Provides a reference to the virtual list container that manages scrolling.
     // suggestedRowRef: Provides a reference to the element representing the row text (separator).
 
-    const scrollToTop = useCallback(() => {
-      parentRef.current?.scrollTo({ top: 0, behavior: 'auto' });
-    }, []);
-
-    useImperativeHandle(
-      ref,
-      () => ({
-        parentRef,
-        suggestedRowRef,
-        scrollToTop,
-      }),
-      [scrollToTop],
-    );
-
     useEffect(() => {
       const handleRouteChange = () => {
-        scrollToTop();
+        parentRef.current?.scrollTo({ top: 0, behavior: 'auto' });
       };
 
       router.events.on('routeChangeComplete', handleRouteChange);
 
-      scrollToTop();
+      handleRouteChange();
 
       return () => {
         router.events.off('routeChangeComplete', handleRouteChange);
       };
-    }, [router.events, scrollToTop]);
+    }, [router.events]);
 
     return (
       <section
@@ -89,6 +75,7 @@ export const AgentsListWrapper = forwardRef<AgentsListWrapperRef, Props>(
             {t('Suggested results from DIAL Marketplace')}
           </span>
         )}
+
         {children}
       </section>
     );
