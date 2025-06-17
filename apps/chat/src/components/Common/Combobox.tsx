@@ -190,7 +190,7 @@ export const Combobox = <T,>({
       </div>
       <ul
         className={classNames(
-          'z-10 max-h-80 overflow-auto rounded bg-layer-3',
+          'z-10 max-h-80 overflow-auto rounded bg-layer-3 shadow',
           panelClassName,
           !isOpen && 'hidden',
         )}
