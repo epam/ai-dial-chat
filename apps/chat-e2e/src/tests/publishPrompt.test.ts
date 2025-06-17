@@ -484,7 +484,7 @@ dialAdminTest(
   },
 );
 
-dialAdminTest.only(
+dialAdminTest(
   'Publish prompt: add new folder inside nested folder structure with depth 4\n' +
     'Publish prompt into nested folder structure inside Organization section\n' +
     'Publish request name: tab is changed to space if to use it in chat name\n' +
