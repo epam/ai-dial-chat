@@ -27,17 +27,17 @@ export const AgentsListWrapper = forwardRef<AgentsListWrapperRef, Props>(
     const parentRef = useRef<HTMLDivElement>(null);
     const suggestedRowRef = useRef<HTMLSpanElement>(null);
 
-    useImperativeHandle(ref, () => ({
-      parentRef,
-      suggestedRowRef,
-    }));
-
     // Using useImperativeHandle to expose internal refs (parentRef and suggestedRowRef)
     // to the parent component. This allows the parent to control scrolling and positioning
     // of elements within this component.
     //
     // parentRef: Provides a reference to the virtual list container that manages scrolling.
     // suggestedRowRef: Provides a reference to the element representing the row text (separator).
+
+    useImperativeHandle(ref, () => ({
+      parentRef,
+      suggestedRowRef,
+    }));
 
     useEffect(() => {
       const handleRouteChange = () => {
