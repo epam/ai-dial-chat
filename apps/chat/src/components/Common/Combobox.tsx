@@ -221,9 +221,14 @@ export const Combobox = <T,>({
                 key={`${getItemValue(item)}${index}`}
                 {...getItemProps({ item, index })}
               >
-                <Tooltip tooltip={itemRow
-                    ? createElement(itemRow, { item })
-                    : getItemLabel(item)} triggerClassName="w-full">
+                <Tooltip
+                  tooltip={
+                    itemRow
+                      ? createElement(itemRow, { item })
+                      : getItemLabel(item)
+                  }
+                  triggerClassName="w-full"
+                >
                   {itemRow
                     ? createElement(itemRow, { item })
                     : getItemLabel(item)}
