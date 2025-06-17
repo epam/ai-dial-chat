@@ -67,9 +67,7 @@ function PublicationControlsView({
 
   const unselectConversation = useCallback(() => {
     dispatch(
-      PublicationActions.uploadPublication({
-        url: resourceToReview.publicationUrl,
-      }),
+      PublicationActions.selectPublication(resourceToReview.publicationUrl),
     );
     dispatch(
       ConversationsActions.selectConversations({
