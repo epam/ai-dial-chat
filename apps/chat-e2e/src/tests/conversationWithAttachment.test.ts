@@ -750,15 +750,15 @@ dialTest(
         await expect
           .soft(
             attachedAllFiles.getFolderCheckbox(folderName),
-            ExpectedMessages.folderCheckboxIsNotVisible,
+            ExpectedMessages.folderCheckboxIsVisible,
           )
-          .toBeHidden();
+          .toBeVisible();
         await expect
           .soft(
             attachFilesModal.attachFilesButton.getElementLocator(),
-            ExpectedMessages.buttonIsDisabled,
+            ExpectedMessages.buttonIsEnabled,
           )
-          .toBeDisabled();
+          .toBeEnabled();
       },
     );
   },
