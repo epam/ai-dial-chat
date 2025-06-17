@@ -7,6 +7,7 @@ import {
   notAllowedSymbols,
   notAllowedSymbolsRegex,
 } from '@/src/utils/app/file';
+import { isHiddenEntity } from '@/src/utils/app/search';
 
 import { Conversation, PrepareNameOptions } from '@/src/types/chat';
 import { BaseDialEntity, FeatureType, PartialBy } from '@/src/types/common';
@@ -215,6 +216,7 @@ export const getFilteredFolders = ({
   entities,
   searchTerm,
   includeEmptyFolders,
+  includeHiddenFolders = false,
 }: {
   allFolders: FolderInterface[];
   emptyFolderIds: string[];
@@ -222,10 +224,13 @@ export const getFilteredFolders = ({
   entities: Conversation[] | Prompt[];
   searchTerm?: string;
   includeEmptyFolders?: boolean;
+  includeHiddenFolders?: boolean;
 }) => {
   // Get roots of section filtered items
-  const sectionFilteredFolders = allFolders.filter(
-    (folder) => filters.sectionFilter?.(folder) ?? true,
+  const sectionFilteredFolders = allFolders.filter((folder) =>
+    (filters.sectionFilter?.(folder) ?? true) && includeHiddenFolders
+      ? true
+      : !isHiddenEntity(folder),
   );
 
   // Get full child tree
