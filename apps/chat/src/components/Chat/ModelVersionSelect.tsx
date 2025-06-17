@@ -32,6 +32,7 @@ interface ModelVersionSelectProps {
   showVersionPrefix?: boolean;
   readonly?: boolean;
   onSelect: (entity: DialAIEntityModel) => void;
+  triggerClassName?: string;
 }
 
 export const ModelVersionSelect = ({
@@ -41,6 +42,7 @@ export const ModelVersionSelect = ({
   showVersionPrefix = false,
   readonly = false,
   onSelect,
+  triggerClassName,
 }: ModelVersionSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -79,7 +81,10 @@ export const ModelVersionSelect = ({
       data-qa="model-version-select"
       trigger={
         <div
-          className="flex cursor-pointer items-center justify-between font-theme text-sm"
+          className={classNames(
+            'flex cursor-pointer items-center justify-between font-theme text-sm',
+            triggerClassName,
+          )}
           data-qa="agent-version-select-trigger"
           data-model-versions
           onClick={stopBubbling}
