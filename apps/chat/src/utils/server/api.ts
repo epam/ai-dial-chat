@@ -20,7 +20,7 @@ import { EMPTY_MODEL_ID } from '@/src/constants/default-ui-settings';
 import { NA_VERSION } from '@/src/constants/publication';
 import { validVersionRegEx } from '@/src/constants/versions';
 
-import { ConversationInfo } from '@epam/ai-dial-shared';
+import { ConversationInfo, EntityPublicationInfo } from '@epam/ai-dial-shared';
 
 export const pathKeySeparator = '__';
 const encodedKeySeparator = '%5F%5F';
@@ -78,7 +78,9 @@ export const getConversationApiKey = (
 export const parseConversationApiKey = (
   apiKey: string,
   options?: ParseOptions,
-): Omit<ConversationInfo, 'folderId' | 'id'> => {
+): Omit<ConversationInfo, 'folderId' | 'id'> & {
+  publicationInfo?: Omit<EntityPublicationInfo, 'publicationUrl'>;
+} => {
   const parts = apiKey.split(pathKeySeparator);
 
   const [modelId, name] =
@@ -86,7 +88,9 @@ export const parseConversationApiKey = (
       ? [EMPTY_MODEL_ID, apiKey] // receive without prefix with model i.e. {name}
       : [decodeModelId(parts[0]), parts.slice(1).join(pathKeySeparator)]; // receive correct format {modelId}__{name}
 
-  const parsedApiKey: Omit<ConversationInfo, 'folderId' | 'id'> = {
+  const parsedApiKey: Omit<ConversationInfo, 'folderId' | 'id'> & {
+    publicationInfo?: Omit<EntityPublicationInfo, 'publicationUrl'>;
+  } = {
     model: { id: modelId },
     name,
     isPlayback: modelId === PseudoModel.Playback,
