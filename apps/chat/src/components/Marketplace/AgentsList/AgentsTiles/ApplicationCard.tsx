@@ -150,8 +150,11 @@ export const ApplicationCard = memo(
                   <FunctionStatusIndicator entity={entity} />
                 </div>
               </div>
-              <div data-qa="application-description">
-                <EntityMarkdownDescription className="hidden text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
+              <div
+                data-qa="application-description"
+                className="hidden xl:block"
+              >
+                <EntityMarkdownDescription className="text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
                   {getModelShortDescription(entity)}
                 </EntityMarkdownDescription>
               </div>
