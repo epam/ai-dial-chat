@@ -124,32 +124,6 @@ export const PublicationHandlerFooter = ({
     [conversations, files, prompts, applications],
   );
 
-  useEffect(() => {
-    // we do not need to review files
-    const resourcesToReview = publication.resources.filter(
-      (resource) => !isFileId(resource.targetUrl),
-    );
-    const resourcesToReviewIds = resourcesToReview.map(
-      (resource) => resource.reviewUrl,
-    );
-    const notExistEntitiesIds = notExistEntities.map((entity) => entity.id);
-    const isSomeResourceNotExist = resourcesToReviewIds.some((id) =>
-      notExistEntitiesIds.includes(id),
-    );
-
-    if (!isSomeResourceNotExist) {
-      dispatch(
-        PublicationActions.setPublicationsToReview({
-          items: resourcesToReview.map((resource) => ({
-            reviewed: false,
-            reviewUrl: resource.reviewUrl,
-            publicationUrl: publication.url,
-          })),
-        }),
-      );
-    }
-  }, [dispatch, notExistEntities, publication.resources, publication.url]);
-
   const expandFoldersByFeatureType = useCallback(
     (
       toReview: ResourceToReview[],

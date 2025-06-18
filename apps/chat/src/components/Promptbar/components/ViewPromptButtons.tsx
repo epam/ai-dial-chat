@@ -21,7 +21,7 @@ import { FeatureType, ScreenState } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/selectors';
+import { PublicationSelectors, SettingsSelectors } from '@/src/store/selectors';
 
 import { ContextMenu } from '@/src/components/Common/ContextMenu';
 import { IconButton } from '@/src/components/Common/IconButton';
@@ -54,6 +54,13 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
     SettingsSelectors.isSharingEnabled(state, FeatureType.Prompt),
   );
 
+  const isApproveRequiredEntitySelected = useAppSelector((state) =>
+    PublicationSelectors.selectIsApproveRequiredEntitySelected(
+      state,
+      prompt.id,
+    ),
+  );
+
   const screenState = useScreenState();
   const isPublic = isEntityIdPublic(prompt);
   const isMyPrompt = isMyEntity(prompt, FeatureType.Prompt);
@@ -62,7 +69,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
     () => [
       {
         name: editBtnName,
-        display: isMyPrompt,
+        display: isMyPrompt || isApproveRequiredEntitySelected,
         dataQa: 'edit-prompt',
         Icon: IconPencilMinus,
         onClick: onEditMode,
@@ -97,7 +104,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
       },
       {
         name: 'Publish',
-        display: !isPublic && isPublishingEnabled,
+        display: isMyPrompt && isPublishingEnabled,
         dataQa: 'publish-prompt',
         Icon: IconWorldShare,
         onClick: handlePublish,
@@ -138,6 +145,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
       isMyPrompt,
       isPublic,
       isPublishingEnabled,
+      isApproveRequiredEntitySelected,
       isSharingEnabled,
       onEditMode,
       prompt.sharedWithMe,

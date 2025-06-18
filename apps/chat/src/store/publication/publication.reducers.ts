@@ -23,6 +23,9 @@ import {
 } from './publication.types';
 
 import {
+  Conversation,
+  FolderInterface,
+  Prompt,
   PublishActions,
   ShareEntity,
   UploadStatus,
@@ -150,17 +153,20 @@ export const publicationSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        items: ResourceToReview[];
+        items: Omit<ResourceToReview, 'publicationUrl'>[];
+        publicationUrl: string;
       }>,
     ) => {
-      const publicationUrls = state.resourcesToReview.map(
-        (r) => r.publicationUrl,
-      );
-      const itemsToReview = payload.items.filter(
-        (item) => !publicationUrls.includes(item.publicationUrl),
+      const filteredResourcesToReview = state.resourcesToReview.filter(
+        (resource) => resource.publicationUrl !== payload.publicationUrl,
       );
 
-      state.resourcesToReview = state.resourcesToReview.concat(itemsToReview);
+      state.resourcesToReview = filteredResourcesToReview.concat(
+        payload.items.map((item) => ({
+          ...item,
+          publicationUrl: payload.publicationUrl,
+        })),
+      );
     },
     markResourceAsReviewed: (
       state,
@@ -356,6 +362,26 @@ export const publicationSlice = createSlice({
       } else {
         state.publishModel = undefined;
       }
+    },
+    updatePublicationRequestAndEntity: (
+      state,
+      _action: PayloadAction<{
+        resourceToUpdateUrl: string;
+        newEntity: Conversation | Prompt;
+        publicationUrl: string;
+      }>,
+    ) => {
+      state.isPublicationUpdating = true;
+    },
+    updatePublicationRequestAndFolder: (
+      state,
+      _action: PayloadAction<{
+        publicationUrl: string;
+        folderIdToUpdate: string;
+        newFolder: FolderInterface;
+      }>,
+    ) => {
+      state.isPublicationUpdating = true;
     },
     updatePublicationRequest: (
       state,

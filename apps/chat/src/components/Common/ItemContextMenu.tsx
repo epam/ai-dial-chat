@@ -32,7 +32,7 @@ import { ContextMenuProps, DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/selectors';
+import { PublicationSelectors, SettingsSelectors } from '@/src/store/selectors';
 
 import { ContextMenu } from './ContextMenu';
 
@@ -105,6 +105,9 @@ export function ItemContextMenu({
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
+  const isApproveRequiredEntity = useAppSelector((state) =>
+    PublicationSelectors.selectIsApproveRequiredEntity(state, entity.id),
+  );
 
   const isExternal = isEntityIdExternal(entity);
   const isNameInvalid = isEntityNameInvalid(entity.name);
@@ -141,7 +144,7 @@ export function ItemContextMenu({
       },
       {
         name: t(featureType === FeatureType.Chat ? 'Rename' : 'Edit'),
-        display: !isExternal && !!onRename,
+        display: (!isExternal || isApproveRequiredEntity) && !!onRename,
         dataQa: 'rename',
         Icon: IconPencilMinus,
         onClick: onRename,
@@ -284,6 +287,7 @@ export function ItemContextMenu({
       isFormSchemaConversation,
       isNameInvalid,
       isPublishingEnabled,
+      isApproveRequiredEntity,
       isSharingEnabled,
       onCompare,
       onDelete,
