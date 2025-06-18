@@ -149,8 +149,7 @@ export function PublicationHandler({ publication }: Props) {
         url: publication.url,
         dataToUpdate: {
           name:
-            publication.name ??
-            getPublicationDefaultName(publication.author ?? 'Unknown Author'),
+            publication.name ?? getPublicationDefaultName(publication.author),
           targetFolder: publication.targetFolder,
           rules: rulesOnEdit,
           displayAuthor: displayAuthorEditState,
@@ -172,7 +171,7 @@ export function PublicationHandler({ publication }: Props) {
                     : currentFolder[EDITED_FOLDER_NAME_KEY],
                 );
               });
-              newFolderSegments[1] = PUBLIC_URL_PREFIX;
+              newFolderSegments[1] = publication.targetFolder;
               const newFolderId = newFolderSegments.join('/');
 
               // get new api key
