@@ -23,7 +23,7 @@ export const validators: Validators = {
     required: formErrors.required,
     validate: (valueToValidate) => {
       return (
-        validateStringField({ valueToValidate, checkDotsInTheEnd: true }) ||
+        validateStringField({ valueToValidate }) ||
         formErrors.notValidString('Request name')
       );
     },
@@ -32,7 +32,7 @@ export const validators: Validators = {
     required: formErrors.required,
     validate: (valueToValidate) => {
       return (
-        validateStringField({ valueToValidate, checkDotsInTheEnd: true }) ||
+        validateStringField({ valueToValidate }) ||
         formErrors.notValidString('Author')
       );
     },
