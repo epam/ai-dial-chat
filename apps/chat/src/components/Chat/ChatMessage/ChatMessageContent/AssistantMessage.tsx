@@ -39,9 +39,9 @@ export const AssistantMessage = memo(function AssistantMessage({
   conversation,
   isLastMessage,
   withButtons,
-  onCopy,
   isLikesEnabled,
   messageCopied,
+  onCopy,
   onLike,
   onRegenerate,
 }: AssistantMessageProps) {

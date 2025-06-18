@@ -36,6 +36,7 @@ import {
   AddonsSelectors,
   ConversationsSelectors,
   ModelsSelectors,
+  PublicationSelectors,
   SettingsSelectors,
   UISelectors,
 } from '@/src/store/selectors';
@@ -99,10 +100,19 @@ export const ChatHeader = Inversify.register(
     const isSelectMode = useAppSelector(
       ConversationsSelectors.selectIsSelectMode,
     );
-
     const enabledFeatures = useAppSelector(
       SettingsSelectors.selectEnabledFeatures,
     );
+    const selectedConversations = useAppSelector(
+      ConversationsSelectors.selectSelectedConversations,
+    );
+    const isApproveRequiredEntitySelected = useAppSelector((state) =>
+      PublicationSelectors.selectIsApproveRequiredEntitySelected(
+        state,
+        conversation.id,
+      ),
+    );
+
     const isTopChatModelSettingsEnabled = enabledFeatures.has(
       Feature.TopChatModelSettings,
     );
@@ -114,18 +124,14 @@ export const ChatHeader = Inversify.register(
     );
     const isChatbarEnabled = enabledFeatures.has(Feature.ConversationsSection);
 
-    const selectedConversations = useAppSelector(
-      ConversationsSelectors.selectSelectedConversations,
-    );
-
     const [model, setModel] = useState<DialAIEntityModel | undefined>(() => {
       return modelsMap[conversation.model.id];
     });
+
     const [isClearConversationModalOpen, setIsClearConversationModalOpen] =
       useState(false);
 
-    const { publicVersionGroupId, isReviewEntity } =
-      usePublicVersionGroupId(conversation);
+    const publicVersionGroupId = usePublicVersionGroupId(conversation);
 
     const screenState = useScreenState();
 
@@ -170,9 +176,13 @@ export const ChatHeader = Inversify.register(
       screenState === ScreenState.SM && conversationSelectedAddons.length > 2;
     const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
-    const disallowChangeAgent = isChangeAgentDisallowed || isExternal;
+    const disallowChangeAgent =
+      isChangeAgentDisallowed ||
+      (isExternal && !isApproveRequiredEntitySelected);
     const disallowChangeSettings =
-      isReplayAsIsConversation(conversation) || isPlayback || isExternal;
+      isReplayAsIsConversation(conversation) ||
+      isPlayback ||
+      (isExternal && !isApproveRequiredEntitySelected);
 
     return (
       <>
@@ -209,7 +219,7 @@ export const ChatHeader = Inversify.register(
               </Tooltip>
               {publicVersionGroupId && (
                 <span className="h-[18px] border-l border-l-primary pl-2">
-                  {!isReviewEntity ? (
+                  {!isApproveRequiredEntitySelected ? (
                     <PublicVersionSelector
                       publicVersionGroupId={publicVersionGroupId}
                       onChangeSelectedVersion={handleChangeSelectedVersion}

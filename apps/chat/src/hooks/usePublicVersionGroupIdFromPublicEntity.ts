@@ -17,30 +17,27 @@ export const usePublicVersionGroupId = (entity: ShareEntity) => {
     PublicationSelectors.selectResourceToReviewByReviewUrl(state, entity.id),
   );
 
-  return {
-    publicVersionGroupId: isEntityIdPublic(entity)
-      ? getPublicItemIdWithoutVersion(
-          entity.publicationInfo?.version ?? NA_VERSION,
-          entity.id,
-        )
-      : resourceToReview
-        ? getPublicItemIdWithoutVersion(
-            entity.publicationInfo?.version ?? NA_VERSION,
-            constructPath(
-              entity.id.split('/')[0],
-              PUBLIC_URL_PREFIX,
-              ...(selectedPublication &&
-              entity.publicationInfo?.action !== PublishActions.DELETE
-                ? selectedPublication.targetFolder.split('/').slice(1)
-                : ''),
-              ...entity.id.split('/').slice(2),
-            ),
-          )
-        : undefined,
-    isReviewEntity:
-      resourceToReview &&
-      selectedPublication?.resources.some(
-        (resource) => resource.reviewUrl === resourceToReview.reviewUrl,
+  if (isEntityIdPublic(entity)) {
+    return getPublicItemIdWithoutVersion(
+      entity.publicationInfo?.version ?? NA_VERSION,
+      entity.id,
+    );
+  }
+
+  if (resourceToReview) {
+    return getPublicItemIdWithoutVersion(
+      entity.publicationInfo?.version ?? NA_VERSION,
+      constructPath(
+        entity.id.split('/')[0],
+        PUBLIC_URL_PREFIX,
+        ...(selectedPublication &&
+        entity.publicationInfo?.action !== PublishActions.DELETE
+          ? selectedPublication.targetFolder.split('/').slice(1)
+          : ''),
+        ...entity.id.split('/').slice(2),
       ),
-  };
+    );
+  }
+
+  return undefined;
 };

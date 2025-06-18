@@ -23,12 +23,14 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 
 interface Props {
   resources: PublicationResource[];
+  publicationUrl: string;
   isOpen: boolean;
   additionalItemData: AdditionalItemData;
 }
 
 export const PromptPublicationSidebarResources = ({
   resources,
+  publicationUrl,
   isOpen,
   additionalItemData,
 }: Props) => {
@@ -74,11 +76,25 @@ export const PromptPublicationSidebarResources = ({
     [dispatch, allPublicationFolders],
   );
 
+  const handleRenameFolder = useCallback(
+    (newName: string, folderId: string) => {
+      dispatch(
+        PromptsActions.updateFolder({
+          publicationUrl,
+          folderId,
+          values: {
+            name: newName,
+          },
+        }),
+      );
+    },
+    [dispatch, publicationUrl],
+  );
+
   return (
     <div className={classNames(!isOpen && 'hidden')}>
       {rootPublicationFolders.map((folder) => (
         <Folder
-          readonly
           key={folder.id}
           level={1}
           currentFolder={folder}
@@ -89,6 +105,7 @@ export const PromptPublicationSidebarResources = ({
           itemComponent={PromptComponent}
           onClickFolder={handleFolderClick}
           featureType={FeatureType.Prompt}
+          onRenameFolder={handleRenameFolder}
           highlightedFolders={
             !isSelectedPromptApproveRequiredResource
               ? undefined
@@ -111,6 +128,7 @@ export const PromptPublicationSidebarResources = ({
 
 export const ConversationPublicationSidebarResources = ({
   resources,
+  publicationUrl,
   isOpen,
   additionalItemData,
 }: Props) => {
@@ -155,11 +173,25 @@ export const ConversationPublicationSidebarResources = ({
     [dispatch, allPublicationFolders],
   );
 
+  const handleRenameFolder = useCallback(
+    (newName: string, folderId: string) => {
+      dispatch(
+        ConversationsActions.updateFolder({
+          publicationUrl,
+          folderId,
+          values: {
+            name: newName,
+          },
+        }),
+      );
+    },
+    [dispatch, publicationUrl],
+  );
+
   return (
     <div className={classNames(!isOpen && 'hidden')}>
       {rootPublicationFolders.map((folder) => (
         <Folder
-          readonly
           key={folder.id}
           level={1}
           currentFolder={folder}
@@ -170,6 +202,7 @@ export const ConversationPublicationSidebarResources = ({
           itemComponent={ConversationComponent}
           onClickFolder={handleFolderClick}
           featureType={FeatureType.Chat}
+          onRenameFolder={handleRenameFolder}
           highlightedFolders={highlightedFolders}
           additionalItemData={additionalItemData}
         />
