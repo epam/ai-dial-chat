@@ -107,8 +107,8 @@ export const validateStringField = ({
 }) => {
   const trimmedValue = valueToValidate.trim();
   return (
-    valueToValidate.length <= maxLength &&
-    valueToValidate.length >= minLength &&
+    trimmedValue.length <= maxLength &&
+    trimmedValue.length >= minLength &&
     !doesHaveNotAllowedSymbols(trimmedValue) &&
     (!checkDotsInTheEnd || !doesHaveDotsInTheEnd(trimmedValue))
   );
