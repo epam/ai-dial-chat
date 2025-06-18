@@ -828,6 +828,7 @@ const selectNotAllowedItemsForDisplay = createSelector(
 const selectIsSelectedConversationBlocksInput = createSelector(
   [
     selectSelectedConversations,
+    PublicationSelectors.selectResourcesToReview,
     ChatSelectors.selectIsConfigurationBlocksInput,
     selectIsNotAllowed,
     selectHasNotAllowedAddons,
@@ -835,12 +836,19 @@ const selectIsSelectedConversationBlocksInput = createSelector(
   ],
   (
     conversations,
+    resourcesToReview,
     isConfigurationBlocksInput,
     isNotAllowedModels,
     hasNotAllowedAddonsFlag,
-    isReadOnly,
-  ) =>
-    conversations.some(
+    areReadOnly,
+  ) => {
+    const isReviewEntity = conversations.some((conversation) =>
+      resourcesToReview.some(
+        (resource) => resource.reviewUrl === conversation.id,
+      ),
+    );
+
+    return conversations.some(
       (conversation) =>
         conversation.sharedWithMe ||
         (!conversation.messages?.length &&
@@ -848,13 +856,15 @@ const selectIsSelectedConversationBlocksInput = createSelector(
         isNotAllowedModels ||
         hasNotAllowedAddonsFlag ||
         isPlaybackConversation(conversation) ||
-        isReadOnly ||
+        (isEntityIdExternal(conversation) && !isReviewEntity) ||
+        areReadOnly ||
         !conversation.messages ||
         isMessageInputDisabled(
           conversation.messages.length,
           conversation.messages,
         ),
-    ),
+    );
+  },
 );
 
 const selectPreviewConversationId = (state: RootState) =>
