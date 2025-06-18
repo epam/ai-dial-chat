@@ -358,12 +358,6 @@ dialTest(
           await dialHomePage.mockChatTextResponse(
             MockedChatApiResponseBodies.simpleTextBody,
           );
-          await chat
-            .getSendMessage()
-            .messageInput.isElementEnabled({ timeout: 2000 });
-          await chat
-            .getSendMessage()
-            .sendMessageButton.isElementEnabled({ timeout: 2000 });
           await chat.sendRequestWithButton('1+2=');
           await chatMessagesAssertion.assertMessagesCount(6);
         }
