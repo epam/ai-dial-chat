@@ -49,7 +49,7 @@ const ErrorMessageContent: FC<ErrorMessageContentProps> = ({
     const [item] = items;
     const messageWithMarker = t('chat.error.agent-not-available', {
       click: INTERNAL_CLICK_MARKER,
-      agentId: ` "${item.displayName}" `,
+      agentId: ` "${item.agentName}" `,
     });
     const [beforeText, afterText] = messageWithMarker.split(
       INTERNAL_CLICK_MARKER,
@@ -59,7 +59,7 @@ const ErrorMessageContent: FC<ErrorMessageContentProps> = ({
       <>
         {beforeText && <span>{beforeText}</span>}
         <button
-          onClick={() => handleChangeModel(item.id)}
+          onClick={() => handleChangeModel(item.conversationId)}
           className={BUTTON_CLASS_NAME}
         >
           {t('change the agent')}
@@ -78,19 +78,19 @@ const ErrorMessageContent: FC<ErrorMessageContentProps> = ({
     <>
       {messageParts[0] && <span>{messageParts[0]}</span>}
       <button
-        onClick={() => handleChangeModel(firstItem.id)}
+        onClick={() => handleChangeModel(firstItem.conversationId)}
         className={BUTTON_CLASS_NAME}
       >
-        {` "${firstItem.displayName}" `}
+        {` "${firstItem.agentName}" `}
       </button>
       {messageParts[1] && <span>{messageParts[1]}</span>}
       {items.length > 1 && (
         <>
           <button
-            onClick={() => handleChangeModel(secondItem.id)}
+            onClick={() => handleChangeModel(secondItem.conversationId)}
             className={BUTTON_CLASS_NAME}
           >
-            {` "${secondItem.displayName}" `}
+            {` "${secondItem.agentName}" `}
           </button>
           {messageParts[2] && <span>{messageParts[2]}</span>}
         </>

@@ -59,6 +59,6 @@ export enum FormButtonType {
 }
 
 export interface NotAllowedItem {
-  id: string;
-  displayName: string;
+  conversationId: string;
+  agentName: string;
 }
