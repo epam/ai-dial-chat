@@ -535,7 +535,7 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
               iif(
                 () =>
                   uploadedUnpublishEntitiesToReview.length ===
-                  resourcesToReview.length,
+                  unpublishResources.length,
                 of(
                   PublicationActions.setPublicationsToReview({
                     items: resourcesToReview.map((resource) => ({
