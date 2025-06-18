@@ -523,11 +523,19 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
               (resource) => !isFileId(resource.targetUrl),
             );
 
+            const resourcesToReviewIds = resourcesToReview.map(
+              (resource) => resource.reviewUrl,
+            );
+            const uploadedUnpublishEntitiesToReview =
+              uploadedUnpublishEntities.filter((entity) =>
+                resourcesToReviewIds.includes(entity.id),
+              );
+
             return concat(
               iif(
                 () =>
-                  unpublishResources.length ===
-                  uploadedUnpublishEntities.length,
+                  uploadedUnpublishEntitiesToReview.length ===
+                  resourcesToReview.length,
                 of(
                   PublicationActions.setPublicationsToReview({
                     items: resourcesToReview.map((resource) => ({

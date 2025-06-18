@@ -782,7 +782,7 @@ dialAdminTest(
   },
 );
 
-dialAdminTest(
+dialAdminTest.only(
   'Unpublish folder from folder structure',
   async ({
     dialHomePage,
