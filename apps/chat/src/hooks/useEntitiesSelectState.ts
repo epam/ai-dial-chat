@@ -1,8 +1,39 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { getParentFolderIdsFromEntityId } from '@/src/utils/app/folders';
+import { isFolderId } from '@/src/utils/app/id';
 
-import { uniq, xor } from 'lodash';
+import { groupBy, uniq, xor } from 'lodash';
+
+const getInitiallySelectedIds = <T extends { id: string }>(
+  ids: string[],
+  entities: T[],
+) => {
+  const { folderIds = [], fileIds = [] } = groupBy(ids, (id) =>
+    isFolderId(id) ? 'folderIds' : 'fileIds',
+  );
+
+  return uniq([
+    ...fileIds,
+    ...entities
+      .filter(
+        ({ id }) =>
+          folderIds?.some((selectedId) => id.startsWith(selectedId)) ?? false,
+      )
+      .map(({ id }) => id),
+  ]);
+};
+
+const getInitialSelectedEmptyFolderIds = <T extends { id: string }>(
+  ids: string[],
+  entities: T[],
+) => {
+  const folderIds = ids.filter(isFolderId);
+
+  return folderIds.filter(
+    (folderId) => !entities.some((entity) => entity.id.startsWith(folderId)),
+  );
+};
 
 export const useEntitiesSelectState = <
   T extends {
@@ -14,18 +45,11 @@ export const useEntitiesSelectState = <
   initiallySelectedIds: string[] = [],
 ) => {
   const [selectedEntityIds, setSelectedEntityIds] = useState<string[]>(
-    entities
-      .filter(
-        ({ id }) =>
-          initiallySelectedIds?.some((selectedId) =>
-            id.startsWith(selectedId),
-          ) ?? false,
-      )
-      .map(({ id }) => id),
+    getInitiallySelectedIds(initiallySelectedIds, entities),
   );
   const [selectedEmptyFolderIds, setSelectedEmptyFolderIds] = useState<
     string[]
-  >([]);
+  >(getInitialSelectedEmptyFolderIds(initiallySelectedIds, entities));
 
   const { selectedFolderIds, partiallySelectedFolderIds } = useMemo(() => {
     const folderIds = uniq(
