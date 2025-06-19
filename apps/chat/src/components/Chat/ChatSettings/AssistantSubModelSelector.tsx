@@ -5,13 +5,13 @@ import { Translation } from '@/src/types/translation';
 import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
 
 interface Props {
-  assistantModelId: string;
+  assistantModelReference: string;
   onSelectAssistantSubModel: (modelId: string) => void;
   disabled?: boolean;
 }
 
 export const AssistantSubModelSelector = ({
-  assistantModelId,
+  assistantModelReference,
   onSelectAssistantSubModel,
   disabled,
 }: Props) => {
@@ -21,7 +21,7 @@ export const AssistantSubModelSelector = ({
     <>
       <label className="mb-4 inline-block text-left">{t('Model')}</label>
       <ModelsSelector
-        value={assistantModelId}
+        value={assistantModelReference}
         onChange={onSelectAssistantSubModel}
         disabled={disabled}
       />
