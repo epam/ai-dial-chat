@@ -227,10 +227,8 @@ export const getFilteredFolders = ({
   includeHiddenFolders?: boolean;
 }) => {
   // Get roots of section filtered items
-  const sectionFilteredFolders = allFolders.filter((folder) =>
-    (filters.sectionFilter?.(folder) ?? true) && includeHiddenFolders
-      ? true
-      : !isHiddenEntity(folder),
+  const sectionFilteredFolders = allFolders.filter(
+    (folder) => filters.sectionFilter?.(folder) ?? true,
   );
 
   // Get full child tree
@@ -240,8 +238,10 @@ export const getFilteredFolders = ({
     ),
   );
   // Map back to folders objects
-  const childAndCurrentSectionFilteredFolders = allFolders.filter((folder) =>
-    childAndCurrentSectionFilteredIds.has(folder.id),
+  const childAndCurrentSectionFilteredFolders = allFolders.filter(
+    (folder) =>
+      childAndCurrentSectionFilteredIds.has(folder.id) &&
+      (!isHiddenEntity(folder) || includeHiddenFolders),
   );
 
   // Apply search filters to section folders
@@ -323,6 +323,10 @@ export const validateFolderRenaming = (
 
   if (doesHaveDotsInTheEnd(newName)) {
     return 'Using a dot at the end of a name is not permitted.';
+  }
+
+  if (newName.startsWith('.')) {
+    return 'Using a dot at the start of a name is not permitted.';
   }
 };
 
