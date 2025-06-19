@@ -233,8 +233,21 @@ export const FileManagerModal = ({
 
     handleSelectEntities: selectFiles,
     setSelectedEntityIds: setSelectedFilesIds,
-    handleSelectFolder,
+    handleSelectFolder: selectFolder,
   } = useEntitiesSelectState(files, initialSelectedFilesIds);
+
+  const handleSelectFolder = useCallback(
+    (folderId: string) => {
+      selectFolder(folderId);
+
+      dispatch(
+        FilesActions.getFilesWithFolders({
+          id: folderId.endsWith('/') ? folderId.slice(0, -1) : folderId,
+        }),
+      );
+    },
+    [dispatch, selectFolder],
+  );
 
   useEffect(() => {
     if (lastRenamedParentFolder?.newId) {
@@ -474,20 +487,17 @@ export const FileManagerModal = ({
     if (canAttachFolders) {
       result.push(...selectedFolderIds);
     }
-    if (canAttachFiles) {
-      result.push(
-        ...selectedFilesIds.filter((id) =>
-          canAttachFolders
-            ? !selectedFolderIds.some((folderId) => id.startsWith(folderId))
-            : true,
-        ),
-      );
-    }
+    result.push(
+      ...selectedFilesIds.filter((id) =>
+        canAttachFolders
+          ? !selectedFolderIds.some((folderId) => id.startsWith(folderId))
+          : true,
+      ),
+    );
 
-    onClose(result);
+    onClose(uniq(result));
   }, [
     allowedTypesArray,
-    canAttachFiles,
     canAttachFolders,
     files,
     maximumAttachmentsAmount,
@@ -522,7 +532,7 @@ export const FileManagerModal = ({
         );
       });
     },
-    [canAttachFiles, dispatch, forceShowSelectCheckBox, selectFiles],
+    [canAttachFiles, dispatch, selectFiles, forceShowSelectCheckBox],
   );
 
   const handleDiscardSharedWithMeFolder = useCallback(
@@ -602,10 +612,10 @@ export const FileManagerModal = ({
     }),
     [
       canAttachFiles,
-      forceShowSelectCheckBox,
       partiallySelectedFolderIds,
       selectedFilesIds,
       selectedFolderIds,
+      forceShowSelectCheckBox,
     ],
   );
 

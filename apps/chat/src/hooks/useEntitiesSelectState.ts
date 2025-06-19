@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { getParentFolderIdsFromEntityId } from '@/src/utils/app/folders';
 
@@ -23,6 +23,9 @@ export const useEntitiesSelectState = <
       )
       .map(({ id }) => id),
   );
+  const [selectedEmptyFolderIds, setSelectedEmptyFolderIds] = useState<
+    string[]
+  >([]);
 
   const { selectedFolderIds, partiallySelectedFolderIds } = useMemo(() => {
     const folderIds = uniq(
@@ -54,17 +57,38 @@ export const useEntitiesSelectState = <
     );
 
     return {
-      selectedFolderIds: fullySelected,
+      selectedFolderIds: [...fullySelected, ...selectedEmptyFolderIds],
       partiallySelectedFolderIds: partiallySelected,
     };
-  }, [entities, selectedEntityIds]);
+  }, [entities, selectedEmptyFolderIds, selectedEntityIds]);
 
-  const handleSelectEntities = useCallback((ids: string[]) => {
-    setSelectedEntityIds((prev) => xor(prev, ids));
-  }, []);
+  const handleSelectEntities = useCallback(
+    (ids: string[]) => {
+      const selectedEmptyFolderIdsToRemove = selectedEmptyFolderIds.filter(
+        (folderId) => ids.some((id) => id.startsWith(folderId)),
+      );
+
+      if (selectedEmptyFolderIdsToRemove.length) {
+        setSelectedEmptyFolderIds((prev) =>
+          xor(prev, selectedEmptyFolderIdsToRemove),
+        );
+      }
+      setSelectedEntityIds((prev) => xor(prev, ids));
+    },
+    [selectedEmptyFolderIds],
+  );
 
   const handleSelectFolder = useCallback(
     (folderId: string) => {
+      const isFolderEmpty = !entities.some((entity) =>
+        entity.id.startsWith(folderId),
+      );
+
+      if (isFolderEmpty) {
+        setSelectedEmptyFolderIds((prev) => xor(prev, [folderId]));
+        return;
+      }
+
       handleSelectEntities(
         entities
           .filter(
@@ -78,11 +102,34 @@ export const useEntitiesSelectState = <
     },
     [
       entities,
-      partiallySelectedFolderIds,
       handleSelectEntities,
+      partiallySelectedFolderIds,
       selectedEntityIds,
     ],
   );
+
+  // If entities of selected empty folder were uploaded -> select all entities by folderId and remove selected empty folderId
+  useEffect(() => {
+    if (selectedEmptyFolderIds.length) {
+      const emptyFolderIdsToRemove = selectedEmptyFolderIds.filter((folderId) =>
+        entities.some((entity) => entity.id.startsWith(folderId)),
+      );
+      const entityIdsToSelect = !emptyFolderIdsToRemove.length
+        ? []
+        : entities
+            .filter((entity) =>
+              emptyFolderIdsToRemove.some((folderId) =>
+                entity.id.startsWith(folderId),
+              ),
+            )
+            .map((entity) => entity.id);
+
+      if (emptyFolderIdsToRemove.length) {
+        setSelectedEmptyFolderIds((prev) => xor(prev, emptyFolderIdsToRemove));
+        setSelectedEntityIds((prev) => xor(prev, entityIdsToSelect));
+      }
+    }
+  }, [entities, selectedEmptyFolderIds]);
 
   return {
     selectedEntityIds,
