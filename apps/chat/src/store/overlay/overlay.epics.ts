@@ -61,6 +61,7 @@ import {
   ConversationsSelectors,
   ModelsSelectors,
   OverlaySelectors,
+  PublicationSelectors,
   SettingsSelectors,
   UISelectors,
 } from '@/src/store/selectors';
@@ -586,13 +587,15 @@ const renameConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(OverlayActions.renameConversation.type),
     switchMap(({ payload }) => {
-      const conversations = ConversationsSelectors.selectConversations(
-        state$.value,
-      );
+      const state = state$.value;
+
+      const conversations = ConversationsSelectors.selectConversations(state);
       const conversation = ConversationsSelectors.selectConversation(
-        state$.value,
+        state,
         payload.id,
       );
+      const selectedPublicationUrl =
+        PublicationSelectors.selectSelectedPublicationUrl(state);
 
       if (!conversation) {
         console.warn(
@@ -621,7 +624,8 @@ const renameConversationEpic: AppEpic = (action$, state$) =>
         of(
           ConversationsActions.updateConversation({
             id: conversation.id,
-            values: { name: payload.newName, isNameChanged: true },
+            values: { name: payload.newName },
+            publicationUrl: selectedPublicationUrl,
           }),
         ),
         of(OverlayActions.renameConversationEffect(payload)),

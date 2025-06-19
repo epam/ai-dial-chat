@@ -206,13 +206,14 @@ const TalkToModalView = ({
   }, [
     searchedModels,
     sortedModels,
+    isMyWorkspace,
+    widgetsSchemaIds,
+    searchedModels,
+    conversation.model.id,
     isPlayback,
     isReplay,
     modelsMap,
-    conversation.model.id,
-    searchTerm,
-    isMyWorkspace,
-    widgetsSchemaIds,
+    searchTerm.length,
     t,
   ]);
 
@@ -236,6 +237,7 @@ const TalkToModalView = ({
                 addonsMap,
               ),
             },
+            publicationUrl: conversation.publicationInfo?.publicationUrl,
           }),
         );
       }
