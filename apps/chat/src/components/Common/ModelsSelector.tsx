@@ -7,7 +7,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
 
 import { EntityType } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
+import { DialAIEntityModel, ModelsMap } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -68,8 +68,7 @@ interface ModelsSelectorProps {
   tooltip?: string;
   onChange: (modelId: string) => void;
   models?: DialAIEntityModel[];
-  additionalModelsMap?: Partial<Record<string, DialAIEntityModel>>;
-  useReference?: boolean;
+  additionalModelsMap?: ModelsMap;
   inputClassName?: string;
   panelClassName?: string;
   indexSeparator?: number;
@@ -82,7 +81,6 @@ export const ModelsSelector = memo(function ModelsSelector({
   onChange,
   models,
   additionalModelsMap,
-  useReference,
   inputClassName,
   panelClassName,
   indexSeparator,
@@ -117,9 +115,7 @@ export const ModelsSelector = memo(function ModelsSelector({
           getItemLabel={(model: DialAIEntityModel) =>
             getOpenAIEntityFullName(model)
           }
-          getItemValue={(model: DialAIEntityModel) =>
-            useReference ? model.reference : model.id
-          }
+          getItemValue={(model: DialAIEntityModel) => model.reference}
           itemRow={({ item, truncate }) => (
             <ModelSelectRow
               item={item}
