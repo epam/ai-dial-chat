@@ -150,6 +150,7 @@ export const conversationsSlice = createSlice({
       _action: PayloadAction<{
         id: string;
         values: Partial<Conversation>;
+        publicationUrl?: string | null;
       }>,
     ) => state,
     updateConversationSuccess: (
@@ -447,6 +448,7 @@ export const conversationsSlice = createSlice({
       _action: PayloadAction<{
         folderId: string;
         values: Partial<FolderInterface>;
+        publicationUrl?: string | null;
       }>,
     ) => state,
     updateFoldersSuccess: (

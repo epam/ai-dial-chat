@@ -63,6 +63,13 @@ replaceContentInNodeModule(
 
 replaceContentInNodeModule(
   'next',
+  'dist/server/config-schema.js',
+  'basePath: _zod.z.string().optional()',
+  'basePath: _zod.z.string().or(_zod.z.record(_zod.z.any())).optional()',
+);
+
+replaceContentInNodeModule(
+  'next',
   'dist/build/webpack/loaders/next-font-loader/index.js',
   'if (assetPrefix && !/^\\/|https?:\\/\\//.test(assetPrefix))',
   'if (false)',

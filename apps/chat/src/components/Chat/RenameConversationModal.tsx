@@ -103,11 +103,12 @@ function RenameConversationView() {
         ConversationsActions.updateConversation({
           id: renamingConversation.id,
           values: { name: newName, isNameChanged: true },
+          publicationUrl: renamingConversation.publicationInfo?.publicationUrl,
         }),
       );
       dispatch(ConversationsActions.setRenamingConversationId(null));
     }
-  }, [newName, renamingConversation, allConversations, dispatch, t]);
+  }, [renamingConversation, newName, allConversations, dispatch, t]);
 
   const handleEnterDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {

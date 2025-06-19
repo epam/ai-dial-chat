@@ -28,7 +28,11 @@ import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { FilesSelectors, SettingsSelectors } from '@/src/store/selectors';
+import {
+  FilesSelectors,
+  PublicationSelectors,
+  SettingsSelectors,
+} from '@/src/store/selectors';
 
 import { ContextMenu } from './ContextMenu';
 
@@ -84,8 +88,16 @@ export const FolderContextMenu = ({
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
-
   const folders = useAppSelector(FilesSelectors.selectFolders);
+  const reviewEntities = useAppSelector(
+    PublicationSelectors.selectResourcesToReview,
+  );
+
+  const isPublicationReviewFolder = useMemo(() => {
+    return reviewEntities.some((entity) =>
+      entity.reviewUrl.startsWith(`${folder.id}/`),
+    );
+  }, [folder.id, reviewEntities]);
 
   const isExternal = isEntityIdExternal(folder);
   const isNameInvalid = isEntityNameInvalid(folder.name);
@@ -124,7 +136,9 @@ export const FolderContextMenu = ({
       },
       {
         name: t('Rename'),
-        display: !!onRename && (!isExternal || !!folder.temporary),
+        display:
+          !!onRename &&
+          (!isExternal || isPublicationReviewFolder || !!folder.temporary),
         dataQa: 'rename',
         Icon: IconPencilMinus,
         onClick: onRename,
@@ -207,6 +221,7 @@ export const FolderContextMenu = ({
     ],
     [
       t,
+      isSelected,
       isExternal,
       onSelect,
       featureType,
@@ -215,6 +230,7 @@ export const FolderContextMenu = ({
       isMyOrCanEdit,
       disableAll,
       onRename,
+      isPublicationReviewFolder,
       folder,
       isNameInvalid,
       isEmpty,
@@ -229,7 +245,6 @@ export const FolderContextMenu = ({
       additionalItemData?.isChangePathFolder,
       onDelete,
       onAddFolder,
-      isSelected,
     ],
   );
 

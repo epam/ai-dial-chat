@@ -8,7 +8,6 @@ import { errorsMessages } from '@/src/constants/errors';
 import { logger } from './logger';
 
 import { Message, Role } from '@epam/ai-dial-shared';
-import { Blob } from 'buffer';
 import { Tiktoken, TiktokenEncoding, get_encoding } from 'tiktoken';
 
 // This is very conservative calculations of tokens (1 token = 1 byte)
