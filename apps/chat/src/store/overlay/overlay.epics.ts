@@ -624,7 +624,7 @@ const renameConversationEpic: AppEpic = (action$, state$) =>
         of(
           ConversationsActions.updateConversation({
             id: conversation.id,
-            values: { name: payload.newName, isNameChanged: true },
+            values: { name: payload.newName },
             publicationUrl: selectedPublicationUrl,
           }),
         ),

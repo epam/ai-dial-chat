@@ -1283,7 +1283,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         const newConversationName =
           isReplayConversation(payload.conversation) ||
           updatedMessages.filter((msg) => msg.role === Role.User).length > 1 ||
-          payload.conversation.isNameChanged
+          !isEntityIdLocal(payload.conversation)
             ? payload.conversation.name
             : getNextDefaultName(
                 getNewConversationName(payload.conversation, payload.message),
