@@ -230,6 +230,28 @@ const selectPublicVersionGroupById = (
 const selectPublishModel = (state: RootState) =>
   rootSelector(state).publishModel;
 
+const selectIsApproveRequiredEntity = createSelector(
+  [selectResourcesToReview, (_state, id: string) => id],
+  (resourcesToReview, id) => {
+    return resourcesToReview.some((r) => r.reviewUrl === id);
+  },
+);
+
+const selectIsApproveRequiredEntitySelected = createSelector(
+  [
+    selectSelectedPublication,
+    (state, id: string) => selectResourceToReviewByReviewUrl(state, id),
+  ],
+  (selectedPublication, resourceToReview) => {
+    if (!resourceToReview || !selectedPublication) {
+      return false;
+    }
+
+    return selectedPublication.resources.some(
+      (resource) => resource.reviewUrl === resourceToReview.reviewUrl,
+    );
+  },
+);
 const selectIsEditMode = (state: RootState) => rootSelector(state).isEditMode;
 
 const selectEntitiesEditState = (state: RootState) =>
@@ -276,6 +298,8 @@ export const PublicationSelectors = {
   selectPublicVersionGroups,
   selectPublicVersionGroupById,
   selectPublishModel,
+  selectIsApproveRequiredEntity,
+  selectIsApproveRequiredEntitySelected,
   selectIsEditMode,
   selectEntitiesEditState,
   selectFoldersEditState,

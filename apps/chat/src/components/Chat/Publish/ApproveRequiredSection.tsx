@@ -142,6 +142,7 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
       {publication.resources && ResourcesComponent && (
         <ResourcesComponent
           resources={publication.resources}
+          publicationUrl={publication.url}
           isOpen={isOpen}
           additionalItemData={additionalItemData}
         />

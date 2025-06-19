@@ -110,6 +110,7 @@ import {
   MarketplaceSelectors,
   ModelsSelectors,
   OverlaySelectors,
+  PublicationSelectors,
   SettingsSelectors,
   UISelectors,
   WidgetsSelectors,
@@ -863,6 +864,16 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
         return of(
           ConversationsActions.updateFoldersSuccess({
             folders: [{ oldId: payload.folderId, newFolder }],
+          }),
+        );
+      }
+
+      if (payload.publicationUrl) {
+        return of(
+          PublicationActions.updatePublicationRequestAndFolder({
+            publicationUrl: payload.publicationUrl,
+            newFolder: newFolder,
+            folderIdToUpdate: payload.folderId,
           }),
         );
       }
@@ -2452,16 +2463,27 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      const { id, values } = payload;
+      const { id, values, publicationUrl } = payload;
       const newConversation: Conversation = regenerateConversationId({
-        ...(conversation as Conversation),
+        ...conversation,
         ...values,
         updatedAt: Date.now(),
       });
 
+      const areIdsEqual = conversation.id === newConversation.id;
+      if (!areIdsEqual && publicationUrl) {
+        return of(
+          PublicationActions.updatePublicationRequestAndEntity({
+            resourceToUpdateUrl: id,
+            newEntity: newConversation,
+            publicationUrl,
+          }),
+        );
+      }
+
       return concat(
         iif(
-          () => !!conversation && conversation.id !== newConversation.id,
+          () => !areIdsEqual,
           of(
             ConversationsActions.moveConversation({
               newConversation,
@@ -3103,6 +3125,9 @@ const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
             MarketplaceActions.setApplyModelStatus(UploadStatus.FAILED),
           );
 
+        const selectedPublicationUrl =
+          PublicationSelectors.selectSelectedPublicationUrl(state$.value);
+
         return concat(
           of(MarketplaceActions.setDetailsModel()),
           of(MarketplaceActions.setApplyModelStatus(UploadStatus.LOADING)),
@@ -3130,6 +3155,7 @@ const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
                       )
                     : {}),
                 },
+                publicationUrl: selectedPublicationUrl,
               }),
             ),
             of(
