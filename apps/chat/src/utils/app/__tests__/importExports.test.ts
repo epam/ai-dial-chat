@@ -120,7 +120,6 @@ describe('cleanData Functions', () => {
     assistantModelId: 'gpt-4',
     folderId: getConversationRootId(bucket),
     updatedAt: expect.any(Number),
-    isNameChanged: undefined,
   };
 
   describe('cleaning v1 data', () => {
