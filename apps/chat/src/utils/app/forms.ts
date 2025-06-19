@@ -8,9 +8,11 @@ import {
 
 import classNames from 'classnames';
 
+import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
 import { formErrors } from '@/src/constants/form-errors';
 
-import { notAllowedSymbols } from './file';
+import { doesHaveDotsInTheEnd } from './common';
+import { doesHaveNotAllowedSymbols, notAllowedSpacesRegex } from './file';
 
 export type InputElement = HTMLInputElement | HTMLTextAreaElement;
 export const checkValidity = (
@@ -77,9 +79,6 @@ export const FormValidations = {
   },
 };
 
-export const getNameReg = (maxLength = 160, minLength = 2) =>
-  new RegExp(`^[^${notAllowedSymbols}]{${minLength},${maxLength}}$`);
-
 export const getValidFormFields = <T extends object>(
   data: T,
   getFieldState: UseFormGetFieldState<T>,
@@ -93,4 +92,27 @@ export const getValidFormFields = <T extends object>(
   });
 
   return validValues;
+};
+
+export const validateStringField = ({
+  valueToValidate,
+  maxLength = MAX_ENTITY_LENGTH,
+  minLength = 2,
+  checkDotsInTheEnd,
+}: {
+  valueToValidate: string;
+  maxLength?: number;
+  minLength?: number;
+  checkDotsInTheEnd?: boolean;
+}) => {
+  const trimmedValue = valueToValidate
+    .trim()
+    .replace(notAllowedSpacesRegex, ' ');
+
+  return (
+    trimmedValue.length <= maxLength &&
+    trimmedValue.length >= minLength &&
+    !doesHaveNotAllowedSymbols(trimmedValue) &&
+    (!checkDotsInTheEnd || !doesHaveDotsInTheEnd(trimmedValue))
+  );
 };

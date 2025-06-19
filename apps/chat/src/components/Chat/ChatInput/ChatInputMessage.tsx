@@ -83,11 +83,15 @@ export const ChatInputMessage = Inversify.register(
     showReplayControls,
   }: Props) => {
     const { t } = useTranslation(Translation.Chat);
+
     const dispatch = useAppDispatch();
-    const [isTyping, setIsTyping] = useState<boolean>(false);
+
+    const [isTyping, setIsTyping] = useState(false);
     const [showPluginSelect, setShowPluginSelect] = useState(false);
     const [selectedDialLinks, setSelectedDialLinks] = useState<DialLink[]>([]);
+
     const promptTemplateMappingRef = useRef(new Map<string, string>());
+
     const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
     const messageIsStreaming = useAppSelector(
       ConversationsSelectors.selectIsConversationsStreaming,
@@ -123,7 +127,6 @@ export const ChatInputMessage = Inversify.register(
     const isUploadingFilePresent = useAppSelector(
       FilesSelectors.selectIsUploadingFilePresent,
     );
-
     const isMessageError = useAppSelector(
       ConversationsSelectors.selectIsMessagesError,
     );
@@ -135,15 +138,9 @@ export const ChatInputMessage = Inversify.register(
     );
     const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
     const chatFormValue = useAppSelector(ChatSelectors.selectChatFormValue);
-
-    const shouldRegenerate =
-      isLastMessageError ||
-      (isLastAssistantMessageEmpty && !messageIsStreaming);
-
     const selectedModels = useAppSelector(
       ConversationsSelectors.selectSelectedConversationsModels,
     );
-
     const isChatInputDisabled = useAppSelector(
       ConversationsSelectors.selectIsSelectedConversationBlocksInput,
     );
@@ -153,6 +150,10 @@ export const ChatInputMessage = Inversify.register(
     const shouldFocusAndScroll = useAppSelector(
       ChatSelectors.selectShouldFocusAndScroll,
     );
+
+    const shouldRegenerate =
+      isLastMessageError ||
+      (isLastAssistantMessageEmpty && !messageIsStreaming);
 
     useEffect(() => {
       if (shouldFocusAndScroll && textareaRef.current) {

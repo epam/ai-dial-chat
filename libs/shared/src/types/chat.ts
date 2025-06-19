@@ -109,9 +109,10 @@ export enum PublishActions {
 }
 
 export interface EntityPublicationInfo {
+  version?: string;
+  publicationUrl?: string;
   action?: PublishActions;
   isNotExist?: boolean;
-  version?: string;
   versionGroup?: string;
 }
 
@@ -175,5 +176,4 @@ export interface Conversation extends ShareEntity, ConversationInfo {
   assistantModelId?: string;
 
   isMessageStreaming?: boolean;
-  isNameChanged?: boolean;
 }

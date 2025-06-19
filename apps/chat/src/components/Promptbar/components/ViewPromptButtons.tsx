@@ -21,7 +21,11 @@ import { FeatureType, ScreenState } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/selectors';
+import {
+  PromptsSelectors,
+  PublicationSelectors,
+  SettingsSelectors,
+} from '@/src/store/selectors';
 
 import { ContextMenu } from '@/src/components/Common/ContextMenu';
 import { IconButton } from '@/src/components/Common/IconButton';
@@ -53,6 +57,16 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, FeatureType.Prompt),
   );
+  const { isSelectedPromptApproveRequiredResource } = useAppSelector(
+    PromptsSelectors.selectSelectedPromptId,
+  );
+
+  const isApproveRequiredEntitySelected = useAppSelector((state) =>
+    PublicationSelectors.selectIsApproveRequiredEntitySelected(
+      state,
+      prompt.id,
+    ),
+  );
 
   const screenState = useScreenState();
   const isPublic = isEntityIdPublic(prompt);
@@ -62,7 +76,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
     () => [
       {
         name: editBtnName,
-        display: isMyPrompt,
+        display: isMyPrompt || isApproveRequiredEntitySelected,
         dataQa: 'edit-prompt',
         Icon: IconPencilMinus,
         onClick: onEditMode,
@@ -97,14 +111,17 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
       },
       {
         name: 'Publish',
-        display: !isPublic && isPublishingEnabled,
+        display: isMyPrompt && isPublishingEnabled,
         dataQa: 'publish-prompt',
         Icon: IconWorldShare,
         onClick: handlePublish,
       },
       {
         name: 'Unpublish',
-        display: isPublic && isPublishingEnabled,
+        display:
+          isPublic &&
+          isPublishingEnabled &&
+          !isSelectedPromptApproveRequiredResource,
         dataQa: 'unpublish-prompt',
         Icon: (props: IconProps) => (
           <UnpublishIcon {...props} style={{ strokeWidth: 1.1 }} />
@@ -127,20 +144,22 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
       },
     ],
     [
-      handleDelete,
+      isMyPrompt,
+      isApproveRequiredEntitySelected,
+      onEditMode,
       handleDuplicate,
       handleExport,
-      handleInfo,
       handleMoveToFolder,
-      handlePublish,
-      handleShare,
-      handleUnpublish,
-      isMyPrompt,
-      isPublic,
-      isPublishingEnabled,
       isSharingEnabled,
-      onEditMode,
+      handleShare,
+      isPublishingEnabled,
+      handlePublish,
+      isPublic,
+      isSelectedPromptApproveRequiredResource,
+      handleUnpublish,
+      handleInfo,
       prompt.sharedWithMe,
+      handleDelete,
     ],
   );
 
