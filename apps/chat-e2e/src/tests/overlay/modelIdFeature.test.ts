@@ -11,9 +11,9 @@ import { OverlaySandboxUrls } from '@/src/testData/overlay/overlaySandboxUrls';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
-const expectedModelId = 'gpt-35-turbo';
+const expectedModelId = 'anthropic.claude-v3-sonnet';
 
-dialOverlayTest(
+dialOverlayTest.only(
   `[Overlay] Defaults set in the code: modelID is used for new conversation.\n` +
     '[Overlay] Defaults set in the code: modelID is NOT used for old conversation. Used model is used in the chat with history.\n' +
     '[Overlay] Display likes in model response - Feature.Likes.\n' +
@@ -22,7 +22,8 @@ dialOverlayTest(
     '[Overlay] Display clear conversations button in chat header - Feature.TopClearConversation.\n' +
     '[Overlay] Display conversation info in chat header - Feature.TopChatInfo.\n' +
     '[Overlay] Display change model settings button in chat header - Feature.TopChatModelSettings.\n' +
-    '[Overlay] Display chat menu in chat header - Feature.HideTopContextMenu',
+    '[Overlay] Display chat menu in chat header - Feature.HideTopContextMenu.\n' +
+    '[Overlay][Select an agent for conversation] Cursor is set into Search field automatically when user opens the window',
   async ({
     overlayHomePage,
     overlayAgentInfo,
@@ -52,6 +53,7 @@ dialOverlayTest(
       'EPMRTC-3763',
       'EPMRTC-3764',
       'EPMRTC-4873',
+      'EPMRTC-6271',
     );
     const randomAgentRequest = 'test';
     const randomModelId = GeneratorUtil.randomArrayElement(
@@ -86,18 +88,25 @@ dialOverlayTest(
     );
 
     await dialTest.step(
-      'Change conversation model and send the request',
+      'Click on "Change agent" btn and verify the cursor is set on the search field',
       async () => {
         await overlayChat.changeAgentButton.click();
-        await overlayTalkToAgentDialog.selectAgent(
-          randomModel,
-          overlayMarketplacePage,
+        await overlayTalkToAgentDialogAssertion.assertIsElementFocused(
+          overlayTalkToAgentDialog.searchAgentInput,
+          true,
         );
-        const request =
-          await overlayChat.sendRequestWithButton(randomAgentRequest);
-        overlayApiAssertion.assertRequestModelId(request, randomModel);
       },
     );
+
+    await dialTest.step('Select a new agent and send the request', async () => {
+      await overlayTalkToAgentDialog.selectAgent(
+        randomModel,
+        overlayMarketplacePage,
+      );
+      const request =
+        await overlayChat.sendRequestWithButton(randomAgentRequest);
+      overlayApiAssertion.assertRequestModelId(request, randomModel);
+    });
 
     await dialTest.step(
       'Verify dots menu, "Clear conversation messages", model name, model and gear icons are available in the chat header',
