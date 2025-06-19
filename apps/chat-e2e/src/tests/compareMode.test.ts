@@ -1555,7 +1555,6 @@ dialTest(
     const firstConversationRequests = ['1+2', '2+3', '3+4'];
     const secondConversationRequests = ['1+2', '4+5', '5+6'];
     let updatedRequestContent: string;
-    let copiedValue: string;
 
     await dialTest.step(
       'Prepare two conversations for compare mode',
@@ -1636,19 +1635,21 @@ dialTest(
           MockedChatApiResponseBodies.simpleTextBody,
         );
         await page.keyboard.press(keys.ctrlPlusV);
-        copiedValue = await dialHomePage.readFromClipboard();
-        const expectedChatId = (modelId: string) =>
-          `${ItemUtil.getEncodedItemId(modelId)}${ItemUtil.entityIdSeparator}${ItemUtil.getEncodedItemId(copiedValue)}`;
+        const expectedChatId = (modelId: string, name: string) =>
+          `${ItemUtil.getEncodedItemId(modelId)}${ItemUtil.entityIdSeparator}${ItemUtil.getEncodedItemId(name)}`;
         await dialHomePage.waitForExpectedResponses(
           () => chatMessages.saveAndSubmit.click(),
           [
             {
               apiMethod: 'PUT',
-              urlPattern: expectedChatId(defaultModel.id),
+              urlPattern: expectedChatId(
+                defaultModel.id,
+                firstConversation.name,
+              ),
             },
             {
               apiMethod: 'PUT',
-              urlPattern: expectedChatId(aModel.id),
+              urlPattern: expectedChatId(aModel.id, secondConversation.name),
             },
           ],
         );
@@ -1661,11 +1662,11 @@ dialTest(
       async () => {
         await baseAssertion.assertElementText(
           leftChatHeader.chatTitle,
-          copiedValue,
+          firstConversation.name,
         );
         await baseAssertion.assertElementText(
           rightChatHeader.chatTitle,
-          copiedValue + ' 1',
+          secondConversation.name,
         );
         await baseAssertion.assertElementsCount(
           chatMessages.compareChatMessages,
@@ -1689,9 +1690,7 @@ dialTest(
       'Edit left chat title and verify it is updated in the header',
       async () => {
         const newLeftChatName = GeneratorUtil.randomString(7);
-        await conversations.openEntityDropdownMenu(updatedRequestContent, {
-          exactMatch: true,
-        });
+        await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         await renameConversationModal.editConversationNameWithSaveButton(
           newLeftChatName,
@@ -1706,11 +1705,11 @@ dialTest(
     await dialTest.step(
       'Delete right chat and compare mode closed, left chat is active',
       async () => {
-        await conversations.openEntityDropdownMenu(updatedRequestContent, 1);
+        await conversations.openEntityDropdownMenu(secondConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await conversationAssertion.assertEntityState(
-          { name: updatedRequestContent, index: 1 },
+          { name: secondConversation.name },
           'hidden',
         );
         await baseAssertion.assertElementState(compare, 'hidden');
