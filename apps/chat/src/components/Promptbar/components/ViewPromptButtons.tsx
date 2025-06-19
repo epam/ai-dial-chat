@@ -21,7 +21,11 @@ import { FeatureType, ScreenState } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors, SettingsSelectors } from '@/src/store/selectors';
+import {
+  PromptsSelectors,
+  PublicationSelectors,
+  SettingsSelectors,
+} from '@/src/store/selectors';
 
 import { ContextMenu } from '@/src/components/Common/ContextMenu';
 import { IconButton } from '@/src/components/Common/IconButton';
@@ -52,6 +56,9 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
   );
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, FeatureType.Prompt),
+  );
+  const { isSelectedPromptApproveRequiredResource } = useAppSelector(
+    PromptsSelectors.selectSelectedPromptId,
   );
 
   const isApproveRequiredEntitySelected = useAppSelector((state) =>
@@ -111,7 +118,10 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
       },
       {
         name: 'Unpublish',
-        display: isPublic && isPublishingEnabled,
+        display:
+          isPublic &&
+          isPublishingEnabled &&
+          !isSelectedPromptApproveRequiredResource,
         dataQa: 'unpublish-prompt',
         Icon: (props: IconProps) => (
           <UnpublishIcon {...props} style={{ strokeWidth: 1.1 }} />
@@ -134,21 +144,22 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
       },
     ],
     [
-      handleDelete,
+      isMyPrompt,
+      isApproveRequiredEntitySelected,
+      onEditMode,
       handleDuplicate,
       handleExport,
-      handleInfo,
       handleMoveToFolder,
-      handlePublish,
-      handleShare,
-      handleUnpublish,
-      isMyPrompt,
-      isPublic,
-      isPublishingEnabled,
-      isApproveRequiredEntitySelected,
       isSharingEnabled,
-      onEditMode,
+      handleShare,
+      isPublishingEnabled,
+      handlePublish,
+      isPublic,
+      isSelectedPromptApproveRequiredResource,
+      handleUnpublish,
+      handleInfo,
       prompt.sharedWithMe,
+      handleDelete,
     ],
   );
 
