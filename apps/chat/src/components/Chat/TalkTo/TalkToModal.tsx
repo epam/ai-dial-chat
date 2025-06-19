@@ -236,6 +236,7 @@ const TalkToModalView = ({
                 addonsMap,
               ),
             },
+            publicationUrl: conversation.publicationInfo?.publicationUrl,
           }),
         );
       }
