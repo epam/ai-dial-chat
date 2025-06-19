@@ -1581,13 +1581,17 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify conversation name is updated on side bar, header and restricted symbols are removed from the name',
+      'Verify conversation name is not updated neither on side bar nor on the header',
       async () => {
         await conversationAssertion.assertEntityState(
           { name: expectedConversationName },
+          'hidden',
+        );
+        await conversationAssertion.assertEntityState(
+          { name: conversation.name },
           'visible',
         );
-        await chatHeaderAssertion.assertHeaderTitle(expectedConversationName);
+        await chatHeaderAssertion.assertHeaderTitle(conversation.name);
       },
     );
   },

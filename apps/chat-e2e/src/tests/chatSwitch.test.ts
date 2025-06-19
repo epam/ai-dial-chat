@@ -119,7 +119,6 @@ dialTest(
       );
       await dialHomePage.throttleAPIResponse(API.chatHost);
       await chat.sendRequestWithButton(request, false);
-      firstConversation.name = request;
     });
 
     await dialTest.step(
