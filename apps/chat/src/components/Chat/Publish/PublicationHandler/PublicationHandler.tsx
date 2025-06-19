@@ -29,10 +29,8 @@ import {
 } from '@/src/store/publication/publication.types';
 import { PublicationSelectors } from '@/src/store/selectors';
 
-import {
-  MAX_PUBLICATION_AUTHOR_LENGTH,
-  PUBLIC_URL_PREFIX,
-} from '@/src/constants/publication';
+import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
+import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -210,7 +208,7 @@ export function PublicationHandler({ publication }: Props) {
   const handleChangeDisplayAuthor = useCallback(
     (value: string) => {
       if (
-        value.length <= MAX_PUBLICATION_AUTHOR_LENGTH ||
+        value.length <= MAX_ENTITY_LENGTH ||
         value.length < displayAuthorEditState.length
       ) {
         dispatch(PublicationActions.setDisplayAuthorEditState(value));

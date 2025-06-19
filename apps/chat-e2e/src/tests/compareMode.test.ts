@@ -11,7 +11,6 @@ import {
   Rate,
   Side,
 } from '@/src/testData';
-import { Overflow, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
@@ -1395,12 +1394,11 @@ dialTest(
           ExpectedMessages.closeChatIconIsNotVisible,
         );
         await compareConversation.checkShowAllConversations();
-        const overflowProp = await compareConversation
-          .compareConversationRowName(secondConversation.name)
-          .getComputedStyleProperty(Styles.text_overflow);
-        expect
-          .soft(overflowProp[0], ExpectedMessages.entityNameIsTruncated)
-          .toBe(Overflow.ellipsis);
+        await conversationToCompareAssertion.assertElementTextIsTruncated(
+          compareConversation.compareConversationRowName(
+            secondConversation.name,
+          ),
+        );
       },
     );
 
