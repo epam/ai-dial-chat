@@ -60,6 +60,7 @@ import {
   ShareSelectors,
 } from '@/src/store/selectors';
 
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import { DeleteType, MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
@@ -669,10 +670,10 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
     }),
   );
 
-const exitEditModeEpic: AppEpic = (action$, _state$, { router }) =>
+const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
   action$.pipe(
     ofType(ApplicationActions.exitEditor.type),
-    tap(({ payload }) => {
+    switchMap(({ payload }) => {
       if (payload.redirectUrl) {
         router.push({
           pathname: payload.redirectUrl,
@@ -683,8 +684,24 @@ const exitEditModeEpic: AppEpic = (action$, _state$, { router }) =>
           query: { tab: MarketplaceTabs.MY_WORKSPACE },
         });
       }
+      const returnConversationIds =
+        ApplicationSelectors.selectReturnConversationIds(state$.value);
+      if (returnConversationIds?.length) {
+        return concat(
+          of(
+            ConversationsActions.selectConversations({
+              conversationIds: returnConversationIds,
+            }),
+          ),
+          of(ApplicationActions.setReturnConversationIds(undefined)),
+        );
+      }
+      return of(
+        ConversationsActions.createNewConversations({
+          names: [DEFAULT_CONVERSATION_NAME],
+        }),
+      );
     }),
-    ignoreElements(),
   );
 
 const setSelectedWidgetEpic: AppEpic = (action$) =>

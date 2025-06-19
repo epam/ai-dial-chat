@@ -42,10 +42,8 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
-import {
-  MAX_PUBLICATION_AUTHOR_LENGTH,
-  NA_VERSION,
-} from '@/src/constants/publication';
+import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
+import { NA_VERSION } from '@/src/constants/publication';
 
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -123,32 +121,6 @@ export const PublicationHandlerFooter = ({
       ),
     [conversations, files, prompts, applications],
   );
-
-  useEffect(() => {
-    // we do not need to review files
-    const resourcesToReview = publication.resources.filter(
-      (resource) => !isFileId(resource.targetUrl),
-    );
-    const resourcesToReviewIds = resourcesToReview.map(
-      (resource) => resource.reviewUrl,
-    );
-    const notExistEntitiesIds = notExistEntities.map((entity) => entity.id);
-    const isSomeResourceNotExist = resourcesToReviewIds.some((id) =>
-      notExistEntitiesIds.includes(id),
-    );
-
-    if (!isSomeResourceNotExist) {
-      dispatch(
-        PublicationActions.setPublicationsToReview({
-          items: resourcesToReview.map((resource) => ({
-            reviewed: false,
-            reviewUrl: resource.reviewUrl,
-            publicationUrl: publication.url,
-          })),
-        }),
-      );
-    }
-  }, [dispatch, notExistEntities, publication.resources, publication.url]);
 
   const expandFoldersByFeatureType = useCallback(
     (
@@ -301,7 +273,7 @@ export const PublicationHandlerFooter = ({
   const isFoldersInvalid = !allEditedFoldersAreValid(foldersEditState);
   const isDisplayAuthorInvalid =
     !displayAuthorEditState.trim().length ||
-    displayAuthorEditState.length > MAX_PUBLICATION_AUTHOR_LENGTH;
+    displayAuthorEditState.length > MAX_ENTITY_LENGTH;
   const isEditDisabled =
     isNamesOrVersionsInvalid || isFoldersInvalid || isDisplayAuthorInvalid;
 

@@ -27,9 +27,9 @@ export interface Props {
   conversation: Conversation;
   isLikesEnabled: boolean;
   editDisabled: boolean;
+  messagesLength: number;
   onLike: (likeStatus: LikeState) => void;
   onDelete: () => void;
-  messagesLength: number;
   onEdit?: (editedMessage: Message, index: number) => void;
   onRegenerate?: () => void;
 }
@@ -42,14 +42,14 @@ export const ChatMessage: FC<Props> = memo(
     message,
     conversation,
     filteredMessages,
-    onLike,
-    onDelete,
     editDisabled,
-    onRegenerate,
-    onEdit,
     messageIndex,
     messagesLength,
     isLikesEnabled,
+    onLike,
+    onDelete,
+    onRegenerate,
+    onEdit,
   }) => {
     const { t } = useTranslation(Translation.Chat);
 
@@ -79,11 +79,11 @@ export const ChatMessage: FC<Props> = memo(
       [conversation, onLike],
     );
 
-    const toggleEditing = useCallback((value: boolean) => {
+    const handleToggleEditing = useCallback((value: boolean) => {
       setIsEditing(value);
     }, []);
 
-    const toggleEditingTemplates = useCallback(
+    const handleToggleEditingTemplates = useCallback(
       (value?: boolean) => {
         setIsTemplateModalOpened(value ?? !isTemplateModalOpened);
       },
@@ -121,10 +121,10 @@ export const ChatMessage: FC<Props> = memo(
             onDelete={() => {
               setIsDeleteConfirmationOpened(true);
             }}
-            toggleEditing={toggleEditing}
+            onToggleEditing={handleToggleEditing}
             isEditing={isEditing}
             editDisabled={editDisabled}
-            toggleEditingTemplates={toggleEditingTemplates}
+            onToggleEditingTemplates={handleToggleEditingTemplates}
             isEditingTemplates={isTemplateModalOpened}
             messageCopied={messageCopied}
             conversation={conversation}
@@ -159,8 +159,8 @@ export const ChatMessage: FC<Props> = memo(
                 allMessages={filteredMessages}
                 editDisabled={editDisabled}
                 isEditing={isEditing}
-                toggleEditing={toggleEditing}
-                toggleEditingTemplates={toggleEditingTemplates}
+                onToggleEditing={handleToggleEditing}
+                onToggleEditingTemplates={handleToggleEditingTemplates}
                 isEditingTemplates={isTemplateModalOpened}
                 message={message}
                 onEdit={onEdit}
@@ -192,11 +192,11 @@ export const ChatMessage: FC<Props> = memo(
               onLike={onLike}
               onDelete={() => setIsDeleteConfirmationOpened(true)}
               isEditing={isEditing}
-              onToggleEditing={toggleEditing}
+              onToggleEditing={handleToggleEditing}
               onRegenerate={onRegenerate}
               isConversationInvalid={isConversationInvalid}
               isEditTemplatesAvailable={isMessageTemplatesEnabled}
-              onToggleTemplatesEditing={toggleEditingTemplates}
+              onToggleTemplatesEditing={handleToggleEditingTemplates}
             />
           </Menu>
         )}

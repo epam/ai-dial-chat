@@ -19,7 +19,11 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isMobile } from '@/src/utils/app/mobile';
+
 import { Translation } from '@/src/types/translation';
+
+import { Tooltip } from './Tooltip';
 
 import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import { useCombobox } from 'downshift';
@@ -30,7 +34,7 @@ interface Props<T> {
   label?: string;
   placeholder?: string;
   notFoundPlaceholder?: string;
-  itemRow?: FC<{ item: T }>;
+  itemRow?: FC<{ item: T; truncate?: boolean }>;
   disabled?: boolean;
   getItemLabel: (item: T) => string;
   getItemValue: (item: T) => string;
@@ -151,19 +155,34 @@ export const Combobox = <T,>({
           )}
         >
           <div className="relative w-full">
-            <input
-              disabled={disabled}
-              placeholder={!selectedItem ? placeholder || '' : ''}
-              className="w-full bg-transparent px-3 outline-none placeholder:text-secondary"
-              style={{
-                ...(selectedItemRef.current && {
-                  height: `${selectedItemRef.current.clientHeight}px`,
-                }),
-              }}
-              {...getInputProps({
-                ref: refs.reference as RefObject<HTMLInputElement>,
-              })}
-            />
+            <Tooltip
+              tooltip={
+                itemRow &&
+                !!selectedItem &&
+                createElement(itemRow, {
+                  item: selectedItem,
+                  truncate: false,
+                })
+              }
+              triggerClassName="w-full"
+              contentClassName="max-w-[300px] break-words"
+              isTriggerClickable
+            >
+              <input
+                readOnly={isMobile()}
+                disabled={disabled}
+                placeholder={!selectedItem ? placeholder || '' : ''}
+                className="w-full bg-transparent px-3 outline-none placeholder:text-secondary"
+                style={{
+                  ...(selectedItemRef.current && {
+                    height: `${selectedItemRef.current.clientHeight}px`,
+                  }),
+                }}
+                {...getInputProps({
+                  ref: refs.reference as RefObject<HTMLInputElement>,
+                })}
+              />
+            </Tooltip>
             {!inputValue && itemRow && !!selectedItem && (
               <div
                 ref={selectedItemRef}
@@ -188,7 +207,7 @@ export const Combobox = <T,>({
       </div>
       <ul
         className={classNames(
-          'z-10 max-h-80 overflow-auto rounded bg-layer-3',
+          'z-10 max-h-80 overflow-auto rounded bg-layer-3 shadow',
           panelClassName,
           !isOpen && 'hidden',
         )}
@@ -211,16 +230,27 @@ export const Combobox = <T,>({
                   'group flex h-[34px] cursor-pointer flex-col justify-center px-3',
                   highlightedIndex === index && 'bg-accent-primary-alpha',
                   selectedItem === item && 'bg-accent-primary-alpha',
-                  indexSeparator &&
+                  !inputValue &&
+                    indexSeparator &&
                     index === indexSeparator &&
                     'border-b border-secondary',
                 )}
                 key={`${getItemValue(item)}${index}`}
                 {...getItemProps({ item, index })}
               >
-                {itemRow
-                  ? createElement(itemRow, { item })
-                  : getItemLabel(item)}
+                <Tooltip
+                  tooltip={
+                    itemRow
+                      ? createElement(itemRow, { item, truncate: false })
+                      : getItemLabel(item)
+                  }
+                  triggerClassName="w-full"
+                  contentClassName="max-w-[300px] break-words"
+                >
+                  {itemRow
+                    ? createElement(itemRow, { item })
+                    : getItemLabel(item)}
+                </Tooltip>
               </li>
             ))
           ) : (
