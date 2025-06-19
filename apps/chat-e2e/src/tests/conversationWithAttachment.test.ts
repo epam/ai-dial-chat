@@ -3,6 +3,7 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
   Attachment,
+  CheckboxState,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
@@ -664,9 +665,13 @@ dialTest(
     fileApiHelper,
     attachmentDropdownMenu,
     attachedAllFiles,
+    manageAttachmentsAssertion,
     chatMessages,
     conversations,
     localStorageManager,
+    baseAssertion,
+    sendMessageInputAttachments,
+    sendMessageAssertion,
   }) => {
     setTestIds('EPMRTC-3243', 'EPMRTC-3127');
 
@@ -709,17 +714,11 @@ dialTest(
         await chatMessages.getChatMessageClipIcon(1).click();
         const editMessageAttachMenuOptions =
           await attachmentDropdownMenu.getAllMenuOptions();
-        expect
-          .soft(
-            editMessageAttachMenuOptions,
-            ExpectedMessages.contextMenuOptionsValid,
-          )
-          .toEqual(
-            expect.not.arrayContaining([
-              MenuOptions.attachFolders,
-              MenuOptions.attachLink,
-            ]),
-          );
+        baseAssertion.assertArrayExcludesAll(
+          editMessageAttachMenuOptions,
+          [MenuOptions.attachFolders, MenuOptions.attachLink],
+          ExpectedMessages.contextMenuOptionsValid,
+        );
       },
     );
 
@@ -729,36 +728,43 @@ dialTest(
         await sendMessage.attachmentMenuTrigger.click();
         const attachMenuOptions =
           await attachmentDropdownMenu.getAllMenuOptions();
-        expect
-          .soft(attachMenuOptions, ExpectedMessages.contextMenuOptionsValid)
-          .toEqual(
-            expect.not.arrayContaining([
-              MenuOptions.attachFolders,
-              MenuOptions.attachLink,
-            ]),
-          );
+        baseAssertion.assertArrayExcludesAll(
+          attachMenuOptions,
+          [MenuOptions.attachFolders, MenuOptions.attachLink],
+          ExpectedMessages.contextMenuOptionsValid,
+        );
       },
     );
 
     await dialTest.step(
-      'Open "Attach files" modal from request input and verify folder cannot be checked, "Attach" button is disabled',
+      'Open "Attach files" modal from request input and verify folder content can be checked',
       async () => {
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
         await attachedAllFiles.getFolderName(folderName).hoverOver();
-        await expect
-          .soft(
-            attachedAllFiles.getFolderCheckbox(folderName),
-            ExpectedMessages.folderCheckboxIsVisible,
-          )
-          .toBeVisible();
-        await expect
-          .soft(
-            attachFilesModal.attachFilesButton.getElementLocator(),
-            ExpectedMessages.buttonIsEnabled,
-          )
-          .toBeEnabled();
+        const folderCheckboxElement =
+          attachedAllFiles.getFolderCheckbox(folderName);
+        await manageAttachmentsAssertion.assertCheckboxState(
+          folderCheckboxElement,
+          CheckboxState.unchecked,
+        );
+        await folderCheckboxElement.click();
+        await manageAttachmentsAssertion.assertElementActionabilityState(
+          attachFilesModal.attachFilesButton,
+          'enabled',
+        );
+        await attachFilesModal.attachFiles();
+        await sendMessageAssertion.assertElementState(
+          sendMessageInputAttachments.inputAttachmentName(
+            Attachment.sunImageName,
+          ),
+          'visible',
+        );
+        await sendMessageAssertion.assertElementState(
+          sendMessageInputAttachments.inputAttachedFolder(folderName),
+          'hidden',
+        );
       },
     );
   },
