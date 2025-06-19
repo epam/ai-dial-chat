@@ -254,7 +254,12 @@ export const PromptComponent = ({
         )}
         onClick={() => {
           if (!isSelectMode) {
-            dispatch(PromptsActions.selectPrompt({ promptId: prompt.id }));
+            dispatch(
+              PromptsActions.selectPrompt({
+                promptId: prompt.id,
+                isApproveRequiredResource,
+              }),
+            );
           }
 
           if (isSelectMode && !isExternal) {

@@ -274,15 +274,15 @@ export class Chat extends BaseElement {
   }
 
   public async saveAndSubmitRequest(waitForAnswer = false) {
-    const moveResponsePromise = this.page.waitForResponse((resp) =>
-      resp.url().includes(API.moveHost),
+    const updateResponsePromise = this.page.waitForResponse(
+      (resp) => resp.request().method() === 'PUT',
     );
     const request = this.sendRequest(
       undefined,
       () => this.getChatMessages().saveAndSubmit.click(),
       waitForAnswer,
     );
-    await moveResponsePromise;
+    await updateResponsePromise;
     return request;
   }
 

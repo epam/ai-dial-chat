@@ -42,10 +42,8 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
-import {
-  MAX_PUBLICATION_AUTHOR_LENGTH,
-  NA_VERSION,
-} from '@/src/constants/publication';
+import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
+import { NA_VERSION } from '@/src/constants/publication';
 
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -275,7 +273,7 @@ export const PublicationHandlerFooter = ({
   const isFoldersInvalid = !allEditedFoldersAreValid(foldersEditState);
   const isDisplayAuthorInvalid =
     !displayAuthorEditState.trim().length ||
-    displayAuthorEditState.length > MAX_PUBLICATION_AUTHOR_LENGTH;
+    displayAuthorEditState.length > MAX_ENTITY_LENGTH;
   const isEditDisabled =
     isNamesOrVersionsInvalid || isFoldersInvalid || isDisplayAuthorInvalid;
 
