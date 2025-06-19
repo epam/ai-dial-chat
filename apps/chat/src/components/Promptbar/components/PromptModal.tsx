@@ -63,6 +63,7 @@ const PromptModalContent: React.FC<PromptModalViewProps> = ({
             PromptsActions.updatePrompt({
               id: prompt.id,
               values: editedPrompt,
+              publicationUrl: prompt.publicationInfo?.publicationUrl,
             }),
           );
         }
@@ -78,13 +79,7 @@ const PromptModalContent: React.FC<PromptModalViewProps> = ({
   }, [onToggleEditMode]);
 
   if (isViewMode && !isNewPromptCreating) {
-    return (
-      <ViewPrompt
-        prompt={prompt}
-        onEditMode={handleGoToEditMode}
-        onClose={onClose}
-      />
-    );
+    return <ViewPrompt prompt={prompt} onEditMode={handleGoToEditMode} />;
   }
 
   return <EditPrompt onEdit={handleEdit} onClose={onClose} prompt={prompt} />;

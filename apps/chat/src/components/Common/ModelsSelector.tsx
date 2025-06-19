@@ -22,20 +22,26 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 interface ModelSelectRowProps {
   item: DialAIEntityModel;
   isNotAllowed: boolean;
+  truncate?: boolean;
 }
 
-const ModelSelectRow = ({ item, isNotAllowed }: ModelSelectRowProps) => {
+const ModelSelectRow = ({
+  item,
+  isNotAllowed,
+  truncate = true,
+}: ModelSelectRowProps) => {
   const { t } = useTranslation(Translation.Chat);
 
   return (
     <div
       className={classNames(
-        'flex items-center gap-2 truncate',
+        'flex items-center gap-2',
         isNotAllowed && 'text-secondary',
+        truncate && 'truncate',
       )}
     >
       <ModelIcon entity={item} entityId={item.id} size={18} />
-      <div className="truncate">
+      <div className={classNames(truncate && 'truncate')}>
         <span>
           {getOpenAIEntityFullName(item)}
           {item.version && (
@@ -110,10 +116,11 @@ export const ModelsSelector = memo(function ModelsSelector({
             getOpenAIEntityFullName(model)
           }
           getItemValue={(model: DialAIEntityModel) => model.reference}
-          itemRow={({ item }) => (
+          itemRow={({ item, truncate }) => (
             <ModelSelectRow
               item={item}
-              isNotAllowed={item.reference === value && !model}
+              isNotAllowed={item.id === value && !model}
+              truncate={truncate}
             />
           )}
           onSelectItem={onChange}

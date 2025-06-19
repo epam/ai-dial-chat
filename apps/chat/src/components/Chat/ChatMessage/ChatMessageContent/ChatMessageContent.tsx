@@ -28,11 +28,12 @@ interface Props {
   isLikesEnabled: boolean;
   isEditing: boolean;
   isLastMessage: boolean;
-  toggleEditing: (value: boolean) => void;
   isEditingTemplates: boolean;
-  toggleEditingTemplates: (value: boolean) => void;
   messageCopied?: boolean;
   editDisabled?: boolean;
+  withButtons?: boolean;
+  onToggleEditing: (value: boolean) => void;
+  onToggleEditingTemplates: (value: boolean) => void;
   onRegenerate?: () => void;
   onEdit?: (editedMessage: Message, index: number) => void;
   onCopy?: () => void;
@@ -42,7 +43,6 @@ interface Props {
     e: MouseEvent<HTMLDivElement>,
     messageRef: RefObject<HTMLDivElement>,
   ) => void;
-  withButtons?: boolean;
 }
 
 const OVERLAY_ICON_SIZE = 18;
@@ -55,19 +55,19 @@ export function ChatMessageContent({
   message,
   allMessages,
   conversation,
-  onEdit,
   editDisabled,
-  onLike,
   isLikesEnabled,
+  messageCopied,
+  isEditing,
+  isEditingTemplates,
+  withButtons,
+  onToggleEditing,
+  onToggleEditingTemplates,
+  onLike,
   onDelete,
   onClick,
-  messageCopied,
   onCopy,
-  isEditing,
-  toggleEditing,
-  isEditingTemplates,
-  toggleEditingTemplates,
-  withButtons,
+  onEdit,
   onRegenerate,
 }: Props) {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -145,10 +145,10 @@ export function ChatMessageContent({
               messageIndex={messageIndex}
               isEditing={isEditing}
               isEditingTemplates={isEditingTemplates}
-              toggleEditing={toggleEditing}
-              toggleEditingTemplates={toggleEditingTemplates}
               withButtons={withButtons}
               editDisabled={editDisabled}
+              onToggleEditing={onToggleEditing}
+              onToggleEditingTemplates={onToggleEditingTemplates}
               onEdit={onEdit}
               onDelete={onDelete}
             />

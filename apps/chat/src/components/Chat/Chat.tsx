@@ -75,7 +75,7 @@ import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './Playback/PlaybackControls';
-import { PublicationControls } from './Publish/PublicationChatControls';
+import { ChatPublicationControls } from './Publish/PublicationControls/ChatPublicationControls';
 import { PublicationHandler } from './Publish/PublicationHandler/PublicationHandler';
 import { TalkToModal } from './TalkTo/TalkToModal';
 
@@ -157,16 +157,22 @@ const ChatView = memo(() => {
   const configurationSchema = useAppSelector(
     ChatSelectors.selectConfigurationSchema,
   );
+  const isApproveRequiredEntity = useAppSelector((state) =>
+    PublicationSelectors.selectIsApproveRequiredEntity(
+      state,
+      selectedConversationsIds[0] ?? '',
+    ),
+  );
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
-  const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
-  const [showScrollDownButton, setShowScrollDownButton] =
-    useState<boolean>(false);
+  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
+  const [showScrollDownButton, setShowScrollDownButton] = useState(false);
   const [mergedMessages, setMergedMessages] = useState<MergedMessages[]>([]);
   const [isShowChatSettings, setIsShowChatSettings] = useState(false);
   const [isLastMessageError, setIsLastMessageError] = useState(false);
   const [prevSelectedIds, setPrevSelectedIds] = useState<string[]>([]);
-  const [inputHeight, setInputHeight] = useState<number>(142);
+  const [inputHeight, setInputHeight] = useState(142);
+  const [isApproveRequiredInput, setIsApproveRequiredInput] = useState(false);
   const [isWideLayout, setIsWideLayout] = useState(
     checkIsWideLayout(mergedMessages.length, isCompareMode),
   );
@@ -553,13 +559,21 @@ const ChatView = memo(() => {
     handleTalkToConversationId(null);
   }, [handleTalkToConversationId]);
 
+  const handleToggleApproveRequiredInput = useCallback(() => {
+    setIsApproveRequiredInput(!isApproveRequiredInput);
+  }, [isApproveRequiredInput]);
+
+  const isValidApproveRequiredConversation =
+    isApproveRequiredEntity && !isReplay && !isPlayback;
   const showLastMessageRegenerate =
-    !isReplay &&
-    !isPlayback &&
-    !isReadOnly &&
-    !messageIsStreaming &&
-    !isLastMessageError &&
-    !notAvailableEntityType;
+    (!isReplay &&
+      !isPlayback &&
+      !isExternal &&
+      !isReadOnly &&
+      !messageIsStreaming &&
+      !isLastMessageError &&
+      !notAvailableEntityType) ||
+    isValidApproveRequiredConversation;
 
   const areSelectedConversationsEmpty = selectedConversations.every(
     (conv) => !conv.messages.length,
@@ -574,10 +588,12 @@ const ChatView = memo(() => {
   );
 
   const isInputVisible =
-    (!isReplay || isNotEmptyConversations) &&
-    !isReadOnly &&
-    (areModelsInstalled || isAdminPreview || isReplay || isIsolatedView) &&
-    !(isConversationWithSchema && selectedConversations.length > 1);
+    ((!isReplay || isNotEmptyConversations) &&
+      !isExternal &&
+      !isReadOnly &&
+      (areModelsInstalled || isAdminPreview || isReplay || isIsolatedView) &&
+      !(isConversationWithSchema && selectedConversations.length > 1)) ||
+    (isValidApproveRequiredConversation && isApproveRequiredInput);
 
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
@@ -585,9 +601,11 @@ const ChatView = memo(() => {
 
   const customViewer = useMemo(() => {
     const model = modelsMap[selectedConversations[0]?.model?.id];
+
     if (!model) return;
+
     if (
-      model?.applicationTypeSchemaId &&
+      model.applicationTypeSchemaId &&
       applicationTypeSchemas.some(
         (schema) => schema.id === model.applicationTypeSchemaId,
       )
@@ -613,6 +631,16 @@ const ChatView = memo(() => {
       textareaRef.current.focus();
     }
   }, [enabledFeatures]);
+
+  useEffect(() => {
+    setIsApproveRequiredInput(false);
+  }, [selectedConversationsIds]);
+
+  useEffect(() => {
+    handleScroll();
+  }, [isApproveRequiredInput, handleScroll]);
+
+  const isScrollDownButton = showScrollDownButton && !isApproveRequiredInput;
 
   return (
     <ChatDropArea isSettingsModalOpen={isShowChatSettings}>
@@ -823,13 +851,15 @@ const ChatView = memo(() => {
                                                 Feature.Likes,
                                               ) &&
                                               (!isEntityReadOnly(conv) ||
-                                                !isEntityIdExternal(conv))
+                                                !isEntityIdExternal(conv) ||
+                                                isValidApproveRequiredConversation)
                                             }
                                             editDisabled={
-                                              !!notAvailableEntityType ||
-                                              isReadOnly ||
-                                              isReplay ||
-                                              isPlayback
+                                              (!!notAvailableEntityType ||
+                                                isReadOnly ||
+                                                isReplay ||
+                                                isPlayback) &&
+                                              !isValidApproveRequiredConversation
                                             }
                                             onEdit={onEditMessage}
                                             onLike={onLikeHandler(index, conv)}
@@ -862,18 +892,18 @@ const ChatView = memo(() => {
                     notAvailableEntityType &&
                     !selectedPublicationUrl ? (
                       <NotAllowedModel
-                        showScrollDownButton={showScrollDownButton}
+                        showScrollDownButton={isScrollDownButton}
                         onScrollDownClick={handleScrollDown}
                         type={notAvailableEntityType}
                       />
                     ) : (
                       <>
                         {isExternal && selectedConversations.length === 1 && (
-                          <PublicationControls
+                          <ChatPublicationControls
                             showScrollDownButton={showScrollDownButton}
                             entity={selectedConversations[0]}
                             onScrollDownClick={handleScrollDown}
-                            controlsClassNames="mx-2 mb-2 mt-5 w-full flex-row md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:w-[768px] lg:max-w-3xl"
+                            onToggleInput={handleToggleApproveRequiredInput}
                           />
                         )}
 
@@ -884,7 +914,7 @@ const ChatView = memo(() => {
                             isWideLayout={isWideLayout}
                             showReplayControls={showReplayControls}
                             textareaRef={textareaRef}
-                            showScrollDownButton={showScrollDownButton}
+                            showScrollDownButton={isScrollDownButton}
                             onSend={onSendMessage}
                             onScrollDownClick={handleScrollDown}
                             onRegenerate={onRegenerateMessage}
@@ -909,7 +939,7 @@ const ChatView = memo(() => {
                               isConversationWithSchema={
                                 isConversationWithSchema
                               }
-                              showScrollDownButton={showScrollDownButton}
+                              showScrollDownButton={isScrollDownButton}
                               onScrollDown={handleScrollDown}
                             />
                           </ChatInput>
@@ -918,7 +948,7 @@ const ChatView = memo(() => {
                         {isPlayback && (
                           <PlaybackControls
                             nextMessageBoxRef={nextMessageBoxRef}
-                            showScrollDownButton={showScrollDownButton}
+                            showScrollDownButton={isScrollDownButton}
                             onScrollDownClick={handleScrollDown}
                             onResize={onChatInputResize}
                           />
