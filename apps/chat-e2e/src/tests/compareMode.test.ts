@@ -1555,7 +1555,6 @@ dialTest(
     const firstConversationRequests = ['1+2', '2+3', '3+4'];
     const secondConversationRequests = ['1+2', '4+5', '5+6'];
     let updatedRequestContent: string;
-    let copiedValue: string;
 
     await dialTest.step(
       'Prepare two conversations for compare mode',
@@ -1636,7 +1635,6 @@ dialTest(
           MockedChatApiResponseBodies.simpleTextBody,
         );
         await page.keyboard.press(keys.ctrlPlusV);
-        copiedValue = await dialHomePage.readFromClipboard();
         const expectedChatId = (modelId: string, name: string) =>
           `${ItemUtil.getEncodedItemId(modelId)}${ItemUtil.entityIdSeparator}${ItemUtil.getEncodedItemId(name)}`;
         await dialHomePage.waitForExpectedResponses(
