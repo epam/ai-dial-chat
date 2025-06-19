@@ -94,7 +94,6 @@ export const cleanConversation = (
     selectedAddons: conversation.selectedAddons ?? [],
     assistantModelId,
     updatedAt: conversation.updatedAt || conversation.lastActivityDate || 0,
-    isNameChanged: conversation.isNameChanged,
     ...(conversation.playback && {
       playback: {
         ...conversation.playback,
