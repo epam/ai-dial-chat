@@ -67,7 +67,7 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
     [dispatch, item.id, item.name, editState?.name],
   );
 
-  const { publicVersionGroupId } = usePublicVersionGroupId(item);
+  const publicVersionGroupId = usePublicVersionGroupId(item);
 
   if (isFileId(item.id)) {
     return (
