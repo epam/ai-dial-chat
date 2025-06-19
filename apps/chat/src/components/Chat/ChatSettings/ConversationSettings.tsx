@@ -117,7 +117,7 @@ export const ConversationSettings = Inversify.register(
         {model.type === EntityType.Assistant && (
           <FieldContainer>
             <AssistantSubModelSelector
-              assistantModelId={
+              assistantModelReference={
                 assistantModelId ??
                 DefaultsService.get(
                   'assistantSubmodelId',
