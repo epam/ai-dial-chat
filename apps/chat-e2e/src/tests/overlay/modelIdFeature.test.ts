@@ -13,7 +13,7 @@ import { expect } from '@playwright/test';
 
 const expectedModelId = 'anthropic.claude-v3-sonnet';
 
-dialOverlayTest.only(
+dialOverlayTest(
   `[Overlay] Defaults set in the code: modelID is used for new conversation.\n` +
     '[Overlay] Defaults set in the code: modelID is NOT used for old conversation. Used model is used in the chat with history.\n' +
     '[Overlay] Display likes in model response - Feature.Likes.\n' +

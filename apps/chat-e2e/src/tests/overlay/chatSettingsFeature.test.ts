@@ -4,6 +4,7 @@ import dialTest from '@/src/core/dialFixtures';
 import dialOverlayTest from '@/src/core/dialOverlayFixtures';
 import {
   Attachment,
+  ExpectedMessages,
   MockedChatApiResponseBodies,
   OverlaySandboxUrls,
 } from '@/src/testData';
@@ -287,6 +288,50 @@ dialOverlayTest(
         await overlayChatMessagesAssertion.assertElementState(
           overlayChatMessages.messageRegenerateIcon(2),
           'visible',
+        );
+      },
+    );
+  },
+);
+
+dialOverlayTest(
+  '[Overlay] any amount of default RECENT_MODELS_IDS is allowed',
+  async ({
+    overlayHomePage,
+    localStorageManager,
+    overlayBaseAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-6311');
+    let agents: DialAIEntityModel[];
+
+    await dialTest.step(
+      'Set more than 5 agents to the "recentModelsIds" local storage key',
+      async () => {
+        agents = GeneratorUtil.randomArrayElements(ModelsUtil.getModels(), 7);
+        await localStorageManager.setRecentModelsIds(...agents);
+      },
+    );
+
+    await dialTest.step(
+      'Open overlay app and verify all agents are set in the local storage',
+      async () => {
+        await overlayHomePage.navigateToUrl(
+          OverlaySandboxUrls.enableHideUserSettingsUrl,
+        );
+        await overlayHomePage.waitForPageLoaded();
+        const actualAgents = await localStorageManager.getRecentModelsIds(
+          process.env.NEXT_PUBLIC_OVERLAY_HOST,
+        );
+        overlayBaseAssertion.assertArrayIncludesAll(
+          actualAgents,
+          agents.map((a) => a.id),
+          ExpectedMessages.recentEntitiesIsValid,
+        );
+        overlayBaseAssertion.assertValue(
+          actualAgents.length,
+          agents.length,
+          ExpectedMessages.recentEntitiesIsValid,
         );
       },
     );
