@@ -50,22 +50,20 @@ const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
 };
 
 interface MessageUserButtonsProps {
-  toggleEditing: () => void;
-  onDelete: () => void;
   isEditAvailable: boolean;
   isMessageStreaming: boolean;
-  editDisabled?: boolean;
   isEditTemplatesAvailable: boolean;
+  onToggleEditing: () => void;
+  onDelete: () => void;
   onToggleTemplatesEditing: () => void;
 }
 
 export const MessageUserButtons = ({
-  onDelete,
-  toggleEditing,
   isEditAvailable,
-  editDisabled,
   isMessageStreaming,
   isEditTemplatesAvailable,
+  onDelete,
+  onToggleEditing,
   onToggleTemplatesEditing,
 }: MessageUserButtonsProps) => {
   const { t } = useTranslation(Translation.Chat);
@@ -98,11 +96,11 @@ export const MessageUserButtons = ({
               </button>
             </Tooltip>
           )}
-          {isEditAvailable && !editDisabled && (
+          {isEditAvailable && (
             <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
               <button
                 className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
-                onClick={toggleEditing}
+                onClick={onToggleEditing}
               >
                 <IconEdit size={18} />
               </button>
@@ -124,18 +122,18 @@ export const MessageUserButtons = ({
 
 interface MessageAssistantButtonsProps {
   messageCopied?: boolean;
-  copyOnClick: () => void;
   isLikesEnabled: boolean;
   message: Message;
+  copyOnClick: () => void;
   onLike: (likeStatus: LikeState) => void;
   onRegenerate?: () => void;
 }
 
 export const MessageAssistantButtons = ({
   messageCopied,
-  copyOnClick,
   message,
   isLikesEnabled,
+  copyOnClick,
   onLike,
   onRegenerate,
 }: MessageAssistantButtonsProps) => {
@@ -245,20 +243,20 @@ export const MessageAssistantButtons = ({
 
 interface MessageMobileButtonsProps {
   message: Message;
-  onCopy: () => void;
   messageCopied: boolean;
   editDisabled: boolean;
-  onLike: (likeStatus: LikeState) => void;
-  onDelete: () => void;
   isEditing: boolean;
-  onToggleEditing: (value: boolean) => void;
   isEditTemplatesAvailable: boolean;
-  onToggleTemplatesEditing: () => void;
   isLastMessage: boolean;
   isLikesEnabled: boolean;
   isMessageStreaming: boolean;
-  onRegenerate?: () => void;
   isConversationInvalid: boolean;
+  onLike: (likeStatus: LikeState) => void;
+  onDelete: () => void;
+  onToggleEditing: (value: boolean) => void;
+  onToggleTemplatesEditing: () => void;
+  onCopy: () => void;
+  onRegenerate?: () => void;
 }
 
 export const MessageMobileButtons = ({
@@ -266,17 +264,17 @@ export const MessageMobileButtons = ({
   editDisabled,
   message,
   isLikesEnabled,
-  onLike,
-  onCopy,
-  onDelete,
   isEditing,
-  onToggleEditing,
   isEditTemplatesAvailable,
-  onToggleTemplatesEditing,
-  onRegenerate,
   isLastMessage,
   isMessageStreaming,
   isConversationInvalid,
+  onLike,
+  onDelete,
+  onToggleEditing,
+  onToggleTemplatesEditing,
+  onCopy,
+  onRegenerate,
 }: MessageMobileButtonsProps) => {
   const { t } = useTranslation(Translation.Chat);
 

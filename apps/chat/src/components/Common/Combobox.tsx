@@ -21,6 +21,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { Tooltip } from './Tooltip';
+
 import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import { useCombobox } from 'downshift';
 
@@ -188,7 +190,7 @@ export const Combobox = <T,>({
       </div>
       <ul
         className={classNames(
-          'z-10 max-h-80 overflow-auto rounded bg-layer-3',
+          'z-10 max-h-80 overflow-auto rounded bg-layer-3 shadow',
           panelClassName,
           !isOpen && 'hidden',
         )}
@@ -211,16 +213,26 @@ export const Combobox = <T,>({
                   'group flex h-[34px] cursor-pointer flex-col justify-center px-3',
                   highlightedIndex === index && 'bg-accent-primary-alpha',
                   selectedItem === item && 'bg-accent-primary-alpha',
-                  indexSeparator &&
+                  !inputValue &&
+                    indexSeparator &&
                     index === indexSeparator &&
                     'border-b border-secondary',
                 )}
                 key={`${getItemValue(item)}${index}`}
                 {...getItemProps({ item, index })}
               >
-                {itemRow
-                  ? createElement(itemRow, { item })
-                  : getItemLabel(item)}
+                <Tooltip
+                  tooltip={
+                    itemRow
+                      ? createElement(itemRow, { item })
+                      : getItemLabel(item)
+                  }
+                  triggerClassName="w-full"
+                >
+                  {itemRow
+                    ? createElement(itemRow, { item })
+                    : getItemLabel(item)}
+                </Tooltip>
               </li>
             ))
           ) : (

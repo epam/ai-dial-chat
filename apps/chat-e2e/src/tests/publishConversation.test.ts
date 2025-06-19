@@ -212,6 +212,7 @@ dialAdminTest(
         );
         await adminApproveRequiredConversationDropdownMenuAssertion.assertMenuOptions(
           [
+            MenuOptions.rename,
             MenuOptions.compare,
             MenuOptions.duplicate,
             MenuOptions.replay,

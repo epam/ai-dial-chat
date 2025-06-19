@@ -20,7 +20,7 @@ import {
 
 import { TemplateRenderer } from '@/src/components/Chat/ChatMessage/ChatMessageTemplatesModal/TemplateRenderer';
 import { PublicVersionSelector } from '@/src/components/Chat/Publish/PublicVersionSelector';
-import { PublicationControls } from '@/src/components/Chat/Publish/PublicationChatControls';
+import { PublicationControls } from '@/src/components/Chat/Publish/PublicationControls/PublicationControls';
 
 import { ViewPromptButtons } from './ViewPromptButtons';
 
@@ -63,7 +63,6 @@ const PromptField: React.FC<PromptFieldProps> = ({
 interface Props {
   prompt: Prompt;
   onEditMode: () => void;
-  onClose: () => void;
 }
 
 export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
@@ -83,9 +82,15 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
   const selectedPublication = useAppSelector(
     PublicationSelectors.selectSelectedPublication,
   );
+  const isApproveRequiredEntitySelected = useAppSelector((state) =>
+    PublicationSelectors.selectIsApproveRequiredEntitySelected(
+      state,
+      prompt.id,
+    ),
+  );
 
-  const { publicVersionGroupId, isReviewEntity } =
-    usePublicVersionGroupId(prompt);
+  const publicVersionGroupId = usePublicVersionGroupId(prompt);
+
   const { handleUse } = usePromptActions(prompt);
 
   const handleChangeSelectedVersion = useCallback(
@@ -131,7 +136,7 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
       <div className="flex items-center justify-between border-t border-t-tertiary px-3 pt-4 md:px-6">
         <ViewPromptButtons prompt={prompt} onEditMode={onEditMode} />
         <div className="flex items-center gap-4">
-          {isReviewEntity ? (
+          {isApproveRequiredEntitySelected ? (
             <>
               <p
                 className={classNames(
