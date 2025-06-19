@@ -12,7 +12,7 @@ import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
 import { formErrors } from '@/src/constants/form-errors';
 
 import { doesHaveDotsInTheEnd } from './common';
-import { doesHaveNotAllowedSymbols } from './file';
+import { doesHaveNotAllowedSymbols, notAllowedSpacesRegex } from './file';
 
 export type InputElement = HTMLInputElement | HTMLTextAreaElement;
 export const checkValidity = (
@@ -105,7 +105,10 @@ export const validateStringField = ({
   minLength?: number;
   checkDotsInTheEnd?: boolean;
 }) => {
-  const trimmedValue = valueToValidate.trim();
+  const trimmedValue = valueToValidate
+    .trim()
+    .replace(notAllowedSpacesRegex, ' ');
+
   return (
     trimmedValue.length <= maxLength &&
     trimmedValue.length >= minLength &&
