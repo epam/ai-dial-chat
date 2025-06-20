@@ -31,7 +31,7 @@ import {
   UIActions,
 } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ApplicationSelectors } from '@/src/store/selectors';
+import { ApplicationSelectors, ModelsSelectors } from '@/src/store/selectors';
 
 import { CONFIRM_DOCUMENT_VALUES } from '@/src/constants/applications';
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/code-apps';
@@ -126,6 +126,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
   const exitAfterSave = useAppSelector(
     ApplicationSelectors.selectExitAfterSave,
   );
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   const confirmDocumentUrlValues = oldApplication?.isShared
     ? CONFIRM_DOCUMENT_VALUES
@@ -138,7 +139,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
       const hasChanged = !isEqual(data, lastSubmittedValuesRef.current);
 
       if (hasChanged) {
-        const applicationData = getQuickAppData(data);
+        const applicationData = getQuickAppData(data, modelsMap);
 
         const arrAreNotTheSameAndShared =
           isShared &&
