@@ -1016,7 +1016,7 @@ export const FileManagerModal = ({
           <button
             onClick={handleToggleHiddenItems}
             className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
-            data-qa="new-folder"
+            data-qa="show-hidden-folders"
           >
             {isHiddenItemsVisible ? (
               <IconEyeOff height={24} width={24} />
