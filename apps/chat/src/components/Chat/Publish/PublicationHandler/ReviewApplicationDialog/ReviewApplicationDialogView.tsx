@@ -14,12 +14,13 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ApplicationSelectors } from '@/src/store/selectors';
 
-import { PublicationControls } from '@/src/components/Chat/Publish/PublicationChatControls';
-import { ReviewCodeAppSection } from '@/src/components/Chat/Publish/PublicationHandler/ReviewApplicationDialog/ReviewCodeAppSection';
-import { ReviewQuickAppSection } from '@/src/components/Chat/Publish/PublicationHandler/ReviewApplicationDialog/ReviewQuickAppSection';
+import { PublicationControls } from '@/src/components/Chat/Publish/PublicationControls/PublicationControls';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
+
+import { ReviewCodeAppSection } from './ReviewCodeAppSection';
+import { ReviewQuickAppSection } from './ReviewQuickAppSection';
 
 import isEmpty from 'lodash-es/isEmpty';
 

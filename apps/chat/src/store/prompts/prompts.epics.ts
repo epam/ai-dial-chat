@@ -256,8 +256,6 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
     ofType(PromptsActions.updatePrompt.type),
     mergeMap(({ payload }) => getOrUploadPrompt(payload, state$.value)),
     mergeMap(({ payload, prompt }) => {
-      const { values, id } = payload;
-
       if (!prompt) {
         return of(
           UIActions.showErrorToast(
@@ -268,16 +266,28 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
         );
       }
 
+      const { values, id, publicationUrl } = payload;
       const newPrompt = regeneratePromptId({
         ...prompt,
         ...values,
         updatedAt: Date.now(),
       });
 
+      const areIdsEqual = prompt.id === newPrompt.id;
+      if (!areIdsEqual && publicationUrl) {
+        return of(
+          PublicationActions.updatePublicationRequestAndEntity({
+            resourceToUpdateUrl: id,
+            newEntity: newPrompt,
+            publicationUrl,
+          }),
+        );
+      }
+
       return concat(
         of(PromptsActions.updatePromptSuccess({ prompt: newPrompt, id })),
         iif(
-          () => !!prompt && prompt.id !== newPrompt.id,
+          () => !areIdsEqual,
           of(PromptsActions.movePrompt({ oldPrompt: prompt, newPrompt })),
           of(PromptsActions.savePrompt(newPrompt)),
         ),
@@ -377,6 +387,16 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
         return of(
           PromptsActions.updateFoldersSuccess({
             folders: [{ oldId: payload.folderId, newFolder }],
+          }),
+        );
+      }
+
+      if (payload.publicationUrl) {
+        return of(
+          PublicationActions.updatePublicationRequestAndFolder({
+            folderIdToUpdate: payload.folderId,
+            newFolder,
+            publicationUrl: payload.publicationUrl,
           }),
         );
       }

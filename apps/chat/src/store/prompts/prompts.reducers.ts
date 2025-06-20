@@ -137,7 +137,11 @@ export const promptsSlice = createSlice({
     },
     updatePrompt: (
       state,
-      _action: PayloadAction<{ id: string; values: Partial<Prompt> }>,
+      _action: PayloadAction<{
+        id: string;
+        values: Partial<Prompt>;
+        publicationUrl?: string | null;
+      }>,
     ) => state,
     updatePromptSuccess: (
       state,
@@ -268,6 +272,7 @@ export const promptsSlice = createSlice({
       _action: PayloadAction<{
         folderId: string;
         values: Partial<FolderInterface>;
+        publicationUrl?: string | null;
       }>,
     ) => state,
     updateFoldersSuccess: (

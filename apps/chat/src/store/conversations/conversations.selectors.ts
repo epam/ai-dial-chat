@@ -755,30 +755,40 @@ const selectTalkToConversationId = (state: RootState) =>
 const selectIsSelectedConversationBlocksInput = createSelector(
   [
     selectSelectedConversations,
+    PublicationSelectors.selectResourcesToReview,
     ChatSelectors.selectIsConfigurationBlocksInput,
     ChatSelectors.selectNotAvailableEntityType,
     selectAreSelectedConversationsReadOnly,
   ],
   (
     conversations,
+    resourcesToReview,
     isConfigurationBlocksInput,
     notAvailableEntityType,
-    isReadOnly,
-  ) =>
-    conversations.some(
+    areReadOnly,
+  ) => {
+    const isReviewEntity = conversations.some((conversation) =>
+      resourcesToReview.some(
+        (resource) => resource.reviewUrl === conversation.id,
+      ),
+    );
+
+    return conversations.some(
       (conversation) =>
         conversation.sharedWithMe ||
         (!conversation.messages?.length &&
           (isConfigurationBlocksInput || isReplayConversation(conversation))) ||
         notAvailableEntityType ||
         isPlaybackConversation(conversation) ||
-        isReadOnly ||
+        (isEntityIdExternal(conversation) && !isReviewEntity) ||
+        areReadOnly ||
         !conversation.messages ||
         isMessageInputDisabled(
           conversation.messages.length,
           conversation.messages,
         ),
-    ),
+    );
+  },
 );
 
 const selectPreviewConversationId = (state: RootState) =>

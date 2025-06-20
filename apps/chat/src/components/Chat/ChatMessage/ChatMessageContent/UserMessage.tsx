@@ -39,6 +39,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ConversationsSelectors,
   FilesSelectors,
+  PublicationSelectors,
   SettingsSelectors,
   UISelectors,
 } from '@/src/store/selectors';
@@ -68,10 +69,10 @@ interface UserMessageProps {
   allMessages: Message[];
   isEditing: boolean;
   isEditingTemplates: boolean;
-  toggleEditing: (value: boolean) => void;
-  toggleEditingTemplates: (value: boolean) => void;
   withButtons?: boolean;
   editDisabled?: boolean;
+  onToggleEditing: (value: boolean) => void;
+  onToggleEditingTemplates: (value: boolean) => void;
   onEdit?: (editedMessage: Message, index: number) => void;
   onDelete?: () => void;
 }
@@ -83,10 +84,10 @@ export const UserMessage = memo(function UserMessage({
   allMessages,
   isEditing,
   isEditingTemplates,
-  toggleEditing,
-  toggleEditingTemplates,
   withButtons,
   editDisabled,
+  onToggleEditing,
+  onToggleEditingTemplates,
   onEdit,
   onDelete,
 }: UserMessageProps) {
@@ -121,6 +122,15 @@ export const UserMessage = memo(function UserMessage({
   const isMessageTemplatesEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.MessageTemplates),
   );
+  const isApproveRequiredEntitySelected = useAppSelector((state) =>
+    PublicationSelectors.selectIsApproveRequiredEntitySelected(
+      state,
+      conversation.id,
+    ),
+  );
+  const isExternal = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsExternal,
+  );
 
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
 
@@ -139,8 +149,16 @@ export const UserMessage = memo(function UserMessage({
   const [selectedDialLinks, setSelectedDialLinks] = useState<DialLink[]>([]);
 
   const showUserButtons =
-    !isReplay && !isPlayback && !isEditing && !isReadOnly && withButtons;
-
+    (!isReplay &&
+      !isPlayback &&
+      !isEditing &&
+      !isExternal &&
+      withButtons &&
+      !isReadOnly) ||
+    (isApproveRequiredEntitySelected &&
+      !isReplay &&
+      !isPlayback &&
+      withButtons);
   const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
   const mappedUserEditableAttachments = useMemo(() => {
@@ -249,10 +267,10 @@ export const UserMessage = memo(function UserMessage({
 
   const handleToggleEditing = useCallback(
     (value?: boolean) => {
-      toggleEditing(value ?? !isEditing);
+      onToggleEditing(value ?? !isEditing);
       setShouldScroll(true);
     },
-    [isEditing, toggleEditing],
+    [isEditing, onToggleEditing],
   );
 
   const handleAddLinkToMessage = useCallback((link: DialLink) => {
@@ -393,9 +411,9 @@ export const UserMessage = memo(function UserMessage({
 
   const handleToggleEditingTemplates = useCallback(
     (value?: boolean) => {
-      toggleEditingTemplates(value ?? !isEditingTemplates);
+      onToggleEditingTemplates(value ?? !isEditingTemplates);
     },
-    [isEditingTemplates, toggleEditingTemplates],
+    [isEditingTemplates, onToggleEditingTemplates],
   );
 
   useEffect(() => {
@@ -615,11 +633,13 @@ export const UserMessage = memo(function UserMessage({
       {showUserButtons && !isConversationInvalid && (
         <MessageUserButtons
           isMessageStreaming={!!conversation.isMessageStreaming}
-          isEditAvailable={!!onEdit}
-          editDisabled={editDisabled}
+          isEditAvailable={!!onEdit && !editDisabled}
           onDelete={() => onDelete?.()}
-          toggleEditing={handleToggleEditing}
-          isEditTemplatesAvailable={!isReadOnly && isMessageTemplatesEnabled}
+          onToggleEditing={handleToggleEditing}
+          isEditTemplatesAvailable={
+            (!isReadOnly || isApproveRequiredEntitySelected) &&
+            isMessageTemplatesEnabled
+          }
           onToggleTemplatesEditing={handleToggleEditingTemplates}
         />
       )}
