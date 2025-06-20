@@ -12,8 +12,7 @@ import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
 
-//TODO: test-cases need to be updated after new search mechanism implementation
-dialTest.skip(
+dialTest(
   `Search in My workspace: 'No results found' and suggest results.\n` +
     `Search in My workspace: 'No results found' and no suggested results.\n` +
     'Search in My workspace when nothing to suggest from DIAL Marketplace. No suggested options.\n' +

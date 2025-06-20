@@ -18,8 +18,7 @@ import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
 
-//TODO: test-cases need to be updated after new search mechanism implementation
-dialTest.skip(
+dialTest(
   'Search word is stored; search results differ if to switch between My workspace and DIAL Marketplace pages. Search by name. Suggested results on My workspace. The model is without versions.' +
     'Space before and after search phrase is ignored\n' +
     `Search in DIAL Marketplace: 'No results found'.\n` +
@@ -43,7 +42,7 @@ dialTest.skip(
     publishRequestBuilder,
   }) => {
     setTestIds(
-      'EPMRTC-4318',
+      'EPMRTC-4+318',
       'EPMRTC-4615',
       'EPMRTC-4383',
       'EPMRTC-4317',
@@ -136,7 +135,7 @@ dialTest.skip(
     );
 
     await dialTest.step(
-      'Switch to "My Workspace" tab, and verify search term is preserved, search results are updated',
+      'Switch to "My Workspace" tab and verify search term is preserved, search results are updated',
       async () => {
         await navigationPanel.goToMyWorkspace();
         await baseAssertion.assertElementAttribute(
@@ -647,6 +646,71 @@ dialTest.skip(
           agentDetailsModal.removeBookmarkIcon,
           'hidden',
         );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Search in DIAL Marketplace: multiple spaces between sub-strings are treated as one space , not as sub-string.\n' +
+    'Search in DIAL Marketplace: more than 2 special symbols starting with ! are treated as sub-string',
+  async ({
+    customApplicationBuilder,
+    applicationApiHelper,
+    marketplacePage,
+    marketplaceHeader,
+    marketplaceAgentsSection,
+    setTestIds,
+    baseAssertion,
+  }) => {
+    setTestIds('EPMRTC-6426', 'EPMRTC-6427');
+    const middleSpaceAppName = GeneratorUtil.randomApplicationName()
+      .concat(' ')
+      .concat(GeneratorUtil.randomString(5));
+    const specialCharsAppName =
+      GeneratorUtil.randomApplicationName().concat('!@#$*()');
+    const searchTermResultMap = new Map<string, string>();
+    searchTermResultMap.set(middleSpaceAppName, middleSpaceAppName);
+    searchTermResultMap.set(
+      middleSpaceAppName.replace(' ', ' '.repeat(5)),
+      middleSpaceAppName,
+    );
+    searchTermResultMap.set('!@#$%', specialCharsAppName);
+
+    await dialTest.step('Prepare two custom applications', async () => {
+      const firstApplicationModel = customApplicationBuilder
+        .withDisplayName(middleSpaceAppName)
+        .build();
+      const secondApplicationModel = customApplicationBuilder
+        .withDisplayName(specialCharsAppName)
+        .build();
+      for (const app of [firstApplicationModel, secondApplicationModel]) {
+        await applicationApiHelper.createApplication(app);
+      }
+    });
+
+    await dialTest.step(
+      'Open "DIAL Marketplace", type search term in the search field and verify it is found',
+      async () => {
+        await marketplacePage.openMarketplacePage();
+        await marketplacePage.waitForPageLoaded();
+        for (const searchTerm of searchTermResultMap.keys()) {
+          await marketplaceHeader.searchInput.fillInInput(searchTerm);
+          const actualAgents = await marketplaceAgentsSection.getAllAgents();
+          const filteredAgents = actualAgents.filter(
+            (agent) => agent.isWorkspaceAgent,
+          );
+          baseAssertion.assertValue(
+            filteredAgents.length,
+            1,
+            ExpectedMessages.elementsCountIsValid,
+          );
+          baseAssertion.assertArrayIncludesAll(
+            filteredAgents.map((agent) => agent.name),
+            [searchTermResultMap.get(searchTerm)!],
+            ExpectedMessages.searchResultsAreCorrect,
+          );
+        }
       },
     );
   },
