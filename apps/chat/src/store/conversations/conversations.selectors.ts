@@ -781,7 +781,7 @@ const selectIsSelectedConversationBlocksInput = createSelector(
         notAvailableEntityType ||
         isPlaybackConversation(conversation) ||
         (isEntityIdExternal(conversation) && !isReviewEntity) ||
-        areReadOnly ||
+        (areReadOnly && !isReviewEntity) ||
         !conversation.messages ||
         isMessageInputDisabled(
           conversation.messages.length,
