@@ -1,5 +1,4 @@
 import { IconPencilMinus } from '@tabler/icons-react';
-import { useMemo } from 'react';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
@@ -9,7 +8,7 @@ import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
 import { PublicationControls } from './PublicationControls';
 
-import { ConversationInfo, PublishActions } from '@epam/ai-dial-shared';
+import { ConversationInfo } from '@epam/ai-dial-shared';
 
 interface Props {
   entity: ConversationInfo;
@@ -27,20 +26,14 @@ export const ChatPublicationControls = ({
   const resourceToReview = useAppSelector((state) =>
     PublicationSelectors.selectResourceToReviewByReviewUrl(state, entity.id),
   );
-  const publication = useAppSelector((state) =>
-    PublicationSelectors.selectPublicationByUrl(
+
+  const isUnpublishing = useAppSelector((state) =>
+    PublicationSelectors.selectIsResourceUnpublishing(
       state,
       resourceToReview?.publicationUrl ?? '',
+      entity.id,
     ),
   );
-
-  const isUnpublishing = useMemo(() => {
-    const action = publication?.resources?.find(
-      ({ reviewUrl }) => resourceToReview?.reviewUrl === reviewUrl,
-    )?.action;
-
-    return action === PublishActions.DELETE;
-  }, [publication, resourceToReview]);
 
   return (
     <PublicationControls
