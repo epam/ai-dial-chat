@@ -44,6 +44,9 @@ vi.mock('@/src/store/selectors', () => ({
   UISelectors: {
     selectIsChatFullWidth: vi.fn(),
   },
+  SettingSelectors: {
+    isFeatureEnabled: vi.fn(),
+  },
 }));
 
 window.ResizeObserver =
