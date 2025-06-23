@@ -96,6 +96,9 @@ const PromptModalView = () => {
   const isNewPromptCreating = useAppSelector(
     PromptsSelectors.selectIsNewPromptCreating,
   );
+  const { isSelectedPromptApproveRequiredResource } = useAppSelector(
+    PromptsSelectors.selectSelectedPromptId,
+  );
 
   const [isViewMode, setIsViewMode] = useState(
     !isNewPromptCreating && !isPromptInitModeEdit,
@@ -130,6 +133,7 @@ const PromptModalView = () => {
         'px-3 md:px-6',
         prompt &&
           prompt.publicationInfo?.action === PublishActions.DELETE &&
+          isSelectedPromptApproveRequiredResource &&
           'text-error',
       )}
       state={isLoading ? ModalState.LOADING : ModalState.OPENED}
