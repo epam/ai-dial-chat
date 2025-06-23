@@ -127,7 +127,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
         return;
       }
 
-      const { slug } = router.query;
+      const { slug, publicationUrl } = router.query;
       if (!slug) return;
 
       const slugStr = slug.toString();
@@ -154,6 +154,9 @@ export const GeneralInfoEditor: React.FC<Props> = ({
                 ? getRouteForSlug(Routes.AppsEditorSettings, slugStr)
                 : undefined,
               schema: schema ?? undefined,
+              publicationUrl: publicationUrl
+                ? decodeURIComponent(publicationUrl.toString())
+                : undefined,
             }),
           );
         }

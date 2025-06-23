@@ -801,7 +801,7 @@ dialTest(
     dialTest.skip(
       [
         ImportedModelIds.GPT_3_5_TURBO,
-        ImportedModelIds.GPT_4,
+        ImportedModelIds.GPT_4_O,
         ImportedModelIds.CHAT_BISON,
       ].some(
         (modelId) =>
@@ -816,10 +816,10 @@ dialTest(
       Import.v14AppImportedFilename,
       Import.v19AppImportedFilename,
     ]);
-    const newModels = [ImportedModelIds.CHAT_BISON, ImportedModelIds.GPT_4];
+    const newModels = [ImportedModelIds.CHAT_BISON, ImportedModelIds.GPT_4_O];
 
     await dialTest.step(
-      'Import conversation from old app version and send two new messages based on Titan and gpt-4 models',
+      'Import conversation from old app version and send two new messages based on Titan and gpt-4o models',
       async () => {
         await localStorageManager.setRecentModelsIdsAndUseLastModel(
           ...newModels.map((m) => ModelsUtil.getModel(m)!),
@@ -866,12 +866,12 @@ dialTest(
     );
 
     await dialTest.step(
-      'Start replaying and verify old requests are replayed using gpt-4 model',
+      'Start replaying and verify old requests are replayed using gpt-4o model',
       async () => {
         const requests = await chat.startReplayForDifferentModels();
         for (let i = 0; i < requests.length; i++) {
           const modelId =
-            i === 1 ? ImportedModelIds.CHAT_BISON : ImportedModelIds.GPT_4;
+            i === 1 ? ImportedModelIds.CHAT_BISON : ImportedModelIds.GPT_4_O;
           expect
             .soft(
               requests[i].model.id,

@@ -7,7 +7,10 @@ import { useChatUploadFiles } from '@/src/hooks/useChatUploadFiles';
 import { useFilePaste } from '@/src/hooks/useFilePaste';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
+import {
+  isEntityNameOrPathInvalid,
+  replaceStringRange,
+} from '@/src/utils/app/common';
 import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
 import {
   getDialFilesFromAttachments,
@@ -452,13 +455,30 @@ export const UserMessage = memo(function UserMessage({
   );
 
   const handleUploadPastedFiles = useCallback(
-    (files: File[]) => {
-      if (!canAttachFiles) return;
-      uploadPastedFiles(files)?.then((newFiles) => {
-        setNewEditableAttachmentsIds((ids) =>
-          uniq(ids.concat(newFiles.map(({ id }) => id))),
+    (
+      files: File[],
+      textContent?: string,
+      selection?: { start: number; end: number },
+    ) => {
+      if (canAttachFiles) {
+        uploadPastedFiles(files)?.then((newFiles) => {
+          setNewEditableAttachmentsIds((ids) =>
+            uniq(ids.concat(newFiles.map(({ id }) => id))),
+          );
+        });
+      }
+      if (textContent) {
+        setMessageContent((prev) =>
+          selection
+            ? replaceStringRange(
+                prev,
+                textContent,
+                selection.start,
+                selection.end,
+              )
+            : textContent,
         );
-      });
+      }
     },
     [uploadPastedFiles, canAttachFiles],
   );
