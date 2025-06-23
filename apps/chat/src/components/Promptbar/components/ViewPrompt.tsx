@@ -15,6 +15,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ConversationsSelectors,
   ModelsSelectors,
+  PromptsSelectors,
   PublicationSelectors,
 } from '@/src/store/selectors';
 
@@ -82,11 +83,8 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
   const selectedPublication = useAppSelector(
     PublicationSelectors.selectSelectedPublication,
   );
-  const isApproveRequiredEntitySelected = useAppSelector((state) =>
-    PublicationSelectors.selectIsApproveRequiredEntitySelected(
-      state,
-      prompt.id,
-    ),
+  const { isSelectedPromptApproveRequiredResource } = useAppSelector(
+    PromptsSelectors.selectSelectedPromptId,
   );
 
   const publicVersionGroupId = usePublicVersionGroupId(prompt);
@@ -136,7 +134,7 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
       <div className="flex items-center justify-between border-t border-t-tertiary px-3 pt-4 md:px-6">
         <ViewPromptButtons prompt={prompt} onEditMode={onEditMode} />
         <div className="flex items-center gap-4">
-          {isApproveRequiredEntitySelected ? (
+          {isSelectedPromptApproveRequiredResource ? (
             <>
               <p
                 className={classNames(
