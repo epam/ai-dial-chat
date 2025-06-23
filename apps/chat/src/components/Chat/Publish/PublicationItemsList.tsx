@@ -94,13 +94,12 @@ export const PublicationItemsList = memo(
       [conversationFolders, promptFolders],
     );
 
+    const collapsedSectionsSelector = useMemo(
+      () => PublicationSelectors.selectChosenFolderIds(memoizedItems, entities),
+      [memoizedItems, entities],
+    );
     const { fullyChosenFolderIds, partialChosenFolderIds } = useAppSelector(
-      (state) =>
-        PublicationSelectors.selectChosenFolderIds(
-          state,
-          memoizedItems,
-          entities,
-        ),
+      collapsedSectionsSelector,
     );
     const chosenItemsIds = useAppSelector(
       PublicationSelectors.selectSelectedItemsToPublish,

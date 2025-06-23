@@ -27,6 +27,7 @@ import { ContextMenu } from '@/src/components/Common/ContextMenu';
 import { IconButton } from '@/src/components/Common/IconButton';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import { PublishActions } from '@epam/ai-dial-shared';
 
 interface Props {
   prompt: Prompt;
@@ -65,7 +66,10 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
     () => [
       {
         name: editBtnName,
-        display: isMyPrompt || isSelectedPromptApproveRequiredResource,
+        display:
+          isMyPrompt ||
+          (isSelectedPromptApproveRequiredResource &&
+            prompt.publicationInfo?.action !== PublishActions.DELETE),
         dataQa: 'edit-prompt',
         Icon: IconPencilMinus,
         onClick: onEditMode,
@@ -134,6 +138,9 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
     ],
     [
       isMyPrompt,
+      isSelectedPromptApproveRequiredResource,
+      prompt.publicationInfo?.action,
+      prompt.sharedWithMe,
       onEditMode,
       handleDuplicate,
       handleExport,
@@ -143,10 +150,8 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
       isPublishingEnabled,
       handlePublish,
       isPublic,
-      isSelectedPromptApproveRequiredResource,
       handleUnpublish,
       handleInfo,
-      prompt.sharedWithMe,
       handleDelete,
     ],
   );
