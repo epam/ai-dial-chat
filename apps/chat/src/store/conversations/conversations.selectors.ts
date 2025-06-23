@@ -62,7 +62,6 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import {
   ConversationInfo,
   Feature,
-  FeatureType,
   Role,
   ShareEntity,
 } from '@epam/ai-dial-shared';
@@ -760,7 +759,6 @@ const selectIsSelectedConversationBlocksInput = createSelector(
     ChatSelectors.selectIsConfigurationBlocksInput,
     ChatSelectors.selectNotAvailableEntityType,
     selectAreSelectedConversationsReadOnly,
-    SettingsSelectors.selectEnabledFeatures,
   ],
   (
     conversations,
@@ -768,7 +766,6 @@ const selectIsSelectedConversationBlocksInput = createSelector(
     isConfigurationBlocksInput,
     notAvailableEntityType,
     areReadOnly,
-    features,
   ) => {
     const isReviewEntity = conversations.some((conversation) =>
       resourcesToReview.some(
@@ -778,7 +775,6 @@ const selectIsSelectedConversationBlocksInput = createSelector(
 
     return conversations.some(
       (conversation) =>
-        features.has(Feature.DisabledInput) ||
         conversation.sharedWithMe ||
         (!conversation.messages?.length &&
           (isConfigurationBlocksInput || isReplayConversation(conversation))) ||
