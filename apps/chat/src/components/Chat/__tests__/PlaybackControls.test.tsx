@@ -44,7 +44,7 @@ vi.mock('@/src/store/selectors', () => ({
   UISelectors: {
     selectIsChatFullWidth: vi.fn(),
   },
-  SettingSelectors: {
+  SettingsSelectors: {
     isFeatureEnabled: vi.fn(),
   },
 }));
