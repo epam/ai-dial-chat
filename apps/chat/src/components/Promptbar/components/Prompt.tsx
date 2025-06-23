@@ -260,6 +260,17 @@ export const PromptComponent = ({
                 isApproveRequiredResource,
               }),
             );
+
+            if (
+              isApproveRequiredResource &&
+              additionalItemData?.publicationUrl
+            ) {
+              dispatch(
+                PublicationActions.selectPublication(
+                  additionalItemData?.publicationUrl,
+                ),
+              );
+            }
           }
 
           if (isSelectMode && !isExternal) {
