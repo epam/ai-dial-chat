@@ -1293,10 +1293,10 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
                   (conv) =>
                     (conv.folderId === payload.conversation.folderId ||
                       (isEntityIdLocal(payload.conversation) &&
-                        (!isOverlay
-                          ? conv.folderId === conversationRootFolderId
-                          : conv.folderId ===
-                            overlayNewConversationsFolder))) &&
+                        (isOverlay && overlayNewConversationsFolder
+                          ? conv.folderId ===
+                            overlayNewConversationsFolder
+                          : conv.folderId === conversationRootFolderId))) &&
                     !selectedConversationIds.includes(conv.id),
                 ),
                 Math.max(
