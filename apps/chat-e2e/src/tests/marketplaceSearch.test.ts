@@ -42,7 +42,7 @@ dialTest(
     publishRequestBuilder,
   }) => {
     setTestIds(
-      'EPMRTC-4+318',
+      'EPMRTC-4318',
       'EPMRTC-4615',
       'EPMRTC-4383',
       'EPMRTC-4317',
@@ -711,6 +711,122 @@ dialTest(
             ExpectedMessages.searchResultsAreCorrect,
           );
         }
+      },
+    );
+  },
+);
+
+dialTest(
+  'Search in DIAL Marketplace. New extended search by name and version',
+  async ({
+    marketplacePage,
+    marketplaceHeader,
+    marketplace,
+    marketplaceAgentsSection,
+    localStorageManager,
+    setTestIds,
+    baseAssertion,
+    customApplicationBuilder,
+    applicationApiHelper,
+  }) => {
+    setTestIds('EPMRTC-6448');
+    const firstTerm = '7.7.7';
+    const secondTerm = '3.3.3';
+    const thirdTerm = '7.7.8';
+    const firstAppName = `${GeneratorUtil.randomApplicationName()} ${firstTerm}`;
+    const secondAppName = `${GeneratorUtil.randomApplicationName()} ${secondTerm}`;
+    const thirdAppName = GeneratorUtil.randomApplicationName();
+    const fourthAppName = GeneratorUtil.randomApplicationName();
+    const searchTermResultMap = new Map<string, string[]>();
+    searchTermResultMap.set(firstTerm, [
+      firstAppName,
+      secondAppName,
+      thirdAppName,
+      fourthAppName,
+    ]);
+    searchTermResultMap.set(secondTerm.concat(' '.repeat(3)), [
+      firstAppName,
+      secondAppName,
+    ]);
+    searchTermResultMap.set(thirdTerm, [
+      firstAppName,
+      secondAppName,
+      thirdAppName,
+      fourthAppName,
+    ]);
+    searchTermResultMap.set(firstTerm.concat('1'), [
+      firstAppName,
+      secondAppName,
+      thirdAppName,
+    ]);
+    searchTermResultMap.set(firstTerm.concat('15'), [thirdAppName]);
+
+    await dialTest.step(
+      'Prepare the set of custom applications with mixture of terms in the name and version',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        const firstAppModel = customApplicationBuilder
+          .withDisplayName(firstAppName)
+          .withDisplayVersion(secondTerm)
+          .build();
+        const secondAppModel = customApplicationBuilder
+          .withDisplayName(secondAppName)
+          .withDisplayVersion(firstTerm)
+          .build();
+        const thirdAppModel = customApplicationBuilder
+          .withDisplayName(thirdAppName)
+          .withDisplayVersion(firstTerm.concat('1'))
+          .build();
+        const fourthAppModel = customApplicationBuilder
+          .withDisplayName(fourthAppName)
+          .withDisplayVersion(thirdTerm)
+          .build();
+        for (const appModel of [
+          firstAppModel,
+          secondAppModel,
+          thirdAppModel,
+          fourthAppModel,
+        ]) {
+          await applicationApiHelper.createApplication(appModel);
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Open "DIAL Marketplace", type search term in the search field and verify correct apps are found',
+      async () => {
+        await marketplacePage.openMarketplacePage();
+        await marketplacePage.waitForPageLoaded();
+        for (const searchTerm of searchTermResultMap.keys()) {
+          await marketplaceHeader.searchInput.fillInInput(searchTerm);
+          const actualAgents = await marketplaceAgentsSection.getAllAgents();
+          const filteredAgents = actualAgents.filter(
+            (agent) => agent.isWorkspaceAgent,
+          );
+          baseAssertion.assertValue(
+            filteredAgents.length,
+            searchTermResultMap.get(searchTerm)!.length,
+            ExpectedMessages.elementsCountIsValid,
+          );
+          baseAssertion.assertArrayIncludesAll(
+            filteredAgents.map((agent) => agent.name),
+            searchTermResultMap.get(searchTerm)!,
+            ExpectedMessages.searchResultsAreCorrect,
+          );
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Type "5.5.5155" in the search field and verify no results are found',
+      async () => {
+        await marketplaceHeader.searchInput.fillInInput(
+          firstTerm.concat('155'),
+        );
+        await baseAssertion.assertElementState(
+          marketplace.noResultsFound,
+          'visible',
+        );
       },
     );
   },
