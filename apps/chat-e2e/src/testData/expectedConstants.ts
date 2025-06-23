@@ -453,7 +453,7 @@ export enum Side {
 
 export enum ImportedModelIds {
   GPT_3_5_TURBO = 'gpt-35-turbo',
-  GPT_4 = 'gpt-4',
+  GPT_4_O = 'gpt-4o',
   CHAT_BISON = 'chat-bison',
 }
 

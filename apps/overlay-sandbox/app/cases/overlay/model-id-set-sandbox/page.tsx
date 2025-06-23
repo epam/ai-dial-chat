@@ -9,7 +9,7 @@ import { Feature } from '@epam/ai-dial-shared';
 
 const overlayOptions = {
   ...commonOverlayProps,
-  modelId: 'anthropic.claude-v3-sonnet',
+  modelId: 'gpt-4o',
   enabledFeatures: [
     Feature.ConversationsSection,
     Feature.PromptsSection,
