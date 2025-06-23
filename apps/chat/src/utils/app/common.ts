@@ -291,3 +291,12 @@ export const getDefaultConversationProps = (): ShareInterface &
   ...getDefaultEntityProps(),
   reference: nanoid(),
 });
+
+export const replaceStringRange = (
+  currentString: string,
+  value: string,
+  start: number,
+  end: number,
+) => {
+  return currentString.slice(0, start) + value + currentString.slice(end);
+};
