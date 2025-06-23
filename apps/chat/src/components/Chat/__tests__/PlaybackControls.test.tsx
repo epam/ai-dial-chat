@@ -99,7 +99,7 @@ describe('PlaybackControls', () => {
           activePlaybackIndex: 1,
         },
         model: {
-          id: 'gpt-4-0613',
+          id: 'gpt-4o',
         },
         messages: [],
         prompt: '',

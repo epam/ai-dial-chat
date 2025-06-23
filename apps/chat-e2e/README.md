@@ -69,13 +69,13 @@ DIAL API tests are divided into several groups based on their functionality:
 
 The input and expected data for the tests are configured in environment variables that must be a valid JSON, and they are parsed into different interface types. The table below illustrates the correlation between tests, environment variables, and interfaces:
 
-| Test                          | Env variable                              | Interface                     | Example                                                                                                                                                                                  |
-| ----------------------------- | ----------------------------------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `entityArithmeticRequest`     | `ENTITY_ARITHMETIC_REQUEST_FOR_API_TESTS` | `ArithmeticRequestEntity`     | `'[{ "entityId": "gpt-35-turbo", "isSysPromptAllowed": "true" }]'`                                                                                                                       |
-| `entityPlusAddons`            | `ENTITY_PLUS_ADDONS_FOR_API_TESTS`        | `EntityPlusAddonsRequest`     | `'[{ "entityId": "gpt-4", "addonIds": ["addon-wolfram"], "request": "plot y = x + 1", "response": "https://www6b3.wolframalpha.com/Calculate/MSP" }]'`                                   |
-| `assistantPlusAddons`         | `ASSISTANT_PLUS_ADDONS_FOR_API_TESTS`     | `AssistantPlusAddonsRequest`  | `'[{ "assistantId": "test-assistant", "addonIds": ["addonId1", "addonId2"], "assistantModelId": "gpt-4", "request": "assistant request?", "response": "expected assistant response" }]'` |
-| `entitySimpleRequest`         | `ENTITY_SIMPLE_REQUEST_FOR_API_TESTS`     | `EntitySimpleRequest`         | `'[{ "entityId": "stability.stable-diffusion-xl", "request": "draw smiling emoticon", "isAttachmentResponse": "true"}]'`                                                                 |
-| `entityPlusAttachmentRequest` | `ENTITY_PLUS_ATTACHMENT_FOR_API_TESTS`    | `EntityPlusAttachmentRequest` | `'[{ "entityId": "gpt-4-vision-preview", "attachmentName": "sun.jpg", "response": "sun" }]'`                                                                                             |
+| Test                          | Env variable                              | Interface                     | Example                                                                                                                                                                                   |
+| ----------------------------- | ----------------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `entityArithmeticRequest`     | `ENTITY_ARITHMETIC_REQUEST_FOR_API_TESTS` | `ArithmeticRequestEntity`     | `'[{ "entityId": "gpt-35-turbo", "isSysPromptAllowed": "true" }]'`                                                                                                                        |
+| `entityPlusAddons`            | `ENTITY_PLUS_ADDONS_FOR_API_TESTS`        | `EntityPlusAddonsRequest`     | `'[{ "entityId": "gpt-4o", "addonIds": ["addon-wolfram"], "request": "plot y = x + 1", "response": "https://www6b3.wolframalpha.com/Calculate/MSP" }]'`                                   |
+| `assistantPlusAddons`         | `ASSISTANT_PLUS_ADDONS_FOR_API_TESTS`     | `AssistantPlusAddonsRequest`  | `'[{ "assistantId": "test-assistant", "addonIds": ["addonId1", "addonId2"], "assistantModelId": "gpt-4o", "request": "assistant request?", "response": "expected assistant response" }]'` |
+| `entitySimpleRequest`         | `ENTITY_SIMPLE_REQUEST_FOR_API_TESTS`     | `EntitySimpleRequest`         | `'[{ "entityId": "stability.stable-diffusion-xl", "request": "draw smiling emoticon", "isAttachmentResponse": "true"}]'`                                                                  |
+| `entityPlusAttachmentRequest` | `ENTITY_PLUS_ATTACHMENT_FOR_API_TESTS`    | `EntityPlusAttachmentRequest` | `'[{ "entityId": "gpt-4-vision-preview", "attachmentName": "sun.jpg", "response": "sun" }]'`                                                                                              |
 
 If environment variable is not set, the corresponding test will not be executed.
 
@@ -86,7 +86,7 @@ To execute these listing tests, the following environment variables need to be s
 
 | Env variable            | Interface | Example                                                           |
 | ----------------------- | --------- | ----------------------------------------------------------------- |
-| `MODELS_LIST_FOR_TESTS` | `Entity`  | `'[{"entityId":"gpt-35-turbo"}, {"entityId":"gpt-4"}]'`           |
+| `MODELS_LIST_FOR_TESTS` | `Entity`  | `'[{"entityId":"gpt-35-turbo"}, {"entityId":"gpt-4o"}]'`          |
 | `ADDONS_LIST_FOR_TESTS` | `Entity`  | `'[{"entityId":"addon-wolfram"}, {"entityId":"addon-xweather"}]'` |
 
 ## Run tests locally
@@ -103,7 +103,7 @@ To run only chat e2e tests use `nx run chat-e2e:e2e:chat`, for overlay sandbox t
 
 After tests execution finished, 2 kind of reports are generated: html, allure.
 
-Before generating Allure report, install it on your local machine following the guide: https://docs.qameta.io/allure/#_get_started.
+Before generating Allure report, install it on your local machine following the guide: <https://docs.qameta.io/allure/#_get_started>.
 
 To open chat html report, run the command `npx playwright show-report apps\chat-e2e\chat-html-report`, for overlay report - `npx playwright show-report apps\chat-e2e\overlay-html-report`
 
