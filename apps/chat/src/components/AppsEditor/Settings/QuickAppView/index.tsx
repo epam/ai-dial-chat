@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Controller,
   Path,
   RegisterOptions,
+  useController,
   useFormContext,
 } from 'react-hook-form';
 
@@ -104,16 +105,16 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
   isShared,
 }) => {
   const { t } = useTranslation(Translation.Chat);
-
   const dispatch = useAppDispatch();
 
   const {
     register,
     control,
     handleSubmit: submitWrapper,
-    formState: { errors, defaultValues, isValid },
+    formState: { errors, defaultValues, isValid: isFormValid },
     getFieldState,
     getValues,
+    watch,
   } = useFormContext<QuickAppFormData>();
 
   const lastSubmittedValuesRef = useRef<QuickAppFormData | undefined>(
@@ -128,6 +129,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
+  const isAppPublic = isEntityIdPublic(oldApplication);
   const confirmDocumentUrlValues = oldApplication?.isShared
     ? CONFIRM_DOCUMENT_VALUES
     : undefined;
@@ -137,7 +139,6 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
   const handleSubmit = useCallback(
     (data: QuickAppFormData) => {
       const hasChanged = !isEqual(data, lastSubmittedValuesRef.current);
-
       if (hasChanged) {
         const applicationData = getQuickAppData(data, modelsMap);
 
@@ -156,7 +157,6 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
             }),
           );
         }
-
         dispatch(
           ApplicationActions.update({
             oldApplication,
@@ -168,46 +168,38 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
             schema: schema ?? undefined,
           }),
         );
-
         lastSubmittedValuesRef.current = data;
       }
-
-      if (exitAfterSave) {
-        dispatch(ApplicationActions.exitEditor({}));
-      }
-
+      if (exitAfterSave) dispatch(ApplicationActions.exitEditor({}));
       dispatch(ApplicationActions.setShouldSaveApplication(false));
       dispatch(ApplicationActions.setExitAfterSave(false));
     },
-    [exitAfterSave, dispatch, isShared, oldApplication, schema],
+    [exitAfterSave, dispatch, modelsMap, isShared, oldApplication, schema],
   );
 
   const autoSaveHandler = useCallback(() => {
     submitWrapper(handleSubmit)();
   }, [submitWrapper, handleSubmit]);
 
-  const isAppPublic = isEntityIdPublic(oldApplication);
-
   const savePartialForm = useCallback(() => {
     if (isAppPublic) return;
     const data = getValues();
-    if (!isValid && lastSubmittedValuesRef.current) {
+    if (!isFormValid && lastSubmittedValuesRef.current) {
       handleSubmit({
         ...lastSubmittedValuesRef.current,
         ...getValidFormFields(data, getFieldState),
       });
-    } else if (isValid) {
+    } else if (isFormValid) {
       handleSubmit(data);
     }
-  }, [getFieldState, getValues, handleSubmit, isValid, isAppPublic]);
+  }, [getFieldState, getValues, handleSubmit, isFormValid, isAppPublic]);
 
   useBeforeRedirect(savePartialForm);
 
   useEffect(() => {
     const isTriggered = shouldSaveApplication || exitAfterSave;
     if (!isTriggered) return;
-
-    if (!isValid) {
+    if (!isFormValid) {
       dispatch(ApplicationActions.setShouldSaveApplication(false));
       dispatch(ApplicationActions.setExitAfterSave(false));
       dispatch(
@@ -215,15 +207,12 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
       );
       return;
     }
-
-    if (shouldSaveApplication) {
-      autoSaveHandler();
-    }
+    if (shouldSaveApplication) autoSaveHandler();
   }, [
     autoSaveHandler,
     dispatch,
     exitAfterSave,
-    isValid,
+    isFormValid,
     shouldSaveApplication,
     router,
     t,
@@ -234,6 +223,56 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
       readOnly: isAppPublic,
     }),
     [isAppPublic],
+  );
+
+  const editorTabs = useMemo(() => {
+    return [
+      {
+        id: 'toolset',
+        label: 'Web API',
+        value: watch('toolset') ?? '',
+        language: 'json',
+      },
+      {
+        id: 'mcpToolset',
+        label: 'MCP',
+        value: watch('mcpToolset') ?? '',
+        language: 'json',
+      },
+    ] as const;
+  }, [watch]);
+
+  type EditorTabId = (typeof editorTabs)[number]['id'];
+  const [activeTabId, setActiveTabId] = useState<EditorTabId>('toolset');
+
+  const toolsetController = useController({
+    name: 'toolset',
+    control,
+    rules: validators.toolset,
+  });
+  const mcpToolsetController = useController({
+    name: 'mcpToolset',
+    control,
+    rules: validators.mcpToolset,
+  });
+
+  const fieldControllers = useMemo(
+    () => ({
+      toolset: toolsetController,
+      mcpToolset: mcpToolsetController,
+    }),
+    [toolsetController, mcpToolsetController],
+  );
+
+  const handleFileChange = useCallback(
+    (fileId: string, value: string) => {
+      const controller = fieldControllers[fileId as EditorTabId]?.field;
+      if (controller) {
+        controller.onChange(value);
+        controller.onBlur();
+      }
+    },
+    [fieldControllers],
   );
 
   return (
@@ -248,16 +287,14 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
           render={({ field }) => (
             <FilesSelectorField
               label={t('Document relative URLs')}
-              onAddFiles={(documents) => {
-                field.onChange(
-                  uniq([...(field.value ? field.value : []), ...documents]),
-                );
-              }}
-              onRemoveFile={(document) => {
+              onAddFiles={(documents) =>
+                field.onChange(uniq([...(field.value ?? []), ...documents]))
+              }
+              onRemoveFile={(document) =>
                 field.onChange(
                   field.value?.filter((field) => field !== document),
-                );
-              }}
+                )
+              }
               readonly={isSharedWithMe || isAppPublic}
               error={errors.documentRelativeUrl?.message}
               fileManagerTitle={t('Select documents')}
@@ -288,42 +325,16 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
           )}
         />
 
-        <Controller
-          name="toolset"
-          control={control}
-          rules={validators['toolset']}
-          render={({ field }) => (
-            <ToolsetEditor
-              label={t('Configure toolset')}
-              error={errors.toolset?.message}
-              height={200}
-              value={field.value}
-              className="m-0.5 w-full overflow-hidden rounded border border-primary"
-              language="json"
-              onChange={(v) => field.onChange(v ?? '')}
-              allowFullScreen
-              options={editorOptions}
-            />
-          )}
-        />
-
-        <Controller
-          name="mcpToolset"
-          control={control}
-          rules={validators['mcpToolset']}
-          render={({ field }) => (
-            <ToolsetEditor
-              label={t('Configure MCP toolset')}
-              error={errors.mcpToolset?.message}
-              height={200}
-              value={field.value}
-              className="m-0.5 w-full overflow-hidden rounded border border-primary"
-              language="json"
-              onChange={(v) => field.onChange(v ?? '')}
-              allowFullScreen
-              options={editorOptions}
-            />
-          )}
+        <ToolsetEditor
+          label={t('Configure toolset')}
+          error={errors[activeTabId]?.message}
+          height={200}
+          allowFullScreen
+          files={[...editorTabs]}
+          onTabChange={(id) => setActiveTabId(id as EditorTabId)}
+          activeFileId={activeTabId}
+          onChangeFile={handleFileChange}
+          options={editorOptions}
         />
 
         <FieldTextArea
