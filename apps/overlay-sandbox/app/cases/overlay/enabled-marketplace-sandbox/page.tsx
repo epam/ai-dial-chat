@@ -9,7 +9,6 @@ import { Feature } from '@epam/ai-dial-shared';
 
 const overlayOptions = {
   ...commonOverlayProps,
-  modelId: 'gpt-4o',
   enabledFeatures: [
     Feature.ConversationsSection,
     Feature.Header,
