@@ -1185,7 +1185,9 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
       actions.push(
         of(OverlayActions.setOverlayOptionsSuccess(options)),
         iif(
-          () => !shouldLogIn && !isOverlayOptionsReceived,
+          () =>
+            !shouldLogIn &&
+            (!isOverlayOptionsReceived || isOptionChanged('modelId')),
           of(ConversationsActions.initSelectedConversations()),
           EMPTY,
         ),
