@@ -128,9 +128,6 @@ export const UserMessage = memo(function UserMessage({
       conversation.id,
     ),
   );
-  const isExternal = useAppSelector(
-    ConversationsSelectors.selectAreSelectedConversationsExternal,
-  );
 
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
 
@@ -149,12 +146,7 @@ export const UserMessage = memo(function UserMessage({
   const [selectedDialLinks, setSelectedDialLinks] = useState<DialLink[]>([]);
 
   const showUserButtons =
-    (!isReplay &&
-      !isPlayback &&
-      !isEditing &&
-      !isExternal &&
-      withButtons &&
-      !isReadOnly) ||
+    (!isReplay && !isPlayback && !isEditing && withButtons && !isReadOnly) ||
     (isApproveRequiredEntitySelected &&
       !isReplay &&
       !isPlayback &&

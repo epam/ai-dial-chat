@@ -568,7 +568,6 @@ const ChatView = memo(() => {
   const showLastMessageRegenerate =
     (!isReplay &&
       !isPlayback &&
-      !isExternal &&
       !isReadOnly &&
       !messageIsStreaming &&
       !isLastMessageError &&
@@ -589,7 +588,6 @@ const ChatView = memo(() => {
 
   const isInputVisible =
     ((!isReplay || isNotEmptyConversations) &&
-      !isExternal &&
       !isReadOnly &&
       (areModelsInstalled || isAdminPreview || isReplay || isIsolatedView) &&
       !(isConversationWithSchema && selectedConversations.length > 1)) ||
