@@ -164,6 +164,7 @@ export const Combobox = <T,>({
                   truncate: false,
                 })
               }
+              hideTooltip={!!isOpen}
               triggerClassName="w-full"
               contentClassName="max-w-[300px] break-words"
               isTriggerClickable
