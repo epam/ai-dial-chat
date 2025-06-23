@@ -11,7 +11,7 @@ import { OverlaySandboxUrls } from '@/src/testData/overlay/overlaySandboxUrls';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
-const expectedModelId = 'gpt-35-turbo';
+const expectedModelId = 'gpt-4o';
 
 dialOverlayTest(
   `[Overlay] Defaults set in the code: modelID is used for new conversation.\n` +
