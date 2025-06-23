@@ -96,6 +96,7 @@ interface QuickAppViewProps {
   isSharedWithMe: boolean;
   oldApplication: CustomApplicationModel;
   isShared?: boolean;
+  publicationUrl?: string;
 }
 
 export const QuickAppView: React.FC<QuickAppViewProps> = ({
@@ -103,6 +104,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
   isSharedWithMe,
   oldApplication,
   isShared,
+  publicationUrl,
 }) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -166,6 +168,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
               isShared: arrAreNotTheSameAndShared ? false : isShared,
             },
             schema: schema ?? undefined,
+            publicationUrl,
           }),
         );
         lastSubmittedValuesRef.current = data;
@@ -174,7 +177,15 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
       dispatch(ApplicationActions.setShouldSaveApplication(false));
       dispatch(ApplicationActions.setExitAfterSave(false));
     },
-    [exitAfterSave, dispatch, modelsMap, isShared, oldApplication, schema],
+    [
+      exitAfterSave,
+      dispatch,
+      modelsMap,
+      isShared,
+      oldApplication,
+      schema,
+      publicationUrl,
+    ],
   );
 
   const autoSaveHandler = useCallback(() => {
