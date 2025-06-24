@@ -48,6 +48,7 @@ import { FeatureType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
 
 import {
+  ChatActions,
   ConversationsActions,
   ImportExportActions,
   ModelsActions,
@@ -76,6 +77,8 @@ import {
   CreatePlaybackConversationRequest,
   CreatePlaybackConversationResponse,
   DeleteConversationRequest,
+  DeleteMessageRequest,
+  DeleteMessageResponse,
   ExportConversationRequest,
   ExportConversationResponse,
   Feature,
@@ -94,7 +97,9 @@ import {
   SelectConversationResponse,
   SelectedConversationLoadedResponse,
   SendMessageRequest,
+  SetInputContentRequest,
   SetSystemPromptRequest,
+  StopSelectedPlaybackConversationResponse,
   overlayAppName,
   validateFeature,
 } from '@epam/ai-dial-shared';
@@ -183,6 +188,13 @@ export const postMessageMapperEpic: AppEpic = (_, state$) =>
                 }),
               );
             }
+            case OverlayRequests.stopSelectedPlaybackConversation: {
+              return of(
+                OverlayActions.stopSelectedPlaybackConversation({
+                  requestId,
+                }),
+              );
+            }
             case OverlayRequests.exportConversation: {
               const options = payload as ExportConversationRequest;
 
@@ -217,6 +229,30 @@ export const postMessageMapperEpic: AppEpic = (_, state$) =>
               const { content } = payload as SendMessageRequest;
 
               return of(OverlayActions.sendMessage({ content, requestId }));
+            }
+            case OverlayRequests.deleteMessage: {
+              const { index } = payload as DeleteMessageRequest;
+
+              return of(OverlayActions.deleteMessage({ index, requestId }));
+            }
+            case OverlayRequests.setInputContent: {
+              const { content } = payload as SetInputContentRequest;
+              const hostDomain = OverlaySelectors.selectHostDomain(
+                state$.value,
+              );
+
+              return concat(
+                of(
+                  OverlayActions.sendPMResponse({
+                    type: OverlayRequests.setInputContent,
+                    requestParams: {
+                      requestId,
+                      hostDomain,
+                    },
+                  }),
+                ),
+                of(ChatActions.setInputContent(content)),
+              );
             }
             case OverlayRequests.setSystemPrompt: {
               const { systemPrompt } = payload as SetSystemPromptRequest;
@@ -583,6 +619,74 @@ const createPlaybackConversationEffectEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const stopSelectedPlaybackConversationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.stopSelectedPlaybackConversation.type),
+    switchMap(({ payload }) => {
+      const conversations = ConversationsSelectors.selectSelectedConversations(
+        state$.value,
+      );
+
+      if (!conversations[0].isPlayback) {
+        console.warn(
+          `[Overlay] Current selected conversations is not playback`,
+        );
+
+        return EMPTY;
+      }
+
+      return concat(
+        of(ConversationsActions.playbackCancel()),
+        of(OverlayActions.stopSelectedPlaybackConversationEffect(payload)),
+      );
+    }),
+  );
+
+const stopSelectedPlaybackConversationEffectEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.stopSelectedPlaybackConversationEffect.type),
+    switchMap(({ payload: { requestId } }) => {
+      return action$.pipe(
+        ofType(ConversationsActions.updateConversation.type),
+        takeUntil(timer(10000)),
+        filter(Boolean),
+        mergeMap(({ payload: { id } }) => {
+          const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+          const updatedConversation = ConversationsSelectors.selectConversation(
+            state$.value,
+            id,
+          );
+
+          if (!updatedConversation) {
+            return EMPTY;
+          }
+
+          const { bucket, parentPath } = splitEntityId(updatedConversation.id);
+          const resultConversation = {
+            ...updatedConversation,
+            bucket,
+            parentPath,
+          };
+
+          return concat(
+            of(
+              OverlayActions.sendPMResponse({
+                type: OverlayRequests.stopSelectedPlaybackConversation,
+                requestParams: {
+                  requestId,
+                  hostDomain,
+                  payload: {
+                    conversation: resultConversation,
+                  } as StopSelectedPlaybackConversationResponse,
+                },
+              }),
+            ),
+          );
+        }),
+      );
+    }),
+  );
+
 const renameConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(OverlayActions.renameConversation.type),
@@ -894,18 +998,62 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const deleteMessageEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(OverlayActions.deleteMessage.type),
+    switchMap(({ payload: { index, requestId } }) => {
+      return concat(
+        of(
+          OverlayActions.deleteMessageEffect({
+            index,
+            requestId,
+          }),
+        ),
+        of(
+          ConversationsActions.deleteMessage({
+            index,
+          }),
+        ),
+      );
+    }),
+  );
+
+const deleteMessageEffectEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.deleteMessageEffect.type),
+    switchMap(({ payload: { requestId } }) => {
+      return action$.pipe(
+        ofType(ConversationsActions.updateConversationSuccess.type),
+        takeUntil(timer(10000)),
+        filter(Boolean),
+        mergeMap(({ payload: { conversation } }) => {
+          const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+
+          return concat(
+            of(
+              OverlayActions.sendPMResponse({
+                type: OverlayRequests.deleteMessage,
+                requestParams: {
+                  requestId,
+                  hostDomain,
+                  payload: {
+                    messages: conversation.messages,
+                  } as DeleteMessageResponse,
+                },
+              }),
+            ),
+          );
+        }),
+      );
+    }),
+  );
+
 const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(OverlayActions.setOverlayOptions.type),
-    map(({ payload: { ...options } }) => {
-      const availableThemes = UISelectors.selectAvailableThemes(state$.value);
-
-      return { ...options, availableThemes };
-    }),
-    switchMap(
-      ({
+    switchMap(({ payload: { ...options } }) => {
+      const {
         theme,
-        availableThemes,
         hostDomain,
         modelId,
         requestId,
@@ -913,129 +1061,140 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
         signInOptions,
         overlayConversationId,
         signInInSameWindow,
-      }) => {
-        const actions = [];
+      } = options;
 
-        actions.push(
-          of(
-            OverlayActions.sendPMResponse({
-              type: OverlayRequests.setOverlayOptions,
-              requestParams: {
-                requestId,
-                hostDomain,
-              },
-            }),
-          ),
+      const availableThemes = UISelectors.selectAvailableThemes(state$.value);
+      const _savedOverlayOptions = state$.value.overlay._savedOverlayOptions;
+      const isOverlayOptionsReceived = state$.value.overlay.optionsReceived;
+      const actions = [];
+
+      const isOptionChanged = (optionName: keyof ChatOverlayOptions) => {
+        return !isEqual(
+          _savedOverlayOptions?.[optionName],
+          options[optionName],
         );
+      };
 
-        if (theme) {
-          if (availableThemes.some(({ id }) => id === theme)) {
-            actions.push(of(UIActions.setTheme(theme)));
-          } else {
-            console.warn(
-              `[Overlay](Theme) No such theme: ${theme}.\nTheme isn't set.`,
-            );
-          }
-        }
+      actions.push(
+        of(
+          OverlayActions.sendPMResponse({
+            type: OverlayRequests.setOverlayOptions,
+            requestParams: {
+              requestId,
+              hostDomain,
+            },
+          }),
+        ),
+      );
 
-        if (signInInSameWindow) {
-          actions.push(
-            of(SettingsActions.setIsSignInInSameWindow(signInInSameWindow)),
+      if (theme && isOptionChanged('theme')) {
+        if (availableThemes.some(({ id }) => id === theme)) {
+          actions.push(of(UIActions.setTheme(theme)));
+        } else {
+          console.warn(
+            `[Overlay](Theme) No such theme: ${theme}.\nTheme isn't set.`,
           );
         }
+      }
 
-        if (enabledFeatures) {
-          let features: string[] = [];
+      if (signInInSameWindow && isOptionChanged('signInInSameWindow')) {
+        actions.push(
+          of(SettingsActions.setIsSignInInSameWindow(signInInSameWindow)),
+        );
+      }
 
-          if (typeof enabledFeatures === 'string') {
-            features = parseCommaSeparatedList(enabledFeatures);
-          }
+      if (enabledFeatures && isOptionChanged('enabledFeatures')) {
+        let features: string[] = [];
 
-          if (Array.isArray(enabledFeatures)) {
-            features = enabledFeatures;
-          }
-
-          if (features.every(validateFeature)) {
-            const isLoginRequired = AuthSelectors.selectIsShouldLogin(
-              state$.value,
-            );
-
-            actions.push(
-              of(SettingsActions.setEnabledFeatures(features as Feature[])),
-            );
-
-            if (
-              !isLoginRequired &&
-              features.includes(Feature.ConversationsSharing)
-            ) {
-              actions.push(
-                of(ShareActions.triggerGettingSharedConversationListings()),
-              );
-            }
-          } else {
-            const incorrectFeatures = features
-              .filter((feature) => !validateFeature(feature))
-              .join(',');
-
-            console.warn(
-              `[Overlay](Enabled Features) No such features: ${incorrectFeatures}. \nFeatures aren't set.`,
-            );
-          }
+        if (typeof enabledFeatures === 'string') {
+          features = parseCommaSeparatedList(enabledFeatures);
         }
 
-        const shouldLogIn = AuthSelectors.selectIsShouldLogin(state$.value);
+        if (Array.isArray(enabledFeatures)) {
+          features = enabledFeatures;
+        }
 
-        if (!shouldLogIn) {
-          if (modelId) {
-            const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
-            const overlayDefaultModel = modelsMap[modelId];
+        if (features.every(validateFeature)) {
+          const isLoginRequired = AuthSelectors.selectIsShouldLogin(
+            state$.value,
+          );
 
-            if (overlayDefaultModel) {
-              actions.push(
-                of(
-                  ModelsActions.updateRecentModels({
-                    modelId: overlayDefaultModel.reference,
-                  }),
-                ),
-              );
-              actions.push(
-                of(
-                  SettingsActions.setOverlayDefaultModelReference({
-                    overlayDefaultModelReference: overlayDefaultModel.reference,
-                  }),
-                ),
-              );
-            } else {
-              console.warn(
-                `[Overlay](ModelId) No such model: ${modelId}.\nModelId isn't available.`,
-              );
-            }
+          actions.push(
+            of(SettingsActions.setEnabledFeatures(features as Feature[])),
+          );
+
+          if (
+            !isLoginRequired &&
+            features.includes(Feature.ConversationsSharing)
+          ) {
+            actions.push(
+              of(ShareActions.triggerGettingSharedConversationListings()),
+            );
           }
-          if (overlayConversationId) {
+        } else {
+          const incorrectFeatures = features
+            .filter((feature) => !validateFeature(feature))
+            .join(',');
+
+          console.warn(
+            `[Overlay](Enabled Features) No such features: ${incorrectFeatures}. \nFeatures aren't set.`,
+          );
+        }
+      }
+
+      const shouldLogIn = AuthSelectors.selectIsShouldLogin(state$.value);
+
+      if (!shouldLogIn) {
+        if (modelId && isOptionChanged('modelId')) {
+          const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+          const overlayDefaultModel = modelsMap[modelId];
+
+          if (overlayDefaultModel) {
             actions.push(
               of(
-                SettingsActions.setOverlayConversationId(overlayConversationId),
+                ModelsActions.updateRecentModels({
+                  modelId: overlayDefaultModel.reference,
+                }),
               ),
+            );
+            actions.push(
+              of(
+                SettingsActions.setOverlayDefaultModelReference({
+                  overlayDefaultModelReference: overlayDefaultModel.reference,
+                }),
+              ),
+            );
+          } else {
+            console.warn(
+              `[Overlay](ModelId) No such model: ${modelId}.\nModelId isn't available.`,
             );
           }
         }
+        if (overlayConversationId && isOptionChanged('overlayConversationId')) {
+          actions.push(
+            of(SettingsActions.setOverlayConversationId(overlayConversationId)),
+          );
+        }
+      }
 
-        // after all actions will send notify that settings are set
-        actions.push(
-          of(
-            OverlayActions.setOverlayOptionsSuccess({ hostDomain, requestId }),
-          ),
-          of(OverlayActions.signInOptionsSet({ signInOptions })),
-          iif(
-            () => !shouldLogIn,
-            of(ConversationsActions.initSelectedConversations()),
-            EMPTY,
-          ),
-        );
+      if (isOptionChanged('signInOptions')) {
+        actions.push(of(OverlayActions.signInOptionsSet({ signInOptions })));
+      }
 
-        return merge(...actions);
-      },
-    ),
+      // after all actions will send notify that settings are set
+      actions.push(
+        of(OverlayActions.setOverlayOptionsSuccess(options)),
+        iif(
+          () =>
+            !shouldLogIn &&
+            (!isOverlayOptionsReceived || isOptionChanged('modelId')),
+          of(ConversationsActions.initSelectedConversations()),
+          EMPTY,
+        ),
+      );
+
+      return merge(...actions);
+    }),
   );
 
 const signInOptionsSet: AppEpic = (action$, state$) =>
@@ -1270,6 +1429,8 @@ export const OverlayEpics = combineEpics(
   deleteConversationEpic,
   createPlaybackConversationEpic,
   createPlaybackConversationEffectEpic,
+  stopSelectedPlaybackConversationEpic,
+  stopSelectedPlaybackConversationEffectEpic,
   exportConversationEpic,
   importConversationEpic,
   importConversationEffectEpic,
@@ -1282,6 +1443,8 @@ export const OverlayEpics = combineEpics(
   notifyHostAboutReadyEpic,
   setOverlayOptionsEpic,
   sendMessageEpic,
+  deleteMessageEpic,
+  deleteMessageEffectEpic,
   notifyHostGPTMessageStatus,
   setOverlayOptionsSuccessEpic,
   signInOptionsSet,

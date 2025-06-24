@@ -48,11 +48,10 @@ export class OverlayAssertion extends BaseAssertion {
     overlayHomePage: OverlayHomePage,
     expectedTheme: ThemeId,
   ) {
-    expect
-      .soft(
-        await overlayHomePage.getTheme(),
-        ExpectedMessages.applicationThemeIsValid,
-      )
-      .toBe(`${expectedTheme} ${expectedTheme}`);
+    await this.assertElementAttribute(
+      overlayHomePage.theme,
+      Attributes.class,
+      `${expectedTheme} ${expectedTheme}`,
+    );
   }
 }
