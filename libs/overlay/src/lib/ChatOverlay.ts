@@ -6,6 +6,8 @@ import {
   CreatePlaybackConversationRequest,
   CreatePlaybackConversationResponse,
   DeferredRequest,
+  DeleteMessageRequest,
+  DeleteMessageResponse,
   ExportConversationRequest,
   ExportConversationResponse,
   GetConversationsResponse,
@@ -23,8 +25,10 @@ import {
   SelectConversationResponse,
   SendMessageRequest,
   SendMessageResponse,
+  SetInputContentRequest,
   SetSystemPromptRequest,
   SetSystemPromptResponse,
+  StopSelectedPlaybackConversationResponse,
   Styles,
   Task,
   overlayAppName,
@@ -460,6 +464,16 @@ export class ChatOverlay {
   }
 
   /**
+   * Stop selected playback conversation
+   * @returns Returns normal conversation after stopping playback
+   */
+  public async stopSelectedPlaybackConversation(): Promise<StopSelectedPlaybackConversationResponse> {
+    return this.send(
+      OverlayRequests.stopSelectedPlaybackConversation,
+    ) as Promise<StopSelectedPlaybackConversationResponse>;
+  }
+
+  /**
    * Export conversation
    * @param {string} id - id of conversation to export
    * @returns Returns exported conversation object
@@ -540,6 +554,34 @@ export class ChatOverlay {
       OverlayRequests.sendMessage,
       request,
     ) as Promise<SendMessageResponse>;
+  }
+
+  /**
+   * Delete message in current selected conversation by index
+   * @param index {number} index of message in conversation
+   * NOTE: if message on index is user message it will also remove answer from assistant
+   */
+  public async deleteMessage(index: number): Promise<DeleteMessageResponse> {
+    const request: DeleteMessageRequest = {
+      index,
+    };
+
+    return this.send(
+      OverlayRequests.deleteMessage,
+      request,
+    ) as Promise<DeleteMessageResponse>;
+  }
+
+  /**
+   * Set input content
+   * @param content {string} content to set in chat input
+   */
+  public async setInputContent(content: string): Promise<void> {
+    const request: SetInputContentRequest = {
+      content,
+    };
+
+    return this.send(OverlayRequests.setInputContent, request) as Promise<void>;
   }
 
   /**
