@@ -24,6 +24,7 @@ import { ReviewQuickAppSection } from './ReviewQuickAppSection';
 
 import isEmpty from 'lodash-es/isEmpty';
 
+// TODO: disable app editing until release: 2025-06-25. Need to enable after
 function ReviewApplicationDialogContent() {
   const { t } = useTranslation(Translation.Chat);
   // const dispatch = useAppDispatch();
@@ -189,7 +190,7 @@ function ReviewApplicationDialogContent() {
         {/*  data-qa="prev-chat-review-button"*/}
         {/*  onClick={handleEditApplication}*/}
         {/*>*/}
-        {/*  <IconPencil className="shrink-0 rotate-180" height={18} width={18} />*/}
+        {/*  <IconPencil className="shrink-0" height={18} width={18} />*/}
         {/*</button>*/}
 
         {controlsEntity && (
