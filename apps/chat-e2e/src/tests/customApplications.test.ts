@@ -32,8 +32,9 @@ dialTest(
     'Delete custom app from context menu\n' + // EPMRTC-4094
     'Custom app: Description field displayed in New conversation , card view, app view\n' + // EPMRTC-4099
     'App Editor open and Exit of first step - app is not saved\n' + // EPMRTC-5746
-    'Preview: current agent stays in Preview after user clicks on "Save and exit" button when there is any empty required field\n' + // EPMRTC-6452
-    'Stepper icons change', //EPMRTC-5757
+    "Preview: current agent stays in Preview after user clicks on 'Save and exit' button when there is any empty required field\n" + // EPMRTC-6452
+    'Stepper icons change\n' + //EPMRTC-5757
+    'Add custom app: Name and version are predefined', //EPMRTC-5759
   async ({
     marketplacePage,
     marketplaceHeader,
@@ -70,6 +71,7 @@ dialTest(
       'EPMRTC-5746',
       'EPMRTC-6452',
       'EPMRTC-5757',
+      'EPMRTC-5759',
     );
     const shortDescription = GeneratorUtil.randomShortDescription();
     const longDescription = GeneratorUtil.randomLongDescription();
@@ -97,6 +99,23 @@ dialTest(
 
         await appEditorHeaderAssertion.assertActionTitle(
           `${AppMenuActions.add(AddAppMenuOptions.customApp)}`,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify default Name and Version are pre-filled',
+      async () => {
+        const defaultAppNamePattern = /Untitled app \d+/;
+        await baseAssertion.assertInputValue(
+          appEditorGeneralForm.name,
+          defaultAppNamePattern,
+          'Default app name should be pre-filled and match pattern "Untitled app <number>"',
+        );
+        await baseAssertion.assertInputValue(
+          appEditorGeneralForm.version,
+          ExpectedConstants.defaultAppVersion,
+          'Default app version should be pre-filled',
         );
       },
     );

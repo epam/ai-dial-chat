@@ -152,7 +152,7 @@ export class BaseAssertion {
 
   public async assertInputValue(
     element: BaseElement | Locator,
-    expectedValue: string,
+    expectedValue: string | RegExp,
     expectedMessage?: string,
   ) {
     const elementLocator = this.getElementLocator(element);
