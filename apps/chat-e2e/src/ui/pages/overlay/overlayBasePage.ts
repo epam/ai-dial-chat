@@ -40,6 +40,11 @@ export class OverlayBasePage<
     this.page,
     OverlaySelectors.overlayManagerContainer,
   );
+  public theme = new BaseElement(
+    this.page,
+    '',
+    this.page.frameLocator(OverlaySelectors.overlayFrame).locator(Tags.html),
+  );
 
   public actions!: Actions;
   public configuration!: Configuration;

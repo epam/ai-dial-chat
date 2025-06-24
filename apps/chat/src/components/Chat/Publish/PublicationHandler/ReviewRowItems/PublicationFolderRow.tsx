@@ -62,12 +62,16 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
   const selectedPublication = useAppSelector(
     PublicationSelectors.selectSelectedPublication,
   );
+
+  const collapsedSectionsSelector = useMemo(
+    () => PublicationSelectors.selectChosenFolderIds(allFolders, allItems),
+    [allFolders, allItems],
+  );
   const {
     fullyChosenFolderIds: selectedFolderIds,
     partialChosenFolderIds: partialSelectedFolderIds,
-  } = useAppSelector((state) =>
-    PublicationSelectors.selectChosenFolderIds(state, allFolders, allItems),
-  );
+  } = useAppSelector(collapsedSectionsSelector);
+
   const chosenItemsIds = useAppSelector(
     PublicationSelectors.selectSelectedItemsToPublish,
   );
