@@ -31,6 +31,7 @@ import {
 import { expect } from '@playwright/test';
 
 const expectedFolderPath = 'test-folder';
+const expectedFoldersPath = 'test-inner-folder-root/test-inner-folder-child';
 
 dialOverlayTest(
   `[Overlay. Events in sandbox] Send 'Hello' to Chat.\n` +
@@ -499,8 +500,6 @@ dialOverlayTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-4840', 'EPMRTC-6177');
-    const expectedFoldersPath =
-      'test-inner-folder-root/test-inner-folder-child';
 
     await dialOverlayTest.step(
       'Create set of conversations in folders',
@@ -582,6 +581,62 @@ dialOverlayTest(
           { name: ExpectedConstants.newConversationWithIndexTitle(1) },
           1,
         );
+      },
+    );
+  },
+);
+
+dialOverlayTest(
+  `[Overlay. Events in sandbox] New conversation name is unique inside in new folder if to click on 'Create conversation in inner folder' event`,
+  async ({
+    overlayHomePage,
+    overlayHeader,
+    overlayBaseAssertion,
+    overlayActions,
+    overlayDialog,
+    overlayChatBarFolderAssertion,
+    conversationData,
+    overlayDataInjector,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-6479');
+
+    await dialOverlayTest.step(
+      'Create a conversation with "New conversation 2" name in Today section',
+      async () => {
+        const todayConversation = conversationData.prepareDefaultConversation(
+          undefined,
+          ExpectedConstants.newConversationWithIndexTitle(2),
+        );
+        await overlayDataInjector.createConversations([todayConversation]);
+      },
+    );
+
+    await dialOverlayTest.step(
+      `Click on "Create conversation in inner folder" twice and verify conversation index is incremented according to folder content`,
+      async () => {
+        await overlayHomePage.navigateToUrl(
+          OverlaySandboxUrls.enabledHeaderSandboxUrl,
+        );
+        await overlayHomePage.waitForPageLoaded();
+        for (let i = 1; i <= 2; i++) {
+          await overlayActions.clickCreateConversationInInnerFolder();
+          await overlayBaseAssertion.assertElementState(
+            overlayDialog,
+            'visible',
+          );
+          await overlayDialog.closeButton.click();
+        }
+        await overlayHeader.leftPanelToggle.click();
+        const innerFolderName = expectedFoldersPath.split('/')[1];
+
+        for (let i = 1; i <= 2; i++) {
+          await overlayChatBarFolderAssertion.assertFolderEntityState(
+            { name: innerFolderName },
+            { name: ExpectedConstants.newConversationWithIndexTitle(i) },
+            'visible',
+          );
+        }
       },
     );
   },
