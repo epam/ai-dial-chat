@@ -317,7 +317,7 @@ dialTest(
       'Input Chat completion URL, click Save and Exit link',
       async () => {
         await appEditorViewForm.fillInAppFields();
-        await appEditorHeader.focusOn();
+        await appEditorHeader.focusOn( {isHttpMethodTriggered: false} );
         await appEditorHeader.saveAndExitButton.click();
         await baseAssertion.assertElementState(appEditorViewForm, 'hidden');
         await marketplacePage.waitForPageLoaded();
