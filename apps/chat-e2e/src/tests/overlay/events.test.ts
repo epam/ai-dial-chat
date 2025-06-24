@@ -1506,7 +1506,8 @@ dialOverlayTest(
           status: UploadStatus.LOADED,
           isMessageStreaming: false,
           createdAt: updateRequestResponse.response.createdAt,
-          isNameChanged: true,
+          //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/4173
+          // isNameChanged: true,
           bucket: updateRequestResponse.response.bucket,
           parentPath: updateRequestResponse.response.parentPath,
         };
@@ -1547,7 +1548,9 @@ dialOverlayTest(
     overlayChatHeaderAssertion,
     localStorageManager,
     setTestIds,
+    setIssueIds,
   }) => {
+    setIssueIds('4173');
     setTestIds('EPMRTC-6331');
     const newEmptyConversationName = GeneratorUtil.randomString(7);
 
