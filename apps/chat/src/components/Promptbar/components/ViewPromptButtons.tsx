@@ -21,16 +21,13 @@ import { FeatureType, ScreenState } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 
 import { useAppSelector } from '@/src/store/hooks';
-import {
-  PromptsSelectors,
-  PublicationSelectors,
-  SettingsSelectors,
-} from '@/src/store/selectors';
+import { PromptsSelectors, SettingsSelectors } from '@/src/store/selectors';
 
 import { ContextMenu } from '@/src/components/Common/ContextMenu';
 import { IconButton } from '@/src/components/Common/IconButton';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import { PublishActions } from '@epam/ai-dial-shared';
 
 interface Props {
   prompt: Prompt;
@@ -61,13 +58,6 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
     PromptsSelectors.selectSelectedPromptId,
   );
 
-  const isApproveRequiredEntitySelected = useAppSelector((state) =>
-    PublicationSelectors.selectIsApproveRequiredEntitySelected(
-      state,
-      prompt.id,
-    ),
-  );
-
   const screenState = useScreenState();
   const isPublic = isEntityIdPublic(prompt);
   const isMyPrompt = isMyEntity(prompt, FeatureType.Prompt);
@@ -76,7 +66,10 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
     () => [
       {
         name: editBtnName,
-        display: isMyPrompt || isApproveRequiredEntitySelected,
+        display:
+          isMyPrompt ||
+          (isSelectedPromptApproveRequiredResource &&
+            prompt.publicationInfo?.action !== PublishActions.DELETE),
         dataQa: 'edit-prompt',
         Icon: IconPencilMinus,
         onClick: onEditMode,
@@ -145,7 +138,9 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
     ],
     [
       isMyPrompt,
-      isApproveRequiredEntitySelected,
+      isSelectedPromptApproveRequiredResource,
+      prompt.publicationInfo?.action,
+      prompt.sharedWithMe,
       onEditMode,
       handleDuplicate,
       handleExport,
@@ -155,10 +150,8 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
       isPublishingEnabled,
       handlePublish,
       isPublic,
-      isSelectedPromptApproveRequiredResource,
       handleUnpublish,
       handleInfo,
-      prompt.sharedWithMe,
       handleDelete,
     ],
   );

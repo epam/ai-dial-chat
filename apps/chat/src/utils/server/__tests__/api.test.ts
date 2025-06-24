@@ -8,7 +8,7 @@ describe('decodeModelId and encodeModelId', () => {
     'gpt__4',
     'gpt%5F%5F4',
     `gpt${encodeURI('%5F%5F')}4`,
-    'gpt-4',
+    'gpt-4o',
   ])('decodeModelId(encodeModelId(%s))', (path: string) => {
     expect(decodeModelId(encodeModelId(path))).toBe(path);
   });

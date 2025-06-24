@@ -1,8 +1,12 @@
-import { Fragment } from 'react';
+import { IconPencil } from '@tabler/icons-react';
+import { Fragment, useCallback } from 'react';
+
+import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
+  getApplicationType,
   getModelDescription,
   isExecutableApp,
 } from '@/src/utils/app/application';
@@ -11,8 +15,13 @@ import { ApiUtils } from '@/src/utils/server/api';
 
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
-import { ApplicationSelectors } from '@/src/store/selectors';
+import { ApplicationActions } from '@/src/store/actions';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import {
+  ApplicationSelectors,
+  ApplicationTypesSchemasSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
 import { PublicationControls } from '@/src/components/Chat/Publish/PublicationControls/PublicationControls';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
@@ -26,10 +35,18 @@ import isEmpty from 'lodash-es/isEmpty';
 
 function ReviewApplicationDialogContent() {
   const { t } = useTranslation(Translation.Chat);
+  const dispatch = useAppDispatch();
 
   const application = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
+  const detailedApplicationTypeSchema = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
+  );
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
+  );
+
   const isCodeApp = application && isExecutableApp(application);
 
   const controlsEntity = application
@@ -39,6 +56,25 @@ function ReviewApplicationDialogContent() {
         folderId: getFolderIdFromEntityId(application.id),
       }
     : null;
+
+  const handleEditApplication = useCallback(() => {
+    if (!application) return;
+
+    const applicationType = getApplicationType(application);
+    dispatch(
+      ApplicationActions.enterEditMode({
+        entity: application,
+        applicationType,
+        detailedApplicationTypeSchemaId: detailedApplicationTypeSchema?.$id,
+        publicationUrl: selectedPublicationUrl as string,
+      }),
+    );
+  }, [
+    application,
+    detailedApplicationTypeSchema?.$id,
+    dispatch,
+    selectedPublicationUrl,
+  ]);
 
   return (
     <>
@@ -154,7 +190,17 @@ function ReviewApplicationDialogContent() {
 
         <ReviewQuickAppSection application={application} />
       </div>
-      <div className="flex w-full items-center justify-end border-t border-tertiary px-3 py-4 md:px-5">
+      <div className="flex w-full items-center justify-between border-t border-tertiary px-3 py-4 md:px-5">
+        <button
+          className={classNames(
+            'button flex size-[38px] items-center justify-center border-primary bg-layer-2 p-3 outline-none hover:bg-layer-4 disabled:cursor-not-allowed disabled:bg-layer-2',
+          )}
+          data-qa="prev-chat-review-button"
+          onClick={handleEditApplication}
+        >
+          <IconPencil className="shrink-0 rotate-180" height={18} width={18} />
+        </button>
+
         {controlsEntity && (
           <PublicationControls
             entity={controlsEntity}
