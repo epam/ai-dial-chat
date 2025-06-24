@@ -856,8 +856,7 @@ const selectIsSelectedConversationBlocksInput = createSelector(
         isNotAllowedModels ||
         hasNotAllowedAddonsFlag ||
         isPlaybackConversation(conversation) ||
-        (isEntityIdExternal(conversation) && !isReviewEntity) ||
-        areReadOnly ||
+        (areReadOnly && !isReviewEntity) ||
         !conversation.messages ||
         isMessageInputDisabled(
           conversation.messages.length,

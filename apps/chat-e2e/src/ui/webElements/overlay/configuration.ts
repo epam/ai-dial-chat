@@ -10,12 +10,4 @@ export class Configuration extends BaseElement {
   public setConfigurationButton = this.getChildElementBySelector(
     EventSelectors.setConfigurationButton,
   );
-
-  public async setConfiguration() {
-    const respPromise = this.page.waitForResponse(
-      (r) => r.request().method() === 'GET' && r.status() === 200,
-    );
-    await this.setConfigurationButton.click();
-    await respPromise;
-  }
 }
