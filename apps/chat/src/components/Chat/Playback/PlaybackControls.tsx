@@ -22,13 +22,21 @@ import { Translation } from '@/src/types/translation';
 
 import { ChatActions, ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ConversationsSelectors, UISelectors } from '@/src/store/selectors';
+import {
+  ConversationsSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
 import { PlaybackAttachments } from './PlaybackAttachments';
 
-import { Attachment, MessageFormValueType } from '@epam/ai-dial-shared';
+import {
+  Attachment,
+  Feature,
+  MessageFormValueType,
+} from '@epam/ai-dial-shared';
 
 interface Props {
   showScrollDownButton: boolean;
@@ -66,6 +74,9 @@ export const PlaybackControls = ({
   );
 
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
+  const isDisabledPlaybackControls = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.DisabledPlaybackControls),
+  );
 
   const controlsContainerRef = useRef<HTMLDivElement | null>(null);
   const [phase, setPhase] = useState<PlaybackPhases>(PlaybackPhases.EMPTY);
@@ -126,7 +137,11 @@ export const PlaybackControls = ({
   );
 
   const handlePlayNextMessage = useCallback(() => {
-    if (isMessageStreaming || !isNextMessageInStack) {
+    if (
+      isDisabledPlaybackControls ||
+      isMessageStreaming ||
+      !isNextMessageInStack
+    ) {
       return;
     }
     if (phase === PlaybackPhases.EMPTY) {
@@ -136,10 +151,19 @@ export const PlaybackControls = ({
     setPhase(PlaybackPhases.EMPTY);
 
     dispatch(ConversationsActions.playbackNextMessageStart());
-  }, [dispatch, isMessageStreaming, isNextMessageInStack, phase]);
+  }, [
+    dispatch,
+    isDisabledPlaybackControls,
+    isMessageStreaming,
+    isNextMessageInStack,
+    phase,
+  ]);
 
   const handlePrevMessage = useCallback(() => {
-    if (activeIndex === 0 && phase !== PlaybackPhases.MESSAGE) {
+    if (
+      isDisabledPlaybackControls ||
+      (activeIndex === 0 && phase !== PlaybackPhases.MESSAGE)
+    ) {
       return;
     }
     if (phase === PlaybackPhases.EMPTY) {
@@ -155,7 +179,13 @@ export const PlaybackControls = ({
     }
 
     dispatch(ConversationsActions.playbackPrevMessage());
-  }, [dispatch, isPrevMessageInStack, phase, activeIndex]);
+  }, [
+    isDisabledPlaybackControls,
+    activeIndex,
+    phase,
+    isPrevMessageInStack,
+    dispatch,
+  ]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -249,7 +279,10 @@ export const PlaybackControls = ({
         <button
           data-qa="playback-prev"
           onClick={handlePrevMessage}
-          disabled={activeIndex === 0 && phase !== PlaybackPhases.MESSAGE}
+          disabled={
+            isDisabledPlaybackControls ||
+            (activeIndex === 0 && phase !== PlaybackPhases.MESSAGE)
+          }
           className="absolute bottom-3 left-4 rounded outline-none hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
         >
           <IconPlayerPlay size={20} className="rotate-180" />
@@ -291,7 +324,11 @@ export const PlaybackControls = ({
                     data-qa="playback-next"
                     onClick={handlePlayNextMessage}
                     className="absolute bottom-3 right-4 rounded outline-none hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-                    disabled={isMessageStreaming || !isNextMessageInStack}
+                    disabled={
+                      isDisabledPlaybackControls ||
+                      isMessageStreaming ||
+                      !isNextMessageInStack
+                    }
                   >
                     <IconPlayerPlay size={20} className="shrink-0" />
                   </button>
