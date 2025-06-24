@@ -144,7 +144,7 @@ export function ItemContextMenu({
       },
       {
         name: t(featureType === FeatureType.Chat ? 'Rename' : 'Edit'),
-        display: (!isExternal || isApproveRequiredEntity) && !!onRename,
+        display: !isExternal && !isApproveRequiredEntity && !!onRename,
         dataQa: 'rename',
         Icon: IconPencilMinus,
         onClick: onRename,
