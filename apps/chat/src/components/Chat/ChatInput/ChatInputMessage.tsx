@@ -55,7 +55,7 @@ import { PromptVariablesDialog } from './PromptVariablesDialog';
 import { ReplayVariables } from './ReplayVariables';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
-import { Message, Role } from '@epam/ai-dial-shared';
+import { Feature, Message, Role } from '@epam/ai-dial-shared';
 
 interface Props {
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
@@ -150,6 +150,9 @@ export const ChatInputMessage = Inversify.register(
     const shouldFocusAndScroll = useAppSelector(
       ChatSelectors.selectShouldFocusAndScroll,
     );
+    const isDisabledInputFeature = useAppSelector((state) =>
+      SettingsSelectors.isFeatureEnabled(state, Feature.DisabledSend),
+    );
 
     const shouldRegenerate =
       isLastMessageError ||
@@ -219,6 +222,7 @@ export const ChatInputMessage = Inversify.register(
       selectedFolders.length,
     ]);
     const isSendDisabled =
+      isDisabledInputFeature ||
       isReplay ||
       isMessageError ||
       isInputEmpty ||
