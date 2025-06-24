@@ -158,7 +158,7 @@ dialOverlayTest(
     await dialOverlayTest.step(
       `Click on "Set light theme and new model" button and verify theme is changed to light, model is added to the recent models`,
       async () => {
-        await overlayConfiguration.setConfiguration();
+        await overlayConfiguration.setConfigurationButton.click();
         await overlayAssertion.assertOverlayTheme(
           overlayHomePage,
           ThemeId.light,

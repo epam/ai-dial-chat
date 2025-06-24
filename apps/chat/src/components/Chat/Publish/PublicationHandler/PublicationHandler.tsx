@@ -48,6 +48,7 @@ import {
   PromptPublicationResources,
 } from './ReviewResources';
 
+import { PublishActions } from '@epam/ai-dial-shared';
 import isEqual from 'lodash-es/isEqual';
 
 interface Props {
@@ -171,7 +172,9 @@ export function PublicationHandler({ publication }: Props) {
                     : currentFolder[EDITED_FOLDER_NAME_KEY],
                 );
               });
-              newFolderSegments[1] = publication.targetFolder;
+              if (action !== PublishActions.DELETE) {
+                newFolderSegments[1] = publication.targetFolder;
+              }
               const newFolderId = newFolderSegments.join('/');
 
               // get new api key

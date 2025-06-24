@@ -127,7 +127,7 @@ const selectIsAllItemsUploaded = (state: RootState, featureType: FeatureType) =>
 const selectSelectedItemsToPublish = (state: RootState) =>
   rootSelector(state).selectedItemsToPublish;
 
-const selectChosenFolderIds = createSelector(
+const _selectChosenFolderIds = createSelector(
   [
     selectSelectedItemsToPublish,
     (_state, folders: FolderInterface[]) => folders,
@@ -165,6 +165,10 @@ const selectChosenFolderIds = createSelector(
     return { partialChosenFolderIds, fullyChosenFolderIds };
   },
 );
+
+const selectChosenFolderIds =
+  (folders: FolderInterface[], items: ShareEntity[]) => (state: RootState) =>
+    _selectChosenFolderIds(state, folders, items);
 
 const selectPublicationsToReviewCount = createSelector(
   [

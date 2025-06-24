@@ -5,6 +5,7 @@ import { BackToButton } from './backToSelectOverlayMode';
 import {
   ChatOverlayManager,
   ChatOverlayManagerOptions,
+  Feature,
   OverlayConversation,
   OverlayEvents,
 } from '@epam/ai-dial-overlay';
@@ -26,6 +27,9 @@ export const ChatOverlayManagerWrapper: React.FC<
   const [conversations, setConversations] = useState<OverlayConversation[]>([]);
   const [conversationNewName, setConversationNewName] = useState('');
 
+  const [deleteMessageIndex, setDeleteMessageIndex] = useState(0);
+  const [inputContent, setInputContent] = useState('');
+
   const handleDisplayInformation = useCallback((textToShow: string) => {
     dialogRef.current?.showModal();
 
@@ -45,6 +49,21 @@ export const ChatOverlayManagerWrapper: React.FC<
       conversationIdInputValue,
     );
   }, [conversationIdInputValue, overlayManagerOptions.id]);
+
+  const handleDeleteMessage = useCallback(async () => {
+    const result = await overlayManager.current?.deleteMessage(
+      overlayManagerOptions.id,
+      deleteMessageIndex,
+    );
+    handleDisplayInformation(JSON.stringify(result?.messages, null, 2));
+  }, [deleteMessageIndex, handleDisplayInformation, overlayManagerOptions.id]);
+
+  const handleSetInputContent = useCallback(async () => {
+    await overlayManager.current?.setInputContent(
+      overlayManagerOptions.id,
+      inputContent,
+    );
+  }, [inputContent, overlayManagerOptions.id]);
 
   const handleCreatePlaybackConversation = useCallback(async () => {
     const replayResult =
@@ -206,6 +225,44 @@ export const ChatOverlayManagerWrapper: React.FC<
                 Send &apos;Hello&apos; to Chat
               </button>
 
+              <div className="flex flex-col gap-1 border p-1">
+                <button
+                  className="button"
+                  onClick={handleDeleteMessage}
+                  data-qa="delete-message"
+                >
+                  Delete message by index
+                </button>
+
+                <input
+                  className="border"
+                  placeholder="Imported conversation object"
+                  value={deleteMessageIndex}
+                  onChange={(e) =>
+                    setDeleteMessageIndex(JSON.parse(e.target.value))
+                  }
+                  data-qa="delete-message-index"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1 border p-1">
+                <button
+                  className="button"
+                  onClick={handleSetInputContent}
+                  data-qa="set-input-content"
+                >
+                  Set input content
+                </button>
+
+                <input
+                  className="border"
+                  placeholder="Input content"
+                  value={inputContent}
+                  onChange={(e) => setInputContent(e.target.value)}
+                  data-qa="set-input-content-input"
+                />
+              </div>
+
               <button
                 className="button"
                 onClick={() => {
@@ -317,6 +374,22 @@ export const ChatOverlayManagerWrapper: React.FC<
                 Create conversation in inner folder
               </button>
 
+              <button
+                className="button"
+                onClick={async () => {
+                  const conversation =
+                    await overlayManager.current?.stopSelectedPlaybackConversation(
+                      overlayManagerOptions.id,
+                    );
+
+                  handleDisplayInformation(
+                    JSON.stringify(conversation, null, 2),
+                  );
+                }}
+              >
+                Stop selected playback conversation
+              </button>
+
               <div className="flex flex-col gap-1 border p-1">
                 <button
                   className="button"
@@ -425,7 +498,7 @@ export const ChatOverlayManagerWrapper: React.FC<
         <details>
           <summary>Overlay configuration</summary>
 
-          <div>
+          <div className="flex flex-col gap-1">
             <button
               className="button w-full"
               onClick={() => {
@@ -444,6 +517,50 @@ export const ChatOverlayManagerWrapper: React.FC<
               }}
             >
               Set dark theme and new model
+            </button>
+            <button
+              className="button w-full"
+              onClick={() => {
+                const newOptions = {
+                  ...overlayManagerOptions,
+                  hostDomain: window.location.origin,
+                };
+
+                newOptions.enabledFeatures = [
+                  ...(overlayManagerOptions.enabledFeatures as Feature[]),
+                  Feature.DisabledSend,
+                ];
+
+                overlayManager.current?.setOverlayOptions(
+                  overlayManagerOptions.id,
+                  newOptions,
+                );
+              }}
+              data-qa="set-configuration-disable-send"
+            >
+              Disable send
+            </button>
+            <button
+              className="button w-full"
+              onClick={() => {
+                const newOptions = {
+                  ...overlayManagerOptions,
+                  hostDomain: window.location.origin,
+                };
+
+                newOptions.enabledFeatures = [
+                  ...(overlayManagerOptions.enabledFeatures as Feature[]),
+                  Feature.DisabledPlaybackControls,
+                ];
+
+                overlayManager.current?.setOverlayOptions(
+                  overlayManagerOptions.id,
+                  newOptions,
+                );
+              }}
+              data-qa="set-configuration-disable-playback-controls"
+            >
+              Disable playback controls
             </button>
           </div>
         </details>
