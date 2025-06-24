@@ -1599,7 +1599,7 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
               ...resource,
               sourceUrl: ApiUtils.decodeApiUrl(resource.sourceUrl ?? ''),
               targetUrl: ApiUtils.decodeApiUrl(resource.targetUrl),
-              reviewUrl: ApiUtils.decodeApiUrl(resource.reviewUrl),
+              reviewUrl: ApiUtils.decodeApiUrl(resource.reviewUrl ?? ''),
             }),
           );
 
