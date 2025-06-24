@@ -85,7 +85,7 @@ export function PublicationFilters({
       {isNewRules && !isEditMode && (
         <RuleListItem path={publication.targetFolder} rules={newRules} />
       )}
-      {isNewRules && isEditMode && (
+      {isEditMode && (
         <RulesInput
           isOpen={isRulesSetterVisible}
           filters={filters}
