@@ -8,7 +8,11 @@ import { FolderInterface } from '@/src/types/folder';
 import { Publication, PublicationResource } from '@/src/types/publication';
 import { RootState } from '@/src/types/store';
 
-import { ShareEntity, UploadStatus } from '@epam/ai-dial-shared';
+import {
+  PublishActions,
+  ShareEntity,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState) => state.publication;
 
@@ -279,6 +283,21 @@ const selectIsPublicationUpdating = (state: RootState) =>
 const selectDisplayAuthorEditState = (state: RootState) =>
   rootSelector(state).displayAuthorEditState;
 
+const selectIsResourceUnpublishing = createSelector(
+  [
+    (state: RootState, publicationUrl: string) =>
+      selectPublicationByUrl(state, publicationUrl),
+    (_state, _publicationUrl: string, reviewUrl: string) => reviewUrl,
+  ],
+  (publication, reviewUrl) => {
+    const action = publication?.resources?.find(
+      (res) => res.reviewUrl === reviewUrl,
+    )?.action;
+
+    return action === PublishActions.DELETE;
+  },
+);
+
 export const PublicationSelectors = {
   selectPublications,
   selectFilteredPublications,
@@ -311,4 +330,5 @@ export const PublicationSelectors = {
   selectRulesOnEdit,
   selectIsPublicationUpdating,
   selectDisplayAuthorEditState,
+  selectIsResourceUnpublishing,
 };
