@@ -12,7 +12,12 @@ import {
 import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { BaseElement, MarketplaceAgentProperties } from '@/src/ui/webElements';
-import { GeneratorUtil, ModelsUtil, SortingUtil } from '@/src/utils';
+import {
+  GeneratorUtil,
+  ModelsUtil,
+  SortingUtil,
+  applicationNamePrefix,
+} from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -667,15 +672,19 @@ dialTest(
     const middleSpaceAppName = GeneratorUtil.randomApplicationName()
       .concat(' ')
       .concat(GeneratorUtil.randomString(5));
-    const specialCharsAppName =
-      GeneratorUtil.randomApplicationName().concat('!@#$*()');
+    const specialCharsPart = '!@#$*()';
+    const standardPart = GeneratorUtil.randomApplicationName();
+    const specialCharsAppName = standardPart.concat(specialCharsPart);
     const searchTermResultMap = new Map<string, string>();
     searchTermResultMap.set(middleSpaceAppName, middleSpaceAppName);
     searchTermResultMap.set(
       middleSpaceAppName.replace(' ', ' '.repeat(5)),
       middleSpaceAppName,
     );
-    searchTermResultMap.set('!@#$%', specialCharsAppName);
+    searchTermResultMap.set(
+      standardPart.replace(applicationNamePrefix, '').concat('!@#$%'),
+      specialCharsAppName,
+    );
 
     await dialTest.step('Prepare two custom applications', async () => {
       const firstApplicationModel = customApplicationBuilder
