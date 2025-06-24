@@ -26,6 +26,12 @@ export enum Feature {
   // Chat input
   SkipFocusChatInputOnLoad = 'skip-focus-chat-input-onload', // Skip default focusing chat input when on screen onload or after navigation
 
+  // Send button
+  DisabledSend = 'disabled-send', // Disable input
+
+  // Playback change
+  DisabledPlaybackControls = 'disabled-playback-controls', // Disable changing playback current message
+
   // Conversation First Screen
   EmptyChatSettings = 'empty-chat-settings', // Display settings for empty chat
   HideEmptyChatChangeAgent = 'hide-empty-chat-change-agent', // Hide empty chat "Change agent" button
