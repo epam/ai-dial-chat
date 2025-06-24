@@ -18,6 +18,7 @@ import { combineEpics, ofType } from 'redux-observable';
 
 import { getConversationInfoFromId } from '@/src/utils/app/conversation';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
+import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application-type-schemas-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
@@ -1744,6 +1745,32 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
                       ).name,
                       version: getVersionFromId(application.id),
                     };
+
+                    if (newApplication.applicationTypeSchemaId) {
+                      return ApplicationTypesSchemasService.getApplicationTypeSchema(
+                        newApplication.applicationTypeSchemaId,
+                      ).pipe(
+                        switchMap((schema) => {
+                          return of(
+                            ApplicationActions.update({
+                              oldApplication: application,
+                              applicationData: newApplication,
+                              schema,
+                            }),
+                          );
+                        }),
+                        catchError((err) => {
+                          console.error(err);
+                          return of(
+                            UIActions.showErrorToast(
+                              translate(
+                                'Cannot fetch application schema. Please try again later.',
+                              ),
+                            ),
+                          );
+                        }),
+                      );
+                    }
 
                     return of(
                       ApplicationActions.update({

@@ -12,14 +12,18 @@ import {
 import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { BaseElement, MarketplaceAgentProperties } from '@/src/ui/webElements';
-import { GeneratorUtil, ModelsUtil, SortingUtil } from '@/src/utils';
+import {
+  GeneratorUtil,
+  ModelsUtil,
+  SortingUtil,
+  applicationNamePrefix,
+} from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
 
-//TODO: test-cases need to be updated after new search mechanism implementation
-dialTest.skip(
+dialTest(
   'Search word is stored; search results differ if to switch between My workspace and DIAL Marketplace pages. Search by name. Suggested results on My workspace. The model is without versions.' +
     'Space before and after search phrase is ignored\n' +
     `Search in DIAL Marketplace: 'No results found'.\n` +
@@ -136,7 +140,7 @@ dialTest.skip(
     );
 
     await dialTest.step(
-      'Switch to "My Workspace" tab, and verify search term is preserved, search results are updated',
+      'Switch to "My Workspace" tab and verify search term is preserved, search results are updated',
       async () => {
         await navigationPanel.goToMyWorkspace();
         await baseAssertion.assertElementAttribute(
@@ -646,6 +650,191 @@ dialTest.skip(
         await agentDetailsModalAssertion.assertElementState(
           agentDetailsModal.removeBookmarkIcon,
           'hidden',
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Search in DIAL Marketplace: multiple spaces between sub-strings are treated as one space , not as sub-string.\n' +
+    'Search in DIAL Marketplace: more than 2 special symbols starting with ! are treated as sub-string',
+  async ({
+    customApplicationBuilder,
+    applicationApiHelper,
+    marketplacePage,
+    marketplaceHeader,
+    marketplaceAgentsSection,
+    setTestIds,
+    baseAssertion,
+  }) => {
+    setTestIds('EPMRTC-6426', 'EPMRTC-6427');
+    const middleSpaceAppName = GeneratorUtil.randomApplicationName()
+      .concat(' ')
+      .concat(GeneratorUtil.randomString(5));
+    const specialCharsPart = '!@#$*()';
+    const standardPart = GeneratorUtil.randomApplicationName();
+    const specialCharsAppName = standardPart.concat(specialCharsPart);
+    const searchTermResultMap = new Map<string, string>();
+    searchTermResultMap.set(middleSpaceAppName, middleSpaceAppName);
+    searchTermResultMap.set(
+      middleSpaceAppName.replace(' ', ' '.repeat(5)),
+      middleSpaceAppName,
+    );
+    searchTermResultMap.set(
+      standardPart.replace(applicationNamePrefix, '').concat('!@#$%'),
+      specialCharsAppName,
+    );
+
+    await dialTest.step('Prepare two custom applications', async () => {
+      const firstApplicationModel = customApplicationBuilder
+        .withDisplayName(middleSpaceAppName)
+        .build();
+      const secondApplicationModel = customApplicationBuilder
+        .withDisplayName(specialCharsAppName)
+        .build();
+      for (const app of [firstApplicationModel, secondApplicationModel]) {
+        await applicationApiHelper.createApplication(app);
+      }
+    });
+
+    await dialTest.step(
+      'Open "DIAL Marketplace", type search term in the search field and verify it is found',
+      async () => {
+        await marketplacePage.openMarketplacePage();
+        await marketplacePage.waitForPageLoaded();
+        for (const searchTerm of searchTermResultMap.keys()) {
+          await marketplaceHeader.searchInput.fillInInput(searchTerm);
+          const actualAgents = await marketplaceAgentsSection.getAllAgents();
+          const filteredAgents = actualAgents.filter(
+            (agent) => agent.isWorkspaceAgent,
+          );
+          baseAssertion.assertValue(
+            filteredAgents.length,
+            1,
+            ExpectedMessages.elementsCountIsValid,
+          );
+          baseAssertion.assertArrayIncludesAll(
+            filteredAgents.map((agent) => agent.name),
+            [searchTermResultMap.get(searchTerm)!],
+            ExpectedMessages.searchResultsAreCorrect,
+          );
+        }
+      },
+    );
+  },
+);
+
+dialTest(
+  'Search in DIAL Marketplace. New extended search by name and version',
+  async ({
+    marketplacePage,
+    marketplaceHeader,
+    marketplace,
+    marketplaceAgentsSection,
+    localStorageManager,
+    setTestIds,
+    baseAssertion,
+    customApplicationBuilder,
+    applicationApiHelper,
+  }) => {
+    setTestIds('EPMRTC-6448');
+    const firstTerm = '7.7.7';
+    const secondTerm = '3.3.3';
+    const thirdTerm = '7.7.8';
+    const firstAppName = `${GeneratorUtil.randomApplicationName()} ${firstTerm}`;
+    const secondAppName = `${GeneratorUtil.randomApplicationName()} ${secondTerm}`;
+    const thirdAppName = GeneratorUtil.randomApplicationName();
+    const fourthAppName = GeneratorUtil.randomApplicationName();
+    const searchTermResultMap = new Map<string, string[]>();
+    searchTermResultMap.set(firstTerm, [
+      firstAppName,
+      secondAppName,
+      thirdAppName,
+      fourthAppName,
+    ]);
+    searchTermResultMap.set(secondTerm.concat(' '.repeat(3)), [
+      firstAppName,
+      secondAppName,
+    ]);
+    searchTermResultMap.set(thirdTerm, [
+      firstAppName,
+      secondAppName,
+      thirdAppName,
+      fourthAppName,
+    ]);
+    searchTermResultMap.set(firstTerm.concat('1'), [
+      firstAppName,
+      secondAppName,
+      thirdAppName,
+    ]);
+    searchTermResultMap.set(firstTerm.concat('15'), [thirdAppName]);
+
+    await dialTest.step(
+      'Prepare the set of custom applications with mixture of terms in the name and version',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        const firstAppModel = customApplicationBuilder
+          .withDisplayName(firstAppName)
+          .withDisplayVersion(secondTerm)
+          .build();
+        const secondAppModel = customApplicationBuilder
+          .withDisplayName(secondAppName)
+          .withDisplayVersion(firstTerm)
+          .build();
+        const thirdAppModel = customApplicationBuilder
+          .withDisplayName(thirdAppName)
+          .withDisplayVersion(firstTerm.concat('1'))
+          .build();
+        const fourthAppModel = customApplicationBuilder
+          .withDisplayName(fourthAppName)
+          .withDisplayVersion(thirdTerm)
+          .build();
+        for (const appModel of [
+          firstAppModel,
+          secondAppModel,
+          thirdAppModel,
+          fourthAppModel,
+        ]) {
+          await applicationApiHelper.createApplication(appModel);
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Open "DIAL Marketplace", type search term in the search field and verify correct apps are found',
+      async () => {
+        await marketplacePage.openMarketplacePage();
+        await marketplacePage.waitForPageLoaded();
+        for (const searchTerm of searchTermResultMap.keys()) {
+          await marketplaceHeader.searchInput.fillInInput(searchTerm);
+          const actualAgents = await marketplaceAgentsSection.getAllAgents();
+          const filteredAgents = actualAgents.filter(
+            (agent) => agent.isWorkspaceAgent,
+          );
+          baseAssertion.assertValue(
+            filteredAgents.length,
+            searchTermResultMap.get(searchTerm)!.length,
+            ExpectedMessages.elementsCountIsValid,
+          );
+          baseAssertion.assertArrayIncludesAll(
+            filteredAgents.map((agent) => agent.name),
+            searchTermResultMap.get(searchTerm)!,
+            ExpectedMessages.searchResultsAreCorrect,
+          );
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Type "5.5.5155" in the search field and verify no results are found',
+      async () => {
+        await marketplaceHeader.searchInput.fillInInput(
+          firstTerm.concat('155'),
+        );
+        await baseAssertion.assertElementState(
+          marketplace.noResultsFound,
+          'visible',
         );
       },
     );
