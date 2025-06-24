@@ -252,6 +252,7 @@ export const ExpectedConstants = {
   informationModalAuthorLabel: 'Author:',
   agentIconTooltip: (appName: string, appVersion: string) =>
     `${appName}\nv. ${appVersion}`,
+  pleaseFillInAllMandatoryFields: 'Please fill in all mandatory fields',
 };
 
 export enum Types {

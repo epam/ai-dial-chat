@@ -31,7 +31,8 @@ dialTest(
     'Custom app with permitted spec symbols in Name.\n' + // EPMRTC-4838
     'Delete custom app from context menu\n' + // EPMRTC-4094
     'Custom app: Description field displayed in New conversation , card view, app view\n' + // EPMRTC-4099
-    'App Editor open and Exit of first step - app is not saved', // EPMRTC-5746
+    'App Editor open and Exit of first step - app is not saved\n' + // EPMRTC-5746
+    "Preview: current agent stays in Preview after user clicks on 'Save and exit' button when there is any empty required field", // EPMRTC-6452
   async ({
     marketplacePage,
     marketplaceHeader,
@@ -55,6 +56,10 @@ dialTest(
     agentDetailsModalAssertion,
     marketplaceContainer,
     marketplace,
+    toastAssertion,
+    toast,
+    iconApiHelper,
+    appEditorAppSettingsAgentPreview,
   }) => {
     setTestIds(
       'EPMRTC-5130',
@@ -63,6 +68,7 @@ dialTest(
       'EPMRTC-4094',
       'EPMRTC-4099',
       'EPMRTC-5746',
+      'EPMRTC-6452',
     );
     const shortDescription = GeneratorUtil.randomShortDescription();
     const longDescription = GeneratorUtil.randomLongDescription();
@@ -237,6 +243,26 @@ dialTest(
           'visible',
           ExpectedMessages.applicationFormFieldShouldHaveAsterisk,
         );
+      },
+    );
+
+    await dialTest.step(
+      'Attempt to save with empty Chat Completion URL and verify error and preview persistence',
+      async () => {
+        await appEditorHeader.saveAndExitButton.click();
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.pleaseFillInAllMandatoryFields,
+        );
+        await toast.closeToast();
+
+        // Check preview persistence
+        await baseAssertion.assertElementState(
+          appEditorAppSettingsAgentPreview,
+          'visible',
+        );
+        await agentInfoAssertion.assertAgentName(appEntity.name);
+        await agentInfoAssertion.assertAgentIcon(API.defaultModelIconHost());
+        await baseAssertion.assertElementState(appEditorViewForm, 'visible');
       },
     );
 
