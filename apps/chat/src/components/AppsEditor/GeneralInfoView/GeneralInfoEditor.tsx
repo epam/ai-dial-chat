@@ -30,7 +30,7 @@ import {
 import { CONFIRM_ICON_FILE_VALUES } from '@/src/constants/applications';
 import { IMAGE_TYPES } from '@/src/constants/chat';
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/code-apps';
-import { DEFAULT_VERSION } from '@/src/constants/public';
+import { DEFAULT_VERSION } from '@/src/constants/publication';
 import { Routes } from '@/src/constants/routes';
 
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
@@ -127,7 +127,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
         return;
       }
 
-      const { slug } = router.query;
+      const { slug, publicationUrl } = router.query;
       if (!slug) return;
 
       const slugStr = slug.toString();
@@ -154,6 +154,9 @@ export const GeneralInfoEditor: React.FC<Props> = ({
                 ? getRouteForSlug(Routes.AppsEditorSettings, slugStr)
                 : undefined,
               schema: schema ?? undefined,
+              publicationUrl: publicationUrl
+                ? decodeURIComponent(publicationUrl.toString())
+                : undefined,
             }),
           );
         }

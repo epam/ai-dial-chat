@@ -120,6 +120,7 @@ interface CodeAppViewProps {
   oldApplication: CustomApplicationModel;
   isShared: boolean;
   applicationStatus?: ApplicationStatus;
+  publicationUrl?: string;
 }
 
 export const CodeAppView: React.FC<CodeAppViewProps> = ({
@@ -127,6 +128,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
   oldApplication,
   isShared,
   applicationStatus,
+  publicationUrl,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -192,6 +194,7 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
 
         dispatch(
           ApplicationActions.update({
+            publicationUrl,
             oldApplication,
             applicationData,
           }),
@@ -207,7 +210,14 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
       dispatch(ApplicationActions.setShouldSaveApplication(false));
       dispatch(ApplicationActions.setExitAfterSave(false));
     },
-    [oldApplication, exitAfterSave, applicationStatus, isShared, dispatch],
+    [
+      oldApplication,
+      exitAfterSave,
+      applicationStatus,
+      isShared,
+      dispatch,
+      publicationUrl,
+    ],
   );
 
   register('sourceFiles', validators['sourceFiles']);
@@ -219,11 +229,11 @@ export const CodeAppView: React.FC<CodeAppViewProps> = ({
     };
   }, [dispatch]);
 
+  const isAppPublic = isEntityIdPublic(oldApplication);
+
   const autoSaveHandler = useCallback(() => {
     submitWrapper(handleEdit)();
   }, [submitWrapper, handleEdit]);
-
-  const isAppPublic = isEntityIdPublic(oldApplication);
 
   const savePartialForm = useCallback(() => {
     if (isAppPublic) return;

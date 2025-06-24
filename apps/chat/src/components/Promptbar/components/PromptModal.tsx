@@ -63,6 +63,7 @@ const PromptModalContent: React.FC<PromptModalViewProps> = ({
             PromptsActions.updatePrompt({
               id: prompt.id,
               values: editedPrompt,
+              publicationUrl: prompt.publicationInfo?.publicationUrl,
             }),
           );
         }
@@ -78,13 +79,7 @@ const PromptModalContent: React.FC<PromptModalViewProps> = ({
   }, [onToggleEditMode]);
 
   if (isViewMode && !isNewPromptCreating) {
-    return (
-      <ViewPrompt
-        prompt={prompt}
-        onEditMode={handleGoToEditMode}
-        onClose={onClose}
-      />
-    );
+    return <ViewPrompt prompt={prompt} onEditMode={handleGoToEditMode} />;
   }
 
   return <EditPrompt onEdit={handleEdit} onClose={onClose} prompt={prompt} />;
@@ -100,6 +95,9 @@ const PromptModalView = () => {
   );
   const isNewPromptCreating = useAppSelector(
     PromptsSelectors.selectIsNewPromptCreating,
+  );
+  const { isSelectedPromptApproveRequiredResource } = useAppSelector(
+    PromptsSelectors.selectSelectedPromptId,
   );
 
   const [isViewMode, setIsViewMode] = useState(
@@ -135,6 +133,7 @@ const PromptModalView = () => {
         'px-3 md:px-6',
         prompt &&
           prompt.publicationInfo?.action === PublishActions.DELETE &&
+          isSelectedPromptApproveRequiredResource &&
           'text-error',
       )}
       state={isLoading ? ModalState.LOADING : ModalState.OPENED}

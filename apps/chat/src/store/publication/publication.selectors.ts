@@ -8,7 +8,11 @@ import { FolderInterface } from '@/src/types/folder';
 import { Publication, PublicationResource } from '@/src/types/publication';
 import { RootState } from '@/src/types/store';
 
-import { ShareEntity, UploadStatus } from '@epam/ai-dial-shared';
+import {
+  PublishActions,
+  ShareEntity,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState) => state.publication;
 
@@ -56,6 +60,13 @@ const selectSelectedPublication = createSelector(
           (publication) => publication.url === selectedPublicationUrl,
         ) as Publication)
       : null;
+  },
+);
+
+const selectPublicationByUrl = createSelector(
+  [selectPublications, (_state, url: string) => url],
+  (publications, url) => {
+    return publications.find((publication) => publication.url === url);
   },
 );
 
@@ -120,7 +131,7 @@ const selectIsAllItemsUploaded = (state: RootState, featureType: FeatureType) =>
 const selectSelectedItemsToPublish = (state: RootState) =>
   rootSelector(state).selectedItemsToPublish;
 
-const selectChosenFolderIds = createSelector(
+const _selectChosenFolderIds = createSelector(
   [
     selectSelectedItemsToPublish,
     (_state, folders: FolderInterface[]) => folders,
@@ -158,6 +169,10 @@ const selectChosenFolderIds = createSelector(
     return { partialChosenFolderIds, fullyChosenFolderIds };
   },
 );
+
+const selectChosenFolderIds =
+  (folders: FolderInterface[], items: ShareEntity[]) => (state: RootState) =>
+    _selectChosenFolderIds(state, folders, items);
 
 const selectPublicationsToReviewCount = createSelector(
   [
@@ -223,12 +238,73 @@ const selectPublicVersionGroupById = (
 const selectPublishModel = (state: RootState) =>
   rootSelector(state).publishModel;
 
+const selectIsApproveRequiredEntity = createSelector(
+  [selectResourcesToReview, (_state, id: string) => id],
+  (resourcesToReview, id) => {
+    return resourcesToReview.some((r) => r.reviewUrl === id);
+  },
+);
+
+const selectIsApproveRequiredEntitySelected = createSelector(
+  [
+    selectSelectedPublication,
+    (state, id: string) => selectResourceToReviewByReviewUrl(state, id),
+  ],
+  (selectedPublication, resourceToReview) => {
+    if (!resourceToReview || !selectedPublication) {
+      return false;
+    }
+
+    return selectedPublication.resources.some(
+      (resource) => resource.reviewUrl === resourceToReview.reviewUrl,
+    );
+  },
+);
+const selectIsEditMode = (state: RootState) => rootSelector(state).isEditMode;
+
+const selectEntitiesEditState = (state: RootState) =>
+  rootSelector(state).entitiesEditState;
+
+const selectFoldersEditState = (state: RootState) =>
+  rootSelector(state).foldersEditState;
+
+const selectEntityEditStateByReviewUrl = createSelector(
+  [selectEntitiesEditState, (_state, reviewUrl: string) => reviewUrl],
+  (entitiesEditState, reviewUrl): { name: string; version: string } | null => {
+    return entitiesEditState[reviewUrl] ?? null;
+  },
+);
+
+const selectRulesOnEdit = (state: RootState) => rootSelector(state).rulesOnEdit;
+
+const selectIsPublicationUpdating = (state: RootState) =>
+  rootSelector(state).isPublicationUpdating;
+
+const selectDisplayAuthorEditState = (state: RootState) =>
+  rootSelector(state).displayAuthorEditState;
+
+const selectIsResourceUnpublishing = createSelector(
+  [
+    (state: RootState, publicationUrl: string) =>
+      selectPublicationByUrl(state, publicationUrl),
+    (_state, _publicationUrl: string, reviewUrl: string) => reviewUrl,
+  ],
+  (publication, reviewUrl) => {
+    const action = publication?.resources?.find(
+      (res) => res.reviewUrl === reviewUrl,
+    )?.action;
+
+    return action === PublishActions.DELETE;
+  },
+);
+
 export const PublicationSelectors = {
   selectPublications,
   selectFilteredPublications,
   selectFilteredPublicationResources,
   selectSelectedPublicationUrl,
   selectSelectedPublication,
+  selectPublicationByUrl,
   selectResourcesToReview,
   selectResourceToReviewByReviewUrl,
   selectResourceToReviewByReviewAndPublicationUrls,
@@ -245,4 +321,14 @@ export const PublicationSelectors = {
   selectPublicVersionGroups,
   selectPublicVersionGroupById,
   selectPublishModel,
+  selectIsApproveRequiredEntity,
+  selectIsApproveRequiredEntitySelected,
+  selectIsEditMode,
+  selectEntitiesEditState,
+  selectFoldersEditState,
+  selectEntityEditStateByReviewUrl,
+  selectRulesOnEdit,
+  selectIsPublicationUpdating,
+  selectDisplayAuthorEditState,
+  selectIsResourceUnpublishing,
 };

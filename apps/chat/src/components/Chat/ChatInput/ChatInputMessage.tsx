@@ -55,7 +55,7 @@ import { PromptVariablesDialog } from './PromptVariablesDialog';
 import { ReplayVariables } from './ReplayVariables';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
-import { Message, Role } from '@epam/ai-dial-shared';
+import { Feature, Message, Role } from '@epam/ai-dial-shared';
 
 interface Props {
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
@@ -83,11 +83,15 @@ export const ChatInputMessage = Inversify.register(
     showReplayControls,
   }: Props) => {
     const { t } = useTranslation(Translation.Chat);
+
     const dispatch = useAppDispatch();
-    const [isTyping, setIsTyping] = useState<boolean>(false);
+
+    const [isTyping, setIsTyping] = useState(false);
     const [showPluginSelect, setShowPluginSelect] = useState(false);
     const [selectedDialLinks, setSelectedDialLinks] = useState<DialLink[]>([]);
+
     const promptTemplateMappingRef = useRef(new Map<string, string>());
+
     const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
     const messageIsStreaming = useAppSelector(
       ConversationsSelectors.selectIsConversationsStreaming,
@@ -123,7 +127,6 @@ export const ChatInputMessage = Inversify.register(
     const isUploadingFilePresent = useAppSelector(
       FilesSelectors.selectIsUploadingFilePresent,
     );
-
     const isMessageError = useAppSelector(
       ConversationsSelectors.selectIsMessagesError,
     );
@@ -135,15 +138,9 @@ export const ChatInputMessage = Inversify.register(
     );
     const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
     const chatFormValue = useAppSelector(ChatSelectors.selectChatFormValue);
-
-    const shouldRegenerate =
-      isLastMessageError ||
-      (isLastAssistantMessageEmpty && !messageIsStreaming);
-
     const selectedModels = useAppSelector(
       ConversationsSelectors.selectSelectedConversationsModels,
     );
-
     const isChatInputDisabled = useAppSelector(
       ConversationsSelectors.selectIsSelectedConversationBlocksInput,
     );
@@ -153,6 +150,13 @@ export const ChatInputMessage = Inversify.register(
     const shouldFocusAndScroll = useAppSelector(
       ChatSelectors.selectShouldFocusAndScroll,
     );
+    const isDisabledInputFeature = useAppSelector((state) =>
+      SettingsSelectors.isFeatureEnabled(state, Feature.DisabledSend),
+    );
+
+    const shouldRegenerate =
+      isLastMessageError ||
+      (isLastAssistantMessageEmpty && !messageIsStreaming);
 
     useEffect(() => {
       if (shouldFocusAndScroll && textareaRef.current) {
@@ -218,6 +222,7 @@ export const ChatInputMessage = Inversify.register(
       selectedFolders.length,
     ]);
     const isSendDisabled =
+      isDisabledInputFeature ||
       isReplay ||
       isMessageError ||
       isInputEmpty ||

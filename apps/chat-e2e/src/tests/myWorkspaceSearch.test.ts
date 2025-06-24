@@ -7,13 +7,17 @@ import {
 } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
 import { BaseElement, MarketplaceAgentProperties } from '@/src/ui/webElements';
-import { GeneratorUtil, ModelsUtil, SortingUtil } from '@/src/utils';
+import {
+  GeneratorUtil,
+  ModelsUtil,
+  SortingUtil,
+  applicationNamePrefix,
+} from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
 
-//TODO: test-cases need to be updated after new search mechanism implementation
-dialTest.skip(
+dialTest(
   `Search in My workspace: 'No results found' and suggest results.\n` +
     `Search in My workspace: 'No results found' and no suggested results.\n` +
     'Search in My workspace when nothing to suggest from DIAL Marketplace. No suggested options.\n' +
@@ -719,6 +723,124 @@ dialTest.skip(
           filteredSuggestedAgents.map((agent) => agent.name),
           [thirdAppName],
           ExpectedMessages.searchResultsAreCorrect,
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Search in My workspace. New extended search by name',
+  async ({
+    marketplacePage,
+    marketplaceHeader,
+    marketplace,
+    marketplaceAgentsSection,
+    localStorageManager,
+    setTestIds,
+    baseAssertion,
+    customApplicationBuilder,
+    applicationApiHelper,
+  }) => {
+    setTestIds('EPMRTC-6447');
+
+    const firstAppName = applicationNamePrefix + 'abcdefghij 1';
+    const secondAppName = applicationNamePrefix + 'abcd efghij';
+    const thirdAppName = applicationNamePrefix + 'abcdefghij 2';
+    const fourthAppName = applicationNamePrefix + 'abcdexfghij';
+    const fifthAppName = applicationNamePrefix + 'abcdefghijklmnop12345678';
+
+    const firstTerm = 'abcd';
+    const secondTerm = 'abcd   ';
+    const thirdTerm = 'abcd ef';
+    const fourthTerm = 'abcdex';
+    const fifthTerm = 'abcdext';
+    const sixthTerm = 'habcdex';
+    const seventhTerm = 'habcdex1';
+
+    const searchTermResultMap = new Map<string, string[]>();
+    searchTermResultMap.set(firstTerm, [
+      firstAppName,
+      secondAppName,
+      thirdAppName,
+      fourthAppName,
+      fifthAppName,
+    ]);
+    searchTermResultMap.set(secondTerm, [
+      firstAppName,
+      secondAppName,
+      thirdAppName,
+      fourthAppName,
+      fifthAppName,
+    ]);
+    searchTermResultMap.set(thirdTerm, [
+      firstAppName,
+      secondAppName,
+      thirdAppName,
+      fifthAppName,
+    ]);
+    searchTermResultMap.set(fourthTerm, [
+      firstAppName,
+      thirdAppName,
+      fourthAppName,
+      fifthAppName,
+    ]);
+    searchTermResultMap.set(fifthTerm, [fourthAppName]);
+    searchTermResultMap.set(sixthTerm, [fourthAppName]);
+
+    await dialTest.step(
+      'Prepare the set of custom applications with mixture of terms in the name',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        for (const name of [
+          firstAppName,
+          secondAppName,
+          thirdAppName,
+          fourthAppName,
+          fifthAppName,
+        ]) {
+          const appModel = customApplicationBuilder
+            .withDisplayName(name)
+            .build();
+          await applicationApiHelper.createApplication(appModel);
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Open "DIAL Marketplace", type search term in the search field and verify correct apps are found',
+      async () => {
+        await marketplacePage.openMyWorkspacePage({
+          updateInstalledDeployments: false,
+        });
+        await marketplacePage.waitForPageLoaded();
+        for (const searchTerm of searchTermResultMap.keys()) {
+          await marketplaceHeader.searchInput.fillInInput(searchTerm);
+          const actualAgents = await marketplaceAgentsSection.getAllAgents();
+          const filteredAgents = actualAgents.filter(
+            (agent) => agent.isWorkspaceAgent,
+          );
+          baseAssertion.assertValue(
+            filteredAgents.length,
+            searchTermResultMap.get(searchTerm)!.length,
+            ExpectedMessages.elementsCountIsValid,
+          );
+          baseAssertion.assertArrayIncludesAll(
+            filteredAgents.map((agent) => agent.name),
+            searchTermResultMap.get(searchTerm)!,
+            ExpectedMessages.searchResultsAreCorrect,
+          );
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Type not existent combination in the search field and verify no results are found',
+      async () => {
+        await marketplaceHeader.searchInput.fillInInput(seventhTerm);
+        await baseAssertion.assertElementState(
+          marketplace.noResultsFound,
+          'visible',
         );
       },
     );

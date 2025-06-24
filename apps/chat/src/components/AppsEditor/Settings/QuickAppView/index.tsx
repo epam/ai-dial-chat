@@ -31,7 +31,7 @@ import {
   UIActions,
 } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ApplicationSelectors } from '@/src/store/selectors';
+import { ApplicationSelectors, ModelsSelectors } from '@/src/store/selectors';
 
 import { CONFIRM_DOCUMENT_VALUES } from '@/src/constants/applications';
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/code-apps';
@@ -70,6 +70,17 @@ const validators: Validators = {
       return true;
     },
   },
+
+  mcpToolset: {
+    validate: (v) => {
+      try {
+        JSON.parse(v ?? '');
+      } catch {
+        return 'Config is not a valid JSON object';
+      }
+      return true;
+    },
+  },
 };
 
 const FilesSelectorField = withErrorMessage(withLabel(FilesSelector));
@@ -84,6 +95,7 @@ interface QuickAppViewProps {
   isSharedWithMe: boolean;
   oldApplication: CustomApplicationModel;
   isShared?: boolean;
+  publicationUrl?: string;
 }
 
 export const QuickAppView: React.FC<QuickAppViewProps> = ({
@@ -91,6 +103,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
   isSharedWithMe,
   oldApplication,
   isShared,
+  publicationUrl,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -115,6 +128,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
   const exitAfterSave = useAppSelector(
     ApplicationSelectors.selectExitAfterSave,
   );
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   const confirmDocumentUrlValues = oldApplication?.isShared
     ? CONFIRM_DOCUMENT_VALUES
@@ -127,7 +141,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
       const hasChanged = !isEqual(data, lastSubmittedValuesRef.current);
 
       if (hasChanged) {
-        const applicationData = getQuickAppData(data);
+        const applicationData = getQuickAppData(data, modelsMap);
 
         const arrAreNotTheSameAndShared =
           isShared &&
@@ -154,6 +168,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
               isShared: arrAreNotTheSameAndShared ? false : isShared,
             },
             schema: schema ?? undefined,
+            publicationUrl,
           }),
         );
 
@@ -167,14 +182,14 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
       dispatch(ApplicationActions.setShouldSaveApplication(false));
       dispatch(ApplicationActions.setExitAfterSave(false));
     },
-    [exitAfterSave, dispatch, isShared, oldApplication, schema],
+    [exitAfterSave, dispatch, isShared, oldApplication, schema, publicationUrl],
   );
+
+  const isAppPublic = isEntityIdPublic(oldApplication);
 
   const autoSaveHandler = useCallback(() => {
     submitWrapper(handleSubmit)();
   }, [submitWrapper, handleSubmit]);
-
-  const isAppPublic = isEntityIdPublic(oldApplication);
 
   const savePartialForm = useCallback(() => {
     if (isAppPublic) return;
@@ -284,6 +299,25 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
             <ToolsetEditor
               label={t('Configure toolset')}
               error={errors.toolset?.message}
+              height={200}
+              value={field.value}
+              className="m-0.5 w-full overflow-hidden rounded border border-primary"
+              language="json"
+              onChange={(v) => field.onChange(v ?? '')}
+              allowFullScreen
+              options={editorOptions}
+            />
+          )}
+        />
+
+        <Controller
+          name="mcpToolset"
+          control={control}
+          rules={validators['mcpToolset']}
+          render={({ field }) => (
+            <ToolsetEditor
+              label={t('Configure MCP toolset')}
+              error={errors.mcpToolset?.message}
               height={200}
               value={field.value}
               className="m-0.5 w-full overflow-hidden rounded border border-primary"

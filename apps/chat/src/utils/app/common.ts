@@ -12,7 +12,7 @@ import {
 import { EntityFilters } from '@/src/types/search';
 
 import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
-import { NA_VERSION } from '@/src/constants/public';
+import { NA_VERSION } from '@/src/constants/publication';
 
 import {
   Entity,
@@ -291,3 +291,12 @@ export const getDefaultConversationProps = (): ShareInterface &
   ...getDefaultEntityProps(),
   reference: nanoid(),
 });
+
+export const replaceStringRange = (
+  currentString: string,
+  value: string,
+  start: number,
+  end: number,
+) => {
+  return currentString.slice(0, start) + value + currentString.slice(end);
+};

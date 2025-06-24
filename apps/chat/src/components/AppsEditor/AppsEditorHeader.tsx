@@ -17,11 +17,7 @@ import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { Translation } from '@/src/types/translation';
 
-import {
-  ApplicationActions,
-  ConversationsActions,
-  UIActions,
-} from '@/src/store/actions';
+import { ApplicationActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
@@ -30,7 +26,6 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
@@ -63,7 +58,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const {
-    query: { id = '', slug = '', add },
+    query: { id = '', slug = '', add, publicationUrl },
     pathname,
     push,
   } = useRouter();
@@ -74,9 +69,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
     UISelectors.selectIsUserSettingsOpen,
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
-  const returnConversationIds = useAppSelector(
-    ApplicationSelectors.selectReturnConversationIds,
-  );
+
   const shouldSaveApplication = useAppSelector(
     ApplicationSelectors.selectShouldSaveApplication,
   );
@@ -92,7 +85,7 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
         label: t('General info'),
         href: {
           pathname: Routes.AppsEditorGeneralInfo,
-          query: { id, slug, add },
+          query: { id, slug, add, publicationUrl },
         },
       },
       {
@@ -100,11 +93,11 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
         label: t('App settings'),
         href: {
           pathname: Routes.AppsEditorSettings,
-          query: { id, slug, add },
+          query: { id, slug, add, publicationUrl },
         },
       },
     ],
-    [t, id, slug, add],
+    [t, id, slug, add, publicationUrl],
   );
 
   const selectedTab =
@@ -150,21 +143,6 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
     if (!shouldSaveApplication) {
       dispatch(ApplicationActions.setShouldSaveApplication(true));
       dispatch(ApplicationActions.setExitAfterSave(true));
-    }
-
-    if (returnConversationIds?.length) {
-      dispatch(
-        ConversationsActions.selectConversations({
-          conversationIds: returnConversationIds,
-        }),
-      );
-      dispatch(ApplicationActions.setReturnConversationIds(undefined));
-    } else {
-      dispatch(
-        ConversationsActions.createNewConversations({
-          names: [DEFAULT_CONVERSATION_NAME],
-        }),
-      );
     }
   };
 

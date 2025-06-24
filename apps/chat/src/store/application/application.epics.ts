@@ -35,6 +35,7 @@ import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { isEntityIdExternal, isEntityIdLocal } from '@/src/utils/app/id';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 import { parseApplicationApiKey } from '@/src/utils/server/api';
 
@@ -49,6 +50,7 @@ import {
   ApplicationTypesSchemasActions,
   ConversationsActions,
   ModelsActions,
+  PublicationActions,
   ShareActions,
   UIActions,
 } from '@/src/store/actions';
@@ -57,9 +59,11 @@ import {
   AuthSelectors,
   ConversationsSelectors,
   ModelsSelectors,
+  PublicationSelectors,
   ShareSelectors,
 } from '@/src/store/selectors';
 
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import { DeleteType, MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
@@ -214,6 +218,16 @@ const updateApplicationEpic: AppEpic = (action$, state$) =>
 
       const isMoved = payload.oldApplication.id !== updatedCustomApplication.id;
 
+      if (isMoved && payload.publicationUrl) {
+        return of(
+          ApplicationActions.updateApplicationPublicationUrls({
+            publicationUrl: payload.publicationUrl,
+            oldApplicationId: payload.oldApplication.id,
+            newApplicationId: updatedCustomApplication.id,
+          }),
+        );
+      }
+
       const move$ = isMoved
         ? DataService.getDataStorage()
             .move({
@@ -294,6 +308,43 @@ const updateApplicationEpic: AppEpic = (action$, state$) =>
             );
           }),
         ),
+      );
+    }),
+  );
+
+const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(ApplicationActions.updateApplicationPublicationUrls.type),
+    switchMap(({ payload }) => {
+      const publication = PublicationSelectors.selectPublicationByUrl(
+        state$.value,
+        payload.publicationUrl as string,
+      );
+      if (!publication || !publication?.resources) {
+        return EMPTY;
+      }
+      const { name } = splitEntityId(payload.newApplicationId);
+
+      return of(
+        PublicationActions.updatePublicationRequest({
+          url: publication.url,
+          dataToUpdate: {
+            name: publication.name as string,
+            targetFolder: publication.targetFolder,
+            resources: publication.resources.map((resource) => ({
+              action: resource.action,
+              sourceUrl: resource.sourceUrl ?? '',
+              targetUrl:
+                resource.reviewUrl === payload.oldApplicationId
+                  ? resource.targetUrl
+                      .split('/')
+                      .slice(0, -1)
+                      .concat(name)
+                      .join('/')
+                  : resource.targetUrl,
+            })),
+          },
+        }),
       );
     }),
   );
@@ -652,6 +703,7 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
             query: {
               id: encodeURIComponent(entity.reference),
               slug: cleanSchemaId(applicationType),
+              publicationUrl: payload.publicationUrl,
             },
           });
         }),
@@ -669,10 +721,10 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
     }),
   );
 
-const exitEditModeEpic: AppEpic = (action$, _state$, { router }) =>
+const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
   action$.pipe(
     ofType(ApplicationActions.exitEditor.type),
-    tap(({ payload }) => {
+    switchMap(({ payload }) => {
       if (payload.redirectUrl) {
         router.push({
           pathname: payload.redirectUrl,
@@ -683,8 +735,24 @@ const exitEditModeEpic: AppEpic = (action$, _state$, { router }) =>
           query: { tab: MarketplaceTabs.MY_WORKSPACE },
         });
       }
+      const returnConversationIds =
+        ApplicationSelectors.selectReturnConversationIds(state$.value);
+      if (returnConversationIds?.length) {
+        return concat(
+          of(
+            ConversationsActions.selectConversations({
+              conversationIds: returnConversationIds,
+            }),
+          ),
+          of(ApplicationActions.setReturnConversationIds(undefined)),
+        );
+      }
+      return of(
+        ConversationsActions.createNewConversations({
+          names: [DEFAULT_CONVERSATION_NAME],
+        }),
+      );
     }),
-    ignoreElements(),
   );
 
 const setSelectedWidgetEpic: AppEpic = (action$) =>
@@ -710,4 +778,5 @@ export const ApplicationEpics = combineEpics(
   enterEditModeEpic,
   exitEditModeEpic,
   setSelectedWidgetEpic,
+  updateApplicationPublicationUrlsEpic,
 );

@@ -14,21 +14,31 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ApplicationSelectors } from '@/src/store/selectors';
 
-import { PublicationControls } from '@/src/components/Chat/Publish/PublicationChatControls';
-import { ReviewCodeAppSection } from '@/src/components/Chat/Publish/ReviewApplicationDialog/ReviewCodeAppSection';
-import { ReviewQuickAppSection } from '@/src/components/Chat/Publish/ReviewApplicationDialog/ReviewQuickAppSection';
+import { PublicationControls } from '@/src/components/Chat/Publish/PublicationControls/PublicationControls';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
 
+import { ReviewCodeAppSection } from './ReviewCodeAppSection';
+import { ReviewQuickAppSection } from './ReviewQuickAppSection';
+
 import isEmpty from 'lodash-es/isEmpty';
 
+// TODO: disable app editing until release: 2025-06-25. Need to enable after
 function ReviewApplicationDialogContent() {
   const { t } = useTranslation(Translation.Chat);
+  // const dispatch = useAppDispatch();
 
   const application = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
+  // const detailedApplicationTypeSchema = useAppSelector(
+  //   ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
+  // );
+  // const selectedPublicationUrl = useAppSelector(
+  //   PublicationSelectors.selectSelectedPublicationUrl,
+  // );
+
   const isCodeApp = application && isExecutableApp(application);
 
   const controlsEntity = application
@@ -38,6 +48,25 @@ function ReviewApplicationDialogContent() {
         folderId: getFolderIdFromEntityId(application.id),
       }
     : null;
+
+  // const handleEditApplication = useCallback(() => {
+  //   if (!application) return;
+  //
+  //   const applicationType = getApplicationType(application);
+  //   dispatch(
+  //     ApplicationActions.enterEditMode({
+  //       entity: application,
+  //       applicationType,
+  //       detailedApplicationTypeSchemaId: detailedApplicationTypeSchema?.$id,
+  //       publicationUrl: selectedPublicationUrl as string,
+  //     }),
+  //   );
+  // }, [
+  //   application,
+  //   detailedApplicationTypeSchema?.$id,
+  //   dispatch,
+  //   selectedPublicationUrl,
+  // ]);
 
   return (
     <>
@@ -153,7 +182,17 @@ function ReviewApplicationDialogContent() {
 
         <ReviewQuickAppSection application={application} />
       </div>
-      <div className="flex w-full items-center justify-end border-t border-tertiary px-3 py-4 md:px-5">
+      <div className="flex w-full items-center justify-between border-t border-tertiary px-3 py-4 md:px-5">
+        {/*<button*/}
+        {/*  className={classNames(*/}
+        {/*    'button flex size-[38px] items-center justify-center border-primary bg-layer-2 p-3 outline-none hover:bg-layer-4 disabled:cursor-not-allowed disabled:bg-layer-2',*/}
+        {/*  )}*/}
+        {/*  data-qa="prev-chat-review-button"*/}
+        {/*  onClick={handleEditApplication}*/}
+        {/*>*/}
+        {/*  <IconPencil className="shrink-0" height={18} width={18} />*/}
+        {/*</button>*/}
+
         {controlsEntity && (
           <PublicationControls
             entity={controlsEntity}
