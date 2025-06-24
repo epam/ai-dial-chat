@@ -32,7 +32,8 @@ dialTest(
     'Delete custom app from context menu\n' + // EPMRTC-4094
     'Custom app: Description field displayed in New conversation , card view, app view\n' + // EPMRTC-4099
     'App Editor open and Exit of first step - app is not saved\n' + // EPMRTC-5746
-    "Preview: current agent stays in Preview after user clicks on 'Save and exit' button when there is any empty required field", // EPMRTC-6452
+    'Preview: current agent stays in Preview after user clicks on "Save and exit" button when there is any empty required field\n' + // EPMRTC-6452
+    'Stepper icons change', //EPMRTC-5757
   async ({
     marketplacePage,
     marketplaceHeader,
@@ -58,7 +59,6 @@ dialTest(
     marketplace,
     toastAssertion,
     toast,
-    iconApiHelper,
     appEditorAppSettingsAgentPreview,
   }) => {
     setTestIds(
@@ -69,6 +69,7 @@ dialTest(
       'EPMRTC-4099',
       'EPMRTC-5746',
       'EPMRTC-6452',
+      'EPMRTC-5757',
     );
     const shortDescription = GeneratorUtil.randomShortDescription();
     const longDescription = GeneratorUtil.randomLongDescription();
@@ -163,6 +164,33 @@ dialTest(
 
         await appEditorHeaderAssertion.assertActionTitle(
           `${AppMenuActions.add(AddAppMenuOptions.customApp)}`,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify App Editor page was opened, title "Edit custom app", general info step is active',
+      async () => {
+        await appEditorHeaderAssertion.assertActionTitle(
+          `${AppMenuActions.add(AddAppMenuOptions.customApp)}`,
+        );
+
+        await appEditorHeaderAssertion.assertStepState(
+          appEditorHeader.getGeneralInfoStep(),
+          'visible',
+        );
+        await appEditorHeaderAssertion.assertStepState(
+          appEditorHeader.getAppSettingsStep(),
+          'visible',
+          'disabled',
+        );
+        await appEditorHeaderAssertion.assertStepIsCompleted(
+          appEditorHeader.getGeneralInfoStep(),
+          false,
+        );
+        await appEditorHeaderAssertion.assertStepIsCompleted(
+          appEditorHeader.getAppSettingsStep(),
+          false,
         );
       },
     );
