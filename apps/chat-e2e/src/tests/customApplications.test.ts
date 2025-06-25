@@ -317,7 +317,7 @@ dialTest(
       'Input Chat completion URL, click Save and Exit link',
       async () => {
         await appEditorViewForm.fillInAppFields();
-        await appEditorHeader.focusOn( {isHttpMethodTriggered: false} );
+        await appEditorHeader.focusOn({ isHttpMethodTriggered: false });
         await appEditorHeader.saveAndExitButton.click();
         await baseAssertion.assertElementState(appEditorViewForm, 'hidden');
         await marketplacePage.waitForPageLoaded();
@@ -889,11 +889,12 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.only(
   'Custom app Topic dropdown select.\n' + // EPMRTC-4374
     '[Custom app]: Hints on for fields\n' + // EPMRTC-4278
     'Preview on step "General info"\n' + // EPMRTC-5749
-    'Preview on step "App settings"', // EPMRTC-5750
+    'Preview on step "App settings"\n' + // EPMRTC-5750
+    'Chat created from preview form on step "App settings" is not available on DIAL home page', // EPMRTC-5762
   async (
     {
       marketplacePage,
@@ -914,10 +915,17 @@ dialTest(
       sendMessage,
       chatMessages,
       page,
+      conversationAssertion,
     },
     testInfo,
   ) => {
-    setTestIds('EPMRTC-4374', 'EPMRTC-4278', 'EPMRTC-5749', 'EPMRTC-5750');
+    setTestIds(
+      'EPMRTC-4374',
+      'EPMRTC-4278',
+      'EPMRTC-5749',
+      'EPMRTC-5750',
+      'EPMRTC-5762',
+    );
     let numberOfTopicsToSelect: number;
     let allTopics: string[] = [];
     let topicsToSelect: string[] = [];
@@ -932,6 +940,7 @@ dialTest(
     const expectedIconUrl = `/api/${await fileApiHelper.putFile(
       Attachment.sunImageName,
     )}`;
+    const previewChatMessage = 'Hello from preview';
 
     await dialTest.step('Open create a custom app page', async () => {
       await marketplacePage.openCreateCustomAppPage();
@@ -1233,13 +1242,12 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        const testMessage = 'Hello from preview';
-        await sendMessage.messageInput.fillInInput(testMessage);
+        await sendMessage.messageInput.fillInInput(previewChatMessage);
         await sendMessage.sendMessageButton.click();
         await chatMessages.getChatMessage(1).waitFor();
         await chatMessages.getChatMessage(2).waitFor();
 
-        await chatMessagesAssertion.assertMessageContent(1, testMessage);
+        await chatMessagesAssertion.assertMessageContent(1, previewChatMessage);
         await chatMessagesAssertion.assertMessageContent(
           2,
           'Response', // Mocked response content
@@ -1258,6 +1266,26 @@ dialTest(
           previewChatAttachmentButton,
           'visible',
           'Attachment clip icon should appear in preview chat',
+        );
+      },
+    );
+
+    await dialTest.step('Click Save and Exit link', async () => {
+      await appEditorHeader.saveAndExitButton.click();
+      await marketplacePage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'Click back to chat - created on preview form chat is not visible on DIAL main screen',
+      async () => {
+        await marketplacePage
+          .getMarketplaceContainer()
+          .getNavigationPanel()
+          .backToChatButton.click();
+        await dialHomePage.waitForPageLoaded( { skipSidebars: true} );
+        await conversationAssertion.assertEntityState(
+          { name: previewChatMessage },
+          'hidden',
         );
       },
     );
