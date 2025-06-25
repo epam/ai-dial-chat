@@ -307,7 +307,8 @@ export const AddApplicationAppSettingsFormSelector = {
   appViewFormContainer: '[data-qa="app-view-form"]',
   maxAttachmentNumberField: '[data-qa="max-attachment-number-field"]',
   selectedAttachmentTypePills: `span[data-state="closed"] > span`,
-  unselectAttachmentTypePillButton: (type: string) => `button[data-qa="unselect-item-${type}"]`,
+  unselectAttachmentTypePillButton: (type: string) =>
+    `button[data-qa="unselect-item-${type}"]`,
 };
 
 export const InformationModalSelectors = {

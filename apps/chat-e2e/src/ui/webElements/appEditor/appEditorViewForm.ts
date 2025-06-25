@@ -31,8 +31,10 @@ export class AppEditorViewForm extends AppEditorForm {
   public attachmentTypesInput =
     this.attachmentTypesContainer.getChildElementBySelector(Tags.input);
 
-  public selectedAttachmentTypePills = this.attachmentTypesContainer
-    .getChildElementBySelector(AddApplicationAppSettingsFormSelector.selectedAttachmentTypePills);
+  public selectedAttachmentTypePills =
+    this.attachmentTypesContainer.getChildElementBySelector(
+      AddApplicationAppSettingsFormSelector.selectedAttachmentTypePills,
+    );
 
   public getSelectedAttachmentTypePill(type: string): BaseElement {
     return this.createElementFromLocator(
@@ -44,7 +46,9 @@ export class AppEditorViewForm extends AppEditorForm {
 
   public getSelectedAttachmentTypePillRemoveIcon(type: string): BaseElement {
     return this.getSelectedAttachmentTypePill(type).getChildElementBySelector(
-      AddApplicationAppSettingsFormSelector.unselectAttachmentTypePillButton(type),
+      AddApplicationAppSettingsFormSelector.unselectAttachmentTypePillButton(
+        type,
+      ),
     );
   }
 
