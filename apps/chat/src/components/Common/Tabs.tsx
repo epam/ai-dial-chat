@@ -2,26 +2,26 @@ import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
-export interface TabOption {
-  id: string;
+export interface TabOption<T extends string = string> {
+  id: T;
   label: string;
   content: ReactNode | null;
   disabled?: boolean;
 }
 
-interface TabsProps {
-  tabs: TabOption[];
-  defaultTabId?: string;
-  onTabChange?: (tabId: string) => void;
+interface TabsProps<T extends string = string> {
+  tabs: TabOption<T>[];
+  defaultTabId?: T;
+  onTabChange?: (tabId: T) => void;
   className?: string;
   tabListClassName?: string;
   tabButtonBaseClassName?: string;
   activeTabButtonClassName?: string;
   inactiveTabButtonClassName?: string;
-  renderContent?: (activeTabId: string) => ReactNode;
+  renderContent?: (activeTabId: T) => ReactNode;
 }
 
-export const Tabs: React.FC<TabsProps> = ({
+export const Tabs = <T extends string = string>({
   tabs,
   defaultTabId,
   onTabChange,
@@ -31,10 +31,10 @@ export const Tabs: React.FC<TabsProps> = ({
   activeTabButtonClassName,
   inactiveTabButtonClassName,
   renderContent,
-}) => {
+}: TabsProps<T>) => {
   const validTabs = useMemo(() => tabs.filter(Boolean), [tabs]);
 
-  const [activeTabId, setActiveTabId] = useState<string | undefined>(() => {
+  const [activeTabId, setActiveTabId] = useState<T | undefined>(() => {
     if (defaultTabId && validTabs.find((tab) => tab.id === defaultTabId)) {
       return defaultTabId;
     }
@@ -50,7 +50,7 @@ export const Tabs: React.FC<TabsProps> = ({
     }
   }, [defaultTabId, activeTabId, validTabs]);
 
-  const handleTabClick = (tabId: string) => {
+  const handleTabClick = (tabId: T) => {
     if (tabId === activeTabId) return;
     setActiveTabId(tabId);
     onTabChange?.(tabId);

@@ -21,7 +21,7 @@ import { getValidFormFields } from '@/src/utils/app/forms';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
-import { CustomApplicationModel } from '@/src/types/applications';
+import { CustomApplicationModel, Toolsets } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
@@ -173,7 +173,9 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
         );
         lastSubmittedValuesRef.current = data;
       }
-      if (exitAfterSave) dispatch(ApplicationActions.exitEditor({}));
+      if (exitAfterSave) {
+        dispatch(ApplicationActions.exitEditor({}));
+      }
       dispatch(ApplicationActions.setShouldSaveApplication(false));
       dispatch(ApplicationActions.setExitAfterSave(false));
     },
@@ -218,7 +220,9 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
       );
       return;
     }
-    if (shouldSaveApplication) autoSaveHandler();
+    if (shouldSaveApplication) {
+      autoSaveHandler();
+    }
   }, [
     autoSaveHandler,
     dispatch,
@@ -239,30 +243,29 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
   const editorTabs = useMemo(() => {
     return [
       {
-        id: 'toolset',
+        id: Toolsets.Toolset,
         label: 'Web API',
-        value: watch('toolset') ?? '',
+        value: watch(Toolsets.Toolset) ?? '',
         language: 'json',
       },
       {
-        id: 'mcpToolset',
+        id: Toolsets.McpToolset,
         label: 'MCP',
-        value: watch('mcpToolset') ?? '',
+        value: watch(Toolsets.McpToolset) ?? '',
         language: 'json',
       },
-    ] as const;
+    ];
   }, [watch]);
 
-  type EditorTabId = (typeof editorTabs)[number]['id'];
-  const [activeTabId, setActiveTabId] = useState<EditorTabId>('toolset');
+  const [activeTabId, setActiveTabId] = useState(Toolsets.Toolset);
 
   const toolsetController = useController({
-    name: 'toolset',
+    name: Toolsets.Toolset,
     control,
     rules: validators.toolset,
   });
   const mcpToolsetController = useController({
-    name: 'mcpToolset',
+    name: Toolsets.McpToolset,
     control,
     rules: validators.mcpToolset,
   });
@@ -276,8 +279,8 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
   );
 
   const handleFileChange = useCallback(
-    (fileId: string, value: string) => {
-      const controller = fieldControllers[fileId as EditorTabId]?.field;
+    (fileId: Toolsets, value: string) => {
+      const controller = fieldControllers[fileId]?.field;
       if (controller) {
         controller.onChange(value);
         controller.onBlur();
@@ -285,6 +288,14 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
     },
     [fieldControllers],
   );
+
+  const handleTabChange = (id: string) => {
+    setActiveTabId(id as Toolsets);
+  };
+
+  const handleFileChangeWrapper = (fileId: string, value: string) => {
+    handleFileChange(fileId as Toolsets, value);
+  };
 
   return (
     <form
@@ -341,10 +352,10 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
           error={errors[activeTabId]?.message}
           height={200}
           allowFullScreen
-          files={[...editorTabs]}
-          onTabChange={(id) => setActiveTabId(id as EditorTabId)}
+          files={editorTabs}
+          onTabChange={handleTabChange}
           activeFileId={activeTabId}
-          onChangeFile={handleFileChange}
+          onChangeFile={handleFileChangeWrapper}
           options={editorOptions}
         />
 
