@@ -895,7 +895,8 @@ dialTest(
     'Preview on step "General info"\n' + // EPMRTC-5749
     'Preview on step "App settings"\n' + // EPMRTC-5750
     'Chat created from preview form on step "App settings" is not available on DIAL home page\n' + // EPMRTC-5762
-    'Input on step "App settings" data saved when switch back to step "General info"', // EPMRTC-5765
+    'Input on step "App settings" data saved when switch back to step "General info"\n' + // EPMRTC-5765
+    'Input on step "General info" data saved when switch to step "App settings" using stepper (not Next button )', // EPMRTC-5928
   async (
     {
       marketplacePage,
@@ -927,6 +928,7 @@ dialTest(
       'EPMRTC-5750',
       'EPMRTC-5762',
       'EPMRTC-5765',
+      'EPMRTC-5928',
     );
     let numberOfTopicsToSelect: number;
     let allTopics: string[] = [];
@@ -944,6 +946,7 @@ dialTest(
     )}`;
     const previewChatMessage = 'Hello from preview';
     const attachmentTypeToSet = 'image/png';
+    const updatedAppNameForStepperTest = `${appEntity.name}-stepper-update`; // New name for EPMRTC-5928
 
     await dialTest.step('Open create a custom app page', async () => {
       await marketplacePage.openCreateCustomAppPage();
@@ -1206,9 +1209,9 @@ dialTest(
     await dialTest.step(
       'Input Chat completion URL on App Settings step',
       async () => {
-        await appEditorViewForm.chatCompletionUrl.fillInInput(
-          'http://testurl.com',
-        );
+        await appEditorViewForm.fillInAppFields({
+          chatCompletionUrl: 'http://testurl.com',
+        });
       },
     );
 
@@ -1261,10 +1264,9 @@ dialTest(
     await dialTest.step(
       'Add attachment type (e.g., image/png) and verify clip icon appears in preview chat message box',
       async () => {
-        await appEditorViewForm.attachmentTypesInput.fillInInput(
-          attachmentTypeToSet,
-        );
-        await page.keyboard.press(keys.enter);
+        await appEditorViewForm.fillInAppFields({
+          attachmentTypes: [attachmentTypeToSet],
+        });
         const previewChatAttachmentButton =
           sendMessage.attachmentMenuTrigger.getElementLocator();
         await baseAssertion.assertElementState(
@@ -1296,6 +1298,51 @@ dialTest(
         ExpectedMessages.fieldValueIsValid,
       );
     });
+
+    await dialTest.step(
+      'Navigate back to General Info step using header stepper',
+      async () => {
+        await appEditorHeader.goOnGeneralInfoStep({
+          isHttpMethodTriggered: false,
+        }); // Assuming no save on just navigating back
+        await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');
+      },
+    );
+
+    await dialTest.step('Input new app name', async () => {
+      await appEditorGeneralForm.fillInAppFields({
+        name: updatedAppNameForStepperTest,
+      });
+    });
+
+    await dialTest.step(
+      'Navigate to App Settings step using header stepper',
+      async () => {
+        await appEditorHeader.getAppSettingsStep().click();
+        await baseAssertion.assertElementState(appEditorViewForm, 'visible');
+      },
+    );
+
+    await dialTest.step(
+      'Navigate back to General Info step using header stepper',
+      async () => {
+        await appEditorHeader.goOnGeneralInfoStep({
+          isHttpMethodTriggered: false,
+        });
+        await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');
+      },
+    );
+
+    await dialTest.step(
+      'Verify the new name is preserved on General Info step',
+      async () => {
+        await baseAssertion.assertInputValue(
+          appEditorGeneralForm.name,
+          updatedAppNameForStepperTest,
+          ExpectedMessages.fieldValueIsValid,
+        );
+      },
+    );
 
     await dialTest.step('Click Save and Exit link', async () => {
       await appEditorHeader.saveAndExitButton.click();

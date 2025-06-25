@@ -414,6 +414,7 @@ export const ExpectedMessages = {
   authorIsValid: 'Author in preview is valid',
   selectedTopicsAreValid: 'Selected topics are displayed in preview',
   numberOfTopicsIsCorrect: 'Number of topics in preview is correct',
+  attachmentClipIconShouldAppear: 'Attachment clip icon should appear here',
   onlyOneEntityCardFoundInSearch: (entityType: string) =>
     `Only one ${entityType} card found in the search`,
 };
