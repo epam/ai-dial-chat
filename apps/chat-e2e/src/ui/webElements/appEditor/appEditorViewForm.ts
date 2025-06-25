@@ -22,9 +22,12 @@ export class AppEditorViewForm extends AppEditorForm {
   public attachmentsTypesLabel = this.getChildElementBySelector(
     AddApplicationAppSettingsFormSelector.attachmentsTypesLabel,
   );
-  public attachmentTypesInput = this.getChildElementBySelector(
-    AddApplicationAppSettingsFormSelector.attachmentsTypesInput,
-  ).getChildElementBySelector(Tags.input);
+  public attachmentTypesContainer = this.getChildElementBySelector(
+    AddApplicationAppSettingsFormSelector.attachmentTypesContainer,
+  );
+
+  public attachmentTypesInput =
+    this.attachmentTypesContainer.getChildElementBySelector(Tags.input);
 
   public featuresDataHintIcon = this.featuresLabel.getChildElementBySelector(
     Tags.svg,

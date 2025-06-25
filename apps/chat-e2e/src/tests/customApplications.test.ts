@@ -1282,7 +1282,7 @@ dialTest.only(
           .getMarketplaceContainer()
           .getNavigationPanel()
           .backToChatButton.click();
-        await dialHomePage.waitForPageLoaded( { skipSidebars: true} );
+        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
         await conversationAssertion.assertEntityState(
           { name: previewChatMessage },
           'hidden',
