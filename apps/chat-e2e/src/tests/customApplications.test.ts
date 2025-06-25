@@ -16,8 +16,7 @@ import {
   MockedChatApiResponseBodies,
   UploadMenuOptions,
 } from '@/src/testData';
-import { Overflow } from '@/src/ui/domData';
-import { keys } from '@/src/ui/keyboard';
+import { Overflow, StylesValues } from '@/src/ui/domData';
 import {
   AppEditSteps,
   BaseElement,
@@ -25,6 +24,7 @@ import {
 } from '@/src/ui/webElements';
 import { DateUtil, GeneratorUtil, SortingUtil, UserUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
+import { Styles } from '@/src/ui/domData/styles';
 
 dialTest(
   'Create custom app with required fields only.\n' + // EPMRTC-5130
@@ -1965,6 +1965,82 @@ dialTest(
         await baseAssertion.assertElementTextWrap(
           agentInfo.agentName,
           Overflow.breakWord,
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  "Tooltip for long app's name displayed in several lines", // EPMRTC-5946
+  async ({
+    customApplicationBuilder,
+    applicationApiHelper,
+    marketplacePage,
+    marketplaceHeader,
+    marketplaceAgentsSection,
+    marketplaceAgents,
+    setTestIds,
+    baseAssertion,
+    tooltipAssertion,
+  }) => {
+    setTestIds('EPMRTC-5946');
+    const appNameWithSpaces = `${GeneratorUtil.randomString(70)} ${GeneratorUtil.randomString(70)} ${GeneratorUtil.randomString(ExpectedConstants.maxEntityNameLength - 140 - 2)}`; // Ensure total length is 160 with spaces
+    const appVersion = GeneratorUtil.randomApplicationVersion();
+    const appEntity = {
+      name: appNameWithSpaces,
+      version: appVersion,
+    } as DialAIEntityModel;
+
+    await dialTest.step(
+      'Create a custom app via API with a name of 160 symbols containing spaces',
+      async () => {
+        const applicationModel = customApplicationBuilder
+          .withDisplayName(appEntity.name)
+          .withDisplayVersion(appEntity.version!)
+          .build();
+        await applicationApiHelper.createApplication(applicationModel);
+      },
+    );
+
+    await dialTest.step('Open DIAL Marketplace', async () => {
+      await marketplacePage.openMarketplacePage({
+        updateInstalledDeployments: false,
+      });
+      await marketplacePage.waitForPageLoaded();
+    });
+
+    await dialTest.step("Find app's card", async () => {
+      await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+      const agentElement =
+        await marketplaceAgentsSection.findAgentElement(appEntity);
+      await baseAssertion.assertElementState(
+        agentElement,
+        'visible',
+        ExpectedMessages.agentIsVisible,
+      );
+    });
+
+    await dialTest.step(
+      "Hover over app's icon - tooltip is displayed in several lines",
+      async () => {
+        const agentElement =
+          await marketplaceAgentsSection.findAgentElement(appEntity);
+        const agentIcon = await marketplaceAgents.getAgentIcon(agentElement);
+        await agentIcon.hover();
+        await tooltipAssertion.assertTooltipContent(
+          ExpectedConstants.agentIconTooltip(
+            appEntity.name,
+            appEntity.version!,
+          ),
+        );
+        await tooltipAssertion.assertTooltipStyle(
+          Styles.wordBreak,
+          StylesValues.breakWord,
+        );
+        await tooltipAssertion.assertTooltipStyle(
+          Styles.textWrapMode,
+          StylesValues.wrap,
         );
       },
     );

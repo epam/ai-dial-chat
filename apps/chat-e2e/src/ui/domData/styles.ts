@@ -24,6 +24,11 @@ export enum Styles {
   wrap = 'wrap',
 }
 
+export enum StylesValues {
+  breakWord = 'break-word',
+  wrap = 'wrap',
+}
+
 export enum Cursors {
   pointer = 'pointer',
   notAllowed = 'not-allowed',
