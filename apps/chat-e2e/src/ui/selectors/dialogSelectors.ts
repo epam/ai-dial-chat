@@ -279,6 +279,7 @@ export const AppEditorAppSettingsPreviewSelectors = {
   previewIcon: '[data-qa="entity-icon"]',
   agentInfoContainer: '[data-qa="agent-info-container"]',
   agentInfo: '[data-qa="agent-info"]',
+  agentName: '[data-qa="agent-name"]',
 };
 
 export const AddApplicationGeneralInfoFormSelector = {

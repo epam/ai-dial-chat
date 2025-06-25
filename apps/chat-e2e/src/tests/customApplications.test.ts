@@ -16,6 +16,7 @@ import {
   MockedChatApiResponseBodies,
   UploadMenuOptions,
 } from '@/src/testData';
+import { Overflow } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import {
   AppEditSteps,
@@ -1304,7 +1305,7 @@ dialTest(
       async () => {
         await appEditorHeader.goOnGeneralInfoStep({
           isHttpMethodTriggered: false,
-        }); // Assuming no save on just navigating back
+        });
         await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');
       },
     );
@@ -1835,6 +1836,136 @@ dialAdminTest(
           encodedIconUrl,
         );
         await chatHeaderAssertion.assertHeaderIcon(encodedIconUrl);
+      },
+    );
+  },
+);
+
+dialTest(
+  'Long names of apps without spaces displayed in several lines on preview screen of Add editor and on start screen of new conversation', // EPMRTC-5945
+  async ({
+    marketplacePage,
+    appEditorPage,
+    appEditorGeneralForm,
+    appEditorHeader,
+    appEditorViewForm,
+    appEditorGeneralInfoAgentPreview,
+    appEditorAppSettingsAgentPreview,
+    setTestIds,
+    baseAssertion,
+    appEditorHeaderAssertion,
+    marketplaceHeader,
+    marketplaceAgentsSection,
+    agentDetailsModal,
+    dialHomePage,
+    agentInfo,
+    agentInfoAssertion,
+  }) => {
+    setTestIds('EPMRTC-5945');
+    const appEntity = {
+      name: GeneratorUtil.randomString(
+        ExpectedConstants.maxEntityNameLength - 1,
+      ),
+      version: GeneratorUtil.randomApplicationVersion(),
+    } as DialAIEntityModel;
+
+    await dialTest.step('Open create a custom app page', async () => {
+      await marketplacePage.openCreateCustomAppPage();
+      await appEditorPage.waitForPageLoaded();
+      await appEditorHeaderAssertion.assertActionTitle(
+        `${AppMenuActions.add(AddAppMenuOptions.customApp)}`,
+      );
+    });
+
+    await dialTest.step(
+      "Input app's name (159 symbols, no spaces) and version on General Info step",
+      async () => {
+        await appEditorGeneralForm.fillInAppFields({
+          name: appEntity.name,
+          version: appEntity.version,
+        });
+      },
+    );
+
+    await dialTest.step(
+      'Check how name displayed on preview screen on General Info step',
+      async () => {
+        await baseAssertion.assertElementState(
+          appEditorGeneralInfoAgentPreview,
+          'visible',
+        );
+        // Verify name is truncated with ellipsis on the card preview
+        await baseAssertion.assertElementTextIsTruncated(
+          appEditorGeneralInfoAgentPreview.previewName,
+          ExpectedMessages.entityNameIsTruncated,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click Next to go to the App Settings step',
+      async () => {
+        await appEditorGeneralForm.goNext({ waitForResponses: true });
+        await baseAssertion.assertElementState(appEditorViewForm, 'visible');
+      },
+    );
+
+    await dialTest.step(
+      'Check how name displayed on preview for New conversation on App Settings step',
+      async () => {
+        await baseAssertion.assertElementState(
+          appEditorAppSettingsAgentPreview,
+          'visible',
+        );
+        const previewAgentNameElement =
+          appEditorAppSettingsAgentPreview.agentName;
+        await baseAssertion.assertElementText(
+          previewAgentNameElement,
+          appEntity.name,
+          ExpectedMessages.agentNameIsValid,
+        );
+        // Verify name is wrapped (not truncated with ellipsis) on the new conversation preview
+        await baseAssertion.assertElementTextWrap(
+          previewAgentNameElement,
+          Overflow.breakWord,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Input Chat completion URL and click "Save and exit"',
+      async () => {
+        await appEditorViewForm.fillInAppFields({
+          chatCompletionUrl: 'http://testurl.com',
+        });
+        await appEditorHeader.saveAndExitButton.click();
+        await marketplacePage.waitForPageLoaded();
+      },
+    );
+
+    await dialTest.step(
+      'On My Workspace page, click on app\'s card and then "Use application" button',
+      async () => {
+        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        const agentElement =
+          await marketplaceAgentsSection.findAgentElement(appEntity);
+        await agentElement.click();
+        await agentDetailsModal.clickUseButton({
+          isInstalledDeploymentsUpdated: false,
+        });
+        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
+      },
+    );
+
+    await dialTest.step(
+      'Verify how name displayed on New conversation start screen',
+      async () => {
+        await agentInfoAssertion.assertAgentName(appEntity.name);
+        // Verify name is wrapped (not truncated with ellipsis) on the new conversation start screen
+        await baseAssertion.assertElementTextWrap(
+          agentInfo.agentName,
+          Overflow.breakWord,
+        );
       },
     );
   },

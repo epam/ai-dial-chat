@@ -28,4 +28,8 @@ export class AppEditorAppSettingsAgentPreview extends BaseElement {
   public agentInfo = this.agentInfoContainer.getChildElementBySelector(
     AppEditorAppSettingsPreviewSelectors.agentInfo,
   );
+
+  public agentName = this.agentInfo.getChildElementBySelector(
+    AppEditorAppSettingsPreviewSelectors.agentName,
+  );
 }
