@@ -31,11 +31,8 @@ export class AppEditorViewForm extends AppEditorForm {
   public attachmentTypesInput =
     this.attachmentTypesContainer.getChildElementBySelector(Tags.input);
 
-  // Pills representing selected attachment types
   public selectedAttachmentTypePills = this.attachmentTypesContainer
-    // .getChildElementBySelector(Tags.div) // First div child
-    // .getChildElementBySelector(Tags.div) // Second div child (relative flex min-h-[31px]...)
-    .getChildElementBySelector(`span[data-state="closed"] > span`); // Selector for the inner span of the pill
+    .getChildElementBySelector(AddApplicationAppSettingsFormSelector.selectedAttachmentTypePills);
 
   public getSelectedAttachmentTypePill(type: string): BaseElement {
     return this.createElementFromLocator(
@@ -47,7 +44,7 @@ export class AppEditorViewForm extends AppEditorForm {
 
   public getSelectedAttachmentTypePillRemoveIcon(type: string): BaseElement {
     return this.getSelectedAttachmentTypePill(type).getChildElementBySelector(
-      `button[data-qa="unselect-item-${type}"]`,
+      AddApplicationAppSettingsFormSelector.unselectAttachmentTypePillButton(type),
     );
   }
 
@@ -92,7 +89,6 @@ export class AppEditorViewForm extends AppEditorForm {
     for (let i = 1; i <= pillsCount; i++) {
       const pillTextContent = await this.selectedAttachmentTypePills
         .getNthElement(i)
-        // .locator('span.truncate') // Target the inner span with the text
         .textContent();
       if (pillTextContent) {
         types.push(pillTextContent.trim());

@@ -889,7 +889,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'Custom app Topic dropdown select.\n' + // EPMRTC-4374
     '[Custom app]: Hints on for fields\n' + // EPMRTC-4278
     'Preview on step "General info"\n' + // EPMRTC-5749
@@ -1295,7 +1295,6 @@ dialTest.only(
         [attachmentTypeToSet],
         ExpectedMessages.fieldValueIsValid,
       );
-      await appEditorViewForm.removeSelectedAttachmentType(attachmentTypeToSet);
     });
 
     await dialTest.step('Click Save and Exit link', async () => {
