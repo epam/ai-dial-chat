@@ -132,7 +132,7 @@ export const MonacoEditor = memo(function MonacoEditor(
                 defaultTabId={activeFileId}
                 onTabChange={props.onTabChange}
                 tabListClassName="flex bg-transparent"
-                tabButtonBaseClassName="border-l border-t border-r border-tertiary bg-layer-2 text-sm font-medium focus:outline-none px-4 h-[35px] hover:bg-accent-primary-alpha"
+                tabButtonBaseClassName="border-r border-tertiary bg-layer-2 text-sm font-medium focus:outline-none px-4 h-[35px] hover:bg-accent-primary-alpha"
                 activeTabButtonClassName="bg-layer-3 text-white"
               />
             )}
