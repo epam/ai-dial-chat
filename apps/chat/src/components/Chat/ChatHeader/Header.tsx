@@ -112,6 +112,9 @@ export const ChatHeader = Inversify.register(
         conversation.id,
       ),
     );
+    const publicationUrl = useAppSelector(
+      PublicationSelectors.selectSelectedPublicationUrl,
+    );
 
     const isTopChatModelSettingsEnabled = enabledFeatures.has(
       Feature.TopChatModelSettings,
@@ -419,6 +422,7 @@ export const ChatHeader = Inversify.register(
                   TriggerIcon={IconDotsVertical}
                   isHeaderMenu
                   disabledState={isMessageStreaming}
+                  publicationUrl={publicationUrl ?? undefined}
                 />
               )}
 

@@ -12,6 +12,7 @@ import {
   CreateConversationRequest,
   CreatePlaybackConversationRequest,
   DeleteConversationRequest,
+  DeleteMessageRequest,
   ExportConversationRequest,
   ImportConversationRequest,
   OverlayEvents,
@@ -25,6 +26,7 @@ import {
 type WithRequestId<T> = T & { requestId: string };
 
 const initialState: OverlayState = {
+  _savedOverlayOptions: undefined,
   hostDomain: '*',
 
   systemPrompt: null,
@@ -74,6 +76,14 @@ export const overlaySlice = createSlice({
       state,
       _action: PayloadAction<WithRequestId<CreatePlaybackConversationRequest>>,
     ) => state,
+    stopSelectedPlaybackConversation: (
+      state,
+      _action: PayloadAction<WithRequestId<object>>,
+    ) => state,
+    stopSelectedPlaybackConversationEffect: (
+      state,
+      _action: PayloadAction<WithRequestId<object>>,
+    ) => state,
     exportConversation: (
       state,
       _action: PayloadAction<WithRequestId<ExportConversationRequest>>,
@@ -111,8 +121,9 @@ export const overlaySlice = createSlice({
     },
     setOverlayOptionsSuccess: (
       state,
-      _action: PayloadAction<WithRequestId<{ hostDomain: string }>>,
+      _action: PayloadAction<WithRequestId<ChatOverlayOptions>>,
     ) => {
+      state._savedOverlayOptions = _action.payload;
       state.optionsReceived = true;
     },
     signInOptionsSet: (
@@ -125,6 +136,14 @@ export const overlaySlice = createSlice({
     sendMessage: (
       state,
       _action: PayloadAction<WithRequestId<SendMessageRequest>>,
+    ) => state,
+    deleteMessage: (
+      state,
+      _action: PayloadAction<WithRequestId<DeleteMessageRequest>>,
+    ) => state,
+    deleteMessageEffect: (
+      state,
+      _action: PayloadAction<WithRequestId<DeleteMessageRequest>>,
     ) => state,
     sendPMEvent: (
       state,

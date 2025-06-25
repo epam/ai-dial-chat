@@ -252,14 +252,9 @@ export const PromptComponent = ({
           isHighlighted && 'bg-accent-primary-alpha',
           additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
         )}
-        onClick={() => {
+        onClick={(e) => {
           if (!isSelectMode) {
-            dispatch(
-              PromptsActions.selectPrompt({
-                promptId: prompt.id,
-                isApproveRequiredResource,
-              }),
-            );
+            handleOpenViewModal(e, false);
           }
 
           if (isSelectMode && !isExternal) {
@@ -371,7 +366,12 @@ export const PromptComponent = ({
               entity={prompt}
               featureType={FeatureType.Prompt}
               onDelete={handleDelete}
-              onRename={handleOpenEditModal}
+              onRename={
+                additionalItemData?.publicationUrl &&
+                prompt.publicationInfo?.action === PublishActions.DELETE
+                  ? undefined
+                  : handleOpenEditModal
+              }
               onExport={handleExport}
               onOpenMoveToModal={handleMoveToFolder}
               onShare={handleShare}
