@@ -31,6 +31,25 @@ export class AppEditorViewForm extends AppEditorForm {
   public attachmentTypesInput =
     this.attachmentTypesContainer.getChildElementBySelector(Tags.input);
 
+  // Pills representing selected attachment types
+  public selectedAttachmentTypePills = this.attachmentTypesContainer
+    // .getChildElementBySelector(Tags.div) // First div child
+    // .getChildElementBySelector(Tags.div) // Second div child (relative flex min-h-[31px]...)
+    .getChildElementBySelector(`span[data-state="closed"] > span`); // Selector for the inner span of the pill
+
+  public getSelectedAttachmentTypePill(type: string): BaseElement {
+    return this.createElementFromLocator(
+      this.selectedAttachmentTypePills
+        .getElementLocator()
+        .filter({ hasText: type }),
+    );
+  }
+
+  public getSelectedAttachmentTypePillRemoveIcon(type: string): BaseElement {
+    return this.getSelectedAttachmentTypePill(type).getChildElementBySelector(
+      `button[data-qa="unselect-item-${type}"]`,
+    );
+  }
 
   public featuresDataHintIcon = this.featuresLabel.getChildElementBySelector(
     Tags.svg,
