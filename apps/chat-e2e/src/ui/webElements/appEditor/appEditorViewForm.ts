@@ -1,6 +1,8 @@
 import { ExampleURLs } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
+import { keys } from '@/src/ui/keyboard';
 import { AddApplicationAppSettingsFormSelector } from '@/src/ui/selectors';
+import { BaseElement } from '@/src/ui/webElements';
 import { AppEditorForm } from '@/src/ui/webElements/appEditor/appEditorForm';
 import { Locator, Page } from '@playwright/test';
 
@@ -29,6 +31,7 @@ export class AppEditorViewForm extends AppEditorForm {
   public attachmentTypesInput =
     this.attachmentTypesContainer.getChildElementBySelector(Tags.input);
 
+
   public featuresDataHintIcon = this.featuresLabel.getChildElementBySelector(
     Tags.svg,
   );
@@ -39,9 +42,48 @@ export class AppEditorViewForm extends AppEditorForm {
     AddApplicationAppSettingsFormSelector.maxAttachmentNumberField,
   );
 
-  public async fillInAppFields(options?: { chatCompletionUrl?: string }) {
-    const chatCompletionUrl =
-      options?.chatCompletionUrl ?? ExampleURLs.chatCompletionURL;
-    await this.chatCompletionUrl.fillInInput(chatCompletionUrl);
+  public async fillInAppFields(options?: {
+    chatCompletionUrl?: string;
+    attachmentTypes?: string[];
+    maxAttachments?: string;
+  }) {
+    if (options?.chatCompletionUrl) {
+      await this.chatCompletionUrl.fillInInput(options.chatCompletionUrl);
+    } else {
+      await this.chatCompletionUrl.fillInInput(ExampleURLs.chatCompletionURL);
+    }
+    if (options?.attachmentTypes && options.attachmentTypes.length > 0) {
+      for (const type of options.attachmentTypes) {
+        await this.attachmentTypesInput.fillInInput(type);
+        await this.page.keyboard.press(keys.enter);
+      }
+    }
+    if (options?.maxAttachments !== undefined) {
+      await this.maxAttachmentsInput.typeInInput(options.maxAttachments);
+    }
+  }
+
+  public async getSelectedAttachmentTypes(): Promise<string[]> {
+    const pillsCount =
+      await this.selectedAttachmentTypePills.getElementsCount();
+    const types: string[] = [];
+    if (pillsCount === 0) {
+      return types;
+    }
+    for (let i = 1; i <= pillsCount; i++) {
+      const pillTextContent = await this.selectedAttachmentTypePills
+        .getNthElement(i)
+        // .locator('span.truncate') // Target the inner span with the text
+        .textContent();
+      if (pillTextContent) {
+        types.push(pillTextContent.trim());
+      }
+    }
+    return types;
+  }
+
+  public async removeSelectedAttachmentType(type: string) {
+    const removeIcon = this.getSelectedAttachmentTypePillRemoveIcon(type);
+    await removeIcon.click();
   }
 }

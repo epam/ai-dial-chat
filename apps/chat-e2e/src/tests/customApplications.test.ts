@@ -894,7 +894,8 @@ dialTest.only(
     '[Custom app]: Hints on for fields\n' + // EPMRTC-4278
     'Preview on step "General info"\n' + // EPMRTC-5749
     'Preview on step "App settings"\n' + // EPMRTC-5750
-    'Chat created from preview form on step "App settings" is not available on DIAL home page', // EPMRTC-5762
+    'Chat created from preview form on step "App settings" is not available on DIAL home page\n' + // EPMRTC-5762
+    'Input on step "App settings" data saved when switch back to step "General info"', // EPMRTC-5765
   async (
     {
       marketplacePage,
@@ -925,6 +926,7 @@ dialTest.only(
       'EPMRTC-5749',
       'EPMRTC-5750',
       'EPMRTC-5762',
+      'EPMRTC-5765',
     );
     let numberOfTopicsToSelect: number;
     let allTopics: string[] = [];
@@ -941,6 +943,7 @@ dialTest.only(
       Attachment.sunImageName,
     )}`;
     const previewChatMessage = 'Hello from preview';
+    const attachmentTypeToSet = 'image/png';
 
     await dialTest.step('Open create a custom app page', async () => {
       await marketplacePage.openCreateCustomAppPage();
@@ -1258,7 +1261,9 @@ dialTest.only(
     await dialTest.step(
       'Add attachment type (e.g., image/png) and verify clip icon appears in preview chat message box',
       async () => {
-        await appEditorViewForm.attachmentTypesInput.fillInInput('image/png');
+        await appEditorViewForm.attachmentTypesInput.fillInInput(
+          attachmentTypeToSet,
+        );
         await page.keyboard.press(keys.enter);
         const previewChatAttachmentButton =
           sendMessage.attachmentMenuTrigger.getElementLocator();
@@ -1269,6 +1274,29 @@ dialTest.only(
         );
       },
     );
+
+    await dialTest.step('Navigate back to General Info step', async () => {
+      await appEditorHeader.goOnGeneralInfoStep({
+        isHttpMethodTriggered: false,
+      });
+      await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');
+    });
+
+    await dialTest.step('Navigate forward to App Settings step', async () => {
+      await appEditorGeneralForm.goNext({ waitForResponses: false });
+      await baseAssertion.assertElementState(appEditorViewForm, 'visible');
+    });
+
+    await dialTest.step('Verify attachment types are preserved', async () => {
+      const actualAttachmentTypes =
+        await appEditorViewForm.getSelectedAttachmentTypes();
+      baseAssertion.assertArrayIncludesAll(
+        actualAttachmentTypes,
+        [attachmentTypeToSet],
+        ExpectedMessages.fieldValueIsValid,
+      );
+      await appEditorViewForm.removeSelectedAttachmentType(attachmentTypeToSet);
+    });
 
     await dialTest.step('Click Save and Exit link', async () => {
       await appEditorHeader.saveAndExitButton.click();
