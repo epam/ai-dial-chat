@@ -314,7 +314,7 @@ dialTest(
 
 const publicationsToUnpublish: Publication[] = [];
 
-dialAdminTest(
+dialAdminTest.only(
   'Use prompt not available for chat from Organization\n' +
     'Use prompt not available for chat from Approve required.\n' +
     'Use prompt option is not available when publication request is selected.\n' +
