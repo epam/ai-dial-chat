@@ -300,3 +300,5 @@ export const replaceStringRange = (
 ) => {
   return currentString.slice(0, start) + value + currentString.slice(end);
 };
+
+export const getLastPathSegment = (path: string) => path.split('/').pop() ?? '';
