@@ -2055,5 +2055,71 @@ dialTest(
     await dialTest.step("Click on app's card", async () => {
       const agentElement =
         await marketplaceAgentsSection.findAgentElement(appEntity);
+      await agentElement.click();
+      await baseAssertion.assertElementState(agentDetailsModal, 'visible');
+    });
+
+    await dialTest.step('Click Edit icon', async () => {
+      await agentDetailsModal.editButton.click();
+      await appEditorPage.waitForPageLoadedForEdit();
+    });
+
+    await dialTest.step(
+      'Switch to General info step in App Editor',
+      async () => {
+        await appEditorHeader.goOnGeneralInfoStep({
+          isHttpMethodTriggered: false,
+        });
+        await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');
+      },
+    );
+
+    await dialTest.step(
+      'Click on Description field, move cursor to App settings step (without clicking) and type any text into the Description field',
+      async () => {
+        await appEditorGeneralForm.description.click();
+        await appEditorHeader.getAppSettingsStep().hoverOver();
+        await page.keyboard.type(descriptionTextToType);
+      },
+    );
+
+    await dialTest.step('Click on "App settings" link in header', async () => {
+      const appSettingsStep = appEditorHeader.getAppSettingsStep();
+      const respPromise = page.waitForResponse(
+        (resp) =>
+          resp.url().includes(API.applicationCreateHost) &&
+          resp.request().method() === 'PUT',
+      );
+      await appSettingsStep.click();
+      await respPromise;
+      await baseAssertion.assertElementState(
+        appEditorPage.getAppEditorContainer().getAppEditorViewForm(),
+        'visible',
+      );
+    });
+
+    await dialTest.step(
+      'Click back on "General info" link in the header',
+      async () => {
+        await appEditorHeader.goOnGeneralInfoStep({
+          isHttpMethodTriggered: false,
+        });
+        await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');
+      },
+    );
+
+    await dialTest.step(
+      'Check description field - The updated description is displayed',
+      async () => {
+        const currentDescription = await appEditorGeneralForm.description
+          .getElementLocator()
+          .inputValue();
+        baseAssertion.assertStringIncludes(
+          currentDescription,
+          descriptionTextToType,
+          ExpectedMessages.agentDescriptionIsValid,
+        );
+      },
+    );
   },
 );
