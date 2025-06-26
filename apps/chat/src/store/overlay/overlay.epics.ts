@@ -25,6 +25,7 @@ import { combineEpics, ofType } from 'redux-observable';
 
 import {
   doesHaveDotsInTheEnd,
+  getLastPathSegment,
   isEntityNameOnSameLevelUnique,
   parseCommaSeparatedList,
 } from '@/src/utils/app/common';
@@ -32,6 +33,7 @@ import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conve
 import { constructPath } from '@/src/utils/app/file';
 import {
   getActionsAddFoldersFromFolderId,
+  getFolderIdFromEntityId,
   getParentFolderIdsFromFolderId,
 } from '@/src/utils/app/folders';
 import { getConversationRootId } from '@/src/utils/app/id';
@@ -841,9 +843,9 @@ const importConversationEpic: AppEpic = (action$, state$) =>
 
         if (!importConversation.history?.length) return EMPTY;
 
-        const convIdLastItem = importConversation.history[0].id
-          .split('/')
-          .pop();
+        const convIdLastItem = getLastPathSegment(
+          importConversation.history[0].id,
+        );
         importConversation.history[0].folderId =
           state$.value.overlay.newConversationsFolder;
         importConversation.history[0].id = constructPath(
@@ -851,14 +853,10 @@ const importConversationEpic: AppEpic = (action$, state$) =>
           convIdLastItem,
         );
         importConversation.folders = parentIds.map((item): FolderInterface => {
-          const splittedEntityId = item.split('/');
-          const name = splittedEntityId.pop();
-          const folderId = splittedEntityId.join('/');
-
           return {
             id: item,
-            name: name!,
-            folderId,
+            name: getLastPathSegment(item),
+            folderId: getFolderIdFromEntityId(item),
             type: FeatureType.Chat,
           };
         });
