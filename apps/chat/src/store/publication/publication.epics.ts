@@ -16,6 +16,7 @@ import {
 
 import { combineEpics, ofType } from 'redux-observable';
 
+import { getLastPathSegment } from '@/src/utils/app/common';
 import { getConversationInfoFromId } from '@/src/utils/app/conversation';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application-type-schemas-service';
@@ -1614,35 +1615,29 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
               return match && match.targetUrl !== newResource.targetUrl;
             },
           );
-
           const resourcesRequiresUpdateIds = resourcesRequiresUpdate.map(
             (resource) => resource.reviewUrl,
           );
 
-          const {
-            conversationsRequiresUpdate = [],
-            promptsRequiresUpdate = [],
-            applicationsRequiresUpdate = [],
-          } = {
-            conversationsRequiresUpdate: filterIdsByFeatureType(
-              resourcesRequiresUpdateIds,
-              FeatureType.Chat,
-            ),
-            promptsRequiresUpdate: filterIdsByFeatureType(
-              resourcesRequiresUpdateIds,
-              FeatureType.Prompt,
-            ),
-            applicationsRequiresUpdate: filterIdsByFeatureType(
-              resourcesRequiresUpdateIds,
-              FeatureType.Application,
-            ),
-          };
+          const [
+            conversationsRequiresUpdate,
+            promptsRequiresUpdate,
+            applicationsRequiresUpdate,
+            filesToUpdate,
+          ] = [
+            FeatureType.Chat,
+            FeatureType.Prompt,
+            FeatureType.Application,
+            FeatureType.File,
+          ].map((featureType) =>
+            filterIdsByFeatureType(resourcesRequiresUpdateIds, featureType),
+          );
 
-          // if only files are updated, we just need to upload the publication, since they are not "JSON objects"
           if (
             !conversationsRequiresUpdate.length &&
             !promptsRequiresUpdate.length &&
-            !applicationsRequiresUpdate.length
+            !applicationsRequiresUpdate.length &&
+            !filesToUpdate.length
           ) {
             return of(PublicationActions.uploadPublication({ url }));
           }
@@ -1657,9 +1652,26 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
             applications: of([]),
           };
 
-          if (conversationsRequiresUpdate.length) {
+          if (conversationsRequiresUpdate.length || filesToUpdate.length) {
+            const resourcesNotRequiresUpdate = newPublicationResources
+              .filter(
+                (resource) =>
+                  !resourcesRequiresUpdateIds.includes(resource.reviewUrl),
+              )
+              .map((resource) => resource.reviewUrl);
+            const conversationsNotRequiresUpdate = filterIdsByFeatureType(
+              resourcesNotRequiresUpdate,
+              FeatureType.Chat,
+            );
+            const conversationsToUpload = filesToUpdate.length
+              ? [
+                  ...conversationsNotRequiresUpdate,
+                  ...conversationsRequiresUpdate,
+                ]
+              : conversationsRequiresUpdate;
+
             observables.conversations = forkJoin(
-              conversationsRequiresUpdate.map((id) => {
+              conversationsToUpload.map((id) => {
                 return ConversationService.getConversation(
                   getConversationInfoFromId(id, { parseVersion: true }),
                 );
@@ -1687,7 +1699,7 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
 
           return forkJoin(observables).pipe(
             switchMap((results) => {
-              const updateActions: Observable<AppAction>[] = [];
+              const actions: Observable<AppAction>[] = [];
 
               const conversations = results.conversations.filter(
                 Boolean,
@@ -1698,26 +1710,70 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
               ) as CustomApplicationModel[];
 
               if (conversations.length) {
-                updateActions.push(
-                  ...conversations.map((conversation) =>
-                    of(
-                      ConversationsActions.updateConversation({
-                        id: conversation.id,
-                        values: {
-                          name: conversation.name,
-                          publicationInfo: {
-                            version: getVersionFromId(conversation.id),
-                            publicationUrl: url,
+                if (filesToUpdate.length) {
+                  const titlesToUpdate = filesToUpdate.map(getLastPathSegment);
+
+                  actions.push(
+                    ...conversations.map((conversation) => {
+                      return of(
+                        ConversationsActions.updateConversation({
+                          id: conversation.id,
+                          values: {
+                            name: conversation.name,
+                            publicationInfo: {
+                              version: getVersionFromId(conversation.id),
+                              publicationUrl: url,
+                            },
+                            messages: conversation.messages.map((message) => ({
+                              ...message,
+                              custom_content: {
+                                ...message.custom_content,
+                                attachments:
+                                  message.custom_content?.attachments?.map(
+                                    (attachment) => {
+                                      const title = ApiUtils.decodeApiUrl(
+                                        getLastPathSegment(
+                                          attachment.url ?? '',
+                                        ),
+                                      );
+
+                                      return titlesToUpdate.includes(title)
+                                        ? {
+                                            ...attachment,
+                                            title: title ?? 'Attachment',
+                                          }
+                                        : attachment;
+                                    },
+                                  ),
+                              },
+                            })),
                           },
-                        },
-                      }),
+                        }),
+                      );
+                    }),
+                  );
+                } else {
+                  actions.push(
+                    ...conversations.map((conversation) =>
+                      of(
+                        ConversationsActions.updateConversation({
+                          id: conversation.id,
+                          values: {
+                            name: conversation.name,
+                            publicationInfo: {
+                              version: getVersionFromId(conversation.id),
+                              publicationUrl: url,
+                            },
+                          },
+                        }),
+                      ),
                     ),
-                  ),
-                );
+                  );
+                }
               }
 
               if (prompts.length) {
-                updateActions.push(
+                actions.push(
                   ...prompts.map((prompt) =>
                     of(
                       PromptsActions.updatePrompt({
@@ -1736,7 +1792,7 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
               }
 
               if (applications.length) {
-                updateActions.push(
+                actions.push(
                   ...applications.map((application) => {
                     const newApplication = {
                       ...application,
@@ -1783,7 +1839,7 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
               }
 
               return concat(
-                ...updateActions,
+                ...actions,
                 of(PublicationActions.uploadPublication({ url })),
               );
             }),
