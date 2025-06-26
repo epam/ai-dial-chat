@@ -182,7 +182,7 @@ function ReviewApplicationDialogContent() {
 
         <ReviewQuickAppSection application={application} />
       </div>
-      <div className="flex w-full items-center justify-between border-t border-tertiary px-3 py-4 md:px-5">
+      <div className="flex w-full items-center justify-end border-t border-tertiary px-3 py-4 md:px-5">
         {/*<button*/}
         {/*  className={classNames(*/}
         {/*    'button flex size-[38px] items-center justify-center border-primary bg-layer-2 p-3 outline-none hover:bg-layer-4 disabled:cursor-not-allowed disabled:bg-layer-2',*/}

@@ -13,7 +13,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { isVersionValid } from '@/src/utils/app/common';
+import { getLastPathSegment, isVersionValid } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import {
@@ -583,7 +583,7 @@ export function PublishModal<
                     className="mb-1 text-xs text-secondary"
                     data-qa="published-path"
                   >
-                    {path.split('/').pop()}
+                    {getLastPathSegment(path)}
                   </div>
                   <RulesInput
                     isOpen={isRuleSetterOpened}
