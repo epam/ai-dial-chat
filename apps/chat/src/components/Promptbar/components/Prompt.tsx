@@ -92,9 +92,6 @@ export const PromptComponent = ({
   const isConversationBlocksInput = useAppSelector(
     ConversationsSelectors.selectIsSelectedConversationBlocksInput,
   );
-  const selectedPublication = useAppSelector(
-    PublicationSelectors.selectSelectedPublication,
-  );
 
   const isExternal = isEntityIdExternal(prompt);
   const isApproveRequiredResource = !!additionalItemData?.publicationUrl;
@@ -218,7 +215,9 @@ export const PromptComponent = ({
   );
 
   const disableUsePrompt =
-    isConversationBlocksInput || !areModelsInstalled || !!selectedPublication;
+    isConversationBlocksInput ||
+    !areModelsInstalled ||
+    !selectedConversations.length;
 
   useEffect(() => {
     if (isSelectMode) {
