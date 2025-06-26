@@ -36,7 +36,8 @@ dialTest(
     "Preview: current agent stays in Preview after user clicks on 'Save and exit' button when there is any empty required field\n" + // EPMRTC-6452
     'Stepper icons change\n' + //EPMRTC-5757
     'Add custom app: Name and version are predefined\n' + //EPMRTC-5759
-    'Side panel with widgets is not displayed for app editor', // EPMRTC-6049
+    'Side panel with widgets is not displayed for app editor\n' + // EPMRTC-6049
+    '[UI][AppEditor]: Logo should be in center of header', // EPMRTC-6262
   async ({
     marketplacePage,
     marketplaceHeader,
@@ -66,6 +67,7 @@ dialTest(
     chatBar,
     promptBar,
     navigationPanel,
+    page, // Added for viewport width
   }) => {
     setTestIds(
       'EPMRTC-5130',
@@ -78,6 +80,7 @@ dialTest(
       'EPMRTC-5757',
       'EPMRTC-5759',
       'EPMRTC-6049',
+      'EPMRTC-6262',
     );
     const shortDescription = GeneratorUtil.randomShortDescription();
     const longDescription = GeneratorUtil.randomLongDescription();
@@ -105,7 +108,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Click Add app and select Custom app in drop down, verify side/navigation panels are hidden',
+      'Click Add app and select Custom app in drop down, verify side/navigation panels are hidden and App Editor logo is centered',
       async () => {
         await marketplaceHeader.addAppButton.click();
         await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
@@ -120,6 +123,15 @@ dialTest(
           ExpectedMessages.navigationPanelShouldNotBeVisible,
         );
       },
+    );
+
+      async () => {
+        const logoBoundingBox =
+          await appEditorHeader.logo.getElementBoundingBox();
+        const viewportWidth = page.viewportSize()!.width;
+        const expectedLogoCenterX = viewportWidth / 2;
+        const actualLogoCenterX =
+          logoBoundingBox!.x + logoBoundingBox!.width / 2;
     );
 
     await dialTest.step(

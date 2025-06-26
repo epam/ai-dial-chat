@@ -428,4 +428,15 @@ export class BaseAssertion {
       ? element.getElementLocator()
       : (element as Locator);
   }
+
+  public assertBooleanCondition(
+    predicate: boolean,
+    expectedResult: boolean,
+    expectedMessage: string,
+  ) {
+    expectedResult
+      ? expect(predicate, expectedMessage).toBeTruthy()
+      : expect(predicate, expectedMessage).toBeFalsy();
+  }
+
 }

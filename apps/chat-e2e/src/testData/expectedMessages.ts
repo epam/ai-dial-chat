@@ -417,10 +417,10 @@ export const ExpectedMessages = {
   attachmentClipIconShouldAppear: 'Attachment clip icon should appear here',
   navigationPanelShouldBeVisible: 'Navigation panel should be visible',
   navigationPanelShouldNotBeVisible: 'Navigation panel should not be visible',
-
-
   onlyOneEntityCardFoundInSearch: (entityType: string) =>
     `Only one ${entityType} card found in the search`,
+  LogoShouldBeCentered: (expectedLogoCenterX: number, actualLogoCenterX: number) =>
+    `Logo should be centered. Expected center around ${expectedLogoCenterX}, got ${actualLogoCenterX}`,
 };
 
 export enum PublishingExpectedMessages {
