@@ -154,6 +154,15 @@ export const AccountSettingsModalSelector = {
   customLogo: '[data-qa="custom-logo"]',
   fullWidthChatToggle: '[data-qa="toggle-switch"]',
   save: '[data-qa="save"]',
+  startChatWith: '[data-qa="model-selector"]',
+  startChatWithSelectedOption: '[data-qa="selected-agent"]',
+  startChatWithToggle: 'button[aria-label="toggle menu"]',
+  startChatWithSearchInput: '[data-qa="search-input"]',
+  startChatWithListbox: '[role="listbox"]',
+  startChatWithListboxOption: '[role="option"]',
+  startChatWithListboxOptionAttributes: '[data-qa="agent-attributes"]',
+  startChatWithListboxOptionVersion: '[data-qa="agent-version"]',
+  noAvailableItems: '[data-qa="no-available-items"]'
 };
 
 export const PublishingModalSelectors = {

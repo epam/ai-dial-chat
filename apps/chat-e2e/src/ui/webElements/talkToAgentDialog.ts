@@ -93,7 +93,7 @@ export class TalkToAgentDialog extends BaseElement {
     return allAgentNames;
   }
 
-  public async selectAgent(entity: DialAIEntityModel) {
+  public async selectAgent(entity: DialAIEntityModel | string) {
     //check if agent is among recent ones
     const isRecentAgentUsed = await this.useAgent(entity);
     //otherwise switch to "All agents" tab
@@ -102,7 +102,7 @@ export class TalkToAgentDialog extends BaseElement {
       const isMarketplaceAgentUsed = await this.useAgent(entity);
       if (!isMarketplaceAgentUsed) {
         throw new Error(
-          `Agent with name: ${entity.name} and version: ${entity.version ?? 'N/A'} is not found!`,
+          `Agent with name: ${entity} and version: ${typeof entity !== 'string' ? (entity.version ?? 'N/A') : 'N/A'} is not found!`,
         );
       }
     }

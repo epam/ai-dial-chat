@@ -1,3 +1,5 @@
+import { DialAIEntityModel } from '@/chat/types/models';
+import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { MenuAssertion } from '@/src/assertions/menuAssertion';
 import {
   ElementState,
@@ -9,11 +11,12 @@ import {
 import { SettingsModal } from '@/src/ui/webElements/settingsModal';
 import { expect } from '@playwright/test';
 
-export class SettingsModalAssertion {
+export class SettingsModalAssertion extends BaseAssertion {
   readonly settingsModal: SettingsModal;
   readonly menuAssertion: MenuAssertion;
 
   constructor(settingsModal: SettingsModal) {
+    super();
     this.settingsModal = settingsModal;
     this.menuAssertion = new MenuAssertion(
       this.settingsModal.getThemeDropdownMenu(),
@@ -21,23 +24,15 @@ export class SettingsModalAssertion {
   }
 
   public async assertThemeValue(expectedTheme: ThemeId) {
-    expect
-      .soft(
-        await this.settingsModal.theme.getElementInnerContent(),
-        ExpectedMessages.applicationThemeIsValid,
-      )
-      .toBe(toTitleCase(expectedTheme));
+    await this.assertElementText(
+      this.settingsModal.theme,
+      toTitleCase(expectedTheme),
+      ExpectedMessages.applicationThemeIsValid,
+    );
   }
 
   public async assertSaveButtonState(expectedState: ElementState) {
-    const saveBtn = this.settingsModal.saveButton.getElementLocator();
-    expectedState === 'visible'
-      ? await expect
-          .soft(saveBtn, ExpectedMessages.buttonIsVisible)
-          .toBeVisible()
-      : await expect
-          .soft(saveBtn, ExpectedMessages.buttonIsNotVisible)
-          .toBeHidden();
+    await this.assertElementState(this.settingsModal.saveButton, expectedState);
   }
 
   public async assertThemeMenuOptions(...expectedOptions: string[]) {
@@ -45,23 +40,24 @@ export class SettingsModalAssertion {
   }
 
   public async assertFullWidthChatToggleState(expectedState: ToggleState) {
-    const toggleState =
-      await this.settingsModal.fullWidthChatToggle.getElementInnerContent();
-    expectedState === 'ON'
-      ? expect
-          .soft(toggleState, ExpectedMessages.featureIsToggledOn)
-          .toBe(ToggleState.on)
-      : expect
-          .soft(toggleState, ExpectedMessages.featureIsToggledOff)
-          .toBe(ToggleState.off);
+    const state = expectedState === 'ON' ? ToggleState.on : ToggleState.off;
+    await this.assertElementText(this.settingsModal.fullWidthChatToggle, state);
   }
 
   public async assertFullWidthChatToggleColor(expectedColor: string) {
-    expect
-      .soft(
-        await this.settingsModal.getFullWidthChatToggleColor(),
-        ExpectedMessages.elementColorIsValid,
-      )
-      .toBe(expectedColor);
+    await this.assertElementColor(
+      this.settingsModal.fullWidthChatToggleLabel,
+      expectedColor,
+    );
+  }
+
+  public async assertStartChatWithValue(
+    expectedAgent: DialAIEntityModel | { name: string; version?: string } | string,
+  ) {
+    const expectedValue = this.settingsModal.optionAttributes(expectedAgent);
+    await this.assertElementText(
+      this.settingsModal.startChatWithAgentAttributes,
+      expectedValue,
+    );
   }
 }

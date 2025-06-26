@@ -256,6 +256,8 @@ export const ExpectedConstants = {
     `${appName}\nv. ${appVersion}`,
   goToMyWorkspaceButtonLabel: 'Go to My workspace',
   goToDialMarketplaceButtonLabel: 'Go to DIAL Marketplace',
+  defaultAgentLabel: 'Default agent',
+  lastUsedAgentLabel: 'Last used agent',
 };
 
 export enum Types {
