@@ -1896,8 +1896,9 @@ dialAdminTest(
   },
 );
 
-dialTest(
-  'Long names of apps without spaces displayed in several lines on preview screen of Add editor and on start screen of new conversation', // EPMRTC-5945
+dialTest.only(
+  'Long names of apps without spaces displayed in several lines on preview screen of Add editor and on start screen of new conversation\n' + // EPMRTC-5945
+    'Create two custom apps consecutively', // EPMRTC-6263
   async ({
     marketplacePage,
     appEditorPage,
@@ -1915,8 +1916,10 @@ dialTest(
     dialHomePage,
     agentInfo,
     agentInfoAssertion,
+    addAppDropdownMenu,
+    toastAssertion,
   }) => {
-    setTestIds('EPMRTC-5945');
+    setTestIds('EPMRTC-5945', 'EPMRTC-6263');
     const appEntity = {
       name: GeneratorUtil.randomString(
         ExpectedConstants.maxEntityNameLength - 1,
@@ -1995,6 +1998,28 @@ dialTest(
         });
         await appEditorHeader.saveAndExitButton.click();
         await marketplacePage.waitForPageLoaded();
+      },
+    );
+
+    await dialTest.step(
+      'Go back to My Workspace to create the second app',
+      async () => {
+        await dialHomePage.goToMyWorkspace();
+        await marketplacePage.waitForPageLoaded();
+      },
+    );
+
+    await dialTest.step(
+      'Click Add app/Custom app to start creation of the second app and verify no error toast',
+      async () => {
+        await marketplaceHeader.addAppButton.click();
+        await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
+        await appEditorPage.waitForPageLoaded();
+        await toastAssertion.assertToastIsHidden();
+        await appEditorHeaderAssertion.assertActionTitle(
+          `${AppMenuActions.add(AddAppMenuOptions.customApp)}`,
+        );
+        await appEditorHeader.exitLink.click();
       },
     );
 
