@@ -35,7 +35,8 @@ dialTest(
     'App Editor open and Exit of first step - app is not saved\n' + // EPMRTC-5746
     "Preview: current agent stays in Preview after user clicks on 'Save and exit' button when there is any empty required field\n" + // EPMRTC-6452
     'Stepper icons change\n' + //EPMRTC-5757
-    'Add custom app: Name and version are predefined', //EPMRTC-5759
+    'Add custom app: Name and version are predefined\n' + //EPMRTC-5759
+    'Side panel with widgets is not displayed for app editor', // EPMRTC-6049
   async ({
     marketplacePage,
     marketplaceHeader,
@@ -62,6 +63,9 @@ dialTest(
     toastAssertion,
     toast,
     appEditorAppSettingsAgentPreview,
+    chatBar,
+    promptBar,
+    navigationPanel,
   }) => {
     setTestIds(
       'EPMRTC-5130',
@@ -73,6 +77,7 @@ dialTest(
       'EPMRTC-6452',
       'EPMRTC-5757',
       'EPMRTC-5759',
+      'EPMRTC-6049',
     );
     const shortDescription = GeneratorUtil.randomShortDescription();
     const longDescription = GeneratorUtil.randomLongDescription();
@@ -84,15 +89,23 @@ dialTest(
     let agentElement: BaseElement;
     await localStorageManager.setShowSideBarPanels();
 
-    await dialTest.step('Open My workspace directly', async () => {
-      await marketplacePage.openMyWorkspacePage({
-        updateInstalledDeployments: false,
-      });
-      await marketplacePage.waitForPageLoaded();
-    });
+    await dialTest.step(
+      'Open My workspace directly and verify navigation panel is displayed',
+      async () => {
+        await marketplacePage.openMyWorkspacePage({
+          updateInstalledDeployments: false,
+        });
+        await marketplacePage.waitForPageLoaded();
+        await baseAssertion.assertElementState(
+          navigationPanel,
+          'visible',
+          ExpectedMessages.navigationPanelShouldBeVisible,
+        );
+      },
+    );
 
     await dialTest.step(
-      'Click Add app and select Custom app in drop down',
+      'Click Add app and select Custom app in drop down, verify side/navigation panels are hidden',
       async () => {
         await marketplaceHeader.addAppButton.click();
         await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
@@ -100,6 +113,11 @@ dialTest(
 
         await appEditorHeaderAssertion.assertActionTitle(
           `${AppMenuActions.add(AddAppMenuOptions.customApp)}`,
+        );
+        await baseAssertion.assertElementState(
+          navigationPanel,
+          'hidden',
+          ExpectedMessages.navigationPanelShouldNotBeVisible,
         );
       },
     );
@@ -151,7 +169,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Input name, click Exit, verify no custom app is created',
+      'Input name, click Exit, verify no custom app is created and navigation panel is visible',
       async () => {
         await appEditorGeneralForm.fillInAppFields({
           name: appEntity.name,
@@ -172,11 +190,16 @@ dialTest(
           0,
           ExpectedMessages.elementsCountIsValid,
         );
+        await baseAssertion.assertElementState(
+          navigationPanel,
+          'visible',
+          ExpectedMessages.navigationPanelShouldBeVisible,
+        );
       },
     );
 
     await dialTest.step(
-      'Click Add app and select Custom app in drop down',
+      'Click Add app and select Custom app in drop down again, verify side/navigation panels are hidden',
       async () => {
         await marketplaceHeader.addAppButton.click();
         await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
@@ -185,11 +208,16 @@ dialTest(
         await appEditorHeaderAssertion.assertActionTitle(
           `${AppMenuActions.add(AddAppMenuOptions.customApp)}`,
         );
+        await baseAssertion.assertElementState(
+          navigationPanel,
+          'hidden',
+          ExpectedMessages.navigationPanelShouldNotBeVisible,
+        );
       },
     );
 
     await dialTest.step(
-      'Verify App Editor page was opened, title "Edit custom app", general info step is active',
+      'Verify App Editor page was opened, title "Add custom app", general info step is active',
       async () => {
         await appEditorHeaderAssertion.assertActionTitle(
           `${AppMenuActions.add(AddAppMenuOptions.customApp)}`,
@@ -240,7 +268,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Fill in inputs of Name, Version and click Next',
+      'Fill in inputs of Name, Version and click Next, verify side/navigation panels are hidden',
       async () => {
         await appEditorGeneralForm.fillInAppFields({
           name: appEntity.name,
@@ -248,6 +276,11 @@ dialTest(
           description: appEntity.description,
         });
         await appEditorGeneralForm.goNext();
+        await baseAssertion.assertElementState(
+          navigationPanel,
+          'hidden',
+          ExpectedMessages.navigationPanelShouldNotBeVisible,
+        );
       },
     );
 
@@ -303,7 +336,6 @@ dialTest(
         );
         await toast.closeToast();
 
-        // Check preview persistence
         await baseAssertion.assertElementState(
           appEditorAppSettingsAgentPreview,
           'visible',
@@ -315,13 +347,18 @@ dialTest(
     );
 
     await dialTest.step(
-      'Input Chat completion URL, click Save and Exit link',
+      'Input Chat completion URL, click Save and Exit link, verify navigation panel is visible',
       async () => {
         await appEditorViewForm.fillInAppFields();
         await appEditorHeader.focusOn({ isHttpMethodTriggered: false });
         await appEditorHeader.saveAndExitButton.click();
         await baseAssertion.assertElementState(appEditorViewForm, 'hidden');
         await marketplacePage.waitForPageLoaded();
+        await baseAssertion.assertElementState(
+          navigationPanel,
+          'visible',
+          ExpectedMessages.navigationPanelShouldBeVisible,
+        );
       },
     );
 

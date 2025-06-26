@@ -415,6 +415,10 @@ export const ExpectedMessages = {
   selectedTopicsAreValid: 'Selected topics are displayed in preview',
   numberOfTopicsIsCorrect: 'Number of topics in preview is correct',
   attachmentClipIconShouldAppear: 'Attachment clip icon should appear here',
+  navigationPanelShouldBeVisible: 'Navigation panel should be visible',
+  navigationPanelShouldNotBeVisible: 'Navigation panel should not be visible',
+
+
   onlyOneEntityCardFoundInSearch: (entityType: string) =>
     `Only one ${entityType} card found in the search`,
 };
