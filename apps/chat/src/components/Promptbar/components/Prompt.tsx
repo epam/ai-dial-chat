@@ -365,12 +365,7 @@ export const PromptComponent = ({
               entity={prompt}
               featureType={FeatureType.Prompt}
               onDelete={handleDelete}
-              onRename={
-                additionalItemData?.publicationUrl &&
-                prompt.publicationInfo?.action === PublishActions.DELETE
-                  ? undefined
-                  : handleOpenEditModal
-              }
+              onRename={handleOpenEditModal}
               onExport={handleExport}
               onOpenMoveToModal={handleMoveToFolder}
               onShare={handleShare}
