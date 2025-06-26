@@ -438,5 +438,4 @@ export class BaseAssertion {
       ? expect(predicate, expectedMessage).toBeTruthy()
       : expect(predicate, expectedMessage).toBeFalsy();
   }
-
 }

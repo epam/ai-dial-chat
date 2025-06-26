@@ -64,10 +64,7 @@ dialTest(
     toastAssertion,
     toast,
     appEditorAppSettingsAgentPreview,
-    chatBar,
-    promptBar,
     navigationPanel,
-    page, // Added for viewport width
   }) => {
     setTestIds(
       'EPMRTC-5130',
@@ -125,14 +122,24 @@ dialTest(
       },
     );
 
-      async () => {
-        const logoBoundingBox =
-          await appEditorHeader.logo.getElementBoundingBox();
-        const viewportWidth = page.viewportSize()!.width;
-        const expectedLogoCenterX = viewportWidth / 2;
-        const actualLogoCenterX =
-          logoBoundingBox!.x + logoBoundingBox!.width / 2;
-    );
+    //TODO blocked by the issue 4196
+    // await dialTest.step(
+    //   'logo is centered in the App Editor',
+    //   async () => {
+    //     const logoBoundingBox =
+    //       await appEditorHeader.logo.getElementBoundingBox();
+    //     const viewportWidth = page.viewportSize()!.width;
+    //     const expectedLogoCenterX = viewportWidth / 2;
+    //     const actualLogoCenterX =
+    //       logoBoundingBox!.x + logoBoundingBox!.width / 2;
+    //     const logoPositionTolerance = 5;
+    //     baseAssertion.assertBooleanCondition(
+    //       Math.abs(actualLogoCenterX - expectedLogoCenterX) < logoPositionTolerance,
+    //       true,
+    //       ExpectedMessages.LogoShouldBeCentered(expectedLogoCenterX, actualLogoCenterX),
+    //     );
+    //   },
+    // );
 
     await dialTest.step(
       'Verify default Name and Version are pre-filled',
@@ -966,7 +973,6 @@ dialTest(
       chatMessagesAssertion,
       sendMessage,
       chatMessages,
-      page,
       conversationAssertion,
     },
     testInfo,
