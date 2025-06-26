@@ -55,6 +55,8 @@ export function PublicationFilters({
     [dispatch],
   );
 
+  const isRootTarget = publication.targetFolder.split('/').length === 1;
+
   if (isRulesLoading) {
     return (
       <div className="flex size-full items-center justify-center">
@@ -85,7 +87,7 @@ export function PublicationFilters({
       {isNewRules && !isEditMode && (
         <RuleListItem path={publication.targetFolder} rules={newRules} />
       )}
-      {isEditMode && (
+      {isEditMode && !isRootTarget && (
         <RulesInput
           isOpen={isRulesSetterVisible}
           filters={filters}
