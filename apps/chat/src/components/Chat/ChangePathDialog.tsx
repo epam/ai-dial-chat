@@ -54,6 +54,9 @@ const additionalItemData = {
   isChangePathFolder: true,
 };
 
+const getPathWithoutType = (folder: { id: string }) =>
+  folder.id.split('/').slice(1).join('/');
+
 export const ChangePathDialog = ({
   isOpen,
   onClose,
@@ -106,7 +109,7 @@ export const ChangePathDialog = ({
             ...applicationFolders,
             ...fileFolders,
           ],
-          'id',
+          getPathWithoutType,
         ) as FolderInterface[],
       ),
     [conversationFolders, promptFolders, applicationFolders, fileFolders],
