@@ -17,6 +17,7 @@ import {
   UploadMenuOptions,
 } from '@/src/testData';
 import { Overflow, StylesValues } from '@/src/ui/domData';
+import { Styles } from '@/src/ui/domData/styles';
 import {
   AppEditSteps,
   BaseElement,
@@ -24,7 +25,6 @@ import {
 } from '@/src/ui/webElements';
 import { DateUtil, GeneratorUtil, SortingUtil, UserUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
-import { Styles } from '@/src/ui/domData/styles';
 
 dialTest(
   'Create custom app with required fields only.\n' + // EPMRTC-5130
@@ -1972,7 +1972,8 @@ dialTest(
 );
 
 dialTest(
-  "Tooltip for long app's name displayed in several lines", // EPMRTC-5946
+  "Tooltip for long app's name displayed in several lines\n" + // EPMRTC-5946
+    '[App editor]: Changes are saved if set focus to field and then move cursor to Save and exit or to step in header', // EPMRTC-6046
   async ({
     customApplicationBuilder,
     applicationApiHelper,
@@ -1983,14 +1984,20 @@ dialTest(
     setTestIds,
     baseAssertion,
     tooltipAssertion,
+    agentDetailsModal,
+    appEditorPage,
+    appEditorGeneralForm,
+    appEditorHeader,
+    page,
   }) => {
-    setTestIds('EPMRTC-5946');
+    setTestIds('EPMRTC-5946', 'EPMRTC-6046');
     const appNameWithSpaces = `${GeneratorUtil.randomString(70)} ${GeneratorUtil.randomString(70)} ${GeneratorUtil.randomString(ExpectedConstants.maxEntityNameLength - 140 - 2)}`; // Ensure total length is 160 with spaces
     const appVersion = GeneratorUtil.randomApplicationVersion();
     const appEntity = {
       name: appNameWithSpaces,
       version: appVersion,
     } as DialAIEntityModel;
+    const descriptionTextToType = 'This is a test description update.';
 
     await dialTest.step(
       'Create a custom app via API with a name of 160 symbols containing spaces',
@@ -2044,5 +2051,9 @@ dialTest(
         );
       },
     );
+
+    await dialTest.step("Click on app's card", async () => {
+      const agentElement =
+        await marketplaceAgentsSection.findAgentElement(appEntity);
   },
 );
