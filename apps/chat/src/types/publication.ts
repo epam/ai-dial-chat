@@ -123,8 +123,9 @@ export interface TargetAudienceFilter extends TargetAudienceFilterItem {
 
 export interface ResourceToReview {
   publicationUrl: string;
-  reviewed: boolean;
   reviewUrl: string;
+  sourceUrl: string;
+  reviewed: boolean;
 }
 
 export interface PublicVersionOption {
