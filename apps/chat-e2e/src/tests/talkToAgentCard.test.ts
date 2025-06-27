@@ -5,12 +5,6 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import { Publication } from '@/chat/types/publication';
 import dialTest from '@/src/core/dialFixtures';
 import {
-  Attributes,
-  StyleValues,
-  Styles,
-  ThemeColorAttributes,
-} from '@/src/ui/domData';
-import {
   API,
   Attachment,
   ExpectedConstants,
@@ -18,6 +12,12 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
+import {
+  Attributes,
+  StyleValues,
+  Styles,
+  ThemeColorAttributes,
+} from '@/src/ui/domData';
 import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil, SortingUtil } from '@/src/utils';
 import { CustomAppAttributes } from '@/src/utils/customApplicationPublishingUtil';

@@ -148,7 +148,7 @@ dialTest(
         const defaultAppNamePattern = new RegExp(
           `${ExpectedConstants.defaultAppName} \\d+`,
         );
-        await baseAssertion.assertInputValue(
+        await baseAssertion.assertInputValueWithPolling(
           appEditorGeneralForm.name,
           defaultAppNamePattern,
           ExpectedMessages.defaultAppNameShouldBeFilled,
@@ -1329,6 +1329,7 @@ dialTest(
         await appEditorViewForm.fillInAppFields({
           attachmentTypes: [attachmentTypeToSet],
         });
+        await sendMessage.click();
         const previewChatAttachmentButton = sendMessage.attachmentMenuTrigger;
         await baseAssertion.assertElementState(
           previewChatAttachmentButton,
