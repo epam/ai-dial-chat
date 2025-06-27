@@ -702,12 +702,9 @@ dialTest(
       async () => {
         const releaseDateElement = appEditorGeneralInfoAgentPreview.releaseDate;
         await baseAssertion.assertElementState(releaseDateElement, 'visible');
-        const releaseDateText =
-          await releaseDateElement.getElementInnerContent();
-        const expectedCurrentDate = DateUtil.getCurrentLocalDate();
-        baseAssertion.assertValue(
-          releaseDateText,
-          expectedCurrentDate,
+        await baseAssertion.assertElementText(
+          releaseDateElement,
+          DateUtil.getCurrentLocalDate(),
           ExpectedMessages.releaseDateShouldBeValid,
         );
       },
