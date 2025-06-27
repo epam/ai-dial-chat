@@ -38,7 +38,7 @@ import { ContextMenu } from './ContextMenu';
 
 import InsertPromptIcon from '@/public/images/icons/insert-prompt.svg';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
-import { ShareEntity } from '@epam/ai-dial-shared';
+import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 
 interface ItemContextMenuProps {
   entity: ShareEntity;
@@ -144,7 +144,10 @@ export function ItemContextMenu({
       },
       {
         name: t(featureType === FeatureType.Chat ? 'Rename' : 'Edit'),
-        display: (!isExternal || isApproveRequiredEntity) && !!onRename,
+        display:
+          (!isExternal || isApproveRequiredEntity) &&
+          entity.publicationInfo?.action !== PublishActions.DELETE &&
+          !!onRename,
         dataQa: 'rename',
         Icon: IconPencilMinus,
         onClick: onRename,
