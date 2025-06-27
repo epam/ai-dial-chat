@@ -521,6 +521,13 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
             }
 
             // we do not need to review files
+
+            const existingReviewedResources =
+              PublicationSelectors.selectResourcesToReviewByPublicationUrl(
+                state$.value,
+                publication.url,
+              );
+
             const resourcesToReview = publication.resources.filter(
               (resource) => !isFileId(resource.targetUrl),
             );
@@ -540,10 +547,17 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
                   unpublishResources.length,
                 of(
                   PublicationActions.setPublicationsToReview({
-                    items: resourcesToReview.map((resource) => ({
-                      reviewed: false,
-                      reviewUrl: resource.reviewUrl,
-                    })),
+                    items: resourcesToReview.map((resource) => {
+                      const matched = existingReviewedResources.find(
+                        (r) => r.sourceUrl === resource.sourceUrl,
+                      );
+
+                      return {
+                        reviewed: matched?.reviewed ?? false,
+                        reviewUrl: resource.reviewUrl,
+                        sourceUrl: resource.sourceUrl!,
+                      };
+                    }),
                     publicationUrl: publication.url,
                   }),
                 ),
