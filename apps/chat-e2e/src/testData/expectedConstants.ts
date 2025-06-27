@@ -189,6 +189,7 @@ export const ExpectedConstants = {
   noPublishNameTooltip: 'Enter a valid name for the publish request',
   nothingToPublishTooltip: 'Nothing is selected and rules have not changed',
   defaultAppVersion: '0.0.1',
+  defaultAppName: 'Untitled app',
   rootPublicationFolder: 'public/',
   duplicatedPublicationErrorMessage: (targetUrl: string) =>
     `Target resource already exists: ${targetUrl}`,

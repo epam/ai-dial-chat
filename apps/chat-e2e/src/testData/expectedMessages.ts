@@ -417,6 +417,10 @@ export const ExpectedMessages = {
   attachmentClipIconShouldAppear: 'Attachment clip icon should appear here',
   navigationPanelShouldBeVisible: 'Navigation panel should be visible',
   navigationPanelShouldNotBeVisible: 'Navigation panel should not be visible',
+  defaultAppVersionShouldBeFilled: 'Default app version should be pre-filled',
+  defaultAppNameShouldBeFilled:
+    'Default app name should be pre-filled and match pattern "Untitled app <number>"',
+  releaseDateShouldBeValid: 'Release date should be valid',
   onlyOneEntityCardFoundInSearch: (entityType: string) =>
     `Only one ${entityType} card found in the search`,
   LogoShouldBeCentered: (

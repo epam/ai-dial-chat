@@ -16,7 +16,7 @@ import {
   MockedChatApiResponseBodies,
   UploadMenuOptions,
 } from '@/src/testData';
-import { Overflow, StylesValues } from '@/src/ui/domData';
+import { StyleValues } from '@/src/ui/domData';
 import { Styles } from '@/src/ui/domData/styles';
 import {
   AppEditSteps,
@@ -65,6 +65,7 @@ dialTest(
     toast,
     appEditorAppSettingsAgentPreview,
     navigationPanel,
+    page,
   }) => {
     setTestIds(
       'EPMRTC-5130',
@@ -122,38 +123,40 @@ dialTest(
       },
     );
 
-    //TODO blocked by the issue 4196
-    // await dialTest.step(
-    //   'logo is centered in the App Editor',
-    //   async () => {
-    //     const logoBoundingBox =
-    //       await appEditorHeader.logo.getElementBoundingBox();
-    //     const viewportWidth = page.viewportSize()!.width;
-    //     const expectedLogoCenterX = viewportWidth / 2;
-    //     const actualLogoCenterX =
-    //       logoBoundingBox!.x + logoBoundingBox!.width / 2;
-    //     const logoPositionTolerance = 5;
-    //     baseAssertion.assertBooleanCondition(
-    //       Math.abs(actualLogoCenterX - expectedLogoCenterX) < logoPositionTolerance,
-    //       true,
-    //       ExpectedMessages.LogoShouldBeCentered(expectedLogoCenterX, actualLogoCenterX),
-    //     );
-    //   },
-    // );
+    // TODO blocked by the issue 4196
+    await dialTest.step.skip('logo is centered in the App Editor', async () => {
+      const logoBoundingBox =
+        await appEditorHeader.logo.getElementBoundingBox();
+      const viewportWidth = page.viewportSize()!.width;
+      const expectedLogoCenterX = viewportWidth / 2;
+      const actualLogoCenterX = logoBoundingBox!.x + logoBoundingBox!.width / 2;
+      const logoPositionTolerance = 5;
+      baseAssertion.assertBooleanCondition(
+        Math.abs(actualLogoCenterX - expectedLogoCenterX) <
+          logoPositionTolerance,
+        true,
+        ExpectedMessages.LogoShouldBeCentered(
+          expectedLogoCenterX,
+          actualLogoCenterX,
+        ),
+      );
+    });
 
     await dialTest.step(
       'Verify default Name and Version are pre-filled',
       async () => {
-        const defaultAppNamePattern = /Untitled app \d+/;
+        const defaultAppNamePattern = new RegExp(
+          `${ExpectedConstants.defaultAppName} \\d+`,
+        );
         await baseAssertion.assertInputValue(
           appEditorGeneralForm.name,
           defaultAppNamePattern,
-          'Default app name should be pre-filled and match pattern "Untitled app <number>"',
+          ExpectedMessages.defaultAppNameShouldBeFilled,
         );
         await baseAssertion.assertInputValue(
           appEditorGeneralForm.version,
           ExpectedConstants.defaultAppVersion,
-          'Default app version should be pre-filled',
+          ExpectedMessages.defaultAppVersionShouldBeFilled,
         );
       },
     );
@@ -239,7 +242,7 @@ dialTest(
       'Verify App Editor page was opened, title "Add custom app", general info step is active',
       async () => {
         await appEditorHeaderAssertion.assertActionTitle(
-          `${AppMenuActions.add(AddAppMenuOptions.customApp)}`,
+          AppMenuActions.add(AddAppMenuOptions.customApp),
         );
 
         await appEditorHeaderAssertion.assertStepState(
@@ -538,6 +541,7 @@ dialTest(
     toastAssertion,
     agentInfo,
     localStorageManager,
+    appEditorGeneralInfoAgentPreview,
   }) => {
     setTestIds('EPMRTC-5131', 'EPMRTC-4305', 'EPMRTC-5747');
     const updatedDescription = GeneratorUtil.randomString(25);
@@ -696,7 +700,16 @@ dialTest(
     await dialTest.step(
       'On detailed view in section Information there is Release date field',
       async () => {
-        await appEditorGeneralForm;
+        const releaseDateElement = appEditorGeneralInfoAgentPreview.releaseDate;
+        await baseAssertion.assertElementState(releaseDateElement, 'visible');
+        const releaseDateText =
+          await releaseDateElement.getElementInnerContent();
+        const expectedCurrentDate = DateUtil.getCurrentLocalDate();
+        baseAssertion.assertValue(
+          releaseDateText,
+          expectedCurrentDate,
+          ExpectedMessages.releaseDateShouldBeValid,
+        );
       },
     );
   },
@@ -1286,7 +1299,7 @@ dialTest(
           appEditorAppSettingsAgentPreview.agentInfoContainer,
           'visible',
         );
-        const previewChatInput = sendMessage.messageInput.getElementLocator();
+        const previewChatInput = sendMessage.messageInput;
         await baseAssertion.assertElementState(previewChatInput, 'visible');
         await baseAssertion.assertElementActionabilityState(
           previewChatInput,
@@ -1306,14 +1319,10 @@ dialTest(
         );
         await sendMessage.messageInput.fillInInput(previewChatMessage);
         await sendMessage.sendMessageButton.click();
-        await chatMessages.getChatMessage(1).waitFor();
         await chatMessages.getChatMessage(2).waitFor();
 
         await chatMessagesAssertion.assertMessageContent(1, previewChatMessage);
-        await chatMessagesAssertion.assertMessageContent(
-          2,
-          'Response', // Mocked response content
-        );
+        await chatMessagesAssertion.assertMessageContent(2, 'Response');
       },
     );
 
@@ -1323,12 +1332,11 @@ dialTest(
         await appEditorViewForm.fillInAppFields({
           attachmentTypes: [attachmentTypeToSet],
         });
-        const previewChatAttachmentButton =
-          sendMessage.attachmentMenuTrigger.getElementLocator();
+        const previewChatAttachmentButton = sendMessage.attachmentMenuTrigger;
         await baseAssertion.assertElementState(
           previewChatAttachmentButton,
           'visible',
-          'Attachment clip icon should appear in preview chat',
+          ExpectedMessages.attachmentClipIconShouldAppear,
         );
       },
     );
@@ -1523,9 +1531,8 @@ dialTest(
       'Verify there is Release date field on the detailed view section',
       async () => {
         const releaseDate = appEditorGeneralInfoAgentPreview.releaseDate;
-        const releaseDateText = await releaseDate.getElementInnerContent();
         await baseAssertion.assertElementState(releaseDate, 'visible');
-        baseAssertion.assertValue(releaseDateText, currentDate);
+        await baseAssertion.assertElementText(releaseDate, currentDate);
       },
     );
 
@@ -1931,7 +1938,7 @@ dialTest(
       await marketplacePage.openCreateCustomAppPage();
       await appEditorPage.waitForPageLoaded();
       await appEditorHeaderAssertion.assertActionTitle(
-        `${AppMenuActions.add(AddAppMenuOptions.customApp)}`,
+        AppMenuActions.add(AddAppMenuOptions.customApp),
       );
     });
 
@@ -1985,7 +1992,7 @@ dialTest(
         // Verify name is wrapped (not truncated with ellipsis) on the new conversation preview
         await baseAssertion.assertElementTextWrap(
           previewAgentNameElement,
-          Overflow.breakWord,
+          StyleValues.breakWord,
         );
       },
     );
@@ -2009,14 +2016,14 @@ dialTest(
         await appEditorPage.waitForPageLoaded();
         await toastAssertion.assertToastIsHidden();
         await appEditorHeaderAssertion.assertActionTitle(
-          `${AppMenuActions.add(AddAppMenuOptions.customApp)}`,
+          AppMenuActions.add(AddAppMenuOptions.customApp),
         );
         await appEditorHeader.exitLink.click();
       },
     );
 
     await dialTest.step(
-      'On My Workspace page, click on app\'s card and then "Use application" button',
+      `On My Workspace page, click on app's card and then "Use application" button`,
       async () => {
         await marketplaceHeader.searchInput.fillInInput(appEntity.name);
         const agentElement =
@@ -2036,7 +2043,7 @@ dialTest(
         // Verify name is wrapped (not truncated with ellipsis) on the new conversation start screen
         await baseAssertion.assertElementTextWrap(
           agentInfo.agentName,
-          Overflow.breakWord,
+          StyleValues.breakWord,
         );
       },
     );
@@ -2061,6 +2068,7 @@ dialTest(
     appEditorGeneralForm,
     appEditorHeader,
     page,
+    appEditorViewForm,
   }) => {
     setTestIds('EPMRTC-5946', 'EPMRTC-6046');
     const appNameWithSpaces = `${GeneratorUtil.randomString(70)} ${GeneratorUtil.randomString(70)} ${GeneratorUtil.randomString(ExpectedConstants.maxEntityNameLength - 140 - 2)}`; // Ensure total length is 160 with spaces
@@ -2070,6 +2078,7 @@ dialTest(
       version: appVersion,
     } as DialAIEntityModel;
     const descriptionTextToType = 'This is a test description update.';
+    let reusableAgentElement;
 
     await dialTest.step(
       'Create a custom app via API with a name of 160 symbols containing spaces',
@@ -2091,10 +2100,10 @@ dialTest(
 
     await dialTest.step("Find app's card", async () => {
       await marketplaceHeader.searchInput.fillInInput(appEntity.name);
-      const agentElement =
+      reusableAgentElement =
         await marketplaceAgentsSection.findAgentElement(appEntity);
       await baseAssertion.assertElementState(
-        agentElement,
+        reusableAgentElement,
         'visible',
         ExpectedMessages.agentIsVisible,
       );
@@ -2103,9 +2112,10 @@ dialTest(
     await dialTest.step(
       "Hover over app's icon - tooltip is displayed in several lines",
       async () => {
-        const agentElement =
+        reusableAgentElement =
           await marketplaceAgentsSection.findAgentElement(appEntity);
-        const agentIcon = await marketplaceAgents.getAgentIcon(agentElement);
+        const agentIcon =
+          await marketplaceAgents.getAgentIcon(reusableAgentElement);
         await agentIcon.hover();
         await tooltipAssertion.assertTooltipContent(
           ExpectedConstants.agentIconTooltip(
@@ -2115,11 +2125,11 @@ dialTest(
         );
         await tooltipAssertion.assertTooltipStyle(
           Styles.wordBreak,
-          StylesValues.breakWord,
+          StyleValues.breakWord,
         );
         await tooltipAssertion.assertTooltipStyle(
           Styles.textWrapMode,
-          StylesValues.wrap,
+          StyleValues.wrap,
         );
       },
     );
@@ -2156,18 +2166,8 @@ dialTest(
     );
 
     await dialTest.step('Click on "App settings" link in header', async () => {
-      const appSettingsStep = appEditorHeader.getAppSettingsStep();
-      const respPromise = page.waitForResponse(
-        (resp) =>
-          resp.url().includes(API.applicationCreateHost) &&
-          resp.request().method() === 'PUT',
-      );
-      await appSettingsStep.click();
-      await respPromise;
-      await baseAssertion.assertElementState(
-        appEditorPage.getAppEditorContainer().getAppEditorViewForm(),
-        'visible',
-      );
+      await appEditorHeader.goToAppSettingsStepWithHeaderStepper();
+      await baseAssertion.assertElementState(appEditorViewForm, 'visible');
     });
 
     await dialTest.step(
@@ -2183,11 +2183,8 @@ dialTest(
     await dialTest.step(
       'Check description field - The updated description is displayed',
       async () => {
-        const currentDescription = await appEditorGeneralForm.description
-          .getElementLocator()
-          .inputValue();
-        baseAssertion.assertStringIncludes(
-          currentDescription,
+        await baseAssertion.assertInputValue(
+          appEditorGeneralForm.description,
           descriptionTextToType,
           ExpectedMessages.agentDescriptionIsValid,
         );

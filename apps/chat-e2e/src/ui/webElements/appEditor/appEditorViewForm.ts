@@ -4,6 +4,7 @@ import { keys } from '@/src/ui/keyboard';
 import { AddApplicationAppSettingsFormSelector } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
 import { AppEditorForm } from '@/src/ui/webElements/appEditor/appEditorForm';
+import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
 export class AppEditorViewForm extends AppEditorForm {
@@ -37,10 +38,12 @@ export class AppEditorViewForm extends AppEditorForm {
     );
 
   public getSelectedAttachmentTypePill(type: string): BaseElement {
+    const escapedType = RegexUtil.escapeRegexChars(type);
+    const exactMatchRegex = new RegExp(`^${escapedType}$`);
     return this.createElementFromLocator(
       this.selectedAttachmentTypePills
         .getElementLocator()
-        .filter({ hasText: type }),
+        .filter({ hasText: exactMatchRegex }),
     );
   }
 
@@ -87,9 +90,6 @@ export class AppEditorViewForm extends AppEditorForm {
     const pillsCount =
       await this.selectedAttachmentTypePills.getElementsCount();
     const types: string[] = [];
-    if (pillsCount === 0) {
-      return types;
-    }
     for (let i = 1; i <= pillsCount; i++) {
       const pillTextContent = await this.selectedAttachmentTypePills
         .getNthElement(i)

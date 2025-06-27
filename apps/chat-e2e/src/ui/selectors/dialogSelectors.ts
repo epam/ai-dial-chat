@@ -307,7 +307,7 @@ export const AddApplicationAppSettingsFormSelector = {
   addButton: '[data-qa="add-application"]',
   appViewFormContainer: '[data-qa="app-view-form"]',
   maxAttachmentNumberField: '[data-qa="max-attachment-number-field"]',
-  selectedAttachmentTypePills: `span[data-state="closed"] > span`,
+  selectedAttachmentTypePills: '[data-qa="attachment-type-pill"]',
   unselectAttachmentTypePillButton: (type: string) =>
     `button[data-qa="unselect-item-${type}"]`,
 };
