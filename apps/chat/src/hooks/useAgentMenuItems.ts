@@ -69,9 +69,6 @@ export const useAgentMenuItems = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
 
-  const isCodeAppsEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
-  );
   const isApplicationsSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
   );
@@ -122,8 +119,7 @@ export const useAgentMenuItems = ({
         name: t(getPlayerCaption(entity)),
         dataQa: 'status-change',
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
-        display:
-          isExecutable && isCodeAppsEnabled && disabledActions.deploy !== true,
+        display: isExecutable && disabledActions.deploy !== true,
         Icon: PlayerContextIcons[playerStatus],
         className: PlayerContextButtonClasses[playerStatus],
         iconClassName: PlayerContextIconClasses[playerStatus],
@@ -206,7 +202,6 @@ export const useAgentMenuItems = ({
       entity,
       playerStatus,
       isExecutable,
-      isCodeAppsEnabled,
       handleUpdateFunctionStatus,
       isAppIdPublic,
       canEditOrView,

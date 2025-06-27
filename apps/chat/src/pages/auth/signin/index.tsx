@@ -20,6 +20,7 @@ export default function Signin(props: PageProps) {
   const { status, ...session } = useSession();
 
   useEffect(() => {
+    if (status === 'loading') return;
     if (
       status === 'unauthenticated' ||
       !isClientSessionValid(session) ||

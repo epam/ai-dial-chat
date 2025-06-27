@@ -18,7 +18,12 @@ import { Menu } from '@/src/components/Common/DropdownMenu';
 
 import { ChatMessageTemplatesModal } from './ChatMessageTemplatesModal/ChatMessageTemplatesModal';
 
-import { Feature, LikeState, Message } from '@epam/ai-dial-shared';
+import {
+  Feature,
+  LikeState,
+  Message,
+  PublishActions,
+} from '@epam/ai-dial-shared';
 
 export interface Props {
   message: Message;
@@ -133,12 +138,17 @@ export const ChatMessage: FC<Props> = memo(
             onCopy={handleCopy}
             message={message}
             onRegenerate={onRegenerate}
-            withButtons
+            withButtons={
+              conversation.publicationInfo?.action !== PublishActions.DELETE
+            }
             isLikesEnabled={isLikesEnabled}
           />
         ) : (
           <Menu
-            isTriggerEnabled={!isEditing}
+            isTriggerEnabled={
+              !isEditing &&
+              conversation.publicationInfo?.action !== PublishActions.DELETE
+            }
             placement="top-start"
             listClassName="context-menu-chat bg-layer-3"
             shouldFlip={false}
