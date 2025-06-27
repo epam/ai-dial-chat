@@ -406,7 +406,6 @@ dialTest(
     chat,
     talkToAgentDialog,
     talkToAgents,
-    marketplacePage,
     agentInfoAssertion,
     agentInfo,
     talkToAgentDialogAssertion,
@@ -439,7 +438,7 @@ dialTest(
         });
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.click();
-        await talkToAgentDialog.selectAgent(configApp, marketplacePage);
+        await talkToAgentDialog.selectAgent(configApp);
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );

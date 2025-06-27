@@ -144,7 +144,6 @@ dialTest(
     chat,
     chatHeader,
     talkToAgentDialog,
-    marketplacePage,
     setTestIds,
     localStorageManager,
   }) => {
@@ -348,10 +347,7 @@ dialTest(
         const simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
         if (simpleRequestModel !== undefined) {
           await chatHeader.chatAgent.click();
-          await talkToAgentDialog.selectAgent(
-            simpleRequestModel,
-            marketplacePage,
-          );
+          await talkToAgentDialog.selectAgent(simpleRequestModel);
           await chat.sendRequestWithButton('1+2=');
           const messagesCount =
             await chatMessages.chatMessages.getElementsCount();
