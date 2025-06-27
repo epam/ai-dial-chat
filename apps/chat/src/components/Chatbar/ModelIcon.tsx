@@ -91,7 +91,7 @@ const ModelIconTemplate = memo(
     return (
       <span
         className={classNames(
-          'relative inline-block shrink-0 bg-model-icon leading-none',
+          'relative inline-block shrink-0 leading-none',
           entity?.type !== EntityType.Addon && 'overflow-hidden rounded-full',
           animate && 'animate-bounce',
           enableShrinking && 'shrink',
@@ -99,6 +99,10 @@ const ModelIconTemplate = memo(
         style={{ height: `${size}px`, width: `${size}px` }}
         data-qa="entity-icon"
       >
+        <div
+          className="absolute z-0 size-full rounded-full border border-secondary bg-model-icon"
+          style={{ height: `${size}px`, width: `${size}px` }}
+        ></div>
         <img
           key={entityId}
           src={getIconUrl(entity)}
@@ -107,6 +111,7 @@ const ModelIconTemplate = memo(
           onError={handleError}
           data-image-name={description}
           ref={ref}
+          className="absolute left-0 top-0 z-10 size-full"
           style={{ height: `${size}px`, width: `${size}px` }}
           id={entityId}
         />
