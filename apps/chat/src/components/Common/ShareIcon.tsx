@@ -75,7 +75,7 @@ export function ShareIcon({
       {children}
       <div
         className={classNames(
-          'absolute bg-layer-3',
+          'absolute z-50 bg-layer-3',
           isPublished && 'rounded-md',
           isApplication
             ? 'bottom-0 left-0 rounded-none rounded-tr-[4px] stroke-[0.6]'
