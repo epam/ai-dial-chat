@@ -13,6 +13,7 @@ import {
   ShareEntity,
   UploadStatus,
 } from '@epam/ai-dial-shared';
+import isEqual from 'lodash-es/isEqual';
 
 const rootSelector = (state: RootState) => state.publication;
 
@@ -298,6 +299,55 @@ const selectIsResourceUnpublishing = createSelector(
   },
 );
 
+const selectInitialEntitiesEditState = (state: RootState) =>
+  rootSelector(state).initialEntitiesEditState;
+
+const selectInitialFoldersEditState = (state: RootState) =>
+  rootSelector(state).initialFoldersEditState;
+
+const selectInitialDisplayAuthorEditState = (state: RootState) =>
+  rootSelector(state).initialDisplayAuthorEditState;
+
+const selectInitialRules = (state: RootState) => state.publication.initialRules;
+
+export const selectAreRulesChanged = createSelector(
+  [selectRulesOnEdit, selectInitialRules],
+  (rulesOnEdit, initialRules) => {
+    const edited = rulesOnEdit ?? [];
+    const initial = initialRules ?? [];
+
+    return !isEqual(edited, initial);
+  },
+);
+
+const selectIsEditChanged = createSelector(
+  [
+    selectEntitiesEditState,
+    selectInitialEntitiesEditState,
+    selectFoldersEditState,
+    selectInitialFoldersEditState,
+    selectDisplayAuthorEditState,
+    selectInitialDisplayAuthorEditState,
+    selectAreRulesChanged,
+  ],
+  (
+    entitiesEditState,
+    initialEntitiesEditState,
+    foldersEditState,
+    initialFoldersEditState,
+    displayAuthorEditState,
+    initialDisplayAuthorEditState,
+    areRulesChanged,
+  ) => {
+    return (
+      !isEqual(entitiesEditState, initialEntitiesEditState) ||
+      !isEqual(foldersEditState, initialFoldersEditState) ||
+      displayAuthorEditState !== initialDisplayAuthorEditState ||
+      areRulesChanged
+    );
+  },
+);
+
 export const PublicationSelectors = {
   selectPublications,
   selectFilteredPublications,
@@ -331,4 +381,6 @@ export const PublicationSelectors = {
   selectIsPublicationUpdating,
   selectDisplayAuthorEditState,
   selectIsResourceUnpublishing,
+  selectIsEditChanged,
+  selectAreRulesChanged,
 };

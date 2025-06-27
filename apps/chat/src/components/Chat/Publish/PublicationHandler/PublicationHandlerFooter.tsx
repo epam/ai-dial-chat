@@ -274,8 +274,13 @@ export const PublicationHandlerFooter = ({
   const isDisplayAuthorInvalid =
     !displayAuthorEditState.trim().length ||
     displayAuthorEditState.length > MAX_ENTITY_LENGTH;
-  const isEditDisabled =
+  const isEditChanged = useAppSelector(
+    PublicationSelectors.selectIsEditChanged,
+  );
+  const isEditInvalid =
     isNamesOrVersionsInvalid || isFoldersInvalid || isDisplayAuthorInvalid;
+
+  const isEditDisabled = isEditInvalid || !isEditChanged;
 
   return (
     <div
@@ -375,7 +380,9 @@ export const PublicationHandlerFooter = ({
             <Tooltip
               hideTooltip={!isEditDisabled}
               tooltip={t(
-                'Request can not be updated as some resources are invalid',
+                isEditInvalid
+                  ? 'Request can not be updated as some resources are invalid'
+                  : 'Make any changes to update the request',
               )}
             >
               <button
