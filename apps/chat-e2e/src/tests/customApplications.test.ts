@@ -2075,7 +2075,7 @@ dialTest(
       version: appVersion,
     } as DialAIEntityModel;
     const descriptionTextToType = 'This is a test description update.';
-    let reusableAgentElement;
+    let reusableAgentElement: BaseElement;
 
     await dialTest.step(
       'Create a custom app via API with a name of 160 symbols containing spaces',
@@ -2109,8 +2109,6 @@ dialTest(
     await dialTest.step(
       "Hover over app's icon - tooltip is displayed in several lines",
       async () => {
-        reusableAgentElement =
-          await marketplaceAgentsSection.findAgentElement(appEntity);
         const agentIcon =
           await marketplaceAgents.getAgentIcon(reusableAgentElement);
         await agentIcon.hover();
