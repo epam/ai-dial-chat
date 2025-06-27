@@ -31,6 +31,7 @@ import {
   regenerateApplicationId,
 } from '@/src/utils/app/application';
 import { cleanSchemaId } from '@/src/utils/app/application-type-schema';
+import { getLastPathSegment } from '@/src/utils/app/common';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
@@ -586,7 +587,7 @@ const updateApplicationStatusSuccessEpic: AppEpic = (action$, state$) =>
       return isAdmin || !isEntityIdExternal(payload)
         ? of(
             UIActions.showSuccessToast(
-              `Application: ${name.split('/').pop()} was successfully ${payload.status.toLowerCase()}`,
+              `Application: ${getLastPathSegment(name)} was successfully ${payload.status.toLowerCase()}`,
             ),
           )
         : EMPTY;
@@ -614,7 +615,7 @@ const updateApplicationStatusFailEpic: AppEpic = (action$) =>
         ),
         of(
           UIActions.showErrorToast(
-            `Application: ${name.split('/').pop()} ${payload.status.toLowerCase()} failed`,
+            `Application: ${getLastPathSegment(name)} ${payload.status.toLowerCase()} failed`,
           ),
         ),
       );

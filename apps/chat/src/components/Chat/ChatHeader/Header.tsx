@@ -181,10 +181,12 @@ export const ChatHeader = Inversify.register(
 
     const disallowChangeAgent =
       isChangeAgentDisallowed ||
+      conversation.publicationInfo?.action === PublishActions.DELETE ||
       (isExternal && !isApproveRequiredEntitySelected);
     const disallowChangeSettings =
       isReplayAsIsConversation(conversation) ||
       isPlayback ||
+      conversation.publicationInfo?.action === PublishActions.DELETE ||
       (isExternal && !isApproveRequiredEntitySelected);
 
     return (
