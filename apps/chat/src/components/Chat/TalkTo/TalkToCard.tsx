@@ -112,7 +112,7 @@ export const TalkToCard = ({
           className="xl:invisible group-hover:xl:visible"
         />
       </div>
-      <div className="flex items-end gap-4 overflow-hidden">
+      <div className="flex items-center gap-4 overflow-hidden">
         <div className="flex shrink-0 items-center justify-center xl:my-[3px]">
           {entity.reference === PseudoModel.Playback && (
             <span
