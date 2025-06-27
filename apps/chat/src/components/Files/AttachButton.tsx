@@ -58,11 +58,8 @@ export const AttachButton = ({
   const selectedConversationIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
   );
-  const isApproveRequiredEntity = useAppSelector((state) =>
-    PublicationSelectors.selectIsApproveRequiredEntity(
-      state,
-      selectedConversationIds[0] ?? '',
-    ),
+  const resourcesToReview = useAppSelector(
+    PublicationSelectors.selectResourcesToReview,
   );
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
   const messageIsStreaming = useAppSelector(
@@ -99,6 +96,14 @@ export const AttachButton = ({
   const handleAttachLink = useCallback(() => {
     setIsAttachLinkDialogOpened(true);
   }, []);
+
+  const isApproveRequiredEntity = useMemo(
+    () =>
+      resourcesToReview.some((r) =>
+        selectedConversationIds.includes(r.reviewUrl),
+      ),
+    [resourcesToReview, selectedConversationIds],
+  );
 
   const sourceFilters =
     isApproveRequiredEntity && isAdmin ? myFilesFilter : undefined;
