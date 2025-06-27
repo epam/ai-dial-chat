@@ -2,8 +2,6 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import config from '@/config/chat.playwright.config';
 import { API, ExpectedConstants } from '@/src/testData';
 import { Attributes, Tags } from '@/src/ui/domData';
-import { MarketplacePage } from '@/src/ui/pages';
-import { OverlayMarketplacePage } from '@/src/ui/pages/overlay/overlayMarketplacePage';
 import {
   IconSelectors,
   MarketplaceAgentSelectors,
@@ -24,11 +22,26 @@ export class TalkToAgentDialog extends BaseElement {
   public goToMyWorkspaceButton = this.getChildElementBySelector(
     TalkToAgentDialogSelectors.goToMyWorkspaceButton,
   );
+  public goToDialMarketplaceButton = this.getChildElementBySelector(
+    TalkToAgentDialogSelectors.goToDialMarketplaceButton,
+  );
+  public myAgentsTab = this.getChildElementBySelector(
+    TalkToAgentDialogSelectors.myAgentsTab,
+  );
+  public allAgentsTab = this.getChildElementBySelector(
+    TalkToAgentDialogSelectors.allAgentsTab,
+  );
   public searchAgentInput = this.getChildElementBySelector(
     TalkToAgentDialogSelectors.searchAgent,
   );
   public cancelButton = this.getChildElementBySelector(
     IconSelectors.cancelIcon,
+  );
+  public nextArrowButton = this.getChildElementBySelector(
+    TalkToAgentDialogSelectors.nextArrowButton,
+  );
+  public previousArrowButton = this.getChildElementBySelector(
+    TalkToAgentDialogSelectors.previousArrowButton,
   );
 
   getAgents(): MarketplaceAgents {
@@ -63,32 +76,31 @@ export class TalkToAgentDialog extends BaseElement {
     return this.getVersionMenuTrigger(agentElement).locator(Tags.svg);
   }
 
-  public async selectAgent(
-    entity: DialAIEntityModel,
-    marketplacePage: MarketplacePage | OverlayMarketplacePage,
-    options?: {
-      isInstalledDeploymentsUpdated?: boolean;
-      isWorkspaceAgent?: boolean;
-      isEditable?: boolean;
-    },
-  ) {
+  public async getAllAgentNames() {
+    const allAgentNames = await this.getAgents().getAgentNames();
+    while (
+      (await this.nextArrowButton.isVisible()) &&
+      (await this.nextArrowButton.isElementEnabled())
+    ) {
+      await this.nextArrowButton.click();
+      const visibleAgentNames = await this.getAgents().getAgentNames();
+      for (const visibleAgentName of visibleAgentNames) {
+        if (!allAgentNames.includes(visibleAgentName)) {
+          allAgentNames.push(visibleAgentName);
+        }
+      }
+    }
+    return allAgentNames;
+  }
+
+  public async selectAgent(entity: DialAIEntityModel) {
     //check if agent is among recent ones
-    const isRecentAgentUsed = await this.useRecentAgent(entity);
-    //otherwise open marketplace page
+    const isRecentAgentUsed = await this.useAgent(entity);
+    //otherwise switch to "All agents" tab
     if (!isRecentAgentUsed) {
-      await this.goToMyWorkspace();
-      await marketplacePage.waitForPageLoaded(); // Wait for "My Workspace" page to load
-      //use agent if it is visible on "My Workspace" tab
-      const marketplaceContainer = marketplacePage.getMarketplaceContainer();
-      const marketplace = marketplaceContainer.getMarketplace();
-      const marketplaceAgentsSection =
-        marketplace.getMarketplaceAgentsSection();
-      await marketplace
-        .getMarketplaceHeader()
-        .searchInput.fillInInput(entity.name);
-      const isMyWorkspaceAgentUsed =
-        await marketplaceAgentsSection.findAndUseAgent(entity, options);
-      if (!isMyWorkspaceAgentUsed) {
+      await this.allAgentsTab.click();
+      const isMarketplaceAgentUsed = await this.useAgent(entity);
+      if (!isMarketplaceAgentUsed) {
         throw new Error(
           `Agent with name: ${entity.name} and version: ${entity.version ?? 'N/A'} is not found!`,
         );
@@ -96,69 +108,81 @@ export class TalkToAgentDialog extends BaseElement {
     }
   }
 
-  private async useRecentAgent(entity: DialAIEntityModel): Promise<boolean> {
-    let isAgentSelected = false;
+  //the function returns an agent card or a dropdown agent version locator to select for the further usage
+  public async findAgent(entity: DialAIEntityModel | string) {
+    const isEntityOfStringType = typeof entity === 'string';
+    await this.searchAgentInput.fillInInput(
+      isEntityOfStringType ? entity : entity.name,
+    );
     const agents = this.getAgents();
     const agentLocator = this.getTalkToAgent(entity);
     //select agent if it is visible
     if (await agentLocator.isVisible()) {
-      await agentLocator.click();
-      isAgentSelected = true;
+      return agentLocator;
     } else {
       //if agent is not visible
       //check if agent name stays among visible agents
-      const agentWithVersionToSetLocator =
-        await agents.agentWithVersionToSet(entity);
-      //select agent version if name is found
-      if (agentWithVersionToSetLocator) {
-        const isVersionSelected = await this.selectAgentVersion(
-          agentWithVersionToSetLocator,
-          entity.version!,
-        );
-        if (isVersionSelected) {
-          isAgentSelected = true;
+      if (!isEntityOfStringType) {
+        const agentWithVersionToSetLocator =
+          await agents.agentWithVersionToSet(entity);
+        //get agent version from dropdown menu if the name is found
+        if (agentWithVersionToSetLocator) {
+          return this.getAgentVersionFromMenu(
+            agentWithVersionToSetLocator,
+            entity.version!,
+          );
         }
       }
+    }
+  }
+
+  public async useAgent(entity: DialAIEntityModel | string): Promise<boolean> {
+    let isAgentSelected = false;
+    const agentElement = await this.findAgent(entity);
+    //if agent's card or dropdown menu version are found, click on it
+    if (agentElement !== undefined) {
+      await agentElement.click();
+      isAgentSelected = true;
     }
     return isAgentSelected;
   }
 
-  private async selectAgentVersion(agentLocator: Locator, version: string) {
-    let isVersionSelected = false;
+  private async getAgentVersionFromMenu(
+    agentLocator: Locator,
+    version: string,
+  ) {
+    let menuVersion: Locator;
     const menuTrigger = this.getVersionMenuTrigger(agentLocator);
     //check if version menu is available
     if (await menuTrigger.isVisible()) {
       await menuTrigger.click();
-      const menuVersion = this.getVersionDropdownMenu().menuOption(version);
+      menuVersion = this.getVersionDropdownMenu().menuOption(version);
       //check if menu contains version
       if (await menuVersion.isVisible()) {
-        await this.getVersionDropdownMenu().selectMenuOption(version);
-        isVersionSelected = true;
+        return menuVersion;
       }
     }
-    return isVersionSelected;
   }
 
   public async goToMyWorkspace() {
+    await this.goMarketplacePage(() => this.goToMyWorkspaceButton.click());
+  }
+
+  public async goToDialMarketplace() {
+    await this.goMarketplacePage(() => this.goToDialMarketplaceButton.click());
+  }
+
+  public async goMarketplacePage(method: () => Promise<void>) {
     const responsePromise = this.page.waitForResponse(
       (resp) => resp.url().includes(API.marketplaceHost),
       { timeout: config.use!.actionTimeout! * 3 },
     );
-    await this.goToMyWorkspaceButton.click();
+    await method();
     await responsePromise;
   }
 
   public async selectReplayAsIs() {
     await this.getTalkToAgent(ExpectedConstants.replayAsIsLabel).click();
-  }
-
-  //select agent available on 'Talk to' modal
-  public async selectRecentAgent(agent: DialAIEntityModel) {
-    const resp = this.page.waitForResponse((r) =>
-      r.url().includes(API.moveHost),
-    );
-    await this.getTalkToAgent(agent).click();
-    await resp;
   }
 
   public async getSelectedAgent() {

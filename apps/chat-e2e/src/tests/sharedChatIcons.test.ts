@@ -321,7 +321,6 @@ dialSharedWithMeTest(
     localStorageManager,
     chatHeader,
     talkToAgentDialog,
-    marketplacePage,
     temperatureSlider,
     agentSettings,
     addons,
@@ -438,7 +437,7 @@ dialSharedWithMeTest(
       async () => {
         await conversations.selectEntity(thirdConversationToShare.name);
         await chatHeader.chatAgent.click();
-        await talkToAgentDialog.selectAgent(randomModel, marketplacePage);
+        await talkToAgentDialog.selectAgent(randomModel);
         const expectedRandomModelIcon =
           iconApiHelper.getEntityIcon(randomModel);
         await conversationAssertion.assertTreeEntityIcon(

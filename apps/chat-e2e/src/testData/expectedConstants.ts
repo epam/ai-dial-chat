@@ -222,7 +222,9 @@ export const ExpectedConstants = {
   attachmentPublishErrorMessage:
     'Publishing failed. You are only allowed to publish conversations with attachments from "All files"',
   marketplacePath: '/marketplace',
-  workspacePath: () => `${ExpectedConstants.marketplacePath}?tab=workspace`,
+  workspaceTab: 'tab=workspace',
+  workspacePath: () =>
+    `${ExpectedConstants.marketplacePath}?${ExpectedConstants.workspaceTab}`,
   createCustomAppPath: '/apps-editor/custom%20app',
   noWorkspaceAgentsFoundMessage:
     'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
@@ -254,6 +256,8 @@ export const ExpectedConstants = {
   agentIconTooltip: (appName: string, appVersion: string) =>
     `${appName}\nv. ${appVersion}`,
   pleaseFillInAllMandatoryFields: 'Please fill in all mandatory fields',
+  goToMyWorkspaceButtonLabel: 'Go to My workspace',
+  goToDialMarketplaceButtonLabel: 'Go to DIAL Marketplace',
 };
 
 export enum Types {

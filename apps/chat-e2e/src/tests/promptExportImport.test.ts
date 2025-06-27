@@ -40,7 +40,6 @@ dialTest(
     promptData,
     sendMessage,
     talkToAgentDialog,
-    marketplacePage,
     apiAssertion,
     sendMessageAssertion,
     chat,
@@ -157,10 +156,7 @@ dialTest(
         const simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
         if (simpleRequestModel !== undefined) {
           await chat.changeAgentButton.click();
-          await talkToAgentDialog.selectAgent(
-            simpleRequestModel,
-            marketplacePage,
-          );
+          await talkToAgentDialog.selectAgent(simpleRequestModel);
           const request = await chat.sendRequestWithPrompt(
             promptContent,
             false,
