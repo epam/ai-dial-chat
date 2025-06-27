@@ -218,6 +218,11 @@ export const TalkToAgentDialogSelectors = {
   talkToAgentModal: '[data-qa="talk-to-agent"]',
   searchAgent: '[data-qa="search-agents"]',
   goToMyWorkspaceButton: '[data-qa="go-to-my-workspace"]',
+  goToDialMarketplaceButton: '[data-qa="go-to-marketplace"]',
+  myAgentsTab: '[data-qa="workspace"]',
+  allAgentsTab: '[data-qa="marketplace"]',
+  nextArrowButton: '[data-qa="slider-dot-arrow-next"]',
+  previousArrowButton: '[data-qa="slider-dot-arrow-prev"]',
 };
 
 export const MessageTemplateModalSelectors = {

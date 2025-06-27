@@ -219,7 +219,6 @@ dialTest(
     variableModalAssertion,
     variableModalDialog,
     talkToAgentDialog,
-    marketplacePage,
     conversations,
     conversationDropdownMenu,
     chatBar,
@@ -261,7 +260,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(replayConversation.name);
         await chat.changeAgentButton.click();
-        await talkToAgentDialog.selectAgent(randomModel, marketplacePage);
+        await talkToAgentDialog.selectAgent(randomModel);
         await chat.replay.click();
         await variableModalAssertion.assertVariableModalState('visible');
         await variableModalDialog.closeButton.click();
