@@ -52,6 +52,7 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
 import { RootState } from '@/src/types/store';
 
+import { AuthSelectors } from '@/src/store/auth/auth.selectors';
 import { ChatSelectors } from '@/src/store/chat/chat.selectors';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
@@ -759,6 +760,7 @@ const selectIsSelectedConversationBlocksInput = createSelector(
     ChatSelectors.selectIsConfigurationBlocksInput,
     ChatSelectors.selectNotAvailableEntityType,
     selectAreSelectedConversationsReadOnly,
+    AuthSelectors.selectIsAdmin,
   ],
   (
     conversations,
@@ -766,6 +768,7 @@ const selectIsSelectedConversationBlocksInput = createSelector(
     isConfigurationBlocksInput,
     notAvailableEntityType,
     areReadOnly,
+    isAdmin,
   ) => {
     const isReviewEntity = conversations.some((conversation) =>
       resourcesToReview.some(
@@ -780,8 +783,8 @@ const selectIsSelectedConversationBlocksInput = createSelector(
           (isConfigurationBlocksInput || isReplayConversation(conversation))) ||
         notAvailableEntityType ||
         isPlaybackConversation(conversation) ||
-        areReadOnly ||
-        isReviewEntity ||
+        (areReadOnly && !isReviewEntity) ||
+        (isReviewEntity && !isAdmin) ||
         !conversation.messages ||
         isMessageInputDisabled(
           conversation.messages.length,
