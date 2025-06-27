@@ -1279,11 +1279,13 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         );
 
         const conversationRootFolderId = getConversationRootId();
+        const overlayNewConversationsFolder =
+          isOverlay && state$.value.overlay.newConversationsFolder;
 
         const newConversationName =
           isReplayConversation(payload.conversation) ||
           updatedMessages.filter((msg) => msg.role === Role.User).length > 1 ||
-          payload.conversation.isNameChanged
+          !isEntityIdLocal(payload.conversation)
             ? payload.conversation.name
             : getNextDefaultName(
                 getNewConversationName(payload.conversation, payload.message),
@@ -1291,7 +1293,9 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
                   (conv) =>
                     (conv.folderId === payload.conversation.folderId ||
                       (isEntityIdLocal(payload.conversation) &&
-                        conv.folderId === conversationRootFolderId)) &&
+                        (isOverlay && overlayNewConversationsFolder
+                          ? conv.folderId === overlayNewConversationsFolder
+                          : conv.folderId === conversationRootFolderId))) &&
                     !selectedConversationIds.includes(conv.id),
                 ),
                 Math.max(

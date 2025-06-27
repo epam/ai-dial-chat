@@ -13,7 +13,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { isVersionValid } from '@/src/utils/app/common';
+import { getLastPathSegment, isVersionValid } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import {
@@ -178,7 +178,7 @@ export function PublishModal<
     register,
     handleSubmit: submitWrapper,
     formState: { errors, isValid },
-    getValues,
+    trigger,
   } = useForm<PublicationRequestFormData>({
     defaultValues: {
       publishRequestName: getPublicationDefaultName(userName),
@@ -221,6 +221,10 @@ export function PublishModal<
     onClose,
     t,
   ]);
+
+  useEffect(() => {
+    trigger();
+  }, [trigger]);
 
   const handleFolderChange = useCallback(
     (e: MouseEvent<HTMLButtonElement> | ClipboardEvent<HTMLInputElement>) => {
@@ -439,17 +443,11 @@ export function PublishModal<
     !isSomeVersionInvalid;
 
   const tooltipText = useMemo(() => {
-    if (
-      !getValues('publishRequestName').length ||
-      (!isValid && !!errors.publishRequestName?.message)
-    ) {
+    if (!isValid && !!errors.publishRequestName?.message) {
       return t('Enter a valid name for the publish request');
     }
 
-    if (
-      !getValues('publicationAuthor').length ||
-      (!isValid && !!errors.publicationAuthor?.message)
-    ) {
+    if (!isValid && !!errors.publicationAuthor?.message) {
       return t("Enter a valid publication's author name");
     }
 
@@ -463,7 +461,6 @@ export function PublishModal<
 
     return t('Nothing is selected and rules have not changed');
   }, [
-    getValues,
     isValid,
     errors.publishRequestName?.message,
     errors.publicationAuthor?.message,
@@ -586,7 +583,7 @@ export function PublishModal<
                     className="mb-1 text-xs text-secondary"
                     data-qa="published-path"
                   >
-                    {path.split('/').pop()}
+                    {getLastPathSegment(path)}
                   </div>
                   <RulesInput
                     isOpen={isRuleSetterOpened}

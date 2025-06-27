@@ -31,10 +31,12 @@ import {
   regenerateApplicationId,
 } from '@/src/utils/app/application';
 import { cleanSchemaId } from '@/src/utils/app/application-type-schema';
+import { getLastPathSegment } from '@/src/utils/app/common';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { isEntityIdExternal, isEntityIdLocal } from '@/src/utils/app/id';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 import { parseApplicationApiKey } from '@/src/utils/server/api';
 
@@ -49,6 +51,7 @@ import {
   ApplicationTypesSchemasActions,
   ConversationsActions,
   ModelsActions,
+  PublicationActions,
   ShareActions,
   UIActions,
 } from '@/src/store/actions';
@@ -57,6 +60,7 @@ import {
   AuthSelectors,
   ConversationsSelectors,
   ModelsSelectors,
+  PublicationSelectors,
   ShareSelectors,
 } from '@/src/store/selectors';
 
@@ -215,6 +219,16 @@ const updateApplicationEpic: AppEpic = (action$, state$) =>
 
       const isMoved = payload.oldApplication.id !== updatedCustomApplication.id;
 
+      if (isMoved && payload.publicationUrl) {
+        return of(
+          ApplicationActions.updateApplicationPublicationUrls({
+            publicationUrl: payload.publicationUrl,
+            oldApplicationId: payload.oldApplication.id,
+            newApplicationId: updatedCustomApplication.id,
+          }),
+        );
+      }
+
       const move$ = isMoved
         ? DataService.getDataStorage()
             .move({
@@ -295,6 +309,43 @@ const updateApplicationEpic: AppEpic = (action$, state$) =>
             );
           }),
         ),
+      );
+    }),
+  );
+
+const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(ApplicationActions.updateApplicationPublicationUrls.type),
+    switchMap(({ payload }) => {
+      const publication = PublicationSelectors.selectPublicationByUrl(
+        state$.value,
+        payload.publicationUrl as string,
+      );
+      if (!publication || !publication?.resources) {
+        return EMPTY;
+      }
+      const { name } = splitEntityId(payload.newApplicationId);
+
+      return of(
+        PublicationActions.updatePublicationRequest({
+          url: publication.url,
+          dataToUpdate: {
+            name: publication.name as string,
+            targetFolder: publication.targetFolder,
+            resources: publication.resources.map((resource) => ({
+              action: resource.action,
+              sourceUrl: resource.sourceUrl ?? '',
+              targetUrl:
+                resource.reviewUrl === payload.oldApplicationId
+                  ? resource.targetUrl
+                      .split('/')
+                      .slice(0, -1)
+                      .concat(name)
+                      .join('/')
+                  : resource.targetUrl,
+            })),
+          },
+        }),
       );
     }),
   );
@@ -536,7 +587,7 @@ const updateApplicationStatusSuccessEpic: AppEpic = (action$, state$) =>
       return isAdmin || !isEntityIdExternal(payload)
         ? of(
             UIActions.showSuccessToast(
-              `Application: ${name.split('/').pop()} was successfully ${payload.status.toLowerCase()}`,
+              `Application: ${getLastPathSegment(name)} was successfully ${payload.status.toLowerCase()}`,
             ),
           )
         : EMPTY;
@@ -564,7 +615,7 @@ const updateApplicationStatusFailEpic: AppEpic = (action$) =>
         ),
         of(
           UIActions.showErrorToast(
-            `Application: ${name.split('/').pop()} ${payload.status.toLowerCase()} failed`,
+            `Application: ${getLastPathSegment(name)} ${payload.status.toLowerCase()} failed`,
           ),
         ),
       );
@@ -653,6 +704,7 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
             query: {
               id: encodeURIComponent(entity.reference),
               slug: cleanSchemaId(applicationType),
+              publicationUrl: payload.publicationUrl,
             },
           });
         }),
@@ -727,4 +779,5 @@ export const ApplicationEpics = combineEpics(
   enterEditModeEpic,
   exitEditModeEpic,
   setSelectedWidgetEpic,
+  updateApplicationPublicationUrlsEpic,
 );

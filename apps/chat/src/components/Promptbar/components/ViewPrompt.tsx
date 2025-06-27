@@ -15,7 +15,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ConversationsSelectors,
   ModelsSelectors,
-  PublicationSelectors,
+  PromptsSelectors,
 } from '@/src/store/selectors';
 
 import { TemplateRenderer } from '@/src/components/Chat/ChatMessage/ChatMessageTemplatesModal/TemplateRenderer';
@@ -79,14 +79,8 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
-  const selectedPublication = useAppSelector(
-    PublicationSelectors.selectSelectedPublication,
-  );
-  const isApproveRequiredEntitySelected = useAppSelector((state) =>
-    PublicationSelectors.selectIsApproveRequiredEntitySelected(
-      state,
-      prompt.id,
-    ),
+  const { isSelectedPromptApproveRequiredResource } = useAppSelector(
+    PromptsSelectors.selectSelectedPromptId,
   );
 
   const publicVersionGroupId = usePublicVersionGroupId(prompt);
@@ -104,7 +98,9 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
     installedModelIds.has(conv.model.id),
   );
   const disableUsePrompt =
-    isConversationBlocksInput || !areModelsInstalled || !!selectedPublication;
+    isConversationBlocksInput ||
+    !areModelsInstalled ||
+    !selectedConversations.length;
 
   const onUse = useMenuItemHandler(handleUse, undefined);
 
@@ -136,7 +132,7 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
       <div className="flex items-center justify-between border-t border-t-tertiary px-3 pt-4 md:px-6">
         <ViewPromptButtons prompt={prompt} onEditMode={onEditMode} />
         <div className="flex items-center gap-4">
-          {isApproveRequiredEntitySelected ? (
+          {isSelectedPromptApproveRequiredResource ? (
             <>
               <p
                 className={classNames(

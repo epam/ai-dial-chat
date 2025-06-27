@@ -8,6 +8,7 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip, topicToOption } from '@/src/utils/app/application';
+import { getLastPathSegment } from '@/src/utils/app/common';
 import { isMobile } from '@/src/utils/app/mobile';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { getRouteForSlug } from '@/src/utils/app/route';
@@ -127,7 +128,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
         return;
       }
 
-      const { slug } = router.query;
+      const { slug, publicationUrl } = router.query;
       if (!slug) return;
 
       const slugStr = slug.toString();
@@ -154,6 +155,9 @@ export const GeneralInfoEditor: React.FC<Props> = ({
                 ? getRouteForSlug(Routes.AppsEditorSettings, slugStr)
                 : undefined,
               schema: schema ?? undefined,
+              publicationUrl: publicationUrl
+                ? decodeURIComponent(publicationUrl.toString())
+                : undefined,
             }),
           );
         }
@@ -278,7 +282,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
               <LogoSelector
                 id="icon"
                 label={t('Icon')}
-                localLogo={field.value?.split('/')?.pop()}
+                localLogo={getLastPathSegment(field.value)}
                 onLogoSelect={(v) => field.onChange(getLogoId(v))}
                 onDeleteLocalLogoHandler={() => field.onChange('')}
                 customPlaceholder={t('No icon')}

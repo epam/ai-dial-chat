@@ -92,9 +92,6 @@ export const PromptComponent = ({
   const isConversationBlocksInput = useAppSelector(
     ConversationsSelectors.selectIsSelectedConversationBlocksInput,
   );
-  const selectedPublication = useAppSelector(
-    PublicationSelectors.selectSelectedPublication,
-  );
 
   const isExternal = isEntityIdExternal(prompt);
   const isApproveRequiredResource = !!additionalItemData?.publicationUrl;
@@ -218,7 +215,9 @@ export const PromptComponent = ({
   );
 
   const disableUsePrompt =
-    isConversationBlocksInput || !areModelsInstalled || !!selectedPublication;
+    isConversationBlocksInput ||
+    !areModelsInstalled ||
+    !selectedConversations.length;
 
   useEffect(() => {
     if (isSelectMode) {
@@ -252,9 +251,9 @@ export const PromptComponent = ({
           isHighlighted && 'bg-accent-primary-alpha',
           additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
         )}
-        onClick={() => {
+        onClick={(e) => {
           if (!isSelectMode) {
-            dispatch(PromptsActions.selectPrompt({ promptId: prompt.id }));
+            handleOpenViewModal(e, false);
           }
 
           if (isSelectMode && !isExternal) {

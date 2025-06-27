@@ -148,10 +148,12 @@ export const getFilesWithInvalidFileType = (
     : files.filter((file) => !isAllowedMimeType(allowedFileTypes, file.type));
 };
 export const notAllowedSymbols = ':;,=/{}%&\\"';
+export const notAllowedSpaces = '(\r\n|\n|\r|\t)|[\x00-\x1F]';
 export const notAllowedSymbolsRegex = new RegExp(
-  `[${escapeRegExp(notAllowedSymbols)}]|(\r\n|\n|\r|\t)|[\x00-\x1F]`,
+  `[${escapeRegExp(notAllowedSymbols)}]|${notAllowedSpaces}`,
   'gm',
 );
+export const notAllowedSpacesRegex = new RegExp(notAllowedSpaces, 'gm');
 export const doesHaveNotAllowedSymbols = (name: string) =>
   !!name.match(notAllowedSymbolsRegex);
 

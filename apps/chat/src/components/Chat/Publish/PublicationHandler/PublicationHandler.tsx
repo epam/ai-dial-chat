@@ -29,10 +29,8 @@ import {
 } from '@/src/store/publication/publication.types';
 import { PublicationSelectors } from '@/src/store/selectors';
 
-import {
-  MAX_PUBLICATION_AUTHOR_LENGTH,
-  PUBLIC_URL_PREFIX,
-} from '@/src/constants/publication';
+import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
+import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -50,6 +48,7 @@ import {
   PromptPublicationResources,
 } from './ReviewResources';
 
+import { PublishActions } from '@epam/ai-dial-shared';
 import isEqual from 'lodash-es/isEqual';
 
 interface Props {
@@ -173,7 +172,9 @@ export function PublicationHandler({ publication }: Props) {
                     : currentFolder[EDITED_FOLDER_NAME_KEY],
                 );
               });
-              newFolderSegments[1] = publication.targetFolder;
+              if (action !== PublishActions.DELETE) {
+                newFolderSegments[1] = publication.targetFolder;
+              }
               const newFolderId = newFolderSegments.join('/');
 
               // get new api key
@@ -210,7 +211,7 @@ export function PublicationHandler({ publication }: Props) {
   const handleChangeDisplayAuthor = useCallback(
     (value: string) => {
       if (
-        value.length <= MAX_PUBLICATION_AUTHOR_LENGTH ||
+        value.length <= MAX_ENTITY_LENGTH ||
         value.length < displayAuthorEditState.length
       ) {
         dispatch(PublicationActions.setDisplayAuthorEditState(value));
@@ -229,7 +230,7 @@ export function PublicationHandler({ publication }: Props) {
     !isEqual(publication.rules, rules[publication.targetFolder] || []);
 
   return (
-    <div className="size-full justify-center overflow-y-auto p-0 md:px-5 md:pt-5">
+    <div className="flex size-full justify-center overflow-y-auto p-0 md:px-5 md:pt-5">
       <div
         className="relative flex size-full flex-col justify-center gap-px rounded 2xl:max-w-[1000px]"
         data-qa="publish-approval-modal"

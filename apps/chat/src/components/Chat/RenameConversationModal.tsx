@@ -102,7 +102,7 @@ function RenameConversationView() {
       dispatch(
         ConversationsActions.updateConversation({
           id: renamingConversation.id,
-          values: { name: newName, isNameChanged: true },
+          values: { name: newName },
           publicationUrl: renamingConversation.publicationInfo?.publicationUrl,
         }),
       );

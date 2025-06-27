@@ -7,7 +7,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
 
 import { EntityType } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
+import { DialAIEntityModel, ModelsMap } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -22,20 +22,26 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 interface ModelSelectRowProps {
   item: DialAIEntityModel;
   isNotAllowed: boolean;
+  truncate?: boolean;
 }
 
-const ModelSelectRow = ({ item, isNotAllowed }: ModelSelectRowProps) => {
+const ModelSelectRow = ({
+  item,
+  isNotAllowed,
+  truncate = true,
+}: ModelSelectRowProps) => {
   const { t } = useTranslation(Translation.Chat);
 
   return (
     <div
       className={classNames(
-        'flex items-center gap-2 truncate',
+        'flex items-center gap-2',
         isNotAllowed && 'text-secondary',
+        truncate && 'truncate',
       )}
     >
       <ModelIcon entity={item} entityId={item.id} size={18} />
-      <div className="truncate">
+      <div className={classNames(truncate && 'truncate')}>
         <span>
           {getOpenAIEntityFullName(item)}
           {item.version && (
@@ -62,8 +68,7 @@ interface ModelsSelectorProps {
   tooltip?: string;
   onChange: (modelId: string) => void;
   models?: DialAIEntityModel[];
-  additionalModelsMap?: Partial<Record<string, DialAIEntityModel>>;
-  useReference?: boolean;
+  additionalModelsMap?: ModelsMap;
   inputClassName?: string;
   panelClassName?: string;
   indexSeparator?: number;
@@ -76,7 +81,6 @@ export const ModelsSelector = memo(function ModelsSelector({
   onChange,
   models,
   additionalModelsMap,
-  useReference,
   inputClassName,
   panelClassName,
   indexSeparator,
@@ -111,13 +115,12 @@ export const ModelsSelector = memo(function ModelsSelector({
           getItemLabel={(model: DialAIEntityModel) =>
             getOpenAIEntityFullName(model)
           }
-          getItemValue={(model: DialAIEntityModel) =>
-            useReference ? model.reference : model.id
-          }
-          itemRow={({ item }) => (
+          getItemValue={(model: DialAIEntityModel) => model.reference}
+          itemRow={({ item, truncate }) => (
             <ModelSelectRow
               item={item}
               isNotAllowed={item.id === value && !model}
+              truncate={truncate}
             />
           )}
           onSelectItem={onChange}

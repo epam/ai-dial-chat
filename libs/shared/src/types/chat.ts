@@ -176,5 +176,4 @@ export interface Conversation extends ShareEntity, ConversationInfo {
   assistantModelId?: string;
 
   isMessageStreaming?: boolean;
-  isNameChanged?: boolean;
 }
