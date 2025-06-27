@@ -839,11 +839,11 @@ dialTest(
       'Switch to "All agents" tab and verify removed agent is not listed, only "Go to DIAL Marketplace" link is available',
       async () => {
         await talkToAgentDialog.allAgentsTab.click();
-        const notAvailableAgentElement =
-          talkToAgents.getNotAvailableAgentElement(appModel.reference!);
-        await talkToAgentDialogAssertion.assertElementState(
-          notAvailableAgentElement,
-          'hidden',
+        actualAgentNames = await talkToAgentDialog.getAllAgentNames();
+        talkToAgentDialogAssertion.assertArrayExcludesAll(
+          actualAgentNames,
+          [appModel.reference!],
+          ExpectedMessages.elementIsNotVisible,
         );
         const goToDialMarketplaceBtn =
           talkToAgentDialog.goToDialMarketplaceButton;
@@ -868,7 +868,6 @@ dialTest(
         const groupedConfigAgents = ModelsUtil.groupEntitiesByName(
           allConfigAgents.filter((a) => a.type !== EntityType.Application),
         );
-        actualAgentNames = await talkToAgentDialog.getAllAgentNames();
         for (const expectedAgentName of Array.from(
           groupedConfigAgents.keys(),
         )) {
@@ -898,7 +897,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify the agents added and not added to "My workspace" are listed and versions are displayed on the cards',
+      'Verify all the installed and Marketplace agents are listed and versions are displayed on the cards',
       async () => {
         const installedDeploymentsResponse = await fileApiHelper.getFile(
           API.installedDeploymentsHost(),

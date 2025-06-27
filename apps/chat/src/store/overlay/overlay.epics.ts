@@ -1284,18 +1284,14 @@ const sendReadyToInteract: AppEpic = (action$, state$) =>
 
 const sendSelectedConversationLoaded: AppEpic = (action$, state$) =>
   state$.pipe(
-    filter(
-      (state) =>
-        !!ConversationsSelectors.selectAreSelectedConversationsLoaded(state) &&
-        !AuthSelectors.selectIsShouldLogin(state),
-    ),
+    filter((state) => !AuthSelectors.selectIsShouldLogin(state)),
     distinctUntilChanged((prev, state) => {
-      const prevConvIds =
-        ConversationsSelectors.selectSelectedConversationsIds(prev);
-      const currentConvId =
-        ConversationsSelectors.selectSelectedConversationsIds(state);
+      const prevLoaded =
+        ConversationsSelectors.selectAreSelectedConversationsLoaded(prev);
+      const currentLoaded =
+        ConversationsSelectors.selectAreSelectedConversationsLoaded(state);
 
-      return isEqual(prevConvIds, currentConvId);
+      return currentLoaded && prevLoaded !== currentLoaded;
     }),
     switchMap((state) => {
       const hostDomain = OverlaySelectors.selectHostDomain(state);
