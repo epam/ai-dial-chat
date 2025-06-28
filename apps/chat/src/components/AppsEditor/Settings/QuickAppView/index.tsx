@@ -60,7 +60,7 @@ type Validators = {
 };
 
 const validators: Validators = {
-  toolset: {
+  [Toolsets.WebApiToolset]: {
     required: 'Toolset config is required',
     validate: (v) => {
       try {
@@ -72,7 +72,7 @@ const validators: Validators = {
     },
   },
 
-  mcpToolset: {
+  [Toolsets.McpToolset]: {
     validate: (v) => {
       try {
         JSON.parse(v ?? '');
@@ -243,9 +243,9 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
   const editorTabs = useMemo(() => {
     return [
       {
-        id: Toolsets.Toolset,
+        id: Toolsets.WebApiToolset,
         label: 'Web API',
-        value: watch(Toolsets.Toolset) ?? '',
+        value: watch(Toolsets.WebApiToolset) ?? '',
         language: 'json',
       },
       {
@@ -257,23 +257,23 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
     ];
   }, [watch]);
 
-  const [activeTabId, setActiveTabId] = useState(Toolsets.Toolset);
+  const [activeTabId, setActiveTabId] = useState(Toolsets.WebApiToolset);
 
   const toolsetController = useController({
-    name: Toolsets.Toolset,
+    name: Toolsets.WebApiToolset,
     control,
-    rules: validators.toolset,
+    rules: validators[Toolsets.WebApiToolset],
   });
   const mcpToolsetController = useController({
     name: Toolsets.McpToolset,
     control,
-    rules: validators.mcpToolset,
+    rules: validators[Toolsets.McpToolset],
   });
 
   const fieldControllers = useMemo(
     () => ({
-      toolset: toolsetController,
-      mcpToolset: mcpToolsetController,
+      [Toolsets.WebApiToolset]: toolsetController,
+      [Toolsets.McpToolset]: mcpToolsetController,
     }),
     [toolsetController, mcpToolsetController],
   );
@@ -348,7 +348,7 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
         />
 
         <ToolsetEditor
-          label={t('Configure toolset')}
+          label={t('Configure toolsets')}
           error={errors[activeTabId]?.message}
           height={200}
           allowFullScreen

@@ -136,6 +136,6 @@ export enum ApplicationType {
 }
 
 export enum Toolsets {
-  Toolset = 'toolset',
+  WebApiToolset = 'webApiToolset',
   McpToolset = 'mcpToolset',
 }
