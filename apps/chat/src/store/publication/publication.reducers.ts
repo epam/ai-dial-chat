@@ -60,10 +60,12 @@ const initialState: PublicationState = {
   isPublicationUpdating: false,
   displayAuthorEditState: '',
 
-  initialEntitiesEditState: {},
-  initialFoldersEditState: {},
-  initialDisplayAuthorEditState: '',
-  initialRules: [],
+  initialEditState: {
+    entities: {},
+    folders: {},
+    displayAuthor: '',
+    rules: [],
+  },
 };
 
 export const publicationSlice = createSlice({
@@ -418,10 +420,12 @@ export const publicationSlice = createSlice({
       state.rulesOnEdit = payload.rules;
       state.displayAuthorEditState = payload.displayAuthor;
 
-      state.initialEntitiesEditState = payload.editState.entities;
-      state.initialFoldersEditState = payload.editState.folders;
-      state.initialDisplayAuthorEditState = payload.displayAuthor;
-      state.initialRules = payload.rules;
+      state.initialEditState = {
+        entities: payload.editState.entities,
+        folders: payload.editState.folders,
+        displayAuthor: payload.displayAuthor,
+        rules: payload.rules,
+      };
     },
     setEntityEditStateByReviewUrl: (
       state,

@@ -42,8 +42,10 @@ export interface PublicationState {
   isPublicationUpdating: boolean;
   displayAuthorEditState: string;
 
-  initialEntitiesEditState: Record<string, { name: string; version: string }>;
-  initialFoldersEditState: FolderEditTree;
-  initialDisplayAuthorEditState: string;
-  initialRules: PublicationRule[];
+  initialEditState: {
+    entities: Record<string, { name: string; version: string }>;
+    folders: FolderEditTree;
+    displayAuthor: string;
+    rules: PublicationRule[];
+  };
 }

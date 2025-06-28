@@ -299,51 +299,29 @@ const selectIsResourceUnpublishing = createSelector(
   },
 );
 
-const selectInitialEntitiesEditState = (state: RootState) =>
-  rootSelector(state).initialEntitiesEditState;
-
-const selectInitialFoldersEditState = (state: RootState) =>
-  rootSelector(state).initialFoldersEditState;
-
-const selectInitialDisplayAuthorEditState = (state: RootState) =>
-  rootSelector(state).initialDisplayAuthorEditState;
-
-const selectInitialRules = (state: RootState) => state.publication.initialRules;
-
-export const selectAreRulesChanged = createSelector(
-  [selectRulesOnEdit, selectInitialRules],
-  (rulesOnEdit, initialRules) => {
-    const edited = rulesOnEdit ?? [];
-    const initial = initialRules ?? [];
-
-    return !isEqual(edited, initial);
-  },
-);
+const selectInitialEditState = (state: RootState) =>
+  rootSelector(state).initialEditState;
 
 const selectIsEditChanged = createSelector(
   [
     selectEntitiesEditState,
-    selectInitialEntitiesEditState,
     selectFoldersEditState,
-    selectInitialFoldersEditState,
     selectDisplayAuthorEditState,
-    selectInitialDisplayAuthorEditState,
-    selectAreRulesChanged,
+    selectRulesOnEdit,
+    selectInitialEditState,
   ],
   (
     entitiesEditState,
-    initialEntitiesEditState,
     foldersEditState,
-    initialFoldersEditState,
     displayAuthorEditState,
-    initialDisplayAuthorEditState,
-    areRulesChanged,
+    rulesOnEdit,
+    initialEditState,
   ) => {
     return (
-      !isEqual(entitiesEditState, initialEntitiesEditState) ||
-      !isEqual(foldersEditState, initialFoldersEditState) ||
-      displayAuthorEditState !== initialDisplayAuthorEditState ||
-      areRulesChanged
+      !isEqual(entitiesEditState, initialEditState.entities) ||
+      !isEqual(foldersEditState, initialEditState.folders) ||
+      displayAuthorEditState !== initialEditState.displayAuthor ||
+      !isEqual(rulesOnEdit ?? [], initialEditState.rules ?? [])
     );
   },
 );
@@ -382,5 +360,4 @@ export const PublicationSelectors = {
   selectDisplayAuthorEditState,
   selectIsResourceUnpublishing,
   selectIsEditChanged,
-  selectAreRulesChanged,
 };
