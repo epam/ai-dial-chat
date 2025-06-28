@@ -416,6 +416,8 @@ export const ExpectedMessages = {
   numberOfTopicsIsCorrect: 'Number of topics in preview is correct',
   onlyOneEntityCardFoundInSearch: (entityType: string) =>
     `Only one ${entityType} card found in the search`,
+  myAgentsListIsValid: 'My Agents list is valid',
+  allAgentsListIsValid: 'All Agents list is valid',
 };
 
 export enum PublishingExpectedMessages {
