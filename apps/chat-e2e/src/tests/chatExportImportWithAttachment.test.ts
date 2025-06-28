@@ -146,7 +146,6 @@ dialTest(
     chat,
     chatHeader,
     talkToAgentDialog,
-    marketplacePage,
     setTestIds,
     localStorageManager,
   }) => {
@@ -350,10 +349,7 @@ dialTest(
         const simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
         if (simpleRequestModel !== undefined) {
           await chatHeader.chatAgent.click();
-          await talkToAgentDialog.selectAgent(
-            simpleRequestModel,
-            marketplacePage,
-          );
+          await talkToAgentDialog.selectAgent(simpleRequestModel);
           await toast.closeToast();
           await dialHomePage.mockChatTextResponse(
             MockedChatApiResponseBodies.simpleTextBody,

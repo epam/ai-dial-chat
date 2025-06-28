@@ -51,7 +51,6 @@ dialTest(
     dataInjector,
     conversations,
     setTestIds,
-    marketplacePage,
     talkToAgents,
     agentSettings,
     temperatureSlider,
@@ -146,7 +145,7 @@ dialTest(
     await dialTest.step(
       'Select some model and verify it has the same settings as parent model',
       async () => {
-        await talkToAgentDialog.selectAgent(defaultModel, marketplacePage);
+        await talkToAgentDialog.selectAgent(defaultModel);
         await chat.configureSettingsButton.click();
         const newModelSystemPrompt = await agentSettings.getSystemPrompt();
         expect
@@ -262,7 +261,6 @@ dialTest(
     chatHeader,
     agentSettings,
     temperatureSlider,
-    marketplacePage,
     modelInfoTooltip,
     errorPopup,
     iconApiHelper,
@@ -304,7 +302,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(replayConversation.name);
         await chat.changeAgentButton.click();
-        await talkToAgentDialog.selectAgent(replayModel, marketplacePage);
+        await talkToAgentDialog.selectAgent(replayModel);
         await chat.configureSettingsButton.click();
         await agentSettings.setSystemPrompt(replayPrompt);
         await temperatureSlider.setTemperature(replayTemp);
@@ -715,7 +713,6 @@ dialTest(
     agentInfoAssertion,
     conversations,
     dataInjector,
-    marketplacePage,
     chatAssertion,
     apiAssertion,
     talkToAgentDialog,
@@ -773,7 +770,7 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        await talkToAgentDialog.selectAgent(defaultModel, marketplacePage);
+        await talkToAgentDialog.selectAgent(defaultModel);
         const replayRequest = await chat.startReplay();
         apiAssertion.assertRequestModelId(replayRequest, defaultModel);
       },
@@ -794,7 +791,6 @@ dialTest(
     chat,
     chatHeader,
     talkToAgentDialog,
-    marketplacePage,
     conversations,
     localStorageManager,
   }) => {
@@ -846,7 +842,7 @@ dialTest(
           );
           const newModel = ModelsUtil.getModel(newModels[i - 1])!;
           await chatHeader.chatAgent.click();
-          await talkToAgentDialog.selectAgent(newModel, marketplacePage);
+          await talkToAgentDialog.selectAgent(newModel);
           const newMessage = `${i}*2=`;
           await chat.sendRequestWithButton(newMessage);
         }

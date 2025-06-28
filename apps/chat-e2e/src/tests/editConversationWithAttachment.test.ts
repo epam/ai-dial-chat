@@ -22,7 +22,6 @@ dialTest(
     dialHomePage,
     conversationData,
     talkToAgentDialog,
-    marketplacePage,
     setTestIds,
     chatHeader,
     fileApiHelper,
@@ -63,10 +62,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversation.name);
         await chatHeader.chatAgent.click();
-        await talkToAgentDialog.selectAgent(
-          ModelsUtil.getDefaultAgent()!,
-          marketplacePage,
-        );
+        await talkToAgentDialog.selectAgent(ModelsUtil.getDefaultAgent()!);
       },
     );
 
