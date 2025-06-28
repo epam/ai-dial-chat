@@ -19,7 +19,6 @@ dialTest(
     chatHeader,
     chat,
     talkToAgentDialog,
-    marketplacePage,
     conversations,
   }) => {
     setTestIds('EPMRTC-3481');
@@ -113,7 +112,7 @@ dialTest(
       'Change conversation model, generate one more picture and verify it is visible on "Manage attachments" modal under new model folder',
       async () => {
         await chatHeader.chatAgent.click();
-        await talkToAgentDialog.selectAgent(updatedModel, marketplacePage);
+        await talkToAgentDialog.selectAgent(updatedModel);
 
         await dialHomePage.mockChatImageResponse(
           updatedModel.id,

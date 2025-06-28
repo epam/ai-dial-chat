@@ -1,18 +1,25 @@
+import { ApiApplicationModelRegular } from '@/chat/types/applications';
 import { Conversation } from '@/chat/types/chat';
-import { BackendEntity } from '@/chat/types/common';
+import { BackendEntity, EntityType } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { Publication } from '@/chat/types/publication';
 import dialTest from '@/src/core/dialFixtures';
-import { API, Attachment, ExpectedConstants } from '@/src/testData';
+import {
+  API,
+  Attachment,
+  ExpectedConstants,
+  ExpectedMessages,
+  MenuOptions,
+  MockedChatApiResponseBodies,
+} from '@/src/testData';
 import { Attributes, Styles, ThemeColorAttributes } from '@/src/ui/domData';
 import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil, SortingUtil } from '@/src/utils';
+import { CustomAppAttributes } from '@/src/utils/customApplicationPublishingUtil';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
-import { Locator } from '@playwright/test';
+import { Locator, expect } from '@playwright/test';
 import tinycolor from 'tinycolor2';
-
-const publicationsToUnpublish: Publication[] = [];
 
 dialTest(
   '[Select an agent for conversation] Version set on the first screen is shown on the card. Custom application.\n' +
@@ -88,6 +95,7 @@ dialTest(
     let actualNameElement: BaseElement;
     let actualDescriptionElement: BaseElement;
     let firstVersionMenuOptionElement: Locator;
+    let actualVersionElement: BaseElement;
 
     await dialTest.step('Upload svg image to the root path', async () => {
       imageUrl = await adminFileApiHelper.putFile(Attachment.appIconSvg);
@@ -116,7 +124,6 @@ dialTest(
             await adminPublicationApiHelper.createPublishRequest(
               publishRequest,
             );
-          publicationsToUnpublish.push(appPublication);
           await adminPublicationApiHelper.approveRequest(appPublication);
         }
         agent = (await modelApiHelper.getAgentByNameAndVersion({
@@ -155,6 +162,7 @@ dialTest(
         actualNameElement = talkToAgents.getAgentName(agentElement);
         actualDescriptionElement =
           talkToAgents.getAgentDescription(agentElement);
+        actualVersionElement = talkToAgents.getAgentVersion(agentElement);
         await marketplaceAgentsAssertion.assertElementText(
           actualNameElement,
           appName,
@@ -163,6 +171,11 @@ dialTest(
           actualDescriptionElement,
           shortDescription(` ${expectedRgbColor}`, ` ${expectedTarget}`),
         );
+        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/3988
+        // await marketplaceAgentsAssertion.assertElementText(
+        //   actualVersionElement,
+        //   SortingUtil.sortVersionsArray([appFirstVersion, appSecondVersion])[0],
+        // );
       },
     );
 
@@ -175,7 +188,7 @@ dialTest(
         await talkToAgentDialogAssertion.assertElementTextIsTruncated(
           talkToAgents.getAgentDescriptionContainer(agentElement),
         );
-        const actualVersionElement = talkToAgents.getAgentVersion(agentElement);
+        actualVersionElement = talkToAgents.getAgentVersion(agentElement);
         await talkToAgentDialogAssertion.assertElementTextIsTruncated(
           actualVersionElement,
         );
@@ -703,6 +716,452 @@ dialTest(
           agent.reference,
         );
         await talkToAgentDialogAssertion.assertAgentIsSelected(agent.reference);
+      },
+    );
+  },
+);
+
+dialTest(
+  '[Select an agent for conversation] Red error appears if the custom app is deleted thru the menu.\n' +
+    `[Select an agent for conversation] 'All agents' tab doesn't contain 'not existed' card.\n` +
+    `[Select an agent for conversation] 'Go to My workspace' link on 'My agents' is changed to 'Go to DIAL Marketplace' on 'All agents' tab.\n` +
+    `[Select an agent for conversation] 'All agents' tab contains al the cards from DIAL Marketplace with the same sorting order and grouping.\n` +
+    `[Select an agent for conversation] 'All agents' tab doesn't contain 'Replay as is' card.\n` +
+    `[Select an agent for conversation] 'All agents' tab doesn't contain 'Playback' card.\n` +
+    `[Select an agent for conversation] Version is shown on the card on 'All agents' tab if the agent is NOT added to My workspace.\n` +
+    `[Select an agent for conversation] Version is shown on the card on 'All agents' tab if the agent is added to My workspace.\n` +
+    `[Select an agent for conversation] 'DIAL Marketplace' is opened if to click on 'Go to DIAL Marketplace' from 'Select an agent for conversation' window on 'All agents' tab`,
+  async ({
+    dialHomePage,
+    talkToAgentDialog,
+    fileApiHelper,
+    talkToAgents,
+    talkToAgentDialogAssertion,
+    chat,
+    confirmationDialog,
+    setTestIds,
+    customApplicationBuilder,
+    applicationApiHelper,
+    localStorageManager,
+    chatHeader,
+    marketplacePage,
+    baseAssertion,
+    navigationPanel,
+    page,
+    modelApiHelper,
+  }) => {
+    setTestIds(
+      'EPMRTC-6275',
+      'EPMRTC-6291',
+      'EPMRTC-6296',
+      'EPMRTC-6284',
+      'EPMRTC-6289',
+      'EPMRTC-6290',
+      'EPMRTC-6287',
+      'EPMRTC-6288',
+      'EPMRTC-6292',
+    );
+
+    let appModel: ApiApplicationModelRegular;
+    let appElement: BaseElement;
+    let actualAgentNames: string[];
+    let allConfigAgents: DialAIEntityModel[];
+    let randomWorkspaceAgent: DialAIEntityModel;
+
+    await dialTest.step(
+      'Create a custom application by main user',
+      async () => {
+        appModel = customApplicationBuilder.build();
+        await applicationApiHelper.createApplication(appModel);
+      },
+    );
+
+    await dialTest.step(
+      'Set custom app agent and one more random config agent to the recent',
+      async () => {
+        allConfigAgents = await modelApiHelper.getModels();
+        //exclude Application type agents from verification since the list of applications is changeable
+        randomWorkspaceAgent = GeneratorUtil.randomArrayElement(
+          allConfigAgents.filter(
+            (a) => a.type !== EntityType.Application && a.version !== undefined,
+          ),
+        );
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          appModel.reference!,
+          randomWorkspaceAgent.reference,
+        );
+        await localStorageManager.setShowSideBarPanels();
+      },
+    );
+
+    await dialTest.step(
+      'Create conversation with app and open "Select an agent for conversation" modal',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chat.sendRequestWithButton('test');
+        await chatHeader.chatModelIcon.click();
+        await talkToAgentDialogAssertion.assertElementState(
+          talkToAgentDialog,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Remove the custom app card from the list and verify error message is displayed on the card',
+      async () => {
+        appElement = talkToAgents.getAgent(appModel.display_name);
+        await appElement.hoverOver();
+        const appDotsMenuElement =
+          talkToAgents.getAgentElementDotsMenu(appElement);
+        await appDotsMenuElement.click();
+        const appDropdownMenu = talkToAgents.getAgentDropdownMenu();
+        await appDropdownMenu.selectMenuOption(MenuOptions.delete);
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
+        const notAvailableAgentElement =
+          talkToAgents.getNotAvailableAgentElement(appModel.reference!);
+        await talkToAgentDialogAssertion.assertElementText(
+          talkToAgents.getAgentDescription(notAvailableAgentElement),
+          ExpectedConstants.notAllowedModelError,
+        );
+        await talkToAgentDialogAssertion.assertElementState(
+          talkToAgents.getAgentVersion(notAvailableAgentElement),
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Switch to "All agents" tab and verify removed agent is not listed, only "Go to DIAL Marketplace" link is available',
+      async () => {
+        await talkToAgentDialog.allAgentsTab.click();
+        actualAgentNames = await talkToAgentDialog.getAllAgentNames();
+        talkToAgentDialogAssertion.assertArrayExcludesAll(
+          actualAgentNames,
+          [appModel.reference!],
+          ExpectedMessages.elementIsNotVisible,
+        );
+        const goToDialMarketplaceBtn =
+          talkToAgentDialog.goToDialMarketplaceButton;
+        await talkToAgentDialogAssertion.assertElementState(
+          goToDialMarketplaceBtn,
+          'visible',
+        );
+        await talkToAgentDialogAssertion.assertElementText(
+          goToDialMarketplaceBtn,
+          ExpectedConstants.goToDialMarketplaceButtonLabel,
+        );
+        await talkToAgentDialogAssertion.assertElementState(
+          talkToAgentDialog.goToMyWorkspaceButton,
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify all available agents are displayed in ascending order',
+      async () => {
+        const groupedConfigAgents = ModelsUtil.groupEntitiesByName(
+          allConfigAgents.filter((a) => a.type !== EntityType.Application),
+        );
+        for (const expectedAgentName of Array.from(
+          groupedConfigAgents.keys(),
+        )) {
+          expect
+            .soft(
+              actualAgentNames.find((agent) => agent === expectedAgentName),
+              ExpectedMessages.agentNameIsValid,
+            )
+            .toBeDefined();
+        }
+        talkToAgentDialogAssertion.assertStringsSorting(
+          actualAgentNames,
+          'asc',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify "Replay as is", "Playback" agents are not listed',
+      async () => {
+        talkToAgentDialogAssertion.assertArrayExcludesAll(
+          actualAgentNames,
+          [ExpectedConstants.replayAsIsLabel, ExpectedConstants.playbackLabel],
+          ExpectedMessages.allAgentsListIsValid,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify all the installed and Marketplace agents are listed and versions are displayed on the cards',
+      async () => {
+        const installedDeploymentsResponse = await fileApiHelper.getFile(
+          API.installedDeploymentsHost(),
+        );
+        const installedDeployments =
+          (await installedDeploymentsResponse.json()) as { id: string }[];
+        //get a random agent with version not included into "My workspace"
+        const marketplaceAgents = allConfigAgents.filter(
+          (a) =>
+            !installedDeployments.some((d) => d.id === a.reference) &&
+            a.type !== EntityType.Application &&
+            a.version !== undefined,
+        );
+        const randomMarketplaceAgent =
+          GeneratorUtil.randomArrayElement(marketplaceAgents);
+
+        for (const agent of [randomMarketplaceAgent, randomWorkspaceAgent]) {
+          const randomAgentElement = await talkToAgentDialog.findAgent(agent);
+          await talkToAgentDialogAssertion.assertElementState(
+            randomAgentElement!,
+            'visible',
+          );
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Switch to "My agents" tab and verify only "Go to My Workspace" link is available',
+      async () => {
+        await talkToAgentDialog.myAgentsTab.click();
+        const goToMyWorkspaceBtn = talkToAgentDialog.goToMyWorkspaceButton;
+        await talkToAgentDialogAssertion.assertElementState(
+          goToMyWorkspaceBtn,
+          'visible',
+        );
+        await talkToAgentDialogAssertion.assertElementText(
+          goToMyWorkspaceBtn,
+          ExpectedConstants.goToMyWorkspaceButtonLabel,
+        );
+        await talkToAgentDialogAssertion.assertElementState(
+          talkToAgentDialog.goToDialMarketplaceButton,
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Switch to "All agents" tab and verify "Go to DIAL Marketplace" link leads to the corresponding page',
+      async () => {
+        await talkToAgentDialog.allAgentsTab.click();
+        await talkToAgentDialog.goToDialMarketplace();
+        await marketplacePage.waitForPageLoaded();
+        baseAssertion.assertBooleanCondition(
+          page.url().includes(ExpectedConstants.workspaceTab),
+          false,
+          'Page url is valid',
+        );
+        await baseAssertion.assertElementAttribute(
+          navigationPanel.marketplaceHomeButton,
+          Attributes.ariaSelected,
+          'true',
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  `[Select an agent for conversation] An agent is added to 'My workspace' if to click on it from 'All agents'.\n` +
+    `[Select an agent for conversation] An agent is added to 'My workspace' if to select a version on the card on 'All agents'`,
+  async ({
+    dialHomePage,
+    talkToAgentDialog,
+    agentInfoAssertion,
+    talkToAgentDialogAssertion,
+    chat,
+    marketplaceAgentsSection,
+    setTestIds,
+    marketplaceAgents,
+    agentDetailsModal,
+    marketplaceAgentsAssertion,
+    agentVersionsDropdownMenuAssertion,
+    marketplacePage,
+    navigationPanel,
+    modelApiHelper,
+    adminCustomApplicationPublishingUtil,
+  }) => {
+    setTestIds('EPMRTC-6237', 'EPMRTC-6297');
+
+    let firstApp: CustomAppAttributes;
+    let secondAppFirstVersion: CustomAppAttributes;
+    let secondAppSecondVersion: CustomAppAttributes;
+    let firstConfigApp: DialAIEntityModel;
+    let secondConfigAppMinorV: DialAIEntityModel;
+    let secondConfigAppMajorV: DialAIEntityModel;
+    let sortedVersions: string[];
+
+    await dialTest.step(
+      'Publish two custom applications by admin user, the second one has two versions',
+      async () => {
+        firstApp =
+          await adminCustomApplicationPublishingUtil.publishApplicationWithVersion();
+
+        const secondAppName = GeneratorUtil.randomApplicationName();
+        secondAppFirstVersion =
+          await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
+            secondAppName,
+          );
+        secondAppSecondVersion =
+          await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
+            secondAppName,
+          );
+        sortedVersions = SortingUtil.sortVersionsArray([
+          secondAppFirstVersion.version,
+          secondAppSecondVersion.version,
+        ]);
+
+        const configAgents = await modelApiHelper.getModels();
+        firstConfigApp = await modelApiHelper.getAgentByNameAndVersion(
+          { name: firstApp.name, version: firstApp.version },
+          configAgents,
+        );
+        secondConfigAppMinorV = await modelApiHelper.getAgentByNameAndVersion(
+          { name: secondAppName, version: sortedVersions[1] },
+          configAgents,
+        );
+        secondConfigAppMajorV = await modelApiHelper.getAgentByNameAndVersion(
+          { name: secondAppName, version: sortedVersions[0] },
+          configAgents,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Open "Select an agent for conversation" modal and switch to "All agents" tab',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
+        await chat.changeAgentButton.click();
+        await talkToAgentDialogAssertion.assertElementState(
+          talkToAgentDialog,
+          'visible',
+        );
+        await talkToAgentDialog.allAgentsTab.click();
+      },
+    );
+
+    await dialTest.step(
+      'Click on the agent with unique version and verify "Select an agent for conversation" modal is closed, the agent is used for the conversation',
+      async () => {
+        await talkToAgentDialog.useAgent(firstConfigApp);
+        await talkToAgentDialogAssertion.assertElementState(
+          talkToAgentDialog,
+          'hidden',
+        );
+        await agentInfoAssertion.assertAgentName(firstConfigApp.name);
+        await agentInfoAssertion.assertAgentVersion(firstConfigApp.version);
+      },
+    );
+
+    await dialTest.step(
+      'Click on "Change agent" and verify selected agent stays on the top and highlighted',
+      async () => {
+        await chat.changeAgentButton.click();
+        await talkToAgentDialogAssertion.assertElementState(
+          talkToAgentDialog,
+          'visible',
+        );
+        await talkToAgentDialogAssertion.assertAgentIsSelected(
+          firstConfigApp.name,
+        );
+        const recentTalkTo = await talkToAgentDialog.getAllAgentNames();
+        talkToAgentDialogAssertion.assertValue(
+          recentTalkTo[0],
+          firstConfigApp.name,
+          ExpectedMessages.recentEntitiesIsOnTop,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on "Go to My workspace" link and verify the agent is bookmarked',
+      async () => {
+        await talkToAgentDialog.goToMyWorkspace();
+        await marketplacePage.waitForPageLoaded();
+        const agentElement = await marketplaceAgentsSection.findAgentElement(
+          firstConfigApp,
+          { isWorkspaceAgent: true, isEditable: false },
+        );
+        await marketplaceAgentsAssertion.assertElementState(
+          marketplaceAgents.getAgentElementRemoveBookmarkIcon(agentElement),
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Back to the chat, open "Select an agent for conversation" modal and switch to "All agents" tab',
+      async () => {
+        await navigationPanel.backToChat({ isHttpMethodTriggered: true });
+        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
+        await chat.changeAgentButton.click();
+        await talkToAgentDialogAssertion.assertElementState(
+          talkToAgentDialog,
+          'visible',
+        );
+        await talkToAgentDialog.allAgentsTab.click();
+      },
+    );
+
+    await dialTest.step(
+      'Select not latest second app version and verify "Select an agent for conversation" modal is closed, the agent is used for the conversation',
+      async () => {
+        await talkToAgentDialog.useAgent(secondConfigAppMinorV);
+        await talkToAgentDialogAssertion.assertElementState(
+          talkToAgentDialog,
+          'hidden',
+        );
+        await agentInfoAssertion.assertAgentName(secondConfigAppMinorV.name);
+        await agentInfoAssertion.assertAgentVersion(
+          secondConfigAppMinorV.version,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on "Change agent" and verify selected agent stays on the top and highlighted',
+      async () => {
+        await chat.changeAgentButton.click();
+        await talkToAgentDialogAssertion.assertElementState(
+          talkToAgentDialog,
+          'visible',
+        );
+        await talkToAgentDialogAssertion.assertAgentIsSelected(
+          secondConfigAppMinorV.name,
+        );
+        const recentTalkTo = await talkToAgentDialog.getAllAgentNames();
+        talkToAgentDialogAssertion.assertValue(
+          recentTalkTo[0],
+          secondConfigAppMinorV.name,
+          ExpectedMessages.recentEntitiesIsOnTop,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on "Go to My workspace" link and verify all agent versions are bookmarked',
+      async () => {
+        await talkToAgentDialog.goToMyWorkspace();
+        await marketplacePage.waitForPageLoaded();
+        const agentElement = await marketplaceAgentsSection.findAgentElement(
+          secondConfigAppMajorV,
+          { isWorkspaceAgent: true, isEditable: false },
+        );
+        await marketplaceAgentsAssertion.assertElementState(
+          marketplaceAgents.getAgentElementRemoveBookmarkIcon(agentElement),
+          'visible',
+        );
+
+        await agentElement.click();
+        await agentDetailsModal.versionMenuTrigger.click();
+        await agentVersionsDropdownMenuAssertion.assertMenuOptions(
+          sortedVersions,
+        );
       },
     );
   },

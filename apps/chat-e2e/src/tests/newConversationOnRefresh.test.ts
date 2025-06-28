@@ -134,7 +134,7 @@ dialTest(
       'Change model and verify the chat stays selected',
       async () => {
         await chatHeader.chatAgent.click();
-        await talkToAgentDialog.selectAgent(models[1], marketplacePage);
+        await talkToAgentDialog.selectAgent(models[1]);
         const expectedModelIcon = iconApiHelper.getEntityIcon(models[1]);
         await chatHeaderAssertion.assertHeaderIcon(expectedModelIcon);
         await chatMessagesAssertion.assertMessageContent(

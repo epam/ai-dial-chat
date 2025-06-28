@@ -34,7 +34,6 @@ dialTest(
     chatMessages,
     conversations,
     chatHeader,
-    marketplacePage,
     iconApiHelper,
     conversationAssertion,
     chatMessagesAssertion,
@@ -152,7 +151,7 @@ dialTest(
       'Open conversation settings, select new model and verify model icon is updated in the header, Replay icon stays on chat bar',
       async () => {
         await chatHeader.chatAgent.click();
-        await talkToAgentDialog.selectAgent(newRandomModel, marketplacePage);
+        await talkToAgentDialog.selectAgent(newRandomModel);
         await chatHeaderAssertion.assertHeaderIcon(expectedNewModelIcon);
         await conversationAssertion.assertReplayIconState(
           {
