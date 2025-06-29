@@ -359,7 +359,7 @@ export const PublicationHandlerFooter = ({
                 onClick={handleApprovePublication}
                 data-qa="approve"
               >
-                {t('Approve')}
+                {t('Approve selected')}
               </button>
             </Tooltip>
           </>
