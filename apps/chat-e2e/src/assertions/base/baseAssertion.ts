@@ -164,34 +164,6 @@ export class BaseAssertion {
     ).toHaveValue(expectedValue);
   }
 
-  // You cannot create a locator with an input element whose value property matches the regex.
-  // As far as I understand, CSS and standard locator strategies don't have a way to filter based on the live .value property of an input.
-  // So...
-  public async assertInputValueWithPolling(
-    element: BaseElement | Locator,
-    expectedValue: string | RegExp,
-    expectedMessage?: string,
-  ) {
-    const elementLocator = this.getElementLocator(element);
-    const finalMessage = expectedMessage ?? ExpectedMessages.fieldValueIsValid;
-
-    const pollAssertion = expect.poll(
-      async () => {
-        return elementLocator.inputValue();
-      },
-      {
-        message: finalMessage,
-        timeout: 10000,
-      },
-    );
-
-    if (expectedValue instanceof RegExp) {
-      await pollAssertion.toMatch(expectedValue);
-    } else {
-      await pollAssertion.toBe(expectedValue);
-    }
-  }
-
   public async assertElementAttribute(
     element: BaseElement | Locator,
     attribute: string,

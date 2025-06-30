@@ -65,6 +65,7 @@ dialTest(
     toast,
     appEditorAppSettingsAgentPreview,
     navigationPanel,
+    appEditorGeneralInfoAgentPreview,
     page,
   }) => {
     setTestIds(
@@ -143,16 +144,25 @@ dialTest(
     });
 
     await dialTest.step(
-      'Verify default Name and Version are pre-filled',
+      'Verify default Name and Version are pre-filled in the form and preview',
       async () => {
         const defaultAppNamePattern = new RegExp(
           `${ExpectedConstants.defaultAppName} \\d+`,
         );
-        await baseAssertion.assertInputValueWithPolling(
+
+        // First, wait for the preview panel to render the correct, indexed name.
+        // This acts as a reliable synchronization point.
+        await baseAssertion.assertElementText(
+          appEditorGeneralInfoAgentPreview.previewName,
+          defaultAppNamePattern,
+        );
+
+        await baseAssertion.assertInputValue(
           appEditorGeneralForm.name,
           defaultAppNamePattern,
           ExpectedMessages.defaultAppNameShouldBeFilled,
         );
+
         await baseAssertion.assertInputValue(
           appEditorGeneralForm.version,
           ExpectedConstants.defaultAppVersion,
@@ -1323,7 +1333,8 @@ dialTest(
       },
     );
 
-    await dialTest.step(
+    //TODO blocked by the issue 4225
+    await dialTest.step.skip(
       'Add attachment type (e.g., image/png) and verify clip icon appears in preview chat message box',
       async () => {
         await appEditorViewForm.fillInAppFields({
