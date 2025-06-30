@@ -1,8 +1,15 @@
 import type { MouseEvent } from 'react';
 
-import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import {
+  constructPath,
+  notAllowedSpacesRegex,
+  notAllowedSymbolsRegex,
+} from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
-import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
+import {
+  getPublicItemIdWithoutVersion,
+  pathKeySeparator,
+} from '@/src/utils/server/api';
 
 import { Conversation, PrepareNameOptions } from '@/src/types/chat';
 import {
@@ -11,8 +18,11 @@ import {
 } from '@/src/types/publication';
 import { EntityFilters } from '@/src/types/search';
 
-import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
-import { NA_VERSION } from '@/src/constants/publication';
+import {
+  MAX_ENTITY_LENGTH,
+  MIN_ENTITY_LENGTH,
+} from '@/src/constants/default-ui-settings';
+import { NA_VERSION, PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import {
   Entity,
@@ -79,8 +89,19 @@ export const isImportEntityNameOnSameLevelUnique = ({
 
 export const doesHaveDotsInTheEnd = (name: string) => name.trim().endsWith('.');
 
-export const isEntityNameInvalid = (name: string) =>
-  doesHaveDotsInTheEnd(name) || notAllowedSymbolsRegex.test(name);
+export const isEntityNameInvalid = (name: string, checkDotsInTheEnd = true) =>
+  notAllowedSymbolsRegex.test(name) ||
+  (checkDotsInTheEnd && doesHaveDotsInTheEnd(name));
+
+export const isEntityNameValid = (name: string, checkDotsInTheEnd = true) => {
+  const trimmedName = name.trim();
+
+  return (
+    !isEntityNameInvalid(trimmedName, checkDotsInTheEnd) &&
+    trimmedName.length <= MAX_ENTITY_LENGTH &&
+    trimmedName.length >= MIN_ENTITY_LENGTH
+  );
+};
 
 export const hasInvalidNameInPath = (path: string) =>
   path.split('/').some((part) => isEntityNameInvalid(part));
@@ -105,6 +126,9 @@ export const filterMigratedEntities = <T extends Entity>(
   );
 
 export const trimEndDots = (str: string) => trimEnd(str, '. \t\r\n');
+
+export const replaceSpacesFromString = (valueToClean: string) =>
+  valueToClean.replace(notAllowedSpacesRegex, ' ');
 
 export const prepareEntityName = (
   name: string,
@@ -175,6 +199,35 @@ export const isVersionValid = (version: string | undefined) => {
   return (
     versionParts.length === 3 &&
     versionParts.every((part) => /^\d+$/.test(part))
+  );
+};
+
+export const isVersionPartSizeValid = (version: string | undefined) => {
+  if (!version) {
+    return false;
+  }
+
+  return version.split('.').every((part) => part.length <= 5);
+};
+
+export const isVersionExists = (
+  versionToTest: string,
+  entityId: string,
+  publicVersionGroups: PublicVersionGroups,
+  newName: string,
+) => {
+  const { apiKey, parentPath, name: oldName } = splitEntityId(entityId);
+  const modelName = oldName.split(pathKeySeparator)[0];
+  const newEntityId = constructPath(
+    apiKey,
+    PUBLIC_URL_PREFIX,
+    parentPath,
+    `${modelName}${pathKeySeparator}${newName}`,
+  );
+  const allVersions = publicVersionGroups[newEntityId]?.allVersions;
+
+  return allVersions?.some(
+    (versionGroup) => versionToTest === versionGroup.version,
   );
 };
 

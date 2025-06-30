@@ -2,6 +2,7 @@ import { IconFile } from '@tabler/icons-react';
 
 import { EnumMapper } from '@/src/utils/app/mappers';
 
+import { BackendResourceTypeName } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -26,6 +27,7 @@ export const PublicationFileRow: React.FC<Props> = ({ item, level }) => {
       level={level}
       Icon={<IconFile size={18} className="text-secondary" />}
       item={item}
+      itemTypeName={BackendResourceTypeName.FILE}
       dataQa="file"
       isEditDisabled={selectedPublication?.resourceTypes.includes(
         EnumMapper.getBackendResourceTypeByFeatureType(FeatureType.Application),
