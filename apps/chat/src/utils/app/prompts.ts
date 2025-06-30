@@ -129,7 +129,7 @@ export const replaceTemplates = (
     .join(value.trim());
 };
 
-export const arePromptsFieldsTheSame = (
+export const areSomePromptsFieldsChanged = (
   firstPrompt: Pick<Prompt, 'name' | 'content' | 'description'>,
   secondPrompt: Pick<Prompt, 'name' | 'content' | 'description'>,
 ) => {
