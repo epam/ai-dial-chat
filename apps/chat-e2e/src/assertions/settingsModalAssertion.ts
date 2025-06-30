@@ -9,7 +9,6 @@ import {
   toTitleCase,
 } from '@/src/testData';
 import { SettingsModal } from '@/src/ui/webElements/settingsModal';
-import { expect } from '@playwright/test';
 
 export class SettingsModalAssertion extends BaseAssertion {
   readonly settingsModal: SettingsModal;
