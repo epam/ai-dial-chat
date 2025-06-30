@@ -22,6 +22,8 @@ export interface ChatOverlayOptions {
   loaderInnerHTML?: string;
   loaderHideEvent?: OverlayEvents;
 
+  messageButtons?: MessageButtons[];
+
   signInOptions?: OverlaySignInOptions;
   signInInSameWindow?: boolean;
 }
@@ -31,3 +33,29 @@ interface OverlaySignInOptions {
   signInProvider?: string;
   signInInNewWindow?: boolean;
 }
+
+export interface MessageButton {
+  buttonKey: string; // Unique key which will be exposed to host on click
+  events: (keyof WindowEventMap)[];
+  title?: string;
+  tooltip?: string;
+  iconSvg?: string;
+  skipDefaultStyles?: boolean;
+  styles?: Styles;
+  hoverStyles?: Styles;
+  focusStyles?: Styles;
+  disabledStyles?: Styles;
+  disabled?: boolean;
+}
+
+export interface MessageButtons {
+  messageIndex: number;
+  buttons: MessageButton[];
+}
+
+// Feature.EditLastAssistantContent
+// Feature.EditAllAssistantContent
+
+// 1. Edit content only (Mikita)
+// 2. Attachments editing (DIAL Chat team)
+// 3. Stages editing (DIAL Chat team)
