@@ -112,6 +112,9 @@ export const ChatHeader = Inversify.register(
         conversation.id,
       ),
     );
+    const publicationUrl = useAppSelector(
+      PublicationSelectors.selectSelectedPublicationUrl,
+    );
 
     const isTopChatModelSettingsEnabled = enabledFeatures.has(
       Feature.TopChatModelSettings,
@@ -178,10 +181,12 @@ export const ChatHeader = Inversify.register(
 
     const disallowChangeAgent =
       isChangeAgentDisallowed ||
+      conversation.publicationInfo?.action === PublishActions.DELETE ||
       (isExternal && !isApproveRequiredEntitySelected);
     const disallowChangeSettings =
       isReplayAsIsConversation(conversation) ||
       isPlayback ||
+      conversation.publicationInfo?.action === PublishActions.DELETE ||
       (isExternal && !isApproveRequiredEntitySelected);
 
     return (
@@ -419,6 +424,7 @@ export const ChatHeader = Inversify.register(
                   TriggerIcon={IconDotsVertical}
                   isHeaderMenu
                   disabledState={isMessageStreaming}
+                  publicationUrl={publicationUrl ?? undefined}
                 />
               )}
 

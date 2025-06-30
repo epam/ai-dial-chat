@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import {
-  arePromptsFieldsTheSame,
+  areSomePromptsFieldsChanged,
   regeneratePromptId,
 } from '@/src/utils/app/prompts';
 
@@ -58,7 +58,7 @@ const PromptModalContent: React.FC<PromptModalViewProps> = ({
         );
         dispatch(PromptsActions.uploadPromptSuccess({ prompt: null }));
       } else {
-        if (arePromptsFieldsTheSame(editedPrompt, prompt)) {
+        if (areSomePromptsFieldsChanged(editedPrompt, prompt)) {
           dispatch(
             PromptsActions.updatePrompt({
               id: prompt.id,
@@ -96,6 +96,9 @@ const PromptModalView = () => {
   const isNewPromptCreating = useAppSelector(
     PromptsSelectors.selectIsNewPromptCreating,
   );
+  const { isSelectedPromptApproveRequiredResource } = useAppSelector(
+    PromptsSelectors.selectSelectedPromptId,
+  );
 
   const [isViewMode, setIsViewMode] = useState(
     !isNewPromptCreating && !isPromptInitModeEdit,
@@ -130,6 +133,7 @@ const PromptModalView = () => {
         'px-3 md:px-6',
         prompt &&
           prompt.publicationInfo?.action === PublishActions.DELETE &&
+          isSelectedPromptApproveRequiredResource &&
           'text-error',
       )}
       state={isLoading ? ModalState.LOADING : ModalState.OPENED}

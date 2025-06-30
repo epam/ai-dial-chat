@@ -5,6 +5,8 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
+
 import {
   isEntityNameValid,
   isVersionExists,
@@ -28,6 +30,7 @@ import {
   getReviewItems,
 } from '@/src/utils/app/publications';
 
+import { ScreenState } from '@/src/types/common';
 import { Publication, ResourceToReview } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
@@ -63,6 +66,9 @@ export const PublicationHandlerFooter = ({
   onUpdateRequest,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+
+  const screenState = useScreenState();
+  const isSmallScreen = screenState === ScreenState.SM;
 
   const files = useAppSelector(FilesSelectors.selectFiles);
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
@@ -370,7 +376,7 @@ export const PublicationHandlerFooter = ({
                 onClick={handleApprovePublication}
                 data-qa="approve"
               >
-                {t('Approve')}
+                {isSmallScreen ? t('Approve') : t('Approve selected')}
               </button>
             </Tooltip>
           </>

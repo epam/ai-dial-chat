@@ -64,7 +64,6 @@ export const DefaultModelSelect = ({
           models={allModels}
           indexSeparator={selected ? 2 : 1}
           additionalModelsMap={SPECIAL_DEFAULT_MODEL_DIC}
-          useReference
           inputClassName="focus-within:!border-primary"
           panelClassName="!bg-layer-0"
         />

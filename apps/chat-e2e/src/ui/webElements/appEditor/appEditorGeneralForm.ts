@@ -48,11 +48,12 @@ export class AppEditorGeneralForm extends AppEditorForm {
     this.topicsDropdownContainer.getChildElementBySelector(
       AddApplicationGeneralInfoFormSelector.clearAllTopicsButton,
     );
-  public iconInputElement = this.getChildElementBySelector(
-    AddApplicationGeneralInfoFormSelector.iconField,
+  public addIconButton = this.getChildElementBySelector(
+    AddApplicationGeneralInfoFormSelector.addIcon,
   );
-
-  public addIconButton = this.iconInputElement.getChildButtonElement();
+  public changeIcon = this.getChildElementBySelector(
+    AddApplicationGeneralInfoFormSelector.changeIcon,
+  );
 
   // Method to get selected topics text
   public async getSelectedTopics(): Promise<string[]> {
@@ -137,7 +138,7 @@ export class AppEditorGeneralForm extends AppEditorForm {
   public async uploadIcon(iconFilename: string) {
     await this.addIconButton.click();
     // Set the file on the (potentially hidden) input element
-    await this.iconInputElement.setElementInputFiles(
+    await this.addIconButton.setElementInputFiles(
       Attachment.attachmentPath,
       iconFilename,
     );

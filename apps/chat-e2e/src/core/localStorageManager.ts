@@ -148,10 +148,13 @@ export class LocalStorageManager {
     );
   }
 
-  async setRecentModelsIds(...models: DialAIEntityModel[]) {
+  //agent's reference should be set not id
+  async setRecentModelsIds(...models: (DialAIEntityModel | string)[]) {
     await this.page.addInitScript(
       this.setRecentModelsIdsKey(),
-      JSON.stringify(models.map((m) => m.reference)),
+      JSON.stringify(
+        models.map((m) => (typeof m === 'string' ? m : m.reference)),
+      ),
     );
   }
 
@@ -254,7 +257,9 @@ export class LocalStorageManager {
     await this.page.addInitScript(this.setDefaultModelReferenceKey(), option);
   }
 
-  async setRecentModelsIdsAndUseLastModel(...models: DialAIEntityModel[]) {
+  async setRecentModelsIdsAndUseLastModel(
+    ...models: (DialAIEntityModel | string)[]
+  ) {
     await this.setRecentModelsIds(...models);
     await this.setDefaultModelReference(DefaultModelReference.lastUsedModel);
   }

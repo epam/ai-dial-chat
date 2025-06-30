@@ -14,6 +14,7 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
+  getLastPathSegment,
   isVersionValid,
   prepareEntityName,
   replaceSpacesFromString,
@@ -602,7 +603,7 @@ export function PublishModal<
                     className="mb-1 text-xs text-secondary"
                     data-qa="published-path"
                   >
-                    {path.split('/').pop()}
+                    {getLastPathSegment(path)}
                   </div>
                   <RulesInput
                     isOpen={isRuleSetterOpened}

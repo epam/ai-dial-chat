@@ -568,7 +568,6 @@ const ChatView = memo(() => {
   const showLastMessageRegenerate =
     (!isReplay &&
       !isPlayback &&
-      !isExternal &&
       !isReadOnly &&
       !messageIsStreaming &&
       !isLastMessageError &&
@@ -589,7 +588,6 @@ const ChatView = memo(() => {
 
   const isInputVisible =
     ((!isReplay || isNotEmptyConversations) &&
-      !isExternal &&
       !isReadOnly &&
       (areModelsInstalled || isAdminPreview || isReplay || isIsolatedView) &&
       !(isConversationWithSchema && selectedConversations.length > 1)) ||
@@ -888,9 +886,19 @@ const ChatView = memo(() => {
                         )}
                       </div>
                     </div>
+
+                    {isExternal && selectedConversations.length === 1 && (
+                      <ChatPublicationControls
+                        showScrollDownButton={showScrollDownButton}
+                        entity={selectedConversations[0]}
+                        onScrollDownClick={handleScrollDown}
+                        onToggleInput={handleToggleApproveRequiredInput}
+                      />
+                    )}
+
                     {!isPlayback &&
                     notAvailableEntityType &&
-                    !selectedPublicationUrl ? (
+                    (!selectedPublicationUrl || isApproveRequiredInput) ? (
                       <NotAllowedModel
                         showScrollDownButton={isScrollDownButton}
                         onScrollDownClick={handleScrollDown}
@@ -898,15 +906,6 @@ const ChatView = memo(() => {
                       />
                     ) : (
                       <>
-                        {isExternal && selectedConversations.length === 1 && (
-                          <ChatPublicationControls
-                            showScrollDownButton={showScrollDownButton}
-                            entity={selectedConversations[0]}
-                            onScrollDownClick={handleScrollDown}
-                            onToggleInput={handleToggleApproveRequiredInput}
-                          />
-                        )}
-
                         {!isWideLayout && <ChatStarters />}
 
                         {!isPlayback && (

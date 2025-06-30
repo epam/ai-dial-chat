@@ -52,7 +52,7 @@ const run = async () => {
     // optional, theme, 'light' | 'dark'
     theme: 'light',
     // optional, specifies the 'reference' or 'id' of the agent to be used as the default.
-    modelId: 'gpt-4',
+    modelId: 'gpt-4o',
     // optional, if DIAL doesn't respond in requestTimeout ms, overlay will throw an exception
     requestTimeout: 20000,
     // optional, features that should be enabled. Use to override the default chat settings. Skip to apply all default chat settings.

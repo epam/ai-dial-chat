@@ -218,6 +218,11 @@ export const TalkToAgentDialogSelectors = {
   talkToAgentModal: '[data-qa="talk-to-agent"]',
   searchAgent: '[data-qa="search-agents"]',
   goToMyWorkspaceButton: '[data-qa="go-to-my-workspace"]',
+  goToDialMarketplaceButton: '[data-qa="go-to-marketplace"]',
+  myAgentsTab: '[data-qa="workspace"]',
+  allAgentsTab: '[data-qa="marketplace"]',
+  nextArrowButton: '[data-qa="slider-dot-arrow-next"]',
+  previousArrowButton: '[data-qa="slider-dot-arrow-prev"]',
 };
 
 export const MessageTemplateModalSelectors = {
@@ -282,7 +287,8 @@ export const AddApplicationGeneralInfoFormSelector = {
   appGeneralFormContainer: '[data-qa="app-general-form"]',
   name: '#name',
   version: '#version',
-  iconField: '[data-qa="custom-logo"]',
+  addIcon: '[data-qa="add-icon"]',
+  changeIcon: '[data-qa="change-icon"]',
   descriptionInput: '#description',
   descriptionLabel: '[for="description"]',
   topicsDropdownContainer: '#topics-dropdown',
