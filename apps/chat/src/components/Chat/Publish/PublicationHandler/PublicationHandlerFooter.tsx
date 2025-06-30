@@ -16,6 +16,7 @@ import {
   isFileId,
   isPromptId,
 } from '@/src/utils/app/id';
+import { isSmallScreen } from '@/src/utils/app/mobile';
 import {
   allEditedFoldersAreValid,
   getDefaultAllEditEntities,
@@ -64,6 +65,7 @@ export const PublicationHandlerFooter = ({
 
   const files = useAppSelector(FilesSelectors.selectFiles);
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
+  const isSmallScreenView = isSmallScreen();
   const conversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );
@@ -359,7 +361,7 @@ export const PublicationHandlerFooter = ({
                 onClick={handleApprovePublication}
                 data-qa="approve"
               >
-                {t('Approve selected')}
+                {isSmallScreenView ? t('Approve') : t('Approve selected')}
               </button>
             </Tooltip>
           </>
