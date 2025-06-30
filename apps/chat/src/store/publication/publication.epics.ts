@@ -17,7 +17,10 @@ import {
 import { combineEpics, ofType } from 'redux-observable';
 
 import { getLastPathSegment } from '@/src/utils/app/common';
-import { getConversationInfoFromId } from '@/src/utils/app/conversation';
+import {
+  getConversationInfoFromId,
+  updateAttachmentTitles,
+} from '@/src/utils/app/conversation';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application-type-schemas-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
@@ -1760,62 +1763,17 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
                               version: getVersionFromId(conversation.id),
                               publicationUrl: url,
                             },
-                            messages: conversation.messages.map((message) => ({
-                              ...message,
-                              custom_content: {
-                                ...message.custom_content,
-                                attachments:
-                                  message.custom_content?.attachments?.map(
-                                    (attachment) => {
-                                      const title = ApiUtils.decodeApiUrl(
-                                        getLastPathSegment(
-                                          attachment.url ?? '',
-                                        ),
-                                      );
-
-                                      return titlesToUpdate.includes(title)
-                                        ? {
-                                            ...attachment,
-                                            title: title ?? 'Attachment',
-                                          }
-                                        : attachment;
-                                    },
-                                  ),
-                              },
-                            })),
+                            messages: updateAttachmentTitles(
+                              conversation.messages,
+                              titlesToUpdate,
+                            ),
                             playback: conversation.playback
                               ? {
                                   ...conversation.playback,
-                                  messagesStack:
-                                    conversation.playback.messagesStack.map(
-                                      (message) => ({
-                                        ...message,
-                                        custom_content: {
-                                          ...message.custom_content,
-                                          attachments:
-                                            message.custom_content?.attachments?.map(
-                                              (attachment) => {
-                                                const title =
-                                                  ApiUtils.decodeApiUrl(
-                                                    getLastPathSegment(
-                                                      attachment.url ?? '',
-                                                    ),
-                                                  );
-
-                                                return titlesToUpdate.includes(
-                                                  title,
-                                                )
-                                                  ? {
-                                                      ...attachment,
-                                                      title:
-                                                        title ?? 'Attachment',
-                                                    }
-                                                  : attachment;
-                                              },
-                                            ),
-                                        },
-                                      }),
-                                    ),
+                                  messagesStack: updateAttachmentTitles(
+                                    conversation.playback.messagesStack,
+                                    titlesToUpdate,
+                                  ),
                                 }
                               : undefined,
                           },
