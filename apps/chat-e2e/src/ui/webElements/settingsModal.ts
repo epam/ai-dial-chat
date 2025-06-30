@@ -57,9 +57,10 @@ export class SettingsModal extends BaseElement {
   public startChatWithToggle = this.startChatWith.getChildElementBySelector(
     AccountSettingsModalSelector.startChatWithToggle,
   );
-  public startChatWithSearchInput = this.startChatWith.getChildElementBySelector(
-    AccountSettingsModalSelector.startChatWithSearchInput,
-  );
+  public startChatWithSearchInput =
+    this.startChatWith.getChildElementBySelector(
+      AccountSettingsModalSelector.startChatWithSearchInput,
+    );
   public startChatWithListbox = this.startChatWith.getChildElementBySelector(
     AccountSettingsModalSelector.startChatWithListbox,
   );

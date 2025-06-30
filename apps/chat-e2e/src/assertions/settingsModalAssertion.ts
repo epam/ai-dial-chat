@@ -52,7 +52,10 @@ export class SettingsModalAssertion extends BaseAssertion {
   }
 
   public async assertStartChatWithValue(
-    expectedAgent: DialAIEntityModel | { name: string; version?: string } | string,
+    expectedAgent:
+      | DialAIEntityModel
+      | { name: string; version?: string }
+      | string,
   ) {
     const expectedValue = this.settingsModal.optionAttributes(expectedAgent);
     await this.assertElementText(

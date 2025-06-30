@@ -162,7 +162,7 @@ export const AccountSettingsModalSelector = {
   startChatWithListboxOption: '[role="option"]',
   startChatWithListboxOptionAttributes: '[data-qa="agent-attributes"]',
   startChatWithListboxOptionVersion: '[data-qa="agent-version"]',
-  noAvailableItems: '[data-qa="no-available-items"]'
+  noAvailableItems: '[data-qa="no-available-items"]',
 };
 
 export const PublishingModalSelectors = {
