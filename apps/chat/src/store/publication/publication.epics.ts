@@ -1482,18 +1482,19 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
 
           const isConversationResource = isConversationId(payload.newEntity.id);
 
-          const updateEntityAction$: Observable<AppAction>[] = [
+          const updateEntityActions: Observable<AppAction>[] = [
             of(
               isConversationResource
                 ? ConversationsActions.updateConversation(updateEntityPayload)
                 : PromptsActions.updatePrompt(updateEntityPayload),
             ),
           ];
+
           if (isConversationResource) {
             const selectedConversationIds =
               ConversationsSelectors.selectSelectedConversationsIds(state);
             if (selectedConversationIds.includes(payload.resourceToUpdateUrl)) {
-              updateEntityAction$.push(
+              updateEntityActions.push(
                 of(
                   ConversationsActions.selectConversations({
                     conversationIds: selectedConversationIds.map((id) =>
@@ -1506,6 +1507,20 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
                 ),
               );
             }
+          } else {
+            updateEntityActions.push(
+              of(
+                PromptsActions.uploadPrompt({
+                  promptId: payload.newEntity.id,
+                }),
+              ),
+              of(
+                PromptsActions.selectPrompt({
+                  promptId: payload.newEntity.id,
+                  isApproveRequiredResource: true,
+                }),
+              ),
+            );
           }
 
           return concat(
@@ -1514,7 +1529,7 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
                 url: payload.publicationUrl,
               }),
             ),
-            ...updateEntityAction$,
+            ...updateEntityActions,
           );
         }),
         catchError((err) => {
