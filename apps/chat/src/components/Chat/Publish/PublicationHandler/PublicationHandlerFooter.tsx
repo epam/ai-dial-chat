@@ -5,6 +5,8 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
+
 import { isVersionValid, prepareEntityName } from '@/src/utils/app/common';
 import {
   getFolderIdFromEntityId,
@@ -16,7 +18,6 @@ import {
   isFileId,
   isPromptId,
 } from '@/src/utils/app/id';
-import { isSmallScreen } from '@/src/utils/app/mobile';
 import {
   allEditedFoldersAreValid,
   getDefaultAllEditEntities,
@@ -24,6 +25,7 @@ import {
   getReviewItems,
 } from '@/src/utils/app/publications';
 
+import { ScreenState } from '@/src/types/common';
 import { Publication, ResourceToReview } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
@@ -63,9 +65,11 @@ export const PublicationHandlerFooter = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
+  const screenState = useScreenState();
+  const isSmallScreen = screenState === ScreenState.SM;
+
   const files = useAppSelector(FilesSelectors.selectFiles);
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
-  const isSmallScreenView = isSmallScreen();
   const conversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );
@@ -361,7 +365,7 @@ export const PublicationHandlerFooter = ({
                 onClick={handleApprovePublication}
                 data-qa="approve"
               >
-                {isSmallScreenView ? t('Approve') : t('Approve selected')}
+                {isSmallScreen ? t('Approve') : t('Approve selected')}
               </button>
             </Tooltip>
           </>
