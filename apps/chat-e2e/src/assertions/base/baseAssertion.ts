@@ -174,17 +174,22 @@ export class BaseAssertion {
   ) {
     const elementLocator = this.getElementLocator(element);
     const finalMessage = expectedMessage ?? ExpectedMessages.fieldValueIsValid;
-    await expect
-      .poll(
-        async () => {
-          return elementLocator.inputValue();
-        },
-        {
-          message: finalMessage,
-          timeout: 10000,
-        },
-      )
-      .toMatch(expectedValue); // .toMatch() is the correct matcher for the polled result
+
+    const pollAssertion = expect.poll(
+      async () => {
+        return elementLocator.inputValue();
+      },
+      {
+        message: finalMessage,
+        timeout: 10000,
+      },
+    );
+
+    if (expectedValue instanceof RegExp) {
+      await pollAssertion.toMatch(expectedValue);
+    } else {
+      await pollAssertion.toBe(expectedValue);
+    }
   }
 
   public async assertElementAttribute(
