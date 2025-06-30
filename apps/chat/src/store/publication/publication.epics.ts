@@ -1783,6 +1783,41 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
                                   ),
                               },
                             })),
+                            playback: conversation.playback
+                              ? {
+                                  ...conversation.playback,
+                                  messagesStack:
+                                    conversation.playback.messagesStack.map(
+                                      (message) => ({
+                                        ...message,
+                                        custom_content: {
+                                          ...message.custom_content,
+                                          attachments:
+                                            message.custom_content?.attachments?.map(
+                                              (attachment) => {
+                                                const title =
+                                                  ApiUtils.decodeApiUrl(
+                                                    getLastPathSegment(
+                                                      attachment.url ?? '',
+                                                    ),
+                                                  );
+
+                                                return titlesToUpdate.includes(
+                                                  title,
+                                                )
+                                                  ? {
+                                                      ...attachment,
+                                                      title:
+                                                        title ?? 'Attachment',
+                                                    }
+                                                  : attachment;
+                                              },
+                                            ),
+                                        },
+                                      }),
+                                    ),
+                                }
+                              : undefined,
                           },
                         }),
                       );
