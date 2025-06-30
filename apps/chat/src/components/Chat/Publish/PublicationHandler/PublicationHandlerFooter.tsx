@@ -360,7 +360,7 @@ export const PublicationHandlerFooter = ({
               )}
             >
               <button
-                className="button button-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                className="button button-primary whitespace-nowrap disabled:cursor-not-allowed disabled:text-controls-disable"
                 disabled={!isAllResourcesReviewed || !!invalidEntities.length}
                 onClick={handleApprovePublication}
                 data-qa="approve"
