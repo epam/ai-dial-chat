@@ -462,6 +462,9 @@ dialTest(
       async () => {
         await page.keyboard.press(keys.ctrlPlusA);
         await settingsModal.startChatWithSearchInput.typeInInput(commonPart);
+        await settingsModal.startChatWithListboxOptions
+          .getNthElement(2)
+          .waitFor();
         const allOptions = await settingsModal.getAllOptions();
         expect.soft(allOptions).toEqual([
           {

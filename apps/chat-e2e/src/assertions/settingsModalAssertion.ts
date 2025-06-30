@@ -44,7 +44,7 @@ export class SettingsModalAssertion extends BaseAssertion {
   }
 
   public async assertFullWidthChatToggleColor(expectedColor: string) {
-    await this.assertElementColor(
+    await this.assertElementBackgroundColors(
       this.settingsModal.fullWidthChatToggleLabel,
       expectedColor,
     );
