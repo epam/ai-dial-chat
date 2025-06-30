@@ -148,6 +148,7 @@ export class LocalStorageManager {
     );
   }
 
+  //agent's reference should be set not id
   async setRecentModelsIds(...models: (DialAIEntityModel | string)[]) {
     await this.page.addInitScript(
       this.setRecentModelsIdsKey(),
