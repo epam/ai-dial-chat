@@ -739,9 +739,9 @@ dialTest(
     applicationApiHelper,
   }) => {
     setTestIds('EPMRTC-6448');
-    const firstTerm = '7.7.7';
-    const secondTerm = '3.3.3';
-    const thirdTerm = '7.7.8';
+    const firstTerm = '72.73.7';
+    const secondTerm = '36.37.3';
+    const thirdTerm = '72.73.8';
     const firstAppName = `${GeneratorUtil.randomApplicationName()} ${firstTerm}`;
     const secondAppName = `${GeneratorUtil.randomApplicationName()} ${secondTerm}`;
     const thirdAppName = GeneratorUtil.randomApplicationName();
@@ -827,10 +827,10 @@ dialTest(
     );
 
     await dialTest.step(
-      'Type "5.5.5155" in the search field and verify no results are found',
+      'Type "72.73.71555" in the search field and verify no results are found',
       async () => {
         await marketplaceHeader.searchInput.fillInInput(
-          firstTerm.concat('155'),
+          firstTerm.concat('1555'),
         );
         await baseAssertion.assertElementState(
           marketplace.noResultsFound,
