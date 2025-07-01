@@ -7,7 +7,12 @@ import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
 
-import { isVersionValid, prepareEntityName } from '@/src/utils/app/common';
+import {
+  isEntityNameValid,
+  isVersionExists,
+  isVersionPartSizeValid,
+  isVersionValid,
+} from '@/src/utils/app/common';
 import {
   getFolderIdFromEntityId,
   getParentFolderIdsFromEntityId,
@@ -45,13 +50,10 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
-import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
-import { NA_VERSION } from '@/src/constants/publication';
-
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { FeatureType } from '@epam/ai-dial-shared';
+import { Conversation, FeatureType } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 interface Props {
@@ -96,6 +98,10 @@ export const PublicationHandlerFooter = ({
     PublicationSelectors.selectSelectedItemsToPublish,
   );
 
+  const publicVersionGroups = useAppSelector(
+    PublicationSelectors.selectPublicVersionGroups,
+  );
+
   const dispatch = useAppDispatch();
 
   useEffect(() => {
@@ -126,6 +132,21 @@ export const PublicationHandlerFooter = ({
         (entity) => entity.publicationInfo?.isNotExist,
       ),
     [conversations, files, prompts, applications],
+  );
+
+  const resourcesToReviewIds = useMemo(
+    () => resourcesToReview.map((resource) => resource.reviewUrl),
+    [resourcesToReview],
+  );
+
+  const publicationConversationsWithUploadedMessages = useMemo(
+    () =>
+      conversations.filter(
+        (conversation) =>
+          resourcesToReviewIds.includes(conversation.id) &&
+          (conversation as Conversation).messages !== undefined,
+      ) as Conversation[],
+    [conversations, resourcesToReviewIds],
   );
 
   const expandFoldersByFeatureType = useCallback(
@@ -268,20 +289,31 @@ export const PublicationHandlerFooter = ({
     isFileId(resource.reviewUrl),
   );
   const isAllResourcesReviewed = resourcesToReview.every((r) => r.reviewed);
-  const isNamesOrVersionsInvalid = Object.values(entitiesEditState).some(
-    ({ version, name }) => {
-      return (
-        !prepareEntityName(name) ||
-        (!isVersionValid(version) && version !== NA_VERSION)
-      );
+  const isNamesOrVersionsInvalid = Object.entries(entitiesEditState).some(
+    ([key, { version, name }]) => {
+      const isInvalidName = !isEntityNameValid(name);
+
+      const isValidVersion =
+        isFileId(key) ||
+        (isVersionValid(version.trim()) &&
+          !isVersionExists(version, key, publicVersionGroups, name) &&
+          (!isApplicationId(key) || isVersionPartSizeValid(version)));
+
+      return isInvalidName || !isValidVersion;
     },
   );
   const isFoldersInvalid = !allEditedFoldersAreValid(foldersEditState);
-  const isDisplayAuthorInvalid =
-    !displayAuthorEditState.trim().length ||
-    displayAuthorEditState.length > MAX_ENTITY_LENGTH;
+  const isDisplayAuthorInvalid = !isEntityNameValid(
+    displayAuthorEditState,
+    false,
+  );
+
   const isEditDisabled =
     isNamesOrVersionsInvalid || isFoldersInvalid || isDisplayAuthorInvalid;
+  const someReviewedConversationHaveNoMessages =
+    publicationConversationsWithUploadedMessages.some(
+      (conversation) => !conversation.messages.length,
+    );
 
   return (
     <div
@@ -356,12 +388,18 @@ export const PublicationHandlerFooter = ({
               tooltip={t(
                 invalidEntities.length
                   ? "Request can't be approved as some conversations are unpublished"
-                  : "It's required to review all resources",
+                  : someReviewedConversationHaveNoMessages
+                    ? "Request can't be approved as some conversations have no messages"
+                    : "It's required to review all resources",
               )}
             >
               <button
                 className="button button-primary whitespace-nowrap disabled:cursor-not-allowed disabled:text-controls-disable"
-                disabled={!isAllResourcesReviewed || !!invalidEntities.length}
+                disabled={
+                  !isAllResourcesReviewed ||
+                  !!invalidEntities.length ||
+                  someReviewedConversationHaveNoMessages
+                }
                 onClick={handleApprovePublication}
                 data-qa="approve"
               >

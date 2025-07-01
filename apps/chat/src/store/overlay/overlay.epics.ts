@@ -1059,6 +1059,7 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
         signInOptions,
         overlayConversationId,
         signInInSameWindow,
+        messageButtons,
       } = options;
 
       const availableThemes = UISelectors.selectAvailableThemes(state$.value);
@@ -1177,6 +1178,12 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
 
       if (isOptionChanged('signInOptions')) {
         actions.push(of(OverlayActions.signInOptionsSet({ signInOptions })));
+      }
+
+      if (isOptionChanged('messageButtons')) {
+        actions.push(
+          of(OverlayActions.setCustomMessages(messageButtons ?? [])),
+        );
       }
 
       // after all actions will send notify that settings are set
@@ -1312,6 +1319,19 @@ const sendSelectedConversationLoaded: AppEpic = (action$, state$) =>
     }),
   );
 
+const sendCustomMessageEvent: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.sendCustomMessageEvent.type),
+    map(({ payload }) => {
+      const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+
+      return OverlayActions.sendPMEvent({
+        type: OverlayEvents.messageCustomButton,
+        eventParams: { hostDomain, payload: payload },
+      });
+    }),
+  );
+
 const sendConversationUpdated: AppEpic = (action$, state$) =>
   state$.pipe(
     // we shouldn't proceed if we are not overlay
@@ -1434,6 +1454,7 @@ export const OverlayEpics = combineEpics(
   initOverlayEpic,
   sendPMEventEpic,
   sendPMResponseEpic,
+  sendCustomMessageEvent,
   notifyHostAboutReadyEpic,
   setOverlayOptionsEpic,
   sendMessageEpic,

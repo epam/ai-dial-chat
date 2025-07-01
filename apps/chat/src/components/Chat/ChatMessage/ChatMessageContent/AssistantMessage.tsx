@@ -20,9 +20,12 @@ import { MessageStages } from '@/src/components/Chat/MessageStages';
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { ChatMDComponent } from '@/src/components/Markdown/ChatMDComponent';
 
+import { MessageCustomButtons } from './MessageCustomButtons';
+
 import { LikeState, Message } from '@epam/ai-dial-shared';
 
 interface AssistantMessageProps {
+  messageIndex: number;
   message: Message;
   conversation: Conversation;
   isLastMessage: boolean;
@@ -35,6 +38,7 @@ interface AssistantMessageProps {
 }
 
 export const AssistantMessage = memo(function AssistantMessage({
+  messageIndex,
   message,
   conversation,
   isLastMessage,
@@ -46,6 +50,8 @@ export const AssistantMessage = memo(function AssistantMessage({
   onRegenerate,
 }: AssistantMessageProps) {
   const { t } = useTranslation(Translation.Chat);
+
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const codeWarning = useAppSelector(SettingsSelectors.selectCodeWarning);
 
@@ -95,6 +101,8 @@ export const AssistantMessage = memo(function AssistantMessage({
         )}
         <AssistantSchema isLastMessage={isLastMessage} message={message} />
         <ErrorMessage error={message.errorMessage}></ErrorMessage>
+
+        {isOverlay && <MessageCustomButtons messageIndex={messageIndex} />}
       </div>
       {withButtons &&
         !(conversation.isMessageStreaming && isLastMessage) &&
