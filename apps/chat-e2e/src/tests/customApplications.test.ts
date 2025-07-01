@@ -66,6 +66,8 @@ dialTest(
     appEditorAppSettingsAgentPreview,
     navigationPanel,
     appEditorGeneralInfoAgentPreview,
+    customApplicationBuilder,
+    applicationApiHelper,
     page,
   }) => {
     setTestIds(
@@ -90,6 +92,18 @@ dialTest(
     } as DialAIEntityModel;
     let agentElement: BaseElement;
     await localStorageManager.setShowSideBarPanels();
+
+    await dialTest.step(
+      'Precondition: Create custom application via API to avoid inconsistent app naming. Issue 4236',
+      async () => {
+        const applicationModel = customApplicationBuilder
+          .withDisplayName(ExpectedConstants.defaultAppName)
+          .withDisplayVersion(appEntity.version!)
+          .withDescriptionKeywords(appEntity.description!)
+          .build();
+        await applicationApiHelper.createApplication(applicationModel);
+      },
+    );
 
     await dialTest.step(
       'Open My workspace directly and verify navigation panel is displayed',
