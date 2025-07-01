@@ -15,13 +15,34 @@ interface ButtonProps {
 
 const MessageCustomButton = ({ button, onEvent }: ButtonProps) => {
   const ref = useRef<HTMLButtonElement>(null);
-  const [isHover, setIsHover] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
 
   const handleMouseEnter = useCallback(() => {
-    setIsHover(true);
+    setIsHovered(true);
   }, []);
   const handleMouseLeave = useCallback(() => {
-    setIsHover(false);
+    setIsHovered(false);
+  }, []);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+
+    const focusIn = () => {
+      setIsFocused(true);
+    };
+    const focusOut = () => {
+      setIsFocused(false);
+    };
+
+    node.addEventListener('focusin', focusIn);
+    node.addEventListener('focusout', focusOut);
+
+    return () => {
+      node.removeEventListener('focusin', focusIn);
+      node.removeEventListener('focusout', focusOut);
+    };
   }, []);
 
   useEffect(() => {
@@ -53,11 +74,19 @@ const MessageCustomButton = ({ button, onEvent }: ButtonProps) => {
         className={
           button.skipDefaultStyles
             ? undefined
-            : 'button button-secondary flex items-center gap-2'
+            : 'button button-secondary flex items-center gap-2 px-2 py-1'
         }
         style={{
           ...(button.styles as CSSProperties),
-          ...(isHover ? (button.hoverStyles as CSSProperties) : undefined),
+          ...(isHovered && !button.disabled
+            ? (button.hoverStyles as CSSProperties)
+            : undefined),
+          ...(isFocused && !button.disabled
+            ? (button.focusStyles as CSSProperties)
+            : undefined),
+          ...(button.disabled && button.disabledStyles
+            ? (button.disabledStyles as CSSProperties)
+            : undefined),
         }}
       >
         <span
