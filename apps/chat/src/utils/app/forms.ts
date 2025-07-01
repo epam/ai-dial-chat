@@ -8,11 +8,20 @@ import {
 
 import classNames from 'classnames';
 
-import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
-import { formErrors } from '@/src/constants/form-errors';
+import {
+  MAX_ENTITY_LENGTH,
+  MIN_ENTITY_LENGTH,
+} from '@/src/constants/default-ui-settings';
+import { formErrors, versionsErrors } from '@/src/constants/form-errors';
 
-import { doesHaveDotsInTheEnd } from './common';
-import { doesHaveNotAllowedSymbols, notAllowedSpacesRegex } from './file';
+import {
+  doesHaveDotsInTheEnd,
+  isEntityNameInvalid,
+  isVersionPartSizeValid,
+  isVersionValid,
+  replaceSpacesFromString,
+} from './common';
+import { doesHaveNotAllowedSymbols } from './file';
 
 export type InputElement = HTMLInputElement | HTMLTextAreaElement;
 export const checkValidity = (
@@ -94,25 +103,90 @@ export const getValidFormFields = <T extends object>(
   return validValues;
 };
 
-export const validateStringField = ({
-  valueToValidate,
-  maxLength = MAX_ENTITY_LENGTH,
-  minLength = 2,
+export function createFormValidationRules(
+  fields: { name: string; label: string; checkDotsInTheEnd?: boolean }[],
+) {
+  const result: Record<string, object> = {};
+
+  fields.forEach(({ name, label, checkDotsInTheEnd }) => {
+    result[name] = {
+      required: formErrors.required,
+      validate: (valueToValidate: string) => {
+        if (isEntityNameInvalid(valueToValidate, false)) {
+          return formErrors.hasSpecialCharacters(label);
+        }
+
+        if (checkDotsInTheEnd && doesHaveDotsInTheEnd(valueToValidate)) {
+          return formErrors.noDotInTheEnd(label);
+        }
+
+        return true;
+      },
+      maxLength: {
+        value: MAX_ENTITY_LENGTH,
+        message: formErrors.tooLong(label),
+      },
+      minLength: {
+        value: MIN_ENTITY_LENGTH,
+        message: formErrors.tooShort(label),
+      },
+      setValueAs: (valueToValidate: string) =>
+        replaceSpacesFromString(valueToValidate.trim()),
+    };
+  });
+
+  return result;
+}
+
+export const getStringValidationErrors = ({
+  value,
+  label,
   checkDotsInTheEnd,
+  maxLength = MAX_ENTITY_LENGTH,
+  minLength = MIN_ENTITY_LENGTH,
 }: {
-  valueToValidate: string;
+  value: string;
+  label: string;
   maxLength?: number;
   minLength?: number;
   checkDotsInTheEnd?: boolean;
 }) => {
-  const trimmedValue = valueToValidate
-    .trim()
-    .replace(notAllowedSpacesRegex, ' ');
+  const errors: string[] = [];
+  const trimmedValue = value.trim();
+  if (!trimmedValue) errors.push(formErrors.required);
 
-  return (
-    trimmedValue.length <= maxLength &&
-    trimmedValue.length >= minLength &&
-    !doesHaveNotAllowedSymbols(trimmedValue) &&
-    (!checkDotsInTheEnd || !doesHaveDotsInTheEnd(trimmedValue))
-  );
+  if (trimmedValue.length > 0 && trimmedValue.length < minLength)
+    errors.push(formErrors.tooShort(label));
+  if (trimmedValue.length > maxLength) errors.push(formErrors.tooLong(label));
+
+  if (doesHaveNotAllowedSymbols(trimmedValue)) {
+    errors.push(formErrors.hasSpecialCharacters(label));
+  }
+
+  if (checkDotsInTheEnd && doesHaveDotsInTheEnd(trimmedValue)) {
+    errors.push(formErrors.noDotInTheEnd(label));
+  }
+
+  return errors;
+};
+
+export const getVersionValidationErrors = (
+  version: string | undefined,
+  versionExists?: boolean,
+  checkPartLength?: boolean,
+) => {
+  const errors: string[] = [];
+  if (!version || !version.trim()) return [versionsErrors.required];
+
+  if (versionExists) errors.push(versionsErrors.versionExists);
+
+  const trimmedVersion = version.trim();
+
+  if (!isVersionValid(trimmedVersion)) errors.push(versionsErrors.notValid);
+
+  if (checkPartLength && !isVersionPartSizeValid(trimmedVersion)) {
+    errors.push(versionsErrors.tooLongPart);
+  }
+
+  return errors;
 };
