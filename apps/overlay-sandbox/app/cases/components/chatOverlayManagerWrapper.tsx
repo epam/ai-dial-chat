@@ -183,6 +183,16 @@ export const ChatOverlayManagerWrapper: React.FC<
         console.info('Conversations updated');
       },
     );
+    overlayManager.current?.subscribe(
+      overlayManagerOptions.id,
+      `@DIAL_OVERLAY/${OverlayEvents.messageCustomButton}`,
+      async (info) => {
+        console.info(
+          'Custom message button event',
+          JSON.stringify(info, null, 2),
+        );
+      },
+    );
 
     overlayManager.current
       ?.getMessages(overlayManagerOptions.id)
