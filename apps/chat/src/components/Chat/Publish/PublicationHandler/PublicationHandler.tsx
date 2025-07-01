@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useDebounce } from '@/src/hooks/useDebounce';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -116,6 +115,8 @@ export function PublicationHandler({ publication }: Props) {
 
   const [isCompareModalOpened, setIsCompareModalOpened] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
+
+  const [isFormChanged, setIsFormChanged] = useState(false);
 
   const publicationAuthor = useMemo(() => {
     return extractNameFromEmail(publication.author) ?? t('Unknown');
@@ -250,7 +251,6 @@ export function PublicationHandler({ publication }: Props) {
     const { entities, folders } = getDefaultAllEditEntities(
       publication.resources,
     );
-
     const initialRules = publication.rules ?? [];
     const initialDisplayAuthor = publication.displayAuthor ?? '';
 
@@ -262,13 +262,26 @@ export function PublicationHandler({ publication }: Props) {
     };
   }, [publication]);
 
-  const isFormChanged = useMemo(() => {
-    const entitiesChanged = !isEqual(initialState.entities, entitiesEditState);
-    const foldersChanged = !isEqual(initialState.folders, foldersEditState);
-    const rulesChanged = !isEqual(initialState.rules, rulesOnEdit);
-    const authorChanged = initialState.displayAuthor !== displayAuthorEditState;
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      const entitiesChanged = !isEqual(
+        initialState.entities,
+        entitiesEditState,
+      );
+      const foldersChanged = !isEqual(initialState.folders, foldersEditState);
+      const rulesChanged = !isEqual(initialState.rules, rulesOnEdit);
+      const authorChanged =
+        initialState.displayAuthor !== displayAuthorEditState;
 
-    return entitiesChanged || foldersChanged || rulesChanged || authorChanged;
+      const result =
+        entitiesChanged || foldersChanged || rulesChanged || authorChanged;
+
+      setIsFormChanged(result);
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
   }, [
     initialState,
     entitiesEditState,
@@ -281,8 +294,6 @@ export function PublicationHandler({ publication }: Props) {
     const initialRules = publication.rules ?? [];
     return !isEqual(initialRules, rulesOnEdit);
   }, [publication.rules, rulesOnEdit]);
-
-  const debouncedIsFormChanged = useDebounce(isFormChanged, 300);
 
   return (
     <div className="flex size-full justify-center overflow-y-auto p-0 md:px-5 md:pt-5">
@@ -421,7 +432,7 @@ export function PublicationHandler({ publication }: Props) {
         <PublicationHandlerFooter
           onUpdateRequest={handleUpdateRequest}
           publication={publication}
-          isFormChanged={debouncedIsFormChanged}
+          isFormChanged={isFormChanged}
         />
       </div>
       {isCompareModalOpened && publication.targetFolder && (
