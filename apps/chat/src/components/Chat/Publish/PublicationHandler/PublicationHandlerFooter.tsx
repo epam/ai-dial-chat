@@ -5,7 +5,14 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { isVersionValid, prepareEntityName } from '@/src/utils/app/common';
+import { useScreenState } from '@/src/hooks/useScreenState';
+
+import {
+  isEntityNameValid,
+  isVersionExists,
+  isVersionPartSizeValid,
+  isVersionValid,
+} from '@/src/utils/app/common';
 import {
   getFolderIdFromEntityId,
   getParentFolderIdsFromEntityId,
@@ -23,6 +30,7 @@ import {
   getReviewItems,
 } from '@/src/utils/app/publications';
 
+import { ScreenState } from '@/src/types/common';
 import { Publication, ResourceToReview } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
@@ -42,13 +50,10 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
-import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
-import { NA_VERSION } from '@/src/constants/publication';
-
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { FeatureType } from '@epam/ai-dial-shared';
+import { Conversation, FeatureType } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 interface Props {
@@ -63,6 +68,9 @@ export const PublicationHandlerFooter = ({
   isFormChanged,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+
+  const screenState = useScreenState();
+  const isSmallScreen = screenState === ScreenState.SM;
 
   const files = useAppSelector(FilesSelectors.selectFiles);
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
@@ -90,6 +98,10 @@ export const PublicationHandlerFooter = ({
   );
   const itemsToPublish = useAppSelector(
     PublicationSelectors.selectSelectedItemsToPublish,
+  );
+
+  const publicVersionGroups = useAppSelector(
+    PublicationSelectors.selectPublicVersionGroups,
   );
 
   const dispatch = useAppDispatch();
@@ -122,6 +134,21 @@ export const PublicationHandlerFooter = ({
         (entity) => entity.publicationInfo?.isNotExist,
       ),
     [conversations, files, prompts, applications],
+  );
+
+  const resourcesToReviewIds = useMemo(
+    () => resourcesToReview.map((resource) => resource.reviewUrl),
+    [resourcesToReview],
+  );
+
+  const publicationConversationsWithUploadedMessages = useMemo(
+    () =>
+      conversations.filter(
+        (conversation) =>
+          resourcesToReviewIds.includes(conversation.id) &&
+          (conversation as Conversation).messages !== undefined,
+      ) as Conversation[],
+    [conversations, resourcesToReviewIds],
   );
 
   const expandFoldersByFeatureType = useCallback(
@@ -264,20 +291,31 @@ export const PublicationHandlerFooter = ({
     isFileId(resource.reviewUrl),
   );
   const isAllResourcesReviewed = resourcesToReview.every((r) => r.reviewed);
-  const isNamesOrVersionsInvalid = Object.values(entitiesEditState).some(
-    ({ version, name }) => {
-      return (
-        !prepareEntityName(name) ||
-        (!isVersionValid(version) && version !== NA_VERSION)
-      );
+  const isNamesOrVersionsInvalid = Object.entries(entitiesEditState).some(
+    ([key, { version, name }]) => {
+      const isInvalidName = !isEntityNameValid(name);
+
+      const isValidVersion =
+        isFileId(key) ||
+        (isVersionValid(version.trim()) &&
+          !isVersionExists(version, key, publicVersionGroups, name) &&
+          (!isApplicationId(key) || isVersionPartSizeValid(version)));
+
+      return isInvalidName || !isValidVersion;
     },
   );
   const isFoldersInvalid = !allEditedFoldersAreValid(foldersEditState);
-  const isDisplayAuthorInvalid =
-    !displayAuthorEditState.trim().length ||
-    displayAuthorEditState.length > MAX_ENTITY_LENGTH;
+  const isDisplayAuthorInvalid = !isEntityNameValid(
+    displayAuthorEditState,
+    false,
+  );
+
   const isEditInvalid =
     isNamesOrVersionsInvalid || isFoldersInvalid || isDisplayAuthorInvalid;
+  const someReviewedConversationHaveNoMessages =
+    publicationConversationsWithUploadedMessages.some(
+      (conversation) => !conversation.messages.length,
+    );
 
   const isEditDisabled = isEditInvalid || !isFormChanged;
 
@@ -354,16 +392,22 @@ export const PublicationHandlerFooter = ({
               tooltip={t(
                 invalidEntities.length
                   ? "Request can't be approved as some conversations are unpublished"
-                  : "It's required to review all resources",
+                  : someReviewedConversationHaveNoMessages
+                    ? "Request can't be approved as some conversations have no messages"
+                    : "It's required to review all resources",
               )}
             >
               <button
-                className="button button-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-                disabled={!isAllResourcesReviewed || !!invalidEntities.length}
+                className="button button-primary whitespace-nowrap disabled:cursor-not-allowed disabled:text-controls-disable"
+                disabled={
+                  !isAllResourcesReviewed ||
+                  !!invalidEntities.length ||
+                  someReviewedConversationHaveNoMessages
+                }
                 onClick={handleApprovePublication}
                 data-qa="approve"
               >
-                {t('Approve')}
+                {isSmallScreen ? t('Approve') : t('Approve selected')}
               </button>
             </Tooltip>
           </>

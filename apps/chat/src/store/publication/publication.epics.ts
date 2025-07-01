@@ -17,7 +17,10 @@ import {
 import { combineEpics, ofType } from 'redux-observable';
 
 import { getLastPathSegment } from '@/src/utils/app/common';
-import { getConversationInfoFromId } from '@/src/utils/app/conversation';
+import {
+  getConversationInfoFromId,
+  updateAttachmentTitles,
+} from '@/src/utils/app/conversation';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application-type-schemas-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
@@ -1479,18 +1482,19 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
 
           const isConversationResource = isConversationId(payload.newEntity.id);
 
-          const updateEntityAction$: Observable<AppAction>[] = [
+          const updateEntityActions: Observable<AppAction>[] = [
             of(
               isConversationResource
                 ? ConversationsActions.updateConversation(updateEntityPayload)
                 : PromptsActions.updatePrompt(updateEntityPayload),
             ),
           ];
+
           if (isConversationResource) {
             const selectedConversationIds =
               ConversationsSelectors.selectSelectedConversationsIds(state);
             if (selectedConversationIds.includes(payload.resourceToUpdateUrl)) {
-              updateEntityAction$.push(
+              updateEntityActions.push(
                 of(
                   ConversationsActions.selectConversations({
                     conversationIds: selectedConversationIds.map((id) =>
@@ -1503,6 +1507,15 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
                 ),
               );
             }
+          } else {
+            updateEntityActions.push(
+              of(
+                PromptsActions.selectPrompt({
+                  promptId: payload.newEntity.id,
+                  isApproveRequiredResource: true,
+                }),
+              ),
+            );
           }
 
           return concat(
@@ -1511,7 +1524,7 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
                 url: payload.publicationUrl,
               }),
             ),
-            ...updateEntityAction$,
+            ...updateEntityActions,
           );
         }),
         catchError((err) => {
@@ -1760,29 +1773,19 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
                               version: getVersionFromId(conversation.id),
                               publicationUrl: url,
                             },
-                            messages: conversation.messages.map((message) => ({
-                              ...message,
-                              custom_content: {
-                                ...message.custom_content,
-                                attachments:
-                                  message.custom_content?.attachments?.map(
-                                    (attachment) => {
-                                      const title = ApiUtils.decodeApiUrl(
-                                        getLastPathSegment(
-                                          attachment.url ?? '',
-                                        ),
-                                      );
-
-                                      return titlesToUpdate.includes(title)
-                                        ? {
-                                            ...attachment,
-                                            title: title ?? 'Attachment',
-                                          }
-                                        : attachment;
-                                    },
+                            messages: updateAttachmentTitles(
+                              conversation.messages,
+                              titlesToUpdate,
+                            ),
+                            playback: conversation.playback
+                              ? {
+                                  ...conversation.playback,
+                                  messagesStack: updateAttachmentTitles(
+                                    conversation.playback.messagesStack,
+                                    titlesToUpdate,
                                   ),
-                              },
-                            })),
+                                }
+                              : undefined,
                           },
                         }),
                       );

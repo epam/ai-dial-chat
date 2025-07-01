@@ -154,6 +154,7 @@ export function ChatMessageContent({
             />
           ) : (
             <AssistantMessage
+              messageIndex={messageIndex}
               message={message}
               conversation={conversation}
               isLastMessage={isLastMessage}

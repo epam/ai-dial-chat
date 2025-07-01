@@ -8,6 +8,7 @@ import {
   prepareEntityName,
 } from '@/src/utils/app/common';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { getStringValidationErrors } from '@/src/utils/app/forms';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
   getDefaultAllEditEntities,
@@ -88,8 +89,6 @@ export function PublicationHandler({ publication }: Props) {
 
   const { t } = useTranslation(Translation.Chat);
 
-  const [isCompareModalOpened, setIsCompareModalOpened] = useState(false);
-
   const rules = useAppSelector((state) =>
     PublicationSelectors.selectRulesByPath(state, publication.targetFolder),
   );
@@ -114,9 +113,23 @@ export function PublicationHandler({ publication }: Props) {
   );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
 
+  const [isCompareModalOpened, setIsCompareModalOpened] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
+
   const publicationAuthor = useMemo(() => {
     return extractNameFromEmail(publication.author) ?? t('Unknown');
   }, [publication.author, t]);
+
+  useEffect(() => {
+    if (isEditMode) {
+      setErrors(() =>
+        getStringValidationErrors({
+          value: publication.displayAuthor ?? '',
+          label: 'Author',
+        }),
+      );
+    }
+  }, [isEditMode, publication.displayAuthor]);
 
   useEffect(() => {
     if (publication.targetFolder !== PUBLIC_URL_PREFIX) {
@@ -182,7 +195,7 @@ export function PublicationHandler({ publication }: Props) {
               const newApiKey = regenerateApiKeyNameAndVersionParts(
                 reviewUrl,
                 name,
-                version,
+                version.trim(),
               );
 
               return {
@@ -211,6 +224,12 @@ export function PublicationHandler({ publication }: Props) {
 
   const handleChangeDisplayAuthor = useCallback(
     (value: string) => {
+      setErrors(() =>
+        getStringValidationErrors({
+          value: value,
+          label: 'Author',
+        }),
+      );
       if (
         value.length <= MAX_ENTITY_LENGTH ||
         value.length < displayAuthorEditState.length
@@ -312,10 +331,8 @@ export function PublicationHandler({ publication }: Props) {
                   )}
                   editValue={displayAuthorEditState}
                   onChangeValue={handleChangeDisplayAuthor}
-                  inputClassName={
-                    !displayAuthorEditState ? 'border-b-error' : ''
-                  }
                   isEditMode={isEditMode}
+                  errors={errors}
                 />
 
                 <PublicationInfoSection
