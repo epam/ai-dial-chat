@@ -246,60 +246,41 @@ export function PublicationHandler({ publication }: Props) {
     : '';
   const publicationName = publication.name || getPublicationId(publication.url);
 
-  const initialEditState = useMemo(
-    () => getDefaultAllEditEntities(publication.resources),
-    [publication.resources],
-  );
-  const hasUserChangedEntitiesOrAuthor = useMemo(() => {
-    const isEntityChanged = Object.entries(entitiesEditState).some(
-      ([id, { name, version }]) => {
-        const initial = initialEditState.entities[id];
-        return initial?.name !== name || initial?.version !== version;
-      },
+  const initialState = useMemo(() => {
+    const { entities, folders } = getDefaultAllEditEntities(
+      publication.resources,
     );
-    const isAuthorChanged =
-      displayAuthorEditState !== (publication.displayAuthor ?? '');
-    return isEntityChanged || isAuthorChanged;
+
+    const initialRules = publication.rules ?? [];
+    const initialDisplayAuthor = publication.displayAuthor ?? '';
+
+    return {
+      entities,
+      folders,
+      rules: initialRules,
+      displayAuthor: initialDisplayAuthor,
+    };
+  }, [publication]);
+
+  const isFormChanged = useMemo(() => {
+    const entitiesChanged = !isEqual(initialState.entities, entitiesEditState);
+    const foldersChanged = !isEqual(initialState.folders, foldersEditState);
+    const rulesChanged = !isEqual(initialState.rules, rulesOnEdit);
+    const authorChanged = initialState.displayAuthor !== displayAuthorEditState;
+
+    return entitiesChanged || foldersChanged || rulesChanged || authorChanged;
   }, [
+    initialState,
     entitiesEditState,
-    initialEditState,
+    foldersEditState,
+    rulesOnEdit,
     displayAuthorEditState,
-    publication.displayAuthor,
   ]);
 
   const hasUserChangedRules = useMemo(() => {
     const initialRules = publication.rules ?? [];
     return !isEqual(initialRules, rulesOnEdit);
   }, [publication.rules, rulesOnEdit]);
-
-  const initialFoldersState = useMemo(() => {
-    const root: FolderNode = { [EDITED_FOLDER_NAME_KEY]: 'root' };
-
-    publication.resources.forEach((resource) => {
-      const path = getFolderIdFromEntityId(resource.reviewUrl);
-      const segments = path.split('/');
-      let currentNode: FolderNode = root;
-
-      segments.forEach((segment) => {
-        if (!currentNode[segment]) {
-          currentNode[segment] = { [EDITED_FOLDER_NAME_KEY]: segment };
-        }
-        currentNode = currentNode[segment] as FolderNode;
-      });
-    });
-
-    const { [EDITED_FOLDER_NAME_KEY]: __, ...children } = root;
-    return children as FolderNode;
-  }, [publication.resources]);
-
-  const hasUserChangedFolders = useMemo(() => {
-    return !isEqual(initialFoldersState, foldersEditState);
-  }, [initialFoldersState, foldersEditState]);
-
-  const isFormChanged =
-    hasUserChangedEntitiesOrAuthor ||
-    hasUserChangedRules ||
-    hasUserChangedFolders;
 
   const debouncedIsFormChanged = useDebounce(isFormChanged, 300);
 
