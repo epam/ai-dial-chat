@@ -241,6 +241,11 @@ export class LocalStorageManager {
     return recentModelsIds ? JSON.parse(recentModelsIds) : '';
   }
 
+  async getSettings(originHost?: string) {
+    const settings = await this.getKey('settings', originHost);
+    return settings ? JSON.parse(settings) : '';
+  }
+
   private async getKey(key: string, originHost?: string) {
     const storage = await this.page.context().storageState();
     const origin = originHost
