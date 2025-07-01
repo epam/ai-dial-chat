@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { useDebounce } from '@/src/hooks/useDebounce';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -249,8 +250,7 @@ export function PublicationHandler({ publication }: Props) {
     () => getDefaultAllEditEntities(publication.resources),
     [publication.resources],
   );
-
-  const isEntityOrAuthorChanged = useMemo(() => {
+  const hasUserChangedEntitiesOrAuthor = useMemo(() => {
     const isEntityChanged = Object.entries(entitiesEditState).some(
       ([id, { name, version }]) => {
         const initial = initialEditState.entities[id];
@@ -259,7 +259,6 @@ export function PublicationHandler({ publication }: Props) {
     );
     const isAuthorChanged =
       displayAuthorEditState !== (publication.displayAuthor ?? '');
-
     return isEntityChanged || isAuthorChanged;
   }, [
     entitiesEditState,
@@ -268,11 +267,41 @@ export function PublicationHandler({ publication }: Props) {
     publication.displayAuthor,
   ]);
 
-  const initialRules = publication.rules ?? [];
+  const hasUserChangedRules = useMemo(() => {
+    const initialRules = publication.rules ?? [];
+    return !isEqual(initialRules, rulesOnEdit);
+  }, [publication.rules, rulesOnEdit]);
 
-  const areRulesChanged =
-    !isRulesLoading && !isEqual(initialRules, rulesOnEdit);
-  const isFormChanged = isEntityOrAuthorChanged || areRulesChanged;
+  const initialFoldersState = useMemo(() => {
+    const root: FolderNode = { [EDITED_FOLDER_NAME_KEY]: 'root' };
+
+    publication.resources.forEach((resource) => {
+      const path = getFolderIdFromEntityId(resource.reviewUrl);
+      const segments = path.split('/');
+      let currentNode: FolderNode = root;
+
+      segments.forEach((segment) => {
+        if (!currentNode[segment]) {
+          currentNode[segment] = { [EDITED_FOLDER_NAME_KEY]: segment };
+        }
+        currentNode = currentNode[segment] as FolderNode;
+      });
+    });
+
+    const { [EDITED_FOLDER_NAME_KEY]: __, ...children } = root;
+    return children as FolderNode;
+  }, [publication.resources]);
+
+  const hasUserChangedFolders = useMemo(() => {
+    return !isEqual(initialFoldersState, foldersEditState);
+  }, [initialFoldersState, foldersEditState]);
+
+  const isFormChanged =
+    hasUserChangedEntitiesOrAuthor ||
+    hasUserChangedRules ||
+    hasUserChangedFolders;
+
+  const debouncedIsFormChanged = useDebounce(isFormChanged, 300);
 
   return (
     <div className="flex size-full justify-center overflow-y-auto p-0 md:px-5 md:pt-5">
@@ -348,7 +377,7 @@ export function PublicationHandler({ publication }: Props) {
                     <p data-qa="allow-access-label">
                       {t('Allow access if all match')}
                     </p>
-                    {areRulesChanged ? (
+                    {hasUserChangedRules ? (
                       <span
                         onClick={() => setIsCompareModalOpened(true)}
                         className="cursor-pointer text-accent-primary"
@@ -411,7 +440,7 @@ export function PublicationHandler({ publication }: Props) {
         <PublicationHandlerFooter
           onUpdateRequest={handleUpdateRequest}
           publication={publication}
-          isFormChanged={isFormChanged}
+          isFormChanged={debouncedIsFormChanged}
         />
       </div>
       {isCompareModalOpened && publication.targetFolder && (
