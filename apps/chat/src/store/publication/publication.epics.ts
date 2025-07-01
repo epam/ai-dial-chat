@@ -1510,8 +1510,9 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
           } else {
             updateEntityActions.push(
               of(
-                PromptsActions.setSelectedPrompt({
+                PromptsActions.selectPrompt({
                   promptId: payload.newEntity.id,
+                  isApproveRequiredResource: true,
                 }),
               ),
             );
