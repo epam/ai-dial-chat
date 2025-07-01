@@ -152,10 +152,9 @@ dialTest(
 
         // First, wait for the preview panel to render the correct, indexed name.
         // This acts as a reliable synchronization point.
-        await baseAssertion.assertElementText(
-          appEditorGeneralInfoAgentPreview.previewName,
-          defaultAppNamePattern,
-        );
+        await appEditorGeneralInfoAgentPreview.previewName
+          .getElementLocatorByText(defaultAppNamePattern)
+          .waitFor();
 
         await baseAssertion.assertInputValue(
           appEditorGeneralForm.name,
@@ -1333,13 +1332,16 @@ dialTest(
       },
     );
 
+    await dialTest.step('Add attachment type (e.g., image/png)', async () => {
+      await appEditorViewForm.fillInAppFields({
+        attachmentTypes: [attachmentTypeToSet],
+      });
+    });
+
     //TODO blocked by the issue 4225
     await dialTest.step.skip(
-      'Add attachment type (e.g., image/png) and verify clip icon appears in preview chat message box',
+      'Verify clip icon appears in preview chat message box',
       async () => {
-        await appEditorViewForm.fillInAppFields({
-          attachmentTypes: [attachmentTypeToSet],
-        });
         await sendMessage.click();
         const previewChatAttachmentButton = sendMessage.attachmentMenuTrigger;
         await baseAssertion.assertElementState(
