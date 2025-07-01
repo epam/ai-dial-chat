@@ -63,7 +63,9 @@ export class ConversationApiStorage extends ApiEntityStorage<
   }
 }
 
-export const getOrUploadConversation = <T extends { id: string }>(
+export const getOrUploadConversation = <
+  T extends { id: string; isApproveRequiredEntity?: boolean },
+>(
   payload: T,
   state: RootState,
 ): Observable<{
@@ -77,7 +79,9 @@ export const getOrUploadConversation = <T extends { id: string }>(
   );
 
   if (!conversation) {
-    conversation = getConversationInfoFromId(payload.id);
+    conversation = getConversationInfoFromId(payload.id, {
+      parseVersion: !!payload.isApproveRequiredEntity,
+    });
   }
 
   if (

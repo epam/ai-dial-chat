@@ -1503,6 +1503,7 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
                         : id,
                     ),
                     suspendHideSidebar: false,
+                    isApproveRequiredEntity: true,
                   }),
                 ),
               );
