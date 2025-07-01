@@ -296,7 +296,13 @@ export const PublicationHandlerFooter = ({
       const isValidVersion =
         isFileId(key) ||
         (isVersionValid(version.trim()) &&
-          !isVersionExists(version, key, publicVersionGroups, name) &&
+          !isVersionExists(
+            version,
+            key,
+            publicVersionGroups,
+            name,
+            publication.targetFolder,
+          ) &&
           (!isApplicationId(key) || isVersionPartSizeValid(version)));
 
       return isInvalidName || !isValidVersion;
