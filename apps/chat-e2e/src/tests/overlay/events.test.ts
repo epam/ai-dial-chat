@@ -538,7 +538,9 @@ dialOverlayTest(
         );
         await overlayHomePage.waitForPageLoaded();
         const newConversationData =
-          await overlayActions.clickCreateConversationInInnerFolder();
+          await overlayActions.clickCreateConversationInInnerFolder(
+            expectedFoldersPath,
+          );
         await overlayBaseAssertion.assertElementState(overlayDialog, 'visible');
         const actualMessages =
           await overlayDialog.content.getElementInnerContent();
