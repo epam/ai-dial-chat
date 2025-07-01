@@ -52,10 +52,3 @@ export interface MessageButtons {
   messageIndex: number;
   buttons: MessageButton[];
 }
-
-// Feature.EditLastAssistantContent
-// Feature.EditAllAssistantContent
-
-// 1. Edit content only (Mikita)
-// 2. Attachments editing (DIAL Chat team)
-// 3. Stages editing (DIAL Chat team)
