@@ -739,9 +739,9 @@ dialTest(
     applicationApiHelper,
   }) => {
     setTestIds('EPMRTC-6448');
-    const firstTerm = '72.73.7';
-    const secondTerm = '36.37.3';
-    const thirdTerm = '72.73.8';
+    const firstTerm = '71234.71234.9';
+    const secondTerm = '36789.30123.4';
+    const thirdTerm = '71234.71234.0';
     const firstAppName = `${GeneratorUtil.randomApplicationName()} ${firstTerm}`;
     const secondAppName = `${GeneratorUtil.randomApplicationName()} ${secondTerm}`;
     const thirdAppName = GeneratorUtil.randomApplicationName();
@@ -763,12 +763,12 @@ dialTest(
       thirdAppName,
       fourthAppName,
     ]);
-    searchTermResultMap.set(firstTerm.concat('1'), [
+    searchTermResultMap.set(firstTerm.concat('189'), [
       firstAppName,
       secondAppName,
       thirdAppName,
     ]);
-    searchTermResultMap.set(firstTerm.concat('15'), [thirdAppName]);
+    searchTermResultMap.set(firstTerm.concat('1567'), [thirdAppName]);
 
     await dialTest.step(
       'Prepare the set of custom applications with mixture of terms in the name and version',
@@ -827,10 +827,10 @@ dialTest(
     );
 
     await dialTest.step(
-      'Type "72.73.71555" in the search field and verify no results are found',
+      'Type "71234.71234.915555" in the search field and verify no results are found',
       async () => {
         await marketplaceHeader.searchInput.fillInInput(
-          firstTerm.concat('1555'),
+          firstTerm.concat('15555'),
         );
         await baseAssertion.assertElementState(
           marketplace.noResultsFound,

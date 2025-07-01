@@ -465,7 +465,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
                 };
 
                 newOptions.theme = 'light';
-                newOptions.modelId = 'dall-e-3';
+                newOptions.modelId = 'imagegeneration@005';
 
                 overlay.current?.setOverlayOptions(newOptions);
               }}
