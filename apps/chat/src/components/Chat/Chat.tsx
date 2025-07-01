@@ -566,13 +566,12 @@ const ChatView = memo(() => {
   const isValidApproveRequiredConversation =
     isApproveRequiredEntity && !isReplay && !isPlayback;
   const showLastMessageRegenerate =
-    (!isReplay &&
-      !isPlayback &&
-      !isReadOnly &&
-      !messageIsStreaming &&
-      !isLastMessageError &&
-      !notAvailableEntityType) ||
-    isValidApproveRequiredConversation;
+    !isReplay &&
+    !isPlayback &&
+    (!isReadOnly || isApproveRequiredEntity) &&
+    !messageIsStreaming &&
+    !isLastMessageError &&
+    !notAvailableEntityType;
 
   const areSelectedConversationsEmpty = selectedConversations.every(
     (conv) => !conv.messages.length,
