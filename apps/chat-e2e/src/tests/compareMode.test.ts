@@ -741,7 +741,6 @@ dialTest(
     conversationSettingsModal,
     rightChatHeader,
     talkToAgentDialog,
-    marketplacePage,
     modelInfoTooltip,
     chatSettingsTooltip,
     errorPopup,
@@ -824,16 +823,10 @@ dialTest(
         );
         await compare.waitForComparedConversationsLoaded();
         await leftChatHeader.chatAgent.click();
-        await talkToAgentDialog.selectAgent(
-          firstUpdatedRandomModel,
-          marketplacePage,
-        );
+        await talkToAgentDialog.selectAgent(firstUpdatedRandomModel);
         await compare.waitForComparedConversationsLoaded();
         await rightChatHeader.chatAgent.click();
-        await talkToAgentDialog.selectAgent(
-          secondUpdatedRandomModel,
-          marketplacePage,
-        );
+        await talkToAgentDialog.selectAgent(secondUpdatedRandomModel);
         await compare.waitForComparedConversationsLoaded();
 
         await leftChatHeader.openConversationSettingsPopup();

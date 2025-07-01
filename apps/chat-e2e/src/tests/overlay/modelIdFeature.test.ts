@@ -34,7 +34,6 @@ dialOverlayTest(
     overlayTalkToAgentDialog,
     overlayHeader,
     overlayConversations,
-    overlayMarketplacePage,
     overlayIconApiHelper,
     overlayBaseAssertion,
     overlayApiAssertion,
@@ -100,8 +99,7 @@ dialOverlayTest(
 
     await dialTest.step('Select a new agent and send the request', async () => {
       await overlayTalkToAgentDialog.selectAgent(
-        randomModel,
-        overlayMarketplacePage,
+        randomModel
       );
       const request =
         await overlayChat.sendRequestWithButton(randomAgentRequest);

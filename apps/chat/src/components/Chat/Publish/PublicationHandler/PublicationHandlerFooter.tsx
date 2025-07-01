@@ -5,7 +5,14 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { isVersionValid, prepareEntityName } from '@/src/utils/app/common';
+import { useScreenState } from '@/src/hooks/useScreenState';
+
+import {
+  isEntityNameValid,
+  isVersionExists,
+  isVersionPartSizeValid,
+  isVersionValid,
+} from '@/src/utils/app/common';
 import {
   getFolderIdFromEntityId,
   getParentFolderIdsFromEntityId,
@@ -23,6 +30,7 @@ import {
   getReviewItems,
 } from '@/src/utils/app/publications';
 
+import { ScreenState } from '@/src/types/common';
 import { Publication, ResourceToReview } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
@@ -42,9 +50,6 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
-import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
-import { NA_VERSION } from '@/src/constants/publication';
-
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
@@ -61,6 +66,9 @@ export const PublicationHandlerFooter = ({
   onUpdateRequest,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+
+  const screenState = useScreenState();
+  const isSmallScreen = screenState === ScreenState.SM;
 
   const files = useAppSelector(FilesSelectors.selectFiles);
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
@@ -88,6 +96,10 @@ export const PublicationHandlerFooter = ({
   );
   const itemsToPublish = useAppSelector(
     PublicationSelectors.selectSelectedItemsToPublish,
+  );
+
+  const publicVersionGroups = useAppSelector(
+    PublicationSelectors.selectPublicVersionGroups,
   );
 
   const dispatch = useAppDispatch();
@@ -262,18 +274,23 @@ export const PublicationHandlerFooter = ({
     isFileId(resource.reviewUrl),
   );
   const isAllResourcesReviewed = resourcesToReview.every((r) => r.reviewed);
-  const isNamesOrVersionsInvalid = Object.values(entitiesEditState).some(
-    ({ version, name }) => {
-      return (
-        !prepareEntityName(name) ||
-        (!isVersionValid(version) && version !== NA_VERSION)
-      );
+  const isNamesOrVersionsInvalid = Object.entries(entitiesEditState).some(
+    ([key, { version, name }]) => {
+      const isInvalidName = !isEntityNameValid(name);
+
+      const isValidVersion =
+        isVersionValid(version.trim()) &&
+        !isVersionExists(version, key, publicVersionGroups, name) &&
+        (!isApplicationId(key) || isVersionPartSizeValid(version));
+
+      return isInvalidName || !isValidVersion;
     },
   );
   const isFoldersInvalid = !allEditedFoldersAreValid(foldersEditState);
-  const isDisplayAuthorInvalid =
-    !displayAuthorEditState.trim().length ||
-    displayAuthorEditState.length > MAX_ENTITY_LENGTH;
+  const isDisplayAuthorInvalid = !isEntityNameValid(
+    displayAuthorEditState,
+    false,
+  );
   const isEditDisabled =
     isNamesOrVersionsInvalid || isFoldersInvalid || isDisplayAuthorInvalid;
 
@@ -354,12 +371,12 @@ export const PublicationHandlerFooter = ({
               )}
             >
               <button
-                className="button button-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                className="button button-primary whitespace-nowrap disabled:cursor-not-allowed disabled:text-controls-disable"
                 disabled={!isAllResourcesReviewed || !!invalidEntities.length}
                 onClick={handleApprovePublication}
                 data-qa="approve"
               >
-                {t('Approve')}
+                {isSmallScreen ? t('Approve') : t('Approve selected')}
               </button>
             </Tooltip>
           </>

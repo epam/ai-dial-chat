@@ -336,7 +336,7 @@ const TalkToModalView = ({
             'm-auto mt-4 text-accent-primary md:absolute md:bottom-6 md:right-6',
             isPlayback && 'cursor-not-allowed',
           )}
-          data-qa={isMyWorkspace ? 'go-to-my-workspace' : 'got-to-marketplace'}
+          data-qa={isMyWorkspace ? 'go-to-my-workspace' : 'go-to-marketplace'}
         >
           {t(`Go to ${isMyWorkspace ? 'My workspace' : 'DIAL Marketplace'}`)}
         </Link>
