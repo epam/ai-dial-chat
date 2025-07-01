@@ -2016,10 +2016,12 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
 const uploadSelectedConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ConversationsActions.selectConversations.type),
-    map(() =>
-      ConversationsSelectors.selectSelectedConversationsIds(state$.value),
-    ),
-    switchMap((selectedConversationsIds) => {
+    map(({ payload }) => ({
+      selectedConversationsIds:
+        ConversationsSelectors.selectSelectedConversationsIds(state$.value),
+      isApproveRequiredEntity: payload.isApproveRequiredEntity,
+    })),
+    switchMap(({ selectedConversationsIds, isApproveRequiredEntity }) => {
       const actions: Observable<AppAction>[] = [];
 
       selectedConversationsIds.forEach((id) => {
@@ -2043,6 +2045,7 @@ const uploadSelectedConversationsEpic: AppEpic = (action$, state$) =>
           ConversationsActions.uploadConversationsByIds({
             conversationIds: selectedConversationsIds,
             showLoader: true,
+            isApproveRequiredEntity,
           }),
         ),
       );
@@ -2332,7 +2335,10 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
 
       const uploadedConversations$ = zip(
         conversationIds.map((id) =>
-          getOrUploadConversation({ id }, state$.value).pipe(
+          getOrUploadConversation(
+            { id, isApproveRequiredEntity: payload.isApproveRequiredEntity },
+            state$.value,
+          ).pipe(
             map((result) => result.conversation),
             catchError((err) => {
               console.error('The selected conversation was not found:', err);
