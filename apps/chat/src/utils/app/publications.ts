@@ -46,7 +46,7 @@ import {
   PUBLIC_URL_PREFIX,
 } from '@/src/constants/publication';
 
-import { isVersionValid, prepareEntityName } from './common';
+import { isEntityNameValid, isVersionValid, prepareEntityName } from './common';
 import { BucketService } from './data/bucket-service';
 import { FileService } from './data/file-service';
 import { constructPath } from './file';
@@ -561,13 +561,15 @@ export const allEditedFoldersAreValid = (obj: unknown) => {
     const value = (obj as Record<string, string>)[key];
 
     if (typeof value === 'object' && value !== null) {
-      if (
-        EDITED_FOLDER_NAME_KEY in value &&
-        (!value[EDITED_FOLDER_NAME_KEY] ||
-          prepareEntityName(value[EDITED_FOLDER_NAME_KEY] as string).trim() ===
-            '')
-      ) {
-        return false;
+      if (EDITED_FOLDER_NAME_KEY in value) {
+        if (!value[EDITED_FOLDER_NAME_KEY]) {
+          return false;
+        }
+        const folderName = (value[EDITED_FOLDER_NAME_KEY] as string).trim();
+
+        if (!isEntityNameValid(folderName)) {
+          return false;
+        }
       }
 
       if (!allEditedFoldersAreValid(value)) {
