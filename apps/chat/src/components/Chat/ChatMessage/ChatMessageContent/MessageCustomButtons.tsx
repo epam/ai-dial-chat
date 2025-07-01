@@ -64,6 +64,8 @@ const MessageCustomButton = ({ button, onEvent }: ButtonProps) => {
     };
   }, [button.events, onEvent]);
 
+  if (!button.iconSvg && !button.title) return null;
+
   return (
     <Tooltip tooltip={button.tooltip}>
       <button
@@ -89,11 +91,13 @@ const MessageCustomButton = ({ button, onEvent }: ButtonProps) => {
             : undefined),
         }}
       >
-        <span
-          dangerouslySetInnerHTML={
-            button.iconSvg ? { __html: button.iconSvg } : undefined
-          }
-        ></span>
+        {button.iconSvg && (
+          <span
+            dangerouslySetInnerHTML={
+              button.iconSvg ? { __html: button.iconSvg } : undefined
+            }
+          ></span>
+        )}
         {button.title && <span>{button.title}</span>}
       </button>
     </Tooltip>
