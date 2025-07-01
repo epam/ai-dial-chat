@@ -23,6 +23,7 @@ enum OverlayCases {
   enabledHideUserSettingsSandboxOverlay = '/cases/overlay/enabled-hide-user-settings-sandbox',
   loaderHideEventSetSandbox = '/cases/overlay/loader-hide-event-set-sandbox',
   skipFocusSetSandbox = '/cases/overlay/skip-focus-set-sandbox',
+  customMessageButtons = '/cases/overlay/custom-message-buttons',
   disabledCustomAppOverlay = '/cases/overlay/disabled-custom-app-sandbox',
   enabledCodeAppOverlay = '/cases/overlay/enabled-code-app-sandbox',
   enabledMarketplaceTableViewOverlay = '/cases/overlay/enabled-marketplace-table-view-sandbox',

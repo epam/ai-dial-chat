@@ -23,7 +23,9 @@ export class ItemApiHelper extends BaseApiHelper {
     await this.deleteBackendItem(
       ...conversations,
       ...prompts,
-      ...apps.filter((a) => a.name.includes(applicationNamePrefix)),
+      ...apps.filter((a) =>
+        a.name.toLowerCase().includes(applicationNamePrefix.toLowerCase()),
+      ),
     );
   }
 
