@@ -148,6 +148,15 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
         console.info('Conversations updated');
       },
     );
+    overlay.current?.subscribe(
+      `@DIAL_OVERLAY/${OverlayEvents.messageCustomButton}`,
+      async (info) => {
+        console.info(
+          'Custom message button event',
+          JSON.stringify(info, null, 2),
+        );
+      },
+    );
 
     overlay.current?.getMessages().then((messages) => {
       console.info(messages);

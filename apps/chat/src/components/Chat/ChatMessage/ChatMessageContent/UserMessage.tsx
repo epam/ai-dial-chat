@@ -53,6 +53,8 @@ import { UserSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/Mess
 import { MessageAttachments } from '@/src/components/Chat/MessageAttachments';
 import { AttachButton } from '@/src/components/Files/AttachButton';
 
+import { MessageCustomButtons } from './MessageCustomButtons';
+
 import {
   Feature,
   Message,
@@ -616,7 +618,11 @@ export const UserMessage = memo(function UserMessage({
             {message.content}
           </div>
         )}
+
         <MessageAttachments attachments={message.custom_content?.attachments} />
+
+        {isOverlay && <MessageCustomButtons messageIndex={messageIndex} />}
+
         <div
           ref={anchorRef}
           className="absolute bottom-[-140px] select-none"
