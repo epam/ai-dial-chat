@@ -1,4 +1,4 @@
-import { ChatOverlayOptions } from '@epam/ai-dial-shared';
+import { ChatOverlayOptions, MessageButtons } from '@epam/ai-dial-shared';
 
 export interface OverlayState {
   // Special property to check against when comparing new overlay options
@@ -12,4 +12,6 @@ export interface OverlayState {
 
   readyToInteractSent: boolean;
   optionsReceived?: boolean;
+
+  customMessageButtons: MessageButtons[];
 }

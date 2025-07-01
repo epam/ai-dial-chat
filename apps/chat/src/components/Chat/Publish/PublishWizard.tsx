@@ -13,7 +13,12 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getLastPathSegment, isVersionValid } from '@/src/utils/app/common';
+import {
+  getLastPathSegment,
+  isVersionValid,
+  prepareEntityName,
+  replaceSpacesFromString,
+} from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import {
@@ -70,7 +75,12 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 import { PublicationInfoSection } from './PublicationInfoSection';
 import { PublicationItemsList } from './PublicationItemsList';
 import { RuleListItem } from './RuleListItem';
-import { PublicationRequestFormData, validators } from './form';
+import {
+  PublicationRequestFormData,
+  PublishRequestFieldsNames,
+  publishRequestFields,
+  validators,
+} from './form';
 
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 import compact from 'lodash-es/compact';
@@ -181,9 +191,12 @@ export function PublishModal<
     trigger,
   } = useForm<PublicationRequestFormData>({
     defaultValues: {
-      publishRequestName: getPublicationDefaultName(userName),
-      publicationAuthor: userName ?? '',
+      publishRequestName: getPublicationDefaultName(
+        prepareEntityName(replaceSpacesFromString(userName)),
+      ),
+      publicationAuthor: prepareEntityName(replaceSpacesFromString(userName)),
     },
+
     mode: 'onChange',
   });
 
@@ -488,13 +501,16 @@ export function PublishModal<
         <div className="py-4 pl-3 pr-10 md:pl-4">
           <Field
             className="border-none p-0 text-base font-semibold"
-            {...register('publishRequestName', validators.publishRequestName)}
+            {...register(
+              PublishRequestFieldsNames.PUBLISH_REQUEST_NAME,
+              validators.publishRequestName,
+            )}
             placeholder={
               publishAction === PublishActions.ADD
                 ? t('Type publication request name...')
                 : t('Type unpublish request name...')
             }
-            id="publishRequestName"
+            id={PublishRequestFieldsNames.PUBLISH_REQUEST_NAME}
             error={errors.publishRequestName?.message}
             dataQa="request-name"
           />
@@ -549,12 +565,16 @@ export function PublishModal<
                 <section>
                   <Field
                     {...register(
-                      'publicationAuthor',
+                      PublishRequestFieldsNames.PUBLICATION_AUTHOR,
                       validators.publicationAuthor,
                     )}
                     placeholder={t(`Type publication's author name...`)}
-                    label={t('Author')}
-                    id="publicationAuthor"
+                    label={t(
+                      publishRequestFields[
+                        PublishRequestFieldsNames.PUBLICATION_AUTHOR
+                      ].label,
+                    )}
+                    id={PublishRequestFieldsNames.PUBLICATION_AUTHOR}
                     error={errors.publicationAuthor?.message}
                     dataQa="public-author-input"
                   />
