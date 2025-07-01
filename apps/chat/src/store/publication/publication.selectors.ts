@@ -1,5 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import { getPartialAndFullyChosenFolders } from '@/src/utils/app/folders';
 import { isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 
@@ -153,28 +154,11 @@ const _selectChosenFolderIds = createSelector(
       itemsShouldBeChosen,
   ],
   (selectedItems, folders, itemsShouldBeChosen) => {
-    const fullyChosenFolderIds = folders
-      .map((folder) => `${folder.id}/`)
-      .filter((folderId) =>
-        itemsShouldBeChosen.some((item) => item.id.startsWith(folderId)),
-      )
-      .filter((folderId) =>
-        itemsShouldBeChosen
-          .filter((item) => item.id.startsWith(folderId))
-          .every((item) => selectedItems.includes(item.id)),
-      );
-
-    const partialChosenFolderIds = folders
-      .map((folder) => `${folder.id}/`)
-      .filter(
-        (folderId) =>
-          !selectedItems.some((chosenId) => folderId.startsWith(chosenId)) &&
-          (selectedItems.some((chosenId) => chosenId.startsWith(folderId)) ||
-            selectedItems.some((entityId) => entityId.startsWith(folderId))) &&
-          !fullyChosenFolderIds.includes(folderId),
-      );
-
-    return { partialChosenFolderIds, fullyChosenFolderIds };
+    return getPartialAndFullyChosenFolders(
+      folders,
+      itemsShouldBeChosen,
+      selectedItems,
+    );
   },
 );
 
@@ -186,28 +170,11 @@ const _selectChosenFolderIdsToApprove = createSelector(
       itemsShouldBeChosen,
   ],
   (selectedItems, folders, itemsShouldBeChosen) => {
-    const fullyChosenFolderIds = folders
-      .map((folder) => `${folder.id}/`)
-      .filter((folderId) =>
-        itemsShouldBeChosen.some((item) => item.id.startsWith(folderId)),
-      )
-      .filter((folderId) =>
-        itemsShouldBeChosen
-          .filter((item) => item.id.startsWith(folderId))
-          .every((item) => selectedItems.includes(item.id)),
-      );
-
-    const partialChosenFolderIds = folders
-      .map((folder) => `${folder.id}/`)
-      .filter(
-        (folderId) =>
-          !selectedItems.some((chosenId) => folderId.startsWith(chosenId)) &&
-          (selectedItems.some((chosenId) => chosenId.startsWith(folderId)) ||
-            selectedItems.some((entityId) => entityId.startsWith(folderId))) &&
-          !fullyChosenFolderIds.includes(folderId),
-      );
-
-    return { partialChosenFolderIds, fullyChosenFolderIds };
+    return getPartialAndFullyChosenFolders(
+      folders,
+      itemsShouldBeChosen,
+      selectedItems,
+    );
   },
 );
 
