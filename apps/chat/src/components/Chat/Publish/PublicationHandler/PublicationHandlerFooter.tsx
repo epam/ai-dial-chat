@@ -294,9 +294,10 @@ export const PublicationHandlerFooter = ({
       const isInvalidName = !isEntityNameValid(name);
 
       const isValidVersion =
-        isVersionValid(version.trim()) &&
-        !isVersionExists(version, key, publicVersionGroups, name) &&
-        (!isApplicationId(key) || isVersionPartSizeValid(version));
+        isFileId(key) ||
+        (isVersionValid(version.trim()) &&
+          !isVersionExists(version, key, publicVersionGroups, name) &&
+          (!isApplicationId(key) || isVersionPartSizeValid(version)));
 
       return isInvalidName || !isValidVersion;
     },
@@ -306,6 +307,7 @@ export const PublicationHandlerFooter = ({
     displayAuthorEditState,
     false,
   );
+
   const isEditDisabled =
     isNamesOrVersionsInvalid || isFoldersInvalid || isDisplayAuthorInvalid;
   const someReviewedConversationHaveNoMessages =
