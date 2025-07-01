@@ -131,6 +131,20 @@ const selectIsAllItemsUploaded = (state: RootState, featureType: FeatureType) =>
 const selectSelectedItemsToPublish = (state: RootState) =>
   rootSelector(state).selectedItemsToPublish;
 
+const selectAllSelectedItemsToApprove = (state: RootState) =>
+  rootSelector(state).selectedItemsToApprove;
+
+const selectSelectedItemsToApprove = createSelector(
+  [selectAllSelectedItemsToApprove, selectSelectedPublicationUrl],
+  (selectedItemsToApprove, selectedPublicationUrl) => {
+    if (!selectedPublicationUrl) {
+      return [];
+    }
+
+    return selectedItemsToApprove[selectedPublicationUrl] ?? [];
+  },
+);
+
 const _selectChosenFolderIds = createSelector(
   [
     selectSelectedItemsToPublish,
@@ -138,7 +152,7 @@ const _selectChosenFolderIds = createSelector(
     (_state, _folders: FolderInterface[], itemsShouldBeChosen: ShareEntity[]) =>
       itemsShouldBeChosen,
   ],
-  (selectedItemsToPublish, folders, itemsShouldBeChosen) => {
+  (selectedItems, folders, itemsShouldBeChosen) => {
     const fullyChosenFolderIds = folders
       .map((folder) => `${folder.id}/`)
       .filter((folderId) =>
@@ -147,22 +161,49 @@ const _selectChosenFolderIds = createSelector(
       .filter((folderId) =>
         itemsShouldBeChosen
           .filter((item) => item.id.startsWith(folderId))
-          .every((item) => selectedItemsToPublish.includes(item.id)),
+          .every((item) => selectedItems.includes(item.id)),
       );
 
     const partialChosenFolderIds = folders
       .map((folder) => `${folder.id}/`)
       .filter(
         (folderId) =>
-          !selectedItemsToPublish.some((chosenId) =>
-            folderId.startsWith(chosenId),
-          ) &&
-          (selectedItemsToPublish.some((chosenId) =>
-            chosenId.startsWith(folderId),
-          ) ||
-            selectedItemsToPublish.some((entityId) =>
-              entityId.startsWith(folderId),
-            )) &&
+          !selectedItems.some((chosenId) => folderId.startsWith(chosenId)) &&
+          (selectedItems.some((chosenId) => chosenId.startsWith(folderId)) ||
+            selectedItems.some((entityId) => entityId.startsWith(folderId))) &&
+          !fullyChosenFolderIds.includes(folderId),
+      );
+
+    return { partialChosenFolderIds, fullyChosenFolderIds };
+  },
+);
+
+const _selectChosenFolderIdsToApprove = createSelector(
+  [
+    selectSelectedItemsToApprove,
+    (_state, folders: FolderInterface[]) => folders,
+    (_state, _folders: FolderInterface[], itemsShouldBeChosen: ShareEntity[]) =>
+      itemsShouldBeChosen,
+  ],
+  (selectedItems, folders, itemsShouldBeChosen) => {
+    const fullyChosenFolderIds = folders
+      .map((folder) => `${folder.id}/`)
+      .filter((folderId) =>
+        itemsShouldBeChosen.some((item) => item.id.startsWith(folderId)),
+      )
+      .filter((folderId) =>
+        itemsShouldBeChosen
+          .filter((item) => item.id.startsWith(folderId))
+          .every((item) => selectedItems.includes(item.id)),
+      );
+
+    const partialChosenFolderIds = folders
+      .map((folder) => `${folder.id}/`)
+      .filter(
+        (folderId) =>
+          !selectedItems.some((chosenId) => folderId.startsWith(chosenId)) &&
+          (selectedItems.some((chosenId) => chosenId.startsWith(folderId)) ||
+            selectedItems.some((entityId) => entityId.startsWith(folderId))) &&
           !fullyChosenFolderIds.includes(folderId),
       );
 
@@ -173,6 +214,10 @@ const _selectChosenFolderIds = createSelector(
 const selectChosenFolderIds =
   (folders: FolderInterface[], items: ShareEntity[]) => (state: RootState) =>
     _selectChosenFolderIds(state, folders, items);
+
+const selectChosenFolderIdsToApprove =
+  (folders: FolderInterface[], items: ShareEntity[]) => (state: RootState) =>
+    _selectChosenFolderIdsToApprove(state, folders, items);
 
 const selectPublicationsToReviewCount = createSelector(
   [
@@ -313,7 +358,10 @@ export const PublicationSelectors = {
   selectIsRulesLoading,
   selectIsAllItemsUploaded,
   selectSelectedItemsToPublish,
+  selectAllSelectedItemsToApprove,
+  selectSelectedItemsToApprove,
   selectChosenFolderIds,
+  selectChosenFolderIdsToApprove,
   selectPublicationsToReviewCount,
   selectIsFolderContainsResourcesToReview,
   selectIsApplicationReview,

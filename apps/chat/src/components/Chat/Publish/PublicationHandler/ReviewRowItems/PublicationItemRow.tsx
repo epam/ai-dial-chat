@@ -196,11 +196,14 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   const dispatch = useAppDispatch();
 
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
+  const selectedPublication = useAppSelector(
+    PublicationSelectors.selectSelectedPublication,
+  );
   const entityEditState = useAppSelector((state) =>
     PublicationSelectors.selectEntityEditStateByReviewUrl(state, item.id),
   );
   const selectedPublicationResources = useAppSelector(
-    PublicationSelectors.selectSelectedItemsToPublish,
+    PublicationSelectors.selectSelectedItemsToApprove,
   );
 
   const isSelected = useMemo(
@@ -256,11 +259,12 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
 
   const handleSelect = useCallback(() => {
     dispatch(
-      PublicationActions.selectItemsToPublish({
+      PublicationActions.selectItemsToApprove({
+        publicationUrl: selectedPublication?.url ?? '',
         ids: [item.id],
       }),
     );
-  }, [dispatch, item.id]);
+  }, [dispatch, item.id, selectedPublication?.url]);
 
   const isDeleteAction = item.publicationInfo?.action === PublishActions.DELETE;
 

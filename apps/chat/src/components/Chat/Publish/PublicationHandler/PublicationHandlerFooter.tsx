@@ -94,8 +94,8 @@ export const PublicationHandlerFooter = ({
   const displayAuthorEditState = useAppSelector(
     PublicationSelectors.selectDisplayAuthorEditState,
   );
-  const itemsToPublish = useAppSelector(
-    PublicationSelectors.selectSelectedItemsToPublish,
+  const itemsToApprove = useAppSelector(
+    PublicationSelectors.selectSelectedItemsToApprove,
   );
 
   const publicVersionGroups = useAppSelector(
@@ -269,7 +269,7 @@ export const PublicationHandlerFooter = ({
   );
 
   const handleApprovePublication = useCallback(() => {
-    if (itemsToPublish.length !== publication.resources.length) {
+    if (itemsToApprove.length !== publication.resources.length) {
       dispatch(PublicationActions.updateAndApprovePublicationRequest());
     } else {
       dispatch(
@@ -280,7 +280,7 @@ export const PublicationHandlerFooter = ({
     }
   }, [
     dispatch,
-    itemsToPublish.length,
+    itemsToApprove.length,
     publication.resources.length,
     publication.url,
   ]);
