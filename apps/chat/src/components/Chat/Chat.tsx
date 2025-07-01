@@ -856,7 +856,8 @@ const ChatView = memo(() => {
                                                 isReadOnly ||
                                                 isReplay ||
                                                 isPlayback) &&
-                                              !isValidApproveRequiredConversation
+                                              (!isValidApproveRequiredConversation ||
+                                                !!notAvailableEntityType)
                                             }
                                             onEdit={onEditMessage}
                                             onLike={onLikeHandler(index, conv)}
