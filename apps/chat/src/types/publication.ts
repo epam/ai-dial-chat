@@ -23,29 +23,29 @@ export interface PublicationRule {
   targets: string[];
 }
 
-export interface PublicationRequestModel {
-  name: string;
+export interface BasePublicationRequestModel {
   displayAuthor?: string;
   targetFolder: string;
-  resources: {
-    action: PublishActions;
-    sourceUrl?: string;
-    reviewUrl?: string;
-    targetUrl: string;
-  }[];
   rules?: PublicationRule[];
 }
 
-export interface PublicationUpdateRequestModel {
-  displayAuthor?: string;
-  targetFolder: string;
+export interface PublicationRequestModel extends BasePublicationRequestModel {
+  name: string;
+  resources: {
+    action: PublishActions;
+    sourceUrl?: string;
+    targetUrl: string;
+  }[];
+}
+
+export interface PublicationUpdateRequestModel
+  extends BasePublicationRequestModel {
   resources: {
     action: PublishActions;
     sourceUrl: string;
     reviewUrl: string;
     targetUrl: string;
   }[];
-  rules?: PublicationRule[];
 }
 
 export enum PublicationStatus {
