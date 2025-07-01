@@ -164,6 +164,8 @@ export const promptsSlice = createSlice({
 
         return prompt;
       });
+
+      state.isPromptLoading = false;
     },
     duplicatePrompt: (state, _action: PayloadAction<PromptInfo>) => state,
     applyPrompt: (state, _action: PayloadAction<PromptInfo>) => state,
