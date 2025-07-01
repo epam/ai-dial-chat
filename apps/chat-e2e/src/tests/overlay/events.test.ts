@@ -158,7 +158,7 @@ dialOverlayTest(
     await dialOverlayTest.step(
       `Click on "Set light theme and new model" button and verify theme is changed to light, model is added to the recent models`,
       async () => {
-        await overlayConfiguration.setConfigurationButton.click();
+        await overlayConfiguration.clickSetConfigurationButton();
         await overlayAssertion.assertOverlayTheme(
           overlayHomePage,
           ThemeId.light,
@@ -167,6 +167,10 @@ dialOverlayTest(
           overlayAgentInfo.agentName,
           ModelsUtil.getDefaultAgent()!.name,
         );
+        const settings = await localStorageManager.getSettings(
+          process.env.NEXT_PUBLIC_OVERLAY_HOST,
+        );
+        overlayBaseAssertion.assertValue(settings.theme, ThemeId.light);
         const recentModels = await localStorageManager.getRecentModelsIds(
           process.env.NEXT_PUBLIC_OVERLAY_HOST,
         );
@@ -184,6 +188,14 @@ dialOverlayTest(
             ? API.themeUrl.concat(`/${expectedModelIcon}`)
             : undefined,
         });
+        const selectedConversationIds =
+          await localStorageManager.getSelectedConversationIds(
+            process.env.NEXT_PUBLIC_OVERLAY_HOST,
+          );
+        overlayBaseAssertion.assertValue(
+          selectedConversationIds[0],
+          `conversations/local/${expectedModel.reference}__${ExpectedConstants.newConversationWithIndexTitle(3)}`,
+        );
         await overlayAgentInfoAssertion.assertElementText(
           overlayAgentInfo.agentName,
           expectedModel.name,
