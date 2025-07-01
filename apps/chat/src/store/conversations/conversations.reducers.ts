@@ -198,7 +198,6 @@ export const conversationsSlice = createSlice({
       }: PayloadAction<{
         conversationIds: string[];
         suspendHideSidebar?: boolean;
-        isApproveRequiredEntity?: boolean;
       }>,
     ) => {
       state.selectedConversationsIds = uniq(payload.conversationIds);
@@ -256,7 +255,6 @@ export const conversationsSlice = createSlice({
       }: PayloadAction<{
         conversationIds: string[];
         showLoader?: boolean;
-        isApproveRequiredEntity?: boolean;
       }>,
     ) => {
       if (payload.showLoader) {
