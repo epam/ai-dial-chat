@@ -634,7 +634,9 @@ dialOverlayTest(
         );
         await overlayHomePage.waitForPageLoaded();
         for (let i = 1; i <= 2; i++) {
-          await overlayActions.clickCreateConversationInInnerFolder();
+          await overlayActions.clickCreateConversationInInnerFolder(
+            expectedFoldersPath,
+          );
           await overlayBaseAssertion.assertElementState(
             overlayDialog,
             'visible',
