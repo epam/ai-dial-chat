@@ -30,6 +30,19 @@ export interface PublicationRequestModel {
   resources: {
     action: PublishActions;
     sourceUrl?: string;
+    reviewUrl?: string;
+    targetUrl: string;
+  }[];
+  rules?: PublicationRule[];
+}
+
+export interface PublicationUpdateRequestModel {
+  displayAuthor?: string;
+  targetFolder: string;
+  resources: {
+    action: PublishActions;
+    sourceUrl: string;
+    reviewUrl: string;
     targetUrl: string;
   }[];
   rules?: PublicationRule[];

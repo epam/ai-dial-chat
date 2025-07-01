@@ -9,6 +9,7 @@ import {
   PublicationInfo,
   PublicationRequestModel,
   PublicationRule,
+  PublicationUpdateRequestModel,
   PublicationsListModel,
   PublishedFileItem,
   PublishedItem,
@@ -22,7 +23,9 @@ import { EnumMapper } from '../mappers';
 
 import mapKeys from 'lodash-es/mapKeys';
 
-const preparePublicationData = (publicationData: PublicationRequestModel) => {
+const preparePublicationCreateData = (
+  publicationData: PublicationRequestModel,
+) => {
   const encodedTargetFolder = ApiUtils.encodeApiUrl(
     publicationData.targetFolder,
   );
@@ -41,13 +44,34 @@ const preparePublicationData = (publicationData: PublicationRequestModel) => {
   };
 };
 
+const preparePublicationUpdateData = (
+  publicationData: PublicationUpdateRequestModel,
+) => {
+  const encodedTargetFolder = ApiUtils.encodeApiUrl(
+    publicationData.targetFolder,
+  );
+  const targetFolderSuffix = publicationData.targetFolder ? '/' : '';
+
+  return {
+    displayAuthor: publicationData.displayAuthor,
+    targetFolder: `${encodedTargetFolder}${targetFolderSuffix}`,
+    resources: publicationData.resources.map((r) => ({
+      action: r.action,
+      sourceUrl: ApiUtils.encodeApiUrl(r.sourceUrl),
+      targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
+      reviewUrl: ApiUtils.encodeApiUrl(r.reviewUrl),
+    })),
+    rules: publicationData.rules,
+  };
+};
+
 export class PublicationService {
   public static createPublicationRequest(
     publicationData: PublicationRequestModel,
   ): Observable<Publication> {
     return ApiUtils.request(getOpsApiUrl(ServerSlugs.PUBLICATION_CREATE), {
       method: HTTPMethod.POST,
-      body: JSON.stringify(preparePublicationData(publicationData)),
+      body: JSON.stringify(preparePublicationCreateData(publicationData)),
     });
   }
 
@@ -55,13 +79,13 @@ export class PublicationService {
     publicationData,
     url,
   }: {
-    publicationData: PublicationRequestModel;
+    publicationData: PublicationUpdateRequestModel;
     url: string;
   }): Observable<Publication> {
     return ApiUtils.request(getOpsApiUrl(ServerSlugs.PUBLICATION_UPDATE), {
       method: HTTPMethod.POST,
       body: JSON.stringify({
-        ...preparePublicationData(publicationData),
+        ...preparePublicationUpdateData(publicationData),
         url: ApiUtils.encodeApiUrl(url),
       }),
     });

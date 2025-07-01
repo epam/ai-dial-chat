@@ -11,7 +11,6 @@ import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getStringValidationErrors } from '@/src/utils/app/forms';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
-  getPublicationDefaultName,
   getPublicationId,
   regenerateApiKeyNameAndVersionParts,
 } from '@/src/utils/app/publications';
@@ -162,8 +161,6 @@ export function PublicationHandler({ publication }: Props) {
       PublicationActions.updatePublicationRequest({
         url: publication.url,
         dataToUpdate: {
-          name:
-            publication.name ?? getPublicationDefaultName(publication.author),
           targetFolder: publication.targetFolder,
           rules: rulesOnEdit,
           displayAuthor: displayAuthorEditState,
@@ -201,6 +198,7 @@ export function PublicationHandler({ publication }: Props) {
                 action,
                 sourceUrl: sourceUrl ?? '',
                 targetUrl: constructPath(newFolderId, newApiKey),
+                reviewUrl,
               };
             },
           ),
@@ -213,8 +211,6 @@ export function PublicationHandler({ publication }: Props) {
     displayAuthorEditState,
     entitiesEditState,
     foldersEditState,
-    publication.author,
-    publication.name,
     publication.resources,
     publication.targetFolder,
     publication.url,
