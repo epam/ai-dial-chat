@@ -53,7 +53,7 @@ import {
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { FeatureType } from '@epam/ai-dial-shared';
+import { Conversation, FeatureType } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 interface Props {
@@ -132,6 +132,21 @@ export const PublicationHandlerFooter = ({
         (entity) => entity.publicationInfo?.isNotExist,
       ),
     [conversations, files, prompts, applications],
+  );
+
+  const resourcesToReviewIds = useMemo(
+    () => resourcesToReview.map((resource) => resource.reviewUrl),
+    [resourcesToReview],
+  );
+
+  const publicationConversationsWithUploadedMessages = useMemo(
+    () =>
+      conversations.filter(
+        (conversation) =>
+          resourcesToReviewIds.includes(conversation.id) &&
+          (conversation as Conversation).messages !== undefined,
+      ) as Conversation[],
+    [conversations, resourcesToReviewIds],
   );
 
   const expandFoldersByFeatureType = useCallback(
@@ -295,6 +310,10 @@ export const PublicationHandlerFooter = ({
 
   const isEditDisabled =
     isNamesOrVersionsInvalid || isFoldersInvalid || isDisplayAuthorInvalid;
+  const someReviewedConversationHaveNoMessages =
+    publicationConversationsWithUploadedMessages.some(
+      (conversation) => !conversation.messages.length,
+    );
 
   return (
     <div
@@ -369,12 +388,18 @@ export const PublicationHandlerFooter = ({
               tooltip={t(
                 invalidEntities.length
                   ? "Request can't be approved as some conversations are unpublished"
-                  : "It's required to review all resources",
+                  : someReviewedConversationHaveNoMessages
+                    ? "Request can't be approved as some conversations have no messages"
+                    : "It's required to review all resources",
               )}
             >
               <button
                 className="button button-primary whitespace-nowrap disabled:cursor-not-allowed disabled:text-controls-disable"
-                disabled={!isAllResourcesReviewed || !!invalidEntities.length}
+                disabled={
+                  !isAllResourcesReviewed ||
+                  !!invalidEntities.length ||
+                  someReviewedConversationHaveNoMessages
+                }
                 onClick={handleApprovePublication}
                 data-qa="approve"
               >
