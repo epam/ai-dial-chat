@@ -10,6 +10,7 @@ import {
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
+  getDefaultAllEditEntities,
   getPublicationDefaultName,
   getPublicationId,
   regenerateApiKeyNameAndVersionParts,
@@ -224,10 +225,35 @@ export function PublicationHandler({ publication }: Props) {
     ? publication.targetFolder.replace(/^[^/]+/, 'Organization')
     : '';
   const publicationName = publication.name || getPublicationId(publication.url);
+
+  const initialEditState = useMemo(
+    () => getDefaultAllEditEntities(publication.resources),
+    [publication.resources],
+  );
+
+  const isEntityOrAuthorChanged = useMemo(() => {
+    const isEntityChanged = Object.entries(entitiesEditState).some(
+      ([id, { name, version }]) => {
+        const initial = initialEditState.entities[id];
+        return initial?.name !== name || initial?.version !== version;
+      },
+    );
+    const isAuthorChanged =
+      displayAuthorEditState !== (publication.displayAuthor ?? '');
+
+    return isEntityChanged || isAuthorChanged;
+  }, [
+    entitiesEditState,
+    initialEditState,
+    displayAuthorEditState,
+    publication.displayAuthor,
+  ]);
+
+  const initialRules = publication.rules ?? [];
+
   const areRulesChanged =
-    !isRulesLoading &&
-    publication.rules &&
-    !isEqual(publication.rules, rules[publication.targetFolder] || []);
+    !isRulesLoading && !isEqual(initialRules, rulesOnEdit);
+  const isFormChanged = isEntityOrAuthorChanged || areRulesChanged;
 
   return (
     <div className="flex size-full justify-center overflow-y-auto p-0 md:px-5 md:pt-5">
@@ -368,6 +394,7 @@ export function PublicationHandler({ publication }: Props) {
         <PublicationHandlerFooter
           onUpdateRequest={handleUpdateRequest}
           publication={publication}
+          isFormChanged={isFormChanged}
         />
       </div>
       {isCompareModalOpened && publication.targetFolder && (

@@ -13,7 +13,6 @@ import {
   ShareEntity,
   UploadStatus,
 } from '@epam/ai-dial-shared';
-import isEqual from 'lodash-es/isEqual';
 
 const rootSelector = (state: RootState) => state.publication;
 
@@ -299,33 +298,6 @@ const selectIsResourceUnpublishing = createSelector(
   },
 );
 
-const selectInitialEditState = (state: RootState) =>
-  rootSelector(state).initialEditState;
-
-const selectIsEditChanged = createSelector(
-  [
-    selectEntitiesEditState,
-    selectFoldersEditState,
-    selectDisplayAuthorEditState,
-    selectRulesOnEdit,
-    selectInitialEditState,
-  ],
-  (
-    entitiesEditState,
-    foldersEditState,
-    displayAuthorEditState,
-    rulesOnEdit,
-    initialEditState,
-  ) => {
-    return (
-      !isEqual(entitiesEditState, initialEditState.entities) ||
-      !isEqual(foldersEditState, initialEditState.folders) ||
-      displayAuthorEditState !== initialEditState.displayAuthor ||
-      !isEqual(rulesOnEdit ?? [], initialEditState.rules ?? [])
-    );
-  },
-);
-
 export const PublicationSelectors = {
   selectPublications,
   selectFilteredPublications,
@@ -359,5 +331,4 @@ export const PublicationSelectors = {
   selectIsPublicationUpdating,
   selectDisplayAuthorEditState,
   selectIsResourceUnpublishing,
-  selectIsEditChanged,
 };

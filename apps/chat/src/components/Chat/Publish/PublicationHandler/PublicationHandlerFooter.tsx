@@ -54,11 +54,13 @@ import uniq from 'lodash-es/uniq';
 interface Props {
   publication: Publication;
   onUpdateRequest: () => void;
+  isFormChanged: boolean;
 }
 
 export const PublicationHandlerFooter = ({
   publication,
   onUpdateRequest,
+  isFormChanged,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -274,13 +276,10 @@ export const PublicationHandlerFooter = ({
   const isDisplayAuthorInvalid =
     !displayAuthorEditState.trim().length ||
     displayAuthorEditState.length > MAX_ENTITY_LENGTH;
-  const isEditChanged = useAppSelector(
-    PublicationSelectors.selectIsEditChanged,
-  );
   const isEditInvalid =
     isNamesOrVersionsInvalid || isFoldersInvalid || isDisplayAuthorInvalid;
 
-  const isEditDisabled = isEditInvalid || !isEditChanged;
+  const isEditDisabled = isEditInvalid || !isFormChanged;
 
   return (
     <div
