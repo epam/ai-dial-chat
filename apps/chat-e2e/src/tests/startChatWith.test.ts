@@ -480,9 +480,12 @@ dialTest(
     );
 
     await dialTest.step(
-      'Continue typing the app name and verify two apps are found',
+      'Continue typing the app name and verify one app is found',
       async () => {
         await settingsModal.startChatWithSearchInput.typeInInput('1');
+        await settingsModal.startChatWithListboxOptions
+          .getNthElement(1)
+          .waitFor();
         const allOptions = await settingsModal.getAllOptions();
         expect.soft(allOptions).toEqual([
           {
