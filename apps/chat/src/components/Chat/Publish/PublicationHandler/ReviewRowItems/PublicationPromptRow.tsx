@@ -1,5 +1,7 @@
 import { IconBulb } from '@tabler/icons-react';
 
+import { BackendResourceTypeName } from '@/src/types/common';
+
 import { PublicationItemRow } from './PublicationItemRow';
 
 import { PromptInfo } from '@epam/ai-dial-shared';
@@ -15,6 +17,7 @@ export const PublicationPromptRow: React.FC<Props> = ({ item, level }) => {
       level={level}
       Icon={<IconBulb size={18} className="text-secondary" />}
       item={item}
+      itemTypeName={BackendResourceTypeName.PROMPT}
       dataQa="prompt"
     />
   );
