@@ -120,10 +120,10 @@ export function PublicationHandler({ publication }: Props) {
   }, [publication.author, t]);
 
   useEffect(() => {
-    if (isEditMode && publication.displayAuthor) {
+    if (isEditMode) {
       setErrors(() =>
         getStringValidationErrors({
-          value: replaceSpacesFromString(publication.displayAuthor!),
+          value: replaceSpacesFromString(publication.displayAuthor),
           label: 'Author',
         }),
       );

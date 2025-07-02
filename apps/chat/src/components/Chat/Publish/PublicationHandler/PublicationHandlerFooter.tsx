@@ -115,9 +115,7 @@ export const PublicationHandlerFooter = ({
       PublicationActions.setEditModeState({
         editState: getDefaultAllEditEntities(publication.resources),
         rules: publication.rules ?? [],
-        displayAuthor: publication.displayAuthor
-          ? replaceSpacesFromString(publication.displayAuthor)
-          : '',
+        displayAuthor: replaceSpacesFromString(publication.displayAuthor),
       }),
     );
   }, [
