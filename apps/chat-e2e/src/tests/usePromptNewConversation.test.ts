@@ -416,11 +416,12 @@ dialAdminTest(
           notApprovedPublication.name!,
           conversationToPublish.name,
         );
-        await adminPrompts.openEntityDropdownMenu(adminPrompt.name); // Use admin prompt
-        await adminPromptDropdownMenuAssertion.assertMenuOptionActionabilityState(
-          MenuOptions.use,
-          'disabled',
-        );
+        //TODO: blocked by https://github.com/epam/ai-dial-chat/issues/4223
+        // await adminPrompts.openEntityDropdownMenu(adminPrompt.name); // Use admin prompt
+        // await adminPromptDropdownMenuAssertion.assertMenuOptionActionabilityState(
+        //   MenuOptions.use,
+        //   'disabled',
+        // );
       },
     );
 

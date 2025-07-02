@@ -21,7 +21,6 @@ dialTest(
     temperatureSlider,
     addons,
     talkToAgentDialog,
-    marketplacePage,
     agentInfoAssertion,
     setTestIds,
     localStorageManager,
@@ -113,7 +112,7 @@ dialTest(
         await chat.changeAgentButton.waitForState();
         await chat.configureSettingsButton.waitForState();
         await chat.changeAgentButton.click();
-        await talkToAgentDialog.selectAgent(models[1], marketplacePage);
+        await talkToAgentDialog.selectAgent(models[1]);
         const expectedModelIcon = iconApiHelper.getEntityIcon(models[1]);
         await agentInfoAssertion.assertAgentIcon(expectedModelIcon);
       },

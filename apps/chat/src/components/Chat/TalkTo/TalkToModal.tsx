@@ -62,7 +62,11 @@ interface TabButtonProps {
 function AgentsTabButton({ tab, setTab, currentTab }: TabButtonProps) {
   const { t } = useTranslation(Translation.Marketplace);
   return (
-    <TabButton selected={currentTab === tab} onClick={() => setTab(tab)}>
+    <TabButton
+      selected={currentTab === tab}
+      onClick={() => setTab(tab)}
+      dataQA={tab.toString()}
+    >
       {t(ChangeAgentTabs[tab])}
     </TabButton>
   );
@@ -332,7 +336,7 @@ const TalkToModalView = ({
             'm-auto mt-4 text-accent-primary md:absolute md:bottom-6 md:right-6',
             isPlayback && 'cursor-not-allowed',
           )}
-          data-qa="go-to-my-workspace"
+          data-qa={isMyWorkspace ? 'go-to-my-workspace' : 'go-to-marketplace'}
         >
           {t(`Go to ${isMyWorkspace ? 'My workspace' : 'DIAL Marketplace'}`)}
         </Link>
