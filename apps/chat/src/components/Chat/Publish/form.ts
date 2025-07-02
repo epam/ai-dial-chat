@@ -1,12 +1,16 @@
 import { Path, RegisterOptions } from 'react-hook-form';
 
-import { validateStringField } from '@/src/utils/app/forms';
+import { createFormValidationRules } from '@/src/utils/app/forms';
 
-import { formErrors } from '@/src/constants/form-errors';
+import '@/src/constants/default-ui-settings';
 
+export enum PublishRequestFieldsNames {
+  PUBLISH_REQUEST_NAME = 'publishRequestName',
+  PUBLICATION_AUTHOR = 'publicationAuthor',
+}
 export interface PublicationRequestFormData {
-  publishRequestName: string;
-  publicationAuthor: string;
+  [PublishRequestFieldsNames.PUBLISH_REQUEST_NAME]: string;
+  [PublishRequestFieldsNames.PUBLICATION_AUTHOR]: string;
 }
 
 type Options<T extends Path<PublicationRequestFormData>> = Omit<
@@ -18,23 +22,18 @@ export type Validators = {
   [K in keyof PublicationRequestFormData]?: Options<K>;
 };
 
-export const validators: Validators = {
-  publishRequestName: {
-    required: formErrors.required,
-    validate: (valueToValidate) => {
-      return (
-        validateStringField({ valueToValidate }) ||
-        formErrors.notValidString('Request name')
-      );
-    },
+export const publishRequestFields = {
+  [PublishRequestFieldsNames.PUBLISH_REQUEST_NAME]: {
+    name: PublishRequestFieldsNames.PUBLISH_REQUEST_NAME,
+    label: 'Request name',
+    checkDotsInTheEnd: true,
   },
-  publicationAuthor: {
-    required: formErrors.required,
-    validate: (valueToValidate) => {
-      return (
-        validateStringField({ valueToValidate }) ||
-        formErrors.notValidString('Author')
-      );
-    },
+  [PublishRequestFieldsNames.PUBLICATION_AUTHOR]: {
+    name: PublishRequestFieldsNames.PUBLICATION_AUTHOR,
+    label: 'Author',
   },
 };
+
+export const validators: Validators = createFormValidationRules(
+  Object.values(publishRequestFields),
+);

@@ -5,6 +5,8 @@ import {
   isReplayConversation,
 } from '@/src/utils/app/conversation';
 
+import { BackendResourceTypeName } from '@/src/types/common';
+
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 
@@ -52,6 +54,7 @@ export const PublicationConversationRow: React.FC<Props> = ({
       level={level}
       Icon={Icon}
       item={item}
+      itemTypeName={BackendResourceTypeName.CONVERSATION}
       dataQa="conversation"
     />
   );
