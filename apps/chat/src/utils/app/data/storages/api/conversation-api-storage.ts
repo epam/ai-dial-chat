@@ -79,10 +79,11 @@ export const getOrUploadConversation = <T extends { id: string }>(
     state,
     payload.id,
   );
+  const entityBucket = getEntityBucket(payload);
   const resourcesToReview = PublicationSelectors.selectResourcesToReview(state);
-  const isResourceOnReview =
-    getEntityBucket(payload) ===
-    getEntityBucket({ id: resourcesToReview[0]?.reviewUrl ?? '' });
+  const isResourceOnReview = resourcesToReview?.some(
+    (r) => getEntityBucket({ id: r.reviewUrl }) === entityBucket,
+  );
 
   if (!conversation) {
     conversation = getConversationInfoFromId(payload.id, {
