@@ -5,10 +5,12 @@ import { ApiUtils, getOpsApiUrl } from '@/src/utils/server/api';
 import { BackendDataNodeType, FeatureType } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
 import {
+  BasePublicationRequestModel,
   Publication,
   PublicationInfo,
   PublicationRequestModel,
   PublicationRule,
+  PublicationUpdateRequestModel,
   PublicationsListModel,
   PublishedFileItem,
   PublishedItem,
@@ -22,22 +24,46 @@ import { EnumMapper } from '../mappers';
 
 import mapKeys from 'lodash-es/mapKeys';
 
-const preparePublicationData = (publicationData: PublicationRequestModel) => {
+const prepareBasePublicationDataTargetFolder = (
+  publicationData: BasePublicationRequestModel,
+): BasePublicationRequestModel => {
   const encodedTargetFolder = ApiUtils.encodeApiUrl(
     publicationData.targetFolder,
   );
   const targetFolderSuffix = publicationData.targetFolder ? '/' : '';
 
   return {
-    name: publicationData.name,
-    displayAuthor: publicationData.displayAuthor,
     targetFolder: `${encodedTargetFolder}${targetFolderSuffix}`,
+    displayAuthor: publicationData.displayAuthor,
+    rules: publicationData.rules,
+  };
+};
+
+const preparePublicationCreateData = (
+  publicationData: PublicationRequestModel,
+): PublicationRequestModel => {
+  return {
+    name: publicationData.name,
     resources: publicationData.resources.map((r) => ({
       action: r.action,
       sourceUrl: r.sourceUrl ? ApiUtils.encodeApiUrl(r.sourceUrl) : undefined,
       targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
     })),
-    rules: publicationData.rules,
+    ...prepareBasePublicationDataTargetFolder(publicationData),
+  };
+};
+
+const preparePublicationUpdateData = (
+  publicationData: PublicationUpdateRequestModel,
+): PublicationUpdateRequestModel => {
+  return {
+    resources: publicationData.resources.map((r) => ({
+      action: r.action,
+      sourceUrl: ApiUtils.encodeApiUrl(r.sourceUrl),
+      targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
+      reviewUrl: ApiUtils.encodeApiUrl(r.reviewUrl),
+    })),
+    ...prepareBasePublicationDataTargetFolder(publicationData),
   };
 };
 
@@ -47,7 +73,7 @@ export class PublicationService {
   ): Observable<Publication> {
     return ApiUtils.request(getOpsApiUrl(ServerSlugs.PUBLICATION_CREATE), {
       method: HTTPMethod.POST,
-      body: JSON.stringify(preparePublicationData(publicationData)),
+      body: JSON.stringify(preparePublicationCreateData(publicationData)),
     });
   }
 
@@ -55,13 +81,13 @@ export class PublicationService {
     publicationData,
     url,
   }: {
-    publicationData: PublicationRequestModel;
+    publicationData: PublicationUpdateRequestModel;
     url: string;
   }): Observable<Publication> {
     return ApiUtils.request(getOpsApiUrl(ServerSlugs.PUBLICATION_UPDATE), {
       method: HTTPMethod.POST,
       body: JSON.stringify({
-        ...preparePublicationData(publicationData),
+        ...preparePublicationUpdateData(publicationData),
         url: ApiUtils.encodeApiUrl(url),
       }),
     });

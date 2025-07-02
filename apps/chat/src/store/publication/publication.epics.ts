@@ -47,7 +47,6 @@ import { getPromptInfoFromId } from '@/src/utils/app/prompts';
 import {
   getFilesFromPublicResources,
   getItemsIdsToRemoveAndHide,
-  getPublicationDefaultName,
   isEntityIdPublic,
   mapPublishedItems,
   processPublicationResources,
@@ -67,7 +66,7 @@ import { CustomApplicationModel } from '@/src/types/applications';
 import { EntityType, FeatureType } from '@/src/types/common';
 import { PromptInfo } from '@/src/types/prompt';
 import {
-  PublicationRequestModel,
+  PublicationUpdateRequestModel,
   PublishedFileItem,
 } from '@/src/types/publication';
 import { AppAction, AppEpic } from '@/src/types/store';
@@ -1447,9 +1446,8 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      const publicationData: PublicationRequestModel = {
+      const publicationData: PublicationUpdateRequestModel = {
         ...publication,
-        name: publication.name ?? getPublicationDefaultName(publication.author),
         resources: publication.resources.map((resource) => {
           if (resource.reviewUrl === payload.resourceToUpdateUrl) {
             const newTargetUrlSegments = payload.newEntity.id.split('/');
@@ -1458,14 +1456,15 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
 
             return {
               ...resource,
-              sourceUrl: resource.sourceUrl ?? undefined,
+              sourceUrl: resource.sourceUrl ?? '',
               targetUrl: newTargetUrl,
             };
           }
 
           return {
             ...resource,
-            sourceUrl: resource.sourceUrl ?? undefined,
+            sourceUrl: resource.sourceUrl ?? '',
+            reviewUrl: resource.reviewUrl,
           };
         }),
       };
@@ -1560,9 +1559,8 @@ const updatePublicationRequestAndFolderEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      const publicationData: PublicationRequestModel = {
+      const publicationData: PublicationUpdateRequestModel = {
         ...publication,
-        name: publication.name ?? getPublicationDefaultName(publication.author),
         resources: publication.resources.map((resource) => {
           if (resource.reviewUrl.startsWith(`${payload.folderIdToUpdate}/`)) {
             const folderIdToUpdateSegments =
@@ -1576,17 +1574,19 @@ const updatePublicationRequestAndFolderEpic: AppEpic = (action$, state$) =>
 
             return {
               ...resource,
-              sourceUrl: resource.sourceUrl ?? undefined,
+              sourceUrl: resource.sourceUrl ?? '',
               targetUrl: resource.targetUrl.replace(
                 `${targetFolderIdToUpdate}/`,
                 `${newTargetFolderId}/`,
               ),
+              reviewUrl: resource.reviewUrl,
             };
           }
 
           return {
             ...resource,
-            sourceUrl: resource.sourceUrl ?? undefined,
+            sourceUrl: resource.sourceUrl ?? '',
+            reviewUrl: resource.reviewUrl,
           };
         }),
       };
@@ -1905,21 +1905,15 @@ const updateAndApprovePublicationRequestEpic: AppEpic = (action$, state$) =>
       const resourcesToApproveIds =
         PublicationSelectors.selectSelectedItemsToPublish(state);
       const filteredResources = selectedPublication.resources
-        .filter((resource) =>
-          resourcesToApproveIds.includes(resource.reviewUrl),
-        )
+        .filter(({ reviewUrl }) => resourcesToApproveIds.includes(reviewUrl))
         .map((resource) => ({
-          action: resource.action,
-          sourceUrl: resource.sourceUrl ?? undefined,
-          targetUrl: resource.targetUrl,
+          ...resource,
+          sourceUrl: resource.sourceUrl ?? '',
         }));
       return PublicationService.updatePublicationRequest({
         url: selectedPublication.url,
         publicationData: {
           ...selectedPublication,
-          name:
-            selectedPublication.name ??
-            getPublicationDefaultName(selectedPublication.author),
           resources: filteredResources,
         },
       }).pipe(
