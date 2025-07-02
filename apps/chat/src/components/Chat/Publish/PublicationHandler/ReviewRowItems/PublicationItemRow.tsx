@@ -68,7 +68,7 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   }, [defaultVersion, isEditMode]);
 
   useEffect(() => {
-    if (isEditMode) {
+    if (isEditMode && item.publicationInfo?.action !== PublishActions.DELETE) {
       const isExistVersion = isVersionExists(
         defaultVersion,
         item.id,
@@ -90,6 +90,7 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
     isEditMode,
     item.id,
     item.name,
+    item.publicationInfo?.action,
     publicVersionGroups,
     selectedPublication?.targetFolder,
   ]);
