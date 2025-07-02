@@ -22,7 +22,8 @@ dialTest(
     'New conversation is NOT created on Back to Chat if conversation with history was focused\n' +
     'New conversation is NOT created on Search on My workspace opened from the chat header\n' +
     'Autofocus on chat input when refresh page.\n' +
-    'New conversation is created on browser refresh if conversation with history from Pinned or Today is focused',
+    'New conversation is created on browser refresh if conversation with history from Pinned or Today is focused.\n' +
+    'New conversation is created on browser refresh if selectedConversationIds from local storage was deleted',
   async ({
     dialHomePage,
     chat,
@@ -41,6 +42,7 @@ dialTest(
     sendMessage,
     baseAssertion,
     localStorageAssertion,
+    agentInfoAssertion,
   }) => {
     setTestIds(
       'EPMRTC-4587',
@@ -49,7 +51,7 @@ dialTest(
       'EPMRTC-4590',
       'EPMRTC-4588',
       'EPMRTC-5450',
-      'EPMRTC-4592',
+      'EPMRTC-4593',
     );
     dialTest.slow();
     const initialConversationName = GeneratorUtil.randomString(7);
@@ -206,6 +208,8 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.waitForState();
         await chat.configureSettingsButton.waitForState();
+        await sendMessage.messageInput.waitForState();
+        await agentInfoAssertion.assertAgentName(models[0].name);
         const updatedConversationIds =
           await localStorageManager.getSelectedConversationIds();
         baseAssertion.assertValue(
@@ -235,7 +239,7 @@ dialTest(
     compareConversation,
     appContainer,
   }) => {
-    setTestIds('EPMRTC-4682', 'EPMRTC-4683', 'EPMRTC-4593');
+    setTestIds('EPMRTC-4592', 'EPMRTC-4682', 'EPMRTC-4683');
     let models: DialAIEntityModel[];
     let initialConversation: Conversation;
     let conversationToCompare: Conversation;
