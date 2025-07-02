@@ -61,7 +61,6 @@ const preparePublicationUpdateData = (
       action: r.action,
       sourceUrl: ApiUtils.encodeApiUrl(r.sourceUrl),
       targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
-      reviewUrl: ApiUtils.encodeApiUrl(r.reviewUrl),
     })),
     ...prepareBasePublicationDataTargetFolder(publicationData),
   };

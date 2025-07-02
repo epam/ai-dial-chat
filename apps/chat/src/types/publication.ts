@@ -43,7 +43,6 @@ export interface PublicationUpdateRequestModel
   resources: {
     action: PublishActions;
     sourceUrl: string;
-    reviewUrl: string;
     targetUrl: string;
   }[];
 }
