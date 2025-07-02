@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
+import { replaceSpacesFromString } from '@/src/utils/app/common';
 import {
   getSelectedEntitiesByFolderId,
   isFolderPartialSelected,
@@ -78,11 +79,12 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
   );
 
   useEffect(() => {
-    setInputName(currentFolder.name);
+    const cleanName = replaceSpacesFromString(currentFolder.name);
+    setInputName(cleanName);
     if (isEditMode) {
       setErrors(() =>
         getStringValidationErrors({
-          value: currentFolder.name,
+          value: cleanName,
           label: 'Folder name',
           checkDotsInTheEnd: true,
         }),

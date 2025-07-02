@@ -6,6 +6,7 @@ import {
   extractNameFromEmail,
   formatDate,
   prepareEntityName,
+  replaceSpacesFromString,
 } from '@/src/utils/app/common';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getStringValidationErrors } from '@/src/utils/app/forms';
@@ -125,7 +126,7 @@ export function PublicationHandler({ publication }: Props) {
     if (isEditMode) {
       setErrors(() =>
         getStringValidationErrors({
-          value: publication.displayAuthor ?? '',
+          value: replaceSpacesFromString(publication.displayAuthor),
           label: 'Author',
         }),
       );
@@ -221,9 +222,10 @@ export function PublicationHandler({ publication }: Props) {
 
   const handleChangeDisplayAuthor = useCallback(
     (value: string) => {
+      const cleanedValue = replaceSpacesFromString(value);
       setErrors(() =>
         getStringValidationErrors({
-          value: value,
+          value: cleanedValue,
           label: 'Author',
         }),
       );
@@ -231,7 +233,7 @@ export function PublicationHandler({ publication }: Props) {
         value.length <= MAX_ENTITY_LENGTH ||
         value.length < displayAuthorEditState.length
       ) {
-        dispatch(PublicationActions.setDisplayAuthorEditState(value));
+        dispatch(PublicationActions.setDisplayAuthorEditState(cleanedValue));
       }
     },
     [dispatch, displayAuthorEditState.length],

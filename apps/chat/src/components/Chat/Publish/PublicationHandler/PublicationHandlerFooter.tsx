@@ -12,6 +12,7 @@ import {
   isVersionExists,
   isVersionPartSizeValid,
   isVersionValid,
+  replaceSpacesFromString,
 } from '@/src/utils/app/common';
 import {
   getFolderIdFromEntityId,
@@ -120,7 +121,7 @@ export const PublicationHandlerFooter = ({
       PublicationActions.setEditModeState({
         editState: getDefaultAllEditEntities(publication.resources),
         rules: publication.rules ?? [],
-        displayAuthor: publication.displayAuthor ?? '',
+        displayAuthor: replaceSpacesFromString(publication.displayAuthor),
       }),
     );
   }, [

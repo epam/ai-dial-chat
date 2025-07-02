@@ -1,6 +1,10 @@
+import { ChangeEvent, useCallback } from 'react';
+
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
+
+import { replaceSpacesFromString } from '@/src/utils/app/common';
 
 import { Translation } from '@/src/types/translation';
 
@@ -30,6 +34,14 @@ export const EditableField: React.FC<Props> = ({
 }) => {
   const isErrors = !!errors?.length;
   const { t } = useTranslation(Translation.Chat);
+  const onChangeHandler = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const cleanName = replaceSpacesFromString(event.target.value);
+      onChange(cleanName);
+    },
+    [onChange],
+  );
+
   if (isEditMode) {
     return (
       <div
@@ -43,7 +55,7 @@ export const EditableField: React.FC<Props> = ({
             inputClassName,
           )}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={onChangeHandler}
           placeholder={placeholder}
         />
 
