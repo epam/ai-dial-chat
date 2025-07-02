@@ -1963,9 +1963,9 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-5945', 'EPMRTC-6263');
     const appEntity = {
-      name: GeneratorUtil.randomString(
-        ExpectedConstants.maxEntityNameLength - 1,
-      ),
+      name: `${applicationNamePrefix}${GeneratorUtil.randomString(
+        ExpectedConstants.maxEntityNameLength - 7,
+      )}`,
       version: GeneratorUtil.randomApplicationVersion(),
     } as DialAIEntityModel;
 
