@@ -201,7 +201,6 @@ export function PublicationHandler({ publication }: Props) {
                 action,
                 sourceUrl: sourceUrl ?? '',
                 targetUrl: constructPath(newFolderId, newApiKey),
-                reviewUrl,
               };
             },
           ),
