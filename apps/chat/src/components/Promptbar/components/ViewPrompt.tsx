@@ -16,7 +16,6 @@ import {
   ConversationsSelectors,
   ModelsSelectors,
   PromptsSelectors,
-  PublicationSelectors,
 } from '@/src/store/selectors';
 
 import { TemplateRenderer } from '@/src/components/Chat/ChatMessage/ChatMessageTemplatesModal/TemplateRenderer';
@@ -80,9 +79,6 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
-  const selectedPublication = useAppSelector(
-    PublicationSelectors.selectSelectedPublication,
-  );
   const { isSelectedPromptApproveRequiredResource } = useAppSelector(
     PromptsSelectors.selectSelectedPromptId,
   );
@@ -102,7 +98,9 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
     installedModelIds.has(conv.model.id),
   );
   const disableUsePrompt =
-    isConversationBlocksInput || !areModelsInstalled || !!selectedPublication;
+    isConversationBlocksInput ||
+    !areModelsInstalled ||
+    !selectedConversations.length;
 
   const onUse = useMenuItemHandler(handleUse, undefined);
 

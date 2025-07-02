@@ -59,7 +59,6 @@ dialSharedWithMeTest(
     conversationDropdownMenu,
     chatHeader,
     talkToAgentDialog,
-    marketplacePage,
     additionalSecondUserShareApiHelper,
     sendMessage,
     additionalSecondShareUserFileApiHelper,
@@ -360,7 +359,6 @@ dialSharedWithMeTest(
                   (model) => model.id !== defaultModelId,
                 ),
               ),
-              marketplacePage,
             );
             break;
           case 'delete':

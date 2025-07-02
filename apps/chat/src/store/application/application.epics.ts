@@ -330,7 +330,6 @@ const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
         PublicationActions.updatePublicationRequest({
           url: publication.url,
           dataToUpdate: {
-            name: publication.name as string,
             targetFolder: publication.targetFolder,
             resources: publication.resources.map((resource) => ({
               action: resource.action,

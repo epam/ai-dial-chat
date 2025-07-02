@@ -17,7 +17,10 @@ import {
 import { combineEpics, ofType } from 'redux-observable';
 
 import { getLastPathSegment } from '@/src/utils/app/common';
-import { getConversationInfoFromId } from '@/src/utils/app/conversation';
+import {
+  getConversationInfoFromId,
+  updateAttachmentTitles,
+} from '@/src/utils/app/conversation';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application-type-schemas-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
@@ -44,7 +47,6 @@ import { getPromptInfoFromId } from '@/src/utils/app/prompts';
 import {
   getFilesFromPublicResources,
   getItemsIdsToRemoveAndHide,
-  getPublicationDefaultName,
   isEntityIdPublic,
   mapPublishedItems,
   processPublicationResources,
@@ -64,7 +66,7 @@ import { CustomApplicationModel } from '@/src/types/applications';
 import { EntityType, FeatureType } from '@/src/types/common';
 import { PromptInfo } from '@/src/types/prompt';
 import {
-  PublicationRequestModel,
+  PublicationUpdateRequestModel,
   PublishedFileItem,
 } from '@/src/types/publication';
 import { AppAction, AppEpic } from '@/src/types/store';
@@ -521,6 +523,13 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
             }
 
             // we do not need to review files
+
+            const existingReviewedResources =
+              PublicationSelectors.selectResourcesToReviewByPublicationUrl(
+                state$.value,
+                publication.url,
+              );
+
             const resourcesToReview = publication.resources.filter(
               (resource) => !isFileId(resource.targetUrl),
             );
@@ -540,10 +549,17 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
                   unpublishResources.length,
                 of(
                   PublicationActions.setPublicationsToReview({
-                    items: resourcesToReview.map((resource) => ({
-                      reviewed: false,
-                      reviewUrl: resource.reviewUrl,
-                    })),
+                    items: resourcesToReview.map((resource) => {
+                      const matched = existingReviewedResources.find(
+                        (r) => r.sourceUrl === resource.sourceUrl,
+                      );
+
+                      return {
+                        reviewed: matched?.reviewed ?? false,
+                        reviewUrl: resource.reviewUrl,
+                        sourceUrl: resource.sourceUrl!,
+                      };
+                    }),
                     publicationUrl: publication.url,
                   }),
                 ),
@@ -1430,9 +1446,8 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      const publicationData: PublicationRequestModel = {
+      const publicationData: PublicationUpdateRequestModel = {
         ...publication,
-        name: publication.name ?? getPublicationDefaultName(publication.author),
         resources: publication.resources.map((resource) => {
           if (resource.reviewUrl === payload.resourceToUpdateUrl) {
             const newTargetUrlSegments = payload.newEntity.id.split('/');
@@ -1441,14 +1456,14 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
 
             return {
               ...resource,
-              sourceUrl: resource.sourceUrl ?? undefined,
+              sourceUrl: resource.sourceUrl ?? '',
               targetUrl: newTargetUrl,
             };
           }
 
           return {
             ...resource,
-            sourceUrl: resource.sourceUrl ?? undefined,
+            sourceUrl: resource.sourceUrl ?? '',
           };
         }),
       };
@@ -1463,19 +1478,51 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
             values: payload.newEntity,
           };
 
-          const updateEntityAction$ = of(
-            isConversationId(payload.newEntity.id)
-              ? ConversationsActions.updateConversation(updateEntityPayload)
-              : PromptsActions.updatePrompt(updateEntityPayload),
-          );
+          const isConversationResource = isConversationId(payload.newEntity.id);
+
+          const updateEntityActions: Observable<AppAction>[] = [
+            of(
+              isConversationResource
+                ? ConversationsActions.updateConversation(updateEntityPayload)
+                : PromptsActions.updatePrompt(updateEntityPayload),
+            ),
+          ];
+
+          if (isConversationResource) {
+            const selectedConversationIds =
+              ConversationsSelectors.selectSelectedConversationsIds(state);
+            if (selectedConversationIds.includes(payload.resourceToUpdateUrl)) {
+              updateEntityActions.push(
+                of(
+                  ConversationsActions.selectConversations({
+                    conversationIds: selectedConversationIds.map((id) =>
+                      id === payload.resourceToUpdateUrl
+                        ? payload.newEntity.id
+                        : id,
+                    ),
+                    suspendHideSidebar: false,
+                  }),
+                ),
+              );
+            }
+          } else {
+            updateEntityActions.push(
+              of(
+                PromptsActions.selectPrompt({
+                  promptId: payload.newEntity.id,
+                  isApproveRequiredResource: true,
+                }),
+              ),
+            );
+          }
 
           return concat(
-            updateEntityAction$,
             of(
               PublicationActions.uploadPublication({
                 url: payload.publicationUrl,
               }),
             ),
+            ...updateEntityActions,
           );
         }),
         catchError((err) => {
@@ -1511,9 +1558,8 @@ const updatePublicationRequestAndFolderEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      const publicationData: PublicationRequestModel = {
+      const publicationData: PublicationUpdateRequestModel = {
         ...publication,
-        name: publication.name ?? getPublicationDefaultName(publication.author),
         resources: publication.resources.map((resource) => {
           if (resource.reviewUrl.startsWith(`${payload.folderIdToUpdate}/`)) {
             const folderIdToUpdateSegments =
@@ -1527,7 +1573,7 @@ const updatePublicationRequestAndFolderEpic: AppEpic = (action$, state$) =>
 
             return {
               ...resource,
-              sourceUrl: resource.sourceUrl ?? undefined,
+              sourceUrl: resource.sourceUrl ?? '',
               targetUrl: resource.targetUrl.replace(
                 `${targetFolderIdToUpdate}/`,
                 `${newTargetFolderId}/`,
@@ -1537,7 +1583,7 @@ const updatePublicationRequestAndFolderEpic: AppEpic = (action$, state$) =>
 
           return {
             ...resource,
-            sourceUrl: resource.sourceUrl ?? undefined,
+            sourceUrl: resource.sourceUrl ?? '',
           };
         }),
       };
@@ -1724,29 +1770,19 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
                               version: getVersionFromId(conversation.id),
                               publicationUrl: url,
                             },
-                            messages: conversation.messages.map((message) => ({
-                              ...message,
-                              custom_content: {
-                                ...message.custom_content,
-                                attachments:
-                                  message.custom_content?.attachments?.map(
-                                    (attachment) => {
-                                      const title = ApiUtils.decodeApiUrl(
-                                        getLastPathSegment(
-                                          attachment.url ?? '',
-                                        ),
-                                      );
-
-                                      return titlesToUpdate.includes(title)
-                                        ? {
-                                            ...attachment,
-                                            title: title ?? 'Attachment',
-                                          }
-                                        : attachment;
-                                    },
+                            messages: updateAttachmentTitles(
+                              conversation.messages,
+                              titlesToUpdate,
+                            ),
+                            playback: conversation.playback
+                              ? {
+                                  ...conversation.playback,
+                                  messagesStack: updateAttachmentTitles(
+                                    conversation.playback.messagesStack,
+                                    titlesToUpdate,
                                   ),
-                              },
-                            })),
+                                }
+                              : undefined,
                           },
                         }),
                       );
@@ -1866,21 +1902,15 @@ const updateAndApprovePublicationRequestEpic: AppEpic = (action$, state$) =>
       const resourcesToApproveIds =
         PublicationSelectors.selectSelectedItemsToPublish(state);
       const filteredResources = selectedPublication.resources
-        .filter((resource) =>
-          resourcesToApproveIds.includes(resource.reviewUrl),
-        )
+        .filter(({ reviewUrl }) => resourcesToApproveIds.includes(reviewUrl))
         .map((resource) => ({
-          action: resource.action,
-          sourceUrl: resource.sourceUrl ?? undefined,
-          targetUrl: resource.targetUrl,
+          ...resource,
+          sourceUrl: resource.sourceUrl ?? '',
         }));
       return PublicationService.updatePublicationRequest({
         url: selectedPublication.url,
         publicationData: {
           ...selectedPublication,
-          name:
-            selectedPublication.name ??
-            getPublicationDefaultName(selectedPublication.author),
           resources: filteredResources,
         },
       }).pipe(
