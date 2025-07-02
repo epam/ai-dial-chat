@@ -64,17 +64,18 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
     PublicationSelectors.selectSelectedPublication,
   );
 
-  const collapsedSectionsSelector = useMemo(
-    () => PublicationSelectors.selectChosenFolderIds(allFolders, allItems),
+  const chosenFoldersSelector = useMemo(
+    () =>
+      PublicationSelectors.selectChosenFolderIdsToApprove(allFolders, allItems),
     [allFolders, allItems],
   );
   const {
     fullyChosenFolderIds: selectedFolderIds,
     partialChosenFolderIds: partialSelectedFolderIds,
-  } = useAppSelector(collapsedSectionsSelector);
+  } = useAppSelector(chosenFoldersSelector);
 
   const chosenItemsIds = useAppSelector(
-    PublicationSelectors.selectSelectedItemsToPublish,
+    PublicationSelectors.selectSelectedItemsToApprove,
   );
 
   useEffect(() => {
@@ -127,7 +128,8 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
     });
 
     dispatch(
-      PublicationActions.selectItemsToPublish({
+      PublicationActions.selectItemsToApprove({
+        publicationUrl: selectedPublication?.url ?? '',
         ids: entitiesToSelect,
       }),
     );
@@ -137,6 +139,7 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
     currentFolder.id,
     dispatch,
     partialSelectedFolderIds,
+    selectedPublication?.url,
   ]);
 
   useEffect(() => {
