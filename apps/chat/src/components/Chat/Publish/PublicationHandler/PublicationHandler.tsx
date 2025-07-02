@@ -11,7 +11,7 @@ import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getStringValidationErrors } from '@/src/utils/app/forms';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
-  getPublicationDefaultName,
+  getDefaultAllEditEntities,
   getPublicationId,
   regenerateApiKeyNameAndVersionParts,
 } from '@/src/utils/app/publications';
@@ -115,6 +115,8 @@ export function PublicationHandler({ publication }: Props) {
   const [isCompareModalOpened, setIsCompareModalOpened] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
 
+  const [isFormChanged, setIsFormChanged] = useState(false);
+
   const publicationAuthor = useMemo(() => {
     return extractNameFromEmail(publication.author) ?? t('Unknown');
   }, [publication.author, t]);
@@ -162,8 +164,6 @@ export function PublicationHandler({ publication }: Props) {
       PublicationActions.updatePublicationRequest({
         url: publication.url,
         dataToUpdate: {
-          name:
-            publication.name ?? getPublicationDefaultName(publication.author),
           targetFolder: publication.targetFolder,
           rules: rulesOnEdit,
           displayAuthor: displayAuthorEditState,
@@ -201,6 +201,7 @@ export function PublicationHandler({ publication }: Props) {
                 action,
                 sourceUrl: sourceUrl ?? '',
                 targetUrl: constructPath(newFolderId, newApiKey),
+                reviewUrl,
               };
             },
           ),
@@ -213,8 +214,6 @@ export function PublicationHandler({ publication }: Props) {
     displayAuthorEditState,
     entitiesEditState,
     foldersEditState,
-    publication.author,
-    publication.name,
     publication.resources,
     publication.targetFolder,
     publication.url,
@@ -243,10 +242,54 @@ export function PublicationHandler({ publication }: Props) {
     ? publication.targetFolder.replace(/^[^/]+/, 'Organization')
     : '';
   const publicationName = publication.name || getPublicationId(publication.url);
-  const areRulesChanged =
-    !isRulesLoading &&
-    publication.rules &&
-    !isEqual(publication.rules, rules[publication.targetFolder] || []);
+
+  const initialState = useMemo(() => {
+    const { entities, folders } = getDefaultAllEditEntities(
+      publication.resources,
+    );
+    const initialRules = publication.rules ?? [];
+    const initialDisplayAuthor = publication.displayAuthor ?? '';
+
+    return {
+      entities,
+      folders,
+      rules: initialRules,
+      displayAuthor: initialDisplayAuthor,
+    };
+  }, [publication]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      const entitiesChanged = !isEqual(
+        initialState.entities,
+        entitiesEditState,
+      );
+      const foldersChanged = !isEqual(initialState.folders, foldersEditState);
+      const rulesChanged = !isEqual(initialState.rules, rulesOnEdit);
+      const authorChanged =
+        initialState.displayAuthor !== displayAuthorEditState;
+
+      const result =
+        entitiesChanged || foldersChanged || rulesChanged || authorChanged;
+
+      setIsFormChanged(result);
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [
+    initialState,
+    entitiesEditState,
+    foldersEditState,
+    rulesOnEdit,
+    displayAuthorEditState,
+  ]);
+
+  const hasUserChangedRules = useMemo(() => {
+    const initialRules = publication.rules ?? [];
+    return !isEqual(initialRules, rulesOnEdit);
+  }, [publication.rules, rulesOnEdit]);
 
   return (
     <div className="flex size-full justify-center overflow-y-auto p-0 md:px-5 md:pt-5">
@@ -322,7 +365,7 @@ export function PublicationHandler({ publication }: Props) {
                     <p data-qa="allow-access-label">
                       {t('Allow access if all match')}
                     </p>
-                    {areRulesChanged ? (
+                    {hasUserChangedRules ? (
                       <span
                         onClick={() => setIsCompareModalOpened(true)}
                         className="cursor-pointer text-accent-primary"
@@ -385,6 +428,7 @@ export function PublicationHandler({ publication }: Props) {
         <PublicationHandlerFooter
           onUpdateRequest={handleUpdateRequest}
           publication={publication}
+          isFormChanged={isFormChanged}
         />
       </div>
       {isCompareModalOpened && publication.targetFolder && (

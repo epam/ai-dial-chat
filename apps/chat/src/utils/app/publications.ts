@@ -30,6 +30,7 @@ import {
   PublicationRequestModel,
   PublicationResource,
   PublicationRule,
+  PublicationUpdateRequestModel,
   ResourceToReview,
   TargetAudienceFilter,
 } from '@/src/types/publication';
@@ -380,10 +381,12 @@ export const getVersionGroupFromId = (id: string) => {
 /**
  * Process publication resources and handle file validation
  */
-export const processPublicationResources = (
-  payload: PublicationRequestModel,
+export const processPublicationResources = <
+  T extends PublicationRequestModel | PublicationUpdateRequestModel,
+>(
+  payload: T,
 ): Observable<{
-  publicationData: PublicationRequestModel;
+  publicationData: T;
   isPublishingExternalFiles: boolean;
 }> => {
   return forkJoin({
@@ -422,7 +425,7 @@ export const processPublicationResources = (
         return resource;
       });
 
-      const publicationData: PublicationRequestModel = {
+      const publicationData: T = {
         ...payload,
         resources,
       };
