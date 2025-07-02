@@ -16,6 +16,7 @@ import {
   MockedChatApiResponseBodies,
   UploadMenuOptions,
 } from '@/src/testData';
+import { ItemApiHelper } from '@/src/testData/api';
 import { StyleValues } from '@/src/ui/domData';
 import { Styles } from '@/src/ui/domData/styles';
 import {
@@ -23,8 +24,16 @@ import {
   BaseElement,
   FileModalSection,
 } from '@/src/ui/webElements';
-import { DateUtil, GeneratorUtil, SortingUtil, UserUtil } from '@/src/utils';
+import {
+  DateUtil,
+  GeneratorUtil,
+  SortingUtil,
+  UserUtil,
+  applicationNamePrefix,
+} from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
+
+let appEntityForCleanup: BackendEntity | undefined;
 
 dialTest(
   'Create custom app with required fields only.\n' + // EPMRTC-5130
@@ -101,7 +110,8 @@ dialTest(
           .withDisplayVersion(appEntity.version!)
           .withDescriptionKeywords(appEntity.description!)
           .build();
-        await applicationApiHelper.createApplication(applicationModel);
+        appEntityForCleanup =
+          await applicationApiHelper.createApplication(applicationModel);
       },
     );
 
@@ -2096,7 +2106,7 @@ dialTest(
     appEditorViewForm,
   }) => {
     setTestIds('EPMRTC-5946', 'EPMRTC-6046');
-    const appNameWithSpaces = `${GeneratorUtil.randomString(70)} ${GeneratorUtil.randomString(70)} ${GeneratorUtil.randomString(ExpectedConstants.maxEntityNameLength - 140 - 2)}`; // Ensure total length is 160 with spaces
+    const appNameWithSpaces = `${applicationNamePrefix}${GeneratorUtil.randomString(70)} ${GeneratorUtil.randomString(70)} ${GeneratorUtil.randomString(ExpectedConstants.maxEntityNameLength - 140 - 2 - 6)}`; // Ensure total length is 160 with spaces
     const appVersion = GeneratorUtil.randomApplicationVersion();
     const appEntity = {
       name: appNameWithSpaces,
@@ -2213,5 +2223,15 @@ dialTest(
         );
       },
     );
+  },
+);
+
+dialTest.afterEach(
+  'Teardown: Delete created application via API',
+  async ({ itemApiHelper }: { itemApiHelper: ItemApiHelper }) => {
+    if (appEntityForCleanup) {
+      await itemApiHelper.deleteBackendItem(appEntityForCleanup);
+      appEntityForCleanup = undefined;
+    }
   },
 );
