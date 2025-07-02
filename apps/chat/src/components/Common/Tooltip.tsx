@@ -215,7 +215,7 @@ export const TooltipContent = forwardRef<
   );
 });
 
-interface TooltipOptions extends TooltipContainerOptions {
+export interface TooltipOptions extends TooltipContainerOptions {
   hideTooltip?: boolean;
   tooltip: ReactNode;
   children: ReactNode;
