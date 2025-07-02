@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 
-import { EntityType } from '@/src/types/common';
+import { BackendResourceTypeName, EntityType } from '@/src/types/common';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 
@@ -30,6 +30,7 @@ export const PublicationApplicationRow: React.FC<Props> = ({ item, level }) => {
       level={level}
       Icon={<ModelIcon entity={entity} entityId={item.id} size={18} />}
       item={item}
+      itemTypeName={BackendResourceTypeName.APPLICATION}
       dataQa="application"
     />
   );

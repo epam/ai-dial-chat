@@ -21,6 +21,13 @@ export enum BackendResourceType {
   APPLICATION = 'APPLICATION',
 }
 
+export enum BackendResourceTypeName {
+  FILE = 'File',
+  PROMPT = 'Prompt',
+  CONVERSATION = 'Conversation',
+  APPLICATION = 'Application',
+}
+
 export interface BackendDataEntity {
   nodeType: BackendDataNodeType;
   name: string;

@@ -1,4 +1,5 @@
 import {
+  getLastPathSegment,
   isEntityNameOrPathInvalid,
   prepareEntityName,
 } from '@/src/utils/app/common';
@@ -10,6 +11,7 @@ import {
 } from '@/src/utils/app/form-schema';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import {
+  ApiUtils,
   getConversationApiKey,
   parseConversationApiKey,
 } from '@/src/utils/server/api';
@@ -381,4 +383,28 @@ export const getQuickAttachmentsSavingPath = () => {
   const date = new Date();
 
   return `${getFileRootId()}/uploads/${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+};
+
+export const updateAttachmentTitles = (
+  messages: Message[],
+  titlesToUpdate: string[],
+) => {
+  return messages.map((message) => ({
+    ...message,
+    custom_content: {
+      ...message.custom_content,
+      attachments: message.custom_content?.attachments?.map((attachment) => {
+        const title = ApiUtils.decodeApiUrl(
+          getLastPathSegment(attachment.url ?? ''),
+        );
+
+        return titlesToUpdate.includes(title)
+          ? {
+              ...attachment,
+              title: title ?? 'Attachment',
+            }
+          : attachment;
+      }),
+    },
+  }));
 };
