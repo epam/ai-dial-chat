@@ -423,6 +423,16 @@ export class BaseAssertion {
     ).toHaveCSS(Styles.text_overflow, Overflow.ellipsis);
   }
 
+  public assertBooleanCondition(
+    predicate: boolean,
+    expectedResult: boolean,
+    expectedMessage: string,
+  ) {
+    expectedResult
+      ? expect(predicate, expectedMessage).toBeTruthy()
+      : expect(predicate, expectedMessage).toBeFalsy();
+  }
+
   private getElementLocator(element: BaseElement | Locator) {
     return element instanceof BaseElement
       ? element.getElementLocator()

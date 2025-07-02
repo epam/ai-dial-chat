@@ -1,5 +1,6 @@
+import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedConstants, ExpectedMessages } from '@/src/testData';
+import { API, ExpectedConstants, ExpectedMessages } from '@/src/testData';
 import { Cursors, ThemeColorAttributes } from '@/src/ui/domData';
 import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil, SortingUtil } from '@/src/utils';
@@ -9,6 +10,7 @@ import { ThemesUtil } from '@/src/utils/themesUtil';
 dialTest(
   '[Card view] Add an agent with several versions to My workspace using bookmark icon.\n' +
     '[Card view] New version of published app becomes automatically bookmarked if the app is in My workspace.\n' +
+    "[Select an agent for conversation] 'My agents' contains only agents from My workspace.\n" +
     '[Card view] Remove an agent with several versions from My workspace using bookmark icon.\n' +
     '[Card view] Bookmark icon highlight and tooltips (add and remove)',
   async ({
@@ -28,19 +30,34 @@ dialTest(
     toastAssertion,
     marketplaceAgentsAssertion,
     adminCustomApplicationPublishingUtil,
+    chat,
+    talkToAgents,
+    talkToAgentDialogAssertion,
+    dialHomePage,
+    modelApiHelper,
+    talkToAgentDialog,
+    fileApiHelper,
   }) => {
-    setTestIds('EPMRTC-4602', 'EPMRTC-5937', 'EPMRTC-4605', 'EPMRTC-5929');
+    setTestIds(
+      'EPMRTC-4602',
+      'EPMRTC-5937',
+      'EPMRTC-6295',
+      'EPMRTC-4605',
+      'EPMRTC-5929',
+    );
     let recentNames: string[];
     let recentVersions: string[];
     const appName = GeneratorUtil.randomApplicationName();
     let appFirstVersion: CustomAppAttributes;
     let appSecondVersion: CustomAppAttributes;
     let appThirdVersion: CustomAppAttributes;
-    let sortedVersions: string[];
+    let threeSortedVersions: string[];
+    let twoSortedVersions: string[];
     let agentToAddElement: BaseElement;
     let workspaceAgentElement: BaseElement;
     let marketplaceAgentElement: BaseElement;
     let removeBookmarkIcon: BaseElement;
+    let configAgents: DialAIEntityModel[];
 
     await dialTest.step(
       'Prepare an application with two versions available in the "Marketplace"',
@@ -118,13 +135,56 @@ dialTest(
         await marketplacePage.waitForPageLoaded();
         workspaceAgentElement =
           await marketplaceAgentsSection.findAgentElement(appName);
-        const latestVersion = SortingUtil.sortVersionsArray([
+        twoSortedVersions = SortingUtil.sortVersionsArray([
           appFirstVersion.version,
           appSecondVersion.version,
-        ])[0];
+        ]);
         await marketplaceAgentsAssertion.assertElementText(
           marketplaceAgents.getAgentVersion(workspaceAgentElement),
-          latestVersion,
+          twoSortedVersions[0],
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Go back to the chat, open "Change agent" modal and verify bookmarked agent card is displayed with all the versions',
+      async () => {
+        configAgents = await modelApiHelper.getModels();
+        await navigationPanel.backToChat({ isHttpMethodTriggered: true });
+        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
+        await chat.changeAgentButton.click();
+        const agentElement = talkToAgents.getAgent(appName);
+        await talkToAgentDialogAssertion.assertAgentState(appName, 'visible');
+        await talkToAgentDialog.getVersionMenuTrigger(agentElement).click();
+        //TODO enable when fixed https://github.com/epam/ai-dial-chat/issues/3988
+        // await agentVersionsDropdownMenuAssertion.assertMenuOptions(
+        //   twoSortedVersions,
+        // );
+      },
+    );
+
+    await dialTest.step(
+      'Verify only agents from "My Workspace" are available on "My agents" tab',
+      async () => {
+        const installedDeploymentsResponse = await fileApiHelper.getFile(
+          API.installedDeploymentsHost(),
+        );
+        const installedDeployments =
+          (await installedDeploymentsResponse.json()) as { id: string }[];
+        const expectedInstalledDeploymentsNames: string[] = [];
+        for (const deployment of installedDeployments) {
+          const expectedName = configAgents.find(
+            (e) => e.reference === deployment.id,
+          )!.name;
+          if (!expectedInstalledDeploymentsNames.includes(expectedName)) {
+            expectedInstalledDeploymentsNames.push(expectedName);
+          }
+        }
+        const actualAgentNames = await talkToAgents.getAgentNames();
+        talkToAgentDialogAssertion.assertArrayIncludesAll(
+          actualAgentNames,
+          expectedInstalledDeploymentsNames,
+          ExpectedMessages.myAgentsListIsValid,
         );
       },
     );
@@ -146,23 +206,29 @@ dialTest(
     await dialTest.step(
       'Open the agent and verify three versions are available in the dropdown menu, bookmark icon is shown on version switching',
       async () => {
-        sortedVersions = SortingUtil.sortVersionsArray([
+        threeSortedVersions = SortingUtil.sortVersionsArray([
           appFirstVersion.version,
           appSecondVersion.version,
           appThirdVersion.version,
         ]);
-        //TODO: remove page refresh after the issue fixed https://github.com/epam/ai-dial-chat/issues/3693
-        await marketplacePage.reloadPage();
+        await marketplacePage.openMarketplacePage({
+          updateInstalledDeployments: false,
+          getInstalledDeployments: true,
+        });
         await marketplacePage.waitForPageLoaded();
+        await marketplaceHeader.searchInput.fillInInput(appName);
         await workspaceAgentElement.click();
         await agentDetailsModalAssertion.assertApplicationVersion(
-          sortedVersions[0],
+          threeSortedVersions[0],
         );
         await agentDetailsModalAssertion.assertElementState(
           agentDetailsModal.removeBookmarkIcon,
           'visible',
         );
-        for (const version of [sortedVersions[1], sortedVersions[2]]) {
+        for (const version of [
+          threeSortedVersions[1],
+          threeSortedVersions[2],
+        ]) {
           await agentDetailsModal.versionMenuTrigger.click();
           await agentDetailsModal
             .getVersionDropdownMenu()

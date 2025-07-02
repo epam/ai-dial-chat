@@ -15,6 +15,8 @@ import {
   DeleteMessageRequest,
   ExportConversationRequest,
   ImportConversationRequest,
+  MessageButtons,
+  MessageCustomButtonResponse,
   OverlayEvents,
   OverlayRequests,
   RenameConversationRequest,
@@ -28,6 +30,7 @@ type WithRequestId<T> = T & { requestId: string };
 const initialState: OverlayState = {
   _savedOverlayOptions: undefined,
   hostDomain: '*',
+  customMessageButtons: [],
 
   systemPrompt: null,
   newConversationsFolder: null,
@@ -163,6 +166,16 @@ export const overlaySlice = createSlice({
     sendReadyToInteract: (state) => {
       state.readyToInteractSent = true;
     },
+    setCustomMessages: (
+      state,
+      { payload }: PayloadAction<MessageButtons[]>,
+    ) => {
+      state.customMessageButtons = payload;
+    },
+    sendCustomMessageEvent: (
+      state,
+      _action: PayloadAction<MessageCustomButtonResponse>,
+    ) => state,
   },
 });
 
