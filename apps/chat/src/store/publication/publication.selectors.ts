@@ -102,10 +102,27 @@ const selectResourceToReviewByReviewAndPublicationUrls = createSelector(
   },
 );
 
+const selectSelectedItemsToPublish = (state: RootState) =>
+  rootSelector(state).selectedItemsToPublish;
+
+const selectSelectedItemsToPublishSet = createSelector(
+  [selectSelectedItemsToPublish],
+  (selectedItemsToPublish) => new Set(selectedItemsToPublish),
+);
+
 const selectResourcesToReviewByPublicationUrl = createSelector(
-  [selectResourcesToReview, (_state, id: string) => id],
-  (resourcesToReview, id) => {
-    return resourcesToReview.filter((r) => r.publicationUrl === id);
+  [
+    selectResourcesToReview,
+    selectSelectedItemsToPublishSet,
+    (_state, id: string) => id,
+  ],
+  (resourcesToReview, selectedItemsToPublish, id) => {
+    return resourcesToReview.filter(
+      (r) =>
+        r.publicationUrl === id &&
+        (selectedItemsToPublish.has(r.reviewUrl) ||
+          selectedItemsToPublish.has(r.sourceUrl)),
+    );
   },
 );
 
@@ -127,9 +144,6 @@ const selectIsRulesLoading = (state: RootState) =>
 
 const selectIsAllItemsUploaded = (state: RootState, featureType: FeatureType) =>
   rootSelector(state).allPublishedWithMeItemsUploaded[featureType];
-
-const selectSelectedItemsToPublish = (state: RootState) =>
-  rootSelector(state).selectedItemsToPublish;
 
 const _selectChosenFolderIds = createSelector(
   [
