@@ -60,11 +60,13 @@ import uniq from 'lodash-es/uniq';
 interface Props {
   publication: Publication;
   onUpdateRequest: () => void;
+  isFormChanged: boolean;
 }
 
 export const PublicationHandlerFooter = ({
   publication,
   onUpdateRequest,
+  isFormChanged,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -311,12 +313,14 @@ export const PublicationHandlerFooter = ({
     false,
   );
 
-  const isEditDisabled =
+  const isEditInvalid =
     isNamesOrVersionsInvalid || isFoldersInvalid || isDisplayAuthorInvalid;
   const someReviewedConversationHaveNoMessages =
     publicationConversationsWithUploadedMessages.some(
       (conversation) => !conversation.messages.length,
     );
+
+  const isEditDisabled = isEditInvalid || !isFormChanged;
 
   return (
     <div
@@ -422,7 +426,9 @@ export const PublicationHandlerFooter = ({
             <Tooltip
               hideTooltip={!isEditDisabled}
               tooltip={t(
-                'Request can not be updated as some resources are invalid',
+                isEditInvalid
+                  ? 'Request can not be updated as some resources are invalid'
+                  : 'Make any changes to update the request',
               )}
             >
               <button
