@@ -7,7 +7,10 @@ import classNames from 'classnames';
 
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 
-import { isVersionExists } from '@/src/utils/app/common';
+import {
+  isVersionExists,
+  replaceSpacesFromString,
+} from '@/src/utils/app/common';
 import {
   getStringValidationErrors,
   getVersionValidationErrors,
@@ -213,9 +216,10 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   const [errors, setErrors] = useState<string[]>([]);
 
   useEffect(() => {
-    setInputName(item.name);
+    const cleanName = replaceSpacesFromString(item.name);
+    setInputName(cleanName);
     const nameErrors = getStringValidationErrors({
-      value: item.name,
+      value: cleanName,
       label: `${itemTypeName} name`,
       checkDotsInTheEnd: true,
     });
