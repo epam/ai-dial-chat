@@ -512,6 +512,10 @@ dialAdminTest(
     );
     const author = GeneratorUtil.randomString(10);
     const currentDate = DateUtil.getCurrentLocalDate();
+    const requestNames = [
+      `${GeneratorUtil.randomString(50)} ${GeneratorUtil.randomString(50)} ${GeneratorUtil.randomString(61)}`,
+      '1',
+    ];
 
     await dialTest.step('Prepare a new prompt', async () => {
       prompt1 = promptData.prepareDefaultPrompt();
@@ -573,20 +577,20 @@ dialAdminTest(
       });
     });
 
-    for (const name of [
-      `${GeneratorUtil.randomString(50)} ${GeneratorUtil.randomString(49)} ${GeneratorUtil.randomString(99)}`,
-      '1',
-    ])
+    for (let i = 0; i < requestNames.length; i++) {
       await dialTest.step(
-        `Type ${name} symbols in the request name and verify error hint is displayed under the field`,
+        `Type ${requestNames[i]} symbols in the request name and verify error hint is displayed under the field`,
         async () => {
-          await publishingRequestModal.requestName.fillInInput(name);
+          await publishingRequestModal.requestName.fillInInput(requestNames[i]);
           await publishingRequestModalAssertion.assertElementText(
             publishingRequestModal.requestNameErrorMessage,
-            'Request name should be 2 to 160 characters long and should not contain special characters',
+            i === 0
+              ? ExpectedConstants.publishRequestNameMaxLengthErrorMessage
+              : ExpectedConstants.publishRequestNameMinLengthErrorMessage,
           );
         },
       );
+    }
 
     await dialTest.step('Check empty publication request name', async () => {
       await publishingRequestModalAssertion.assertSendRequestButtonIsDisabled();

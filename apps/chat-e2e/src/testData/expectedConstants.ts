@@ -256,6 +256,10 @@ export const ExpectedConstants = {
     `${appName}\nv. ${appVersion}`,
   goToMyWorkspaceButtonLabel: 'Go to My workspace',
   goToDialMarketplaceButtonLabel: 'Go to DIAL Marketplace',
+  publishRequestNameMaxLengthErrorMessage:
+    'Request name should be at most 160 characters long',
+  publishRequestNameMinLengthErrorMessage:
+    'Request name should be at least 2 characters long',
 };
 
 export enum Types {
