@@ -1464,7 +1464,6 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
           return {
             ...resource,
             sourceUrl: resource.sourceUrl ?? '',
-            reviewUrl: resource.reviewUrl,
           };
         }),
       };
@@ -1579,14 +1578,12 @@ const updatePublicationRequestAndFolderEpic: AppEpic = (action$, state$) =>
                 `${targetFolderIdToUpdate}/`,
                 `${newTargetFolderId}/`,
               ),
-              reviewUrl: resource.reviewUrl,
             };
           }
 
           return {
             ...resource,
             sourceUrl: resource.sourceUrl ?? '',
-            reviewUrl: resource.reviewUrl,
           };
         }),
       };

@@ -322,6 +322,10 @@ export const PublicationHandlerFooter = ({
     publicationConversationsWithUploadedMessages.some(
       (conversation) => !conversation.messages.length,
     );
+  const isApproveDisabled =
+    !isAllResourcesReviewed ||
+    !!invalidEntities.length ||
+    someReviewedConversationHaveNoMessages;
 
   const isEditDisabled = isEditInvalid || !isFormChanged;
 
@@ -394,7 +398,7 @@ export const PublicationHandlerFooter = ({
               {t('Reject')}
             </button>
             <Tooltip
-              hideTooltip={isAllResourcesReviewed}
+              hideTooltip={!isApproveDisabled}
               tooltip={t(
                 invalidEntities.length
                   ? "Request can't be approved as some conversations are unpublished"
@@ -405,11 +409,7 @@ export const PublicationHandlerFooter = ({
             >
               <button
                 className="button button-primary whitespace-nowrap disabled:cursor-not-allowed disabled:text-controls-disable"
-                disabled={
-                  !isAllResourcesReviewed ||
-                  !!invalidEntities.length ||
-                  someReviewedConversationHaveNoMessages
-                }
+                disabled={isApproveDisabled}
                 onClick={handleApprovePublication}
                 data-qa="approve"
               >
