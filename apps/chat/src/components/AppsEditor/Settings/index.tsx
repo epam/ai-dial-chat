@@ -5,7 +5,13 @@ import {
   IconLayoutSidebarRightCollapse,
   IconRefresh,
 } from '@tabler/icons-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  FocusEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
@@ -51,6 +57,7 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
+import { CHAT_TEXT_FIELD_ID } from '@/src/constants/chat';
 import { DEFAULT_QUICK_APPS_SCHEMA_ID } from '@/src/constants/quick-apps';
 import { Routes } from '@/src/constants/routes';
 
@@ -350,6 +357,19 @@ export const ApplicationSettings: React.FC<Props> = ({
   const showRedeployButton =
     type === ApplicationType.CODE_APP && isAppDeployed && !isAppPublic;
 
+  const handleSaveOnLeave = useCallback(() => {
+    if (!isAppPublic) saveForm();
+  }, [isAppPublic, saveForm]);
+
+  const handleSaveOnChatFocus = useCallback(
+    (e: FocusEvent<HTMLDivElement>) => {
+      if (e.target.id === CHAT_TEXT_FIELD_ID && !isAppPublic) {
+        saveForm();
+      }
+    },
+    [saveForm, isAppPublic],
+  );
+
   return (
     <div className="flex size-full flex-col">
       <div className="flex w-full justify-center gap-2 border-b border-primary px-3 py-2 text-primary md:hidden">
@@ -371,11 +391,7 @@ export const ApplicationSettings: React.FC<Props> = ({
 
       <div className="flex w-full grow overflow-hidden">
         <div
-          onMouseLeave={() => {
-            if (!isAppPublic) {
-              saveForm();
-            }
-          }}
+          onMouseLeave={handleSaveOnLeave}
           className={classNames('transition-all duration-300 ease-in-out', {
             'w-[calc(100%-40px)] opacity-100 max-md:w-full': isPreviewClosed,
             'w-1/2 opacity-100': isPreviewHalf,
@@ -451,7 +467,10 @@ export const ApplicationSettings: React.FC<Props> = ({
             </div>
           </div>
           {!isPreviewClosed && (
-            <div className="flex-1 overflow-auto">
+            <div
+              className="flex-1 overflow-auto"
+              onFocus={handleSaveOnChatFocus}
+            >
               <ApplicationPreviewChat
                 isAppDeploymentInProgress={isAppDeploymentInProgress}
                 isApplicationValid={methods.formState.isValid}
