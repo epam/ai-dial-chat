@@ -134,3 +134,8 @@ export enum ApplicationType {
   CUSTOM_APP = 'custom app',
   CODE_APP = 'code app',
 }
+
+export enum Toolsets {
+  WebApiToolset = 'webApiToolset',
+  McpToolset = 'mcpToolset',
+}

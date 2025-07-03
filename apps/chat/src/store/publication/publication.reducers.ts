@@ -54,6 +54,7 @@ const initialState: PublicationState = {
   publishModel: undefined,
 
   // Review edit mode
+  selectedItemsToApprove: {},
   isEditMode: false,
   entitiesEditState: {},
   foldersEditState: {},
@@ -223,12 +224,27 @@ export const publicationSlice = createSlice({
     ) => {
       state.selectedItemsToPublish = payload.ids;
     },
+    setItemsToApprove: (
+      state,
+      { payload }: PayloadAction<{ publicationUrl: string; ids: string[] }>,
+    ) => {
+      state.selectedItemsToApprove[payload.publicationUrl] = payload.ids;
+    },
     selectItemsToPublish: (
       state,
       { payload }: PayloadAction<{ ids: string[] }>,
     ) => {
       state.selectedItemsToPublish = xor(
         state.selectedItemsToPublish,
+        payload.ids,
+      );
+    },
+    selectItemsToApprove: (
+      state,
+      { payload }: PayloadAction<{ publicationUrl: string; ids: string[] }>,
+    ) => {
+      state.selectedItemsToApprove[payload.publicationUrl] = xor(
+        state.selectedItemsToApprove[payload.publicationUrl] ?? [],
         payload.ids,
       );
     },

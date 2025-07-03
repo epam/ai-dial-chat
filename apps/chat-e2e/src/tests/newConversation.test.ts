@@ -22,6 +22,7 @@ dialTest(
     addons,
     talkToAgentDialog,
     agentInfoAssertion,
+    agentSettingAssertion,
     setTestIds,
     localStorageManager,
     conversationSettingsModal,
@@ -88,8 +89,7 @@ dialTest(
       'Check that the settings are reset, temperature is not changed after sending a message and starting a new conversation',
       async () => {
         await chat.configureSettingsButton.click();
-        await agentInfoAssertion.assertElementText(
-          agentSettings.systemPrompt,
+        await agentSettingAssertion.assertSystemPromptValue(
           ExpectedConstants.emptyString,
         );
         agentInfoAssertion.assertValue(
@@ -130,8 +130,7 @@ dialTest(
       'Verify settings are completely reset after not sending a message in a chat',
       async () => {
         await chat.configureSettingsButton.click();
-        await agentInfoAssertion.assertElementText(
-          agentSettings.systemPrompt,
+        await agentSettingAssertion.assertSystemPromptValue(
           ExpectedConstants.emptyString,
         );
         agentInfoAssertion.assertValue(
@@ -492,6 +491,7 @@ dialTest(
     talkToAgentDialog,
     chatBar,
     agentInfoAssertion,
+    agentSettingAssertion,
     setTestIds,
     localStorageManager,
     conversationSettingsModal,
@@ -569,8 +569,7 @@ dialTest(
         await conversationSettingsModal.applyChangesButton.click();
         await header.logo.click();
         await chat.configureSettingsButton.click();
-        await agentInfoAssertion.assertElementText(
-          agentSettings.systemPrompt,
+        await agentSettingAssertion.assertSystemPromptValue(
           ExpectedConstants.emptyString,
         );
         agentInfoAssertion.assertValue(

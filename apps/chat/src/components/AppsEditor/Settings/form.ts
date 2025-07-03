@@ -16,7 +16,7 @@ import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { constructPath } from '@/src/utils/app/file';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { CustomApplicationModel } from '@/src/types/applications';
+import { CustomApplicationModel, Toolsets } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 import { ModelsMap } from '@/src/types/models';
 import { QuickAppConfig } from '@/src/types/quick-apps';
@@ -60,8 +60,8 @@ export interface QuickAppFormData extends ApplicationGeneralInfo {
   reference: string;
   instructions: string;
   temperature: number;
-  toolset: string;
-  mcpToolset?: string;
+  [Toolsets.WebApiToolset]: string;
+  [Toolsets.McpToolset]?: string;
   documentRelativeUrl?: string[];
   model: string;
 }
@@ -250,12 +250,12 @@ export const getQuickAppDefaultValues = ({
       typeof app.applicationProperties?.temperature === 'number'
         ? app.applicationProperties.temperature
         : DEFAULT_TEMPERATURE,
-    toolset:
+    [Toolsets.WebApiToolset]:
       getWebAPIToolsetStr({
         web_api_toolset: app.applicationProperties?.web_api_toolset ?? [],
       } as QuickAppConfig) ?? '',
 
-    mcpToolset:
+    [Toolsets.McpToolset]:
       getMcpToolsetStr({
         mcp_toolset: app.applicationProperties?.mcp_toolset ?? [],
       } as QuickAppConfig) ?? '',
@@ -337,9 +337,9 @@ export const getQuickAppData = (
     applicationProperties: {
       instructions: formData.instructions,
       temperature: formData.temperature,
-      web_api_toolset: JSON.parse(formData.toolset),
-      ...(formData.mcpToolset && {
-        mcp_toolset: JSON.parse(formData.mcpToolset),
+      web_api_toolset: JSON.parse(formData[Toolsets.WebApiToolset]),
+      ...(formData[Toolsets.McpToolset] && {
+        mcp_toolset: JSON.parse(formData[Toolsets.McpToolset]),
       }),
       model: modelsMap[formData.model]?.id ?? formData.model,
       document_relative_url: formData.documentRelativeUrl,
