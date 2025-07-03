@@ -453,7 +453,7 @@ export const getPromptActions = (
       : EMPTY;
 
   return [
-    of(PromptsActions.savePrompt(prompt)),
+    of(PromptsActions.savePrompt({ prompt })),
     of(
       PromptsActions.updatePromptSuccess({
         id: prompt.id,
