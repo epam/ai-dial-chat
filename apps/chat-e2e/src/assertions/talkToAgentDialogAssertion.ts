@@ -1,12 +1,8 @@
 import { DialAIEntityModel } from '@/chat/types/models';
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
-import {
-  ElementState,
-  ExpectedMessages,
-  MarketplaceExpectedMessages,
-} from '@/src/testData';
+import { ElementState, MarketplaceExpectedMessages } from '@/src/testData';
+import { Attributes } from '@/src/ui/domData';
 import { TalkToAgentDialog } from '@/src/ui/webElements/talkToAgentDialog';
-import { expect } from '@playwright/test';
 
 export class TalkToAgentDialogAssertion extends BaseAssertion {
   readonly talkToAgentDialog: TalkToAgentDialog;
@@ -19,14 +15,8 @@ export class TalkToAgentDialogAssertion extends BaseAssertion {
   public async assertAgentIsSelected(
     expectedAgent: DialAIEntityModel | string,
   ) {
-    expect
-      .soft(
-        await this.talkToAgentDialog.getSelectedAgent(),
-        ExpectedMessages.talkToEntityIsSelected,
-      )
-      .toBe(
-        typeof expectedAgent === 'string' ? expectedAgent : expectedAgent.name,
-      );
+    const agent = this.talkToAgentDialog.getAgents().getAgent(expectedAgent);
+    await this.assertElementAttribute(agent, Attributes.ariaSelected, 'true');
   }
 
   public async assertAgentState(

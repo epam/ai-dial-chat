@@ -16,7 +16,7 @@ dialTest(
   async ({
     dialHomePage,
     chatHeader,
-    agentSettings,
+    agentSettingAssertion,
     temperatureSlider,
     addons,
     talkToAgentDialog,
@@ -61,10 +61,9 @@ dialTest(
       async () => {
         await chatHeader.openConversationSettingsPopup();
         if (ModelsUtil.doesModelAllowSystemPrompt(randomModel)) {
-          const systemPrompt = await agentSettings.getSystemPrompt();
-          expect
-            .soft(systemPrompt, ExpectedMessages.defaultSystemPromptIsEmpty)
-            .toBe(conversation.prompt);
+          await agentSettingAssertion.assertSystemPromptValue(
+            conversation.prompt,
+          );
         }
         if (ModelsUtil.doesModelAllowTemperature(randomModel)) {
           const temperature = await temperatureSlider.getTemperature();
