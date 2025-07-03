@@ -342,7 +342,6 @@ const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
                       .concat(name)
                       .join('/')
                   : resource.targetUrl,
-              reviewUrl: resource.reviewUrl,
             })),
           },
         }),
