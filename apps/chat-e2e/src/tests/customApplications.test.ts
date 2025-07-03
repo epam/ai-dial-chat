@@ -1419,6 +1419,14 @@ dialTest(
       async () => {
         await appEditorHeader.getAppSettingsStep().click();
         await baseAssertion.assertElementState(appEditorViewForm, 'visible');
+        await baseAssertion.assertElementState(
+          appEditorAppSettingsAgentPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          appEditorAppSettingsAgentPreview.previewSpinner,
+          'hidden',
+        );
       },
     );
 
