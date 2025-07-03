@@ -1938,8 +1938,21 @@ const onSelectPublicationEffectEpic: AppEpic = (action$, state$) =>
       );
       const resources = publication?.resources;
 
+      if (!publication) {
+        console.error('Publication not found, cannot select items to approve');
+        return EMPTY;
+      }
+
+      const selectedItemsToApprove =
+        PublicationSelectors.selectAllSelectedItemsToApprove(state$.value);
+
+      if (selectedItemsToApprove[publication.url] !== undefined) {
+        return EMPTY;
+      }
+
       return of(
-        PublicationActions.setItemsToPublish({
+        PublicationActions.setItemsToApprove({
+          publicationUrl: publication?.url ?? '',
           ids: resources?.map(({ reviewUrl }) => reviewUrl) ?? [],
         }),
       );

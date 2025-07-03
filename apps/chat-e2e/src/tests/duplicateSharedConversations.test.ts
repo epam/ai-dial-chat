@@ -272,6 +272,9 @@ dialSharedWithMeTest(
         await additionalShareUserSharedWithMeConversations.selectEntity(
           firstComparedConversation.name,
         );
+        await additionalShareUserSharedWithMeConversations
+          .selectedEntity(firstComparedConversation.name)
+          .waitFor();
         await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
           firstComparedConversation.name,
         );
@@ -315,9 +318,8 @@ dialSharedWithMeTest(
         );
 
         for (const conversation of conversationsToShare) {
-          await additionalShareUserConversationAssertion.assertEntityBackgroundColor(
-            { name: conversation.name },
-            Colors.backgroundAccentSecondary,
+          await additionalShareUserConversationAssertion.assertSelectedEntity(
+            conversation.name,
           );
         }
       },
@@ -332,6 +334,9 @@ dialSharedWithMeTest(
         await additionalShareUserSharedWithMeConversationDropdownMenu.selectMenuOption(
           MenuOptions.compare,
         );
+        await additionalShareUserSharedWithMeConversations
+          .selectedEntity(firstComparedConversation.name)
+          .waitFor();
         await additionalShareUserCompareConversation.checkShowAllConversations();
         await additionalShareUserCompareConversation.selectCompareConversation(
           thirdComparedConversation.name,

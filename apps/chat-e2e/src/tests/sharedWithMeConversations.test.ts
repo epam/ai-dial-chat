@@ -427,10 +427,12 @@ dialSharedWithMeTest(
     dialHomePage,
     page,
     folderConversations,
+    chatBarFolderAssertion,
     folderDropdownMenu,
     confirmationDialog,
     additionalShareUserDialHomePage,
     additionalShareUserSharedFolderConversations,
+    additionalShareUserSharedWithMeFoldersAssertion,
     conversationData,
     dataInjector,
     mainUserShareApiHelper,
@@ -485,30 +487,28 @@ dialSharedWithMeTest(
           nestedFolders[nestedLevel - 1].name,
           nestedConversations[nestedLevel - 1].name,
         );
+        await additionalShareUserSharedFolderConversations
+          .getSelectedFolderEntity(
+            nestedFolders[nestedLevel - 1].name,
+            nestedConversations[nestedLevel - 1].name,
+          )
+          .waitFor();
         for (let i = nestedLevel - 2; i < nestedLevel; i++) {
           await additionalShareUserSharedFolderConversations.expandFolder(
             nestedFolders[i].name,
           );
-          await expect
-            .soft(
-              additionalShareUserSharedFolderConversations.getFolderEntity(
-                nestedFolders[i].name,
-                nestedConversations[i].name,
-              ),
-              ExpectedMessages.conversationIsVisible,
-            )
-            .toBeVisible();
+          await additionalShareUserSharedWithMeFoldersAssertion.assertFolderEntityState(
+            { name: nestedFolders[i].name },
+            { name: nestedConversations[i].name },
+            'visible',
+          );
         }
         for (let i = 0; i < nestedLevel - 2; i++) {
-          await expect
-            .soft(
-              additionalShareUserSharedFolderConversations.getFolderEntity(
-                nestedFolders[i].name,
-                nestedConversations[i].name,
-              ),
-              ExpectedMessages.conversationIsNotVisible,
-            )
-            .toBeHidden();
+          await additionalShareUserSharedWithMeFoldersAssertion.assertFolderEntityState(
+            { name: nestedFolders[i].name },
+            { name: nestedConversations[i].name },
+            'hidden',
+          );
         }
       },
     );
@@ -526,6 +526,12 @@ dialSharedWithMeTest(
           nestedFolders[nestedLevel - 1].name,
           nestedConversations[nestedLevel - 1].name,
         );
+        await folderConversations
+          .getSelectedFolderEntity(
+            nestedFolders[nestedLevel - 1].name,
+            nestedConversations[nestedLevel - 1].name,
+          )
+          .waitFor();
         await folderConversations.openFolderDropdownMenu(
           nestedFolders[nestedLevel - 2].name,
         );
@@ -533,9 +539,11 @@ dialSharedWithMeTest(
 
         await folderConversations.editFolderName(updatedFolderName);
         await page.keyboard.press(keys.enter);
-        if (await confirmationDialog.isVisible()) {
-          await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
-        }
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
+        await chatBarFolderAssertion.assertFolderState(
+          { name: updatedFolderName },
+          'visible',
+        );
 
         const sharedEntities =
           await additionalUserShareApiHelper.listSharedWithMeConversations();
