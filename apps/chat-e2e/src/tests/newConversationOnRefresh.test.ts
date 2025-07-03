@@ -61,7 +61,7 @@ dialTest(
       'Set 2 random models to recent and create a conversation and playback conversation via API',
       async () => {
         models = GeneratorUtil.randomArrayElements(
-          ModelsUtil.getModels().filter((m) => m.iconUrl !== undefined),
+          ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
           2,
         );
         await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
