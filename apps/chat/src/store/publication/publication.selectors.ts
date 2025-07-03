@@ -150,8 +150,7 @@ const selectResourcesToReviewByPublicationUrl = createSelector(
     return resourcesToReview.filter(
       (r) =>
         r.publicationUrl === id &&
-        (itemsToPublish.has(r.reviewUrl) ||
-        itemsToPublish.has(r.sourceUrl)),
+        (itemsToPublish.has(r.reviewUrl) || itemsToPublish.has(r.sourceUrl)),
     );
   },
 );
