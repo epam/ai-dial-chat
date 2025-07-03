@@ -127,8 +127,8 @@ export const filterMigratedEntities = <T extends Entity>(
 
 export const trimEndDots = (str: string) => trimEnd(str, '. \t\r\n');
 
-export const replaceSpacesFromString = (valueToClean: string) =>
-  valueToClean.replace(notAllowedSpacesRegex, ' ');
+export const replaceSpacesFromString = (valueToClean: string | undefined) =>
+  valueToClean?.replace(notAllowedSpacesRegex, ' ') ?? '';
 
 export const prepareEntityName = (
   name: string,
